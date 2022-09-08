@@ -14,6 +14,11 @@ if lsmod | grep $DRIVER_NAME; then
     exit 0
 fi
 
+if modprobe --quiet --dry-run $DRIVER_NAME; then
+    echo "shiftfs exists in the kernel - nothing to do here"
+    exit 0
+fi
+
 set -ex
 mkdir -p /lib/modules/"${KERNEL_RELEASE}"
 ln -s /usr/src_node/linux-headers-"${KERNEL_RELEASE}" /lib/modules/"${KERNEL_RELEASE}"/build

@@ -99,6 +99,36 @@ spec:
     - Ingress
 
 ---
+# networking.k8s.io/v1/NetworkPolicy ide-metrics
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ide-metrics
+  name: ide-metrics
+  namespace: default
+spec:
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              component: proxy
+        - podSelector:
+            matchLabels:
+              component: ide-proxy
+      ports:
+        - port: 3000
+          protocol: TCP
+  podSelector:
+    matchLabels:
+      app: gitpod
+      component: ide-metrics
+  policyTypes:
+    - Ingress
+
+---
 # networking.k8s.io/v1/NetworkPolicy image-builder-mk3
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -637,228 +667,6 @@ spec:
       app: gitpod
       component: ws-manager
 status: {}
----
-# policy/v1beta1/PodSecurityPolicy default-ns-privileged
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  annotations:
-    apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-    apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-    seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-  creationTimestamp: null
-  name: default-ns-privileged
-  namespace: default
-spec:
-  allowPrivilegeEscalation: true
-  allowedCapabilities:
-  - '*'
-  fsGroup:
-    rule: RunAsAny
-  hostIPC: true
-  hostNetwork: true
-  hostPID: true
-  hostPorts:
-  - max: 65535
-    min: 0
-  privileged: true
-  runAsUser:
-    rule: RunAsAny
-  seLinux:
-    rule: RunAsAny
-  supplementalGroups:
-    rule: RunAsAny
-  volumes:
-  - '*'
----
-# policy/v1beta1/PodSecurityPolicy default-ns-privileged-unconfined
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  annotations:
-    apparmor.security.beta.kubernetes.io/allowedProfileNames: unconfined
-    apparmor.security.beta.kubernetes.io/defaultProfileName: unconfined
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default,unconfined
-    seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-  creationTimestamp: null
-  name: default-ns-privileged-unconfined
-  namespace: default
-spec:
-  allowPrivilegeEscalation: true
-  allowedCapabilities:
-  - '*'
-  fsGroup:
-    rule: RunAsAny
-  hostPID: true
-  hostPorts:
-  - max: 65535
-    min: 0
-  privileged: true
-  runAsUser:
-    rule: RunAsAny
-  seLinux:
-    rule: RunAsAny
-  supplementalGroups:
-    rule: RunAsAny
-  volumes:
-  - '*'
----
-# policy/v1beta1/PodSecurityPolicy default-ns-registry-facade
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  annotations:
-    apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-    apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-    seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: registry-facade
-  name: default-ns-registry-facade
-spec:
-  fsGroup:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  hostNetwork: true
-  hostPorts:
-  - max: 20000
-    min: 20000
-  runAsUser:
-    rule: RunAsAny
-  seLinux:
-    rule: RunAsAny
-  supplementalGroups:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  volumes:
-  - configMap
-  - secret
-  - emptyDir
-  - hostPath
----
-# policy/v1beta1/PodSecurityPolicy default-ns-restricted-root-user
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  annotations:
-    apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-    apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-    seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-  creationTimestamp: null
-  name: default-ns-restricted-root-user
-  namespace: default
-spec:
-  fsGroup:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  hostNetwork: true
-  hostPorts:
-  - max: 33000
-    min: 30000
-  privileged: true
-  runAsUser:
-    rule: RunAsAny
-  seLinux:
-    rule: RunAsAny
-  supplementalGroups:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  volumes:
-  - configMap
-  - projected
-  - secret
-  - emptyDir
-  - persistentVolumeClaim
-  - hostPath
----
-# policy/v1beta1/PodSecurityPolicy default-ns-unprivileged
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  annotations:
-    apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-    apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-    seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-  creationTimestamp: null
-  name: default-ns-unprivileged
-  namespace: default
-spec:
-  allowPrivilegeEscalation: false
-  fsGroup:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  requiredDropCapabilities:
-  - ALL
-  runAsUser:
-    rule: MustRunAsNonRoot
-  seLinux:
-    rule: RunAsAny
-  supplementalGroups:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  volumes:
-  - configMap
-  - emptyDir
-  - projected
-  - secret
-  - persistentVolumeClaim
----
-# policy/v1beta1/PodSecurityPolicy default-ns-workspace
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  annotations:
-    apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default,unconfined
-    apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: '*'
-    seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-  creationTimestamp: null
-  name: default-ns-workspace
-  namespace: default
-spec:
-  allowPrivilegeEscalation: true
-  allowedCapabilities:
-  - AUDIT_WRITE
-  - FSETID
-  - KILL
-  - NET_BIND_SERVICE
-  - SYS_PTRACE
-  fsGroup:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  runAsUser:
-    rule: RunAsAny
-  seLinux:
-    rule: RunAsAny
-  supplementalGroups:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  volumes:
-  - configMap
-  - projected
-  - secret
-  - hostPath
 ---
 # policy/v1/PodDisruptionBudget messagebus
 # Source: rabbitmq/charts/rabbitmq/templates/pdb.yaml
@@ -1678,72 +1486,6 @@ data:
       creationTimestamp: null
       name: default-kube-rbac-proxy
     ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      creationTimestamp: null
-      name: default-ns-psp:privileged
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      creationTimestamp: null
-      name: default-ns-psp:restricted-root-user
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      creationTimestamp: null
-      name: default-ns-psp:unprivileged
-    ---
-    apiVersion: policy/v1beta1
-    kind: PodSecurityPolicy
-    metadata:
-      annotations:
-        apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-        apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-        seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-        seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-      creationTimestamp: null
-      name: default-ns-privileged
-      namespace: default
-    ---
-    apiVersion: policy/v1beta1
-    kind: PodSecurityPolicy
-    metadata:
-      annotations:
-        apparmor.security.beta.kubernetes.io/allowedProfileNames: unconfined
-        apparmor.security.beta.kubernetes.io/defaultProfileName: unconfined
-        seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default,unconfined
-        seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-      creationTimestamp: null
-      name: default-ns-privileged-unconfined
-      namespace: default
-    ---
-    apiVersion: policy/v1beta1
-    kind: PodSecurityPolicy
-    metadata:
-      annotations:
-        apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-        apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-        seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-        seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-      creationTimestamp: null
-      name: default-ns-restricted-root-user
-      namespace: default
-    ---
-    apiVersion: policy/v1beta1
-    kind: PodSecurityPolicy
-    metadata:
-      annotations:
-        apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-        apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-        seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-        seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-      creationTimestamp: null
-      name: default-ns-unprivileged
-      namespace: default
-    ---
     apiVersion: v1
     kind: ResourceQuota
     metadata:
@@ -2126,6 +1868,16 @@ data:
         app: gitpod
         component: ide-metrics
         kind: service
+      name: ide-metrics
+      namespace: default
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ide-metrics
       name: ide-metrics
       namespace: default
     ---
@@ -2642,20 +2394,6 @@ data:
       name: registry-facade
       namespace: default
     ---
-    apiVersion: policy/v1beta1
-    kind: PodSecurityPolicy
-    metadata:
-      annotations:
-        apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-        apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-        seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-        seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: registry-facade
-      name: default-ns-registry-facade
-    ---
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -2713,28 +2451,6 @@ data:
         app: gitpod
         component: workspace
       name: workspace-default
-      namespace: default
-    ---
-    apiVersion: policy/v1beta1
-    kind: PodSecurityPolicy
-    metadata:
-      annotations:
-        apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default,unconfined
-        apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-        seccomp.security.alpha.kubernetes.io/allowedProfileNames: '*'
-        seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-      creationTimestamp: null
-      name: default-ns-workspace
-      namespace: default
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: Role
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: workspace
-      name: workspace
       namespace: default
     ---
     apiVersion: rbac.authorization.k8s.io/v1
@@ -3074,15 +2790,6 @@ data:
       name: ws-proxy
       namespace: default
     ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: image-builder-mk3
-      name: default-ns-image-builder-mk3
-    ---
     apiVersion: v1
     kind: ConfigMap
     metadata:
@@ -3328,15 +3035,634 @@ data:
           {
             "name": "gitpod_supervisor_frontend_error_total",
             "help": "Total count of supervisor frontend client errors",
-            "labels": null
+            "labels": [
+              {
+                "name": "resource",
+                "allowValues": [
+                  "vscode-web-workbench",
+                  "unknown"
+                ],
+                "defaultValue": "unknown"
+              },
+              {
+                "name": "error",
+                "allowValues": [
+                  "LoadError",
+                  "Unknown"
+                ],
+                "defaultValue": "Unknown"
+              }
+            ]
           },
           {
             "name": "gitpod_supervisor_frontend_client_total",
             "help": "Total count of supervisor frontend client",
             "labels": null
+          },
+          {
+            "name": "gitpod_vscode_extension_gallery_operation_total",
+            "help": "Total count of extension operations",
+            "labels": [
+              {
+                "name": "operation",
+                "allowValues": [
+                  "install",
+                  "update",
+                  "uninstall",
+                  "unknown"
+                ],
+                "defaultValue": "unknown"
+              },
+              {
+                "name": "status",
+                "allowValues": [
+                  "success",
+                  "failure",
+                  "unknown"
+                ],
+                "defaultValue": "unknown"
+              }
+            ]
+          },
+          {
+            "name": "gitpod_vscode_extension_gallery_query_total",
+            "help": "Total count of extension gallery queries",
+            "labels": [
+              {
+                "name": "status",
+                "allowValues": [
+                  "success",
+                  "failure",
+                  "unknown"
+                ],
+                "defaultValue": "unknown"
+              },
+              {
+                "name": "statusCode",
+                "allowValues": [
+                  "100",
+                  "101",
+                  "102",
+                  "103",
+                  "104",
+                  "105",
+                  "106",
+                  "107",
+                  "108",
+                  "109",
+                  "110",
+                  "111",
+                  "112",
+                  "113",
+                  "114",
+                  "115",
+                  "116",
+                  "117",
+                  "118",
+                  "119",
+                  "120",
+                  "121",
+                  "122",
+                  "123",
+                  "124",
+                  "125",
+                  "126",
+                  "127",
+                  "128",
+                  "129",
+                  "130",
+                  "131",
+                  "132",
+                  "133",
+                  "134",
+                  "135",
+                  "136",
+                  "137",
+                  "138",
+                  "139",
+                  "140",
+                  "141",
+                  "142",
+                  "143",
+                  "144",
+                  "145",
+                  "146",
+                  "147",
+                  "148",
+                  "149",
+                  "150",
+                  "151",
+                  "152",
+                  "153",
+                  "154",
+                  "155",
+                  "156",
+                  "157",
+                  "158",
+                  "159",
+                  "160",
+                  "161",
+                  "162",
+                  "163",
+                  "164",
+                  "165",
+                  "166",
+                  "167",
+                  "168",
+                  "169",
+                  "170",
+                  "171",
+                  "172",
+                  "173",
+                  "174",
+                  "175",
+                  "176",
+                  "177",
+                  "178",
+                  "179",
+                  "180",
+                  "181",
+                  "182",
+                  "183",
+                  "184",
+                  "185",
+                  "186",
+                  "187",
+                  "188",
+                  "189",
+                  "190",
+                  "191",
+                  "192",
+                  "193",
+                  "194",
+                  "195",
+                  "196",
+                  "197",
+                  "198",
+                  "199",
+                  "200",
+                  "201",
+                  "202",
+                  "203",
+                  "204",
+                  "205",
+                  "206",
+                  "207",
+                  "208",
+                  "209",
+                  "210",
+                  "211",
+                  "212",
+                  "213",
+                  "214",
+                  "215",
+                  "216",
+                  "217",
+                  "218",
+                  "219",
+                  "220",
+                  "221",
+                  "222",
+                  "223",
+                  "224",
+                  "225",
+                  "226",
+                  "227",
+                  "228",
+                  "229",
+                  "230",
+                  "231",
+                  "232",
+                  "233",
+                  "234",
+                  "235",
+                  "236",
+                  "237",
+                  "238",
+                  "239",
+                  "240",
+                  "241",
+                  "242",
+                  "243",
+                  "244",
+                  "245",
+                  "246",
+                  "247",
+                  "248",
+                  "249",
+                  "250",
+                  "251",
+                  "252",
+                  "253",
+                  "254",
+                  "255",
+                  "256",
+                  "257",
+                  "258",
+                  "259",
+                  "260",
+                  "261",
+                  "262",
+                  "263",
+                  "264",
+                  "265",
+                  "266",
+                  "267",
+                  "268",
+                  "269",
+                  "270",
+                  "271",
+                  "272",
+                  "273",
+                  "274",
+                  "275",
+                  "276",
+                  "277",
+                  "278",
+                  "279",
+                  "280",
+                  "281",
+                  "282",
+                  "283",
+                  "284",
+                  "285",
+                  "286",
+                  "287",
+                  "288",
+                  "289",
+                  "290",
+                  "291",
+                  "292",
+                  "293",
+                  "294",
+                  "295",
+                  "296",
+                  "297",
+                  "298",
+                  "299",
+                  "300",
+                  "301",
+                  "302",
+                  "303",
+                  "304",
+                  "305",
+                  "306",
+                  "307",
+                  "308",
+                  "309",
+                  "310",
+                  "311",
+                  "312",
+                  "313",
+                  "314",
+                  "315",
+                  "316",
+                  "317",
+                  "318",
+                  "319",
+                  "320",
+                  "321",
+                  "322",
+                  "323",
+                  "324",
+                  "325",
+                  "326",
+                  "327",
+                  "328",
+                  "329",
+                  "330",
+                  "331",
+                  "332",
+                  "333",
+                  "334",
+                  "335",
+                  "336",
+                  "337",
+                  "338",
+                  "339",
+                  "340",
+                  "341",
+                  "342",
+                  "343",
+                  "344",
+                  "345",
+                  "346",
+                  "347",
+                  "348",
+                  "349",
+                  "350",
+                  "351",
+                  "352",
+                  "353",
+                  "354",
+                  "355",
+                  "356",
+                  "357",
+                  "358",
+                  "359",
+                  "360",
+                  "361",
+                  "362",
+                  "363",
+                  "364",
+                  "365",
+                  "366",
+                  "367",
+                  "368",
+                  "369",
+                  "370",
+                  "371",
+                  "372",
+                  "373",
+                  "374",
+                  "375",
+                  "376",
+                  "377",
+                  "378",
+                  "379",
+                  "380",
+                  "381",
+                  "382",
+                  "383",
+                  "384",
+                  "385",
+                  "386",
+                  "387",
+                  "388",
+                  "389",
+                  "390",
+                  "391",
+                  "392",
+                  "393",
+                  "394",
+                  "395",
+                  "396",
+                  "397",
+                  "398",
+                  "399",
+                  "400",
+                  "401",
+                  "402",
+                  "403",
+                  "404",
+                  "405",
+                  "406",
+                  "407",
+                  "408",
+                  "409",
+                  "410",
+                  "411",
+                  "412",
+                  "413",
+                  "414",
+                  "415",
+                  "416",
+                  "417",
+                  "418",
+                  "419",
+                  "420",
+                  "421",
+                  "422",
+                  "423",
+                  "424",
+                  "425",
+                  "426",
+                  "427",
+                  "428",
+                  "429",
+                  "430",
+                  "431",
+                  "432",
+                  "433",
+                  "434",
+                  "435",
+                  "436",
+                  "437",
+                  "438",
+                  "439",
+                  "440",
+                  "441",
+                  "442",
+                  "443",
+                  "444",
+                  "445",
+                  "446",
+                  "447",
+                  "448",
+                  "449",
+                  "450",
+                  "451",
+                  "452",
+                  "453",
+                  "454",
+                  "455",
+                  "456",
+                  "457",
+                  "458",
+                  "459",
+                  "460",
+                  "461",
+                  "462",
+                  "463",
+                  "464",
+                  "465",
+                  "466",
+                  "467",
+                  "468",
+                  "469",
+                  "470",
+                  "471",
+                  "472",
+                  "473",
+                  "474",
+                  "475",
+                  "476",
+                  "477",
+                  "478",
+                  "479",
+                  "480",
+                  "481",
+                  "482",
+                  "483",
+                  "484",
+                  "485",
+                  "486",
+                  "487",
+                  "488",
+                  "489",
+                  "490",
+                  "491",
+                  "492",
+                  "493",
+                  "494",
+                  "495",
+                  "496",
+                  "497",
+                  "498",
+                  "499",
+                  "500",
+                  "501",
+                  "502",
+                  "503",
+                  "504",
+                  "505",
+                  "506",
+                  "507",
+                  "508",
+                  "509",
+                  "510",
+                  "511",
+                  "512",
+                  "513",
+                  "514",
+                  "515",
+                  "516",
+                  "517",
+                  "518",
+                  "519",
+                  "520",
+                  "521",
+                  "522",
+                  "523",
+                  "524",
+                  "525",
+                  "526",
+                  "527",
+                  "528",
+                  "529",
+                  "530",
+                  "531",
+                  "532",
+                  "533",
+                  "534",
+                  "535",
+                  "536",
+                  "537",
+                  "538",
+                  "539",
+                  "540",
+                  "541",
+                  "542",
+                  "543",
+                  "544",
+                  "545",
+                  "546",
+                  "547",
+                  "548",
+                  "549",
+                  "550",
+                  "551",
+                  "552",
+                  "553",
+                  "554",
+                  "555",
+                  "556",
+                  "557",
+                  "558",
+                  "559",
+                  "560",
+                  "561",
+                  "562",
+                  "563",
+                  "564",
+                  "565",
+                  "566",
+                  "567",
+                  "568",
+                  "569",
+                  "570",
+                  "571",
+                  "572",
+                  "573",
+                  "574",
+                  "575",
+                  "576",
+                  "577",
+                  "578",
+                  "579",
+                  "580",
+                  "581",
+                  "582",
+                  "583",
+                  "584",
+                  "585",
+                  "586",
+                  "587",
+                  "588",
+                  "589",
+                  "590",
+                  "591",
+                  "592",
+                  "593",
+                  "594",
+                  "595",
+                  "596",
+                  "597",
+                  "598",
+                  "599",
+                  "unknown"
+                ],
+                "defaultValue": "unknown"
+              },
+              {
+                "name": "errorCode",
+                "allowValues": [
+                  "canceled",
+                  "timeout",
+                  "failed",
+                  "unknown"
+                ],
+                "defaultValue": "unknown"
+              }
+            ]
           }
         ],
-        "histogramMetrics": []
+        "histogramMetrics": [
+          {
+            "name": "gitpod_vscode_extension_gallery_operation_duration_seconds",
+            "help": "Duration of extension operations in seconds",
+            "labels": [
+              {
+                "name": "operation",
+                "allowValues": [
+                  "install",
+                  "update",
+                  "uninstall",
+                  "unknown"
+                ],
+                "defaultValue": "unknown"
+              }
+            ],
+            "buckets": [
+              0.1,
+              0.5,
+              1,
+              5,
+              10,
+              15,
+              30
+            ]
+          },
+          {
+            "name": "gitpod_vscode_extension_gallery_query_duration_seconds",
+            "help": "Duration of extension gallery query in seconds",
+            "labels": null,
+            "buckets": [
+              0.1,
+              0.5,
+              1,
+              5,
+              10,
+              15,
+              30
+            ]
+          }
+        ],
+        "errorReporting": {
+          "allowComponents": [
+            "supervisor-frontend"
+          ]
+        }
       },
       "debug": false,
       "pprof": {
@@ -3687,7 +4013,7 @@ data:
             "type": "browser",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "label": "Browser",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-c47714bb26bbdbf55f0abdd7560a7ef14f92a742",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
           },
           "code-desktop": {
@@ -3872,6 +4198,11 @@ data:
           "readIOPS": 0
         },
         "procLimit": 0,
+        "netlimit": {
+          "enabled": false,
+          "connectionsPerMinute": 3000,
+          "bucketSize": 1000
+        },
         "hosts": {
           "enabled": true,
           "nodeHostsFile": "/mnt/hosts",
@@ -4156,73 +4487,6 @@ rules:
   verbs:
   - create
 ---
-# rbac.authorization.k8s.io/v1/ClusterRole default-ns-image-builder-mk3
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: image-builder-mk3
-  name: default-ns-image-builder-mk3
-rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-privileged-unconfined
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
----
-# rbac.authorization.k8s.io/v1/ClusterRole default-ns-psp:privileged
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  creationTimestamp: null
-  name: default-ns-psp:privileged
-rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-privileged
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
----
-# rbac.authorization.k8s.io/v1/ClusterRole default-ns-psp:restricted-root-user
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  creationTimestamp: null
-  name: default-ns-psp:restricted-root-user
-rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-restricted-root-user
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
----
-# rbac.authorization.k8s.io/v1/ClusterRole default-ns-psp:unprivileged
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  creationTimestamp: null
-  name: default-ns-psp:unprivileged
-rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-unprivileged
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
----
 # rbac.authorization.k8s.io/v1/ClusterRole default-ns-registry-facade
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -4233,14 +4497,6 @@ metadata:
     component: registry-facade
   name: default-ns-registry-facade
 rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-registry-facade
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
 - apiGroups:
   - ""
   resources:
@@ -4261,14 +4517,6 @@ metadata:
     component: ws-daemon
   name: default-ns-ws-daemon
 rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-privileged-unconfined
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
 - apiGroups:
   - ""
   resources:
@@ -4648,14 +4896,6 @@ metadata:
   namespace: default
 rules:
 - apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-privileged-unconfined
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
-- apiGroups:
   - ""
   resources:
   - pods
@@ -4717,26 +4957,6 @@ rules:
   - update
   - patch
   - watch
----
-# rbac.authorization.k8s.io/v1/Role workspace
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: workspace
-  name: workspace
-  namespace: default
-rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-workspace
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
 ---
 # rbac.authorization.k8s.io/v1/Role ws-manager
 apiVersion: rbac.authorization.k8s.io/v1
@@ -6058,7 +6278,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 37ed82dd055197051fa618b9b48d9ff55f2017999d5aab152b8812e80c552153
+        gitpod.io/checksum_config: 5df9f8dc1dd20d39ae253cd9f977d948fcf75a7375165a9b82ecfd9852e343f3
         seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
       creationTimestamp: null
       labels:
@@ -7100,7 +7320,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 429b9479c206dc66164883793af80586bca4017bb59e108fa7501a530d24ef57
+        gitpod.io/checksum_config: 5f647d019f026f04a85e04ad8e695083db2a70f97ee7199143859879d5d40ebe
       creationTimestamp: null
       labels:
         app: gitpod
@@ -7713,6 +7933,9 @@ spec:
         - mountPath: /ws-manager-client-tls-certs
           name: ws-manager-client-tls-certs
           readOnly: true
+        - mountPath: /twilio-config
+          name: twilio-secret-volume
+          readOnly: true
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -7814,6 +8037,10 @@ spec:
       - name: ws-manager-client-tls-certs
         secret:
           secretName: ws-manager-client-tls
+      - name: twilio-secret-volume
+        secret:
+          optional: true
+          secretName: twilio-secret
 status: {}
 ---
 # apps/v1/Deployment ws-manager

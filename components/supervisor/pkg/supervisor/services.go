@@ -651,6 +651,11 @@ func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest)
 		WorkspaceUrl:         is.cfg.WorkspaceUrl,
 		IdeAlias:             is.cfg.IDEAlias,
 		IdePort:              uint32(is.cfg.IDEPort),
+		WorkspaceClass:       &api.WorkspaceInfoResponse_WorkspaceClass{Id: is.cfg.WorkspaceClass},
+	}
+	if is.cfg.WorkspaceClassInfo != nil {
+		resp.WorkspaceClass.DisplayName = is.cfg.WorkspaceClassInfo.DisplayName
+		resp.WorkspaceClass.Description = is.cfg.WorkspaceClassInfo.Description
 	}
 
 	commit, err := is.cfg.getCommit()
@@ -675,10 +680,7 @@ func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest)
 		}
 	}
 
-	resp.UserHome, err = os.UserHomeDir()
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
+	resp.UserHome = "/home/gitpod"
 
 	endpoint, host, err := is.cfg.GitpodAPIEndpoint()
 	if err != nil {
@@ -715,7 +717,7 @@ func (c *ControlService) ExposePort(ctx context.Context, req *api.ExposePortRequ
 
 // CreateSSHKeyPair create a ssh key pair for the workspace.
 func (ss *ControlService) CreateSSHKeyPair(context.Context, *api.CreateSSHKeyPairRequest) (response *api.CreateSSHKeyPairResponse, err error) {
-	home, _ := os.UserHomeDir()
+	home := "/home/gitpod/"
 	if ss.privateKey != "" && ss.publicKey != "" {
 		checkKey := func() error {
 			data, err := os.ReadFile(filepath.Join(home, ".ssh/authorized_keys"))

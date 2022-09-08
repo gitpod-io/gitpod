@@ -34,16 +34,16 @@ func TestCgroupV2(t *testing.T) {
 				api.Done(t)
 			})
 
-			ws, err := integration.LaunchWorkspaceDirectly(ctx, api)
+			ws, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api)
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer func() {
-				err = integration.DeleteWorkspace(ctx, api, ws.Req.Id)
+			t.Cleanup(func() {
+				err = stopWs(true)
 				if err != nil {
-					t.Fatal(err)
+					t.Errorf("cannot stop workspace: %q", err)
 				}
-			}()
+			})
 
 			rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(ws.Req.Id), integration.WithWorkspacekitLift(true))
 			if err != nil {

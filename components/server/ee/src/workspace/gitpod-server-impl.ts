@@ -71,7 +71,8 @@ import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositor
 import { EligibilityService } from "../user/eligibility-service";
 import { AccountStatementProvider } from "../user/account-statement-provider";
 import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/payment-protocol";
-import { ExtendedBillableSession, BillableSessionRequest } from "@gitpod/gitpod-protocol/lib/usage";
+import { ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
+import * as usage_grpc from "@gitpod/usage-api/lib/usage/v1/usage_pb";
 import {
     AssigneeIdentityIdentifier,
     TeamSubscription,
@@ -79,7 +80,7 @@ import {
     TeamSubscriptionSlot,
     TeamSubscriptionSlotResolved,
 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
-import { Currency, Plans } from "@gitpod/gitpod-protocol/lib/plans";
+import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import * as pThrottle from "p-throttle";
 import { formatDate } from "@gitpod/gitpod-protocol/lib/util/date-time";
 import { FindUserByIdentityStrResult, UserService } from "../../../src/user/user-service";
@@ -106,9 +107,9 @@ import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
 import { URL } from "url";
 import { UserCounter } from "../user/user-counter";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { CachingUsageServiceClientProvider, UsageService } from "@gitpod/usage-api/lib/usage/v1/sugar";
+import { CachingUsageServiceClientProvider } from "@gitpod/usage-api/lib/usage/v1/sugar";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
-import { EntitlementService } from "../../../src/billing/entitlement-service";
+import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billing/entitlement-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { BillingModes } from "../billing/billing-mode";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
@@ -256,15 +257,17 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     ): Promise<void> {
         await super.mayStartWorkspace(ctx, user, runningInstances);
 
-        let result;
+        let result: MayStartWorkspaceResult = {};
         try {
             result = await this.entitlementService.mayStartWorkspace(user, new Date(), runningInstances);
-        } catch (error) {
-            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, `Error in Entitlement Service.`);
+            TraceContext.addNestedTags(ctx, { mayStartWorkspace: { result } });
+        } catch (err) {
+            log.error({ userId: user.id }, "EntitlementSerivce.mayStartWorkspace error", err);
+            TraceContext.setError(ctx, err);
+            return; // we don't want to block workspace starts because of internal errors
         }
-        log.info("mayStartWorkspace", { result });
-        if (result.mayStart) {
-            return; // green light from entitlement service
+        if (!!result.needsVerification) {
+            throw new ResponseError(ErrorCodes.NEEDS_VERIFICATION, `Please verify your account.`);
         }
         if (!!result.oufOfCredits) {
             throw new ResponseError(
@@ -272,14 +275,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 `Not enough monthly workspace hours. Please upgrade your account to get more hours for your workspaces.`,
             );
         }
-        if (!!result.spendingLimitReachedOnCostCenter) {
-            throw new ResponseError(
-                ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED,
-                "Increase spending limit and try again.",
-                {
-                    attributionId: result.spendingLimitReachedOnCostCenter,
-                },
-            );
+        if (!!result.usageLimitReachedOnCostCenter) {
+            throw new ResponseError(ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED, "Increase usage limit and try again.", {
+                attributionId: result.usageLimitReachedOnCostCenter,
+            });
         }
         if (!!result.hitParallelWorkspaceLimit) {
             throw new ResponseError(
@@ -639,6 +638,23 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         // For some reason, returning the result of `this.userDB.storeUser(target)` does not work. The response never arrives the caller.
         // Returning `target` instead (which should be equivalent).
         return this.censorUser(targetUser);
+    }
+
+    async adminVerifyUser(ctx: TraceContext, userId: string): Promise<User> {
+        await this.requireEELicense(Feature.FeatureAdminDashboard);
+
+        await this.guardAdminAccess("adminVerifyUser", { id: userId }, Permission.ADMIN_USERS);
+        try {
+            const user = await this.userDB.findUserById(userId);
+            if (!user) {
+                throw new ResponseError(ErrorCodes.NOT_FOUND, `No user with id ${userId} found.`);
+            }
+            this.verificationService.markVerified(user);
+            await this.userDB.updateUserPartial(user);
+            return user;
+        } catch (e) {
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+        }
     }
 
     async adminDeleteUser(ctx: TraceContext, userId: string): Promise<void> {
@@ -2051,22 +2067,55 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    protected defaultSpendingLimit = 100;
-    async subscribeTeamToStripe(
-        ctx: TraceContext,
-        teamId: string,
-        setupIntentId: string,
-        currency: Currency,
-    ): Promise<void> {
-        const user = this.checkAndBlockUser("subscribeUserToStripe");
+    async createOrUpdateStripeCustomerForTeam(ctx: TraceContext, teamId: string, currency: string): Promise<void> {
+        const user = this.checkAndBlockUser("createOrUpdateStripeCustomerForTeam");
         const team = await this.guardTeamOperation(teamId, "update");
         await this.ensureStripeApiIsAllowed({ team });
         try {
             let customer = await this.stripeService.findCustomerByTeamId(team!.id);
             if (!customer) {
-                customer = await this.stripeService.createCustomerForTeam(user, team!, setupIntentId);
+                customer = await this.stripeService.createCustomerForTeam(user, team!);
             }
-            await this.stripeService.createSubscriptionForCustomer(customer.id, currency);
+            await this.stripeService.setPreferredCurrencyForCustomer(customer, currency);
+        } catch (error) {
+            log.error(`Failed to update Stripe customer profile for team '${teamId}'`, error);
+            throw new ResponseError(
+                ErrorCodes.INTERNAL_SERVER_ERROR,
+                `Failed to update Stripe customer profile for team '${teamId}'`,
+            );
+        }
+    }
+
+    async createOrUpdateStripeCustomerForUser(ctx: TraceContext, currency: string): Promise<void> {
+        const user = this.checkAndBlockUser("createOrUpdateStripeCustomerForUser");
+        await this.ensureStripeApiIsAllowed({ user });
+        try {
+            let customer = await this.stripeService.findCustomerByUserId(user.id);
+            if (!customer) {
+                customer = await this.stripeService.createCustomerForUser(user);
+            }
+            await this.stripeService.setPreferredCurrencyForCustomer(customer, currency);
+        } catch (error) {
+            log.error(`Failed to update Stripe customer profile for user '${user.id}'`, error);
+            throw new ResponseError(
+                ErrorCodes.INTERNAL_SERVER_ERROR,
+                `Failed to update Stripe customer profile for user '${user.id}'`,
+            );
+        }
+    }
+
+    protected defaultSpendingLimit = 100;
+    async subscribeTeamToStripe(ctx: TraceContext, teamId: string, setupIntentId: string): Promise<void> {
+        this.checkAndBlockUser("subscribeUserToStripe");
+        const team = await this.guardTeamOperation(teamId, "update");
+        await this.ensureStripeApiIsAllowed({ team });
+        try {
+            let customer = await this.stripeService.findCustomerByTeamId(team!.id);
+            if (!customer) {
+                throw new Error(`No Stripe customer profile for team '${team.id}'`);
+            }
+            await this.stripeService.setDefaultPaymentMethodForCustomer(customer, setupIntentId);
+            await this.stripeService.createSubscriptionForCustomer(customer);
 
             const attributionId = AttributionId.render({ kind: "team", teamId });
 
@@ -2097,8 +2146,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async getSpendingLimitForTeam(ctx: TraceContext, teamId: string): Promise<number | undefined> {
-        const user = this.checkAndBlockUser("getSpendingLimitForTeam");
+    async getUsageLimitForTeam(ctx: TraceContext, teamId: string): Promise<number | undefined> {
+        const user = this.checkAndBlockUser("getUsageLimitForTeam");
         const team = await this.guardTeamOperation(teamId, "get");
         await this.ensureStripeApiIsAllowed({ team });
 
@@ -2112,19 +2161,19 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return undefined;
     }
 
-    async setSpendingLimitForTeam(ctx: TraceContext, teamId: string, spendingLimit: number): Promise<void> {
-        const user = this.checkAndBlockUser("setSpendingLimitForTeam");
+    async setUsageLimitForTeam(ctx: TraceContext, teamId: string, usageLimit: number): Promise<void> {
+        const user = this.checkAndBlockUser("setUsageLimitForTeam");
         const team = await this.guardTeamOperation(teamId, "update");
         await this.ensureStripeApiIsAllowed({ team });
-        if (typeof spendingLimit !== "number" || spendingLimit < 0) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Unexpected `spendingLimit` value.");
+        if (typeof usageLimit !== "number" || usageLimit < 0) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Unexpected `usageLimit` value.");
         }
         const attributionId = AttributionId.render({ kind: "team", teamId });
         await this.guardCostCenterAccess(ctx, user.id, attributionId, "update");
 
         await this.costCenterDB.storeEntry({
             id: AttributionId.render({ kind: "team", teamId }),
-            spendingLimit,
+            spendingLimit: usageLimit,
         });
     }
 
@@ -2134,61 +2183,71 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const billingMode = await this.billingModes.getBillingModeForUser(user, new Date());
         if (billingMode.mode === "usage-based") {
-            const limit = await this.billingService.checkSpendingLimitReached(user);
+            const limit = await this.billingService.checkUsageLimitReached(user);
             const costCenter = await this.costCenterDB.findById(AttributionId.render(limit.attributionId));
             if (costCenter) {
                 if (limit.reached) {
-                    result.unshift("The spending limit is reached.");
+                    result.unshift("The usage limit is reached.");
                 } else if (limit.almostReached) {
-                    result.unshift("The spending limit is almost reached.");
+                    result.unshift("The usage limit is almost reached.");
                 }
             }
         }
         return result;
     }
 
-    async listBilledUsage(ctx: TraceContext, req: BillableSessionRequest): Promise<ExtendedBillableSession[]> {
-        const { attributionId, startedTimeOrder, from, to } = req;
+    async listUsage(ctx: TraceContext, req: ListUsageRequest): Promise<ListUsageResponse> {
+        const { attributionId, from, to } = req;
         traceAPIParams(ctx, { attributionId });
-        let timestampFrom;
-        let timestampTo;
-        const user = this.checkAndBlockUser("listBilledUsage");
+        const user = this.checkAndBlockUser("listUsage");
 
         await this.guardCostCenterAccess(ctx, user.id, attributionId, "get");
 
-        if (from) {
-            timestampFrom = Timestamp.fromDate(new Date(from));
-        }
-        if (to) {
-            timestampTo = Timestamp.fromDate(new Date(to));
-        }
+        const timestampFrom = from ? Timestamp.fromDate(new Date(from)) : undefined;
+        const timestampTo = to ? Timestamp.fromDate(new Date(to)) : undefined;
+
         const usageClient = this.usageServiceClientProvider.getDefault();
-        const response = await usageClient.listBilledUsage(
-            ctx,
-            attributionId,
-            startedTimeOrder as number,
-            timestampFrom,
-            timestampTo,
-        );
-        const sessions = response.getSessionsList().map((s) => UsageService.mapBilledSession(s));
-        const extendedSessions = await Promise.all(
-            sessions.map(async (session) => {
-                const ws = await this.workspaceDb.trace(ctx).findWorkspaceAndInstance(session.workspaceId);
-                let profile: User.Profile | undefined = undefined;
-                if (session.workspaceType === "regular" && session.userId) {
-                    const user = await this.userDB.findUserById(session.userId);
-                    if (user) {
-                        profile = User.getProfile(user);
-                    }
-                }
+        const request = new usage_grpc.ListUsageRequest();
+        request.setAttributionId(attributionId);
+        request.setFrom(timestampFrom);
+        if (to) {
+            request.setTo(timestampTo);
+        }
+        request.setOrder(req.order);
+        if (req.pagination) {
+            const paginatedRequest = new usage_grpc.PaginatedRequest();
+            paginatedRequest.setPage(req.pagination.page);
+            paginatedRequest.setPerPage(req.pagination.perPage);
+            request.setPagination(paginatedRequest);
+        }
+        const response = await usageClient.listUsage(ctx, request);
+        const pagination = response.getPagination();
+        return {
+            usageEntriesList: response.getUsageEntriesList().map((u) => {
                 return {
-                    ...session,
-                    contextURL: ws?.contextURL,
-                    user: profile ? <User.Profile>{ name: profile.name, avatarURL: profile.avatarURL } : undefined,
+                    id: u.getId(),
+                    attributionId: u.getAttributionId(),
+                    effectiveTime: u.getEffectiveTime()!.toDate().getTime(),
+                    credits: u.getCredits(),
+                    description: u.getDescription(),
+                    draft: u.getDraft(),
+                    workspaceInstanceId: u.getWorkspaceInstanceId(),
+                    kind:
+                        u.getKind() === usage_grpc.Usage.Kind.KIND_WORKSPACE_INSTANCE ? "workspaceinstance" : "invoice",
+                    metadata: JSON.parse(u.getMetadata()),
                 };
             }),
-        );
-        return extendedSessions;
+            pagination: pagination
+                ? {
+                      page: pagination.getPage(),
+                      perPage: pagination.getPerPage(),
+                      total: pagination.getTotal(),
+                      totalPages: pagination.getTotalPages(),
+                  }
+                : undefined,
+            creditBalanceAtEnd: response.getCreditBalanceAtEnd(),
+            creditBalanceAtStart: response.getCreditBalanceAtStart(),
+        };
     }
 
     protected async guardCostCenterAccess(

@@ -65,6 +65,7 @@ export class UserDeletionService {
             this.anonymizeUser(user);
             this.deleteIdentities(user);
             await this.deleteTokens(db, user);
+            user.lastVerificationTime = undefined;
             user.markedDeleted = true;
             await db.storeUser(user);
         });
@@ -148,6 +149,9 @@ export class UserDeletionService {
         user.avatarUrl = "deleted-avatarUrl";
         user.fullName = "deleted-fullName";
         user.name = "deleted-Name";
+        if (user.verificationPhoneNumber) {
+            user.verificationPhoneNumber = "deleted-phoneNumber";
+        }
     }
 
     protected deleteIdentities(user: User) {

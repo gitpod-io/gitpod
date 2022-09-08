@@ -1,3 +1,13 @@
+output "gke_database" {
+    sensitive = true
+    value = try(module.gke.database, null)
+}
+
+output "k3s_database" {
+    sensitive = true
+    value = try(module.k3s.database, null)
+}
+
 output "aws_storage" {
     sensitive = true
     value = try(module.eks.storage, null)
@@ -11,6 +21,11 @@ output "aws_registry" {
 output "aws_database" {
     sensitive = true
     value = try(module.eks.database, null)
+}
+
+output "aws_s3_registry_backend" {
+    sensitive = true
+    value = try(module.eks.registry_backend, null)
 }
 
 output "azure_database" {

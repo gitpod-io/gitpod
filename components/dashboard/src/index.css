@@ -77,8 +77,13 @@
         @apply text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500;
     }
 
+    code {
+        @apply bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-md text-sm font-mono font-medium;
+    }
+
     textarea,
     input[type="text"],
+    input[type="tel"],
     input[type="number"],
     input[type="search"],
     input[type="password"],
@@ -87,12 +92,14 @@
     }
     textarea::placeholder,
     input[type="text"]::placeholder,
+    input[type="tel"]::placeholder,
     input[type="number"]::placeholder,
     input[type="search"]::placeholder,
     input[type="password"]::placeholder {
         @apply text-gray-400 dark:text-gray-500;
     }
     input[type="text"].error,
+    input[type="tel"].error,
     input[type="number"].error,
     input[type="search"].error,
     input[type="password"].error,

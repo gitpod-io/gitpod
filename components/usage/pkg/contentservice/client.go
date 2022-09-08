@@ -11,30 +11,34 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/content-service/api"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Interface interface {
-	UploadUsageReport(ctx context.Context, filename string, report []db.WorkspaceInstanceUsage) error
+	UploadUsageReport(ctx context.Context, filename string, report UsageReport) error
+	DownloadUsageReport(ctx context.Context, filename string) (UsageReport, error)
 }
 
 type Client struct {
-	url string
+	service api.UsageReportServiceClient
 }
 
-func New(url string) *Client {
-	return &Client{url: url}
+func New(service api.UsageReportServiceClient) *Client {
+	return &Client{service: service}
 }
 
-func (c *Client) UploadUsageReport(ctx context.Context, filename string, report []db.WorkspaceInstanceUsage) error {
-	url, err := c.getSignedUploadUrl(ctx, filename)
+func (c *Client) UploadUsageReport(ctx context.Context, filename string, report UsageReport) (err error) {
+	start := time.Now()
+	defer func() {
+		observeReportUploadDuration(time.Since(start), err)
+	}()
+
+	uploadURLResp, err := c.service.UploadURL(ctx, &api.UsageReportUploadURLRequest{Name: filename})
 	if err != nil {
-		return fmt.Errorf("failed to obtain signed upload URL: %w", err)
+		return fmt.Errorf("failed to get upload URL from usage report service: %w", err)
 	}
 
 	reportBytes := &bytes.Buffer{}
@@ -48,7 +52,7 @@ func (c *Client) UploadUsageReport(ctx context.Context, filename string, report 
 		return fmt.Errorf("failed to compress usage report: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPut, url, reportBytes)
+	req, err := http.NewRequest(http.MethodPut, uploadURLResp.GetUrl(), reportBytes)
 	if err != nil {
 		return fmt.Errorf("failed to construct http request: %w", err)
 	}
@@ -69,19 +73,51 @@ func (c *Client) UploadUsageReport(ctx context.Context, filename string, report 
 	return nil
 }
 
-func (c *Client) getSignedUploadUrl(ctx context.Context, key string) (string, error) {
-	conn, err := grpc.Dial(c.url, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func (c *Client) DownloadUsageReport(ctx context.Context, filename string) (report UsageReport, err error) {
+	start := time.Now()
+	defer func() {
+		observeReportDownloadDuration(time.Since(start), err)
+	}()
+
+	downloadURlResp, err := c.service.DownloadURL(ctx, &api.UsageReportDownloadURLRequest{
+		Name: filename,
+	})
 	if err != nil {
-		return "", fmt.Errorf("failed to dial content-service gRPC server: %w", err)
+		return UsageReport{}, fmt.Errorf("failed to get download URL: %w", err)
 	}
-	defer conn.Close()
 
-	uc := api.NewUsageReportServiceClient(conn)
-
-	resp, err := uc.UploadURL(ctx, &api.UsageReportUploadURLRequest{Name: key})
+	req, err := http.NewRequest(http.MethodGet, downloadURlResp.GetUrl(), nil)
 	if err != nil {
-		return "", fmt.Errorf("failed RPC to content service: %w", err)
+		return UsageReport{}, fmt.Errorf("failed to construct request: %w", err)
 	}
 
-	return resp.Url, nil
+	// We want to receive it as gzip, this disables transcoding of the response
+	req.Header.Set("Accept-Encoding", "gzip")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Encoding", "gzip")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return UsageReport{}, fmt.Errorf("failed to make request to download usage report: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return UsageReport{}, fmt.Errorf("request to download usage report returned non 200 status code: %d", resp.StatusCode)
+	}
+
+	body := resp.Body
+	defer body.Close()
+
+	decompressor, err := gzip.NewReader(body)
+	if err != nil {
+		return UsageReport{}, fmt.Errorf("failed to construct gzip decompressor from response: %w", err)
+	}
+	defer decompressor.Close()
+
+	decoder := json.NewDecoder(decompressor)
+	if err := decoder.Decode(&report); err != nil {
+		return UsageReport{}, fmt.Errorf("failed to deserialize report: %w", err)
+	}
+
+	return report, nil
 }

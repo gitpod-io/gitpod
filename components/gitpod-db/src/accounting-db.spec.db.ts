@@ -26,6 +26,7 @@ export class AccountingDBSpec {
     db: AccountingDB;
     queryRunner: QueryRunner;
 
+    @timeout(10000)
     async before() {
         const connection = await this.typeORM.getConnection();
         const manager = connection.manager;

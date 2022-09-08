@@ -223,14 +223,16 @@ class GitpodManager : Disposable {
         }
     }
 
+    var infoResponse: WorkspaceInfoResponse? = null
     val pendingInfo = CompletableFuture<WorkspaceInfoResponse>()
+
     private val infoJob = GlobalScope.launch {
         if (application.isHeadlessEnvironment) {
             return@launch
         }
         try {
             // TODO(ak) replace retry with proper handling of grpc errors
-            val infoResponse = retry(3) {
+            infoResponse = retry(3) {
                 InfoServiceGrpc
                         .newFutureStub(supervisorChannel)
                         .workspaceInfo(Info.WorkspaceInfoRequest.newBuilder().build())
@@ -391,5 +393,4 @@ class GitpodManager : Disposable {
             metricsJob.cancel()
         }
     }
-
 }

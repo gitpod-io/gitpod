@@ -112,7 +112,11 @@ import { WithReferrerContext } from "@gitpod/gitpod-protocol/lib/protocol";
 import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { ExtendedUser } from "@gitpod/ws-manager/lib/constraints";
-import { increaseFailedInstanceStartCounter, increaseSuccessfulInstanceStartCounter } from "../prometheus-metrics";
+import {
+    FailedInstanceStartReason,
+    increaseFailedInstanceStartCounter,
+    increaseSuccessfulInstanceStartCounter,
+} from "../prometheus-metrics";
 import { ContextParser } from "./context-parser-service";
 import { IDEService } from "../ide-service";
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-imagebuilder-client-provider";
@@ -125,6 +129,7 @@ import { CachingBillingServiceClientProvider } from "@gitpod/usage-api/lib/usage
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { System } from "@gitpod/usage-api/lib/usage/v1/billing_pb";
+import { LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 export interface StartWorkspaceOptions {
     rethrow?: boolean;
@@ -172,13 +177,16 @@ export const chooseIDE = (
 ) => {
     const defaultIDEOption = ideOptions.options[ideOptions.defaultIde];
     const defaultIdeImage = useLatest ? defaultIDEOption.latestImage ?? defaultIDEOption.image : defaultIDEOption.image;
-    const data: { desktopIdeImage?: string; ideImage: string } = {
+    const data: { desktopIdeImage?: string; desktopIdePluginImage?: string; ideImage: string } = {
         ideImage: defaultIdeImage,
     };
     const chooseOption = ideOptions.options[ideChoice] ?? defaultIDEOption;
     const isDesktopIde = chooseOption.type === "desktop";
     if (isDesktopIde) {
         data.desktopIdeImage = useLatest ? chooseOption?.latestImage ?? chooseOption?.image : chooseOption?.image;
+        data.desktopIdePluginImage = useLatest
+            ? chooseOption?.pluginLatestImage ?? chooseOption?.pluginImage
+            : chooseOption?.pluginImage;
         if (hasIdeSettingPerm) {
             data.desktopIdeImage = data.desktopIdeImage || ideChoice;
         }
@@ -244,6 +252,12 @@ export async function getWorkspaceClassForInstance(
     }
 }
 
+class StartInstanceError extends Error {
+    constructor(public readonly reason: FailedInstanceStartReason, public readonly cause: Error) {
+        super("Starting workspace instance failed: " + cause.message);
+    }
+}
+
 @injectable()
 export class WorkspaceStarter {
     @inject(WorkspaceManagerClientProvider) protected readonly clientProvider: WorkspaceManagerClientProvider;
@@ -291,6 +305,7 @@ export class WorkspaceStarter {
         }
 
         options = options || {};
+        let instanceId: string | undefined = undefined;
         try {
             await this.checkBlockedRepository(user, workspace.contextURL);
 
@@ -358,6 +373,7 @@ export class WorkspaceStarter {
                     ),
                 );
             span.log({ newInstance: instance.id });
+            instanceId = instance.id;
 
             const forceRebuild = !!workspace.context.forceImageBuild;
 
@@ -414,7 +430,7 @@ export class WorkspaceStarter {
                 forceRebuild,
             );
         } catch (e) {
-            TraceContext.setError({ span }, e);
+            this.logAndTraceStartWorkspaceError({ span }, { userId: user.id, instanceId }, e);
             throw e;
         } finally {
             span.finish();
@@ -523,16 +539,14 @@ export class WorkspaceStarter {
                     await new Promise((resolve) => setTimeout(resolve, INSTANCE_START_RETRY_INTERVAL_SECONDS * 1000));
                 }
             } catch (err) {
-                increaseFailedInstanceStartCounter("startOnClusterFailed");
                 await this.failInstanceStart({ span }, err, workspace, instance);
-                throw err;
+                throw new StartInstanceError("startOnClusterFailed", err);
             }
 
             if (!resp) {
-                increaseFailedInstanceStartCounter("clusterSelectionFailed");
                 const err = new Error("cannot start a workspace because no workspace clusters are available");
                 await this.failInstanceStart({ span }, err, workspace, instance);
-                throw err;
+                throw new StartInstanceError("clusterSelectionFailed", err);
             }
             increaseSuccessfulInstanceStartCounter(retries);
 
@@ -578,13 +592,27 @@ export class WorkspaceStarter {
             if (rethrow) {
                 throw err;
             } else {
-                log.error("error starting instance", err, { instanceId: instance.id });
+                this.logAndTraceStartWorkspaceError({ span }, { userId: user.id, instanceId: instance.id }, err);
             }
 
             return { instanceID: instance.id };
         } finally {
             span.finish();
         }
+    }
+
+    protected logAndTraceStartWorkspaceError(ctx: TraceContext, logCtx: LogContext, err: any) {
+        TraceContext.setError(ctx, err);
+
+        let reason: FailedInstanceStartReason | undefined = undefined;
+        if (err instanceof StartInstanceError) {
+            reason = err.reason;
+            increaseFailedInstanceStartCounter(reason);
+        }
+        log.error(logCtx, "error starting instance", err, {
+            failedInstanceStartReason: reason,
+        });
+        ctx.span?.setTag("failedInstanceStartReason", reason);
     }
 
     protected async createMetadata(workspace: Workspace): Promise<WorkspaceMetadata> {
@@ -747,7 +775,7 @@ export class WorkspaceStarter {
         ideConfig: IDEConfig,
         pvcEnabledForPrebuilds: boolean,
     ): Promise<WorkspaceInstance> {
-        const span = TraceContext.startSpan("buildWorkspaceImage", ctx);
+        const span = TraceContext.startSpan("newInstance", ctx);
         //#endregion IDE resolution TODO(ak) move to IDE service
         // TODO: Compatible with ide-config not deployed, need revert after ide-config deployed
         delete ideConfig.ideOptions.options["code-latest"];
@@ -783,6 +811,7 @@ export class WorkspaceStarter {
                 );
                 configuration.ideImage = choose.ideImage;
                 configuration.desktopIdeImage = choose.desktopIdeImage;
+                configuration.desktopIdePluginImage = choose.desktopIdePluginImage;
             }
 
             const referrerIde = this.resolveReferrerIDE(workspace, user, ideConfig);
@@ -790,6 +819,9 @@ export class WorkspaceStarter {
                 configuration.desktopIdeImage = useLatest
                     ? referrerIde.option.latestImage ?? referrerIde.option.image
                     : referrerIde.option.image;
+                configuration.desktopIdePluginImage = useLatest
+                    ? referrerIde.option.pluginLatestImage ?? referrerIde.option.pluginImage
+                    : referrerIde.option.pluginImage;
                 if (!user.additionalData?.ideSettings) {
                     // A user does not have IDE settings configured yet configure it with a referrer ide as default.
                     const additionalData = user?.additionalData || {};
@@ -1246,18 +1278,20 @@ export class WorkspaceStarter {
 
             TraceContext.setError({ span }, err);
             const looksLikeUserError = (msg: string): boolean => {
-                return msg.startsWith("build failed:");
+                return msg.startsWith("build failed:") || msg.includes("headless task failed:");
             };
             if (looksLikeUserError(message)) {
-                log.debug(
+                log.info(
                     { instanceId: instance.id, userId: user.id, workspaceId: workspace.id },
                     `workspace image build failed: ${message}`,
+                    { looksLikeUserError: true },
                 );
             } else {
-                log.warn(
+                log.error(
                     { instanceId: instance.id, userId: user.id, workspaceId: workspace.id },
                     `workspace image build failed: ${message}`,
                 );
+                err = new StartInstanceError("imageBuildFailed", err);
             }
             this.analytics.track({
                 userId: user.id,
@@ -1340,6 +1374,14 @@ export class WorkspaceStarter {
         contextEnv.setName("GITPOD_WORKSPACE_CONTEXT");
         contextEnv.setValue(JSON.stringify(workspace.context));
         envvars.push(contextEnv);
+
+        const info = this.config.workspaceClasses.find((cls) => cls.id === instance.workspaceClass);
+        if (!!info) {
+            const workspaceClassInfoEnv = new EnvironmentVariable();
+            workspaceClassInfoEnv.setName("GITPOD_WORKSPACE_CLASS_INFO");
+            workspaceClassInfoEnv.setValue(JSON.stringify(info));
+            envvars.push(workspaceClassInfoEnv);
+        }
 
         log.debug("Workspace config", workspace.config);
         const tasks = this.ideService.resolveGitpodTasks(workspace);
@@ -1496,6 +1538,7 @@ export class WorkspaceStarter {
         const startWorkspaceSpecIDEImage = new IDEImage();
         startWorkspaceSpecIDEImage.setWebRef(ideImage);
         startWorkspaceSpecIDEImage.setDesktopRef(instance.configuration?.desktopIdeImage || "");
+        startWorkspaceSpecIDEImage.setDesktopPluginRef(instance.configuration?.desktopIdePluginImage || "");
         startWorkspaceSpecIDEImage.setSupervisorRef(instance.configuration?.supervisorImage || "");
         spec.setIdeImage(startWorkspaceSpecIDEImage);
         spec.setDeprecatedIdeImage(ideImage);
@@ -1503,6 +1546,7 @@ export class WorkspaceStarter {
         spec.setWorkspaceLocation(workspace.config.workspaceLocation || checkoutLocation);
         spec.setFeatureFlagsList(this.toWorkspaceFeatureFlags(featureFlags));
         spec.setClass(instance.workspaceClass!);
+
         if (workspace.type === "regular") {
             spec.setTimeout(this.userService.workspaceTimeoutToDuration(await userTimeoutPromise));
         }
@@ -1547,7 +1591,9 @@ export class WorkspaceStarter {
             "function:getSSHPublicKeys",
             "function:addSSHPublicKey",
             "function:deleteSSHPublicKey",
+            "function:getTeams",
             "function:trackEvent",
+            "function:getSupportedWorkspaceClasses",
 
             "resource:" +
                 ScopedResourceGuard.marshalResourceScope({

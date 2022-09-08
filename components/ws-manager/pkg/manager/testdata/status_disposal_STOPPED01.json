@@ -25,7 +25,7 @@
       "annotations": {
         "cni.projectcalico.org/podIP": "10.60.113.15/32",
         "container.apparmor.security.beta.kubernetes.io/workspace": "runtime/default",
-        "gitpod.io/disposalStatus": "{\"backupComplete\":true,\"backupFailure\":\"testing the backup failure mode\"}",
+        "gitpod.io/disposalStatus": "{\"status\":\"finished\",\"backupFailure\":\"testing the backup failure mode\"}",
         "gitpod.io/requiredNodeServices": "ws-daemon,registry-facade",
         "gitpod/admission": "admit_owner_only",
         "gitpod/contentInitializer": "[redacted]",

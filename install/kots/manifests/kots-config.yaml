@@ -119,7 +119,7 @@ spec:
           when: '{{repl ConfigOptionEquals "reg_docker_config_enable" "1" }}'
           type: file
           required: true
-          help_text: Docker [config JSON file](https://docs.docker.com/engine/reference/commandline/cli/#sample-configuration-file) with auth credentials used to access private registries, for workspace images.
+          help_text: "Docker [config JSON file](https://docs.docker.com/engine/reference/commandline/cli/#sample-configuration-file) with auth credentials used to access private registries, for workspace images. **NB.** All of the registries in the config will be automatically added to the [`privateBaseImageAllowList`](http://gitpod.io/docs/self-hosted/latest/advanced/private-registries)."
 
     - name: database
       title: Database

@@ -9,14 +9,19 @@ import { BillingServiceClient } from "./billing_grpc_pb";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
 import { Metadata } from "@grpc/grpc-js";
-import { BilledSession, ListBilledUsageRequest, ListBilledUsageResponse } from "./usage_pb";
-import { SetBilledSessionRequest, SetBilledSessionResponse, System } from "./billing_pb";
+import { ListUsageRequest, ListUsageResponse } from "./usage_pb";
+import {
+    GetUpcomingInvoiceRequest,
+    GetUpcomingInvoiceResponse,
+    SetBilledSessionRequest,
+    SetBilledSessionResponse,
+    System,
+} from "./billing_pb";
 import { injectable, inject, optional } from "inversify";
 import { createClientCallMetricsInterceptor, IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import * as grpc from "@grpc/grpc-js";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
-import { BillableSession } from "@gitpod/gitpod-protocol/lib/usage";
-import { WorkspaceType } from "@gitpod/gitpod-protocol";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 
 export const UsageServiceClientProvider = Symbol("UsageServiceClientProvider");
 export const BillingServiceClientProvider = Symbol("BillingServiceClientProvider");
@@ -142,27 +147,17 @@ export class PromisifiedUsageServiceClient {
         );
     }
 
-    public async listBilledUsage(
+    public async listUsage(
         _ctx: TraceContext,
-        attributionId: string,
-        order: ListBilledUsageRequest.Ordering,
-        from?: Timestamp,
-        to?: Timestamp,
-    ): Promise<ListBilledUsageResponse> {
-        const ctx = TraceContext.childContext(`/usage-service/listBilledUsage`, _ctx);
-
+        request: ListUsageRequest,
+    ): Promise<ListUsageResponse> {
+        const ctx = TraceContext.childContext(`/usage-service/listUsage`, _ctx);
         try {
-            const req = new ListBilledUsageRequest();
-            req.setAttributionId(attributionId);
-            req.setFrom(from);
-            req.setTo(to);
-            req.setOrder(order);
-
-            const response = await new Promise<ListBilledUsageResponse>((resolve, reject) => {
-                this.client.listBilledUsage(
-                    req,
+            const response = await new Promise<ListUsageResponse>((resolve, reject) => {
+                this.client.listUsage(
+                    request,
                     withTracing(ctx),
-                    (err: grpc.ServiceError | null, response: ListBilledUsageResponse) => {
+                    (err: grpc.ServiceError | null, response: ListUsageResponse) => {
                         if (err) {
                             reject(err);
                             return;
@@ -187,30 +182,6 @@ export class PromisifiedUsageServiceClient {
     protected getDefaultUnaryOptions(): Partial<grpc.CallOptions> {
         return {
             interceptors: this.interceptor,
-        };
-    }
-}
-
-export namespace UsageService {
-    export function mapBilledSession(s: BilledSession): BillableSession {
-        function mandatory<T>(v: T, m: (v: T) => string = (s) => "" + s): string {
-            if (!v) {
-                throw new Error(`Empty value in usage.BilledSession for instanceId '${s.getInstanceId()}'`);
-            }
-            return m(v);
-        }
-        return {
-            attributionId: mandatory(s.getAttributionId()),
-            userId: s.getUserId() || undefined,
-            teamId: s.getTeamId() || undefined,
-            projectId: s.getProjectId() || undefined,
-            workspaceId: mandatory(s.getWorkspaceId()),
-            instanceId: mandatory(s.getInstanceId()),
-            workspaceType: mandatory(s.getWorkspaceType()) as WorkspaceType,
-            workspaceClass: s.getWorkspaceClass(),
-            startTime: mandatory(s.getStartTime(), (t) => t!.toDate().toISOString()),
-            endTime: s.getEndTime()?.toDate().toISOString(),
-            credits: s.getCredits(), // optional
         };
     }
 }
@@ -253,5 +224,29 @@ export class PromisifiedBillingServiceClient {
         return {
             interceptors: this.interceptor,
         };
+    }
+
+    public async getUpcomingInvoice(attributionId: AttributionId) {
+        const req = new GetUpcomingInvoiceRequest();
+        if (attributionId.kind === "team") {
+            req.setTeamId(attributionId.teamId);
+        }
+        if (attributionId.kind === "user") {
+            req.setUserId(attributionId.userId);
+        }
+
+        const response = await new Promise<GetUpcomingInvoiceResponse>((resolve, reject) => {
+            this.client.getUpcomingInvoice(
+                req,
+                (err: grpc.ServiceError | null, response: GetUpcomingInvoiceResponse) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    resolve(response);
+                },
+            );
+        });
+        return response;
     }
 }

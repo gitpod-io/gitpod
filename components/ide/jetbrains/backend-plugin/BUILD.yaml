@@ -18,6 +18,7 @@ packages:
       commands:
         - ["./gradlew", "-PsupervisorApiProjectPath=components-supervisor-api-java--lib/", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "-PenvironmentName=stable", "runPluginVerifier"]
         - ["./gradlew", "-PsupervisorApiProjectPath=components-supervisor-api-java--lib/", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "-PenvironmentName=stable", "buildPlugin"]
+        - ["unzip", "./build/distributions/gitpod-remote-0.0.1.zip", "-d", "./build"]
   - name: plugin-latest
     type: generic
     deps:
@@ -37,3 +38,4 @@ packages:
       commands:
         - ["./gradlew", "-PsupervisorApiProjectPath=components-supervisor-api-java--lib/", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "-PenvironmentName=latest", "runPluginVerifier"]
         - ["./gradlew", "-PsupervisorApiProjectPath=components-supervisor-api-java--lib/", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "-PenvironmentName=latest", "buildPlugin"]
+        - ["unzip", "./build/distributions/gitpod-remote-0.0.1.zip", "-d", "./build"]

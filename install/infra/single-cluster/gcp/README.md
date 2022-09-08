@@ -38,6 +38,10 @@ Before starting the installation process, you need:
 * Create and configure GCS bucket for terraform backend
   * Create a [GCS bucket](https://cloud.google.com/storage) to store the terraform backend state
   * Replace the name of the bucket in [`main.tf`](./main.tf) - currently it is set as `gitpod-tf`
+  * Provide [credentials to access the bucket](https://www.terraform.io/language/settings/backends/gcs#credentials) for terraform by running:
+    ```
+    export GOOGLE_BACKEND_CREDENTIALS=/path/to/the/account/key.json
+    ```
 
 ## Update the `terraform.tfvars` file with appropriate values
 
@@ -218,6 +222,20 @@ There is a chance that your kubeconfig has gotten expired after a specific amoun
 gcloud auth activate-service-account --key-file=/path/to/account/key.json
 gcloud container clusters get-credentials <cluster_name> --region <region> --zone <zone> --project <project>
 ```
+
+### Failed to install helm charts to the cluster
+
+If you see errors like:
+
+```
+Error: clusterroles.rbac.authorization.k8s.io is forbidden: User "xxxxx@developer.gserviceaccount.com" cannot create resource "clusterroles" in API group "rbac.authorization.k8s.io" at the cluster scope: requires one of ["container.clusterRoles.create"] permission(s).
+│
+│   with module.certmanager.helm_release.cert,
+│   on ../../modules/tools/cert-manager/main.tf line 17, in resource "helm_release" "cert":
+│   17: resource "helm_release" "cert" {
+│
+```
+After running `make apply`, ensure that the service account you are using has the `Kubernetes Engine Admin` role. See the [GCP IAM documentation](https://cloud.google.com/iam/docs/granting-changing-revoking-access) to learn how to associate roles with a service account.
 
 ## Cleanup
 

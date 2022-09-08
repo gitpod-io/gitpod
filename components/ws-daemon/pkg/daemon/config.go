@@ -13,6 +13,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/diskguard"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/hosts"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/netlimit"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
@@ -25,6 +26,7 @@ type Config struct {
 	CPULimit       cpulimit.Config     `json:"cpulimit"`
 	IOLimit        IOLimitConfig       `json:"ioLimit"`
 	ProcLimit      int64               `json:"procLimit"`
+	NetLimit       netlimit.Config     `json:"netlimit"`
 	Hosts          hosts.Config        `json:"hosts"`
 	DiskSpaceGuard diskguard.Config    `json:"disk"`
 }

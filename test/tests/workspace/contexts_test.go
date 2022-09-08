@@ -102,59 +102,74 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 	f := features.New("context").
 		WithLabel("component", "server").
 		Assess("should run context tests", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			for _, test := range tests {
-				t.Run(test.ContextURL, func(t *testing.T) {
-					if test.Skip {
-						t.SkipNow()
-					}
+			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
+			defer cancel()
 
-					// t.Parallel()
+			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+			t.Cleanup(func() {
+				api.Done(t)
+			})
 
-					ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-					defer cancel()
+			ffs := []struct {
+				Name string
+				FF   string
+			}{
+				{Name: "classic"},
+				{Name: "pvc", FF: "persistent_volume_claim"},
+			}
 
-					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
-					t.Cleanup(func() {
-						api.Done(t)
+			for _, ff := range ffs {
+				for _, test := range tests {
+					t.Run(test.ContextURL+"_"+ff.Name, func(t *testing.T) {
+						if test.Skip {
+							t.SkipNow()
+						}
+
+						username := username + ff.Name
+						userId, err := api.CreateUser(username, userToken)
+						if err != nil {
+							t.Fatal(err)
+						}
+
+						if err := api.UpdateUserFeatureFlag(userId, ff.FF); err != nil {
+							t.Fatal(err)
+						}
+
+						nfo, stopWS, err := integration.LaunchWorkspaceFromContextURL(ctx, test.ContextURL, username, api)
+						if err != nil {
+							t.Fatal(err)
+						}
+						t.Cleanup(func() {
+							stopWS(true)
+						})
+
+						rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.LatestInstance.ID))
+						if err != nil {
+							t.Fatal(err)
+						}
+						defer rsa.Close()
+						integration.DeferCloser(t, closer)
+
+						// get actual from workspace
+						git := common.Git(rsa)
+						err = git.ConfigSafeDirectory()
+						if err != nil {
+							t.Fatal(err)
+						}
+						actBranch, err := git.GetBranch(test.WorkspaceRoot)
+						if err != nil {
+							t.Fatal(err)
+						}
+
+						expectedBranch := test.ExpectedBranch
+						if test.ExpectedBranchFunc != nil {
+							expectedBranch = test.ExpectedBranchFunc(username)
+						}
+						if actBranch != expectedBranch {
+							t.Fatalf("expected branch '%s', got '%s'!", expectedBranch, actBranch)
+						}
 					})
-
-					_, err := api.CreateUser(username, userToken)
-					if err != nil {
-						t.Fatal(err)
-					}
-
-					nfo, stopWS, err := integration.LaunchWorkspaceFromContextURL(ctx, test.ContextURL, username, api)
-					if err != nil {
-						t.Fatal(err)
-					}
-					defer stopWS(false) // we do not wait for stopped here as it does not matter for this test case and speeds things up
-
-					rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.LatestInstance.ID))
-					if err != nil {
-						t.Fatal(err)
-					}
-					defer rsa.Close()
-					integration.DeferCloser(t, closer)
-
-					// get actual from workspace
-					git := common.Git(rsa)
-					err = git.ConfigSafeDirectory()
-					if err != nil {
-						t.Fatal(err)
-					}
-					actBranch, err := git.GetBranch(test.WorkspaceRoot)
-					if err != nil {
-						t.Fatal(err)
-					}
-
-					expectedBranch := test.ExpectedBranch
-					if test.ExpectedBranchFunc != nil {
-						expectedBranch = test.ExpectedBranchFunc(username)
-					}
-					if actBranch != expectedBranch {
-						t.Fatalf("expected branch '%s', got '%s'!", expectedBranch, actBranch)
-					}
-				})
+				}
 			}
 			return ctx
 		}).

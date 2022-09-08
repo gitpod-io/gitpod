@@ -694,6 +694,8 @@ export class IDEImage extends jspb.Message {
     setDesktopRef(value: string): IDEImage;
     getSupervisorRef(): string;
     setSupervisorRef(value: string): IDEImage;
+    getDesktopPluginRef(): string;
+    setDesktopPluginRef(value: string): IDEImage;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): IDEImage.AsObject;
@@ -710,6 +712,7 @@ export namespace IDEImage {
         webRef: string,
         desktopRef: string,
         supervisorRef: string,
+        desktopPluginRef: string,
     }
 }
 
@@ -1266,6 +1269,7 @@ export enum WorkspaceFeatureFlag {
     PERSISTENT_VOLUME_CLAIM = 7,
     PROTECTED_SECRETS = 8,
     WORKSPACE_CLASS_LIMITING = 9,
+    WORKSPACE_CONNECTION_LIMITING = 10,
 }
 
 export enum WorkspaceType {

@@ -44,16 +44,28 @@ variable "services_machine_type" {
   default     = "n2d-standard-4"
 }
 
-variable "max_count" {
+variable "max_node_count_workspaces" {
   type        = number
-  description = "Maximum number of nodes in the NodePool. Must be >= 1."
+  description = "Maximum number of nodes in the workspaces NodePool. Must be >= 1."
   default     = 50
 }
 
-variable "disk_size_gb" {
+variable "max_node_count_services" {
   type        = number
-  description = "Size of the node's disk."
+  description = "Maximum number of nodes in the services NodePool. Must be >= 1."
+  default     = 4
+}
+
+variable "services_disk_size_gb" {
+  type        = number
+  description = "Size of the services node's disk."
   default     = 100
+}
+
+variable "workspaces_disk_size_gb" {
+  type        = number
+  description = "Size of the workspace node's disk."
+  default     = 512
 }
 
 variable "credentials" {

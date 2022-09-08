@@ -24,12 +24,18 @@ service MetricsService {
             body : "*"
         };
     }
+    rpc reportError(ReportErrorRequest) returns (ReportErrorResponse) {
+        option (google.api.http) = {
+            post: "/reportError"
+            body : "*"
+        };
+    }
 }
 
 message AddCounterRequest {
     string name = 1;
     map<string, string> labels = 2;
-    optional int32 value = 3;
+    int32 value = 3;
 }
 
 message AddCounterResponse {}
@@ -41,3 +47,15 @@ message ObserveHistogramRequest {
 }
 
 message ObserveHistogramResponse {}
+
+message ReportErrorRequest {
+    string error_stack = 1;
+    string component = 2;
+    string version = 3;
+    string user_id = 4;
+    string workspace_id = 5;
+    string instance_id = 6;
+    map<string, string> properties = 7;
+}
+
+message ReportErrorResponse {}

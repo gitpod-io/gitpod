@@ -5,13 +5,15 @@
 package dbtest
 
 import (
+	"context"
 	"database/sql"
+	"testing"
+	"time"
+
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
-	"testing"
-	"time"
 )
 
 var (
@@ -22,7 +24,7 @@ func NewWorkspaceInstance(t *testing.T, instance db.WorkspaceInstance) db.Worksp
 	t.Helper()
 
 	id := uuid.New()
-	if instance.ID.ID() != 0 { // empty value
+	if instance.ID != uuid.Nil {
 		id = instance.ID
 	}
 
@@ -34,6 +36,8 @@ func NewWorkspaceInstance(t *testing.T, instance db.WorkspaceInstance) db.Worksp
 	creationTime := db.VarcharTime{}
 	if instance.CreationTime.IsSet() {
 		creationTime = instance.CreationTime
+	} else if instance.StartedTime.IsSet() {
+		creationTime = instance.StartedTime
 	}
 
 	startedTime := db.VarcharTime{}
@@ -49,6 +53,8 @@ func NewWorkspaceInstance(t *testing.T, instance db.WorkspaceInstance) db.Worksp
 	stoppedTime := db.VarcharTime{}
 	if instance.StoppedTime.IsSet() {
 		stoppedTime = instance.StoppedTime
+	} else if instance.StoppingTime.IsSet() {
+		creationTime = instance.StoppingTime
 	}
 
 	stoppingTime := db.VarcharTime{}
@@ -114,4 +120,26 @@ func CreateWorkspaceInstances(t *testing.T, conn *gorm.DB, instances ...db.Works
 	})
 
 	return records
+}
+
+func FindStoppedWorkspaceInstancesInRange(t *testing.T, conn *gorm.DB, from, to time.Time, workspaceID string) []db.WorkspaceInstanceForUsage {
+	all, err := db.FindStoppedWorkspaceInstancesInRange(context.Background(), conn, from, to)
+	require.NoError(t, err)
+	return filterByWorkspaceId(all, workspaceID)
+}
+
+func FindRunningWorkspaceInstances(t *testing.T, conn *gorm.DB, workspaceID string) []db.WorkspaceInstanceForUsage {
+	all, err := db.FindRunningWorkspaceInstances(context.Background(), conn)
+	require.NoError(t, err)
+	return filterByWorkspaceId(all, workspaceID)
+}
+
+func filterByWorkspaceId(all []db.WorkspaceInstanceForUsage, workspaceID string) []db.WorkspaceInstanceForUsage {
+	var result []db.WorkspaceInstanceForUsage
+	for _, candidate := range all {
+		if candidate.WorkspaceID == workspaceID {
+			result = append(result, candidate)
+		}
+	}
+	return result
 }

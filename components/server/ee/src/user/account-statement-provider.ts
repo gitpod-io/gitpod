@@ -8,6 +8,7 @@ import { injectable, inject } from "inversify";
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { AccountService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
+import { GarbageCollectedCache } from "@gitpod/gitpod-protocol/lib/util/garbage-collected-cache";
 
 export type CachedAccountStatement = Pick<AccountStatement, "remainingHours" | "endDate">;
 
@@ -19,20 +20,18 @@ export type CachedAccountStatement = Pick<AccountStatement, "remainingHours" | "
 export class AccountStatementProvider {
     @inject(AccountService) protected readonly accountService: AccountService;
 
-    protected cachedStatement: CachedAccountStatement | undefined;
+    /**
+     * AccountStatements, cached by userId
+     */
+    protected readonly cachedStatements = new GarbageCollectedCache<CachedAccountStatement>(5 * 60, 10 * 60);
 
-    setCachedStatement(cachedStatement: CachedAccountStatement) {
-        this.cachedStatement = cachedStatement;
-    }
-
-    getCachedStatement(): CachedAccountStatement | undefined {
-        return this.cachedStatement;
+    getCachedStatement(userId: string): CachedAccountStatement | undefined {
+        return this.cachedStatements.get(userId);
     }
 
     async getAccountStatement(userId: string, date: string): Promise<AccountStatement> {
         const statement = await this.accountService.getAccountStatement(userId, date);
-        // Fill cache
-        this.setCachedStatement({
+        this.cachedStatements.set(userId, {
             remainingHours: statement.remainingHours,
             endDate: statement.endDate,
         });

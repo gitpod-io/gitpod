@@ -5,8 +5,7 @@
   "version": "0.0.0",
   "dependencies": {
     "@gitpod/gitpod-protocol": "0.1.5",
-    "@gitpod/supervisor-api-grpc": "0.1.5",
-    "@gitpod/ide-metrics-api-grpcweb": "0.0.1"
+    "@gitpod/supervisor-api-grpc": "0.1.5"
   },
   "devDependencies": {
     "@babel/core": "^7.10.0",

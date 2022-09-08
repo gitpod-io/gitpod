@@ -123,9 +123,9 @@ func TestGitActions(t *testing.T) {
 	}
 
 	f := features.New("GitActions").
-		WithLabel("component", "server").
+		WithLabel("component", "workspace").
 		Assess("it can run git actions", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -133,39 +133,54 @@ func TestGitActions(t *testing.T) {
 				api.Done(t)
 			})
 
-			_, err := api.CreateUser(username, userToken)
-			if err != nil {
-				t.Fatal(err)
+			ffs := []struct {
+				Name string
+				FF   string
+			}{
+				{Name: "classic"},
+				{Name: "pvc", FF: "persistent_volume_claim"},
 			}
 
-			for _, test := range tests {
-				t.Run(test.ContextURL, func(t *testing.T) {
-					if test.Skip {
-						t.SkipNow()
-					}
+			for _, ff := range ffs {
+				for _, test := range tests {
+					t.Run(test.ContextURL+"_"+ff.Name, func(t *testing.T) {
+						if test.Skip {
+							t.SkipNow()
+						}
 
-					nfo, stopWS, err := integration.LaunchWorkspaceFromContextURL(ctx, test.ContextURL, username, api)
-					if err != nil {
-						t.Fatal(err)
-					}
+						username := username + ff.Name
+						userId, err := api.CreateUser(username, userToken)
+						if err != nil {
+							t.Fatal(err)
+						}
 
-					defer stopWS(false)
+						if err := api.UpdateUserFeatureFlag(userId, ff.FF); err != nil {
+							t.Fatal(err)
+						}
 
-					rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.LatestInstance.ID))
-					if err != nil {
-						t.Fatal(err)
-					}
-					defer rsa.Close()
-					integration.DeferCloser(t, closer)
+						nfo, stopWS, err := integration.LaunchWorkspaceFromContextURL(ctx, test.ContextURL, username, api)
+						if err != nil {
+							t.Fatal(err)
+						}
+						t.Cleanup(func() {
+							stopWS(true)
+						})
 
-					git := common.Git(rsa)
-					err = test.Action(rsa, git, test.WorkspaceRoot)
-					if err != nil {
-						t.Fatal(err)
-					}
-				})
+						rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.LatestInstance.ID))
+						if err != nil {
+							t.Fatal(err)
+						}
+						defer rsa.Close()
+						integration.DeferCloser(t, closer)
+
+						git := common.Git(rsa)
+						err = test.Action(rsa, git, test.WorkspaceRoot)
+						if err != nil {
+							t.Fatal(err)
+						}
+					})
+				}
 			}
-
 			return ctx
 		}).
 		Feature()
@@ -179,7 +194,7 @@ func TestGitLFSSupport(t *testing.T) {
 	integration.SkipWithoutUserToken(t, userToken)
 
 	f := features.New("GitLFSSupport").
-		WithLabel("component", "server").
+		WithLabel("component", "workspace").
 		Assess("it can open a repo with Git LFS support", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
@@ -189,17 +204,36 @@ func TestGitLFSSupport(t *testing.T) {
 				api.Done(t)
 			})
 
-			_, err := api.CreateUser(username, userToken)
-			if err != nil {
-				t.Fatal(err)
+			ffs := []struct {
+				Name string
+				FF   string
+			}{
+				{Name: "classic"},
+				{Name: "pvc", FF: "persistent_volume_claim"},
 			}
 
-			_, stopWs, err := integration.LaunchWorkspaceFromContextURL(ctx, "github.com/atduarte/lfs-test", username, api)
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer stopWs(true)
+			for _, ff := range ffs {
+				t.Run(ff.Name, func(t *testing.T) {
+					username := username + ff.Name
+					userId, err := api.CreateUser(username, userToken)
+					if err != nil {
+						t.Fatal(err)
+					}
 
+					if err := api.UpdateUserFeatureFlag(userId, ff.FF); err != nil {
+						t.Fatal(err)
+					}
+
+					_, stopWS, err := integration.LaunchWorkspaceFromContextURL(ctx, "github.com/atduarte/lfs-test", username, api)
+					if err != nil {
+						t.Fatal(err)
+					}
+
+					t.Cleanup(func() {
+						stopWS(true)
+					})
+				})
+			}
 			return ctx
 		}).
 		Feature()

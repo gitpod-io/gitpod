@@ -116,4 +116,14 @@ export interface IDEOption {
      * we resolve the tag regularly to the most recent image version.
      */
     resolveImageDigest?: boolean;
+
+    /**
+     * The plugin image ref for the IDE image, this image ref always resolve to digest.
+     */
+    pluginImage?: string;
+
+    /**
+     * The latest plugin image ref for the latest IDE image, this image ref always resolve to digest.
+     */
+    pluginLatestImage?: string;
 }

@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,25 +16,33 @@ import (
 )
 
 func role(ctx *common.RenderContext) ([]runtime.Object, error) {
-	return []runtime.Object{&rbacv1.Role{
-		TypeMeta: common.TypeMetaRole,
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      Component,
-			Namespace: ctx.Namespace,
-			Labels:    common.DefaultLabels(Component),
-		},
-		Rules: []rbacv1.PolicyRule{
-			{
+	var rules []rbacv1.PolicyRule
+
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.Common != nil && cfg.Common.UsePodSecurityPolicies {
+			rules = append(rules, rbacv1.PolicyRule{
 				APIGroups:     []string{"policy"},
 				Resources:     []string{"podsecuritypolicies"},
 				Verbs:         []string{"use"},
 				ResourceNames: []string{fmt.Sprintf("%s-ns-privileged-unconfined", ctx.Namespace)},
+			})
+		}
+		return nil
+	})
+
+	return []runtime.Object{
+		&rbacv1.Role{
+			TypeMeta: common.TypeMetaRole,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      Component,
+				Namespace: ctx.Namespace,
+				Labels:    common.DefaultLabels(Component),
 			},
-			{
+			Rules: append(rules, rbacv1.PolicyRule{
 				APIGroups: []string{""},
 				Resources: []string{"pods"},
 				Verbs:     []string{"get", "update"},
-			},
+			}),
 		},
-	}}, nil
+	}, nil
 }

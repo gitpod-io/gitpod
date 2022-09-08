@@ -10,3 +10,5 @@ metadata:
     component: gitpod-installer
 data:
   gitpod-config-patch.yaml: '{{repl if and (ConfigOptionEquals "advanced_mode_enabled" "1") (ConfigOptionNotEquals "config_patch" "") }}{{repl ConfigOption "config_patch" }}{{repl else }}{{repl printf "{}" | Base64Encode }}{{repl end }}'
+  customization-patch.yaml: |
+    repl{{ ConfigOptionData "customization_patch" | default "" | nindent 4 }}

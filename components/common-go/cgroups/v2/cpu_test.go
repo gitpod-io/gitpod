@@ -5,6 +5,8 @@
 package v2
 
 import (
+	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,19 +15,50 @@ import (
 )
 
 func TestMax(t *testing.T) {
-	mountPoint := createMaxFile(t)
-
-	cpu := NewCpuControllerWithMount(mountPoint, "cgroup")
-	quota, period, err := cpu.Max()
-	if err != nil {
-		t.Fatal(err)
+	values := []struct {
+		scenario       string
+		fileQuota      string
+		filePeriod     string
+		expectedQuota  uint64
+		expectedPeriod uint64
+	}{
+		{
+			scenario:       "cpu consumption is restricted",
+			fileQuota:      "200000",
+			filePeriod:     "100000",
+			expectedQuota:  200_000,
+			expectedPeriod: 100_000,
+		},
+		{
+			scenario:       "cpu consumption is unrestricted",
+			fileQuota:      "max",
+			filePeriod:     "100000",
+			expectedQuota:  math.MaxUint64,
+			expectedPeriod: 100_000,
+		},
 	}
 
-	assert.Equal(t, uint64(200_000), quota)
-	assert.Equal(t, uint64(100_000), period)
+	for _, v := range values {
+		mountPoint := createMaxFile(t, v.fileQuota, v.filePeriod)
+		cpu := NewCpuControllerWithMount(mountPoint, "cgroup")
+		quota, period, err := cpu.Max()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert.Equal(t, uint64(v.expectedQuota), quota, v.scenario)
+		assert.Equal(t, uint64(v.expectedPeriod), period, v.scenario)
+	}
 }
 
-func createMaxFile(t *testing.T) string {
+func TestMaxNotExist(t *testing.T) {
+	cpu := NewCpuControllerWithMount("/this/does/not", "exist")
+	_, _, err := cpu.Max()
+
+	assert.ErrorIs(t, err, os.ErrNotExist)
+}
+
+func createMaxFile(t *testing.T, quota, period string) string {
 	mountPoint, err := os.MkdirTemp("", "test.max")
 	if err != nil {
 		t.Fatal(err)
@@ -35,7 +68,7 @@ func createMaxFile(t *testing.T) string {
 		t.Fatal(err)
 	}
 
-	if err := os.WriteFile(filepath.Join(cgroupPath, "cpu.max"), []byte("200000 100000\n"), 0755); err != nil {
+	if err := os.WriteFile(filepath.Join(cgroupPath, "cpu.max"), []byte(fmt.Sprintf("%v %v\n", quota, period)), 0755); err != nil {
 		t.Fatalf("failed to create cpu.max file: %v", err)
 	}
 

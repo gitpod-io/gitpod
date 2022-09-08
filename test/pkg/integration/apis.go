@@ -401,6 +401,22 @@ func (c *ComponentAPI) GetUserId(user string) (userId string, err error) {
 	return id, nil
 }
 
+func (c *ComponentAPI) UpdateUserFeatureFlag(userId, featureFlag string) error {
+	db, err := c.DB()
+	if err != nil {
+		return err
+	}
+
+	if _, err = db.Exec("SELECT id FROM d_b_user WHERE id = ?", userId); err != nil {
+		return err
+	}
+
+	if _, err = db.Exec("UPDATE d_b_user SET featureFlags=? WHERE id = ?", fmt.Sprintf("{\"permanentWSFeatureFlags\":[%q]}", featureFlag), userId); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *ComponentAPI) CreateUser(username string, token string) (string, error) {
 	dbConfig, err := FindDBConfigFromPodEnv("server", c.namespace, c.client)
 	if err != nil {
@@ -425,12 +441,13 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 		}
 
 		userId = userUuid.String()
-		_, err = db.Exec(`INSERT IGNORE INTO d_b_user (id, creationDate, avatarUrl, name, fullName) VALUES (?, ?, ?, ?, ?)`,
+		_, err = db.Exec(`INSERT IGNORE INTO d_b_user (id, creationDate, avatarUrl, name, fullName, featureFlags) VALUES (?, ?, ?, ?, ?, ?)`,
 			userId,
 			time.Now().Format(time.RFC3339),
 			"",
 			username,
 			username,
+			"{\"permanentWSFeatureFlags\":[]}",
 		)
 		if err != nil {
 			return "", err

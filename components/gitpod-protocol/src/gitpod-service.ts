@@ -60,8 +60,7 @@ import {
 import { RemotePageMessage, RemoteTrackMessage, RemoteIdentifyMessage } from "./analytics";
 import { IDEServer } from "./ide-protocol";
 import { InstallationAdminSettings, TelemetryData } from "./installation-admin-protocol";
-import { Currency } from "./plans";
-import { BillableSession, BillableSessionRequest } from "./usage";
+import { ListUsageRequest, ListUsageResponse } from "./usage";
 import { SupportedWorkspaceClass } from "./workspace-class";
 import { BillingMode } from "./billing-mode";
 
@@ -85,6 +84,8 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getLoggedInUser(): Promise<User>;
     getTerms(): Promise<Terms>;
     updateLoggedInUser(user: Partial<User>): Promise<User>;
+    sendPhoneNumberVerificationToken(phoneNumber: string): Promise<void>;
+    verifyPhoneNumberVerificationToken(phoneNumber: string, token: string): Promise<boolean>;
     getAuthProviders(): Promise<AuthProviderInfo[]>;
     getOwnAuthProviders(): Promise<AuthProviderEntry[]>;
     updateOwnAuthProvider(params: GitpodServer.UpdateOwnAuthProviderParams): Promise<AuthProviderEntry>;
@@ -290,12 +291,14 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getStripePublishableKey(): Promise<string>;
     getStripeSetupIntentClientSecret(): Promise<string>;
     findStripeSubscriptionIdForTeam(teamId: string): Promise<string | undefined>;
-    subscribeTeamToStripe(teamId: string, setupIntentId: string, currency: Currency): Promise<void>;
+    createOrUpdateStripeCustomerForTeam(teamId: string, currency: string): Promise<void>;
+    createOrUpdateStripeCustomerForUser(currency: string): Promise<void>;
+    subscribeTeamToStripe(teamId: string, setupIntentId: string): Promise<void>;
     getStripePortalUrlForTeam(teamId: string): Promise<string>;
-    getSpendingLimitForTeam(teamId: string): Promise<number | undefined>;
-    setSpendingLimitForTeam(teamId: string, spendingLimit: number): Promise<void>;
+    getUsageLimitForTeam(teamId: string): Promise<number | undefined>;
+    setUsageLimitForTeam(teamId: string, spendingLimit: number): Promise<void>;
 
-    listBilledUsage(req: BillableSessionRequest): Promise<BillableSession[]>;
+    listUsage(req: ListUsageRequest): Promise<ListUsageResponse>;
 
     setUsageAttribution(usageAttribution: string): Promise<void>;
 

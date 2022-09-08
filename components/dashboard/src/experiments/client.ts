@@ -37,6 +37,7 @@ function newProductionConfigCatClient(): Client {
     const clientKey = "WBLaCPtkjkqKHlHedziE9g/TwAe6YyftEGPnGxVRXd0Ig";
     const client = configcat.createClient(clientKey, {
         logger: configcat.createConsoleLogger(LogLevel.Error),
+        pollIntervalSeconds: 60 * 3, // 3 minutes
         maxInitWaitTimeSeconds: 0,
     });
 

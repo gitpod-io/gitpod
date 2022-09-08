@@ -48,6 +48,7 @@ import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
 import { LocalMessageBroker } from "./messaging/local-message-broker";
 import { WsConnectionHandler } from "./express/ws-connection-handler";
 import { InstallationAdminController } from "./installation-admin/installation-admin-controller";
+import { WebhookEventGarbageCollector } from "./projects/webhook-event-garbage-collector";
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -75,6 +76,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(OneTimeSecretServer) protected readonly oneTimeSecretServer: OneTimeSecretServer;
 
     @inject(PeriodicDbDeleter) protected readonly periodicDbDeleter: PeriodicDbDeleter;
+    @inject(WebhookEventGarbageCollector) protected readonly webhookEventGarbageCollector: WebhookEventGarbageCollector;
 
     @inject(BearerAuth) protected readonly bearerAuth: BearerAuth;
 
@@ -268,6 +270,11 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
 
         // Start DB updater
         this.startDbDeleter().catch((err) => log.error("starting DB deleter", err));
+
+        // Start WebhookEvent GC
+        this.webhookEventGarbageCollector
+            .start()
+            .catch((err) => log.error("webhook-event-gc: error during startup", err));
 
         this.app = app;
         log.info("server initialized.");

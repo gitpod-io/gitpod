@@ -7,6 +7,8 @@ TOPDIR=$(shell pwd)
 
 KUBECONFIG := "$(TOPDIR)/kubeconfig"
 
+DOMAIN := tests.gitpod-self-hosted.com
+
 check-env-sub-domain:
 ifndef TF_VAR_TEST_ID
 	$(error TF_VAR_TEST_ID is not defined)
@@ -50,9 +52,10 @@ gcp-kubeconfig:
 
 ## azure-kubeconfig: Get the kubeconfig configuration for Azure AKS
 azure-kubeconfig:
+	az login --service-principal -u $$ARM_CLIENT_ID -p $$ARM_CLIENT_SECRET  --tenant $$ARM_TENANT_ID
 	export KUBECONFIG=${KUBECONFIG} && \
-	export resource=$$(echo "$$TF_VAR_TEST_ID" | sed "s/[\\W\\-]//") && \
-	az aks get-credentials --name gitpod-test-nor-primary-$$resource --resource-group gitpod-test-nor-$$resource --file ${KUBECONFIG} || echo "No cluster present"
+	export resource=$$(echo "$$TF_VAR_TEST_ID" | sed "s/[\\W\\-]//g") && \
+	az aks get-credentials --name test-cluster-$$resource --resource-group sh-test-$$resource --file ${KUBECONFIG} || echo "No cluster present"
 
 ## aws-kubeconfig: Get the kubeconfig configuration for AWS EKS
 aws-kubeconfig:
@@ -65,20 +68,16 @@ aws-kubeconfig:
 gke-standard-cluster: check-env-cluster-version
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || $(MAKE) select-workspace && \
-	terraform apply -target=module.gke -var kubeconfig=${KUBECONFIG} --auto-approve
+	rm -f ${KUBECONFIG} && \
+	$(MAKE) get-kubeconfig && \
+	[[ -f ${KUBECONFIG} ]] || terraform apply -target=module.gke -var kubeconfig=${KUBECONFIG} --auto-approve
 	@echo "Done creating GKE cluster"
 
-ami_id_120 := "ami-0ecb917eb4fbf4387"
+ami_id_121 := "ami-060637af2651bc8bb"
 
-ami_id_121 := "ami-0d57fb01036fac543"
+ami_id_122 := "ami-0733d755ed2c97a4d"
 
-ami_id_122 := "ami-0b306cb7e98db98e4"
-
-ami_id_120 := "ami-0ecb917eb4fbf4387"
-
-ami_id_121 := "ami-0d57fb01036fac543"
-
-ami_id_122 := "ami-0b306cb7e98db98e4"
+ami_id_123 := "ami-05ec8881b9c2740d4"
 
 .PHONY:
 ## eks-standard-cluster: Creates an EKS cluster
@@ -86,7 +85,9 @@ eks-standard-cluster: ami_id = $(if $(ami_id_${TF_VAR_cluster_version//.}),$(ami
 eks-standard-cluster: check-env-cluster-version
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || $(MAKE) select-workspace && \
-	terraform apply -target=module.eks -var kubeconfig=${KUBECONFIG} -var eks_node_image_id=${ami_id} --auto-approve
+	rm -f ${KUBECONFIG} && \
+	$(MAKE) get-kubeconfig && \
+	[[ -f ${KUBECONFIG} ]] || terraform apply -target=module.eks -var kubeconfig=${KUBECONFIG} -var eks_node_image_id=${ami_id} --auto-approve
 	@echo "Done creating EKS cluster"
 
 .PHONY:
@@ -94,7 +95,9 @@ eks-standard-cluster: check-env-cluster-version
 aks-standard-cluster: check-env-cluster-version
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || $(MAKE) select-workspace && \
-	terraform apply -target=module.aks -var kubeconfig=${KUBECONFIG} --auto-approve
+	rm -f ${KUBECONFIG} && \
+	$(MAKE) get-kubeconfig && \
+	[[ -f ${KUBECONFIG} ]] || terraform apply -target=module.aks -var kubeconfig=${KUBECONFIG} --auto-approve
 	@echo "Done creating AKS cluster"
 
 .PHONY:
@@ -126,7 +129,9 @@ k3s-standard-cluster: image_id = $(if $(image_id_$(os_version)),$(image_id_$(os_
 k3s-standard-cluster: check-env-cluster-version
 	terraform init --upgrade && \
 	terraform workspace new $(TF_VAR_TEST_ID) || $(MAKE) select-workspace && \
-	terraform apply -target=module.k3s -var kubeconfig=${KUBECONFIG} -var k3s_node_image_id=${image_id} --auto-approve && \
+	rm -f ${KUBECONFIG} && \
+	$(MAKE) get-kubeconfig && \
+	[[ -f ${KUBECONFIG} ]] || terraform apply -target=module.k3s -var kubeconfig=${KUBECONFIG} -var k3s_node_image_id=${image_id} --auto-approve && \
 	$(MAKE) upload-kubeconfig-to-gcp # we upload the file to GCP since we cannot retrieve the file against without SSHing to the master
 	@echo "Done creating k3s cluster"
 
@@ -158,7 +163,7 @@ get-github-config:
 ifneq ($(GITHUB_SCM_OAUTH),)
 	export SCM_OAUTH=./manifests/github-oauth.yaml && \
 	cat $$GITHUB_SCM_OAUTH/provider > $$SCM_OAUTH && \
-	yq w -i $$SCM_OAUTH 'oauth.callBackUrl' http://${TF_VAR_TEST_ID}.tests.gitpod-self-hosted.com/auth/github.com/callback && \
+	yq w -i $$SCM_OAUTH 'oauth.callBackUrl' http://${TF_VAR_TEST_ID}.${DOMAIN}/auth/github.com/callback && \
 	kubectl --kubeconfig=${KUBECONFIG} create namespace gitpod || echo "Gitpod namespace already exist" && \
 	kubectl --kubeconfig=${KUBECONFIG} delete secret github-oauth -n gitpod || echo "gitpod-oauth secret needs to be created" && \
 	kubectl --kubeconfig=${KUBECONFIG} create secret generic "github-oauth" --namespace gitpod --from-literal=provider="$$(cat $$SCM_OAUTH)" && \
@@ -171,6 +176,7 @@ KOTS_KONFIG := "./manifests/kots-config.yaml"
 
 get-base-config: get-github-config
 	export CONFIG_PATCH=./manifests/config-patch.yaml && \
+	export DOMAIN=${DOMAIN} && \
 	export PATCH=$$(cat $$CONFIG_PATCH | base64 -w 0) || export PATCH="" && \
 	envsubst < ${KOTS_KONFIG} > tmp_config.yml
 
@@ -186,6 +192,10 @@ registry-config-gcp:
 
 db-config-gcp:
 	export BASE64_GCP_KEY=$$(cat $$TF_VAR_sa_creds | tr -d '\n' | base64 -w 0) && \
+	export DB_OUTPUT=$$(terraform output -json k3s_database || terraform output -json gke_database) && \
+	export DB_INSTANCE=$$(echo $$DB_OUTPUT | yq r - 'instance') && \
+	export DB_PASSWORD=$$(echo $$DB_OUTPUT | yq r - 'password') && \
+	export DB_USER=$$(echo $$DB_OUTPUT | yq r - 'username') && \
 	envsubst < ./manifests/kots-config-gcp-db.yaml > tmp_4_config.yml
 	envsubst < tmp_4_config.yml > tmp_5_config.yml
 	yq m -i tmp_config.yml tmp_5_config.yml
@@ -226,6 +236,15 @@ storage-config-aws:
 	envsubst < ./manifests/kots-config-aws-storage.yaml > tmp_2_config.yml
 	yq m -i tmp_config.yml tmp_2_config.yml
 
+s3-registry-backend-config-aws: # this registry config involves using s3 backend for incluster registry
+	export REGION=$$(terraform output -json aws_s3_registry_backend | yq r - 'region') && \
+	export ENDPOINT=$$(terraform output -json aws_s3_registry_backend | yq r - 'endpoint') && \
+	export BUCKET=$$(terraform output -json aws_s3_registry_backend | yq r - 'bucket_name') && \
+	export S3_ACCESS_KEY_ID=$$(terraform output -json aws_s3_registry_backend | yq r - 'access_key_id') && \
+	export S3_SECRET_ACCESS_KEY=$$(terraform output -json aws_s3_registry_backend | yq r - 'secret_access_key') && \
+	envsubst < ./manifests/kots-config-aws-s3-backend.yaml > tmp_2_config.yml
+	yq m -i tmp_config.yml tmp_2_config.yml
+
 registry-config-aws:
 	export SERVER=$$(terraform output -json aws_registry | yq r - 'server' | cut -d / -f 1) && \
 	export PASSWORD=$$(terraform output -json aws_registry | yq r - 'password') && \
@@ -240,9 +259,13 @@ db-config-incluster:
 	@echo "Nothing to do"
 
 registry-config-incluster:
+ifeq ($(cloud), aws)
+	$(MAKE) s3-registry-backend-config-aws
+else
 	@echo "Nothing to do"
+endif
 
-torage ?= incluster
+storage ?= incluster
 registry ?= incluster
 db ?= incluster
 .PHONY:
@@ -264,13 +287,16 @@ install-kots-cli:
 
 preflights ?= true
 channel ?= unstable
+app ?= gitpod
 version ?= -
 kots-install: version-flag = $(if $(version:-=),--app-version-label=$(version),)
 kots-install: preflight-flag = $(if $(preflights:true=),--skip-preflights,)
 kots-install: license-file = $(if $(license_community_$(channel)),$(license_community_$(channel)),"../licenses/$(channel).yaml")
 kots-install: install-kots-cli
-	kubectl kots install gitpod/${channel} \
+	kubectl kots remove ${app} -n gitpod --force --kubeconfig=${KUBECONFIG} || echo "No kots app existing, Installing"
+	kubectl kots install ${app}/${channel} \
 	--skip-rbac-check ${version-flag} ${preflight-flag} \
+					--wait-duration "10m" \
 					--namespace gitpod --kubeconfig=${KUBECONFIG} \
                     --name gitpod --shared-password gitpod \
 					--license-file ${license-file} \
@@ -280,9 +306,13 @@ kots-install: install-kots-cli
 time_to_sleep_azure := 600 # azure seem to take more time to fullfil DNS propogation
 time_to_sleep := 300
 
+wait_time := 180
+wait_time_azure := 180
+
 delete-cm-setup: sleeptime=$(if $(time_to_sleep_$(cloud)),$(time_to_sleep_$(cloud)),${time_to_sleep})
+delete-cm-setup: waittime=$(if $(wait_time_$(cloud)),$(wait_time_$(cloud)),${wait_time})
 delete-cm-setup:
-	sleep 180 && kubectl --kubeconfig=${KUBECONFIG} delete pods --all -n cert-manager && sleep ${sleeptime};
+	sleep ${waittime} && kubectl --kubeconfig=${KUBECONFIG} delete pods --all -n cert-manager && sleep ${sleeptime};
 
 gitpod-debug-info:
 	@echo "Gitpod is not ready"
@@ -293,8 +323,8 @@ check-kots-app:
 	kubectl kots get --kubeconfig=${KUBECONFIG} app gitpod -n gitpod | grep gitpod  | awk '{print $$2}' | grep "ready" || { $(MAKE) gitpod-debug-info; exit 1; }
 
 check-gitpod-installation: delete-cm-setup check-kots-app check-env-sub-domain
-	@echo "Curling http://${TF_VAR_TEST_ID}.tests.gitpod-self-hosted.com/api/version"
-	curl -i -X GET http://${TF_VAR_TEST_ID}.tests.gitpod-self-hosted.com/api/version || { echo "Curling Gitpod endpoint failed"; exit 1; }
+	@echo "Curling http://${TF_VAR_TEST_ID}.${DOMAIN}/api/version"
+	curl -i -X GET http://${TF_VAR_TEST_ID}.${DOMAIN}/api/version || { echo "Curling Gitpod endpoint failed"; exit 1; }
 
 define runtests
 	./tests.sh ${KUBECONFIG} $(1)

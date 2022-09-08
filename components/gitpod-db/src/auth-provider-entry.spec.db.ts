@@ -19,6 +19,7 @@ export class AuthProviderEntryDBSpec {
     typeORM = testContainer.get<TypeORM>(TypeORM);
     db = testContainer.get<AuthProviderEntryDB>(AuthProviderEntryDB);
 
+    @timeout(10000)
     async before() {
         await this.clear();
     }

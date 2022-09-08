@@ -1,0 +1,81 @@
+packages:
+  - name: intellij
+    type: generic
+    srcs:
+      - "download.sh"
+    argdeps:
+      - intellijDownloadUrl
+    env:
+      - JETBRAINS_BACKEND_URL=${intellijDownloadUrl}
+    config:
+      commands:
+        - ["./download.sh"]
+  - name: intellij-latest
+    type: generic
+    srcs:
+      - "download.sh"
+    env:
+      - JETBRAINS_BACKEND_URL=https://download.jetbrains.com/product?type=release,rc,eap&distribution=linux&code=IIU
+    config:
+      commands:
+        - ["./download.sh"]
+  - name: goland
+    type: generic
+    srcs:
+      - "download.sh"
+    argdeps:
+      - golandDownloadUrl
+    env:
+      - JETBRAINS_BACKEND_URL=${golandDownloadUrl}
+    config:
+      commands:
+        - ["./download.sh"]
+  - name: goland-latest
+    type: generic
+    srcs:
+      - "download.sh"
+    env:
+      - JETBRAINS_BACKEND_URL=https://download.jetbrains.com/product?type=release,rc,eap&distribution=linux&code=GO
+    config:
+      commands:
+        - ["./download.sh"]
+  - name: pycharm
+    type: generic
+    srcs:
+      - "download.sh"
+    argdeps:
+      - pycharmDownloadUrl
+    env:
+      - JETBRAINS_BACKEND_URL=${pycharmDownloadUrl}
+    config:
+      commands:
+        - ["./download.sh"]
+  - name: pycharm-latest
+    type: generic
+    srcs:
+      - "download.sh"
+    env:
+      - JETBRAINS_BACKEND_URL=https://download.jetbrains.com/product?type=release,rc,eap&distribution=linux&code=PCP
+    config:
+      commands:
+        - ["./download.sh"]
+  - name: phpstorm
+    type: generic
+    srcs:
+      - "download.sh"
+    argdeps:
+      - phpstormDownloadUrl
+    env:
+      - JETBRAINS_BACKEND_URL=${phpstormDownloadUrl}
+    config:
+      commands:
+        - ["./download.sh"]
+  - name: phpstorm-latest
+    type: generic
+    srcs:
+      - "download.sh"
+    env:
+      - JETBRAINS_BACKEND_URL=https://download.jetbrains.com/product?type=release,rc,eap&distribution=linux&code=PS
+    config:
+      commands:
+        - ["./download.sh"]

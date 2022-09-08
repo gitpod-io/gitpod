@@ -161,6 +161,24 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		}
 	}
 
+	// mount the optional twilio secret
+	truethy := true
+	volumes = append(volumes, corev1.Volume{
+		Name: "twilio-secret-volume",
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: "twilio-secret",
+				Optional:   &truethy,
+			},
+		},
+	})
+
+	volumeMounts = append(volumeMounts, corev1.VolumeMount{
+		Name:      "twilio-secret-volume",
+		MountPath: "/twilio-config",
+		ReadOnly:  true,
+	})
+
 	if vol, mnt, envv, ok := common.CustomCACertVolume(ctx); ok {
 		volumes = append(volumes, *vol)
 		volumeMounts = append(volumeMounts, *mnt)

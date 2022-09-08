@@ -68,14 +68,7 @@ async function wipePreviewEnvironmentInstaller(namespace: string, kubeconfig: st
         }).code === 0;
     if (hasGitpodConfigmap) {
         werft.log(slice, `${namespace} has Gitpod configmap, proceeding with removal`);
-        const inWerftFolder = exec(`pwd`, { slice, dontCheckRc: true }).stdout.trim().endsWith(".werft");
-        if (inWerftFolder) {
-            // used in .werft/wipe-devstaging.yaml on preview environment clean-up
-            exec(`./util/uninstall-gitpod.sh ${namespace} ${kubeconfig}`, { slice });
-        } else {
-            // used in .werft/build.yaml on 'with-clean-slate-deployment=true'
-            exec(`./.werft/util/uninstall-gitpod.sh ${namespace} ${kubeconfig}`, { slice });
-        }
+        exec(`./util/uninstall-gitpod.sh ${namespace} ${kubeconfig}`, { slice });
     } else {
         werft.log(slice, `There is no Gitpod configmap, moving on`);
     }
@@ -394,7 +387,7 @@ export async function waitUntilAllPodsAreReady(namespace: string, kubeconfig: st
 
         await sleep(3 * 1000);
     }
-    exec(`kubectl --kubeconfig ${kubeconfig} get pods -n ${namespace}`, { ...shellOpts, async: false });
+    exec(`kubectl --kubeconfig ${kubeconfig} describe pods -n ${namespace}`, { ...shellOpts, async: false });
     throw new Error(
         `Not all pods in namespace ${namespace} transitioned to 'Running' or 'Succeeded/Completed' during the expected time.`,
     );

@@ -24,6 +24,16 @@ output "secretAccessKey" {
   value     = try("${aws_iam_access_key.edns[0].secret}", "")
 }
 
+output "oidc_provider_arn" {
+  sensitive = false
+  value     = module.eks.oidc_provider_arn
+}
+
+output "cluster_id" {
+  sensitive = false
+  value     = module.eks.cluster_id
+}
+
 output "cert_manager_issuer" {
   value = try({
     region = var.region

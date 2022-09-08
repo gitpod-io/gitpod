@@ -13,4 +13,6 @@ const (
 	HTTPContainerPort = 9002
 	HTTPServicePort   = 9002
 	HTTPPortName      = "http"
+
+	stripeSecretMountPath = "/secrets/stripe-webhook-secret"
 )

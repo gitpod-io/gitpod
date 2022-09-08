@@ -2,6 +2,7 @@
     "compilerOptions": {
         "target": "es2019",
         "skipLibCheck": true,
-        "moduleResolution": "node"
+        "moduleResolution": "node",
+        "noUnusedLocals": true
     }
 }

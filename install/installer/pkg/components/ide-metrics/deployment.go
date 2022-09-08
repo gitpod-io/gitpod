@@ -7,6 +7,7 @@ package ide_metrics
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -24,6 +25,67 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	volumes := make([]corev1.Volume, 0)
+	volumeMounts := make([]corev1.VolumeMount, 0)
+
+	volumes = append(volumes, corev1.Volume{
+		Name: VolumeConfig,
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{Name: Component},
+			},
+		},
+	})
+
+	volumeMounts = append(volumeMounts, corev1.VolumeMount{
+		Name:      VolumeConfig,
+		MountPath: "/config",
+		ReadOnly:  true,
+	})
+
+	env := common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
+		common.DefaultEnv(&ctx.Config),
+	))
+
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.IDE != nil && cfg.IDE.IDEMetricsConfig != nil {
+			if cfg.IDE.IDEMetricsConfig.EnabledErrorReporting {
+				env = append(env, corev1.EnvVar{
+					Name:  "GITPOD_ENABLED_ERROR_REPORTING",
+					Value: "true",
+				})
+
+				if cfg.IDE.IDEMetricsConfig.GCPADCSecret != "" && cfg.IDE.IDEMetricsConfig.GCPProject != "" {
+					volumes = append(volumes, corev1.Volume{
+						Name: "gcp-adc-file",
+						VolumeSource: corev1.VolumeSource{
+							ConfigMap: &corev1.ConfigMapVolumeSource{
+								LocalObjectReference: corev1.LocalObjectReference{Name: Component},
+							},
+						},
+					})
+
+					volumeMounts = append(volumeMounts, corev1.VolumeMount{
+						Name:      "gcp-adc-file",
+						MountPath: "/gcp",
+						ReadOnly:  true,
+					})
+
+					env = append(env, corev1.EnvVar{
+						Name:  "GOOGLE_PROJECT",
+						Value: cfg.IDE.IDEMetricsConfig.GCPProject,
+					})
+					env = append(env, corev1.EnvVar{
+						Name:  "GOOGLE_APPLICATION_CREDENTIALS",
+						Value: "/gcp/credentials.json",
+					})
+				}
+			}
+
+		}
+		return nil
+	})
 
 	return []runtime.Object{
 		&appsv1.Deployment{
@@ -74,16 +136,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: pointer.Bool(false),
 							},
-							Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
-								common.DefaultEnv(&ctx.Config),
-							)),
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      VolumeConfig,
-									MountPath: "/config",
-									ReadOnly:  true,
-								},
-							},
+							Env:          env,
+							VolumeMounts: volumeMounts,
 							ReadinessProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{
 									TCPSocket: &corev1.TCPSocketAction{
@@ -97,16 +151,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						},
 							*common.KubeRBACProxyContainerWithConfig(ctx),
 						},
-						Volumes: []corev1.Volume{
-							{
-								Name: VolumeConfig,
-								VolumeSource: corev1.VolumeSource{
-									ConfigMap: &corev1.ConfigMapVolumeSource{
-										LocalObjectReference: corev1.LocalObjectReference{Name: Component},
-									},
-								},
-							},
-						},
+						Volumes: volumes,
 					},
 				},
 			},

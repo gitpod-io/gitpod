@@ -39,6 +39,8 @@ type TelemetryConfig struct {
 type CommonConfig struct {
 	PodConfig                map[string]*PodConfig `json:"podConfig,omitempty"`
 	StaticMessagebusPassword string                `json:"staticMessagebusPassword"`
+	// @deprecated PodSecurityPolicies are deprecated in k8s 1.21 and removed in 1.25
+	UsePodSecurityPolicies bool `json:"usePodSecurityPolicies"`
 }
 
 type PodConfig struct {
@@ -72,6 +74,11 @@ type WorkspaceConfig struct {
 		WriteIOPS        int64             `json:"writeIOPS"`
 		ReadIOPS         int64             `json:"readIOPS"`
 	} `json:"ioLimits"`
+	NetworkLimits struct {
+		Enabled              bool  `json:"enabled"`
+		ConnectionsPerMinute int64 `json:"connectionsPerMinute"`
+		BucketSize           int64 `json:"bucketSize"`
+	} `json:"networkLimits"`
 
 	ProcLimit int64 `json:"procLimit"`
 
@@ -224,6 +231,8 @@ type ProxyConfig struct {
 
 type PublicAPIConfig struct {
 	Enabled bool `json:"enabled"`
+	// Name of the kubernetes secret to use for Stripe secrets
+	StripeSecretName string `json:"stripeSecretName"`
 }
 
 type UsageConfig struct {
@@ -246,13 +255,20 @@ type WebAppWorkspaceClass struct {
 
 type IDEConfig struct {
 	// Disable resolution of latest images and use bundled latest versions instead
-	ResolveLatest  *bool           `json:"resolveLatest,omitempty"`
-	IDEProxyConfig *IDEProxyConfig `json:"ideProxy,omitempty"`
-	VSXProxyConfig *VSXProxyConfig `json:"openvsxProxy,omitempty"`
+	ResolveLatest    *bool             `json:"resolveLatest,omitempty"`
+	IDEProxyConfig   *IDEProxyConfig   `json:"ideProxy,omitempty"`
+	VSXProxyConfig   *VSXProxyConfig   `json:"openvsxProxy,omitempty"`
+	IDEMetricsConfig *IDEMetricsConfig `json:"ideMetrics,omitempty"`
 }
 
 type IDEProxyConfig struct {
 	ServiceAnnotations map[string]string `json:"serviceAnnotations"`
+}
+
+type IDEMetricsConfig struct {
+	EnabledErrorReporting bool   `json:"enabledErrorReporting,omitempty"`
+	GCPProject            string `json:"gcpProject,omitempty"`
+	GCPADCSecret          string `json:"gcpAdcSecret,omitempty"`
 }
 
 type VSXProxyConfig struct {

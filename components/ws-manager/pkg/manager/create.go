@@ -30,6 +30,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
@@ -267,6 +268,7 @@ func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) 
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%s", prefix, req.Id),
 			Namespace: m.Config.Namespace,
+			Labels:    startContext.Labels,
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
 			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
@@ -322,9 +324,11 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 
 	ideRef := startContext.Request.Spec.DeprecatedIdeImage
 	var desktopIdeRef string
+	var desktopIdePluginRef string
 	if startContext.Request.Spec.IdeImage != nil && len(startContext.Request.Spec.IdeImage.WebRef) > 0 {
 		ideRef = startContext.Request.Spec.IdeImage.WebRef
 		desktopIdeRef = startContext.Request.Spec.IdeImage.DesktopRef
+		desktopIdePluginRef = startContext.Request.Spec.IdeImage.DesktopPluginRef
 	}
 
 	var supervisorRef string
@@ -333,10 +337,11 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	}
 
 	spec := regapi.ImageSpec{
-		BaseRef:       startContext.Request.Spec.WorkspaceImage,
-		IdeRef:        ideRef,
-		DesktopIdeRef: desktopIdeRef,
-		SupervisorRef: supervisorRef,
+		BaseRef:             startContext.Request.Spec.WorkspaceImage,
+		IdeRef:              ideRef,
+		DesktopIdeRef:       desktopIdeRef,
+		SupervisorRef:       supervisorRef,
+		DesktopIdePluginRef: desktopIdePluginRef,
 	}
 	imageSpec, err := spec.ToBase64()
 	if err != nil {
@@ -619,8 +624,11 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 				}
 			}
 
+		case api.WorkspaceFeatureFlag_WORKSPACE_CONNECTION_LIMITING:
+			annotations[kubernetes.WorkspaceNetConnLimitAnnotation] = util.BooleanTrueString
+
 		default:
-			return nil, xerrors.Errorf("unknown feature flag: %v", feature)
+			log.Warnf("Unknown feature flag %v", feature)
 		}
 	}
 
@@ -793,6 +801,7 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 				"GITPOD_TASKS",
 				"GITPOD_RESOLVED_EXTENSIONS",
 				"GITPOD_EXTERNAL_EXTENSIONS",
+				"GITPOD_WORKSPACE_CLASS_INFO",
 				"GITPOD_IDE_ALIAS":
 				// these variables are allowed - don't skip them
 			default:

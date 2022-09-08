@@ -16,6 +16,8 @@ message ImageSpec {
     string desktop_ide_ref = 4;
     // supervisor_ref points to an image denotign the supervisor to use
     string supervisor_ref = 5;
+    // desktop_ide_plugin_ref points to an image denotign the desktop IDE plugin to use
+    string desktop_ide_plugin_ref = 6;
 }
 
 // ContentLayer is a layer that provides a workspace's content

@@ -51,3 +51,43 @@ export namespace UsageReportUploadURLResponse {
         url: string,
     }
 }
+
+export class UsageReportDownloadURLRequest extends jspb.Message {
+    getName(): string;
+    setName(value: string): UsageReportDownloadURLRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): UsageReportDownloadURLRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: UsageReportDownloadURLRequest): UsageReportDownloadURLRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: UsageReportDownloadURLRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): UsageReportDownloadURLRequest;
+    static deserializeBinaryFromReader(message: UsageReportDownloadURLRequest, reader: jspb.BinaryReader): UsageReportDownloadURLRequest;
+}
+
+export namespace UsageReportDownloadURLRequest {
+    export type AsObject = {
+        name: string,
+    }
+}
+
+export class UsageReportDownloadURLResponse extends jspb.Message {
+    getUrl(): string;
+    setUrl(value: string): UsageReportDownloadURLResponse;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): UsageReportDownloadURLResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: UsageReportDownloadURLResponse): UsageReportDownloadURLResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: UsageReportDownloadURLResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): UsageReportDownloadURLResponse;
+    static deserializeBinaryFromReader(message: UsageReportDownloadURLResponse, reader: jspb.BinaryReader): UsageReportDownloadURLResponse;
+}
+
+export namespace UsageReportDownloadURLResponse {
+    export type AsObject = {
+        url: string,
+    }
+}

@@ -171,11 +171,13 @@ import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { InstallationAdminTelemetryDataProvider } from "../installation-admin/telemetry-data-provider";
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
-import { Currency } from "@gitpod/gitpod-protocol/lib/plans";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { BillableSession, BillableSessionRequest } from "@gitpod/gitpod-protocol/lib/usage";
+import { ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-imagebuilder-client-provider";
+import { VerificationService } from "../auth/verification-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
+import { EntitlementService } from "../billing/entitlement-service";
+import { WorkspaceClasses } from "./workspace-classes";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -243,6 +245,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(ConfigurationService) protected readonly configurationService: ConfigurationService;
 
     @inject(IDEConfigService) protected readonly ideConfigService: IDEConfigService;
+
+    @inject(VerificationService) protected readonly verificationService: VerificationService;
+    @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
 
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
@@ -462,6 +467,27 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         return user;
+    }
+
+    public async sendPhoneNumberVerificationToken(ctx: TraceContext, phoneNumber: string): Promise<void> {
+        this.checkUser("sendPhoneNumberVerificationToken");
+        return this.verificationService.sendVerificationToken(phoneNumber);
+    }
+
+    public async verifyPhoneNumberVerificationToken(
+        ctx: TraceContext,
+        phoneNumber: string,
+        token: string,
+    ): Promise<boolean> {
+        const user = this.checkUser("verifyPhoneNumberVerificationToken");
+        const checked = await this.verificationService.verifyVerificationToken(phoneNumber, token);
+        if (!checked) {
+            return false;
+        }
+        this.verificationService.markVerified(user);
+        user.verificationPhoneNumber = phoneNumber;
+        await this.userDB.updateUserPartial(user);
+        return true;
     }
 
     public async getClientRegion(ctx: TraceContext): Promise<string | undefined> {
@@ -1583,31 +1609,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const logInfo = instance.imageBuildInfo?.log;
         if (!logInfo) {
-            const teams = await this.teamDB.findTeamsByUser(user.id);
-            const isOldImageBuildLogsMechanismDeprecated = await getExperimentsClientForBackend().getValueAsync(
-                "deprecateOldImageLogsMechanism",
-                false,
-                {
-                    user,
-                    projectId: workspace.projectId,
-                    teams,
-                },
+            log.error(logCtx, "cannot watch imagebuild logs for workspaceId: no image build info available");
+            throw new ResponseError(
+                ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE,
+                "cannot watch imagebuild logs for workspaceId",
             );
-            if (isOldImageBuildLogsMechanismDeprecated) {
-                log.error(logCtx, "cannot watch imagebuild logs for workspaceId: no image build info available");
-                throw new ResponseError(
-                    ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE,
-                    "cannot watch imagebuild logs for workspaceId",
-                );
-            }
-
-            // during roll-out this is our fall-back case.
-            // Afterwards we might want to do some spinning-lock and re-check for a certain period (30s?) to give db-sync
-            // a change to move the imageBuildLogInfo across the globe.
-            log.warn(logCtx, "imageBuild logs: fallback!");
-            ctx.span?.setTag("workspace.imageBuild.logs.fallback", true);
-            await this.deprecatedDoWatchWorkspaceImageBuildLogs(ctx, logCtx, user, workspace);
-            return;
         }
 
         const aborted = new Deferred<boolean>();
@@ -2688,6 +2694,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
 
+    async adminVerifyUser(ctx: TraceContext, _id: string): Promise<User> {
+        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+    }
+
     async adminModifyRoleOrPermission(ctx: TraceContext, req: AdminModifyRoleOrPermissionRequest): Promise<User> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
@@ -3050,6 +3060,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async getSupportedWorkspaceClasses(ctx: TraceContext): Promise<SupportedWorkspaceClass[]> {
+        let user = this.checkAndBlockUser("getSupportedWorkspaceClasses");
+        let selectedClass = await WorkspaceClasses.getConfiguredOrUpgradeFromLegacy(
+            user,
+            this.config.workspaceClasses,
+            this.entitlementService,
+        );
+
         let classes = this.config.workspaceClasses
             .filter((c) => !c.deprecated)
             .map((c) => ({
@@ -3058,7 +3075,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 displayName: c.displayName,
                 description: c.description,
                 powerups: c.powerups,
-                isDefault: c.isDefault,
+                isSelected: selectedClass === c.id,
             }));
 
         return classes;
@@ -3201,26 +3218,27 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async findStripeSubscriptionIdForTeam(ctx: TraceContext, teamId: string): Promise<string | undefined> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async subscribeTeamToStripe(
-        ctx: TraceContext,
-        teamId: string,
-        setupIntentId: string,
-        currency: Currency,
-    ): Promise<void> {
+    async createOrUpdateStripeCustomerForTeam(ctx: TraceContext, teamId: string, currency: string): Promise<void> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async createOrUpdateStripeCustomerForUser(ctx: TraceContext, currency: string): Promise<void> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async subscribeTeamToStripe(ctx: TraceContext, teamId: string, setupIntentId: string): Promise<void> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
     async getStripePortalUrlForTeam(ctx: TraceContext, teamId: string): Promise<string> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
 
-    async listBilledUsage(ctx: TraceContext, req: BillableSessionRequest): Promise<BillableSession[]> {
+    async listUsage(ctx: TraceContext, req: ListUsageRequest): Promise<ListUsageResponse> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
 
-    async getSpendingLimitForTeam(ctx: TraceContext, teamId: string): Promise<number | undefined> {
+    async getUsageLimitForTeam(ctx: TraceContext, teamId: string): Promise<number | undefined> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async setSpendingLimitForTeam(ctx: TraceContext, teamId: string, spendingLimit: number): Promise<void> {
+    async setUsageLimitForTeam(ctx: TraceContext, teamId: string, spendingLimit: number): Promise<void> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
 

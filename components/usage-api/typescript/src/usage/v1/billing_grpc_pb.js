@@ -34,26 +34,48 @@ function deserialize_usage_v1_FinalizeInvoiceResponse(buffer_arg) {
   return usage_v1_billing_pb.FinalizeInvoiceResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-function serialize_usage_v1_GetLatestInvoiceRequest(arg) {
-  if (!(arg instanceof usage_v1_billing_pb.GetLatestInvoiceRequest)) {
-    throw new Error('Expected argument of type usage.v1.GetLatestInvoiceRequest');
+function serialize_usage_v1_GetUpcomingInvoiceRequest(arg) {
+  if (!(arg instanceof usage_v1_billing_pb.GetUpcomingInvoiceRequest)) {
+    throw new Error('Expected argument of type usage.v1.GetUpcomingInvoiceRequest');
   }
   return Buffer.from(arg.serializeBinary());
 }
 
-function deserialize_usage_v1_GetLatestInvoiceRequest(buffer_arg) {
-  return usage_v1_billing_pb.GetLatestInvoiceRequest.deserializeBinary(new Uint8Array(buffer_arg));
+function deserialize_usage_v1_GetUpcomingInvoiceRequest(buffer_arg) {
+  return usage_v1_billing_pb.GetUpcomingInvoiceRequest.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-function serialize_usage_v1_GetLatestInvoiceResponse(arg) {
-  if (!(arg instanceof usage_v1_billing_pb.GetLatestInvoiceResponse)) {
-    throw new Error('Expected argument of type usage.v1.GetLatestInvoiceResponse');
+function serialize_usage_v1_GetUpcomingInvoiceResponse(arg) {
+  if (!(arg instanceof usage_v1_billing_pb.GetUpcomingInvoiceResponse)) {
+    throw new Error('Expected argument of type usage.v1.GetUpcomingInvoiceResponse');
   }
   return Buffer.from(arg.serializeBinary());
 }
 
-function deserialize_usage_v1_GetLatestInvoiceResponse(buffer_arg) {
-  return usage_v1_billing_pb.GetLatestInvoiceResponse.deserializeBinary(new Uint8Array(buffer_arg));
+function deserialize_usage_v1_GetUpcomingInvoiceResponse(buffer_arg) {
+  return usage_v1_billing_pb.GetUpcomingInvoiceResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_usage_v1_ReconcileInvoicesRequest(arg) {
+  if (!(arg instanceof usage_v1_billing_pb.ReconcileInvoicesRequest)) {
+    throw new Error('Expected argument of type usage.v1.ReconcileInvoicesRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_usage_v1_ReconcileInvoicesRequest(buffer_arg) {
+  return usage_v1_billing_pb.ReconcileInvoicesRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_usage_v1_ReconcileInvoicesResponse(arg) {
+  if (!(arg instanceof usage_v1_billing_pb.ReconcileInvoicesResponse)) {
+    throw new Error('Expected argument of type usage.v1.ReconcileInvoicesResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_usage_v1_ReconcileInvoicesResponse(buffer_arg) {
+  return usage_v1_billing_pb.ReconcileInvoicesResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
 function serialize_usage_v1_SetBilledSessionRequest(arg) {
@@ -116,17 +138,30 @@ updateInvoices: {
     responseSerialize: serialize_usage_v1_UpdateInvoicesResponse,
     responseDeserialize: deserialize_usage_v1_UpdateInvoicesResponse,
   },
-  // GetLatestInvoice retrieves the latest invoice for a given query.
-getLatestInvoice: {
-    path: '/usage.v1.BillingService/GetLatestInvoice',
+  // ReconcileInvoices retrieves current credit balance and reflects it in billing system.
+// Internal RPC, not intended for general consumption.
+reconcileInvoices: {
+    path: '/usage.v1.BillingService/ReconcileInvoices',
     requestStream: false,
     responseStream: false,
-    requestType: usage_v1_billing_pb.GetLatestInvoiceRequest,
-    responseType: usage_v1_billing_pb.GetLatestInvoiceResponse,
-    requestSerialize: serialize_usage_v1_GetLatestInvoiceRequest,
-    requestDeserialize: deserialize_usage_v1_GetLatestInvoiceRequest,
-    responseSerialize: serialize_usage_v1_GetLatestInvoiceResponse,
-    responseDeserialize: deserialize_usage_v1_GetLatestInvoiceResponse,
+    requestType: usage_v1_billing_pb.ReconcileInvoicesRequest,
+    responseType: usage_v1_billing_pb.ReconcileInvoicesResponse,
+    requestSerialize: serialize_usage_v1_ReconcileInvoicesRequest,
+    requestDeserialize: deserialize_usage_v1_ReconcileInvoicesRequest,
+    responseSerialize: serialize_usage_v1_ReconcileInvoicesResponse,
+    responseDeserialize: deserialize_usage_v1_ReconcileInvoicesResponse,
+  },
+  // GetUpcomingInvoice retrieves the latest invoice for a given query.
+getUpcomingInvoice: {
+    path: '/usage.v1.BillingService/GetUpcomingInvoice',
+    requestStream: false,
+    responseStream: false,
+    requestType: usage_v1_billing_pb.GetUpcomingInvoiceRequest,
+    responseType: usage_v1_billing_pb.GetUpcomingInvoiceResponse,
+    requestSerialize: serialize_usage_v1_GetUpcomingInvoiceRequest,
+    requestDeserialize: deserialize_usage_v1_GetUpcomingInvoiceRequest,
+    responseSerialize: serialize_usage_v1_GetUpcomingInvoiceResponse,
+    responseDeserialize: deserialize_usage_v1_GetUpcomingInvoiceResponse,
   },
   // FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
 // having been invoiced.

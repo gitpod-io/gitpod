@@ -71,12 +71,7 @@ java.lang.String defaultValue);
         java.lang.String key);
 
     /**
-     * <code>optional int32 value = 3;</code>
-     * @return Whether the value field is set.
-     */
-    boolean hasValue();
-    /**
-     * <code>optional int32 value = 3;</code>
+     * <code>int32 value = 3;</code>
      * @return The value.
      */
     int getValue();
@@ -148,7 +143,7 @@ java.lang.String defaultValue);
               break;
             }
             case 24: {
-              bitField0_ |= 0x00000001;
+
               value_ = input.readInt32();
               break;
             }
@@ -198,7 +193,6 @@ java.lang.String defaultValue);
               io.gitpod.idemetrics.api.Idemetrics.AddCounterRequest.class, io.gitpod.idemetrics.api.Idemetrics.AddCounterRequest.Builder.class);
     }
 
-    private int bitField0_;
     public static final int NAME_FIELD_NUMBER = 1;
     private volatile java.lang.Object name_;
     /**
@@ -321,15 +315,7 @@ java.lang.String defaultValue);
     public static final int VALUE_FIELD_NUMBER = 3;
     private int value_;
     /**
-     * <code>optional int32 value = 3;</code>
-     * @return Whether the value field is set.
-     */
-    @java.lang.Override
-    public boolean hasValue() {
-      return ((bitField0_ & 0x00000001) != 0);
-    }
-    /**
-     * <code>optional int32 value = 3;</code>
+     * <code>int32 value = 3;</code>
      * @return The value.
      */
     @java.lang.Override
@@ -360,7 +346,7 @@ java.lang.String defaultValue);
           internalGetLabels(),
           LabelsDefaultEntryHolder.defaultEntry,
           2);
-      if (((bitField0_ & 0x00000001) != 0)) {
+      if (value_ != 0) {
         output.writeInt32(3, value_);
       }
       unknownFields.writeTo(output);
@@ -385,7 +371,7 @@ java.lang.String defaultValue);
         size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(2, labels__);
       }
-      if (((bitField0_ & 0x00000001) != 0)) {
+      if (value_ != 0) {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(3, value_);
       }
@@ -408,11 +394,8 @@ java.lang.String defaultValue);
           .equals(other.getName())) return false;
       if (!internalGetLabels().equals(
           other.internalGetLabels())) return false;
-      if (hasValue() != other.hasValue()) return false;
-      if (hasValue()) {
-        if (getValue()
-            != other.getValue()) return false;
-      }
+      if (getValue()
+          != other.getValue()) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -430,10 +413,8 @@ java.lang.String defaultValue);
         hash = (37 * hash) + LABELS_FIELD_NUMBER;
         hash = (53 * hash) + internalGetLabels().hashCode();
       }
-      if (hasValue()) {
-        hash = (37 * hash) + VALUE_FIELD_NUMBER;
-        hash = (53 * hash) + getValue();
-      }
+      hash = (37 * hash) + VALUE_FIELD_NUMBER;
+      hash = (53 * hash) + getValue();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -593,7 +574,7 @@ java.lang.String defaultValue);
 
         internalGetMutableLabels().clear();
         value_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000002);
+
         return this;
       }
 
@@ -621,15 +602,10 @@ java.lang.String defaultValue);
       public io.gitpod.idemetrics.api.Idemetrics.AddCounterRequest buildPartial() {
         io.gitpod.idemetrics.api.Idemetrics.AddCounterRequest result = new io.gitpod.idemetrics.api.Idemetrics.AddCounterRequest(this);
         int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
         result.name_ = name_;
         result.labels_ = internalGetLabels();
         result.labels_.makeImmutable();
-        if (((from_bitField0_ & 0x00000002) != 0)) {
-          result.value_ = value_;
-          to_bitField0_ |= 0x00000001;
-        }
-        result.bitField0_ = to_bitField0_;
+        result.value_ = value_;
         onBuilt();
         return result;
       }
@@ -684,7 +660,7 @@ java.lang.String defaultValue);
         }
         internalGetMutableLabels().mergeFrom(
             other.internalGetLabels());
-        if (other.hasValue()) {
+        if (other.getValue() != 0) {
           setValue(other.getValue());
         }
         this.mergeUnknownFields(other.unknownFields);
@@ -926,15 +902,7 @@ java.lang.String defaultValue);
 
       private int value_ ;
       /**
-       * <code>optional int32 value = 3;</code>
-       * @return Whether the value field is set.
-       */
-      @java.lang.Override
-      public boolean hasValue() {
-        return ((bitField0_ & 0x00000002) != 0);
-      }
-      /**
-       * <code>optional int32 value = 3;</code>
+       * <code>int32 value = 3;</code>
        * @return The value.
        */
       @java.lang.Override
@@ -942,22 +910,22 @@ java.lang.String defaultValue);
         return value_;
       }
       /**
-       * <code>optional int32 value = 3;</code>
+       * <code>int32 value = 3;</code>
        * @param value The value to set.
        * @return This builder for chaining.
        */
       public Builder setValue(int value) {
-        bitField0_ |= 0x00000002;
+
         value_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional int32 value = 3;</code>
+       * <code>int32 value = 3;</code>
        * @return This builder for chaining.
        */
       public Builder clearValue() {
-        bitField0_ = (bitField0_ & ~0x00000002);
+
         value_ = 0;
         onChanged();
         return this;
@@ -2822,6 +2790,2071 @@ java.lang.String defaultValue);
 
   }
 
+  public interface ReportErrorRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:ide_metrics_api.ReportErrorRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string error_stack = 1;</code>
+     * @return The errorStack.
+     */
+    java.lang.String getErrorStack();
+    /**
+     * <code>string error_stack = 1;</code>
+     * @return The bytes for errorStack.
+     */
+    com.google.protobuf.ByteString
+        getErrorStackBytes();
+
+    /**
+     * <code>string component = 2;</code>
+     * @return The component.
+     */
+    java.lang.String getComponent();
+    /**
+     * <code>string component = 2;</code>
+     * @return The bytes for component.
+     */
+    com.google.protobuf.ByteString
+        getComponentBytes();
+
+    /**
+     * <code>string version = 3;</code>
+     * @return The version.
+     */
+    java.lang.String getVersion();
+    /**
+     * <code>string version = 3;</code>
+     * @return The bytes for version.
+     */
+    com.google.protobuf.ByteString
+        getVersionBytes();
+
+    /**
+     * <code>string user_id = 4;</code>
+     * @return The userId.
+     */
+    java.lang.String getUserId();
+    /**
+     * <code>string user_id = 4;</code>
+     * @return The bytes for userId.
+     */
+    com.google.protobuf.ByteString
+        getUserIdBytes();
+
+    /**
+     * <code>string workspace_id = 5;</code>
+     * @return The workspaceId.
+     */
+    java.lang.String getWorkspaceId();
+    /**
+     * <code>string workspace_id = 5;</code>
+     * @return The bytes for workspaceId.
+     */
+    com.google.protobuf.ByteString
+        getWorkspaceIdBytes();
+
+    /**
+     * <code>string instance_id = 6;</code>
+     * @return The instanceId.
+     */
+    java.lang.String getInstanceId();
+    /**
+     * <code>string instance_id = 6;</code>
+     * @return The bytes for instanceId.
+     */
+    com.google.protobuf.ByteString
+        getInstanceIdBytes();
+
+    /**
+     * <code>map&lt;string, string&gt; properties = 7;</code>
+     */
+    int getPropertiesCount();
+    /**
+     * <code>map&lt;string, string&gt; properties = 7;</code>
+     */
+    boolean containsProperties(
+        java.lang.String key);
+    /**
+     * Use {@link #getPropertiesMap()} instead.
+     */
+    @java.lang.Deprecated
+    java.util.Map<java.lang.String, java.lang.String>
+    getProperties();
+    /**
+     * <code>map&lt;string, string&gt; properties = 7;</code>
+     */
+    java.util.Map<java.lang.String, java.lang.String>
+    getPropertiesMap();
+    /**
+     * <code>map&lt;string, string&gt; properties = 7;</code>
+     */
+
+    /* nullable */
+java.lang.String getPropertiesOrDefault(
+        java.lang.String key,
+        /* nullable */
+java.lang.String defaultValue);
+    /**
+     * <code>map&lt;string, string&gt; properties = 7;</code>
+     */
+
+    java.lang.String getPropertiesOrThrow(
+        java.lang.String key);
+  }
+  /**
+   * Protobuf type {@code ide_metrics_api.ReportErrorRequest}
+   */
+  public static final class ReportErrorRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:ide_metrics_api.ReportErrorRequest)
+      ReportErrorRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use ReportErrorRequest.newBuilder() to construct.
+    private ReportErrorRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private ReportErrorRequest() {
+      errorStack_ = "";
+      component_ = "";
+      version_ = "";
+      userId_ = "";
+      workspaceId_ = "";
+      instanceId_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new ReportErrorRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private ReportErrorRequest(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              errorStack_ = s;
+              break;
+            }
+            case 18: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              component_ = s;
+              break;
+            }
+            case 26: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              version_ = s;
+              break;
+            }
+            case 34: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              userId_ = s;
+              break;
+            }
+            case 42: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              workspaceId_ = s;
+              break;
+            }
+            case 50: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              instanceId_ = s;
+              break;
+            }
+            case 58: {
+              if (!((mutable_bitField0_ & 0x00000001) != 0)) {
+                properties_ = com.google.protobuf.MapField.newMapField(
+                    PropertiesDefaultEntryHolder.defaultEntry);
+                mutable_bitField0_ |= 0x00000001;
+              }
+              com.google.protobuf.MapEntry<java.lang.String, java.lang.String>
+              properties__ = input.readMessage(
+                  PropertiesDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
+              properties_.getMutableMap().put(
+                  properties__.getKey(), properties__.getValue());
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (com.google.protobuf.UninitializedMessageException e) {
+        throw e.asInvalidProtocolBufferException().setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.idemetrics.api.Idemetrics.internal_static_ide_metrics_api_ReportErrorRequest_descriptor;
+    }
+
+    @SuppressWarnings({"rawtypes"})
+    @java.lang.Override
+    protected com.google.protobuf.MapField internalGetMapField(
+        int number) {
+      switch (number) {
+        case 7:
+          return internalGetProperties();
+        default:
+          throw new RuntimeException(
+              "Invalid map field number: " + number);
+      }
+    }
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.idemetrics.api.Idemetrics.internal_static_ide_metrics_api_ReportErrorRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest.class, io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest.Builder.class);
+    }
+
+    public static final int ERROR_STACK_FIELD_NUMBER = 1;
+    private volatile java.lang.Object errorStack_;
+    /**
+     * <code>string error_stack = 1;</code>
+     * @return The errorStack.
+     */
+    @java.lang.Override
+    public java.lang.String getErrorStack() {
+      java.lang.Object ref = errorStack_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        errorStack_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string error_stack = 1;</code>
+     * @return The bytes for errorStack.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getErrorStackBytes() {
+      java.lang.Object ref = errorStack_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        errorStack_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int COMPONENT_FIELD_NUMBER = 2;
+    private volatile java.lang.Object component_;
+    /**
+     * <code>string component = 2;</code>
+     * @return The component.
+     */
+    @java.lang.Override
+    public java.lang.String getComponent() {
+      java.lang.Object ref = component_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        component_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string component = 2;</code>
+     * @return The bytes for component.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getComponentBytes() {
+      java.lang.Object ref = component_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        component_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int VERSION_FIELD_NUMBER = 3;
+    private volatile java.lang.Object version_;
+    /**
+     * <code>string version = 3;</code>
+     * @return The version.
+     */
+    @java.lang.Override
+    public java.lang.String getVersion() {
+      java.lang.Object ref = version_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        version_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string version = 3;</code>
+     * @return The bytes for version.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getVersionBytes() {
+      java.lang.Object ref = version_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        version_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int USER_ID_FIELD_NUMBER = 4;
+    private volatile java.lang.Object userId_;
+    /**
+     * <code>string user_id = 4;</code>
+     * @return The userId.
+     */
+    @java.lang.Override
+    public java.lang.String getUserId() {
+      java.lang.Object ref = userId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        userId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string user_id = 4;</code>
+     * @return The bytes for userId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getUserIdBytes() {
+      java.lang.Object ref = userId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        userId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int WORKSPACE_ID_FIELD_NUMBER = 5;
+    private volatile java.lang.Object workspaceId_;
+    /**
+     * <code>string workspace_id = 5;</code>
+     * @return The workspaceId.
+     */
+    @java.lang.Override
+    public java.lang.String getWorkspaceId() {
+      java.lang.Object ref = workspaceId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        workspaceId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string workspace_id = 5;</code>
+     * @return The bytes for workspaceId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getWorkspaceIdBytes() {
+      java.lang.Object ref = workspaceId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        workspaceId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int INSTANCE_ID_FIELD_NUMBER = 6;
+    private volatile java.lang.Object instanceId_;
+    /**
+     * <code>string instance_id = 6;</code>
+     * @return The instanceId.
+     */
+    @java.lang.Override
+    public java.lang.String getInstanceId() {
+      java.lang.Object ref = instanceId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        instanceId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string instance_id = 6;</code>
+     * @return The bytes for instanceId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getInstanceIdBytes() {
+      java.lang.Object ref = instanceId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        instanceId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int PROPERTIES_FIELD_NUMBER = 7;
+    private static final class PropertiesDefaultEntryHolder {
+      static final com.google.protobuf.MapEntry<
+          java.lang.String, java.lang.String> defaultEntry =
+              com.google.protobuf.MapEntry
+              .<java.lang.String, java.lang.String>newDefaultInstance(
+                  io.gitpod.idemetrics.api.Idemetrics.internal_static_ide_metrics_api_ReportErrorRequest_PropertiesEntry_descriptor,
+                  com.google.protobuf.WireFormat.FieldType.STRING,
+                  "",
+                  com.google.protobuf.WireFormat.FieldType.STRING,
+                  "");
+    }
+    private com.google.protobuf.MapField<
+        java.lang.String, java.lang.String> properties_;
+    private com.google.protobuf.MapField<java.lang.String, java.lang.String>
+    internalGetProperties() {
+      if (properties_ == null) {
+        return com.google.protobuf.MapField.emptyMapField(
+            PropertiesDefaultEntryHolder.defaultEntry);
+      }
+      return properties_;
+    }
+
+    public int getPropertiesCount() {
+      return internalGetProperties().getMap().size();
+    }
+    /**
+     * <code>map&lt;string, string&gt; properties = 7;</code>
+     */
+
+    @java.lang.Override
+    public boolean containsProperties(
+        java.lang.String key) {
+      if (key == null) { throw new NullPointerException("map key"); }
+      return internalGetProperties().getMap().containsKey(key);
+    }
+    /**
+     * Use {@link #getPropertiesMap()} instead.
+     */
+    @java.lang.Override
+    @java.lang.Deprecated
+    public java.util.Map<java.lang.String, java.lang.String> getProperties() {
+      return getPropertiesMap();
+    }
+    /**
+     * <code>map&lt;string, string&gt; properties = 7;</code>
+     */
+    @java.lang.Override
+
+    public java.util.Map<java.lang.String, java.lang.String> getPropertiesMap() {
+      return internalGetProperties().getMap();
+    }
+    /**
+     * <code>map&lt;string, string&gt; properties = 7;</code>
+     */
+    @java.lang.Override
+
+    public java.lang.String getPropertiesOrDefault(
+        java.lang.String key,
+        java.lang.String defaultValue) {
+      if (key == null) { throw new NullPointerException("map key"); }
+      java.util.Map<java.lang.String, java.lang.String> map =
+          internalGetProperties().getMap();
+      return map.containsKey(key) ? map.get(key) : defaultValue;
+    }
+    /**
+     * <code>map&lt;string, string&gt; properties = 7;</code>
+     */
+    @java.lang.Override
+
+    public java.lang.String getPropertiesOrThrow(
+        java.lang.String key) {
+      if (key == null) { throw new NullPointerException("map key"); }
+      java.util.Map<java.lang.String, java.lang.String> map =
+          internalGetProperties().getMap();
+      if (!map.containsKey(key)) {
+        throw new java.lang.IllegalArgumentException();
+      }
+      return map.get(key);
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(errorStack_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, errorStack_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(component_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, component_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(version_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, version_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(userId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, userId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(workspaceId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 5, workspaceId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(instanceId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 6, instanceId_);
+      }
+      com.google.protobuf.GeneratedMessageV3
+        .serializeStringMapTo(
+          output,
+          internalGetProperties(),
+          PropertiesDefaultEntryHolder.defaultEntry,
+          7);
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(errorStack_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, errorStack_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(component_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, component_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(version_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, version_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(userId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, userId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(workspaceId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, workspaceId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(instanceId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, instanceId_);
+      }
+      for (java.util.Map.Entry<java.lang.String, java.lang.String> entry
+           : internalGetProperties().getMap().entrySet()) {
+        com.google.protobuf.MapEntry<java.lang.String, java.lang.String>
+        properties__ = PropertiesDefaultEntryHolder.defaultEntry.newBuilderForType()
+            .setKey(entry.getKey())
+            .setValue(entry.getValue())
+            .build();
+        size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(7, properties__);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest)) {
+        return super.equals(obj);
+      }
+      io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest other = (io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest) obj;
+
+      if (!getErrorStack()
+          .equals(other.getErrorStack())) return false;
+      if (!getComponent()
+          .equals(other.getComponent())) return false;
+      if (!getVersion()
+          .equals(other.getVersion())) return false;
+      if (!getUserId()
+          .equals(other.getUserId())) return false;
+      if (!getWorkspaceId()
+          .equals(other.getWorkspaceId())) return false;
+      if (!getInstanceId()
+          .equals(other.getInstanceId())) return false;
+      if (!internalGetProperties().equals(
+          other.internalGetProperties())) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + ERROR_STACK_FIELD_NUMBER;
+      hash = (53 * hash) + getErrorStack().hashCode();
+      hash = (37 * hash) + COMPONENT_FIELD_NUMBER;
+      hash = (53 * hash) + getComponent().hashCode();
+      hash = (37 * hash) + VERSION_FIELD_NUMBER;
+      hash = (53 * hash) + getVersion().hashCode();
+      hash = (37 * hash) + USER_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getUserId().hashCode();
+      hash = (37 * hash) + WORKSPACE_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getWorkspaceId().hashCode();
+      hash = (37 * hash) + INSTANCE_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getInstanceId().hashCode();
+      if (!internalGetProperties().getMap().isEmpty()) {
+        hash = (37 * hash) + PROPERTIES_FIELD_NUMBER;
+        hash = (53 * hash) + internalGetProperties().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code ide_metrics_api.ReportErrorRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:ide_metrics_api.ReportErrorRequest)
+        io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.idemetrics.api.Idemetrics.internal_static_ide_metrics_api_ReportErrorRequest_descriptor;
+      }
+
+      @SuppressWarnings({"rawtypes"})
+      protected com.google.protobuf.MapField internalGetMapField(
+          int number) {
+        switch (number) {
+          case 7:
+            return internalGetProperties();
+          default:
+            throw new RuntimeException(
+                "Invalid map field number: " + number);
+        }
+      }
+      @SuppressWarnings({"rawtypes"})
+      protected com.google.protobuf.MapField internalGetMutableMapField(
+          int number) {
+        switch (number) {
+          case 7:
+            return internalGetMutableProperties();
+          default:
+            throw new RuntimeException(
+                "Invalid map field number: " + number);
+        }
+      }
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.idemetrics.api.Idemetrics.internal_static_ide_metrics_api_ReportErrorRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest.class, io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest.Builder.class);
+      }
+
+      // Construct using io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        errorStack_ = "";
+
+        component_ = "";
+
+        version_ = "";
+
+        userId_ = "";
+
+        workspaceId_ = "";
+
+        instanceId_ = "";
+
+        internalGetMutableProperties().clear();
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.idemetrics.api.Idemetrics.internal_static_ide_metrics_api_ReportErrorRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest getDefaultInstanceForType() {
+        return io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest build() {
+        io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest buildPartial() {
+        io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest result = new io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest(this);
+        int from_bitField0_ = bitField0_;
+        result.errorStack_ = errorStack_;
+        result.component_ = component_;
+        result.version_ = version_;
+        result.userId_ = userId_;
+        result.workspaceId_ = workspaceId_;
+        result.instanceId_ = instanceId_;
+        result.properties_ = internalGetProperties();
+        result.properties_.makeImmutable();
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest) {
+          return mergeFrom((io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest other) {
+        if (other == io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest.getDefaultInstance()) return this;
+        if (!other.getErrorStack().isEmpty()) {
+          errorStack_ = other.errorStack_;
+          onChanged();
+        }
+        if (!other.getComponent().isEmpty()) {
+          component_ = other.component_;
+          onChanged();
+        }
+        if (!other.getVersion().isEmpty()) {
+          version_ = other.version_;
+          onChanged();
+        }
+        if (!other.getUserId().isEmpty()) {
+          userId_ = other.userId_;
+          onChanged();
+        }
+        if (!other.getWorkspaceId().isEmpty()) {
+          workspaceId_ = other.workspaceId_;
+          onChanged();
+        }
+        if (!other.getInstanceId().isEmpty()) {
+          instanceId_ = other.instanceId_;
+          onChanged();
+        }
+        internalGetMutableProperties().mergeFrom(
+            other.internalGetProperties());
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object errorStack_ = "";
+      /**
+       * <code>string error_stack = 1;</code>
+       * @return The errorStack.
+       */
+      public java.lang.String getErrorStack() {
+        java.lang.Object ref = errorStack_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          errorStack_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string error_stack = 1;</code>
+       * @return The bytes for errorStack.
+       */
+      public com.google.protobuf.ByteString
+          getErrorStackBytes() {
+        java.lang.Object ref = errorStack_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          errorStack_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string error_stack = 1;</code>
+       * @param value The errorStack to set.
+       * @return This builder for chaining.
+       */
+      public Builder setErrorStack(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+
+        errorStack_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error_stack = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearErrorStack() {
+
+        errorStack_ = getDefaultInstance().getErrorStack();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error_stack = 1;</code>
+       * @param value The bytes for errorStack to set.
+       * @return This builder for chaining.
+       */
+      public Builder setErrorStackBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+
+        errorStack_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object component_ = "";
+      /**
+       * <code>string component = 2;</code>
+       * @return The component.
+       */
+      public java.lang.String getComponent() {
+        java.lang.Object ref = component_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          component_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string component = 2;</code>
+       * @return The bytes for component.
+       */
+      public com.google.protobuf.ByteString
+          getComponentBytes() {
+        java.lang.Object ref = component_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          component_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string component = 2;</code>
+       * @param value The component to set.
+       * @return This builder for chaining.
+       */
+      public Builder setComponent(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+
+        component_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string component = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearComponent() {
+
+        component_ = getDefaultInstance().getComponent();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string component = 2;</code>
+       * @param value The bytes for component to set.
+       * @return This builder for chaining.
+       */
+      public Builder setComponentBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+
+        component_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object version_ = "";
+      /**
+       * <code>string version = 3;</code>
+       * @return The version.
+       */
+      public java.lang.String getVersion() {
+        java.lang.Object ref = version_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          version_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string version = 3;</code>
+       * @return The bytes for version.
+       */
+      public com.google.protobuf.ByteString
+          getVersionBytes() {
+        java.lang.Object ref = version_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          version_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string version = 3;</code>
+       * @param value The version to set.
+       * @return This builder for chaining.
+       */
+      public Builder setVersion(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+
+        version_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string version = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearVersion() {
+
+        version_ = getDefaultInstance().getVersion();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string version = 3;</code>
+       * @param value The bytes for version to set.
+       * @return This builder for chaining.
+       */
+      public Builder setVersionBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+
+        version_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object userId_ = "";
+      /**
+       * <code>string user_id = 4;</code>
+       * @return The userId.
+       */
+      public java.lang.String getUserId() {
+        java.lang.Object ref = userId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          userId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string user_id = 4;</code>
+       * @return The bytes for userId.
+       */
+      public com.google.protobuf.ByteString
+          getUserIdBytes() {
+        java.lang.Object ref = userId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          userId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string user_id = 4;</code>
+       * @param value The userId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUserId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+
+        userId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string user_id = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUserId() {
+
+        userId_ = getDefaultInstance().getUserId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string user_id = 4;</code>
+       * @param value The bytes for userId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUserIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+
+        userId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object workspaceId_ = "";
+      /**
+       * <code>string workspace_id = 5;</code>
+       * @return The workspaceId.
+       */
+      public java.lang.String getWorkspaceId() {
+        java.lang.Object ref = workspaceId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          workspaceId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string workspace_id = 5;</code>
+       * @return The bytes for workspaceId.
+       */
+      public com.google.protobuf.ByteString
+          getWorkspaceIdBytes() {
+        java.lang.Object ref = workspaceId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          workspaceId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string workspace_id = 5;</code>
+       * @param value The workspaceId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setWorkspaceId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+
+        workspaceId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string workspace_id = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearWorkspaceId() {
+
+        workspaceId_ = getDefaultInstance().getWorkspaceId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string workspace_id = 5;</code>
+       * @param value The bytes for workspaceId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setWorkspaceIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+
+        workspaceId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object instanceId_ = "";
+      /**
+       * <code>string instance_id = 6;</code>
+       * @return The instanceId.
+       */
+      public java.lang.String getInstanceId() {
+        java.lang.Object ref = instanceId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          instanceId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string instance_id = 6;</code>
+       * @return The bytes for instanceId.
+       */
+      public com.google.protobuf.ByteString
+          getInstanceIdBytes() {
+        java.lang.Object ref = instanceId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          instanceId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string instance_id = 6;</code>
+       * @param value The instanceId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setInstanceId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+
+        instanceId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string instance_id = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearInstanceId() {
+
+        instanceId_ = getDefaultInstance().getInstanceId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string instance_id = 6;</code>
+       * @param value The bytes for instanceId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setInstanceIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+
+        instanceId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.MapField<
+          java.lang.String, java.lang.String> properties_;
+      private com.google.protobuf.MapField<java.lang.String, java.lang.String>
+      internalGetProperties() {
+        if (properties_ == null) {
+          return com.google.protobuf.MapField.emptyMapField(
+              PropertiesDefaultEntryHolder.defaultEntry);
+        }
+        return properties_;
+      }
+      private com.google.protobuf.MapField<java.lang.String, java.lang.String>
+      internalGetMutableProperties() {
+        onChanged();;
+        if (properties_ == null) {
+          properties_ = com.google.protobuf.MapField.newMapField(
+              PropertiesDefaultEntryHolder.defaultEntry);
+        }
+        if (!properties_.isMutable()) {
+          properties_ = properties_.copy();
+        }
+        return properties_;
+      }
+
+      public int getPropertiesCount() {
+        return internalGetProperties().getMap().size();
+      }
+      /**
+       * <code>map&lt;string, string&gt; properties = 7;</code>
+       */
+
+      @java.lang.Override
+      public boolean containsProperties(
+          java.lang.String key) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        return internalGetProperties().getMap().containsKey(key);
+      }
+      /**
+       * Use {@link #getPropertiesMap()} instead.
+       */
+      @java.lang.Override
+      @java.lang.Deprecated
+      public java.util.Map<java.lang.String, java.lang.String> getProperties() {
+        return getPropertiesMap();
+      }
+      /**
+       * <code>map&lt;string, string&gt; properties = 7;</code>
+       */
+      @java.lang.Override
+
+      public java.util.Map<java.lang.String, java.lang.String> getPropertiesMap() {
+        return internalGetProperties().getMap();
+      }
+      /**
+       * <code>map&lt;string, string&gt; properties = 7;</code>
+       */
+      @java.lang.Override
+
+      public java.lang.String getPropertiesOrDefault(
+          java.lang.String key,
+          java.lang.String defaultValue) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        java.util.Map<java.lang.String, java.lang.String> map =
+            internalGetProperties().getMap();
+        return map.containsKey(key) ? map.get(key) : defaultValue;
+      }
+      /**
+       * <code>map&lt;string, string&gt; properties = 7;</code>
+       */
+      @java.lang.Override
+
+      public java.lang.String getPropertiesOrThrow(
+          java.lang.String key) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        java.util.Map<java.lang.String, java.lang.String> map =
+            internalGetProperties().getMap();
+        if (!map.containsKey(key)) {
+          throw new java.lang.IllegalArgumentException();
+        }
+        return map.get(key);
+      }
+
+      public Builder clearProperties() {
+        internalGetMutableProperties().getMutableMap()
+            .clear();
+        return this;
+      }
+      /**
+       * <code>map&lt;string, string&gt; properties = 7;</code>
+       */
+
+      public Builder removeProperties(
+          java.lang.String key) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        internalGetMutableProperties().getMutableMap()
+            .remove(key);
+        return this;
+      }
+      /**
+       * Use alternate mutation accessors instead.
+       */
+      @java.lang.Deprecated
+      public java.util.Map<java.lang.String, java.lang.String>
+      getMutableProperties() {
+        return internalGetMutableProperties().getMutableMap();
+      }
+      /**
+       * <code>map&lt;string, string&gt; properties = 7;</code>
+       */
+      public Builder putProperties(
+          java.lang.String key,
+          java.lang.String value) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        if (value == null) {
+  throw new NullPointerException("map value");
+}
+
+        internalGetMutableProperties().getMutableMap()
+            .put(key, value);
+        return this;
+      }
+      /**
+       * <code>map&lt;string, string&gt; properties = 7;</code>
+       */
+
+      public Builder putAllProperties(
+          java.util.Map<java.lang.String, java.lang.String> values) {
+        internalGetMutableProperties().getMutableMap()
+            .putAll(values);
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:ide_metrics_api.ReportErrorRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:ide_metrics_api.ReportErrorRequest)
+    private static final io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest();
+    }
+
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<ReportErrorRequest>
+        PARSER = new com.google.protobuf.AbstractParser<ReportErrorRequest>() {
+      @java.lang.Override
+      public ReportErrorRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new ReportErrorRequest(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<ReportErrorRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<ReportErrorRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.idemetrics.api.Idemetrics.ReportErrorRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface ReportErrorResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:ide_metrics_api.ReportErrorResponse)
+      com.google.protobuf.MessageOrBuilder {
+  }
+  /**
+   * Protobuf type {@code ide_metrics_api.ReportErrorResponse}
+   */
+  public static final class ReportErrorResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:ide_metrics_api.ReportErrorResponse)
+      ReportErrorResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use ReportErrorResponse.newBuilder() to construct.
+    private ReportErrorResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private ReportErrorResponse() {
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new ReportErrorResponse();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private ReportErrorResponse(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (com.google.protobuf.UninitializedMessageException e) {
+        throw e.asInvalidProtocolBufferException().setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.idemetrics.api.Idemetrics.internal_static_ide_metrics_api_ReportErrorResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.idemetrics.api.Idemetrics.internal_static_ide_metrics_api_ReportErrorResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse.class, io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse.Builder.class);
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse)) {
+        return super.equals(obj);
+      }
+      io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse other = (io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse) obj;
+
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code ide_metrics_api.ReportErrorResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:ide_metrics_api.ReportErrorResponse)
+        io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.idemetrics.api.Idemetrics.internal_static_ide_metrics_api_ReportErrorResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.idemetrics.api.Idemetrics.internal_static_ide_metrics_api_ReportErrorResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse.class, io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse.Builder.class);
+      }
+
+      // Construct using io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.idemetrics.api.Idemetrics.internal_static_ide_metrics_api_ReportErrorResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse getDefaultInstanceForType() {
+        return io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse build() {
+        io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse buildPartial() {
+        io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse result = new io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse(this);
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse) {
+          return mergeFrom((io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse other) {
+        if (other == io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse.getDefaultInstance()) return this;
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:ide_metrics_api.ReportErrorResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:ide_metrics_api.ReportErrorResponse)
+    private static final io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse();
+    }
+
+    public static io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<ReportErrorResponse>
+        PARSER = new com.google.protobuf.AbstractParser<ReportErrorResponse>() {
+      @java.lang.Override
+      public ReportErrorResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new ReportErrorResponse(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<ReportErrorResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<ReportErrorResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.idemetrics.api.Idemetrics.ReportErrorResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_ide_metrics_api_AddCounterRequest_descriptor;
   private static final
@@ -2852,6 +4885,21 @@ java.lang.String defaultValue);
   private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_ide_metrics_api_ObserveHistogramResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_ide_metrics_api_ReportErrorRequest_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_ide_metrics_api_ReportErrorRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_ide_metrics_api_ReportErrorRequest_PropertiesEntry_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_ide_metrics_api_ReportErrorRequest_PropertiesEntry_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_ide_metrics_api_ReportErrorResponse_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_ide_metrics_api_ReportErrorResponse_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -2862,27 +4910,36 @@ java.lang.String defaultValue);
   static {
     java.lang.String[] descriptorData = {
       "\n\020idemetrics.proto\022\017ide_metrics_api\032\034goo" +
-      "gle/api/annotations.proto\"\256\001\n\021AddCounter" +
+      "gle/api/annotations.proto\"\237\001\n\021AddCounter" +
       "Request\022\014\n\004name\030\001 \001(\t\022>\n\006labels\030\002 \003(\0132.." +
       "ide_metrics_api.AddCounterRequest.Labels" +
-      "Entry\022\022\n\005value\030\003 \001(\005H\000\210\001\001\032-\n\013LabelsEntry" +
-      "\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001B\010\n\006_val" +
-      "ue\"\024\n\022AddCounterResponse\"\253\001\n\027ObserveHist" +
-      "ogramRequest\022\014\n\004name\030\001 \001(\t\022D\n\006labels\030\002 \003" +
-      "(\01324.ide_metrics_api.ObserveHistogramReq" +
-      "uest.LabelsEntry\022\r\n\005value\030\003 \001(\001\032-\n\013Label" +
-      "sEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"\032" +
-      "\n\030ObserveHistogramResponse2\247\002\n\016MetricsSe" +
-      "rvice\022}\n\nAddCounter\022\".ide_metrics_api.Ad" +
-      "dCounterRequest\032#.ide_metrics_api.AddCou" +
-      "nterResponse\"&\202\323\344\223\002 \"\033/metrics/counter/a" +
-      "dd/{name}:\001*\022\225\001\n\020ObserveHistogram\022(.ide_" +
-      "metrics_api.ObserveHistogramRequest\032).id" +
-      "e_metrics_api.ObserveHistogramResponse\"," +
-      "\202\323\344\223\002&\"!/metrics/histogram/observe/{name" +
-      "}:\001*BG\n\030io.gitpod.idemetrics.apiZ+github" +
-      ".com/gitpod-io/gitpod/ide-metrics/apib\006p" +
-      "roto3"
+      "Entry\022\r\n\005value\030\003 \001(\005\032-\n\013LabelsEntry\022\013\n\003k" +
+      "ey\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"\024\n\022AddCounte" +
+      "rResponse\"\253\001\n\027ObserveHistogramRequest\022\014\n" +
+      "\004name\030\001 \001(\t\022D\n\006labels\030\002 \003(\01324.ide_metric" +
+      "s_api.ObserveHistogramRequest.LabelsEntr" +
+      "y\022\r\n\005value\030\003 \001(\001\032-\n\013LabelsEntry\022\013\n\003key\030\001" +
+      " \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"\032\n\030ObserveHistog" +
+      "ramResponse\"\205\002\n\022ReportErrorRequest\022\023\n\013er" +
+      "ror_stack\030\001 \001(\t\022\021\n\tcomponent\030\002 \001(\t\022\017\n\007ve" +
+      "rsion\030\003 \001(\t\022\017\n\007user_id\030\004 \001(\t\022\024\n\014workspac" +
+      "e_id\030\005 \001(\t\022\023\n\013instance_id\030\006 \001(\t\022G\n\nprope" +
+      "rties\030\007 \003(\01323.ide_metrics_api.ReportErro" +
+      "rRequest.PropertiesEntry\0321\n\017PropertiesEn" +
+      "try\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"\025\n\023R" +
+      "eportErrorResponse2\232\003\n\016MetricsService\022}\n" +
+      "\nAddCounter\022\".ide_metrics_api.AddCounter" +
+      "Request\032#.ide_metrics_api.AddCounterResp" +
+      "onse\"&\202\323\344\223\002 \"\033/metrics/counter/add/{name" +
+      "}:\001*\022\225\001\n\020ObserveHistogram\022(.ide_metrics_" +
+      "api.ObserveHistogramRequest\032).ide_metric" +
+      "s_api.ObserveHistogramResponse\",\202\323\344\223\002&\"!" +
+      "/metrics/histogram/observe/{name}:\001*\022q\n\013" +
+      "reportError\022#.ide_metrics_api.ReportErro" +
+      "rRequest\032$.ide_metrics_api.ReportErrorRe" +
+      "sponse\"\027\202\323\344\223\002\021\"\014/reportError:\001*BG\n\030io.gi" +
+      "tpod.idemetrics.apiZ+github.com/gitpod-i" +
+      "o/gitpod/ide-metrics/apib\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -2894,7 +4951,7 @@ java.lang.String defaultValue);
     internal_static_ide_metrics_api_AddCounterRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ide_metrics_api_AddCounterRequest_descriptor,
-        new java.lang.String[] { "Name", "Labels", "Value", "Value", });
+        new java.lang.String[] { "Name", "Labels", "Value", });
     internal_static_ide_metrics_api_AddCounterRequest_LabelsEntry_descriptor =
       internal_static_ide_metrics_api_AddCounterRequest_descriptor.getNestedTypes().get(0);
     internal_static_ide_metrics_api_AddCounterRequest_LabelsEntry_fieldAccessorTable = new
@@ -2924,6 +4981,24 @@ java.lang.String defaultValue);
     internal_static_ide_metrics_api_ObserveHistogramResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ide_metrics_api_ObserveHistogramResponse_descriptor,
+        new java.lang.String[] { });
+    internal_static_ide_metrics_api_ReportErrorRequest_descriptor =
+      getDescriptor().getMessageTypes().get(4);
+    internal_static_ide_metrics_api_ReportErrorRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_ide_metrics_api_ReportErrorRequest_descriptor,
+        new java.lang.String[] { "ErrorStack", "Component", "Version", "UserId", "WorkspaceId", "InstanceId", "Properties", });
+    internal_static_ide_metrics_api_ReportErrorRequest_PropertiesEntry_descriptor =
+      internal_static_ide_metrics_api_ReportErrorRequest_descriptor.getNestedTypes().get(0);
+    internal_static_ide_metrics_api_ReportErrorRequest_PropertiesEntry_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_ide_metrics_api_ReportErrorRequest_PropertiesEntry_descriptor,
+        new java.lang.String[] { "Key", "Value", });
+    internal_static_ide_metrics_api_ReportErrorResponse_descriptor =
+      getDescriptor().getMessageTypes().get(5);
+    internal_static_ide_metrics_api_ReportErrorResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_ide_metrics_api_ReportErrorResponse_descriptor,
         new java.lang.String[] { });
     com.google.protobuf.ExtensionRegistry registry =
         com.google.protobuf.ExtensionRegistry.newInstance();

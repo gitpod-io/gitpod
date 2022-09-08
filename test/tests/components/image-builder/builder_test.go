@@ -13,6 +13,8 @@ import (
 
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/xerrors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
@@ -75,6 +77,9 @@ func TestBaseImageBuild(t *testing.T) {
 				}
 
 				if err != nil {
+					if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+						continue
+					}
 					t.Fatal(err)
 				}
 
@@ -84,7 +89,7 @@ func TestBaseImageBuild(t *testing.T) {
 				} else if msg.Status == imgapi.BuildStatus_done_failure {
 					t.Fatalf("image build failed: %s", msg.Message)
 				} else {
-					t.Logf("build output: %s", msg.Message)
+					t.Logf("build output: %s, %s", msg.Message, msg.Info)
 				}
 			}
 			if ref == "" {

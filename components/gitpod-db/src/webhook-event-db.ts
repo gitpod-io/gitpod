@@ -11,4 +11,5 @@ export interface WebhookEventDB {
     createEvent(parts: Omit<WebhookEvent, "id" | "creationTime">): Promise<WebhookEvent>;
     updateEvent(id: string, update: Partial<WebhookEvent>): Promise<void>;
     findByCloneUrl(cloneUrl: string, limit?: number): Promise<WebhookEvent[]>;
+    deleteOldEvents(ageInDays: number, limit?: number): Promise<void>;
 }

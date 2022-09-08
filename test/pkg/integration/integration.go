@@ -8,7 +8,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/rpc"
 	"os"
@@ -34,6 +36,8 @@ import (
 	kubectlexec "k8s.io/kubectl/pkg/cmd/exec"
 	"sigs.k8s.io/e2e-framework/klient"
 
+	volumesnapshotv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned"
+
 	"github.com/gitpod-io/gitpod/test/pkg/integration/common"
 )
 
@@ -53,14 +57,23 @@ func NewPodExec(config rest.Config, clientset *kubernetes.Clientset) *PodExec {
 }
 
 func (p *PodExec) PodCopyFile(src string, dst string, containername string) (*bytes.Buffer, *bytes.Buffer, *bytes.Buffer, error) {
-	ioStreams, in, out, errOut := genericclioptions.NewTestIOStreams()
-	copyOptions := kubectlcp.NewCopyOptions(ioStreams)
-	copyOptions.Clientset = p.Clientset
-	copyOptions.ClientConfig = p.RestConfig
-	copyOptions.Container = containername
-	err := copyOptions.Run([]string{src, dst})
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("Could not run copy operation: %v", err)
+	var in, out, errOut *bytes.Buffer
+	var ioStreams genericclioptions.IOStreams
+	for {
+		ioStreams, in, out, errOut = genericclioptions.NewTestIOStreams()
+		copyOptions := kubectlcp.NewCopyOptions(ioStreams)
+		copyOptions.Clientset = p.Clientset
+		copyOptions.ClientConfig = p.RestConfig
+		copyOptions.Container = containername
+		err := copyOptions.Run([]string{src, dst})
+		if err != nil {
+			if !errors.Is(err, io.EOF) {
+				return nil, nil, nil, fmt.Errorf("Could not run copy operation: %v", err)
+			}
+			time.Sleep(10 * time.Second)
+			continue
+		}
+		break
 	}
 	return in, out, errOut, nil
 }
@@ -187,20 +200,21 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 	}
 
 	execErrs := make(chan error, 1)
-	go func() {
+	execF := func() {
 		defer close(execErrs)
 		_, _, _, execErr := podExec.ExecCmd(cmd, podName, namespace, containerName)
 		if execErr != nil {
 			execErrs <- execErr
 		}
-	}()
+	}
+	go execF()
 	select {
 	case err := <-execErrs:
 		if err != nil {
 			return nil, closer, err
 		}
 		return nil, closer, fmt.Errorf("agent stopped unexepectedly")
-	case <-time.After(1 * time.Second):
+	case <-time.After(30 * time.Second):
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -230,7 +244,7 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 
 	var res *rpc.Client
 	var lastError error
-	waitErr := wait.PollImmediate(5*time.Second, 1*time.Minute, func() (bool, error) {
+	waitErr := wait.PollImmediate(5*time.Second, 3*time.Minute, func() (bool, error) {
 		res, lastError = rpc.DialHTTP("tcp", fmt.Sprintf("localhost:%d", localAgentPort))
 		if lastError != nil {
 			return false, nil
@@ -488,4 +502,28 @@ func isPodReady(s *corev1.PodStatus) bool {
 	}
 
 	return false
+}
+
+func FindVolumeSnapshot(ctx context.Context, instanceID, namespace string, client klient.Client) (string, string, error) {
+	vsClient, err := volumesnapshotv1.NewForConfig(client.RESTConfig())
+	if err != nil {
+		return "", "", err
+	}
+
+	volumeSnapshots, err := vsClient.SnapshotV1().VolumeSnapshots(namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: "workspaceID=" + instanceID,
+	})
+	if err != nil {
+		return "", "", xerrors.Errorf("cannot list volume snapshots: %w", err)
+	}
+	if len(volumeSnapshots.Items) == 0 {
+		return "", "", xerrors.Errorf("no volume snapshot for instance %s", instanceID)
+	}
+
+	var volumeSnapshot, volumeSnapshotContent string
+	volumeSnapshot = volumeSnapshots.Items[0].Name
+	if volumeSnapshots.Items[0].Status != nil && volumeSnapshots.Items[0].Status.BoundVolumeSnapshotContentName != nil {
+		volumeSnapshotContent = *volumeSnapshots.Items[0].Status.BoundVolumeSnapshotContentName
+	}
+	return volumeSnapshot, volumeSnapshotContent, nil
 }

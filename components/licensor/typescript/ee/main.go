@@ -27,7 +27,6 @@ func Init(key *C.char, domain *C.char) (id int) {
 	switch os.Getenv("GITPOD_LICENSE_TYPE") {
 	case string(licensor.LicenseTypeReplicated):
 		instances[id] = licensor.NewReplicatedEvaluator()
-		break
 	default:
 		instances[id] = licensor.NewGitpodEvaluator([]byte(C.GoString(key)), C.GoString(domain))
 	}

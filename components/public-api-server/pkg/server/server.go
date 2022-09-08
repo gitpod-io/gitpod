@@ -6,7 +6,11 @@ package server
 
 import (
 	"fmt"
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"net/http"
 	"net/url"
+	"os"
+	"strings"
 
 	"github.com/gitpod-io/gitpod/public-api/config"
 	"github.com/gorilla/handlers"
@@ -48,9 +52,18 @@ func Start(logger *logrus.Entry, cfg *config.Configuration) error {
 		}
 	}
 
-	srv.HTTPMux().Handle("/stripe/invoices/webhook",
-		handlers.ContentTypeHandler(webhooks.NewStripeWebhookHandler(billingService), "application/json"),
-	)
+	var stripeWebhookHandler http.Handler = webhooks.NewNoopWebhookHandler()
+	if cfg.StripeWebhookSigningSecretPath != "" {
+		stripeWebhookSecret, err := readStripeWebhookSecret(cfg.StripeWebhookSigningSecretPath)
+		if err != nil {
+			return fmt.Errorf("failed to read stripe secret: %w", err)
+		}
+		stripeWebhookHandler = webhooks.NewStripeWebhookHandler(billingService, stripeWebhookSecret)
+	} else {
+		log.Info("No stripe webhook secret is configured, endpoints will return NotImplemented")
+	}
+
+	srv.HTTPMux().Handle("/stripe/invoices/webhook", handlers.ContentTypeHandler(stripeWebhookHandler, "application/json"))
 
 	if registerErr := register(srv, gitpodAPI, registry); registerErr != nil {
 		return fmt.Errorf("failed to register services: %w", registerErr)
@@ -72,4 +85,13 @@ func register(srv *baseserver.Server, serverAPIURL *url.URL, registry *prometheu
 	v1.RegisterPrebuildsServiceServer(srv.GRPC(), v1.UnimplementedPrebuildsServiceServer{})
 
 	return nil
+}
+
+func readStripeWebhookSecret(path string) (string, error) {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to read stripe webhook secret: %w", err)
+	}
+
+	return strings.TrimSpace(string(b)), nil
 }

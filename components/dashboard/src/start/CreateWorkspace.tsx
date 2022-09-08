@@ -23,7 +23,6 @@ import { openAuthorizeWindow } from "../provider-utils";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { SelectAccountModal } from "../settings/SelectAccountModal";
 import PrebuildLogs from "../components/PrebuildLogs";
-import CodeText from "../components/CodeText";
 import FeedbackComponent from "../feedback-form/FeedbackComponent";
 import { isGitpodIo } from "../utils";
 import { BillingAccountSelector } from "../components/BillingAccountSelector";
@@ -206,7 +205,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
                 case ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED:
                     error = undefined; // to hide the error (otherwise rendered behind the modal)
                     phase = StartPhase.Stopped;
-                    statusMessage = <SpendingLimitReachedModal hints={this.state?.error?.data} />;
+                    statusMessage = <UsageLimitReachedModal hints={this.state?.error?.data} />;
                     break;
                 default:
                     statusMessage = (
@@ -367,7 +366,7 @@ function LimitReachedOutOfHours() {
         </LimitReachedModal>
     );
 }
-function SpendingLimitReachedModal(p: { hints: any }) {
+function UsageLimitReachedModal(p: { hints: any }) {
     const { teams } = useContext(TeamsContext);
     // const [attributionId, setAttributionId] = useState<AttributionId | undefined>();
     const [attributedTeam, setAttributedTeam] = useState<Team | undefined>();
@@ -391,7 +390,7 @@ function SpendingLimitReachedModal(p: { hints: any }) {
             </h3>
             <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-6">
                 <Alert type="error" className="app-container rounded-md">
-                    You have reached the <strong>spending limit</strong> of your billing account.
+                    You have reached the <strong>usage limit</strong> of your billing account.
                 </Alert>
                 <p className="mt-3 text-base text-gray-600 dark:text-gray-300">
                     {"Contact a team owner "}
@@ -400,7 +399,7 @@ function SpendingLimitReachedModal(p: { hints: any }) {
                             of <strong>{attributedTeamName} </strong>
                         </>
                     )}
-                    to increase the spending limit, or change your <a href="/billing">billing settings</a>.
+                    to increase the usage limit, or change your <a href="/billing">billing settings</a>.
                 </p>
             </div>
             <div className="flex justify-end mt-6 space-x-2">
@@ -480,7 +479,7 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
                     <div className="mt-2 flex flex-col space-y-8">
                         <p className="text-base text-gray-400 w-96">
                             Permission to access private repositories has been granted. If you are a member of{" "}
-                            <CodeText>{owner}</CodeText>, please try to request access for Gitpod.
+                            <code>{owner}</code>, please try to request access for Gitpod.
                         </p>
                         <a className="mx-auto" href={authorizeURL}>
                             <button>Request Access for Gitpod</button>
@@ -494,7 +493,7 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
                 <div className="mt-2 flex flex-col space-y-8">
                     <p className="text-base text-gray-400 w-96">
                         Your access token was updated recently. Please try again if the repository exists and Gitpod was
-                        approved for <CodeText>{owner}</CodeText>.
+                        approved for <code>{owner}</code>.
                     </p>
                     <a className="mx-auto" href={authorizeURL}>
                         <button>Try Again</button>
@@ -507,7 +506,7 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
     return (
         <StartPage phase={StartPhase.Checking} error={p.error}>
             <p className="text-base text-gray-400 mt-2">
-                <CodeText>{repoFullName}</CodeText>
+                <code>{repoFullName}</code>
             </p>
             {statusMessage}
             {p.error && isGitpodIo() && (

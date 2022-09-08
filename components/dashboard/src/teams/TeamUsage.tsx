@@ -9,10 +9,11 @@ import { useLocation } from "react-router";
 import { getCurrentTeam, TeamsContext } from "./teams-context";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import {
-    BillableSessionRequest,
-    BillableWorkspaceType,
-    ExtendedBillableSession,
-    SortOrder,
+    ListUsageRequest,
+    Ordering,
+    ListUsageResponse,
+    WorkspaceInstanceUsageData,
+    Usage,
 } from "@gitpod/gitpod-protocol/lib/usage";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { Item, ItemField, ItemsList } from "../components/ItemsList";
@@ -21,27 +22,25 @@ import Header from "../components/Header";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ReactComponent as CreditsSvg } from "../images/credits.svg";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
-import { ReactComponent as SortArrow } from "../images/sort-arrow.svg";
 import { ReactComponent as UsageIcon } from "../images/usage-default.svg";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { toRemoteURL } from "../projects/render-utils";
+import { WorkspaceType } from "@gitpod/gitpod-protocol";
 
 function TeamUsage() {
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
     const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
-    const [billedUsage, setBilledUsage] = useState<ExtendedBillableSession[]>([]);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [resultsPerPage] = useState(50);
+    const [usagePage, setUsagePage] = useState<ListUsageResponse | undefined>(undefined);
     const [errorMessage, setErrorMessage] = useState("");
     const today = new Date();
     const startOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const timestampStartOfCurrentMonth = startOfCurrentMonth.getTime();
     const [startDateOfBillMonth, setStartDateOfBillMonth] = useState(timestampStartOfCurrentMonth);
     const [endDateOfBillMonth, setEndDateOfBillMonth] = useState(Date.now());
+    const [totalCreditsUsed, setTotalCreditsUsed] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [isStartedTimeDescending, setIsStartedTimeDescending] = useState<boolean>(true);
 
     useEffect(() => {
         if (!team) {
@@ -57,30 +56,8 @@ function TeamUsage() {
         if (!team) {
             return;
         }
-        if (billedUsage.length === 0) {
-            setIsLoading(true);
-        }
-        (async () => {
-            const attributionId = AttributionId.render({ kind: "team", teamId: team.id });
-            const request: BillableSessionRequest = {
-                attributionId,
-                startedTimeOrder: isStartedTimeDescending ? SortOrder.Descending : SortOrder.Ascending,
-                from: startDateOfBillMonth,
-                to: endDateOfBillMonth,
-            };
-            try {
-                const { server } = getGitpodService();
-                const billedUsageResult = await server.listBilledUsage(request);
-                setBilledUsage(billedUsageResult);
-            } catch (error) {
-                if (error.code === ErrorCodes.PERMISSION_DENIED) {
-                    setErrorMessage("Access to usage details is restricted to team owners.");
-                }
-            } finally {
-                setIsLoading(false);
-            }
-        })();
-    }, [team, startDateOfBillMonth, endDateOfBillMonth, isStartedTimeDescending]);
+        loadPage(1);
+    }, [team, startDateOfBillMonth, endDateOfBillMonth]);
 
     useEffect(() => {
         if (!teamBillingMode) {
@@ -91,30 +68,60 @@ function TeamUsage() {
         }
     }, [teamBillingMode]);
 
-    const getType = (type: BillableWorkspaceType) => {
+    const loadPage = async (page: number = 1) => {
+        if (!team) {
+            return;
+        }
+        if (usagePage === undefined) {
+            setIsLoading(true);
+            setTotalCreditsUsed(0);
+        }
+        const attributionId = AttributionId.render({ kind: "team", teamId: team.id });
+        const request: ListUsageRequest = {
+            attributionId,
+            from: startDateOfBillMonth,
+            to: endDateOfBillMonth,
+            order: Ordering.ORDERING_DESCENDING,
+            pagination: {
+                perPage: 50,
+                page,
+            },
+        };
+        try {
+            const page = await getGitpodService().server.listUsage(request);
+            setUsagePage(page);
+            setTotalCreditsUsed(Math.ceil(page.creditBalanceAtEnd));
+        } catch (error) {
+            if (error.code === ErrorCodes.PERMISSION_DENIED) {
+                setErrorMessage("Access to usage details is restricted to team owners.");
+            } else {
+                setErrorMessage(`Error: ${error?.message}`);
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const getType = (type: WorkspaceType) => {
         if (type === "regular") {
             return "Workspace";
         }
         return "Prebuild";
     };
 
-    const getMinutes = (usage: ExtendedBillableSession) => {
-        let end;
-        if (!usage.endTime) {
-            end = new Date(Date.now()).getTime();
-        } else {
-            end = new Date(usage.endTime).getTime();
+    const getMinutes = (usage: Usage) => {
+        if (usage.kind !== "workspaceinstance") {
+            return "";
         }
-        const start = new Date(usage.startTime).getTime();
+        const metaData = usage.metadata as WorkspaceInstanceUsageData;
+        if (!metaData.endTime) {
+            return "running";
+        }
+        const end = new Date(metaData.endTime).getTime();
+        const start = new Date(metaData.startTime).getTime();
         const lengthOfUsage = Math.floor(end - start);
         const inMinutes = (lengthOfUsage / (1000 * 60)).toFixed(1);
         return inMinutes + " min";
-    };
-
-    const calculateTotalUsage = () => {
-        let totalCredits = 0;
-        billedUsage.forEach((session) => (totalCredits += session.credits));
-        return totalCredits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
 
     const handleMonthClick = (start: any, end: any) => {
@@ -144,7 +151,7 @@ function TeamUsage() {
         return rows;
     };
 
-    const displayTime = (time: string) => {
+    const displayTime = (time: string | number) => {
         const options: Intl.DateTimeFormatOptions = {
             day: "numeric",
             month: "short",
@@ -155,14 +162,11 @@ function TeamUsage() {
         return new Date(time).toLocaleDateString(undefined, options).replace("at ", "");
     };
 
-    const lastResultOnCurrentPage = currentPage * resultsPerPage;
-    const firstResultOnCurrentPage = lastResultOnCurrentPage - resultsPerPage;
-    const totalNumberOfPages = Math.ceil(billedUsage.length / resultsPerPage);
-    const currentPaginatedResults = billedUsage.slice(firstResultOnCurrentPage, lastResultOnCurrentPage);
+    const currentPaginatedResults = usagePage?.usageEntriesList ?? [];
 
     return (
         <>
-            <Header title="Usage" subtitle="Manage team usage." />
+            <Header title="Usage" subtitle="View usage details (updated every 15 minutes)." />
             <div className="app-container pt-5">
                 {errorMessage && <p className="text-base">{errorMessage}</p>}
                 {!errorMessage && (
@@ -181,16 +185,18 @@ function TeamUsage() {
                                     <div className="text-base text-gray-500 truncate">Previous Months</div>
                                     {getBillingHistory()}
                                 </div>
-                                <div className="flex flex-col truncate">
-                                    <div className="text-base text-gray-500">Total usage</div>
-                                    <div className="flex text-lg text-gray-600 font-semibold">
-                                        <CreditsSvg className="my-auto mr-1" />
-                                        <span>{calculateTotalUsage()} Credits</span>
+                                {!isLoading && (
+                                    <div className="flex flex-col truncate">
+                                        <div className="text-base text-gray-500">Total usage</div>
+                                        <div className="flex text-lg text-gray-600 font-semibold">
+                                            <CreditsSvg className="my-auto mr-1" />
+                                            <span>{totalCreditsUsed} Credits</span>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         </div>
-                        {!isLoading && billedUsage.length === 0 && !errorMessage && (
+                        {!isLoading && usagePage === undefined && !errorMessage && (
                             <div className="flex flex-col w-full mb-8">
                                 <h3 className="text-center text-gray-500 mt-8">No sessions found.</h3>
                                 <p className="text-center text-gray-500 mt-1">
@@ -215,7 +221,7 @@ function TeamUsage() {
                                 <Spinner className="m-2 h-5 w-5 animate-spin" />
                             </div>
                         )}
-                        {billedUsage.length > 0 && !isLoading && (
+                        {!isLoading && currentPaginatedResults.length > 0 && (
                             <div className="flex flex-col w-full mb-8">
                                 <ItemsList className="mt-2 text-gray-400 dark:text-gray-500">
                                     <Item
@@ -233,40 +239,41 @@ function TeamUsage() {
                                         </ItemField>
                                         <ItemField className="my-auto" />
                                         <ItemField className="col-span-3 my-auto cursor-pointer">
-                                            <span
-                                                className="flex my-auto"
-                                                onClick={() => setIsStartedTimeDescending(!isStartedTimeDescending)}
-                                            >
-                                                Timestamp
-                                                <SortArrow
-                                                    className={`ml-2 h-4 w-4 my-auto ${
-                                                        isStartedTimeDescending ? "" : " transform rotate-180"
-                                                    }`}
-                                                />
-                                            </span>
+                                            <span>Timestamp</span>
                                         </ItemField>
                                     </Item>
                                     {currentPaginatedResults &&
                                         currentPaginatedResults.map((usage) => {
                                             return (
                                                 <div
-                                                    key={usage.instanceId}
+                                                    key={usage.workspaceInstanceId}
                                                     className="flex p-3 grid grid-cols-12 gap-x-3 justify-between transition ease-in-out rounded-xl"
                                                 >
                                                     <div className="flex flex-col col-span-2 my-auto">
                                                         <span className="text-gray-600 dark:text-gray-100 text-md font-medium">
-                                                            {getType(usage.workspaceType)}
+                                                            {getType(
+                                                                (usage.metadata as WorkspaceInstanceUsageData)
+                                                                    .workspaceType,
+                                                            )}
                                                         </span>
                                                         <span className="text-sm text-gray-400 dark:text-gray-500">
-                                                            {usage.workspaceClass}
+                                                            {
+                                                                (usage.metadata as WorkspaceInstanceUsageData)
+                                                                    .workspaceClass
+                                                            }
                                                         </span>
                                                     </div>
                                                     <div className="flex flex-col col-span-5 my-auto">
                                                         <span className="truncate text-gray-600 dark:text-gray-100 text-md font-medium">
-                                                            {usage.workspaceId}
+                                                            {(usage.metadata as WorkspaceInstanceUsageData).workspaceId}
                                                         </span>
                                                         <span className="text-sm truncate text-gray-400 dark:text-gray-500">
-                                                            {usage.contextURL && toRemoteURL(usage.contextURL)}
+                                                            {(usage.metadata as WorkspaceInstanceUsageData)
+                                                                .contextURL &&
+                                                                toRemoteURL(
+                                                                    (usage.metadata as WorkspaceInstanceUsageData)
+                                                                        .contextURL,
+                                                                )}
                                                         </span>
                                                     </div>
                                                     <div className="flex flex-col my-auto">
@@ -280,15 +287,17 @@ function TeamUsage() {
                                                     <div className="my-auto" />
                                                     <div className="flex flex-col col-span-3 my-auto">
                                                         <span className="text-gray-400 dark:text-gray-500 truncate font-medium">
-                                                            {displayTime(usage.startTime)}
+                                                            {displayTime(usage.effectiveTime!)}
                                                         </span>
                                                         <div className="flex">
-                                                            {usage.workspaceType === "prebuild" ? (
+                                                            {(usage.metadata as WorkspaceInstanceUsageData)
+                                                                .workspaceType === "prebuild" ? (
                                                                 <UsageIcon className="my-auto w-4 h-4 mr-1" />
                                                             ) : (
                                                                 ""
                                                             )}
-                                                            {usage.workspaceType === "prebuild" ? (
+                                                            {(usage.metadata as WorkspaceInstanceUsageData)
+                                                                .workspaceType === "prebuild" ? (
                                                                 <span className="text-sm text-gray-400 dark:text-gray-500">
                                                                     Gitpod
                                                                 </span>
@@ -296,11 +305,16 @@ function TeamUsage() {
                                                                 <div className="flex">
                                                                     <img
                                                                         className="my-auto rounded-full w-4 h-4 inline-block align-text-bottom mr-1 overflow-hidden"
-                                                                        src={usage.user?.avatarURL || ""}
+                                                                        src={
+                                                                            (
+                                                                                usage.metadata as WorkspaceInstanceUsageData
+                                                                            ).userAvatarURL || ""
+                                                                        }
                                                                         alt="user avatar"
                                                                     />
                                                                     <span className="text-sm text-gray-400 dark:text-gray-500">
-                                                                        {usage.user?.name}
+                                                                        {(usage.metadata as WorkspaceInstanceUsageData)
+                                                                            .userName || ""}
                                                                     </span>
                                                                 </div>
                                                             )}
@@ -310,12 +324,11 @@ function TeamUsage() {
                                             );
                                         })}
                                 </ItemsList>
-                                {billedUsage.length > resultsPerPage && (
+                                {usagePage && usagePage.pagination && usagePage.pagination.totalPages > 1 && (
                                     <Pagination
-                                        totalResults={billedUsage.length}
-                                        currentPage={currentPage}
-                                        setCurrentPage={setCurrentPage}
-                                        totalNumberOfPages={totalNumberOfPages}
+                                        currentPage={usagePage.pagination.page}
+                                        setPage={(page) => loadPage(page)}
+                                        totalNumberOfPages={usagePage.pagination.totalPages}
                                     />
                                 )}
                             </div>

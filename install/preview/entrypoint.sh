@@ -22,7 +22,7 @@ fi
 REQUIRED_MEM_KB=$((6 * 1024 * 1024))
 total_mem_kb=$(awk '/MemTotal:/ {print $2}' /proc/meminfo)
 if [ "${total_mem_kb}" -lt "${REQUIRED_MEM_KB}" ]; then
-    echo "Preview installation of Gitpod requires a system with at least 6GB of memory"
+    echo "Gitpod local preview requires a system with at least 6GB of memory"
     exit 1
 else
   set -x
@@ -31,22 +31,20 @@ fi
 REQUIRED_CORES=4
 total_cores=$(nproc)
 if [ "${total_cores}" -lt "${REQUIRED_CORES}" ]; then
-    echo "Preview installation of Gitpod requires a system with at least 4 CPU Cores"
+    echo "Gitpod local preview requires a system with at least 4 CPU Cores"
     exit 1
 fi
 
 echo "Gitpod Domain: $DOMAIN"
 
+# With cgroupv2, We need to move the k3s processes into the
+# init group when we override the entrypoint in the container
 if [ -f /sys/fs/cgroup/cgroup.controllers ]; then
-  echo "[$(date -Iseconds)] [CgroupV2 Fix] Evacuating Root Cgroup ..."
-	# move the processes from the root group to the /init group,
-  # otherwise writing subtree_control fails with EBUSY.
   mkdir -p /sys/fs/cgroup/init
   busybox xargs -rn1 < /sys/fs/cgroup/cgroup.procs > /sys/fs/cgroup/init/cgroup.procs || :
-  # enable controllers
   sed -e 's/ / +/g' -e 's/^/+/' <"/sys/fs/cgroup/cgroup.controllers" >"/sys/fs/cgroup/cgroup.subtree_control"
-  echo "[$(date -Iseconds)] [CgroupV2 Fix] Done"
 fi
+
 
 mount --make-shared /sys/fs/cgroup
 mount --make-shared /proc
@@ -212,6 +210,11 @@ for f in /var/lib/rancher/k3s/server/manifests/gitpod/*StatefulSet*.yaml; do yq 
 
 # removing init container from ws-daemon (systemd and Ubuntu)
 yq eval-all -i 'del(.spec.template.spec.initContainers[0])' /var/lib/rancher/k3s/server/manifests/gitpod/*_DaemonSet_ws-daemon.yaml
+
+# set lower requirements
+yq eval-all -i '.spec.template.spec.containers[0].resources.requests.memory="250Mi"' /var/lib/rancher/k3s/server/manifests/gitpod/*_DaemonSet_ws-daemon.yaml
+yq eval-all -i '.spec.template.spec.containers[0].resources.requests.cpu="250m"' /var/lib/rancher/k3s/server/manifests/gitpod/*_DaemonSet_ws-daemon.yaml
+yq eval-all -i '.spec.template.spec.containers[0].resources.requests.memory="250Mi"' /var/lib/rancher/k3s/server/manifests/gitpod/*_Deployment_minio.yaml
 
 touch /var/lib/rancher/k3s/server/manifests/coredns.yaml.skip
 mv -f /app/manifests/coredns.yaml /var/lib/rancher/k3s/server/manifests/custom-coredns.yaml

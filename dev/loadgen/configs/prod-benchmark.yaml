@@ -9,12 +9,12 @@ successRate: 1
 environment:
   - name: "THEIA_SUPERVISOR_TOKENS"
     value: '[{"token":"foobar","host":"gitpod-staging.com","scope":["function:getWorkspace","function:getLoggedInUser","function:getPortAuthenticationToken","function:getWorkspaceOwner","function:getWorkspaceUsers","function:isWorkspaceOwner","function:controlAdmission","function:setWorkspaceTimeout","function:getWorkspaceTimeout","function:sendHeartBeat","function:getOpenPorts","function:openPort","function:closePort","function:getLayout","function:generateNewGitpodToken","function:takeSnapshot","function:storeLayout","function:stopWorkspace","resource:workspace::fa498dcc-0a84-448f-9666-79f297ad821a::get/update","resource:workspaceInstance::e0a17083-6a78-441a-9b97-ef90d6aff463::get/update/delete","resource:snapshot::*::create/get","resource:gitpodToken::*::create","resource:userStorage::*::create/get/update"],"expiryDate":"2020-12-01T07:55:12.501Z","reuse":2}]'
-workspaceClass: ""
+workspaceClass: "g1-standard"
 repos:
   - cloneURL: https://github.com/Furisto/workspace-stress
     cloneTarget: main
     score: 20
-    workspaceImage: eu.gcr.io/gitpod-dev/dev/loadtest/workspace-stress:latest
+    workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest
     environment:
     # cpu
     - name: "CPU_COUNT" # start N workers
@@ -66,16 +66,19 @@ repos:
   - cloneURL: https://github.com/gitpod-io/template-typescript-node
     cloneTarget: master
     score: 20
-    workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:dd3075638ccf424374cc9c681b3d2338908d07115b28e54856cd45604c33768c
+    workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest
+    workspaceClass: "g1-large"
   - cloneURL: https://github.com/gitpod-io/template-typescript-react
     cloneTarget: main
     score: 20
-    workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:e764b1a602dc4123d9a027358367b5c4a35b62043e3c630731702144b7d37f77
+    workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest
+    workspaceClass: "default"
   - cloneURL: https://github.com/gitpod-io/template-python-django
     cloneTarget: main
     score: 20
-    workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:e764b1a602dc4123d9a027358367b5c4a35b62043e3c630731702144b7d37f77
+    workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest
+    workspaceClass: "gitpodio-internal-xl"
   - cloneURL: https://github.com/gitpod-io/template-python-flask
     score: 20
     cloneTarget: main
-    workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:32b2dc5f2707904a9338a97c77a039706df661b5c5e4a5851f1ee74f06a38fd3
+    workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest

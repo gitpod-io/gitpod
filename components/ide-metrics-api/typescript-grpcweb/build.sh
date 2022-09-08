@@ -3,21 +3,22 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-curl -LsSo /tmp/protoc-gen-grpc-web https://github.com/grpc/grpc-web/releases/download/1.3.1/protoc-gen-grpc-web-1.3.1-linux-x86_64
-    chmod +x /tmp/protoc-gen-grpc-web
+DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 
-THIRD_PARTY_INCLUDES="${PROTOLOC:-..}"
+THIRD_PARTY_INCLUDES=${PROTOLOC:-$DIR/..}
 if [ ! -d "$THIRD_PARTY_INCLUDES"/third_party/google/api ]; then
     echo "missing $THIRD_PARTY_INCLUDES/third_party/google/api"
     exit 1
 fi
 
+
 mkdir -p lib
+export PROTO_INCLUDE="-I$THIRD_PARTY_INCLUDES/third_party -I /usr/lib/protoc/include"
 
 protoc -I"$THIRD_PARTY_INCLUDES"/third_party -I/usr/lib/protoc/include \
-    --plugin=protoc-gen-grpc-web=/tmp/protoc-gen-grpc-web \
-    --js_out=import_style=commonjs:lib \
-    --grpc-web_out=import_style=commonjs+dts,mode=grpcweb:lib \
+    --plugin="protoc-gen-ts=$DIR/node_modules/.bin/protoc-gen-ts" \
+    --js_out="import_style=commonjs,binary:lib" \
+    --ts_out="service=grpc-web:lib" \
     -I"${PROTOLOC:-..}" "${PROTOLOC:-..}"/*.proto
 
 # shellcheck disable=SC2038

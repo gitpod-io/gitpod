@@ -79,7 +79,6 @@ export default function Modal(props: {
                         "relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 max-w-lg mx-auto text-left " +
                         (props.className || "")
                     }
-                    onClick={(e) => e.stopPropagation()}
                 >
                     {props.closeable !== false && (
                         <div

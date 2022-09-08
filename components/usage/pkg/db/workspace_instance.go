@@ -51,46 +51,98 @@ func (i *WorkspaceInstance) TableName() string {
 	return "d_b_workspace_instance"
 }
 
-// ListWorkspaceInstancesInRange lists WorkspaceInstances between from (inclusive) and to (exclusive).
-// This results in all instances which have existed in the specified period, regardless of their current status, this includes:
-// - terminated
-// - running
-// - instances which only just terminated after the start period
-// - instances which only just started in the period specified
-func ListWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, from, to time.Time) ([]WorkspaceInstanceForUsage, error) {
+// FindStoppedWorkspaceInstancesInRange finds WorkspaceInstanceForUsage that have been stopped between from (inclusive) and to (exclusive).
+func FindStoppedWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, from, to time.Time) ([]WorkspaceInstanceForUsage, error) {
 	var instances []WorkspaceInstanceForUsage
 	var instancesInBatch []WorkspaceInstanceForUsage
 
-	tx := conn.WithContext(ctx).
-		Table(fmt.Sprintf("%s as wsi", (&WorkspaceInstance{}).TableName())).
-		Select("wsi.id as id, "+
-			"ws.projectId as projectId, "+
-			"ws.type as workspaceType, "+
-			"wsi.workspaceClass as workspaceClass, "+
-			"wsi.usageAttributionId as usageAttributionId, "+
-			"wsi.creationTime as creationTime, "+
-			"wsi.startedTime as startedTime, "+
-			"wsi.stoppingTime as stoppingTime, "+
-			"wsi.stoppedTime as stoppedTime, "+
-			"ws.ownerId as ownerId, "+
-			"ws.id as workspaceId",
-		).
-		Joins(fmt.Sprintf("LEFT JOIN %s AS ws ON wsi.workspaceId = ws.id", (&Workspace{}).TableName())).
-		Where(
-			conn.Where("wsi.stoppingTime >= ?", TimeToISO8601(from)).Or("wsi.stoppingTime = ?", ""),
-		).
-		Where("wsi.creationTime < ?", TimeToISO8601(to)).
-		Where("wsi.startedTime != ?", "").
+	tx := queryWorkspaceInstanceForUsage(ctx, conn).
+		Where("wsi.stoppingTime >= ?", TimeToISO8601(from)).
+		Where("wsi.stoppingTime < ?", TimeToISO8601(to)).
+		Where("wsi.stoppingTime != ?", "").
 		Where("wsi.usageAttributionId != ?", "").
 		FindInBatches(&instancesInBatch, 1000, func(_ *gorm.DB, _ int) error {
 			instances = append(instances, instancesInBatch...)
 			return nil
 		})
 	if tx.Error != nil {
-		return nil, fmt.Errorf("failed to list workspace instances: %w", tx.Error)
+		return nil, fmt.Errorf("failed to find workspace instances: %w", tx.Error)
 	}
 
 	return instances, nil
+}
+
+// FindRunningWorkspaceInstances finds WorkspaceInstanceForUsage that are running at the point in time the querty is executed.
+func FindRunningWorkspaceInstances(ctx context.Context, conn *gorm.DB) ([]WorkspaceInstanceForUsage, error) {
+	var instances []WorkspaceInstanceForUsage
+	var instancesInBatch []WorkspaceInstanceForUsage
+
+	tx := queryWorkspaceInstanceForUsage(ctx, conn).
+		Where("wsi.stoppingTime = ?", "").
+		Where("wsi.usageAttributionId != ?", "").
+		// We cannot guarantee data quality before this date
+		Where("wsi.startedTime > ?", TimeToISO8601(time.Date(2022, 8, 1, 0, 0, 0, 0, time.UTC))).
+		FindInBatches(&instancesInBatch, 1000, func(_ *gorm.DB, _ int) error {
+			instances = append(instances, instancesInBatch...)
+			return nil
+		})
+	if tx.Error != nil {
+		return nil, fmt.Errorf("failed to find running workspace instances: %w", tx.Error)
+	}
+
+	return instances, nil
+}
+
+// FindWorkspaceInstancesByIds finds WorkspaceInstanceForUsage by Id.
+func FindWorkspaceInstancesByIds(ctx context.Context, conn *gorm.DB, workspaceInstanceIds []uuid.UUID) ([]WorkspaceInstanceForUsage, error) {
+	var instances []WorkspaceInstanceForUsage
+	var instancesInBatch []WorkspaceInstanceForUsage
+	var idChunks [][]uuid.UUID
+	chunkSize, totalSize := 1000, len(workspaceInstanceIds)
+	// explicit batching to reduce the lengths of the 'in'-part in the SELECT statement below
+	for i := 0; i < totalSize; i += chunkSize {
+		end := i + chunkSize
+		if end > totalSize {
+			end = totalSize
+		}
+		idChunks = append(idChunks, workspaceInstanceIds[i:end])
+	}
+
+	for _, idChunk := range idChunks {
+		err := queryWorkspaceInstanceForUsage(ctx, conn).
+			Where("wsi.id in ?", idChunk).
+			Where("wsi.usageAttributionId != ?", "").
+			Find(&instancesInBatch).Error
+		if err != nil {
+			return nil, fmt.Errorf("failed to find workspace instances by id: %w", err)
+		}
+		instances = append(instances, instancesInBatch...)
+	}
+
+	return instances, nil
+}
+
+func queryWorkspaceInstanceForUsage(ctx context.Context, conn *gorm.DB) *gorm.DB {
+	return conn.WithContext(ctx).
+		Table(fmt.Sprintf("%s as wsi", (&WorkspaceInstance{}).TableName())).
+		Select("wsi.id as id, "+
+			"ws.projectId as projectId, "+
+			"ws.contextUrl as contextUrl, "+
+			"ws.type as workspaceType, "+
+			"wsi.workspaceClass as workspaceClass, "+
+			"wsi.usageAttributionId as usageAttributionId, "+
+			"wsi.startedTime as startedTime, "+
+			"wsi.stoppingTime as stoppingTime, "+
+			"ws.ownerId as ownerId, "+
+			"wsi.workspaceId as workspaceId, "+
+			"ws.ownerId as userId, "+
+			"u.name as userName, "+
+			"u.avatarURL as userAvatarURL ",
+		).
+		Joins(fmt.Sprintf("LEFT JOIN %s AS ws ON wsi.workspaceId = ws.id", (&Workspace{}).TableName())).
+		Joins(fmt.Sprintf("LEFT JOIN %s AS u ON ws.ownerId = u.id", "d_b_user")).
+		// Instances without a StartedTime never actually started, we're not interested in these.
+		Where("wsi.startedTime != ?", "")
 }
 
 const (
@@ -151,11 +203,13 @@ type WorkspaceInstanceForUsage struct {
 	WorkspaceClass     string         `gorm:"column:workspaceClass;type:varchar;size:255;" json:"workspaceClass"`
 	Type               WorkspaceType  `gorm:"column:workspaceType;type:char;size:16;default:regular;" json:"workspaceType"`
 	UsageAttributionID AttributionID  `gorm:"column:usageAttributionId;type:varchar;size:60;" json:"usageAttributionId"`
+	ContextURL         string         `gorm:"column:contextUrl;type:varchar;size:255;" json:"contextUrl"`
+	UserID             uuid.UUID      `gorm:"column:userId;type:varchar;size:255;" json:"userId"`
+	UserName           string         `gorm:"column:userName;type:varchar;size:255;" json:"userName"`
+	UserAvatarURL      string         `gorm:"column:userAvatarURL;type:varchar;size:255;" json:"userAvatarURL"`
 
-	CreationTime VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
 	StartedTime  VarcharTime `gorm:"column:startedTime;type:varchar;size:255;" json:"startedTime"`
 	StoppingTime VarcharTime `gorm:"column:stoppingTime;type:varchar;size:255;" json:"stoppingTime"`
-	StoppedTime  VarcharTime `gorm:"column:stoppedTime;type:varchar;size:255;" json:"stoppedTime"`
 }
 
 // WorkspaceRuntimeSeconds computes how long this WorkspaceInstance has been running.

@@ -39,7 +39,7 @@ kind: VirtualMachine
 metadata:
   namespace: ${namespace}
   annotations:
-    harvesterhci.io/volumeClaimTemplates: '[{"metadata":{"name":"${claimName}","annotations":{"harvesterhci.io/imageId":"default/image-tfmk6"}},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"200Gi"}},"volumeMode":"Block","storageClassName":"longhorn-image-tfmk6-onereplica"}},{"metadata":{"name":"${storageClaimName}"},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"30Gi"}},"volumeMode":"Block","storageClassName":"longhorn"}}]'
+    harvesterhci.io/volumeClaimTemplates: '[{"metadata":{"name":"${claimName}","annotations":{"harvesterhci.io/imageId":"default/image-tfmk6"}},"spec":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"200Gi"}},"volumeMode":"Block","storageClassName":"longhorn-image-tfmk6-onereplica"}},{"metadata":{"name":"${storageClaimName}"},"spec":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"30Gi"}},"volumeMode":"Block","storageClassName":"longhorn"}}]'
     network.harvesterhci.io/ips: "[]"
   labels:
     harvesterhci.io/creator: harvester
@@ -343,8 +343,8 @@ write_files:
       kubectl apply -f /var/lib/gitpod/manifests/metrics-server.yaml
 
       # install CSI snapshotter CRDs and snapshot controller
-      kubectl apply -f /var/lib/gitpod/manifests/csi-driver.yaml
-      kubectl apply -f /var/lib/gitpod/manifests/csi-config.yaml
+      kubectl apply -f /var/lib/gitpod/manifests/csi-driver.yaml || true
+      kubectl apply -f /var/lib/gitpod/manifests/csi-config.yaml || true
 
       cat <<EOF >> /etc/bash.bashrc
       export KUBECONFIG=/etc/rancher/k3s/k3s.yaml

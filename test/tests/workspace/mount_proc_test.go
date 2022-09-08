@@ -56,10 +56,17 @@ func TestMountProc(t *testing.T) {
 				api.Done(t)
 			})
 
-			ws, err := integration.LaunchWorkspaceDirectly(ctx, api)
+			ws, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api)
 			if err != nil {
 				t.Fatal(err)
 			}
+
+			t.Cleanup(func() {
+				err = stopWs(true)
+				if err != nil {
+					t.Errorf("cannot stop workspace: %q", err)
+				}
+			})
 
 			rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(ws.Req.Id), integration.WithWorkspacekitLift(true))
 			if err != nil {
@@ -77,11 +84,6 @@ func TestMountProc(t *testing.T) {
 				}()
 			}
 			wg.Wait()
-
-			err = integration.DeleteWorkspace(ctx, api, ws.Req.Id)
-			if err != nil {
-				t.Fatal(err)
-			}
 
 			return ctx
 		}).

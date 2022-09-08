@@ -48,6 +48,12 @@ export interface User {
 
     // Identifies an explicit team or user ID to which all the user's workspace usage should be attributed to (e.g. for billing purposes)
     usageAttributionId?: string;
+
+    // The last time this user got verified somehow. The user is not verified if this is empty.
+    lastVerificationTime?: string;
+
+    // The phone number used for the last phone verification.
+    verificationPhoneNumber?: string;
 }
 
 export namespace User {
@@ -207,7 +213,21 @@ export interface AdditionalUserData {
     // additional user profile data
     profile?: ProfileDetails;
 }
-
+export namespace AdditionalUserData {
+    export function set(user: User, partialData: Partial<AdditionalUserData>): User {
+        if (!user.additionalData) {
+            user.additionalData = {
+                ...partialData,
+            };
+        } else {
+            user.additionalData = {
+                ...user.additionalData,
+                ...partialData,
+            };
+        }
+        return user;
+    }
+}
 // The format in which we store User Profiles in
 export interface ProfileDetails {
     // when was the last time the user updated their profile information or has been nudged to do so.

@@ -317,7 +317,7 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 		//               to update the disposal status to reflect this timeout situation.
 		if status.Conditions.Timeout != "" && strings.Contains(status.Conditions.Timeout, string(activityBackup)) {
 			span.LogKV("event", "timeout during backup")
-			ds := &workspaceDisposalStatus{Status: DisposalFinished, BackupComplete: true, BackupFailure: status.Conditions.Timeout}
+			ds := &workspaceDisposalStatus{Status: DisposalFinished, BackupFailure: status.Conditions.Timeout}
 			err = manager.markDisposalStatus(ctx, workspaceID, ds)
 			if err != nil {
 				log.WithError(err).Error("was unable to update pod's disposal state - this will break someone's experience")
@@ -795,8 +795,16 @@ func (m *Monitor) probeWorkspaceReady(ctx context.Context, pod *corev1.Pod) (res
 // If we're already initializing the workspace, thus function will return immediately. If we were not initializing,
 // prior to this call this function returns once initialization is complete.
 func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Pod) (err error) {
+	span, ctx := tracing.FromContext(ctx, "initializeWorkspaceContent")
+	defer tracing.FinishSpan(span, &err)
+	log := log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta))
+	tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
+
 	_, fullWorkspaceBackup := pod.Labels[fullWorkspaceBackupLabel]
 	_, pvcFeatureEnabled := pod.Labels[pvcWorkspaceFeatureLabel]
+
+	span.SetTag("fullWorkspaceBackup", fullWorkspaceBackup)
+	span.SetTag("pvcFeatureEnabled", pvcFeatureEnabled)
 
 	workspaceID, ok := pod.Annotations[workspaceIDAnnotation]
 	if !ok {
@@ -834,11 +842,6 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 		if alreadyInitializing {
 			return nil
 		}
-
-		// There is no need to emit this span if the operation is noop.
-		span, ctx := tracing.FromContext(ctx, "initializeWorkspace")
-		defer tracing.FinishSpan(span, &err)
-		span.SetTag("fullWorkspaceBackup", fullWorkspaceBackup)
 
 		initializerRaw, ok := pod.Annotations[workspaceInitializerAnnotation]
 		if !ok {
@@ -892,6 +895,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 	}
 	if err == nil && snc == nil {
 		// we are already initialising
+		span.SetTag("alreadyInitializing", true)
 		return nil
 	}
 	t := time.Now()
@@ -1003,6 +1007,26 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		return
 	}
 
+	ctx, cancelReq := context.WithTimeout(ctx, time.Duration(m.manager.Config.Timeouts.ContentFinalization))
+	// Make sure only one finalizeWorkspaceContent() can be active at the same time
+	// finalizeWorkspaceContent() may be called multiple times, sometimes within several milliseconds.
+	// this ensures that we will not attempt to do any disposing from multiple threads
+	_, alreadyFinalizing := m.finalizerMap.LoadOrStore(workspaceID, cancelReq)
+	if alreadyFinalizing {
+		span.LogKV("alreadyFinalizing", true)
+		return
+	}
+	defer func() {
+		// we're done disposing - remove from the finalizerMap
+		val, ok := m.finalizerMap.LoadAndDelete(workspaceID)
+		if !ok {
+			return
+		}
+
+		cancelReq := val.(context.CancelFunc)
+		cancelReq()
+	}()
+
 	disposalStatus := &workspaceDisposalStatus{}
 	defer func() {
 		if disposalStatus.Status == DisposalEmpty {
@@ -1031,6 +1055,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		deletedPVC                   bool
 		pvcFeatureEnabled            bool
 		markVolumeSnapshotAnnotation bool
+		markedDisposalStatusStarted  bool
 		// volume snapshot name is 1:1 mapped to workspace id
 		pvcVolumeSnapshotName        string = workspaceID
 		pvcVolumeSnapshotContentName string
@@ -1054,13 +1079,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	doBackup := wso.WasEverReady() && !wso.IsWorkspaceHeadless()
 	doBackupLogs := tpe == api.WorkspaceType_PREBUILD
 	doSnapshot := tpe == api.WorkspaceType_PREBUILD
-	doFinalize := func() (worked bool, gitStatus *csapi.GitStatus, err error) {
-		_, alreadyFinalizing := m.finalizerMap.Load(workspaceID)
-		if alreadyFinalizing {
-			span.LogKV("alreadyFinalizing", true)
-			return false, nil, nil
-		}
-
+	doFinalize := func() (gitStatus *csapi.GitStatus, err error) {
 		// Maybe the workspace never made it to a phase where we actually initialized a workspace.
 		// Assuming that once we've had a nodeName we've spoken to ws-daemon it's safe to assume that if
 		// we don't have a nodeName we don't need to dipose the workspace.
@@ -1069,49 +1088,39 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		if !doBackup && !doSnapshot && wso.NodeName() == "" {
 			// we don't need a backup and have never spoken to ws-daemon: we're good here.
 			span.LogKV("noBackupNeededAndNoNode", true)
-			return true, &csapi.GitStatus{}, nil
+			return &csapi.GitStatus{}, nil
 		}
 
 		// we're not yet finalizing - start the process
 		snc, err := m.manager.connectToWorkspaceDaemon(ctx, *wso)
 		if err != nil {
 			tracing.LogError(span, err)
-			return true, nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
+			return nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
 		}
 
-		defer func() {
-			// we're done disposing - remove from the finalizerMap
-			val, ok := m.finalizerMap.LoadAndDelete(workspaceID)
-			if !ok {
-				return
-			}
+		// make sure that workspace was ready, otherwise there is no need to backup anything
+		// as we might backup corrupted workspace state
+		// this also ensures that if INITIALIZING still going, that we will wait for it to finish before disposing the workspace
+		_, err = snc.WaitForInit(ctx, &wsdaemon.WaitForInitRequest{Id: workspaceID})
+		if err != nil {
+			tracing.LogError(span, err)
+			return nil, err
+		}
 
-			cancelReq := val.(context.CancelFunc)
-			cancelReq()
-		}()
-
-		// only build prebuild snapshots of initialized/ready workspaces.
-		if doSnapshot {
-			_, err = snc.WaitForInit(ctx, &wsdaemon.WaitForInitRequest{Id: workspaceID})
-			if st, ok := grpc_status.FromError(err); ok {
-				if st.Code() == codes.FailedPrecondition &&
-					(st.Message() == "workspace is not initializing or ready" || st.Message() == "workspace is not ready") {
-					log.Warn("skipping snapshot creation because content-initializer never finished or the workspace reached a ready state")
-					doSnapshot = false
-				} else if st.Code() == codes.NotFound {
-					// the workspace has gone some reason
-					// e.g. since it was a retry, it already succeeded the first time.
-					log.WithError(err).Warnf("skipping snapshot and disposing because the workspace has already gone")
-					return false, &csapi.GitStatus{}, nil
-				}
+		// only set status to started if we actually confirmed that workspace is ready and we are about to do actual disposal
+		// otherwise we risk overwriting previous disposal status
+		if !markedDisposalStatusStarted {
+			statusStarted := &workspaceDisposalStatus{
+				Status: DisposalStarted,
 			}
+			err = m.manager.markDisposalStatus(ctx, workspaceID, statusStarted)
 			if err != nil {
-				log.WithError(err).Warn("WaitForInit returned an error")
+				tracing.LogError(span, err)
+				log.WithError(err).Error("was unable to update pod's start disposal status - this might cause an incorrect disposal status")
+			} else {
+				markedDisposalStatusStarted = true
 			}
 		}
-
-		ctx, cancelReq := context.WithTimeout(ctx, time.Duration(m.manager.Config.Timeouts.ContentFinalization))
-		m.finalizerMap.Store(workspaceID, cancelReq)
 
 		if pvcFeatureEnabled {
 			// pvc was created with the name of the pod. see createDefiniteWorkspacePod()
@@ -1122,6 +1131,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      pvcVolumeSnapshotName,
 						Namespace: m.manager.Config.Namespace,
+						Labels:    wso.Pod.Labels,
 					},
 					Spec: volumesnapshotv1.VolumeSnapshotSpec{
 						Source: volumesnapshotv1.VolumeSnapshotSource{
@@ -1134,7 +1144,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 				err = m.manager.Clientset.Create(ctx, volumeSnapshot)
 				if err != nil && !k8serr.IsAlreadyExists(err) {
 					err = xerrors.Errorf("cannot create volumesnapshot: %v", err)
-					return true, nil, err
+					return nil, err
 				}
 				createdVolumeSnapshot = true
 				volumeSnapshotTime = time.Now()
@@ -1164,7 +1174,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 
 					err = xerrors.Errorf("%s timed out while waiting for volume snapshot to get ready", m.manager.Config.Timeouts.ContentFinalization.String())
 					log.Error(err.Error())
-					return true, nil, err
+					return nil, err
 				}
 
 				hist, err := m.manager.metrics.volumeSnapshotTimeHistVec.GetMetricWithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel])
@@ -1180,20 +1190,20 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 				err := m.manager.Clientset.Get(ctx, types.NamespacedName{Namespace: "", Name: pvcVolumeSnapshotContentName}, &volumeSnapshotContent)
 				if err != nil {
 					log.WithError(err).Error("was unable to get volume snapshot content")
-					return true, nil, err
+					return nil, err
 				}
 
 				if volumeSnapshotContent.Status == nil {
-					return true, nil, xerrors.Errorf("volume snapshot content status is nil")
+					return nil, xerrors.Errorf("volume snapshot content status is nil")
 				}
 				if volumeSnapshotContent.Status.SnapshotHandle == nil {
-					return true, nil, xerrors.Errorf("volume snapshot content's snapshot handle is nil")
+					return nil, xerrors.Errorf("volume snapshot content's snapshot handle is nil")
 				}
 				snapshotHandle := *volumeSnapshotContent.Status.SnapshotHandle
 
 				b, err := json.Marshal(workspaceVolumeSnapshotStatus{VolumeSnapshotName: pvcVolumeSnapshotName, VolumeSnapshotHandle: snapshotHandle})
 				if err != nil {
-					return true, nil, err
+					return nil, err
 				}
 
 				err = m.manager.markWorkspace(context.Background(), workspaceID, addMark(pvcWorkspaceVolumeSnapshotAnnotation, string(b)))
@@ -1203,7 +1213,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 					if errMark != nil {
 						log.WithError(errMark).Warn("was unable to mark workspace as failed")
 					}
-					return true, nil, err
+					return nil, err
 				}
 
 				if doSnapshot {
@@ -1215,7 +1225,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 						if errMark != nil {
 							log.WithError(errMark).Warn("was unable to mark workspace as failed")
 						}
-						return true, nil, err
+						return nil, err
 					}
 				}
 
@@ -1228,7 +1238,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 				err = m.manager.deleteWorkspacePVC(ctx, pvcName)
 				if err != nil {
 					log.Error(err)
-					return true, nil, err
+					return nil, err
 				}
 				deletedPVC = true
 			}
@@ -1273,7 +1283,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		if err != nil {
 			log.WithError(err).Error("DisposeWorkspace failed")
 		}
-		return true, gitStatus, err
+		return gitStatus, err
 	}
 
 	var (
@@ -1283,25 +1293,12 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	)
 	t := time.Now()
 
-	disposalStatus = &workspaceDisposalStatus{
-		Status: DisposalStarted,
-	}
-	err = m.manager.markDisposalStatus(ctx, workspaceID, disposalStatus)
-	if err != nil {
-		tracing.LogError(span, err)
-		log.WithError(err).Error("was unable to update pod's start disposal status - this might cause an incorrect disposal status")
-	}
 	for i := 0; i < wsdaemonMaxAttempts; i++ {
 		span.LogKV("attempt", i)
-		didSometing, gs, err := doFinalize()
+		gs, err := doFinalize()
 		if err != nil {
 			tracing.LogError(span, err)
 			log.WithError(err).Error("doFinalize failed")
-		}
-		if !didSometing {
-			// someone else is managing finalization process ... we don't have to bother
-			span.LogKV("did-nothing", true)
-			return
 		}
 
 		// by default we assume the worst case scenario. If things aren't just as bad, we'll tune it down below.
@@ -1316,6 +1313,14 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		st, isGRPCError := grpc_status.FromError(err)
 		if !isGRPCError {
 			break
+		}
+
+		if st.Code() == codes.NotFound {
+			// workspace state not found, that is normal.
+			// it can happen if previous finalizeWorkspaceContent already disposed the workspace
+			span.LogKV("not found", true)
+			// we want to bail out from finalizeWorkspaceContent function now and do not update disposal status or metrics
+			return
 		}
 
 		if (err != nil && strings.Contains(err.Error(), context.DeadlineExceeded.Error())) ||
@@ -1357,9 +1362,8 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	}
 
 	disposalStatus = &workspaceDisposalStatus{
-		Status:         DisposalFinished,
-		BackupComplete: true,
-		GitStatus:      gitStatus,
+		Status:    DisposalFinished,
+		GitStatus: gitStatus,
 	}
 
 	if doBackup || doSnapshot {

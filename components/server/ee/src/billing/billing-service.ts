@@ -7,14 +7,16 @@
 import { CostCenterDB } from "@gitpod/gitpod-db/lib";
 import { User } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { BillableSession, BillableSessionRequest, SortOrder } from "@gitpod/gitpod-protocol/lib/usage";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { CachingUsageServiceClientProvider, UsageService } from "@gitpod/usage-api/lib/usage/v1/sugar";
-import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
+import { GetUpcomingInvoiceResponse } from "@gitpod/usage-api/lib/usage/v1/billing_pb";
+import {
+    CachingUsageServiceClientProvider,
+    CachingBillingServiceClientProvider,
+} from "@gitpod/usage-api/lib/usage/v1/sugar";
 import { inject, injectable } from "inversify";
 import { UserService } from "../../../src/user/user-service";
 
-export interface SpendingLimitReachedResult {
+export interface UsageLimitReachedResult {
     reached: boolean;
     almostReached?: boolean;
     attributionId: AttributionId;
@@ -26,8 +28,10 @@ export class BillingService {
     @inject(CostCenterDB) protected readonly costCenterDB: CostCenterDB;
     @inject(CachingUsageServiceClientProvider)
     protected readonly usageServiceClientProvider: CachingUsageServiceClientProvider;
+    @inject(CachingBillingServiceClientProvider)
+    protected readonly billingServiceClientProvider: CachingBillingServiceClientProvider;
 
-    async checkSpendingLimitReached(user: User): Promise<SpendingLimitReachedResult> {
+    async checkUsageLimitReached(user: User): Promise<UsageLimitReachedResult> {
         const attributionId = await this.userService.getWorkspaceUsageAttributionId(user);
         const costCenter = await this.costCenterDB.findById(AttributionId.render(attributionId));
         if (!costCenter) {
@@ -40,50 +44,39 @@ export class BillingService {
             };
         }
 
-        const allSessions = await this.listBilledUsage({
-            attributionId: AttributionId.render(attributionId),
-            startedTimeOrder: SortOrder.Descending,
-        });
-        const totalUsage = allSessions.map((s) => s.credits).reduce((a, b) => a + b, 0);
-        if (totalUsage >= costCenter.spendingLimit) {
+        const upcomingInvoice = await this.getUpcomingInvoice(attributionId);
+        const currentInvoiceCredits = upcomingInvoice.getCredits();
+        if (currentInvoiceCredits >= costCenter.spendingLimit) {
+            log.info({ userId: user.id }, "Usage limit reached", {
+                attributionId,
+                currentInvoiceCredits,
+                usageLimit: costCenter.spendingLimit,
+            });
             return {
                 reached: true,
                 attributionId,
             };
-        } else if (totalUsage > costCenter.spendingLimit * 0.8) {
+        } else if (currentInvoiceCredits > costCenter.spendingLimit * 0.8) {
+            log.info({ userId: user.id }, "Usage limit almost reached", {
+                attributionId,
+                currentInvoiceCredits,
+                usageLimit: costCenter.spendingLimit,
+            });
             return {
                 reached: false,
                 almostReached: true,
                 attributionId,
             };
         }
+
         return {
             reached: false,
             attributionId,
         };
     }
 
-    // TODO (gpl): Replace this with call to stripeService.getInvoice()
-    async listBilledUsage(req: BillableSessionRequest): Promise<BillableSession[]> {
-        const { attributionId, startedTimeOrder, from, to } = req;
-        let timestampFrom;
-        let timestampTo;
-
-        if (from) {
-            timestampFrom = Timestamp.fromDate(new Date(from));
-        }
-        if (to) {
-            timestampTo = Timestamp.fromDate(new Date(to));
-        }
-        const usageClient = this.usageServiceClientProvider.getDefault();
-        const response = await usageClient.listBilledUsage(
-            {},
-            attributionId,
-            startedTimeOrder as number,
-            timestampFrom,
-            timestampTo,
-        );
-        const sessions = response.getSessionsList().map((s) => UsageService.mapBilledSession(s));
-        return sessions;
+    async getUpcomingInvoice(attributionId: AttributionId): Promise<GetUpcomingInvoiceResponse> {
+        const response = await this.billingServiceClientProvider.getDefault().getUpcomingInvoice(attributionId);
+        return response;
     }
 }

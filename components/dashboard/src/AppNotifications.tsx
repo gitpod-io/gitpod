@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import Alert from "./components/Alert";
 import { getGitpodService } from "./service/service";
 
-const KEY_APP_NOTIFICATIONS = "KEY_APP_NOTIFICATIONS";
+const KEY_APP_NOTIFICATIONS = "gitpod-app-notifications";
 
 export function AppNotifications() {
     const [notifications, setNotifications] = useState<string[]>([]);
@@ -22,7 +22,9 @@ export function AppNotifications() {
         (async () => {
             const serverState = await getGitpodService().server.getNotifications();
             setNotifications(serverState);
-            setLocalStorageObject(KEY_APP_NOTIFICATIONS, serverState);
+            if (serverState.length > 0) {
+                setLocalStorageObject(KEY_APP_NOTIFICATIONS, serverState, /* expires in */ 60 /* seconds */);
+            }
         })();
     }, []);
 
@@ -57,9 +59,14 @@ function getLocalStorageObject(key: string): any {
         if (!string) {
             return;
         }
-        return JSON.parse(string);
+        const stored = JSON.parse(string);
+        if (Date.now() > stored.expirationTime) {
+            window.localStorage.removeItem(key);
+            return undefined;
+        }
+        return stored.value;
     } catch (error) {
-        return;
+        window.localStorage.removeItem(key);
     }
 }
 
@@ -67,9 +74,12 @@ function removeLocalStorageObject(key: string): void {
     window.localStorage.removeItem(key);
 }
 
-function setLocalStorageObject(key: string, object: Object): void {
+function setLocalStorageObject(key: string, object: Object, expiresInSeconds: number): void {
     try {
-        window.localStorage.setItem(key, JSON.stringify(object));
+        window.localStorage.setItem(
+            key,
+            JSON.stringify({ expirationTime: Date.now() + expiresInSeconds * (1000 * 60), value: object }),
+        );
     } catch (error) {
         console.error("Setting localstorage item failed", key, object, error);
     }

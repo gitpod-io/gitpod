@@ -7,17 +7,40 @@ option go_package = "github.com/gitpod-io/gitpod/usage-api/v1";
 import "google/protobuf/timestamp.proto";
 
 service UsageService {
-    // ListBilledUsage retrieves all usage for the specified attributionId
-    rpc ListBilledUsage(ListBilledUsageRequest) returns (ListBilledUsageResponse) {}
-
-    // ReconcileUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
-    rpc ReconcileUsage(ReconcileUsageRequest) returns (ReconcileUsageResponse) {}
 
     // GetCostCenter retrieves the spending limit with its associated attributionID
     rpc GetCostCenter(GetCostCenterRequest) returns (GetCostCenterResponse) {}
+
+    // Triggers reconciliation of usage with ledger implementation.
+    rpc ReconcileUsageWithLedger(ReconcileUsageWithLedgerRequest) returns (ReconcileUsageWithLedgerResponse) {}
+
+    // ListUsage retrieves all usage for the specified attributionId and theb given time range
+    rpc ListUsage(ListUsageRequest) returns (ListUsageResponse) {}
 }
 
-message ListBilledUsageRequest {
+message ReconcileUsageWithLedgerRequest {
+    // from specifies the starting time range for this request.
+    google.protobuf.Timestamp from = 1;
+
+    // to specifies the end time range for this request.
+    google.protobuf.Timestamp to = 2;
+}
+
+message ReconcileUsageWithLedgerResponse {}
+
+message PaginatedRequest {
+    int64 per_page = 1;
+    int64 page = 2;
+}
+
+message PaginatedResponse {
+    int64 per_page = 2;
+    int64 total_pages = 3;
+    int64 total = 4;
+    int64 page = 5;
+}
+
+message ListUsageRequest {
     string attribution_id = 1;
 
     // from specifies the starting time range for this request.
@@ -34,10 +57,35 @@ message ListBilledUsageRequest {
     }
 
     Ordering order = 4;
+
+    PaginatedRequest pagination = 5;
 }
 
-message ListBilledUsageResponse {
-    repeated BilledSession sessions = 1;
+message ListUsageResponse {
+    repeated Usage usage_entries = 1;
+    PaginatedResponse pagination = 2;
+    // the amount of credits the given account (attributionId) had at the beginning of the requested period
+    double credit_balance_at_start = 3;
+
+    // the amount of credits the given account (attributionId) had at the end of the requested period
+    double credit_balance_at_end = 4;
+}
+
+message Usage {
+    string id = 1;
+	string attribution_id = 2;
+	string description = 3;
+	double credits = 4;
+    google.protobuf.Timestamp effective_time = 5;
+
+    enum Kind {
+        KIND_WORKSPACE_INSTANCE = 0;
+        KIND_INVOICE = 1;
+    }
+	Kind kind = 6;
+	string workspace_instance_id = 7;
+	bool draft = 8;
+	string metadata = 9;
 }
 
 message BilledSession {
@@ -57,17 +105,6 @@ message BilledSession {
 
     int64 credits_deprecated = 11 [deprecated=true];   // insufficient precision to represent credits for workspace time
     double credits = 12;
-}
-
-message ReconcileUsageRequest {
-    google.protobuf.Timestamp start_time = 1;
-    google.protobuf.Timestamp end_time = 2;
-}
-
-message ReconcileUsageResponse {
-    repeated BilledSession sessions = 1;
-    // ID of the UsageReport generated for this reconcile run.
-    string report_id = 2;
 }
 
 message GetCostCenterRequest {

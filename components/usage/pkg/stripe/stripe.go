@@ -16,6 +16,11 @@ import (
 	"github.com/stripe/stripe-go/v72/client"
 )
 
+const (
+	ReportIDMetadataKey = "reportId"
+	TeamIDMetadataKey   = "teamId"
+)
+
 type Client struct {
 	sc *client.API
 }
@@ -50,9 +55,22 @@ type UsageRecord struct {
 	Quantity           int64
 }
 
+type Invoice struct {
+	ID             string
+	SubscriptionID string
+	Amount         int64
+	Currency       string
+	Credits        int64
+}
+
+type CreditSummary struct {
+	Credits  int64
+	ReportID string
+}
+
 // UpdateUsage updates teams' Stripe subscriptions with usage data
 // `usageForTeam` is a map from team name to total workspace seconds used within a billing period.
-func (c *Client) UpdateUsage(ctx context.Context, creditsPerTeam map[string]int64) error {
+func (c *Client) UpdateUsage(ctx context.Context, creditsPerTeam map[string]CreditSummary) error {
 	teamIds := make([]string, 0, len(creditsPerTeam))
 	for k := range creditsPerTeam {
 		teamIds = append(teamIds, k)
@@ -61,16 +79,13 @@ func (c *Client) UpdateUsage(ctx context.Context, creditsPerTeam map[string]int6
 
 	for _, query := range queries {
 		log.Infof("Searching customers in Stripe with query: %q", query)
-		params := &stripe.CustomerSearchParams{
-			SearchParams: stripe.SearchParams{
-				Query:   query,
-				Expand:  []*string{stripe.String("data.subscriptions")},
-				Context: ctx,
-			},
+
+		customers, err := c.findCustomers(ctx, query)
+		if err != nil {
+			return fmt.Errorf("failed to udpate usage: %w", err)
 		}
-		iter := c.sc.Customers.Search(params)
-		for iter.Next() {
-			customer := iter.Customer()
+
+		for _, customer := range customers {
 			teamID := customer.Metadata["teamId"]
 			log.Infof("Found customer %q for teamId %q", customer.Name, teamID)
 
@@ -91,7 +106,28 @@ func (c *Client) UpdateUsage(ctx context.Context, creditsPerTeam map[string]int6
 	return nil
 }
 
-func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Customer, credits int64) (*UsageRecord, error) {
+func (c *Client) findCustomers(ctx context.Context, query string) ([]*stripe.Customer, error) {
+	params := &stripe.CustomerSearchParams{
+		SearchParams: stripe.SearchParams{
+			Query:   query,
+			Expand:  []*string{stripe.String("data.subscriptions")},
+			Context: ctx,
+		},
+	}
+	iter := c.sc.Customers.Search(params)
+	if iter.Err() != nil {
+		return nil, fmt.Errorf("failed to search for customers: %w", iter.Err())
+	}
+
+	var customers []*stripe.Customer
+	for iter.Next() {
+		customers = append(customers, iter.Customer())
+	}
+
+	return customers, nil
+}
+
+func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Customer, summary CreditSummary) (*UsageRecord, error) {
 	subscriptions := customer.Subscriptions.Data
 	if len(subscriptions) != 1 {
 		return nil, fmt.Errorf("customer has an unexpected number of subscriptions %v (expected 1, got %d)", subscriptions, len(subscriptions))
@@ -110,7 +146,7 @@ func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Cu
 			Context: ctx,
 		},
 		SubscriptionItem: stripe.String(subscriptionItemId),
-		Quantity:         stripe.Int64(credits),
+		Quantity:         stripe.Int64(summary.Credits),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to register usage for customer %q on subscription item %s", customer.Name, subscriptionItemId)
@@ -118,8 +154,96 @@ func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Cu
 
 	return &UsageRecord{
 		SubscriptionItemID: subscriptionItemId,
-		Quantity:           credits,
+		Quantity:           summary.Credits,
 	}, nil
+}
+
+func (c *Client) GetCustomerByTeamID(ctx context.Context, teamID string) (*stripe.Customer, error) {
+	customers, err := c.findCustomers(ctx, fmt.Sprintf("metadata['teamId']:'%s'", teamID))
+	if err != nil {
+		return nil, fmt.Errorf("failed to find customers: %w", err)
+	}
+
+	if len(customers) == 0 {
+		return nil, fmt.Errorf("no team customer found for id: %s", teamID)
+	}
+	if len(customers) > 1 {
+		return nil, fmt.Errorf("found multiple team customers for id: %s", teamID)
+	}
+
+	return customers[0], nil
+}
+
+func (c *Client) GetCustomerByUserID(ctx context.Context, userID string) (*stripe.Customer, error) {
+	customers, err := c.findCustomers(ctx, fmt.Sprintf("metadata['userId']:'%s'", userID))
+	if err != nil {
+		return nil, fmt.Errorf("failed to find customers: %w", err)
+	}
+
+	if len(customers) == 0 {
+		return nil, fmt.Errorf("no user customer found for id: %s", userID)
+	}
+	if len(customers) > 1 {
+		return nil, fmt.Errorf("found multiple user customers for id: %s", userID)
+	}
+
+	return customers[0], nil
+}
+
+// GetUpcomingInvoice fetches the upcoming invoice for the given team or user id.
+func (c *Client) GetUpcomingInvoice(ctx context.Context, customerID string) (*Invoice, error) {
+	invoiceParams := &stripe.InvoiceParams{
+		Params: stripe.Params{
+			Context: ctx,
+		},
+		Customer: stripe.String(customerID),
+	}
+	invoice, err := c.sc.Invoices.GetNext(invoiceParams)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch the upcoming invoice for customer %s", customerID)
+	}
+	if len(invoice.Lines.Data) < 1 {
+		return nil, fmt.Errorf("no line items on invoice %s for customer %s", invoice.ID, customerID)
+	}
+
+	return &Invoice{
+		ID:             invoice.ID,
+		SubscriptionID: invoice.Subscription.ID,
+		Amount:         invoice.AmountRemaining,
+		Currency:       string(invoice.Currency),
+		Credits:        invoice.Lines.Data[0].Quantity,
+	}, nil
+}
+
+func (c *Client) UpdateInvoiceMetadata(ctx context.Context, invoiceID string, metadata map[string]string) (*stripe.Invoice, error) {
+	invoice, err := c.sc.Invoices.Update(invoiceID, &stripe.InvoiceParams{
+		Params: stripe.Params{
+			Context:  ctx,
+			Metadata: metadata,
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to update invoice %s metadata: %w", invoiceID, err)
+	}
+
+	return invoice, nil
+}
+
+func (c *Client) GetInvoice(ctx context.Context, invoiceID string) (*stripe.Invoice, error) {
+	if invoiceID == "" {
+		return nil, fmt.Errorf("no invoice ID specified")
+	}
+
+	invoice, err := c.sc.Invoices.Get(invoiceID, &stripe.InvoiceParams{
+		Params: stripe.Params{
+			Context: ctx,
+			Expand:  []*string{stripe.String("data.subscriptions")},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get invoice %s: %w", invoiceID, err)
+	}
+	return invoice, nil
 }
 
 // queriesForCustomersWithTeamIds constructs Stripe query strings to find the Stripe Customer for each teamId
@@ -133,7 +257,7 @@ func queriesForCustomersWithTeamIds(teamIds []string) []string {
 	for i := 0; i < len(teamIds); i += clausesPerQuery {
 		sb.Reset()
 		for j := 0; j < clausesPerQuery && i+j < len(teamIds); j++ {
-			sb.WriteString(fmt.Sprintf("metadata['teamId']:'%s'", teamIds[i+j]))
+			sb.WriteString(fmt.Sprintf("metadata['%s']:'%s'", TeamIDMetadataKey, teamIds[i+j]))
 			if j < clausesPerQuery-1 && i+j < len(teamIds)-1 {
 				sb.WriteString(" OR ")
 			}

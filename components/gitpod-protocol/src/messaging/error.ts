@@ -26,6 +26,9 @@ export namespace ErrorCodes {
     // 410 No User
     export const SETUP_REQUIRED = 410;
 
+    // 411 No User
+    export const NEEDS_VERIFICATION = 411;
+
     // 429 Too Many Requests
     export const TOO_MANY_REQUESTS = 429;
 

@@ -28,7 +28,7 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 				api.Done(t)
 			})
 
-			ws, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
+			_, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
 				req.Type = wsmanapi.WorkspaceType_PREBUILD
 				req.Spec.Envvars = append(req.Spec.Envvars, &wsmanapi.EnvironmentVariable{
 					Name:  "GITPOD_TASKS",
@@ -39,9 +39,11 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 			if err != nil {
 				t.Fatalf("cannot launch a workspace: %q", err)
 			}
-
 			t.Cleanup(func() {
-				_, _ = integration.WaitForWorkspaceStop(ctx, api, ws.Req.Id)
+				err = stopWs(true)
+				if err != nil {
+					t.Errorf("cannot stop workspace: %q", err)
+				}
 			})
 
 			return ctx
@@ -65,7 +67,7 @@ func TestPrebuildWorkspaceTaskFail(t *testing.T) {
 				api.Done(t)
 			})
 
-			ws, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
+			ws, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
 				req.Type = wsmanapi.WorkspaceType_PREBUILD
 				req.Spec.Envvars = append(req.Spec.Envvars, &wsmanapi.EnvironmentVariable{
 					Name:  "GITPOD_TASKS",
@@ -76,6 +78,13 @@ func TestPrebuildWorkspaceTaskFail(t *testing.T) {
 			if err != nil {
 				t.Fatalf("cannot start workspace: %q", err)
 			}
+
+			t.Cleanup(func() {
+				err = stopWs(true)
+				if err != nil {
+					t.Errorf("cannot stop workspace: %q", err)
+				}
+			})
 
 			_, err = integration.WaitForWorkspace(ctx, api, ws.Req.Id, func(status *wsmanapi.WorkspaceStatus) bool {
 				if status.Phase != wsmanapi.WorkspacePhase_STOPPED {
@@ -90,10 +99,6 @@ func TestPrebuildWorkspaceTaskFail(t *testing.T) {
 			if err != nil {
 				t.Fatalf("cannot start workspace: %q", err)
 			}
-
-			t.Cleanup(func() {
-				_, _ = integration.WaitForWorkspaceStop(ctx, api, ws.Req.Id)
-			})
 
 			return ctx
 		}).

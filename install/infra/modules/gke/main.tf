@@ -42,45 +42,12 @@ resource "google_container_cluster" "gitpod-cluster" {
   name     = var.cluster_name
   location = var.zone == null ? var.region : var.zone
 
-  cluster_autoscaling {
-    enabled = true
-
-    resource_limits {
-      resource_type = "cpu"
-      minimum       = 2
-      maximum       = 16
-    }
-
-    resource_limits {
-      resource_type = "memory"
-      minimum       = 4
-      maximum       = 64
-    }
-  }
-
   min_master_version = var.cluster_version
-  # the default nodepool is used as the services nodepool
-  remove_default_node_pool = false
-  node_config {
-    oauth_scopes = [
-      "https://www.googleapis.com/auth/cloud-platform"
-    ]
 
-    labels = {
-      "gitpod.io/workload_meta" = true
-      "gitpod.io/workload_ide"  = true
-    }
+  remove_default_node_pool = true
 
-    preemptible  = false
-    image_type   = "COS_CONTAINERD"
-    disk_type    = "pd-standard"
-    disk_size_gb = var.disk_size_gb
-    machine_type = var.services_machine_type
-    tags         = ["gke-node", "${var.project}-gke"]
-    metadata = {
-      disable-legacy-endpoints = "true"
-    }
-  }
+  network    = google_compute_network.vpc.name
+  subnetwork = google_compute_subnetwork.subnet.name
 
   initial_node_count = 1
   release_channel {
@@ -105,10 +72,51 @@ resource "google_container_cluster" "gitpod-cluster" {
     horizontal_pod_autoscaling {
       disabled = false
     }
+
+    dns_cache_config {
+      enabled = true
+    }
+  }
+}
+
+resource "google_container_node_pool" "services" {
+  name               = "services-${var.cluster_name}"
+  location           = google_container_cluster.gitpod-cluster.location
+  cluster            = google_container_cluster.gitpod-cluster.name
+  version            = var.cluster_version // kubernetes version
+  initial_node_count = 1
+  max_pods_per_node  = 110
+
+  node_config {
+    oauth_scopes = [
+      "https://www.googleapis.com/auth/cloud-platform"
+    ]
+
+    labels = {
+      "gitpod.io/workload_meta" = true
+      "gitpod.io/workload_ide"  = true
+    }
+
+    preemptible  = false
+    image_type   = "UBUNTU_CONTAINERD"
+    disk_type    = "pd-ssd"
+    disk_size_gb = var.services_disk_size_gb
+    machine_type = var.services_machine_type
+    tags         = ["gke-node", "${var.project}-gke"]
+    metadata = {
+      disable-legacy-endpoints = "true"
+    }
   }
 
-  network    = google_compute_network.vpc.name
-  subnetwork = google_compute_subnetwork.subnet.name
+  autoscaling {
+    min_node_count = 1
+    max_node_count = var.max_node_count_services
+  }
+
+  management {
+    auto_repair  = true
+    auto_upgrade = false
+  }
 }
 
 resource "google_container_node_pool" "workspaces" {
@@ -132,8 +140,8 @@ resource "google_container_node_pool" "workspaces" {
 
     preemptible  = false
     image_type   = "UBUNTU_CONTAINERD"
-    disk_type    = "pd-standard"
-    disk_size_gb = var.disk_size_gb
+    disk_type    = "pd-ssd"
+    disk_size_gb = var.workspaces_disk_size_gb
     machine_type = var.workspaces_machine_type
     tags         = ["gke-node", "${var.project}-gke"]
     metadata = {
@@ -143,7 +151,7 @@ resource "google_container_node_pool" "workspaces" {
 
   autoscaling {
     min_node_count = 1
-    max_node_count = var.max_count
+    max_node_count = var.max_node_count_workspaces
   }
 
   management {
@@ -152,9 +160,15 @@ resource "google_container_node_pool" "workspaces" {
   }
 }
 
+resource "random_string" "random" {
+  length           = 4
+  upper            = false
+  special          = false
+}
+
 resource "google_sql_database_instance" "gitpod" {
   count            = var.enable_external_database ? 1 : 0
-  name             = "sql-${var.cluster_name}"
+  name             = "sql-${var.cluster_name}-${random_string.random.result}" // we cannot reuse the same name for 1 week
   database_version = "MYSQL_5_7"
   region           = var.region
   settings {
@@ -181,7 +195,7 @@ resource "google_sql_database" "database" {
 
 resource "google_sql_user" "users" {
   count    = var.enable_external_database ? 1 : 0
-  name     = "dbuser-${var.cluster_name}-${count.index}"
+  name     = "gitpod"
   instance = google_sql_database_instance.gitpod[count.index].name
   password = random_password.password[count.index].result
 }

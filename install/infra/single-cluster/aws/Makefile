@@ -26,7 +26,11 @@ plan-cluster:
 	@terraform plan -target=module.eks
 
 .PHONY: plan-tools
-plan-tools: plan-cm-edns plan-cluster-issuer
+plan-tools: plan-cm-edns plan-cluster-issuer plan-cluster-autoscaler
+
+.PHONY: plan-cluster-autoscaler
+plan-cluster-autoscaler:
+	@terraform plan -target=module.cluster-autoscaler
 
 .PHONY: plan-cm-edns
 plan-cm-edns:
@@ -41,7 +45,11 @@ apply-cluster:
 	@terraform apply -target=module.eks --auto-approve
 
 .PHONY: apply-tools
-apply-tools: install-cm-edns install-cluster-issuer
+apply-tools: install-cm-edns install-cluster-issuer install-cluster-autoscaler
+
+.PHONY: install-cluster-autoscaler
+install-cluster-autoscaler:
+	@terraform apply -target=module.cluster-autoscaler --auto-approve
 
 .PHONY: install-cm-edns
 install-cm-edns:
@@ -56,7 +64,11 @@ destroy-cluster:
 	@terraform destroy -target=module.eks --auto-approve
 
 .PHONY: destroy-tools
-destroy-tools: destroy-cluster-issuer destroy-cm-edns
+destroy-tools: destroy-cluster-issuer destroy-cm-edns destroy-cluster-autoscaler
+
+.PHONY: destroy-cluster-autoscaler
+destroy-cluster-autoscaler:
+	@terraform destroy -target=module.cluster-autoscaler --auto-approve
 
 .PHONY: destroy-cm-edns
 destroy-cm-edns:

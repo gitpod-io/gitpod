@@ -15,6 +15,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	api "github.com/gitpod-io/gitpod/ide-metrics-api"
 	"github.com/gitpod-io/gitpod/ide-metrics-api/config"
+	"github.com/gitpod-io/gitpod/ide-metrics/pkg/errorreporter"
 	"github.com/gorilla/websocket"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -29,9 +30,10 @@ import (
 type IDEMetricsServer struct {
 	config *config.ServiceConfiguration
 
-	registry     prometheus.Registerer
-	counterMap   map[string]*allowListCollector
-	histogramMap map[string]*allowListCollector
+	registry      prometheus.Registerer
+	counterMap    map[string]*allowListCollector
+	histogramMap  map[string]*allowListCollector
+	errorReporter errorreporter.ErrorReporter
 
 	api.UnimplementedMetricsServiceServer
 }
@@ -112,10 +114,10 @@ func (s *IDEMetricsServer) AddCounter(ctx context.Context, req *api.AddCounterRe
 	if err != nil {
 		return nil, err
 	}
-	if req.Value == nil {
+	if req.Value == 0 {
 		counter.Inc()
 	} else {
-		counter.Add(float64(*req.Value))
+		counter.Add(float64(req.Value))
 	}
 	return &api.AddCounterResponse{}, nil
 }
@@ -132,6 +134,34 @@ func (s *IDEMetricsServer) ObserveHistogram(ctx context.Context, req *api.Observ
 	}
 	histogram.Observe(req.Value)
 	return &api.ObserveHistogramResponse{}, nil
+}
+func (s *IDEMetricsServer) ReportError(ctx context.Context, req *api.ReportErrorRequest) (*api.ReportErrorResponse, error) {
+	if req.Component == "" || req.ErrorStack == "" {
+		return nil, errors.New("request invalid")
+	}
+	allow := false
+	for _, c := range s.config.Server.ErrorReporting.AllowComponents {
+		if c == req.Component {
+			allow = true
+			break
+		}
+	}
+	if !allow {
+		return nil, errors.New("invalid component name")
+	}
+	s.errorReporter.Report(errorreporter.ReportedErrorEvent{
+		Type:        "type.googleapis.com/google.devtools.clouderrorreporting.v1beta1.ReportedErrorEvent",
+		Message:     req.ErrorStack,
+		WorkspaceID: req.WorkspaceId,
+		InstanceId:  req.InstanceId,
+		UserId:      req.UserId,
+		Properties:  req.Properties,
+		ServiceContext: errorreporter.ReportedErrorServiceContext{
+			Service: req.Component,
+			Version: req.Version,
+		},
+	})
+	return &api.ReportErrorResponse{}, nil
 }
 
 func (s *IDEMetricsServer) registryCounterMetrics() {
@@ -189,11 +219,13 @@ func (s *IDEMetricsServer) ReloadConfig(cfg *config.ServiceConfiguration) {
 }
 
 func NewMetricsServer(cfg *config.ServiceConfiguration, reg prometheus.Registerer) *IDEMetricsServer {
+	r := errorreporter.NewFromEnvironment()
 	s := &IDEMetricsServer{
-		registry:     reg,
-		config:       cfg,
-		counterMap:   make(map[string]*allowListCollector),
-		histogramMap: make(map[string]*allowListCollector),
+		registry:      reg,
+		config:        cfg,
+		counterMap:    make(map[string]*allowListCollector),
+		histogramMap:  make(map[string]*allowListCollector),
+		errorReporter: r,
 	}
 	s.prepareMetrics()
 	return s
@@ -236,8 +268,6 @@ func (s *IDEMetricsServer) Start() error {
 			return true
 		},
 		AllowedHeaders: []string{"*"},
-		// Enable Debugging for testing, consider disabling in production
-		Debug: true,
 	})
 
 	routes.Handle("/metrics-api/", http.StripPrefix("/metrics-api", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -247,7 +277,8 @@ func (s *IDEMetricsServer) Start() error {
 			websocket.IsWebSocketUpgrade(r) {
 			grpcWebServer.ServeHTTP(w, r)
 		} else {
-			restMux.ServeHTTP(w, r)
+			x := c.Handler(restMux)
+			x.ServeHTTP(w, r)
 		}
 	})))
 	go http.Serve(httpMux, routes)

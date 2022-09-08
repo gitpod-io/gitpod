@@ -75,6 +75,12 @@ export default function UserDetail(p: { user: User }) {
         });
     };
 
+    const verifyUser = async () => {
+        await updateUser(async (u) => {
+            return await getGitpodService().server.adminVerifyUser(u.id);
+        });
+    };
+
     const toggleBlockUser = async () => {
         await updateUser(async (u) => {
             u.blocked = !u.blocked;
@@ -123,6 +129,7 @@ export default function UserDetail(p: { user: User }) {
                             <h3>{user.fullName}</h3>
                             {user.blocked ? <Label text="Blocked" color="red" /> : null}{" "}
                             {user.markedDeleted ? <Label text="Deleted" color="red" /> : null}
+                            {user.lastVerificationTime ? <Label text="Verified" color="green" /> : null}
                         </div>
                         <p>
                             {user.identities
@@ -131,6 +138,11 @@ export default function UserDetail(p: { user: User }) {
                                 .join(", ")}
                         </p>
                     </div>
+                    {!user.lastVerificationTime ? (
+                        <button className="secondary danger ml-3" disabled={activity} onClick={verifyUser}>
+                            Verify User
+                        </button>
+                    ) : null}
                     <button className="secondary danger ml-3" disabled={activity} onClick={toggleBlockUser}>
                         {user.blocked ? "Unblock" : "Block"} User
                     </button>

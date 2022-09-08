@@ -1,3 +1,4 @@
 installer
 dist
-/versions.yaml
+versions.yaml
+!cmd/testdata/render/versions.yaml

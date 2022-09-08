@@ -13,8 +13,12 @@ service BillingService {
   // This is an Internal RPC used by the usage reconciler and not intended for general consumption.
   rpc UpdateInvoices(UpdateInvoicesRequest) returns (UpdateInvoicesResponse) {};
 
-  // GetLatestInvoice retrieves the latest invoice for a given query.
-  rpc GetLatestInvoice(GetLatestInvoiceRequest) returns (GetLatestInvoiceResponse) {};
+  // ReconcileInvoices retrieves current credit balance and reflects it in billing system.
+  // Internal RPC, not intended for general consumption.
+  rpc ReconcileInvoices(ReconcileInvoicesRequest) returns (ReconcileInvoicesResponse) {};
+
+  // GetUpcomingInvoice retrieves the latest invoice for a given query.
+  rpc GetUpcomingInvoice(GetUpcomingInvoiceRequest) returns (GetUpcomingInvoiceResponse) {};
 
   // FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
   // having been invoiced.
@@ -28,7 +32,7 @@ message UpdateInvoicesRequest {
   google.protobuf.Timestamp start_time = 1;
   google.protobuf.Timestamp end_time = 2;
 
-  repeated BilledSession sessions = 3;
+  repeated BilledSession sessions = 3 [deprecated=true];
   // report_id is a unique identifier of the usage report for this UpdateInvoicesRequest
   string report_id = 4;
 }
@@ -36,17 +40,22 @@ message UpdateInvoicesRequest {
 message UpdateInvoicesResponse {
 }
 
-message GetLatestInvoiceRequest {
+message ReconcileInvoicesRequest {}
+
+message ReconcileInvoicesResponse {}
+
+message GetUpcomingInvoiceRequest {
   oneof identifier {
     string team_id = 1;
     string user_id = 2;
   }
 }
 
-message GetLatestInvoiceResponse {
+message GetUpcomingInvoiceResponse {
   string invoice_id = 1;
   string currency = 2;
   double amount = 3;
+  int64  credits = 4;
 }
 
 message FinalizeInvoiceRequest {
