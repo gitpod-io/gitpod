@@ -633,7 +633,7 @@ spec:
     group: cert-manager.io
     kind: Issuer
     name: ca-issuer
-  secretName: ws-manager-client-tls
+  secretName: ws-manager-tls
   secretTemplate:
     labels:
       app: gitpod
@@ -6547,7 +6547,7 @@ spec:
         name: config
       - name: ws-manager-client-tls-certs
         secret:
-          secretName: ws-manager-client-tls
+          secretName: ws-manager-tls
       - name: pull-secret
         secret:
           secretName: my-registry-credentials
@@ -8017,7 +8017,7 @@ spec:
         name: configuration
       - name: wsman-tls-certs
         secret:
-          secretName: ws-manager-client-tls
+          secretName: ws-manager-tls
       - name: pull-secret
         secret:
           secretName: my-registry-credentials
@@ -8545,7 +8545,7 @@ spec:
         name: ide-config
       - name: ws-manager-client-tls-certs
         secret:
-          secretName: ws-manager-client-tls
+          secretName: ws-manager-tls
       - name: twilio-secret-volume
         secret:
           optional: true
@@ -8922,7 +8922,7 @@ spec:
         name: config
       - name: ws-manager-client-tls-certs
         secret:
-          secretName: ws-manager-client-tls
+          secretName: ws-manager-tls
 status: {}
 ---
 # apps/v1/Deployment ws-proxy
@@ -9070,7 +9070,7 @@ spec:
         name: config
       - name: ws-manager-client-tls-certs
         secret:
-          secretName: ws-manager-client-tls
+          secretName: ws-manager-tls
       - name: config-certificates
         secret:
           secretName: https-certificates

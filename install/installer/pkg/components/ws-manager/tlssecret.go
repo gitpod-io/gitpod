@@ -63,7 +63,7 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Spec: certmanagerv1.CertificateSpec{
 				Duration:   common.InternalCertDuration,
-				SecretName: TLSSecretNameClient,
+				SecretName: TLSSecretNameSecret,
 				DNSNames:   clientAltNames,
 				IssuerRef: cmmeta.ObjectReference{
 					Name:  issuer,

@@ -72,7 +72,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Name: "wsman-tls-certs",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: wsmanager.TLSSecretNameClient,
+					SecretName: wsmanager.TLSSecretNameSecret,
 				},
 			},
 		},
