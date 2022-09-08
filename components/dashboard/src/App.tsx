@@ -35,6 +35,7 @@ import {
     settingsPathTeamsNew,
     settingsPathVariables,
     settingsPathSSHKeys,
+    usagePathMain,
 } from "./settings/settings.routes";
 import {
     projectsPathInstallGitHubApp,
@@ -90,6 +91,7 @@ const ProjectsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "./ad
 const TeamsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "./admin/TeamsSearch"));
 const OAuthClientApproval = React.lazy(() => import(/* webpackPrefetch: true */ "./OauthClientApproval"));
 const License = React.lazy(() => import(/* webpackPrefetch: true */ "./admin/License"));
+const Usage = React.lazy(() => import(/* webpackPrefetch: true */ "./Usage"));
 
 function Loading() {
     return <></>;
@@ -377,6 +379,7 @@ function App() {
                     <Route path="/setup" exact component={Setup} />
                     <Route path={workspacesPathMain} exact component={Workspaces} />
                     <Route path={settingsPathAccount} exact component={Account} />
+                    <Route path={usagePathMain} exact component={Usage} />
                     <Route path={settingsPathIntegrations} exact component={Integrations} />
                     <Route path={settingsPathNotifications} exact component={Notifications} />
                     <Route path={settingsPathBilling} exact component={Billing} />
