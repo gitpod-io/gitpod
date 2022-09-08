@@ -12,6 +12,7 @@ import { WorkspaceInstance, WorkspaceInstancePhase } from "./workspace-instance"
 import { RoleOrPermission } from "./permission";
 import { AccountStatement } from "./accounting-protocol";
 import { InstallationAdminSettings } from "./installation-admin-protocol";
+import { BillingMode } from "./billing-mode";
 
 export interface AdminServer {
     adminGetUsers(req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>>;
@@ -49,6 +50,7 @@ export interface AdminServer {
     adminIsStudent(userId: string): Promise<boolean>;
     adminAddStudentEmailDomain(userId: string, domain: string): Promise<void>;
     adminGrantExtraHours(userId: string, extraHours: number): Promise<void>;
+    adminGetBillingMode(attributionId: string): Promise<BillingMode>;
 
     adminGetSettings(): Promise<InstallationAdminSettings>;
     adminUpdateSettings(settings: InstallationAdminSettings): Promise<void>;

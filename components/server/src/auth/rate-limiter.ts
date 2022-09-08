@@ -163,6 +163,7 @@ const defaultFunctions: FunctionsConfig = {
     adminGetBlockedRepositories: { group: "default", points: 1 },
     adminCreateBlockedRepository: { group: "default", points: 1 },
     adminDeleteBlockedRepository: { group: "default", points: 1 },
+    adminGetBillingMode: { group: "default", points: 1 },
 
     validateLicense: { group: "default", points: 1 },
     getLicenseInfo: { group: "default", points: 1 },

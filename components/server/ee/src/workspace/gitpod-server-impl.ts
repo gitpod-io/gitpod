@@ -2374,6 +2374,21 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         await this.subscriptionService.addCredit(userId, extraHours, new Date().toISOString());
     }
 
+    async adminGetBillingMode(ctx: TraceContextWithSpan, attributionId: string): Promise<BillingMode> {
+        traceAPIParams(ctx, { attributionId });
+
+        const user = this.checkAndBlockUser("adminGetBillingMode");
+        if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
+            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
+        }
+
+        const parsedAttributionId = AttributionId.parse(attributionId);
+        if (!parsedAttributionId) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Unable to parse attributionId");
+        }
+        return this.billingModes.getBillingMode(parsedAttributionId, new Date());
+    }
+
     // various
     async sendFeedback(ctx: TraceContext, feedback: string): Promise<string | undefined> {
         traceAPIParams(ctx, {}); // feedback is not interesting here, any may contain names
