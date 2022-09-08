@@ -20,18 +20,20 @@ func Git(rsa *rpc.Client) GitClient {
 	return GitClient{rsa}
 }
 
-func (g GitClient) GetBranch(workspaceRoot string) (string, error) {
+func (g GitClient) GetBranch(workspaceRoot string, ignoreError bool) (string, error) {
 	var resp agent.ExecResponse
 	err := g.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 		Dir:     workspaceRoot,
 		Command: "git",
 		Args:    []string{"rev-parse", "--abbrev-ref", "HEAD"},
 	}, &resp)
-	if err != nil {
-		return "", fmt.Errorf("getBranch error: %w", err)
-	}
-	if resp.ExitCode != 0 {
-		return "", fmt.Errorf("getBranch returned rc: %d err: %v", resp.ExitCode, resp.Stderr)
+	if !ignoreError {
+		if err != nil {
+			return "", fmt.Errorf("getBranch error: %w", err)
+		}
+		if resp.ExitCode != 0 {
+			return "", fmt.Errorf("getBranch returned rc: %d err: %v", resp.ExitCode, resp.Stderr)
+		}
 	}
 	return strings.Trim(resp.Stdout, " \t\n"), nil
 }

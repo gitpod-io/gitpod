@@ -25,6 +25,7 @@ type ContextTest struct {
 	WorkspaceRoot      string
 	ExpectedBranch     string
 	ExpectedBranchFunc func(username string) string
+	IgnoreError        bool
 }
 
 func TestGitHubContexts(t *testing.T) {
@@ -54,6 +55,19 @@ func TestGitHubContexts(t *testing.T) {
 			ContextURL:     "github.com/gitpod-io/gitpod-test-repo/tree/integration-test-context-tag",
 			WorkspaceRoot:  "/workspace/gitpod-test-repo",
 			ExpectedBranch: "HEAD",
+		},
+		{
+			Name:           "empty repo",
+			ContextURL:     "github.com/gitpod-io/empty",
+			WorkspaceRoot:  "/workspace/empty",
+			ExpectedBranch: "main",
+		},
+		{
+			Name:           "empty repo",
+			ContextURL:     "github.com/gitpod-io/empty",
+			WorkspaceRoot:  "/workspace/empty",
+			ExpectedBranch: "HEAD",
+			IgnoreError:    true,
 		},
 	}
 	runContextTests(t, tests)
@@ -156,7 +170,7 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 						if err != nil {
 							t.Fatal(err)
 						}
-						actBranch, err := git.GetBranch(test.WorkspaceRoot)
+						actBranch, err := git.GetBranch(test.WorkspaceRoot, test.IgnoreError)
 						if err != nil {
 							t.Fatal(err)
 						}
