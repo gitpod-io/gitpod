@@ -2086,6 +2086,24 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
+    async createOrUpdateStripeCustomerForUser(ctx: TraceContext, currency: string): Promise<void> {
+        const user = this.checkAndBlockUser("createOrUpdateStripeCustomerForUser");
+        await this.ensureStripeApiIsAllowed({ user });
+        try {
+            let customer = await this.stripeService.findCustomerByUserId(user.id);
+            if (!customer) {
+                customer = await this.stripeService.createCustomerForUser(user);
+            }
+            await this.stripeService.setPreferredCurrencyForCustomer(customer, currency);
+        } catch (error) {
+            log.error(`Failed to update Stripe customer profile for user '${user.id}'`, error);
+            throw new ResponseError(
+                ErrorCodes.INTERNAL_SERVER_ERROR,
+                `Failed to update Stripe customer profile for user '${user.id}'`,
+            );
+        }
+    }
+
     protected defaultSpendingLimit = 100;
     async subscribeTeamToStripe(ctx: TraceContext, teamId: string, setupIntentId: string): Promise<void> {
         this.checkAndBlockUser("subscribeUserToStripe");
