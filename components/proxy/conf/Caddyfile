@@ -15,6 +15,7 @@
 	order gitpod.cors_origin            before header
 	order gitpod.workspace_download     before redir
 	order gitpod.headless_log_download	before rewrite
+	order gitpod.configcat	            before rewrite
 	order gitpod.sec_websocket_key      before header
 
 	servers {
@@ -192,6 +193,14 @@ https://{$GITPOD_DOMAIN} {
 		gitpod.headless_log_download {
 			service http://server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000
 		}
+	}
+
+	@configcat path /configcat*
+	handle @configcat {
+		gitpod.cors_origin {
+			any_domain true
+		}
+		gitpod.configcat
 	}
 
 	@backend_wss {
