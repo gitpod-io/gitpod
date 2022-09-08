@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	contentservice "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
@@ -229,9 +230,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				"shareSnapshot":    {Group: "inWorkspaceUserAction"},
 			},
 		},
-		ContentServiceAddr:           "content-service:8080",
-		ImageBuilderAddr:             "image-builder-mk3:8080",
-		UsageServiceAddr:             net.JoinHostPort(usage.Component, strconv.Itoa(usage.GRPCServicePort)),
+		ContentServiceAddr:           net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", contentservice.Component, ctx.Namespace), strconv.Itoa(contentservice.RPCPort)),
+		ImageBuilderAddr:             net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", common.ImageBuilderComponent, ctx.Namespace), strconv.Itoa(common.ImageBuilderRPCPort)),
+		UsageServiceAddr:             net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", usage.Component, ctx.Namespace), strconv.Itoa(usage.GRPCServicePort)),
 		CodeSync:                     CodeSync{},
 		VSXRegistryUrl:               fmt.Sprintf("https://open-vsx.%s", ctx.Config.Domain), // todo(sje): or "https://{{ .Values.vsxRegistry.host | default "open-vsx.org" }}" if not using OpenVSX proxy
 		EnablePayment:                chargebeeSecret != "" || stripeSecret != "" || stripeConfig != "",
