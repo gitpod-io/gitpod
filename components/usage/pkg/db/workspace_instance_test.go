@@ -130,16 +130,21 @@ func TestFindRunningWorkspace(t *testing.T) {
 			StartedTime:  db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
 			StoppingTime: db.NewVarcharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
 		}),
+		// one before August 2022, excluded
+		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			WorkspaceID: workspace.ID,
+			StartedTime: db.NewVarcharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
+		}),
 		// Two running instances
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:          uuid.New(),
 			WorkspaceID: workspace.ID,
-			StartedTime: db.NewVarcharTime(time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)),
+			StartedTime: db.NewVarcharTime(time.Date(2022, 9, 1, 0, 00, 00, 00, time.UTC)),
 		}),
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			ID:          uuid.New(),
 			WorkspaceID: workspace.ID,
-			StartedTime: db.NewVarcharTime(time.Date(2022, 04, 30, 23, 00, 00, 00, time.UTC)),
+			StartedTime: db.NewVarcharTime(time.Date(2022, 9, 30, 23, 00, 00, 00, time.UTC)),
 		}),
 	}
 

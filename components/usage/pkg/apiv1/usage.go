@@ -121,7 +121,7 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 	}
 
 	usageSummary, err := db.GetUsageSummary(ctx, s.conn,
-		db.AttributionID(string(attributionId)),
+		attributionId,
 		from,
 		to,
 		true,
