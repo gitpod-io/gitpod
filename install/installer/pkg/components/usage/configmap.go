@@ -5,8 +5,6 @@ package usage
 
 import (
 	"fmt"
-	"time"
-
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/usage/pkg/server"
 
@@ -19,7 +17,7 @@ import (
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	cfg := server.Config{
-		ControllerSchedule: time.Hour.String(),
+		ControllerSchedule: "", // By default controller is disabled
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{
