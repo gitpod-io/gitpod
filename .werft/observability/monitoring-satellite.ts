@@ -67,6 +67,11 @@ export class MonitoringSatelliteInstaller {
                 "pyrra": {
                     "install": true
                 },
+                "tracing": {
+                    "install": true,
+                    "honeycombAPIKey": "${process.env.HONEYCOMB_API_KEY}",
+                    "honeycombDataset": "preview-environments",
+                },
                 "prometheus": {
                     "externalLabels": {
                         "cluster": "${previewName}",
