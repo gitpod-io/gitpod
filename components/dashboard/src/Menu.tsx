@@ -217,17 +217,23 @@ export default function Menu() {
             return teamSettingsList;
         }
         // User menu
-        return [
-            {
-                title: "Projects",
-                link: "/projects",
-            },
-            {
-                title: "Settings",
-                link: "/settings",
-                alternatives: getSettingsMenu({ userBillingMode }).flatMap((e) => e.link),
-            },
-        ];
+        const userMenu = [];
+        userMenu.push({
+            title: "Projects",
+            link: "/projects",
+        });
+        if (userBillingMode?.mode === "usage-based") {
+            userMenu.push({
+                title: "Usage",
+                link: "/usage",
+            });
+        }
+        userMenu.push({
+            title: "Settings",
+            link: "/settings",
+            alternatives: getSettingsMenu({ userBillingMode }).flatMap((e) => e.link),
+        });
+        return userMenu;
     })();
     const rightMenu: Entry[] = [
         ...(user?.rolesOrPermissions?.includes("admin")
