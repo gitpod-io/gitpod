@@ -181,6 +181,9 @@ yq e -i '.customCACert.kind = "secret"' config.yaml
 yq e -i '.observability.logLevel = "debug"' config.yaml
 yq e -i '.workspace.runtime.containerdSocket = "/run/k3s/containerd/containerd.sock"' config.yaml
 yq e -i '.workspace.runtime.containerdRuntimeDir = "/var/lib/rancher/k3s/agent/containerd/io.containerd.runtime.v2.task/k8s.io/"' config.yaml
+yq e -i '.workspace.pvc.size = "10Gi"' config.yaml
+yq e -i '.workspace.resources.requests.memory = "500Mi"' config.yaml
+yq e -i '.workspace.resources.requests.cpu = "500m"' config.yaml
 yq e -i '.experimental.telemetry.data.platform = "local-preview"' config.yaml
 
 echo "extracting images to download ahead..."
@@ -215,6 +218,15 @@ yq eval-all -i 'del(.spec.template.spec.initContainers[0])' /var/lib/rancher/k3s
 yq eval-all -i '.spec.template.spec.containers[0].resources.requests.memory="250Mi"' /var/lib/rancher/k3s/server/manifests/gitpod/*_DaemonSet_ws-daemon.yaml
 yq eval-all -i '.spec.template.spec.containers[0].resources.requests.cpu="250m"' /var/lib/rancher/k3s/server/manifests/gitpod/*_DaemonSet_ws-daemon.yaml
 yq eval-all -i '.spec.template.spec.containers[0].resources.requests.memory="250Mi"' /var/lib/rancher/k3s/server/manifests/gitpod/*_Deployment_minio.yaml
+
+# set storage requests to be lower
+for f in /var/lib/rancher/k3s/server/manifests/gitpod/*PersistentVolumeClaim*.yaml; do
+    yq e -i '.spec.resources.requests.storage="1Gi"' "$f";
+done
+
+for f in /var/lib/rancher/k3s/server/manifests/gitpod/*StatefulSet*.yaml; do
+    yq e -i '.spec.volumeClaimTemplates[0].spec.resources.requests.storage="1Gi"' "$f";
+done
 
 touch /var/lib/rancher/k3s/server/manifests/coredns.yaml.skip
 mv -f /app/manifests/coredns.yaml /var/lib/rancher/k3s/server/manifests/custom-coredns.yaml
