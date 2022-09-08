@@ -6,32 +6,33 @@ package stripe
 
 import (
 	"fmt"
+	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
-func TestCustomerQueriesForTeamIds_SingleQuery(t *testing.T) {
+func TestQueriesForCustomersWithAttributionID_Single(t *testing.T) {
 	testCases := []struct {
 		Name            string
-		TeamIds         []string
+		AttributionIDs  []db.AttributionID
 		ExpectedQueries []string
 	}{
 		{
 			Name:            "1 team id",
-			TeamIds:         []string{"abcd-123"},
-			ExpectedQueries: []string{"metadata['teamId']:'abcd-123'"},
+			AttributionIDs:  []db.AttributionID{db.NewTeamAttributionID("abcd-123")},
+			ExpectedQueries: []string{"metadata['attributionId']:'team:abcd-123'"},
 		},
 		{
-			Name:            "2 team ids",
-			TeamIds:         []string{"abcd-123", "abcd-456"},
-			ExpectedQueries: []string{"metadata['teamId']:'abcd-123' OR metadata['teamId']:'abcd-456'"},
+			Name:            "1 team id, 1 user id",
+			AttributionIDs:  []db.AttributionID{db.NewTeamAttributionID("abcd-123"), db.NewUserAttributionID("abcd-456")},
+			ExpectedQueries: []string{"metadata['attributionId']:'team:abcd-123' OR metadata['attributionId']:'user:abcd-456'"},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			actualQueries := queriesForCustomersWithTeamIds(tc.TeamIds)
+			actualQueries := queriesForCustomersWithAttributionIDs(tc.AttributionIDs)
 
 			require.Equal(t, tc.ExpectedQueries, actualQueries)
 		})
@@ -66,18 +67,18 @@ func TestCustomerQueriesForTeamIds_MultipleQueries(t *testing.T) {
 		},
 	}
 
-	buildTeamIds := func(numberOfTeamIds int) []string {
-		var teamIds []string
+	buildTeamIds := func(numberOfTeamIds int) []db.AttributionID {
+		var attributionIDs []db.AttributionID
 		for i := 0; i < numberOfTeamIds; i++ {
-			teamIds = append(teamIds, fmt.Sprintf("abcd-%d", i))
+			attributionIDs = append(attributionIDs, db.NewTeamAttributionID(fmt.Sprintf("abcd-%d", i)))
 		}
-		return teamIds
+		return attributionIDs
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			teamIds := buildTeamIds(tc.NumberOfTeamIds)
-			actualQueries := queriesForCustomersWithTeamIds(teamIds)
+			actualQueries := queriesForCustomersWithAttributionIDs(teamIds)
 
 			require.Equal(t, tc.ExpectedNumberOfQueries, len(actualQueries))
 		})
