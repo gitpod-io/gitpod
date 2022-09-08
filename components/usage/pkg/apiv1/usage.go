@@ -190,8 +190,6 @@ func (s *UsageService) ReconcileUsageWithLedger(ctx context.Context, req *v1.Rec
 		return nil, status.Errorf(codes.InvalidArgument, "To must not be before From")
 	}
 
-	now := s.nowFunc()
-
 	var instances []db.WorkspaceInstanceForUsage
 	stopped, err := db.FindStoppedWorkspaceInstancesInRange(ctx, s.conn, from, to)
 	if err != nil {
@@ -224,6 +222,8 @@ func (s *UsageService) ReconcileUsageWithLedger(ctx context.Context, req *v1.Rec
 	logger.Infof("Found %d workspaces instances for usage records in draft.", len(instancesWithUsageInDraft))
 	instances = append(instances, instancesWithUsageInDraft...)
 
+	// now has to be computed after we've collected all data, to ensure that it's always greater than any of the records we fetch
+	now := s.nowFunc()
 	inserts, updates, err := reconcileUsageWithLedger(instances, usageDrafts, s.pricer, now)
 	if err != nil {
 		logger.WithError(err).Errorf("Failed to reconcile usage with ledger.")
