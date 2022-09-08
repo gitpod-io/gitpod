@@ -8,6 +8,7 @@ import { inject, injectable } from "inversify";
 import Stripe from "stripe";
 import { Team, User } from "@gitpod/gitpod-protocol";
 import { Config } from "../../../src/config";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 
 const POLL_CREATED_CUSTOMER_INTERVAL_MS = 1000;
 const POLL_CREATED_CUSTOMER_MAX_ATTEMPTS = 30;
@@ -61,7 +62,9 @@ export class StripeService {
             email: User.getPrimaryEmail(user),
             name: User.getName(user),
             metadata: {
+                // userId is deprecated, use attributionId where possible
                 userId: user.id,
+                attributionId: AttributionId.render({ kind: "user", userId: user.id }),
             },
         });
         // Wait for the customer to show up in Stripe search results before proceeding
@@ -85,7 +88,9 @@ export class StripeService {
             email: User.getPrimaryEmail(user),
             name: userName ? `${userName} (${team.name})` : team.name,
             metadata: {
+                // teamId is deprecated, use attributionId where possible
                 teamId: team.id,
+                attributionId: AttributionId.render({ kind: "team", teamId: team.id }),
             },
         });
         // Wait for the customer to show up in Stripe search results before proceeding
