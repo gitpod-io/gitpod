@@ -144,8 +144,19 @@ func TestInsertUsageRecords(t *testing.T) {
 
 	drafts, err := db.FindAllDraftUsage(context.Background(), conn)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(drafts))
-	require.NotEqual(t, updatedDesc, drafts[0].Description)
+	cleaned := filter(drafts, attributionID)
+	require.Equal(t, 1, len(cleaned))
+	require.NotEqual(t, updatedDesc, cleaned[0].Description)
+}
+
+func filter(drafts []db.Usage, attributionID db.AttributionID) []db.Usage {
+	var cleaned []db.Usage
+	for _, draft := range drafts {
+		if draft.AttributionID == attributionID {
+			cleaned = append(cleaned, draft)
+		}
+	}
+	return cleaned
 }
 
 func TestUpdateUsageRecords(t *testing.T) {
@@ -168,8 +179,9 @@ func TestUpdateUsageRecords(t *testing.T) {
 
 	drafts, err := db.FindAllDraftUsage(context.Background(), conn)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(drafts))
-	require.Equal(t, updatedDesc, drafts[0].Description)
+	cleaned := filter(drafts, attributionID)
+	require.Equal(t, 1, len(cleaned))
+	require.Equal(t, updatedDesc, cleaned[0].Description)
 }
 
 func TestFindAllDraftUsage(t *testing.T) {
@@ -197,8 +209,9 @@ func TestFindAllDraftUsage(t *testing.T) {
 	dbtest.CreateUsageRecords(t, conn, usage1, usage2, usage3)
 	drafts, err := db.FindAllDraftUsage(context.Background(), conn)
 	require.NoError(t, err)
-	require.Equal(t, 2, len(drafts))
-	for _, usage := range drafts {
+	cleaned := filter(drafts, attributionID)
+	require.Equal(t, 2, len(cleaned))
+	for _, usage := range cleaned {
 		require.True(t, usage.Draft)
 	}
 
@@ -208,8 +221,9 @@ func TestFindAllDraftUsage(t *testing.T) {
 
 	drafts, err = db.FindAllDraftUsage(context.Background(), conn)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(drafts))
-	for _, usage := range drafts {
+	cleaned = filter(drafts, attributionID)
+	require.Equal(t, 1, len(cleaned))
+	for _, usage := range cleaned {
 		require.True(t, usage.Draft)
 	}
 }
