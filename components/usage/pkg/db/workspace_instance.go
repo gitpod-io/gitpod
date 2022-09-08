@@ -80,6 +80,8 @@ func FindRunningWorkspaceInstances(ctx context.Context, conn *gorm.DB) ([]Worksp
 	tx := queryWorkspaceInstanceForUsage(ctx, conn).
 		Where("wsi.stoppingTime = ?", "").
 		Where("wsi.usageAttributionId != ?", "").
+		// We cannot guarantee data quality before this date
+		Where("wsi.startedTime > ?", TimeToISO8601(time.Date(2022, 8, 1, 0, 0, 0, 0, time.UTC))).
 		FindInBatches(&instancesInBatch, 1000, func(_ *gorm.DB, _ int) error {
 			instances = append(instances, instancesInBatch...)
 			return nil
