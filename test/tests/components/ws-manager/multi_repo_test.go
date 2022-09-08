@@ -167,7 +167,7 @@ func assertRepositories(t *testing.T, rsa *rpc.Client) {
 			t.Fatalf("repository %s has not been cloned", k)
 		}
 
-		branch, err := git.GetBranch(filepath.Join("/workspace", k))
+		branch, err := git.GetBranch(filepath.Join("/workspace", k), false)
 		if err != nil {
 			t.Fatal(err)
 		}
