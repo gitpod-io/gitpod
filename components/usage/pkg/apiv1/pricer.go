@@ -34,8 +34,8 @@ type WorkspacePricer struct {
 	creditMinutesByWorkspaceClass map[string]float64
 }
 
-func (p *WorkspacePricer) CreditsUsedByInstance(instance *db.WorkspaceInstanceForUsage, maxStopTime time.Time) float64 {
-	runtime := instance.WorkspaceRuntimeSeconds(maxStopTime)
+func (p *WorkspacePricer) CreditsUsedByInstance(instance *db.WorkspaceInstanceForUsage, stopTimeIfStillRunning time.Time) float64 {
+	runtime := instance.WorkspaceRuntimeSeconds(stopTimeIfStillRunning)
 	class := defaultWorkspaceClass
 	if instance.WorkspaceClass != "" {
 		class = instance.WorkspaceClass

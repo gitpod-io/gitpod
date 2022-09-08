@@ -8,6 +8,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"strings"
 	"time"
 
@@ -214,14 +215,26 @@ type WorkspaceInstanceForUsage struct {
 
 // WorkspaceRuntimeSeconds computes how long this WorkspaceInstance has been running.
 // If the instance is still running (no stopping time set), maxStopTime is used to to compute the duration - this is an upper bound on stop
-func (i *WorkspaceInstanceForUsage) WorkspaceRuntimeSeconds(maxStopTime time.Time) int64 {
+func (i *WorkspaceInstanceForUsage) WorkspaceRuntimeSeconds(stopTimeIfInstanceIsStillRunning time.Time) int64 {
 	start := i.StartedTime.Time()
-	stop := maxStopTime
+	stop := stopTimeIfInstanceIsStillRunning
 
 	if i.StoppingTime.IsSet() {
-		if i.StoppingTime.Time().Before(maxStopTime) {
-			stop = i.StoppingTime.Time()
-		}
+		stop = i.StoppingTime.Time()
+	}
+
+	if stop.Before(start) {
+		log.
+			WithField("instance_id", i.ID).
+			WithField("workspace_id", i.WorkspaceID).
+			WithField("started_time", TimeToISO8601(i.StartedTime.Time())).
+			WithField("started_time_set", i.StartedTime.IsSet()).
+			WithField("stopping_time_set", i.StartedTime.IsSet()).
+			WithField("stopping_time", TimeToISO8601(i.StartedTime.Time())).
+			WithField("stop_time_if_instance_still_running", stopTimeIfInstanceIsStillRunning).
+			Errorf("Instance %s had stop time before start time. Using startedTime as stop time.", i.ID)
+
+		stop = start
 	}
 
 	return int64(stop.Sub(start).Round(time.Second).Seconds())
