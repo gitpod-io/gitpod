@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"os"
 	"strings"
 
@@ -17,8 +18,8 @@ import (
 )
 
 const (
-	ReportIDMetadataKey = "reportId"
-	TeamIDMetadataKey   = "teamId"
+	ReportIDMetadataKey      = "reportId"
+	AttributionIDMetadataKey = "attributionId"
 )
 
 type Client struct {
@@ -63,19 +64,14 @@ type Invoice struct {
 	Credits        int64
 }
 
-type CreditSummary struct {
-	Credits  int64
-	ReportID string
-}
-
 // UpdateUsage updates teams' Stripe subscriptions with usage data
 // `usageForTeam` is a map from team name to total workspace seconds used within a billing period.
-func (c *Client) UpdateUsage(ctx context.Context, creditsPerTeam map[string]CreditSummary) error {
-	teamIds := make([]string, 0, len(creditsPerTeam))
-	for k := range creditsPerTeam {
-		teamIds = append(teamIds, k)
+func (c *Client) UpdateUsage(ctx context.Context, creditsPerAttributionID map[db.AttributionID]int64) error {
+	attributionIDs := make([]db.AttributionID, 0, len(creditsPerAttributionID))
+	for k := range creditsPerAttributionID {
+		attributionIDs = append(attributionIDs, k)
 	}
-	queries := queriesForCustomersWithTeamIds(teamIds)
+	queries := queriesForCustomersWithAttributionIDs(attributionIDs)
 
 	for _, query := range queries {
 		log.Infof("Searching customers in Stripe with query: %q", query)
@@ -86,14 +82,21 @@ func (c *Client) UpdateUsage(ctx context.Context, creditsPerTeam map[string]Cred
 		}
 
 		for _, customer := range customers {
-			teamID := customer.Metadata["teamId"]
-			log.Infof("Found customer %q for teamId %q", customer.Name, teamID)
+			attributionIDRaw := customer.Metadata[AttributionIDMetadataKey]
+			log.Infof("Found customer %q for attribution ID %q", customer.Name, attributionIDRaw)
 
-			_, err := c.updateUsageForCustomer(ctx, customer, creditsPerTeam[teamID])
+			attributionID, err := db.ParseAttributionID(attributionIDRaw)
+			if err != nil {
+				log.WithError(err).Error("Failed to parse attribution ID from Stripe metadata.")
+				continue
+			}
+
+			_, err = c.updateUsageForCustomer(ctx, customer, creditsPerAttributionID[attributionID])
 			if err != nil {
 				log.WithField("customer_id", customer.ID).
 					WithField("customer_name", customer.Name).
 					WithField("subscriptions", customer.Subscriptions).
+					WithField("attribution_id", attributionID).
 					WithError(err).
 					Errorf("Failed to update usage.")
 
@@ -127,7 +130,7 @@ func (c *Client) findCustomers(ctx context.Context, query string) ([]*stripe.Cus
 	return customers, nil
 }
 
-func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Customer, summary CreditSummary) (*UsageRecord, error) {
+func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Customer, credits int64) (*UsageRecord, error) {
 	subscriptions := customer.Subscriptions.Data
 	if len(subscriptions) != 1 {
 		return nil, fmt.Errorf("customer has an unexpected number of subscriptions %v (expected 1, got %d)", subscriptions, len(subscriptions))
@@ -146,7 +149,7 @@ func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Cu
 			Context: ctx,
 		},
 		SubscriptionItem: stripe.String(subscriptionItemId),
-		Quantity:         stripe.Int64(summary.Credits),
+		Quantity:         stripe.Int64(credits),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to register usage for customer %q on subscription item %s", customer.Name, subscriptionItemId)
@@ -154,7 +157,7 @@ func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Cu
 
 	return &UsageRecord{
 		SubscriptionItemID: subscriptionItemId,
-		Quantity:           summary.Credits,
+		Quantity:           credits,
 	}, nil
 }
 
@@ -246,19 +249,19 @@ func (c *Client) GetInvoice(ctx context.Context, invoiceID string) (*stripe.Invo
 	return invoice, nil
 }
 
-// queriesForCustomersWithTeamIds constructs Stripe query strings to find the Stripe Customer for each teamId
+// queriesForCustomersWithAttributionIDs constructs Stripe query strings to find the Stripe Customer for each teamId
 // It returns multiple queries, each being a big disjunction of subclauses so that we can process multiple teamIds in one query.
 // `clausesPerQuery` is a limit enforced by the Stripe API.
-func queriesForCustomersWithTeamIds(teamIds []string) []string {
+func queriesForCustomersWithAttributionIDs(attributionIDs []db.AttributionID) []string {
 	const clausesPerQuery = 10
 	var queries []string
 	sb := strings.Builder{}
 
-	for i := 0; i < len(teamIds); i += clausesPerQuery {
+	for i := 0; i < len(attributionIDs); i += clausesPerQuery {
 		sb.Reset()
-		for j := 0; j < clausesPerQuery && i+j < len(teamIds); j++ {
-			sb.WriteString(fmt.Sprintf("metadata['%s']:'%s'", TeamIDMetadataKey, teamIds[i+j]))
-			if j < clausesPerQuery-1 && i+j < len(teamIds)-1 {
+		for j := 0; j < clausesPerQuery && i+j < len(attributionIDs); j++ {
+			sb.WriteString(fmt.Sprintf("metadata['%s']:'%s'", AttributionIDMetadataKey, attributionIDs[i+j]))
+			if j < clausesPerQuery-1 && i+j < len(attributionIDs)-1 {
 				sb.WriteString(" OR ")
 			}
 		}

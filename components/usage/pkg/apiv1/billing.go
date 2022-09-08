@@ -43,19 +43,9 @@ func (s *BillingService) ReconcileInvoices(ctx context.Context, in *v1.Reconcile
 		return nil, status.Errorf(codes.Internal, "Failed to reconcile invoices.")
 	}
 
-	creditSummaryForTeams := map[string]stripe.CreditSummary{}
+	creditSummaryForTeams := map[db.AttributionID]int64{}
 	for _, balance := range balances {
-		entity, id := balance.AttributionID.Values()
-
-		// TODO: Support updating of user attribution IDs
-		if entity != db.AttributionEntity_Team {
-			continue
-		}
-
-		creditSummaryForTeams[id] = stripe.CreditSummary{
-			Credits:  int64(math.Ceil(balance.CreditCents.ToCredits())),
-			ReportID: "no-report",
-		}
+		creditSummaryForTeams[balance.AttributionID] = int64(math.Ceil(balance.CreditCents.ToCredits()))
 	}
 
 	err = s.stripeClient.UpdateUsage(ctx, creditSummaryForTeams)
@@ -86,7 +76,7 @@ func (s *BillingService) FinalizeInvoice(ctx context.Context, in *v1.FinalizeInv
 		return nil, status.Errorf(codes.Internal, "Failed to retrieve subscription details from invoice.")
 	}
 
-	teamID, found := subscription.Metadata[stripe.TeamIDMetadataKey]
+	teamID, found := subscription.Metadata[stripe.AttributionIDMetadataKey]
 	if !found {
 		logger.Error("Failed to find teamID from subscription metadata.")
 		return nil, status.Errorf(codes.Internal, "Failed to extra teamID from Stripe subscription.")
