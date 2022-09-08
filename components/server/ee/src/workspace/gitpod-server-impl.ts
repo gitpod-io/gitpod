@@ -2125,7 +2125,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     protected defaultSpendingLimit = 100;
     async subscribeTeamToStripe(ctx: TraceContext, teamId: string, setupIntentId: string): Promise<void> {
-        this.checkAndBlockUser("subscribeUserToStripe");
+        this.checkAndBlockUser("subscribeTeamToStripe");
         const team = await this.guardTeamOperation(teamId, "update");
         await this.ensureStripeApiIsAllowed({ team });
         try {
