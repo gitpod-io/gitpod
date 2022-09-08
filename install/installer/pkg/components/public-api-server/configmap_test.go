@@ -31,15 +31,15 @@ func TestConfigMap(t *testing.T) {
 
 	expectedConfiguration := config.Configuration{
 		GitpodServiceURL:               "wss://test.domain.everything.awesome.is/api/v1",
-		BillingServiceAddress:          "usage:9001",
+		BillingServiceAddress:          fmt.Sprintf("usage.%s.svc.cluster.local:9001", ctx.Namespace),
 		StripeWebhookSigningSecretPath: stripeSecretPath,
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{
-					Address: fmt.Sprintf(":%d", GRPCContainerPort),
+					Address: fmt.Sprintf("0.0.0.0:%d", GRPCContainerPort),
 				},
 				HTTP: &baseserver.ServerConfiguration{
-					Address: fmt.Sprintf(":%d", HTTPContainerPort),
+					Address: fmt.Sprintf("0.0.0.0:%d", HTTPContainerPort),
 				},
 			},
 		},

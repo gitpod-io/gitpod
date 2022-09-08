@@ -6,10 +6,11 @@ package public_api_server
 
 import (
 	"fmt"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
-	"k8s.io/utils/pointer"
 	"net"
 	"strconv"
+
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
+	"k8s.io/utils/pointer"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/public-api/config"
@@ -36,14 +37,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	cfg := config.Configuration{
 		GitpodServiceURL:               fmt.Sprintf("wss://%s/api/v1", ctx.Config.Domain),
 		StripeWebhookSigningSecretPath: stripeSecretPath,
-		BillingServiceAddress:          net.JoinHostPort(usage.Component, strconv.Itoa(usage.GRPCServicePort)),
+		BillingServiceAddress:          net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", usage.Component, ctx.Namespace), strconv.Itoa(usage.GRPCServicePort)),
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{
-					Address: fmt.Sprintf(":%d", GRPCContainerPort),
+					Address: fmt.Sprintf("0.0.0.0:%d", GRPCContainerPort),
 				},
 				HTTP: &baseserver.ServerConfiguration{
-					Address: fmt.Sprintf(":%d", HTTPContainerPort),
+					Address: fmt.Sprintf("0.0.0.0:%d", HTTPContainerPort),
 				},
 			},
 		},

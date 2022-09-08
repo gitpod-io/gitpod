@@ -21,7 +21,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{
-					Address: fmt.Sprintf(":%d", gRPCContainerPort),
+					Address: fmt.Sprintf("0.0.0.0:%d", gRPCContainerPort),
 				},
 			},
 		},

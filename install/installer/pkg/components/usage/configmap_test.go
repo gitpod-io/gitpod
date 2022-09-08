@@ -26,7 +26,7 @@ func TestConfigMap_ContainsSchedule(t *testing.T) {
        "server": {
          "services": {
            "grpc": {
-             "address": ":9001"
+             "address": "0.0.0.0:9001"
            }
          }
        }
