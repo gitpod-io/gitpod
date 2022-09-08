@@ -20,7 +20,7 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 	f := features.New("prebuild").
 		WithLabel("component", "ws-manager").
 		Assess("it should create a prebuild and succeed the defined tasks", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -28,11 +28,11 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 				api.Done(t)
 			})
 
-			_, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
+			_, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
 				req.Type = wsmanapi.WorkspaceType_PREBUILD
 				req.Spec.Envvars = append(req.Spec.Envvars, &wsmanapi.EnvironmentVariable{
 					Name:  "GITPOD_TASKS",
-					Value: `[{ "init": "echo \"some output\" > someFile; sleep 5; exit 0;" }]`,
+					Value: `[{ "init": "echo \"some output\" > someFile; sleep 120; exit 0;" }]`,
 				})
 				return nil
 			}))
@@ -41,8 +41,16 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 			}
 
 			t.Cleanup(func() {
-				//TODO(toru): we can't wait for stopped prebuild for some reason
-				_ = stopWs(false)
+				sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
+				defer scancel()
+
+				sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+				defer sapi.Done(t)
+
+				err := stopWs(true, sapi)
+				if err != nil {
+					t.Fatal(err)
+				}
 			})
 
 			return ctx
@@ -66,7 +74,7 @@ func TestPrebuildWorkspaceTaskFail(t *testing.T) {
 				api.Done(t)
 			})
 
-			ws, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
+			ws, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
 				req.Type = wsmanapi.WorkspaceType_PREBUILD
 				req.Spec.Envvars = append(req.Spec.Envvars, &wsmanapi.EnvironmentVariable{
 					Name:  "GITPOD_TASKS",
@@ -78,12 +86,18 @@ func TestPrebuildWorkspaceTaskFail(t *testing.T) {
 				t.Fatalf("cannot start workspace: %q", err)
 			}
 
-			t.Cleanup(func() {
-				err = stopWs(true)
+			defer func() {
+				sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
+				defer scancel()
+
+				sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+				defer sapi.Done(t)
+
+				err := stopWs(true, sapi)
 				if err != nil {
-					t.Errorf("cannot stop workspace: %q", err)
+					t.Fatal(err)
 				}
-			})
+			}()
 
 			_, err = integration.WaitForWorkspace(ctx, api, ws.Req.Id, func(status *wsmanapi.WorkspaceStatus) bool {
 				if status.Phase != wsmanapi.WorkspacePhase_STOPPED {

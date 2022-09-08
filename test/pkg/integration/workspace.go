@@ -8,6 +8,7 @@ import (
 	"context"
 	"io"
 	"sync"
+	"testing"
 	"time"
 
 	"github.com/google/uuid"
@@ -93,7 +94,7 @@ type LaunchWorkspaceDirectlyResult struct {
 // LaunchWorkspaceDirectly starts a workspace pod by talking directly to ws-manager.
 // Whenever possible prefer this function over LaunchWorkspaceFromContextURL, because
 // it has fewer prerequisites.
-func LaunchWorkspaceDirectly(ctx context.Context, api *ComponentAPI, opts ...LaunchWorkspaceDirectlyOpt) (*LaunchWorkspaceDirectlyResult, func(waitForStop bool) error, error) {
+func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAPI, opts ...LaunchWorkspaceDirectlyOpt) (*LaunchWorkspaceDirectlyResult, func(waitForStop bool, api *ComponentAPI) error, error) {
 	options := launchWorkspaceDirectlyOptions{
 		BaseImage: "docker.io/gitpod/workspace-full:latest",
 	}
@@ -116,9 +117,11 @@ func LaunchWorkspaceDirectly(ctx context.Context, api *ComponentAPI, opts ...Lau
 
 	var workspaceImage string
 	if options.BaseImage != "" {
+		t.Log("try to resolve the build image")
 		for {
 			workspaceImage, err = resolveOrBuildImage(ctx, api, options.BaseImage)
 			if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+				t.Logf("got Unavailable during resolving the buildimage: %v", st)
 				time.Sleep(5 * time.Second)
 				continue
 			} else if err != nil {
@@ -181,52 +184,33 @@ func LaunchWorkspaceDirectly(ctx context.Context, api *ComponentAPI, opts ...Lau
 	sctx, scancel := context.WithTimeout(ctx, perCallTimeout)
 	defer scancel()
 
+	t.Log("prepare for a connection with ws-manager")
 	wsm, err := api.WorkspaceManager()
 	if err != nil {
 		return nil, nil, xerrors.Errorf("cannot start workspace manager: %q", err)
 	}
+	t.Log("established a connection with ws-manager")
 
+	t.Logf("attemp to start up the workspace directly: %s, %s", instanceID, workspaceID)
 	sresp, err := wsm.StartWorkspace(sctx, req)
 	if err != nil {
 		return nil, nil, xerrors.Errorf("cannot start workspace: %q", err)
 	}
+	t.Log("successfully sent workspace start request")
 
-	stopWs := func(waitForStop bool) error {
-		tctx, tcancel := context.WithTimeout(context.Background(), perCallTimeout)
-		defer tcancel()
-
-		for {
-			err = DeleteWorkspace(tctx, api, req.Id)
-			if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
-				time.Sleep(5 * time.Second)
-				continue
-			} else if err != nil {
-				return err
-			}
-			break
-		}
-		for {
-			_, err = WaitForWorkspaceStop(tctx, api, req.Id)
-			if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
-				time.Sleep(5 * time.Second)
-				continue
-			} else if err != nil {
-				return err
-			}
-			break
-		}
-		return err
-	}
+	stopWs := stopWsF(t, req.Id)
 	defer func() {
 		if err != nil {
-			stopWs(false)
+			stopWs(false, api)
 		}
 	}()
 
+	t.Log("wait for workspace to be fully up and running")
 	lastStatus, err := WaitForWorkspaceStart(ctx, instanceID.String(), api, options.WaitForOpts...)
 	if err != nil {
 		return nil, nil, xerrors.Errorf("cannot wait for workspace start: %q", err)
 	}
+	t.Log("successful launch of the workspace")
 
 	return &LaunchWorkspaceDirectlyResult{
 		Req:        req,
@@ -240,19 +224,23 @@ func LaunchWorkspaceDirectly(ctx context.Context, api *ComponentAPI, opts ...Lau
 // fail the test.
 //
 // When possible, prefer the less complex LaunchWorkspaceDirectly.
-func LaunchWorkspaceFromContextURL(ctx context.Context, contextURL string, username string, api *ComponentAPI, serverOpts ...GitpodServerOpt) (*protocol.WorkspaceInfo, func(waitForStop bool) error, error) {
+func LaunchWorkspaceFromContextURL(t *testing.T, ctx context.Context, contextURL string, username string, api *ComponentAPI, serverOpts ...GitpodServerOpt) (*protocol.WorkspaceInfo, func(waitForStop bool, api *ComponentAPI) error, error) {
 	var defaultServerOpts []GitpodServerOpt
 	if username != "" {
 		defaultServerOpts = []GitpodServerOpt{WithGitpodUser(username)}
 	}
 
+	t.Log("prepare for a connection with gitpod server")
 	server, err := api.GitpodServer(append(defaultServerOpts, serverOpts...)...)
 	if err != nil {
 		return nil, nil, xerrors.Errorf("cannot start server: %q", err)
 	}
+	t.Log("established a connection with gitpod server")
 
 	cctx, ccancel := context.WithTimeout(context.Background(), perCallTimeout)
 	defer ccancel()
+
+	t.Logf("attemp to create the workspace: %s", contextURL)
 	resp, err := server.CreateWorkspace(cctx, &protocol.CreateWorkspaceOptions{
 		ContextURL: contextURL,
 		Mode:       "force-new",
@@ -261,56 +249,71 @@ func LaunchWorkspaceFromContextURL(ctx context.Context, contextURL string, usern
 		return nil, nil, xerrors.Errorf("cannot start workspace: %q", err)
 	}
 
-	nfo, err := server.GetWorkspace(ctx, resp.CreatedWorkspaceID)
+	t.Logf("attemp to get the workspace information: %s", resp.CreatedWorkspaceID)
+	wi, err := server.GetWorkspace(ctx, resp.CreatedWorkspaceID)
 	if err != nil {
 		return nil, nil, xerrors.Errorf("cannot get workspace: %q", err)
 	}
-	if nfo.LatestInstance == nil {
+	if wi.LatestInstance == nil {
 		return nil, nil, xerrors.Errorf("CreateWorkspace did not start the workspace")
 	}
+	t.Logf("got the workspace information: %s", wi.Workspace.ID)
 
 	// GetWorkspace might receive an instance before we seen the first event
 	// from ws-manager, in which case IdeURL is not set
-	nfo.LatestInstance.IdeURL = resp.WorkspaceURL
+	wi.LatestInstance.IdeURL = resp.WorkspaceURL
 
-	stopWs := func(waitForStop bool) error {
-		sctx, scancel := context.WithTimeout(ctx, perCallTimeout)
-		defer scancel()
-
-		for {
-			err = DeleteWorkspace(sctx, api, nfo.LatestInstance.ID)
-			if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
-				time.Sleep(5 * time.Second)
-				continue
-			} else if err != nil {
-				return err
-			}
-			break
-		}
-		for {
-			_, err = WaitForWorkspaceStop(sctx, api, nfo.LatestInstance.ID)
-			if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
-				time.Sleep(5 * time.Second)
-				continue
-			} else if err != nil {
-				return err
-			}
-			break
-		}
-		return err
-	}
+	stopWs := stopWsF(t, wi.LatestInstance.ID)
 	defer func() {
 		if err != nil {
-			stopWs(false)
+			stopWs(false, api)
 		}
 	}()
 
-	_, err = WaitForWorkspaceStart(ctx, nfo.LatestInstance.ID, api)
+	t.Log("wait for workspace to be fully up and running")
+	_, err = WaitForWorkspaceStart(ctx, wi.LatestInstance.ID, api)
 	if err != nil {
 		return nil, nil, xerrors.Errorf("failed to wait for the workspace to start up: %w", err)
 	}
+	t.Log("successful launch of the workspace")
 
-	return nfo, stopWs, nil
+	return wi, stopWs, nil
+}
+
+func stopWsF(t *testing.T, instanceID string) func(waitForStop bool, api *ComponentAPI) error {
+	return func(waitForStop bool, api *ComponentAPI) error {
+		sctx, scancel := context.WithTimeout(context.Background(), perCallTimeout)
+		defer scancel()
+
+		var err error
+		for {
+			t.Logf("attemp to delete the workspace: %s", instanceID)
+			err = DeleteWorkspace(sctx, api, instanceID)
+			if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+				t.Logf("got Unavailable during when try to delete the workspace: %v", st)
+				time.Sleep(5 * time.Second)
+				continue
+			} else if err != nil {
+				return err
+			}
+			break
+		}
+		if waitForStop {
+			for {
+				t.Logf("waiting for stopping the workspace: %s", instanceID)
+				_, err = WaitForWorkspaceStop(sctx, api, instanceID)
+				if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+					t.Logf("got Unavailable during waiting for stopping workspace: %v", st)
+					time.Sleep(5 * time.Second)
+					continue
+				} else if err != nil {
+					return err
+				}
+				break
+			}
+		}
+		return err
+	}
 }
 
 // WaitForWorkspaceOpt configures a WaitForWorkspace call

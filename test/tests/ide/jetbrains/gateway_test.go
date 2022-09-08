@@ -107,10 +107,10 @@ func TestJetBrainsGatewayWorkspace(t *testing.T) {
 
 				t.Logf("starting workspace")
 				var nfo *protocol.WorkspaceInfo
-				var stopWs func(waitForStop bool) error
+				var stopWs func(waitForStop bool, api *integration.ComponentAPI) error
 
 				for i := 0; i < 3; i++ {
-					nfo, stopWs, err = integration.LaunchWorkspaceFromContextURL(ctx, "referrer:jetbrains-gateway:"+ideName+"/"+repo, username, api)
+					nfo, stopWs, err = integration.LaunchWorkspaceFromContextURL(t, ctx, "referrer:jetbrains-gateway:"+ideName+"/"+repo, username, api)
 					if err != nil {
 						if strings.Contains(err.Error(), "code 429 message: too many requests") {
 							t.Log(err)
@@ -123,7 +123,7 @@ func TestJetBrainsGatewayWorkspace(t *testing.T) {
 					}
 				}
 
-				defer stopWs(true)
+				defer stopWs(true, api)
 
 				t.Logf("get oauth2 token")
 				oauthToken, err := api.CreateOAuth2Token(username, []string{

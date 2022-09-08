@@ -158,12 +158,16 @@ func TestGitActions(t *testing.T) {
 							t.Fatal(err)
 						}
 
-						nfo, stopWS, err := integration.LaunchWorkspaceFromContextURL(ctx, test.ContextURL, username, api)
+						nfo, stopWS, err := integration.LaunchWorkspaceFromContextURL(t, ctx, test.ContextURL, username, api)
 						if err != nil {
 							t.Fatal(err)
 						}
 						t.Cleanup(func() {
-							stopWS(true)
+							sapi := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+							err := stopWS(true, sapi)
+							if err != nil {
+								t.Fatal(err)
+							}
 						})
 
 						rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.LatestInstance.ID))
@@ -180,6 +184,63 @@ func TestGitActions(t *testing.T) {
 						}
 					})
 				}
+			}
+			return ctx
+		}).
+		Feature()
+
+	testEnv.Test(t, f)
+}
+
+func TestGitLFSSupport(t *testing.T) {
+	userToken, _ := os.LookupEnv("USER_TOKEN")
+	integration.SkipWithoutUsername(t, username)
+	integration.SkipWithoutUserToken(t, userToken)
+
+	f := features.New("GitLFSSupport").
+		WithLabel("component", "workspace").
+		Assess("it can open a repo with Git LFS support", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			defer cancel()
+
+			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+			t.Cleanup(func() {
+				api.Done(t)
+			})
+
+			ffs := []struct {
+				Name string
+				FF   string
+			}{
+				{Name: "classic"},
+				{Name: "pvc", FF: "persistent_volume_claim"},
+			}
+
+			for _, ff := range ffs {
+				t.Run(ff.Name, func(t *testing.T) {
+					username := username + ff.Name
+					userId, err := api.CreateUser(username, userToken)
+					if err != nil {
+						t.Fatal(err)
+					}
+
+					if err := api.UpdateUserFeatureFlag(userId, ff.FF); err != nil {
+						t.Fatal(err)
+					}
+
+					_, stopWS, err := integration.LaunchWorkspaceFromContextURL(t, ctx, "github.com/atduarte/lfs-test", username, api)
+					if err != nil {
+						t.Fatal(err)
+					}
+
+					t.Cleanup(func() {
+						sapi := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+						err := stopWS(true, sapi)
+						if err != nil {
+							t.Fatal(err)
+						}
+					})
+				})
 			}
 			return ctx
 		}).

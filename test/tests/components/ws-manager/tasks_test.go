@@ -77,15 +77,21 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 						return nil
 					}
 
-					nfo, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(addInitTask))
+					nfo, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(addInitTask))
 					if err != nil {
 						t.Fatal(err)
 					}
 
 					defer func() {
-						err = stopWs(true)
+						sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
+						defer scancel()
+
+						sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+						defer sapi.Done(t)
+
+						err := stopWs(true, sapi)
 						if err != nil {
-							t.Errorf("cannot stop workspace: %q", err)
+							t.Fatal(err)
 						}
 					}()
 

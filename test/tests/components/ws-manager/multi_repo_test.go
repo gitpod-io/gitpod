@@ -96,13 +96,19 @@ func TestMultiRepoWorkspaceSuccess(t *testing.T) {
 			return nil
 		}
 
-		ws, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(multiRepoInit))
+		ws, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(multiRepoInit))
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		defer func() {
-			err = stopWs(true)
+			sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			defer scancel()
+
+			sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+			defer sapi.Done(t)
+
+			err := stopWs(true, sapi)
 			if err != nil {
 				t.Errorf("cannot stop workspace: %q", err)
 			}
@@ -113,6 +119,9 @@ func TestMultiRepoWorkspaceSuccess(t *testing.T) {
 			integration.WithContainer("workspace"),
 			integration.WithWorkspacekitLift(true),
 		)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		integration.DeferCloser(t, closer)
 		defer rsa.Close()

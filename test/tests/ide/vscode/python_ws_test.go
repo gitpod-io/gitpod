@@ -78,11 +78,11 @@ func TestPythonExtWorkspace(t *testing.T) {
 				t.Fatalf("cannot set ide to vscode insiders: %q", err)
 			}
 
-			nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(ctx, "github.com/gitpod-io/python-test-workspace", username, api)
+			nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(t, ctx, "github.com/gitpod-io/python-test-workspace", username, api)
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer stopWs(true)
+			defer stopWs(true, api)
 
 			_, err = integration.WaitForWorkspaceStart(ctx, nfo.LatestInstance.ID, api)
 			if err != nil {

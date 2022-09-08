@@ -124,37 +124,53 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 				{Name: "pvc", FF: "persistent_volume_claim"},
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
-			defer cancel()
+			for _, ff := range ffs {
+				func() {
+					ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+					defer cancel()
 
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
-			t.Cleanup(func() {
-				api.Done(t)
-			})
+					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+					defer api.Done(t)
+
+					username := username + ff.Name
+					userId, err := api.CreateUser(username, userToken)
+					if err != nil {
+						t.Fatal(err)
+					}
+
+					if err := api.UpdateUserFeatureFlag(userId, ff.FF); err != nil {
+						t.Fatal(err)
+					}
+				}()
+			}
 
 			for _, ff := range ffs {
-				username := username + ff.Name
-				userId, err := api.CreateUser(username, userToken)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				if err := api.UpdateUserFeatureFlag(userId, ff.FF); err != nil {
-					t.Fatal(err)
-				}
-
 				for _, test := range tests {
 					t.Run(test.ContextURL+"_"+ff.Name, func(t *testing.T) {
 						if test.Skip {
 							t.SkipNow()
 						}
+						username := username + ff.Name
 
-						nfo, stopWS, err := integration.LaunchWorkspaceFromContextURL(ctx, test.ContextURL, username, api)
+						ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+						defer cancel()
+
+						api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+						defer api.Done(t)
+
+						nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(t, ctx, test.ContextURL, username, api)
 						if err != nil {
 							t.Fatal(err)
 						}
+
 						defer func() {
-							err := stopWS(true)
+							sctx, scancel := context.WithTimeout(context.Background(), 10*time.Minute)
+							defer scancel()
+
+							sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+							defer sapi.Done(t)
+
+							err := stopWs(true, sapi)
 							if err != nil {
 								t.Fatal(err)
 							}
