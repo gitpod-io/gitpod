@@ -131,6 +131,16 @@ func (c *Client) findCustomers(ctx context.Context, query string) ([]*stripe.Cus
 }
 
 func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Customer, credits int64) (*UsageRecord, error) {
+	if credits < 0 {
+		log.WithField("customer_id", customer.ID).
+			WithField("customer_name", customer.Name).
+			WithField("credits", credits).
+			Infof("Received request to update customer %s usage to negative value, updating to 0 instead.", customer.ID)
+
+		// nullify any existing usage, but do not set it to negative value - negative invoice doesn't make sense...
+		credits = 0
+	}
+
 	subscriptions := customer.Subscriptions.Data
 	if len(subscriptions) != 1 {
 		return nil, fmt.Errorf("customer has an unexpected number of subscriptions %v (expected 1, got %d)", subscriptions, len(subscriptions))
