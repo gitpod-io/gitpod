@@ -5,14 +5,8 @@ package usage.v1;
 option go_package = "github.com/gitpod-io/gitpod/usage-api/v1";
 
 import "google/protobuf/timestamp.proto";
-import "usage/v1/usage.proto";
 
 service BillingService {
-  // UpdateInvoices takes provides BilledSessions and reflects their usage
-  // in a billing system.
-  // This is an Internal RPC used by the usage reconciler and not intended for general consumption.
-  rpc UpdateInvoices(UpdateInvoicesRequest) returns (UpdateInvoicesResponse) {};
-
   // ReconcileInvoices retrieves current credit balance and reflects it in billing system.
   // Internal RPC, not intended for general consumption.
   rpc ReconcileInvoices(ReconcileInvoicesRequest) returns (ReconcileInvoicesResponse) {};
@@ -26,18 +20,6 @@ service BillingService {
 
   // SetBilledSession marks an instance as billed with a billing system
   rpc SetBilledSession(SetBilledSessionRequest) returns (SetBilledSessionResponse) {};
-}
-
-message UpdateInvoicesRequest {
-  google.protobuf.Timestamp start_time = 1;
-  google.protobuf.Timestamp end_time = 2;
-
-  repeated BilledSession sessions = 3 [deprecated=true];
-  // report_id is a unique identifier of the usage report for this UpdateInvoicesRequest
-  string report_id = 4;
-}
-
-message UpdateInvoicesResponse {
 }
 
 message ReconcileInvoicesRequest {}

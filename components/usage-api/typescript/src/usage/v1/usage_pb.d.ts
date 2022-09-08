@@ -245,65 +245,6 @@ export namespace Usage {
 
 }
 
-export class BilledSession extends jspb.Message {
-    getAttributionId(): string;
-    setAttributionId(value: string): BilledSession;
-    getUserId(): string;
-    setUserId(value: string): BilledSession;
-    getTeamId(): string;
-    setTeamId(value: string): BilledSession;
-    getWorkspaceId(): string;
-    setWorkspaceId(value: string): BilledSession;
-    getWorkspaceType(): string;
-    setWorkspaceType(value: string): BilledSession;
-    getProjectId(): string;
-    setProjectId(value: string): BilledSession;
-    getInstanceId(): string;
-    setInstanceId(value: string): BilledSession;
-    getWorkspaceClass(): string;
-    setWorkspaceClass(value: string): BilledSession;
-
-    hasStartTime(): boolean;
-    clearStartTime(): void;
-    getStartTime(): google_protobuf_timestamp_pb.Timestamp | undefined;
-    setStartTime(value?: google_protobuf_timestamp_pb.Timestamp): BilledSession;
-
-    hasEndTime(): boolean;
-    clearEndTime(): void;
-    getEndTime(): google_protobuf_timestamp_pb.Timestamp | undefined;
-    setEndTime(value?: google_protobuf_timestamp_pb.Timestamp): BilledSession;
-    getCreditsDeprecated(): number;
-    setCreditsDeprecated(value: number): BilledSession;
-    getCredits(): number;
-    setCredits(value: number): BilledSession;
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): BilledSession.AsObject;
-    static toObject(includeInstance: boolean, msg: BilledSession): BilledSession.AsObject;
-    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: BilledSession, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): BilledSession;
-    static deserializeBinaryFromReader(message: BilledSession, reader: jspb.BinaryReader): BilledSession;
-}
-
-export namespace BilledSession {
-    export type AsObject = {
-        attributionId: string,
-        userId: string,
-        teamId: string,
-        workspaceId: string,
-        workspaceType: string,
-        projectId: string,
-        instanceId: string,
-        workspaceClass: string,
-        startTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
-        endTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
-        creditsDeprecated: number,
-        credits: number,
-    }
-}
-
 export class GetCostCenterRequest extends jspb.Message {
     getAttributionId(): string;
     setAttributionId(value: string): GetCostCenterRequest;
