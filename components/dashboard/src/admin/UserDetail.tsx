@@ -158,6 +158,51 @@ export default function UserDetail(p: { user: User }) {
                         <div className="flex w-full mt-6">
                             <Property name="Sign Up Date">{moment(user.creationDate).format("MMM D, YYYY")}</Property>
                             <Property
+                                name="Feature Flags"
+                                actions={[
+                                    {
+                                        label: "Edit Feature Flags",
+                                        onClick: () => {
+                                            setEditFeatureFlags(true);
+                                        },
+                                    },
+                                ]}
+                            >
+                                {user.featureFlags?.permanentWSFeatureFlags?.join(", ") || "---"}
+                            </Property>
+                            <Property
+                                name="Roles"
+                                actions={[
+                                    {
+                                        label: "Edit Roles",
+                                        onClick: () => {
+                                            setEditRoles(true);
+                                        },
+                                    },
+                                ]}
+                            >
+                                {user.rolesOrPermissions?.join(", ") || "---"}
+                            </Property>
+                        </div>
+                        <div className="flex w-full mt-6">
+                            <Property
+                                name="Student"
+                                actions={
+                                    !isStudent &&
+                                    emailDomain &&
+                                    !["gmail.com", "yahoo.com", "hotmail.com"].includes(emailDomain)
+                                        ? [
+                                              {
+                                                  label: `Make '${emailDomain}' a student domain`,
+                                                  onClick: addStudentDomain,
+                                              },
+                                          ]
+                                        : undefined
+                                }
+                            >
+                                {isStudent === undefined ? "---" : isStudent ? "Enabled" : "Disabled"}
+                            </Property>
+                            <Property
                                 name="Remaining Hours"
                                 actions={
                                     accountStatement && [
@@ -207,51 +252,6 @@ export default function UserDetail(p: { user: User }) {
                                           .map((s) => Plans.getById(s.planId)?.name)
                                           .join(", ")
                                     : "---"}
-                            </Property>
-                        </div>
-                        <div className="flex w-full mt-6">
-                            <Property
-                                name="Feature Flags"
-                                actions={[
-                                    {
-                                        label: "Edit Feature Flags",
-                                        onClick: () => {
-                                            setEditFeatureFlags(true);
-                                        },
-                                    },
-                                ]}
-                            >
-                                {user.featureFlags?.permanentWSFeatureFlags?.join(", ") || "---"}
-                            </Property>
-                            <Property
-                                name="Roles"
-                                actions={[
-                                    {
-                                        label: "Edit Roles",
-                                        onClick: () => {
-                                            setEditRoles(true);
-                                        },
-                                    },
-                                ]}
-                            >
-                                {user.rolesOrPermissions?.join(", ") || "---"}
-                            </Property>
-                            <Property
-                                name="Student"
-                                actions={
-                                    !isStudent &&
-                                    emailDomain &&
-                                    !["gmail.com", "yahoo.com", "hotmail.com"].includes(emailDomain)
-                                        ? [
-                                              {
-                                                  label: `Make '${emailDomain}' a student domain`,
-                                                  onClick: addStudentDomain,
-                                              },
-                                          ]
-                                        : undefined
-                                }
-                            >
-                                {isStudent === undefined ? "---" : isStudent ? "Enabled" : "Disabled"}
                             </Property>
                         </div>
                     </div>
