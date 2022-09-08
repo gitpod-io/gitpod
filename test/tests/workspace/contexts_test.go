@@ -32,8 +32,8 @@ func TestGitHubContexts(t *testing.T) {
 	tests := []ContextTest{
 		{
 			Name:           "open repository",
-			ContextURL:     "github.com/gitpod-io/gitpod",
-			WorkspaceRoot:  "/workspace/gitpod",
+			ContextURL:     "github.com/gitpod-io/template-golang-cli",
+			WorkspaceRoot:  "/workspace/template-golang-cli",
 			ExpectedBranch: "main",
 		},
 		{
@@ -116,9 +116,6 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 	f := features.New("context").
 		WithLabel("component", "server").
 		Assess("should run context tests", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
-			defer cancel()
-
 			ffs := []struct {
 				Name string
 				FF   string
@@ -127,35 +124,41 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 				{Name: "pvc", FF: "persistent_volume_claim"},
 			}
 
+			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
+			defer cancel()
+
+			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+			t.Cleanup(func() {
+				api.Done(t)
+			})
+
 			for _, ff := range ffs {
+				username := username + ff.Name
+				userId, err := api.CreateUser(username, userToken)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if err := api.UpdateUserFeatureFlag(userId, ff.FF); err != nil {
+					t.Fatal(err)
+				}
+
 				for _, test := range tests {
 					t.Run(test.ContextURL+"_"+ff.Name, func(t *testing.T) {
-						api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
-						t.Cleanup(func() {
-							api.Done(t)
-						})
-
 						if test.Skip {
 							t.SkipNow()
-						}
-
-						username := username + ff.Name
-						userId, err := api.CreateUser(username, userToken)
-						if err != nil {
-							t.Fatal(err)
-						}
-
-						if err := api.UpdateUserFeatureFlag(userId, ff.FF); err != nil {
-							t.Fatal(err)
 						}
 
 						nfo, stopWS, err := integration.LaunchWorkspaceFromContextURL(ctx, test.ContextURL, username, api)
 						if err != nil {
 							t.Fatal(err)
 						}
-						t.Cleanup(func() {
-							stopWS(true)
-						})
+						defer func() {
+							err := stopWS(true)
+							if err != nil {
+								t.Fatal(err)
+							}
+						}()
 
 						rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.LatestInstance.ID))
 						if err != nil {

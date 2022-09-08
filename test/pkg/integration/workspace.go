@@ -6,7 +6,6 @@ package integration
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"sync"
 	"time"
@@ -193,7 +192,7 @@ func LaunchWorkspaceDirectly(ctx context.Context, api *ComponentAPI, opts ...Lau
 	}
 
 	stopWs := func(waitForStop bool) error {
-		tctx, tcancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		tctx, tcancel := context.WithTimeout(context.Background(), perCallTimeout)
 		defer tcancel()
 
 		for {
@@ -241,7 +240,7 @@ func LaunchWorkspaceDirectly(ctx context.Context, api *ComponentAPI, opts ...Lau
 // fail the test.
 //
 // When possible, prefer the less complex LaunchWorkspaceDirectly.
-func LaunchWorkspaceFromContextURL(ctx context.Context, contextURL string, username string, api *ComponentAPI, serverOpts ...GitpodServerOpt) (*protocol.WorkspaceInfo, func(waitForStop bool), error) {
+func LaunchWorkspaceFromContextURL(ctx context.Context, contextURL string, username string, api *ComponentAPI, serverOpts ...GitpodServerOpt) (*protocol.WorkspaceInfo, func(waitForStop bool) error, error) {
 	var defaultServerOpts []GitpodServerOpt
 	if username != "" {
 		defaultServerOpts = []GitpodServerOpt{WithGitpodUser(username)}
@@ -274,14 +273,31 @@ func LaunchWorkspaceFromContextURL(ctx context.Context, contextURL string, usern
 	// from ws-manager, in which case IdeURL is not set
 	nfo.LatestInstance.IdeURL = resp.WorkspaceURL
 
-	stopWs := func(waitForStop bool) {
+	stopWs := func(waitForStop bool) error {
 		sctx, scancel := context.WithTimeout(ctx, perCallTimeout)
-		_ = server.StopWorkspace(sctx, resp.CreatedWorkspaceID)
-		scancel()
+		defer scancel()
 
-		if waitForStop {
-			_, _ = WaitForWorkspaceStop(ctx, api, nfo.LatestInstance.ID)
+		for {
+			err = DeleteWorkspace(sctx, api, nfo.LatestInstance.ID)
+			if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+				time.Sleep(5 * time.Second)
+				continue
+			} else if err != nil {
+				return err
+			}
+			break
 		}
+		for {
+			_, err = WaitForWorkspaceStop(sctx, api, nfo.LatestInstance.ID)
+			if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+				time.Sleep(5 * time.Second)
+				continue
+			} else if err != nil {
+				return err
+			}
+			break
+		}
+		return err
 	}
 	defer func() {
 		if err != nil {
@@ -433,7 +449,7 @@ func WaitForWorkspaceStop(ctx context.Context, api *ComponentAPI, instanceID str
 		return nil, xerrors.Errorf("cannot listen for workspace updates: %q", err)
 	}
 
-	sub, err := wsman.Subscribe(context.Background(), &wsmanapi.SubscribeRequest{})
+	sub, err := wsman.Subscribe(ctx, &wsmanapi.SubscribeRequest{})
 	if err != nil {
 		return nil, xerrors.Errorf("cannot listen for workspace updates: %q", err)
 	}
@@ -441,10 +457,14 @@ func WaitForWorkspaceStop(ctx context.Context, api *ComponentAPI, instanceID str
 		_ = sub.CloseSend()
 	}()
 
-	done := make(chan struct{})
+	done := make(chan *wsmanapi.WorkspaceStatus)
 	errCh := make(chan error)
 	go func() {
-		defer close(done)
+		var s *wsmanapi.WorkspaceStatus
+		defer func() {
+			done <- s
+			close(done)
+		}()
 		for {
 			resp, err := sub.Recv()
 			if err != nil {
@@ -455,25 +475,25 @@ func WaitForWorkspaceStop(ctx context.Context, api *ComponentAPI, instanceID str
 				errCh <- xerrors.Errorf("workspace update error: %q", err)
 				return
 			}
-			status := resp.GetStatus()
-			if status == nil {
+			s = resp.GetStatus()
+			if s == nil {
 				continue
 			}
-			if status.Id != instanceID {
+			if s.Id != instanceID {
 				continue
 			}
 
-			if status.Conditions.Failed != "" {
+			if s.Conditions.Failed != "" {
 				// TODO(toru): we have to fix https://github.com/gitpod-io/gitpod/issues/12021
-				if status.Conditions.Failed == "The container could not be located when the pod was deleted.  The container used to be Running" || status.Conditions.Failed == "The container could not be located when the pod was terminated" {
-					lastStatus = status
+				if s.Conditions.Failed == "The container could not be located when the pod was deleted.  The container used to be Running" || s.Conditions.Failed == "The container could not be located when the pod was terminated" {
+					lastStatus = s
 					return
 				}
-				errCh <- xerrors.Errorf("workspace instance %s failed: %s", instanceID, status.Conditions.Failed)
+				errCh <- xerrors.Errorf("workspace instance %s failed: %s", instanceID, s.Conditions.Failed)
 				return
 			}
-			if status.Phase == wsmanapi.WorkspacePhase_STOPPED {
-				lastStatus = status
+			if s.Phase == wsmanapi.WorkspacePhase_STOPPED {
+				lastStatus = s
 				return
 			}
 
@@ -496,10 +516,9 @@ func WaitForWorkspaceStop(ctx context.Context, api *ComponentAPI, instanceID str
 		return nil, err
 	case <-ctx.Done():
 		return nil, xerrors.Errorf("cannot wait for workspace: %q", ctx.Err())
-	case <-done:
+	case s := <-done:
+		return s, nil
 	}
-
-	return
 }
 
 // WaitForWorkspace waits until the condition function returns true. Fails the test if the condition does
@@ -646,7 +665,6 @@ func resolveOrBuildImage(ctx context.Context, api *ComponentAPI, baseRef string)
 func DeleteWorkspace(ctx context.Context, api *ComponentAPI, instanceID string) error {
 	wm, err := api.WorkspaceManager()
 	if err != nil {
-		fmt.Println("Failed to get wsmnger")
 		return err
 	}
 

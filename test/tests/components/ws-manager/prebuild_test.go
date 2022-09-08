@@ -40,10 +40,10 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 				t.Fatalf("cannot launch a workspace: %q", err)
 			}
 
-			err = stopWs(true)
-			if err != nil {
-				t.Errorf("cannot stop workspace: %q", err)
-			}
+			t.Cleanup(func() {
+				//TODO(toru): we can't wait for stopped prebuild for some reason
+				_ = stopWs(false)
+			})
 
 			return ctx
 		}).

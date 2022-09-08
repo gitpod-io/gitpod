@@ -107,7 +107,7 @@ func TestJetBrainsGatewayWorkspace(t *testing.T) {
 
 				t.Logf("starting workspace")
 				var nfo *protocol.WorkspaceInfo
-				var stopWs func(waitForStop bool)
+				var stopWs func(waitForStop bool) error
 
 				for i := 0; i < 3; i++ {
 					nfo, stopWs, err = integration.LaunchWorkspaceFromContextURL(ctx, "referrer:jetbrains-gateway:"+ideName+"/"+repo, username, api)
