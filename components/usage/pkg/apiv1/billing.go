@@ -108,7 +108,8 @@ func (s *BillingService) FinalizeInvoice(ctx context.Context, in *v1.FinalizeInv
 		ID:            uuid.New(),
 		AttributionID: attributionID,
 		Description:   fmt.Sprintf("Invoice %s finalized in Stripe", invoice.ID),
-		CreditCents:   db.NewCreditCents(float64(creditsOnInvoice)),
+		// Apply negative value of credits to reduce accrued credit usage
+		CreditCents:   db.NewCreditCents(float64(-creditsOnInvoice)),
 		EffectiveTime: db.NewVarcharTime(finalizedAt),
 		Kind:          db.InvoiceUsageKind,
 		Draft:         false,
