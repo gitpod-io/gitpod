@@ -108,7 +108,9 @@ export class BillingModesImpl implements BillingModes {
         }
         const cbSubscriptions = await this.subscriptionSvc.getActivePaidSubscription(user.id, now);
         const cbTeamSubscriptions = cbSubscriptions.filter((s) => isTeamSubscription(s));
-        const cbPersonalSubscriptions = cbSubscriptions.filter((s) => !isTeamSubscription(s));
+        const cbPersonalSubscriptions = cbSubscriptions.filter(
+            (s) => !isTeamSubscription(s) && s.planId !== Plans.FREE_OPEN_SOURCE.chargebeeId,
+        );
         let canUpgradeToUBB = false;
         if (cbPersonalSubscriptions.length > 0) {
             if (cbPersonalSubscriptions.every((s) => Subscription.isCancelled(s, now.toISOString()))) {
