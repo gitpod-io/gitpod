@@ -53,8 +53,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	wspcfg := config.Config{
 		Namespace: ctx.Namespace,
 		Ingress: proxy.HostBasedIngressConfig{
-			HTTPAddress:  fmt.Sprintf(":%d", HTTPProxyPort),
-			HTTPSAddress: fmt.Sprintf(":%d", HTTPSProxyPort),
+			HTTPAddress:  fmt.Sprintf("0.0.0.0:%d", HTTPProxyPort),
+			HTTPSAddress: fmt.Sprintf("0.0.0.0:%d", HTTPSProxyPort),
 			Header:       header,
 		},
 		Proxy: proxy.Config{

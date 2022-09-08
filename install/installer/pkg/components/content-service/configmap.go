@@ -29,7 +29,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	cscfg := config.ServiceConfig{
 		Service: baseserver.ServerConfiguration{
-			Address: fmt.Sprintf(":%d", RPCPort),
+			Address: fmt.Sprintf("0.0.0.0:%d", RPCPort),
 		},
 		Storage: common.StorageConfig(ctx),
 		UsageReports: config.UsageReportConfig{
