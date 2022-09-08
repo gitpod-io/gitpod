@@ -8,9 +8,12 @@ import (
 	"encoding/base64"
 	"fmt"
 	"path"
+	"strings"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
+	contentservice "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
@@ -121,6 +124,20 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 		},
 	)
+
+	if ctx.Config.HTTPProxy != nil {
+		env = append(env, corev1.EnvVar{
+			Name: "no_grpc_proxy",
+			// @grpc/grpc-js does not support wildcards in NO_PROXY
+			// @link https://github.com/grpc/grpc-node/issues/1293
+			Value: strings.Join([]string{
+				fmt.Sprintf("%s.%s.svc.cluster.local", contentservice.Component, ctx.Namespace),
+				fmt.Sprintf("%s.%s.svc.cluster.local", common.ImageBuilderComponent, ctx.Namespace),
+				fmt.Sprintf("%s.%s.svc.cluster.local", usage.Component, ctx.Namespace),
+				"$(NO_PROXY)",
+			}, ","),
+		})
+	}
 
 	volumes := make([]corev1.Volume, 0)
 	volumeMounts := make([]corev1.VolumeMount, 0)
