@@ -304,60 +304,6 @@ export namespace BilledSession {
     }
 }
 
-export class ReconcileUsageRequest extends jspb.Message {
-
-    hasStartTime(): boolean;
-    clearStartTime(): void;
-    getStartTime(): google_protobuf_timestamp_pb.Timestamp | undefined;
-    setStartTime(value?: google_protobuf_timestamp_pb.Timestamp): ReconcileUsageRequest;
-
-    hasEndTime(): boolean;
-    clearEndTime(): void;
-    getEndTime(): google_protobuf_timestamp_pb.Timestamp | undefined;
-    setEndTime(value?: google_protobuf_timestamp_pb.Timestamp): ReconcileUsageRequest;
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): ReconcileUsageRequest.AsObject;
-    static toObject(includeInstance: boolean, msg: ReconcileUsageRequest): ReconcileUsageRequest.AsObject;
-    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: ReconcileUsageRequest, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): ReconcileUsageRequest;
-    static deserializeBinaryFromReader(message: ReconcileUsageRequest, reader: jspb.BinaryReader): ReconcileUsageRequest;
-}
-
-export namespace ReconcileUsageRequest {
-    export type AsObject = {
-        startTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
-        endTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
-    }
-}
-
-export class ReconcileUsageResponse extends jspb.Message {
-    clearSessionsList(): void;
-    getSessionsList(): Array<BilledSession>;
-    setSessionsList(value: Array<BilledSession>): ReconcileUsageResponse;
-    addSessions(value?: BilledSession, index?: number): BilledSession;
-    getReportId(): string;
-    setReportId(value: string): ReconcileUsageResponse;
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): ReconcileUsageResponse.AsObject;
-    static toObject(includeInstance: boolean, msg: ReconcileUsageResponse): ReconcileUsageResponse.AsObject;
-    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: ReconcileUsageResponse, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): ReconcileUsageResponse;
-    static deserializeBinaryFromReader(message: ReconcileUsageResponse, reader: jspb.BinaryReader): ReconcileUsageResponse;
-}
-
-export namespace ReconcileUsageResponse {
-    export type AsObject = {
-        sessionsList: Array<BilledSession.AsObject>,
-        reportId: string,
-    }
-}
-
 export class GetCostCenterRequest extends jspb.Message {
     getAttributionId(): string;
     setAttributionId(value: string): GetCostCenterRequest;
