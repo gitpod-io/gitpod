@@ -22,10 +22,13 @@ import { getGitpodService } from "../service/service";
 import { WorkspaceSearch } from "./WorkspacesSearch";
 import Property from "./Property";
 import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
+import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 
 export default function UserDetail(p: { user: User }) {
     const [activity, setActivity] = useState(false);
     const [user, setUser] = useState(p.user);
+    const [billingMode, setBillingMode] = useState<BillingMode | undefined>(undefined);
     const [accountStatement, setAccountStatement] = useState<AccountStatement>();
     const [isStudent, setIsStudent] = useState<boolean>();
     const [editFeatureFlags, setEditFeatureFlags] = useState(false);
@@ -46,6 +49,9 @@ export default function UserDetail(p: { user: User }) {
         getGitpodService()
             .server.adminIsStudent(p.user.id)
             .then((isStud) => setIsStudent(isStud));
+        getGitpodService()
+            .server.adminGetBillingMode(AttributionId.render({ kind: "user", userId: p.user.id }))
+            .then((bm) => setBillingMode(bm));
     }, [p.user]);
 
     const email = User.getPrimaryEmail(p.user);
@@ -120,6 +126,101 @@ export default function UserDetail(p: { user: User }) {
         }
     };
 
+    function renderUserBillingProperties(): JSX.Element {
+        if (billingMode?.mode === "none") {
+            return <></>; // nothing to show here atm
+        }
+
+        const properties: JSX.Element[] = [
+            <Property
+                name="Student"
+                actions={
+                    !isStudent && emailDomain && !["gmail.com", "yahoo.com", "hotmail.com"].includes(emailDomain)
+                        ? [
+                              {
+                                  label: `Make '${emailDomain}' a student domain`,
+                                  onClick: addStudentDomain,
+                              },
+                          ]
+                        : undefined
+                }
+            >
+                {isStudent === undefined ? "---" : isStudent ? "Enabled" : "Disabled"}
+            </Property>,
+            <Property name="BillingMode">{billingMode?.mode || "---"}</Property>,
+        ];
+
+        switch (billingMode?.mode) {
+            case "chargebee":
+                properties.push(
+                    <Property
+                        name="Remaining Hours"
+                        actions={
+                            accountStatement && [
+                                {
+                                    label: "Download Account Statement",
+                                    onClick: () => downloadAccountStatement(),
+                                },
+                                {
+                                    label: "Grant 20 Extra Hours",
+                                    onClick: async () => {
+                                        await getGitpodService().server.adminGrantExtraHours(user.id, 20);
+                                        setAccountStatement(
+                                            await getGitpodService().server.adminGetAccountStatement(user.id),
+                                        );
+                                    },
+                                },
+                            ]
+                        }
+                    >
+                        {accountStatement?.remainingHours ? accountStatement?.remainingHours.toString() : "---"}
+                    </Property>,
+                );
+                properties.push(
+                    <Property
+                        name="Plan"
+                        actions={
+                            accountStatement && [
+                                {
+                                    label: (isProfessionalOpenSource ? "Disable" : "Enable") + " Professional OSS",
+                                    onClick: async () => {
+                                        await getGitpodService().server.adminSetProfessionalOpenSource(
+                                            user.id,
+                                            !isProfessionalOpenSource,
+                                        );
+                                        setAccountStatement(
+                                            await getGitpodService().server.adminGetAccountStatement(user.id),
+                                        );
+                                    },
+                                },
+                            ]
+                        }
+                    >
+                        {accountStatement?.subscriptions
+                            ? accountStatement.subscriptions
+                                  .filter((s) => !s.deleted && Subscription.isActive(s, new Date().toISOString()))
+                                  .map((s) => Plans.getById(s.planId)?.name)
+                                  .join(", ")
+                            : "---"}
+                    </Property>,
+                );
+                break;
+            case "usage-based":
+                // TODO(gpl) Add info about Stripe plan, etc.
+                break;
+            default:
+                break;
+        }
+
+        // Split properties into rows of 3
+        const rows: JSX.Element[] = [];
+        while (properties.length > 0) {
+            const row = properties.splice(0, 3);
+            rows.push(<div className="flex w-full mt-6">{row}</div>);
+        }
+        return <>{rows}</>;
+    }
+
     return (
         <>
             <PageWithAdminSubMenu title="Users" subtitle="Search and manage all users.">
@@ -184,76 +285,7 @@ export default function UserDetail(p: { user: User }) {
                                 {user.rolesOrPermissions?.join(", ") || "---"}
                             </Property>
                         </div>
-                        <div className="flex w-full mt-6">
-                            <Property
-                                name="Student"
-                                actions={
-                                    !isStudent &&
-                                    emailDomain &&
-                                    !["gmail.com", "yahoo.com", "hotmail.com"].includes(emailDomain)
-                                        ? [
-                                              {
-                                                  label: `Make '${emailDomain}' a student domain`,
-                                                  onClick: addStudentDomain,
-                                              },
-                                          ]
-                                        : undefined
-                                }
-                            >
-                                {isStudent === undefined ? "---" : isStudent ? "Enabled" : "Disabled"}
-                            </Property>
-                            <Property
-                                name="Remaining Hours"
-                                actions={
-                                    accountStatement && [
-                                        {
-                                            label: "Download Account Statement",
-                                            onClick: () => downloadAccountStatement(),
-                                        },
-                                        {
-                                            label: "Grant 20 Extra Hours",
-                                            onClick: async () => {
-                                                await getGitpodService().server.adminGrantExtraHours(user.id, 20);
-                                                setAccountStatement(
-                                                    await getGitpodService().server.adminGetAccountStatement(user.id),
-                                                );
-                                            },
-                                        },
-                                    ]
-                                }
-                            >
-                                {accountStatement?.remainingHours ? accountStatement?.remainingHours.toString() : "---"}
-                            </Property>
-                            <Property
-                                name="Plan"
-                                actions={
-                                    accountStatement && [
-                                        {
-                                            label:
-                                                (isProfessionalOpenSource ? "Disable" : "Enable") + " Professional OSS",
-                                            onClick: async () => {
-                                                await getGitpodService().server.adminSetProfessionalOpenSource(
-                                                    user.id,
-                                                    !isProfessionalOpenSource,
-                                                );
-                                                setAccountStatement(
-                                                    await getGitpodService().server.adminGetAccountStatement(user.id),
-                                                );
-                                            },
-                                        },
-                                    ]
-                                }
-                            >
-                                {accountStatement?.subscriptions
-                                    ? accountStatement.subscriptions
-                                          .filter(
-                                              (s) => !s.deleted && Subscription.isActive(s, new Date().toISOString()),
-                                          )
-                                          .map((s) => Plans.getById(s.planId)?.name)
-                                          .join(", ")
-                                    : "---"}
-                            </Property>
-                        </div>
+                        {renderUserBillingProperties()}
                     </div>
                 </div>
                 <WorkspaceSearch user={user} />
