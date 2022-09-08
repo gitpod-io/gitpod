@@ -248,10 +248,9 @@ EOF`);
 
     private configureConfigCat(slice: string) {
         // This key is not a secret, it is a unique identifier of our ConfigCat application
-        exec(
-            `yq w -i ${this.options.installerConfigPath} experimental.webapp.configcatKey "WBLaCPtkjkqKHlHedziE9g/LEAOCNkbuUKiqUZAcVg7dw"`,
-            { slice: slice },
-        );
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.configcatKey "WBLaCPtkjkqKHlHedziE9g/LEAOCNkbuUKiqUZAcVg7dw"`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.proxy.configcat.baseUrl "https://cdn-global.configcat.com"`,{ slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.proxy.configcat.pollInterval "1m"`,{ slice: slice });
     }
 
     private includeAnalytics(slice: string): void {

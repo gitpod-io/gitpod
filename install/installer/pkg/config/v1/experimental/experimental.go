@@ -227,6 +227,13 @@ type ProxyConfig struct {
 
 	// @deprecated use components.proxy.service.serviceType instead
 	ServiceType *corev1.ServiceType `json:"serviceType,omitempty" validate:"omitempty,service_config_type"`
+
+	Configcat *ConfigcatProxyConfig `json:"configcat,omitempty"`
+}
+
+type ConfigcatProxyConfig struct {
+	BaseUrl      string `json:"baseUrl"`
+	PollInterval string `json:"pollInterval"`
 }
 
 type PublicAPIConfig struct {
