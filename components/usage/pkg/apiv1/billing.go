@@ -13,7 +13,6 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
-	"github.com/gitpod-io/gitpod/usage/pkg/contentservice"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"github.com/google/uuid"
@@ -23,48 +22,18 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewBillingService(stripeClient *stripe.Client, billInstancesAfter time.Time, conn *gorm.DB, contentService contentservice.Interface) *BillingService {
+func NewBillingService(stripeClient *stripe.Client, conn *gorm.DB) *BillingService {
 	return &BillingService{
-		stripeClient:       stripeClient,
-		billInstancesAfter: billInstancesAfter,
-		conn:               conn,
-		contentService:     contentService,
+		stripeClient: stripeClient,
+		conn:         conn,
 	}
 }
 
 type BillingService struct {
-	conn           *gorm.DB
-	stripeClient   *stripe.Client
-	contentService contentservice.Interface
-
-	billInstancesAfter time.Time
+	conn         *gorm.DB
+	stripeClient *stripe.Client
 
 	v1.UnimplementedBillingServiceServer
-}
-
-func (s *BillingService) UpdateInvoices(ctx context.Context, in *v1.UpdateInvoicesRequest) (*v1.UpdateInvoicesResponse, error) {
-	if in.GetReportId() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Missing report ID")
-	}
-
-	report, err := s.contentService.DownloadUsageReport(ctx, in.GetReportId())
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Failed to download usage report with ID: %s", in.GetReportId())
-	}
-
-	credits, err := s.creditSummaryForTeams(report.UsageRecords, in.GetReportId())
-	if err != nil {
-		log.Log.WithError(err).Errorf("Failed to compute credit summary.")
-		return nil, status.Errorf(codes.InvalidArgument, "failed to compute credit summary")
-	}
-
-	err = s.stripeClient.UpdateUsage(ctx, credits)
-	if err != nil {
-		log.Log.WithError(err).Errorf("Failed to update stripe invoices.")
-		return nil, status.Errorf(codes.Internal, "failed to update stripe invoices")
-	}
-
-	return &v1.UpdateInvoicesResponse{}, nil
 }
 
 func (s *BillingService) ReconcileInvoices(ctx context.Context, in *v1.ReconcileInvoicesRequest) (*v1.ReconcileInvoicesResponse, error) {
@@ -194,37 +163,6 @@ func (s *BillingService) GetUpcomingInvoice(ctx context.Context, in *v1.GetUpcom
 		Amount:    float64(invoice.Amount),
 		Credits:   invoice.Credits,
 	}, nil
-}
-
-func (s *BillingService) creditSummaryForTeams(sessions []db.WorkspaceInstanceUsage, reportID string) (map[string]stripe.CreditSummary, error) {
-	creditsPerTeamID := map[string]float64{}
-
-	for _, session := range sessions {
-		if session.StartedAt.Before(s.billInstancesAfter) {
-			continue
-		}
-
-		entity, id := session.AttributionID.Values()
-		if entity != db.AttributionEntity_Team {
-			continue
-		}
-
-		if _, ok := creditsPerTeamID[id]; !ok {
-			creditsPerTeamID[id] = 0
-		}
-
-		creditsPerTeamID[id] += session.CreditsUsed
-	}
-
-	rounded := map[string]stripe.CreditSummary{}
-	for teamID, credits := range creditsPerTeamID {
-		rounded[teamID] = stripe.CreditSummary{
-			Credits:  int64(math.Ceil(credits)),
-			ReportID: reportID,
-		}
-	}
-
-	return rounded, nil
 }
 
 func (s *BillingService) SetBilledSession(ctx context.Context, in *v1.SetBilledSessionRequest) (*v1.SetBilledSessionResponse, error) {

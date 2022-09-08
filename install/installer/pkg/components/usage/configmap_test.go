@@ -24,7 +24,6 @@ func TestConfigMap_ContainsSchedule(t *testing.T) {
 	require.JSONEq(t,
 		`{
        "controllerSchedule": "2m",
-       "contentServiceAddress": "content-service:8080",
        "stripeCredentialsFile": "stripe-secret/apikeys",
        "server": {
          "services": {
@@ -52,7 +51,6 @@ func TestConfigMap_ContainsBillInstancesAfter(t *testing.T) {
 		`{
        "controllerSchedule": "1h0m0s",
        "billInstancesAfter": "2022-08-04T00:00:00Z",
-       "contentServiceAddress": "content-service:8080",
        "stripeCredentialsFile": "stripe-secret/apikeys",
        "server": {
          "services": {

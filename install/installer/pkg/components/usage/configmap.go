@@ -5,15 +5,12 @@ package usage
 
 import (
 	"fmt"
-	"net"
-	"strconv"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/usage/pkg/server"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,8 +19,7 @@ import (
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	cfg := server.Config{
-		ControllerSchedule:    time.Hour.String(),
-		ContentServiceAddress: net.JoinHostPort(content_service.Component, strconv.Itoa(content_service.RPCPort)),
+		ControllerSchedule: time.Hour.String(),
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{

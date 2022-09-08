@@ -6,7 +6,6 @@ package server
 
 import (
 	"fmt"
-	"github.com/gitpod-io/gitpod/content-service/api"
 	"net"
 	"os"
 	"time"
@@ -36,7 +35,8 @@ type Config struct {
 
 	StripeCredentialsFile string `json:"stripeCredentialsFile,omitempty"`
 
-	ContentServiceAddress string `json:"contentServiceAddress,omitempty"`
+	// Deprecated
+	_ string `json:"contentServiceAddress,omitempty"`
 
 	// billInstancesAfter sets the date after which instances should be considered for billing -
 	// instances started before `billInstancesAfter` will not be considered by the billing controller.
@@ -132,16 +132,8 @@ func Start(cfg Config) error {
 	if err != nil {
 		return fmt.Errorf("failed to register content service metrics: %w", err)
 	}
-	var contentService contentservice.Interface = &contentservice.NoOpClient{}
-	if cfg.ContentServiceAddress != "" {
-		contentServiceConn, err := grpc.Dial(cfg.ContentServiceAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			return fmt.Errorf("failed to dial contentservice: %w", err)
-		}
-		contentService = contentservice.New(api.NewUsageReportServiceClient(contentServiceConn))
-	}
 
-	err = registerGRPCServices(srv, conn, stripeClient, contentService, pricer, *cfg.BillInstancesAfter)
+	err = registerGRPCServices(srv, conn, stripeClient, pricer)
 	if err != nil {
 		return fmt.Errorf("failed to register gRPC services: %w", err)
 	}
@@ -164,12 +156,12 @@ func Start(cfg Config) error {
 	return nil
 }
 
-func registerGRPCServices(srv *baseserver.Server, conn *gorm.DB, stripeClient *stripe.Client, contentSvc contentservice.Interface, pricer *apiv1.WorkspacePricer, billInstancesAfter time.Time) error {
+func registerGRPCServices(srv *baseserver.Server, conn *gorm.DB, stripeClient *stripe.Client, pricer *apiv1.WorkspacePricer) error {
 	v1.RegisterUsageServiceServer(srv.GRPC(), apiv1.NewUsageService(conn, pricer))
 	if stripeClient == nil {
 		v1.RegisterBillingServiceServer(srv.GRPC(), &apiv1.BillingServiceNoop{})
 	} else {
-		v1.RegisterBillingServiceServer(srv.GRPC(), apiv1.NewBillingService(stripeClient, billInstancesAfter, conn, contentSvc))
+		v1.RegisterBillingServiceServer(srv.GRPC(), apiv1.NewBillingService(stripeClient, conn))
 	}
 	return nil
 }
