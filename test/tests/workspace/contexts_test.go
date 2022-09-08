@@ -57,9 +57,9 @@ func TestGitHubContexts(t *testing.T) {
 			ExpectedBranch: "HEAD",
 		},
 		{
-			Name:           "empty repo",
-			ContextURL:     "github.com/gitpod-io/empty",
-			WorkspaceRoot:  "/workspace/empty",
+			Name:           "Git LFS support",
+			ContextURL:     "github.com/atduarte/lfs-test",
+			WorkspaceRoot:  "/workspace/lfs-test",
 			ExpectedBranch: "main",
 		},
 		{
