@@ -13,6 +13,8 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 const POLL_CREATED_CUSTOMER_INTERVAL_MS = 1000;
 const POLL_CREATED_CUSTOMER_MAX_ATTEMPTS = 30;
 
+const ATTRIBUTION_ID_METADATA_KEY = "attributionId";
+
 @injectable()
 export class StripeService {
     @inject(Config) protected readonly config: Config;
@@ -34,11 +36,15 @@ export class StripeService {
     }
 
     async findCustomerByUserId(userId: string): Promise<Stripe.Customer | undefined> {
-        return this.findCustomerByQuery(`metadata['userId']:'${userId}'`);
+        return this.findCustomerByQuery(
+            `metadata['${ATTRIBUTION_ID_METADATA_KEY}']:'${AttributionId.render({ kind: "user", userId })}'`,
+        );
     }
 
     async findCustomerByTeamId(teamId: string): Promise<Stripe.Customer | undefined> {
-        return this.findCustomerByQuery(`metadata['teamId']:'${teamId}'`);
+        return this.findCustomerByQuery(
+            `metadata['${ATTRIBUTION_ID_METADATA_KEY}']:'${AttributionId.render({ kind: "team", teamId })}'`,
+        );
     }
 
     async findCustomerByQuery(query: string): Promise<Stripe.Customer | undefined> {
@@ -58,9 +64,7 @@ export class StripeService {
             email: User.getPrimaryEmail(user),
             name: User.getName(user),
             metadata: {
-                // userId is deprecated, use attributionId where possible
-                userId: user.id,
-                attributionId: AttributionId.render({ kind: "user", userId: user.id }),
+                ATTRIBUTION_ID_METADATA_KEY: AttributionId.render({ kind: "user", userId: user.id }),
             },
         });
         // Wait for the customer to show up in Stripe search results before proceeding
@@ -84,9 +88,7 @@ export class StripeService {
             email: User.getPrimaryEmail(user),
             name: userName ? `${userName} (${team.name})` : team.name,
             metadata: {
-                // teamId is deprecated, use attributionId where possible
-                teamId: team.id,
-                attributionId: AttributionId.render({ kind: "team", teamId: team.id }),
+                ATTRIBUTION_ID_METADATA_KEY: AttributionId.render({ kind: "team", teamId: team.id }),
             },
         });
         // Wait for the customer to show up in Stripe search results before proceeding
