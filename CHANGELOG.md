@@ -1,6 +1,7 @@
 # Change Log
 
 ## September 2022
+- [local-preview] Remove unused dead code ([#12496](https://github.com/gitpod-io/gitpod/pull/12496)) - [@Pothulapati](https://github.com/Pothulapati)
 - Reword "Spending Limit" to "Usage Limit" ([#12669](https://github.com/gitpod-io/gitpod/pull/12669)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - [local-preview] set low memory & cpu requirements ([#12657](https://github.com/gitpod-io/gitpod/pull/12657)) - [@Pothulapati](https://github.com/Pothulapati)
 - NONOE ([#12648](https://github.com/gitpod-io/gitpod/pull/12648)) - [@akosyakov](https://github.com/akosyakov)
