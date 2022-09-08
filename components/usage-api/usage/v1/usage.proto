@@ -8,9 +8,6 @@ import "google/protobuf/timestamp.proto";
 
 service UsageService {
 
-    // ReconcileUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
-    rpc ReconcileUsage(ReconcileUsageRequest) returns (ReconcileUsageResponse) {}
-
     // GetCostCenter retrieves the spending limit with its associated attributionID
     rpc GetCostCenter(GetCostCenterRequest) returns (GetCostCenterResponse) {}
 
@@ -108,17 +105,6 @@ message BilledSession {
 
     int64 credits_deprecated = 11 [deprecated=true];   // insufficient precision to represent credits for workspace time
     double credits = 12;
-}
-
-message ReconcileUsageRequest {
-    google.protobuf.Timestamp start_time = 1;
-    google.protobuf.Timestamp end_time = 2;
-}
-
-message ReconcileUsageResponse {
-    repeated BilledSession sessions = 1 [deprecated=true];
-    // ID of the UsageReport generated for this reconcile run.
-    string report_id = 2;
 }
 
 message GetCostCenterRequest {

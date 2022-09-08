@@ -26,8 +26,6 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UsageServiceClient interface {
-	// ReconcileUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
-	ReconcileUsage(ctx context.Context, in *ReconcileUsageRequest, opts ...grpc.CallOption) (*ReconcileUsageResponse, error)
 	// GetCostCenter retrieves the spending limit with its associated attributionID
 	GetCostCenter(ctx context.Context, in *GetCostCenterRequest, opts ...grpc.CallOption) (*GetCostCenterResponse, error)
 	// Triggers reconciliation of usage with ledger implementation.
@@ -42,15 +40,6 @@ type usageServiceClient struct {
 
 func NewUsageServiceClient(cc grpc.ClientConnInterface) UsageServiceClient {
 	return &usageServiceClient{cc}
-}
-
-func (c *usageServiceClient) ReconcileUsage(ctx context.Context, in *ReconcileUsageRequest, opts ...grpc.CallOption) (*ReconcileUsageResponse, error) {
-	out := new(ReconcileUsageResponse)
-	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/ReconcileUsage", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *usageServiceClient) GetCostCenter(ctx context.Context, in *GetCostCenterRequest, opts ...grpc.CallOption) (*GetCostCenterResponse, error) {
@@ -84,8 +73,6 @@ func (c *usageServiceClient) ListUsage(ctx context.Context, in *ListUsageRequest
 // All implementations must embed UnimplementedUsageServiceServer
 // for forward compatibility
 type UsageServiceServer interface {
-	// ReconcileUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
-	ReconcileUsage(context.Context, *ReconcileUsageRequest) (*ReconcileUsageResponse, error)
 	// GetCostCenter retrieves the spending limit with its associated attributionID
 	GetCostCenter(context.Context, *GetCostCenterRequest) (*GetCostCenterResponse, error)
 	// Triggers reconciliation of usage with ledger implementation.
@@ -99,9 +86,6 @@ type UsageServiceServer interface {
 type UnimplementedUsageServiceServer struct {
 }
 
-func (UnimplementedUsageServiceServer) ReconcileUsage(context.Context, *ReconcileUsageRequest) (*ReconcileUsageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReconcileUsage not implemented")
-}
 func (UnimplementedUsageServiceServer) GetCostCenter(context.Context, *GetCostCenterRequest) (*GetCostCenterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCostCenter not implemented")
 }
@@ -122,24 +106,6 @@ type UnsafeUsageServiceServer interface {
 
 func RegisterUsageServiceServer(s grpc.ServiceRegistrar, srv UsageServiceServer) {
 	s.RegisterService(&UsageService_ServiceDesc, srv)
-}
-
-func _UsageService_ReconcileUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReconcileUsageRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UsageServiceServer).ReconcileUsage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/usage.v1.UsageService/ReconcileUsage",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsageServiceServer).ReconcileUsage(ctx, req.(*ReconcileUsageRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _UsageService_GetCostCenter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -203,10 +169,6 @@ var UsageService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "usage.v1.UsageService",
 	HandlerType: (*UsageServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "ReconcileUsage",
-			Handler:    _UsageService_ReconcileUsage_Handler,
-		},
 		{
 			MethodName: "GetCostCenter",
 			Handler:    _UsageService_GetCostCenter_Handler,

@@ -55,28 +55,6 @@ function deserialize_usage_v1_ListUsageResponse(buffer_arg) {
   return usage_v1_usage_pb.ListUsageResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-function serialize_usage_v1_ReconcileUsageRequest(arg) {
-  if (!(arg instanceof usage_v1_usage_pb.ReconcileUsageRequest)) {
-    throw new Error('Expected argument of type usage.v1.ReconcileUsageRequest');
-  }
-  return Buffer.from(arg.serializeBinary());
-}
-
-function deserialize_usage_v1_ReconcileUsageRequest(buffer_arg) {
-  return usage_v1_usage_pb.ReconcileUsageRequest.deserializeBinary(new Uint8Array(buffer_arg));
-}
-
-function serialize_usage_v1_ReconcileUsageResponse(arg) {
-  if (!(arg instanceof usage_v1_usage_pb.ReconcileUsageResponse)) {
-    throw new Error('Expected argument of type usage.v1.ReconcileUsageResponse');
-  }
-  return Buffer.from(arg.serializeBinary());
-}
-
-function deserialize_usage_v1_ReconcileUsageResponse(buffer_arg) {
-  return usage_v1_usage_pb.ReconcileUsageResponse.deserializeBinary(new Uint8Array(buffer_arg));
-}
-
 function serialize_usage_v1_ReconcileUsageWithLedgerRequest(arg) {
   if (!(arg instanceof usage_v1_usage_pb.ReconcileUsageWithLedgerRequest)) {
     throw new Error('Expected argument of type usage.v1.ReconcileUsageWithLedgerRequest');
@@ -101,18 +79,6 @@ function deserialize_usage_v1_ReconcileUsageWithLedgerResponse(buffer_arg) {
 
 
 var UsageServiceService = exports.UsageServiceService = {
-  // ReconcileUsage collects usage for the specified time period, and stores the usage records in the database, returning the records.
-reconcileUsage: {
-    path: '/usage.v1.UsageService/ReconcileUsage',
-    requestStream: false,
-    responseStream: false,
-    requestType: usage_v1_usage_pb.ReconcileUsageRequest,
-    responseType: usage_v1_usage_pb.ReconcileUsageResponse,
-    requestSerialize: serialize_usage_v1_ReconcileUsageRequest,
-    requestDeserialize: deserialize_usage_v1_ReconcileUsageRequest,
-    responseSerialize: serialize_usage_v1_ReconcileUsageResponse,
-    responseDeserialize: deserialize_usage_v1_ReconcileUsageResponse,
-  },
   // GetCostCenter retrieves the spending limit with its associated attributionID
 getCostCenter: {
     path: '/usage.v1.UsageService/GetCostCenter',
