@@ -284,6 +284,43 @@ func ConfigcatEnv(ctx *RenderContext) []corev1.EnvVar {
 	}
 }
 
+func ConfigcatProxyEnv(ctx *RenderContext) []corev1.EnvVar {
+	var (
+		sdkKey       string
+		baseUrl      string
+		pollInterval string
+	)
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.ConfigcatKey != "" {
+			sdkKey = cfg.WebApp.ConfigcatKey
+		}
+		if cfg.WebApp != nil && cfg.WebApp.ProxyConfig != nil && cfg.WebApp.ProxyConfig.Configcat != nil {
+			baseUrl = cfg.WebApp.ProxyConfig.Configcat.BaseUrl
+			pollInterval = cfg.WebApp.ProxyConfig.Configcat.PollInterval
+		}
+		return nil
+	})
+
+	if sdkKey == "" {
+		return nil
+	}
+
+	return []corev1.EnvVar{
+		{
+			Name:  "CONFIGCAT_SDK_KEY",
+			Value: sdkKey,
+		},
+		{
+			Name:  "CONFIGCAT_BASE_URL",
+			Value: baseUrl,
+		},
+		{
+			Name:  "CONFIGCAT_POLL_INTERVAL",
+			Value: pollInterval,
+		},
+	}
+}
+
 func DatabaseWaiterContainer(ctx *RenderContext) *corev1.Container {
 	return &corev1.Container{
 		Name:  "database-waiter",

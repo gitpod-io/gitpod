@@ -246,6 +246,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							VolumeMounts: volumeMounts,
 							Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),
+								common.ConfigcatProxyEnv(ctx),
 								[]corev1.EnvVar{{
 									Name:  "PROXY_DOMAIN",
 									Value: ctx.Config.Domain,
