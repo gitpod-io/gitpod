@@ -4,7 +4,6 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { CostCenterDB } from "@gitpod/gitpod-db/lib";
 import { User } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -25,7 +24,6 @@ export interface UsageLimitReachedResult {
 @injectable()
 export class BillingService {
     @inject(UserService) protected readonly userService: UserService;
-    @inject(CostCenterDB) protected readonly costCenterDB: CostCenterDB;
     @inject(CachingUsageServiceClientProvider)
     protected readonly usageServiceClientProvider: CachingUsageServiceClientProvider;
     @inject(CachingBillingServiceClientProvider)
@@ -33,11 +31,11 @@ export class BillingService {
 
     async checkUsageLimitReached(user: User): Promise<UsageLimitReachedResult> {
         const attributionId = await this.userService.getWorkspaceUsageAttributionId(user);
-        const costCenter = await this.costCenterDB.findById(AttributionId.render(attributionId));
+        const costCenter = await this.usageServiceClientProvider.getDefault().getCostCenter(attributionId);
         if (!costCenter) {
             const err = new Error("No CostCenter found");
             log.error({ userId: user.id }, err.message, err, { attributionId });
-            // Technially we do not have any spending limit set, yet. But sending users down the "reached" path will fix this issues as well.
+            // Technically we do not have any spending limit set, yet. But sending users down the "reached" path will fix this issues as well.
             return {
                 reached: true,
                 attributionId,

@@ -19,6 +19,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"gorm.io/gorm"
 )
 
 func TestUsageService_ReconcileUsageWithLedger(t *testing.T) {
@@ -54,19 +55,9 @@ func TestUsageService_ReconcileUsageWithLedger(t *testing.T) {
 		Draft:               true,
 	}))
 
-	srv := baseserver.NewForTests(t,
-		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
-	)
+	client := newUsageService(t, dbconn)
 
-	v1.RegisterUsageServiceServer(srv.GRPC(), NewUsageService(dbconn, DefaultWorkspacePricer))
-	baseserver.StartServerForTests(t, srv)
-
-	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	require.NoError(t, err)
-
-	client := v1.NewUsageServiceClient(conn)
-
-	_, err = client.ReconcileUsageWithLedger(context.Background(), &v1.ReconcileUsageWithLedgerRequest{
+	_, err := client.ReconcileUsageWithLedger(context.Background(), &v1.ReconcileUsageWithLedgerRequest{
 		From: timestamppb.New(from),
 		To:   timestamppb.New(to),
 	})
@@ -80,6 +71,21 @@ func TestUsageService_ReconcileUsageWithLedger(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Len(t, usage, 1)
+}
+
+func newUsageService(t *testing.T, dbconn *gorm.DB) v1.UsageServiceClient {
+	srv := baseserver.NewForTests(t,
+		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
+	)
+
+	v1.RegisterUsageServiceServer(srv.GRPC(), NewUsageService(dbconn, DefaultWorkspacePricer))
+	baseserver.StartServerForTests(t, srv)
+
+	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+
+	client := v1.NewUsageServiceClient(conn)
+	return client
 }
 
 func TestReconcileWithLedger(t *testing.T) {
@@ -209,4 +215,47 @@ func TestReconcileWithLedger(t *testing.T) {
 		}))
 		require.EqualValues(t, expectedUsage, updates[0])
 	})
+}
+
+func TestGetAndSetCostCenter(t *testing.T) {
+	conn := dbtest.ConnectForTests(t)
+	costCenterUpdates := []*v1.CostCenter{
+		{
+			AttributionId:   string(db.NewTeamAttributionID(uuid.New().String())),
+			SpendingLimit:   5000,
+			BillingStrategy: v1.CostCenter_BILLING_STRATEGY_OTHER,
+		},
+		{
+			AttributionId:   string(db.NewTeamAttributionID(uuid.New().String())),
+			SpendingLimit:   8000,
+			BillingStrategy: v1.CostCenter_BILLING_STRATEGY_OTHER,
+		},
+		{
+			AttributionId:   string(db.NewTeamAttributionID(uuid.New().String())),
+			SpendingLimit:   8000,
+			BillingStrategy: v1.CostCenter_BILLING_STRATEGY_STRIPE,
+		},
+		{
+			AttributionId:   string(db.NewTeamAttributionID(uuid.New().String())),
+			SpendingLimit:   5000,
+			BillingStrategy: v1.CostCenter_BILLING_STRATEGY_OTHER,
+		},
+	}
+
+	service := newUsageService(t, conn)
+
+	for _, costCenter := range costCenterUpdates {
+		_, err := service.SetCostCenter(context.Background(), &v1.SetCostCenterRequest{
+			CostCenter: costCenter,
+		})
+		require.NoError(t, err)
+		retrieved, err := service.GetCostCenter(context.Background(), &v1.GetCostCenterRequest{
+			AttributionId: costCenter.AttributionId,
+		})
+		require.NoError(t, err)
+
+		require.Equal(t, costCenter.SpendingLimit, retrieved.CostCenter.SpendingLimit)
+		require.Equal(t, costCenter.BillingStrategy, retrieved.CostCenter.BillingStrategy)
+	}
+
 }

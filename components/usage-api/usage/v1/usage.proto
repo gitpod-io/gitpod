@@ -8,8 +8,11 @@ import "google/protobuf/timestamp.proto";
 
 service UsageService {
 
-    // GetCostCenter retrieves the spending limit with its associated attributionID
+    // GetCostCenter retrieves the active cost center for the given attributionID
     rpc GetCostCenter(GetCostCenterRequest) returns (GetCostCenterResponse) {}
+
+    // SetCostCenter stores the given cost center
+    rpc SetCostCenter(SetCostCenterRequest) returns (SetCostCenterResponse) {}
 
     // Triggers reconciliation of usage with ledger implementation.
     rpc ReconcileUsageWithLedger(ReconcileUsageWithLedgerRequest) returns (ReconcileUsageWithLedgerResponse) {}
@@ -88,6 +91,13 @@ message Usage {
 	string metadata = 9;
 }
 
+message SetCostCenterRequest {
+    CostCenter cost_center = 1;
+}
+
+message SetCostCenterResponse {
+}
+
 message GetCostCenterRequest {
     string attribution_id = 1;
 }
@@ -99,4 +109,9 @@ message GetCostCenterResponse {
 message CostCenter {
     string attribution_id = 1;
     int32 spending_limit = 2;
+    enum BillingStrategy {
+        BILLING_STRATEGY_STRIPE = 0;
+        BILLING_STRATEGY_OTHER = 1;
+    }
+    BillingStrategy billing_strategy = 3;
 }
