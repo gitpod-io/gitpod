@@ -172,12 +172,45 @@ func (s *UsageService) GetCostCenter(ctx context.Context, in *v1.GetCostCenterRe
 		return nil, status.Errorf(codes.Internal, "Failed to get cost center %s from DB: %s", in.AttributionId, err.Error())
 	}
 
+	billingStrategy := v1.CostCenter_BILLING_STRATEGY_OTHER
+	if result.BillingStrategy == db.CostCenter_Stripe {
+		billingStrategy = v1.CostCenter_BILLING_STRATEGY_STRIPE
+	}
+
 	return &v1.GetCostCenterResponse{
 		CostCenter: &v1.CostCenter{
-			AttributionId: string(attributionId),
-			SpendingLimit: result.SpendingLimit,
+			AttributionId:   string(attributionId),
+			SpendingLimit:   result.SpendingLimit,
+			BillingStrategy: billingStrategy,
 		},
 	}, nil
+}
+
+func (s *UsageService) SetCostCenter(ctx context.Context, in *v1.SetCostCenterRequest) (*v1.SetCostCenterResponse, error) {
+	if in.CostCenter == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Empty CostCenter")
+	}
+
+	attributionID, err := db.ParseAttributionID(in.CostCenter.AttributionId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Failed to parse attribution ID: %s", err.Error())
+	}
+
+	billingStrategy := db.CostCenter_Other
+	if in.CostCenter.BillingStrategy == v1.CostCenter_BILLING_STRATEGY_STRIPE {
+		billingStrategy = db.CostCenter_Stripe
+	}
+
+	_, err = db.SaveCostCenter(ctx, s.conn, &db.CostCenter{
+		ID:              attributionID,
+		SpendingLimit:   in.CostCenter.SpendingLimit,
+		BillingStrategy: billingStrategy,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to save cost center %s: %s", attributionID, err.Error())
+	}
+
+	return &v1.SetCostCenterResponse{}, nil
 }
 
 func (s *UsageService) ReconcileUsageWithLedger(ctx context.Context, req *v1.ReconcileUsageWithLedgerRequest) (*v1.ReconcileUsageWithLedgerResponse, error) {

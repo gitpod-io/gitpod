@@ -15,13 +15,20 @@ import (
 
 var CostCenterNotFound = errors.New("CostCenter not found")
 
-type CostCenter struct {
-	ID            AttributionID `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
-	SpendingLimit int32         `gorm:"column:spendingLimit;type:int;default:0;" json:"spendingLimit"`
-	LastModified  time.Time     `gorm:"->:column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
+type BillingStrategy string
 
-	// deleted is restricted for use by db-sync
-	_ bool `gorm:"column:deleted;type:tinyint;default:0;" json:"deleted"`
+const (
+	CostCenter_Stripe BillingStrategy = "stripe"
+	CostCenter_Other  BillingStrategy = "other"
+)
+
+type CostCenter struct {
+	ID              AttributionID   `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
+	CreationTime    VarcharTime     `gorm:"primary_key;column:creationTime;type:varchar;size:255;" json:"creationTime"`
+	SpendingLimit   int32           `gorm:"column:spendingLimit;type:int;default:0;" json:"spendingLimit"`
+	BillingStrategy BillingStrategy `gorm:"column:billingStrategy;type:varchar;size:255;" json:"billingStrategy"`
+
+	LastModified time.Time `gorm:"->:column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
 }
 
 // TableName sets the insert table name for this struct type
@@ -31,16 +38,25 @@ func (d *CostCenter) TableName() string {
 
 func GetCostCenter(ctx context.Context, conn *gorm.DB, attributionId AttributionID) (*CostCenter, error) {
 	db := conn.WithContext(ctx)
-	var costCenter CostCenter
 
-	result := db.First(&costCenter, attributionId)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, CostCenterNotFound
-		}
-		return nil, fmt.Errorf("failed to get cost center: %w", result.Error)
-
+	var results []CostCenter
+	db = db.Where("id = ?", attributionId).Order("creationTime DESC").Limit(1).Find(&results)
+	if db.Error != nil {
+		return nil, fmt.Errorf("failed to get cost center: %w", db.Error)
 	}
-
+	if len(results) == 0 {
+		return nil, CostCenterNotFound
+	}
+	costCenter := results[0]
 	return &costCenter, nil
+}
+
+func SaveCostCenter(ctx context.Context, conn *gorm.DB, costCenter *CostCenter) (*CostCenter, error) {
+	db := conn.WithContext(ctx)
+	costCenter.CreationTime = NewVarcharTime(time.Now())
+	db = db.Save(costCenter)
+	if db.Error != nil {
+		return nil, fmt.Errorf("failed to save cost center: %w", db.Error)
+	}
+	return costCenter, nil
 }

@@ -9,7 +9,7 @@ import { BillingServiceClient } from "./billing_grpc_pb";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
 import { Metadata } from "@grpc/grpc-js";
-import { ListUsageRequest, ListUsageResponse } from "./usage_pb";
+import { CostCenter as ProtocolCostCenter, GetCostCenterRequest, GetCostCenterResponse, ListUsageRequest, ListUsageResponse, SetCostCenterRequest, SetCostCenterResponse } from "./usage_pb";
 import {
     GetUpcomingInvoiceRequest,
     GetUpcomingInvoiceResponse,
@@ -22,6 +22,7 @@ import { createClientCallMetricsInterceptor, IClientCallMetrics } from "@gitpod/
 import * as grpc from "@grpc/grpc-js";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { CostCenter } from "@gitpod/gitpod-protocol";
 
 export const UsageServiceClientProvider = Symbol("UsageServiceClientProvider");
 export const BillingServiceClientProvider = Symbol("BillingServiceClientProvider");
@@ -173,6 +174,62 @@ export class PromisifiedUsageServiceClient {
         } finally {
             ctx.span.finish();
         }
+    }
+
+    public async getCostCenter(
+        attributionID: AttributionId,
+    ): Promise<CostCenter | undefined> {
+        const request = new GetCostCenterRequest();
+        request.setAttributionId(AttributionId.render(attributionID))
+
+        const response = await new Promise<GetCostCenterResponse>((resolve, reject) => {
+            this.client.getCostCenter(
+                request,
+                (err: grpc.ServiceError | null, response: GetCostCenterResponse) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    resolve(response);
+                },
+            );
+        });
+        if (!response.hasCostCenter()) {
+            return undefined;
+        }
+        return <CostCenter> {
+            id: AttributionId.parse(response.getCostCenter()!.getAttributionId()),
+            spendingLimit: response.getCostCenter()!.getSpendingLimit(),
+            billingStrategy: response.getCostCenter()!.getBillingStrategy() || 'other'
+        };
+    }
+
+    public async setCostCenter(
+        costCenter: CostCenter,
+    ): Promise<void> {
+        const request = new SetCostCenterRequest();
+        const cc = new ProtocolCostCenter();
+        cc.setAttributionId(AttributionId.render(costCenter.id));
+        let billingStrategy = ProtocolCostCenter.BillingStrategy.BILLING_STRATEGY_OTHER;
+        if (costCenter.billingStrategy == 'stripe') {
+            billingStrategy = ProtocolCostCenter.BillingStrategy.BILLING_STRATEGY_STRIPE;
+        }
+        cc.setBillingStrategy(billingStrategy);
+        cc.setSpendingLimit(costCenter.spendingLimit);
+        request.setCostCenter(cc);
+
+        await new Promise<SetCostCenterResponse>((resolve, reject) => {
+            this.client.setCostCenter(
+                request,
+                (err: grpc.ServiceError | null, response: SetCostCenterResponse) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    resolve(response);
+                },
+            );
+        });
     }
 
     public dispose() {

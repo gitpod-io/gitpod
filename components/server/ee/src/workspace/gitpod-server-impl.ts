@@ -64,7 +64,7 @@ import { LicenseKeySource } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
 import { LicenseValidationResult, LicenseFeature } from "@gitpod/gitpod-protocol/lib/license-protocol";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
-import { CostCenterDB, LicenseDB } from "@gitpod/gitpod-db/lib";
+import { LicenseDB } from "@gitpod/gitpod-db/lib";
 import { GuardedCostCenter, ResourceAccessGuard, ResourceAccessOp } from "../../../src/auth/resource-access";
 import { AccountStatement, CreditAlert, Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
@@ -156,7 +156,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(CachingUsageServiceClientProvider)
     protected readonly usageServiceClientProvider: CachingUsageServiceClientProvider;
 
-    @inject(CostCenterDB) protected readonly costCenterDB: CostCenterDB;
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
 
     @inject(BillingModes) protected readonly billingModes: BillingModes;
@@ -2117,12 +2116,13 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             await this.stripeService.setDefaultPaymentMethodForCustomer(customer, setupIntentId);
             await this.stripeService.createSubscriptionForCustomer(customer);
 
-            const attributionId = AttributionId.render({ kind: "team", teamId });
+            const attributionId: AttributionId = { kind: "team", teamId };
 
             // Creating a cost center for this team
-            await this.costCenterDB.storeEntry({
+            await this.usageServiceClientProvider.getDefault().setCostCenter({
                 id: attributionId,
                 spendingLimit: this.defaultSpendingLimit,
+                billingStrategy: "stripe",
             });
         } catch (error) {
             log.error(`Failed to subscribe team '${teamId}' to Stripe`, error);
@@ -2151,10 +2151,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const team = await this.guardTeamOperation(teamId, "get");
         await this.ensureStripeApiIsAllowed({ team });
 
-        const attributionId = AttributionId.render({ kind: "team", teamId });
+        const attributionId: AttributionId = { kind: "team", teamId };
         await this.guardCostCenterAccess(ctx, user.id, attributionId, "get");
 
-        const costCenter = await this.costCenterDB.findById(attributionId);
+        const costCenter = await this.usageServiceClientProvider.getDefault().getCostCenter(attributionId);
         if (costCenter) {
             return costCenter.spendingLimit;
         }
@@ -2168,12 +2168,14 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         if (typeof usageLimit !== "number" || usageLimit < 0) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "Unexpected `usageLimit` value.");
         }
-        const attributionId = AttributionId.render({ kind: "team", teamId });
+        const attributionId: AttributionId = { kind: "team", teamId };
         await this.guardCostCenterAccess(ctx, user.id, attributionId, "update");
 
-        await this.costCenterDB.storeEntry({
-            id: AttributionId.render({ kind: "team", teamId }),
+        const costCenter = await this.usageServiceClientProvider.getDefault().getCostCenter(attributionId);
+        await this.usageServiceClientProvider.getDefault().setCostCenter({
+            id: attributionId,
             spendingLimit: usageLimit,
+            billingStrategy: costCenter?.billingStrategy || "other",
         });
     }
 
@@ -2184,23 +2186,25 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const billingMode = await this.billingModes.getBillingModeForUser(user, new Date());
         if (billingMode.mode === "usage-based") {
             const limit = await this.billingService.checkUsageLimitReached(user);
-            const costCenter = await this.costCenterDB.findById(AttributionId.render(limit.attributionId));
-            if (costCenter) {
-                if (limit.reached) {
-                    result.unshift("The usage limit is reached.");
-                } else if (limit.almostReached) {
-                    result.unshift("The usage limit is almost reached.");
-                }
+            if (limit.reached) {
+                result.unshift("The usage limit is reached.");
+            } else if (limit.almostReached) {
+                result.unshift("The usage limit is almost reached.");
             }
         }
         return result;
     }
 
     async listUsage(ctx: TraceContext, req: ListUsageRequest): Promise<ListUsageResponse> {
-        const { attributionId, from, to } = req;
+        const { from, to } = req;
+        const attributionId = AttributionId.parse(req.attributionId);
+        if (!attributionId) {
+            throw new ResponseError(ErrorCodes.INVALID_COST_CENTER, "Bad attribution ID", {
+                attributionId: req.attributionId,
+            });
+        }
         traceAPIParams(ctx, { attributionId });
         const user = this.checkAndBlockUser("listUsage");
-
         await this.guardCostCenterAccess(ctx, user.id, attributionId, "get");
 
         const timestampFrom = from ? Timestamp.fromDate(new Date(from)) : undefined;
@@ -2208,7 +2212,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const usageClient = this.usageServiceClientProvider.getDefault();
         const request = new usage_grpc.ListUsageRequest();
-        request.setAttributionId(attributionId);
+        request.setAttributionId(AttributionId.render(attributionId));
         request.setFrom(timestampFrom);
         if (to) {
             request.setTo(timestampTo);
@@ -2253,23 +2257,15 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     protected async guardCostCenterAccess(
         ctx: TraceContext,
         userId: string,
-        attributionId: string,
+        attributionId: AttributionId,
         operation: ResourceAccessOp,
     ): Promise<void> {
         traceAPIParams(ctx, { userId, attributionId });
 
-        // TODO(gpl) We need a CostCenter entity (with a strong connection to Team or User) to properly to authorize access to these reports
-        // const costCenter = await this.costCenterDB.findByAttributionId(attributionId);
-        const parsedId = AttributionId.parse(attributionId);
-        if (parsedId === undefined) {
-            log.warn({ userId }, "Unable to parse attributionId", { attributionId });
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Unable to parse attributionId");
-        }
-
         let owner: GuardedCostCenter["owner"];
-        switch (parsedId.kind) {
+        switch (attributionId.kind) {
             case "team":
-                const team = await this.teamDB.findTeamById(parsedId.teamId);
+                const team = await this.teamDB.findTeamById(attributionId.teamId);
                 if (!team) {
                     throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
                 }

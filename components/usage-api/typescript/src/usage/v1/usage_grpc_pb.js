@@ -77,9 +77,31 @@ function deserialize_usage_v1_ReconcileUsageWithLedgerResponse(buffer_arg) {
   return usage_v1_usage_pb.ReconcileUsageWithLedgerResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_usage_v1_SetCostCenterRequest(arg) {
+  if (!(arg instanceof usage_v1_usage_pb.SetCostCenterRequest)) {
+    throw new Error('Expected argument of type usage.v1.SetCostCenterRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_usage_v1_SetCostCenterRequest(buffer_arg) {
+  return usage_v1_usage_pb.SetCostCenterRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_usage_v1_SetCostCenterResponse(arg) {
+  if (!(arg instanceof usage_v1_usage_pb.SetCostCenterResponse)) {
+    throw new Error('Expected argument of type usage.v1.SetCostCenterResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_usage_v1_SetCostCenterResponse(buffer_arg) {
+  return usage_v1_usage_pb.SetCostCenterResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 
 var UsageServiceService = exports.UsageServiceService = {
-  // GetCostCenter retrieves the spending limit with its associated attributionID
+  // GetCostCenter retrieves the active cost center for the given attributionID
 getCostCenter: {
     path: '/usage.v1.UsageService/GetCostCenter',
     requestStream: false,
@@ -90,6 +112,18 @@ getCostCenter: {
     requestDeserialize: deserialize_usage_v1_GetCostCenterRequest,
     responseSerialize: serialize_usage_v1_GetCostCenterResponse,
     responseDeserialize: deserialize_usage_v1_GetCostCenterResponse,
+  },
+  // SetCostCenter stores the given cost center
+setCostCenter: {
+    path: '/usage.v1.UsageService/SetCostCenter',
+    requestStream: false,
+    responseStream: false,
+    requestType: usage_v1_usage_pb.SetCostCenterRequest,
+    responseType: usage_v1_usage_pb.SetCostCenterResponse,
+    requestSerialize: serialize_usage_v1_SetCostCenterRequest,
+    requestDeserialize: deserialize_usage_v1_SetCostCenterRequest,
+    responseSerialize: serialize_usage_v1_SetCostCenterResponse,
+    responseDeserialize: deserialize_usage_v1_SetCostCenterResponse,
   },
   // Triggers reconciliation of usage with ledger implementation.
 reconcileUsageWithLedger: {

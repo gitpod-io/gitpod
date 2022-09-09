@@ -17,7 +17,7 @@ import {
     WORKSPACE_TIMEOUT_EXTENDED_ALT,
     Team,
 } from "@gitpod/gitpod-protocol";
-import { CostCenterDB, ProjectDB, TeamDB, TermsAcceptanceDB, UserDB } from "@gitpod/gitpod-db/lib";
+import { ProjectDB, TeamDB, TermsAcceptanceDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config } from "../config";
@@ -70,7 +70,6 @@ export class UserService {
     @inject(TermsAcceptanceDB) protected readonly termsAcceptanceDb: TermsAcceptanceDB;
     @inject(TermsProvider) protected readonly termsProvider: TermsProvider;
     @inject(ProjectDB) protected readonly projectDb: ProjectDB;
-    @inject(CostCenterDB) protected readonly costCenterDb: CostCenterDB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(StripeService) protected readonly stripeService: StripeService;
     @inject(VerificationService) protected readonly verificationService: VerificationService;
