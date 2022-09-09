@@ -53,7 +53,7 @@ pod:
         secretName: sh-playground-dns-perm
   containers:
     - name: nightly-test
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:pd-dev-image-gcloud.2
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:pd-dev-upgrade.0
       workingDir: /workspace
       imagePullPolicy: Always
       volumeMounts:
