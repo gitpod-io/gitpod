@@ -62,19 +62,6 @@ func TestWorkspaceRouter(t *testing.T) {
 				URL:           "http://1234-amaranth-smelt-9ba20cc1.ws.gitpod.dev/",
 			},
 		},
-		{
-			Name: "host-based blobserve access",
-			URL:  "http://blobserve.ws.gitpod.dev/image:version:/foo/main.js",
-			Headers: map[string]string{
-				forwardedHostnameHeader: "blobserve.ws.gitpod.dev",
-			},
-			Router:       HostBasedRouter(forwardedHostnameHeader, wsHostSuffix, wsHostRegex),
-			WSHostSuffix: wsHostSuffix,
-			Expected: Expectation{
-				Status: http.StatusOK,
-				URL:    "http://blobserve.ws.gitpod.dev/image:version:/foo/main.js",
-			},
-		},
 	}
 
 	for _, test := range tests {
@@ -162,66 +149,17 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 			Path:       "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly@sha256:41aeea688aa0943bd746cb70c4ed378910f7c7ecf56f5f53ccb2b76c6b68e1a7/__files__/index.html",
 		},
 		{
+			Name:       "no match 3",
+			HostHeader: "v--0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk" + wsHostSuffix,
+			Path:       "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly@sha256:41aeea688aa0943bd746cb70c4ed378910f7c7ecf56f5f53ccb2b76c6b68e1a7/__files__/index.html",
+		},
+		{
 			Name:       "workspace match",
 			HostHeader: "amaranth-smelt-9ba20cc1" + wsHostSuffix,
 			Expected: matchResult{
 				MatchesWorkspace: true,
 				WorkspaceVars: map[string]string{
 					workspaceIDIdentifier: "amaranth-smelt-9ba20cc1",
-				},
-			},
-		},
-		{
-			Name:       "unique webview workspace match 2",
-			HostHeader: "0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk" + wsHostSuffix,
-			Path:       "/amaranth-smelt-9ba20cc1/index.html",
-			Expected: matchResult{
-				MatchesWorkspace: true,
-				WorkspaceVars: map[string]string{
-					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
-					foreignOriginIdentifier: "0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk",
-					foreignPathIdentifier:   "/index.html",
-				},
-			},
-		},
-		{
-			Name:       "unique webview port match 2",
-			HostHeader: "0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk" + wsHostSuffix,
-			Path:       "/8080-amaranth-smelt-9ba20cc1/index.html",
-			Expected: matchResult{
-				MatchesPort: true,
-				PortVars: map[string]string{
-					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
-					workspacePortIdentifier: "8080",
-					foreignOriginIdentifier: "0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk",
-					foreignPathIdentifier:   "/index.html",
-				},
-			},
-		},
-		{
-			Name:       "unique webworker workspace match",
-			HostHeader: "v--0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk" + wsHostSuffix,
-			Path:       "/amaranth-smelt-9ba20cc1/index.html",
-			Expected: matchResult{
-				MatchesWorkspace: true,
-				WorkspaceVars: map[string]string{
-					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
-					foreignOriginIdentifier: "v--0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk",
-					foreignPathIdentifier:   "/index.html",
-				},
-			},
-		},
-		{
-			Name:       "unique webworker port match",
-			HostHeader: "v--0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk" + wsHostSuffix,
-			Path:       "/8080-amaranth-smelt-9ba20cc1/index.html",
-			Expected: matchResult{
-				MatchesPort: true,
-				PortVars: map[string]string{
-					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
-					workspacePortIdentifier: "8080",
-					foreignOriginIdentifier: "v--0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk",
-					foreignPathIdentifier:   "/index.html",
 				},
 			},
 		},

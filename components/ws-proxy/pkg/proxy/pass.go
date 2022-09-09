@@ -14,7 +14,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 
@@ -254,24 +253,5 @@ func withXFrameOptionsFilter() proxyPassOpt {
 func withUseTargetHost() proxyPassOpt {
 	return func(cfg *proxyPassConfig) {
 		cfg.UseTargetHost = true
-	}
-}
-
-type workspaceTransport struct {
-	transport http.RoundTripper
-}
-
-func (t *workspaceTransport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	vars := mux.Vars(req)
-	if vars[foreignPathIdentifier] != "" {
-		req = req.Clone(req.Context())
-		req.URL.Path = vars[foreignPathIdentifier]
-	}
-	return t.transport.RoundTrip(req)
-}
-
-func withWorkspaceTransport() proxyPassOpt {
-	return func(h *proxyPassConfig) {
-		h.Transport = &workspaceTransport{h.Transport}
 	}
 }
