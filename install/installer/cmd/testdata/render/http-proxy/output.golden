@@ -681,228 +681,6 @@ spec:
       component: ws-manager
 status: {}
 ---
-# policy/v1beta1/PodSecurityPolicy default-ns-privileged
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  annotations:
-    apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-    apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-    seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-  creationTimestamp: null
-  name: default-ns-privileged
-  namespace: default
-spec:
-  allowPrivilegeEscalation: true
-  allowedCapabilities:
-  - '*'
-  fsGroup:
-    rule: RunAsAny
-  hostIPC: true
-  hostNetwork: true
-  hostPID: true
-  hostPorts:
-  - max: 65535
-    min: 0
-  privileged: true
-  runAsUser:
-    rule: RunAsAny
-  seLinux:
-    rule: RunAsAny
-  supplementalGroups:
-    rule: RunAsAny
-  volumes:
-  - '*'
----
-# policy/v1beta1/PodSecurityPolicy default-ns-privileged-unconfined
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  annotations:
-    apparmor.security.beta.kubernetes.io/allowedProfileNames: unconfined
-    apparmor.security.beta.kubernetes.io/defaultProfileName: unconfined
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default,unconfined
-    seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-  creationTimestamp: null
-  name: default-ns-privileged-unconfined
-  namespace: default
-spec:
-  allowPrivilegeEscalation: true
-  allowedCapabilities:
-  - '*'
-  fsGroup:
-    rule: RunAsAny
-  hostPID: true
-  hostPorts:
-  - max: 65535
-    min: 0
-  privileged: true
-  runAsUser:
-    rule: RunAsAny
-  seLinux:
-    rule: RunAsAny
-  supplementalGroups:
-    rule: RunAsAny
-  volumes:
-  - '*'
----
-# policy/v1beta1/PodSecurityPolicy default-ns-registry-facade
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  annotations:
-    apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-    apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-    seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: registry-facade
-  name: default-ns-registry-facade
-spec:
-  fsGroup:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  hostNetwork: true
-  hostPorts:
-  - max: 20000
-    min: 20000
-  runAsUser:
-    rule: RunAsAny
-  seLinux:
-    rule: RunAsAny
-  supplementalGroups:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  volumes:
-  - configMap
-  - secret
-  - emptyDir
-  - hostPath
----
-# policy/v1beta1/PodSecurityPolicy default-ns-restricted-root-user
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  annotations:
-    apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-    apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-    seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-  creationTimestamp: null
-  name: default-ns-restricted-root-user
-  namespace: default
-spec:
-  fsGroup:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  hostNetwork: true
-  hostPorts:
-  - max: 33000
-    min: 30000
-  privileged: true
-  runAsUser:
-    rule: RunAsAny
-  seLinux:
-    rule: RunAsAny
-  supplementalGroups:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  volumes:
-  - configMap
-  - projected
-  - secret
-  - emptyDir
-  - persistentVolumeClaim
-  - hostPath
----
-# policy/v1beta1/PodSecurityPolicy default-ns-unprivileged
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  annotations:
-    apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-    apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-    seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-  creationTimestamp: null
-  name: default-ns-unprivileged
-  namespace: default
-spec:
-  allowPrivilegeEscalation: false
-  fsGroup:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  requiredDropCapabilities:
-  - ALL
-  runAsUser:
-    rule: MustRunAsNonRoot
-  seLinux:
-    rule: RunAsAny
-  supplementalGroups:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  volumes:
-  - configMap
-  - emptyDir
-  - projected
-  - secret
-  - persistentVolumeClaim
----
-# policy/v1beta1/PodSecurityPolicy default-ns-workspace
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  annotations:
-    apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default,unconfined
-    apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: '*'
-    seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-  creationTimestamp: null
-  name: default-ns-workspace
-  namespace: default
-spec:
-  allowPrivilegeEscalation: true
-  allowedCapabilities:
-  - AUDIT_WRITE
-  - FSETID
-  - KILL
-  - NET_BIND_SERVICE
-  - SYS_PTRACE
-  fsGroup:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  runAsUser:
-    rule: RunAsAny
-  seLinux:
-    rule: RunAsAny
-  supplementalGroups:
-    ranges:
-    - max: 65535
-      min: 1
-    rule: MustRunAs
-  volumes:
-  - configMap
-  - projected
-  - secret
-  - hostPath
----
 # policy/v1/PodDisruptionBudget messagebus
 # Source: rabbitmq/charts/rabbitmq/templates/pdb.yaml
 apiVersion: policy/v1
@@ -1614,6 +1392,9 @@ data:
       inCluster: true
     disableDefinitelyGp: true
     domain: gitpod.example.com
+    httpProxy:
+      kind: secret
+      name: http-proxy-settings
     kind: Full
     metadata:
       region: local
@@ -1876,72 +1657,6 @@ data:
     metadata:
       creationTimestamp: null
       name: default-kube-rbac-proxy
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      creationTimestamp: null
-      name: default-ns-psp:privileged
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      creationTimestamp: null
-      name: default-ns-psp:restricted-root-user
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      creationTimestamp: null
-      name: default-ns-psp:unprivileged
-    ---
-    apiVersion: policy/v1beta1
-    kind: PodSecurityPolicy
-    metadata:
-      annotations:
-        apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-        apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-        seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-        seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-      creationTimestamp: null
-      name: default-ns-privileged
-      namespace: default
-    ---
-    apiVersion: policy/v1beta1
-    kind: PodSecurityPolicy
-    metadata:
-      annotations:
-        apparmor.security.beta.kubernetes.io/allowedProfileNames: unconfined
-        apparmor.security.beta.kubernetes.io/defaultProfileName: unconfined
-        seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default,unconfined
-        seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-      creationTimestamp: null
-      name: default-ns-privileged-unconfined
-      namespace: default
-    ---
-    apiVersion: policy/v1beta1
-    kind: PodSecurityPolicy
-    metadata:
-      annotations:
-        apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-        apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-        seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-        seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-      creationTimestamp: null
-      name: default-ns-restricted-root-user
-      namespace: default
-    ---
-    apiVersion: policy/v1beta1
-    kind: PodSecurityPolicy
-    metadata:
-      annotations:
-        apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-        apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-        seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-        seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-      creationTimestamp: null
-      name: default-ns-unprivileged
-      namespace: default
     ---
     apiVersion: v1
     kind: ResourceQuota
@@ -2840,20 +2555,6 @@ data:
       name: registry-facade
       namespace: default
     ---
-    apiVersion: policy/v1beta1
-    kind: PodSecurityPolicy
-    metadata:
-      annotations:
-        apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-        apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-        seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
-        seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: registry-facade
-      name: default-ns-registry-facade
-    ---
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -2911,28 +2612,6 @@ data:
         app: gitpod
         component: workspace
       name: workspace-default
-      namespace: default
-    ---
-    apiVersion: policy/v1beta1
-    kind: PodSecurityPolicy
-    metadata:
-      annotations:
-        apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default,unconfined
-        apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
-        seccomp.security.alpha.kubernetes.io/allowedProfileNames: '*'
-        seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
-      creationTimestamp: null
-      name: default-ns-workspace
-      namespace: default
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: Role
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: workspace
-      name: workspace
       namespace: default
     ---
     apiVersion: rbac.authorization.k8s.io/v1
@@ -3271,15 +2950,6 @@ data:
         component: ws-proxy
       name: ws-proxy
       namespace: default
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: image-builder-mk3
-      name: default-ns-image-builder-mk3
     ---
     apiVersion: v1
     kind: ConfigMap
@@ -5308,73 +4978,6 @@ rules:
   verbs:
   - create
 ---
-# rbac.authorization.k8s.io/v1/ClusterRole default-ns-image-builder-mk3
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: image-builder-mk3
-  name: default-ns-image-builder-mk3
-rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-privileged-unconfined
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
----
-# rbac.authorization.k8s.io/v1/ClusterRole default-ns-psp:privileged
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  creationTimestamp: null
-  name: default-ns-psp:privileged
-rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-privileged
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
----
-# rbac.authorization.k8s.io/v1/ClusterRole default-ns-psp:restricted-root-user
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  creationTimestamp: null
-  name: default-ns-psp:restricted-root-user
-rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-restricted-root-user
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
----
-# rbac.authorization.k8s.io/v1/ClusterRole default-ns-psp:unprivileged
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  creationTimestamp: null
-  name: default-ns-psp:unprivileged
-rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-unprivileged
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
----
 # rbac.authorization.k8s.io/v1/ClusterRole default-ns-registry-facade
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -5385,14 +4988,6 @@ metadata:
     component: registry-facade
   name: default-ns-registry-facade
 rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-registry-facade
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
 - apiGroups:
   - ""
   resources:
@@ -5413,14 +5008,6 @@ metadata:
     component: ws-daemon
   name: default-ns-ws-daemon
 rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-privileged-unconfined
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
 - apiGroups:
   - ""
   resources:
@@ -5800,14 +5387,6 @@ metadata:
   namespace: default
 rules:
 - apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-privileged-unconfined
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
-- apiGroups:
   - ""
   resources:
   - pods
@@ -5869,26 +5448,6 @@ rules:
   - update
   - patch
   - watch
----
-# rbac.authorization.k8s.io/v1/Role workspace
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: workspace
-  name: workspace
-  namespace: default
-rules:
-- apiGroups:
-  - policy
-  resourceNames:
-  - default-ns-workspace
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
 ---
 # rbac.authorization.k8s.io/v1/Role ws-manager
 apiVersion: rbac.authorization.k8s.io/v1
@@ -7031,6 +6590,46 @@ spec:
           value: svc.cluster.local
         - name: LOG_LEVEL
           value: info
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         - name: JAEGER_DISABLED
           value: "true"
         - name: NODENAME
@@ -7059,6 +6658,46 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: quay.io/brancz/kube-rbac-proxy:v0.12.0
         name: kube-rbac-proxy
         ports:
@@ -7146,6 +6785,46 @@ spec:
           value: svc.cluster.local
         - name: LOG_LEVEL
           value: info
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         - name: JAEGER_DISABLED
           value: "true"
         - name: GRPC_GO_RETRY
@@ -7209,6 +6888,46 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: quay.io/brancz/kube-rbac-proxy:v0.12.0
         name: kube-rbac-proxy
         ports:
@@ -7232,6 +6951,46 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/registry-facade:test
         imagePullPolicy: IfNotPresent
         lifecycle:
@@ -7251,6 +7010,47 @@ spec:
         - -c
         - set -e; update-ca-certificates -f; cp /etc/ssl/certs/* /ssl-certs; echo
           'OK'
+        env:
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/ca-updater:test
         imagePullPolicy: IfNotPresent
         name: update-ca-certificates
@@ -7351,6 +7151,46 @@ spec:
           value: svc.cluster.local
         - name: LOG_LEVEL
           value: info
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         - name: JAEGER_DISABLED
           value: "true"
         - name: NODENAME
@@ -7420,6 +7260,46 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: quay.io/brancz/kube-rbac-proxy:v0.12.0
         name: kube-rbac-proxy
         ports:
@@ -7443,6 +7323,46 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/ws-daemon:test
         imagePullPolicy: IfNotPresent
         lifecycle:
@@ -7474,6 +7394,47 @@ spec:
         - -a
         - /bin/bash
         - -c
+        env:
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: docker.io/library/ubuntu:20.04
         name: disable-kube-health-monitor
         resources: {}
@@ -7982,6 +7943,46 @@ spec:
               value: svc.cluster.local
             - name: LOG_LEVEL
               value: info
+            - name: HTTP_PROXY
+              valueFrom:
+                secretKeyRef:
+                  key: httpProxy
+                  name: http-proxy-settings
+                  optional: true
+            - name: http_proxy
+              valueFrom:
+                secretKeyRef:
+                  key: httpProxy
+                  name: http-proxy-settings
+                  optional: true
+            - name: HTTPS_PROXY
+              valueFrom:
+                secretKeyRef:
+                  key: httpsProxy
+                  name: http-proxy-settings
+                  optional: true
+            - name: https_proxy
+              valueFrom:
+                secretKeyRef:
+                  key: httpsProxy
+                  name: http-proxy-settings
+                  optional: true
+            - name: CUSTOM_NO_PROXY
+              valueFrom:
+                secretKeyRef:
+                  key: noProxy
+                  name: http-proxy-settings
+                  optional: true
+            - name: custom_no_proxy
+              valueFrom:
+                secretKeyRef:
+                  key: noProxy
+                  name: http-proxy-settings
+                  optional: true
+            - name: NO_PROXY
+              value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+            - name: no_proxy
+              value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
           image: eu.gcr.io/gitpod-core-dev/build/openvsx-proxy:test
           imagePullPolicy: IfNotPresent
           name: openvsx-proxy
@@ -8030,6 +8031,46 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
+            - name: HTTP_PROXY
+              valueFrom:
+                secretKeyRef:
+                  key: httpProxy
+                  name: http-proxy-settings
+                  optional: true
+            - name: http_proxy
+              valueFrom:
+                secretKeyRef:
+                  key: httpProxy
+                  name: http-proxy-settings
+                  optional: true
+            - name: HTTPS_PROXY
+              valueFrom:
+                secretKeyRef:
+                  key: httpsProxy
+                  name: http-proxy-settings
+                  optional: true
+            - name: https_proxy
+              valueFrom:
+                secretKeyRef:
+                  key: httpsProxy
+                  name: http-proxy-settings
+                  optional: true
+            - name: CUSTOM_NO_PROXY
+              valueFrom:
+                secretKeyRef:
+                  key: noProxy
+                  name: http-proxy-settings
+                  optional: true
+            - name: custom_no_proxy
+              valueFrom:
+                secretKeyRef:
+                  key: noProxy
+                  name: http-proxy-settings
+                  optional: true
+            - name: NO_PROXY
+              value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+            - name: no_proxy
+              value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
           image: quay.io/brancz/kube-rbac-proxy:v0.12.0
           name: kube-rbac-proxy
           ports:
@@ -8130,6 +8171,46 @@ spec:
           value: svc.cluster.local
         - name: LOG_LEVEL
           value: info
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         - name: JAEGER_DISABLED
           value: "true"
         image: eu.gcr.io/gitpod-core-dev/build/blobserve:test
@@ -8181,6 +8262,46 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: quay.io/brancz/kube-rbac-proxy:v0.12.0
         name: kube-rbac-proxy
         ports:
@@ -8269,6 +8390,46 @@ spec:
           value: svc.cluster.local
         - name: LOG_LEVEL
           value: info
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         - name: JAEGER_DISABLED
           value: "true"
         - name: GRPC_GO_RETRY
@@ -8301,6 +8462,46 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: quay.io/brancz/kube-rbac-proxy:v0.12.0
         name: kube-rbac-proxy
         ports:
@@ -8381,6 +8582,46 @@ spec:
           value: svc.cluster.local
         - name: LOG_LEVEL
           value: info
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/dashboard:test
         imagePullPolicy: IfNotPresent
         name: dashboard
@@ -8469,6 +8710,46 @@ spec:
           value: svc.cluster.local
         - name: LOG_LEVEL
           value: info
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/ide-metrics:test
         imagePullPolicy: IfNotPresent
         name: ide-metrics
@@ -8500,6 +8781,46 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: quay.io/brancz/kube-rbac-proxy:v0.12.0
         name: kube-rbac-proxy
         ports:
@@ -8580,6 +8901,46 @@ spec:
           value: svc.cluster.local
         - name: LOG_LEVEL
           value: info
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/ide-proxy:test
         imagePullPolicy: IfNotPresent
         name: ide-proxy
@@ -8668,6 +9029,46 @@ spec:
           value: svc.cluster.local
         - name: LOG_LEVEL
           value: info
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         - name: JAEGER_DISABLED
           value: "true"
         image: eu.gcr.io/gitpod-core-dev/build/image-builder-mk3:test
@@ -8702,6 +9103,46 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: quay.io/brancz/kube-rbac-proxy:v0.12.0
         name: kube-rbac-proxy
         ports:
@@ -8724,6 +9165,47 @@ spec:
         - -c
         - set -e; update-ca-certificates -f; cp /etc/ssl/certs/* /ssl-certs; echo
           'OK'
+        env:
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/ca-updater:test
         imagePullPolicy: IfNotPresent
         name: update-ca-certificates
@@ -8946,6 +9428,46 @@ spec:
           value: svc.cluster.local
         - name: LOG_LEVEL
           value: info
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         - name: PROXY_DOMAIN
           value: gitpod.example.com
         image: eu.gcr.io/gitpod-core-dev/build/proxy:test
@@ -9162,6 +9684,46 @@ spec:
           value: svc.cluster.local
         - name: LOG_LEVEL
           value: info
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         - name: DB_HOST
           valueFrom:
             secretKeyRef:
@@ -9226,6 +9788,8 @@ spec:
           value: "1"
         - name: WSMAN_CFG_MANAGERS
           value: WwogIHsKICAgICJuYW1lIjogImRlZmF1bHQiLAogICAgInVybCI6ICJkbnM6Ly8vd3MtbWFuYWdlcjo4MDgwIiwKICAgICJ0bHMiOiB7CiAgICAgICJjYSI6ICIvd3MtbWFuYWdlci1jbGllbnQtdGxzLWNlcnRzL2NhLmNydCIsCiAgICAgICJjcnQiOiAiL3dzLW1hbmFnZXItY2xpZW50LXRscy1jZXJ0cy90bHMuY3J0IiwKICAgICAgImtleSI6ICIvd3MtbWFuYWdlci1jbGllbnQtdGxzLWNlcnRzL3Rscy5rZXkiCiAgICB9LAogICAgInN0YXRlIjogImF2YWlsYWJsZSIsCiAgICAibWF4U2NvcmUiOiAxMDAsCiAgICAic2NvcmUiOiA1MCwKICAgICJnb3Zlcm4iOiB0cnVlLAogICAgImFkbWlzc2lvbkNvbnN0cmFpbnRzIjogbnVsbAogIH0KXQ==
+        - name: no_grpc_proxy
+          value: content-service.default.svc.cluster.local,image-builder-mk3.default.svc.cluster.local,usage.default.svc.cluster.local,$(NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/server:test
         imagePullPolicy: IfNotPresent
         name: server
@@ -9269,6 +9833,46 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: quay.io/brancz/kube-rbac-proxy:v0.12.0
         name: kube-rbac-proxy
         ports:
@@ -9314,6 +9918,46 @@ spec:
             secretKeyRef:
               key: encryptionKeys
               name: mysql
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/service-waiter:test
         name: database-waiter
         resources: {}
@@ -9349,6 +9993,46 @@ spec:
             secretKeyRef:
               key: tls.key
               name: messagebus-certificates-secret-core
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/service-waiter:test
         name: msgbus-waiter
         resources: {}
@@ -9434,6 +10118,46 @@ spec:
           value: svc.cluster.local
         - name: LOG_LEVEL
           value: info
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         - name: JAEGER_DISABLED
           value: "true"
         - name: GRPC_GO_RETRY
@@ -9472,6 +10196,46 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: quay.io/brancz/kube-rbac-proxy:v0.12.0
         name: kube-rbac-proxy
         ports:
@@ -9563,6 +10327,46 @@ spec:
           value: svc.cluster.local
         - name: LOG_LEVEL
           value: info
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         - name: JAEGER_DISABLED
           value: "true"
         - name: MESSAGEBUS_USERNAME
@@ -9646,6 +10450,46 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: quay.io/brancz/kube-rbac-proxy:v0.12.0
         name: kube-rbac-proxy
         ports:
@@ -9692,6 +10536,46 @@ spec:
             secretKeyRef:
               key: encryptionKeys
               name: mysql
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/service-waiter:test
         name: database-waiter
         resources: {}
@@ -9727,6 +10611,46 @@ spec:
             secretKeyRef:
               key: tls.key
               name: messagebus-certificates-secret-core
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/service-waiter:test
         name: msgbus-waiter
         resources: {}
@@ -9806,6 +10730,46 @@ spec:
           value: svc.cluster.local
         - name: LOG_LEVEL
           value: info
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         - name: JAEGER_DISABLED
           value: "true"
         image: eu.gcr.io/gitpod-core-dev/build/ws-proxy:test
@@ -9858,6 +10822,46 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: quay.io/brancz/kube-rbac-proxy:v0.12.0
         name: kube-rbac-proxy
         ports:
@@ -9991,6 +10995,46 @@ spec:
             secretKeyRef:
               key: encryptionKeys
               name: mysql
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/service-waiter:test
         name: database-waiter
         resources: {}
@@ -10078,6 +11122,46 @@ spec:
                 secretKeyRef:
                   key: encryptionKeys
                   name: mysql
+            - name: HTTP_PROXY
+              valueFrom:
+                secretKeyRef:
+                  key: httpProxy
+                  name: http-proxy-settings
+                  optional: true
+            - name: http_proxy
+              valueFrom:
+                secretKeyRef:
+                  key: httpProxy
+                  name: http-proxy-settings
+                  optional: true
+            - name: HTTPS_PROXY
+              valueFrom:
+                secretKeyRef:
+                  key: httpsProxy
+                  name: http-proxy-settings
+                  optional: true
+            - name: https_proxy
+              valueFrom:
+                secretKeyRef:
+                  key: httpsProxy
+                  name: http-proxy-settings
+                  optional: true
+            - name: CUSTOM_NO_PROXY
+              valueFrom:
+                secretKeyRef:
+                  key: noProxy
+                  name: http-proxy-settings
+                  optional: true
+            - name: custom_no_proxy
+              valueFrom:
+                secretKeyRef:
+                  key: noProxy
+                  name: http-proxy-settings
+                  optional: true
+            - name: NO_PROXY
+              value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+            - name: no_proxy
+              value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
             image: eu.gcr.io/gitpod-core-dev/build/service-waiter:test
             name: database-waiter
             resources: {}

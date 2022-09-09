@@ -1218,7 +1218,7 @@ data:
   config.json: |-
     {
       "service": {
-        "address": ":8080"
+        "address": "0.0.0.0:8080"
       },
       "storage": {
         "stage": "",
@@ -3813,7 +3813,7 @@ data:
         ]
       },
       "service": {
-        "address": ":8080",
+        "address": "0.0.0.0:8080",
         "tls": {
           "ca": "",
           "crt": "",
@@ -4059,9 +4059,9 @@ data:
       "makeNewUsersAdmin": false,
       "defaultBaseImageRegistryWhitelist": [],
       "runDbDeleter": true,
-      "contentServiceAddr": "content-service:8080",
-      "imageBuilderAddr": "image-builder-mk3:8080",
-      "usageServiceAddr": "usage:9001",
+      "contentServiceAddr": "content-service.default.svc.cluster.local:8080",
+      "imageBuilderAddr": "image-builder-mk3.default.svc.cluster.local:8080",
+      "usageServiceAddr": "usage.default.svc.cluster.local:9001",
       "vsxRegistryUrl": "https://open-vsx.gitpod.example.com",
       "chargebeeProviderOptionsFile": "/chargebee/providerOptions",
       "stripeSecretsFile": "/stripe-secret/apikeys",
@@ -4407,7 +4407,7 @@ data:
         }
       },
       "service": {
-        "address": ":8080",
+        "address": "0.0.0.0:8080",
         "tls": {
           "caPath": "/certs/ca.crt",
           "certPath": "/certs/tls.crt",
@@ -4593,8 +4593,8 @@ data:
   config.json: |-
     {
       "ingress": {
-        "httpAddress": ":8080",
-        "httpsAddress": ":9090",
+        "httpAddress": "0.0.0.0:8080",
+        "httpsAddress": "0.0.0.0:9090",
         "header": "x-wsproxy-host"
       },
       "proxy": {
@@ -6460,7 +6460,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 531cd94d43e48d4295f80353ac56f7748a9f678b8ade59cbabc14d1c3fb43395
+        gitpod.io/checksum_config: de8ed99a057f28c772db0287eeb93b12fe89401a2645f94d0b533eb0e5640654
         seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
       creationTimestamp: null
       labels:
@@ -7227,7 +7227,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 910d0b3b714a6d8b04963ee4f42d8ea370d56531b8faaa16bb819a19c4f75928
+        gitpod.io/checksum_config: 2e45691c9b7dbd15eefd950854dfc5d89500012dc70f6a624069a404c72f9010
       creationTimestamp: null
       labels:
         app: gitpod
@@ -7632,7 +7632,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 5a02760487dc021fb50bdfc0d92a3a453348b226fb74729cd57a33927d5b6e08
+        gitpod.io/checksum_config: 96743936096936609b76bcab7e6b4c5d2ae5b0cd63b73268b03984c82bdf3d3e
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8032,7 +8032,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: e51ff44d9dd16219dfe3e61a9c3c4562a3ee6c31632791d43697f66569e1569f
+        gitpod.io/checksum_config: 32e8b437cc6763cf35540014d9f2d93632243e2da7bfac04edb928dbd31193e0
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8679,7 +8679,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: dcbc53af67e4007a4affc029e880c338b93e4484010727f4bf0a08ad7c93a112
+        gitpod.io/checksum_config: f88055f3ce58c8eca0064866deeb5131473b6ba2980dce8bf4f9989e997f1ff5
       creationTimestamp: null
       labels:
         app: gitpod
