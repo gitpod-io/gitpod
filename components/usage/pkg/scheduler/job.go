@@ -2,55 +2,72 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package controller
+package scheduler
 
 import (
 	"context"
 	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
+	"github.com/robfig/cron"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"time"
 )
 
-type Reconciler interface {
-	Reconcile() error
+type Job interface {
+	Run() error
 }
 
-type ReconcilerFunc func() error
+func NewLedgerTriggerJobSpec(schedule time.Duration, job Job) (JobSpec, error) {
+	parsed, err := cron.Parse(fmt.Sprintf("@every %s", schedule.String()))
+	if err != nil {
+		return JobSpec{}, fmt.Errorf("failed to parse ledger job schedule: %w", err)
+	}
 
-func (f ReconcilerFunc) Reconcile() error {
-	return f()
+	return JobSpec{
+		Job:      job,
+		ID:       "ledger",
+		Schedule: parsed,
+	}, nil
 }
 
-func NewLedgerReconciler(usageClient v1.UsageServiceClient, billingClient v1.BillingServiceClient) *LedgerReconciler {
-	return &LedgerReconciler{
+func NewLedgerTrigger(usageClient v1.UsageServiceClient, billingClient v1.BillingServiceClient) *LedgerJob {
+	return &LedgerJob{
 		usageClient:   usageClient,
 		billingClient: billingClient,
+
+		running: make(chan struct{}, 1),
 	}
 }
 
-type LedgerReconciler struct {
+type LedgerJob struct {
 	usageClient   v1.UsageServiceClient
 	billingClient v1.BillingServiceClient
+
+	running chan struct{}
 }
 
-func (r *LedgerReconciler) Reconcile() (err error) {
+func (r *LedgerJob) Run() (err error) {
 	ctx := context.Background()
+
+	select {
+	// attempt a write to signal we want to run
+	case r.running <- struct{}{}:
+		// we managed to write, there's no other job executing. Cases are not fall through so we continue executing our main logic.
+	default:
+		// we could not write, so another instance is already running. Skip current run.
+		log.Infof("Skipping ledger run, another run is already in progress.")
+		return nil
+	}
 
 	now := time.Now().UTC()
 	hourAgo := now.Add(-1 * time.Hour)
-
-	reportUsageReconcileStarted()
-	defer func() {
-		reportUsageReconcileFinished(time.Since(now), err)
-	}()
 
 	logger := log.
 		WithField("from", hourAgo).
 		WithField("to", now)
 
-	logger.Info("Starting ledger reconciliation.")
+	logger.Info("Running ledger job. Reconciling usage records.")
 	_, err = r.usageClient.ReconcileUsageWithLedger(ctx, &v1.ReconcileUsageWithLedgerRequest{
 		From: timestamppb.New(hourAgo),
 		To:   timestamppb.New(now),

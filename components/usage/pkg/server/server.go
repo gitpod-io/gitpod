@@ -6,6 +6,7 @@ package server
 
 import (
 	"fmt"
+	"github.com/gitpod-io/gitpod/usage/pkg/scheduler"
 	"net"
 	"os"
 	"time"
@@ -19,7 +20,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"github.com/gitpod-io/gitpod/usage/pkg/apiv1"
-	"github.com/gitpod-io/gitpod/usage/pkg/controller"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"gorm.io/gorm"
@@ -105,17 +105,13 @@ func Start(cfg Config) error {
 			return fmt.Errorf("failed to parse schedule duration: %w", err)
 		}
 
-		usageClient := v1.NewUsageServiceClient(selfConnection)
-		ctrl, err := controller.New(schedule, controller.NewLedgerReconciler(usageClient, v1.NewBillingServiceClient(selfConnection)))
-		if err != nil {
-			return fmt.Errorf("failed to initialize ledger controller: %w", err)
-		}
+		jobSpec, err := scheduler.NewLedgerTriggerJobSpec(schedule,
+			scheduler.NewLedgerTrigger(v1.NewUsageServiceClient(selfConnection), v1.NewBillingServiceClient(selfConnection)),
+		)
 
-		err = ctrl.Start()
-		if err != nil {
-			return fmt.Errorf("failed tostart ledger controller: %w", err)
-		}
-		defer ctrl.Stop()
+		sched := scheduler.New(jobSpec)
+		sched.Start()
+		defer sched.Stop()
 	} else {
 		log.Info("No controller schedule specified, controller will be disabled.")
 	}
@@ -125,7 +121,7 @@ func Start(cfg Config) error {
 		return fmt.Errorf("failed to register gRPC services: %w", err)
 	}
 
-	err = controller.RegisterMetrics(srv.MetricsRegistry())
+	err = scheduler.RegisterMetrics(srv.MetricsRegistry())
 	if err != nil {
 		return fmt.Errorf("failed to register controller metrics: %w", err)
 	}
