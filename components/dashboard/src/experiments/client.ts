@@ -35,10 +35,10 @@ export function getExperimentsClient(): Client {
 function newProductionConfigCatClient(): Client {
     // clientKey is an identifier of our ConfigCat application. It is not a secret.
     const clientKey = "WBLaCPtkjkqKHlHedziE9g/TwAe6YyftEGPnGxVRXd0Ig";
-    const client = configcat.createClient(clientKey, {
+    const client = configcat.createClientWithLazyLoad(clientKey, {
         logger: configcat.createConsoleLogger(LogLevel.Error),
-        pollIntervalSeconds: 60 * 3, // 3 minutes
-        maxInitWaitTimeSeconds: 0,
+        cacheTimeToLiveSeconds: 60 * 3, // 3 minutes
+        requestTimeoutMs: 1500,
     });
 
     return new ConfigCatClient(client);
@@ -48,10 +48,10 @@ function newProductionConfigCatClient(): Client {
 function newNonProductionConfigCatClient(): Client {
     // clientKey is an identifier of our ConfigCat application. It is not a secret.
     const clientKey = "WBLaCPtkjkqKHlHedziE9g/LEAOCNkbuUKiqUZAcVg7dw";
-    const client = configcat.createClient(clientKey, {
-        pollIntervalSeconds: 60 * 3, // 3 minutes
+    const client = configcat.createClientWithLazyLoad(clientKey, {
         logger: configcat.createConsoleLogger(LogLevel.Info),
-        maxInitWaitTimeSeconds: 0,
+        cacheTimeToLiveSeconds: 60 * 3, // 3 minutes
+        requestTimeoutMs: 1500,
     });
 
     return new ConfigCatClient(client);
