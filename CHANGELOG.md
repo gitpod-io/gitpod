@@ -1,6 +1,8 @@
 # Change Log
 
 ## September 2022
+- JetBrains IDEs now have actions related to Gitpod, which can be accessed via Control Center and via the Search Menu. ([#12621](https://github.com/gitpod-io/gitpod/pull/12621)) - [@felladrin](https://github.com/felladrin)
+- [server] Support for storing vscode edit sessions in sync server ([#12445](https://github.com/gitpod-io/gitpod/pull/12445)) - [@jeanp413](https://github.com/jeanp413)
 - [local-preview] Remove unused dead code ([#12496](https://github.com/gitpod-io/gitpod/pull/12496)) - [@Pothulapati](https://github.com/Pothulapati)
 - Reword "Spending Limit" to "Usage Limit" ([#12669](https://github.com/gitpod-io/gitpod/pull/12669)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - [local-preview] set low memory & cpu requirements ([#12657](https://github.com/gitpod-io/gitpod/pull/12657)) - [@Pothulapati](https://github.com/Pothulapati)
