@@ -78,8 +78,9 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 	if in.GetPagination().GetPage() > 1 {
 		page = in.GetPagination().GetPage()
 	}
-	var offset int64 = perPage * (page - 1)
+	var offset = perPage * (page - 1)
 
+	excludeDrafts := false
 	listUsageResult, err := db.FindUsage(ctx, s.conn, &db.FindUsageParams{
 		AttributionId: db.AttributionID(in.GetAttributionId()),
 		From:          from,
@@ -87,6 +88,7 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 		Order:         order,
 		Offset:        offset,
 		Limit:         perPage,
+		ExcludeDrafts: excludeDrafts,
 	})
 	logger := log.Log.
 		WithField("attribution_id", in.AttributionId).
@@ -124,7 +126,7 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 		attributionId,
 		from,
 		to,
-		true,
+		excludeDrafts,
 	)
 
 	if err != nil {
