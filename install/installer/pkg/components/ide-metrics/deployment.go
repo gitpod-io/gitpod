@@ -55,32 +55,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Name:  "GITPOD_ENABLED_ERROR_REPORTING",
 					Value: "true",
 				})
-
-				if cfg.IDE.IDEMetricsConfig.GCPADCSecret != "" && cfg.IDE.IDEMetricsConfig.GCPProject != "" {
-					volumes = append(volumes, corev1.Volume{
-						Name: "gcp-adc-file",
-						VolumeSource: corev1.VolumeSource{
-							ConfigMap: &corev1.ConfigMapVolumeSource{
-								LocalObjectReference: corev1.LocalObjectReference{Name: Component},
-							},
-						},
-					})
-
-					volumeMounts = append(volumeMounts, corev1.VolumeMount{
-						Name:      "gcp-adc-file",
-						MountPath: "/gcp",
-						ReadOnly:  true,
-					})
-
-					env = append(env, corev1.EnvVar{
-						Name:  "GOOGLE_PROJECT",
-						Value: cfg.IDE.IDEMetricsConfig.GCPProject,
-					})
-					env = append(env, corev1.EnvVar{
-						Name:  "GOOGLE_APPLICATION_CREDENTIALS",
-						Value: "/gcp/credentials.json",
-					})
-				}
 			}
 
 		}

@@ -273,9 +273,7 @@ type IDEProxyConfig struct {
 }
 
 type IDEMetricsConfig struct {
-	EnabledErrorReporting bool   `json:"enabledErrorReporting,omitempty"`
-	GCPProject            string `json:"gcpProject,omitempty"`
-	GCPADCSecret          string `json:"gcpAdcSecret,omitempty"`
+	EnabledErrorReporting bool `json:"enabledErrorReporting,omitempty"`
 }
 
 type VSXProxyConfig struct {
