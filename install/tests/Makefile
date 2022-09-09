@@ -81,13 +81,24 @@ prepare-terraform:
 	export CLUSTER_VERSION=$$TF_VAR_cluster_version && \
 	export KUBECONFIG=${KUBECONFIG} IMAGE_ID=${ami_id} UBUNTU_IMAGE=${ubuntu_image_id} && \
 	envsubst < ./manifests/$(cloud)-terraform.tfvars > $(TF_MOD)/terraform.tfvars
-	cp ./manifests/tf-backend.tf $(TF_MOD)/main.tf  # we set the backend to be gcs based
+	cp ./manifests/tf-backend.tf $(TF_MOD)/main.tf
+	[[ $(cloud) = k3s ]] || $(MAKE) copy-dns-tf
+
+cluster_gcp := gke
+cluster_k3s := k3s
+cluster_aws := eks
+cluster_azure := aks
+
+copy-dns-tf: cluster_mod = $(cluster_$(cloud))
+copy-dns-tf:
+	export cluster=$(cluster_mod) && \
+	envsubst < ./manifests/gcp-dns.tf > $(TF_MOD)/gcp-dns.tf
 
 .PHONY:
 ## standard-cluster: Creates a kubernetes cluster of type $cloud
 standard-cluster: check-env-cloud check-env-cluster-version prepare-terraform
 	$(MAKE) -C $(TF_MOD) init
-	$(MAKE) select-workspace WORKDIR=$(TF_MOD)
+	$(MAKE) select-workspace
 	$(MAKE) -C $(TF_MOD) apply-cluster
 	@echo "Done creating $(cloud) cluster"
 
@@ -95,7 +106,7 @@ standard-cluster: check-env-cloud check-env-cluster-version prepare-terraform
 ## cert-manager: Installs cert-manager, optionally create secret for cloud-dns access
 cert-manager: check-env-cloud
 	$(MAKE) -C $(TF_MOD) init
-	$(MAKE) select-workspace WORKDIR=$(TF_MOD)
+	$(MAKE) select-workspace
 	terraform -chdir=$(TF_MOD) apply -target=module.certmanager --auto-approve
 	@echo "Done installing cert-manager"
 
@@ -103,7 +114,7 @@ cert-manager: check-env-cloud
 ## external-dns: Installs external-dns
 external-dns: check-env-cloud
 	$(MAKE) -C $(TF_MOD) init
-	$(MAKE) select-workspace WORKDIR=$(TF_MOD)
+	$(MAKE) select-workspace
 	terraform -chdir=$(TF_MOD) apply -target=module.externaldns --auto-approve
 	@echo "Done creating externaldns for $(cloud)"
 
@@ -111,7 +122,7 @@ external-dns: check-env-cloud
 ## cluster-issuer: Creates a cluster issuer for the correspondign provider
 cluster-issuer: check-env-cloud
 	$(MAKE) -C $(TF_MOD) init
-	$(MAKE) select-workspace WORKDIR=$(TF_MOD)
+	$(MAKE) select-workspace
 	$(MAKE) -C $(TF_MOD) install-cluster-issuer
 	@echo "Done creating cluster issuer"
 
@@ -120,19 +131,12 @@ terraform-output: prepare-terraform
 	terraform -chdir=$(TF_MOD) refresh
 	terraform -chdir=$(TF_MOD) output -json > $(cloud)-output.json
 
-cluster_gcp := gke
-cluster_k3s := k3s
-cluster_aws := eks
-cluster_azure := aks
 
 .PHONY:
 ## add-ns-record: Adds NS record for subdomain under gitpod-selfhosted.com
-add-ns-record: cluster_mod = $(cluster_$(cloud))
 add-ns-record: check-env-cloud prepare-terraform
-	export cluster=$(cluster_mod) && \
-	envsubst < ./manifests/gcp-dns.tf > $(TF_MOD)/gcp-dns.tf
 	$(MAKE) -C $(TF_MOD) init
-	$(MAKE) select-workspace WORKDIR=$(TF_MOD)
+	$(MAKE) select-workspace
 	terraform -chdir=$(TF_MOD) apply -target=module.add-dns-record --auto-approve
 	@echo "Done adding NS record"
 
@@ -377,12 +381,12 @@ kots-upgrade:
 	@echo "Upgrade gitpod KOTS app to latest"
 	kubectl kots upstream upgrade --kubeconfig=${KUBECONFIG} gitpod -n gitpod --deploy
 
-cleanup: check-env-cloud $(cloud)-kubeconfig destroy-gitpod destroy-infra destroy-workspace destroy-kubeconfig
+cleanup: check-env-cloud prepare-terraform $(cloud)-kubeconfig tf-init select-workspace destroy-gitpod destroy-infra destroy-workspace destroy-kubeconfig
 
 cluster-kubeconfig: azure-kubeconfig aws-kubeconfig k3s-kubeconfig gcp-kubeconfig
 
 tf-init:
-	@terraform init
+	@terraform -chdir=${TF_MOD} init
 
 destroy-infra: check-env-cloud
 	$(MAKE) -C $(TF_MOD) destroy
@@ -394,7 +398,7 @@ destroy-kubeconfig:
 
 WORKDIR ?= "."
 select-workspace:
-	terraform -chdir=${WORKDIR} workspace new $(TF_VAR_TEST_ID) || terraform -chdir=${WORKDIR} workspace select $(TF_VAR_TEST_ID)
+	terraform -chdir=${TF_MOD} workspace new $(TF_VAR_TEST_ID) || terraform -chdir=${TF_MOD} workspace select $(TF_VAR_TEST_ID)
 
 destroy-workspace:
 	terraform -chdir=${TF_MOD} workspace select default
@@ -412,7 +416,7 @@ destroy-gitpod:
 		|| true
 
 list-state:
-	terraform state list
+	terraform -chdir=${TF_MOD} state list
 
 cleanup-old-tests:
 	./cleanup.sh
