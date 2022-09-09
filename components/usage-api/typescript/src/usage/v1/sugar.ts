@@ -30,7 +30,7 @@ import { createClientCallMetricsInterceptor, IClientCallMetrics } from "@gitpod/
 import * as grpc from "@grpc/grpc-js";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { CostCenter } from "@gitpod/gitpod-protocol";
+import { CostCenter, BillingStrategy } from "@gitpod/gitpod-protocol";
 
 export const UsageServiceClientProvider = Symbol("UsageServiceClientProvider");
 export const BillingServiceClientProvider = Symbol("BillingServiceClientProvider");
@@ -197,10 +197,24 @@ export class PromisifiedUsageServiceClient {
         if (!response.hasCostCenter()) {
             return undefined;
         }
-        return <CostCenter>{
-            id: AttributionId.parse(response.getCostCenter()!.getAttributionId()),
+
+        const attrId = AttributionId.parse(response.getCostCenter()!.getAttributionId());
+        if (!attrId) {
+            return undefined;
+        }
+
+        let billingStrategy: BillingStrategy = "other";
+        if (
+            response.getCostCenter()!.getBillingStrategy() ===
+            ProtocolCostCenter.BillingStrategy.BILLING_STRATEGY_STRIPE
+        ) {
+            billingStrategy = "stripe";
+        }
+
+        return {
+            id: attrId,
             spendingLimit: response.getCostCenter()!.getSpendingLimit(),
-            billingStrategy: response.getCostCenter()!.getBillingStrategy() || "other",
+            billingStrategy: billingStrategy,
         };
     }
 
