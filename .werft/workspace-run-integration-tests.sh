@@ -97,13 +97,21 @@ echo "start build preview environment, job name: ${BUILD_ID}, job url: ${job_url
 werft log result -d "Build job for integration test branch" url "${job_url}"
 
 while true; do
-    job_phase=$(werft job get "${BUILD_ID}" -o json | jq --raw-output '.phase')
-    if [[ ${job_phase} != "PHASE_DONE" ]]; then
-        echo "Waiting for ${BUILD_ID} to finish running. Current phase: ${job_phase}. Sleeping 10 seconds." | werft log slice "build preview environment";
+    set +e
+    job_log=$(werft job get "${BUILD_ID}" -o json 2>&1)
+    set -e
+    if echo "$job_log" | grep -q "code = Unavailable"; then
+        echo "Werft returned 50X for some reason. Waiting for ${BUILD_ID} to finish running. Sleeping 10 seconds." | werft log slice "build preview environment";
         sleep 10
     else
-        echo "Phase reached ${job_phase}. continuing." | werft log slice "build preview environment";
-        break
+        job_phase=$(echo "$job_log" | jq --raw-output '.phase')
+        if [[ ${job_phase} != "PHASE_DONE" ]]; then
+            echo "Waiting for ${BUILD_ID} to finish running. Current phase: ${job_phase}. Sleeping 10 seconds." | werft log slice "build preview environment";
+            sleep 10
+        else
+            echo "Phase reached ${job_phase}. continuing." | werft log slice "build preview environment";
+            break
+        fi
     fi
 done
 
