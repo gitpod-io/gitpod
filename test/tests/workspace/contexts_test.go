@@ -6,7 +6,6 @@ package workspace
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -43,12 +42,10 @@ func TestGitHubContexts(t *testing.T) {
 			ExpectedBranch: "integration-test-1",
 		},
 		{
+			// Branch name decisions are not tested in the workspace as it is the server side logic
 			Name:          "open issue",
 			ContextURL:    "github.com/gitpod-io/gitpod-test-repo/issues/88",
 			WorkspaceRoot: "/workspace/gitpod-test-repo",
-			ExpectedBranchFunc: func(username string) string {
-				return fmt.Sprintf("%s/integration-88", username)
-			},
 		},
 		{
 			Name:           "open tag",
@@ -94,9 +91,6 @@ func TestGitLabContexts(t *testing.T) {
 			Name:          "open issue",
 			ContextURL:    "gitlab.com/AlexTugarev/gp-test/issues/1",
 			WorkspaceRoot: "/workspace/gp-test",
-			ExpectedBranchFunc: func(username string) string {
-				return fmt.Sprintf("%s/write-a-readme-1", username)
-			},
 		},
 		{
 			Name:           "open tag",
@@ -163,6 +157,10 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 						}
 						defer rsa.Close()
 						integration.DeferCloser(t, closer)
+
+						if test.ExpectedBranch == "" && test.ExpectedBranchFunc == nil {
+							return
+						}
 
 						// get actual from workspace
 						git := common.Git(rsa)
