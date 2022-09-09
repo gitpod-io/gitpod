@@ -4,12 +4,13 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceInfo, Event, Emitter } from "@gitpod/gitpod-protocol";
+import { WorkspaceInfo, Event, User } from "@gitpod/gitpod-protocol";
 import { workspaceUrl } from "../shared/urls";
 
 export interface GitpodServiceClient {
     readonly auth: Promise<void>;
     readonly info: WorkspaceInfo;
+    readonly user: User;
     readonly onDidChangeInfo: Event<void>;
 }
 
@@ -56,9 +57,14 @@ export async function create(): Promise<GitpodServiceClient> {
     }
     //#endregion
 
+    //#region user
+    const user = await window.gitpod.service.server.getLoggedInUser();
+    //#endregion
+
     return {
         get auth() { return _auth },
         get info() { return listener.info },
+        get user() { return user },
         onDidChangeInfo: listener.onDidChange
     }
 }

@@ -30,6 +30,11 @@ window.addEventListener('error', (event) => {
             labels['error'] = 'LoadError';
         }
     }
+    if (event.error) {
+        (async () => {
+            IDEMetricsServiceClient.reportError(event.error).catch(() => {});
+        })()
+    }
     IDEMetricsServiceClient.addCounter(MetricsName.SupervisorFrontendErrorTotal, labels).catch(() => {});
 });
 //#endregion
@@ -59,6 +64,7 @@ const toStop = new DisposableCollection();
 
 (async () => {
     const gitpodServiceClient = await pendingGitpodServiceClient;
+    IDEMetricsServiceClient.loadWorkspaceInfo(gitpodServiceClient)
 
     document.title = gitpodServiceClient.info.workspace.description;
 
