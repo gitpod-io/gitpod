@@ -64,7 +64,6 @@ tasks:
     openMode: split-right
 vscode:
   extensions:
-    - bradlc.vscode-tailwindcss
     - EditorConfig.EditorConfig
     - golang.go
     - hashicorp.terraform
