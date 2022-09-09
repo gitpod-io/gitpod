@@ -8,13 +8,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"os"
-	"path"
-	"time"
-
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/usage/pkg/server"
 	"github.com/spf13/cobra"
+	"os"
+	"path"
 )
 
 func init() {
@@ -66,10 +64,6 @@ func parseConfig(path string) (server.Config, error) {
 	err = dec.Decode(&cfg)
 	if err != nil {
 		return server.Config{}, fmt.Errorf("failed to parse config from %s: %w", path, err)
-	}
-
-	if cfg.BillInstancesAfter == nil {
-		cfg.BillInstancesAfter = &time.Time{}
 	}
 
 	return cfg, nil
