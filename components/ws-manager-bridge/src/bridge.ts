@@ -205,16 +205,15 @@ export class WorkspaceManagerBridge implements Disposable {
             );
             log.error(logCtx, "Failed to complete WorkspaceInstance status update", e);
             throw e;
-        } finally {
-            const durationMs = performance.now() - start;
-            this.prometheusExporter.reportWorkspaceInstanceUpdateCompleted(
-                durationMs / 1000,
-                writeToDB,
-                this.cluster.name,
-                status.spec.type,
-            );
-            log.info(logCtx, "Successfully completed WorkspaceInstance status update");
         }
+        const durationMs = performance.now() - start;
+        this.prometheusExporter.reportWorkspaceInstanceUpdateCompleted(
+            durationMs / 1000,
+            writeToDB,
+            this.cluster.name,
+            status.spec.type,
+        );
+        log.info(logCtx, "Successfully completed WorkspaceInstance status update");
     }
 
     private async statusUpdate(ctx: TraceContext, rawStatus: WorkspaceStatus, writeToDB: boolean) {
