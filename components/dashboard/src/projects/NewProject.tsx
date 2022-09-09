@@ -20,6 +20,7 @@ import { UserContext } from "../user-context";
 import { trackEvent } from "../Analytics";
 import exclamation from "../images/exclamation.svg";
 import ErrorMessage from "../components/ErrorMessage";
+import Spinner from "../icons/Spinner.svg";
 
 export default function NewProject() {
     const location = useLocation();
@@ -526,7 +527,10 @@ export default function NewProject() {
                 <div className="mt-8 border rounded-xl border-gray-100 dark:border-gray-700 flex-col">
                     <div>
                         <div className="px-12 py-16 text-center text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl w-96 h-h96 flex items-center justify-center">
-                            <h3 className="mb-2 text-gray-400 dark:text-gray-600 animate-pulse">Loading ...</h3>
+                            <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm">
+                                <img className="h-4 w-4 animate-spin" src={Spinner} />
+                                <span>Fetching repositories...</span>
+                            </div>
                         </div>
                     </div>
                 </div>
