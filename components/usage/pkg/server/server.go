@@ -108,6 +108,9 @@ func Start(cfg Config) error {
 		jobSpec, err := scheduler.NewLedgerTriggerJobSpec(schedule,
 			scheduler.NewLedgerTrigger(v1.NewUsageServiceClient(selfConnection), v1.NewBillingServiceClient(selfConnection)),
 		)
+		if err != nil {
+			return fmt.Errorf("failed to setup ledger trigger job: %w", err)
+		}
 
 		sched := scheduler.New(jobSpec)
 		sched.Start()

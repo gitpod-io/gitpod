@@ -19,7 +19,7 @@ var (
 	jobStartedSeconds = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
-		Name:      "scheduler_job_started",
+		Name:      "scheduler_job_started_total",
 		Help:      "Number of jobs started",
 	}, []string{"job"})
 

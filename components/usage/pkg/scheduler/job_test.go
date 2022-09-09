@@ -35,6 +35,16 @@ func TestLedgerJob_PreventsConcurrentInvocations(t *testing.T) {
 	require.Equal(t, 1, int(client.ReconcileUsageWithLedgerCallCount))
 }
 
+func TestLedgerJob_CanRunRepeatedly(t *testing.T) {
+	client := &fakeUsageClient{}
+	job := NewLedgerTrigger(client, nil)
+
+	_ = job.Run()
+	_ = job.Run()
+
+	require.Equal(t, 2, int(client.ReconcileUsageWithLedgerCallCount))
+}
+
 type fakeUsageClient struct {
 	ReconcileUsageWithLedgerCallCount int32
 }
@@ -52,7 +62,7 @@ func (c *fakeUsageClient) SetCostCenter(ctx context.Context, in *v1.SetCostCente
 // Triggers reconciliation of usage with ledger implementation.
 func (c *fakeUsageClient) ReconcileUsageWithLedger(ctx context.Context, in *v1.ReconcileUsageWithLedgerRequest, opts ...grpc.CallOption) (*v1.ReconcileUsageWithLedgerResponse, error) {
 	atomic.AddInt32(&c.ReconcileUsageWithLedgerCallCount, 1)
-	time.Sleep(1 * time.Second)
+	time.Sleep(50 * time.Millisecond)
 
 	return nil, status.Error(codes.Unauthenticated, "not implemented")
 }

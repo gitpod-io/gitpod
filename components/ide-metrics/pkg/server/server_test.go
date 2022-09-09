@@ -119,7 +119,7 @@ func Test_allowListCollector_Reconcile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := c.Reconcile(tt.args.labels); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("allowListCollector.Run() = %v, want %v", got, tt.want)
+				t.Errorf("allowListCollector.Reconcile() = %v, want %v", got, tt.want)
 			}
 		})
 	}

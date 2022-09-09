@@ -54,6 +54,10 @@ func (r *LedgerJob) Run() (err error) {
 	// attempt a write to signal we want to run
 	case r.running <- struct{}{}:
 		// we managed to write, there's no other job executing. Cases are not fall through so we continue executing our main logic.
+		defer func() {
+			// signal job completed
+			<-r.running
+		}()
 	default:
 		// we could not write, so another instance is already running. Skip current run.
 		log.Infof("Skipping ledger run, another run is already in progress.")
