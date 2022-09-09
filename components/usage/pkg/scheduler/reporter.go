@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package controller
+package scheduler
 
 import (
 	"fmt"
@@ -16,26 +16,26 @@ const (
 )
 
 var (
-	reconcileStartedTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+	jobStartedSeconds = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
-		Name:      "reconcile_started_total",
-		Help:      "Number of usage reconciliation runs started",
-	}, []string{})
+		Name:      "scheduler_job_started",
+		Help:      "Number of jobs started",
+	}, []string{"job"})
 
-	reconcileStartedDurationSeconds = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+	jobCompletedSeconds = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
-		Name:      "reconcile_completed_duration_seconds",
-		Help:      "Histogram of reconcile duration",
+		Name:      "scheduler_job_completed_seconds",
+		Help:      "Histogram of job duration",
 		Buckets:   prometheus.LinearBuckets(30, 30, 10), // every 30 secs, starting at 30secs
-	}, []string{"outcome"})
+	}, []string{"job", "outcome"})
 )
 
 func RegisterMetrics(reg *prometheus.Registry) error {
 	metrics := []prometheus.Collector{
-		reconcileStartedTotal,
-		reconcileStartedDurationSeconds,
+		jobStartedSeconds,
+		jobCompletedSeconds,
 	}
 	for _, metric := range metrics {
 		err := reg.Register(metric)
@@ -47,14 +47,14 @@ func RegisterMetrics(reg *prometheus.Registry) error {
 	return nil
 }
 
-func reportUsageReconcileStarted() {
-	reconcileStartedTotal.WithLabelValues().Inc()
+func reportJobStarted(id string) {
+	jobStartedSeconds.WithLabelValues(id).Inc()
 }
 
-func reportUsageReconcileFinished(duration time.Duration, err error) {
+func reportJobCompleted(id string, duration time.Duration, err error) {
 	outcome := "success"
 	if err != nil {
 		outcome = "error"
 	}
-	reconcileStartedDurationSeconds.WithLabelValues(outcome).Observe(duration.Seconds())
+	jobCompletedSeconds.WithLabelValues(id, outcome).Observe(duration.Seconds())
 }
