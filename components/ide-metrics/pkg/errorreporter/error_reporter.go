@@ -34,6 +34,7 @@ type ReportedErrorEvent struct {
 	InstanceId     string                      `json:"instanceId"`
 	Properties     map[string]string           `json:"properties"`
 	ServiceContext ReportedErrorServiceContext `json:"serviceContext"`
+	Severity       string                      `json:"severity"`
 }
 type ReportedErrorServiceContext struct {
 	Service string `json:"service"`
