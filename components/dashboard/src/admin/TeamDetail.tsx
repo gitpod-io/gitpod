@@ -13,10 +13,13 @@ import DropDown from "../components/DropDown";
 import { Link } from "react-router-dom";
 import Label from "./Label";
 import Property from "./Property";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 
 export default function TeamDetail(props: { team: Team }) {
     const { team } = props;
     const [teamMembers, setTeamMembers] = useState<TeamMemberInfo[] | undefined>(undefined);
+    const [billingMode, setBillingMode] = useState<BillingMode | undefined>(undefined);
     const [searchText, setSearchText] = useState<string>("");
 
     useEffect(() => {
@@ -26,6 +29,9 @@ export default function TeamDetail(props: { team: Team }) {
                 setTeamMembers(members);
             }
         })();
+        getGitpodService()
+            .server.adminGetBillingMode(AttributionId.render({ kind: "team", teamId: props.team.id }))
+            .then((bm) => setBillingMode(bm));
     }, [team]);
 
     const filteredMembers = teamMembers?.filter((m) => {
@@ -59,6 +65,7 @@ export default function TeamDetail(props: { team: Team }) {
             </div>
             <div className="flex mt-6">
                 {!team.markedDeleted && teamMembers && <Property name="Members">{teamMembers.length}</Property>}
+                {!team.markedDeleted && <Property name="BillingMode">{billingMode?.mode || "---"}</Property>}
             </div>
             <div className="flex mt-4">
                 <div className="flex">
