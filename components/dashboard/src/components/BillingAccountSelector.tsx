@@ -82,7 +82,7 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
                 <div>
                     <p>Associate all my usage with the billing account below.</p>
                     <div className="mt-4 max-w-2xl grid grid-cols-3 gap-3">
-                        {/* <SelectableCardSolid
+                        <SelectableCardSolid
                             className="h-18"
                             title="(myself)"
                             selected={
@@ -94,7 +94,7 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
                             <div className="flex-grow flex items-end px-1">
                                 <span className="text-sm text-gray-400">Personal Account</span>
                             </div>
-                        </SelectableCardSolid> */}
+                        </SelectableCardSolid>
                         {teamsWithBillingEnabled.length === 0 && (
                             <span className="col-span-3">
                                 Please enable billing for one of your teams, or create a new team and enable billing for
