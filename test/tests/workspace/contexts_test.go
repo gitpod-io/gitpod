@@ -32,8 +32,8 @@ func TestGitHubContexts(t *testing.T) {
 	tests := []ContextTest{
 		{
 			Name:           "open repository",
-			ContextURL:     "github.com/gitpod-io/gitpod",
-			WorkspaceRoot:  "/workspace/gitpod",
+			ContextURL:     "github.com/gitpod-io/template-golang-cli",
+			WorkspaceRoot:  "/workspace/template-golang-cli",
 			ExpectedBranch: "main",
 		},
 		{
