@@ -150,7 +150,8 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         withLargeVM,
     };
 
-    werft.log("job config", JSON.stringify(jobConfig));
+    werft.logOutput(sliceId, JSON.stringify(jobConfig, null, 2));
+    werft.log(sliceId, "Expand to see the parsed configuration")
     const globalAttributes = Object.fromEntries(
         Object.entries(jobConfig).map((kv) => {
             const [key, value] = kv;

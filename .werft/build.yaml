@@ -228,19 +228,32 @@ pod:
         sleep 1
         set -Eeuo pipefail
 
-        sudo chown gitpod:gitpod $GOCACHE
         export GITHUB_TOKEN=$(echo $GITHUB_TOKEN | xargs)
-
         export DOCKER_HOST=tcp://$NODENAME:2375
-        sudo chown -R gitpod:gitpod /workspace
 
-        mkdir /workspace/.ssh
-        cp /mnt/secrets/harvester-vm-ssh-keys/id_rsa /workspace/.ssh/id_rsa_harvester_vm
-        cp /mnt/secrets/harvester-vm-ssh-keys/id_rsa.pub /workspace/.ssh/id_rsa_harvester_vm.pub
-        sudo chmod 600 /workspace/.ssh/id_rsa_harvester_vm
-        sudo chmod 644 /workspace/.ssh/id_rsa_harvester_vm.pub
+        echo "Job is running on node $NODENAME" | werft log slice "Node information"
 
-        (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
+        ( \
+          sudo chown gitpod:gitpod $GOCACHE && \
+          sudo chown -R gitpod:gitpod /workspace && \
+          echo "done" \
+        ) | werft log slice "chowning /workspace and $GOCACHE"
+
+        ( \
+          mkdir -p /workspace/.ssh && \
+          cp /mnt/secrets/harvester-vm-ssh-keys/id_rsa /workspace/.ssh/id_rsa_harvester_vm && \
+          cp /mnt/secrets/harvester-vm-ssh-keys/id_rsa.pub /workspace/.ssh/id_rsa_harvester_vm.pub && \
+          sudo chmod 600 /workspace/.ssh/id_rsa_harvester_vm && \
+          sudo chmod 644 /workspace/.ssh/id_rsa_harvester_vm.pub && \
+          echo "done" \
+        ) | werft log slice "Prepare SSH keys"
+
+        ( \
+          cd .werft && \
+          yarn install && \
+          mv node_modules .. \
+        ) | werft log slice "Installing dependencies"
+
         printf '{{ toJson . }}' > context.json
 
         npx ts-node .werft/build.ts
