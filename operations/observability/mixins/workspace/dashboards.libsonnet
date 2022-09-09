@@ -19,6 +19,7 @@
     'gitpod-workspace-coredns.json': (import 'dashboards/coredns.json'),
     'gitpod-node-swap.json': (import 'dashboards/node-swap.json'),
     'gitpod-node-ephemeral-storage.json': (import 'dashboards/ephemeral-storage.json'),
-    'gitpod-node-problem-detector.json': (import 'dashboards/node-problem-detector.json')
+    'gitpod-node-problem-detector.json': (import 'dashboards/node-problem-detector.json'),
+    'gitpod-network-limiting.json': (import 'dashboards/network-limiting.json')
   },
 }
