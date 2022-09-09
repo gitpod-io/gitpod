@@ -7,6 +7,7 @@ package apiv1
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"testing"
 	"time"
 
@@ -256,6 +257,87 @@ func TestGetAndSetCostCenter(t *testing.T) {
 
 		require.Equal(t, costCenter.SpendingLimit, retrieved.CostCenter.SpendingLimit)
 		require.Equal(t, costCenter.BillingStrategy, retrieved.CostCenter.BillingStrategy)
+	}
+
+}
+
+func TestListUsage(t *testing.T) {
+	conn := dbtest.ConnectForTests(t)
+
+	start := time.Date(2022, 7, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(2022, 8, 1, 0, 0, 0, 0, time.UTC)
+
+	attributionID := db.NewTeamAttributionID(uuid.New().String())
+
+	draftBefore := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarcharTime(start.Add(-1 * 23 * time.Hour)),
+		CreditCents:   100,
+		Draft:         true,
+	})
+
+	nondraftBefore := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarcharTime(start.Add(-1 * 23 * time.Hour)),
+		CreditCents:   200,
+		Draft:         false,
+	})
+
+	draftInside := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarcharTime(start.Add(2 * time.Hour)),
+		CreditCents:   300,
+		Draft:         true,
+	})
+	nonDraftInside := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarcharTime(start.Add(2 * time.Hour)),
+		CreditCents:   400,
+		Draft:         false,
+	})
+
+	nonDraftAfter := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarcharTime(end.Add(2 * time.Hour)),
+		CreditCents:   1000,
+	})
+
+	dbtest.CreateUsageRecords(t, conn, draftBefore, nondraftBefore, draftInside, nonDraftInside, nonDraftAfter)
+
+	usageService := newUsageService(t, conn)
+
+	tests := []struct {
+		start, end time.Time
+		// expectations
+		creditsAtStart float64
+		creditsAtEnd   float64
+		recordsInRange int64
+	}{
+		{start, end, 3, 10, 2},
+		{end, end, 10, 10, 0},
+		{start, start, 3, 3, 0},
+		{start.Add(-200 * 24 * time.Hour), end, 0, 10, 4},
+		{start.Add(-200 * 24 * time.Hour), end.Add(10 * 24 * time.Hour), 0, 20, 5},
+	}
+
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("Running test no %d", i+1), func(t *testing.T) {
+			metaData, err := usageService.ListUsage(context.Background(), &v1.ListUsageRequest{
+				AttributionId: string(attributionID),
+				From:          timestamppb.New(test.start),
+				To:            timestamppb.New(test.end),
+				Order:         v1.ListUsageRequest_ORDERING_DESCENDING,
+				Pagination: &v1.PaginatedRequest{
+					PerPage: 1,
+					Page:    1,
+				},
+			})
+			require.NoError(t, err)
+
+			require.Equal(t, test.creditsAtStart, metaData.CreditBalanceAtStart)
+			require.Equal(t, test.creditsAtEnd, metaData.CreditBalanceAtEnd)
+			require.Equal(t, test.recordsInRange, metaData.Pagination.Total)
+		})
 	}
 
 }
