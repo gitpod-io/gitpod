@@ -202,7 +202,7 @@ gitpod         kotsadm-minio-0                            0/1     ContainerCreat
 gitpod         kotsadm-postgres-0                         0/1     Init:0/2            0          2m28s
 ```
 
-This can happen when the wrong `image_id`  was used in the `.tfvars` file. The ID needs to respect both the region as well as the Kubernetes version and can be found [here](https://cloud-images.ubuntu.com/docs/aws/eks/). 
+This can happen when the wrong `image_id`  was used in the `.tfvars` file. The ID needs to respect both the region as well as the Kubernetes version and can be found [here](https://cloud-images.ubuntu.com/docs/aws/eks/).
 
 ### Some pods never start (Init state)
 
