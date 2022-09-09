@@ -4,7 +4,8 @@ set -euo pipefail
 
 BRANCH="wk-inte-test/"$(date +%Y%m%d%H%M%S)
 FAILURE_COUNT=0
-RUN_COUNT=0
+RUN_COUNT=0 # Prevent multiple cleanup runs
+DO_CLEANUP=0
 declare -A FAILURE_TESTS
 declare SIGNAL # used to record signal caught by trap
 
@@ -13,46 +14,50 @@ context_repo=$2
 
 function cleanup ()
 {
-  werft log phase "slack notification and cleanup $SIGNAL" "Slack notification and cleanup: $SIGNAL"
-
-  werftJobUrl="https://werft.gitpod-dev.com/job/${context_name}"
-
-  if [ "${RUN_COUNT}" -eq "0" ]; then
-    title=":x: *Workspace integration test fail*"
-    title=$title"\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}"
-
-    errs="Failed at preparing the preview environment"
-    BODY="{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\":werft: Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"\`\`\`\\n${errs}\\n\`\`\`\"}}]}"
-  elif [ "${FAILURE_COUNT}" -ne "0" ]; then
-    title=":x: *Workspace integration test fail*"
-    title=$title"\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}"
-
-    errs=""
-    for TEST_NAME in ${!FAILURE_TESTS[*]}; do
-      title=$title"\n_Tests_: ${TEST_NAME}"
-      errs+="${FAILURE_TESTS["${TEST_NAME}"]}"
-    done
-    errs=$(echo "${errs}" | head)
-    BODY="{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\":werft: Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"\`\`\`\\n${errs}\\n\`\`\`\"}}]}"
-  else
-    title=":white_check_mark: *Workspace integration test pass*"
-
-    title=$title"\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}"
-    BODY="{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\":werft: Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}}]}"
-  fi
-
-  echo "Sending Slack notificaition" | werft log slice "slack notification"
-  curl -X POST \
-    -H 'Content-type: application/json' \
-    -d "${BODY}" \
-    "https://hooks.slack.com/${SLACK_NOTIFICATION_PATH}"
-  werft log result "slack notification" "${PIPESTATUS[0]}"
-  werft log slice "slack notification" --done
-
-  git push origin :"${BRANCH}" | werft log slice "clean up"
-
-  echo "Finished cleaning up based on signal $SIGNAL" | werft log slice "clean up"
-  werft log slice "clean up" --done
+    if [[ $DO_CLEANUP -eq 0 ]]; then
+        return 0
+    fi
+    DO_CLEANUP=1
+    werft log phase "slack notification and cleanup $SIGNAL" "Slack notification and cleanup: $SIGNAL"
+    
+    werftJobUrl="https://werft.gitpod-dev.com/job/${context_name}"
+    
+    if [ "${RUN_COUNT}" -eq "0" ]; then
+        title=":x: *Workspace integration test fail*"
+        title=$title"\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}"
+        
+        errs="Failed at preparing the preview environment"
+        BODY="{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\":werft: Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"\`\`\`\\n${errs}\\n\`\`\`\"}}]}"
+    elif [ "${FAILURE_COUNT}" -ne "0" ]; then
+        title=":x: *Workspace integration test fail*"
+        title=$title"\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}"
+      
+        errs=""
+        for TEST_NAME in ${!FAILURE_TESTS[*]}; do
+          title=$title"\n_Tests_: ${TEST_NAME}"
+          errs+="${FAILURE_TESTS["${TEST_NAME}"]}"
+        done
+        errs=$(echo "${errs}" | head)
+        BODY="{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\":werft: Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"\`\`\`\\n${errs}\\n\`\`\`\"}}]}"
+    else
+        title=":white_check_mark: *Workspace integration test pass*"
+      
+        title=$title"\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}"
+        BODY="{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\":werft: Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}}]}"
+    fi
+    
+    echo "Sending Slack notificaition" | werft log slice "slack notification"
+    curl -X POST \
+      -H 'Content-type: application/json' \
+      -d "${BODY}" \
+      "https://hooks.slack.com/${SLACK_NOTIFICATION_PATH}"
+    werft log result "slack notification" "${PIPESTATUS[0]}"
+    werft log slice "slack notification" --done
+    
+    git push origin :"${BRANCH}" | werft log slice "clean up"
+    
+    echo "Finished cleaning up based on signal $SIGNAL" | werft log slice "clean up"
+    werft log slice "clean up" --done
 }
 
 sudo chown -R gitpod:gitpod /workspace
