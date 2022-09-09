@@ -22,12 +22,6 @@ const (
 	// Used as key for storing the workspace ID in the requests mux.Vars() map.
 	workspaceIDIdentifier = "workspaceID"
 
-	// Used as key for storing the origin to fetch foreign content.
-	foreignOriginIdentifier = "foreignOrigin"
-
-	// Used as key for storing the path to fetch foreign content.
-	foreignPathIdentifier = "foreignPath"
-
 	// The header that is used to communicate the "Host" from proxy -> ws-proxy in scenarios where ws-proxy is _not_ directly exposed.
 	forwardedHostnameHeader = "x-wsproxy-host"
 
@@ -86,74 +80,31 @@ func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 
 	r := regexp.MustCompile("^" + regexPrefix + wsHostSuffix)
 
-	// REMOVE this once all workspaces have updated to new vscode version
-	foreignContentHost2R := regexp.MustCompile("^((?:v--)?[0-9a-v]+)" + wsHostSuffix)
-
-	foreignContentPathR := regexp.MustCompile("^/" + regexPrefix + "(/.*)")
 	return func(req *http.Request, m *mux.RouteMatch) bool {
 		hostname := headerProvider(req)
 		if hostname == "" {
 			return false
 		}
 
-		var workspaceID, workspacePort, foreignOrigin, foreignPath string
-		matches := foreignContentHost2R.FindStringSubmatch(hostname)
-		if len(matches) == 2 {
-			foreignOrigin = matches[1]
-			if strings.Contains(req.URL.Path, "/__files__/") {
-				// REMOVE this once all workspaces have updated to new vscode version
-				// Don't match if path contains `/__files__/` (blobserve image separator)
+		var workspaceID, workspacePort string
+		matches := r.FindStringSubmatch(hostname)
+		if matchPort {
+			if len(matches) < 3 {
 				return false
 			}
-			matches = foreignContentPathR.FindStringSubmatch(req.URL.Path)
-			if matchPort {
-				if len(matches) < 4 {
-					return false
-				}
-				// https://0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk.ws-eu10.gitpod.io/3000-coral-dragon-ilr0r6eq/index.html
-				// workspaceID: coral-dragon-ilr0r6eq
-				// workspacePort: 3000
-				// foreignOrigin: 0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk
-				// foreignPath: /index.html
-				workspaceID = matches[2]
-				workspacePort = matches[1]
-				foreignPath = matches[3]
-			} else {
-				if len(matches) < 3 {
-					return false
-				}
-				// https://0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk.ws-eu10.gitpod.io/coral-dragon-ilr0r6eq/index.html
-				// workspaceID: coral-dragon-ilr0r6eq
-				// workspacePort:
-				// foreignOrigin: 0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk
-				// foreignPath: /index.html
-				workspaceID = matches[1]
-				foreignPath = matches[2]
-			}
+			// https://3000-coral-dragon-ilr0r6eq.ws-eu10.gitpod.io/index.html
+			// workspaceID: coral-dragon-ilr0r6eq
+			// workspacePort: 3000
+			workspaceID = matches[2]
+			workspacePort = matches[1]
 		} else {
-			matches = r.FindStringSubmatch(hostname)
-			if matchPort {
-				if len(matches) < 3 {
-					return false
-				}
-				// https://3000-coral-dragon-ilr0r6eq.ws-eu10.gitpod.io/index.html
-				// workspaceID: coral-dragon-ilr0r6eq
-				// workspacePort: 3000
-				// foreignOrigin:
-				// foreignPath:
-				workspaceID = matches[2]
-				workspacePort = matches[1]
-			} else {
-				if len(matches) < 2 {
-					return false
-				}
-				// https://coral-dragon-ilr0r6eq.ws-eu10.gitpod.io/index.html
-				// workspaceID: coral-dragon-ilr0r6eq
-				// workspacePort:
-				// foreignOrigin:
-				// foreignPath:
-				workspaceID = matches[1]
+			if len(matches) < 2 {
+				return false
 			}
+			// https://coral-dragon-ilr0r6eq.ws-eu10.gitpod.io/index.html
+			// workspaceID: coral-dragon-ilr0r6eq
+			// workspacePort:
+			workspaceID = matches[1]
 		}
 
 		if workspaceID == "" {
@@ -171,20 +122,13 @@ func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 		if workspacePort != "" {
 			m.Vars[workspacePortIdentifier] = workspacePort
 		}
-		if foreignOrigin != "" {
-			m.Vars[foreignOriginIdentifier] = foreignOrigin
-		}
-		if foreignPath != "" {
-			m.Vars[foreignPathIdentifier] = foreignPath
-		}
 
 		return true
 	}
 }
 
 func matchBlobserveHostHeader(wsHostSuffix string, headerProvider hostHeaderProvider) mux.MatcherFunc {
-	r := regexp.MustCompile("^blobserve" + wsHostSuffix)
-	r2 := regexp.MustCompile("^(?:v--)?[0-9a-v]+" + wsHostSuffix)
+	r := regexp.MustCompile("^(?:v--)?[0-9a-v]+" + wsHostSuffix)
 	return func(req *http.Request, m *mux.RouteMatch) bool {
 		hostname := headerProvider(req)
 		if hostname == "" {
@@ -192,18 +136,7 @@ func matchBlobserveHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 		}
 
 		matches := r.FindStringSubmatch(hostname)
-		if len(matches) >= 1 {
-			return true
-		}
-
-		matches = r2.FindStringSubmatch(hostname)
-		if len(matches) >= 1 && strings.Contains(req.URL.Path, "/__files__/") {
-			// Check if path contains `/__files__/` for now as it could be using an
-			// old vscode version serving webview resources from workspace
-			return true
-		}
-
-		return false
+		return len(matches) >= 1
 	}
 }
 

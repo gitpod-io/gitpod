@@ -296,19 +296,18 @@ https://*.*.{$GITPOD_DOMAIN} {
 	import ssl_configuration
 	import debug_headers
 
-	@workspace_blobserve header_regexp host Host ^blobserve.ws(?P<location>-[a-z0-9]+)?.{$GITPOD_DOMAIN}
-	handle @workspace_blobserve {
-		gitpod.cors_origin {
-			base_domain {$GITPOD_DOMAIN}
-		}
-
+	# foreign content route used by vscode to serve webview and webworker resources of the form
+	# https://{{hash_base_32}}.<cluster>.<gitpod_domain> or https://v--{{hash_base_32}}.<cluster>.<gitpod_domain>
+	# e.g:
+	# https://0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk.ws-us34xl.gitpod.io (for webviews)
+	# https://v--0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk.ws-us34xl.gitpod.io (for webworker)
+	@foreign_content2 header_regexp host Host ^(?:v--)?[0-9a-v]+.ws(-[a-z0-9]+)?.{$GITPOD_DOMAIN}
+	handle @foreign_content2 {
 		reverse_proxy https://ws-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9090 {
 			import workspace_transport
 			import upstream_headers
 
 			header_up X-WSProxy-Host       {http.request.host}
-
-			header_down -access-control-allow-origin
 		}
 	}
 
@@ -331,22 +330,6 @@ https://*.*.{$GITPOD_DOMAIN} {
 			import upstream_headers
 
 			header_up X-Gitpod-WorkspaceId {re.host.workspaceID}
-			header_up X-WSProxy-Host       {http.request.host}
-		}
-	}
-
-	# foreign content route used by vscode to serve webview and webworker resources of the form
-	# https://{{hash_base_32}}.<cluster>.<gitpod_domain> or https://v--{{hash_base_32}}.<cluster>.<gitpod_domain>
-	# e.g:
-	# https://0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk.ws-us34xl.gitpod.io (for webviews)
-	# https://v--0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk.ws-us34xl.gitpod.io (for webworker)
-	# origin should be decoupled from the workspace (port) origin but the workspace (port) prefix should be the path root for routing
-	@foreign_content2 header_regexp host Host ^(?:v--)?[0-9a-v]+.ws(-[a-z0-9]+)?.{$GITPOD_DOMAIN}
-	handle @foreign_content2 {
-		reverse_proxy https://ws-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9090 {
-			import workspace_transport
-			import upstream_headers
-
 			header_up X-WSProxy-Host       {http.request.host}
 		}
 	}

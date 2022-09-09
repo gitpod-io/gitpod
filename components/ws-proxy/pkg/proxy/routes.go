@@ -101,12 +101,18 @@ func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip Worksp
 	routes.HandleDirectSupervisorRoute(r.PathPrefix("/_supervisor/v1"), true)
 	routes.HandleDirectSupervisorRoute(r.PathPrefix("/_supervisor"), true)
 
-	routes.HandleDirectIDERoute(enableCompression(r).MatcherFunc(func(req *http.Request, m *mux.RouteMatch) bool {
-		// this handles all foreign (none-IDE) content
-		return m.Vars != nil && m.Vars[foreignOriginIdentifier] != ""
-	}))
-
-	routes.HandleRoot(enableCompression(r).NewRoute())
+	rootRouter := enableCompression(r)
+	rootRouter.Use(func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+			// This is just an alias to callback.html to make its purpose more explicit,
+			// it will be served by blobserve.
+			if req.URL.Path == "/vscode-extension-auth-callback" {
+				req.URL.Path = "/callback.html"
+			}
+			h.ServeHTTP(resp, req)
+		})
+	})
+	routes.HandleRoot(rootRouter.NewRoute())
 }
 
 func enableCompression(r *mux.Router) *mux.Router {
@@ -151,16 +157,6 @@ func (ir *ideRoutes) HandleSSHHostKeyRoute(route *mux.Route, hostKeyList []ssh.S
 		rw.Header().Add("Content-Type", "application/json")
 		rw.Write(byt)
 	})
-}
-
-func (ir *ideRoutes) HandleDirectIDERoute(route *mux.Route) {
-	r := route.Subrouter()
-	r.Use(logRouteHandlerHandler("HandleDirectIDERoute"))
-	r.Use(ir.Config.CorsHandler)
-	r.Use(ir.Config.WorkspaceAuthHandler)
-	r.Use(ir.workspaceMustExistHandler)
-
-	r.NewRoute().HandlerFunc(proxyPass(ir.Config, ir.InfoProvider, workspacePodResolver, withWorkspaceTransport()))
 }
 
 func (ir *ideRoutes) HandleDirectSupervisorRoute(route *mux.Route, authenticated bool) {
@@ -385,7 +381,6 @@ func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig, infoP
 				workspacePodPortResolver,
 				withHTTPErrorHandler(showPortNotFoundPage),
 				withXFrameOptionsFilter(),
-				withWorkspaceTransport(),
 			)(rw, r)
 		},
 	)
