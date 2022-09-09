@@ -151,6 +151,7 @@ func (s *IDEMetricsServer) ReportError(ctx context.Context, req *api.ReportError
 	}
 	s.errorReporter.Report(errorreporter.ReportedErrorEvent{
 		Type:        "type.googleapis.com/google.devtools.clouderrorreporting.v1beta1.ReportedErrorEvent",
+		Severity:    "ERROR",
 		Message:     req.ErrorStack,
 		WorkspaceID: req.WorkspaceId,
 		InstanceId:  req.InstanceId,
