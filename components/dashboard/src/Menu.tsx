@@ -222,12 +222,12 @@ export default function Menu() {
             title: "Projects",
             link: "/projects",
         });
-        if (userBillingMode?.mode === "usage-based") {
-            userMenu.push({
-                title: "Usage",
-                link: "/usage",
-            });
-        }
+        // if (userBillingMode?.mode === "usage-based") {
+        //     userMenu.push({
+        //         title: "Usage",
+        //         link: "/usage",
+        //     });
+        // }
         userMenu.push({
             title: "Settings",
             link: "/settings",
