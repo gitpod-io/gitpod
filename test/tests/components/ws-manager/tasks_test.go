@@ -46,16 +46,19 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 			Name:        "pvc-init",
 			Task:        gitpod.TasksItems{Init: "touch /workspace/gitpod/init-ran; exit"},
 			LookForFile: "init-ran",
+			FF:          []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM},
 		},
 		{
 			Name:        "pvc-before",
 			Task:        gitpod.TasksItems{Before: "touch /workspace/gitpod/before-ran; exit"},
 			LookForFile: "before-ran",
+			FF:          []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM},
 		},
 		{
 			Name:        "pvc-command",
 			Task:        gitpod.TasksItems{Command: "touch /workspace/gitpod/command-ran; exit"},
 			LookForFile: "command-ran",
+			FF:          []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM},
 		},
 	}
 
