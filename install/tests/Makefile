@@ -68,21 +68,19 @@ ami_id_121 := "ami-060637af2651bc8bb"
 ami_id_122 := "ami-0733d755ed2c97a4d"
 ami_id_123 := "ami-05ec8881b9c2740d4"
 
+# K3S ubuntu image ID
+image_id_1804 := "ubuntu-1804-bionic-v20220712"
+image_id_2004 := "ubuntu-2004-focal-v20220712"
+image_id_2204 := "ubuntu-2204-jammy-v20220712a"
 
-cluster_gcp := gke
-cluster_k3s := k3s
-cluster_aws := eks
-cluster_azure := aks
-
-prepare-terraform: cluster_mod = $(cluster_$(cloud))
+os_version ?= "2004"
 prepare-terraform: ami_id = $(if $(ami_id_${TF_VAR_cluster_version//.}),$(ami_id_${TF_VAR_cluster_version//.}),$(ami_id_122))
+prepare-terraform: ubuntu_image_id = $(if $(image_id_$(os_version)),$(image_id_$(os_version)),$(image_id_2004))
 prepare-terraform:
 	export DOMAIN=${DOMAIN} && \
 	export CLUSTER_VERSION=$$TF_VAR_cluster_version && \
-	export KUBECONFIG=${KUBECONFIG} IMAGE_ID=${ami_id} && \
+	export KUBECONFIG=${KUBECONFIG} IMAGE_ID=${ami_id} UBUNTU_IMAGE=${ubuntu_image_id} && \
 	envsubst < ./manifests/$(cloud)-terraform.tfvars > $(TF_MOD)/terraform.tfvars
-	export cluster=$(cluster_mod) && \
-	envsubst < ./manifests/gcp-dns.tf > $(TF_MOD)/gcp-dns.tf
 	cp ./manifests/tf-backend.tf $(TF_MOD)/main.tf  # we set the backend to be gcs based
 
 .PHONY:
@@ -91,7 +89,7 @@ standard-cluster: check-env-cloud check-env-cluster-version prepare-terraform
 	$(MAKE) -C $(TF_MOD) init
 	$(MAKE) select-workspace WORKDIR=$(TF_MOD)
 	$(MAKE) -C $(TF_MOD) apply-cluster
-	@echo "Done creating GKE cluster"
+	@echo "Done creating $(cloud) cluster"
 
 .PHONY:
 ## cert-manager: Installs cert-manager, optionally create secret for cloud-dns access
@@ -122,9 +120,17 @@ terraform-output: prepare-terraform
 	terraform -chdir=$(TF_MOD) refresh
 	terraform -chdir=$(TF_MOD) output -json > $(cloud)-output.json
 
+cluster_gcp := gke
+cluster_k3s := k3s
+cluster_aws := eks
+cluster_azure := aks
+
 .PHONY:
 ## add-ns-record: Adds NS record for subdomain under gitpod-selfhosted.com
+add-ns-record: cluster_mod = $(cluster_$(cloud))
 add-ns-record: check-env-cloud prepare-terraform
+	export cluster=$(cluster_mod) && \
+	envsubst < ./manifests/gcp-dns.tf > $(TF_MOD)/gcp-dns.tf
 	$(MAKE) -C $(TF_MOD) init
 	$(MAKE) select-workspace WORKDIR=$(TF_MOD)
 	terraform -chdir=$(TF_MOD) apply -target=module.add-dns-record --auto-approve
@@ -176,6 +182,31 @@ db-config-gcp:
 	export DB_INSTANCE=$$(cat gcp-output.json | yq r - 'database.value.instance') && \
 	export DB_PASSWORD=$$(cat gcp-output.json | yq r - 'database.value.password') && \
 	export DB_USER=$$(cat gcp-output.json | yq r - 'database.value.username') && \
+	envsubst < ./manifests/kots-config-gcp-db.yaml > tmp_4_config.yml
+	envsubst < tmp_4_config.yml > tmp_5_config.yml
+	yq m -i tmp_config.yml tmp_5_config.yml
+
+storage-config-k3s:
+	export k3s_storage_credentials=$$(cat k3s-output.json | yq r - 'storage.value.service_account_key_path') && \
+	[[ $$k3s_storage_credentials = /* ]] || export k3s_storage_credentials=$$(realpath $(TF_MOD)/$$k3s_storage_credentials) && \
+	export BASE64_GCP_KEY=$$(cat $$k3s_storage_credentials | tr -d '\n' | base64 -w 0) && \
+	envsubst < ./manifests/kots-config-gcp-storage.yaml > tmp_2_config.yml
+	yq m -i tmp_config.yml tmp_2_config.yml
+
+registry-config-k3s:
+	export k3s_registry_credentials=$$(cat k3s-output.json | yq r - 'registry.value.password_file_path') && \
+	[[ $$k3s_registry_credentials = /* ]] || export k3s_registry_credentials=$$(realpath $(TF_MOD)/$$k3s_registry_credentials) && \
+	export GCP_KEY=$$(cat $$k3s_registry_credentials | tr -d '\n' | jq -Rsa .) && \
+	envsubst < ./manifests/kots-config-gcp-registry.yaml > tmp_4_config.yml
+	yq m -i tmp_config.yml tmp_4_config.yml
+
+db-config-k3s:
+	export k3s_db_credentials=$$(cat k3s-output.json | yq r - 'database.value.service_account_key_path') && \
+	[[ $$k3s_db_credentials = /* ]] || export k3s_db_credentials=$$(realpath $(TF_MOD)/$$k3s_db_credentials) && \
+	export BASE64_GCP_KEY=$$(cat $$k3s_db_credentials | tr -d '\n' | base64 -w 0) && \
+	export DB_INSTANCE=$$(cat k3s-output.json | yq r - 'database.value.instance') && \
+	export DB_PASSWORD=$$(cat k3s-output.json | yq r - 'database.value.password') && \
+	export DB_USER=$$(cat k3s-output.json | yq r - 'database.value.username') && \
 	envsubst < ./manifests/kots-config-gcp-db.yaml > tmp_4_config.yml
 	envsubst < tmp_4_config.yml > tmp_5_config.yml
 	yq m -i tmp_config.yml tmp_5_config.yml

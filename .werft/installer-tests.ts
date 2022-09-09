@@ -71,7 +71,8 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         CLOUD: "k3s",
         DESCRIPTION: `${op} Gitpod on a K3s cluster(version ${k8s_version}) on a GCP instance with ubuntu ${os_version}`,
         PHASES: [
-            "STANDARD_K3S_CLUSTER_ON_GCP",
+            "STANDARD_CLUSTER",
+            "UPLOAD_KUBECONFIG",
             "CERT_MANAGER",
             "CLUSTER_ISSUER",
             "GENERATE_KOTS_CONFIG",
@@ -129,20 +130,10 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
         makeTarget: `standard-cluster`,
         description: `Creating a single ${cloud} managed cluster(version: ${k8s_version})`,
     },
-    STANDARD_K3S_CLUSTER_ON_GCP: {
-        phase: "create-std-k3s-cluster",
-        makeTarget: `k3s-standard-cluster os_version=${os_version}`,
-        description: `Creating a k3s(version: ${k8s_version}) cluster on GCP with 1 node`,
-    },
-    STANDARD_AKS_CLUSTER: {
-        phase: "create-std-aks-cluster",
-        makeTarget: `aks-standard-cluster`,
-        description: `Creating an Azure AKS cluster(version: ${k8s_version})`,
-    },
-    STANDARD_EKS_CLUSTER: {
-        phase: "create-std-eks-cluster",
-        makeTarget: `eks-standard-cluster`,
-        description: `Creating a AWS EKS cluster(version: ${k8s_version}) with 1 nodepool each for workspace and server`,
+    UPLOAD_KUBECONFIG: {
+        phase: "upload-kubeconfig-to-gcp",
+        makeTarget: "upload-kubeconfig-to-gcp",
+        description: `Upload kubeconfig file to gcp bucket`,
     },
     CERT_MANAGER: {
         phase: "setup-cert-manager",
