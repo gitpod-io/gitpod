@@ -77,7 +77,7 @@ export class PrometheusMetricsExporter {
             // we track db_write because we need to be able to distinguish between outcomes which did affect the system negatively - failed to write,
             // and outcomes by read-only replicas.
             labelNames: ["db_write", "workspace_cluster", "workspace_instance_type", "outcome"],
-            buckets: prom.exponentialBuckets(2, 2, 8),
+            buckets: prom.exponentialBuckets(0.050, 2, 8),
         });
 
         this.prebuildsCompletedTotal = new prom.Counter({
