@@ -394,7 +394,7 @@ export async function waitUntilAllPodsAreReady(namespace: string, kubeconfig: st
 }
 
 function getPods(namespace: string, kubeconfig: string): Pod[] {
-    const cmd = `kubectl --kubeconfig ${kubeconfig} get pods -n ${namespace}  -o=jsonpath='{range .items[*]}{@.metadata.name}:{@.metadata.ownerReferences[0].kind}:{@.status.phase};{end}'`;
+    const cmd = `kubectl --kubeconfig ${kubeconfig} get pods -n ${namespace} -l 'component!=workspace'  -o=jsonpath='{range .items[*]}{@.metadata.name}:{@.metadata.ownerReferences[0].kind}:{@.status.phase};{end}'`;
     const unsanitizedPods = exec(cmd, { silent: true, async: false, dontCheckRc: true });
     if (unsanitizedPods.code != 0) {
         throw new Error(
