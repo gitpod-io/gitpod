@@ -97,7 +97,9 @@ func run() error {
 
 			err = downloadVolume(ctx, client, namespace, cv, v)
 			if err != nil {
-				return nil
+				log.WithField("cv", cv.Name).WithField("c", c.Name).Info("could not download volume content")
+				// continue with next volume instead of early exit
+				// return nil
 			}
 		}
 	}
