@@ -6,6 +6,7 @@
 
 export function getPaginationNumbers(totalNumberOfPages: number, currentPage: number) {
     const adjacentToCurrentPage = 1; // This is the number(s) we see next to the currentPage
+    const numberOfPagesToShowOnTheSide = 3;
     const totalNumbersShownInPagination = 6;
     let calculatedPagination: number[] = [];
 
@@ -24,16 +25,21 @@ export function getPaginationNumbers(totalNumberOfPages: number, currentPage: nu
     const toTheLeftOfCurrent = Math.max(currentPage - adjacentToCurrentPage, 1);
 
     const showRightEllipsis = toTheRightOfCurrent < totalNumberOfPages - minimumAmountInBetweenToShowEllipsis; // e.g. "1 2 3 ... 7"
-    const showLeftEllipsis = toTheLeftOfCurrent > minimumAmountInBetweenToShowEllipsis; // e.g. 1 ... 5 6 7"
+    const showLeftEllipsis =
+        currentPage > numberOfPagesToShowOnTheSide + adjacentToCurrentPage &&
+        toTheLeftOfCurrent > minimumAmountInBetweenToShowEllipsis; // e.g. 1 ... 5 6 7"
 
     if (showRightEllipsis && !showLeftEllipsis) {
-        let leftSideNumbers = 3;
+        let leftSideNumbers = Math.max(numberOfPagesToShowOnTheSide, currentPage + adjacentToCurrentPage);
         let leftPageNumbersAsArray = pageNumbersAsArray(1, leftSideNumbers);
         return [...leftPageNumbersAsArray, "...", totalNumberOfPages];
     }
 
     if (showLeftEllipsis && !showRightEllipsis) {
-        let rightSideNumbers = 3;
+        let rightSideNumbers = Math.max(
+            numberOfPagesToShowOnTheSide,
+            totalNumberOfPages - currentPage + adjacentToCurrentPage,
+        );
         let rightPageNumbersAsArray = pageNumbersAsArray(totalNumberOfPages - rightSideNumbers, totalNumberOfPages);
         return [1, "...", ...rightPageNumbersAsArray];
     }
