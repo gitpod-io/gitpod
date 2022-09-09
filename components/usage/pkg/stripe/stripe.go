@@ -18,7 +18,6 @@ import (
 )
 
 const (
-	ReportIDMetadataKey      = "reportId"
 	AttributionIDMetadataKey = "attributionId"
 )
 
@@ -226,20 +225,6 @@ func (c *Client) GetUpcomingInvoice(ctx context.Context, customerID string) (*In
 		Currency:       string(invoice.Currency),
 		Credits:        invoice.Lines.Data[0].Quantity,
 	}, nil
-}
-
-func (c *Client) UpdateInvoiceMetadata(ctx context.Context, invoiceID string, metadata map[string]string) (*stripe.Invoice, error) {
-	invoice, err := c.sc.Invoices.Update(invoiceID, &stripe.InvoiceParams{
-		Params: stripe.Params{
-			Context:  ctx,
-			Metadata: metadata,
-		},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to update invoice %s metadata: %w", invoiceID, err)
-	}
-
-	return invoice, nil
 }
 
 func (c *Client) GetInvoice(ctx context.Context, invoiceID string) (*stripe.Invoice, error) {

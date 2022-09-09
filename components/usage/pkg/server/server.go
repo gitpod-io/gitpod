@@ -19,7 +19,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"github.com/gitpod-io/gitpod/usage/pkg/apiv1"
-	"github.com/gitpod-io/gitpod/usage/pkg/contentservice"
 	"github.com/gitpod-io/gitpod/usage/pkg/controller"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
@@ -34,13 +33,6 @@ type Config struct {
 	CreditsPerMinuteByWorkspaceClass map[string]float64 `json:"creditsPerMinuteByWorkspaceClass,omitempty"`
 
 	StripeCredentialsFile string `json:"stripeCredentialsFile,omitempty"`
-
-	// Deprecated
-	_ string `json:"contentServiceAddress,omitempty"`
-
-	// billInstancesAfter sets the date after which instances should be considered for billing -
-	// instances started before `billInstancesAfter` will not be considered by the billing controller.
-	BillInstancesAfter *time.Time `json:"billInstancesAfter,omitempty"`
 
 	Server *baseserver.Configuration `json:"server,omitempty"`
 }
@@ -126,11 +118,6 @@ func Start(cfg Config) error {
 		defer ctrl.Stop()
 	} else {
 		log.Info("No controller schedule specified, controller will be disabled.")
-	}
-
-	err = contentservice.RegisterMetrics(srv.MetricsRegistry())
-	if err != nil {
-		return fmt.Errorf("failed to register content service metrics: %w", err)
 	}
 
 	err = registerGRPCServices(srv, conn, stripeClient, pricer)
