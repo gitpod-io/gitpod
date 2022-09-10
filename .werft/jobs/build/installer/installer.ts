@@ -52,7 +52,7 @@ export class Installer {
             { slice: slice },
         );
         exec(`chmod +x /tmp/installer`, { slice: slice });
-        exec(`/tmp/installer init > ${this.options.installerConfigPath}`, { slice: slice });
+        exec(`/tmp/installer config init --overwrite --config ${this.options.installerConfigPath}`, { slice: slice });
         this.options.werft.done(slice);
     }
 
