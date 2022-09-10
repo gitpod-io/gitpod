@@ -29,6 +29,7 @@ import (
 	"github.com/rootless-containers/rootlesskit/pkg/sigproxy"
 	sigproxysignal "github.com/rootless-containers/rootlesskit/pkg/sigproxy/signal"
 	libseccomp "github.com/seccomp/libseccomp-golang"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
@@ -55,6 +56,14 @@ const (
 	// ring2StartupTimeout is the maximum time we wait between starting ring2 and its
 	// attempt to connect to the parent socket.
 	ring2StartupTimeout = 5 * time.Second
+
+	upperDir = "upper"
+
+	//lowerDir = "lower"
+
+	workDir = "work"
+
+	rootDir = "newroot"
 )
 
 var ring0Cmd = &cobra.Command{
@@ -253,9 +262,17 @@ var ring1Cmd = &cobra.Command{
 		_ = unix.Prctl(unix.PR_SET_PDEATHSIG, uintptr(unix.SIGKILL), 0, 0, 0)
 		runtime.UnlockOSThread()
 
-		ring2Root, err := os.MkdirTemp("", "supervisor")
+		ring2Scratch, err := os.MkdirTemp("", "supervisor")
 		if err != nil {
 			log.WithError(err).Fatal("cannot create tempdir")
+		}
+
+		ring2Lower := filepath.Join(ring2Scratch, "lower")
+		if err != nil {
+			log.WithError(err).Fatal("cannot create tempdir")
+		}
+		if err := os.WriteFile(filepath.Join(ring2Lower, "abc123"), []byte("foo"), 0644); err != nil {
+			log.WithError(err).Info("could not create marker")
 		}
 
 		var fsshift api.FSShiftMethod
@@ -327,7 +344,7 @@ var ring1Cmd = &cobra.Command{
 		}
 
 		for _, m := range mnts {
-			dst := filepath.Join(ring2Root, m.Target)
+			dst := filepath.Join(ring2Lower, m.Target)
 			_ = os.MkdirAll(dst, 0644)
 
 			if m.Source == "" {
@@ -354,15 +371,20 @@ var ring1Cmd = &cobra.Command{
 		// so that users in the workspace can modify the file.
 		copyPaths := []string{"/etc/resolv.conf", "/etc/hosts"}
 		for _, fn := range copyPaths {
-			err = copyRing2Root(ring2Root, fn)
+			err = copyRing2Root(ring2Lower, fn)
 			if err != nil {
 				log.WithError(err).Warn("cannot copy " + fn)
 			}
 		}
 
-		err = makeHostnameLocal(ring2Root)
+		err = makeHostnameLocal(ring2Lower)
 		if err != nil {
 			log.WithError(err).Warn("cannot make /etc/hosts hostname local")
+		}
+
+		newRoot, err := prepareOverlay(ring2Scratch, ring2Lower)
+		if err != nil {
+			log.WithError(err).Error("could not prepare overlay")
 		}
 
 		env := make([]string, 0, len(os.Environ()))
@@ -392,7 +414,7 @@ var ring1Cmd = &cobra.Command{
 			Pdeathsig:  syscall.SIGKILL,
 			Cloneflags: cloneFlags,
 		}
-		cmd.Dir = ring2Root
+		cmd.Dir = newRoot
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
@@ -404,18 +426,22 @@ var ring1Cmd = &cobra.Command{
 		sigc := sigproxy.ForwardAllSignals(context.Background(), cmd.Process.Pid)
 		defer sigproxysignal.StopCatch(sigc)
 
-		procLoc := filepath.Join(ring2Root, "proc")
+		procLoc := filepath.Join(newRoot, "proc")
 		err = os.MkdirAll(procLoc, 0755)
 		if err != nil {
 			log.WithError(err).Error("cannot create directory for mounting proc")
 			return
 		}
 
+		log.Info("MARKER2")
+
 		client, err := connectToInWorkspaceDaemonService(ctx)
 		if err != nil {
 			log.WithError(err).Error("cannot connect to daemon from ring1")
+			time.Sleep(3 * time.Minute)
 			return
 		}
+
 		_, err = client.MountProc(ctx, &daemonapi.MountProcRequest{
 			Target: procLoc,
 			Pid:    int64(cmd.Process.Pid),
@@ -495,7 +521,7 @@ var ring1Cmd = &cobra.Command{
 		log.Info("signaling to child process")
 		_, err = msgutil.MarshalToWriter(ring2Conn, ringSyncMsg{
 			Stage:   1,
-			Rootfs:  ring2Root,
+			Rootfs:  newRoot,
 			FSShift: fsshift,
 		})
 		if err != nil {
@@ -519,7 +545,7 @@ var ring1Cmd = &cobra.Command{
 					return connectToInWorkspaceDaemonService(ctx)
 				},
 				Ring2PID:    cmd.Process.Pid,
-				Ring2Rootfs: ring2Root,
+				Ring2Rootfs: newRoot,
 				BindEvents:  make(chan seccomp.BindEvent),
 				WorkspaceId: wsid,
 			}
@@ -562,7 +588,7 @@ var ring1Cmd = &cobra.Command{
 			}
 		}()
 
-		socketPath := filepath.Join(ring2Root, ".supervisor")
+		socketPath := filepath.Join(newRoot, ".supervisor")
 		if _, err = os.Stat(socketPath); errors.Is(err, fs.ErrNotExist) {
 			if err := os.MkdirAll(socketPath, 0644); err != nil {
 				log.Errorf("failed to create dir %v", err)
@@ -618,6 +644,70 @@ var (
 	}
 )
 
+func prepareOverlay(scratch, lower string) (string, error) {
+	overlay := filepath.Join(scratch, "overlay")
+	if err := os.MkdirAll(overlay, 0644); err != nil {
+		log.WithError(err).Info("overlay")
+		return "", err
+	}
+
+	bindMount("/workspace", overlay)
+
+	upper := filepath.Join(overlay, upperDir)
+	if err := os.MkdirAll(upper, 0644); err != nil {
+		log.WithError(err).Info("upper")
+		return "", err
+	}
+
+	workspace := filepath.Join(upper, "/workspace")
+	if err := os.MkdirAll(workspace, 0644); err != nil {
+		log.WithError(err).Info(workDir)
+		return "", err
+	}
+
+	if err := os.Chown(workspace, 33333, 33333); err != nil {
+		log.WithError(err).Info("chown")
+		return "", err
+	}
+
+	work := filepath.Join(overlay, workDir)
+	if err := os.MkdirAll(work, 0644); err != nil {
+		log.WithError(err).Info(workDir)
+		return "", err
+	}
+
+	newRoot := filepath.Join(scratch, rootDir)
+	if err := os.MkdirAll(newRoot, 0644); err != nil {
+		log.WithError(err).Info(rootDir)
+		return "", err
+	}
+
+	log.Info("MARKER1")
+	mountOverlay(lower, upper, work, newRoot)
+
+	return newRoot, nil
+}
+
+func mountOverlay(lower, upper, workdir, target string) {
+	logFields := logrus.Fields{
+		"lower":  lower,
+		"upper":  upper,
+		"work":   workdir,
+		"target": target,
+	}
+
+	opts := fmt.Sprintf("metacopy=off,redirect_dir=off,lowerdir=%s,upperdir=%s,workdir=%s", lower, upper, workdir)
+	if err := unix.Mount("overlay", target, "overlay", 0, opts); err != nil {
+		log.WithError(err).WithFields(logFields).Error("cannot mount overlay")
+	}
+}
+
+func bindMount(source, target string) {
+	if err := unix.Mount(source, target, "bind", unix.MS_BIND|unix.MS_REC, ""); err != nil {
+		log.WithError(err).WithField("source", source).WithField("target", target).Errorf("cannot bind mount %v", source)
+	}
+}
+
 // findBindMountCandidates attempts to find bind mount candidates in the ring0 mount namespace.
 // It does that by either checking for knownMountCandidatePaths, or after rejecting based on filesystems (e.g. cgroup or proc),
 // checking if in the root of the mountpoint there's a `..data` symlink pointing to a file starting with `..`.
@@ -633,6 +723,7 @@ func findBindMountCandidates(procMounts io.Reader, readlink func(path string) (d
 		if len(fields) < 4 {
 			continue
 		}
+		log.Infof("MOUNT: %v", scanner.Text())
 
 		// accept known paths
 		var (
