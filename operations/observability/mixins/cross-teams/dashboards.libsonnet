@@ -15,5 +15,6 @@
     // 'my-new-dashboard.json': (import 'dashboards/components/new-component.json'),
     'gitpod-cluster-autoscaler-k3s.json': (import 'dashboards/gitpod-cluster-autoscaler-k3s.json'),
     'gitpod-node-resource-metrics.json': (import 'dashboards/gitpod-node-resource-metrics.json'),
+    'gitpod-grpc-server.json': (import 'dashboards/gitpod-grpc-server.json'),
   },
 }
