@@ -7,6 +7,70 @@ metadata:
   name: gitpod
 spec:
   collectors:
+    #   # This is based upon the gitpod-installer-job pod spec
+    # - runPod:
+    #     name: config
+    #     namespace: '{{repl Namespace }}'
+    #     timeout: 30s # This is the max timeout
+    #     podSpec:
+    #       affinity:
+    #         nodeAffinity:
+    #           # Same affinity as ws-daemon as detecting the containerd location
+    #           requiredDuringSchedulingIgnoredDuringExecution:
+    #             nodeSelectorTerms:
+    #               - matchExpressions:
+    #                 - key: gitpod.io/workload_workspace_regular
+    #                   operator: Exists
+    #               - matchExpressions:
+    #                 - key: gitpod.io/workload_workspace_headless
+    #                   operator: Exists
+    #       serviceAccountName: installer
+    #       containers:
+    #           # This will normally be the release tag
+    #         - image: "eu.gcr.io/gitpod-core-dev/build/installer:sje-installer-config-build.7"
+    #           volumeMounts:
+    #             - mountPath: /config-patch
+    #               name: config-patch
+    #               readOnly: true
+    #             - mountPath: /mnt/node0
+    #               name: node-fs0
+    #               readOnly: true
+    #           env:
+    #             - name: INSTALLER_DRY_RUN
+    #               value: "true" # Ensures that this is not installed
+    #             - name: CONFIG_FILE
+    #               value: /tmp/gitpod-config.yaml
+    #             - name: CONFIG_PATCH_FILE
+    #               value: /config-patch/gitpod-config-patch.yaml
+    #             - name: CUSTOMIZATION_PATCH_FILE
+    #               value: /config-patch/customization-patch.yaml
+    #             - name: GITPOD_OBJECTS
+    #               value: /tmp/gitpod
+    #             - name: REG_DOCKER_CONFIG_JSON
+    #               valueFrom:
+    #                 secretKeyRef:
+    #                   name: custom-registry-credentials
+    #                   key: .dockerconfigjson
+    #                   optional: true
+    #             - name: LOCAL_REGISTRY_IMAGE_PULL_DOCKER_CONFIG_JSON
+    #               valueFrom:
+    #                 secretKeyRef:
+    #                   name: repl{{ LocalRegistryImagePullSecret | quote }}
+    #                   key: .dockerconfigjson
+    #                   optional: true
+    #           envFrom:
+    #             - configMapRef:
+    #                 name: gitpod-kots-config
+    #           command:
+    #             - /app/scripts/kots-install.sh
+    #       volumes:
+    #         - name: config-patch
+    #           configMap:
+    #             name: gitpod-config-patch
+    #         - name: node-fs0
+    #           hostPath:
+    #             path: /
+    #             type: Directory
     - run:
         collectorName: database
         image: eu.gcr.io/gitpod-core-dev/build/kots-config-check/database:sje-kots-config-check.9
