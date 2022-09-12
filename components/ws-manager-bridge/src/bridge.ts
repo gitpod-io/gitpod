@@ -452,7 +452,12 @@ export class WorkspaceManagerBridge implements Disposable {
 
                     // Control running workspace instances against ws-manager
                     try {
-                        await this.controlRunningInstances(ctx, runningInstances, clientProvider);
+                        await this.controlRunningInstances(
+                            ctx,
+                            runningInstances,
+                            clientProvider,
+                            this.config.maxTimeToRunningPhaseSeconds,
+                        );
 
                         disconnectStarted = Number.MAX_SAFE_INTEGER; // Reset disconnect period
                     } catch (err) {
@@ -489,6 +494,7 @@ export class WorkspaceManagerBridge implements Disposable {
         parentCtx: TraceContext,
         runningInstances: RunningWorkspaceInfo[],
         clientProvider: ClientProvider,
+        maxTimeToRunningPhaseSeconds: number,
     ) {
         const installation = this.config.installation;
 
@@ -511,10 +517,7 @@ export class WorkspaceManagerBridge implements Disposable {
                 if (
                     !(
                         instance.status.phase === "running" ||
-                        durationLongerThanSeconds(
-                            Date.parse(instance.creationTime),
-                            this.config.maxTimeToRunningPhaseSeconds,
-                        )
+                        durationLongerThanSeconds(Date.parse(instance.creationTime), maxTimeToRunningPhaseSeconds)
                     )
                 ) {
                     log.debug({ instanceId }, "Skipping instance", {
