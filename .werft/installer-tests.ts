@@ -11,7 +11,8 @@ const annotations: any = context.Annotations || {};
 
 const testConfig: string = process.argv.length > 2 ? process.argv[2] : "STANDARD_K3S_TEST";
 
-const channel: string = annotations.channel || "unstable";
+// we can either provide the channel name of we randomly run tests against stable and unstable channels
+const channel: string = annotations.channel || randomize(["stable", "unstable"]);
 const kotsApp: string = annotations.replicatedApp || "gitpod";
 
 const version: string = annotations.version || "-";
