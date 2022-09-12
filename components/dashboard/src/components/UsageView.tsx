@@ -82,15 +82,20 @@ function UsageView({ attributionId, billingMode }: UsageViewProps) {
         return "Prebuild";
     };
 
+    const isRunning = (usage: Usage) => {
+        if (usage.kind !== "workspaceinstance") {
+            return false;
+        }
+        const metaData = usage.metadata as WorkspaceInstanceUsageData;
+        return metaData.endTime === "" || metaData.endTime === undefined;
+    };
+
     const getMinutes = (usage: Usage) => {
         if (usage.kind !== "workspaceinstance") {
             return "";
         }
         const metaData = usage.metadata as WorkspaceInstanceUsageData;
-        if (!metaData.endTime) {
-            return "running";
-        }
-        const end = new Date(metaData.endTime).getTime();
+        const end = metaData.endTime ? new Date(metaData.endTime).getTime() : Date.now();
         const start = new Date(metaData.startTime).getTime();
         const lengthOfUsage = Math.floor(end - start);
         const inMinutes = (lengthOfUsage / (1000 * 60)).toFixed(1);
@@ -139,7 +144,12 @@ function UsageView({ attributionId, billingMode }: UsageViewProps) {
 
     return (
         <>
-            <Header title="Usage" subtitle="View usage details (updated every 15 minutes)." />
+            <Header
+                title="Usage"
+                subtitle={`${new Date(startDateOfBillMonth).toLocaleDateString()} - ${new Date(
+                    endDateOfBillMonth,
+                ).toLocaleDateString()} (updated every 15 minutes).`}
+            />
             <div className="app-container pt-5">
                 {errorMessage && <p className="text-base">{errorMessage}</p>}
                 {!errorMessage && (
@@ -163,29 +173,31 @@ function UsageView({ attributionId, billingMode }: UsageViewProps) {
                                         <div className="text-base text-gray-500">Total usage</div>
                                         <div className="flex text-lg text-gray-600 font-semibold">
                                             <CreditsSvg className="my-auto mr-1" />
-                                            <span>{totalCreditsUsed} Credits</span>
+                                            <span>{Intl.NumberFormat().format(totalCreditsUsed)} Credits</span>
                                         </div>
                                     </div>
                                 )}
                             </div>
                         </div>
-                        {!isLoading && usagePage === undefined && !errorMessage && (
-                            <div className="flex flex-col w-full mb-8">
-                                <h3 className="text-center text-gray-500 mt-8">No sessions found.</h3>
-                                <p className="text-center text-gray-500 mt-1">
-                                    Have you started any
-                                    <a className="gp-link" href={gitpodHostUrl.asWorkspacePage().toString()}>
-                                        {" "}
-                                        workspaces
-                                    </a>{" "}
-                                    in{" "}
-                                    {new Date(startDateOfBillMonth).toLocaleString("default", {
-                                        month: "long",
-                                    })}{" "}
-                                    {new Date(startDateOfBillMonth).getFullYear()} or checked your other teams?
-                                </p>
-                            </div>
-                        )}
+                        {!isLoading &&
+                            (usagePage === undefined || usagePage.usageEntriesList.length === 0) &&
+                            !errorMessage && (
+                                <div className="flex flex-col w-full mb-8">
+                                    <h3 className="text-center text-gray-500 mt-8">No sessions found.</h3>
+                                    <p className="text-center text-gray-500 mt-1">
+                                        Have you started any
+                                        <a className="gp-link" href={gitpodHostUrl.asWorkspacePage().toString()}>
+                                            {" "}
+                                            workspaces
+                                        </a>{" "}
+                                        in{" "}
+                                        {new Date(startDateOfBillMonth).toLocaleString("default", {
+                                            month: "long",
+                                        })}{" "}
+                                        {new Date(startDateOfBillMonth).getFullYear()} or checked your other teams?
+                                    </p>
+                                </div>
+                            )}
                         {isLoading && (
                             <div className="flex flex-col place-items-center align-center w-full">
                                 <div className="uppercase text-sm text-gray-400 dark:text-gray-500 mb-5">
@@ -237,9 +249,20 @@ function UsageView({ attributionId, billingMode }: UsageViewProps) {
                                                         </span>
                                                     </div>
                                                     <div className="flex flex-col col-span-5 my-auto">
-                                                        <span className="truncate text-gray-600 dark:text-gray-100 text-md font-medium">
-                                                            {(usage.metadata as WorkspaceInstanceUsageData).workspaceId}
-                                                        </span>
+                                                        <div className="flex">
+                                                            {isRunning(usage) && (
+                                                                <div
+                                                                    className="rounded-full w-2 h-2 text-sm align-middle bg-green-500 my-auto mx-1"
+                                                                    title="Still running"
+                                                                />
+                                                            )}
+                                                            <span className="truncate text-gray-600 dark:text-gray-100 text-md font-medium">
+                                                                {
+                                                                    (usage.metadata as WorkspaceInstanceUsageData)
+                                                                        .workspaceId
+                                                                }
+                                                            </span>
+                                                        </div>
                                                         <span className="text-sm truncate text-gray-400 dark:text-gray-500">
                                                             {(usage.metadata as WorkspaceInstanceUsageData)
                                                                 .contextURL &&
@@ -253,9 +276,11 @@ function UsageView({ attributionId, billingMode }: UsageViewProps) {
                                                         <span className="text-right text-gray-500 dark:text-gray-400 font-medium">
                                                             {usage.credits.toFixed(1)}
                                                         </span>
-                                                        <span className="text-right truncate text-sm text-gray-400 dark:text-gray-500">
-                                                            {getMinutes(usage)}
-                                                        </span>
+                                                        <div className="flex">
+                                                            <span className="text-right truncate text-sm text-gray-400 dark:text-gray-500">
+                                                                {getMinutes(usage)}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                     <div className="my-auto" />
                                                     <div className="flex flex-col col-span-3 my-auto">
