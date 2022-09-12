@@ -25,7 +25,7 @@ func TestBackup(t *testing.T) {
 	f := features.New("backup").
 		WithLabel("component", "ws-manager").
 		Assess("it should start a workspace, create a file and successfully create a backup", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -41,7 +41,7 @@ func TestBackup(t *testing.T) {
 				{Name: "pvc", FF: []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM}},
 			}
 			for _, test := range tests {
-				t.Run(test.Name+"_backup", func(t *testing.T) {
+				t.Run(test.Name, func(t *testing.T) {
 					ws1, stopWs1, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(func(w *wsmanapi.StartWorkspaceRequest) error {
 						w.Spec.FeatureFlags = test.FF
 						w.Spec.Initializer = &csapi.WorkspaceInitializer{
@@ -68,7 +68,7 @@ func TestBackup(t *testing.T) {
 						integration.WithWorkspacekitLift(true),
 					)
 					if err != nil {
-						if err := stopWs1(true); err != nil {
+						if _, err := stopWs1(true); err != nil {
 							t.Errorf("cannot stop workspace: %q", err)
 						}
 						t.Fatal(err)
@@ -83,13 +83,13 @@ func TestBackup(t *testing.T) {
 					}, &resp)
 					rsa.Close()
 					if err != nil {
-						if err = stopWs1(true); err != nil {
+						if _, err := stopWs1(true); err != nil {
 							t.Errorf("cannot stop workspace: %q", err)
 						}
 						t.Fatal(err)
 					}
 
-					err = stopWs1(true)
+					lastStatusWs1, err := stopWs1(true)
 					if err != nil {
 						t.Fatal(err)
 					}
@@ -107,13 +107,8 @@ func TestBackup(t *testing.T) {
 								return nil
 							}
 
-							// PVC: find VolumeSnapshot by workspace ID
-							volumeSnapshot, volumeSnapshotContent, err := integration.FindVolumeSnapshot(ctx, ws1.Req.Id, cfg.Namespace(), cfg.Client())
-							if err != nil {
-								return err
-							}
-							if volumeSnapshot != "" && volumeSnapshotContent != "" {
-								w.Spec.VolumeSnapshot = &wsmanapi.VolumeSnapshotInfo{VolumeSnapshotName: volumeSnapshot, VolumeSnapshotHandle: volumeSnapshotContent}
+							if lastStatusWs1 != nil && lastStatusWs1.Conditions != nil && lastStatusWs1.Conditions.VolumeSnapshot != nil {
+								w.Spec.VolumeSnapshot = lastStatusWs1.Conditions.VolumeSnapshot
 							}
 							return nil
 						}),
@@ -122,7 +117,7 @@ func TestBackup(t *testing.T) {
 						t.Fatal(err)
 					}
 					t.Cleanup(func() {
-						err = stopWs2(true)
+						_, err = stopWs2(true)
 						if err != nil {
 							t.Errorf("cannot stop workspace: %q", err)
 						}
@@ -205,7 +200,7 @@ func TestExistingWorkspaceEnablePVC(t *testing.T) {
 				integration.WithWorkspacekitLift(true),
 			)
 			if err != nil {
-				if err := stopWs1(true); err != nil {
+				if _, err := stopWs1(true); err != nil {
 					t.Errorf("cannot stop workspace: %q", err)
 				}
 				t.Fatal(err)
@@ -220,13 +215,13 @@ func TestExistingWorkspaceEnablePVC(t *testing.T) {
 			}, &resp)
 			rsa.Close()
 			if err != nil {
-				if err = stopWs1(true); err != nil {
+				if _, err := stopWs1(true); err != nil {
 					t.Errorf("cannot stop workspace: %q", err)
 				}
 				t.Fatal(err)
 			}
 
-			err = stopWs1(true)
+			_, err = stopWs1(true)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -247,7 +242,7 @@ func TestExistingWorkspaceEnablePVC(t *testing.T) {
 				t.Fatal(err)
 			}
 			t.Cleanup(func() {
-				err = stopWs2(true)
+				_, err = stopWs2(true)
 				if err != nil {
 					t.Errorf("cannot stop workspace: %q", err)
 				}
@@ -308,8 +303,7 @@ func TestMissingBackup(t *testing.T) {
 
 			wsm, err := api.WorkspaceManager()
 			if err != nil {
-				err = stopWs(true)
-				if err != nil {
+				if _, err := stopWs(true); err != nil {
 					t.Errorf("cannot stop workspace: %q", err)
 				}
 				t.Fatal(err)
@@ -369,7 +363,7 @@ func TestMissingBackup(t *testing.T) {
 						return
 					}
 					if testws.LastStatus.Conditions.Failed == "" {
-						err = stopWs(true)
+						_, err = stopWs(true)
 						if err != nil {
 							t.Errorf("cannot stop workspace: %q", err)
 						}

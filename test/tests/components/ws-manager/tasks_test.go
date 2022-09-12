@@ -98,7 +98,7 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 					}
 
 					defer func() {
-						if err = stopWs(true); err != nil {
+						if _, err = stopWs(true); err != nil {
 							t.Errorf("cannot stop workspace: %q", err)
 						}
 					}()

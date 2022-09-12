@@ -93,7 +93,7 @@ type LaunchWorkspaceDirectlyResult struct {
 // LaunchWorkspaceDirectly starts a workspace pod by talking directly to ws-manager.
 // Whenever possible prefer this function over LaunchWorkspaceFromContextURL, because
 // it has fewer prerequisites.
-func LaunchWorkspaceDirectly(ctx context.Context, api *ComponentAPI, opts ...LaunchWorkspaceDirectlyOpt) (*LaunchWorkspaceDirectlyResult, func(waitForStop bool) error, error) {
+func LaunchWorkspaceDirectly(ctx context.Context, api *ComponentAPI, opts ...LaunchWorkspaceDirectlyOpt) (*LaunchWorkspaceDirectlyResult, func(waitForStop bool) (*wsmanapi.WorkspaceStatus, error), error) {
 	options := launchWorkspaceDirectlyOptions{
 		BaseImage: "docker.io/gitpod/workspace-full:latest",
 	}
@@ -191,31 +191,36 @@ func LaunchWorkspaceDirectly(ctx context.Context, api *ComponentAPI, opts ...Lau
 		return nil, nil, xerrors.Errorf("cannot start workspace: %q", err)
 	}
 
-	stopWs := func(waitForStop bool) error {
+	stopWs := func(waitForStop bool) (*wsmanapi.WorkspaceStatus, error) {
 		tctx, tcancel := context.WithTimeout(context.Background(), perCallTimeout)
 		defer tcancel()
 
+		var lastStatus *wsmanapi.WorkspaceStatus
 		for {
 			err = DeleteWorkspace(tctx, api, req.Id)
 			if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
 				time.Sleep(5 * time.Second)
 				continue
 			} else if err != nil {
-				return err
+				return nil, err
 			}
 			break
 		}
+
+		if !waitForStop {
+			return nil, nil
+		}
 		for {
-			_, err = WaitForWorkspaceStop(tctx, api, req.Id)
+			lastStatus, err = WaitForWorkspaceStop(tctx, api, req.Id)
 			if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
 				time.Sleep(5 * time.Second)
 				continue
 			} else if err != nil {
-				return err
+				return lastStatus, err
 			}
 			break
 		}
-		return err
+		return lastStatus, err
 	}
 	defer func() {
 		if err != nil {
