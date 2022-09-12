@@ -38,4 +38,7 @@ export interface Configuration {
 
     // clusterSyncIntervalSeconds configures how often we sync workspace cluster information
     clusterSyncIntervalSeconds: number;
+
+    // maxTimeToRunningPhaseSeconds is the timeout duration
+    maxTimeToRunningPhaseSeconds: number;
 }

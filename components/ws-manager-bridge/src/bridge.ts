@@ -436,7 +436,6 @@ export class WorkspaceManagerBridge implements Disposable {
         clientProvider: ClientProvider,
         controllerIntervalSeconds: number,
         controllerMaxDisconnectSeconds: number,
-        maxTimeToRunningPhaseSeconds = 60 * 60,
     ) {
         let disconnectStarted = Number.MAX_SAFE_INTEGER;
         this.disposables.push(
@@ -457,7 +456,7 @@ export class WorkspaceManagerBridge implements Disposable {
                             ctx,
                             runningInstances,
                             clientProvider,
-                            maxTimeToRunningPhaseSeconds,
+                            this.config.maxTimeToRunningPhaseSeconds,
                         );
 
                         disconnectStarted = Number.MAX_SAFE_INTEGER; // Reset disconnect period
