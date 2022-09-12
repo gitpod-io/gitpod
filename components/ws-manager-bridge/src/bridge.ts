@@ -512,8 +512,6 @@ export class WorkspaceManagerBridge implements Disposable {
 
             for (const [instanceId, ri] of runningInstancesIdx.entries()) {
                 const instance = ri.latestInstance;
-                // This ensures that the workspace instance is not in a
-                // non-running phase for longer than the max time
                 if (
                     !(
                         instance.status.phase === "running" ||
@@ -614,11 +612,10 @@ export class WorkspaceManagerBridge implements Disposable {
 
     protected async markWorkspaceInstanceAsStopped(ctx: TraceContext, info: RunningWorkspaceInfo, now: Date) {
         const nowISO = now.toISOString();
+        info.latestInstance.status.phase = "stopped";
         info.latestInstance.stoppingTime = nowISO;
         info.latestInstance.stoppedTime = nowISO;
-        info.latestInstance.status.phase = "stopped";
         await this.workspaceDB.trace(ctx).storeInstance(info.latestInstance);
-
         await this.messagebus.notifyOnInstanceUpdate(ctx, info.workspace.ownerId, info.latestInstance);
         await this.prebuildUpdater.stopPrebuildInstance(ctx, info.latestInstance);
     }
