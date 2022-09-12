@@ -7,6 +7,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -39,6 +40,7 @@ var workspacesListCmd = &cobra.Command{
 			Phase       string
 			Type        string
 			Pod         string
+			Active      bool
 		}
 
 		var out []PrintWorkspace
@@ -54,6 +56,7 @@ var workspacesListCmd = &cobra.Command{
 			case api.WorkspaceType_PROBE:
 				pod = fmt.Sprintf("probe-%s", w.GetId())
 			}
+
 			out = append(out, PrintWorkspace{
 				Owner:       w.GetMetadata().GetOwner(),
 				WorkspaceID: w.GetMetadata().GetMetaId(),
@@ -61,12 +64,13 @@ var workspacesListCmd = &cobra.Command{
 				Phase:       w.GetPhase().String(),
 				Type:        w.GetSpec().GetType().String(),
 				Pod:         pod,
+				Active:      w.GetConditions().FirstUserActivity != nil,
 			})
 		}
 
-		tpl := `OWNER	WORKSPACE	INSTANCE	PHASE	TYPE	POD
+		tpl := `OWNER	WORKSPACE	INSTANCE	PHASE	TYPE	POD	ACTIVE
 {{- range . }}
-{{ .Owner }}	{{ .WorkspaceID }}	{{ .Instance }}	{{ .Phase }}	{{ .Type }}	{{ .Pod -}}
+{{ .Owner }}	{{ .WorkspaceID }}	{{ .Instance }}	{{ .Phase }}	{{ .Type }}	{{ .Pod }}	{{ .Active -}}
 {{ end }}
 `
 		err = getOutputFormat(tpl, "{.id}").Print(out)
