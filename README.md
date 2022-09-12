@@ -95,7 +95,7 @@ To this end, we've developed a number of open source projects including:
 1. [**Dazzle**](https://github.com/gitpod-io/dazzle/) - An experimental Docker image builder
 1. [**OpenVSCode Server**](https://github.com/gitpod-io/openvscode-server) - Run the latest VS Code on a remote machine accessed through a browser
 
-## Code of Conduct
+## Code of Conductz
 
 We want to create a welcoming environment for everyone who is interested in contributing to Gitpod or participating in discussions with the Gitpod community.
 This project has adopted the [Contributor Covenant Code of Conduct](https://github.com/gitpod-io/.github/blob/main/CODE_OF_CONDUCT.md), [version 2.0](https://www.contributor-covenant.org/version/2/0/code_of_conduct/).
