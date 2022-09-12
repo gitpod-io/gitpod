@@ -82,10 +82,10 @@ type Dispatch struct {
 }
 
 type workspaceState struct {
-	SeenContainer bool
-	Context       context.Context
-	Cancel        context.CancelFunc
-	Workspace     *Workspace
+	WorkspaceAdded bool
+	Context        context.Context
+	Cancel         context.CancelFunc
+	Workspace      *Workspace
 }
 
 type contextKey struct{}
@@ -191,7 +191,7 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 		// we haven't seen this pod before - add it, and wait for the container
 		owi := wsk8s.GetOWIFromObject(&newPod.ObjectMeta)
 		d.ctxs[workspaceInstanceID] = &workspaceState{
-			SeenContainer: false,
+			WorkspaceAdded: false,
 			Workspace: &Workspace{
 				InstanceID:  workspaceInstanceID,
 				WorkspaceID: workspaceID,
@@ -220,8 +220,6 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 			s.Context = containerCtx
 			s.Cancel = containerCtxCancel
 			s.Workspace.ContainerID = containerID
-			s.SeenContainer = true
-			d.mu.Unlock()
 
 			for _, l := range d.Listener {
 				go func(listener Listener) {
@@ -231,6 +229,9 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 					}
 				}(l)
 			}
+
+			s.WorkspaceAdded = true
+			d.mu.Unlock()
 		}()
 		go func() {
 			// no matter if the container was deleted or not - we've lost our guard that was waiting for that to happen.
@@ -246,7 +247,7 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 		return
 	}
 
-	if !state.SeenContainer {
+	if !state.WorkspaceAdded {
 		return
 	}
 
