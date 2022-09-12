@@ -20,13 +20,20 @@ GITPOD_PLUGIN_DIR=/workspace/gitpod/components/ide/jetbrains/backend-plugin
 $GITPOD_PLUGIN_DIR/gradlew buildPlugin
 
 # TODO(ak) actually should be gradle task to make use of output
-GITPOD_PLUGIN_DIST="$GITPOD_PLUGIN_DIR/build/distributions/gitpod-remote-0.0.1.zip"
+GITPOD_PLUGIN_DIST="$GITPOD_PLUGIN_DIR/build/distributions/gitpod-remote.zip"
 unzip $GITPOD_PLUGIN_DIST -d $TEST_PLUGINS_DIR
 
-TEST_REPO=https://github.com/gitpod-io/spring-petclinic
-TEST_DIR=/workspace/spring-petclinic
+TEST_DIR=/workspace/test-repo
 if [ ! -d "$TEST_DIR" ]; then
-  git clone $TEST_REPO $TEST_DIR
+  TEST_REPO=https://github.com/gitpod-io/spring-petclinic
+  while getopts "r:" OPTION
+  do
+     case $OPTION in
+         r) TEST_REPO=$OPTARG ;;
+         *) ;;
+       esac
+  done
+  git clone "$TEST_REPO" $TEST_DIR
 fi
 
 export JB_DEV=true
