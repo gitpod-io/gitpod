@@ -23,10 +23,6 @@ export function getProjectSettingsMenu(project?: Project, team?: Team) {
             link: [`/${teamOrUserSlug}/${project?.slug || project?.name}/settings`],
         },
         {
-            title: "Configuration",
-            link: [`/${teamOrUserSlug}/${project?.slug || project?.name}/configure`],
-        },
-        {
             title: "Variables",
             link: [`/${teamOrUserSlug}/${project?.slug || project?.name}/variables`],
         },

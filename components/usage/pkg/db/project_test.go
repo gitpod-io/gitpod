@@ -6,13 +6,14 @@ package db_test
 
 import (
 	"fmt"
+	"strings"
+	"testing"
+
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/db/dbtest"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
-	"strings"
-	"testing"
 )
 
 var projectJSON = map[string]interface{}{
@@ -24,7 +25,6 @@ var projectJSON = map[string]interface{}{
 	"deleted":           0,
 	"_lastModified":     "2021-11-02 10:49:12.473658",
 	"name":              "gptest1-repo1-private",
-	"config":            "{\".gitpod.yml\":\"tasks:\\n  - init: |\\n      echo 'TODO: build project'\\n    command: |\\n      echo 'TODO: start app'\"}",
 	"markedDeleted":     1,
 	"userId":            nil,
 	"slug":              "gptest1-repo1-private",
@@ -48,7 +48,7 @@ func TestProject_ReadExistingRecords(t *testing.T) {
 
 func insertRawProject(t *testing.T, conn *gorm.DB, obj map[string]interface{}) uuid.UUID {
 	columns := []string{
-		"id", "cloneUrl", "teamId", "appInstallationId", "creationTime", "deleted", "_lastModified", "name", "config", "markedDeleted", "userId", "slug", "settings",
+		"id", "cloneUrl", "teamId", "appInstallationId", "creationTime", "deleted", "_lastModified", "name", "markedDeleted", "userId", "slug", "settings",
 	}
 	statement := fmt.Sprintf(`INSERT INTO d_b_project (%s) VALUES ?;`, strings.Join(columns, ", "))
 	id := uuid.MustParse(obj["id"].(string))

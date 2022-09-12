@@ -27,7 +27,6 @@ export interface Project {
     teamId?: string;
     userId?: string;
     appInstallationId: string;
-    config?: ProjectConfig;
     settings?: ProjectSettings;
     creationTime: string;
     /** This is a flag that triggers the HARD DELETION of this entity */

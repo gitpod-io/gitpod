@@ -23,7 +23,6 @@ import {
     WithDefaultConfig,
     ProjectConfig,
 } from "@gitpod/gitpod-protocol";
-import { ProjectDB } from "@gitpod/gitpod-db/lib";
 import { GitpodFileParser } from "@gitpod/gitpod-protocol/lib/gitpod-file-parser";
 
 import { MaybeContent } from "../repohost/file-provider";
@@ -47,7 +46,6 @@ export class ConfigProvider {
     @inject(GitpodFileParser) protected readonly gitpodParser: GitpodFileParser;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
-    @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(Config) protected readonly config: Config;
     @inject(ConfigurationService) protected readonly configurationService: ConfigurationService;
 
@@ -184,20 +182,9 @@ export class ConfigProvider {
                 const contextRepoConfig = services.fileProvider.getGitpodFileContent(commit, user);
                 customConfigString = await contextRepoConfig;
                 let origin: WorkspaceConfig["_origin"] = "repo";
-                if (!customConfigString) {
-                    const projectDBConfig = this.projectDB
-                        .findProjectByCloneUrl(commit.repository.cloneUrl)
-                        .then((project) => project?.config);
-                    // We haven't found a Gitpod configuration file in the context repo - check the "Project" in the DB.
-                    const config = await projectDBConfig;
-                    if (config) {
-                        customConfigString = config[".gitpod.yml"];
-                        origin = "project-db";
-                    }
-                }
 
                 if (!customConfigString) {
-                    /* We haven't found a Gitpod configuration file in the context repo or "Project" - check definitely-gp.
+                    /* We haven't found a Gitpod configuration file in the context repo - check definitely-gp.
                      *
                      * In case we had found a config file here, we'd still be checking the definitely GP repo, just to save some time.
                      * While all those checks will be in vain, they should not leak memory either as they'll simply
