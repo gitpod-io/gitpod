@@ -733,8 +733,10 @@ func (m *Manager) StopWorkspace(ctx context.Context, req *api.StopWorkspaceReque
 
 	gracePeriod := stopWorkspaceNormallyGracePeriod
 	if req.Policy == api.StopWorkspacePolicy_IMMEDIATELY {
+		span.LogKV("policy", "immediately")
 		gracePeriod = stopWorkspaceImmediatelyGracePeriod
 	} else if req.Policy == api.StopWorkspacePolicy_ABORT {
+		span.LogKV("policy", "abort")
 		gracePeriod = stopWorkspaceImmediatelyGracePeriod
 		err = m.markWorkspace(ctx, req.Id, addMark(abortRequestAnnotation, util.BooleanTrueString))
 		if err != nil {
