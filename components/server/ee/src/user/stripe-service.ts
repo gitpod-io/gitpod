@@ -130,6 +130,18 @@ export class StripeService {
         return session.url;
     }
 
+    async getPortalUrlForUser(user: User): Promise<string> {
+        const customer = await this.findCustomerByUserId(user.id);
+        if (!customer) {
+            throw new Error(`No Stripe Customer ID found for user '${user.id}'`);
+        }
+        const session = await this.getStripe().billingPortal.sessions.create({
+            customer: customer.id,
+            return_url: this.config.hostUrl.with(() => ({ pathname: `/billing` })).toString(),
+        });
+        return session.url;
+    }
+
     async findUncancelledSubscriptionByCustomer(customerId: string): Promise<Stripe.Subscription | undefined> {
         const result = await this.getStripe().subscriptions.list({
             customer: customerId,

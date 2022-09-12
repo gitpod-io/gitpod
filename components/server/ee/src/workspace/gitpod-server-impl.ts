@@ -2150,6 +2150,43 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
+    async getStripePortalUrl(ctx: TraceContext, attributionId: string): Promise<string> {
+        const attrId = AttributionId.parse(attributionId);
+        if (attrId === undefined) {
+            log.error(`Invalid attribution id: ${attributionId}`);
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+        }
+
+        const user = this.checkAndBlockUser("getStripePortalUrl");
+
+        let url: string;
+        if (attrId.kind === "user") {
+            await this.ensureStripeApiIsAllowed({ user });
+            try {
+                url = await this.stripeService.getPortalUrlForUser(user);
+            } catch (error) {
+                log.error(`Failed to get Stripe portal URL for user '${user.id}'`, error);
+                throw new ResponseError(
+                    ErrorCodes.INTERNAL_SERVER_ERROR,
+                    `Failed to get Stripe portal URL for user '${user.id}'`,
+                );
+            }
+        } else {
+            const team = await this.guardTeamOperation(attrId.teamId, "update");
+            await this.ensureStripeApiIsAllowed({ team });
+            try {
+                url = await this.stripeService.getPortalUrlForTeam(team);
+            } catch (error) {
+                log.error(`Failed to get Stripe portal URL for team '${team.id}'`, error);
+                throw new ResponseError(
+                    ErrorCodes.INTERNAL_SERVER_ERROR,
+                    `Failed to get Stripe portal URL for team '${team.id}'`,
+                );
+            }
+        }
+        return url;
+    }
+
     async getStripePortalUrlForTeam(ctx: TraceContext, teamId: string): Promise<string> {
         this.checkAndBlockUser("getStripePortalUrlForTeam");
         const team = await this.guardTeamOperation(teamId, "update");
