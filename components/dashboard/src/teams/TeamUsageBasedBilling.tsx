@@ -10,6 +10,7 @@ import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { getCurrentTeam, TeamsContext } from "./teams-context";
 import { getGitpodService } from "../service/service";
 import UsageBasedBillingConfig from "../components/UsageBasedBillingConfig";
+import Alert from "../components/Alert";
 
 type PendingStripeSubscription = { pendingSince: number };
 
@@ -24,6 +25,7 @@ export default function TeamUsageBasedBilling() {
     const [pollStripeSubscriptionTimeout, setPollStripeSubscriptionTimeout] = useState<NodeJS.Timeout | undefined>();
     const [stripePortalUrl, setStripePortalUrl] = useState<string | undefined>();
     const [usageLimit, setUsageLimit] = useState<number | undefined>();
+    const [billingError, setBillingError] = useState<string | undefined>();
 
     useEffect(() => {
         if (!team) {
@@ -85,6 +87,7 @@ export default function TeamUsageBasedBilling() {
                 window.localStorage.removeItem(`pendingStripeSubscriptionForTeam${team.id}`);
                 clearTimeout(pollStripeSubscriptionTimeout!);
                 setPendingStripeSubscription(undefined);
+                setBillingError(`Could not subscribe team to Stripe. ${error?.message || String(error)}`);
             }
         })();
     }, [location.search, team]);
@@ -160,6 +163,11 @@ export default function TeamUsageBasedBilling() {
 
     return (
         <>
+            {billingError && (
+                <Alert className="max-w-xl mb-4" closable={false} showIcon={true} type="error">
+                    {billingError}
+                </Alert>
+            )}
             <h3>Usage-Based Billing</h3>
             <UsageBasedBillingConfig
                 userOrTeamId={team?.id || ""}
