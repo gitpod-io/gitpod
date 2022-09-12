@@ -36,6 +36,33 @@ go_protoc() {
         "${PROTO_DIR}"/*.proto
 }
 
+typescript_ts_protoc() {
+    local ROOT_DIR=$1
+    local PROTO_DIR=${2:-.}
+    local MODULE_DIR
+    # Assigning external program output directly
+    # after the `local` keyword masks the return value (Could be an error).
+    # Should be done in a separate line.
+    MODULE_DIR=$(pwd)
+    TARGET_DIR="$MODULE_DIR"/typescript/src
+
+    pushd typescript > /dev/null || exit
+
+    yarn install
+
+    rm -rf "$TARGET_DIR"
+    mkdir -p "$TARGET_DIR"
+
+    echo "[protoc] Generating TypeScript files"
+    protoc --plugin="$MODULE_DIR"/typescript/node_modules/.bin/protoc-gen-ts_proto \
+            --ts_proto_out="$TARGET_DIR" \
+            --ts_proto_opt=outputClientImpl=grpc-web \
+            -I /usr/lib/protoc/include -I"$ROOT_DIR" -I.. -I"../$PROTO_DIR" \
+            "../$PROTO_DIR"/*.proto
+
+popd > /dev/null || exit
+}
+
 typescript_protoc() {
     local ROOT_DIR=$1
     local PROTO_DIR=${2:-.}

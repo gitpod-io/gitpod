@@ -28,8 +28,10 @@ const _ = grpc.SupportPackageIsVersion7
 type UsageServiceClient interface {
 	// GetCostCenter retrieves the active cost center for the given attributionID
 	GetCostCenter(ctx context.Context, in *GetCostCenterRequest, opts ...grpc.CallOption) (*GetCostCenterResponse, error)
-	// SetCostCenter stores the given cost center
+	// DEPRECATED (use UpdateBillingStrategy)
 	SetCostCenter(ctx context.Context, in *SetCostCenterRequest, opts ...grpc.CallOption) (*SetCostCenterResponse, error)
+	// UpdateBillingStrategy updates the billing strategy for the given attributionID
+	UpdateBillingStrategy(ctx context.Context, in *UpdateBillingStrategyRequest, opts ...grpc.CallOption) (*UpdateBillingStrategyResponse, error)
 	// Triggers reconciliation of usage with ledger implementation.
 	ReconcileUsageWithLedger(ctx context.Context, in *ReconcileUsageWithLedgerRequest, opts ...grpc.CallOption) (*ReconcileUsageWithLedgerResponse, error)
 	// ListUsage retrieves all usage for the specified attributionId and theb given time range
@@ -62,6 +64,15 @@ func (c *usageServiceClient) SetCostCenter(ctx context.Context, in *SetCostCente
 	return out, nil
 }
 
+func (c *usageServiceClient) UpdateBillingStrategy(ctx context.Context, in *UpdateBillingStrategyRequest, opts ...grpc.CallOption) (*UpdateBillingStrategyResponse, error) {
+	out := new(UpdateBillingStrategyResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/UpdateBillingStrategy", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *usageServiceClient) ReconcileUsageWithLedger(ctx context.Context, in *ReconcileUsageWithLedgerRequest, opts ...grpc.CallOption) (*ReconcileUsageWithLedgerResponse, error) {
 	out := new(ReconcileUsageWithLedgerResponse)
 	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/ReconcileUsageWithLedger", in, out, opts...)
@@ -86,8 +97,10 @@ func (c *usageServiceClient) ListUsage(ctx context.Context, in *ListUsageRequest
 type UsageServiceServer interface {
 	// GetCostCenter retrieves the active cost center for the given attributionID
 	GetCostCenter(context.Context, *GetCostCenterRequest) (*GetCostCenterResponse, error)
-	// SetCostCenter stores the given cost center
+	// DEPRECATED (use UpdateBillingStrategy)
 	SetCostCenter(context.Context, *SetCostCenterRequest) (*SetCostCenterResponse, error)
+	// UpdateBillingStrategy updates the billing strategy for the given attributionID
+	UpdateBillingStrategy(context.Context, *UpdateBillingStrategyRequest) (*UpdateBillingStrategyResponse, error)
 	// Triggers reconciliation of usage with ledger implementation.
 	ReconcileUsageWithLedger(context.Context, *ReconcileUsageWithLedgerRequest) (*ReconcileUsageWithLedgerResponse, error)
 	// ListUsage retrieves all usage for the specified attributionId and theb given time range
@@ -104,6 +117,9 @@ func (UnimplementedUsageServiceServer) GetCostCenter(context.Context, *GetCostCe
 }
 func (UnimplementedUsageServiceServer) SetCostCenter(context.Context, *SetCostCenterRequest) (*SetCostCenterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetCostCenter not implemented")
+}
+func (UnimplementedUsageServiceServer) UpdateBillingStrategy(context.Context, *UpdateBillingStrategyRequest) (*UpdateBillingStrategyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateBillingStrategy not implemented")
 }
 func (UnimplementedUsageServiceServer) ReconcileUsageWithLedger(context.Context, *ReconcileUsageWithLedgerRequest) (*ReconcileUsageWithLedgerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReconcileUsageWithLedger not implemented")
@@ -160,6 +176,24 @@ func _UsageService_SetCostCenter_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UsageService_UpdateBillingStrategy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateBillingStrategyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsageServiceServer).UpdateBillingStrategy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.UsageService/UpdateBillingStrategy",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsageServiceServer).UpdateBillingStrategy(ctx, req.(*UpdateBillingStrategyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UsageService_ReconcileUsageWithLedger_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ReconcileUsageWithLedgerRequest)
 	if err := dec(in); err != nil {
@@ -210,6 +244,10 @@ var UsageService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetCostCenter",
 			Handler:    _UsageService_SetCostCenter_Handler,
+		},
+		{
+			MethodName: "UpdateBillingStrategy",
+			Handler:    _UsageService_UpdateBillingStrategy_Handler,
 		},
 		{
 			MethodName: "ReconcileUsageWithLedger",

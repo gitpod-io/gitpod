@@ -186,28 +186,50 @@ func (s *UsageService) GetCostCenter(ctx context.Context, in *v1.GetCostCenterRe
 	}, nil
 }
 
-func (s *UsageService) SetCostCenter(ctx context.Context, in *v1.SetCostCenterRequest) (*v1.SetCostCenterResponse, error) {
-	if in.CostCenter == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Empty CostCenter")
-	}
+func (s *UsageService) UpdateBillingStrategy(ctx context.Context, in *v1.UpdateBillingStrategyRequest) (*v1.UpdateBillingStrategyResponse, error) {
 
-	attributionID, err := db.ParseAttributionID(in.CostCenter.AttributionId)
+	attributionID, err := db.ParseAttributionID(in.AttributionId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Failed to parse attribution ID: %s", err.Error())
 	}
 
 	billingStrategy := db.CostCenter_Other
-	if in.CostCenter.BillingStrategy == v1.CostCenter_BILLING_STRATEGY_STRIPE {
+	if in.BillingStrategy == v1.BillingStrategy_BILLING_STRATEGY_STRIPE {
 		billingStrategy = db.CostCenter_Stripe
 	}
 
+	summary, err := db.GetUsageSummary(ctx, s.conn, attributionID, time.Now(), time.Now(), false)
+	if err != nil {
+		return nil, err
+	}
+	if summary.CreditCentsBalanceAtEnd.ToCredits() > float64(in.SpendingLimit) {
+		return nil, status.Errorf(codes.InvalidArgument, "The spending limit must be higher than the current usage %u", summary.CreditCentsBalanceAtEnd.ToCredits())
+	}
+
+	//TODO (se) - Check if the strategy has changed and was 'other' before. If so run the invoice finalization.
 	_, err = db.SaveCostCenter(ctx, s.conn, &db.CostCenter{
 		ID:              attributionID,
-		SpendingLimit:   in.CostCenter.SpendingLimit,
+		SpendingLimit:   in.SpendingLimit,
 		BillingStrategy: billingStrategy,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to save cost center %s: %s", attributionID, err.Error())
+	}
+
+	return &v1.UpdateBillingStrategyResponse{}, nil
+}
+
+func (s *UsageService) SetCostCenter(ctx context.Context, in *v1.SetCostCenterRequest) (*v1.SetCostCenterResponse, error) {
+	if in.CostCenter == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Empty CostCenter")
+	}
+	_, err := s.UpdateBillingStrategy(ctx, &v1.UpdateBillingStrategyRequest{
+		AttributionId:   in.GetCostCenter().GetAttributionId(),
+		SpendingLimit:   in.GetCostCenter().GetSpendingLimit(),
+		BillingStrategy: in.GetCostCenter().GetBillingStrategy(),
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return &v1.SetCostCenterResponse{}, nil

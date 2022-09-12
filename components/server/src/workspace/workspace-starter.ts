@@ -125,10 +125,8 @@ import { WorkspaceClasses, WorkspaceClassesConfig } from "./workspace-classes";
 import { EntitlementService } from "../billing/entitlement-service";
 import { BillingModes } from "../../ee/src/billing/billing-mode";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { CachingBillingServiceClientProvider } from "@gitpod/usage-api/lib/usage/v1/sugar";
-import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
+import { BillingServiceClientImpl, System } from "@gitpod/usage-api/lib/usage/v1/billing";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import { System } from "@gitpod/usage-api/lib/usage/v1/billing_pb";
 import { LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 export interface StartWorkspaceOptions {
@@ -283,8 +281,8 @@ export class WorkspaceStarter {
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
     @inject(BillingModes) protected readonly billingModes: BillingModes;
-    @inject(CachingBillingServiceClientProvider)
-    protected readonly billingServiceClientProvider: CachingBillingServiceClientProvider;
+    @inject(BillingServiceClientImpl)
+    protected readonly billingService: BillingServiceClientImpl;
 
     public async startWorkspace(
         ctx: TraceContext,
@@ -554,13 +552,15 @@ export class WorkspaceStarter {
 
             if (instance.usageAttributionId) {
                 const creationTime = new Date(instance.creationTime);
-                const timestamped = Timestamp.fromDate(creationTime);
                 const parsedAttributionId = AttributionId.parse(instance.usageAttributionId);
                 if (parsedAttributionId) {
                     const billingMode = await this.billingModes.getBillingMode(parsedAttributionId, creationTime);
                     if (billingMode && billingMode.mode === "chargebee") {
-                        const billingClient = this.billingServiceClientProvider.getDefault();
-                        await billingClient.setBilledSession(instance.id, timestamped, System.SYSTEM_CHARGEBEE);
+                        await this.billingService.SetBilledSession({
+                            instanceId: instance.id,
+                            from: creationTime,
+                            system: System.SYSTEM_CHARGEBEE,
+                        });
                     }
                 }
             }

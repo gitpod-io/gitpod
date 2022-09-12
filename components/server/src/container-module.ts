@@ -100,15 +100,8 @@ import { InstallationAdminTelemetryDataProvider } from "./installation-admin/tel
 import { IDEService } from "./ide-service";
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace/workspace-cluster-imagebuilder-client-provider";
-import {
-    CachingUsageServiceClientProvider,
-    CachingBillingServiceClientProvider,
-    UsageServiceClientCallMetrics,
-    UsageServiceClientConfig,
-    UsageServiceClientProvider,
-    BillingServiceClientCallMetrics,
-    BillingServiceClientConfig,
-} from "@gitpod/usage-api/lib/usage/v1/sugar";
+import { GrpcWebImpl, UsageServiceClientImpl } from "@gitpod/usage-api/lib/usage/v1/usage";
+import { BillingServiceClientImpl } from "@gitpod/usage-api/lib/usage/v1/billing";
 import { CommunityEntitlementService, EntitlementService } from "./billing/entitlement-service";
 import {
     ConfigCatClientFactory,
@@ -264,19 +257,15 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(NewsletterSubscriptionController).toSelf().inSingletonScope();
 
-    bind(UsageServiceClientConfig).toDynamicValue((ctx) => {
+    bind(UsageServiceClientImpl).toDynamicValue((ctx) => {
         const config = ctx.container.get<Config>(Config);
-        return { address: config.usageServiceAddr };
+        const service = new UsageServiceClientImpl(new GrpcWebImpl(config.usageServiceAddr, {}));
+        return service;
     });
-    bind(CachingUsageServiceClientProvider).toSelf().inSingletonScope();
-    bind(UsageServiceClientProvider).toService(CachingImageBuilderClientProvider);
-    bind(UsageServiceClientCallMetrics).toService(IClientCallMetrics);
-
-    bind(CachingBillingServiceClientProvider).toSelf().inSingletonScope();
-    bind(BillingServiceClientCallMetrics).toService(IClientCallMetrics);
-    bind(BillingServiceClientConfig).toDynamicValue((ctx) => {
+    bind(BillingServiceClientImpl).toDynamicValue((ctx) => {
         const config = ctx.container.get<Config>(Config);
-        return { address: config.usageServiceAddr };
+        const service = new BillingServiceClientImpl(new GrpcWebImpl(config.usageServiceAddr, {}));
+        return service;
     });
 
     bind(EntitlementService).to(CommunityEntitlementService).inSingletonScope();

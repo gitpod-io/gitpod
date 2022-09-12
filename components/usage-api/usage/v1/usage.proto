@@ -11,8 +11,11 @@ service UsageService {
     // GetCostCenter retrieves the active cost center for the given attributionID
     rpc GetCostCenter(GetCostCenterRequest) returns (GetCostCenterResponse) {}
 
-    // SetCostCenter stores the given cost center
+    // DEPRECATED (use UpdateBillingStrategy)
     rpc SetCostCenter(SetCostCenterRequest) returns (SetCostCenterResponse) {}
+
+    // UpdateBillingStrategy updates the billing strategy for the given attributionID
+    rpc UpdateBillingStrategy(UpdateBillingStrategyRequest) returns (UpdateBillingStrategyResponse) {}
 
     // Triggers reconciliation of usage with ledger implementation.
     rpc ReconcileUsageWithLedger(ReconcileUsageWithLedgerRequest) returns (ReconcileUsageWithLedgerResponse) {}
@@ -20,6 +23,14 @@ service UsageService {
     // ListUsage retrieves all usage for the specified attributionId and theb given time range
     rpc ListUsage(ListUsageRequest) returns (ListUsageResponse) {}
 }
+
+message UpdateBillingStrategyRequest {
+    string attribution_id = 1;
+    int32 spending_limit = 2;
+    BillingStrategy billing_strategy = 3;
+}
+
+message UpdateBillingStrategyResponse {}
 
 message ReconcileUsageWithLedgerRequest {
     // from specifies the starting time range for this request.
@@ -106,12 +117,13 @@ message GetCostCenterResponse {
     CostCenter cost_center = 1;
 }
 
+enum BillingStrategy {
+    BILLING_STRATEGY_STRIPE = 0;
+    BILLING_STRATEGY_OTHER = 1;
+}
+
 message CostCenter {
     string attribution_id = 1;
     int32 spending_limit = 2;
-    enum BillingStrategy {
-        BILLING_STRATEGY_STRIPE = 0;
-        BILLING_STRATEGY_OTHER = 1;
-    }
     BillingStrategy billing_strategy = 3;
 }
