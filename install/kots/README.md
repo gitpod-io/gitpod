@@ -12,6 +12,8 @@ You will need:
 Go to [our Replicated channels page](https://vendor.replicated.com/apps/gitpod/channels) and
 follow the installation instructions on screen.
 
+sssss
+
 # Terminology
 
 KOTS is the technology which is used to deliver a Replicated installation. Generally,
