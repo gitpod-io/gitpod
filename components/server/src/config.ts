@@ -43,11 +43,30 @@ export interface WorkspaceDefaults {
 export interface WorkspaceGarbageCollection {
     disabled: boolean;
     startDate: number;
+
+    /** The number of seconds between a run and the next */
+    intervalSeconds: number;
+
+    /** The maximum amount of workspaces that are marked as 'softDeleted' in one go */
     chunkLimit: number;
+
+    /** The minimal age of a workspace before it is marked as 'softDeleted' (= hidden for the user) */
     minAgeDays: number;
+
+    /** The minimal age of a prebuild (incl. workspace) before it's content is deleted (+ marked as 'softDeleted') */
     minAgePrebuildDays: number;
+
+    /** The minimal number of days a workspace has to stay in 'softDeleted' before it's content is deleted */
     contentRetentionPeriodDays: number;
+
+    /** The maximum amount of workspaces whose content is deleted in one go */
     contentChunkLimit: number;
+
+    /** The minimal number of days a workspace has to stay in 'contentDeleted' before it's purged from the DB */
+    purgeRetentionPeriodDays: number;
+
+    /** The maximum amount of workspaces which are purged in one go */
+    purgeChunkLimit: number;
 }
 
 /**

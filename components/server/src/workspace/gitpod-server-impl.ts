@@ -1166,7 +1166,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             try {
                 await this.guardAccess({ kind: "workspace", subject: workspace }, "create");
             } catch (err) {
-                await this.workspaceDb.trace(ctx).hardDeleteWorkspace(workspace.id);
+                await this.workspaceDeletionService.hardDeleteWorkspace(ctx, workspace.id);
                 throw err;
             }
 

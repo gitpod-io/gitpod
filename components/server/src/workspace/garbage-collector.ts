@@ -34,7 +34,10 @@ export class WorkspaceGarbageCollector {
                 dispose: () => {},
             };
         }
-        return repeat(async () => this.garbageCollectWorkspacesIfLeader(), 30 * 60 * 1000);
+        return repeat(
+            async () => this.garbageCollectWorkspacesIfLeader(),
+            this.config.workspaceGarbageCollection.intervalSeconds * 1000,
+        );
     }
 
     public async garbageCollectWorkspacesIfLeader() {
@@ -43,6 +46,9 @@ export class WorkspaceGarbageCollector {
             this.softDeleteOldWorkspaces().catch((err) => log.error("wsgc: error during soft-deletion", err));
             this.deleteWorkspaceContentAfterRetentionPeriod().catch((err) =>
                 log.error("wsgc: error during content deletion", err),
+            );
+            this.purgeWorkspacesAfterPurgeRetentionPeriod().catch((err) =>
+                log.error("wsgc: error during hard deletion of workspaces", err),
             );
             this.deleteOldPrebuilds().catch((err) => log.error("wsgc: error during prebuild deletion", err));
             this.deleteOutdatedVolumeSnapshots().catch((err) =>
@@ -105,6 +111,34 @@ export class WorkspaceGarbageCollector {
         }
     }
 
+    /**
+     * This method is meant to purge all traces of a Workspace and it's WorkspaceInstances from the DB
+     */
+    protected async purgeWorkspacesAfterPurgeRetentionPeriod() {
+        const span = opentracing.globalTracer().startSpan("purgeWorkspacesAfterPurgeRetentionPeriod");
+        try {
+            const now = new Date();
+            const workspaces = await this.workspaceDB
+                .trace({ span })
+                .findWorkspacesForPurging(
+                    this.config.workspaceGarbageCollection.purgeRetentionPeriodDays,
+                    this.config.workspaceGarbageCollection.purgeChunkLimit,
+                    now,
+                );
+            const deletes = await Promise.all(
+                workspaces.map((ws) => this.deletionService.hardDeleteWorkspace({ span }, ws.id)),
+            );
+
+            log.info(`wsgc: successfully purged ${deletes.length} workspaces`);
+            span.addTags({ nrOfCollectedWorkspaces: deletes.length });
+        } catch (err) {
+            TraceContext.setError({ span }, err);
+            throw err;
+        } finally {
+            span.finish();
+        }
+    }
+
     protected async deleteOldPrebuilds() {
         const span = opentracing.globalTracer().startSpan("deleteOldPrebuilds");
         try {
@@ -128,7 +162,7 @@ export class WorkspaceGarbageCollector {
         }
     }
 
-    // finds volume snapshots that have been superceded by newer volume snapshot and removes them
+    // finds volume snapshots that have been superseded by newer volume snapshot and removes them
     protected async deleteOutdatedVolumeSnapshots() {
         const span = opentracing.globalTracer().startSpan("deleteOutdatedVolumeSnapshots");
         try {

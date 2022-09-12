@@ -108,6 +108,11 @@ export interface WorkspaceDB {
         minSoftDeletedTimeInDays: number,
         limit: number,
     ): Promise<WorkspaceOwnerAndSoftDeleted[]>;
+    findWorkspacesForPurging(
+        minContentDeletionTimeInDays: number,
+        limit: number,
+        now: Date,
+    ): Promise<WorkspaceAndOwner[]>;
     findPrebuiltWorkspacesForGC(daysUnused: number, limit: number): Promise<WorkspaceAndOwner[]>;
     findAllWorkspaces(
         offset: number,

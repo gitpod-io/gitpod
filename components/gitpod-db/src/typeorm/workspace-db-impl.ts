@@ -52,6 +52,7 @@ import { DBPrebuiltWorkspace } from "./entity/db-prebuilt-workspace";
 import { DBPrebuiltWorkspaceUpdatable } from "./entity/db-prebuilt-workspace-updatable";
 import { BUILTIN_WORKSPACE_PROBE_USER_ID } from "../user-db";
 import { DBPrebuildInfo } from "./entity/db-prebuild-info-entry";
+import { daysBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 
 type RawTo<T> = (instance: WorkspaceInstance, ws: Workspace) => T;
 interface OrderBy {
@@ -592,6 +593,22 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         return dbResults as WorkspaceAndOwner[];
     }
 
+    public async findWorkspacesForPurging(
+        minContentDeletionTimeInDays: number,
+        limit: number,
+        now: Date,
+    ): Promise<WorkspaceAndOwner[]> {
+        const minPurgeTime = daysBefore(now.toISOString(), minContentDeletionTimeInDays);
+        const repo = await this.getWorkspaceRepo();
+        const qb = repo
+            .createQueryBuilder("ws")
+            .select(["ws.id", "ws.ownerId"])
+            .where(`ws.contentDeletedTime != ''`)
+            .andWhere(`ws.contentDeletedTime < :minPurgeTime`, { minPurgeTime })
+            .limit(limit);
+        return await qb.getMany();
+    }
+
     public async findWorkspacesForContentDeletion(
         minSoftDeletedTimeInDays: number,
         limit: number,
@@ -964,8 +981,8 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
      *       around to deleting them.
      */
     public async hardDeleteWorkspace(workspaceId: string): Promise<void> {
-        await (await this.getWorkspaceRepo()).update(workspaceId, { deleted: true });
         await (await this.getWorkspaceInstanceRepo()).update({ workspaceId }, { deleted: true });
+        await (await this.getWorkspaceRepo()).update(workspaceId, { deleted: true });
     }
 
     public async findAllWorkspaces(
