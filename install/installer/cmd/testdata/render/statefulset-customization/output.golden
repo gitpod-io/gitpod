@@ -4855,8 +4855,7 @@ data:
         "buildingPhaseSeconds": 3600,
         "unknownPhaseSeconds": 600
       },
-      "clusterSyncIntervalSeconds": 60,
-      "maxTimeToRunningPhaseSeconds": 3600
+      "clusterSyncIntervalSeconds": 60
     }
 kind: ConfigMap
 metadata:
@@ -9099,7 +9098,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 19a15d16ea83f7cd1c61948f0e433f3f72ce175524ea639c1c050a485f17f74d
+        gitpod.io/checksum_config: bacace964780fd56bdd04b997df0017c24563c2aac6bffd10962c297b54c91ba
       creationTimestamp: null
       labels:
         app: gitpod
