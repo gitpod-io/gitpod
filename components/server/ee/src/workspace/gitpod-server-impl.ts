@@ -114,6 +114,7 @@ import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { BillingModes } from "../billing/billing-mode";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { BillingService } from "../billing/billing-service";
+import Stripe from "stripe";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -2047,23 +2048,42 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async findStripeSubscriptionIdForTeam(ctx: TraceContext, teamId: string): Promise<string | undefined> {
-        this.checkAndBlockUser("findStripeSubscriptionIdForTeam");
-        await this.guardTeamOperation(teamId, "get");
+    async findStripeSubscriptionId(ctx: TraceContext, attributionId: string): Promise<string | undefined> {
+        const attrId = AttributionId.parse(attributionId);
+        if (attrId === undefined) {
+            log.error(`Invalid attribution id: ${attributionId}`);
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+        }
+
+        this.checkAndBlockUser("findStripeSubscriptionId");
+
+        let customer: Stripe.Customer | undefined;
         try {
-            const customer = await this.stripeService.findCustomerByTeamId(teamId);
+            if (attrId.kind == "team") {
+                await this.guardTeamOperation(attrId.teamId, "get");
+                customer = await this.stripeService.findCustomerByTeamId(attrId.teamId);
+            } else {
+                customer = await this.stripeService.findCustomerByUserId(attrId.userId);
+            }
+
             if (!customer?.id) {
                 return undefined;
             }
+
             const subscription = await this.stripeService.findUncancelledSubscriptionByCustomer(customer.id);
             return subscription?.id;
         } catch (error) {
-            log.error(`Failed to get Stripe Subscription ID for team '${teamId}'`, error);
+            log.error(`Failed to get Stripe Subscription ID for '${attributionId}'`, error);
             throw new ResponseError(
                 ErrorCodes.INTERNAL_SERVER_ERROR,
-                `Failed to get Stripe Subscription ID for team '${teamId}'`,
+                `Failed to get Stripe Subscription ID for '${attributionId}'`,
             );
         }
+    }
+
+    async findStripeSubscriptionIdForTeam(ctx: TraceContext, teamId: string): Promise<string | undefined> {
+        const attributionId: AttributionId = { kind: "team", teamId: teamId };
+        return this.findStripeSubscriptionId(ctx, AttributionId.render(attributionId));
     }
 
     async createOrUpdateStripeCustomerForTeam(ctx: TraceContext, teamId: string, currency: string): Promise<void> {
