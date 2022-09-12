@@ -436,6 +436,7 @@ export class WorkspaceManagerBridge implements Disposable {
         clientProvider: ClientProvider,
         controllerIntervalSeconds: number,
         controllerMaxDisconnectSeconds: number,
+        maxTimeToRunningPhaseSeconds = 60 * 60,
     ) {
         let disconnectStarted = Number.MAX_SAFE_INTEGER;
         this.disposables.push(
@@ -452,7 +453,12 @@ export class WorkspaceManagerBridge implements Disposable {
 
                     // Control running workspace instances against ws-manager
                     try {
-                        await this.controlRunningInstances(ctx, runningInstances, clientProvider);
+                        await this.controlRunningInstances(
+                            ctx,
+                            runningInstances,
+                            clientProvider,
+                            maxTimeToRunningPhaseSeconds,
+                        );
 
                         disconnectStarted = Number.MAX_SAFE_INTEGER; // Reset disconnect period
                     } catch (err) {
@@ -489,6 +495,7 @@ export class WorkspaceManagerBridge implements Disposable {
         parentCtx: TraceContext,
         runningInstances: RunningWorkspaceInfo[],
         clientProvider: ClientProvider,
+        maxTimeToRunningPhaseSeconds: number,
     ) {
         const installation = this.config.installation;
 
@@ -506,7 +513,14 @@ export class WorkspaceManagerBridge implements Disposable {
 
             for (const [instanceId, ri] of runningInstancesIdx.entries()) {
                 const instance = ri.latestInstance;
-                if (instance.status.phase !== "running") {
+                // This ensures that the workspace instance is not in a
+                // non-running phase for longer than the max time
+                if (
+                    !(
+                        instance.status.phase === "running" ||
+                        durationLongerThanSeconds(Date.parse(instance.creationTime), maxTimeToRunningPhaseSeconds)
+                    )
+                ) {
                     log.debug({ instanceId }, "Skipping instance", {
                         phase: instance.status.phase,
                         creationTime: instance.creationTime,
