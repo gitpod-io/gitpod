@@ -166,3 +166,13 @@ const prebuildsStartedTotal = new prometheusClient.Counter({
 export function increasePrebuildsStartedCounter() {
     prebuildsStartedTotal.inc();
 }
+
+const workspacesPurgedTotal = new prometheusClient.Counter({
+    name: "gitpod_server_workspaces_purged_total",
+    help: "Counter of workspaces hard deleted by periodic job running on server.",
+    registers: [prometheusClient.register],
+});
+
+export function reportWorkspacePurged() {
+    workspacesPurgedTotal.inc();
+}

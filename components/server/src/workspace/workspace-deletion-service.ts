@@ -19,6 +19,7 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import { DeleteVolumeSnapshotRequest } from "@gitpod/ws-manager/lib";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { reportWorkspacePurged } from "../prometheus-metrics";
 
 @injectable()
 export class WorkspaceDeletionService {
@@ -44,6 +45,19 @@ export class WorkspaceDeletionService {
             softDeleted,
             softDeletedTime: new Date().toISOString(),
         });
+    }
+
+    /**
+     * This *hard deletes* the workspace entry and all corresponding workspace-instances, by triggering a db-sync mechanism that purges it from the DB.
+     * Note: when this function returns that doesn't mean that the entries are actually gone yet, that might still take a short while until db-sync comes
+     *       around to deleting them.
+     * @param ctx
+     * @param workspaceId
+     */
+    public async hardDeleteWorkspace(ctx: TraceContext, workspaceId: string): Promise<void> {
+        await this.db.trace(ctx).hardDeleteWorkspace(workspaceId);
+        log.info(`Purged Workspace ${workspaceId} and all WorkspaceInstances for this workspace`, { workspaceId });
+        reportWorkspacePurged();
     }
 
     /**

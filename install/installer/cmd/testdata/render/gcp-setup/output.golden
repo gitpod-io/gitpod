@@ -4059,11 +4059,14 @@ data:
       "workspaceGarbageCollection": {
         "disabled": false,
         "startDate": 0,
+        "intervalSeconds": 1800,
         "chunkLimit": 1000,
         "minAgeDays": 14,
         "minAgePrebuildDays": 7,
         "contentRetentionPeriodDays": 21,
-        "contentChunkLimit": 1000
+        "contentChunkLimit": 1000,
+        "purgeRetentionPeriodDays": 1095,
+        "purgeChunkLimit": 1000
       },
       "authProviderConfigFiles": [],
       "incrementalPrebuilds": {
@@ -8155,7 +8158,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 4f66681a8061c909af839092f3667c674ae68889a700f1af87162eafb05f72ac
+        gitpod.io/checksum_config: be459a9d71866b87da87cd017d0063334112640ca956927773eb7adaf885c00b
       creationTimestamp: null
       labels:
         app: gitpod

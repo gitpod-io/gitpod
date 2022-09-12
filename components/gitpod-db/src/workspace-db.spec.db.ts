@@ -662,6 +662,7 @@ class WorkspaceDBSpec {
             ]);
         }
     }
+
     @test(timeout(10000))
     public async testFindVolumeSnapshotWorkspacesForGC() {
         await this.threeVolumeSnapshotsForTwoWorkspaces();
@@ -725,6 +726,78 @@ class WorkspaceDBSpec {
             volumeHandle: "some-handle3",
             workspaceId: workspaceId2,
         });
+    }
+
+    @test(timeout(10000))
+    public async findWorkspacesForPurging() {
+        const creationTime = "2018-01-01T00:00:00.000Z";
+        const ownerId = "1221423";
+        const purgeDate = new Date("2019-02-01T00:00:00.000Z");
+        const d20180202 = "2018-02-02T00:00:00.000Z";
+        const d20180201 = "2018-02-01T00:00:00.000Z";
+        const d20180131 = "2018-01-31T00:00:00.000Z";
+        await Promise.all([
+            this.db.store({
+                id: "1",
+                creationTime,
+                description: "something",
+                contextURL: "http://github.com/myorg/inactive",
+                ownerId,
+                context: {
+                    title: "my title",
+                },
+                config: {},
+                type: "regular",
+                contentDeletedTime: d20180131,
+            }),
+            this.db.store({
+                id: "2",
+                creationTime,
+                description: "something",
+                contextURL: "http://github.com/myorg/active",
+                ownerId,
+                context: {
+                    title: "my title",
+                },
+                config: {},
+                type: "regular",
+                contentDeletedTime: d20180201,
+            }),
+            this.db.store({
+                id: "3",
+                creationTime,
+                description: "something",
+                contextURL: "http://github.com/myorg/active",
+                ownerId,
+                context: {
+                    title: "my title",
+                },
+                config: {},
+                type: "regular",
+                contentDeletedTime: d20180202,
+            }),
+            this.db.store({
+                id: "4",
+                creationTime,
+                description: "something",
+                contextURL: "http://github.com/myorg/active",
+                ownerId,
+                context: {
+                    title: "my title",
+                },
+                config: {},
+                type: "regular",
+                contentDeletedTime: undefined,
+            }),
+        ]);
+
+        const wsIds = await this.db.findWorkspacesForPurging(365, 1000, purgeDate);
+        expect(wsIds).to.deep.equal([
+            {
+                id: "1",
+                ownerId,
+            },
+        ]);
     }
 }
 module.exports = new WorkspaceDBSpec();

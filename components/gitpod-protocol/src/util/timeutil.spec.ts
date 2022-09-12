@@ -45,4 +45,25 @@ export class TimeutilSpec {
         const later = oneMonthLater(from.toISOString(), day);
         expect(later, `expected ${later} to be equal ${expectation}`).to.be.equal(expectation.toISOString());
     }
+
+    @test
+    testDaysBefore2() {
+        const tests: { date: Date; daysEarlier: number; expectation: string }[] = [
+            {
+                date: new Date("2021-07-13T00:00:00.000Z"),
+                daysEarlier: 365,
+                expectation: "2020-07-13T00:00:00.000Z",
+            },
+            {
+                date: new Date("2019-02-01T00:00:00.000Z"),
+                daysEarlier: 365,
+                expectation: "2018-02-01T00:00:00.000Z",
+            },
+        ];
+
+        for (const t of tests) {
+            const actual = daysBefore(t.date.toISOString(), t.daysEarlier);
+            expect(actual).to.equal(t.expectation, `expected ${actual} to be equal ${t.expectation}`);
+        }
+    }
 }
