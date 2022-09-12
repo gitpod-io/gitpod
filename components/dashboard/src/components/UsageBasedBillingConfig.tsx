@@ -13,6 +13,7 @@ import { PaymentContext } from "../payment-context";
 import { getGitpodService } from "../service/service";
 import DropDown from "../components/DropDown";
 import Modal from "../components/Modal";
+import Alert from "./Alert";
 
 interface Props {
     userOrTeamId: string;
@@ -150,12 +151,14 @@ function CreditCardInputForm(props: { id: string }) {
     const elements = useElements();
     const { currency, setCurrency } = useContext(PaymentContext);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [billingError, setBillingError] = useState<string | undefined>();
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
         if (!stripe || !elements) {
             return;
         }
+        setBillingError(undefined);
         setIsLoading(true);
         try {
             // Create Stripe customer for team & currency (or update currency)
@@ -176,7 +179,7 @@ function CreditCardInputForm(props: { id: string }) {
             }
         } catch (error) {
             console.error(error);
-            alert(error?.message || "Failed to submit form. See console for error message.");
+            setBillingError(`Failed to submit form. ${error?.message || String(error)}`);
         } finally {
             setIsLoading(false);
         }
@@ -184,6 +187,11 @@ function CreditCardInputForm(props: { id: string }) {
 
     return (
         <form className="mt-4 flex-grow flex flex-col" onSubmit={handleSubmit}>
+            {billingError && (
+                <Alert className="mb-4" closable={false} showIcon={true} type="error">
+                    {billingError}
+                </Alert>
+            )}
             <PaymentElement />
             <div className="mt-4 flex-grow flex justify-end items-end">
                 <div className="flex-grow flex space-x-1">
