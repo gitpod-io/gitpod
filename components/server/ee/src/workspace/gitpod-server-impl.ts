@@ -2124,30 +2124,48 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     protected defaultSpendingLimit = 100;
-    async subscribeTeamToStripe(ctx: TraceContext, teamId: string, setupIntentId: string): Promise<void> {
-        this.checkAndBlockUser("subscribeTeamToStripe");
-        const team = await this.guardTeamOperation(teamId, "update");
-        await this.ensureStripeApiIsAllowed({ team });
+    async subscribeToStripe(ctx: TraceContext, attributionId: string, setupIntentId: string): Promise<void> {
+        const attrId = AttributionId.parse(attributionId);
+        if (attrId === undefined) {
+            log.error(`Invalid attribution id: ${attributionId}`);
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+        }
+
+        const user = this.checkAndBlockUser("subscribeToStripe");
+
+        let customer: Stripe.Customer | undefined;
         try {
-            let customer = await this.stripeService.findCustomerByTeamId(team!.id);
-            if (!customer) {
-                throw new Error(`No Stripe customer profile for team '${team.id}'`);
+            if (attrId.kind === "team") {
+                const team = await this.guardTeamOperation(attrId.teamId, "update");
+                await this.ensureStripeApiIsAllowed({ team });
+                customer = await this.stripeService.findCustomerByTeamId(team!.id);
+            } else {
+                await this.ensureStripeApiIsAllowed({ user });
+                customer = await this.stripeService.findCustomerByUserId(user.id);
             }
+            if (!customer) {
+                throw new Error(`No Stripe customer profile for '${attributionId}'`);
+            }
+
             await this.stripeService.setDefaultPaymentMethodForCustomer(customer, setupIntentId);
             await this.stripeService.createSubscriptionForCustomer(customer);
-
-            const attributionId: AttributionId = { kind: "team", teamId };
-
-            // Creating a cost center for this team
             await this.usageServiceClientProvider.getDefault().setCostCenter({
-                id: attributionId,
+                id: attrId,
                 spendingLimit: this.defaultSpendingLimit,
                 billingStrategy: "stripe",
             });
         } catch (error) {
-            log.error(`Failed to subscribe team '${teamId}' to Stripe`, error);
-            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, `Failed to subscribe team '${teamId}' to Stripe`);
+            log.error(`Failed to subscribe '${attributionId}' to Stripe`, error);
+            throw new ResponseError(
+                ErrorCodes.INTERNAL_SERVER_ERROR,
+                `Failed to subscribe '${attributionId}' to Stripe`,
+            );
         }
+    }
+
+    async subscribeTeamToStripe(ctx: TraceContext, teamId: string, setupIntentId: string): Promise<void> {
+        const attributionId: AttributionId = { kind: "team", teamId: teamId };
+        return this.subscribeToStripe(ctx, AttributionId.render(attributionId), setupIntentId);
     }
 
     async getStripePortalUrl(ctx: TraceContext, attributionId: string): Promise<string> {
