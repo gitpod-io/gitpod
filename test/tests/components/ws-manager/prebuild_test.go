@@ -12,6 +12,7 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 )
@@ -28,24 +29,47 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 				api.Done(t)
 			})
 
-			_, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
-				req.Type = wsmanapi.WorkspaceType_PREBUILD
-				req.Spec.Envvars = append(req.Spec.Envvars, &wsmanapi.EnvironmentVariable{
-					Name:  "GITPOD_TASKS",
-					Value: `[{ "init": "echo \"some output\" > someFile; sleep 20; exit 0;" }]`,
-				})
-				return nil
-			}))
-			if err != nil {
-				t.Fatalf("cannot launch a workspace: %q", err)
+			tests := []struct {
+				Name string
+				FF   []wsmanapi.WorkspaceFeatureFlag
+			}{
+				{Name: "classic"},
+				{Name: "pvc", FF: []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM}},
 			}
-			t.Cleanup(func() {
-				err = stopWs(true)
-				if err != nil {
-					t.Errorf("cannot stop workspace: %q", err)
-				}
-			})
-
+			for _, test := range tests {
+				t.Run(test.Name, func(t *testing.T) {
+					_, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
+						req.Type = wsmanapi.WorkspaceType_PREBUILD
+						req.Spec.Envvars = append(req.Spec.Envvars, &wsmanapi.EnvironmentVariable{
+							Name:  "GITPOD_TASKS",
+							Value: `[{ "init": "echo \"some output\" > someFile; sleep 20; exit 0;" }]`,
+						})
+						req.Spec.FeatureFlags = test.FF
+						req.Spec.Initializer = &csapi.WorkspaceInitializer{
+							Spec: &csapi.WorkspaceInitializer_Git{
+								Git: &csapi.GitInitializer{
+									RemoteUri:        "https://github.com/gitpod-io/empty.git",
+									TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,
+									CloneTaget:       "main",
+									CheckoutLocation: "empty",
+									Config:           &csapi.GitConfig{},
+								},
+							},
+						}
+						req.Spec.WorkspaceLocation = "empty"
+						return nil
+					}))
+					if err != nil {
+						t.Fatalf("cannot launch a workspace: %q", err)
+					}
+					t.Cleanup(func() {
+						err = stopWs(true)
+						if err != nil {
+							t.Errorf("cannot stop workspace: %q", err)
+						}
+					})
+				})
+			}
 			return ctx
 		}).
 		Feature()
