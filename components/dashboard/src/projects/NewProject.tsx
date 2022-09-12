@@ -39,8 +39,6 @@ export default function NewProject() {
     const [loaded, setLoaded] = useState<boolean>(false);
 
     const [project, setProject] = useState<Project | undefined>();
-    const [guessedConfigString, setGuessedConfigString] = useState<string | undefined>();
-    const [sourceOfConfig, setSourceOfConfig] = useState<"repo" | "db" | undefined>();
 
     const [authProviders, setAuthProviders] = useState<AuthProviderInfo[]>([]);
     const [isGitHubAppEnabled, setIsGitHubAppEnabled] = useState<boolean>();
@@ -123,37 +121,6 @@ export default function NewProject() {
     }, [teams]);
 
     useEffect(() => {
-        if (selectedRepo) {
-            (async () => {
-                try {
-                    const guessedConfigStringPromise = getGitpodService().server.guessRepositoryConfiguration(
-                        selectedRepo.cloneUrl,
-                    );
-                    const repoConfigString = await getGitpodService().server.fetchRepositoryConfiguration(
-                        selectedRepo.cloneUrl,
-                    );
-                    if (repoConfigString) {
-                        setSourceOfConfig("repo");
-                    } else {
-                        setGuessedConfigString(
-                            (await guessedConfigStringPromise) ||
-                                `tasks:
-  - init: |
-      echo 'TODO: build project'
-    command: |
-      echo 'TODO: start app'`,
-                        );
-                        setSourceOfConfig("db");
-                    }
-                } catch (error) {
-                    console.error("Getting project configuration failed", error);
-                    setSourceOfConfig(undefined);
-                }
-            })();
-        }
-    }, [selectedRepo]);
-
-    useEffect(() => {
         if (selectedTeamOrUser && selectedRepo) {
             createProject(selectedTeamOrUser, selectedRepo);
         }
@@ -189,15 +156,10 @@ export default function NewProject() {
     }, [selectedProviderHost]);
 
     useEffect(() => {
-        if (project && sourceOfConfig) {
-            (async () => {
-                if (guessedConfigString && sourceOfConfig === "db") {
-                    await getGitpodService().server.setProjectConfiguration(project.id, guessedConfigString);
-                }
-                await getGitpodService().server.triggerPrebuild(project.id, null);
-            })();
+        if (project) {
+            getGitpodService().server.triggerPrebuild(project.id, null);
         }
-    }, [project, sourceOfConfig]);
+    }, [project]);
 
     const isGitHub = () => selectedProviderHost === "github.com";
 

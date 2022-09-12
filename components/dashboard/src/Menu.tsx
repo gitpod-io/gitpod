@@ -75,7 +75,6 @@ export default function Menu() {
                 // project sub-pages
                 "prebuilds",
                 "settings",
-                "configure",
                 "variables",
             ].includes(resource)
         ) {

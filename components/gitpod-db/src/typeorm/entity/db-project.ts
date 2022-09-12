@@ -6,7 +6,7 @@
 
 import { Entity, Column, PrimaryColumn, Index } from "typeorm";
 import { TypeORM } from "../typeorm";
-import { ProjectConfig, ProjectSettings } from "@gitpod/gitpod-protocol";
+import { ProjectSettings } from "@gitpod/gitpod-protocol";
 import { Transformer } from "../transformer";
 
 @Entity()
@@ -41,9 +41,6 @@ export class DBProject {
 
     @Column()
     appInstallationId: string;
-
-    @Column("simple-json", { nullable: true })
-    config?: ProjectConfig;
 
     @Column("simple-json", { nullable: true })
     settings?: ProjectSettings;

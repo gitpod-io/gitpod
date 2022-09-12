@@ -2416,95 +2416,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         );
     }
 
-    public async fetchRepositoryConfiguration(ctx: TraceContext, cloneUrl: string): Promise<string | undefined> {
-        traceAPIParams(ctx, { cloneUrl });
-        const user = this.checkUser("fetchRepositoryConfiguration");
-        try {
-            const context = (await this.contextParser.handle(ctx, user, cloneUrl)) as CommitContext;
-            return await this.configurationService.fetchRepositoryConfiguration(ctx, user, context);
-        } catch (error) {
-            if (UnauthorizedError.is(error)) {
-                throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
-            }
-            throw error;
-        }
-    }
-
-    public async fetchProjectRepositoryConfiguration(
-        ctx: TraceContext,
-        projectId: string,
-    ): Promise<string | undefined> {
-        traceAPIParams(ctx, { projectId });
-        const user = this.checkUser("fetchProjectRepositoryConfiguration");
-
-        await this.guardProjectOperation(user, projectId, "get");
-
-        const project = await this.projectsService.getProject(projectId);
-        if (!project) {
-            throw new Error("Project not found");
-        }
-
-        try {
-            const context = (await this.contextParser.handle(ctx, user, project.cloneUrl)) as CommitContext;
-            return await this.configurationService.fetchRepositoryConfiguration(ctx, user, context);
-        } catch (error) {
-            if (UnauthorizedError.is(error)) {
-                throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
-            }
-            throw error;
-        }
-    }
-
-    public async guessRepositoryConfiguration(ctx: TraceContext, cloneUrl: string): Promise<string | undefined> {
-        const user = this.checkUser("guessRepositoryConfiguration");
-        try {
-            const context = (await this.contextParser.handle(ctx, user, cloneUrl)) as CommitContext;
-            return await this.configurationService.guessRepositoryConfiguration(ctx, user, context);
-        } catch (error) {
-            if (UnauthorizedError.is(error)) {
-                throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
-            }
-            throw error;
-        }
-    }
-
-    public async guessProjectConfiguration(ctx: TraceContext, projectId: string): Promise<string | undefined> {
-        traceAPIParams(ctx, { projectId });
-        const user = this.checkUser("guessProjectConfiguration");
-        await this.guardProjectOperation(user, projectId, "get");
-
-        const project = await this.projectsService.getProject(projectId);
-        if (!project) {
-            throw new Error("Project not found");
-        }
-
-        try {
-            const context = (await this.contextParser.handle(ctx, user, project.cloneUrl)) as CommitContext;
-            return await this.configurationService.guessRepositoryConfiguration(ctx, user, context);
-        } catch (error) {
-            if (UnauthorizedError.is(error)) {
-                throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
-            }
-            throw error;
-        }
-    }
-
-    public async setProjectConfiguration(ctx: TraceContext, projectId: string, configString: string): Promise<void> {
-        traceAPIParams(ctx, { projectId }); // filter configString because of size
-
-        const user = this.checkAndBlockUser("setProjectConfiguration");
-        await this.guardProjectOperation(user, projectId, "update");
-
-        const parseResult = this.gitpodParser.parse(configString);
-        if (parseResult.validationErrors) {
-            throw new Error(`This configuration could not be parsed: ${parseResult.validationErrors.join(", ")}`);
-        }
-        await this.projectsService.updateProjectPartial({
-            id: projectId,
-            config: { ".gitpod.yml": configString },
-        });
-    }
-
     public async updateProjectPartial(ctx: TraceContext, partialProject: PartialProject): Promise<void> {
         traceAPIParams(ctx, {
             // censor everything irrelevant
@@ -2518,7 +2429,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardProjectOperation(user, partialProject.id, "update");
 
         const partial: PartialProject = { id: partialProject.id };
-        const allowedFields: (keyof Project)[] = ["settings"]; // Don't add 'config' here! Please use `setProjectConfiguration` instead to parse & validate configs
+        const allowedFields: (keyof Project)[] = ["settings"];
         for (const f of allowedFields) {
             if (f in partialProject) {
                 (partial[f] as any) = partialProject[f];
