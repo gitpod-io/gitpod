@@ -33,7 +33,7 @@ func TestRunDocker(t *testing.T) {
 				t.Fatal(err)
 			}
 			t.Cleanup(func() {
-				err = stopWs(true)
+				_, err = stopWs(true)
 				if err != nil {
 					t.Errorf("cannot stop workspace: %q", err)
 				}
