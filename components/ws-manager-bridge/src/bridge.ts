@@ -506,7 +506,17 @@ export class WorkspaceManagerBridge implements Disposable {
 
             for (const [instanceId, ri] of runningInstancesIdx.entries()) {
                 const instance = ri.latestInstance;
-                if (instance.status.phase !== "running") {
+                // This ensures that the workspace instance is not in a
+                // non-running phase for longer than the max time
+                if (
+                    !(
+                        instance.status.phase === "running" ||
+                        durationLongerThanSeconds(
+                            Date.parse(instance.creationTime),
+                            this.config.maxTimeToRunningPhaseSeconds,
+                        )
+                    )
+                ) {
                     log.debug({ instanceId }, "Skipping instance", {
                         phase: instance.status.phase,
                         creationTime: instance.creationTime,
