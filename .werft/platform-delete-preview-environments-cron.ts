@@ -47,7 +47,7 @@ Tracing.initialize()
         werft.endAllSpans();
     });
 
-class HarvesterPreviewEnvironment {
+export class HarvesterPreviewEnvironment {
     // The prefix we use for the namespace
     static readonly namespacePrefix: string = "preview-";
 
@@ -228,7 +228,7 @@ class HarvesterPreviewEnvironment {
     }
 }
 
-type PreviewEnvironment = HarvesterPreviewEnvironment;
+export type PreviewEnvironment = HarvesterPreviewEnvironment;
 
 async function getAllPreviewEnvironments(slice: string): Promise<PreviewEnvironment[]> {
     const harvesterPreviewEnvironments = exec(
