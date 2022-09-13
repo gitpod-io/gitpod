@@ -4,11 +4,18 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import { useContext } from "react";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { BillingAccountSelector } from "../components/BillingAccountSelector";
+import { UserContext } from "../user-context";
 import UsageBasedBillingConfig from "../components/UsageBasedBillingConfig";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 
 export default function Billing() {
+    const { user } = useContext(UserContext);
+
+    const attributionId: AttributionId = { kind: "user", userId: user?.id || "" };
+
     return (
         <PageWithSettingsSubMenu title="Billing" subtitle="Usage-Based Billing.">
             <div>
@@ -16,8 +23,8 @@ export default function Billing() {
                 <BillingAccountSelector />
                 <h3 className="mt-12">Usage-Based Billing</h3>
                 <UsageBasedBillingConfig
-                    userOrTeamId={""}
-                    showSpinner={false}
+                    attributionId={attributionId}
+                    showSpinner={!user}
                     showUpgradeBilling={true}
                     showManageBilling={false}
                     doUpdateLimit={function (_: number): Promise<void> {

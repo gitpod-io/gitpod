@@ -11,6 +11,7 @@ import { getCurrentTeam, TeamsContext } from "./teams-context";
 import { getGitpodService } from "../service/service";
 import UsageBasedBillingConfig from "../components/UsageBasedBillingConfig";
 import Alert from "../components/Alert";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 
 type PendingStripeSubscription = { pendingSince: number };
 
@@ -161,6 +162,8 @@ export default function TeamUsageBasedBilling() {
         }
     };
 
+    const attributionId: AttributionId = { kind: "team", teamId: team?.id || "" };
+
     return (
         <>
             {billingError && (
@@ -170,7 +173,7 @@ export default function TeamUsageBasedBilling() {
             )}
             <h3>Usage-Based Billing</h3>
             <UsageBasedBillingConfig
-                userOrTeamId={team?.id || ""}
+                attributionId={attributionId}
                 showSpinner={showSpinner}
                 showUpgradeBilling={showUpgradeBilling}
                 showManageBilling={showManageBilling}
