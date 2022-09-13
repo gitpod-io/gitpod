@@ -1419,9 +1419,6 @@ data:
           "parallelUpload": 6
         },
         "blobQuota": 5368709120
-      },
-      "usageReport": {
-        "bucketName": "gitpod-usage-reports"
       }
     }
 kind: ConfigMap
@@ -8441,7 +8438,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: d72d95c5bd425eaabe281cea259139df35cc6343145eadac5f2e95aae30360ab
+        gitpod.io/checksum_config: efaa4ecb9c874bc91c8f6000604bbbc61f5294f388703b19ec5cdb58c303ea23
         hello: world
       creationTimestamp: null
       labels:

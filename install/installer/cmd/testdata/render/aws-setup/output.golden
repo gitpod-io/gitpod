@@ -1240,9 +1240,6 @@ data:
           "bucket": "s3-bucket"
         },
         "blobQuota": 5368709120
-      },
-      "usageReport": {
-        "bucketName": "gitpod-usage-reports"
       }
     }
 kind: ConfigMap
@@ -7227,7 +7224,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 2e45691c9b7dbd15eefd950854dfc5d89500012dc70f6a624069a404c72f9010
+        gitpod.io/checksum_config: 8a160b6e8470e7a514961a4530576b4fa6bfb60eae6a275d05f2b488542a9e9b
       creationTimestamp: null
       labels:
         app: gitpod

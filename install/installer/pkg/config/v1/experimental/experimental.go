@@ -115,6 +115,7 @@ type WorkspaceConfig struct {
 	} `json:"wsProxy"`
 
 	ContentService struct {
+		// Deprecated
 		UsageReportBucketName string `json:"usageReportBucketName"`
 	} `json:"contentService"`
 }
