@@ -20,11 +20,14 @@ context_repo=$2
 
 function cleanup ()
 {
-    if [[ $DO_CLEANUP -eq 0 ]]; then
+    werft log phase "slack notification and cleanup $SIGNAL" "Slack notification and cleanup: $SIGNAL"
+    echo "Check if cleanup has already done" | werft log slice "Check if clenup has already done"
+    if [[ $DO_CLEANUP -eq 1 ]]; then
+        echo "Skip clean up" | werft log slice "Check if clenup has already done" --done
         return 0
     fi
     DO_CLEANUP=1
-    werft log phase "slack notification and cleanup $SIGNAL" "Slack notification and cleanup: $SIGNAL"
+    werft log slice "Check if clenup has already done" --done
 
     werftJobUrl="https://werft.gitpod-dev.com/job/${context_name}"
 
