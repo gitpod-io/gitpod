@@ -14,14 +14,14 @@ service UsageService {
     // SetCostCenter stores the given cost center
     rpc SetCostCenter(SetCostCenterRequest) returns (SetCostCenterResponse) {}
 
-    // Triggers reconciliation of usage with ledger implementation.
-    rpc ReconcileUsageWithLedger(ReconcileUsageWithLedgerRequest) returns (ReconcileUsageWithLedgerResponse) {}
+    // Triggers reconciliation of usage.
+    rpc ReconcileUsage(ReconcileUsageRequest) returns (ReconcileUsageResponse) {}
 
     // ListUsage retrieves all usage for the specified attributionId and theb given time range
     rpc ListUsage(ListUsageRequest) returns (ListUsageResponse) {}
 }
 
-message ReconcileUsageWithLedgerRequest {
+message ReconcileUsageRequest {
     // from specifies the starting time range for this request.
     google.protobuf.Timestamp from = 1;
 
@@ -29,7 +29,7 @@ message ReconcileUsageWithLedgerRequest {
     google.protobuf.Timestamp to = 2;
 }
 
-message ReconcileUsageWithLedgerResponse {}
+message ReconcileUsageResponse {}
 
 message PaginatedRequest {
     int64 per_page = 1;

@@ -72,7 +72,7 @@ func (r *LedgerJob) Run() (err error) {
 		WithField("to", now)
 
 	logger.Info("Running ledger job. Reconciling usage records.")
-	_, err = r.usageClient.ReconcileUsageWithLedger(ctx, &v1.ReconcileUsageWithLedgerRequest{
+	_, err = r.usageClient.ReconcileUsage(ctx, &v1.ReconcileUsageRequest{
 		From: timestamppb.New(hourAgo),
 		To:   timestamppb.New(now),
 	})
