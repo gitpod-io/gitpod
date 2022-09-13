@@ -7,11 +7,8 @@
 import { User } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { GetUpcomingInvoiceResponse } from "@gitpod/usage-api/lib/usage/v1/billing_pb";
-import {
-    CachingUsageServiceClientProvider,
-    CachingBillingServiceClientProvider,
-} from "@gitpod/usage-api/lib/usage/v1/sugar";
+import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
+import { UsageServiceClient, UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import { inject, injectable } from "inversify";
 import { UserService } from "../../../src/user/user-service";
 
@@ -24,14 +21,18 @@ export interface UsageLimitReachedResult {
 @injectable()
 export class BillingService {
     @inject(UserService) protected readonly userService: UserService;
-    @inject(CachingUsageServiceClientProvider)
-    protected readonly usageServiceClientProvider: CachingUsageServiceClientProvider;
-    @inject(CachingBillingServiceClientProvider)
-    protected readonly billingServiceClientProvider: CachingBillingServiceClientProvider;
+    @inject(UsageServiceDefinition.name)
+    protected readonly usageService: UsageServiceClient;
+    @inject(BillingServiceDefinition.name)
+    protected readonly billingService: BillingServiceClient;
 
     async checkUsageLimitReached(user: User): Promise<UsageLimitReachedResult> {
         const attributionId = await this.userService.getWorkspaceUsageAttributionId(user);
-        const costCenter = await this.usageServiceClientProvider.getDefault().getCostCenter(attributionId);
+        const costCenter = (
+            await this.usageService.getCostCenter({
+                attributionId: AttributionId.render(attributionId),
+            })
+        ).costCenter;
         if (!costCenter) {
             const err = new Error("No CostCenter found");
             log.error({ userId: user.id }, err.message, err, { attributionId });
@@ -42,9 +43,9 @@ export class BillingService {
             };
         }
 
-        const upcomingInvoice = await this.getUpcomingInvoice(attributionId);
-        const currentInvoiceCredits = upcomingInvoice.getCredits();
-        if (currentInvoiceCredits >= costCenter.spendingLimit) {
+        const upcomingInvoice = await this.billingService.getUpcomingInvoice(attributionId);
+        const currentInvoiceCredits = upcomingInvoice.credits | 0;
+        if (currentInvoiceCredits >= (costCenter.spendingLimit || 0)) {
             log.info({ userId: user.id }, "Usage limit reached", {
                 attributionId,
                 currentInvoiceCredits,
@@ -71,10 +72,5 @@ export class BillingService {
             reached: false,
             attributionId,
         };
-    }
-
-    async getUpcomingInvoice(attributionId: AttributionId): Promise<GetUpcomingInvoiceResponse> {
-        const response = await this.billingServiceClientProvider.getDefault().getUpcomingInvoice(attributionId);
-        return response;
     }
 }

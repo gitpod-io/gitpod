@@ -72,7 +72,12 @@ import { EligibilityService } from "../user/eligibility-service";
 import { AccountStatementProvider } from "../user/account-statement-provider";
 import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/payment-protocol";
 import { ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
-import * as usage_grpc from "@gitpod/usage-api/lib/usage/v1/usage_pb";
+import {
+    CostCenter_BillingStrategy,
+    ListUsageRequest_Ordering,
+    UsageServiceClient,
+    Usage_Kind,
+} from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import {
     AssigneeIdentityIdentifier,
     TeamSubscription,
@@ -107,14 +112,13 @@ import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
 import { URL } from "url";
 import { UserCounter } from "../user/user-counter";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { CachingUsageServiceClientProvider } from "@gitpod/usage-api/lib/usage/v1/sugar";
-import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billing/entitlement-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { BillingModes } from "../billing/billing-mode";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { BillingService } from "../billing/billing-service";
 import Stripe from "stripe";
+import { UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -154,8 +158,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     @inject(UserService) protected readonly userService: UserService;
 
-    @inject(CachingUsageServiceClientProvider)
-    protected readonly usageServiceClientProvider: CachingUsageServiceClientProvider;
+    @inject(UsageServiceDefinition.name)
+    protected readonly usageService: UsageServiceClient;
 
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
 
@@ -2149,10 +2153,14 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
             await this.stripeService.setDefaultPaymentMethodForCustomer(customer, setupIntentId);
             await this.stripeService.createSubscriptionForCustomer(customer);
-            await this.usageServiceClientProvider.getDefault().setCostCenter({
-                id: attrId,
-                spendingLimit: this.defaultSpendingLimit,
-                billingStrategy: "stripe",
+
+            // Creating a cost center for this team
+            await this.usageService.setCostCenter({
+                costCenter: {
+                    attributionId: attributionId,
+                    spendingLimit: this.defaultSpendingLimit,
+                    billingStrategy: CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE,
+                },
             });
         } catch (error) {
             log.error(`Failed to subscribe '${attributionId}' to Stripe`, error);
@@ -2218,9 +2226,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const attributionId: AttributionId = { kind: "team", teamId };
         await this.guardCostCenterAccess(ctx, user.id, attributionId, "get");
 
-        const costCenter = await this.usageServiceClientProvider.getDefault().getCostCenter(attributionId);
-        if (costCenter) {
-            return costCenter.spendingLimit;
+        const costCenter = await this.usageService.getCostCenter({
+            attributionId: AttributionId.render(attributionId),
+        });
+        if (costCenter?.costCenter) {
+            return costCenter.costCenter.spendingLimit;
         }
         return undefined;
     }
@@ -2232,14 +2242,17 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         if (typeof usageLimit !== "number" || usageLimit < 0) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "Unexpected `usageLimit` value.");
         }
-        const attributionId: AttributionId = { kind: "team", teamId };
-        await this.guardCostCenterAccess(ctx, user.id, attributionId, "update");
-
-        const costCenter = await this.usageServiceClientProvider.getDefault().getCostCenter(attributionId);
-        await this.usageServiceClientProvider.getDefault().setCostCenter({
-            id: attributionId,
-            spendingLimit: usageLimit,
-            billingStrategy: costCenter?.billingStrategy || "other",
+        const attrId: AttributionId = { kind: "team", teamId };
+        await this.guardCostCenterAccess(ctx, user.id, attrId, "update");
+        const attributionId = AttributionId.render(attrId);
+        const costCenter = await this.usageService.getCostCenter({ attributionId });
+        await this.usageService.setCostCenter({
+            costCenter: {
+                attributionId,
+                spendingLimit: usageLimit,
+                billingStrategy:
+                    costCenter?.costCenter?.billingStrategy || CostCenter_BillingStrategy.BILLING_STRATEGY_OTHER,
+            },
         });
     }
 
@@ -2271,50 +2284,40 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const user = this.checkAndBlockUser("listUsage");
         await this.guardCostCenterAccess(ctx, user.id, attributionId, "get");
 
-        const timestampFrom = from ? Timestamp.fromDate(new Date(from)) : undefined;
-        const timestampTo = to ? Timestamp.fromDate(new Date(to)) : undefined;
-
-        const usageClient = this.usageServiceClientProvider.getDefault();
-        const request = new usage_grpc.ListUsageRequest();
-        request.setAttributionId(AttributionId.render(attributionId));
-        request.setFrom(timestampFrom);
-        if (to) {
-            request.setTo(timestampTo);
-        }
-        request.setOrder(req.order);
-        if (req.pagination) {
-            const paginatedRequest = new usage_grpc.PaginatedRequest();
-            paginatedRequest.setPage(req.pagination.page);
-            paginatedRequest.setPerPage(req.pagination.perPage);
-            request.setPagination(paginatedRequest);
-        }
-        const response = await usageClient.listUsage(ctx, request);
-        const pagination = response.getPagination();
+        const response = await this.usageService.listUsage({
+            attributionId: AttributionId.render(attributionId),
+            from: from ? new Date(from) : undefined,
+            to: to ? new Date(to) : undefined,
+            order: ListUsageRequest_Ordering.ORDERING_DESCENDING,
+            pagination: {
+                page: req.pagination?.page,
+                perPage: req.pagination?.perPage,
+            },
+        });
         return {
-            usageEntriesList: response.getUsageEntriesList().map((u) => {
+            usageEntriesList: response.usageEntries.map((u) => {
                 return {
-                    id: u.getId(),
-                    attributionId: u.getAttributionId(),
-                    effectiveTime: u.getEffectiveTime()!.toDate().getTime(),
-                    credits: u.getCredits(),
-                    description: u.getDescription(),
-                    draft: u.getDraft(),
-                    workspaceInstanceId: u.getWorkspaceInstanceId(),
-                    kind:
-                        u.getKind() === usage_grpc.Usage.Kind.KIND_WORKSPACE_INSTANCE ? "workspaceinstance" : "invoice",
-                    metadata: JSON.parse(u.getMetadata()),
+                    id: u.id,
+                    attributionId: u.attributionId,
+                    effectiveTime: u.effectiveTime && u.effectiveTime.getTime(),
+                    credits: u.credits,
+                    description: u.description,
+                    draft: u.draft,
+                    workspaceInstanceId: u.workspaceInstanceId,
+                    kind: u.kind === Usage_Kind.KIND_WORKSPACE_INSTANCE ? "workspaceinstance" : "invoice",
+                    metadata: JSON.parse(u.metadata),
                 };
             }),
-            pagination: pagination
+            pagination: response.pagination
                 ? {
-                      page: pagination.getPage(),
-                      perPage: pagination.getPerPage(),
-                      total: pagination.getTotal(),
-                      totalPages: pagination.getTotalPages(),
+                      page: response.pagination.page,
+                      perPage: response.pagination.perPage,
+                      total: response.pagination.total,
+                      totalPages: response.pagination.totalPages,
                   }
                 : undefined,
-            creditBalanceAtEnd: response.getCreditBalanceAtEnd(),
-            creditBalanceAtStart: response.getCreditBalanceAtStart(),
+            creditBalanceAtEnd: response.creditBalanceAtEnd,
+            creditBalanceAtStart: response.creditBalanceAtStart,
         };
     }
 

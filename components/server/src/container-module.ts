@@ -100,15 +100,9 @@ import { InstallationAdminTelemetryDataProvider } from "./installation-admin/tel
 import { IDEService } from "./ide-service";
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace/workspace-cluster-imagebuilder-client-provider";
-import {
-    CachingUsageServiceClientProvider,
-    CachingBillingServiceClientProvider,
-    UsageServiceClientCallMetrics,
-    UsageServiceClientConfig,
-    UsageServiceClientProvider,
-    BillingServiceClientCallMetrics,
-    BillingServiceClientConfig,
-} from "@gitpod/usage-api/lib/usage/v1/sugar";
+import { UsageServiceClient, UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
+import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
+import { createChannel, createClient } from "nice-grpc";
 import { CommunityEntitlementService, EntitlementService } from "./billing/entitlement-service";
 import {
     ConfigCatClientFactory,
@@ -264,19 +258,14 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(NewsletterSubscriptionController).toSelf().inSingletonScope();
 
-    bind(UsageServiceClientConfig).toDynamicValue((ctx) => {
+    bind<UsageServiceClient>(UsageServiceDefinition.name).toDynamicValue((ctx) => {
         const config = ctx.container.get<Config>(Config);
-        return { address: config.usageServiceAddr };
+        return createClient(UsageServiceDefinition, createChannel(config.usageServiceAddr));
     });
-    bind(CachingUsageServiceClientProvider).toSelf().inSingletonScope();
-    bind(UsageServiceClientProvider).toService(CachingImageBuilderClientProvider);
-    bind(UsageServiceClientCallMetrics).toService(IClientCallMetrics);
 
-    bind(CachingBillingServiceClientProvider).toSelf().inSingletonScope();
-    bind(BillingServiceClientCallMetrics).toService(IClientCallMetrics);
-    bind(BillingServiceClientConfig).toDynamicValue((ctx) => {
+    bind<BillingServiceClient>(BillingServiceDefinition.name).toDynamicValue((ctx) => {
         const config = ctx.container.get<Config>(Config);
-        return { address: config.usageServiceAddr };
+        return createClient(BillingServiceDefinition, createChannel(config.usageServiceAddr));
     });
 
     bind(EntitlementService).to(CommunityEntitlementService).inSingletonScope();
