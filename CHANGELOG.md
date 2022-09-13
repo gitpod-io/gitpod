@@ -1,6 +1,11 @@
 # Change Log
 
 ## September 2022
+- [installer]: config detects shiftfs and containerd values ([#12683](https://github.com/gitpod-io/gitpod/pull/12683)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Show personal Usage page. ([#12771](https://github.com/gitpod-io/gitpod/pull/12771)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- [installer]: create config command and deprecate init command ([#12679](https://github.com/gitpod-io/gitpod/pull/12679)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Improve fetching repositories loading state ([#12833](https://github.com/gitpod-io/gitpod/pull/12833)) - [@gtsiolis](https://github.com/gtsiolis)
+- Add link to support on phone verification ([#12852](https://github.com/gitpod-io/gitpod/pull/12852)) - [@gtsiolis](https://github.com/gtsiolis)
 - JetBrains IDEs now have actions related to Gitpod, which can be accessed via Control Center and via the Search Menu. ([#12621](https://github.com/gitpod-io/gitpod/pull/12621)) - [@felladrin](https://github.com/felladrin)
 - [server] Support for storing vscode edit sessions in sync server ([#12445](https://github.com/gitpod-io/gitpod/pull/12445)) - [@jeanp413](https://github.com/jeanp413)
 - [local-preview] Remove unused dead code ([#12496](https://github.com/gitpod-io/gitpod/pull/12496)) - [@Pothulapati](https://github.com/Pothulapati)
