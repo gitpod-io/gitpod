@@ -8,7 +8,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/config"
@@ -102,7 +104,12 @@ func runClusterConfigValidation(ctx context.Context, restConfig *rest.Config, na
 func init() {
 	validateCmd.AddCommand(validateClusterCmd)
 
+	dir, err := os.Getwd()
+	if err != nil {
+		log.WithError(err).Fatal("Failed to get working directory")
+	}
+
 	validateClusterCmd.PersistentFlags().StringVar(&validateClusterOpts.Kube.Config, "kubeconfig", "", "path to the kubeconfig file")
-	validateClusterCmd.PersistentFlags().StringVarP(&validateClusterOpts.Config, "config", "c", os.Getenv("GITPOD_INSTALLER_CONFIG"), "path to the config file")
+	validateClusterCmd.PersistentFlags().StringVarP(&validateClusterOpts.Config, "config", "c", getEnvvar("GITPOD_INSTALLER_CONFIG", filepath.Join(dir, "gitpod.config.yaml")), "path to the config file")
 	validateClusterCmd.PersistentFlags().StringVarP(&validateClusterOpts.Namespace, "namespace", "n", "default", "namespace to deploy to")
 }

@@ -13,6 +13,7 @@ import (
 
 	_ "embed"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components"
 	"github.com/gitpod-io/gitpod/installer/pkg/config"
@@ -238,7 +239,12 @@ func renderKubernetesObjects(cfgVersion string, cfg *configv1.Config) ([]string,
 func init() {
 	rootCmd.AddCommand(renderCmd)
 
-	renderCmd.PersistentFlags().StringVarP(&renderOpts.ConfigFN, "config", "c", os.Getenv("GITPOD_INSTALLER_CONFIG"), "path to the config file, use - for stdin")
+	dir, err := os.Getwd()
+	if err != nil {
+		log.WithError(err).Fatal("Failed to get working directory")
+	}
+
+	renderCmd.PersistentFlags().StringVarP(&renderOpts.ConfigFN, "config", "c", getEnvvar("GITPOD_INSTALLER_CONFIG", filepath.Join(dir, "gitpod.config.yaml")), "path to the config file, use - for stdin")
 	renderCmd.PersistentFlags().StringVarP(&renderOpts.Namespace, "namespace", "n", "default", "namespace to deploy to")
 	renderCmd.Flags().BoolVar(&renderOpts.ValidateConfigDisabled, "no-validation", false, "if set, the config will not be validated before running")
 	renderCmd.Flags().BoolVar(&renderOpts.UseExperimentalConfig, "use-experimental-config", false, "enable the use of experimental config that is prone to be changed")
