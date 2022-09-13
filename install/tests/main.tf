@@ -13,6 +13,11 @@ variable "project" { default = "sh-automated-tests" }
 variable "sa_creds" { default = null }
 variable "dns_sa_creds" { default = null }
 
+data local_file "dns_credentials" {
+  filename = var.dns_sa_creds
+}
+
+
 variable "eks_node_image_id" {
   default = null
 }
@@ -59,7 +64,7 @@ module "k3s" {
 module "gcp-issuer" {
   source      = "../infra/modules/tools/issuer"
   kubeconfig  = var.kubeconfig
-  gcp_credentials = var.dns_sa_creds
+  gcp_credentials = data.local_file.dns_credentials.content
   issuer_name = "cloudDNS"
   cert_manager_issuer = {
     project = "dns-for-playgrounds"
@@ -113,7 +118,8 @@ module "clouddns-externaldns" {
   # source = "github.com/gitpod-io/gitpod//install/infra/terraform/tools/external-dns?ref=main"
   source      = "../infra/modules/tools/cloud-dns-external-dns"
   kubeconfig  = var.kubeconfig
-  credentials = var.dns_sa_creds
+  credentials = data.local_file.dns_credentials.content
+  project     = "dns-for-playgrounds"
 }
 
 module "azure-externaldns" {

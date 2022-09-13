@@ -1,22 +1,23 @@
 resource "google_service_account" "dns_sa" {
+  count = var.domain_name == null ? 0 : 1
+
   account_id   = local.dns_sa
   display_name = "Service Account managed by TF for DNS"
 }
 
 resource "google_project_iam_member" "dns-sa-iam" {
+  count = var.domain_name == null ? 0 : 1
+
   project = var.project
   role = "roles/dns.admin"
 
-  member = "serviceAccount:${google_service_account.dns_sa.email}"
+  member = "serviceAccount:${google_service_account.dns_sa[count.index].email}"
 }
 
 resource "google_service_account_key" "dns_sa_key" {
-  service_account_id = google_service_account.dns_sa.name
-}
+  count = var.domain_name == null ? 0 : 1
 
-resource "local_file" "dns-credentials" {
-  filename = "dns-credentials.json"
-  content  = base64decode(google_service_account_key.dns_sa_key.private_key)
+  service_account_id = google_service_account.dns_sa[count.index].name
 }
 
 resource "google_dns_managed_zone" "gitpod-dns-zone" {

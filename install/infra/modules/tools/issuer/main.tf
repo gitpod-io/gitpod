@@ -15,22 +15,15 @@ resource "kubernetes_secret" "aws_dns_solver" {
 
 # the following is only for GCP managed DNS setup
 
-data local_file "gcp_credentials" {
-  count    = var.gcp_credentials == null ? 0 : 1
-  filename = var.gcp_credentials
-}
-
 resource "kubernetes_secret" "gcp_dns_solver" {
   count    = var.gcp_credentials == null ? 0 : 1
-  depends_on = [
-    data.local_file.gcp_credentials,
-  ]
+
   metadata {
     name      = "clouddns-dns01-solver"
     namespace = "cert-manager"
   }
   data = {
-    "keys.json" = "${data.local_file.gcp_credentials[0].content}"
+    "keys.json" = var.gcp_credentials
   }
 }
 

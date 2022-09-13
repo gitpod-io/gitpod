@@ -28,7 +28,7 @@ output "database" {
     instance            = "${var.project}:${var.region}:${google_sql_database_instance.gitpod[0].name}"
     username            = "${google_sql_user.users[0].name}"
     password            = random_password.password[0].result
-    service_account_key_path = "./mysql-credentials.json"
+    service_account_key = base64decode(google_service_account_key.db_sa_key[0].private_key)
   }, "No database created")
 }
 
@@ -38,20 +38,20 @@ output "registry" {
     url      = data.google_container_registry_repository.gitpod[0].repository_url
     server   = regex("[^/?#]*", data.google_container_registry_repository.gitpod[0].repository_url)
     username = "_json_key"
-    password = "Copy the output of the command: cat ./gs-credentials.json | tr -s '\n' ' '"
+    password = base64decode(google_service_account_key.obj_sa_key[0].private_key)
   }, "No container registry created")
 }
 
-output "dns_credentials_path" {
+output "dns_credentials" {
   sensitive = false
-  value = var.domain_name == null ? "" : "./dns-credentials.json"
+  value = var.domain_name == null ? "" : base64decode(google_service_account_key.dns_sa_key[0].private_key)
 }
 
 output "storage" {
   sensitive = true
   value = try({
-    region      = var.region
-    project     = var.project
-    service_account_key_path = "./gs-credentials.json"
+    region              = var.region
+    project             = var.project
+    service_account_key = base64decode(google_service_account_key.obj_sa_key[0].private_key)
   }, "No GCS bucket created for object storage")
 }

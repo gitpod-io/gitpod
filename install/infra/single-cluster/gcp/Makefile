@@ -51,33 +51,49 @@ output-url:
 
 output-nameservers:
 	@echo ""
-	@echo "Nameservers for the domain(to be added as NS records in your domain provider):"
+	@echo "🟢 Nameservers for the domain(to be added as NS records in your domain provider):"
 	@echo "================="
 	@terraform output -json nameservers | jq
 
 output-storage:
 	@echo ""
-	@echo "Object storage:"
+	@echo "🟢 Object storage:"
 	@echo "=============="
-	@terraform output -json storage | jq
+	@echo "Choose 'GCP' Storage provider"
+	@echo ""
+	@echo "Storage region = $$(terraform output -json storage | yq r - region)"
+	@echo "Project ID     = $$(terraform output -json storage | yq r - project)"
+	@echo "Service account key = Upload the file 'gs-credentials.json' created in this directory"
+	@terraform output -json storage | yq r - service_account_key > gs-credentials.json
+	@echo ""
 
 output-registry:
 	@echo ""
-	@echo "GCR registry:"
+	@echo "🟢 GCR registry:"
 	@echo "=================="
-	@terraform output -json registry | jq
+	@echo "Container registry URL      = $$(terraform output -json registry | yq r - url)"
+	@echo "Container registry server   = $$(terraform output -json registry | yq r - server)"
+	@echo "Container registry username = $$(terraform output -json registry | yq r - username)"
+	@echo "Container registry password = Copy paste the following JSON key"
+	@echo ""
+	@terraform output -json registry | yq r - password
 
 output-database:
 	@echo ""
-	@echo "Database:"
+	@echo "🟢 Database:"
 	@echo "========"
 	@echo "Tick the option 'Use Google Cloud SQL Proxy' if using this database"
-	@terraform output -json database | jq
+	@echo ""
+	@echo "CloudSQL connection name = $$(terraform output -json database | yq r - instance)"
+	@echo "Username 				= $$(terraform output -json database | yq r - username)"
+	@echo "Password 				= $$(terraform output -json database | yq r - password)"
+	@echo "GCP service account key  = Upload the file 'mysql-credentials.json' created in this directory"
+	@terraform output -json database | yq r - service_account_key > mysql-credentials.json
 	@echo ""
 
 output-issuer:
 	@echo ""
-	@echo "ClusterIssuer name:"
+	@echo "🟢 ClusterIssuer name:"
 	@echo "================="
 	@terraform output -json cluster_issuer | jq
 

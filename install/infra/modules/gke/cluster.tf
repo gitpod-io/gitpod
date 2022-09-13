@@ -4,31 +4,11 @@ resource "google_service_account" "cluster_sa" {
 }
 
 resource "google_project_iam_member" "gke-sa-iam-storage" {
+  for_each = local.gke_iam_roles
+
   project = var.project
-  role = "roles/storage.admin"
-
-  member = "serviceAccount:${google_service_account.cluster_sa.email}"
-}
-
-resource "google_project_iam_member" "gke-sa-iam-log" {
-  project = var.project
-  role = "roles/logging.logWriter"
-
-  member = "serviceAccount:${google_service_account.cluster_sa.email}"
-}
-
-resource "google_project_iam_member" "gke-sa-iam-metrics" {
-  project = var.project
-  role = "roles/monitoring.metricWriter"
-
-  member = "serviceAccount:${google_service_account.cluster_sa.email}"
-}
-
-resource "google_project_iam_member" "gke-sa-iam-container" {
-  project = var.project
-  role = "roles/container.admin"
-
-  member = "serviceAccount:${google_service_account.cluster_sa.email}"
+  role    = each.key
+  member  = "serviceAccount:${google_service_account.cluster_sa.email}"
 }
 
 resource "google_container_cluster" "gitpod-cluster" {
