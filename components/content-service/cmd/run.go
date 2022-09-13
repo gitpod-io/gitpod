@@ -57,12 +57,6 @@ var runCmd = &cobra.Command{
 		}
 		api.RegisterIDEPluginServiceServer(srv.GRPC(), idePluginService)
 
-		usageReportService, err := service.NewUsageReportService(cfg.Storage, cfg.UsageReports.BucketName)
-		if err != nil {
-			log.WithError(err).Fatalf("Cannot create usage report service")
-		}
-		api.RegisterUsageReportServiceServer(srv.GRPC(), usageReportService)
-
 		err = srv.ListenAndServe()
 		if err != nil {
 			log.WithError(err).Fatal("Cannot start server")

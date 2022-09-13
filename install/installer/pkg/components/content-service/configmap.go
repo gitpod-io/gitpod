@@ -11,30 +11,17 @@ import (
 
 	"github.com/gitpod-io/gitpod/content-service/api/config"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	usageReportBucketName := "gitpod-usage-reports"
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.Workspace != nil && cfg.Workspace.ContentService.UsageReportBucketName != "" {
-			usageReportBucketName = cfg.Workspace.ContentService.UsageReportBucketName
-		}
-		return nil
-	})
-
 	cscfg := config.ServiceConfig{
 		Service: baseserver.ServerConfiguration{
 			Address: fmt.Sprintf("0.0.0.0:%d", RPCPort),
 		},
 		Storage: common.StorageConfig(ctx),
-		UsageReports: config.UsageReportConfig{
-			BucketName: usageReportBucketName,
-		},
 	}
 
 	fc, err := common.ToJSONString(cscfg)

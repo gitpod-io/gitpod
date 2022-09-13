@@ -112,7 +112,8 @@ type UsageReportConfig struct {
 }
 
 type ServiceConfig struct {
-	Service      baseserver.ServerConfiguration `json:"service"`
-	Storage      StorageConfig                  `json:"storage"`
-	UsageReports UsageReportConfig              `json:"usageReport"`
+	Service baseserver.ServerConfiguration `json:"service"`
+	Storage StorageConfig                  `json:"storage"`
+	// Deprecated
+	_ UsageReportConfig `json:"usageReport"`
 }

@@ -1213,9 +1213,6 @@ data:
           "region": ""
         },
         "blobQuota": 5368709120
-      },
-      "usageReport": {
-        "bucketName": "gitpod-usage-reports"
       }
     }
 kind: ConfigMap
@@ -7352,7 +7349,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 161f3cb1cb0878446fc17e8b20667e54261e2ebe7ac8212e33a63e2674507435
+        gitpod.io/checksum_config: facd640dff87a0bd161053705fc8e34204a605c5eeaf445f6f5ef8e5329f486a
       creationTimestamp: null
       labels:
         app: gitpod
