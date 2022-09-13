@@ -19,9 +19,10 @@ const version: string = annotations.version || "-";
 const preview: string = annotations.preview || "false"; // setting to true will not destroy the setup
 const upgrade: string = annotations.upgrade || "false"; // setting to true will not KOTS upgrade to the latest version. Set the channel to beta or stable in this case.
 const skipTests: string = annotations.skipTests || "false"; // setting to true skips the integration tests
+const selfSigned: Boolean = annotations.selfSigned === "true";
 const deps: string = annotations.deps || ""; // options: ["external", "internal"] setting to `external` will ensure that all resource dependencies(storage, db, registry) will be external. if unset, a random selection will be used
 
-const baseDomain: string = "tests.gitpod-self-hosted.com"
+const baseDomain: string = "tests.gitpod-self-hosted.com";
 
 const slackHook = new Map<string, string>([
     ["self-hosted-jobs", process.env.SH_SLACK_NOTIFICATION_PATH.trim()],
@@ -46,9 +47,9 @@ interface TestConfig {
     CLOUD: string;
 }
 
-const k8s_version: string = randK8sVersion(testConfig)
-const os_version: string = randOsVersion() // applicable only for k3s
-const op: string = preview == "true" ? "Preview" : "Test"
+const k8s_version: string = randK8sVersion(testConfig);
+const os_version: string = randOsVersion(); // applicable only for k3s
+const op: string = preview == "true" ? "Preview" : "Test";
 
 // Each of the TEST_CONFIGURATIONS define an integration test end-to-end
 // It should be a combination of multiple INFRA_PHASES, order of PHASES slice is important
@@ -109,10 +110,8 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
     CLEANUP_OLD_TESTS: {
         CLOUD: "",
         DESCRIPTION: "Deletes old test setups",
-        PHASES: [
-            "CLEANUP_OLD_TESTS"
-        ]
-    }
+        PHASES: ["CLEANUP_OLD_TESTS"],
+    },
 };
 
 const config: TestConfig = TEST_CONFIGURATIONS[testConfig];
@@ -121,7 +120,7 @@ const cloud: string = config.CLOUD;
 // `INFRA_PHASES` describe the phases that can be mixed
 // and matched to form a test configuration
 // Each phase should contain a `makeTarget` which
-// corresponds to a target in the Makefile in ./nightly-tests/Makefile
+// corresponds to a target in the Makefile in ../install/tests/Makefile
 const INFRA_PHASES: { [name: string]: InfraConfig } = {
     STANDARD_GKE_CLUSTER: {
         phase: "create-std-gke-cluster",
@@ -149,7 +148,7 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
         description: "Sets up cert-manager and optional cloud dns secret",
     },
     GCP_MANAGED_DNS: {
-        phase: "setup-external-dns-with-cloud-dns",
+        phase: "setup-gke-with-cloud-dns",
         makeTarget: "managed-dns",
         description: "Sets up external-dns & cloudDNS config",
     },
@@ -160,7 +159,7 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
     },
     CLUSTER_ISSUER: {
         phase: "setup-cluster-issuer",
-        makeTarget: "cluster-issuer",
+        makeTarget: `cluster-issuer`,
         description: `Deploys ClusterIssuer for ${cloud}`,
     },
     EXTERNALDNS: {
@@ -205,7 +204,6 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
         description: "",
     },
 };
-
 
 const TESTS: { [name: string]: InfraConfig } = {
     WORKSPACE_TEST: {
@@ -258,7 +256,7 @@ const TESTS: { [name: string]: InfraConfig } = {
         description: "ws-manager integration tests",
         slackhook: slackHook.get("workspace-jobs"),
     },
-}
+};
 
 if (config === undefined) {
     console.log(`Unknown configuration specified: "${testConfig}", Exiting...`);
@@ -275,7 +273,7 @@ export async function installerTests(config: TestConfig) {
     console.log(config.DESCRIPTION);
     // these phases sets up or clean up the infrastructure
     // If the cloud variable is not set, we have a cleanup job in hand
-    const majorPhase: string = cloud == "" ? "cleanup-infra" :`create-${cloud}-infra`
+    const majorPhase: string = cloud == "" ? "cleanup-infra" : `create-${cloud}-infra`;
 
     werft.phase(majorPhase, `Manage the infrastructure in ${cloud}`);
     for (let phase of config.PHASES) {
@@ -283,22 +281,22 @@ export async function installerTests(config: TestConfig) {
         const ret = callMakeTargets(phaseSteps.phase, phaseSteps.description, phaseSteps.makeTarget);
         if (ret) {
             // there is not point in continuing if one stage fails for infra setup
-            const err: Error = new Error("Cluster creation failed")
+            const err: Error = new Error("Cluster creation failed");
 
-            console.log("Trying to send slack alert")
+            console.log("Trying to send slack alert");
 
-            await sendFailureSlackAlert(phaseSteps.description, err, slackHook.get("self-hosted-jobs"))
+            await sendFailureSlackAlert(phaseSteps.description, err, slackHook.get("self-hosted-jobs"));
 
             werft.fail(`create-${cloud}-infra`, err.message);
 
-            return
+            return;
         }
     }
     werft.done(majorPhase);
 
     if (cloud == "") {
         // this means that it was a cleanup job, nothing more to do here
-        return
+        return;
     }
 
     if (upgrade === "true") {
@@ -309,7 +307,11 @@ export async function installerTests(config: TestConfig) {
         const upgradePhase = INFRA_PHASES["KOTS_UPGRADE"];
         const ret = callMakeTargets(upgradePhase.phase, upgradePhase.description, upgradePhase.makeTarget);
         if (ret) {
-            sendFailureSlackAlert(upgradePhase.description, new Error("Upgrade test failed"), slackHook.get("self-hosted-jobs"))
+            sendFailureSlackAlert(
+                upgradePhase.description,
+                new Error("Upgrade test failed"),
+                slackHook.get("self-hosted-jobs"),
+            );
 
             return;
         }
@@ -330,29 +332,33 @@ export async function installerTests(config: TestConfig) {
         );
 
         if (testConfig == "STANDARD_K3S_TEST") {
-            exec(`werft log result -d  "KUBECONFIG file store under GCP project 'sh-automated-tests'" url "gs://nightly-tests/tf-state/${process.env["TF_VAR_TEST_ID"]}-kubeconfig"`);
+            exec(
+                `werft log result -d  "KUBECONFIG file store under GCP project 'sh-automated-tests'" url "gs://nightly-tests/tf-state/${process.env["TF_VAR_TEST_ID"]}-kubeconfig"`,
+            );
         } else {
-            exec(`werft log result -d  "KUBECONFIG Connection details" url "Follow cloud specific instructions to connect to the cluster"`);
+            exec(
+                `werft log result -d  "KUBECONFIG Connection details" url "Follow cloud specific instructions to connect to the cluster"`,
+            );
         }
 
         sendPreviewSlackAlert().catch((error: Error) => {
             console.error("Failed to send message to Slack", error);
         });
 
-
-        exec(`werft log result -d  "Terraform state" url "Terraform state file name is ${process.env["TF_VAR_TEST_ID"]}"`);
+        exec(
+            `werft log result -d  "Terraform state" url "Terraform state file name is ${process.env["TF_VAR_TEST_ID"]}"`,
+        );
 
         werft.done("print-output");
     } else {
         // if we are not doing preview, we delete the infrastructure
         cleanup();
     }
-
 }
 
 function runIntegrationTests() {
     werft.phase("run-integration-tests", "Run all existing integration tests");
-    const slackAlerts = new Map<string, string>([])
+    const slackAlerts = new Map<string, string>([]);
     for (let test in TESTS) {
         const testPhase = TESTS[test];
         const ret = callMakeTargets(testPhase.phase, testPhase.description, testPhase.makeTarget);
@@ -361,14 +367,13 @@ function runIntegrationTests() {
                 `werft log result -d "failed test" url "${testPhase.description}(Phase ${testPhase.phase}) failed. Please refer logs."`,
             );
 
-            const msg: string = slackAlerts.get(testPhase.slackhook) || ""
-            slackAlerts.set(testPhase.slackhook, `${msg}\n${testPhase.description}`)
-
+            const msg: string = slackAlerts.get(testPhase.slackhook) || "";
+            slackAlerts.set(testPhase.slackhook, `${msg}\n${testPhase.description}`);
         }
     }
 
     slackAlerts.forEach((msg: string, channel: string) => {
-        sendFailureSlackAlert(msg, new Error("Integration tests failed"), channel)
+        sendFailureSlackAlert(msg, new Error("Integration tests failed"), channel);
     });
 
     werft.done("run-integration-tests");
@@ -376,12 +381,19 @@ function runIntegrationTests() {
 
 function callMakeTargets(phase: string, description: string, makeTarget: string, failable: boolean = false) {
     werft.log(phase, `Calling ${makeTarget}`);
-
     // exporting cloud env var is important for the make targets
-    const response = exec(`export TF_VAR_cluster_version=${k8s_version} cloud=${cloud} && make -C ${makefilePath} ${makeTarget}`, {
-        slice: phase,
-        dontCheckRc: true,
-    });
+    var env = `export TF_VAR_cluster_version=${k8s_version} cloud=${cloud}`;
+    if (selfSigned) {
+        env = env.concat(` self_signed=${selfSigned}`)
+    }
+
+    const response = exec(
+        `${env} && make -C ${makefilePath} ${makeTarget}`,
+        {
+            slice: phase,
+            dontCheckRc: true,
+        },
+    );
 
     if (response.code) {
         console.error(`Error: ${response.stderr}`);
@@ -404,54 +416,54 @@ function randomize(options: string[]): string {
 }
 
 function randDeps(): string {
-    var depOptions: string[] = ["incluster", "external"]
+    var depOptions: string[] = ["incluster", "external"];
 
-    if(deps && depOptions.includes(deps)) {
-        return deps
+    if (deps && depOptions.includes(deps)) {
+        return deps;
     }
 
-    return randomize(depOptions)
+    return randomize(depOptions);
 }
 
 function randK8sVersion(config: string): string {
-    var options: string[] = []
-    switch(config) {
+    var options: string[] = [];
+    switch (config) {
         case "STANDARD_GKE_TEST": {
-            options = ["1.21", "1.22", "1.23"]
+            options = ["1.21", "1.22", "1.23"];
             break;
         }
         case "STANDARD_AKS_TEST": {
-            options = ["1.22", "1.23", "1.24"]
+            options = ["1.22", "1.23", "1.24"];
             break;
         }
         case "STANDARD_EKS_TEST": {
-            options = ["1.21", "1.22"] // we will start 1.23 when official Ubuntu image is out
+            options = ["1.21", "1.22"]; // we will start 1.23 when official Ubuntu image is out
             break;
         }
         case "STANDARD_K3S_TEST": {
-            options = ["v1.22.12+k3s1", "v1.23.9+k3s1", "v1.24.3+k3s1"]
+            options = ["v1.22.12+k3s1", "v1.23.9+k3s1", "v1.24.3+k3s1"];
             break;
         }
     }
     // in the follow-up PR we will add `${platform}-${resource}` as an option here to
     // test against resource dependencies(storage, db, registry) for each cloud platform
 
-    return randomize(options)
+    return randomize(options);
 }
 
 function randOsVersion(): string {
     // in the follow-up PR we will add `${platform}-${resource}` as an option here to
     // test against resource dependencies(storage, db, registry) for each cloud platform
-    var options: string[] = ["2204", "2004", "1804"]
+    var options: string[] = ["2204", "2004", "1804"];
 
-    return randomize(options)
+    return randomize(options);
 }
 
 function cleanup() {
-    const phase = INFRA_PHASES["DESTROY"]
+    const phase = INFRA_PHASES["DESTROY"];
     werft.phase(phase.phase, phase.description);
 
-    const ret = callMakeTargets(phase.phase, phase.description, phase.makeTarget)
+    const ret = callMakeTargets(phase.phase, phase.description, phase.makeTarget);
 
     // if the destroy command fail, we check if any resources are pending to be removed
     // if nothing is yet to be cleaned, we return with success
@@ -473,7 +485,7 @@ function cleanup() {
 
         console.log(`Cleanup the following resources manually: ${itemsTobeCleaned}`);
 
-        sendFailureSlackAlert(phase.description, new Error("Cleanup job failed"), slackHook.get("self-hosted-jobs"))
+        sendFailureSlackAlert(phase.description, new Error("Cleanup job failed"), slackHook.get("self-hosted-jobs"));
     }
 
     werft.done(phase.phase);
@@ -484,8 +496,8 @@ function cleanup() {
 }
 
 export function sendFailureSlackAlert(phase: string, err: Error, hook: string): Promise<void> {
-    if (typeof hook === 'undefined' || hook === null) {
-        return
+    if (typeof hook === "undefined" || hook === null) {
+        return;
     }
 
     const data = JSON.stringify({
@@ -494,7 +506,16 @@ export function sendFailureSlackAlert(phase: string, err: Error, hook: string): 
                 type: "section",
                 text: {
                     type: "mrkdwn",
-                    text: ":X: *self-hosted " + op + " failed*\n_Test configuration:_ `" + config.DESCRIPTION + "`\n_Replicated channel_: `" + channel + "`\n_Build:_ `" + context.Name + "`",
+                    text:
+                        ":X: *self-hosted " +
+                        op +
+                        " failed*\n_Test configuration:_ `" +
+                        config.DESCRIPTION +
+                        "`\n_Replicated channel_: `" +
+                        channel +
+                        "`\n_Build:_ `" +
+                        context.Name +
+                        "`",
                 },
                 accessory: {
                     type: "button",
@@ -519,7 +540,7 @@ export function sendFailureSlackAlert(phase: string, err: Error, hook: string): 
                         type: "mrkdwn",
                         text: "*Error:*\n`" + err + "`\n",
                     },
-                ]
+                ],
             },
         ],
     });
@@ -550,32 +571,42 @@ export async function sendPreviewSlackAlert(): Promise<void> {
                 type: "section",
                 text: {
                     type: "mrkdwn",
-                    text: ":white_check_mark: *self-hosted preview environment*\n_Test configuration:_ `" + config.DESCRIPTION + "`\n_Build:_ `" + context.Name + "`\n_Owner:_ `" + context.Owner + "`",
+                    text:
+                        ":white_check_mark: *self-hosted preview environment*\n_Test configuration:_ `" +
+                        config.DESCRIPTION +
+                        "`\n_Build:_ `" +
+                        context.Name +
+                        "`\n_Owner:_ `" +
+                        context.Owner +
+                        "`",
                 },
                 accessory: {
                     type: "button",
                     text: {
                         type: "plain_text",
                         text: "Go to Werft",
-                        emoji: true
+                        emoji: true,
                     },
                     value: "click_me_123",
                     url: "https://werft.gitpod-dev.com/job/" + context.Name,
-                    action_id: "button-action"
-                }
+                    action_id: "button-action",
+                },
             },
             {
                 type: "section",
                 fields: [
                     {
                         type: "mrkdwn",
-                        text: "*URL:*\n<https://" + process.env["TF_VAR_TEST_ID"] + `.${baseDomain}|Access preview setup>`,
+                        text:
+                            "*URL:*\n<https://" +
+                            process.env["TF_VAR_TEST_ID"] +
+                            `.${baseDomain}|Access preview setup>`,
                     },
                     {
                         type: "mrkdwn",
                         text: "*Terraform workspace:*\n`" + process.env["TF_VAR_TEST_ID"] + "`\n",
                     },
-                ]
+                ],
             },
         ],
     });

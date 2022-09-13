@@ -20,6 +20,10 @@ args:
   desc: "Set this to true to skip integration tests"
   required: false
   default: false
+- name: selfSigned
+  desc: "Set this to true to generate and use a private self-signed certificate"
+  required: false
+  default: false
 - name: upgrade
   desc: "Set this to true to run KOTS upgrade from the specified version to the latest version"
   required: false
@@ -113,6 +117,11 @@ pod:
         sudo apt update && apt install gettext-base
 
         curl -sLS https://get.k3sup.dev | sh
+
+        # install mkcert
+        curl -JLO "https://dl.filippo.io/mkcert/latest?for=linux/amd64"
+        chmod +x mkcert-v*-linux-amd64
+        sudo cp mkcert-v*-linux-amd64 /usr/local/bin/mkcert
 
         export domain="{{ .Annotations.subdomain }}"
 
