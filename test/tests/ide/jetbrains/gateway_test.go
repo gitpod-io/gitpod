@@ -21,6 +21,7 @@ import (
 
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
+	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/google/go-github/v42/github"
 )
 
@@ -107,10 +108,10 @@ func TestJetBrainsGatewayWorkspace(t *testing.T) {
 
 				t.Logf("starting workspace")
 				var nfo *protocol.WorkspaceInfo
-				var stopWs func(waitForStop bool)
+				var stopWs func(waitForStop bool) (*wsmanapi.WorkspaceStatus, error)
 
 				for i := 0; i < 3; i++ {
-					nfo, stopWs, err = integration.LaunchWorkspaceFromContextURL(ctx, "referrer:jetbrains-gateway:"+ideName+"/"+repo, username, api)
+					nfo, stopWs, err = integration.LaunchWorkspaceFromContextURL(t, ctx, "referrer:jetbrains-gateway:"+ideName+"/"+repo, username, api)
 					if err != nil {
 						if strings.Contains(err.Error(), "code 429 message: too many requests") {
 							t.Log(err)

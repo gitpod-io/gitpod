@@ -158,12 +158,15 @@ func TestGitActions(t *testing.T) {
 							t.Fatal(err)
 						}
 
-						nfo, stopWS, err := integration.LaunchWorkspaceFromContextURL(ctx, test.ContextURL, username, api)
+						nfo, stopWS, err := integration.LaunchWorkspaceFromContextURL(t, ctx, test.ContextURL, username, api)
 						if err != nil {
 							t.Fatal(err)
 						}
 						t.Cleanup(func() {
-							stopWS(true)
+							_, err := stopWS(true)
+							if err != nil {
+								t.Fatal(err)
+							}
 						})
 
 						rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.LatestInstance.ID))

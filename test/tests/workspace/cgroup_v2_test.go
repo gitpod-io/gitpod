@@ -34,14 +34,14 @@ func TestCgroupV2(t *testing.T) {
 				api.Done(t)
 			})
 
-			ws, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api)
+			ws, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api)
 			if err != nil {
 				t.Fatal(err)
 			}
 			t.Cleanup(func() {
 				_, err = stopWs(true)
 				if err != nil {
-					t.Errorf("cannot stop workspace: %q", err)
+					t.Fatal(err)
 				}
 			})
 

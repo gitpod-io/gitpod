@@ -42,7 +42,7 @@ func TestBackup(t *testing.T) {
 			}
 			for _, test := range tests {
 				t.Run(test.Name, func(t *testing.T) {
-					ws1, stopWs1, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(func(w *wsmanapi.StartWorkspaceRequest) error {
+					ws1, stopWs1, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(w *wsmanapi.StartWorkspaceRequest) error {
 						w.Spec.FeatureFlags = test.FF
 						w.Spec.Initializer = &csapi.WorkspaceInitializer{
 							Spec: &csapi.WorkspaceInitializer_Git{
@@ -94,7 +94,7 @@ func TestBackup(t *testing.T) {
 						t.Fatal(err)
 					}
 
-					ws2, stopWs2, err := integration.LaunchWorkspaceDirectly(ctx, api,
+					ws2, stopWs2, err := integration.LaunchWorkspaceDirectly(t, ctx, api,
 						integration.WithRequestModifier(func(w *wsmanapi.StartWorkspaceRequest) error {
 							w.ServicePrefix = ws1.Req.ServicePrefix
 							w.Metadata.MetaId = ws1.Req.Metadata.MetaId
@@ -116,12 +116,12 @@ func TestBackup(t *testing.T) {
 					if err != nil {
 						t.Fatal(err)
 					}
-					t.Cleanup(func() {
+					defer func() {
 						_, err = stopWs2(true)
 						if err != nil {
 							t.Errorf("cannot stop workspace: %q", err)
 						}
-					})
+					}()
 
 					rsa, closer, err = integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(),
 						integration.WithInstanceID(ws2.Req.Id),
@@ -175,7 +175,7 @@ func TestExistingWorkspaceEnablePVC(t *testing.T) {
 			})
 
 			// Create a new workspace without the PVC feature flag
-			ws1, stopWs1, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(func(w *wsmanapi.StartWorkspaceRequest) error {
+			ws1, stopWs1, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(w *wsmanapi.StartWorkspaceRequest) error {
 				w.Spec.Initializer = &csapi.WorkspaceInitializer{
 					Spec: &csapi.WorkspaceInitializer_Git{
 						Git: &csapi.GitInitializer{
@@ -227,7 +227,7 @@ func TestExistingWorkspaceEnablePVC(t *testing.T) {
 			}
 
 			// Relaunch the workspace and enable the PVC feature flag
-			ws2, stopWs2, err := integration.LaunchWorkspaceDirectly(ctx, api,
+			ws2, stopWs2, err := integration.LaunchWorkspaceDirectly(t, ctx, api,
 				integration.WithRequestModifier(func(w *wsmanapi.StartWorkspaceRequest) error {
 					w.ServicePrefix = ws1.Req.ServicePrefix
 					w.Metadata.MetaId = ws1.Req.Metadata.MetaId
@@ -296,7 +296,7 @@ func TestMissingBackup(t *testing.T) {
 				api.Done(t)
 			})
 
-			ws, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api)
+			ws, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -342,7 +342,7 @@ func TestMissingBackup(t *testing.T) {
 			}
 			for _, test := range tests {
 				t.Run(test.Name+"_backup_init", func(t *testing.T) {
-					testws, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(func(w *wsmanapi.StartWorkspaceRequest) error {
+					testws, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(w *wsmanapi.StartWorkspaceRequest) error {
 						w.ServicePrefix = ws.Req.ServicePrefix
 						w.Metadata.MetaId = ws.Req.Metadata.MetaId
 						w.Metadata.Owner = ws.Req.Metadata.Owner

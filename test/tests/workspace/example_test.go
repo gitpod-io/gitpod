@@ -38,11 +38,16 @@ func TestWorkspaceInstrumentation(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(ctx, "github.com/gitpod-io/gitpod", username, api)
+			nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(t, ctx, "github.com/gitpod-io/gitpod", username, api)
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer stopWs(true)
+			t.Cleanup(func() {
+				_, err = stopWs(true)
+				if err != nil {
+					t.Errorf("cannot stop workspace: %q", err)
+				}
+			})
 
 			rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.LatestInstance.ID))
 			if err != nil {
@@ -81,7 +86,7 @@ func TestLaunchWorkspaceDirectly(t *testing.T) {
 				api.Done(t)
 			})
 
-			_, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api)
+			_, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api)
 			if err != nil {
 				t.Fatal(err)
 			}
