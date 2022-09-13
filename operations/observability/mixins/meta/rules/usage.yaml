@@ -14,13 +14,24 @@ spec:
   groups:
   - name: usage
     rules:
-    - alert: GitpodUsageScheduledReconciliationFailures'
-      expr: sum(increase(gitpod_usage_reconcile_completed_duration_seconds_count{outcome!="success"}[1h])) > 1
+    - alert: GitpodUsageReconcileUsageFailures'
+      expr: sum(increase(grpc_server_handled_total{grpc_service="usage.v1.UsageService", grpc_method="ReconcileUsage", grpc_code!="OK"})) > 1
       for: 30m
       labels:
         severity: warning
         team: webapp
       annotations:
-        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodUsageScheduledReconciliationFailures.md
-        summary: There are failed scheduled reconciliations in the usage component.
-        description: We have accumulated {{ printf "%.2f" $value }} failures. This affects how stale usage data is and/or updating invoices in Stripe.
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodUsageReconcileUsageFailures.md
+        summary: There are failed usage reconciliations.
+        description: We have accumulated {{ printf "%.2f" $value }} failures. This affects how up-to-date usage data is.
+
+    - alert: GitpodUsageReconcileInvoicesFailures'
+      expr: sum(increase(grpc_server_handled_total{grpc_service="usage.v1.BillingService", grpc_method="ReconcileInvoices", grpc_code!="OK"})) > 1
+      for: 30m
+      labels:
+        severity: warning
+        team: webapp
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodUsageReconcileInvoicesFailures.md
+        summary: There are failed Stripe invoice reconciliations.
+        description: We have accumulated {{ printf "%.2f" $value }} failures. This affects how much customers will be billed.
