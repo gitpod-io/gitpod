@@ -115,6 +115,7 @@ func Top(ctx context.Context) (*api.ResourcesStatusResponse, error) {
 		if err != nil {
 			return nil, xerrors.Errorf("could not dial context: %w", err)
 		}
+		defer conn.Close()
 
 		client := daemonapi.NewWorkspaceInfoServiceClient(conn)
 		resp, err := client.WorkspaceInfo(ctx, &daemonapi.WorkspaceInfoRequest{})
