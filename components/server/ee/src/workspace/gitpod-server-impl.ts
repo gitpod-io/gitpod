@@ -54,6 +54,7 @@ import {
     AdmissionLevel,
     ControlAdmissionRequest,
     StopWorkspacePolicy,
+    StopWorkspaceReason,
     DescribeWorkspaceRequest,
     SetTimeoutRequest,
 } from "@gitpod/ws-manager/lib";
@@ -631,6 +632,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                     ctx,
                     instance.id,
                     instance.region,
+                    StopWorkspaceReason.ADMIN_BLOCKED,
                     StopWorkspacePolicy.IMMEDIATELY,
                 ),
             );
@@ -864,7 +866,13 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
         if (workspace) {
-            await this.internalStopWorkspace(ctx, workspace, StopWorkspacePolicy.IMMEDIATELY, true);
+            await this.internalStopWorkspace(
+                ctx,
+                workspace,
+                StopWorkspaceReason.ADMIN_STOPPED,
+                StopWorkspacePolicy.IMMEDIATELY,
+                true,
+            );
         }
     }
 

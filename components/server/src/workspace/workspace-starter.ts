@@ -90,6 +90,7 @@ import {
     WorkspaceType,
     VolumeSnapshotInfo,
     StopWorkspacePolicy,
+    StopWorkspaceReason,
     StopWorkspaceRequest,
 } from "@gitpod/ws-manager/lib/core_pb";
 import * as crypto from "crypto";
@@ -441,10 +442,12 @@ export class WorkspaceStarter {
         ctx: TraceContext,
         instanceId: string,
         instanceRegion: string,
+        reason: StopWorkspaceReason,
         policy?: StopWorkspacePolicy,
     ): Promise<void> {
         const req = new StopWorkspaceRequest();
         req.setId(instanceId);
+        req.setReason(reason);
         req.setPolicy(policy || StopWorkspacePolicy.NORMALLY);
 
         const client = await this.clientProvider.get(instanceRegion);

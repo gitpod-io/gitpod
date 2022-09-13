@@ -10,7 +10,7 @@ import { User, Workspace } from "@gitpod/gitpod-protocol";
 import { StorageClient } from "../storage/storage-client";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
-import { StopWorkspaceRequest, StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
+import { StopWorkspaceRequest, StopWorkspacePolicy, StopWorkspaceReason } from "@gitpod/ws-manager/lib";
 import { WorkspaceDeletionService } from "../workspace/workspace-deletion-service";
 import { AuthProviderService } from "../auth/auth-provider-service";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
@@ -116,6 +116,7 @@ export class UserDeletionService {
                 const req = new StopWorkspaceRequest();
                 req.setId(wsi.id);
                 req.setPolicy(StopWorkspacePolicy.NORMALLY);
+                req.setReason(StopWorkspaceReason.USER_DELETED);
 
                 try {
                     const manager = await this.workspaceManagerClientProvider.get(wsi.region);

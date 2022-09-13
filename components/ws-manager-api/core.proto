@@ -116,12 +116,38 @@ message StopWorkspaceRequest {
 
     // Policy determines how quickly a workspace will be stopped
     StopWorkspacePolicy policy = 2;
+
+    // Reason is why this workspace should be stopped
+    StopWorkspaceReason reason = 3;
 }
 
 enum StopWorkspacePolicy {
     NORMALLY = 0;
     IMMEDIATELY = 1;
     ABORT = 2;
+}
+
+enum StopWorkspaceReason {
+    // The user stopped the workspace
+    USER_STOPPED = 0;
+
+    // The user deleted the workspace
+    USER_DELETED = 1;
+
+    // The user cancelled the running prebuild
+    USER_CANCELLED_PREBUILD = 2;
+
+    // An admin force-stopped the workspace
+    ADMIN_STOPPED = 3;
+
+    // An admin blocked the user
+    ADMIN_BLOCKED = 4;
+
+    // A new commit was pushed to a repository branch, so we cancelled all previously running prebuilds for that branch
+    SYSTEM_CANCELLED_BRANCH_PREBUILD = 5;
+
+    // The user exceeded their allowed usage limit (e.g. number of hours in month), so we stopped the workspace
+    SYSTEM_USER_LIMIT_REACHED = 6;
 }
 
 // StopWorkspaceResponse is the answer to a stop workspace request

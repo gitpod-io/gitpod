@@ -129,6 +129,7 @@ import {
     PortSpec,
     PortVisibility as ProtoPortVisibility,
     StopWorkspacePolicy,
+    StopWorkspaceReason,
     UpdateSSHKeyRequest,
 } from "@gitpod/ws-manager/lib/core_pb";
 import * as crypto from "crypto";
@@ -748,7 +749,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
         }
 
-        this.internalStopWorkspace(ctx, workspace).catch((err) => {
+        this.internalStopWorkspace(ctx, workspace, StopWorkspaceReason.USER_STOPPED).catch((err) => {
             log.error(logCtx, "stopWorkspace error: ", err);
         });
     }
@@ -756,6 +757,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     protected async internalStopWorkspace(
         ctx: TraceContext,
         workspace: Workspace,
+        reason: StopWorkspaceReason,
         policy?: StopWorkspacePolicy,
         admin: boolean = false,
     ): Promise<void> {
@@ -782,7 +784,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "update");
             }
         }
-        await this.workspaceStarter.stopWorkspaceInstance(ctx, instance.id, instance.region, policy);
+        await this.workspaceStarter.stopWorkspaceInstance(ctx, instance.id, instance.region, reason, policy);
     }
 
     protected async guardAdminAccess(method: string, params: any, requiredPermission: PermissionName) {
@@ -834,7 +836,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardAccess({ kind: "workspace", subject: ws }, "delete");
 
         // for good measure, try and stop running instances
-        await this.internalStopWorkspace(ctx, ws);
+        await this.internalStopWorkspace(ctx, ws, StopWorkspaceReason.USER_DELETED);
 
         // actually delete the workspace
         await this.workspaceDeletionService.softDeleteWorkspace(ctx, ws, "user");

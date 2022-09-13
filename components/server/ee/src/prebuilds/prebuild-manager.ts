@@ -31,7 +31,7 @@ import { secondsBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 
 import { inject, injectable } from "inversify";
 import * as opentracing from "opentracing";
-import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
+import { StopWorkspacePolicy, StopWorkspaceReason } from "@gitpod/ws-manager/lib";
 import { error } from "console";
 
 export class WorkspaceRunningError extends Error {
@@ -79,6 +79,7 @@ export class PrebuildManager {
                                 { span },
                                 instance.id,
                                 instance.region,
+                                StopWorkspaceReason.SYSTEM_CANCELLED_BRANCH_PREBUILD,
                                 StopWorkspacePolicy.ABORT,
                             ),
                         );
