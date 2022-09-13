@@ -239,3 +239,19 @@ func (i *WorkspaceInstanceForUsage) WorkspaceRuntimeSeconds(stopTimeIfInstanceIs
 
 	return int64(stop.Sub(start).Round(time.Second).Seconds())
 }
+
+func ListWorkspaceInstanceIDsWithPhaseStoppedButNoStoppingTime(ctx context.Context, conn *gorm.DB) ([]uuid.UUID, error) {
+	var ids []uuid.UUID
+	//var chunk []uuid.UUID
+
+	tx := conn.WithContext(ctx).
+		Table(fmt.Sprintf("%s as wsi", (&WorkspaceInstance{}).TableName())).
+		Joins(fmt.Sprintf("LEFT JOIN %s AS u ON wsi.id = u.id", (&Usage{}).TableName())).
+		Where("wsi.phasePersisted = ?", "stopped").
+		Where("wsi.stoppingTime = ''"). // empty
+		Pluck("wsi.id", &ids)
+	if tx.Error != nil {
+		return nil, fmt.Errorf("failed to list workspace instances with phase stopped but no stopping time: %w", tx.Error)
+	}
+	return ids, nil
+}

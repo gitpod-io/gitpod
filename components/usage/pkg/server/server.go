@@ -98,6 +98,19 @@ func Start(cfg Config) error {
 		stripeClient = c
 	}
 
+	stoppedWithoutStoppingTimeSpec, err := scheduler.NewPeriodicJobSpec(
+		15*time.Minute,
+		"stopped_without_stopping_time",
+		scheduler.WithoutConcurrentRun(scheduler.NewStoppedWithoutStoppingTimeDetectorSpec(conn)),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to setup stopped without a stopping time detector: %w", err)
+	}
+
+	schedulerJobSpecs := []scheduler.JobSpec{
+		stoppedWithoutStoppingTimeSpec,
+	}
+
 	if cfg.ControllerSchedule != "" {
 		// we do not run the controller if there is no schedule defined.
 		schedule, err := time.ParseDuration(cfg.ControllerSchedule)
@@ -112,12 +125,15 @@ func Start(cfg Config) error {
 			return fmt.Errorf("failed to setup ledger trigger job: %w", err)
 		}
 
-		sched := scheduler.New(jobSpec)
-		sched.Start()
-		defer sched.Stop()
+		schedulerJobSpecs = append(schedulerJobSpecs, jobSpec)
+
 	} else {
 		log.Info("No controller schedule specified, controller will be disabled.")
 	}
+
+	sched := scheduler.New(schedulerJobSpecs...)
+	sched.Start()
+	defer sched.Stop()
 
 	err = registerGRPCServices(srv, conn, stripeClient, pricer)
 	if err != nil {

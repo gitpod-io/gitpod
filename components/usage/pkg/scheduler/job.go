@@ -9,8 +9,10 @@ import (
 	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
+	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/robfig/cron"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -18,52 +20,43 @@ type Job interface {
 	Run() error
 }
 
-func NewLedgerTriggerJobSpec(schedule time.Duration, job Job) (JobSpec, error) {
-	parsed, err := cron.Parse(fmt.Sprintf("@every %s", schedule.String()))
+type JobFunc func() error
+
+func (f JobFunc) Run() error {
+	return f()
+}
+
+func NewPeriodicJobSpec(period time.Duration, id string, job Job) (JobSpec, error) {
+	parsed, err := cron.Parse(fmt.Sprintf("@every %s", period.String()))
 	if err != nil {
-		return JobSpec{}, fmt.Errorf("failed to parse ledger job schedule: %w", err)
+		return JobSpec{}, fmt.Errorf("failed to parse period into schedule: %w", err)
 	}
 
 	return JobSpec{
-		Job:      job,
-		ID:       "ledger",
+		Job:      WithoutConcurrentRun(job),
+		ID:       id,
 		Schedule: parsed,
 	}, nil
+}
+
+func NewLedgerTriggerJobSpec(schedule time.Duration, job Job) (JobSpec, error) {
+	return NewPeriodicJobSpec(schedule, "ledger", WithoutConcurrentRun(job))
 }
 
 func NewLedgerTrigger(usageClient v1.UsageServiceClient, billingClient v1.BillingServiceClient) *LedgerJob {
 	return &LedgerJob{
 		usageClient:   usageClient,
 		billingClient: billingClient,
-
-		running: make(chan struct{}, 1),
 	}
 }
 
 type LedgerJob struct {
 	usageClient   v1.UsageServiceClient
 	billingClient v1.BillingServiceClient
-
-	running chan struct{}
 }
 
 func (r *LedgerJob) Run() (err error) {
 	ctx := context.Background()
-
-	select {
-	// attempt a write to signal we want to run
-	case r.running <- struct{}{}:
-		// we managed to write, there's no other job executing. Cases are not fall through so we continue executing our main logic.
-		defer func() {
-			// signal job completed
-			<-r.running
-		}()
-	default:
-		// we could not write, so another instance is already running. Skip current run.
-		log.Infof("Skipping ledger run, another run is already in progress.")
-		return nil
-	}
-
 	now := time.Now().UTC()
 	hourAgo := now.Add(-1 * time.Hour)
 
@@ -87,6 +80,65 @@ func (r *LedgerJob) Run() (err error) {
 		logger.WithError(err).Errorf("Failed to reconcile invoices.")
 		return fmt.Errorf("failed to reconcile invoices: %w", err)
 	}
+
+	return nil
+}
+
+// WithoutConcurrentRun wraps a Job and ensures the job does not concurrently
+func WithoutConcurrentRun(j Job) Job {
+	return &preventConcurrentInvocation{
+		job:     j,
+		running: make(chan struct{}, 1),
+	}
+}
+
+type preventConcurrentInvocation struct {
+	job     Job
+	running chan struct{}
+}
+
+func (r *preventConcurrentInvocation) Run() error {
+	select {
+	// attempt a write to signal we want to run
+	case r.running <- struct{}{}:
+		// we managed to write, there's no other job executing. Cases are not fall through so we continue executing our main logic.
+		defer func() {
+			// signal job completed
+			<-r.running
+		}()
+
+		err := r.job.Run()
+		return err
+	default:
+		// we could not write, so another instance is already running. Skip current run.
+		log.Infof("Job already running, skipping invocation.")
+		return nil
+	}
+}
+
+func NewStoppedWithoutStoppingTimeDetectorSpec(dbconn *gorm.DB) *StoppedWithoutStoppingTimeDetector {
+	return &StoppedWithoutStoppingTimeDetector{
+		dbconn: dbconn,
+	}
+}
+
+type StoppedWithoutStoppingTimeDetector struct {
+	dbconn *gorm.DB
+}
+
+func (r *StoppedWithoutStoppingTimeDetector) Run() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
+
+	log.Info("Checking for instances which are stopped but are missing a stoppingTime.")
+	instances, err := db.ListWorkspaceInstanceIDsWithPhaseStoppedButNoStoppingTime(ctx, r.dbconn)
+	if err != nil {
+		log.WithError(err).Errorf("Failed to list stop instances without stopping time.")
+		return fmt.Errorf("failed to list instances from db: %w", err)
+	}
+
+	log.Infof("Identified %d instances in stopped state without a stopping time.", len(instances))
+	stoppedWithoutStoppingTime.Set(float64(len(instances)))
 
 	return nil
 }

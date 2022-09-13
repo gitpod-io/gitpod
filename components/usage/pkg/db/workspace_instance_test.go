@@ -244,3 +244,31 @@ func TestWorkspaceInstanceForUsage_WorkspaceRuntimeSeconds(t *testing.T) {
 		})
 	}
 }
+
+func TestListWorkspaceInstanceIDsWithPhaseStoppedButNoStoppingTime(t *testing.T) {
+	dbconn := dbtest.ConnectForTests(t)
+	instances := dbtest.CreateWorkspaceInstances(t, dbconn,
+		// started but not stopped, should be ignored
+		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			StartedTime: db.NewVarcharTime(time.Now()),
+		}),
+		// stopped, but no stopping time, should be detected
+		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
+			StartedTime:    db.NewVarcharTime(time.Now()),
+			PhasePersisted: "stopped",
+		}),
+	)
+
+	dbtest.CreateUsageRecords(t, dbconn,
+		dbtest.NewUsage(t, db.Usage{
+			ID: instances[0].ID,
+		}),
+		dbtest.NewUsage(t, db.Usage{
+			ID: instances[1].ID,
+		}),
+	)
+
+	detectedIDs, err := db.ListWorkspaceInstanceIDsWithPhaseStoppedButNoStoppingTime(context.Background(), dbconn)
+	require.NoError(t, err)
+	require.Equal(t, []uuid.UUID{instances[1].ID}, detectedIDs)
+}

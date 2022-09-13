@@ -77,6 +77,11 @@ func NewWorkspaceInstance(t *testing.T, instance db.WorkspaceInstance) db.Worksp
 		workspaceClass = instance.WorkspaceClass
 	}
 
+	phasePersisted := ""
+	if instance.PhasePersisted != "" {
+		phasePersisted = instance.PhasePersisted
+	}
+
 	return db.WorkspaceInstance{
 		ID:                 id,
 		WorkspaceID:        workspaceID,
@@ -98,7 +103,7 @@ func NewWorkspaceInstance(t *testing.T, instance db.WorkspaceInstance) db.Worksp
 		StatusOld:          sql.NullString{},
 		Status:             status,
 		Phase:              sql.NullString{},
-		PhasePersisted:     "",
+		PhasePersisted:     phasePersisted,
 	}
 }
 

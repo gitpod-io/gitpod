@@ -39,9 +39,3 @@ func TestScheduler(t *testing.T) {
 	require.True(t, firstRan)
 	require.True(t, secondRan)
 }
-
-type JobFunc func() error
-
-func (f JobFunc) Run() error {
-	return f()
-}
