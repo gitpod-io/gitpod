@@ -125,7 +125,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                             recentPrebuild.workspace,
                         ))
                     ) {
-                        log.info({ userId: user.id }, "Not using incremental prebuild base", {
+                        log.debug({ userId: user.id }, "Not using incremental prebuild base", {
                             candidatePrebuildId: recentPrebuild.prebuild.id,
                             context: loggedContext,
                         });
