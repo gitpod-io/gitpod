@@ -60,7 +60,7 @@ func (c *fakeUsageClient) SetCostCenter(ctx context.Context, in *v1.SetCostCente
 }
 
 // Triggers reconciliation of usage with ledger implementation.
-func (c *fakeUsageClient) ReconcileUsageWithLedger(ctx context.Context, in *v1.ReconcileUsageWithLedgerRequest, opts ...grpc.CallOption) (*v1.ReconcileUsageWithLedgerResponse, error) {
+func (c *fakeUsageClient) ReconcileUsage(ctx context.Context, in *v1.ReconcileUsageRequest, opts ...grpc.CallOption) (*v1.ReconcileUsageResponse, error) {
 	atomic.AddInt32(&c.ReconcileUsageWithLedgerCallCount, 1)
 	time.Sleep(50 * time.Millisecond)
 

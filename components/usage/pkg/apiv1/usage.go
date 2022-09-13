@@ -213,7 +213,7 @@ func (s *UsageService) SetCostCenter(ctx context.Context, in *v1.SetCostCenterRe
 	return &v1.SetCostCenterResponse{}, nil
 }
 
-func (s *UsageService) ReconcileUsageWithLedger(ctx context.Context, req *v1.ReconcileUsageWithLedgerRequest) (*v1.ReconcileUsageWithLedgerResponse, error) {
+func (s *UsageService) ReconcileUsage(ctx context.Context, req *v1.ReconcileUsageRequest) (*v1.ReconcileUsageResponse, error) {
 	from := req.GetFrom().AsTime()
 	to := req.GetTo().AsTime()
 
@@ -259,7 +259,7 @@ func (s *UsageService) ReconcileUsageWithLedger(ctx context.Context, req *v1.Rec
 
 	// now has to be computed after we've collected all data, to ensure that it's always greater than any of the records we fetch
 	now := s.nowFunc()
-	inserts, updates, err := reconcileUsageWithLedger(instances, usageDrafts, s.pricer, now)
+	inserts, updates, err := reconcileUsage(instances, usageDrafts, s.pricer, now)
 	if err != nil {
 		logger.WithError(err).Errorf("Failed to reconcile usage with ledger.")
 		return nil, status.Errorf(codes.Internal, "Failed to reconcile usage with ledger.")
@@ -284,10 +284,10 @@ func (s *UsageService) ReconcileUsageWithLedger(ctx context.Context, req *v1.Rec
 		logger.Infof("Updated %d Usage records in the database.", len(updates))
 	}
 
-	return &v1.ReconcileUsageWithLedgerResponse{}, nil
+	return &v1.ReconcileUsageResponse{}, nil
 }
 
-func reconcileUsageWithLedger(instances []db.WorkspaceInstanceForUsage, drafts []db.Usage, pricer *WorkspacePricer, now time.Time) (inserts []db.Usage, updates []db.Usage, err error) {
+func reconcileUsage(instances []db.WorkspaceInstanceForUsage, drafts []db.Usage, pricer *WorkspacePricer, now time.Time) (inserts []db.Usage, updates []db.Usage, err error) {
 
 	instancesByID := dedupeWorkspaceInstancesForUsage(instances)
 

@@ -12,7 +12,7 @@ import { Timestamp } from "../../google/protobuf/timestamp.pb";
 
 export const protobufPackage = "usage.v1";
 
-export interface ReconcileUsageWithLedgerRequest {
+export interface ReconcileUsageRequest {
   /** from specifies the starting time range for this request. */
   from:
     | Date
@@ -21,7 +21,7 @@ export interface ReconcileUsageWithLedgerRequest {
   to: Date | undefined;
 }
 
-export interface ReconcileUsageWithLedgerResponse {
+export interface ReconcileUsageResponse {
 }
 
 export interface PaginatedRequest {
@@ -233,12 +233,12 @@ export function costCenter_BillingStrategyToNumber(object: CostCenter_BillingStr
   }
 }
 
-function createBaseReconcileUsageWithLedgerRequest(): ReconcileUsageWithLedgerRequest {
+function createBaseReconcileUsageRequest(): ReconcileUsageRequest {
   return { from: undefined, to: undefined };
 }
 
-export const ReconcileUsageWithLedgerRequest = {
-  encode(message: ReconcileUsageWithLedgerRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const ReconcileUsageRequest = {
+  encode(message: ReconcileUsageRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.from !== undefined) {
       Timestamp.encode(toTimestamp(message.from), writer.uint32(10).fork()).ldelim();
     }
@@ -248,10 +248,10 @@ export const ReconcileUsageWithLedgerRequest = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): ReconcileUsageWithLedgerRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): ReconcileUsageRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseReconcileUsageWithLedgerRequest();
+    const message = createBaseReconcileUsageRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -269,41 +269,41 @@ export const ReconcileUsageWithLedgerRequest = {
     return message;
   },
 
-  fromJSON(object: any): ReconcileUsageWithLedgerRequest {
+  fromJSON(object: any): ReconcileUsageRequest {
     return {
       from: isSet(object.from) ? fromJsonTimestamp(object.from) : undefined,
       to: isSet(object.to) ? fromJsonTimestamp(object.to) : undefined,
     };
   },
 
-  toJSON(message: ReconcileUsageWithLedgerRequest): unknown {
+  toJSON(message: ReconcileUsageRequest): unknown {
     const obj: any = {};
     message.from !== undefined && (obj.from = message.from.toISOString());
     message.to !== undefined && (obj.to = message.to.toISOString());
     return obj;
   },
 
-  fromPartial(object: DeepPartial<ReconcileUsageWithLedgerRequest>): ReconcileUsageWithLedgerRequest {
-    const message = createBaseReconcileUsageWithLedgerRequest();
+  fromPartial(object: DeepPartial<ReconcileUsageRequest>): ReconcileUsageRequest {
+    const message = createBaseReconcileUsageRequest();
     message.from = object.from ?? undefined;
     message.to = object.to ?? undefined;
     return message;
   },
 };
 
-function createBaseReconcileUsageWithLedgerResponse(): ReconcileUsageWithLedgerResponse {
+function createBaseReconcileUsageResponse(): ReconcileUsageResponse {
   return {};
 }
 
-export const ReconcileUsageWithLedgerResponse = {
-  encode(_: ReconcileUsageWithLedgerResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const ReconcileUsageResponse = {
+  encode(_: ReconcileUsageResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): ReconcileUsageWithLedgerResponse {
+  decode(input: _m0.Reader | Uint8Array, length?: number): ReconcileUsageResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseReconcileUsageWithLedgerResponse();
+    const message = createBaseReconcileUsageResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -315,17 +315,17 @@ export const ReconcileUsageWithLedgerResponse = {
     return message;
   },
 
-  fromJSON(_: any): ReconcileUsageWithLedgerResponse {
+  fromJSON(_: any): ReconcileUsageResponse {
     return {};
   },
 
-  toJSON(_: ReconcileUsageWithLedgerResponse): unknown {
+  toJSON(_: ReconcileUsageResponse): unknown {
     const obj: any = {};
     return obj;
   },
 
-  fromPartial(_: DeepPartial<ReconcileUsageWithLedgerResponse>): ReconcileUsageWithLedgerResponse {
-    const message = createBaseReconcileUsageWithLedgerResponse();
+  fromPartial(_: DeepPartial<ReconcileUsageResponse>): ReconcileUsageResponse {
+    const message = createBaseReconcileUsageResponse();
     return message;
   },
 };
@@ -1053,12 +1053,12 @@ export const UsageServiceDefinition = {
       responseStream: false,
       options: {},
     },
-    /** Triggers reconciliation of usage with ledger implementation. */
-    reconcileUsageWithLedger: {
-      name: "ReconcileUsageWithLedger",
-      requestType: ReconcileUsageWithLedgerRequest,
+    /** Triggers reconciliation of usage. */
+    reconcileUsage: {
+      name: "ReconcileUsage",
+      requestType: ReconcileUsageRequest,
       requestStream: false,
-      responseType: ReconcileUsageWithLedgerResponse,
+      responseType: ReconcileUsageResponse,
       responseStream: false,
       options: {},
     },
@@ -1085,11 +1085,11 @@ export interface UsageServiceServiceImplementation<CallContextExt = {}> {
     request: SetCostCenterRequest,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<SetCostCenterResponse>>;
-  /** Triggers reconciliation of usage with ledger implementation. */
-  reconcileUsageWithLedger(
-    request: ReconcileUsageWithLedgerRequest,
+  /** Triggers reconciliation of usage. */
+  reconcileUsage(
+    request: ReconcileUsageRequest,
     context: CallContext & CallContextExt,
-  ): Promise<DeepPartial<ReconcileUsageWithLedgerResponse>>;
+  ): Promise<DeepPartial<ReconcileUsageResponse>>;
   /** ListUsage retrieves all usage for the specified attributionId and theb given time range */
   listUsage(request: ListUsageRequest, context: CallContext & CallContextExt): Promise<DeepPartial<ListUsageResponse>>;
 }
@@ -1105,11 +1105,11 @@ export interface UsageServiceClient<CallOptionsExt = {}> {
     request: DeepPartial<SetCostCenterRequest>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<SetCostCenterResponse>;
-  /** Triggers reconciliation of usage with ledger implementation. */
-  reconcileUsageWithLedger(
-    request: DeepPartial<ReconcileUsageWithLedgerRequest>,
+  /** Triggers reconciliation of usage. */
+  reconcileUsage(
+    request: DeepPartial<ReconcileUsageRequest>,
     options?: CallOptions & CallOptionsExt,
-  ): Promise<ReconcileUsageWithLedgerResponse>;
+  ): Promise<ReconcileUsageResponse>;
   /** ListUsage retrieves all usage for the specified attributionId and theb given time range */
   listUsage(request: DeepPartial<ListUsageRequest>, options?: CallOptions & CallOptionsExt): Promise<ListUsageResponse>;
 }

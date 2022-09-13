@@ -23,7 +23,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func TestUsageService_ReconcileUsageWithLedger(t *testing.T) {
+func TestUsageService_ReconcileUsage(t *testing.T) {
 	dbconn := dbtest.ConnectForTests(t)
 	from := time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)
 	to := time.Date(2022, 05, 1, 1, 00, 00, 00, time.UTC)
@@ -58,7 +58,7 @@ func TestUsageService_ReconcileUsageWithLedger(t *testing.T) {
 
 	client := newUsageService(t, dbconn)
 
-	_, err := client.ReconcileUsageWithLedger(context.Background(), &v1.ReconcileUsageWithLedgerRequest{
+	_, err := client.ReconcileUsage(context.Background(), &v1.ReconcileUsageRequest{
 		From: timestamppb.New(from),
 		To:   timestamppb.New(to),
 	})
@@ -89,7 +89,7 @@ func newUsageService(t *testing.T, dbconn *gorm.DB) v1.UsageServiceClient {
 	return client
 }
 
-func TestReconcileWithLedger(t *testing.T) {
+func TestReconcile(t *testing.T) {
 	now := time.Date(2022, 9, 1, 10, 0, 0, 0, time.UTC)
 	pricer, err := NewWorkspacePricer(map[string]float64{
 		"default":              0.1666666667,
@@ -102,7 +102,7 @@ func TestReconcileWithLedger(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("no action with no instances and no drafts", func(t *testing.T) {
-		inserts, updates, err := reconcileUsageWithLedger(nil, nil, pricer, now)
+		inserts, updates, err := reconcileUsage(nil, nil, pricer, now)
 		require.NoError(t, err)
 		require.Len(t, inserts, 0)
 		require.Len(t, updates, 0)
@@ -110,7 +110,7 @@ func TestReconcileWithLedger(t *testing.T) {
 
 	t.Run("no action with no instances but existing drafts", func(t *testing.T) {
 		drafts := []db.Usage{dbtest.NewUsage(t, db.Usage{})}
-		inserts, updates, err := reconcileUsageWithLedger(nil, drafts, pricer, now)
+		inserts, updates, err := reconcileUsage(nil, drafts, pricer, now)
 		require.NoError(t, err)
 		require.Len(t, inserts, 0)
 		require.Len(t, updates, 0)
@@ -131,7 +131,7 @@ func TestReconcileWithLedger(t *testing.T) {
 			StartedTime:        db.NewVarcharTime(now.Add(1 * time.Minute)),
 		}
 
-		inserts, updates, err := reconcileUsageWithLedger([]db.WorkspaceInstanceForUsage{instance, instance}, nil, pricer, now)
+		inserts, updates, err := reconcileUsage([]db.WorkspaceInstanceForUsage{instance, instance}, nil, pricer, now)
 		require.NoError(t, err)
 		require.Len(t, inserts, 1)
 		require.Len(t, updates, 0)
@@ -188,7 +188,7 @@ func TestReconcileWithLedger(t *testing.T) {
 			Metadata:            nil,
 		})
 
-		inserts, updates, err := reconcileUsageWithLedger([]db.WorkspaceInstanceForUsage{instance}, []db.Usage{draft}, pricer, now)
+		inserts, updates, err := reconcileUsage([]db.WorkspaceInstanceForUsage{instance}, []db.Usage{draft}, pricer, now)
 		require.NoError(t, err)
 		require.Len(t, inserts, 0)
 		require.Len(t, updates, 1)
