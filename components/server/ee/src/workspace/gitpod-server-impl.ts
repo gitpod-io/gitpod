@@ -90,7 +90,6 @@ import * as pThrottle from "p-throttle";
 import { formatDate } from "@gitpod/gitpod-protocol/lib/util/date-time";
 import { FindUserByIdentityStrResult, UserService } from "../../../src/user/user-service";
 import {
-    Accounting,
     AccountService,
     SubscriptionService,
     TeamSubscriptionService,
@@ -2450,22 +2449,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "Unable to parse attributionId");
         }
         return this.billingModes.getBillingMode(parsedAttributionId, new Date());
-    }
-
-    // various
-    async sendFeedback(ctx: TraceContext, feedback: string): Promise<string | undefined> {
-        traceAPIParams(ctx, {}); // feedback is not interesting here, any may contain names
-
-        const user = this.checkUser("sendFeedback");
-        const now = new Date().toISOString();
-        const remainingUsageHours = await this.getRemainingUsageHours(ctx);
-        const stillEnoughCredits = remainingUsageHours > Math.max(...Accounting.LOW_CREDIT_WARNINGS_IN_HOURS);
-        log.info({ userId: user.id }, `Feedback: "${feedback}"`, { feedback, stillEnoughCredits });
-        if (stillEnoughCredits) {
-            return "Thank you for your feedback.";
-        }
-        await this.subscriptionService.addCredit(user.id, 50, now);
-        return "Thank you for you feedback. We have added 50 Gitpod Hours to your account. Have fun!";
     }
 
     // Projects

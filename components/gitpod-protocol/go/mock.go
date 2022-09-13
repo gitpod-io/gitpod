@@ -703,21 +703,6 @@ func (mr *MockAPIInterfaceMockRecorder) RegisterGithubApp(ctx, installationID in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterGithubApp", reflect.TypeOf((*MockAPIInterface)(nil).RegisterGithubApp), ctx, installationID)
 }
 
-// SendFeedback mocks base method.
-func (m *MockAPIInterface) SendFeedback(ctx context.Context, feedback string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendFeedback", ctx, feedback)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// SendFeedback indicates an expected call of SendFeedback.
-func (mr *MockAPIInterfaceMockRecorder) SendFeedback(ctx, feedback interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendFeedback", reflect.TypeOf((*MockAPIInterface)(nil).SendFeedback), ctx, feedback)
-}
-
 // SendHeartBeat mocks base method.
 func (m *MockAPIInterface) SendHeartBeat(ctx context.Context, options *SendHeartBeatOptions) error {
 	m.ctrl.T.Helper()
