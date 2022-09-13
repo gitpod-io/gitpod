@@ -111,5 +111,5 @@ func init() {
 
 	validateClusterCmd.PersistentFlags().StringVar(&validateClusterOpts.Kube.Config, "kubeconfig", "", "path to the kubeconfig file")
 	validateClusterCmd.PersistentFlags().StringVarP(&validateClusterOpts.Config, "config", "c", getEnvvar("GITPOD_INSTALLER_CONFIG", filepath.Join(dir, "gitpod.config.yaml")), "path to the config file")
-	validateClusterCmd.PersistentFlags().StringVarP(&validateClusterOpts.Namespace, "namespace", "n", "default", "namespace to deploy to")
+	validateClusterCmd.PersistentFlags().StringVarP(&validateClusterOpts.Namespace, "namespace", "n", getEnvvar("NAMESPACE", "default"), "namespace to deploy to")
 }
