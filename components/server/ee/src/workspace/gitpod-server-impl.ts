@@ -2235,6 +2235,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const attributionId: AttributionId = { kind: "team", teamId };
         await this.guardCostCenterAccess(ctx, user.id, attributionId, "update");
 
+        // check usage here
+
         const costCenter = await this.usageServiceClientProvider.getDefault().getCostCenter(attributionId);
         await this.usageServiceClientProvider.getDefault().setCostCenter({
             id: attributionId,
