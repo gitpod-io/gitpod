@@ -120,6 +120,7 @@ export class WorkspaceManagerBridge implements Disposable {
     }
 
     public stop() {
+        this.markAllRunningWorkspaceInstancesAsStopped();
         this.dispose();
     }
 
@@ -643,6 +644,35 @@ export class WorkspaceManagerBridge implements Disposable {
                 messageId: `bridge-wsstopped-${instance.id}`,
                 properties: { instanceId: instance.id, workspaceId: instance.workspaceId },
             });
+        } catch (err) {
+            TraceContext.setError({ span }, err);
+            throw err;
+        } finally {
+            span.finish();
+        }
+    }
+
+    protected async markAllRunningWorkspaceInstancesAsStopped(): Promise<void> {
+        const span = TraceContext.startSpan("markAllRunningWorkspaceInstancesAsStopped");
+        try {
+            const now = new Date();
+            const runningInstances = await this.workspaceDB
+                .trace({ span })
+                .findRunningInstancesWithWorkspaces(this.cluster.name, undefined, true);
+            await Promise.all(
+                runningInstances.map(async (info) => {
+                    const logContext: LogContext = {
+                        userId: info.workspace.ownerId,
+                        workspaceId: info.workspace.id,
+                        instanceId: info.latestInstance.id,
+                    };
+                    log.error(logContext, "Marking still-running instance as stopped in database.", {
+                        creationTime: info.workspace.creationTime,
+                        currentPhase: info.latestInstance.status.phase,
+                    });
+                    await this.markWorkspaceInstanceAsStopped({ span }, info, now);
+                }),
+            );
         } catch (err) {
             TraceContext.setError({ span }, err);
             throw err;
