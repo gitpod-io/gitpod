@@ -1762,10 +1762,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.userStorageResourcesDB.update(userId, uri, content);
     }
 
-    async sendFeedback(ctx: TraceContext, feedback: string): Promise<string | undefined> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, "Sending feedback is not implemented");
-    }
-
     async isGitHubAppEnabled(ctx: TraceContext): Promise<boolean> {
         this.checkAndBlockUser();
         return !!this.config.githubApp?.enabled;

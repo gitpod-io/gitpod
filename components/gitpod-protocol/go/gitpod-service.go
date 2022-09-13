@@ -73,7 +73,6 @@ type APIInterface interface {
 	GetGitpodTokens(ctx context.Context) (res []*APIToken, err error)
 	GenerateNewGitpodToken(ctx context.Context, options *GenerateNewGitpodTokenOptions) (res string, err error)
 	DeleteGitpodToken(ctx context.Context, tokenHash string) (err error)
-	SendFeedback(ctx context.Context, feedback string) (res string, err error)
 	RegisterGithubApp(ctx context.Context, installationID string) (err error)
 	TakeSnapshot(ctx context.Context, options *TakeSnapshotOptions) (res string, err error)
 	WaitForSnapshot(ctx context.Context, snapshotId string) (err error)
@@ -191,8 +190,6 @@ const (
 	FunctionGenerateNewGitpodToken FunctionName = "generateNewGitpodToken"
 	// FunctionDeleteGitpodToken is the name of the deleteGitpodToken function
 	FunctionDeleteGitpodToken FunctionName = "deleteGitpodToken"
-	// FunctionSendFeedback is the name of the sendFeedback function
-	FunctionSendFeedback FunctionName = "sendFeedback"
 	// FunctionRegisterGithubApp is the name of the registerGithubApp function
 	FunctionRegisterGithubApp FunctionName = "registerGithubApp"
 	// FunctionTakeSnapshot is the name of the takeSnapshot function
@@ -1268,26 +1265,6 @@ func (gp *APIoverJSONRPC) DeleteGitpodToken(ctx context.Context, tokenHash strin
 	if err != nil {
 		return
 	}
-
-	return
-}
-
-// SendFeedback calls sendFeedback on the server
-func (gp *APIoverJSONRPC) SendFeedback(ctx context.Context, feedback string) (res string, err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	_params = append(_params, feedback)
-
-	var result string
-	err = gp.C.Call(ctx, "sendFeedback", _params, &result)
-	if err != nil {
-		return
-	}
-	res = result
 
 	return
 }
