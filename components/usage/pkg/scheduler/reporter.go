@@ -30,12 +30,20 @@ var (
 		Help:      "Histogram of job duration",
 		Buckets:   prometheus.LinearBuckets(30, 30, 10), // every 30 secs, starting at 30secs
 	}, []string{"job", "outcome"})
+
+	stoppedWithoutStoppingTime = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "job_stopped_instances_without_stopping_time_count",
+		Help:      "Gauge of usage records where workpsace instance is stopped but doesn't have a stopping time",
+	})
 )
 
 func RegisterMetrics(reg *prometheus.Registry) error {
 	metrics := []prometheus.Collector{
 		jobStartedSeconds,
 		jobCompletedSeconds,
+		stoppedWithoutStoppingTime,
 	}
 	for _, metric := range metrics {
 		err := reg.Register(metric)
