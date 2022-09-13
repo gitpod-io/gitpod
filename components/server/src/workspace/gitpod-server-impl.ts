@@ -802,7 +802,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { workspaceId, action });
         traceWI(ctx, { workspaceId });
 
-        this.checkAndBlockUser("updateWorkspacePin");
+        this.checkAndBlockUser("updateWorkspaceUserPin");
 
         await this.workspaceDb.trace(ctx).transaction(async (db) => {
             const ws = await this.internalGetWorkspace(workspaceId, db);
@@ -1834,7 +1834,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { workspaceId });
         traceWI(ctx, { workspaceId });
 
-        this.checkUser("storeLayout");
+        this.checkUser("getLayout");
 
         const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
         if (!workspace) {
@@ -2948,7 +2948,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         // traceAPIParams(ctx, { event }); tracing analytics does not make much sense
 
         //Identify calls collect user informmation. If the user is unknown, we don't make a call (privacy preservation)
-        const user = this.checkUser("IdentifyUser");
+        const user = this.checkUser("identifyUser");
 
         const identifyMessage: IdentifyMessage = {
             userId: user.id,
