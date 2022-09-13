@@ -96,7 +96,7 @@ func TestMultiRepoWorkspaceSuccess(t *testing.T) {
 			return nil
 		}
 
-		ws, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(multiRepoInit))
+		ws, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(multiRepoInit))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -113,6 +113,9 @@ func TestMultiRepoWorkspaceSuccess(t *testing.T) {
 			integration.WithContainer("workspace"),
 			integration.WithWorkspacekitLift(true),
 		)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		integration.DeferCloser(t, closer)
 		defer rsa.Close()

@@ -38,7 +38,7 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 			}
 			for _, test := range tests {
 				t.Run(test.Name, func(t *testing.T) {
-					_, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
+					_, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
 						req.Type = wsmanapi.WorkspaceType_PREBUILD
 						req.Spec.Envvars = append(req.Spec.Envvars, &wsmanapi.EnvironmentVariable{
 							Name:  "GITPOD_TASKS",
@@ -91,7 +91,7 @@ func TestPrebuildWorkspaceTaskFail(t *testing.T) {
 				api.Done(t)
 			})
 
-			ws, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
+			ws, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
 				req.Type = wsmanapi.WorkspaceType_PREBUILD
 				req.Spec.Envvars = append(req.Spec.Envvars, &wsmanapi.EnvironmentVariable{
 					Name:  "GITPOD_TASKS",
@@ -106,7 +106,7 @@ func TestPrebuildWorkspaceTaskFail(t *testing.T) {
 			t.Cleanup(func() {
 				_, err = stopWs(true)
 				if err != nil {
-					t.Errorf("cannot stop workspace: %q", err)
+					t.Fatal(err)
 				}
 			})
 

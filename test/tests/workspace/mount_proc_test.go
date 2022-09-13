@@ -56,7 +56,7 @@ func TestMountProc(t *testing.T) {
 				api.Done(t)
 			})
 
-			ws, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api)
+			ws, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api)
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -20,7 +20,7 @@ import (
 
 const (
 	K3S_VERSION = "1.23.4"
-	TIME_OUT    = 5 * time.Minute
+	TIME_OUT    = 10 * time.Minute
 )
 
 func TestK3s(t *testing.T) {
@@ -35,14 +35,14 @@ func TestK3s(t *testing.T) {
 				api.Done(t)
 			})
 
-			ws, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api)
+			ws, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api)
 			if err != nil {
 				t.Fatal(err)
 			}
 			t.Cleanup(func() {
 				_, err = stopWs(true)
 				if err != nil {
-					t.Errorf("cannot stop workspace: %q", err)
+					t.Fatal(err)
 				}
 			})
 

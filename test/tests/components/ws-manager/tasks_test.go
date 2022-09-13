@@ -24,8 +24,7 @@ import (
 func TestRegularWorkspaceTasks(t *testing.T) {
 	testRepo := "https://github.com/gitpod-io/empty"
 	testRepoName := "empty"
-	wsLoc := "/workspace/empty"
-
+	wsLoc := fmt.Sprintf("/workspace/%s", testRepoName)
 	tests := []struct {
 		Name        string
 		Task        []gitpod.TasksItems
@@ -92,7 +91,7 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 						return nil
 					}
 
-					nfo, stopWs, err := integration.LaunchWorkspaceDirectly(ctx, api, integration.WithRequestModifier(addInitTask))
+					nfo, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(addInitTask))
 					if err != nil {
 						t.Fatal(err)
 					}
