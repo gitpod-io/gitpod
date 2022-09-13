@@ -10,6 +10,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/yq"
 	"github.com/go-playground/validator/v10"
+	"k8s.io/client-go/kubernetes"
 
 	"sigs.k8s.io/yaml"
 )
@@ -54,6 +55,9 @@ type ConfigVersion interface {
 
 	// BuildFromEnvvars builds the configuration file from assigned envvars
 	BuildFromEnvvars(cfg interface{}) error
+
+	// PreDeploy runs before deployment to build dependent resources from envvars/config
+	PreDeploy(cfg interface{}, clientset *kubernetes.Clientset, namespace string) error
 }
 
 // AddVersion adds a new version.
