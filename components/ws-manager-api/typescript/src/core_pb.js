@@ -57,6 +57,7 @@ goog.exportSymbol('proto.wsman.StartWorkspaceRequest', null, global);
 goog.exportSymbol('proto.wsman.StartWorkspaceResponse', null, global);
 goog.exportSymbol('proto.wsman.StartWorkspaceSpec', null, global);
 goog.exportSymbol('proto.wsman.StopWorkspacePolicy', null, global);
+goog.exportSymbol('proto.wsman.StopWorkspaceReason', null, global);
 goog.exportSymbol('proto.wsman.StopWorkspaceRequest', null, global);
 goog.exportSymbol('proto.wsman.StopWorkspaceResponse', null, global);
 goog.exportSymbol('proto.wsman.SubscribeRequest', null, global);
@@ -2011,7 +2012,8 @@ proto.wsman.StopWorkspaceRequest.prototype.toObject = function(opt_includeInstan
 proto.wsman.StopWorkspaceRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
     id: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    policy: jspb.Message.getFieldWithDefault(msg, 2, 0)
+    policy: jspb.Message.getFieldWithDefault(msg, 2, 0),
+    reason: jspb.Message.getFieldWithDefault(msg, 3, 0)
   };
 
   if (includeInstance) {
@@ -2056,6 +2058,10 @@ proto.wsman.StopWorkspaceRequest.deserializeBinaryFromReader = function(msg, rea
       var value = /** @type {!proto.wsman.StopWorkspacePolicy} */ (reader.readEnum());
       msg.setPolicy(value);
       break;
+    case 3:
+      var value = /** @type {!proto.wsman.StopWorkspaceReason} */ (reader.readEnum());
+      msg.setReason(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -2099,6 +2105,13 @@ proto.wsman.StopWorkspaceRequest.serializeBinaryToWriter = function(message, wri
       f
     );
   }
+  f = message.getReason();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      3,
+      f
+    );
+  }
 };
 
 
@@ -2135,6 +2148,24 @@ proto.wsman.StopWorkspaceRequest.prototype.getPolicy = function() {
  */
 proto.wsman.StopWorkspaceRequest.prototype.setPolicy = function(value) {
   return jspb.Message.setProto3EnumField(this, 2, value);
+};
+
+
+/**
+ * optional StopWorkspaceReason reason = 3;
+ * @return {!proto.wsman.StopWorkspaceReason}
+ */
+proto.wsman.StopWorkspaceRequest.prototype.getReason = function() {
+  return /** @type {!proto.wsman.StopWorkspaceReason} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+};
+
+
+/**
+ * @param {!proto.wsman.StopWorkspaceReason} value
+ * @return {!proto.wsman.StopWorkspaceRequest} returns this
+ */
+proto.wsman.StopWorkspaceRequest.prototype.setReason = function(value) {
+  return jspb.Message.setProto3EnumField(this, 3, value);
 };
 
 
@@ -9818,6 +9849,19 @@ proto.wsman.StopWorkspacePolicy = {
   NORMALLY: 0,
   IMMEDIATELY: 1,
   ABORT: 2
+};
+
+/**
+ * @enum {number}
+ */
+proto.wsman.StopWorkspaceReason = {
+  USER_STOPPED: 0,
+  USER_DELETED: 1,
+  USER_CANCELLED_PREBUILD: 2,
+  ADMIN_STOPPED: 3,
+  ADMIN_BLOCKED: 4,
+  SYSTEM_CANCELLED_BRANCH_PREBUILD: 5,
+  SYSTEM_USER_LIMIT_REACHED: 6
 };
 
 /**

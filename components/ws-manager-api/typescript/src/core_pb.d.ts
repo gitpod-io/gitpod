@@ -153,6 +153,8 @@ export class StopWorkspaceRequest extends jspb.Message {
     setId(value: string): StopWorkspaceRequest;
     getPolicy(): StopWorkspacePolicy;
     setPolicy(value: StopWorkspacePolicy): StopWorkspaceRequest;
+    getReason(): StopWorkspaceReason;
+    setReason(value: StopWorkspaceReason): StopWorkspaceRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StopWorkspaceRequest.AsObject;
@@ -168,6 +170,7 @@ export namespace StopWorkspaceRequest {
     export type AsObject = {
         id: string,
         policy: StopWorkspacePolicy,
+        reason: StopWorkspaceReason,
     }
 }
 
@@ -1234,6 +1237,16 @@ export enum StopWorkspacePolicy {
     NORMALLY = 0,
     IMMEDIATELY = 1,
     ABORT = 2,
+}
+
+export enum StopWorkspaceReason {
+    USER_STOPPED = 0,
+    USER_DELETED = 1,
+    USER_CANCELLED_PREBUILD = 2,
+    ADMIN_STOPPED = 3,
+    ADMIN_BLOCKED = 4,
+    SYSTEM_CANCELLED_BRANCH_PREBUILD = 5,
+    SYSTEM_USER_LIMIT_REACHED = 6,
 }
 
 export enum AdmissionLevel {
