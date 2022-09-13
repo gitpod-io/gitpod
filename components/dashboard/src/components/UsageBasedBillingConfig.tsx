@@ -7,6 +7,7 @@
 import { useState, useContext, useEffect } from "react";
 import { Appearance, loadStripe, Stripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { ThemeContext } from "../theme-context";
 import { PaymentContext } from "../payment-context";
@@ -16,7 +17,7 @@ import Modal from "../components/Modal";
 import Alert from "./Alert";
 
 interface Props {
-    userOrTeamId: string;
+    attributionId: AttributionId;
     showSpinner: boolean;
     showUpgradeBilling: boolean;
     showManageBilling: boolean;
@@ -26,7 +27,7 @@ interface Props {
 }
 
 export default function UsageBasedBillingConfig({
-    userOrTeamId,
+    attributionId,
     showSpinner,
     showUpgradeBilling,
     showManageBilling,
@@ -89,7 +90,7 @@ export default function UsageBasedBillingConfig({
                 )}
             </div>
             {showBillingSetupModal && (
-                <BillingSetupModal id={userOrTeamId} onClose={() => setShowBillingSetupModal(false)} />
+                <BillingSetupModal attributionId={attributionId} onClose={() => setShowBillingSetupModal(false)} />
             )}
             {showUpdateLimitModal && (
                 <UpdateLimitModal
@@ -102,7 +103,7 @@ export default function UsageBasedBillingConfig({
     );
 }
 
-function BillingSetupModal(props: { id: string; onClose: () => void }) {
+function BillingSetupModal(props: { attributionId: AttributionId; onClose: () => void }) {
     const { isDark } = useContext(ThemeContext);
     const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | undefined>();
     const [stripeSetupIntentClientSecret, setStripeSetupIntentClientSecret] = useState<string | undefined>();
@@ -132,7 +133,7 @@ function BillingSetupModal(props: { id: string; onClose: () => void }) {
                             clientSecret: stripeSetupIntentClientSecret,
                         }}
                     >
-                        <CreditCardInputForm id={props.id} />
+                        <CreditCardInputForm attributionId={props.attributionId} />
                     </Elements>
                 )}
             </div>
@@ -146,7 +147,7 @@ function getStripeAppearance(isDark?: boolean): Appearance {
     };
 }
 
-function CreditCardInputForm(props: { id: string }) {
+function CreditCardInputForm(props: { attributionId: AttributionId }) {
     const stripe = useStripe();
     const elements = useElements();
     const { currency, setCurrency } = useContext(PaymentContext);
@@ -161,8 +162,16 @@ function CreditCardInputForm(props: { id: string }) {
         setBillingError(undefined);
         setIsLoading(true);
         try {
-            // Create Stripe customer for team & currency (or update currency)
-            await getGitpodService().server.createOrUpdateStripeCustomerForTeam(props.id, currency);
+            if (props.attributionId.kind === "team") {
+                // Create Stripe customer for team & currency (or update currency)
+                await getGitpodService().server.createOrUpdateStripeCustomerForTeam(
+                    props.attributionId.teamId,
+                    currency,
+                );
+            } else {
+                // Create Stripe customer for user & currency (or update currency)
+                await getGitpodService().server.createOrUpdateStripeCustomerForUser(currency);
+            }
             const result = await stripe.confirmSetup({
                 elements,
                 confirmParams: {
