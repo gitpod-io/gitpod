@@ -27,12 +27,15 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
 
 	linuxproc "github.com/c9s/goprocinfo/linux"
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/common-go/cgroups"
 	v1 "github.com/gitpod-io/gitpod/common-go/cgroups/v1"
 	v2 "github.com/gitpod-io/gitpod/common-go/cgroups/v2"
+	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	wsinit "github.com/gitpod-io/gitpod/content-service/pkg/initializer"
@@ -156,11 +159,10 @@ func (wbs *InWorkspaceServiceServer) Start() error {
 	}
 
 	socketFN := filepath.Join(wbs.Session.ServiceLocDaemon, "daemon.sock")
-	if _, err := os.Stat(socketFN); err == nil {
-		// a former ws-daemon instance left their sockets laying around.
-		// Let's clean up after them.
-		_ = os.Remove(socketFN)
-	}
+	// a former ws-daemon instance left their sockets laying around.
+	// Let's clean up after them.
+	_ = os.Remove(socketFN)
+
 	sckt, err := net.Listen("unix", socketFN)
 	if err != nil {
 		return xerrors.Errorf("cannot create IWS socket: %w", err)
@@ -191,8 +193,17 @@ func (wbs *InWorkspaceServiceServer) Start() error {
 		},
 	}
 
-	wbs.srv = grpc.NewServer(grpc.ChainUnaryInterceptor(limits.UnaryInterceptor()))
+	grpcOpts := common_grpc.ServerOptionsWithInterceptors(
+		[]grpc.StreamServerInterceptor{},
+		[]grpc.UnaryServerInterceptor{limits.UnaryInterceptor()},
+	)
+	wbs.srv = grpc.NewServer(grpcOpts...)
+
+	// Register health service by default
+	grpc_health_v1.RegisterHealthServer(wbs.srv, &baseserver.GrpcHealthService{})
+
 	api.RegisterInWorkspaceServiceServer(wbs.srv, wbs)
+
 	go func() {
 		err := wbs.srv.Serve(sckt)
 		if err != nil {

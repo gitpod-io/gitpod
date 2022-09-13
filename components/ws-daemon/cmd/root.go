@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 )
@@ -30,6 +31,8 @@ var rootCmd = &cobra.Command{
 	Short: "Workspace initialization and synchronization daemon",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, jsonLog, verbose)
+		common_grpc.SetupLogging()
+
 	},
 }
 
