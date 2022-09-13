@@ -194,7 +194,7 @@ func TestUploadDownloadBlob(t *testing.T) {
 			originalUrl := resp.Url
 			updatedUrl, err := api.Storage(originalUrl)
 			if err != nil {
-				t.Fatalf("error resolving blob upload target url")
+				t.Fatalf("error resolving blob upload target url: %q", err)
 			}
 			t.Logf("upload URL: %s", updatedUrl)
 
@@ -207,7 +207,7 @@ func TestUploadDownloadBlob(t *testing.T) {
 			originalUrl = resp2.Url
 			updatedUrl, err = api.Storage(originalUrl)
 			if err != nil {
-				t.Fatalf("error resolving blob download target url")
+				t.Fatalf("error resolving blob download target url: %q", err)
 			}
 			t.Logf("download URL: %s", updatedUrl)
 
@@ -263,7 +263,7 @@ func TestUploadDownloadBlobViaServer(t *testing.T) {
 
 			updatedUrl, err = api.Storage(originalUrl)
 			if err != nil {
-				t.Fatalf("error resolving blob download target url")
+				t.Fatalf("error resolving blob download target url, %q", err)
 			}
 			t.Logf("download URL: %s", updatedUrl)
 
