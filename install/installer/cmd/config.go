@@ -74,5 +74,5 @@ func init() {
 		log.WithError(err).Fatal("Failed to get working directory")
 	}
 
-	configCmd.PersistentFlags().StringVarP(&configOpts.ConfigFile, "config", "c", getEnvvar("CONFIG_FILE", filepath.Join(dir, "gitpod.config.yaml")), "path to the configuration file")
+	configCmd.PersistentFlags().StringVarP(&configOpts.ConfigFile, "config", "c", getEnvvar("GITPOD_INSTALLER_CONFIG", filepath.Join(dir, "gitpod.config.yaml")), "path to the configuration file")
 }
