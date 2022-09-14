@@ -41,6 +41,7 @@ var workspacesListCmd = &cobra.Command{
 			Type        string
 			Pod         string
 			Active      bool
+			Node        string
 		}
 
 		var out []PrintWorkspace
@@ -65,12 +66,13 @@ var workspacesListCmd = &cobra.Command{
 				Type:        w.GetSpec().GetType().String(),
 				Pod:         pod,
 				Active:      w.GetConditions().FirstUserActivity != nil,
+				Node:        w.Runtime.NodeName,
 			})
 		}
 
-		tpl := `OWNER	WORKSPACE	INSTANCE	PHASE	TYPE	POD	ACTIVE
+		tpl := `OWNER	WORKSPACE	INSTANCE	PHASE	TYPE	POD	ACTIVE	NODE
 {{- range . }}
-{{ .Owner }}	{{ .WorkspaceID }}	{{ .Instance }}	{{ .Phase }}	{{ .Type }}	{{ .Pod }}	{{ .Active -}}
+{{ .Owner }}	{{ .WorkspaceID }}	{{ .Instance }}	{{ .Phase }}	{{ .Type }}	{{ .Pod }}	{{ .Active }}	{{ .Node -}}
 {{ end }}
 `
 		err = getOutputFormat(tpl, "{.id}").Print(out)
