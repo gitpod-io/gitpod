@@ -63,7 +63,7 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 						t.Fatalf("cannot launch a workspace: %q", err)
 					}
 					t.Cleanup(func() {
-						_, err = stopWs(true)
+						_, err = stopWs(true, api)
 						if err != nil {
 							t.Errorf("cannot stop workspace: %q", err)
 						}
@@ -104,7 +104,7 @@ func TestPrebuildWorkspaceTaskFail(t *testing.T) {
 			}
 
 			t.Cleanup(func() {
-				_, err = stopWs(true)
+				_, err = stopWs(true, api)
 				if err != nil {
 					t.Fatal(err)
 				}

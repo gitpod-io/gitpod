@@ -149,7 +149,7 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 						}
 
 						defer func() {
-							_, err := stopWs(true)
+							_, err := stopWs(true, api)
 							if err != nil {
 								t.Fatal(err)
 							}

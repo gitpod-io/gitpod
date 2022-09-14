@@ -68,7 +68,7 @@ func TestBackup(t *testing.T) {
 						integration.WithWorkspacekitLift(true),
 					)
 					if err != nil {
-						if _, err := stopWs1(true); err != nil {
+						if _, err := stopWs1(true, api); err != nil {
 							t.Errorf("cannot stop workspace: %q", err)
 						}
 						t.Fatal(err)
@@ -83,13 +83,13 @@ func TestBackup(t *testing.T) {
 					}, &resp)
 					rsa.Close()
 					if err != nil {
-						if _, err := stopWs1(true); err != nil {
+						if _, err := stopWs1(true, api); err != nil {
 							t.Errorf("cannot stop workspace: %q", err)
 						}
 						t.Fatal(err)
 					}
 
-					lastStatusWs1, err := stopWs1(true)
+					lastStatusWs1, err := stopWs1(true, api)
 					if err != nil {
 						t.Fatal(err)
 					}
@@ -117,7 +117,7 @@ func TestBackup(t *testing.T) {
 						t.Fatal(err)
 					}
 					defer func() {
-						_, err = stopWs2(true)
+						_, err = stopWs2(true, api)
 						if err != nil {
 							t.Errorf("cannot stop workspace: %q", err)
 						}
@@ -200,7 +200,7 @@ func TestExistingWorkspaceEnablePVC(t *testing.T) {
 				integration.WithWorkspacekitLift(true),
 			)
 			if err != nil {
-				if _, err := stopWs1(true); err != nil {
+				if _, err := stopWs1(true, api); err != nil {
 					t.Errorf("cannot stop workspace: %q", err)
 				}
 				t.Fatal(err)
@@ -215,13 +215,13 @@ func TestExistingWorkspaceEnablePVC(t *testing.T) {
 			}, &resp)
 			rsa.Close()
 			if err != nil {
-				if _, err := stopWs1(true); err != nil {
+				if _, err := stopWs1(true, api); err != nil {
 					t.Errorf("cannot stop workspace: %q", err)
 				}
 				t.Fatal(err)
 			}
 
-			_, err = stopWs1(true)
+			_, err = stopWs1(true, api)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -242,7 +242,7 @@ func TestExistingWorkspaceEnablePVC(t *testing.T) {
 				t.Fatal(err)
 			}
 			t.Cleanup(func() {
-				_, err = stopWs2(true)
+				_, err = stopWs2(true, api)
 				if err != nil {
 					t.Errorf("cannot stop workspace: %q", err)
 				}
@@ -303,7 +303,7 @@ func TestMissingBackup(t *testing.T) {
 
 			wsm, err := api.WorkspaceManager()
 			if err != nil {
-				if _, err := stopWs(true); err != nil {
+				if _, err := stopWs(true, api); err != nil {
 					t.Errorf("cannot stop workspace: %q", err)
 				}
 				t.Fatal(err)
@@ -363,7 +363,7 @@ func TestMissingBackup(t *testing.T) {
 						return
 					}
 					if testws.LastStatus.Conditions.Failed == "" {
-						_, err = stopWs(true)
+						_, err = stopWs(true, api)
 						if err != nil {
 							t.Errorf("cannot stop workspace: %q", err)
 						}

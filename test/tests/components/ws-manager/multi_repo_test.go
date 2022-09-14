@@ -102,7 +102,7 @@ func TestMultiRepoWorkspaceSuccess(t *testing.T) {
 		}
 
 		defer func() {
-			_, err = stopWs(true)
+			_, err = stopWs(true, api)
 			if err != nil {
 				t.Errorf("cannot stop workspace: %q", err)
 			}

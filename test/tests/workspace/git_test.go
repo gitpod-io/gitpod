@@ -158,12 +158,12 @@ func TestGitActions(t *testing.T) {
 							t.Fatal(err)
 						}
 
-						nfo, stopWS, err := integration.LaunchWorkspaceFromContextURL(t, ctx, test.ContextURL, username, api)
+						nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(t, ctx, test.ContextURL, username, api)
 						if err != nil {
 							t.Fatal(err)
 						}
 						t.Cleanup(func() {
-							_, err := stopWS(true)
+							_, err := stopWs(true, api)
 							if err != nil {
 								t.Fatal(err)
 							}

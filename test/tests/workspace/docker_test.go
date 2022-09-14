@@ -33,7 +33,7 @@ func TestRunDocker(t *testing.T) {
 				t.Fatal(err)
 			}
 			t.Cleanup(func() {
-				_, err = stopWs(true)
+				_, err = stopWs(true, api)
 				if err != nil {
 					t.Fatal(err)
 				}

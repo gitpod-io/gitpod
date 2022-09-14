@@ -82,7 +82,7 @@ func TestPythonExtWorkspace(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer stopWs(true)
+			defer stopWs(true, api)
 
 			_, err = integration.WaitForWorkspaceStart(ctx, nfo.LatestInstance.ID, api)
 			if err != nil {
