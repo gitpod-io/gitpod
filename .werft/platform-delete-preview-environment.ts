@@ -1,6 +1,6 @@
 import { Werft } from "./util/werft";
 import * as Tracing from "./observability/tracing";
-import { HarvesterPreviewEnvironment, PreviewEnvironment } from "./platform-delete-preview-environments-cron";
+import { HarvesterPreviewEnvironment, PreviewEnvironment } from "./util/preview";
 import { SpanStatusCode } from "@opentelemetry/api";
 import { exec } from "./util/shell";
 import { CORE_DEV_KUBECONFIG_PATH, HARVESTER_KUBECONFIG_PATH } from "./jobs/build/const";
@@ -18,6 +18,7 @@ const annotations = context.Annotations || {};
 const previewName = annotations["preview"] || "";
 
 const SLICES = {
+    VALIDATE_CONFIGURATION: "Validating configuration",
     CONFIGURE_ACCESS: "Configuring access to relevant resources",
     INSTALL_HARVESTER_KUBECONFIG: "Install Harvester kubeconfig",
     DELETING_PREVIEW: `Deleting preview environment: ${previewName}`,
@@ -45,9 +46,14 @@ Tracing.initialize()
 
 async function deletePreviewEnvironment() {
     // Fail early if no preview was passed through annotations.
+    werft.log(SLICES.VALIDATE_CONFIGURATION, "Validating annotations");
     if (previewName == "") {
-        werft.fail("Preparation", "A preview name is required. Please inform the preview name with '-a preview=<name of the preview>'.")
+        werft.fail(
+            SLICES.VALIDATE_CONFIGURATION,
+            "A preview name is required. Please inform the preview name with '-a preview=<name of the preview>'.",
+        );
     }
+    werft.done(SLICES.VALIDATE_CONFIGURATION);
 
     werft.phase("Configure access");
     try {
@@ -74,11 +80,11 @@ async function deletePreviewEnvironment() {
         werft.fail(SLICES.INSTALL_HARVESTER_KUBECONFIG, err);
     }
 
-    const preview = new HarvesterPreviewEnvironment(previewName)
+    const preview = new HarvesterPreviewEnvironment(werft, previewName);
     if (DRY_RUN) {
-        werft.log(SLICES.DELETING_PREVIEW, `Would have deleted preview ${preview.name}`)
+        werft.log(SLICES.DELETING_PREVIEW, `Would have deleted preview ${preview.name}`);
     } else {
-        removePreviewEnvironment(preview)
+        removePreviewEnvironment(preview);
     }
 }
 
