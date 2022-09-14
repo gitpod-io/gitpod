@@ -436,8 +436,12 @@ export class WorkspaceStarter {
         ctx: TraceContext,
         instanceId: string,
         instanceRegion: string,
+        reason: string,
         policy?: StopWorkspacePolicy,
     ): Promise<void> {
+        ctx.span?.setTag("stopWorkspaceReason", reason);
+        log.info({ instanceId }, "Stopping workspace instance", { reason });
+
         const req = new StopWorkspaceRequest();
         req.setId(instanceId);
         req.setPolicy(policy || StopWorkspacePolicy.NORMALLY);

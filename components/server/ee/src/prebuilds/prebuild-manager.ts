@@ -72,13 +72,14 @@ export class PrebuildManager {
                     for (const instance of prebuild.instances) {
                         log.info(
                             { userId: user.id, instanceId: instance.id, workspaceId: instance.workspaceId },
-                            "Aborting Prebuild workspace because a newer commit was pushed to the same branch.",
+                            "Cancelling Prebuild workspace because a newer commit was pushed to the same branch.",
                         );
                         results.push(
                             this.workspaceStarter.stopWorkspaceInstance(
                                 { span },
                                 instance.id,
                                 instance.region,
+                                "prebuild cancelled because a newer commit was pushed to the same branch",
                                 StopWorkspacePolicy.ABORT,
                             ),
                         );
