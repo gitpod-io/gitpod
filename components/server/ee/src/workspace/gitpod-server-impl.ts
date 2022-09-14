@@ -2245,15 +2245,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
 
         const user = this.checkAndBlockUser("setUsageLimit");
-        switch (attrId.kind) {
-            case "team":
-                const team = await this.guardTeamOperation(attrId.teamId, "update");
-                await this.ensureStripeApiIsAllowed({ team });
-                break;
-            case "user":
-                await this.ensureStripeApiIsAllowed({ user });
-                break;
-        }
         await this.guardCostCenterAccess(ctx, user.id, attrId, "update");
 
         const response = await this.usageService.getCostCenter({ attributionId });
