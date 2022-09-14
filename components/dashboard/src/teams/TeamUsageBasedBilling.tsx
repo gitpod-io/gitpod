@@ -35,11 +35,7 @@ export default function TeamUsageBasedBilling() {
     return (
         <>
             <h3>Usage-Based Billing</h3>
-            <UsageBasedBillingConfig
-                subject={team}
-                attributionId={attributionId}
-                localStorageKey={`pendingStripeSubscriptionForTeam${team?.id || ""}`}
-            />
+            <UsageBasedBillingConfig subject={team} attributionId={attributionId} />
         </>
     );
 }
