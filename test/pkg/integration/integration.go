@@ -20,9 +20,12 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"golang.org/x/xerrors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -37,6 +40,11 @@ import (
 	"sigs.k8s.io/e2e-framework/klient"
 
 	"github.com/gitpod-io/gitpod/test/pkg/integration/common"
+)
+
+const (
+	connectFailureMaxTries = 5
+	errorDialingBackendEOF = "error dialing backend: EOF"
 )
 
 type PodExec struct {
@@ -57,7 +65,7 @@ func NewPodExec(config rest.Config, clientset *kubernetes.Clientset) *PodExec {
 func (p *PodExec) PodCopyFile(src string, dst string, containername string) (*bytes.Buffer, *bytes.Buffer, *bytes.Buffer, error) {
 	var in, out, errOut *bytes.Buffer
 	var ioStreams genericclioptions.IOStreams
-	for {
+	for count := 0; ; count++ {
 		ioStreams, in, out, errOut = genericclioptions.NewTestIOStreams()
 		copyOptions := kubectlcp.NewCopyOptions(ioStreams)
 		copyOptions.Clientset = p.Clientset
@@ -65,8 +73,8 @@ func (p *PodExec) PodCopyFile(src string, dst string, containername string) (*by
 		copyOptions.Container = containername
 		err := copyOptions.Run([]string{src, dst})
 		if err != nil {
-			if !errors.Is(err, io.EOF) {
-				return nil, nil, nil, fmt.Errorf("Could not run copy operation: %v", err)
+			if !shouldRetry(count, err) {
+				return nil, nil, nil, fmt.Errorf("could not run copy operation: %v", err)
 			}
 			time.Sleep(10 * time.Second)
 			continue
@@ -74,6 +82,13 @@ func (p *PodExec) PodCopyFile(src string, dst string, containername string) (*by
 		break
 	}
 	return in, out, errOut, nil
+}
+
+func shouldRetry(count int, err error) bool {
+	if count < connectFailureMaxTries {
+		return err.Error() == errorDialingBackendEOF
+	}
+	return false
 }
 
 func (p *PodExec) ExecCmd(command []string, podname string, namespace string, containername string) (*bytes.Buffer, *bytes.Buffer, *bytes.Buffer, error) {
@@ -187,73 +202,22 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 		return nil, closer, err
 	}
 
-	localAgentPort, err := getFreePort()
-	if err != nil {
-		return nil, closer, err
-	}
-
-	cmd := []string{filepath.Join("/home/gitpod/", tgtFN), "-rpc-port", strconv.Itoa(localAgentPort)}
-	if options.WorkspacekitLift {
-		cmd = append([]string{"/.supervisor/workspacekit", "lift"}, cmd...)
-	}
-
-	execErrs := make(chan error, 1)
-	execF := func() {
-		defer close(execErrs)
-		_, _, _, execErr := podExec.ExecCmd(cmd, podName, namespace, containerName)
-		if execErr != nil {
-			execErrs <- execErr
-		}
-	}
-	go execF()
-	select {
-	case err := <-execErrs:
-		if err != nil {
-			return nil, closer, err
-		}
-		return nil, closer, fmt.Errorf("agent stopped unexepectedly")
-	case <-time.After(30 * time.Second):
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer func() {
+	var (
+		res *rpc.Client
+		cl  []func() error
+	)
+	for i := 0; i < connectFailureMaxTries; i++ {
+		res, cl, err = portfw(podExec, kubeconfig, podName, namespace, containerName, tgtFN, options)
 		if err == nil {
-			closer = append(closer, func() error {
-				cancel()
-				return nil
-			})
-		} else {
-			cancel()
+			closer = append(closer, cl...)
+			break
 		}
-	}()
-
-	fwdReady, fwdErr := common.ForwardPortOfPod(ctx, kubeconfig, namespace, podName, strconv.Itoa(localAgentPort))
-	select {
-	case <-fwdReady:
-	case err := <-execErrs:
-		if err != nil {
-			return nil, closer, err
+		for _, c := range cl {
+			_ = c()
 		}
-	case err := <-fwdErr:
-		if err != nil {
-			return nil, closer, err
-		}
+		time.Sleep(5 * time.Second)
 	}
-
-	var res *rpc.Client
-	var lastError error
-	waitErr := wait.PollImmediate(5*time.Second, 3*time.Minute, func() (bool, error) {
-		res, lastError = rpc.DialHTTP("tcp", fmt.Sprintf("localhost:%d", localAgentPort))
-		if lastError != nil {
-			return false, nil
-		}
-
-		return true, nil
-	})
-	if waitErr == wait.ErrWaitTimeout {
-		return nil, closer, xerrors.Errorf("timed out attempting to connect agent: %v", lastError)
-	}
-	if waitErr != nil {
+	if err != nil {
 		return nil, closer, err
 	}
 
@@ -268,6 +232,81 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 		}
 		return nil
 	})
+
+	return res, closer, nil
+}
+
+func portfw(podExec *PodExec, kubeconfig string, podName string, namespace string, containerName string, tgtFN string, options instrumentOptions) (*rpc.Client, []func() error, error) {
+	var closer []func() error
+
+	localAgentPort, err := getFreePort()
+	if err != nil {
+		return nil, closer, err
+	}
+
+	cmd := []string{filepath.Join("/home/gitpod/", tgtFN), "-rpc-port", strconv.Itoa(localAgentPort)}
+	if options.WorkspacekitLift {
+		cmd = append([]string{"/.supervisor/workspacekit", "lift"}, cmd...)
+	}
+
+	execErrs := make(chan error, 1)
+	go func() {
+		defer close(execErrs)
+		_, _, _, execErr := podExec.ExecCmd(cmd, podName, namespace, containerName)
+		if execErr != nil {
+			execErrs <- execErr
+		}
+	}()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer func() {
+		if err == nil {
+			closer = append(closer, func() error {
+				cancel()
+				return nil
+			})
+		} else {
+			cancel()
+		}
+	}()
+L:
+	for {
+		fwdReady, fwdErr := common.ForwardPortOfPod(ctx, kubeconfig, namespace, podName, strconv.Itoa(localAgentPort))
+		select {
+		case <-fwdReady:
+			break L
+		case err := <-execErrs:
+			if err != nil {
+				return nil, closer, err
+			}
+		case err := <-fwdErr:
+			var eno syscall.Errno
+			if errors.Is(err, io.EOF) || (errors.As(err, &eno) && eno == syscall.ECONNREFUSED) {
+				time.Sleep(10 * time.Second)
+			} else if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+				time.Sleep(10 * time.Second)
+			} else if err != nil {
+				return nil, closer, err
+			}
+		}
+	}
+
+	var res *rpc.Client
+	var lastError error
+	waitErr := wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
+		res, lastError = rpc.DialHTTP("tcp", net.JoinHostPort("localhost", strconv.Itoa(localAgentPort)))
+		if lastError != nil {
+			return false, nil
+		}
+
+		return true, nil
+	})
+	if waitErr == wait.ErrWaitTimeout {
+		return nil, closer, xerrors.Errorf("timed out attempting to connect agent: %v", lastError)
+	}
+	if waitErr != nil {
+		return nil, closer, err
+	}
 
 	return res, closer, nil
 }
