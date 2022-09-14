@@ -27,7 +27,8 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
         const teamsWithBilling: Team[] = [];
         Promise.all(
             teams.map(async (t) => {
-                const subscriptionId = await getGitpodService().server.findStripeSubscriptionIdForTeam(t.id);
+                const attributionId: string = AttributionId.render({ kind: "team", teamId: t.id });
+                const subscriptionId = await getGitpodService().server.findStripeSubscriptionId(attributionId);
                 if (subscriptionId) {
                     teamsWithBilling.push(t);
                 }
