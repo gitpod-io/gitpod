@@ -21,56 +21,73 @@ func TestWorkspaceInstrumentation(t *testing.T) {
 	userToken, _ := os.LookupEnv("USER_TOKEN")
 	integration.SkipWithoutUsername(t, username)
 	integration.SkipWithoutUserToken(t, userToken)
+	tests := []struct {
+		Name          string
+		ContextURL    string
+		WorkspaceRoot string
+	}{
+		{
+
+			Name:          "example",
+			ContextURL:    "https://github.com/gitpod-io/empty",
+			WorkspaceRoot: "/workspace/empty",
+		},
+	}
 
 	f := features.New("instrumentation").
 		WithLabel("component", "server").
-		Assess("it can instrument a workspace", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-			defer cancel()
+		Assess("it can instrument a workspace", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			for _, test := range tests {
+				t.Run(test.ContextURL, func(t *testing.T) {
+					ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+					defer cancel()
 
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
-			t.Cleanup(func() {
-				api.Done(t)
-			})
+					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+					t.Cleanup(func() {
+						api.Done(t)
+					})
 
-			_, err := api.CreateUser(username, userToken)
-			if err != nil {
-				t.Fatal(err)
-			}
+					_, err := api.CreateUser(username, userToken)
+					if err != nil {
+						t.Fatal(err)
+					}
 
-			nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(t, ctx, "github.com/gitpod-io/gitpod", username, api)
-			if err != nil {
-				t.Fatal(err)
-			}
-			t.Cleanup(func() {
-				sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
-				defer scancel()
+					nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(t, ctx, test.ContextURL, username, api)
+					if err != nil {
+						t.Fatal(err)
+					}
 
-				sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
-				defer sapi.Done(t)
+					defer func() {
+						sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
+						defer scancel()
 
-				_, err = stopWs(true, sapi)
-				if err != nil {
-					t.Errorf("cannot stop workspace: %q", err)
-				}
-			})
+						sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+						defer sapi.Done(t)
 
-			rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.LatestInstance.ID))
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer rsa.Close()
-			integration.DeferCloser(t, closer)
+						_, err := stopWs(true, sapi)
+						if err != nil {
+							t.Fatal(err)
+						}
+					}()
 
-			var ls agent.ListDirResponse
-			err = rsa.Call("WorkspaceAgent.ListDir", &agent.ListDirRequest{
-				Dir: "/workspace/gitpod",
-			}, &ls)
-			if err != nil {
-				t.Fatal(err)
-			}
-			for _, f := range ls.Files {
-				t.Log(f)
+					rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.LatestInstance.ID))
+					if err != nil {
+						t.Fatal(err)
+					}
+					defer rsa.Close()
+					integration.DeferCloser(t, closer)
+
+					var ls agent.ListDirResponse
+					err = rsa.Call("WorkspaceAgent.ListDir", &agent.ListDirRequest{
+						Dir: test.WorkspaceRoot,
+					}, &ls)
+					if err != nil {
+						t.Fatal(err)
+					}
+					for _, f := range ls.Files {
+						t.Log(f)
+					}
+				})
 			}
 
 			return ctx
@@ -97,18 +114,18 @@ func TestLaunchWorkspaceDirectly(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			t.Cleanup(func() {
+			defer func() {
 				sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
 				defer scancel()
 
 				sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
 				defer sapi.Done(t)
 
-				_, err = stopWs(true, sapi)
+				_, err := stopWs(true, sapi)
 				if err != nil {
-					t.Errorf("cannot stop workspace: %q", err)
+					t.Fatal(err)
 				}
-			})
+			}()
 
 			return ctx
 		}).
