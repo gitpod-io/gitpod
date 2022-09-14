@@ -26,10 +26,9 @@ type PendingStripeSubscription = { pendingSince: number };
 interface Props {
     subject?: hasId;
     attributionId: AttributionId;
-    localStorageKey: string;
 }
 
-export default function UsageBasedBillingConfig({ subject, attributionId, localStorageKey }: Props) {
+export default function UsageBasedBillingConfig({ subject, attributionId }: Props) {
     const location = useLocation();
     const [showUpdateLimitModal, setShowUpdateLimitModal] = useState<boolean>(false);
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
@@ -40,6 +39,8 @@ export default function UsageBasedBillingConfig({ subject, attributionId, localS
     const [usageLimit, setUsageLimit] = useState<number | undefined>();
     const [pendingStripeSubscription, setPendingStripeSubscription] = useState<PendingStripeSubscription | undefined>();
     const [billingError, setBillingError] = useState<string | undefined>();
+
+    const localStorageKey = `pendingStripeSubscriptionFor${subject?.id || ""}`;
 
     useEffect(() => {
         if (!subject) {
