@@ -2269,17 +2269,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         this.messageBus.notifyOnSubscriptionUpdate(ctx, attrId).catch();
     }
 
-    async getUsageLimitForTeam(ctx: TraceContext, teamId: string): Promise<number | undefined> {
-        const attributionId: AttributionId = { kind: "team", teamId: teamId };
-
-        return this.getUsageLimit(ctx, AttributionId.render(attributionId));
-    }
-
-    async setUsageLimitForTeam(ctx: TraceContext, teamId: string, usageLimit: number): Promise<void> {
-        const attributionId: AttributionId = { kind: "team", teamId: teamId };
-        return this.setUsageLimit(ctx, AttributionId.render(attributionId), usageLimit);
-    }
-
     async getNotifications(ctx: TraceContext): Promise<string[]> {
         const result = await super.getNotifications(ctx);
         const user = this.checkAndBlockUser("getNotifications");
