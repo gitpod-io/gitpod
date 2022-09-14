@@ -25,7 +25,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": 72,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -700,7 +699,7 @@
           "type": "prometheus",
           "uid": "P4169E866C3094E38"
         },
-        "definition": "label_values(grpc_server_started_total, grpc_method)",
+        "definition": "label_values(grpc_server_started_total{grpc_service=~\"$service\"}, grpc_method)",
         "description": "gRPC Method Name",
         "hide": 0,
         "includeAll": true,
@@ -709,7 +708,7 @@
         "name": "method",
         "options": [],
         "query": {
-          "query": "label_values(grpc_server_started_total, grpc_method)",
+          "query": "label_values(grpc_server_started_total{grpc_service=~\"$service\"}, grpc_method)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
@@ -733,7 +732,7 @@
           "type": "prometheus",
           "uid": "P4169E866C3094E38"
         },
-        "definition": "label_values(grpc_server_started_total, grpc_type)",
+        "definition": "label_values(grpc_server_started_total{grpc_service=~\"$service\", grpc_method=~\"$method\"}, grpc_type)",
         "description": "gRPC request type - bidirectional stream, server stream, unary, client_stream",
         "hide": 0,
         "includeAll": true,
@@ -742,7 +741,7 @@
         "name": "type",
         "options": [],
         "query": {
-          "query": "label_values(grpc_server_started_total, grpc_type)",
+          "query": "label_values(grpc_server_started_total{grpc_service=~\"$service\", grpc_method=~\"$method\"}, grpc_type)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
@@ -772,6 +771,6 @@
   "timezone": "utc",
   "title": "gRPC / Server",
   "uid": "fDH4_QMVk",
-  "version": 5,
+  "version": 1,
   "weekStart": "monday"
 }
