@@ -2175,11 +2175,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async subscribeTeamToStripe(ctx: TraceContext, teamId: string, setupIntentId: string): Promise<void> {
-        const attributionId: AttributionId = { kind: "team", teamId: teamId };
-        return this.subscribeToStripe(ctx, AttributionId.render(attributionId), setupIntentId);
-    }
-
     async getStripePortalUrl(ctx: TraceContext, attributionId: string): Promise<string> {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
