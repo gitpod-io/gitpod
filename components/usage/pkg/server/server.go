@@ -98,18 +98,7 @@ func Start(cfg Config) error {
 		stripeClient = c
 	}
 
-	stoppedWithoutStoppingTimeSpec, err := scheduler.NewPeriodicJobSpec(
-		15*time.Minute,
-		"stopped_without_stopping_time",
-		scheduler.WithoutConcurrentRun(scheduler.NewStoppedWithoutStoppingTimeDetectorSpec(conn)),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to setup stopped without a stopping time detector: %w", err)
-	}
-
-	schedulerJobSpecs := []scheduler.JobSpec{
-		stoppedWithoutStoppingTimeSpec,
-	}
+	var schedulerJobSpecs []scheduler.JobSpec
 
 	if cfg.ControllerSchedule != "" {
 		// we do not run the controller if there is no schedule defined.
