@@ -115,9 +115,12 @@ cluster-issuer: check-env-cloud
 	$(MAKE) -C $(TF_MOD) init
 	$(MAKE) select-workspace WORKDIR=$(TF_MOD)
 	$(MAKE) -C $(TF_MOD) install-cluster-issuer
+	@echo "Done creating cluster issuer"
+
+.PHONY:
+terraform-output: prepare-terraform
 	terraform -chdir=$(TF_MOD) refresh
 	terraform -chdir=$(TF_MOD) output -json > $(cloud)-output.json
-	@echo "Done creating cluster issuer"
 
 .PHONY:
 ## add-ns-record: Adds NS record for subdomain under gitpod-selfhosted.com
@@ -161,9 +164,8 @@ storage-config-gcp:
 	yq m -i tmp_config.yml tmp_2_config.yml
 
 registry-config-gcp:
-	export gcp_registry_credentials=$$(cat gcp-output.json | yq r - 'registry.value.password_file_path') && \
-	[[ $$gcp_registry_credentials = /* ]] || export gcp_registry_credentials=$$(realpath $(TF_MOD)/$$gcp_registry_credentials) && \
-	export GCP_KEY=$$(cat $$gcp_registry_credentials | tr -d '\n' | jq -Rsa .) && \
+	export gcp_registry_credentials=$$(cat gcp-output.json | yq r - 'registry.value.password') && \
+	export GCP_KEY=$$(echo $$gcp_registry_credentials | tr -d '\n' ) && \
 	envsubst < ./manifests/kots-config-gcp-registry.yaml > tmp_4_config.yml
 	yq m -i tmp_config.yml tmp_4_config.yml
 
@@ -256,7 +258,7 @@ generate-kots-config: cloud_storage = $(if $(findstring external,$(storage)),$(c
 generate-kots-config: cloud_registry = $(if $(findstring external,$(registry)),$(cloud),incluster)
 generate-kots-config: cloud_db = $(if $(findstring external,$(db)),$(cloud),incluster)
 ## generate-kots-config: Generate the kots config based on test config
-generate-kots-config: check-env-cloud get-base-config
+generate-kots-config: check-env-cloud terraform-output get-base-config
 	$(MAKE) storage-config-${cloud_storage}
 	$(MAKE) db-config-${cloud_db}
 	$(MAKE) registry-config-${cloud_registry}
