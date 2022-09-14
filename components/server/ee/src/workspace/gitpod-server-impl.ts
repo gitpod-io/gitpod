@@ -2212,11 +2212,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return url;
     }
 
-    async getStripePortalUrlForTeam(ctx: TraceContext, teamId: string): Promise<string> {
-        const attributionId: AttributionId = { kind: "team", teamId: teamId };
-        return this.getStripePortalUrl(ctx, AttributionId.render(attributionId));
-    }
-
     async getUsageLimit(ctx: TraceContext, attributionId: string): Promise<number | undefined> {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
