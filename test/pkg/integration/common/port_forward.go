@@ -9,10 +9,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"os/exec"
 	"strings"
 	"time"
+)
+
+const (
+	errorDialingBackend = "error: error upgrading connection: error dialing backend: EOF"
 )
 
 // ForwardPortOfPod establishes a TCP port forwarding to a Kubernetes pod
@@ -48,17 +53,31 @@ func forwardPort(ctx context.Context, kubeconfig string, namespace, resourceType
 		command.Stderr = &serr
 		err := command.Start()
 		if err != nil {
-			errchan <- fmt.Errorf("unexpected error string port-forward: %w", errors.New(serr.String()))
-			if command.Process != nil {
-				_ = command.Process.Kill()
+			if strings.TrimSuffix(serr.String(), "\n") == errorDialingBackend {
+				errchan <- io.EOF
+				if command.Process != nil {
+					_ = command.Process.Kill()
+				}
+			} else {
+				errchan <- fmt.Errorf("unexpected error string port-forward: %w", errors.New(serr.String()))
+				if command.Process != nil {
+					_ = command.Process.Kill()
+				}
 			}
 		}
 
 		err = command.Wait()
 		if err != nil {
-			errchan <- fmt.Errorf("unexpected error string port-forward: %w", errors.New(serr.String()))
-			if command.Process != nil {
-				_ = command.Process.Kill()
+			if strings.TrimSuffix(serr.String(), "\n") == errorDialingBackend {
+				errchan <- io.EOF
+				if command.Process != nil {
+					_ = command.Process.Kill()
+				}
+			} else {
+				errchan <- fmt.Errorf("unexpected error running port-forward: %w", errors.New(serr.String()))
+				if command.Process != nil {
+					_ = command.Process.Kill()
+				}
 			}
 		}
 	}()
