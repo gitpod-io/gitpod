@@ -122,6 +122,7 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 		for {
 			workspaceImage, err = resolveOrBuildImage(ctx, api, options.BaseImage)
 			if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+				api.ClearImageBuilderClientCache()
 				time.Sleep(5 * time.Second)
 				continue
 			} else if err != nil {
@@ -290,6 +291,7 @@ func stopWsF(t *testing.T, instanceID string, api *ComponentAPI) stopWorkspaceFu
 			t.Logf("attemp to delete the workspace: %s", instanceID)
 			err = DeleteWorkspace(sctx, api, instanceID)
 			if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+				api.ClearWorkspaceManagerClientCache()
 				t.Logf("got %v when deleting workspace", st)
 				time.Sleep(5 * time.Second)
 				continue
@@ -323,6 +325,7 @@ func stopWsF(t *testing.T, instanceID string, api *ComponentAPI) stopWorkspaceFu
 			t.Logf("waiting for stopping the workspace: %s", instanceID)
 			lastStatus, err := WaitForWorkspaceStop(sctx, api, instanceID)
 			if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+				api.ClearWorkspaceManagerClientCache()
 				t.Logf("got %v during waiting for stopping the workspace", st)
 				time.Sleep(5 * time.Second)
 				continue
@@ -389,6 +392,18 @@ func WaitForWorkspaceStart(ctx context.Context, instanceID string, api *Componen
 			resp, err := sub.Recv()
 			if err != nil {
 				if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+					sub.CloseSend()
+					api.ClearWorkspaceManagerClientCache()
+					wsman, err := api.WorkspaceManager()
+					if err != nil {
+						errStatus <- xerrors.Errorf("cannot listen for workspace updates: %w", err)
+						return
+					}
+					sub, err = wsman.Subscribe(ctx, &wsmanapi.SubscribeRequest{})
+					if err != nil {
+						errStatus <- xerrors.Errorf("cannot listen for workspace updates: %w", err)
+						return
+					}
 					continue
 				}
 				errStatus <- xerrors.Errorf("workspace update error: %q", err)
