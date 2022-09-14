@@ -21,6 +21,8 @@ import (
 	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/typeurl"
+	//cgroupdevices "github.com/opencontainers/runc/libcontainer/cgroups/devices"
+	containerdevices "github.com/opencontainers/runc/libcontainer/devices"
 	ocispecs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
@@ -90,6 +92,7 @@ type containerInfo struct {
 	UpperDir    string
 	CGroupPath  string
 	PID         uint32
+	devices     []ocispecs.LinuxDeviceCgroup
 }
 
 // start listening to containerd
@@ -237,6 +240,10 @@ func (s *Containerd) handleNewContainer(c containers.Container) {
 		info.CGroupPath, err = ExtractCGroupPathFromContainer(c)
 		if err != nil {
 			log.WithError(err).WithFields(log.OWI(info.OwnerID, info.WorkspaceID, info.InstanceID)).Warn("cannot extract cgroup path")
+		}
+		info.devices, err = ExtractDevicesFromContainer(c)
+		if err != nil {
+			log.WithError(err).WithFields(log.OWI(info.OwnerID, info.WorkspaceID, info.InstanceID)).Warn("cannot extract cgroup device information")
 		}
 
 		info.ID = c.ID
@@ -460,6 +467,39 @@ func (s *Containerd) IsContainerdReady(ctx context.Context) (bool, error) {
 	return s.Client.IsServing(ctx)
 }
 
+func (s *Containerd) ContainerExtraDeviceRules(ctx context.Context, cgroupPath string) []*containerdevices.Rule {
+	devices := make([]*containerdevices.Rule, 0)
+	for _, container := range s.cntIdx {
+		if container.CGroupPath == cgroupPath {
+			for _, device := range container.devices {
+				var devType containerdevices.Type
+				switch device.Type {
+				case "c", "u":
+					devType = containerdevices.CharDevice
+				case "a":
+					devType = containerdevices.WildcardDevice
+				case "b":
+					devType = containerdevices.BlockDevice
+				case "p":
+					devType = containerdevices.FifoDevice
+				}
+
+				newRule := containerdevices.Rule{
+					Type:        devType,
+					Major:       *device.Major,
+					Minor:       *device.Minor,
+					Permissions: containerdevices.Permissions(device.Access),
+					Allow:       device.Allow,
+				}
+
+				devices = append(devices, &newRule)
+			}
+			break
+		}
+	}
+	return devices
+}
+
 var kubepodsRegexp = regexp.MustCompile(`([^/]+)-([^/]+)-pod`)
 
 // ExtractCGroupPathFromContainer retrieves the CGroupPath from the linux section
@@ -494,4 +534,22 @@ func ExtractCGroupPathFromContainer(container containers.Container) (cgroupPath 
 	}
 
 	return spec.Linux.CgroupsPath, nil
+}
+
+// ExtractDevicesFromContainer retrieves configured device cgroup info from the linux section
+// in a container's OCI spec.
+func ExtractDevicesFromContainer(container containers.Container) (devices []ocispecs.LinuxDeviceCgroup, err error) {
+	var spec ocispecs.Spec
+	err = json.Unmarshal(container.Spec.Value, &spec)
+	if err != nil {
+		return
+	}
+	if spec.Linux == nil {
+		return nil, xerrors.Errorf("container spec has no Linux section")
+	}
+	if spec.Linux.Resources == nil {
+		return nil, err
+	}
+
+	return spec.Linux.Resources.Devices, err
 }

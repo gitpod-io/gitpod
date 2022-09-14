@@ -72,7 +72,9 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	cgroupPlugins, err := cgroup.NewPluginHost(config.CPULimit.CGroupBasePath,
 		&cgroup.CacheReclaim{},
 		&cgroup.FuseDeviceEnablerV1{},
-		&cgroup.FuseDeviceEnablerV2{},
+		&cgroup.FuseDeviceEnablerV2{
+			Runtime: containerRuntime,
+		},
 		cgroupV1IOLimiter,
 		cgroupV2IOLimiter,
 		&cgroup.ProcessPriorityV2{

@@ -16,9 +16,12 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 )
 
-type FuseDeviceEnablerV2 struct{}
+type FuseDeviceEnablerV2 struct {
+	Runtime container.Runtime
+}
 
 func (c *FuseDeviceEnablerV2) Name() string  { return "fuse-device-enabler-v2" }
 func (c *FuseDeviceEnablerV2) Type() Version { return Version2 }
@@ -33,7 +36,8 @@ func (c *FuseDeviceEnablerV2) Apply(ctx context.Context, basePath, cgroupPath st
 	}
 	defer unix.Close(cgroupFD)
 
-	insts, license, err := devicefilter.DeviceFilter(composeDeviceRules())
+	extraRules := composeDeviceRules(c.Runtime.ContainerExtraDeviceRules(ctx, cgroupPath))
+	insts, license, err := devicefilter.DeviceFilter(extraRules)
 	if err != nil {
 		return xerrors.Errorf("failed to generate device filter: %w", err)
 	}
@@ -46,13 +50,7 @@ func (c *FuseDeviceEnablerV2) Apply(ctx context.Context, basePath, cgroupPath st
 	return nil
 }
 
-func composeDeviceRules() []*devices.Rule {
-	denyAll := devices.Rule{
-		Type:        'a',
-		Permissions: "rwm",
-		Allow:       false,
-	}
-
+func composeDeviceRules(extraRules []*devices.Rule) []*devices.Rule {
 	allowFuse := devices.Rule{
 		Type:        'c',
 		Major:       fuseDeviceMajor,
@@ -62,7 +60,14 @@ func composeDeviceRules() []*devices.Rule {
 	}
 
 	deviceRules := make([]*devices.Rule, 0)
-	deviceRules = append(deviceRules, &denyAll, &allowFuse)
+	deviceRules = append(deviceRules, &allowFuse)
+
+	if extraRules != nil {
+		for _, rule := range extraRules {
+			deviceRules = append(deviceRules, rule)
+		}
+	}
+
 	for _, device := range specconv.AllowedDevices {
 		deviceRules = append(deviceRules, &device.Rule)
 	}

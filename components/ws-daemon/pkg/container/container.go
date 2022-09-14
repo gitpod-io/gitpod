@@ -7,6 +7,7 @@ package container
 import (
 	"context"
 
+	containerdevices "github.com/opencontainers/runc/libcontainer/devices"
 	"golang.org/x/xerrors"
 )
 
@@ -47,6 +48,9 @@ type Runtime interface {
 
 	// IsContainerdReady returns is the status of containerd.
 	IsContainerdReady(ctx context.Context) (bool, error)
+
+	// ContainerExtraDeviceRules extracts cgroup device rules from a container selected by cgroup path
+	ContainerExtraDeviceRules(ctx context.Context, cgroupPath string) []*containerdevices.Rule
 }
 
 var (
