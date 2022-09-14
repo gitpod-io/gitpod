@@ -39,10 +39,12 @@ Tracing.initialize()
         process.exitCode = 1;
     })
     .finally(() => {
-        werft.phase("Stop kubectl port forwards", "Stopping kubectl port forwards");
-        VM.stopKubectlPortForwards();
+        werft.phase("cleanup", "Cleanup")
 
-        werft.phase("Flushing telemetry", "Flushing telemetry before stopping job");
+        werft.log("cleanup", "Stopping kubectl port forwards");
+        VM.stopKubectlPortForwards("cleanup");
+
+        werft.log("cleanup", "Flushing telemetry before stopping job")
         werft.endAllSpans();
     });
 
@@ -66,8 +68,9 @@ async function run(context: any) {
     }
 
     if (!config.withPreview || config.publishRelease) {
-        werft.phase("deploy", "not deploying");
-        console.log("running without preview environment or publish-release is set");
+        werft.phase("deploy", "Deploy");
+        werft.log("deploy", "running without preview environment or publish-release is set")
+        werft.done("deploy")
         return;
     }
 

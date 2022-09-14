@@ -138,6 +138,7 @@ export class Werft {
         });
         // End the phase
         this.currentPhaseSpan.end();
+        this.currentPhaseSpan = null;
     }
 
     public endAllSpans() {

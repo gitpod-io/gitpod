@@ -235,8 +235,8 @@ export function startSSHProxy(options: { name: string; slice: string }) {
 /**
  * Terminates all running kubectl proxies
  */
-export function stopKubectlPortForwards() {
-    exec(`sudo killall kubectl || true`);
+export function stopKubectlPortForwards(sliceID?: string) {
+    exec(`sudo killall kubectl || true`, {slice: sliceID});
 }
 
 /**
