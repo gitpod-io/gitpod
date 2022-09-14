@@ -331,9 +331,7 @@ export interface RateLimiterError {
 
 export interface CreateProjectParams {
     name: string;
-    slug?: string;
-    account: string;
-    provider: string;
+    slug: string;
     cloneUrl: string;
     teamId?: string;
     userId?: string;
