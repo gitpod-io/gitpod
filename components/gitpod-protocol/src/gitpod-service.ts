@@ -293,6 +293,8 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     subscribeTeamToStripe(teamId: string, setupIntentId: string): Promise<void>;
     getStripePortalUrl(attributionId: string): Promise<string>;
     getStripePortalUrlForTeam(teamId: string): Promise<string>;
+    getUsageLimit(attributionId: string): Promise<number | undefined>;
+    setUsageLimit(attributionId: string, usageLimit: number): Promise<void>;
     getUsageLimitForTeam(teamId: string): Promise<number | undefined>;
     setUsageLimitForTeam(teamId: string, spendingLimit: number): Promise<void>;
 
