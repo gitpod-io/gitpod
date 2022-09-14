@@ -29,7 +29,7 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
     // We set it to false as default and only set it true if the build succeeds.
     werft.rootSpan.setAttributes({ "preview.gitpod_built_successfully": false });
 
-    werft.phase("build", "build running");
+    werft.phase("build", "Build");
     const imageRepo = publishRelease ? "gcr.io/gitpod-io/self-hosted" : "eu.gcr.io/gitpod-core-dev/build";
 
     exec(
