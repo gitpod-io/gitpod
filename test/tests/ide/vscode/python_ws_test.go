@@ -82,7 +82,15 @@ func TestPythonExtWorkspace(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer stopWs(true, api)
+			defer func() {
+				sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
+				defer scancel()
+
+				sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+				defer sapi.Done(t)
+
+				stopWs(true, sapi)
+			}()
 
 			_, err = integration.WaitForWorkspaceStart(ctx, nfo.LatestInstance.ID, api)
 			if err != nil {

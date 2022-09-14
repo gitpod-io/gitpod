@@ -117,7 +117,13 @@ func TestBackup(t *testing.T) {
 						t.Fatal(err)
 					}
 					defer func() {
-						_, err = stopWs2(true, api)
+						sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
+						defer scancel()
+
+						sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+						defer sapi.Done(t)
+
+						_, err = stopWs2(true, sapi)
 						if err != nil {
 							t.Errorf("cannot stop workspace: %q", err)
 						}
@@ -242,7 +248,12 @@ func TestExistingWorkspaceEnablePVC(t *testing.T) {
 				t.Fatal(err)
 			}
 			t.Cleanup(func() {
-				_, err = stopWs2(true, api)
+				sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
+				defer scancel()
+
+				sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+				defer sapi.Done(t)
+				_, err = stopWs2(true, sapi)
 				if err != nil {
 					t.Errorf("cannot stop workspace: %q", err)
 				}

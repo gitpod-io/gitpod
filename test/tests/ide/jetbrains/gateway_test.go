@@ -124,7 +124,15 @@ func TestJetBrainsGatewayWorkspace(t *testing.T) {
 					}
 				}
 
-				defer stopWs(true, api)
+				defer func() {
+					sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
+					defer scancel()
+
+					sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+					defer sapi.Done(t)
+
+					stopWs(true, sapi)
+				}()
 
 				t.Logf("get oauth2 token")
 				oauthToken, err := api.CreateOAuth2Token(username, []string{

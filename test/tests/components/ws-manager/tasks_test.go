@@ -97,7 +97,13 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 					}
 
 					defer func() {
-						if _, err = stopWs(true, api); err != nil {
+						sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
+						defer scancel()
+
+						sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+						defer sapi.Done(t)
+
+						if _, err = stopWs(true, sapi); err != nil {
 							t.Errorf("cannot stop workspace: %q", err)
 						}
 					}()
