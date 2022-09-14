@@ -9,10 +9,8 @@ import (
 	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/robfig/cron"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"gorm.io/gorm"
 	"time"
 )
 
@@ -114,31 +112,4 @@ func (r *preventConcurrentInvocation) Run() error {
 		log.Infof("Job already running, skipping invocation.")
 		return nil
 	}
-}
-
-func NewStoppedWithoutStoppingTimeDetectorSpec(dbconn *gorm.DB) *StoppedWithoutStoppingTimeDetector {
-	return &StoppedWithoutStoppingTimeDetector{
-		dbconn: dbconn,
-	}
-}
-
-type StoppedWithoutStoppingTimeDetector struct {
-	dbconn *gorm.DB
-}
-
-func (r *StoppedWithoutStoppingTimeDetector) Run() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
-	defer cancel()
-
-	log.Info("Checking for instances which are stopped but are missing a stoppingTime.")
-	instances, err := db.ListWorkspaceInstanceIDsWithPhaseStoppedButNoStoppingTime(ctx, r.dbconn)
-	if err != nil {
-		log.WithError(err).Errorf("Failed to list stop instances without stopping time.")
-		return fmt.Errorf("failed to list instances from db: %w", err)
-	}
-
-	log.Infof("Identified %d instances in stopped state without a stopping time.", len(instances))
-	stoppedWithoutStoppingTime.Set(float64(len(instances)))
-
-	return nil
 }
