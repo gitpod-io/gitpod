@@ -2217,42 +2217,71 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return this.getStripePortalUrl(ctx, AttributionId.render(attributionId));
     }
 
-    async getUsageLimitForTeam(ctx: TraceContext, teamId: string): Promise<number | undefined> {
-        const user = this.checkAndBlockUser("getUsageLimitForTeam");
-        const team = await this.guardTeamOperation(teamId, "get");
-        await this.ensureStripeApiIsAllowed({ team });
+    async getUsageLimit(ctx: TraceContext, attributionId: string): Promise<number | undefined> {
+        const attrId = AttributionId.parse(attributionId);
+        if (attrId === undefined) {
+            log.error(`Invalid attribution id: ${attributionId}`);
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+        }
 
-        const attributionId: AttributionId = { kind: "team", teamId };
-        await this.guardCostCenterAccess(ctx, user.id, attributionId, "get");
+        const user = this.checkAndBlockUser("getUsageLimit");
+        await this.guardCostCenterAccess(ctx, user.id, attrId, "get");
 
-        const costCenter = await this.usageService.getCostCenter({
-            attributionId: AttributionId.render(attributionId),
-        });
+        const costCenter = await this.usageService.getCostCenter({ attributionId });
         if (costCenter?.costCenter) {
             return costCenter.costCenter.spendingLimit;
         }
         return undefined;
     }
 
-    async setUsageLimitForTeam(ctx: TraceContext, teamId: string, usageLimit: number): Promise<void> {
-        const user = this.checkAndBlockUser("setUsageLimitForTeam");
-        const team = await this.guardTeamOperation(teamId, "update");
-        await this.ensureStripeApiIsAllowed({ team });
-        if (typeof usageLimit !== "number" || usageLimit < 0) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Unexpected `usageLimit` value.");
+    async setUsageLimit(ctx: TraceContext, attributionId: string, usageLimit: number): Promise<void> {
+        const attrId = AttributionId.parse(attributionId);
+        if (attrId === undefined) {
+            log.error(`Invalid attribution id: ${attributionId}`);
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
         }
-        const attrId: AttributionId = { kind: "team", teamId };
+        if (typeof usageLimit !== "number" || usageLimit < 0) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Unexpected usageLimit value: ${usageLimit}`);
+        }
+
+        const user = this.checkAndBlockUser("setUsageLimit");
+        switch (attrId.kind) {
+            case "team":
+                const team = await this.guardTeamOperation(attrId.teamId, "update");
+                await this.ensureStripeApiIsAllowed({ team });
+                break;
+            case "user":
+                await this.ensureStripeApiIsAllowed({ user });
+                break;
+        }
         await this.guardCostCenterAccess(ctx, user.id, attrId, "update");
-        const attributionId = AttributionId.render(attrId);
-        const costCenter = await this.usageService.getCostCenter({ attributionId });
+
+        const response = await this.usageService.getCostCenter({ attributionId });
+        if (response?.costCenter?.billingStrategy !== CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
+            throw new ResponseError(
+                ErrorCodes.BAD_REQUEST,
+                `Setting a usage limit is not valid for non-Stripe billing strategies`,
+            );
+        }
         await this.usageService.setCostCenter({
             costCenter: {
                 attributionId,
                 spendingLimit: usageLimit,
                 billingStrategy:
-                    costCenter?.costCenter?.billingStrategy || CostCenter_BillingStrategy.BILLING_STRATEGY_OTHER,
+                    response?.costCenter?.billingStrategy || CostCenter_BillingStrategy.BILLING_STRATEGY_OTHER,
             },
         });
+    }
+
+    async getUsageLimitForTeam(ctx: TraceContext, teamId: string): Promise<number | undefined> {
+        const attributionId: AttributionId = { kind: "team", teamId: teamId };
+
+        return this.getUsageLimit(ctx, AttributionId.render(attributionId));
+    }
+
+    async setUsageLimitForTeam(ctx: TraceContext, teamId: string, usageLimit: number): Promise<void> {
+        const attributionId: AttributionId = { kind: "team", teamId: teamId };
+        return this.setUsageLimit(ctx, AttributionId.render(attributionId), usageLimit);
     }
 
     async getNotifications(ctx: TraceContext): Promise<string[]> {

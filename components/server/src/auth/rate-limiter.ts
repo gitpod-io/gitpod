@@ -218,6 +218,8 @@ const defaultFunctions: FunctionsConfig = {
     getIDEOptions: { group: "default", points: 1 },
     getPrebuildEvents: { group: "default", points: 1 },
     setUsageAttribution: { group: "default", points: 1 },
+    getUsageLimit: { group: "default", points: 1 },
+    setUsageLimit: { group: "default", points: 1 },
     getUsageLimitForTeam: { group: "default", points: 1 },
     setUsageLimitForTeam: { group: "default", points: 1 },
     getNotifications: { group: "default", points: 1 },
