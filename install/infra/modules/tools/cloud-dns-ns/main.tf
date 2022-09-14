@@ -1,4 +1,4 @@
-variable credentials {}
+variable credentials { default = null }
 variable nameservers {}
 variable domain_name {}
 variable managed_dns_zone {}

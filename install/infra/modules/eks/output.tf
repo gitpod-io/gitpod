@@ -47,7 +47,7 @@ output "cert_manager_issuer" {
   }, {})
 }
 
-output "domain_nameservers" {
+output "name_servers" {
   value = formatlist("%s.", resource.aws_route53_zone.gitpod[0].name_servers)
 }
 

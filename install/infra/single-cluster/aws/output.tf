@@ -23,7 +23,7 @@ output "database" {
 
 output "nameservers" {
   sensitive = false
-  value     = module.eks.domain_nameservers
+  value     = module.eks.name_servers
 }
 
 output "cluster_issuer" {

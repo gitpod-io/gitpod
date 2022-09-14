@@ -18,5 +18,5 @@ spec:
         value: ${DB_USER}
         data: "db_username"
       db_password:
-        value: ${DB_PASSWORD}
+        value: "${DB_PASSWORD}"
         data: "db_password"

@@ -21,7 +21,7 @@ const upgrade: string = annotations.upgrade || "false"; // setting to true will 
 const skipTests: string = annotations.skipTests || "false"; // setting to true skips the integration tests
 const deps: string = annotations.deps || ""; // options: ["external", "internal"] setting to `external` will ensure that all resource dependencies(storage, db, registry) will be external. if unset, a random selection will be used
 
-const baseDomain: string = "tests.gitpod-self-hosted.com"
+const baseDomain: string = "sh-tests.gitpod-self-hosted.com"
 
 const slackHook = new Map<string, string>([
     ["self-hosted-jobs", process.env.SH_SLACK_NOTIFICATION_PATH.trim()],
@@ -57,9 +57,10 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         CLOUD: "gcp",
         DESCRIPTION: `${op} Gitpod on GKE managed cluster(version ${k8s_version})`,
         PHASES: [
-            "STANDARD_GKE_CLUSTER",
+            "STANDARD_CLUSTER",
             "CERT_MANAGER",
-            "GCP_MANAGED_DNS",
+            "EXTERNALDNS",
+            "ADD_NS_RECORD",
             "CLUSTER_ISSUER",
             "GENERATE_KOTS_CONFIG",
             "INSTALL_GITPOD",
@@ -67,7 +68,7 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         ],
     },
     STANDARD_K3S_TEST: {
-        CLOUD: "gcp", // the cloud provider is still GCP
+        CLOUD: "k3s",
         DESCRIPTION: `${op} Gitpod on a K3s cluster(version ${k8s_version}) on a GCP instance with ubuntu ${os_version}`,
         PHASES: [
             "STANDARD_K3S_CLUSTER_ON_GCP",
@@ -82,7 +83,7 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         CLOUD: "azure",
         DESCRIPTION: `${op} Gitpod on AKS(version ${k8s_version})`,
         PHASES: [
-            "STANDARD_AKS_CLUSTER",
+            "STANDARD_CLUSTER",
             "CERT_MANAGER",
             "CLUSTER_ISSUER",
             "EXTERNALDNS",
@@ -96,11 +97,11 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         CLOUD: "aws",
         DESCRIPTION: `${op} an EKS cluster(version ${k8s_version})`,
         PHASES: [
-            "STANDARD_EKS_CLUSTER",
+            "STANDARD_CLUSTER",
             "CERT_MANAGER",
             "EXTERNALDNS",
-            "CLUSTER_ISSUER",
             "ADD_NS_RECORD",
+            "CLUSTER_ISSUER",
             "GENERATE_KOTS_CONFIG",
             "INSTALL_GITPOD",
             "CHECK_INSTALLATION",
@@ -123,10 +124,10 @@ const cloud: string = config.CLOUD;
 // Each phase should contain a `makeTarget` which
 // corresponds to a target in the Makefile in ./nightly-tests/Makefile
 const INFRA_PHASES: { [name: string]: InfraConfig } = {
-    STANDARD_GKE_CLUSTER: {
-        phase: "create-std-gke-cluster",
-        makeTarget: `gke-standard-cluster`,
-        description: `Creating a GCP GKE cluster(version: ${k8s_version}) with 1 nodepool each for workspace and server`,
+    STANDARD_CLUSTER: {
+        phase: "create-single-cluster",
+        makeTarget: `standard-cluster`,
+        description: `Creating a single ${cloud} managed cluster(version: ${k8s_version})`,
     },
     STANDARD_K3S_CLUSTER_ON_GCP: {
         phase: "create-std-k3s-cluster",
@@ -147,11 +148,6 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
         phase: "setup-cert-manager",
         makeTarget: "cert-manager",
         description: "Sets up cert-manager and optional cloud dns secret",
-    },
-    GCP_MANAGED_DNS: {
-        phase: "setup-external-dns-with-cloud-dns",
-        makeTarget: "managed-dns",
-        description: "Sets up external-dns & cloudDNS config",
     },
     GENERATE_KOTS_CONFIG: {
         phase: "generate-kots-config",

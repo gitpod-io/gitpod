@@ -23,7 +23,6 @@ variable "eks_node_image_id" {
 }
 
 variable "domain" { default = "tests.gitpod-self-hosted.com" }
-variable "gcp_zone" { default = "tests-gitpod-self-hosted-com" }
 
 variable "k3s_node_image_id" {
   default = null
@@ -156,15 +155,6 @@ module "azure-add-dns-record" {
   source           = "../infra/modules/tools/cloud-dns-ns"
   credentials      = var.dns_sa_creds
   nameservers      = module.aks.domain_nameservers
-  dns_project      = "dns-for-playgrounds"
-  managed_dns_zone = var.gcp_zone
-  domain_name      = "${var.TEST_ID}.${var.domain}"
-}
-
-module "aws-add-dns-record" {
-  source           = "../infra/modules/tools/cloud-dns-ns"
-  credentials      = var.dns_sa_creds
-  nameservers      = module.eks.domain_nameservers
   dns_project      = "dns-for-playgrounds"
   managed_dns_zone = var.gcp_zone
   domain_name      = "${var.TEST_ID}.${var.domain}"

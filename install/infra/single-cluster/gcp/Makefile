@@ -136,7 +136,7 @@ destroy-tools: destroy-cluster-issuer destroy-cm-edns
 
 .PHONY: destroy-cm-edns
 destroy-cm-edns:
-	@terraform destroy -target=module.certmanager  -target=module.externaldns --auto-approve
+	@terraform destroy -target=module.certmanager  -target=module.externaldns --auto-approve || echo "Could not remove cert-manager"
 
 .PHONY: destroy-cluster-issuer
 destroy-cluster-issuer:
