@@ -226,8 +226,6 @@ export default function NewProject() {
                 name: repo.name,
                 slug: repoSlug,
                 cloneUrl: repo.cloneUrl,
-                account: repo.account,
-                provider: selectedProviderHost,
                 ...(User.is(teamOrUser) ? { userId: teamOrUser.id } : { teamId: teamOrUser.id }),
                 appInstallationId: String(repo.installationId),
             });
