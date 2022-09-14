@@ -41,10 +41,10 @@ Tracing.initialize()
     .finally(() => {
         werft.phase("cleanup", "Cleanup")
 
-        werft.log("cleanup", "Stopping kubectl port forwards");
-        VM.stopKubectlPortForwards("cleanup");
+        werft.log("stop kubectl port forward", "Stopping kubectl port forwards");
+        VM.stopKubectlPortForwards("stop kubectl port forward");
 
-        werft.log("cleanup", "Flushing telemetry before stopping job")
+        werft.log("tracing shutdown", "Flushing telemetry before stopping job")
         werft.endAllSpans();
     });
 

@@ -15,25 +15,28 @@ const prepareSlices = {
 };
 
 export async function prepare(werft: Werft, config: JobConfig) {
-
-    werft.phase(phaseName);
+    werft.phase(phaseName, "Prepare");
     try {
         werft.log(prepareSlices.CONFIGURE_CORE_DEV, prepareSlices.CONFIGURE_CORE_DEV);
         activateCoreDevServiceAccount();
         configureDocker();
         configureStaticClustersAccess();
         werft.done(prepareSlices.CONFIGURE_CORE_DEV);
-        if (!config.withPreview)
-        {
-            return
-        }
-        var certReady = issueCertificate(werft, config);
-        decideHarvesterVMCreation(werft, config);
-        await certReady
     } catch (err) {
-        werft.fail(phaseName, err);
+        werft.fail(prepareSlices.CONFIGURE_CORE_DEV, err);
     }
-    werft.done(phaseName);
+
+    if (!config.withPreview) {
+        return
+    }
+
+    var certReady = issueCertificate(werft, config)
+    try {
+        decideHarvesterVMCreation(werft, config);
+    } catch (err) {
+        werft.fail(prepareSlices.BOOT_VM, err)
+    }
+    await certReady
 }
 
 function activateCoreDevServiceAccount() {
@@ -77,13 +80,17 @@ function configureStaticClustersAccess() {
 }
 
 async function issueCertificate(werft: Werft, config: JobConfig): Promise<boolean> {
-    const certName = `harvester-${previewNameFromBranchName(config.repository.branch)}`;
-    const domain = `${config.previewEnvironment.destname}.preview.gitpod-dev.com`;
+    try {
+        const certName = `harvester-${previewNameFromBranchName(config.repository.branch)}`;
+        const domain = `${config.previewEnvironment.destname}.preview.gitpod-dev.com`;
 
-    werft.log(prepareSlices.ISSUE_CERTIFICATES, prepareSlices.ISSUE_CERTIFICATES);
-    var certReady = await issueMetaCerts(werft, certName, "certs", domain, config.repository.branch, prepareSlices.ISSUE_CERTIFICATES);
-    werft.done(prepareSlices.ISSUE_CERTIFICATES);
-    return certReady
+        werft.log(prepareSlices.ISSUE_CERTIFICATES, prepareSlices.ISSUE_CERTIFICATES);
+        var certReady = await issueMetaCerts(werft, certName, "certs", domain, config.repository.branch, prepareSlices.ISSUE_CERTIFICATES);
+        werft.done(prepareSlices.ISSUE_CERTIFICATES);
+        return certReady
+    } catch (err) {
+        werft.fail(prepareSlices.ISSUE_CERTIFICATES, err)
+    }
 }
 
 function decideHarvesterVMCreation(werft: Werft, config: JobConfig) {
