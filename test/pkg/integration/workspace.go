@@ -290,7 +290,7 @@ func stopWsF(t *testing.T, instanceID string, api *ComponentAPI) stopWorkspaceFu
 			t.Logf("attemp to delete the workspace: %s", instanceID)
 			err = DeleteWorkspace(sctx, api, instanceID)
 			if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
-				t.Logf("got %v during waiting for stopping workspace", st)
+				t.Logf("got %v when deleting workspace", st)
 				time.Sleep(5 * time.Second)
 				continue
 			} else if err != nil {
@@ -298,14 +298,32 @@ func stopWsF(t *testing.T, instanceID string, api *ComponentAPI) stopWorkspaceFu
 			}
 			break
 		}
+
 		if !waitForStop {
-			return nil, err
+			wm, err := api.WorkspaceManager()
+			if err != nil {
+				return nil, err
+			}
+
+			dr, err := wm.DescribeWorkspace(sctx, &wsmanapi.DescribeWorkspaceRequest{
+				Id: instanceID,
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			s, ok := status.FromError(err)
+			if ok && s.Code() == codes.NotFound {
+				return nil, err
+			}
+			return dr.Status, err
 		}
+
 		for {
 			t.Logf("waiting for stopping the workspace: %s", instanceID)
 			lastStatus, err := WaitForWorkspaceStop(sctx, api, instanceID)
 			if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
-				t.Logf("got %v during when try to delete the workspace", st)
+				t.Logf("got %v during waiting for stopping the workspace", st)
 				time.Sleep(5 * time.Second)
 				continue
 			} else if err != nil {
