@@ -31,6 +31,14 @@ var (
 		Buckets:   prometheus.LinearBuckets(30, 30, 10), // every 30 secs, starting at 30secs
 	}, []string{"job", "outcome"})
 
+	ledgerLastCompletedTime = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace:   namespace,
+		Subsystem:   subsystem,
+		Name:        "ledger_last_completed_time",
+		Help:        "The last time the ledger scheduled job completed, by outcome",
+		ConstLabels: nil,
+	}, []string{"outcome"})
+
 	stoppedWithoutStoppingTime = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
@@ -44,6 +52,7 @@ func RegisterMetrics(reg *prometheus.Registry) error {
 		jobStartedSeconds,
 		jobCompletedSeconds,
 		stoppedWithoutStoppingTime,
+		ledgerLastCompletedTime,
 	}
 	for _, metric := range metrics {
 		err := reg.Register(metric)
@@ -60,9 +69,17 @@ func reportJobStarted(id string) {
 }
 
 func reportJobCompleted(id string, duration time.Duration, err error) {
-	outcome := "success"
+	jobCompletedSeconds.WithLabelValues(id, outcomeFromErr(err)).Observe(duration.Seconds())
+}
+
+func reportLedgerCompleted(err error) {
+	ledgerLastCompletedTime.WithLabelValues(outcomeFromErr(err)).SetToCurrentTime()
+}
+
+func outcomeFromErr(err error) string {
+	out := "success"
 	if err != nil {
-		outcome = "error"
+		out = "error"
 	}
-	jobCompletedSeconds.WithLabelValues(id, outcome).Observe(duration.Seconds())
+	return out
 }
