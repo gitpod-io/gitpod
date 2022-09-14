@@ -24,6 +24,7 @@ import { ReactComponent as UsageIcon } from "../images/usage-default.svg";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { toRemoteURL } from "../projects/render-utils";
 import { WorkspaceType } from "@gitpod/gitpod-protocol";
+import PillLabel from "./PillLabel";
 
 interface UsageViewProps {
     attributionId: AttributionId;
@@ -169,11 +170,38 @@ function UsageView({ attributionId, billingMode }: UsageViewProps) {
                                     {getBillingHistory()}
                                 </div>
                                 {!isLoading && (
-                                    <div className="flex flex-col truncate">
-                                        <div className="text-base text-gray-500">Total usage</div>
-                                        <div className="flex text-lg text-gray-600 font-semibold">
-                                            <CreditsSvg className="my-auto mr-1" />
-                                            <span>{Intl.NumberFormat().format(totalCreditsUsed)} Credits</span>
+                                    <div>
+                                        <div className="flex flex-col truncate">
+                                            <div className="text-base text-gray-500">Total usage</div>
+                                            <div className="flex text-lg text-gray-600 font-semibold">
+                                                <CreditsSvg className="my-auto mr-1" />
+                                                <span>{totalCreditsUsed} Credits</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col truncate mt-8 text-sm">
+                                            <div className="text-gray-400 dark:text-gray-500">
+                                                This feature is in{" "}
+                                                <PillLabel
+                                                    type="warn"
+                                                    className="font-semibold mt-2 ml-0 py-0.5 px-1 self-center"
+                                                >
+                                                    <span className="text-xs">Beta</span>
+                                                </PillLabel>
+                                                <br />
+                                                <a
+                                                    href="https://www.gitpod.io/docs/references/gitpod-releases"
+                                                    className="gp-link"
+                                                >
+                                                    Learn more
+                                                </a>
+                                                &nbsp;·&nbsp;
+                                                <a
+                                                    href="https://github.com/gitpod-io/gitpod/issues/12636"
+                                                    className="gp-link"
+                                                >
+                                                    Send feedback
+                                                </a>
+                                            </div>
                                         </div>
                                     </div>
                                 )}
