@@ -699,6 +699,11 @@ func (c *ComponentAPI) WorkspaceManager() (wsmanapi.WorkspaceManagerClient, erro
 	return c.wsmanStatus.Client, nil
 }
 
+func (c *ComponentAPI) ClearWorkspaceManagerClientCache() {
+	c.wsmanStatus.Client = nil
+	c.wsmanStatus.Port = 0
+}
+
 // BlobService provides access to the blob service of the content service
 func (c *ComponentAPI) BlobService() (csapi.BlobServiceClient, error) {
 	if c.contentServiceStatus.BlobServiceClient != nil {
@@ -737,6 +742,11 @@ func (c *ComponentAPI) BlobService() (csapi.BlobServiceClient, error) {
 
 	c.contentServiceStatus.BlobServiceClient = csapi.NewBlobServiceClient(conn)
 	return c.contentServiceStatus.BlobServiceClient, nil
+}
+
+func (c *ComponentAPI) ClearBlobServiceClientCache() {
+	c.contentServiceStatus.BlobServiceClient = nil
+	c.contentServiceStatus.Port = 0
 }
 
 type dbOpts struct {
@@ -1040,6 +1050,11 @@ func (c *ComponentAPI) ImageBuilder(opts ...APIImageBuilderOpt) (imgbldr.ImageBu
 	return c.imgbldStatus.Client, nil
 }
 
+func (c *ComponentAPI) ClearImageBuilderClientCache() {
+	c.imgbldStatus.Client = nil
+	c.imgbldStatus.Port = 0
+}
+
 // ContentService groups content service interfaces for convenience
 type ContentService interface {
 	csapi.ContentServiceClient
@@ -1087,6 +1102,11 @@ func (c *ComponentAPI) ContentService() (ContentService, error) {
 	}
 
 	return c.contentServiceStatus.ContentService, nil
+}
+
+func (c *ComponentAPI) ClearContentServiceClientCache() {
+	c.contentServiceStatus.ContentService = nil
+	c.contentServiceStatus.Port = 0
 }
 
 func (c *ComponentAPI) Done(t *testing.T) {
