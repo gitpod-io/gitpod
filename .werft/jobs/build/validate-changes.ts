@@ -5,8 +5,7 @@ import { JobConfig } from "./job-config";
 export async function validateChanges(werft: Werft, config: JobConfig) {
     werft.phase("validate-changes", "validating changes");
     try {
-        branchNameCheck(werft, config);
-        preCommitCheck(werft);
+        await Promise.all([branchNameCheck(werft, config), preCommitCheck(werft), typecheckWerftJobs(werft)]);
     } catch (err) {
         werft.fail("validate-changes", err);
     }
@@ -35,10 +34,29 @@ async function branchNameCheck(werft: Werft, config: JobConfig) {
 
 async function preCommitCheck(werft: Werft) {
     werft.log("pre-commit checks", "Running pre-commit hooks.");
-    const preCommitCmd = exec(`pre-commit run --show-diff-on-failure`, { slice: "pre-commit checks" });
+    const preCommitCmd = await exec(`pre-commit run --show-diff-on-failure`, {
+        slice: "pre-commit checks",
+        async: true,
+    });
 
     if (preCommitCmd.code != 0) {
         throw new Error(preCommitCmd.stderr.toString().trim());
     }
     werft.done("pre-commit checks");
+}
+
+/**
+ * This validates all the .ts files inside of the .werft folder and fails the
+ * build if there are compile errors.
+ */
+export async function typecheckWerftJobs(werft: Werft) {
+    const slice = "tsc --noEmit";
+    try {
+        werft.log(slice, "Typechecking Werft Typescript files");
+        await exec("cd .werft && tsc --noEmit", { slice, async: true });
+        werft.log(slice, "No compilation errors");
+    } catch (e) {
+        werft.fail(slice, e);
+    }
+    werft.done(slice);
 }

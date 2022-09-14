@@ -11,7 +11,6 @@ import { deployToPreviewEnvironment } from "./jobs/build/deploy-to-preview-envir
 import { triggerIntegrationTests } from "./jobs/build/trigger-integration-tests";
 import { triggerSelfHostedPreview, triggerUpgradeTests } from "./jobs/build/self-hosted-upgrade-tests";
 import { jobConfig } from "./jobs/build/job-config";
-import { typecheckWerftJobs } from "./jobs/build/typecheck-werft-jobs";
 
 // Will be set once tracing has been initialized
 let werft: Werft;
@@ -57,12 +56,12 @@ async function run(context: any) {
         await triggerUpgradeTests(werft, config, context.Owner);
         return;
     }
-    await typecheckWerftJobs(werft);
+
     await buildAndPublish(werft, config);
 
     if (config.withSelfHostedPreview) {
         await triggerSelfHostedPreview(werft, config, context.Owner);
-        return
+        return;
     }
 
     if (!config.withPreview || config.publishRelease) {

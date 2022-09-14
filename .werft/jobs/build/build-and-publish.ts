@@ -45,7 +45,8 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
     if (publishRelease) {
         exec(`gcloud auth activate-service-account --key-file "/mnt/secrets/gcp-sa-release/service-account.json"`);
     }
-    exec(
+
+    await exec(
         `leeway build --docker-build-options network=host --werft=true -c remote ${
             dontTest ? "--dont-test" : ""
         } ${retag} --coverage-output-path=${coverageOutput} -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo} -DlocalAppVersion=${localAppVersion} -DSEGMENT_IO_TOKEN=${
@@ -55,6 +56,7 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
         } -DnpmPublishTrigger=${publishToNpm ? Date.now() : "false"} -DjbMarketplacePublishTrigger=${
             publishToJBMarketplace ? Date.now() : "false"
         }`,
+        { async: true },
     );
     if (publishRelease) {
         try {
