@@ -63,7 +63,13 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 						t.Fatalf("cannot launch a workspace: %q", err)
 					}
 					t.Cleanup(func() {
-						_, err = stopWs(true, api)
+						sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
+						defer scancel()
+
+						sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+						defer sapi.Done(t)
+
+						_, err = stopWs(true, sapi)
 						if err != nil {
 							t.Errorf("cannot stop workspace: %q", err)
 						}
@@ -104,7 +110,13 @@ func TestPrebuildWorkspaceTaskFail(t *testing.T) {
 			}
 
 			t.Cleanup(func() {
-				_, err = stopWs(true, api)
+				sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
+				defer scancel()
+
+				sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+				defer sapi.Done(t)
+
+				_, err = stopWs(true, sapi)
 				if err != nil {
 					t.Fatal(err)
 				}
