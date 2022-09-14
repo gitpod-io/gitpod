@@ -634,6 +634,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                     ctx,
                     instance.id,
                     instance.region,
+                    "user blocked by admin",
                     StopWorkspacePolicy.IMMEDIATELY,
                 ),
             );
@@ -867,7 +868,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
         if (workspace) {
-            await this.internalStopWorkspace(ctx, workspace, StopWorkspacePolicy.IMMEDIATELY, true);
+            await this.internalStopWorkspace(ctx, workspace, "stopped by admin", StopWorkspacePolicy.IMMEDIATELY, true);
         }
     }
 

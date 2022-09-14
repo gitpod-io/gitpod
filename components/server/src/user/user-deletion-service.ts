@@ -113,6 +113,10 @@ export class UserDeletionService {
             runningWorkspaces.map(async (info) => {
                 const wsi = info.latestInstance;
 
+                log.info({ workspaceId: info.workspace.id, instanceId: wsi.id }, "Stopping workspace instance", {
+                    reason: "deleting user",
+                });
+
                 const req = new StopWorkspaceRequest();
                 req.setId(wsi.id);
                 req.setPolicy(StopWorkspacePolicy.NORMALLY);
