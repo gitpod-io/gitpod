@@ -108,7 +108,7 @@ func TestJetBrainsGatewayWorkspace(t *testing.T) {
 
 				t.Logf("starting workspace")
 				var nfo *protocol.WorkspaceInfo
-				var stopWs func(waitForStop bool) (*wsmanapi.WorkspaceStatus, error)
+				var stopWs func(waitForStop bool, api *integration.ComponentAPI) (*wsmanapi.WorkspaceStatus, error)
 
 				for i := 0; i < 3; i++ {
 					nfo, stopWs, err = integration.LaunchWorkspaceFromContextURL(t, ctx, "referrer:jetbrains-gateway:"+ideName+"/"+repo, username, api)
@@ -124,7 +124,7 @@ func TestJetBrainsGatewayWorkspace(t *testing.T) {
 					}
 				}
 
-				defer stopWs(true)
+				defer stopWs(true, api)
 
 				t.Logf("get oauth2 token")
 				oauthToken, err := api.CreateOAuth2Token(username, []string{

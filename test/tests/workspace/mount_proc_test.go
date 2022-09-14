@@ -62,7 +62,7 @@ func TestMountProc(t *testing.T) {
 			}
 
 			t.Cleanup(func() {
-				_, err = stopWs(true)
+				_, err = stopWs(true, api)
 				if err != nil {
 					t.Errorf("cannot stop workspace: %q", err)
 				}

@@ -43,7 +43,7 @@ func TestWorkspaceInstrumentation(t *testing.T) {
 				t.Fatal(err)
 			}
 			t.Cleanup(func() {
-				_, err = stopWs(true)
+				_, err = stopWs(true, api)
 				if err != nil {
 					t.Errorf("cannot stop workspace: %q", err)
 				}
@@ -92,7 +92,7 @@ func TestLaunchWorkspaceDirectly(t *testing.T) {
 			}
 
 			t.Cleanup(func() {
-				_, err = stopWs(true)
+				_, err = stopWs(true, api)
 				if err != nil {
 					t.Errorf("cannot stop workspace: %q", err)
 				}

@@ -91,7 +91,7 @@ type LaunchWorkspaceDirectlyResult struct {
 	LastStatus *wsmanapi.WorkspaceStatus
 }
 
-type stopWorkspaceFunc = func(waitForStop bool) (*wsmanapi.WorkspaceStatus, error)
+type stopWorkspaceFunc = func(waitForStop bool, api *ComponentAPI) (*wsmanapi.WorkspaceStatus, error)
 
 // LaunchWorkspaceDirectly starts a workspace pod by talking directly to ws-manager.
 // Whenever possible prefer this function over LaunchWorkspaceFromContextURL, because
@@ -201,7 +201,7 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 	stopWs := stopWsF(t, req.Id, api)
 	defer func() {
 		if err != nil {
-			stopWs(false)
+			stopWs(false, api)
 		}
 	}()
 
@@ -266,7 +266,7 @@ func LaunchWorkspaceFromContextURL(t *testing.T, ctx context.Context, contextURL
 	stopWs := stopWsF(t, wi.LatestInstance.ID, api)
 	defer func() {
 		if err != nil {
-			_, _ = stopWs(false)
+			_, _ = stopWs(false, api)
 		}
 	}()
 
@@ -281,7 +281,7 @@ func LaunchWorkspaceFromContextURL(t *testing.T, ctx context.Context, contextURL
 }
 
 func stopWsF(t *testing.T, instanceID string, api *ComponentAPI) stopWorkspaceFunc {
-	return func(waitForStop bool) (*wsmanapi.WorkspaceStatus, error) {
+	return func(waitForStop bool, api *ComponentAPI) (*wsmanapi.WorkspaceStatus, error) {
 		sctx, scancel := context.WithTimeout(context.Background(), perCallTimeout)
 		defer scancel()
 
