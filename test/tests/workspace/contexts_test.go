@@ -110,14 +110,6 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 	f := features.New("context").
 		WithLabel("component", "server").
 		Assess("should run context tests", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
-			defer cancel()
-
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
-			t.Cleanup(func() {
-				api.Done(t)
-			})
-
 			ffs := []struct {
 				Name string
 				FF   string
@@ -127,21 +119,38 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 			}
 
 			for _, ff := range ffs {
+				func() {
+					ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+					defer cancel()
+
+					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+					defer api.Done(t)
+
+					username := username + ff.Name
+					userId, err := api.CreateUser(username, userToken)
+					if err != nil {
+						t.Fatal(err)
+					}
+
+					if err := api.UpdateUserFeatureFlag(userId, ff.FF); err != nil {
+						t.Fatal(err)
+					}
+				}()
+			}
+
+			for _, ff := range ffs {
 				for _, test := range tests {
 					t.Run(test.ContextURL+"_"+ff.Name, func(t *testing.T) {
 						if test.Skip {
 							t.SkipNow()
 						}
-
 						username := username + ff.Name
-						userId, err := api.CreateUser(username, userToken)
-						if err != nil {
-							t.Fatal(err)
-						}
 
-						if err := api.UpdateUserFeatureFlag(userId, ff.FF); err != nil {
-							t.Fatal(err)
-						}
+						ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+						defer cancel()
+
+						api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+						defer api.Done(t)
 
 						nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(t, ctx, test.ContextURL, username, api)
 						if err != nil {
@@ -149,7 +158,7 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 						}
 
 						defer func() {
-							sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
+							sctx, scancel := context.WithTimeout(context.Background(), 10*time.Minute)
 							defer scancel()
 
 							sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
