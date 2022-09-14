@@ -124,18 +124,6 @@ async function deletePreviewEnvironments() {
         werft.done(SLICES.DETERMINING_STALE_PREVIEW_ENVIRONMENTS);
     }
 
-    werft.phase("Deleting stale preview environments");
-    if (DRY_RUN) {
-        previewsToDelete.forEach((preview) => {
-            werft.log(
-                SLICES.DELETING_PREVIEW_ENVIRONMNETS,
-                `Would have deleted preview environment ${preview.name} (${preview.namespace})`,
-            );
-        });
-        werft.done(SLICES.DELETING_PREVIEW_ENVIRONMNETS);
-        return;
-    }
-
     try {
         const promises: Promise<any>[] = [];
         previewsToDelete.forEach((preview) => promises.push(removePreviewEnvironment(preview)));
@@ -228,11 +216,18 @@ async function determineStalePreviewEnvironments(options: {
 
 async function removePreviewEnvironment(previewEnvironment: PreviewEnvironment) {
     const sliceID = `Deleting preview ${previewEnvironment.name}`;
-    werft.log(sliceID, `Starting deletion of all resources related to ${previewEnvironment.name}`);
+    werft.log(sliceID, `Triggering job to delete ${previewEnvironment.name}. DRY_RUN=${DRY_RUN}`);
     try {
-        // We're running these promises sequentially to make it easier to read the log output.
-        await previewEnvironment.removeDNSRecords(sliceID);
-        await previewEnvironment.delete();
+        exec(
+            `sudo chown -R gitpod:gitpod /workspace && git config --global user.name roboquat && git config --global user.email roboquat@gitpod.io`,
+            {slice: sliceID}
+        )
+        const deleteJobURL = exec(
+            `werft job run github -j .werft/platform-delete-preview-environment.yaml -a preview=${previewEnvironment.name} -a dry-run=${DRY_RUN}`,
+            {slice: sliceID}
+        ).stdout.trim()
+
+        exec(`werft log result -d "Delete preview ${previewEnvironment.name} job" url "https://werft.gitpod-dev.com/job/${deleteJobURL}"`, {slice: sliceID})
         werft.done(sliceID);
     } catch (e) {
         werft.failSlice(sliceID, e);
