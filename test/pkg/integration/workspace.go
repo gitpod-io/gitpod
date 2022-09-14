@@ -503,20 +503,25 @@ func WaitForWorkspaceStop(ctx context.Context, api *ComponentAPI, instanceID str
 				errCh <- xerrors.Errorf("workspace update error: %q", err)
 				return
 			}
-			status := resp.GetStatus()
-			if status == nil {
+			s := resp.GetStatus()
+			if s == nil {
 				continue
 			}
-			if status.Id != instanceID {
+			if s.Id != instanceID {
 				continue
 			}
 
-			if status.Conditions.Failed != "" {
-				errCh <- xerrors.Errorf("workspace instance %s failed: %s", instanceID, status.Conditions.Failed)
+			if s.Conditions.Failed != "" {
+				// TODO(toru): we have to fix https://github.com/gitpod-io/gitpod/issues/12021
+				if s.Conditions.Failed == "The container could not be located when the pod was deleted.  The container used to be Running" || s.Conditions.Failed == "The container could not be located when the pod was terminated" {
+					lastStatus = s
+					return
+				}
+				errCh <- xerrors.Errorf("workspace instance %s failed: %s", instanceID, s.Conditions.Failed)
 				return
 			}
-			if status.Phase == wsmanapi.WorkspacePhase_STOPPED {
-				lastStatus = status
+			if s.Phase == wsmanapi.WorkspacePhase_STOPPED {
+				lastStatus = s
 				return
 			}
 
