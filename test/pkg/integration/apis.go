@@ -30,8 +30,10 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -1135,6 +1137,8 @@ func (c *ComponentAPI) portFwdWithRetry(ctx context.Context, portFwdF portFwdFun
 		select {
 		case err := <-errc:
 			if err == io.EOF {
+				time.Sleep(10 * time.Second)
+			} else if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
 				time.Sleep(10 * time.Second)
 			} else {
 				return err
