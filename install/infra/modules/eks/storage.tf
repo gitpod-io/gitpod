@@ -57,12 +57,6 @@ resource "aws_iam_user_policy_attachment" "attachment" {
   policy_arn = aws_iam_policy.policy[0].arn
 }
 
-resource "aws_iam_user_policy_attachment" "full_access_attachment" {
-  count      = var.create_external_storage ? 1 : 0
-  user       = aws_iam_user.bucket_storage[0].name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
-}
-
 resource "aws_iam_access_key" "bucket_storage_user" {
   count = var.create_external_storage ? 1 : 0
   user  = aws_iam_user.bucket_storage[0].name
@@ -127,12 +121,6 @@ resource "aws_iam_user_policy_attachment" "registry_attachment" {
   count      = var.create_external_storage_for_registry_backend ? 1 : 0
   user       = aws_iam_user.bucket_registry[count.index].name
   policy_arn = aws_iam_policy.policy_registry[count.index].arn
-}
-
-resource "aws_iam_user_policy_attachment" "full_access_registry_attachment" {
-  count      = var.create_external_storage_for_registry_backend ? 1 : 0
-  user       = aws_iam_user.bucket_registry[count.index].name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
 resource "aws_iam_access_key" "bucket_registry_user" {
