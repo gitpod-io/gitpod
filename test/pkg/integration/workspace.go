@@ -321,9 +321,10 @@ func stopWsF(t *testing.T, instanceID string, api *ComponentAPI) stopWorkspaceFu
 			return dr.Status, err
 		}
 
+		var lastStatus *wsmanapi.WorkspaceStatus
 		for {
 			t.Logf("waiting for stopping the workspace: %s", instanceID)
-			lastStatus, err := WaitForWorkspaceStop(sctx, api, instanceID)
+			lastStatus, err = WaitForWorkspaceStop(sctx, api, instanceID)
 			if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
 				api.ClearWorkspaceManagerClientCache()
 				t.Logf("got %v during waiting for stopping the workspace", st)
@@ -334,7 +335,7 @@ func stopWsF(t *testing.T, instanceID string, api *ComponentAPI) stopWorkspaceFu
 			}
 			break
 		}
-		return nil, err
+		return lastStatus, err
 	}
 }
 
