@@ -2087,11 +2087,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async findStripeSubscriptionIdForTeam(ctx: TraceContext, teamId: string): Promise<string | undefined> {
-        const attributionId: AttributionId = { kind: "team", teamId: teamId };
-        return this.findStripeSubscriptionId(ctx, AttributionId.render(attributionId));
-    }
-
     async createOrUpdateStripeCustomerForTeam(ctx: TraceContext, teamId: string, currency: string): Promise<void> {
         const user = this.checkAndBlockUser("createOrUpdateStripeCustomerForTeam");
         const team = await this.guardTeamOperation(teamId, "update");
