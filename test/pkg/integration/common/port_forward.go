@@ -5,14 +5,14 @@
 package common
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os/exec"
 	"strings"
 	"time"
-
-	"golang.org/x/xerrors"
 )
 
 // ForwardPortOfPod establishes a TCP port forwarding to a Kubernetes pod
@@ -43,14 +43,23 @@ func forwardPort(ctx context.Context, kubeconfig string, namespace, resourceType
 		}
 
 		command := exec.CommandContext(ctx, "kubectl", args...)
+		var serr, sout bytes.Buffer
+		command.Stdout = &sout
+		command.Stderr = &serr
 		err := command.Start()
 		if err != nil {
-			errchan <- xerrors.Errorf("unexpected error starting port-forward: %w, args: %v", err, args)
+			errchan <- fmt.Errorf("unexpected error string port-forward: %w", errors.New(serr.String()))
+			if command.Process != nil {
+				_ = command.Process.Kill()
+			}
 		}
 
 		err = command.Wait()
 		if err != nil {
-			errchan <- xerrors.Errorf("unexpected error running port-forward: %w, args: %v", err, args)
+			errchan <- fmt.Errorf("unexpected error string port-forward: %w", errors.New(serr.String()))
+			if command.Process != nil {
+				_ = command.Process.Kill()
+			}
 		}
 	}()
 
@@ -58,12 +67,12 @@ func forwardPort(ctx context.Context, kubeconfig string, namespace, resourceType
 	go func() {
 		localPort := strings.Split(port, ":")[0]
 		for {
-			conn, _ := net.DialTimeout("tcp", net.JoinHostPort("", localPort), time.Second)
+			conn, _ := net.DialTimeout("tcp", net.JoinHostPort("localhost", localPort), time.Second)
 			if conn != nil {
 				conn.Close()
 				break
 			}
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(5 * time.Second)
 		}
 
 		readychan <- struct{}{}
