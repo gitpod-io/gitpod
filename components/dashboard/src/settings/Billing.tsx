@@ -10,13 +10,10 @@ import { BillingAccountSelector } from "../components/BillingAccountSelector";
 import { UserContext } from "../user-context";
 import UsageBasedBillingConfig from "../components/UsageBasedBillingConfig";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import useStripe from "../hooks/useStripe";
 
 export default function Billing() {
     const { user } = useContext(UserContext);
     const attributionId: AttributionId = { kind: "user", userId: user?.id || "" };
-    const [showSpinner, _, showUpgradeBilling, showManageBilling, stripePortalUrl, usageLimit, doUpdateLimit] =
-        useStripe(user, attributionId, `pendingStripeSubscriptionForUser${user?.id || ""}`);
 
     return (
         <PageWithSettingsSubMenu title="Billing" subtitle="Usage-Based Billing.">
@@ -25,13 +22,9 @@ export default function Billing() {
                 <BillingAccountSelector />
                 <h3 className="mt-12">Usage-Based Billing</h3>
                 <UsageBasedBillingConfig
+                    subject={user}
                     attributionId={attributionId}
-                    showSpinner={showSpinner}
-                    showUpgradeBilling={showUpgradeBilling}
-                    showManageBilling={showManageBilling}
-                    stripePortalUrl={stripePortalUrl}
-                    usageLimit={usageLimit}
-                    doUpdateLimit={doUpdateLimit}
+                    localStorageKey={`pendingStripeSubscriptionForUser${user?.id || ""}`}
                 />
             </div>
         </PageWithSettingsSubMenu>

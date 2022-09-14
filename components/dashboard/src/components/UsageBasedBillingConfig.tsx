@@ -5,6 +5,7 @@
  */
 
 import { useState, useContext, useEffect } from "react";
+import { useLocation } from "react-router";
 import { Appearance, loadStripe, Stripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
@@ -16,27 +17,156 @@ import DropDown from "../components/DropDown";
 import Modal from "../components/Modal";
 import Alert from "./Alert";
 
-interface Props {
-    attributionId: AttributionId;
-    showSpinner: boolean;
-    showUpgradeBilling: boolean;
-    showManageBilling: boolean;
-    stripePortalUrl?: string;
-    usageLimit?: number;
-    doUpdateLimit: (newLimit: number) => Promise<void>;
+interface hasId {
+    id: string;
 }
 
-export default function UsageBasedBillingConfig({
-    attributionId,
-    showSpinner,
-    showUpgradeBilling,
-    showManageBilling,
-    stripePortalUrl,
-    usageLimit,
-    doUpdateLimit,
-}: Props) {
+type PendingStripeSubscription = { pendingSince: number };
+
+interface Props {
+    subject?: hasId;
+    attributionId: AttributionId;
+    localStorageKey: string;
+}
+
+export default function UsageBasedBillingConfig({ subject, attributionId, localStorageKey }: Props) {
+    const location = useLocation();
     const [showUpdateLimitModal, setShowUpdateLimitModal] = useState<boolean>(false);
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
+    const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | undefined>();
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [stripePortalUrl, setStripePortalUrl] = useState<string | undefined>();
+    const [pollStripeSubscriptionTimeout, setPollStripeSubscriptionTimeout] = useState<NodeJS.Timeout | undefined>();
+    const [usageLimit, setUsageLimit] = useState<number | undefined>();
+    const [pendingStripeSubscription, setPendingStripeSubscription] = useState<PendingStripeSubscription | undefined>();
+    const [billingError, setBillingError] = useState<string | undefined>();
+
+    useEffect(() => {
+        if (!subject) {
+            return;
+        }
+        (async () => {
+            setStripeSubscriptionId(undefined);
+            setIsLoading(true);
+            try {
+                const subscriptionId = await getGitpodService().server.findStripeSubscriptionId(
+                    AttributionId.render(attributionId),
+                );
+                setStripeSubscriptionId(subscriptionId);
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setIsLoading(false);
+            }
+        })();
+    }, [subject]);
+
+    useEffect(() => {
+        if (!subject || !stripeSubscriptionId) {
+            return;
+        }
+        (async () => {
+            const [portalUrl, spendingLimit] = await Promise.all([
+                getGitpodService().server.getStripePortalUrl(AttributionId.render(attributionId)),
+                getGitpodService().server.getUsageLimit(AttributionId.render(attributionId)),
+            ]);
+            setStripePortalUrl(portalUrl);
+            setUsageLimit(spendingLimit);
+        })();
+    }, [subject, stripeSubscriptionId]);
+
+    useEffect(() => {
+        if (!subject) {
+            return;
+        }
+        const params = new URLSearchParams(location.search);
+        if (!params.get("setup_intent") || params.get("redirect_status") !== "succeeded") {
+            return;
+        }
+        (async () => {
+            const setupIntentId = params.get("setup_intent")!;
+            window.history.replaceState({}, "", location.pathname);
+            const pendingSubscription = { pendingSince: Date.now() };
+            setPendingStripeSubscription(pendingSubscription);
+            window.localStorage.setItem(localStorageKey, JSON.stringify(pendingSubscription));
+            try {
+                await getGitpodService().server.subscribeToStripe(AttributionId.render(attributionId), setupIntentId);
+            } catch (error) {
+                console.error("Could not subscribe subject to Stripe", error);
+                window.localStorage.removeItem(localStorageKey);
+                clearTimeout(pollStripeSubscriptionTimeout!);
+                setPendingStripeSubscription(undefined);
+                setBillingError(`Could not subscribe subject to Stripe. ${error?.message || String(error)}`);
+            }
+        })();
+    }, [location.search, subject]);
+
+    useEffect(() => {
+        setPendingStripeSubscription(undefined);
+        if (!subject) {
+            return;
+        }
+        try {
+            const pendingStripeSubscription = window.localStorage.getItem(localStorageKey);
+            if (!pendingStripeSubscription) {
+                return;
+            }
+            const pending = JSON.parse(pendingStripeSubscription);
+            setPendingStripeSubscription(pending);
+        } catch (error) {
+            console.error("Could not load pending stripe subscription", subject.id, error);
+        }
+    }, [subject]);
+
+    useEffect(() => {
+        if (!pendingStripeSubscription || !subject) {
+            return;
+        }
+        if (!!stripeSubscriptionId) {
+            // The upgrade was successful!
+            window.localStorage.removeItem(localStorageKey);
+            clearTimeout(pollStripeSubscriptionTimeout!);
+            setPendingStripeSubscription(undefined);
+            return;
+        }
+        if (pendingStripeSubscription.pendingSince + 1000 * 60 * 5 < Date.now()) {
+            // Pending Stripe subscription expires after 5 minutes
+            window.localStorage.removeItem(localStorageKey);
+            clearTimeout(pollStripeSubscriptionTimeout!);
+            setPendingStripeSubscription(undefined);
+            return;
+        }
+        if (!pollStripeSubscriptionTimeout) {
+            // Refresh Stripe subscription in 5 seconds in order to poll for upgrade confirmation
+            const timeout = setTimeout(async () => {
+                const subscriptionId = await getGitpodService().server.findStripeSubscriptionId(
+                    AttributionId.render(attributionId),
+                );
+                setStripeSubscriptionId(subscriptionId);
+                setPollStripeSubscriptionTimeout(undefined);
+            }, 5000);
+            setPollStripeSubscriptionTimeout(timeout);
+        }
+    }, [pendingStripeSubscription, pollStripeSubscriptionTimeout, stripeSubscriptionId, subject]);
+
+    const showSpinner = isLoading || !!pendingStripeSubscription;
+    const showUpgradeBilling = !showSpinner && !stripeSubscriptionId;
+    const showManageBilling = !showSpinner && !!stripeSubscriptionId;
+
+    const doUpdateLimit = async (newLimit: number) => {
+        if (!subject) {
+            return;
+        }
+        const oldLimit = usageLimit;
+        setUsageLimit(newLimit);
+        try {
+            await getGitpodService().server.setUsageLimit(AttributionId.render(attributionId), newLimit);
+        } catch (error) {
+            setUsageLimit(oldLimit);
+            console.error(error);
+            alert(error?.message || "Failed to update usage limit. See console for error message.");
+        }
+    };
 
     const onLimitUpdated = async (newLimit: number) => {
         await doUpdateLimit(newLimit);
@@ -47,6 +177,11 @@ export default function UsageBasedBillingConfig({
         <div className="mb-16">
             <h2 className="text-gray-500">Manage usage-based billing, usage limit, and payment method.</h2>
             <div className="max-w-xl flex flex-col">
+                {billingError && (
+                    <Alert className="max-w-xl mb-4" closable={false} showIcon={true} type="error">
+                        {billingError}
+                    </Alert>
+                )}
                 {showSpinner && (
                     <div className="flex flex-col mt-4 h-32 p-4 rounded-xl bg-gray-100 dark:bg-gray-800">
                         <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Billing</div>
