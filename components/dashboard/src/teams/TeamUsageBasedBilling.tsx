@@ -10,9 +10,7 @@ import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { getCurrentTeam, TeamsContext } from "./teams-context";
 import { getGitpodService } from "../service/service";
 import UsageBasedBillingConfig from "../components/UsageBasedBillingConfig";
-import Alert from "../components/Alert";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import useStripe from "../hooks/useStripe";
 
 export default function TeamUsageBasedBilling() {
     const { teams } = useContext(TeamsContext);
@@ -20,15 +18,6 @@ export default function TeamUsageBasedBilling() {
     const team = getCurrentTeam(location, teams);
     const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
     const attributionId: AttributionId = { kind: "team", teamId: team?.id || "" };
-    const [
-        showSpinner,
-        billingError,
-        showUpgradeBilling,
-        showManageBilling,
-        stripePortalUrl,
-        usageLimit,
-        doUpdateLimit,
-    ] = useStripe(team, attributionId, `pendingStripeSubscriptionForTeam${team?.id || ""}`);
 
     useEffect(() => {
         if (!team) return;
@@ -45,20 +34,11 @@ export default function TeamUsageBasedBilling() {
 
     return (
         <>
-            {billingError && (
-                <Alert className="max-w-xl mb-4" closable={false} showIcon={true} type="error">
-                    {billingError}
-                </Alert>
-            )}
             <h3>Usage-Based Billing</h3>
             <UsageBasedBillingConfig
+                subject={team}
                 attributionId={attributionId}
-                showSpinner={showSpinner}
-                showUpgradeBilling={showUpgradeBilling}
-                showManageBilling={showManageBilling}
-                stripePortalUrl={stripePortalUrl}
-                usageLimit={usageLimit}
-                doUpdateLimit={doUpdateLimit}
+                localStorageKey={`pendingStripeSubscriptionForTeam${team?.id || ""}`}
             />
         </>
     );
