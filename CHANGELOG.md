@@ -1,6 +1,16 @@
 # Change Log
 
 ## September 2022
+- Update stable Browser Code to `1.71.1` release ([#12929](https://github.com/gitpod-io/gitpod/pull/12929)) - [@mustard-mh](https://github.com/mustard-mh)
+- [installer]: make the installer config file consistent ([#12920](https://github.com/gitpod-io/gitpod/pull/12920)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- NONE. ([#12875](https://github.com/gitpod-io/gitpod/pull/12875)) - [@felladrin](https://github.com/felladrin)
+- [installer]: add HTTP_PROXY envvars to the Installer ([#12726](https://github.com/gitpod-io/gitpod/pull/12726)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [local-preview] Reduce storage requirements ([#12761](https://github.com/gitpod-io/gitpod/pull/12761)) - [@Pothulapati](https://github.com/Pothulapati)
+- [installer]: config detects shiftfs and containerd values ([#12683](https://github.com/gitpod-io/gitpod/pull/12683)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Show personal Usage page. ([#12771](https://github.com/gitpod-io/gitpod/pull/12771)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- [installer]: create config command and deprecate init command ([#12679](https://github.com/gitpod-io/gitpod/pull/12679)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Improve fetching repositories loading state ([#12833](https://github.com/gitpod-io/gitpod/pull/12833)) - [@gtsiolis](https://github.com/gtsiolis)
+- Add link to support on phone verification ([#12852](https://github.com/gitpod-io/gitpod/pull/12852)) - [@gtsiolis](https://github.com/gtsiolis)
 - JetBrains IDEs now have actions related to Gitpod, which can be accessed via Control Center and via the Search Menu. ([#12621](https://github.com/gitpod-io/gitpod/pull/12621)) - [@felladrin](https://github.com/felladrin)
 - [server] Support for storing vscode edit sessions in sync server ([#12445](https://github.com/gitpod-io/gitpod/pull/12445)) - [@jeanp413](https://github.com/jeanp413)
 - [local-preview] Remove unused dead code ([#12496](https://github.com/gitpod-io/gitpod/pull/12496)) - [@Pothulapati](https://github.com/Pothulapati)
