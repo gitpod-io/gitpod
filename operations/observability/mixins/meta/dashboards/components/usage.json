@@ -24,8 +24,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 68,
-  "iteration": 1658784406433,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -51,6 +49,8 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -107,7 +107,8 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
           "mode": "single",
@@ -141,6 +142,8 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -197,7 +200,8 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
           "mode": "single",
@@ -240,9 +244,9 @@
         "x": 0,
         "y": 9
       },
-      "id": 2,
+      "id": 14,
       "panels": [],
-      "title": "Usage Controller",
+      "title": "Scheduled jobs",
       "type": "row"
     },
     {
@@ -257,6 +261,8 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "# of events",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -312,7 +318,8 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
           "mode": "single",
@@ -326,8 +333,8 @@
             "uid": "P4169E866C3094E38"
           },
           "editorMode": "code",
-          "expr": "sum(increase(gitpod_usage_reconcile_started_total{cluster=~\"$cluster\"}[1m]))",
-          "legendFormat": "Reconcile started",
+          "expr": "sum(increase(gitpod_usage_scheduler_job_started_total{cluster=~\"$cluster\"}[1m])) by (job)",
+          "legendFormat": "{{job}} started",
           "range": true,
           "refId": "A"
         },
@@ -338,15 +345,15 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum(increase(gitpod_usage_reconcile_completed_duration_seconds_count{cluster=~\"$cluster\"}[1m])) by (outcome)",
+          "expr": "sum(increase(gitpod_usage_scheduler_job_completed_seconds_count{cluster=~\"$cluster\"}[1m])) by (job, outcome)",
           "hide": false,
           "instant": false,
-          "legendFormat": "Reconcile completed: {{outcome}}",
+          "legendFormat": "{{job}} completed: {{outcome}}",
           "range": true,
           "refId": "B"
         }
       ],
-      "title": "Usage Controller Ticks",
+      "title": "Scheduled jobs started & completed",
       "type": "timeseries"
     },
     {
@@ -361,6 +368,8 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisGridShow": true,
             "axisLabel": "",
             "axisPlacement": "auto",
@@ -418,7 +427,8 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
           "mode": "single",
@@ -432,7 +442,7 @@
             "uid": "P4169E866C3094E38"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.5, sum(rate(gitpod_usage_reconcile_completed_duration_seconds_bucket{cluster=~\"$cluster\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.5, sum(rate(gitpod_usage_scheduler_job_completed_seconds_bucket{cluster=~\"$cluster\"}[$__rate_interval])) by (le))",
           "legendFormat": "50th percentile",
           "range": true,
           "refId": "A"
@@ -443,18 +453,18 @@
             "uid": "P4169E866C3094E38"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.9, sum(rate(gitpod_usage_reconcile_completed_duration_seconds_bucket{cluster=~\"$cluster\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.9, sum(rate(gitpod_usage_scheduler_job_completed_seconds_bucket{cluster=~\"$cluster\"}[$__rate_interval])) by (le))",
           "hide": false,
           "legendFormat": "90th percentile",
           "range": true,
           "refId": "B"
         }
       ],
-      "title": "Tick Duration",
+      "title": "Scheduled job duration",
       "type": "timeseries"
     }
   ],
-  "schemaVersion": 36,
+  "schemaVersion": 37,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -561,6 +571,6 @@
   "timezone": "utc",
   "title": "Component: Usage",
   "uid": "8W7P-jg4z",
-  "version": 8,
+  "version": 1,
   "weekStart": "monday"
 }
