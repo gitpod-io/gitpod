@@ -205,7 +205,6 @@ const defaultFunctions: FunctionsConfig = {
     createOrUpdateStripeCustomerForTeam: { group: "default", points: 1 },
     createOrUpdateStripeCustomerForUser: { group: "default", points: 1 },
     subscribeToStripe: { group: "default", points: 1 },
-    subscribeTeamToStripe: { group: "default", points: 1 },
     getStripePortalUrl: { group: "default", points: 1 },
     getStripePortalUrlForTeam: { group: "default", points: 1 },
     listUsage: { group: "default", points: 1 },
