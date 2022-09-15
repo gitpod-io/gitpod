@@ -22,6 +22,7 @@ function ErrorMessage(props: { imgSrc: string; imgAlt?: string; message: string 
                     initialSize={24}
                     isError={true}
                     isModal={false}
+                    error_message={props.message}
                 />
             )}
         </>
