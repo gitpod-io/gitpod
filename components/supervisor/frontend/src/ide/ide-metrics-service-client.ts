@@ -6,6 +6,7 @@
 
 import { serverUrl, workspaceUrl } from '../shared/urls';
 import { GitpodServiceClient } from './gitpod-service-client';
+const commit = require('../../config.json').commit
 
 export enum MetricsName {
     SupervisorFrontendClientTotal = "gitpod_supervisor_frontend_client_total",
@@ -67,7 +68,7 @@ export class IDEMetricsServiceClient {
         const params: ReportErrorParam = {
             errorStack: error.stack ?? String(error),
             component: "supervisor-frontend",
-            version: "unknown",
+            version: commit,
             workspaceId: this.workspaceId ?? "",
             instanceId: this.instanceId ?? "",
             userId: this.userId ?? "",
