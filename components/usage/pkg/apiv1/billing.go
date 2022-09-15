@@ -155,20 +155,3 @@ func (s *BillingService) GetUpcomingInvoice(ctx context.Context, in *v1.GetUpcom
 		Credits:   invoice.Credits,
 	}, nil
 }
-
-func (s *BillingService) SetBilledSession(ctx context.Context, in *v1.SetBilledSessionRequest) (*v1.SetBilledSessionResponse, error) {
-	var from time.Time
-	if in.From != nil {
-		from = in.From.AsTime()
-	}
-	uuid, err := uuid.Parse(in.InstanceId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "failed to parse instance ID: %s", err)
-	}
-	err = db.SetBilled(ctx, s.conn, uuid, from, in.System)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to set session: %s", err)
-	}
-
-	return &v1.SetBilledSessionResponse{}, nil
-}
