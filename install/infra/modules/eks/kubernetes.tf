@@ -219,3 +219,36 @@ resource "null_resource" "kubeconfig" {
     create_before_destroy = true
   }
 }
+
+data "aws_iam_policy_document" "eks_policy" {
+  statement {
+    actions   = [
+      "eks:DescribeCluster",
+      "eks:ListClusters"
+    ]
+    resources = [
+      "*",
+    ]
+    effect    = "Allow"
+  }
+}
+
+resource "aws_iam_policy" "eks_policy" {
+  name        = "eks-policy-${var.cluster_name}"
+  description = "Gitpod ${var.cluster_name} EKS cluster access bucket policy"
+  policy      = data.aws_iam_policy_document.eks_policy.json
+}
+
+resource "aws_iam_user" "eks_user" {
+  force_destroy = true
+  name  = "eks-user-${var.cluster_name}"
+}
+
+resource "aws_iam_user_policy_attachment" "eks_attachment" {
+  user       = aws_iam_user.eks_user.name
+  policy_arn = aws_iam_policy.eks_policy.arn
+}
+
+resource "aws_iam_access_key" "eks_user_key" {
+  user  = aws_iam_user.eks_user.name
+}

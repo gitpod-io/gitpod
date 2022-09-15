@@ -149,3 +149,18 @@ resource "local_file" "kubeconfig" {
   filename = var.kubeconfig
   content  = module.gke_auth.kubeconfig_raw
 }
+
+resource "google_service_account" "cluster_user_sa" {
+  account_id   = local.gke_user_sa
+  display_name = "Gitpod Service Account managed by TF for GKE cluster user"
+}
+
+resource "google_project_iam_member" "gke-user-sa-iam" {
+  project = var.project
+  role    = "roles/container.developer"
+  member  = "serviceAccount:${google_service_account.cluster_user_sa.email}"
+}
+
+resource "google_service_account_key" "gke_sa_key" {
+  service_account_id = google_service_account.cluster_user_sa.name
+}

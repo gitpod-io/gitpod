@@ -22,6 +22,11 @@ output "kubeconfig" {
   value     = module.gke_auth.kubeconfig_raw
 }
 
+output "cluster-sa" {
+  sensitive = true
+  value = google_service_account_key.gke_sa_key.private_key
+}
+
 output "database" {
   sensitive = true
   value = try({

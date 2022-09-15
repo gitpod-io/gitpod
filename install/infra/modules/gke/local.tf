@@ -7,6 +7,8 @@ locals {
         "roles/container.admin"
     ])
 
+    gke_user_sa = "user-${var.cluster_name}"
+
     obj_sa = "obj-sa-${var.cluster_name}"
     obj_iam_roles = var.enable_external_registry ? toset([
         "roles/storage.admin",

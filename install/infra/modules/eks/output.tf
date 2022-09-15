@@ -91,3 +91,13 @@ output "registry_backend" {
     secret_access_key = aws_iam_access_key.bucket_registry_user[0].secret
   }, "No s3 bucket created for registry backend.")
 }
+
+output "cluster_user" {
+  sensitive = true
+  value = {
+    userarn           = aws_iam_user.eks_user.arn
+    name              = aws_iam_user.eks_user.name
+    access_key_id     = aws_iam_access_key.eks_user_key.id
+    secret_access_key = aws_iam_access_key.eks_user_key.secret
+  }
+}
