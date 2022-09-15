@@ -37,8 +37,6 @@ type BillingServiceClient interface {
 	// CancelSubscription cancels a stripe subscription in our system
 	// Called by a stripe webhook
 	CancelSubscription(ctx context.Context, in *CancelSubscriptionRequest, opts ...grpc.CallOption) (*CancelSubscriptionResponse, error)
-	// SetBilledSession marks an instance as billed with a billing system
-	SetBilledSession(ctx context.Context, in *SetBilledSessionRequest, opts ...grpc.CallOption) (*SetBilledSessionResponse, error)
 }
 
 type billingServiceClient struct {
@@ -85,15 +83,6 @@ func (c *billingServiceClient) CancelSubscription(ctx context.Context, in *Cance
 	return out, nil
 }
 
-func (c *billingServiceClient) SetBilledSession(ctx context.Context, in *SetBilledSessionRequest, opts ...grpc.CallOption) (*SetBilledSessionResponse, error) {
-	out := new(SetBilledSessionResponse)
-	err := c.cc.Invoke(ctx, "/usage.v1.BillingService/SetBilledSession", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // BillingServiceServer is the server API for BillingService service.
 // All implementations must embed UnimplementedBillingServiceServer
 // for forward compatibility
@@ -109,8 +98,6 @@ type BillingServiceServer interface {
 	// CancelSubscription cancels a stripe subscription in our system
 	// Called by a stripe webhook
 	CancelSubscription(context.Context, *CancelSubscriptionRequest) (*CancelSubscriptionResponse, error)
-	// SetBilledSession marks an instance as billed with a billing system
-	SetBilledSession(context.Context, *SetBilledSessionRequest) (*SetBilledSessionResponse, error)
 	mustEmbedUnimplementedBillingServiceServer()
 }
 
@@ -129,9 +116,6 @@ func (UnimplementedBillingServiceServer) FinalizeInvoice(context.Context, *Final
 }
 func (UnimplementedBillingServiceServer) CancelSubscription(context.Context, *CancelSubscriptionRequest) (*CancelSubscriptionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelSubscription not implemented")
-}
-func (UnimplementedBillingServiceServer) SetBilledSession(context.Context, *SetBilledSessionRequest) (*SetBilledSessionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetBilledSession not implemented")
 }
 func (UnimplementedBillingServiceServer) mustEmbedUnimplementedBillingServiceServer() {}
 
@@ -218,24 +202,6 @@ func _BillingService_CancelSubscription_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BillingService_SetBilledSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetBilledSessionRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BillingServiceServer).SetBilledSession(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/usage.v1.BillingService/SetBilledSession",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BillingServiceServer).SetBilledSession(ctx, req.(*SetBilledSessionRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // BillingService_ServiceDesc is the grpc.ServiceDesc for BillingService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -258,10 +224,6 @@ var BillingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CancelSubscription",
 			Handler:    _BillingService_CancelSubscription_Handler,
-		},
-		{
-			MethodName: "SetBilledSession",
-			Handler:    _BillingService_SetBilledSession_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

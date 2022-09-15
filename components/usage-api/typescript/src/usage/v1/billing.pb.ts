@@ -8,62 +8,8 @@
 import * as Long from "long";
 import { CallContext, CallOptions } from "nice-grpc-common";
 import * as _m0 from "protobufjs/minimal";
-import { Timestamp } from "../../google/protobuf/timestamp.pb";
 
 export const protobufPackage = "usage.v1";
-
-export enum System {
-  SYSTEM_UNKNOWN = "SYSTEM_UNKNOWN",
-  SYSTEM_CHARGEBEE = "SYSTEM_CHARGEBEE",
-  SYSTEM_STRIPE = "SYSTEM_STRIPE",
-  UNRECOGNIZED = "UNRECOGNIZED",
-}
-
-export function systemFromJSON(object: any): System {
-  switch (object) {
-    case 0:
-    case "SYSTEM_UNKNOWN":
-      return System.SYSTEM_UNKNOWN;
-    case 1:
-    case "SYSTEM_CHARGEBEE":
-      return System.SYSTEM_CHARGEBEE;
-    case 2:
-    case "SYSTEM_STRIPE":
-      return System.SYSTEM_STRIPE;
-    case -1:
-    case "UNRECOGNIZED":
-    default:
-      return System.UNRECOGNIZED;
-  }
-}
-
-export function systemToJSON(object: System): string {
-  switch (object) {
-    case System.SYSTEM_UNKNOWN:
-      return "SYSTEM_UNKNOWN";
-    case System.SYSTEM_CHARGEBEE:
-      return "SYSTEM_CHARGEBEE";
-    case System.SYSTEM_STRIPE:
-      return "SYSTEM_STRIPE";
-    case System.UNRECOGNIZED:
-    default:
-      return "UNRECOGNIZED";
-  }
-}
-
-export function systemToNumber(object: System): number {
-  switch (object) {
-    case System.SYSTEM_UNKNOWN:
-      return 0;
-    case System.SYSTEM_CHARGEBEE:
-      return 1;
-    case System.SYSTEM_STRIPE:
-      return 2;
-    case System.UNRECOGNIZED:
-    default:
-      return -1;
-  }
-}
 
 export interface ReconcileInvoicesRequest {
 }
@@ -95,19 +41,6 @@ export interface CancelSubscriptionRequest {
 }
 
 export interface CancelSubscriptionResponse {
-}
-
-/**
- * If there are two billable sessions for this instance ID,
- * the second one's "from" will be the first one's "to"
- */
-export interface SetBilledSessionRequest {
-  instanceId: string;
-  from: Date | undefined;
-  system: System;
-}
-
-export interface SetBilledSessionResponse {
 }
 
 function createBaseReconcileInvoicesRequest(): ReconcileInvoicesRequest {
@@ -494,112 +427,6 @@ export const CancelSubscriptionResponse = {
   },
 };
 
-function createBaseSetBilledSessionRequest(): SetBilledSessionRequest {
-  return { instanceId: "", from: undefined, system: System.SYSTEM_UNKNOWN };
-}
-
-export const SetBilledSessionRequest = {
-  encode(message: SetBilledSessionRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.instanceId !== "") {
-      writer.uint32(10).string(message.instanceId);
-    }
-    if (message.from !== undefined) {
-      Timestamp.encode(toTimestamp(message.from), writer.uint32(18).fork()).ldelim();
-    }
-    if (message.system !== System.SYSTEM_UNKNOWN) {
-      writer.uint32(24).int32(systemToNumber(message.system));
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): SetBilledSessionRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseSetBilledSessionRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.instanceId = reader.string();
-          break;
-        case 2:
-          message.from = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
-          break;
-        case 3:
-          message.system = systemFromJSON(reader.int32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): SetBilledSessionRequest {
-    return {
-      instanceId: isSet(object.instanceId) ? String(object.instanceId) : "",
-      from: isSet(object.from) ? fromJsonTimestamp(object.from) : undefined,
-      system: isSet(object.system) ? systemFromJSON(object.system) : System.SYSTEM_UNKNOWN,
-    };
-  },
-
-  toJSON(message: SetBilledSessionRequest): unknown {
-    const obj: any = {};
-    message.instanceId !== undefined && (obj.instanceId = message.instanceId);
-    message.from !== undefined && (obj.from = message.from.toISOString());
-    message.system !== undefined && (obj.system = systemToJSON(message.system));
-    return obj;
-  },
-
-  fromPartial(object: DeepPartial<SetBilledSessionRequest>): SetBilledSessionRequest {
-    const message = createBaseSetBilledSessionRequest();
-    message.instanceId = object.instanceId ?? "";
-    message.from = object.from ?? undefined;
-    message.system = object.system ?? System.SYSTEM_UNKNOWN;
-    return message;
-  },
-};
-
-function createBaseSetBilledSessionResponse(): SetBilledSessionResponse {
-  return {};
-}
-
-export const SetBilledSessionResponse = {
-  encode(_: SetBilledSessionResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): SetBilledSessionResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseSetBilledSessionResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(_: any): SetBilledSessionResponse {
-    return {};
-  },
-
-  toJSON(_: SetBilledSessionResponse): unknown {
-    const obj: any = {};
-    return obj;
-  },
-
-  fromPartial(_: DeepPartial<SetBilledSessionResponse>): SetBilledSessionResponse {
-    const message = createBaseSetBilledSessionResponse();
-    return message;
-  },
-};
-
 export type BillingServiceDefinition = typeof BillingServiceDefinition;
 export const BillingServiceDefinition = {
   name: "BillingService",
@@ -650,15 +477,6 @@ export const BillingServiceDefinition = {
       responseStream: false,
       options: {},
     },
-    /** SetBilledSession marks an instance as billed with a billing system */
-    setBilledSession: {
-      name: "SetBilledSession",
-      requestType: SetBilledSessionRequest,
-      requestStream: false,
-      responseType: SetBilledSessionResponse,
-      responseStream: false,
-      options: {},
-    },
   },
 } as const;
 
@@ -692,11 +510,6 @@ export interface BillingServiceServiceImplementation<CallContextExt = {}> {
     request: CancelSubscriptionRequest,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<CancelSubscriptionResponse>>;
-  /** SetBilledSession marks an instance as billed with a billing system */
-  setBilledSession(
-    request: SetBilledSessionRequest,
-    context: CallContext & CallContextExt,
-  ): Promise<DeepPartial<SetBilledSessionResponse>>;
 }
 
 export interface BillingServiceClient<CallOptionsExt = {}> {
@@ -729,11 +542,6 @@ export interface BillingServiceClient<CallOptionsExt = {}> {
     request: DeepPartial<CancelSubscriptionRequest>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<CancelSubscriptionResponse>;
-  /** SetBilledSession marks an instance as billed with a billing system */
-  setBilledSession(
-    request: DeepPartial<SetBilledSessionRequest>,
-    options?: CallOptions & CallOptionsExt,
-  ): Promise<SetBilledSessionResponse>;
 }
 
 export interface DataLoaderOptions {
@@ -770,28 +578,6 @@ export type DeepPartial<T> = T extends Builtin ? T
   : T extends Array<infer U> ? Array<DeepPartial<U>> : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
   : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
-
-function toTimestamp(date: Date): Timestamp {
-  const seconds = date.getTime() / 1_000;
-  const nanos = (date.getTime() % 1_000) * 1_000_000;
-  return { seconds, nanos };
-}
-
-function fromTimestamp(t: Timestamp): Date {
-  let millis = t.seconds * 1_000;
-  millis += t.nanos / 1_000_000;
-  return new Date(millis);
-}
-
-function fromJsonTimestamp(o: any): Date {
-  if (o instanceof Date) {
-    return o;
-  } else if (typeof o === "string") {
-    return new Date(o);
-  } else {
-    return fromTimestamp(Timestamp.fromJSON(o));
-  }
-}
 
 function longToNumber(long: Long): number {
   if (long.gt(Number.MAX_SAFE_INTEGER)) {
