@@ -1,1 +1,1 @@
-install/installer/cmd/testdata/render/*.golden linguist-generated=true
+install/installer/cmd/testdata/render/**/*.golden linguist-generated=true
