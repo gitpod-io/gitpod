@@ -4,8 +4,6 @@ package usage.v1;
 
 option go_package = "github.com/gitpod-io/gitpod/usage-api/v1";
 
-import "google/protobuf/timestamp.proto";
-
 service BillingService {
   // ReconcileInvoices retrieves current credit balance and reflects it in billing system.
   // Internal RPC, not intended for general consumption.
@@ -21,9 +19,6 @@ service BillingService {
   // CancelSubscription cancels a stripe subscription in our system
   // Called by a stripe webhook
   rpc CancelSubscription(CancelSubscriptionRequest) returns (CancelSubscriptionResponse) {};
-
-  // SetBilledSession marks an instance as billed with a billing system
-  rpc SetBilledSession(SetBilledSessionRequest) returns (SetBilledSessionResponse) {};
 }
 
 message ReconcileInvoicesRequest {}
@@ -56,21 +51,4 @@ message CancelSubscriptionRequest {
 }
 
 message CancelSubscriptionResponse {
-}
-
-enum System {
-  SYSTEM_UNKNOWN = 0;
-  SYSTEM_CHARGEBEE = 1;
-  SYSTEM_STRIPE = 2;
-}
-
-// If there are two billable sessions for this instance ID,
-// the second one's "from" will be the first one's "to"
-message SetBilledSessionRequest {
-  string instance_id = 1;
-  google.protobuf.Timestamp from = 2;
-  System system = 3;
-}
-
-message SetBilledSessionResponse {
 }
