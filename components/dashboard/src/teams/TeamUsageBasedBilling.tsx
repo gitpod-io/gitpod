@@ -35,7 +35,7 @@ export default function TeamUsageBasedBilling() {
     return (
         <>
             <h3>Usage-Based Billing</h3>
-            <UsageBasedBillingConfig subject={team} attributionId={attributionId} />
+            <UsageBasedBillingConfig subject={team} attributionId={AttributionId.render(attributionId)} />
         </>
     );
 }

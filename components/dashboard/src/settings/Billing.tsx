@@ -21,7 +21,7 @@ export default function Billing() {
                 <h3>Billing Account</h3>
                 <BillingAccountSelector />
                 <h3 className="mt-12">Usage-Based Billing</h3>
-                <UsageBasedBillingConfig subject={user} attributionId={attributionId} />
+                <UsageBasedBillingConfig subject={user} attributionId={AttributionId.render(attributionId)} />
             </div>
         </PageWithSettingsSubMenu>
     );
