@@ -518,12 +518,12 @@ export class WorkspaceManagerBridge implements Disposable {
                             instance.stoppingTime &&
                             durationLongerThanSeconds(Date.parse(instance.stoppingTime), 10))
                     ) {
-                        log.info("Logging to validate #12902. Should mark as stopped in database.", {
-                            instanceId,
-                            workspaceId: instance.workspaceId,
-                            installation,
-                            phase,
-                        });
+                        log.info(
+                            { instanceId, workspaceId: instance.workspaceId },
+                            "Logging to validate #12902. Should mark as stopped in database.",
+                            { installation },
+                            { phase },
+                        );
                     }
                     log.debug({ instanceId }, "Skipping instance", {
                         phase: instance.status.phase,
