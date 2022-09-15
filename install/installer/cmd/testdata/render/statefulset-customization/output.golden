@@ -4133,7 +4133,8 @@ data:
         ],
         "errorReporting": {
           "allowComponents": [
-            "supervisor-frontend"
+            "supervisor-frontend",
+            "vscode-workbench"
           ]
         }
       },
@@ -8235,7 +8236,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 9294988d9eda9035b1f1feabbe3743d7f56366a821fe43a1736c209bcce70c85
+        gitpod.io/checksum_config: 38daf6eb90ea9693d49597f331d3fcbc68a6b62961fa86096d1fd7e8f67af33c
       creationTimestamp: null
       labels:
         app: gitpod
