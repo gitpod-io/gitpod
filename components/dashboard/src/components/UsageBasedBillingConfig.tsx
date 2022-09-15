@@ -25,7 +25,7 @@ type PendingStripeSubscription = { pendingSince: number };
 
 interface Props {
     subject?: hasId;
-    attributionId: AttributionId;
+    attributionId: string;
 }
 
 export default function UsageBasedBillingConfig({ subject, attributionId }: Props) {
@@ -50,9 +50,7 @@ export default function UsageBasedBillingConfig({ subject, attributionId }: Prop
             setStripeSubscriptionId(undefined);
             setIsLoading(true);
             try {
-                const subscriptionId = await getGitpodService().server.findStripeSubscriptionId(
-                    AttributionId.render(attributionId),
-                );
+                const subscriptionId = await getGitpodService().server.findStripeSubscriptionId(attributionId);
                 setStripeSubscriptionId(subscriptionId);
             } catch (error) {
                 console.error(error);
@@ -68,8 +66,8 @@ export default function UsageBasedBillingConfig({ subject, attributionId }: Prop
         }
         (async () => {
             const [portalUrl, spendingLimit] = await Promise.all([
-                getGitpodService().server.getStripePortalUrl(AttributionId.render(attributionId)),
-                getGitpodService().server.getUsageLimit(AttributionId.render(attributionId)),
+                getGitpodService().server.getStripePortalUrl(attributionId),
+                getGitpodService().server.getUsageLimit(attributionId),
             ]);
             setStripePortalUrl(portalUrl);
             setUsageLimit(spendingLimit);
@@ -91,7 +89,7 @@ export default function UsageBasedBillingConfig({ subject, attributionId }: Prop
             setPendingStripeSubscription(pendingSubscription);
             window.localStorage.setItem(localStorageKey, JSON.stringify(pendingSubscription));
             try {
-                await getGitpodService().server.subscribeToStripe(AttributionId.render(attributionId), setupIntentId);
+                await getGitpodService().server.subscribeToStripe(attributionId, setupIntentId);
             } catch (error) {
                 console.error("Could not subscribe subject to Stripe", error);
                 window.localStorage.removeItem(localStorageKey);
@@ -140,9 +138,7 @@ export default function UsageBasedBillingConfig({ subject, attributionId }: Prop
         if (!pollStripeSubscriptionTimeout) {
             // Refresh Stripe subscription in 5 seconds in order to poll for upgrade confirmation
             const timeout = setTimeout(async () => {
-                const subscriptionId = await getGitpodService().server.findStripeSubscriptionId(
-                    AttributionId.render(attributionId),
-                );
+                const subscriptionId = await getGitpodService().server.findStripeSubscriptionId(attributionId);
                 setStripeSubscriptionId(subscriptionId);
                 setPollStripeSubscriptionTimeout(undefined);
             }, 5000);
@@ -161,7 +157,7 @@ export default function UsageBasedBillingConfig({ subject, attributionId }: Prop
         const oldLimit = usageLimit;
         setUsageLimit(newLimit);
         try {
-            await getGitpodService().server.setUsageLimit(AttributionId.render(attributionId), newLimit);
+            await getGitpodService().server.setUsageLimit(attributionId, newLimit);
         } catch (error) {
             setUsageLimit(oldLimit);
             console.error(error);
@@ -239,7 +235,7 @@ export default function UsageBasedBillingConfig({ subject, attributionId }: Prop
     );
 }
 
-function BillingSetupModal(props: { attributionId: AttributionId; onClose: () => void }) {
+function BillingSetupModal(props: { attributionId: string; onClose: () => void }) {
     const { isDark } = useContext(ThemeContext);
     const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | undefined>();
     const [stripeSetupIntentClientSecret, setStripeSetupIntentClientSecret] = useState<string | undefined>();
@@ -283,7 +279,7 @@ function getStripeAppearance(isDark?: boolean): Appearance {
     };
 }
 
-function CreditCardInputForm(props: { attributionId: AttributionId }) {
+function CreditCardInputForm(props: { attributionId: string }) {
     const stripe = useStripe();
     const elements = useElements();
     const { currency, setCurrency } = useContext(PaymentContext);
@@ -292,18 +288,16 @@ function CreditCardInputForm(props: { attributionId: AttributionId }) {
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
-        if (!stripe || !elements) {
+        const attrId = AttributionId.parse(props.attributionId);
+        if (!stripe || !elements || !attrId) {
             return;
         }
         setBillingError(undefined);
         setIsLoading(true);
         try {
-            if (props.attributionId.kind === "team") {
+            if (attrId.kind === "team") {
                 // Create Stripe customer for team & currency (or update currency)
-                await getGitpodService().server.createOrUpdateStripeCustomerForTeam(
-                    props.attributionId.teamId,
-                    currency,
-                );
+                await getGitpodService().server.createOrUpdateStripeCustomerForTeam(attrId.teamId, currency);
             } else {
                 // Create Stripe customer for user & currency (or update currency)
                 await getGitpodService().server.createOrUpdateStripeCustomerForUser(currency);
