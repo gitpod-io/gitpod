@@ -7,7 +7,6 @@
 import { User } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 import { UsageServiceClient, UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import { inject, injectable } from "inversify";
 import { UserService } from "../../../src/user/user-service";
@@ -23,8 +22,6 @@ export class BillingService {
     @inject(UserService) protected readonly userService: UserService;
     @inject(UsageServiceDefinition.name)
     protected readonly usageService: UsageServiceClient;
-    @inject(BillingServiceDefinition.name)
-    protected readonly billingService: BillingServiceClient;
 
     async checkUsageLimitReached(user: User): Promise<UsageLimitReachedResult> {
         const attributionId = await this.userService.getWorkspaceUsageAttributionId(user);
@@ -43,8 +40,13 @@ export class BillingService {
             };
         }
 
-        const upcomingInvoice = await this.billingService.getUpcomingInvoice(attributionId);
-        const currentInvoiceCredits = upcomingInvoice.credits | 0;
+        const now = new Date();
+        const currentBalance = await this.usageService.listUsage({
+            attributionId: AttributionId.render(attributionId),
+            from: now,
+            to: now,
+        });
+        const currentInvoiceCredits = currentBalance.creditBalanceAtEnd | 0;
         if (currentInvoiceCredits >= (costCenter.spendingLimit || 0)) {
             log.info({ userId: user.id }, "Usage limit reached", {
                 attributionId,
