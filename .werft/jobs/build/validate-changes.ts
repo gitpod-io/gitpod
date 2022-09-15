@@ -5,7 +5,12 @@ import { JobConfig } from "./job-config";
 export async function validateChanges(werft: Werft, config: JobConfig) {
     werft.phase("validate-changes", "validating changes");
     try {
-        await Promise.all([branchNameCheck(werft, config), preCommitCheck(werft), typecheckWerftJobs(werft)]);
+        await Promise.all([
+            branchNameCheck(werft, config),
+            preCommitCheck(werft),
+            typecheckWerftJobs(werft),
+            leewayVet(werft),
+        ]);
     } catch (err) {
         werft.fail("validate-changes", err);
     }
@@ -57,6 +62,18 @@ export async function typecheckWerftJobs(werft: Werft) {
         werft.log(slice, "No compilation errors");
     } catch (e) {
         werft.fail(slice, e);
+    }
+    werft.done(slice);
+}
+
+export async function leewayVet(werft: Werft) {
+    const slice = "leeway vet --ignore-warnings"
+    try {
+        werft.log(slice, "Running leeway vet")
+        await exec(`leeway vet --ignore-warnings`, {slice, async: true});
+        werft.log(slice, "leeway vet successful")
+    } catch (e) {
+        werft.fail(slice, e)
     }
     werft.done(slice);
 }
