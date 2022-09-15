@@ -5,9 +5,10 @@
 package init
 
 const (
-	Component       = "dbinit"
-	dbSessionsImage = "library/mysql"
-	dbSessionsTag   = "5.7.34"
-	initScriptDir   = "files"
-	sqlInitScripts  = "db-init-scripts"
+	Component         = "dbinit"
+	dbSessionsImage   = "library/mysql"
+	dbSessionsTag     = "5.7.34"
+	initScriptDir     = "files"
+	sqlInitScripts    = "db-init-scripts"
+	customCaMountName = "db-custom-ca"
 )

@@ -44,10 +44,11 @@ func Start(cfg Config, version string) error {
 	log.WithField("config", cfg).Info("Starting usage component.")
 
 	conn, err := db.Connect(db.ConnectionParams{
-		User:     os.Getenv("DB_USERNAME"),
-		Password: os.Getenv("DB_PASSWORD"),
-		Host:     net.JoinHostPort(os.Getenv("DB_HOST"), os.Getenv("DB_PORT")),
-		Database: "gitpod",
+		User:         os.Getenv("DB_USERNAME"),
+		Password:     os.Getenv("DB_PASSWORD"),
+		Host:         net.JoinHostPort(os.Getenv("DB_HOST"), os.Getenv("DB_PORT")),
+		Database:     "gitpod",
+		CustomCACert: os.Getenv("DB_CUSTOM_CA_CERT"),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to establish database connection: %w", err)
