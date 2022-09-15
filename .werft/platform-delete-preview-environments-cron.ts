@@ -218,10 +218,6 @@ async function removePreviewEnvironment(previewEnvironment: PreviewEnvironment) 
     const sliceID = `Deleting preview ${previewEnvironment.name}`;
     werft.log(sliceID, `Triggering job to delete ${previewEnvironment.name}. DRY_RUN=${DRY_RUN}`);
     try {
-        exec(
-            `sudo chown -R gitpod:gitpod /workspace && git config --global user.name roboquat && git config --global user.email roboquat@gitpod.io`,
-            {slice: sliceID}
-        )
         const deleteJobURL = exec(
             `werft job run github -j .werft/platform-delete-preview-environment.yaml -a preview=${previewEnvironment.name} -a dry-run=${DRY_RUN}`,
             {slice: sliceID}

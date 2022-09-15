@@ -25,7 +25,7 @@ const SLICES = {
 
 Tracing.initialize()
     .then(() => {
-        werft = new Werft("delete-preview-environment-cron");
+        werft = new Werft("delete-preview-environment");
     })
     .then(() => deletePreviewEnvironment())
     .catch((err) => {
