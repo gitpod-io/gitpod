@@ -3,9 +3,19 @@ output "gke_database" {
     value = try(module.gke.database, null)
 }
 
+output "gke_user_key" {
+    sensitive = true
+    value = try(module.gke.cluster-sa, null)
+}
+
 output "k3s_database" {
     sensitive = true
     value = try(module.k3s.database, null)
+}
+
+output "aws_cluster_user" {
+    sensitive = true
+    value = try(module.eks.cluster_user, null)
 }
 
 output "aws_storage" {

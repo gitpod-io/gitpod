@@ -19,6 +19,7 @@ for i in $(gsutil ls gs://nightly-tests/tf-state); do
     [ -z "$filename" ] && continue
 
     if [[ "$filename" == *-kubeconfig ]]; then continue; fi
+    if [[ "$filename" == *-creds ]]; then continue; fi
 
     TF_VAR_TEST_ID=$(basename "$filename" .tfstate)
 

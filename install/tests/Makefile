@@ -33,12 +33,27 @@ help: Makefile
 	@sed -n 's/^##//p' $< | column -t -s ':' |  sed -e 's/^/ /'
 	@echo
 
+upload-gcp-cluster-creds:
+	export GKE_CREDS=$$(terraform output -json gke_user_key) && \
+	echo $$GKE_CREDS > gcp-creds
+	gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
+	gsutil cp gcp-creds gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-creds
+
+download-cluster-creds:
+	[[ -z $$TF_VAR_sa_creds ]] || gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
+	gcloud config set project sh-automated-tests
+	[[ -n $$TF_VAR_sa_creds ]] || gsutil cp gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-creds gcs-creds
+	[[ -f gcs-creds ]]  && cat gcs-creds | tr -d '"' | base64 -d > ${TF_VAR_TEST_ID}-key.json || echo "No GCP credentials"
+	rm -f gcs-creds
+	[[ -f ${TF_VAR_TEST_ID}-key.json ]] || cp ${GOOGLE_APPLICATION_CREDENTIALS} ${TF_VAR_TEST_ID}-key.json
+
 upload-kubeconfig-to-gcp:
 	gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
 	gsutil cp ${KUBECONFIG} gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-kubeconfig
 
 sync-kubeconfig:
-	gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
+	[[ -z $$TF_VAR_sa_creds ]] || gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
+	gcloud config set project sh-automated-tests
 	gsutil cp gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-kubeconfig ${KUBECONFIG} || echo "No kubeconfig"
 
 ## k3s-kubeconfig: Get the kubeconfig configuration for GCP K3s
@@ -46,21 +61,26 @@ k3s-kubeconfig: sync-kubeconfig
 
 ## gcp-kubeconfig: Get the kubeconfig configuration for GCP GKE
 gcp-kubeconfig:
-	gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
+	$(MAKE) download-cluster-creds
+	gcloud auth activate-service-account --key-file=${TF_VAR_TEST_ID}-key.json --project=sh-automated-tests || { echo "Count not authenicate the service account"; exit 1; }
 	export KUBECONFIG=${KUBECONFIG} && \
-	gcloud container clusters get-credentials gp-${TF_VAR_TEST_ID} --zone europe-west1-d --project sh-automated-tests || $(MAKE) sync-kubeconfig || echo "No cluster present"
+	gcloud container clusters get-credentials gp-${TF_VAR_TEST_ID} --zone europe-west1-d --project sh-automated-tests || echo "No cluster present"
+	rm -f ${TF_VAR_TEST_ID}-key.json
 
 ## azure-kubeconfig: Get the kubeconfig configuration for Azure AKS
 azure-kubeconfig:
-	az login --service-principal -u $$ARM_CLIENT_ID -p $$ARM_CLIENT_SECRET  --tenant $$ARM_TENANT_ID
+	[[ -n "$$ARM_CLIENT_SECRET" ]] && az login --service-principal -u $$ARM_CLIENT_ID -p $$ARM_CLIENT_SECRET  --tenant $$ARM_TENANT_ID || { echo "Please login to azure using az login command"; exit 1; }
 	export KUBECONFIG=${KUBECONFIG} && \
 	az aks get-credentials --name p$$TF_VAR_TEST_ID-cluster --resource-group p$$TF_VAR_TEST_ID --file ${KUBECONFIG} || echo "No cluster present"
 
 ## aws-kubeconfig: Get the kubeconfig configuration for AWS EKS
 aws-kubeconfig:
-	export KUBECONFIG=${KUBECONFIG} && \
+	[[ -z $$TF_VAR_sa_creds ]] || gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
+	gcloud config set project sh-automated-tests
+	[[ -n $$TF_VAR_sa_creds ]] || gsutil cp gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-creds ${TF_VAR_TEST_ID}-creds
+	[[ -f ${TF_VAR_TEST_ID}-creds ]] || touch ${TF_VAR_TEST_ID}-creds
+	source ${TF_VAR_TEST_ID}-creds; \
 	aws eks update-kubeconfig --name ${TF_VAR_TEST_ID} --region eu-west-1 --kubeconfig ${KUBECONFIG} || echo "No cluster present"
-
 
 .PHONY:
 ## gke-standard-cluster: Creates a zonal GKE cluster
@@ -70,7 +90,21 @@ gke-standard-cluster: check-env-cluster-version
 	rm -f ${KUBECONFIG} && \
 	$(MAKE) get-kubeconfig && \
 	[[ -f ${KUBECONFIG} ]] || terraform apply -target=module.gke -var kubeconfig=${KUBECONFIG} --auto-approve
+	$(MAKE) upload-gcp-cluster-creds
 	@echo "Done creating GKE cluster"
+
+upload-eks-user:
+	export AWS_CLUSTER_USER=$$(terraform output -json aws_cluster_user) && \
+	export USERARN=$$(echo $$AWS_CLUSTER_USER | yq r - 'userarn') && \
+	export NAME=$$(echo $$AWS_CLUSTER_USER | yq r - 'name') && \
+	envsubst < ./manifests/aws-auth.yaml > tmp-aws-auth.yaml && \
+	echo "export AWS_SECRET_ACCESS_KEY=$$(echo $$AWS_CLUSTER_USER | yq r - 'secret_access_key')" > ${TF_VAR_TEST_ID}-creds && \
+	echo "export AWS_ACCESS_KEY_ID=$$(echo $$AWS_CLUSTER_USER | yq r - 'access_key_id')" >> ${TF_VAR_TEST_ID}-creds && \
+	kubectl --kubeconfig=${KUBECONFIG} get configmap -n kube-system aws-auth -o yaml | grep -v "creationTimestamp\|resourceVersion\|selfLink\|uid" | sed '/^  annotations:/,+2 d' > /tmp/aws-auth.yaml
+	yq m --inplace /tmp/aws-auth.yaml tmp-aws-auth.yaml
+	gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
+	gsutil cp ${TF_VAR_TEST_ID}-creds gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-creds
+	kubectl --kubeconfig=${KUBECONFIG} replace -f /tmp/aws-auth.yaml
 
 ami_id_121 := "ami-060637af2651bc8bb"
 
@@ -87,6 +121,7 @@ eks-standard-cluster: check-env-cluster-version
 	rm -f ${KUBECONFIG} && \
 	$(MAKE) get-kubeconfig && \
 	[[ -f ${KUBECONFIG} ]] || terraform apply -target=module.eks -var kubeconfig=${KUBECONFIG} -var eks_node_image_id=${ami_id} --auto-approve
+	$(MAKE) upload-eks-user
 	@echo "Done creating EKS cluster"
 
 .PHONY:
@@ -159,8 +194,10 @@ external-dns: check-env-cloud select-workspace
 
 .PHONY:
 ## get-kubeconfig: Returns KUBECONFIG of a just created cluster
-get-kubeconfig: ${cloud}-kubeconfig
-
+get-kubeconfig:
+	echo "Getting kubeconfig for $$TF_VAR_TEST_ID terraform state" && \
+    export provider=$$(echo "$$TF_VAR_TEST_ID" | sed 's/\(.*\)-/\1 /' | xargs | awk '{print $$2}') && \
+	$(MAKE) $$provider-kubeconfig && echo "kubeconfig written to ${KUBECONFIG}"
 
 get-github-config:
 ifneq ($(GITHUB_SCM_OAUTH),)
@@ -212,8 +249,8 @@ registry-config-azure:
 	yq m -i tmp_config.yml tmp_2_config.yml
 
 storage-config-azure:
-	export PASSWORD=$$(terraform output -json azure_storage | yq r - 'account_name') && \
-	export USERNAME=$$(terraform output -json azure_storage | yq r - 'account_key') && \
+	export USERNAME=$$(terraform output -json azure_storage | yq r - 'account_name') && \
+	export PASSWORD=$$(terraform output -json azure_storage | yq r - 'account_key') && \
 	export REGION=$$(terraform output -json azure_storage | yq r - 'storage_region') && \
 	envsubst < ./manifests/kots-config-azure-storage.yaml > tmp_2_config.yml
 	yq m -i tmp_config.yml tmp_2_config.yml
@@ -388,7 +425,7 @@ kots-upgrade:
 	kubectl kots upstream upgrade --kubeconfig=${KUBECONFIG} gitpod -n gitpod --deploy
 
 cloud ?= cluster
-cleanup: $(cloud)-kubeconfig destroy-gitpod tf-init destroy-$(cloud) destroy-workspace destroy-kubeconfig
+cleanup: get-kubeconfig destroy-gitpod tf-init destroy-$(cloud) destroy-workspace destroy-kubeconfig
 
 cluster-kubeconfig: azure-kubeconfig aws-kubeconfig k3s-kubeconfig gcp-kubeconfig
 
@@ -400,6 +437,7 @@ destroy-cluster: destroy-gcp destroy-aws destroy-azure
 destroy-kubeconfig:
 	gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
 	gsutil rm gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-kubeconfig || echo "No kubeconfig"
+	gsutil rm gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-creds || echo "No credentials file"
 	rm ${KUBECONFIG} || echo "No kubeconfig"
 
 select-workspace:

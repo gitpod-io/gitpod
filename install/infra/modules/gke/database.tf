@@ -41,8 +41,7 @@ resource "random_password" "password" {
   count = var.enable_external_database ? 1 : 0
 
   length           = 16
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
+  special          = false
 }
 
 resource "google_sql_database" "database" {
