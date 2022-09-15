@@ -9,7 +9,8 @@ import starry from "../images/feedback/starry-emoji.svg";
 import happy from "../images/feedback/happy-emoji.svg";
 import meh from "../images/feedback/meh-emoji.svg";
 import crying from "../images/feedback/crying-emoji.svg";
-import { trackEvent } from "../Analytics";
+import { trackEvent, TrackFeedback } from "../Analytics";
+import { StartWorkspaceError } from "../start/StartPage";
 
 function FeedbackComponent(props: {
     onClose?: () => void;
@@ -17,6 +18,8 @@ function FeedbackComponent(props: {
     isError: boolean;
     message?: string;
     initialSize?: number;
+    errorObject?: StartWorkspaceError;
+    errorMessage?: string;
 }) {
     const [text, setText] = useState<string>("");
     const [selectedEmoji, setSelectedEmoji] = useState<number | undefined>();
@@ -30,11 +33,13 @@ function FeedbackComponent(props: {
     };
     const onSubmit = () => {
         if (selectedEmoji) {
-            const feedbackObj = {
+            const feedbackObj: TrackFeedback = {
                 score: selectedEmoji,
                 feedback: text,
                 href: window.location.href,
                 path: window.location.pathname,
+                error_object: props.errorObject || undefined,
+                error_message: props.errorMessage,
             };
             trackEvent("feedback_submitted", feedbackObj);
         }

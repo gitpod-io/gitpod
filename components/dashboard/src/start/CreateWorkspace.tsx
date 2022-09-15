@@ -515,6 +515,8 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
                     message={"Was this error message helpful?"}
                     isError={true}
                     initialSize={24}
+                    errorObject={p.error}
+                    errorMessage={p.error.message}
                 />
             )}
         </StartPage>
