@@ -115,7 +115,6 @@ import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billin
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { BillingModes } from "../billing/billing-mode";
 import { BillingService } from "../billing/billing-service";
-import Stripe from "stripe";
 import { UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import { MessageBusIntegration } from "../../../src/workspace/messagebus-integration";
 
@@ -1597,11 +1596,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 { teamId, chargebeeSubscriptionId },
             );
         }
-        const teamCustomer = await this.stripeService.findCustomerByTeamId(teamId);
-        if (teamCustomer) {
-            const subsciption = await this.stripeService.findUncancelledSubscriptionByCustomer(teamCustomer.id);
-            if (subsciption) {
-                await this.stripeService.cancelSubscription(subsciption.id);
+        const teamCustomerId = await this.stripeService.findCustomerByTeamId(teamId);
+        if (teamCustomerId) {
+            const subsciptionId = await this.stripeService.findUncancelledSubscriptionByCustomer(teamCustomerId);
+            if (subsciptionId) {
+                await this.stripeService.cancelSubscription(subsciptionId);
             }
         }
     }
@@ -2063,21 +2062,17 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         this.checkAndBlockUser("findStripeSubscriptionId");
 
-        let customer: Stripe.Customer | undefined;
         try {
             if (attrId.kind == "team") {
                 await this.guardTeamOperation(attrId.teamId, "get");
-                customer = await this.stripeService.findCustomerByTeamId(attrId.teamId);
-            } else {
-                customer = await this.stripeService.findCustomerByUserId(attrId.userId);
             }
-
-            if (!customer?.id) {
+            const customerId = await this.stripeService.findCustomerByAttributionId(attributionId);
+            if (!customerId) {
                 return undefined;
             }
 
-            const subscription = await this.stripeService.findUncancelledSubscriptionByCustomer(customer.id);
-            return subscription?.id;
+            const subscriptionId = await this.stripeService.findUncancelledSubscriptionByCustomer(customerId);
+            return subscriptionId;
         } catch (error) {
             log.error(`Failed to get Stripe Subscription ID for '${attributionId}'`, error);
             throw new ResponseError(
@@ -2092,11 +2087,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const team = await this.guardTeamOperation(teamId, "update");
         await this.ensureStripeApiIsAllowed({ team });
         try {
-            let customer = await this.stripeService.findCustomerByTeamId(team!.id);
-            if (!customer) {
-                customer = await this.stripeService.createCustomerForTeam(user, team!);
+            let customerId = await this.stripeService.findCustomerByTeamId(team!.id);
+            if (!customerId) {
+                customerId = await this.stripeService.createCustomerForTeam(user, team!);
             }
-            await this.stripeService.setPreferredCurrencyForCustomer(customer, currency);
+            await this.stripeService.setPreferredCurrencyForCustomer(customerId, currency);
         } catch (error) {
             log.error(`Failed to update Stripe customer profile for team '${teamId}'`, error);
             throw new ResponseError(
@@ -2110,11 +2105,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const user = this.checkAndBlockUser("createOrUpdateStripeCustomerForUser");
         await this.ensureStripeApiIsAllowed({ user });
         try {
-            let customer = await this.stripeService.findCustomerByUserId(user.id);
-            if (!customer) {
-                customer = await this.stripeService.createCustomerForUser(user);
+            let customerId = await this.stripeService.findCustomerByUserId(user.id);
+            if (!customerId) {
+                customerId = await this.stripeService.createCustomerForUser(user);
             }
-            await this.stripeService.setPreferredCurrencyForCustomer(customer, currency);
+            await this.stripeService.setPreferredCurrencyForCustomer(customerId, currency);
         } catch (error) {
             log.error(`Failed to update Stripe customer profile for user '${user.id}'`, error);
             throw new ResponseError(
@@ -2134,22 +2129,20 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const user = this.checkAndBlockUser("subscribeToStripe");
 
-        let customer: Stripe.Customer | undefined;
         try {
             if (attrId.kind === "team") {
                 const team = await this.guardTeamOperation(attrId.teamId, "update");
                 await this.ensureStripeApiIsAllowed({ team });
-                customer = await this.stripeService.findCustomerByTeamId(team!.id);
             } else {
                 await this.ensureStripeApiIsAllowed({ user });
-                customer = await this.stripeService.findCustomerByUserId(user.id);
             }
-            if (!customer) {
+            const customerId = await this.stripeService.findCustomerByAttributionId(attributionId);
+            if (!customerId) {
                 throw new Error(`No Stripe customer profile for '${attributionId}'`);
             }
 
-            await this.stripeService.setDefaultPaymentMethodForCustomer(customer, setupIntentId);
-            await this.stripeService.createSubscriptionForCustomer(customer);
+            await this.stripeService.setDefaultPaymentMethodForCustomer(customerId, setupIntentId);
+            await this.stripeService.createSubscriptionForCustomer(customerId);
 
             // Creating a cost center for this team
             await this.usageService.setCostCenter({

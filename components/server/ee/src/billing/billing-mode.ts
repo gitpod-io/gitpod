@@ -116,10 +116,10 @@ export class BillingModesImpl implements BillingModes {
 
         // Stripe: Active personal subsciption?
         let hasUbbPersonal = false;
-        const customer = await this.stripeSvc.findCustomerByUserId(user.id);
-        if (customer) {
-            const subscription = await this.stripeSvc.findUncancelledSubscriptionByCustomer(customer.id);
-            if (subscription) {
+        const customerId = await this.stripeSvc.findCustomerByUserId(user.id);
+        if (customerId) {
+            const subscriptionId = await this.stripeSvc.findUncancelledSubscriptionByCustomer(customerId);
+            if (subscriptionId) {
                 hasUbbPersonal = true;
             }
         }
@@ -192,10 +192,10 @@ export class BillingModesImpl implements BillingModes {
 
         // 3. Now we're usage-based. We only have to figure out whether we have a plan yet or not.
         const result: BillingMode = { mode: "usage-based" };
-        const customer = await this.stripeSvc.findCustomerByTeamId(team.id);
-        if (customer) {
-            const subscription = await this.stripeSvc.findUncancelledSubscriptionByCustomer(customer.id);
-            if (subscription) {
+        const customerId = await this.stripeSvc.findCustomerByTeamId(team.id);
+        if (customerId) {
+            const subscriptionId = await this.stripeSvc.findUncancelledSubscriptionByCustomer(customerId);
+            if (subscriptionId) {
                 result.paid = true;
             }
         }

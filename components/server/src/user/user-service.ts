@@ -196,12 +196,12 @@ export class UserService {
     }
 
     protected async findTeamUsageBasedSubscriptionId(team: Team): Promise<string | undefined> {
-        const customer = await this.stripeService.findCustomerByTeamId(team.id);
-        if (!customer) {
+        const customerId = await this.stripeService.findCustomerByTeamId(team.id);
+        if (!customerId) {
             return;
         }
-        const subscription = await this.stripeService.findUncancelledSubscriptionByCustomer(customer.id);
-        return subscription?.id;
+        const subscriptionId = await this.stripeService.findUncancelledSubscriptionByCustomer(customerId);
+        return subscriptionId;
     }
 
     protected async validateUsageAttributionId(user: User, usageAttributionId: string): Promise<AttributionId> {
