@@ -50,24 +50,22 @@ class StripeServiceMock extends StripeService {
         super();
     }
 
-    async findUncancelledSubscriptionByCustomer(customerId: string): Promise<Stripe.Subscription | undefined> {
+    async findUncancelledSubscriptionByCustomer(customerId: string): Promise<string | undefined> {
         if (this.subscription?.customer === customerId) {
-            return this.subscription as Stripe.Subscription;
+            return this.subscription.id;
         }
         return undefined;
     }
 
-    async findCustomerByUserId(userId: string): Promise<Stripe.Customer | undefined> {
+    async findCustomerByUserId(userId: string): Promise<string | undefined> {
         const customerId = this.subscription?.customer;
         if (!customerId) {
             return undefined;
         }
-        return {
-            id: customerId,
-        } as Stripe.Customer;
+        return customerId;
     }
 
-    async findCustomerByTeamId(teamId: string): Promise<Stripe.Customer | undefined> {
+    async findCustomerByTeamId(teamId: string): Promise<string | undefined> {
         return this.findCustomerByUserId(teamId);
     }
 }

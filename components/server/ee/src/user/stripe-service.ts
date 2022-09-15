@@ -33,24 +33,24 @@ export class StripeService {
         return await this.getStripe().setupIntents.create({ usage: "on_session" });
     }
 
-    async findCustomerByUserId(userId: string): Promise<Stripe.Customer | undefined> {
+    async findCustomerByUserId(userId: string): Promise<string | undefined> {
         return this.findCustomerByAttributionId(AttributionId.render({ kind: "user", userId }));
     }
 
-    async findCustomerByTeamId(teamId: string): Promise<Stripe.Customer | undefined> {
+    async findCustomerByTeamId(teamId: string): Promise<string | undefined> {
         return this.findCustomerByAttributionId(AttributionId.render({ kind: "team", teamId }));
     }
 
-    async findCustomerByAttributionId(attributionId: string): Promise<Stripe.Customer | undefined> {
+    async findCustomerByAttributionId(attributionId: string): Promise<string | undefined> {
         const query = `metadata['attributionId']:'${attributionId}'`;
         const result = await this.getStripe().customers.search({ query });
         if (result.data.length > 1) {
             throw new Error(`Found more than one Stripe customer for query '${query}'`);
         }
-        return result.data[0];
+        return result.data[0]?.id;
     }
 
-    async createCustomerForUser(user: User): Promise<Stripe.Customer> {
+    async createCustomerForUser(user: User): Promise<string> {
         const attributionId = AttributionId.render({ kind: "user", userId: user.id });
         if (await this.findCustomerByAttributionId(attributionId)) {
             throw new Error(`A Stripe customer already exists for user '${user.id}'`);
@@ -69,10 +69,10 @@ export class StripeService {
                 throw new Error(`Could not confirm Stripe customer creation for user '${user.id}'`);
             }
         }
-        return customer;
+        return customer.id;
     }
 
-    async createCustomerForTeam(user: User, team: Team): Promise<Stripe.Customer> {
+    async createCustomerForTeam(user: User, team: Team): Promise<string> {
         const attributionId = AttributionId.render({ kind: "team", teamId: team.id });
         if (await this.findCustomerByAttributionId(attributionId)) {
             throw new Error(`A Stripe customer already exists for team '${team.id}'`);
@@ -92,24 +92,24 @@ export class StripeService {
                 throw new Error(`Could not confirm Stripe customer creation for team '${team.id}'`);
             }
         }
-        return customer;
+        return customer.id;
     }
 
-    async setPreferredCurrencyForCustomer(customer: Stripe.Customer, currency: string): Promise<void> {
-        await this.getStripe().customers.update(customer.id, { metadata: { preferredCurrency: currency } });
+    async setPreferredCurrencyForCustomer(customerId: string, currency: string): Promise<void> {
+        await this.getStripe().customers.update(customerId, { metadata: { preferredCurrency: currency } });
     }
 
-    async setDefaultPaymentMethodForCustomer(customer: Stripe.Customer, setupIntentId: string): Promise<void> {
+    async setDefaultPaymentMethodForCustomer(customerId: string, setupIntentId: string): Promise<void> {
         const setupIntent = await this.getStripe().setupIntents.retrieve(setupIntentId);
         if (typeof setupIntent.payment_method !== "string") {
             throw new Error("The provided Stripe SetupIntent does not have a valid payment method attached");
         }
         // Attach the provided payment method to the customer
         await this.getStripe().paymentMethods.attach(setupIntent.payment_method, {
-            customer: customer.id,
+            customer: customerId,
         });
         const paymentMethod = await this.getStripe().paymentMethods.retrieve(setupIntent.payment_method);
-        await this.getStripe().customers.update(customer.id, {
+        await this.getStripe().customers.update(customerId, {
             invoice_settings: { default_payment_method: setupIntent.payment_method },
             ...(paymentMethod.billing_details.address?.country
                 ? { address: { line1: "", country: paymentMethod.billing_details.address?.country } }
@@ -118,44 +118,48 @@ export class StripeService {
     }
 
     async getPortalUrlForTeam(team: Team): Promise<string> {
-        const customer = await this.findCustomerByTeamId(team.id);
-        if (!customer) {
+        const customerId = await this.findCustomerByTeamId(team.id);
+        if (!customerId) {
             throw new Error(`No Stripe Customer ID found for team '${team.id}'`);
         }
         const session = await this.getStripe().billingPortal.sessions.create({
-            customer: customer.id,
+            customer: customerId,
             return_url: this.config.hostUrl.with(() => ({ pathname: `/t/${team.slug}/billing` })).toString(),
         });
         return session.url;
     }
 
     async getPortalUrlForUser(user: User): Promise<string> {
-        const customer = await this.findCustomerByUserId(user.id);
-        if (!customer) {
+        const customerId = await this.findCustomerByUserId(user.id);
+        if (!customerId) {
             throw new Error(`No Stripe Customer ID found for user '${user.id}'`);
         }
         const session = await this.getStripe().billingPortal.sessions.create({
-            customer: customer.id,
+            customer: customerId,
             return_url: this.config.hostUrl.with(() => ({ pathname: `/billing` })).toString(),
         });
         return session.url;
     }
 
-    async findUncancelledSubscriptionByCustomer(customerId: string): Promise<Stripe.Subscription | undefined> {
+    async findUncancelledSubscriptionByCustomer(customerId: string): Promise<string | undefined> {
         const result = await this.getStripe().subscriptions.list({
             customer: customerId,
         });
         if (result.data.length > 1) {
             throw new Error(`Stripe customer '${customerId}') has more than one subscription!`);
         }
-        return result.data[0];
+        return result.data[0]?.id;
     }
 
     async cancelSubscription(subscriptionId: string): Promise<void> {
         await this.getStripe().subscriptions.del(subscriptionId);
     }
 
-    async createSubscriptionForCustomer(customer: Stripe.Customer): Promise<void> {
+    async createSubscriptionForCustomer(customerId: string): Promise<void> {
+        const customer = await this.getStripe().customers.retrieve(customerId, { expand: ["tax"] });
+        if (!customer || customer.deleted) {
+            throw new Error(`Stripe customer '${customerId}' was deleted`);
+        }
         const currency = customer.metadata.preferredCurrency || "USD";
         const priceId = this.config?.stripeConfig?.usageProductPriceIds[currency];
         if (!priceId) {
