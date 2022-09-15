@@ -326,6 +326,16 @@ var ring1Cmd = &cobra.Command{
 			)
 		}
 
+		fn, err := fakeProcMeminfo()
+		if err != nil {
+			log.WithError(err).Warn("cannot adjust /proc/meminfo")
+		}
+		if fn != "" {
+			mnts = append(mnts, mnte{
+				Target: "/proc/meminfo", Source: fn, Flags: unix.MS_BIND | unix.MS_REC,
+			})
+		}
+
 		for _, m := range mnts {
 			dst := filepath.Join(ring2Root, m.Target)
 			_ = os.MkdirAll(dst, 0644)
@@ -944,6 +954,57 @@ func sleepForDebugging() {
 	case <-sigChan:
 	case <-time.After(5 * time.Minute):
 	}
+}
+
+func fakeProcMeminfo() (fn string, err error) {
+	if _, err := os.Stat("/sys/fs/cgroup/cgroup.controllers"); err != nil {
+		// we only support cgroup v2 here - this is not cgroup v2
+		return "", nil
+	}
+
+	fd, err := os.CreateTemp("", "meminfo-*")
+	if err != nil {
+		return
+	}
+	fd.Close()
+	fn = fd.Name()
+
+	go func() {
+		const updateInterval = 5 * time.Second
+		t := time.NewTicker(updateInterval)
+		defer t.Stop()
+
+		for ; true; <-t.C {
+			ctx, cancel := context.WithTimeout(context.Background(), updateInterval/2)
+			iws, err := connectToInWorkspaceDaemonService(ctx)
+			if err != nil {
+				log.WithError(err).Warn("failed to update meminfo")
+				cancel()
+				continue
+			}
+			nfo, err := iws.WorkspaceInfo(ctx, &daemonapi.WorkspaceInfoRequest{})
+			if err != nil {
+				log.WithError(err).Warn("failed to update meminfo")
+				cancel()
+				continue
+			}
+			cancel()
+
+			free := (nfo.Resources.Memory.Limit - nfo.Resources.Memory.Used) / 1024
+			fc := []byte(strings.Join([]string{
+				fmt.Sprintf("MemTotal:       %d kB", nfo.Resources.Memory.Limit/1024),
+				fmt.Sprintf("MemFree:        %d kB", free),
+				fmt.Sprintf("MemAvailable:   %d kB", free),
+			}, "\n") + "\n")
+			err = os.WriteFile(fn, fc, 0444)
+			if err != nil {
+				log.WithError(err).Warn("failed to update meminfo")
+				continue
+			}
+		}
+	}()
+
+	return fn, nil
 }
 
 type ringSyncMsg struct {
