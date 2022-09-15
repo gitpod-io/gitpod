@@ -115,8 +115,12 @@ export class StripeService {
         await this.getStripe().paymentMethods.attach(setupIntent.payment_method, {
             customer: customer.id,
         });
+        const paymentMethod = await this.getStripe().paymentMethods.retrieve(setupIntent.payment_method);
         await this.getStripe().customers.update(customer.id, {
             invoice_settings: { default_payment_method: setupIntent.payment_method },
+            ...(paymentMethod.billing_details.address?.country
+                ? { address: { line1: "", country: paymentMethod.billing_details.address?.country } }
+                : {}),
         });
     }
 
