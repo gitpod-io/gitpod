@@ -186,6 +186,8 @@ export interface CostCenter {
   attributionId: string;
   spendingLimit: number;
   billingStrategy: CostCenter_BillingStrategy;
+  /** next_billing_time specifies when the next billing cycle happens. Only set when billing strategy is 'other'. This property is readonly. */
+  nextBillingTime: Date | undefined;
 }
 
 export enum CostCenter_BillingStrategy {
@@ -961,7 +963,12 @@ export const GetCostCenterResponse = {
 };
 
 function createBaseCostCenter(): CostCenter {
-  return { attributionId: "", spendingLimit: 0, billingStrategy: CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE };
+  return {
+    attributionId: "",
+    spendingLimit: 0,
+    billingStrategy: CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE,
+    nextBillingTime: undefined,
+  };
 }
 
 export const CostCenter = {
@@ -974,6 +981,9 @@ export const CostCenter = {
     }
     if (message.billingStrategy !== CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
       writer.uint32(24).int32(costCenter_BillingStrategyToNumber(message.billingStrategy));
+    }
+    if (message.nextBillingTime !== undefined) {
+      Timestamp.encode(toTimestamp(message.nextBillingTime), writer.uint32(34).fork()).ldelim();
     }
     return writer;
   },
@@ -994,6 +1004,9 @@ export const CostCenter = {
         case 3:
           message.billingStrategy = costCenter_BillingStrategyFromJSON(reader.int32());
           break;
+        case 4:
+          message.nextBillingTime = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -1009,6 +1022,7 @@ export const CostCenter = {
       billingStrategy: isSet(object.billingStrategy)
         ? costCenter_BillingStrategyFromJSON(object.billingStrategy)
         : CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE,
+      nextBillingTime: isSet(object.nextBillingTime) ? fromJsonTimestamp(object.nextBillingTime) : undefined,
     };
   },
 
@@ -1018,6 +1032,7 @@ export const CostCenter = {
     message.spendingLimit !== undefined && (obj.spendingLimit = Math.round(message.spendingLimit));
     message.billingStrategy !== undefined &&
       (obj.billingStrategy = costCenter_BillingStrategyToJSON(message.billingStrategy));
+    message.nextBillingTime !== undefined && (obj.nextBillingTime = message.nextBillingTime.toISOString());
     return obj;
   },
 
@@ -1026,6 +1041,7 @@ export const CostCenter = {
     message.attributionId = object.attributionId ?? "";
     message.spendingLimit = object.spendingLimit ?? 0;
     message.billingStrategy = object.billingStrategy ?? CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
+    message.nextBillingTime = object.nextBillingTime ?? undefined;
     return message;
   },
 };

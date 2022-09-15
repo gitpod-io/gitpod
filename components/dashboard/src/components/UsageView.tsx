@@ -141,7 +141,7 @@ function UsageView({ attributionId, billingMode }: UsageViewProps) {
         return new Date(time).toLocaleDateString(undefined, options).replace("at ", "");
     };
 
-    const currentPaginatedResults = usagePage?.usageEntriesList ?? [];
+    const currentPaginatedResults = usagePage?.usageEntriesList.filter((u) => u.kind === "workspaceinstance") ?? [];
 
     return (
         <>
@@ -208,7 +208,7 @@ function UsageView({ attributionId, billingMode }: UsageViewProps) {
                             </div>
                         </div>
                         {!isLoading &&
-                            (usagePage === undefined || usagePage.usageEntriesList.length === 0) &&
+                            (usagePage === undefined || currentPaginatedResults.length === 0) &&
                             !errorMessage && (
                                 <div className="flex flex-col w-full mb-8">
                                     <h3 className="text-center text-gray-500 mt-8">No sessions found.</h3>

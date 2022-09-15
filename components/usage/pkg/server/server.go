@@ -6,10 +6,11 @@ package server
 
 import (
 	"fmt"
-	"github.com/gitpod-io/gitpod/usage/pkg/scheduler"
 	"net"
 	"os"
 	"time"
+
+	"github.com/gitpod-io/gitpod/usage/pkg/scheduler"
 
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 
@@ -35,6 +36,8 @@ type Config struct {
 	StripeCredentialsFile string `json:"stripeCredentialsFile,omitempty"`
 
 	Server *baseserver.Configuration `json:"server,omitempty"`
+
+	DefaultSpendingLimit db.DefaultSpendingLimit `json:"defaultSpendingLimit"`
 }
 
 func Start(cfg Config) error {
@@ -124,7 +127,7 @@ func Start(cfg Config) error {
 	sched.Start()
 	defer sched.Stop()
 
-	err = registerGRPCServices(srv, conn, stripeClient, pricer)
+	err = registerGRPCServices(srv, conn, stripeClient, pricer, cfg)
 	if err != nil {
 		return fmt.Errorf("failed to register gRPC services: %w", err)
 	}
@@ -147,8 +150,9 @@ func Start(cfg Config) error {
 	return nil
 }
 
-func registerGRPCServices(srv *baseserver.Server, conn *gorm.DB, stripeClient *stripe.Client, pricer *apiv1.WorkspacePricer) error {
-	v1.RegisterUsageServiceServer(srv.GRPC(), apiv1.NewUsageService(conn, pricer))
+func registerGRPCServices(srv *baseserver.Server, conn *gorm.DB, stripeClient *stripe.Client, pricer *apiv1.WorkspacePricer, cfg Config) error {
+	ccManager := db.NewCostCenterManager(conn, cfg.DefaultSpendingLimit)
+	v1.RegisterUsageServiceServer(srv.GRPC(), apiv1.NewUsageService(conn, pricer, ccManager))
 	if stripeClient == nil {
 		v1.RegisterBillingServiceServer(srv.GRPC(), &apiv1.BillingServiceNoop{})
 	} else {

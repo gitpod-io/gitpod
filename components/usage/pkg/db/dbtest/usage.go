@@ -17,6 +17,8 @@ import (
 func NewUsage(t *testing.T, record db.Usage) db.Usage {
 	t.Helper()
 
+	workspaceInstanceId := uuid.New()
+
 	result := db.Usage{
 		ID:                  uuid.New(),
 		AttributionID:       db.NewUserAttributionID(uuid.New().String()),
@@ -24,7 +26,7 @@ func NewUsage(t *testing.T, record db.Usage) db.Usage {
 		CreditCents:         42,
 		EffectiveTime:       db.VarcharTime{},
 		Kind:                db.WorkspaceInstanceUsageKind,
-		WorkspaceInstanceID: uuid.New(),
+		WorkspaceInstanceID: &workspaceInstanceId,
 	}
 
 	if record.ID.ID() != 0 {
@@ -42,7 +44,7 @@ func NewUsage(t *testing.T, record db.Usage) db.Usage {
 	if record.CreditCents != 0 {
 		result.CreditCents = record.CreditCents
 	}
-	if record.WorkspaceInstanceID.ID() != 0 {
+	if record.WorkspaceInstanceID != nil && (*record.WorkspaceInstanceID).ID() != 0 {
 		result.WorkspaceInstanceID = record.WorkspaceInstanceID
 	}
 	if record.Kind != "" {

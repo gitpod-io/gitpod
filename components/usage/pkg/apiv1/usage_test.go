@@ -51,7 +51,7 @@ func TestUsageService_ReconcileUsage(t *testing.T) {
 	dbtest.CreateUsageRecords(t, dbconn, dbtest.NewUsage(t, db.Usage{
 		ID:                  uuid.New(),
 		AttributionID:       attributionID,
-		WorkspaceInstanceID: instance.ID,
+		WorkspaceInstanceID: &instance.ID,
 		Kind:                db.WorkspaceInstanceUsageKind,
 		Draft:               true,
 	}))
@@ -79,7 +79,12 @@ func newUsageService(t *testing.T, dbconn *gorm.DB) v1.UsageServiceClient {
 		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
 	)
 
-	v1.RegisterUsageServiceServer(srv.GRPC(), NewUsageService(dbconn, DefaultWorkspacePricer))
+	costCenterManager := db.NewCostCenterManager(dbconn, db.DefaultSpendingLimit{
+		ForTeams: 0,
+		ForUsers: 500,
+	})
+
+	v1.RegisterUsageServiceServer(srv.GRPC(), NewUsageService(dbconn, DefaultWorkspacePricer, costCenterManager))
 	baseserver.StartServerForTests(t, srv)
 
 	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -142,7 +147,7 @@ func TestReconcile(t *testing.T) {
 			CreditCents:         db.NewCreditCents(pricer.CreditsUsedByInstance(&instance, now)),
 			EffectiveTime:       db.NewVarcharTime(now),
 			Kind:                db.WorkspaceInstanceUsageKind,
-			WorkspaceInstanceID: instance.ID,
+			WorkspaceInstanceID: &instance.ID,
 			Draft:               true,
 			Metadata:            nil,
 		}
@@ -183,7 +188,7 @@ func TestReconcile(t *testing.T) {
 			CreditCents:         1,
 			EffectiveTime:       db.VarcharTime{},
 			Kind:                db.WorkspaceInstanceUsageKind,
-			WorkspaceInstanceID: instance.ID,
+			WorkspaceInstanceID: &instance.ID,
 			Draft:               true,
 			Metadata:            nil,
 		})
@@ -200,7 +205,7 @@ func TestReconcile(t *testing.T) {
 			CreditCents:         db.NewCreditCents(pricer.CreditsUsedByInstance(&instance, now)),
 			EffectiveTime:       db.NewVarcharTime(now),
 			Kind:                db.WorkspaceInstanceUsageKind,
-			WorkspaceInstanceID: instance.ID,
+			WorkspaceInstanceID: &instance.ID,
 			Draft:               true,
 			Metadata:            nil,
 		}
@@ -258,7 +263,6 @@ func TestGetAndSetCostCenter(t *testing.T) {
 		require.Equal(t, costCenter.SpendingLimit, retrieved.CostCenter.SpendingLimit)
 		require.Equal(t, costCenter.BillingStrategy, retrieved.CostCenter.BillingStrategy)
 	}
-
 }
 
 func TestListUsage(t *testing.T) {

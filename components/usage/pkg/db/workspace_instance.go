@@ -8,9 +8,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"strings"
 	"time"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
@@ -174,6 +175,11 @@ func (a AttributionID) Values() (entity string, identifier string) {
 	}
 
 	return tokens[0], tokens[1]
+}
+
+func (a AttributionID) IsEntity(entity string) bool {
+	e, _ := a.Values()
+	return e == entity
 }
 
 func ParseAttributionID(s string) (AttributionID, error) {
