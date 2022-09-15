@@ -184,6 +184,12 @@ func renderAllKubernetesObject(cfgVersion string, cfg *configv1.Config) ([]strin
 
 			return renderKubernetesObjects(cfgVersion, cfg)
 		},
+		func() ([]string, error) {
+			// Render for ShiftFS
+			cfg.Workspace.Runtime.FSShiftMethod = configv1.FSShiftShiftFS
+
+			return renderKubernetesObjects(cfgVersion, cfg)
+		},
 	}
 
 	var k8s []string
