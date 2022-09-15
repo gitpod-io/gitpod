@@ -23,6 +23,7 @@ job_url="https://werft.gitpod-dev.com/job/${BUILD_ID}"
 echo "Triggered job $job_url" | werft log slice "Triggering new job"
 werft log result -d "build job" url "$job_url"
 
+set +e
 while true; do
     job_phase=$(werft job get "${BUILD_ID}" -o json | jq --raw-output '.phase')
     if [[ ${job_phase} != "PHASE_DONE" ]]; then
@@ -33,6 +34,7 @@ while true; do
         break
     fi
 done
+set -e
 
 ###########
 # Deleting artificial preview
