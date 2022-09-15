@@ -7,7 +7,7 @@ data:
   config: |
     {
       "usageProductPriceIds": {
-        "EUR": "price_1LFZhJGadRXm50o3v27S1DB1",
-        "USD": "price_1LFZhJGadRXm50o3YEAaspXu"
+        "EUR": "price_1LiId7GadRXm50o3OayAS2y4",
+        "USD": "price_1LiIdbGadRXm50o3ylg5S44r"
       }
     }
