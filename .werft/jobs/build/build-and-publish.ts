@@ -35,7 +35,7 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
     exec(
         `LICENCE_HEADER_CHECK_ONLY=true leeway run components:update-license-header || { echo "[build|FAIL] There are some license headers missing. Please run 'leeway run components:update-license-header'."; exit 1; }`,
     );
-    exec(`leeway vet --ignore-warnings`);
+
     exec(
         `leeway build --docker-build-options network=host --werft=true -c remote ${
             dontTest ? "--dont-test" : ""
