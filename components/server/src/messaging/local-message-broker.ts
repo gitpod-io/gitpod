@@ -12,6 +12,7 @@ import {
     WorkspaceInstance,
 } from "@gitpod/gitpod-protocol";
 import { CreditAlert } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { inject, injectable } from "inversify";
@@ -19,6 +20,9 @@ import { MessageBusIntegration } from "../workspace/messagebus-integration";
 
 export interface PrebuildUpdateListener {
     (ctx: TraceContext, evt: PrebuildWithStatus): void;
+}
+export interface SubscriptionUpdateListener {
+    (ctx: TraceContext, attributionId: AttributionId): void;
 }
 export interface CreditAlertListener {
     (ctx: TraceContext, alert: CreditAlert): void;
@@ -37,6 +41,8 @@ export interface LocalMessageBroker {
     stop(): Promise<void>;
 
     listenForPrebuildUpdates(projectId: string, listener: PrebuildUpdateListener): Disposable;
+
+    listenForSubscriptionUpdates(attributionId: string, listener: SubscriptionUpdateListener): Disposable;
 
     listenToCreditAlerts(userId: string, listener: CreditAlertListener): Disposable;
 
@@ -69,6 +75,7 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
     protected creditAlertsListeners: Map<string, CreditAlertListener[]> = new Map();
     protected headlessWorkspaceEventListeners: Map<string, HeadlessWorkspaceEventListener[]> = new Map();
     protected workspaceInstanceUpdateListeners: Map<string, WorkspaceInstanceUpdateListener[]> = new Map();
+    protected subscriptionUpdateListeners: Map<string, SubscriptionUpdateListener[]> = new Map();
 
     protected readonly disposables = new DisposableCollection();
 
@@ -151,6 +158,24 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
                 },
             ),
         );
+        this.disposables.push(
+            this.messageBusIntegration.listenToSubscriptionUpdates(
+                (ctx: TraceContext, attributionId: AttributionId) => {
+                    TraceContext.setOWI(ctx, {});
+
+                    const listeners = this.subscriptionUpdateListeners.get(AttributionId.render(attributionId)) || [];
+
+                    for (const l of listeners) {
+                        try {
+                            l(ctx, attributionId);
+                        } catch (err) {
+                            TraceContext.setError(ctx, err);
+                            log.error("listenToSubscriptionUpdates", err, { attributionId });
+                        }
+                    }
+                },
+            ),
+        );
     }
 
     async stop() {
@@ -163,6 +188,10 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
 
     listenToCreditAlerts(userId: string, listener: CreditAlertListener): Disposable {
         return this.doRegister(userId, listener, this.creditAlertsListeners);
+    }
+
+    listenForSubscriptionUpdates(attributionId: string, listener: SubscriptionUpdateListener): Disposable {
+        return this.doRegister(attributionId, listener, this.subscriptionUpdateListeners);
     }
 
     listenForPrebuildUpdatableEvents(listener: HeadlessWorkspaceEventListener): Disposable {

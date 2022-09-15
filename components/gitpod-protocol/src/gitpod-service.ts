@@ -70,6 +70,8 @@ export interface GitpodClient {
 
     onPrebuildUpdate(update: PrebuildWithStatus): void;
 
+    onNotificationUpdated(): void;
+
     onCreditAlert(creditAlert: CreditAlert): void;
 
     //#region propagating reconnection to iframe
@@ -564,6 +566,18 @@ export class GitpodCompositeClient<Client extends GitpodClient> implements Gitpo
             if (client.onCreditAlert) {
                 try {
                     client.onCreditAlert(creditAlert);
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+        }
+    }
+
+    onNotificationUpdated(): void {
+        for (const client of this.clients) {
+            if (client.onNotificationUpdated) {
+                try {
+                    client.onNotificationUpdated();
                 } catch (error) {
                     console.error(error);
                 }

@@ -19,14 +19,21 @@ export function AppNotifications() {
             setNotifications(localState);
             return;
         }
-        (async () => {
-            const serverState = await getGitpodService().server.getNotifications();
-            setNotifications(serverState);
-            if (serverState.length > 0) {
-                setLocalStorageObject(KEY_APP_NOTIFICATIONS, serverState, /* expires in */ 60 /* seconds */);
-            }
-        })();
+        reloadNotifications().catch(console.error);
+
+        getGitpodService().registerClient({
+            onNotificationUpdated: () => reloadNotifications().catch(console.error),
+        });
     }, []);
+
+    const reloadNotifications = async () => {
+        const serverState = await getGitpodService().server.getNotifications();
+        setNotifications(serverState);
+        removeLocalStorageObject(KEY_APP_NOTIFICATIONS);
+        if (serverState.length > 0) {
+            setLocalStorageObject(KEY_APP_NOTIFICATIONS, serverState, /* expires in */ 300 /* seconds */);
+        }
+    };
 
     const topNotification = notifications[0];
     if (topNotification === undefined) {
