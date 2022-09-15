@@ -9,6 +9,7 @@ import Stripe from "stripe";
 import { Team, User } from "@gitpod/gitpod-protocol";
 import { Config } from "../../../src/config";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 const POLL_CREATED_CUSTOMER_INTERVAL_MS = 1000;
 const POLL_CREATED_CUSTOMER_MAX_ATTEMPTS = 30;
@@ -158,18 +159,26 @@ export class StripeService {
     async createSubscriptionForCustomer(customerId: string): Promise<void> {
         const customer = await this.getStripe().customers.retrieve(customerId, { expand: ["tax"] });
         if (!customer || customer.deleted) {
-            throw new Error(`Stripe customer '${customerId}' was deleted`);
+            throw new Error(`Stripe customer '${customerId}' could not be found`);
         }
         const currency = customer.metadata.preferredCurrency || "USD";
         const priceId = this.config?.stripeConfig?.usageProductPriceIds[currency];
         if (!priceId) {
             throw new Error(`No Stripe Price ID configured for currency '${currency}'`);
         }
+        const isAutomaticTaxSupported = customer.tax?.automatic_tax === "supported";
+        if (!isAutomaticTaxSupported) {
+            log.warn("Automatic Stripe tax is not supported for this customer", {
+                customerId,
+                taxInformation: customer.tax,
+            });
+        }
         const startOfNextMonth = new Date(new Date().toISOString().slice(0, 7) + "-01"); // First day of this month (YYYY-MM-01)
         startOfNextMonth.setMonth(startOfNextMonth.getMonth() + 1); // Add one month
         await this.getStripe().subscriptions.create({
             customer: customer.id,
             items: [{ price: priceId }],
+            automatic_tax: { enabled: isAutomaticTaxSupported },
             billing_cycle_anchor: Math.round(startOfNextMonth.getTime() / 1000),
         });
     }
