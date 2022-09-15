@@ -125,7 +125,6 @@ import { WorkspaceClasses, WorkspaceClassesConfig } from "./workspace-classes";
 import { EntitlementService } from "../billing/entitlement-service";
 import { BillingModes } from "../../ee/src/billing/billing-mode";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { BillingServiceClient, BillingServiceDefinition, System } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 
@@ -281,8 +280,6 @@ export class WorkspaceStarter {
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
     @inject(BillingModes) protected readonly billingModes: BillingModes;
-    @inject(BillingServiceDefinition.name)
-    protected readonly billingService: BillingServiceClient;
 
     public async startWorkspace(
         ctx: TraceContext,
@@ -549,21 +546,6 @@ export class WorkspaceStarter {
             increaseSuccessfulInstanceStartCounter(retries);
 
             span.log({ resp: resp });
-
-            if (instance.usageAttributionId) {
-                const creationTime = new Date(instance.creationTime);
-                const parsedAttributionId = AttributionId.parse(instance.usageAttributionId);
-                if (parsedAttributionId) {
-                    const billingMode = await this.billingModes.getBillingMode(parsedAttributionId, creationTime);
-                    if (billingMode && billingMode.mode === "chargebee") {
-                        await this.billingService.setBilledSession({
-                            instanceId: instance.id,
-                            from: creationTime,
-                            system: System.SYSTEM_CHARGEBEE,
-                        });
-                    }
-                }
-            }
 
             this.analytics.track({
                 userId: user.id,
