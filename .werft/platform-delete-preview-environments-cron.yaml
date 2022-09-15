@@ -75,6 +75,10 @@ pod:
           sudo chmod 600 /workspace/.ssh/id_rsa_harvester_vm
           sudo chmod 644 /workspace/.ssh/id_rsa_harvester_vm.pub
 
+          # A git user is required to trigger new werft jobs
+          git config --global user.name roboquat
+          git config --global user.email roboquat@gitpod.io
+
           (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
 
           npx ts-node .werft/platform-delete-preview-environments-cron.ts
