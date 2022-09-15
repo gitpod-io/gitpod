@@ -137,9 +137,6 @@ RUN bash -c ". .nvm/nvm.sh \
     && npm install -g typescript yarn"
 ENV PATH=/home/gitpod/.nvm/versions/node/v${GITPOD_NODE_VERSION}/bin:$PATH
 
-# Go
-ENV GOFLAGS="-mod=readonly"
-
 ## Register leeway autocompletion in bashrc
 RUN bash -c "echo . \<\(leeway bash-completion\) >> ~/.bashrc"
 
