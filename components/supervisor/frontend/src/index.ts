@@ -18,9 +18,10 @@ function isElement(obj: any): obj is Element {
 
 window.addEventListener('error', (event) => {
     const labels: Record<string, string> = {};
+    let resourceSource: string|null|undefined
     if (isElement(event.target)) {
         // We take a look at what is the resource that was attempted to load;
-        const resourceSource = event.target.getAttribute('src') || event.target.getAttribute('href')
+        resourceSource = event.target.getAttribute('src') || event.target.getAttribute('href')
         // If the event has a `target`, it means that it wasn't a script error
         if (resourceSource) {
             if (resourceSource.match(new RegExp(/\/build\/ide\/code:.+\/__files__\//g))) {
@@ -31,9 +32,13 @@ window.addEventListener('error', (event) => {
         }
     }
     if (event.error) {
-        (async () => {
-            IDEMetricsServiceClient.reportError(event.error).catch(() => {});
-        })()
+        IDEMetricsServiceClient.reportError(event.error).catch(() => {});
+    } else if (labels['error'] == 'LoadError') {
+        let error = new Error("LoadError")
+        IDEMetricsServiceClient.reportError(error, {
+            resource: labels['resource'],
+            url: resourceSource ?? ""
+        }).catch(() => {});
     }
     IDEMetricsServiceClient.addCounter(MetricsName.SupervisorFrontendErrorTotal, labels).catch(() => {});
 });

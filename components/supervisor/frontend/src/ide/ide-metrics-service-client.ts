@@ -63,7 +63,7 @@ export class IDEMetricsServiceClient {
         }
     }
 
-    static async reportError(error: Error) : Promise<boolean> {
+    static async reportError(error: Error, properties?: Record<string, string>) : Promise<boolean> {
         const url = `${MetricsUrl}/reportError`
         const params: ReportErrorParam = {
             errorStack: error.stack ?? String(error),
@@ -73,7 +73,8 @@ export class IDEMetricsServiceClient {
             instanceId: this.instanceId ?? "",
             userId: this.userId ?? "",
             name: error.name,
-            message: error.message
+            message: error.message,
+            properties,
         }
         try {
             const response = await fetch(url, {
