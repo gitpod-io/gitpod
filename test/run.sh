@@ -48,7 +48,7 @@ args+=( "-timeout=60m" )
 args+=( "-p=1" )
 
 if [[ "${GITPOD_REPO_ROOT:-}" != "" ]]; then
-  echo "Running in Gitpod workspace. Fetching USERNAME adn USER_TOKEN" | werft log slice "test-setup"
+  echo "Running in Gitpod workspace. Fetching USERNAME and USER_TOKEN" | werft log slice "test-setup"
   USERNAME="$(kubectl --context=dev -n werft get secret integration-test-user -o jsonpath='{.data.username}' | base64 -d)"
   USER_TOKEN="$(kubectl --context=dev -n werft get secret integration-test-user -o jsonpath='{.data.token}' | base64 -d)"
   export USER_TOKEN
