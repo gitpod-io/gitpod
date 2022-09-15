@@ -4,6 +4,7 @@ packages:
     srcs:
       - "src/**"
       - "public/**"
+      - config.json
       - package.json
       - webpack.config.js
       - tsconfig.json
@@ -14,3 +15,8 @@ packages:
     config:
       dontTest: true
       yarnLock: ${coreYarnLockBase}/../yarn.lock
+      commands:
+        build:
+         - sh
+         - -c
+         - yq w -i config.json commit commit-${__git_commit} -j && yarn build
