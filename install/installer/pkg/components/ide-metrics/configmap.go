@@ -122,6 +122,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	errorReporting := config.ErrorReportingConfiguration{
 		AllowComponents: []string{
 			"supervisor-frontend",
+			"vscode-workbench",
 		},
 	}
 
