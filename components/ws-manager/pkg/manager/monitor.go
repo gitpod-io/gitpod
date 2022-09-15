@@ -200,11 +200,10 @@ func (m *Monitor) onVolumesnapshotEvent(evt watch.Event) error {
 	}
 
 	m.notifyPodMapLock.Lock()
-	if m.notifyPod[podName] == nil {
-		m.notifyPod[podName] = make(chan string)
+	if m.notifyPod[podName] != nil {
+		m.notifyPod[podName] <- vsc
 	}
 	m.notifyPodMapLock.Unlock()
-	m.notifyPod[podName] <- vsc
 
 	return nil
 }
