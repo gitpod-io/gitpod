@@ -31,7 +31,7 @@ class GitpodConnectorView(
         row {
             panel {
                 verticalAlign(VerticalAlign.BOTTOM)
-                separator(null, WelcomeScreenUIManager.getSeparatorColor())
+                separator(WelcomeScreenUIManager.getSeparatorColor())
                 indent {
                     row {
                         button("Back") {
