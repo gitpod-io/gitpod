@@ -1128,9 +1128,10 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 				// create snapshot object out of PVC
 				volumeSnapshot := &volumesnapshotv1.VolumeSnapshot{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      pvcVolumeSnapshotName,
-						Namespace: m.manager.Config.Namespace,
-						Labels:    wso.Pod.Labels,
+						Name:        pvcVolumeSnapshotName,
+						Namespace:   m.manager.Config.Namespace,
+						Annotations: map[string]string{workspaceIDAnnotation: workspaceID},
+						Labels:      wso.Pod.Labels,
 					},
 					Spec: volumesnapshotv1.VolumeSnapshotSpec{
 						Source: volumesnapshotv1.VolumeSnapshotSource{
