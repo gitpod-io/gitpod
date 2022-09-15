@@ -22,6 +22,7 @@ import * as opentracing from "opentracing";
 import { CancellationTokenSource } from "vscode-ws-jsonrpc";
 import { increaseMessagebusTopicReads } from "../prometheus-metrics";
 import { CreditAlert } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 
 interface WorkspaceInstanceUpdateCallback {
     (ctx: TraceContext, instance: WorkspaceInstance, ownerId: string | undefined): void;
@@ -69,6 +70,16 @@ export class CreditAlertListener extends AbstractTopicListener<CreditAlert> {
 
     topic() {
         return this.messageBusHelper.getWsTopicForListening(this.userId, undefined, "credit");
+    }
+}
+
+export class SubscriptionUpdateListener extends AbstractTopicListener<AttributionId> {
+    constructor(protected messageBusHelper: MessageBusHelper, listener: TopicListener<AttributionId>) {
+        super(messageBusHelper.workspaceExchange, listener);
+    }
+
+    topic() {
+        return this.messageBusHelper.getSubscriptionUpdateTopic();
     }
 }
 
@@ -201,6 +212,28 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
         callback: (ctx: TraceContext, alert: CreditAlert) => void,
     ): Disposable {
         const listener = new CreditAlertListener(this.messageBusHelper, callback, userId);
+        const cancellationTokenSource = new CancellationTokenSource();
+        this.listen(listener, cancellationTokenSource.token).catch((err) => {
+            /** ignore */
+        });
+        return Disposable.create(() => cancellationTokenSource.cancel());
+    }
+
+    async notifyOnSubscriptionUpdate(ctx: TraceContext, attributionId: AttributionId) {
+        if (!this.channel) {
+            throw new Error("Not connected to message bus");
+        }
+        const topic = this.messageBusHelper.getSubscriptionUpdateTopic(AttributionId.render(attributionId));
+        const msg = Buffer.from(JSON.stringify(attributionId));
+        await this.messageBusHelper.assertWorkspaceExchange(this.channel);
+
+        await super.publish(MessageBusHelperImpl.WORKSPACE_EXCHANGE_LOCAL, topic, msg, {
+            trace: ctx,
+        });
+    }
+
+    listenToSubscriptionUpdates(callback: (ctx: TraceContext, attributionId: AttributionId) => void): Disposable {
+        const listener = new SubscriptionUpdateListener(this.messageBusHelper, callback);
         const cancellationTokenSource = new CancellationTokenSource();
         this.listen(listener, cancellationTokenSource.token).catch((err) => {
             /** ignore */

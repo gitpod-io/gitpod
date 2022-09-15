@@ -61,6 +61,8 @@ export interface MessageBusHelper {
      * @param topic the topic to parse
      */
     getWsInformationFromTopic(topic: string): WorkspaceTopic | undefined;
+
+    getSubscriptionUpdateTopic(attributionId?: string): string;
 }
 
 export const WorkspaceTopic = Symbol("WorkspaceTopic");
@@ -87,6 +89,10 @@ export class MessageBusHelperImpl implements MessageBusHelper {
      */
     async assertWorkspaceExchange(ch: Channel): Promise<void> {
         await ch.assertExchange(this.workspaceExchange, "topic", { durable: true });
+    }
+
+    getSubscriptionUpdateTopic(attributionId: string | undefined): string {
+        return `subscription.${attributionId || "*"}.update`;
     }
 
     /**
