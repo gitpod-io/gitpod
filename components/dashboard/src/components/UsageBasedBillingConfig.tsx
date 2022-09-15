@@ -179,7 +179,7 @@ export default function UsageBasedBillingConfig({ subject, attributionId }: Prop
             <h2 className="text-gray-500">Manage usage-based billing, usage limit, and payment method.</h2>
             <div className="max-w-xl flex flex-col">
                 {billingError && (
-                    <Alert className="max-w-xl mb-4" closable={false} showIcon={true} type="error">
+                    <Alert className="max-w-xl mt-2" closable={false} showIcon={true} type="error">
                         {billingError}
                     </Alert>
                 )}
