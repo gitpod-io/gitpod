@@ -40,7 +40,7 @@ export default function UsageBasedBillingConfig({ subject, attributionId }: Prop
     const [pendingStripeSubscription, setPendingStripeSubscription] = useState<PendingStripeSubscription | undefined>();
     const [billingError, setBillingError] = useState<string | undefined>();
 
-    const localStorageKey = `pendingStripeSubscriptionFor${subject?.id || ""}`;
+    const localStorageKey = `pendingStripeSubscriptionFor${attributionId}`;
 
     useEffect(() => {
         if (!subject) {
