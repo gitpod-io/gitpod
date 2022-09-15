@@ -1,10 +1,13 @@
 {
   "controllerSchedule": "1h",
+  "defaultSpendingLimit": {
+    "forUsers": 5000,
+    "forTeams": 0
+  },
   "creditsPerMinuteByWorkspaceClass": {
     "default": 0.1666666667,
     "gitpodio-internal-xl": 0.3333333333
   },
-  "billInstancesAfter":"2022-08-11T08:05:32.499Z",
   "server": {
     "services": {
       "grpc": {

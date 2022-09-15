@@ -2358,7 +2358,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                     draft: u.draft,
                     workspaceInstanceId: u.workspaceInstanceId,
                     kind: u.kind === Usage_Kind.KIND_WORKSPACE_INSTANCE ? "workspaceinstance" : "invoice",
-                    metadata: JSON.parse(u.metadata),
+                    metadata: !!u.metadata ? JSON.parse(u.metadata) : undefined,
                 };
             }),
             pagination: response.pagination

@@ -4,10 +4,11 @@
 package usage
 
 import (
+	"testing"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
-	"testing"
 )
 
 func TestConfigMap_ContainsSchedule(t *testing.T) {
@@ -23,6 +24,10 @@ func TestConfigMap_ContainsSchedule(t *testing.T) {
 		`{
        "controllerSchedule": "2m",
        "stripeCredentialsFile": "stripe-secret/apikeys",
+	   "defaultSpendingLimit": {
+		"forUsers": 1000000000,
+		"forTeams": 1000000000
+	   },
        "server": {
          "services": {
            "grpc": {

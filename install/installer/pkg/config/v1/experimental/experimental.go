@@ -15,6 +15,7 @@ import (
 
 	agentSmith "github.com/gitpod-io/gitpod/agent-smith/pkg/config"
 	"github.com/gitpod-io/gitpod/common-go/grpc"
+	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -243,10 +244,11 @@ type PublicAPIConfig struct {
 }
 
 type UsageConfig struct {
-	Enabled                          bool               `json:"enabled"`
-	Schedule                         string             `json:"schedule"`
-	BillInstancesAfter               *time.Time         `json:"billInstancesAfter"`
-	CreditsPerMinuteByWorkspaceClass map[string]float64 `json:"creditsPerMinuteByWorkspaceClass"`
+	Enabled                          bool                     `json:"enabled"`
+	Schedule                         string                   `json:"schedule"`
+	BillInstancesAfter               *time.Time               `json:"billInstancesAfter"`
+	DefaultSpendingLimit             *db.DefaultSpendingLimit `json:"defaultSpendingLimit"`
+	CreditsPerMinuteByWorkspaceClass map[string]float64       `json:"creditsPerMinuteByWorkspaceClass"`
 }
 
 type WebAppWorkspaceClass struct {

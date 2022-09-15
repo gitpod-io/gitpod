@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -27,8 +29,8 @@ type CostCenter struct {
 	CreationTime    VarcharTime     `gorm:"primary_key;column:creationTime;type:varchar;size:255;" json:"creationTime"`
 	SpendingLimit   int32           `gorm:"column:spendingLimit;type:int;default:0;" json:"spendingLimit"`
 	BillingStrategy BillingStrategy `gorm:"column:billingStrategy;type:varchar;size:255;" json:"billingStrategy"`
-
-	LastModified time.Time `gorm:"->:column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
+	NextBillingTime VarcharTime     `gorm:"column:nextBillingTime;type:varchar;size:255;" json:"nextBillingTime"`
+	LastModified    time.Time       `gorm:"->:column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
 }
 
 // TableName sets the insert table name for this struct type
@@ -36,27 +38,133 @@ func (d *CostCenter) TableName() string {
 	return "d_b_cost_center"
 }
 
-func GetCostCenter(ctx context.Context, conn *gorm.DB, attributionId AttributionID) (*CostCenter, error) {
+type DefaultSpendingLimit struct {
+	ForTeams int32 `json:"forTeams"`
+	ForUsers int32 `json:"forUsers"`
+}
+
+func NewCostCenterManager(conn *gorm.DB, cfg DefaultSpendingLimit) *CostCenterManager {
+	return &CostCenterManager{
+		conn: conn,
+		cfg:  cfg,
+	}
+}
+
+type CostCenterManager struct {
+	conn *gorm.DB
+	cfg  DefaultSpendingLimit
+}
+
+// GetOrCreateCostCenter returns the latest version of cost center for the given attributionID.
+// This method creates a codt center and stores it in the DB if there is no preexisting one.
+func (c *CostCenterManager) GetOrCreateCostCenter(ctx context.Context, attributionID AttributionID) (CostCenter, error) {
+	logger := log.WithField("attributionId", attributionID)
+
+	result, err := getCostCenter(ctx, c.conn, attributionID)
+	if err != nil {
+		if errors.Is(err, CostCenterNotFound) {
+			logger.Info("No existing cost center. Creating one.")
+			defaultSpendingLimit := c.cfg.ForUsers
+			if attributionID.IsEntity(AttributionEntity_Team) {
+				defaultSpendingLimit = c.cfg.ForTeams
+			}
+			result = CostCenter{
+				ID:              attributionID,
+				CreationTime:    NewVarcharTime(time.Now()),
+				BillingStrategy: CostCenter_Other,
+				SpendingLimit:   defaultSpendingLimit,
+				NextBillingTime: NewVarcharTime(time.Now().AddDate(0, 1, 0)),
+			}
+			err := c.conn.Save(&result).Error
+			if err != nil {
+				return CostCenter{}, err
+			}
+		} else {
+			return CostCenter{}, err
+		}
+	}
+
+	return result, nil
+}
+
+func getCostCenter(ctx context.Context, conn *gorm.DB, attributionId AttributionID) (CostCenter, error) {
 	db := conn.WithContext(ctx)
 
 	var results []CostCenter
 	db = db.Where("id = ?", attributionId).Order("creationTime DESC").Limit(1).Find(&results)
 	if db.Error != nil {
-		return nil, fmt.Errorf("failed to get cost center: %w", db.Error)
+		return CostCenter{}, fmt.Errorf("failed to get cost center: %w", db.Error)
 	}
 	if len(results) == 0 {
-		return nil, CostCenterNotFound
+		return CostCenter{}, CostCenterNotFound
 	}
 	costCenter := results[0]
-	return &costCenter, nil
+	return costCenter, nil
 }
 
-func SaveCostCenter(ctx context.Context, conn *gorm.DB, costCenter *CostCenter) (*CostCenter, error) {
-	db := conn.WithContext(ctx)
-	costCenter.CreationTime = NewVarcharTime(time.Now())
-	db = db.Save(costCenter)
+func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, costCenter CostCenter) (CostCenter, error) {
+
+	// retrieving the existing cost center to maintain the readonly values
+	existingCostCenter, err := c.GetOrCreateCostCenter(ctx, costCenter.ID)
+	if err != nil {
+		return CostCenter{}, err
+	}
+
+	now := time.Now()
+
+	// we don't allow setting the creationTime or the nextBillingTime from outside
+	costCenter.CreationTime = existingCostCenter.CreationTime
+	costCenter.NextBillingTime = existingCostCenter.NextBillingTime
+
+	// Do we have a billing strategy update?
+	if costCenter.BillingStrategy != existingCostCenter.BillingStrategy {
+		if existingCostCenter.BillingStrategy == CostCenter_Other {
+			// moving to stripe -> let's run a finalization
+			finalizationUsage, err := c.ComputeInvoiceUsageRecord(ctx, costCenter.ID)
+			if err != nil {
+				return CostCenter{}, err
+			}
+			if finalizationUsage != nil {
+				err = UpdateUsage(ctx, c.conn, *finalizationUsage)
+				if err != nil {
+					return CostCenter{}, err
+				}
+			}
+		}
+		c.updateNextBillingTime(&costCenter, now)
+	}
+
+	// we update the creationTime
+	costCenter.CreationTime = NewVarcharTime(now)
+	db := c.conn.Save(&costCenter)
 	if db.Error != nil {
-		return nil, fmt.Errorf("failed to save cost center: %w", db.Error)
+		return CostCenter{}, fmt.Errorf("failed to save cost center for attributionID %s: %w", costCenter.ID, db.Error)
 	}
 	return costCenter, nil
+}
+
+func (c *CostCenterManager) ComputeInvoiceUsageRecord(ctx context.Context, attributionID AttributionID) (*Usage, error) {
+	now := time.Now()
+	summary, err := GetUsageSummary(ctx, c.conn, attributionID, now, now, false)
+	if err != nil {
+		return nil, err
+	}
+	if summary.CreditCentsBalanceAtEnd <= int64(0) {
+		// account has not debt, do nothing
+		return nil, nil
+	}
+	return &Usage{
+		ID:            uuid.New(),
+		AttributionID: attributionID,
+		Description:   "Credits",
+		CreditCents:   CreditCents(summary.CreditCentsBalanceAtEnd * -1),
+		EffectiveTime: NewVarcharTime(now),
+		Kind:          InvoiceUsageKind,
+		Draft:         false,
+	}, nil
+}
+
+func (c *CostCenterManager) updateNextBillingTime(costCenter *CostCenter, now time.Time) {
+	nextMonth := NewVarcharTime(time.Now().AddDate(0, 1, 0))
+	costCenter.NextBillingTime = nextMonth
 }

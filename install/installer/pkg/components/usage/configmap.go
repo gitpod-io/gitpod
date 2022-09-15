@@ -5,7 +5,9 @@ package usage
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
+	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/server"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -25,14 +27,21 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 		},
+		DefaultSpendingLimit: db.DefaultSpendingLimit{
+			// because we only want spending limits in SaaS, if not configured we go with a very high (i.e. no) spending limit
+			ForTeams: 1_000_000_000,
+			ForUsers: 1_000_000_000,
+		},
 	}
-
 	expConfig := getExperimentalConfig(ctx)
+
 	if expConfig != nil {
 		if expConfig.Schedule != "" {
 			cfg.ControllerSchedule = expConfig.Schedule
 		}
-
+		if expConfig.DefaultSpendingLimit != nil {
+			cfg.DefaultSpendingLimit = *expConfig.DefaultSpendingLimit
+		}
 		cfg.CreditsPerMinuteByWorkspaceClass = expConfig.CreditsPerMinuteByWorkspaceClass
 	}
 

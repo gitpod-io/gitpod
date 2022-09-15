@@ -43,7 +43,7 @@ type Usage struct {
 	CreditCents         CreditCents    `gorm:"column:creditCents;type:bigint;" json:"creditCents"`
 	EffectiveTime       VarcharTime    `gorm:"column:effectiveTime;type:varchar;size:255;" json:"effectiveTime"`
 	Kind                UsageKind      `gorm:"column:kind;type:char;size:10;" json:"kind"`
-	WorkspaceInstanceID uuid.UUID      `gorm:"column:workspaceInstanceId;type:char;size:36;" json:"workspaceInstanceId"`
+	WorkspaceInstanceID *uuid.UUID     `gorm:"column:workspaceInstanceId;type:char;size:36;" json:"workspaceInstanceId"`
 	Draft               bool           `gorm:"column:draft;type:boolean;" json:"draft"`
 	Metadata            datatypes.JSON `gorm:"column:metadata;type:text;size:65535" json:"metadata"`
 }
