@@ -77,7 +77,7 @@ detekt {
 }
 
 tasks {
-    // Set the compatibility versions to 1.8
+    // JetBrains Gateway 2022.3+ requires Source Compatibility set to 17.
     withType<JavaCompile> {
         sourceCompatibility = "17"
         targetCompatibility = "17"
