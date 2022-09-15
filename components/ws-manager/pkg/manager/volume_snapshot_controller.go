@@ -37,6 +37,11 @@ func (r *VolumeSnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return reconcile.Result{}, nil
 	}
 
+	queue := vs.Annotations[workspaceIDAnnotation]
+	if queue == "" {
+		return ctrl.Result{}, nil
+	}
+
 	r.Monitor.eventpool.Add(vs.Name, watch.Event{
 		Type:   watch.Modified,
 		Object: &vs,

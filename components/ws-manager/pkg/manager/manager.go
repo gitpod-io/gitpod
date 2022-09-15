@@ -453,8 +453,9 @@ func (m *Manager) restoreVolumeSnapshotFromHandle(ctx context.Context, id, handl
 	snapshotContentName := "restored-" + id
 	volumeSnapshot := &volumesnapshotv1.VolumeSnapshot{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      id,
-			Namespace: m.Config.Namespace,
+			Name:        id,
+			Namespace:   m.Config.Namespace,
+			Annotations: map[string]string{workspaceIDAnnotation: id},
 		},
 		Spec: volumesnapshotv1.VolumeSnapshotSpec{
 			Source: volumesnapshotv1.VolumeSnapshotSource{
