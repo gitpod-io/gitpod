@@ -185,7 +185,7 @@ function UsageView({ attributionId, billingMode }: UsageViewProps) {
                                                     type="warn"
                                                     className="font-semibold mt-2 ml-0 py-0.5 px-1 self-center"
                                                 >
-                                                    <span className="text-xs">Beta</span>
+                                                    <span className="text-xs">Early Access</span>
                                                 </PillLabel>
                                                 <br />
                                                 <a
