@@ -7,6 +7,7 @@ package log
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 )
 
@@ -16,6 +17,9 @@ var (
 		"auth_",
 		"password",
 		"token",
+		"key",
+		"jwt",
+		"secret",
 	}
 )
 
@@ -59,6 +63,7 @@ func redactArray(data *[]interface{}) {
 }
 
 func redactObject(data *map[string]interface{}) {
+	var forceRedact bool
 	for k, v := range *data {
 		for _, prohibited := range redactedFields {
 			if strings.Contains(strings.ToLower(fmt.Sprintf("%v", k)), prohibited) {
@@ -67,10 +72,18 @@ func redactObject(data *map[string]interface{}) {
 			}
 		}
 
+		if forceRedact {
+			(*data)[k] = redactedValue
+		}
 		if (*data)[k] != redactedValue {
 			//TODO: refactor
 			//nolint:gosec
+			was := (*data)[k]
 			(*data)[k] = redactValue(&v)
+			if !reflect.DeepEqual(was, (*data)[k]) {
+				// force the rest values to redact
+				forceRedact = true
+			}
 		}
 	}
 }
