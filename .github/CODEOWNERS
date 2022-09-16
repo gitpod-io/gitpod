@@ -6,7 +6,7 @@
 
 /components/blobserve @gitpod-io/engineering-ide
 /components/common-go @gitpod-io/engineering-workspace @gitpod-io/engineering-webapp
-/components/content-service-api @csweichel @geropl @corneliusludmann
+/components/content-service-api @gitpod-io/engineering-workspace
 /components/content-service @gitpod-io/engineering-workspace
 /components/dashboard @gitpod-io/engineering-webapp
 /components/docker-up @gitpod-io/engineering-workspace
