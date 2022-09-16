@@ -8,9 +8,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"os"
 	"strings"
+
+	"github.com/gitpod-io/gitpod/usage/pkg/db"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/stripe/stripe-go/v72"
@@ -242,6 +245,30 @@ func (c *Client) GetInvoiceWithCustomer(ctx context.Context, invoiceID string) (
 		return nil, fmt.Errorf("failed to get invoice %s: %w", invoiceID, err)
 	}
 	return invoice, nil
+}
+
+func (c *Client) GetSubscriptionWithCustomer(ctx context.Context, subscriptionID string) (*stripe.Subscription, error) {
+	if subscriptionID == "" {
+		return nil, fmt.Errorf("no subscriptionID specified")
+	}
+
+	subscription, err := c.sc.Subscriptions.Get(subscriptionID, &stripe.SubscriptionParams{
+		Params: stripe.Params{
+			Expand: []*string{stripe.String("customer")},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get subscription %s: %w", subscriptionID, err)
+	}
+	return subscription, nil
+}
+
+func GetAttributionID(ctx context.Context, customer *stripe.Customer) (db.AttributionID, error) {
+	if customer == nil {
+		log.Error("No customer information available for invoice.")
+		return "", status.Errorf(codes.Internal, "Failed to retrieve customer details from invoice.")
+	}
+	return db.ParseAttributionID(customer.Metadata[AttributionIDMetadataKey])
 }
 
 // queriesForCustomersWithAttributionIDs constructs Stripe query strings to find the Stripe Customer for each teamId

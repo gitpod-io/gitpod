@@ -187,6 +187,10 @@ func ParseAttributionID(s string) (AttributionID, error) {
 	if len(tokens) != 2 {
 		return "", fmt.Errorf("attribution ID (%s) does not have two parts", s)
 	}
+	_, err := uuid.Parse(tokens[1])
+	if err != nil {
+		return "", fmt.Errorf("The uuid part of attribution ID (%s) is not a valid UUID. %w", tokens[1], err)
+	}
 
 	switch tokens[0] {
 	case AttributionEntity_Team:
