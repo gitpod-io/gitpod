@@ -20,8 +20,9 @@ import {
     Issues,
     RepositoryFiles,
 } from "@gitbeaker/core";
-import { ProjectSchemaDefault } from "@gitbeaker/core/dist/types/services/Projects";
-import { UserSchemaDefault } from "@gitbeaker/core/dist/types/services/Users";
+import { ProjectExtendedSchema } from "@gitbeaker/core/dist/types/resources/Projects";
+import { NamespaceSchema } from "@gitbeaker/core/dist/types/resources/Namespaces";
+import { UserExtendedSchema, UserSchema } from "@gitbeaker/core/dist/types/resources/Users";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { GitLabScope } from "./scopes";
 import { AuthProviderParams } from "../auth/auth-provider";
@@ -70,9 +71,11 @@ export class GitLabApi {
                 //         "description": "404 Commit Not Found"
                 //     }
 
-                return new GitLab.ApiError(`GitLab Request Error: ${error?.description}`, error);
+                return new GitLab.ApiError(
+                    `GitLab Request Error: ${error?.description?.name || JSON.stringify(error?.description)}`,
+                    error,
+                );
             }
-            log.error(`GitLab request error`, error);
             throw error;
         } finally {
             log.debug(`GitLab request took ${new Date().getTime() - before} ms`);
@@ -87,7 +90,9 @@ export class GitLabApi {
         path: string,
     ): Promise<string | undefined> {
         const projectId = `${org}/${name}`;
-        const result = await this.run<string>(user, (api) => api.RepositoryFiles.showRaw(projectId, path, commitish));
+        const result = await this.run<string>(user, (api) =>
+            api.RepositoryFiles.showRaw(projectId, path, { ref: commitish }),
+        );
         if (GitLab.ApiError.is(result)) {
             return undefined; // e.g. 404 error, because the file isn't found
         }
@@ -132,14 +137,17 @@ export namespace GitLab {
     /**
      * https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/projects.md#get-single-project
      */
-    export interface Project extends ProjectSchemaDefault {
+    export interface Project extends ProjectExtendedSchema {
         visibility: "public" | "private" | "internal";
         archived: boolean;
         path: string; // "diaspora-project-site"
         path_with_namespace: string; // "diaspora/diaspora-project-site"
         creator_id: number;
-        owner: User;
-        permissions: Permissions;
+        namespace: Pick<
+            NamespaceSchema,
+            "id" | "name" | "path" | "kind" | "full_path" | "avatar_url" | "web_url" | "avatar_url" | "parent_id"
+        >;
+        owner: Pick<UserSchema, "id" | "name" | "created_at" | "avatar_url">;
         merge_requests_enabled: boolean;
         issues_enabled: boolean;
         open_issues_count: number;
@@ -219,11 +227,9 @@ export namespace GitLab {
         merge_requests_count: number;
     }
     // https://docs.gitlab.com/ee/api/users.html#list-current-user-for-normal-users
-    export interface User extends UserSchemaDefault {
+    export interface User extends UserExtendedSchema {
         email: string;
         state: "active" | string;
-        confirmed_at: string | undefined;
-        private_profile: boolean;
     }
     export interface Permissions {
         project_access?: {

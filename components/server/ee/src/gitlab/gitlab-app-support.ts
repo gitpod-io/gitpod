@@ -7,27 +7,11 @@
 import { AuthProviderInfo, ProviderRepository, User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { TokenProvider } from "../../../src/user/token-provider";
-import { UserDB } from "@gitpod/gitpod-db/lib";
 import { Gitlab } from "@gitbeaker/node";
-import { ProjectSchemaDefault, NamespaceInfoSchemaDefault } from "@gitbeaker/core/dist/types/services/Projects";
-
-// Add missing fields to Gitbeaker's ProjectSchema type
-type ProjectSchema = ProjectSchemaDefault & {
-    last_activity_at: string;
-    namespace: NamespaceInfoSchemaDefault & {
-        avatar_url: string | null;
-        parent_id: number | null;
-    };
-    owner?: {
-        id: number;
-        name: string;
-        avatar_url: string | null;
-    };
-};
+import { GitLab } from "../../../src/gitlab/api";
 
 @injectable()
 export class GitLabAppSupport {
-    @inject(UserDB) protected readonly userDB: UserDB;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
 
     async getProviderRepositoriesForUser(params: {
@@ -51,9 +35,12 @@ export class GitLabAppSupport {
         // we are listing only those projects with access level of maintainers.
         // also cf. https://docs.gitlab.com/ee/api/members.html#valid-access-levels
         //
-        const projectsWithAccess = await api.Projects.all({ min_access_level: "40", perPage: 100 });
+        const projectsWithAccess = await api.Projects.all({
+            min_access_level: "40",
+            perPage: 100,
+        });
         for (const project of projectsWithAccess) {
-            const aProject = project as ProjectSchema;
+            const aProject = project as GitLab.Project;
             const path = aProject.path as string;
             const fullPath = aProject.path_with_namespace as string;
             const cloneUrl = aProject.http_url_to_repo as string;
@@ -77,7 +64,7 @@ export class GitLabAppSupport {
         return result;
     }
 
-    protected async getAccountAvatarUrl(project: ProjectSchema, providerHost: string): Promise<string> {
+    protected async getAccountAvatarUrl(project: GitLab.Project, providerHost: string): Promise<string> {
         let owner = project.owner;
         if (!owner && project.namespace && !project.namespace.parent_id) {
             // Fall back to "root namespace" / "top-level group"
