@@ -73,7 +73,7 @@ func (c *Client) UpdateUsage(ctx context.Context, creditsPerAttributionID map[db
 	queries := queriesForCustomersWithAttributionIDs(attributionIDs)
 
 	for _, query := range queries {
-		log.Infof("Searching customers in Stripe with query: %q", query)
+		logger := log.WithField("stripe_query", query)
 
 		customers, err := c.findCustomers(ctx, query)
 		if err != nil {
@@ -82,17 +82,17 @@ func (c *Client) UpdateUsage(ctx context.Context, creditsPerAttributionID map[db
 
 		for _, customer := range customers {
 			attributionIDRaw := customer.Metadata[AttributionIDMetadataKey]
-			log.Infof("Found customer %q for attribution ID %q", customer.Name, attributionIDRaw)
+			logger.Infof("Found customer %q for attribution ID %q", customer.Name, attributionIDRaw)
 
 			attributionID, err := db.ParseAttributionID(attributionIDRaw)
 			if err != nil {
-				log.WithError(err).Error("Failed to parse attribution ID from Stripe metadata.")
+				logger.WithError(err).Error("Failed to parse attribution ID from Stripe metadata.")
 				continue
 			}
 
 			_, err = c.updateUsageForCustomer(ctx, customer, creditsPerAttributionID[attributionID])
 			if err != nil {
-				log.WithField("customer_id", customer.ID).
+				logger.WithField("customer_id", customer.ID).
 					WithField("customer_name", customer.Name).
 					WithField("subscriptions", customer.Subscriptions).
 					WithField("attribution_id", attributionID).
