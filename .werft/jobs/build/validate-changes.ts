@@ -4,17 +4,12 @@ import { JobConfig } from "./job-config";
 
 export async function validateChanges(werft: Werft, config: JobConfig) {
     werft.phase("validate-changes", "validating changes");
-    try {
-        await Promise.all([
-            branchNameCheck(werft, config),
-            preCommitCheck(werft),
-            typecheckWerftJobs(werft),
-            leewayVet(werft),
-        ]);
-    } catch (err) {
-        werft.fail("validate-changes", err);
-    }
-    werft.done("validate-changes");
+    await Promise.all([
+        branchNameCheck(werft, config),
+        preCommitCheck(werft),
+        typecheckWerftJobs(werft),
+        leewayVet(werft),
+    ]);
 }
 
 // Branch names cannot be longer than 45 characters.
