@@ -34,6 +34,9 @@ type BillingServiceClient interface {
 	// FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
 	// having been invoiced.
 	FinalizeInvoice(ctx context.Context, in *FinalizeInvoiceRequest, opts ...grpc.CallOption) (*FinalizeInvoiceResponse, error)
+	// CancelSubscription cancels a stripe subscription in our system
+	// Called by a stripe webhook
+	CancelSubscription(ctx context.Context, in *CancelSubscriptionRequest, opts ...grpc.CallOption) (*CancelSubscriptionResponse, error)
 	// SetBilledSession marks an instance as billed with a billing system
 	SetBilledSession(ctx context.Context, in *SetBilledSessionRequest, opts ...grpc.CallOption) (*SetBilledSessionResponse, error)
 }
@@ -73,6 +76,15 @@ func (c *billingServiceClient) FinalizeInvoice(ctx context.Context, in *Finalize
 	return out, nil
 }
 
+func (c *billingServiceClient) CancelSubscription(ctx context.Context, in *CancelSubscriptionRequest, opts ...grpc.CallOption) (*CancelSubscriptionResponse, error) {
+	out := new(CancelSubscriptionResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.BillingService/CancelSubscription", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *billingServiceClient) SetBilledSession(ctx context.Context, in *SetBilledSessionRequest, opts ...grpc.CallOption) (*SetBilledSessionResponse, error) {
 	out := new(SetBilledSessionResponse)
 	err := c.cc.Invoke(ctx, "/usage.v1.BillingService/SetBilledSession", in, out, opts...)
@@ -94,6 +106,9 @@ type BillingServiceServer interface {
 	// FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
 	// having been invoiced.
 	FinalizeInvoice(context.Context, *FinalizeInvoiceRequest) (*FinalizeInvoiceResponse, error)
+	// CancelSubscription cancels a stripe subscription in our system
+	// Called by a stripe webhook
+	CancelSubscription(context.Context, *CancelSubscriptionRequest) (*CancelSubscriptionResponse, error)
 	// SetBilledSession marks an instance as billed with a billing system
 	SetBilledSession(context.Context, *SetBilledSessionRequest) (*SetBilledSessionResponse, error)
 	mustEmbedUnimplementedBillingServiceServer()
@@ -111,6 +126,9 @@ func (UnimplementedBillingServiceServer) GetUpcomingInvoice(context.Context, *Ge
 }
 func (UnimplementedBillingServiceServer) FinalizeInvoice(context.Context, *FinalizeInvoiceRequest) (*FinalizeInvoiceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FinalizeInvoice not implemented")
+}
+func (UnimplementedBillingServiceServer) CancelSubscription(context.Context, *CancelSubscriptionRequest) (*CancelSubscriptionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CancelSubscription not implemented")
 }
 func (UnimplementedBillingServiceServer) SetBilledSession(context.Context, *SetBilledSessionRequest) (*SetBilledSessionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetBilledSession not implemented")
@@ -182,6 +200,24 @@ func _BillingService_FinalizeInvoice_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BillingService_CancelSubscription_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CancelSubscriptionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).CancelSubscription(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.BillingService/CancelSubscription",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).CancelSubscription(ctx, req.(*CancelSubscriptionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _BillingService_SetBilledSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SetBilledSessionRequest)
 	if err := dec(in); err != nil {
@@ -218,6 +254,10 @@ var BillingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FinalizeInvoice",
 			Handler:    _BillingService_FinalizeInvoice_Handler,
+		},
+		{
+			MethodName: "CancelSubscription",
+			Handler:    _BillingService_CancelSubscription_Handler,
 		},
 		{
 			MethodName: "SetBilledSession",
