@@ -227,7 +227,7 @@ func (c *Client) GetUpcomingInvoice(ctx context.Context, customerID string) (*In
 	}, nil
 }
 
-func (c *Client) GetInvoice(ctx context.Context, invoiceID string) (*stripe.Invoice, error) {
+func (c *Client) GetInvoiceWithCustomer(ctx context.Context, invoiceID string) (*stripe.Invoice, error) {
 	if invoiceID == "" {
 		return nil, fmt.Errorf("no invoice ID specified")
 	}
@@ -235,7 +235,7 @@ func (c *Client) GetInvoice(ctx context.Context, invoiceID string) (*stripe.Invo
 	invoice, err := c.sc.Invoices.Get(invoiceID, &stripe.InvoiceParams{
 		Params: stripe.Params{
 			Context: ctx,
-			Expand:  []*string{stripe.String("data.subscriptions")},
+			Expand:  []*string{stripe.String("customer")},
 		},
 	})
 	if err != nil {
