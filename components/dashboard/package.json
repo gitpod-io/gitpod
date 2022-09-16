@@ -22,6 +22,17 @@
   },
   "devDependencies": {
     "@craco/craco": "^6.1.2",
+    "@storybook/addon-actions": "^6.5.12",
+    "@storybook/addon-essentials": "^6.5.12",
+    "@storybook/addon-interactions": "^6.5.12",
+    "@storybook/addon-links": "^6.5.12",
+    "@storybook/addon-postcss": "^2.0.0",
+    "@storybook/builder-webpack4": "^6.5.12",
+    "@storybook/manager-webpack4": "^6.5.12",
+    "@storybook/node-logger": "^6.5.12",
+    "@storybook/preset-create-react-app": "^3.2.0",
+    "@storybook/react": "^6.5.12",
+    "@storybook/testing-library": "^0.0.13",
     "@tailwindcss/forms": "^0.3.2",
     "@tailwindcss/postcss7-compat": "^2.2.4",
     "@testing-library/cypress": "^8.0.2",
@@ -43,8 +54,10 @@
     "cypress": "^9.2.1",
     "eslint": "^7.24.0",
     "eslint-config-react-app": "^6.0.0",
+    "eslint-plugin-storybook": "^0.6.4",
     "postcss": "^7.0.36",
     "react-scripts": "^4.0.3",
+    "storybook-addon-designs": "^6.3.1",
     "tailwind-underline-utils": "^1.1.2",
     "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.2.4",
     "tailwindcss-filters": "^3.0.0",
@@ -60,7 +73,9 @@
     "test:integration:watch": "cypress open",
     "test:integration:run": "cypress install && cypress run",
     "eject": "react-scripts eject",
-    "telepresence": "TELEPRESENCE_USE_DEPLOYMENT=1 leeway run .:telepresence"
+    "telepresence": "TELEPRESENCE_USE_DEPLOYMENT=1 leeway run .:telepresence",
+    "storybook": "start-storybook -p 6006 -s public",
+    "build-storybook": "build-storybook -s public"
   },
   "files": [
     "conf",
@@ -71,6 +86,16 @@
     "extends": [
       "react-app",
       "react-app/jest"
+    ],
+    "overrides": [
+      {
+        "files": [
+          "**/*.stories.*"
+        ],
+        "rules": {
+          "import/no-anonymous-default-export": "off"
+        }
+      }
     ]
   },
   "browserslist": {

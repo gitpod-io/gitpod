@@ -105,3 +105,7 @@ yarn test:integration:run
 ```
 
 You should see Cypress running in the terminal.
+
+### How to run Storybook locally
+1. In this directory, run `yarn storybook`
+2. Once Storybook started, go to `http://localhost:6006/` or click on the new tab that spun up
