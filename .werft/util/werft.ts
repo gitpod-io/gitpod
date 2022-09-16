@@ -3,6 +3,14 @@ import { exec } from "./shell";
 
 let werft: Werft;
 
+export class FailedSliceError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "FailedSliceError";
+        Object.setPrototypeOf(this, FailedSliceError.prototype);
+    }
+}
+
 /**
  * For backwards compatibility with existing code we expose a global Werft instance
  */
@@ -75,7 +83,7 @@ export class Werft {
     /**
      * Use this when you intend to fail the werft job
      */
-    public fail(slice, err) {
+    public fail(slice: string, err: string | Error) {
         const span = this.sliceSpans[slice];
 
         if (span) {
@@ -92,12 +100,21 @@ export class Werft {
             }
             span.setStatus({
                 code: SpanStatusCode.ERROR,
-                message: err,
+                message: err.toString(),
             });
         });
 
-        console.log(`[${slice}|FAIL] ${err}`);
-        throw err;
+        // In case the error message is a multi-line string we want to ensure that we contain
+        // the error message within the slice (otherwise they'll be moved to the "default" slice of the phase)
+        err.toString()
+            .split("\n")
+            .forEach((line: string) => console.log(`[${slice}] ${line}`));
+
+        // The UI shows the last log of the slice which might not make a lot of sense
+        // for multi-line error messages, so instead we tell the user to expand the slice.
+        console.log(`[${slice}] Failed. Expand to see why`);
+        console.log(`[${slice}|FAIL]`);
+        throw new FailedSliceError(slice);
     }
 
     /**

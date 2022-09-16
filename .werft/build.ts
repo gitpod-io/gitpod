@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import { SpanStatusCode } from "@opentelemetry/api";
-import { Werft } from "./util/werft";
+import { FailedSliceError, Werft } from "./util/werft";
 import { reportBuildFailureInSlack } from "./util/slack";
 import * as Tracing from "./observability/tracing";
 import * as VM from "./vm/vm";
@@ -27,7 +27,12 @@ Tracing.initialize()
             message: err,
         });
 
-        console.log("Error", err);
+        if (err instanceof FailedSliceError) {
+            // This error was produced using werft.fail which means that we
+            // already handled it "gracefully"
+        } else {
+            console.log("Error", err);
+        }
 
         if (context.Repository.ref === "refs/heads/main") {
             reportBuildFailureInSlack(context, err).catch((error: Error) => {
