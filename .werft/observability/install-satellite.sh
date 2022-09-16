@@ -24,14 +24,11 @@ if ! command -v envsubst; then
   go install github.com/a8m/envsubst/cmd/envsubst@latest
 fi
 
-obsDir="${SCRIPT_PATH}/observability"
-mkdir -p "${obsDir}"
-git clone https://roboquat:"$(cat /mnt/secrets/monitoring-satellite-preview-token/token)"@github.com/gitpod-io/observability.git "${obsDir}"
-cd "${obsDir}/installer"
+GOBIN=$(pwd) go install github.com/gitpod-io/observability/installer@main
 
 tmpdir=$(mktemp -d)
 
-envsubst <"${SCRIPT_PATH}/manifests/monitoring-satellite.yaml" | go run main.go render --output-split-files "${tmpdir}" --config -
+envsubst <"${SCRIPT_PATH}/manifests/monitoring-satellite.yaml" | ./installer render --output-split-files "${tmpdir}" --config -
 
 pushd "${tmpdir}"
 
