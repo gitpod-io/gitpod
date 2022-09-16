@@ -45,6 +45,7 @@ var runCmd = &cobra.Command{
 		srv, err := baseserver.New(grpcServerName,
 			baseserver.WithGRPC(&cfg.Service),
 			baseserver.WithHealthHandler(health),
+			baseserver.WithVersion(Version),
 		)
 		if err != nil {
 			log.WithError(err).Fatal("Cannot set up server.")
