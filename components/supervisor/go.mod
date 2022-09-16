@@ -50,6 +50,7 @@ require (
 	github.com/fatih/gomodifytags v1.14.0 // indirect
 	github.com/fatih/structtag v1.2.0 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
+	github.com/slok/go-http-metrics v0.10.0 // indirect
 	github.com/smartystreets/assertions v1.13.0 // indirect
 	golang.org/x/tools v0.1.5 // indirect
 )

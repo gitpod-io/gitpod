@@ -7,6 +7,7 @@ package baseserver_test
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
@@ -109,4 +110,24 @@ func TestServer_Metrics_gRPC(t *testing.T) {
 	count, err := testutil.GatherAndCount(registry, expected...)
 	require.NoError(t, err)
 	require.Equal(t, len(expected)*1, count, "expected 1 count for each metric")
+}
+
+func TestServer_Metrics_HTTP(t *testing.T) {
+	srv := baseserver.NewForTests(t, baseserver.WithHTTP(&baseserver.ServerConfiguration{
+		Address: fmt.Sprintf("localhost:%d", baseserver.MustFindFreePort(t)),
+	}))
+
+	// At this point, there must be metrics registry available for use
+	require.NotNil(t, srv.MetricsRegistry())
+	// Let's start our server up
+	baseserver.StartServerForTests(t, srv)
+
+	_, err := http.Get(fmt.Sprintf("%s/foo/bar", srv.HTTPAddress()))
+	require.NoError(t, err)
+
+	registry := srv.MetricsRegistry()
+
+	count, err := testutil.GatherAndCount(registry, "gitpod_http_request_duration_seconds", "gitpod_http_response_size_bytes", "gitpod_http_requests_inflight")
+	require.NoError(t, err)
+	require.Equal(t, 3, count, "expecting 1 count for each above metric")
 }

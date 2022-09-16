@@ -22,6 +22,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
+	http_metrics "github.com/slok/go-http-metrics/metrics/prometheus"
+	"github.com/slok/go-http-metrics/middleware"
+	"github.com/slok/go-http-metrics/middleware/std"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -42,7 +45,12 @@ func New(name string, opts ...Option) (*Server, error) {
 	server.builtinServices = newBuiltinServices(server)
 
 	server.httpMux = http.NewServeMux()
-	server.http = &http.Server{Handler: server.httpMux}
+	server.http = &http.Server{Handler: std.Handler("", middleware.New(middleware.Config{
+		Recorder: http_metrics.NewRecorder(http_metrics.Config{
+			Prefix:   "gitpod",
+			Registry: server.MetricsRegistry(),
+		}),
+	}), server.httpMux)}
 
 	err = server.initializeMetrics()
 	if err != nil {
