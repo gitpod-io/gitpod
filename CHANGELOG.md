@@ -1,6 +1,8 @@
 # Change Log
 
 ## September 2022
+- Update IntelliJ IDEA IDE image to version 222.4167.29. ([#12994](https://github.com/gitpod-io/gitpod/pull/12994)) - [@roboquat](https://github.com/roboquat)
+- Dismiss Usage Limit notifications automatically. ([#12670](https://github.com/gitpod-io/gitpod/pull/12670)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - No longer attaches `arn:aws:iam::aws:policy/AmazonS3FullAccess` to the IAM user accounts created in our AWS terraform reference infrastructure. This level of access is no longer required now that one can provide an S3 bucket to be used for object storage. ([#12965](https://github.com/gitpod-io/gitpod/pull/12965)) - [@mrzarquon](https://github.com/mrzarquon)
 - Add beta notice and label on usage ([#12412](https://github.com/gitpod-io/gitpod/pull/12412)) - [@gtsiolis](https://github.com/gtsiolis)
 - Update stable Browser Code to `1.71.1` release ([#12929](https://github.com/gitpod-io/gitpod/pull/12929)) - [@mustard-mh](https://github.com/mustard-mh)
