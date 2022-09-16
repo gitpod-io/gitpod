@@ -18,6 +18,10 @@ service BillingService {
   // having been invoiced.
   rpc FinalizeInvoice(FinalizeInvoiceRequest) returns (FinalizeInvoiceResponse) {};
 
+  // CancelSubscription cancels a stripe subscription in our system
+  // Called by a stripe webhook
+  rpc CancelSubscription(CancelSubscriptionRequest) returns (CancelSubscriptionResponse) {};
+
   // SetBilledSession marks an instance as billed with a billing system
   rpc SetBilledSession(SetBilledSessionRequest) returns (SetBilledSessionResponse) {};
 }
@@ -45,6 +49,13 @@ message FinalizeInvoiceRequest {
 }
 
 message FinalizeInvoiceResponse {
+}
+
+message CancelSubscriptionRequest {
+  string subscription_id = 1;
+}
+
+message CancelSubscriptionResponse {
 }
 
 enum System {

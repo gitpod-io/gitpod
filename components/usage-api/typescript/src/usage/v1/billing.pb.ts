@@ -90,6 +90,13 @@ export interface FinalizeInvoiceRequest {
 export interface FinalizeInvoiceResponse {
 }
 
+export interface CancelSubscriptionRequest {
+  subscriptionId: string;
+}
+
+export interface CancelSubscriptionResponse {
+}
+
 /**
  * If there are two billable sessions for this instance ID,
  * the second one's "from" will be the first one's "to"
@@ -401,6 +408,92 @@ export const FinalizeInvoiceResponse = {
   },
 };
 
+function createBaseCancelSubscriptionRequest(): CancelSubscriptionRequest {
+  return { subscriptionId: "" };
+}
+
+export const CancelSubscriptionRequest = {
+  encode(message: CancelSubscriptionRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.subscriptionId !== "") {
+      writer.uint32(10).string(message.subscriptionId);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CancelSubscriptionRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCancelSubscriptionRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.subscriptionId = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CancelSubscriptionRequest {
+    return { subscriptionId: isSet(object.subscriptionId) ? String(object.subscriptionId) : "" };
+  },
+
+  toJSON(message: CancelSubscriptionRequest): unknown {
+    const obj: any = {};
+    message.subscriptionId !== undefined && (obj.subscriptionId = message.subscriptionId);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<CancelSubscriptionRequest>): CancelSubscriptionRequest {
+    const message = createBaseCancelSubscriptionRequest();
+    message.subscriptionId = object.subscriptionId ?? "";
+    return message;
+  },
+};
+
+function createBaseCancelSubscriptionResponse(): CancelSubscriptionResponse {
+  return {};
+}
+
+export const CancelSubscriptionResponse = {
+  encode(_: CancelSubscriptionResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CancelSubscriptionResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCancelSubscriptionResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): CancelSubscriptionResponse {
+    return {};
+  },
+
+  toJSON(_: CancelSubscriptionResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial(_: DeepPartial<CancelSubscriptionResponse>): CancelSubscriptionResponse {
+    const message = createBaseCancelSubscriptionResponse();
+    return message;
+  },
+};
+
 function createBaseSetBilledSessionRequest(): SetBilledSessionRequest {
   return { instanceId: "", from: undefined, system: System.SYSTEM_UNKNOWN };
 }
@@ -545,6 +638,18 @@ export const BillingServiceDefinition = {
       responseStream: false,
       options: {},
     },
+    /**
+     * CancelSubscription cancels a stripe subscription in our system
+     * Called by a stripe webhook
+     */
+    cancelSubscription: {
+      name: "CancelSubscription",
+      requestType: CancelSubscriptionRequest,
+      requestStream: false,
+      responseType: CancelSubscriptionResponse,
+      responseStream: false,
+      options: {},
+    },
     /** SetBilledSession marks an instance as billed with a billing system */
     setBilledSession: {
       name: "SetBilledSession",
@@ -579,6 +684,14 @@ export interface BillingServiceServiceImplementation<CallContextExt = {}> {
     request: FinalizeInvoiceRequest,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<FinalizeInvoiceResponse>>;
+  /**
+   * CancelSubscription cancels a stripe subscription in our system
+   * Called by a stripe webhook
+   */
+  cancelSubscription(
+    request: CancelSubscriptionRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<CancelSubscriptionResponse>>;
   /** SetBilledSession marks an instance as billed with a billing system */
   setBilledSession(
     request: SetBilledSessionRequest,
@@ -608,6 +721,14 @@ export interface BillingServiceClient<CallOptionsExt = {}> {
     request: DeepPartial<FinalizeInvoiceRequest>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<FinalizeInvoiceResponse>;
+  /**
+   * CancelSubscription cancels a stripe subscription in our system
+   * Called by a stripe webhook
+   */
+  cancelSubscription(
+    request: DeepPartial<CancelSubscriptionRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<CancelSubscriptionResponse>;
   /** SetBilledSession marks an instance as billed with a billing system */
   setBilledSession(
     request: DeepPartial<SetBilledSessionRequest>,
