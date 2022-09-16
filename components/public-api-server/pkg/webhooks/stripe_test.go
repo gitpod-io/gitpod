@@ -8,10 +8,11 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"github.com/stripe/stripe-go/v72/webhook"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/stripe/stripe-go/v72/webhook"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice"
@@ -22,9 +23,10 @@ import (
 
 // https://stripe.com/docs/api/events/types
 const (
-	invoiceUpdatedEventType   = "invoice.updated"
-	invoiceFinalizedEventType = "invoice.finalized"
-	customerCreatedEventType  = "customer.created"
+	invoiceUpdatedEventType     = "invoice.updated"
+	invoiceFinalizedEventType   = "invoice.finalized"
+	customerCreatedEventType    = "customer.created"
+	customerSubscriptionDeleted = "customer.subscription.deleted"
 )
 
 const (
@@ -81,6 +83,10 @@ func TestWebhookIgnoresIrrelevantEvents(t *testing.T) {
 			ExpectedStatusCode: http.StatusOK,
 		},
 		{
+			EventType:          customerSubscriptionDeleted,
+			ExpectedStatusCode: http.StatusOK,
+		},
+		{
 			EventType:          invoiceUpdatedEventType,
 			ExpectedStatusCode: http.StatusBadRequest,
 		},
@@ -134,6 +140,26 @@ func TestWebhookInvokesFinalizeInvoiceRPC(t *testing.T) {
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
+func TestWebhookInvokesCancelSubscriptionRPC(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	m := mockbillingservice.NewMockInterface(ctrl)
+	m.EXPECT().CancelSubscription(gomock.Any(), gomock.Eq("in_1LUQi7GadRXm50o36jWK7ehs"))
+
+	srv := baseServerWithStripeWebhook(t, m)
+
+	url := fmt.Sprintf("%s%s", srv.HTTPAddress(), "/webhook")
+
+	payload := payloadForStripeEvent(t, customerSubscriptionDeleted)
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(payload))
+	require.NoError(t, err)
+
+	req.Header.Set("Stripe-Signature", generateHeader(payload, testWebhookSecret))
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
 func baseServerWithStripeWebhook(t *testing.T, billingService billingservice.Interface) *baseserver.Server {
 	t.Helper()
 
@@ -150,19 +176,14 @@ func baseServerWithStripeWebhook(t *testing.T, billingService billingservice.Int
 func payloadForStripeEvent(t *testing.T, eventType string) []byte {
 	t.Helper()
 
-	if eventType != invoiceFinalizedEventType {
-		return []byte(`{}`)
-	}
-	return []byte(`
-{
-  "data": {
-    "object": {
-      "id": "in_1LUQi7GadRXm50o36jWK7ehs"
-    }
-  },
-  "type": "invoice.finalized"
-}
-`)
+	return []byte(`{
+			"data": {
+				"object": {
+				  "id": "in_1LUQi7GadRXm50o36jWK7ehs"
+				}
+			  },
+			  "type": "` + eventType + `"
+		}`)
 }
 
 func generateHeader(payload []byte, secret string) string {

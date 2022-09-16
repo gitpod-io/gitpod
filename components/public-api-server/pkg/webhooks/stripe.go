@@ -5,11 +5,12 @@
 package webhooks
 
 import (
+	"io"
+	"net/http"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice"
 	"github.com/stripe/stripe-go/v72/webhook"
-	"io"
-	"net/http"
 )
 
 const maxBodyBytes = int64(65536)
@@ -56,22 +57,36 @@ func (h *webhookHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if event.Type != "invoice.finalized" {
+	switch event.Type {
+	case "invoice.finalized":
+		invoiceId, ok := event.Data.Object["id"].(string)
+		if !ok {
+			log.Error("failed to find invoice id in Stripe event payload")
+			w.WriteHeader(http.StatusBadRequest)
+		}
+
+		err = h.billingService.FinalizeInvoice(req.Context(), invoiceId)
+		if err != nil {
+			log.WithError(err).Error("Failed to finalize invoice")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	case "customer.subscription.deleted":
+		subscriptionId, ok := event.Data.Object["id"].(string)
+		if !ok {
+			log.Error("failed to find subscriptionId id in Stripe event payload")
+			w.WriteHeader(http.StatusBadRequest)
+		}
+		err = h.billingService.CancelSubscription(req.Context(), subscriptionId)
+		if err != nil {
+			log.WithError(err).Error("Failed to cancel subscription")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	default:
 		log.Errorf("Unexpected Stripe event type: %s", event.Type)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	invoiceId, ok := event.Data.Object["id"].(string)
-	if !ok {
-		log.Error("failed to find invoice id in Stripe event payload")
-		w.WriteHeader(http.StatusBadRequest)
-	}
-
-	err = h.billingService.FinalizeInvoice(req.Context(), invoiceId)
-	if err != nil {
-		log.WithError(err).Error("Failed to finalize invoice")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
 }
