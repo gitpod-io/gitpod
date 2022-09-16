@@ -58,7 +58,7 @@ spec:
           required: true
           value: s3.amazonaws.com
           when: '{{repl and (ConfigOptionEquals "reg_incluster" "1") (ConfigOptionEquals "reg_incluster_storage" "s3") }}'
-          help_text: The endpoint used to connect to the S3 storage.
+          help_text: The endpoint used to connect to the S3 storage. If not using the `us-east-1` region, this should be `s3.<region>.amazonaws.com`.
 
         - name: reg_incluster_storage_s3_bucketname
           title: S3 bucket name
