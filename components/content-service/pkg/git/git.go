@@ -328,7 +328,7 @@ func (c *Client) Clone(ctx context.Context) (err error) {
 		log.WithError(err).Error("cannot create clone location")
 	}
 
-	args := []string{"--depth=1", "--no-single-branch", c.RemoteURI}
+	args := []string{"--depth=1", c.RemoteURI}
 
 	for key, value := range c.Config {
 		args = append(args, "--config")
