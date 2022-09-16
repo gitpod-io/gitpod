@@ -64,19 +64,20 @@ func (s *BillingService) FinalizeInvoice(ctx context.Context, in *v1.FinalizeInv
 		return nil, status.Errorf(codes.InvalidArgument, "Missing InvoiceID")
 	}
 
-	invoice, err := s.stripeClient.GetInvoice(ctx, in.GetInvoiceId())
+	invoice, err := s.stripeClient.GetInvoiceWithCustomer(ctx, in.GetInvoiceId())
 	if err != nil {
 		logger.WithError(err).Error("Failed to retrieve invoice from Stripe.")
 		return nil, status.Errorf(codes.NotFound, "Failed to get invoice with ID %s: %s", in.GetInvoiceId(), err.Error())
 	}
 
-	subscription := invoice.Subscription
-	if subscription == nil {
-		logger.Error("No subscription information available for invoice.")
-		return nil, status.Errorf(codes.Internal, "Failed to retrieve subscription details from invoice.")
+	customer := invoice.Customer
+	if customer == nil {
+		logger.Error("No customer information available for invoice.")
+		return nil, status.Errorf(codes.Internal, "Failed to retrieve customer details from invoice.")
 	}
+	logger = logger.WithField("stripe_customer", customer.ID).WithField("stripe_customer_name", customer.Name)
 
-	teamID, found := subscription.Metadata[stripe.AttributionIDMetadataKey]
+	teamID, found := customer.Metadata[stripe.AttributionIDMetadataKey]
 	if !found {
 		logger.Error("Failed to find teamID from subscription metadata.")
 		return nil, status.Errorf(codes.Internal, "Failed to extra teamID from Stripe subscription.")
