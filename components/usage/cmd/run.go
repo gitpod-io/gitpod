@@ -37,7 +37,7 @@ func run() *cobra.Command {
 				log.WithError(err).Fatal("Failed to get config. Did you specify --config correctly?")
 			}
 
-			err = server.Start(cfg)
+			err = server.Start(cfg, Version)
 			if err != nil {
 				log.WithError(err).Fatal("Failed to start usage server.")
 			}

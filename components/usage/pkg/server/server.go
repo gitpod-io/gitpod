@@ -40,7 +40,7 @@ type Config struct {
 	DefaultSpendingLimit db.DefaultSpendingLimit `json:"defaultSpendingLimit"`
 }
 
-func Start(cfg Config) error {
+func Start(cfg Config, version string) error {
 	log.WithField("config", cfg).Info("Starting usage component.")
 
 	conn, err := db.Connect(db.ConnectionParams{
@@ -53,7 +53,9 @@ func Start(cfg Config) error {
 		return fmt.Errorf("failed to establish database connection: %w", err)
 	}
 
-	var serverOpts []baseserver.Option
+	serverOpts := []baseserver.Option{
+		baseserver.WithVersion(version),
+	}
 	if cfg.Server != nil {
 		serverOpts = append(serverOpts, baseserver.WithConfig(cfg.Server))
 	}
