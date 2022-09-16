@@ -71,7 +71,8 @@ RUN yarn --cwd extensions compile \
 # Check pkg/blobserve/blobserve.go, `inlineVars` method
 RUN cp /vscode-web/out/vs/gitpod/browser/workbench/workbench.html /vscode-web/index.html \
     && cp /vscode-web/out/vs/gitpod/browser/workbench/callback.html /vscode-web/callback.html \
-    && sed -i -e 's#static/##g' /vscode-web/index.html
+    && sed -i -e 's#static/##g' /vscode-web/index.html \
+    && sed -i -e "s/{{VERSION}}/$CODE_QUALITY-$CODE_COMMIT/g" /vscode-web/index.html
 
 # cli config: alises to gitpod-code
 RUN cp /vscode-reh-linux-x64/bin/remote-cli/gitpod-code /vscode-reh-linux-x64/bin/remote-cli/code \
