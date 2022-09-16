@@ -32,6 +32,7 @@ func TestOptions(t *testing.T) {
 		WithMetricsRegistry(registry),
 		WithHealthHandler(health),
 		WithGRPCHealthService(grpcHealthService),
+		WithVersion("foo-bar"),
 	}
 	actual, err := evaluateOptions(defaultOptions(), opts...)
 	require.NoError(t, err)
@@ -48,6 +49,7 @@ func TestOptions(t *testing.T) {
 		metricsRegistry: registry,
 		healthHandler:   health,
 		grpcHealthCheck: grpcHealthService,
+		version:         "foo-bar",
 	}
 
 	require.Equal(t, expected, actual)

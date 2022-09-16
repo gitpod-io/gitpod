@@ -25,7 +25,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func Start(logger *logrus.Entry, cfg *config.Configuration) error {
+func Start(logger *logrus.Entry, version string, cfg *config.Configuration) error {
 	logger.WithField("config", cfg).Info("Starting public-api.")
 
 	gitpodAPI, err := url.Parse(cfg.GitpodServiceURL)
@@ -39,6 +39,7 @@ func Start(logger *logrus.Entry, cfg *config.Configuration) error {
 		baseserver.WithLogger(logger),
 		baseserver.WithConfig(cfg.Server),
 		baseserver.WithMetricsRegistry(registry),
+		baseserver.WithVersion(version),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to initialize public api server: %w", err)

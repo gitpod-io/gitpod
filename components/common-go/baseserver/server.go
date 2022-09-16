@@ -320,6 +320,13 @@ func (s *Server) initializeMetrics() error {
 		return fmt.Errorf("failed to register process collectors: %w", err)
 	}
 
+	err = registerMetrics(s.MetricsRegistry())
+	if err != nil {
+		return fmt.Errorf("failed to register baseserver metrics: %w", err)
+	}
+
+	reportServerVersion(s.options.version)
+
 	return nil
 }
 

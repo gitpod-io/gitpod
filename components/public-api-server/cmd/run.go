@@ -21,7 +21,7 @@ var runCommand = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg := getConfig()
 
-		if err := server.Start(log.Log, cfg); err != nil {
+		if err := server.Start(log.Log, Version, cfg); err != nil {
 			log.WithError(err).Fatal("cannot start server")
 		}
 	},
