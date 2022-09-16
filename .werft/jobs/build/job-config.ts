@@ -186,6 +186,7 @@ export function parseWithIntegrationTests(werft: Werft, sliceID: string, value?:
     switch (value) {
         case null:
         case undefined:
+            werft.log(sliceID, "with-integration-tests was not set - will use 'skip'");
             return "skip";
         case "skip":
         case "all":
