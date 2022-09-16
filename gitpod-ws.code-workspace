@@ -23,6 +23,7 @@
         { "path": "components/ws-daemon" },
         { "path": "components/ws-manager" },
         { "path": "components/ws-proxy" },
+        { "path": "components/public-api-server" },
         { "path": "test" },
         { "path": "dev/blowtorch" },
         { "path": "dev/changelog" },
