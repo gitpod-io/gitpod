@@ -64,6 +64,7 @@ func redactArray(data *[]interface{}) {
 
 func redactObject(data *map[string]interface{}) {
 	var forceRedact bool
+loop:
 	for k, v := range *data {
 		for _, prohibited := range redactedFields {
 			if strings.Contains(strings.ToLower(fmt.Sprintf("%v", k)), prohibited) {
@@ -81,8 +82,9 @@ func redactObject(data *map[string]interface{}) {
 			was := (*data)[k]
 			(*data)[k] = redactValue(&v)
 			if !reflect.DeepEqual(was, (*data)[k]) {
-				// force the rest values to redact
+				// force all the values redacted
 				forceRedact = true
+				goto loop
 			}
 		}
 	}
