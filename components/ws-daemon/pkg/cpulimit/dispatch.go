@@ -112,6 +112,7 @@ func (d *DispatchListener) source(context.Context) ([]Workspace, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
+	log.Warn("Start source")
 	res := make([]Workspace, 0, len(d.workspaces))
 	d.workspacesCPUTimeVec.Reset()
 	for id, w := range d.workspaces {
@@ -121,6 +122,7 @@ func (d *DispatchListener) source(context.Context) ([]Workspace, error) {
 				log.WithFields(w.OWI).WithError(err).Warn("cannot read CPU usage")
 			}
 
+			log.WithError(err).WithFields(w.OWI).Warn("Failed to get usage")
 			continue
 		}
 
@@ -155,8 +157,10 @@ func (d *DispatchListener) sink(id string, limit Bandwidth, burst bool) {
 	ws, ok := d.workspaces[id]
 	if !ok {
 		// this can happen if the workspace has gone away inbetween a distributor cycle
+		log.Warnf("not found workspace: %s", id)
 		return
 	}
+	log.WithFields(ws.OWI).Warnf("Hit in sink { limit: %v, burst: %v}", limit, burst)
 
 	d.workspacesBurstCounterVec.WithLabelValues("none").Inc()
 
@@ -171,6 +175,7 @@ func (d *DispatchListener) sink(id string, limit Bandwidth, burst bool) {
 
 // WorkspaceAdded starts new governer
 func (d *DispatchListener) WorkspaceAdded(ctx context.Context, ws *dispatch.Workspace) error {
+	log.WithFields(ws.OWI()).Warn("Try to get d.mu.Lock()")
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -189,6 +194,7 @@ func (d *DispatchListener) WorkspaceAdded(ctx context.Context, ws *dispatch.Work
 		return xerrors.Errorf("cannot start CFS controller: %w", err)
 	}
 
+	log.WithFields(ws.OWI()).Warn("Added to d.workspaces")
 	d.workspaces[ws.InstanceID] = &workspace{
 		CFS:         controller,
 		OWI:         ws.OWI(),
@@ -199,6 +205,7 @@ func (d *DispatchListener) WorkspaceAdded(ctx context.Context, ws *dispatch.Work
 
 		d.mu.Lock()
 		defer d.mu.Unlock()
+		log.WithFields(ws.OWI()).Warn("Deleted from d.workspaces")
 		delete(d.workspaces, ws.InstanceID)
 		d.workspacesRemovedCounterVec.WithLabelValues("none").Inc()
 	}()

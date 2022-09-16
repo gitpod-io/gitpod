@@ -100,6 +100,7 @@ func (d *Distributor) Run(ctx context.Context, dt time.Duration) {
 
 	go func() {
 		for range t.C {
+			log.Warn("Start Tick")
 			_, err := d.Tick(dt)
 			if err != nil && d.Log != nil {
 				d.Log.WithError(err).Warn("cannot advance CPU limit distributor")
