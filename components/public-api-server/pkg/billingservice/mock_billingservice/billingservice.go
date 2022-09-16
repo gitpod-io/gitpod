@@ -51,3 +51,17 @@ func (mr *MockInterfaceMockRecorder) FinalizeInvoice(ctx, invoiceId interface{})
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FinalizeInvoice", reflect.TypeOf((*MockInterface)(nil).FinalizeInvoice), ctx, invoiceId)
 }
+
+// CancelSubscription mocks base method.
+func (m *MockInterface) CancelSubscription(ctx context.Context, subscriptionId string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CancelSubscription", ctx, subscriptionId)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CancelSubscription indicates an expected call of CancelSubscription.
+func (mr *MockInterfaceMockRecorder) CancelSubscription(ctx, subscriptionId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CancelSubscription", reflect.TypeOf((*MockInterface)(nil).CancelSubscription), ctx, subscriptionId)
+}

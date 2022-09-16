@@ -8,13 +8,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gitpod-io/gitpod/usage-api/v1"
+	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Interface interface {
 	FinalizeInvoice(ctx context.Context, invoiceId string) error
+	CancelSubscription(ctx context.Context, subscriptionId string) error
 }
 
 type Client struct {
@@ -32,6 +33,15 @@ func New(billingServiceAddress string) (*Client, error) {
 
 func (c *Client) FinalizeInvoice(ctx context.Context, invoiceId string) error {
 	_, err := c.b.FinalizeInvoice(ctx, &v1.FinalizeInvoiceRequest{InvoiceId: invoiceId})
+	if err != nil {
+		return fmt.Errorf("failed RPC to billing service: %s", err)
+	}
+
+	return nil
+}
+
+func (c *Client) CancelSubscription(ctx context.Context, subscriptionId string) error {
+	_, err := c.b.CancelSubscription(ctx, &v1.CancelSubscriptionRequest{SubscriptionId: subscriptionId})
 	if err != nil {
 		return fmt.Errorf("failed RPC to billing service: %s", err)
 	}

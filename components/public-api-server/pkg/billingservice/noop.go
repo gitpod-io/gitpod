@@ -11,3 +11,7 @@ type NoOpClient struct{}
 func (c *NoOpClient) FinalizeInvoice(ctx context.Context, invoiceId string) error {
 	return nil
 }
+
+func (c *NoOpClient) CancelSubscription(ctx context.Context, subscriptionId string) error {
+	return nil
+}
