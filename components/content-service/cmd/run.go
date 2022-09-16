@@ -22,6 +22,7 @@ var runCmd = &cobra.Command{
 
 		srv, err := baseserver.New("content-service",
 			baseserver.WithGRPC(&cfg.Service),
+			baseserver.WithVersion(Version),
 		)
 		if err != nil {
 			log.WithError(err).Fatal("Failed to create server.")
