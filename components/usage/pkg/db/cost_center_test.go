@@ -83,20 +83,28 @@ func TestCostCenterManager_UpdateCostCenter(t *testing.T) {
 func TestSaveCostCenterMovedToStripe(t *testing.T) {
 	conn := dbtest.ConnectForTests(t)
 	mnr := db.NewCostCenterManager(conn, db.DefaultSpendingLimit{
-		ForTeams: 0,
+		ForTeams: 20,
 		ForUsers: 500,
 	})
 	team := db.NewTeamAttributionID(uuid.New().String())
 	cleanUp(t, conn, team)
 	teamCC, err := mnr.GetOrCreateCostCenter(context.Background(), team)
 	require.NoError(t, err)
-	require.Equal(t, int32(0), teamCC.SpendingLimit)
+	require.Equal(t, int32(20), teamCC.SpendingLimit)
 
 	teamCC.BillingStrategy = db.CostCenter_Stripe
-	newTeamCC, err := mnr.UpdateCostCenter(context.Background(), teamCC)
+	teamCC.SpendingLimit = 400050
+	teamCC, err = mnr.UpdateCostCenter(context.Background(), teamCC)
 	require.NoError(t, err)
-	require.Equal(t, db.CostCenter_Stripe, newTeamCC.BillingStrategy)
-	require.Equal(t, newTeamCC.CreationTime.Time().AddDate(0, 1, 0).Truncate(time.Second), newTeamCC.NextBillingTime.Time().Truncate(time.Second))
+	require.Equal(t, db.CostCenter_Stripe, teamCC.BillingStrategy)
+	require.Equal(t, db.VarcharTime{}, teamCC.NextBillingTime)
+	require.Equal(t, int32(400050), teamCC.SpendingLimit)
+
+	teamCC.BillingStrategy = db.CostCenter_Other
+	teamCC, err = mnr.UpdateCostCenter(context.Background(), teamCC)
+	require.NoError(t, err)
+	require.Equal(t, teamCC.CreationTime.Time().AddDate(0, 1, 0).Truncate(time.Second), teamCC.NextBillingTime.Time().Truncate(time.Second))
+	require.Equal(t, int32(20), teamCC.SpendingLimit)
 }
 
 func cleanUp(t *testing.T, conn *gorm.DB, attributionIds ...db.AttributionID) {

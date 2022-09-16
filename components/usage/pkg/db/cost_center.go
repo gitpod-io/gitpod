@@ -59,6 +59,7 @@ type CostCenterManager struct {
 // This method creates a codt center and stores it in the DB if there is no preexisting one.
 func (c *CostCenterManager) GetOrCreateCostCenter(ctx context.Context, attributionID AttributionID) (CostCenter, error) {
 	logger := log.WithField("attributionId", attributionID)
+	logger.Info("Get or create CostCenter")
 
 	result, err := getCostCenter(ctx, c.conn, attributionID)
 	if err != nil {
@@ -112,13 +113,15 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, costCenter Cos
 
 	now := time.Now()
 
-	// we don't allow setting the creationTime or the nextBillingTime from outside
-	costCenter.CreationTime = existingCostCenter.CreationTime
+	// we always update the creationTime
+	costCenter.CreationTime = NewVarcharTime(now)
+	// we don't allow setting the nextBillingTime from outside
 	costCenter.NextBillingTime = existingCostCenter.NextBillingTime
 
 	// Do we have a billing strategy update?
 	if costCenter.BillingStrategy != existingCostCenter.BillingStrategy {
-		if existingCostCenter.BillingStrategy == CostCenter_Other {
+		switch costCenter.BillingStrategy {
+		case CostCenter_Stripe:
 			// moving to stripe -> let's run a finalization
 			finalizationUsage, err := c.ComputeInvoiceUsageRecord(ctx, costCenter.ID)
 			if err != nil {
@@ -130,12 +133,22 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, costCenter Cos
 					return CostCenter{}, err
 				}
 			}
+			// we don't manage stripe billing cycle
+			costCenter.NextBillingTime = VarcharTime{}
+
+		case CostCenter_Other:
+			// cancelled from stripe reset the spending limit
+			if costCenter.ID.IsEntity(AttributionEntity_Team) {
+				costCenter.SpendingLimit = c.cfg.ForTeams
+			} else {
+				costCenter.SpendingLimit = c.cfg.ForUsers
+			}
+			// see you next month
+			costCenter.NextBillingTime = NewVarcharTime(now.AddDate(0, 1, 0))
 		}
-		c.updateNextBillingTime(&costCenter, now)
 	}
 
-	// we update the creationTime
-	costCenter.CreationTime = NewVarcharTime(now)
+	log.WithField("cost_center", costCenter).Info("saving cost center.")
 	db := c.conn.Save(&costCenter)
 	if db.Error != nil {
 		return CostCenter{}, fmt.Errorf("failed to save cost center for attributionID %s: %w", costCenter.ID, db.Error)
@@ -162,9 +175,4 @@ func (c *CostCenterManager) ComputeInvoiceUsageRecord(ctx context.Context, attri
 		Kind:          InvoiceUsageKind,
 		Draft:         false,
 	}, nil
-}
-
-func (c *CostCenterManager) updateNextBillingTime(costCenter *CostCenter, now time.Time) {
-	nextMonth := NewVarcharTime(time.Now().AddDate(0, 1, 0))
-	costCenter.NextBillingTime = nextMonth
 }

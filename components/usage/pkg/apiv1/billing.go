@@ -22,16 +22,18 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewBillingService(stripeClient *stripe.Client, conn *gorm.DB) *BillingService {
+func NewBillingService(stripeClient *stripe.Client, conn *gorm.DB, ccManager *db.CostCenterManager) *BillingService {
 	return &BillingService{
 		stripeClient: stripeClient,
 		conn:         conn,
+		ccManager:    ccManager,
 	}
 }
 
 type BillingService struct {
 	conn         *gorm.DB
 	stripeClient *stripe.Client
+	ccManager    *db.CostCenterManager
 
 	v1.UnimplementedBillingServiceServer
 }
@@ -43,8 +45,20 @@ func (s *BillingService) ReconcileInvoices(ctx context.Context, in *v1.Reconcile
 		return nil, status.Errorf(codes.Internal, "Failed to reconcile invoices.")
 	}
 
-	creditSummaryForTeams := map[db.AttributionID]int64{}
+	//TODO (se) make it one query
+	stripeBalances := []db.Balance{}
 	for _, balance := range balances {
+		costCenter, err := s.ccManager.GetOrCreateCostCenter(ctx, balance.AttributionID)
+		if err != nil {
+			return nil, err
+		}
+		if costCenter.BillingStrategy == db.CostCenter_Stripe {
+			stripeBalances = append(stripeBalances, balance)
+		}
+	}
+
+	creditSummaryForTeams := map[db.AttributionID]int64{}
+	for _, balance := range stripeBalances {
 		creditSummaryForTeams[balance.AttributionID] = int64(math.Ceil(balance.CreditCents.ToCredits()))
 	}
 
@@ -70,22 +84,11 @@ func (s *BillingService) FinalizeInvoice(ctx context.Context, in *v1.FinalizeInv
 		return nil, status.Errorf(codes.NotFound, "Failed to get invoice with ID %s: %s", in.GetInvoiceId(), err.Error())
 	}
 
-	customer := invoice.Customer
-	if customer == nil {
-		logger.Error("No customer information available for invoice.")
-		return nil, status.Errorf(codes.Internal, "Failed to retrieve customer details from invoice.")
+	attributionID, err := stripe.GetAttributionID(ctx, invoice.Customer)
+	if err != nil {
+		return nil, err
 	}
-	logger = logger.WithField("stripe_customer", customer.ID).WithField("stripe_customer_name", customer.Name)
-
-	teamID, found := customer.Metadata[stripe.AttributionIDMetadataKey]
-	if !found {
-		logger.Error("Failed to find teamID from subscription metadata.")
-		return nil, status.Errorf(codes.Internal, "Failed to extra teamID from Stripe subscription.")
-	}
-	logger = logger.WithField("team_id", teamID)
-
-	// To support individual `user`s, we'll need to also extract the `userId` from metadata here and handle separately.
-	attributionID := db.NewTeamAttributionID(teamID)
+	logger = logger.WithField("attributionID", attributionID)
 	finalizedAt := time.Unix(invoice.StatusTransitions.FinalizedAt, 0)
 
 	logger = logger.
@@ -125,6 +128,36 @@ func (s *BillingService) FinalizeInvoice(ctx context.Context, in *v1.FinalizeInv
 	logger.WithField("usage_id", usage.ID).Infof("Inserted usage record into database for %d credits against %s attribution", creditsOnInvoice, attributionID)
 
 	return &v1.FinalizeInvoiceResponse{}, nil
+}
+
+func (s *BillingService) CancelSubscription(ctx context.Context, in *v1.CancelSubscriptionRequest) (*v1.CancelSubscriptionResponse, error) {
+	logger := log.WithField("subscription_id", in.GetSubscriptionId())
+	logger.Infof("Subscription ended. Setting cost center back to free.")
+	if in.GetSubscriptionId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "subscriptionId is required")
+	}
+
+	subscription, err := s.stripeClient.GetSubscriptionWithCustomer(ctx, in.GetSubscriptionId())
+	if err != nil {
+		return nil, err
+	}
+
+	attributionID, err := stripe.GetAttributionID(ctx, subscription.Customer)
+	if err != nil {
+		return nil, err
+	}
+
+	costCenter, err := s.ccManager.GetOrCreateCostCenter(ctx, attributionID)
+	if err != nil {
+		return nil, err
+	}
+
+	costCenter.BillingStrategy = db.CostCenter_Other
+	_, err = s.ccManager.UpdateCostCenter(ctx, costCenter)
+	if err != nil {
+		return nil, err
+	}
+	return &v1.CancelSubscriptionResponse{}, nil
 }
 
 func (s *BillingService) GetUpcomingInvoice(ctx context.Context, in *v1.GetUpcomingInvoiceRequest) (*v1.GetUpcomingInvoiceResponse, error) {

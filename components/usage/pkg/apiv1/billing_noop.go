@@ -6,6 +6,7 @@ package apiv1
 
 import (
 	"context"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 )
@@ -18,4 +19,9 @@ type BillingServiceNoop struct {
 func (s *BillingServiceNoop) ReconcileInvoices(_ context.Context, _ *v1.ReconcileInvoicesRequest) (*v1.ReconcileInvoicesResponse, error) {
 	log.Infof("ReconcileInvoices RPC invoked in no-op mode, no invoices will be updated.")
 	return &v1.ReconcileInvoicesResponse{}, nil
+}
+
+func (s *BillingServiceNoop) CancelSubscription(ctx context.Context, in *v1.CancelSubscriptionRequest) (*v1.CancelSubscriptionResponse, error) {
+	log.Infof("ReconcileInvoices RPC invoked in no-op mode, no invoices will be updated.")
+	return &v1.CancelSubscriptionResponse{}, nil
 }
