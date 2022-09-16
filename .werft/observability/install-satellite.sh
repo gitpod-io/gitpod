@@ -25,10 +25,11 @@ if ! command -v envsubst; then
 fi
 
 GOBIN=$(pwd) go install github.com/gitpod-io/observability/installer@main
+mv installer observability-installer
 
 tmpdir=$(mktemp -d)
 
-envsubst <"${SCRIPT_PATH}/manifests/monitoring-satellite.yaml" | ./installer render --output-split-files "${tmpdir}" --config -
+envsubst <"${SCRIPT_PATH}/manifests/monitoring-satellite.yaml" | ./observability-installer render --output-split-files "${tmpdir}" --config -
 
 pushd "${tmpdir}"
 
@@ -43,3 +44,5 @@ kubectl --kubeconfig "${KUBE_PATH}" apply --server-side -f .
 kubectl --kubeconfig "${KUBE_PATH}" patch deployments.apps -n monitoring-satellite grafana --type=json -p="[{'op': 'remove', 'path': '/spec/template/spec/nodeSelector'}]"
 
 popd
+
+rm observability-installer
