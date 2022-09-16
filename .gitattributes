@@ -6,3 +6,5 @@ components/**/*.pb.go linguist-generated=true
 components/**/*_pb.js linguist-generated=true
 components/**/*_pb.ts linguist-generated=true
 components/**/*_pb.d.ts linguist-generated=true
+
+**/go.sum linguist-generated=true
