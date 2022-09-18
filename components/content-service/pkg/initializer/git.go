@@ -84,8 +84,16 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 					Err: fmt.Errorf("Access denied. Please check that Gitpod was given permission to access the repository"),
 				}
 			}
+
+			return err
 		}
-		return err
+
+		err = ws.Git(ctx, "config", "--replace-all", "remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*")
+		if err != nil {
+			log.WithError(err).WithField("location", ws.Location).Error("cannot configure fecth behavior")
+		}
+
+		return nil
 	}
 	onGitCloneFailure := func(e error, d time.Duration) {
 		if err := os.RemoveAll(ws.Location); err != nil {
