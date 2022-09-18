@@ -165,13 +165,13 @@ func (d *Distributor) Tick(dt time.Duration) (DistributorDebug, error) {
 	}
 
 	totalBandwidth, err := BandwithFromUsage(d.LastTickUsage, totalUsage, dt)
+	d.LastTickUsage = totalUsage
 	if err != nil {
 		return DistributorDebug{
 			BandwidthAvail: d.TotalBandwidth,
 			BandwidthUsed:  0,
 		}, err
 	}
-	d.LastTickUsage = totalUsage
 
 	// enforce limits
 	var burstBandwidth Bandwidth
