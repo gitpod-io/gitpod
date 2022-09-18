@@ -150,7 +150,7 @@ export class ConfigInferrer {
             this.addCommand(ctx.config, "go get", "init");
             this.addCommand(ctx.config, "go build ./...", "init");
             this.addCommand(ctx.config, "go test ./...", "init");
-            this.addCommand(ctx.config, "go run", "command");
+            this.addCommand(ctx.config, "go run .", "command");
             this.addExtension(ctx, "golang.go");
         }
     }
