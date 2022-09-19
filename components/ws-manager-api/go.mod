@@ -1,3 +1,3 @@
-module github.com/gitpod-io/generated_code_dependencies
+module github.com/gitpod-io/ws-manager/api
 
 go 1.18
