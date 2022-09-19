@@ -30,11 +30,9 @@ Does this PR require updates to the documentation at www.gitpod.io/docs?
 -->
 
 ## Werft options:
-<!--
-Optional annotations to add to the werft job.
 
-* with-preview - whether to create a preview environment for this PR
--->
+- [ ] /werft with-local-preview
+      If enabled this will build `install/preview`
 - [ ] /werft with-preview
 - [ ] /werft with-integration-tests=all
       Valid options are `all`, `workspace`, `webapp`, `ide`
