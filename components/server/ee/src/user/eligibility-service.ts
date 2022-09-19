@@ -94,8 +94,9 @@ export class EligibilityService {
                     logCtx,
                     `fetching the GitHub Education API failed with status ${rawResponse.status}: ${rawResponse.statusText}`,
                 );
+                return { student: false, faculty: false };
             }
-            const result: GitHubEducationPack = JSON.parse(await rawResponse.text());
+            const result: GitHubEducationPack = await rawResponse.json();
             if (result.student && result.faculty) {
                 // That violates the API contract: `student` and `faculty` need to be mutually exclusive
                 log.warn(
