@@ -82,6 +82,10 @@ public class GitpodServerLauncher {
             }
         }
         ClientContainer container = new ClientContainer(httpClient);
+
+        // stop container immediately since we close only when a session is already gone
+        container.setStopTimeout(0);
+
         // allow clientContainer to own httpClient (for start/stop lifecycle)
         container.getClient().addManaged(httpClient);
         container.start();
