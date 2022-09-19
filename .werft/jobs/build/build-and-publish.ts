@@ -56,6 +56,7 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
         REPLICATED_APP: process.env.REPLICATED_APP,
         npmPublishTrigger: publishToNpm ? Date.now().toString() : "false",
         jbMarketplacePublishTrigger: publishToJBMarketplace ? Date.now().toString() : "false",
+        withLocalPreview: jobConfig.withLocalPreview,
     }).map(([key, value]) => `-D${key}=${value}`).join(" ");
 
     const buildFlags = [

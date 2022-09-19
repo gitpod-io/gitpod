@@ -30,6 +30,7 @@ export interface JobConfig {
     withSelfHostedPreview: boolean;
     withObservability: boolean;
     withPayment: boolean;
+    withLocalPreview: boolean;
     workspaceFeatureFlags: string[];
     previewEnvironment: PreviewEnvironmentConfig;
     repository: Repository;
@@ -97,6 +98,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const withPayment = "with-payment" in buildConfig && !mainBuild;
     const withObservability = "with-observability" in buildConfig && !mainBuild;
     const withLargeVM = "with-large-vm" in buildConfig && !mainBuild;
+    const withLocalPreview = "with-local-preview" in buildConfig || mainBuild
     const repository: Repository = {
         owner: context.Repository.owner,
         repo: context.Repository.repo,
@@ -148,6 +150,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         withPayment,
         withUpgradeTests,
         withSelfHostedPreview,
+        withLocalPreview,
         workspaceFeatureFlags,
         withLargeVM,
     };
