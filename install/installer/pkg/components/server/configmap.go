@@ -194,7 +194,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ContentRetentionPeriodDays: 21,
 			ContentChunkLimit:          1000,
 			PurgeRetentionPeriodDays:   365 * 2,
-			PurgeChunkLimit:            1000,
+			PurgeChunkLimit:            5000,
 		},
 		EnableLocalApp: enableLocalApp,
 		AuthProviderConfigFiles: func() []string {

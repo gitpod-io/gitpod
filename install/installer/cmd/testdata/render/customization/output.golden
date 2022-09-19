@@ -5054,7 +5054,7 @@ data:
         "contentRetentionPeriodDays": 21,
         "contentChunkLimit": 1000,
         "purgeRetentionPeriodDays": 730,
-        "purgeChunkLimit": 1000
+        "purgeChunkLimit": 5000
       },
       "authProviderConfigFiles": [],
       "incrementalPrebuilds": {
@@ -9799,7 +9799,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: 57e826b6b832dd75e184270a64128d56d5122d45fa529acec7928ac6f640299d
+        gitpod.io/checksum_config: 1c78430996bb02767dd4d5056d285a4921476ee7d787fc03289271172e680e4f
         hello: world
       creationTimestamp: null
       labels:
