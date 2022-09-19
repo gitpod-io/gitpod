@@ -3,7 +3,7 @@
 To create a new migration file, run this command in the `gitpod-db` component directory:
 
 ```
-yarn typeorm migrations:create -n NameOfYourMigration
+yarn typeorm migration:create -n NameOfYourMigration
 leeway run components:update-license-header
 ```
 
