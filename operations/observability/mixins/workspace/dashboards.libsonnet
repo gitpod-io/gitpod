@@ -21,5 +21,6 @@
     'gitpod-node-ephemeral-storage.json': (import 'dashboards/ephemeral-storage.json'),
     'gitpod-node-problem-detector.json': (import 'dashboards/node-problem-detector.json'),
     'gitpod-network-limiting.json': (import 'dashboards/network-limiting.json')
+    'gitpod-component-image-builder.json': (import 'dashboards/components/image-builder.json'),
   },
 }
