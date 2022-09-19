@@ -66,3 +66,5 @@ use (
 	./components/ws-manager-bridge-api/go
 	./components/ws-proxy
 )
+
+replace github.com/seccomp/libseccomp-golang => github.com/gitpod-io/libseccomp-golang v0.9.2-0.20220203100026-45179215fdb1 // leeway indirect from components/workspacekit:lib
