@@ -29,8 +29,6 @@ type BillingServiceClient interface {
 	// ReconcileInvoices retrieves current credit balance and reflects it in billing system.
 	// Internal RPC, not intended for general consumption.
 	ReconcileInvoices(ctx context.Context, in *ReconcileInvoicesRequest, opts ...grpc.CallOption) (*ReconcileInvoicesResponse, error)
-	// GetUpcomingInvoice retrieves the latest invoice for a given query.
-	GetUpcomingInvoice(ctx context.Context, in *GetUpcomingInvoiceRequest, opts ...grpc.CallOption) (*GetUpcomingInvoiceResponse, error)
 	// FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
 	// having been invoiced.
 	FinalizeInvoice(ctx context.Context, in *FinalizeInvoiceRequest, opts ...grpc.CallOption) (*FinalizeInvoiceResponse, error)
@@ -50,15 +48,6 @@ func NewBillingServiceClient(cc grpc.ClientConnInterface) BillingServiceClient {
 func (c *billingServiceClient) ReconcileInvoices(ctx context.Context, in *ReconcileInvoicesRequest, opts ...grpc.CallOption) (*ReconcileInvoicesResponse, error) {
 	out := new(ReconcileInvoicesResponse)
 	err := c.cc.Invoke(ctx, "/usage.v1.BillingService/ReconcileInvoices", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *billingServiceClient) GetUpcomingInvoice(ctx context.Context, in *GetUpcomingInvoiceRequest, opts ...grpc.CallOption) (*GetUpcomingInvoiceResponse, error) {
-	out := new(GetUpcomingInvoiceResponse)
-	err := c.cc.Invoke(ctx, "/usage.v1.BillingService/GetUpcomingInvoice", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -90,8 +79,6 @@ type BillingServiceServer interface {
 	// ReconcileInvoices retrieves current credit balance and reflects it in billing system.
 	// Internal RPC, not intended for general consumption.
 	ReconcileInvoices(context.Context, *ReconcileInvoicesRequest) (*ReconcileInvoicesResponse, error)
-	// GetUpcomingInvoice retrieves the latest invoice for a given query.
-	GetUpcomingInvoice(context.Context, *GetUpcomingInvoiceRequest) (*GetUpcomingInvoiceResponse, error)
 	// FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
 	// having been invoiced.
 	FinalizeInvoice(context.Context, *FinalizeInvoiceRequest) (*FinalizeInvoiceResponse, error)
@@ -107,9 +94,6 @@ type UnimplementedBillingServiceServer struct {
 
 func (UnimplementedBillingServiceServer) ReconcileInvoices(context.Context, *ReconcileInvoicesRequest) (*ReconcileInvoicesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReconcileInvoices not implemented")
-}
-func (UnimplementedBillingServiceServer) GetUpcomingInvoice(context.Context, *GetUpcomingInvoiceRequest) (*GetUpcomingInvoiceResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUpcomingInvoice not implemented")
 }
 func (UnimplementedBillingServiceServer) FinalizeInvoice(context.Context, *FinalizeInvoiceRequest) (*FinalizeInvoiceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FinalizeInvoice not implemented")
@@ -144,24 +128,6 @@ func _BillingService_ReconcileInvoices_Handler(srv interface{}, ctx context.Cont
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BillingServiceServer).ReconcileInvoices(ctx, req.(*ReconcileInvoicesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _BillingService_GetUpcomingInvoice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUpcomingInvoiceRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BillingServiceServer).GetUpcomingInvoice(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/usage.v1.BillingService/GetUpcomingInvoice",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BillingServiceServer).GetUpcomingInvoice(ctx, req.(*GetUpcomingInvoiceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -212,10 +178,6 @@ var BillingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReconcileInvoices",
 			Handler:    _BillingService_ReconcileInvoices_Handler,
-		},
-		{
-			MethodName: "GetUpcomingInvoice",
-			Handler:    _BillingService_GetUpcomingInvoice_Handler,
 		},
 		{
 			MethodName: "FinalizeInvoice",

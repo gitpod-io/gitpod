@@ -5,7 +5,6 @@
  */
 
 /* eslint-disable */
-import * as Long from "long";
 import { CallContext, CallOptions } from "nice-grpc-common";
 import * as _m0 from "protobufjs/minimal";
 
@@ -15,18 +14,6 @@ export interface ReconcileInvoicesRequest {
 }
 
 export interface ReconcileInvoicesResponse {
-}
-
-export interface GetUpcomingInvoiceRequest {
-  teamId: string | undefined;
-  userId: string | undefined;
-}
-
-export interface GetUpcomingInvoiceResponse {
-  invoiceId: string;
-  currency: string;
-  amount: number;
-  credits: number;
 }
 
 export interface FinalizeInvoiceRequest {
@@ -117,140 +104,6 @@ export const ReconcileInvoicesResponse = {
 
   fromPartial(_: DeepPartial<ReconcileInvoicesResponse>): ReconcileInvoicesResponse {
     const message = createBaseReconcileInvoicesResponse();
-    return message;
-  },
-};
-
-function createBaseGetUpcomingInvoiceRequest(): GetUpcomingInvoiceRequest {
-  return { teamId: undefined, userId: undefined };
-}
-
-export const GetUpcomingInvoiceRequest = {
-  encode(message: GetUpcomingInvoiceRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.teamId !== undefined) {
-      writer.uint32(10).string(message.teamId);
-    }
-    if (message.userId !== undefined) {
-      writer.uint32(18).string(message.userId);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetUpcomingInvoiceRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetUpcomingInvoiceRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.teamId = reader.string();
-          break;
-        case 2:
-          message.userId = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): GetUpcomingInvoiceRequest {
-    return {
-      teamId: isSet(object.teamId) ? String(object.teamId) : undefined,
-      userId: isSet(object.userId) ? String(object.userId) : undefined,
-    };
-  },
-
-  toJSON(message: GetUpcomingInvoiceRequest): unknown {
-    const obj: any = {};
-    message.teamId !== undefined && (obj.teamId = message.teamId);
-    message.userId !== undefined && (obj.userId = message.userId);
-    return obj;
-  },
-
-  fromPartial(object: DeepPartial<GetUpcomingInvoiceRequest>): GetUpcomingInvoiceRequest {
-    const message = createBaseGetUpcomingInvoiceRequest();
-    message.teamId = object.teamId ?? undefined;
-    message.userId = object.userId ?? undefined;
-    return message;
-  },
-};
-
-function createBaseGetUpcomingInvoiceResponse(): GetUpcomingInvoiceResponse {
-  return { invoiceId: "", currency: "", amount: 0, credits: 0 };
-}
-
-export const GetUpcomingInvoiceResponse = {
-  encode(message: GetUpcomingInvoiceResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.invoiceId !== "") {
-      writer.uint32(10).string(message.invoiceId);
-    }
-    if (message.currency !== "") {
-      writer.uint32(18).string(message.currency);
-    }
-    if (message.amount !== 0) {
-      writer.uint32(25).double(message.amount);
-    }
-    if (message.credits !== 0) {
-      writer.uint32(32).int64(message.credits);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetUpcomingInvoiceResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetUpcomingInvoiceResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.invoiceId = reader.string();
-          break;
-        case 2:
-          message.currency = reader.string();
-          break;
-        case 3:
-          message.amount = reader.double();
-          break;
-        case 4:
-          message.credits = longToNumber(reader.int64() as Long);
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): GetUpcomingInvoiceResponse {
-    return {
-      invoiceId: isSet(object.invoiceId) ? String(object.invoiceId) : "",
-      currency: isSet(object.currency) ? String(object.currency) : "",
-      amount: isSet(object.amount) ? Number(object.amount) : 0,
-      credits: isSet(object.credits) ? Number(object.credits) : 0,
-    };
-  },
-
-  toJSON(message: GetUpcomingInvoiceResponse): unknown {
-    const obj: any = {};
-    message.invoiceId !== undefined && (obj.invoiceId = message.invoiceId);
-    message.currency !== undefined && (obj.currency = message.currency);
-    message.amount !== undefined && (obj.amount = message.amount);
-    message.credits !== undefined && (obj.credits = Math.round(message.credits));
-    return obj;
-  },
-
-  fromPartial(object: DeepPartial<GetUpcomingInvoiceResponse>): GetUpcomingInvoiceResponse {
-    const message = createBaseGetUpcomingInvoiceResponse();
-    message.invoiceId = object.invoiceId ?? "";
-    message.currency = object.currency ?? "";
-    message.amount = object.amount ?? 0;
-    message.credits = object.credits ?? 0;
     return message;
   },
 };
@@ -444,15 +297,6 @@ export const BillingServiceDefinition = {
       responseStream: false,
       options: {},
     },
-    /** GetUpcomingInvoice retrieves the latest invoice for a given query. */
-    getUpcomingInvoice: {
-      name: "GetUpcomingInvoice",
-      requestType: GetUpcomingInvoiceRequest,
-      requestStream: false,
-      responseType: GetUpcomingInvoiceResponse,
-      responseStream: false,
-      options: {},
-    },
     /**
      * FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
      * having been invoiced.
@@ -489,11 +333,6 @@ export interface BillingServiceServiceImplementation<CallContextExt = {}> {
     request: ReconcileInvoicesRequest,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<ReconcileInvoicesResponse>>;
-  /** GetUpcomingInvoice retrieves the latest invoice for a given query. */
-  getUpcomingInvoice(
-    request: GetUpcomingInvoiceRequest,
-    context: CallContext & CallContextExt,
-  ): Promise<DeepPartial<GetUpcomingInvoiceResponse>>;
   /**
    * FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
    * having been invoiced.
@@ -521,11 +360,6 @@ export interface BillingServiceClient<CallOptionsExt = {}> {
     request: DeepPartial<ReconcileInvoicesRequest>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<ReconcileInvoicesResponse>;
-  /** GetUpcomingInvoice retrieves the latest invoice for a given query. */
-  getUpcomingInvoice(
-    request: DeepPartial<GetUpcomingInvoiceRequest>,
-    options?: CallOptions & CallOptionsExt,
-  ): Promise<GetUpcomingInvoiceResponse>;
   /**
    * FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
    * having been invoiced.
@@ -553,45 +387,12 @@ export interface DataLoaders {
   getDataLoader<T>(identifier: string, constructorFn: () => T): T;
 }
 
-declare var self: any | undefined;
-declare var window: any | undefined;
-declare var global: any | undefined;
-var globalThis: any = (() => {
-  if (typeof globalThis !== "undefined") {
-    return globalThis;
-  }
-  if (typeof self !== "undefined") {
-    return self;
-  }
-  if (typeof window !== "undefined") {
-    return window;
-  }
-  if (typeof global !== "undefined") {
-    return global;
-  }
-  throw "Unable to locate global object";
-})();
-
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
 export type DeepPartial<T> = T extends Builtin ? T
   : T extends Array<infer U> ? Array<DeepPartial<U>> : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
   : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
-
-function longToNumber(long: Long): number {
-  if (long.gt(Number.MAX_SAFE_INTEGER)) {
-    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
-  }
-  return long.toNumber();
-}
-
-// If you get a compile-error about 'Constructor<Long> and ... have no overlap',
-// add '--ts_proto_opt=esModuleInterop=true' as a flag when calling 'protoc'.
-if (_m0.util.Long !== Long) {
-  _m0.util.Long = Long as any;
-  _m0.configure();
-}
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;
