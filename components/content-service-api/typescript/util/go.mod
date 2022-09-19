@@ -10,15 +10,17 @@ require (
 )
 
 require (
+	github.com/alecthomas/repr v0.0.0-20201120212035-bb82daffcca2 // indirect
+	github.com/go-test/deep v1.0.5 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/iancoleman/strcase v0.0.0-20180726023541-3605ed457bf7 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.0.2 // indirect
-	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
-	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
-	golang.org/x/text v0.3.7 // indirect
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
-	google.golang.org/genproto v0.0.0-20201019141844-1ed22bb0c154 // indirect
-	google.golang.org/grpc v1.45.0 // indirect
-	google.golang.org/protobuf v1.28.0 // indirect
+	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799 // indirect
+	golang.org/x/net v0.0.0-20220812174116-3211cb980234 // indirect
+	golang.org/x/sys v0.0.0-20220919091848-fb04ddd9f9c8 // indirect
+	golang.org/x/text v0.3.8-0.20211004125949-5bd84dd9b33b // indirect
+	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
+	google.golang.org/genproto v0.0.0-20220617124728-180714bec0ad // indirect
+	google.golang.org/grpc v1.49.0 // indirect
+	google.golang.org/protobuf v1.28.1 // indirect
 )

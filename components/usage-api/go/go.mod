@@ -55,14 +55,15 @@ replace k8s.io/mount-utils => k8s.io/mount-utils v0.24.4 // leeway indirect from
 replace k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.24.4 // leeway indirect from components/common-go:lib
 
 require (
-	google.golang.org/grpc v1.47.0
-	google.golang.org/protobuf v1.28.0
+	google.golang.org/grpc v1.49.0
+	google.golang.org/protobuf v1.28.1
 )
 
 require (
 	github.com/golang/protobuf v1.5.2 // indirect
-	golang.org/x/net v0.0.0-20201021035429-f5854403a974 // indirect
-	golang.org/x/sys v0.0.0-20210119212857-b64e53b001e4 // indirect
-	golang.org/x/text v0.3.3 // indirect
-	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect
+	github.com/google/go-cmp v0.5.8 // indirect
+	golang.org/x/net v0.0.0-20220812174116-3211cb980234 // indirect
+	golang.org/x/sys v0.0.0-20220919091848-fb04ddd9f9c8 // indirect
+	golang.org/x/text v0.3.8-0.20211004125949-5bd84dd9b33b // indirect
+	google.golang.org/genproto v0.0.0-20220617124728-180714bec0ad // indirect
 )
