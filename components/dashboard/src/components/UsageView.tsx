@@ -21,17 +21,15 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ReactComponent as CreditsSvg } from "../images/credits.svg";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { ReactComponent as UsageIcon } from "../images/usage-default.svg";
-import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { toRemoteURL } from "../projects/render-utils";
 import { WorkspaceType } from "@gitpod/gitpod-protocol";
 import PillLabel from "./PillLabel";
 
 interface UsageViewProps {
     attributionId: AttributionId;
-    billingMode: BillingMode;
 }
 
-function UsageView({ attributionId, billingMode }: UsageViewProps) {
+function UsageView({ attributionId }: UsageViewProps) {
     const [usagePage, setUsagePage] = useState<ListUsageResponse | undefined>(undefined);
     const [errorMessage, setErrorMessage] = useState("");
     const today = new Date();
