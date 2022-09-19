@@ -100,158 +100,6 @@ func (*ReconcileInvoicesResponse) Descriptor() ([]byte, []int) {
 	return file_usage_v1_billing_proto_rawDescGZIP(), []int{1}
 }
 
-type GetUpcomingInvoiceRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// Types that are assignable to Identifier:
-	//
-	//	*GetUpcomingInvoiceRequest_TeamId
-	//	*GetUpcomingInvoiceRequest_UserId
-	Identifier isGetUpcomingInvoiceRequest_Identifier `protobuf_oneof:"identifier"`
-}
-
-func (x *GetUpcomingInvoiceRequest) Reset() {
-	*x = GetUpcomingInvoiceRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_usage_v1_billing_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetUpcomingInvoiceRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetUpcomingInvoiceRequest) ProtoMessage() {}
-
-func (x *GetUpcomingInvoiceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_usage_v1_billing_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetUpcomingInvoiceRequest.ProtoReflect.Descriptor instead.
-func (*GetUpcomingInvoiceRequest) Descriptor() ([]byte, []int) {
-	return file_usage_v1_billing_proto_rawDescGZIP(), []int{2}
-}
-
-func (m *GetUpcomingInvoiceRequest) GetIdentifier() isGetUpcomingInvoiceRequest_Identifier {
-	if m != nil {
-		return m.Identifier
-	}
-	return nil
-}
-
-func (x *GetUpcomingInvoiceRequest) GetTeamId() string {
-	if x, ok := x.GetIdentifier().(*GetUpcomingInvoiceRequest_TeamId); ok {
-		return x.TeamId
-	}
-	return ""
-}
-
-func (x *GetUpcomingInvoiceRequest) GetUserId() string {
-	if x, ok := x.GetIdentifier().(*GetUpcomingInvoiceRequest_UserId); ok {
-		return x.UserId
-	}
-	return ""
-}
-
-type isGetUpcomingInvoiceRequest_Identifier interface {
-	isGetUpcomingInvoiceRequest_Identifier()
-}
-
-type GetUpcomingInvoiceRequest_TeamId struct {
-	TeamId string `protobuf:"bytes,1,opt,name=team_id,json=teamId,proto3,oneof"`
-}
-
-type GetUpcomingInvoiceRequest_UserId struct {
-	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3,oneof"`
-}
-
-func (*GetUpcomingInvoiceRequest_TeamId) isGetUpcomingInvoiceRequest_Identifier() {}
-
-func (*GetUpcomingInvoiceRequest_UserId) isGetUpcomingInvoiceRequest_Identifier() {}
-
-type GetUpcomingInvoiceResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	InvoiceId string  `protobuf:"bytes,1,opt,name=invoice_id,json=invoiceId,proto3" json:"invoice_id,omitempty"`
-	Currency  string  `protobuf:"bytes,2,opt,name=currency,proto3" json:"currency,omitempty"`
-	Amount    float64 `protobuf:"fixed64,3,opt,name=amount,proto3" json:"amount,omitempty"`
-	Credits   int64   `protobuf:"varint,4,opt,name=credits,proto3" json:"credits,omitempty"`
-}
-
-func (x *GetUpcomingInvoiceResponse) Reset() {
-	*x = GetUpcomingInvoiceResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_usage_v1_billing_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetUpcomingInvoiceResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetUpcomingInvoiceResponse) ProtoMessage() {}
-
-func (x *GetUpcomingInvoiceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_usage_v1_billing_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetUpcomingInvoiceResponse.ProtoReflect.Descriptor instead.
-func (*GetUpcomingInvoiceResponse) Descriptor() ([]byte, []int) {
-	return file_usage_v1_billing_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *GetUpcomingInvoiceResponse) GetInvoiceId() string {
-	if x != nil {
-		return x.InvoiceId
-	}
-	return ""
-}
-
-func (x *GetUpcomingInvoiceResponse) GetCurrency() string {
-	if x != nil {
-		return x.Currency
-	}
-	return ""
-}
-
-func (x *GetUpcomingInvoiceResponse) GetAmount() float64 {
-	if x != nil {
-		return x.Amount
-	}
-	return 0
-}
-
-func (x *GetUpcomingInvoiceResponse) GetCredits() int64 {
-	if x != nil {
-		return x.Credits
-	}
-	return 0
-}
-
 type FinalizeInvoiceRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -263,7 +111,7 @@ type FinalizeInvoiceRequest struct {
 func (x *FinalizeInvoiceRequest) Reset() {
 	*x = FinalizeInvoiceRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_usage_v1_billing_proto_msgTypes[4]
+		mi := &file_usage_v1_billing_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -276,7 +124,7 @@ func (x *FinalizeInvoiceRequest) String() string {
 func (*FinalizeInvoiceRequest) ProtoMessage() {}
 
 func (x *FinalizeInvoiceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_usage_v1_billing_proto_msgTypes[4]
+	mi := &file_usage_v1_billing_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -289,7 +137,7 @@ func (x *FinalizeInvoiceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FinalizeInvoiceRequest.ProtoReflect.Descriptor instead.
 func (*FinalizeInvoiceRequest) Descriptor() ([]byte, []int) {
-	return file_usage_v1_billing_proto_rawDescGZIP(), []int{4}
+	return file_usage_v1_billing_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *FinalizeInvoiceRequest) GetInvoiceId() string {
@@ -308,7 +156,7 @@ type FinalizeInvoiceResponse struct {
 func (x *FinalizeInvoiceResponse) Reset() {
 	*x = FinalizeInvoiceResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_usage_v1_billing_proto_msgTypes[5]
+		mi := &file_usage_v1_billing_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -321,7 +169,7 @@ func (x *FinalizeInvoiceResponse) String() string {
 func (*FinalizeInvoiceResponse) ProtoMessage() {}
 
 func (x *FinalizeInvoiceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_usage_v1_billing_proto_msgTypes[5]
+	mi := &file_usage_v1_billing_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -334,7 +182,7 @@ func (x *FinalizeInvoiceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FinalizeInvoiceResponse.ProtoReflect.Descriptor instead.
 func (*FinalizeInvoiceResponse) Descriptor() ([]byte, []int) {
-	return file_usage_v1_billing_proto_rawDescGZIP(), []int{5}
+	return file_usage_v1_billing_proto_rawDescGZIP(), []int{3}
 }
 
 type CancelSubscriptionRequest struct {
@@ -348,7 +196,7 @@ type CancelSubscriptionRequest struct {
 func (x *CancelSubscriptionRequest) Reset() {
 	*x = CancelSubscriptionRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_usage_v1_billing_proto_msgTypes[6]
+		mi := &file_usage_v1_billing_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -361,7 +209,7 @@ func (x *CancelSubscriptionRequest) String() string {
 func (*CancelSubscriptionRequest) ProtoMessage() {}
 
 func (x *CancelSubscriptionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_usage_v1_billing_proto_msgTypes[6]
+	mi := &file_usage_v1_billing_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -374,7 +222,7 @@ func (x *CancelSubscriptionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelSubscriptionRequest.ProtoReflect.Descriptor instead.
 func (*CancelSubscriptionRequest) Descriptor() ([]byte, []int) {
-	return file_usage_v1_billing_proto_rawDescGZIP(), []int{6}
+	return file_usage_v1_billing_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *CancelSubscriptionRequest) GetSubscriptionId() string {
@@ -393,7 +241,7 @@ type CancelSubscriptionResponse struct {
 func (x *CancelSubscriptionResponse) Reset() {
 	*x = CancelSubscriptionResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_usage_v1_billing_proto_msgTypes[7]
+		mi := &file_usage_v1_billing_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -406,7 +254,7 @@ func (x *CancelSubscriptionResponse) String() string {
 func (*CancelSubscriptionResponse) ProtoMessage() {}
 
 func (x *CancelSubscriptionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_usage_v1_billing_proto_msgTypes[7]
+	mi := &file_usage_v1_billing_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -419,7 +267,7 @@ func (x *CancelSubscriptionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelSubscriptionResponse.ProtoReflect.Descriptor instead.
 func (*CancelSubscriptionResponse) Descriptor() ([]byte, []int) {
-	return file_usage_v1_billing_proto_rawDescGZIP(), []int{7}
+	return file_usage_v1_billing_proto_rawDescGZIP(), []int{5}
 }
 
 var File_usage_v1_billing_proto protoreflect.FileDescriptor
@@ -430,46 +278,25 @@ var file_usage_v1_billing_proto_rawDesc = []byte{
 	0x76, 0x31, 0x22, 0x1a, 0x0a, 0x18, 0x52, 0x65, 0x63, 0x6f, 0x6e, 0x63, 0x69, 0x6c, 0x65, 0x49,
 	0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x1b,
 	0x0a, 0x19, 0x52, 0x65, 0x63, 0x6f, 0x6e, 0x63, 0x69, 0x6c, 0x65, 0x49, 0x6e, 0x76, 0x6f, 0x69,
-	0x63, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x5f, 0x0a, 0x19, 0x47,
-	0x65, 0x74, 0x55, 0x70, 0x63, 0x6f, 0x6d, 0x69, 0x6e, 0x67, 0x49, 0x6e, 0x76, 0x6f, 0x69, 0x63,
-	0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x19, 0x0a, 0x07, 0x74, 0x65, 0x61, 0x6d,
-	0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x06, 0x74, 0x65, 0x61,
-	0x6d, 0x49, 0x64, 0x12, 0x19, 0x0a, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x02,
-	0x20, 0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x42, 0x0c,
-	0x0a, 0x0a, 0x69, 0x64, 0x65, 0x6e, 0x74, 0x69, 0x66, 0x69, 0x65, 0x72, 0x22, 0x89, 0x01, 0x0a,
-	0x1a, 0x47, 0x65, 0x74, 0x55, 0x70, 0x63, 0x6f, 0x6d, 0x69, 0x6e, 0x67, 0x49, 0x6e, 0x76, 0x6f,
-	0x69, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x1d, 0x0a, 0x0a, 0x69,
-	0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x09, 0x69, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x49, 0x64, 0x12, 0x1a, 0x0a, 0x08, 0x63, 0x75,
-	0x72, 0x72, 0x65, 0x6e, 0x63, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x63, 0x75,
-	0x72, 0x72, 0x65, 0x6e, 0x63, 0x79, 0x12, 0x16, 0x0a, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74,
-	0x18, 0x03, 0x20, 0x01, 0x28, 0x01, 0x52, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x18,
-	0x0a, 0x07, 0x63, 0x72, 0x65, 0x64, 0x69, 0x74, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x03, 0x52,
-	0x07, 0x63, 0x72, 0x65, 0x64, 0x69, 0x74, 0x73, 0x22, 0x37, 0x0a, 0x16, 0x46, 0x69, 0x6e, 0x61,
-	0x6c, 0x69, 0x7a, 0x65, 0x49, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x69, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x5f, 0x69, 0x64,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x69, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x49,
-	0x64, 0x22, 0x19, 0x0a, 0x17, 0x46, 0x69, 0x6e, 0x61, 0x6c, 0x69, 0x7a, 0x65, 0x49, 0x6e, 0x76,
-	0x6f, 0x69, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x44, 0x0a, 0x19,
-	0x43, 0x61, 0x6e, 0x63, 0x65, 0x6c, 0x53, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69,
-	0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x27, 0x0a, 0x0f, 0x73, 0x75, 0x62,
-	0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x0e, 0x73, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e,
-	0x49, 0x64, 0x22, 0x1c, 0x0a, 0x1a, 0x43, 0x61, 0x6e, 0x63, 0x65, 0x6c, 0x53, 0x75, 0x62, 0x73,
-	0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x32, 0x90, 0x03, 0x0a, 0x0e, 0x42, 0x69, 0x6c, 0x6c, 0x69, 0x6e, 0x67, 0x53, 0x65, 0x72, 0x76,
-	0x69, 0x63, 0x65, 0x12, 0x5e, 0x0a, 0x11, 0x52, 0x65, 0x63, 0x6f, 0x6e, 0x63, 0x69, 0x6c, 0x65,
-	0x49, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x73, 0x12, 0x22, 0x2e, 0x75, 0x73, 0x61, 0x67, 0x65,
-	0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65, 0x63, 0x6f, 0x6e, 0x63, 0x69, 0x6c, 0x65, 0x49, 0x6e, 0x76,
-	0x6f, 0x69, 0x63, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x23, 0x2e, 0x75,
-	0x73, 0x61, 0x67, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65, 0x63, 0x6f, 0x6e, 0x63, 0x69, 0x6c,
-	0x65, 0x49, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x22, 0x00, 0x12, 0x61, 0x0a, 0x12, 0x47, 0x65, 0x74, 0x55, 0x70, 0x63, 0x6f, 0x6d, 0x69,
-	0x6e, 0x67, 0x49, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x12, 0x23, 0x2e, 0x75, 0x73, 0x61, 0x67,
-	0x65, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x55, 0x70, 0x63, 0x6f, 0x6d, 0x69, 0x6e, 0x67,
-	0x49, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x24,
-	0x2e, 0x75, 0x73, 0x61, 0x67, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x55, 0x70, 0x63,
-	0x6f, 0x6d, 0x69, 0x6e, 0x67, 0x49, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70,
+	0x63, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x37, 0x0a, 0x16, 0x46,
+	0x69, 0x6e, 0x61, 0x6c, 0x69, 0x7a, 0x65, 0x49, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x69, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65,
+	0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x69, 0x6e, 0x76, 0x6f, 0x69,
+	0x63, 0x65, 0x49, 0x64, 0x22, 0x19, 0x0a, 0x17, 0x46, 0x69, 0x6e, 0x61, 0x6c, 0x69, 0x7a, 0x65,
+	0x49, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
+	0x44, 0x0a, 0x19, 0x43, 0x61, 0x6e, 0x63, 0x65, 0x6c, 0x53, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69,
+	0x70, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x27, 0x0a, 0x0f,
+	0x73, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x69, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x73, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74,
+	0x69, 0x6f, 0x6e, 0x49, 0x64, 0x22, 0x1c, 0x0a, 0x1a, 0x43, 0x61, 0x6e, 0x63, 0x65, 0x6c, 0x53,
+	0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x32, 0xad, 0x02, 0x0a, 0x0e, 0x42, 0x69, 0x6c, 0x6c, 0x69, 0x6e, 0x67, 0x53,
+	0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x5e, 0x0a, 0x11, 0x52, 0x65, 0x63, 0x6f, 0x6e, 0x63,
+	0x69, 0x6c, 0x65, 0x49, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x73, 0x12, 0x22, 0x2e, 0x75, 0x73,
+	0x61, 0x67, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65, 0x63, 0x6f, 0x6e, 0x63, 0x69, 0x6c, 0x65,
+	0x49, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x23, 0x2e, 0x75, 0x73, 0x61, 0x67, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65, 0x63, 0x6f, 0x6e,
+	0x63, 0x69, 0x6c, 0x65, 0x49, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70,
 	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x58, 0x0a, 0x0f, 0x46, 0x69, 0x6e, 0x61, 0x6c, 0x69,
 	0x7a, 0x65, 0x49, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x12, 0x20, 0x2e, 0x75, 0x73, 0x61, 0x67,
 	0x65, 0x2e, 0x76, 0x31, 0x2e, 0x46, 0x69, 0x6e, 0x61, 0x6c, 0x69, 0x7a, 0x65, 0x49, 0x6e, 0x76,
@@ -500,28 +327,24 @@ func file_usage_v1_billing_proto_rawDescGZIP() []byte {
 	return file_usage_v1_billing_proto_rawDescData
 }
 
-var file_usage_v1_billing_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_usage_v1_billing_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_usage_v1_billing_proto_goTypes = []interface{}{
 	(*ReconcileInvoicesRequest)(nil),   // 0: usage.v1.ReconcileInvoicesRequest
 	(*ReconcileInvoicesResponse)(nil),  // 1: usage.v1.ReconcileInvoicesResponse
-	(*GetUpcomingInvoiceRequest)(nil),  // 2: usage.v1.GetUpcomingInvoiceRequest
-	(*GetUpcomingInvoiceResponse)(nil), // 3: usage.v1.GetUpcomingInvoiceResponse
-	(*FinalizeInvoiceRequest)(nil),     // 4: usage.v1.FinalizeInvoiceRequest
-	(*FinalizeInvoiceResponse)(nil),    // 5: usage.v1.FinalizeInvoiceResponse
-	(*CancelSubscriptionRequest)(nil),  // 6: usage.v1.CancelSubscriptionRequest
-	(*CancelSubscriptionResponse)(nil), // 7: usage.v1.CancelSubscriptionResponse
+	(*FinalizeInvoiceRequest)(nil),     // 2: usage.v1.FinalizeInvoiceRequest
+	(*FinalizeInvoiceResponse)(nil),    // 3: usage.v1.FinalizeInvoiceResponse
+	(*CancelSubscriptionRequest)(nil),  // 4: usage.v1.CancelSubscriptionRequest
+	(*CancelSubscriptionResponse)(nil), // 5: usage.v1.CancelSubscriptionResponse
 }
 var file_usage_v1_billing_proto_depIdxs = []int32{
 	0, // 0: usage.v1.BillingService.ReconcileInvoices:input_type -> usage.v1.ReconcileInvoicesRequest
-	2, // 1: usage.v1.BillingService.GetUpcomingInvoice:input_type -> usage.v1.GetUpcomingInvoiceRequest
-	4, // 2: usage.v1.BillingService.FinalizeInvoice:input_type -> usage.v1.FinalizeInvoiceRequest
-	6, // 3: usage.v1.BillingService.CancelSubscription:input_type -> usage.v1.CancelSubscriptionRequest
-	1, // 4: usage.v1.BillingService.ReconcileInvoices:output_type -> usage.v1.ReconcileInvoicesResponse
-	3, // 5: usage.v1.BillingService.GetUpcomingInvoice:output_type -> usage.v1.GetUpcomingInvoiceResponse
-	5, // 6: usage.v1.BillingService.FinalizeInvoice:output_type -> usage.v1.FinalizeInvoiceResponse
-	7, // 7: usage.v1.BillingService.CancelSubscription:output_type -> usage.v1.CancelSubscriptionResponse
-	4, // [4:8] is the sub-list for method output_type
-	0, // [0:4] is the sub-list for method input_type
+	2, // 1: usage.v1.BillingService.FinalizeInvoice:input_type -> usage.v1.FinalizeInvoiceRequest
+	4, // 2: usage.v1.BillingService.CancelSubscription:input_type -> usage.v1.CancelSubscriptionRequest
+	1, // 3: usage.v1.BillingService.ReconcileInvoices:output_type -> usage.v1.ReconcileInvoicesResponse
+	3, // 4: usage.v1.BillingService.FinalizeInvoice:output_type -> usage.v1.FinalizeInvoiceResponse
+	5, // 5: usage.v1.BillingService.CancelSubscription:output_type -> usage.v1.CancelSubscriptionResponse
+	3, // [3:6] is the sub-list for method output_type
+	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -558,30 +381,6 @@ func file_usage_v1_billing_proto_init() {
 			}
 		}
 		file_usage_v1_billing_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetUpcomingInvoiceRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_usage_v1_billing_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetUpcomingInvoiceResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_usage_v1_billing_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*FinalizeInvoiceRequest); i {
 			case 0:
 				return &v.state
@@ -593,7 +392,7 @@ func file_usage_v1_billing_proto_init() {
 				return nil
 			}
 		}
-		file_usage_v1_billing_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+		file_usage_v1_billing_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*FinalizeInvoiceResponse); i {
 			case 0:
 				return &v.state
@@ -605,7 +404,7 @@ func file_usage_v1_billing_proto_init() {
 				return nil
 			}
 		}
-		file_usage_v1_billing_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+		file_usage_v1_billing_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CancelSubscriptionRequest); i {
 			case 0:
 				return &v.state
@@ -617,7 +416,7 @@ func file_usage_v1_billing_proto_init() {
 				return nil
 			}
 		}
-		file_usage_v1_billing_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+		file_usage_v1_billing_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CancelSubscriptionResponse); i {
 			case 0:
 				return &v.state
@@ -630,17 +429,13 @@ func file_usage_v1_billing_proto_init() {
 			}
 		}
 	}
-	file_usage_v1_billing_proto_msgTypes[2].OneofWrappers = []interface{}{
-		(*GetUpcomingInvoiceRequest_TeamId)(nil),
-		(*GetUpcomingInvoiceRequest_UserId)(nil),
-	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_usage_v1_billing_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

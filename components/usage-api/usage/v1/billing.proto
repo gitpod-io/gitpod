@@ -9,9 +9,6 @@ service BillingService {
   // Internal RPC, not intended for general consumption.
   rpc ReconcileInvoices(ReconcileInvoicesRequest) returns (ReconcileInvoicesResponse) {};
 
-  // GetUpcomingInvoice retrieves the latest invoice for a given query.
-  rpc GetUpcomingInvoice(GetUpcomingInvoiceRequest) returns (GetUpcomingInvoiceResponse) {};
-
   // FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
   // having been invoiced.
   rpc FinalizeInvoice(FinalizeInvoiceRequest) returns (FinalizeInvoiceResponse) {};
@@ -24,20 +21,6 @@ service BillingService {
 message ReconcileInvoicesRequest {}
 
 message ReconcileInvoicesResponse {}
-
-message GetUpcomingInvoiceRequest {
-  oneof identifier {
-    string team_id = 1;
-    string user_id = 2;
-  }
-}
-
-message GetUpcomingInvoiceResponse {
-  string invoice_id = 1;
-  string currency = 2;
-  double amount = 3;
-  int64  credits = 4;
-}
 
 message FinalizeInvoiceRequest {
   string invoice_id = 1;

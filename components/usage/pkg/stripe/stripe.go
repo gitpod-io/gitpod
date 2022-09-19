@@ -205,31 +205,6 @@ func (c *Client) GetCustomerByUserID(ctx context.Context, userID string) (*strip
 	return customers[0], nil
 }
 
-// GetUpcomingInvoice fetches the upcoming invoice for the given team or user id.
-func (c *Client) GetUpcomingInvoice(ctx context.Context, customerID string) (*Invoice, error) {
-	invoiceParams := &stripe.InvoiceParams{
-		Params: stripe.Params{
-			Context: ctx,
-		},
-		Customer: stripe.String(customerID),
-	}
-	invoice, err := c.sc.Invoices.GetNext(invoiceParams)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch the upcoming invoice for customer %s", customerID)
-	}
-	if len(invoice.Lines.Data) < 1 {
-		return nil, fmt.Errorf("no line items on invoice %s for customer %s", invoice.ID, customerID)
-	}
-
-	return &Invoice{
-		ID:             invoice.ID,
-		SubscriptionID: invoice.Subscription.ID,
-		Amount:         invoice.AmountRemaining,
-		Currency:       string(invoice.Currency),
-		Credits:        invoice.Lines.Data[0].Quantity,
-	}, nil
-}
-
 func (c *Client) GetInvoiceWithCustomer(ctx context.Context, invoiceID string) (*stripe.Invoice, error) {
 	if invoiceID == "" {
 		return nil, fmt.Errorf("no invoice ID specified")
