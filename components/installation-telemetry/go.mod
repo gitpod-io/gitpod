@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
-	github.com/spf13/cobra v1.4.0
+	github.com/spf13/cobra v1.5.0
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0
 )
 
@@ -15,7 +15,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
-	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
+	golang.org/x/sys v0.0.0-20220610221304-9f5ed59c137d // indirect
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
