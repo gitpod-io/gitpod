@@ -1,82 +1,82 @@
 {
-  "malicious": [],
-  "deprecated": {
+    "malicious": [],
+    "deprecated": {
       "msjsdiag.debugger-for-chrome": {
-          "disallowInstall": true,
-          "extension": {
-              "id": "ms-vscode.js-debug",
-              "displayName": "JavaScript Debugger"
-          }
+        "disallowInstall": true,
+        "extension": {
+          "id": "ms-vscode.js-debug",
+          "displayName": "JavaScript Debugger"
+        }
       },
       "abusaidm.html-snippets": true,
       "ms-vscode.vscode-typescript-tslint-plugin": true,
       "auchenberg.vscode-browser-preview": {
-          "disallowInstall": false,
-          "extension": {
-              "id": "ms-vscode.live-server",
-              "displayName": "Live Preview"
-          }
+        "disallowInstall": false,
+        "extension": {
+          "id": "ms-vscode.live-server",
+          "displayName": "Live Preview"
+        }
       },
       "rust-lang.rust": {
-          "disallowInstall": true,
-          "extension": {
-              "id": "rust-lang.rust-analyzer",
-              "displayName": "rust-analyzer"
-          }
+        "disallowInstall": true,
+        "extension": {
+          "id": "rust-lang.rust-analyzer",
+          "displayName": "rust-analyzer"
+        }
       },
       "KnisterPeter.vscode-github": {
-          "disallowInstall": true,
-          "extension": {
-              "id": "GitHub.vscode-pull-request-github",
-              "displayName": "GitHub Pull Requests and Issues"
-          }
+        "disallowInstall": true,
+        "extension": {
+          "id": "GitHub.vscode-pull-request-github",
+          "displayName": "GitHub Pull Requests and Issues"
+        }
       },
       "antfu.vue-i18n-ally": {
-          "disallowInstall": true,
-          "extension": {
-              "id": "lokalise.i18n-ally",
-              "displayName": "i18n Ally"
-          }
+        "disallowInstall": true,
+        "extension": {
+          "id": "lokalise.i18n-ally",
+          "displayName": "i18n Ally"
+        }
       },
       "antfu.i18n-ally": {
-          "disallowInstall": true,
-          "extension": {
-              "id": "lokalise.i18n-ally",
-              "displayName": "i18n Ally"
-          }
+        "disallowInstall": true,
+        "extension": {
+          "id": "lokalise.i18n-ally",
+          "displayName": "i18n Ally"
+        }
       },
       "redhat.vscode-didact": {
-          "disallowInstall": false,
-          "extension": {
-              "id": "vsls-contrib.codetour",
-              "displayName": "CodeTour"
-          }
+        "disallowInstall": false,
+        "extension": {
+          "id": "vsls-contrib.codetour",
+          "displayName": "CodeTour"
+        }
       },
       "EmberTooling.prettier-for-handlebars-vscode": {
-          "disallowInstall": true,
-          "extension": {
-              "id": "esbenp.prettier-vscode",
-              "displayName": "Prettier - Code formatter"
-          }
+        "disallowInstall": true,
+        "extension": {
+          "id": "esbenp.prettier-vscode",
+          "displayName": "Prettier - Code formatter"
+        }
       },
       "silvenon.mdx": {
         "disallowInstall": true,
         "extension": {
-            "id": "unifiedjs.vscode-mdx",
-            "displayName": "VSCode MDX"
+          "id": "unifiedjs.vscode-mdx",
+          "displayName": "VSCode MDX"
         }
       },
       "CoenraadS.bracket-pair-colorizer-2": {
-          "settings": [
-              "editor.bracketPairColorization.enabled",
-              "editor.guides.bracketPairs"
-          ]
+        "settings": [
+          "editor.bracketPairColorization.enabled",
+          "editor.guides.bracketPairs"
+        ]
       },
       "CoenraadS.bracket-pair-colorizer": {
-          "settings": [
-              "editor.bracketPairColorization.enabled",
-              "editor.guides.bracketPairs"
-          ]
+        "settings": [
+          "editor.bracketPairColorization.enabled",
+          "editor.guides.bracketPairs"
+        ]
       },
       "idleberg.innosetup": {
         "disallowInstall": true,
@@ -95,6 +95,6 @@
       "heptio.jsonnet": true,
       "eg2.vscode-npm-script": true,
       "ethan-reesor.vscode-go-test-adapter": true
-  },
-  "migrateToPreRelease": {}
-}
+    },
+    "migrateToPreRelease": {}
+  }
