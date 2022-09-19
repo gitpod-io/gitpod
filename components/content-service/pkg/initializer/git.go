@@ -170,14 +170,14 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 	switch ws.TargetMode {
 	case RemoteBranch:
 		// check remote branch exists before git checkout
-		gitout, err := ws.Client.GitWithOutput(ctx, nil, "ls-remote", "origin", ws.CloneTarget)
+		gitout, err := ws.GitWithOutput(ctx, nil, "ls-remote", "origin", ws.CloneTarget)
 		if err != nil || len(gitout) == 0 {
 			log.WithError(err).WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Error("Remote branch doesn't exist.")
 			return err
 		}
-		// create local branch based on specific remote branch
-		if err := ws.Git(ctx, "checkout", "-B", ws.CloneTarget, "origin/"+ws.CloneTarget); err != nil {
-			log.WithError(err).WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Error("Cannot checkout remote branch.")
+
+		if err := ws.Git(ctx, "switch", "-C", ws.CloneTarget); err != nil {
+			log.WithError(err).WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Error("Cannot fetch remote branch")
 			return err
 		}
 	case LocalBranch:
@@ -194,7 +194,7 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 		}
 
 		// checkout specific commit
-		if err := ws.Git(ctx, "checkout", ws.CloneTarget); err != nil {
+		if err := ws.Git(ctx, "switch", "-C", ws.CloneTarget); err != nil {
 			return err
 		}
 	default:
