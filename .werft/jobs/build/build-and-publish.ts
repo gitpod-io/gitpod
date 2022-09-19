@@ -46,18 +46,28 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
         exec(`gcloud auth activate-service-account --key-file "/mnt/secrets/gcp-sa-release/service-account.json"`);
     }
 
-    await exec(
-        `leeway build --docker-build-options network=host --werft=true -c remote ${
-            dontTest ? "--dont-test" : ""
-        } ${retag} --coverage-output-path=${coverageOutput} -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo} -DlocalAppVersion=${localAppVersion} -DSEGMENT_IO_TOKEN=${
-            process.env.SEGMENT_IO_TOKEN
-        } -DREPLICATED_API_TOKEN=${process.env.REPLICATED_API_TOKEN} -DREPLICATED_APP=${
-            process.env.REPLICATED_APP
-        } -DnpmPublishTrigger=${publishToNpm ? Date.now() : "false"} -DjbMarketplacePublishTrigger=${
-            publishToJBMarketplace ? Date.now() : "false"
-        }`,
-        { async: true },
-    );
+    const buildArguments = Object.entries({
+        version: version,
+        removeSources: "false",
+        imageRepoBase: imageRepo,
+        localAppVersion: localAppVersion,
+        SEGMENT_IO_TOKEN: process.env.SEGMENT_IO_TOKEN,
+        REPLICATED_API_TOKEN: process.env.REPLICATED_API_TOKEN,
+        REPLICATED_APP: process.env.REPLICATED_APP,
+        npmPublishTrigger: publishToNpm ? Date.now().toString() : "false",
+        jbMarketplacePublishTrigger: publishToJBMarketplace ? Date.now().toString() : "false",
+    }).map(([key, value]) => `-D${key}=${value}`).join(" ");
+
+    const buildFlags = [
+        "--docker-build-options network=host",
+        "--werft=true",
+        "-c remote",
+        dontTest ? "--dont-test" : "",
+        retag,
+        `--coverage-output-path=${coverageOutput}`,
+    ].filter((value) => value).join(" ");
+
+    await exec(`leeway build ${buildFlags} ${buildArguments}`, { async: true });
     if (publishRelease) {
         try {
             werft.phase("publish", "checking version semver compliance...");
