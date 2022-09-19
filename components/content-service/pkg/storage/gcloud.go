@@ -197,6 +197,7 @@ func (rs *DirectGCPStorage) download(ctx context.Context, destination string, bk
 	var wg sync.WaitGroup
 
 	wg.Add(1)
+	backupSpan := opentracing.StartSpan("downloadBackup", opentracing.ChildOf(span.Context()))
 
 	go func() {
 		defer wg.Done()
@@ -224,6 +225,7 @@ func (rs *DirectGCPStorage) download(ctx context.Context, destination string, bk
 	}()
 
 	wg.Wait()
+	tracing.FinishSpan(backupSpan, &err)
 
 	rc, err := os.Open(filepath.Join(backupDir, obj))
 	if err != nil {
