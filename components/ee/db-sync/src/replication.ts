@@ -195,14 +195,15 @@ export class PeriodicReplicator {
     }
 
     protected async update(target: Connection, updates: string[], batchSize = 100) {
-        // const updateSize = updates.join().length;
-        // const inTransaction = updateSize < (8 * 1024 * 1024) && this.useTransactions;
-        // if(inTransaction) {
-        //     await query(target, "START TRANSACTION;");
-        // } else {
-        //     console.warn("Update is too big (> 8mb) or transactions are disabled, not running in a transaction! Inconsistency is possible.");
-        // }
-        const inTransaction = false;
+        const updateSize = updates.map((u) => u.length).reduce((pv, cv) => pv + cv, 0);
+        const inTransaction = updateSize < 8 * 1024 * 1024 && this.useTransactions;
+        if (inTransaction) {
+            await query(target, "START TRANSACTION;");
+        } else {
+            console.warn(
+                "Update is too big (> 8mb) or transactions are disabled, not running in a transaction! Inconsistency is possible.",
+            );
+        }
 
         const bar =
             this.showProgressBar && updates.length > batchSize
