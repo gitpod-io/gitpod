@@ -2020,13 +2020,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         });
     }
 
-    protected async ensureIsUsageBasedFeatureFlagEnabled(user: User): Promise<void> {
-        const isUsageBasedBillingEnabled = await this.isUsageBasedFeatureFlagEnabled(user);
-        if (!isUsageBasedBillingEnabled) {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
-        }
-    }
-
     protected async ensureChargebeeApiIsAllowed(sub: { user?: User; team?: Team }): Promise<void> {
         await this.ensureBillingMode(sub, (m) => m.mode === "chargebee");
     }
@@ -2281,7 +2274,16 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         await this.guardCostCenterAccess(ctx, user.id, attrId, "update");
 
         const response = await this.usageService.getCostCenter({ attributionId });
-        if (response?.costCenter?.billingStrategy !== CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
+
+        // backward compatibility for cost centers that were created before introduction of BillingStrategy
+        if (response.costCenter) {
+            const stripeSubscriptionId = await this.findStripeSubscriptionId(ctx, attributionId);
+            if (stripeSubscriptionId != undefined) {
+                response.costCenter.billingStrategy = CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
+            }
+        }
+
+        if (response.costCenter?.billingStrategy !== CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
             throw new ResponseError(
                 ErrorCodes.BAD_REQUEST,
                 `Setting a usage limit is not valid for non-Stripe billing strategies`,
@@ -2291,8 +2293,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             costCenter: {
                 attributionId,
                 spendingLimit: usageLimit,
-                billingStrategy:
-                    response?.costCenter?.billingStrategy || CostCenter_BillingStrategy.BILLING_STRATEGY_OTHER,
+                billingStrategy: CostCenter_BillingStrategy.BILLING_STRATEGY_OTHER,
             },
         });
 
