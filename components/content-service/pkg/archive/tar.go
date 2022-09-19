@@ -81,6 +81,7 @@ func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOp
 	finished := make(chan bool)
 	m := make(map[string]Info)
 
+	unpackSpan := opentracing.StartSpan("unpackTarbal", opentracing.ChildOf(span.Context()))
 	go func() {
 		defer close(finished)
 		for {
@@ -124,7 +125,9 @@ func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOp
 	log.WithField("log", string(msg)).Debug("decompressing tar stream log")
 
 	<-finished
+	tracing.FinishSpan(unpackSpan, &err)
 
+	chownSpan := opentracing.StartSpan("chown", opentracing.ChildOf(span.Context()))
 	// lets create a sorted list of pathes and chown depth first.
 	paths := make([]string, 0, len(m))
 	for path := range m {
@@ -148,6 +151,7 @@ func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOp
 			log.WithError(err).WithField("uid", uid).WithField("gid", gid).WithField("path", p).Debug("cannot chown")
 		}
 	}
+	tracing.FinishSpan(chownSpan, &err)
 
 	log.WithField("duration", time.Since(start).Milliseconds()).Debug("untar complete")
 	return nil
