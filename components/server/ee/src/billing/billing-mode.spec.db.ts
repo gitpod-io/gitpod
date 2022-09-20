@@ -496,7 +496,6 @@ class BillingModeSpec {
                         () =>
                             new ConfigCatClientMock({
                                 isUsageBasedBillingEnabled: test.config.usageBasedPricingEnabled,
-                                isBillingModeEnabled: true,
                             }),
                     );
                 }),

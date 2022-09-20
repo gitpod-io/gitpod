@@ -63,25 +63,10 @@ export class BillingModesImpl implements BillingModes {
         }
     }
 
-    protected async isBillingModeEnabled(subject: { user?: User; team?: Team }): Promise<boolean> {
-        // This is a double safety-net to smoothen and de-risk the rollout of BillingMode, because it not only affects
-        // new behavior which is in focus and subject to test anyway (usage-based), but also old behavior (chargebee).
-        const teams = subject.user ? await this.teamDB.findTeamsByUser(subject.user.id) : undefined;
-        return await this.configCatClientFactory().getValueAsync("isBillingModeEnabled", false, {
-            user: subject.user,
-            teams,
-            teamId: subject.team?.id,
-            teamName: subject.team?.name,
-        });
-    }
-
     async getBillingModeForUser(user: User, now: Date): Promise<BillingMode> {
         if (!this.config.enablePayment) {
             // Payment is not enabled. E.g. Self-Hosted.
             return { mode: "none" };
-        }
-        if (!(await this.isBillingModeEnabled({ user }))) {
-            return { mode: "chargebee" };
         }
 
         // Is Usage Based Billing enabled for this user or not?
@@ -166,9 +151,6 @@ export class BillingModesImpl implements BillingModes {
         if (!this.config.enablePayment) {
             // Payment is not enabled. E.g. Self-Hosted.
             return { mode: "none" };
-        }
-        if (!(await this.isBillingModeEnabled({ team }))) {
-            return { mode: "chargebee" };
         }
         const now = _now.toISOString();
 
