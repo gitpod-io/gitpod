@@ -829,7 +829,12 @@ export class WorkspaceStarter {
             let featureFlags: NamedWorkspaceFeatureFlag[] = workspace.config._featureFlags || [];
             featureFlags = featureFlags.concat(this.config.workspaceDefaults.defaultFeatureFlags);
             if (user.featureFlags && user.featureFlags.permanentWSFeatureFlags) {
-                featureFlags = featureFlags.concat(featureFlags, user.featureFlags.permanentWSFeatureFlags);
+                // Workspace-persisted feature flags are inherited from and controlled by workspace.config._featureFlags
+                // Make sure we do not overide them, here.
+                const nonWorkspacePersistentFeatureFlags = user.featureFlags.permanentWSFeatureFlags.filter(
+                    (ff) => !NamedWorkspaceFeatureFlag.isWorkspacePersisted(ff),
+                );
+                featureFlags = featureFlags.concat(featureFlags, nonWorkspacePersistentFeatureFlags);
             }
 
             // if the user has feature preview enabled, we need to add the respective feature flags.
