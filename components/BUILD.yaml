@@ -41,16 +41,16 @@ packages:
       - components/ide/code-desktop:docker
       - components/ide/code-desktop:docker-insiders
       - components/ide/code:docker
-      - components/ide/jetbrains/backend-plugin:stable
-      - components/ide/jetbrains/backend-plugin:latest
-      - components/ide/jetbrains/image:goland
-      - components/ide/jetbrains/image:goland-latest
-      - components/ide/jetbrains/image:intellij
-      - components/ide/jetbrains/image:intellij-latest
-      - components/ide/jetbrains/image:phpstorm
-      - components/ide/jetbrains/image:phpstorm-latest
-      - components/ide/jetbrains/image:pycharm
-      - components/ide/jetbrains/image:pycharm-latest
+      # - components/ide/jetbrains/backend-plugin:stable
+      # - components/ide/jetbrains/backend-plugin:latest
+      # - components/ide/jetbrains/image:goland
+      # - components/ide/jetbrains/image:goland-latest
+      # - components/ide/jetbrains/image:intellij
+      # - components/ide/jetbrains/image:intellij-latest
+      # - components/ide/jetbrains/image:phpstorm
+      # - components/ide/jetbrains/image:phpstorm-latest
+      # - components/ide/jetbrains/image:pycharm
+      # - components/ide/jetbrains/image:pycharm-latest
       - components/image-builder-bob:docker
       - components/image-builder-mk3:docker
       - components/local-app:docker
