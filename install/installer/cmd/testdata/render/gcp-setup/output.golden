@@ -1990,6 +1990,26 @@ data:
       namespace: default
     ---
     apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ide-service
+      name: ide-config
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: server
+      name: server-ide-config
+      namespace: default
+    ---
+    apiVersion: v1
     kind: ServiceAccount
     metadata:
       creationTimestamp: null
@@ -2261,16 +2281,6 @@ data:
         app: gitpod
         component: server
       name: server
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: server
-      name: server-ide-config
       namespace: default
     ---
     apiVersion: networking.k8s.io/v1
@@ -3130,6 +3140,117 @@ metadata:
   name: gitpod-app
   namespace: default
 
+---
+# v1/ConfigMap ide-config
+apiVersion: v1
+data:
+  config.json: |-
+    {
+      "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:test",
+      "ideOptions": {
+        "options": {
+          "code": {
+            "orderKey": "00",
+            "title": "VS Code",
+            "type": "browser",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
+            "label": "Browser",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-2d7f400a0046e9793b88b28ce569e5ef02fa8ba2",
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
+          },
+          "code-desktop": {
+            "orderKey": "02",
+            "title": "VS Code",
+            "type": "desktop",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code-desktop:test",
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code-desktop-insiders:test"
+          },
+          "goland": {
+            "orderKey": "05",
+            "title": "GoLand",
+            "type": "desktop",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/golandLogo.svg",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/goland:test",
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/goland:latest",
+            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+          },
+          "intellij": {
+            "orderKey": "04",
+            "title": "IntelliJ IDEA",
+            "type": "desktop",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/intellijIdeaLogo.svg",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:test",
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:latest",
+            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+          },
+          "phpstorm": {
+            "orderKey": "07",
+            "title": "PhpStorm",
+            "type": "desktop",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/phpstormLogo.svg",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:test",
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:latest",
+            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+          },
+          "pycharm": {
+            "orderKey": "06",
+            "title": "PyCharm",
+            "type": "desktop",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/pycharmLogo.svg",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:test",
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:latest",
+            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+          }
+        },
+        "defaultIde": "code",
+        "defaultDesktopIde": "code-desktop",
+        "clients": {
+          "jetbrains-gateway": {
+            "defaultDesktopIDE": "intellij",
+            "desktopIDEs": [
+              "intellij",
+              "goland",
+              "pycharm",
+              "phpstorm"
+            ],
+            "installationSteps": [
+              "If you don't see an open dialog in your browser, make sure you have the \u003ca target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'\u003eJetBrains Gateway with Gitpod Plugin\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."
+            ]
+          },
+          "vscode": {
+            "defaultDesktopIDE": "code-desktop",
+            "desktopIDEs": [
+              "code-desktop"
+            ],
+            "installationSteps": [
+              "If you don't see an open dialog in your browser, make sure you have \u003ca target='_blank' class='gp-link' href='https://code.visualstudio.com/download'\u003eVS Code\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."
+            ]
+          },
+          "vscode-insiders": {
+            "defaultDesktopIDE": "code-desktop",
+            "desktopIDEs": [
+              "code-desktop"
+            ],
+            "installationSteps": [
+              "If you don't see an open dialog in your browser, make sure you have \u003ca target='_blank' class='gp-link' href='https://code.visualstudio.com/insiders'\u003eVS Code Insiders\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."
+            ]
+          }
+        }
+      }
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ide-service
+  name: ide-config
+  namespace: default
 ---
 # v1/ConfigMap ide-metrics
 apiVersion: v1
@@ -7850,7 +7971,7 @@ spec:
           name: ide-service
         name: config
       - configMap:
-          name: server-ide-config
+          name: ide-config
         name: ide-config
 status: {}
 ---
