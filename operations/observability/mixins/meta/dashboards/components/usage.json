@@ -24,7 +24,35 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "links": [],
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "cloud",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
+      "title": "GCP Logs",
+      "tooltip": "See usage component logs in GCP",
+      "type": "link",
+      "url": "https://cloudlogging.app.goo.gl/6en8Xwu5tz7mTex9A"
+    },
+    {
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [
+        "grpc",
+        "server"
+      ],
+      "targetBlank": true,
+      "title": "gRPC Server Metrics",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    }
+  ],
   "liveNow": false,
   "panels": [
     {
@@ -523,7 +551,7 @@
         "showThresholdLabels": false,
         "showThresholdMarkers": true
       },
-      "pluginVersion": "9.1.4",
+      "pluginVersion": "9.1.5",
       "targets": [
         {
           "datasource": {
@@ -754,6 +782,6 @@
   "timezone": "utc",
   "title": "Component: Usage",
   "uid": "8W7P-jg4z",
-  "version": 2,
+  "version": 1,
   "weekStart": "monday"
 }
