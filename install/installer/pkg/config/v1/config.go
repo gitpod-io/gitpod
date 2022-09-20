@@ -410,8 +410,9 @@ const (
 )
 
 type BlockNewUsers struct {
-	Enabled  bool     `json:"enabled"`
-	Passlist []string `json:"passlist"`
+	Enabled bool `json:"enabled"`
+	// Passlist []string `json:"passlist" validate:"min=1,unique,dive,fqdn"`
+	Passlist []string `json:"passlist" validate:"block_new_users_passlist"`
 }
 
 // AuthProviderConfigs this only contains what is necessary for validation

@@ -6,6 +6,7 @@ package config
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
@@ -64,6 +65,38 @@ func (v version) LoadValidationFuncs(validate *validator.Validate) error {
 		"log_level": func(fl validator.FieldLevel) bool {
 			_, ok := LogLevelList[LogLevel(fl.Field().String())]
 			return ok
+		},
+		"block_new_users_passlist": func(fl validator.FieldLevel) bool {
+			if !fl.Parent().FieldByName("Enabled").Bool() {
+				// Not enabled - it's valid
+				return true
+			}
+
+			if fl.Field().Len() == 0 {
+				// No exceptions
+				return false
+			}
+
+			// Use same regex as "fqdn"
+			// @link https://github.com/go-playground/validator/blob/c7e0172e0fd176bdc521afb5186818a7db6b77ac/regexes.go#L52
+			fqdnRegexStringRFC1123 := `^([a-zA-Z0-9]{1}[a-zA-Z0-9-]{0,62})(\.[a-zA-Z0-9]{1}[a-zA-Z0-9-]{0,62})*?(\.[a-zA-Z]{1}[a-zA-Z0-9]{0,62})\.?$`
+			fqdnRegexRFC1123 := regexp.MustCompile(fqdnRegexStringRFC1123)
+
+			for i := 0; i < fl.Field().Len(); i++ {
+				val := fl.Field().Index(i).String()
+
+				if val == "" {
+					// Empty value
+					return false
+				}
+
+				// Check that it validates as a fully-qualified domain name
+				valid := fqdnRegexRFC1123.MatchString(val)
+				if !valid {
+					return false
+				}
+			}
+			return true
 		},
 	}
 
