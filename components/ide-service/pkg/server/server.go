@@ -29,7 +29,7 @@ type IDEServiceServer struct {
 	config                 *config.ServiceConfiguration
 	originIDEConfig        []byte
 	parsedIDEConfigContent string
-	ideConfig              *IDEConfig
+	ideConfig              *config.IDEConfig
 	ideConfigFileName      string
 
 	api.UnimplementedIDEServiceServer

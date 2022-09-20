@@ -9,16 +9,18 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/gitpod-io/gitpod/ide-service-api/config"
+
 	ctesting "github.com/gitpod-io/gitpod/common-go/testing"
 )
 
 func TestParseConfig(t *testing.T) {
 
 	type fixture struct {
-		IDEConfig
+		config.IDEConfig
 	}
 	type gold struct {
-		Config IDEConfig
+		Config config.IDEConfig
 		Err    string
 	}
 
