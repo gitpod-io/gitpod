@@ -59,6 +59,8 @@ import {
     ProjectEnvVar,
     ImageBuildLogInfo,
     IDESettings,
+    WithReferrerContext,
+    EnvVarWithValue,
 } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -107,8 +109,6 @@ import { MessageBusIntegration } from "./messagebus-integration";
 import * as path from "path";
 import * as grpc from "@grpc/grpc-js";
 import { IDEConfig, IDEConfigService } from "../ide-config";
-import { EnvVarWithValue } from "@gitpod/gitpod-protocol/src/protocol";
-import { WithReferrerContext } from "@gitpod/gitpod-protocol/lib/protocol";
 import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { ExtendedUser } from "@gitpod/ws-manager/lib/constraints";
@@ -132,7 +132,6 @@ export interface StartWorkspaceOptions {
     rethrow?: boolean;
     forceDefaultImage?: boolean;
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
-    pvcEnabledForPrebuilds?: boolean;
 }
 
 const MAX_INSTANCE_START_RETRIES = 2;
@@ -364,7 +363,6 @@ export class WorkspaceStarter {
                         user,
                         options.excludeFeatureFlags || [],
                         ideConfig,
-                        options.pvcEnabledForPrebuilds || false,
                     ),
                 );
             span.log({ newInstance: instance.id });
@@ -759,7 +757,6 @@ export class WorkspaceStarter {
         user: User,
         excludeFeatureFlags: NamedWorkspaceFeatureFlag[],
         ideConfig: IDEConfig,
-        pvcEnabledForPrebuilds: boolean,
     ): Promise<WorkspaceInstance> {
         const span = TraceContext.startSpan("newInstance", ctx);
         //#endregion IDE resolution TODO(ak) move to IDE service
@@ -852,17 +849,6 @@ export class WorkspaceStarter {
             }
 
             featureFlags = featureFlags.filter((f) => !excludeFeatureFlags.includes(f));
-
-            if (workspace.type === "prebuild") {
-                if (pvcEnabledForPrebuilds === true) {
-                    featureFlags = featureFlags.concat(["persistent_volume_claim"]);
-                } else {
-                    // If PVC is disabled for prebuilds, we need to remove the PVC feature flag.
-                    // This is necessary to ensure if user has PVC enabled on their account, that they
-                    // will not hijack prebuild with PVC and make everyone who use this prebuild to auto enroll into PVC feature.
-                    featureFlags = featureFlags.filter((f) => f !== "persistent_volume_claim");
-                }
-            }
 
             const userTeams = await this.teamDB.findTeamsByUser(user.id);
             const wsConnectionLimitingEnabled = await getExperimentsClientForBackend().getValueAsync(

@@ -24,7 +24,6 @@ export class WorkspaceStarterEE extends WorkspaceStarter {
         user: User,
         excludeFeatureFlags: NamedWorkspaceFeatureFlag[],
         ideConfig: IDEConfig,
-        pvcEnabledForPrebuilds: boolean,
     ): Promise<WorkspaceInstance> {
         const instance = await super.newInstance(
             ctx,
@@ -33,7 +32,6 @@ export class WorkspaceStarterEE extends WorkspaceStarter {
             user,
             excludeFeatureFlags,
             ideConfig,
-            pvcEnabledForPrebuilds,
         );
 
         return instance;
