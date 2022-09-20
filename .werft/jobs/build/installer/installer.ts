@@ -122,7 +122,7 @@ export class Installer {
     private configureMetadata(slice: string): void {
         exec(`cat <<EOF > shortname.yaml
 metadata:
-  shortname: ""
+  shortname: "default"
 EOF`);
         exec(`yq m -ix ${this.options.installerConfigPath} shortname.yaml`, { slice: slice });
     }
