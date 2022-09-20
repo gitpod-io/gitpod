@@ -127,8 +127,9 @@ module "eks" {
         }]
       }]
       labels = {
-        "gitpod.io/workload_meta" = true
-        "gitpod.io/workload_ide"  = true
+        "gitpod.io/workload_meta"               = true
+        "gitpod.io/workload_ide"                = true
+        "gitpod.io/workload_workspace_services" = true
       }
 
       tags = {
@@ -148,10 +149,10 @@ module "eks" {
         EOT
     }
 
-    Workspaces = {
+    RegularWorkspaces = {
       instance_types = [var.workspace_machine_type]
-      name           = "ws-${var.cluster_name}"
-      iam_role_name  = format("%s-%s", substr("${var.cluster_name}-ws-ng", 0, 58), random_string.ng_role_suffix.result)
+      name           = "ws-regular-${var.cluster_name}"
+      iam_role_name  = format("%s-%s", substr("${var.cluster_name}-regular-ws-ng", 0, 58), random_string.ng_role_suffix.result)
       subnet_ids     = module.vpc.public_subnets
       min_size       = 1
       max_size       = 50
@@ -169,8 +170,47 @@ module "eks" {
       desired_size               = 2
       enable_bootstrap_user_data = true
       labels = {
-        "gitpod.io/workload_workspace_services" = true
         "gitpod.io/workload_workspace_regular"  = true
+      }
+
+      tags = {
+        "k8s.io/cluster-autoscaler/enabled" = true
+        "k8s.io/cluster-autoscaler/gitpod"  = "owned"
+      }
+
+      pre_bootstrap_user_data = <<-EOT
+        #!/bin/bash
+        set -ex
+        cat <<-EOF > /etc/profile.d/bootstrap.sh
+        export CONTAINER_RUNTIME="containerd"
+        export USE_MAX_PODS=false
+        EOF
+        # Source extra environment variables in bootstrap script
+        sed -i '/^set -o errexit/a\\nsource /etc/profile.d/bootstrap.sh' /etc/eks/bootstrap.sh
+        EOT
+    }
+
+    HeadlessWorkspaces = {
+      instance_types = [var.workspace_machine_type]
+      name           = "ws-headless-${var.cluster_name}"
+      iam_role_name  = format("%s-%s", substr("${var.cluster_name}-headless-ws-ng", 0, 58), random_string.ng_role_suffix.result)
+      subnet_ids     = module.vpc.public_subnets
+      min_size       = 1
+      max_size       = 50
+      block_device_mappings = [{
+        device_name = "/dev/sda1"
+
+        ebs = [{
+          volume_size           = 512
+          volume_type           = "gp3"
+          throughput            = 500
+          iops                  = 6000
+          delete_on_termination = true
+        }]
+      }]
+      desired_size               = 2
+      enable_bootstrap_user_data = true
+      labels = {
         "gitpod.io/workload_workspace_headless" = true
       }
 
