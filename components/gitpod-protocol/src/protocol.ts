@@ -804,6 +804,12 @@ export interface RepositoryCloneInformation {
     checkoutLocation?: string;
 }
 
+export interface CoreDumpConfig {
+    enabled?: boolean;
+	softLimit?: number;
+	hardLimit?: number;
+}
+
 export interface WorkspaceConfig {
     mainConfiguration?: string;
     additionalRepositories?: RepositoryCloneInformation[];
@@ -816,6 +822,7 @@ export interface WorkspaceConfig {
     github?: GithubAppConfig;
     vscode?: VSCodeConfig;
     jetbrains?: JetBrainsConfig;
+    coreDump?: CoreDumpConfig;
 
     /** deprecated. Enabled by default **/
     experimentalNetwork?: boolean;

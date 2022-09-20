@@ -1417,6 +1417,19 @@ export class WorkspaceStarter {
         dotfileEnv.setValue(user.additionalData?.dotfileRepo || "");
         envvars.push(dotfileEnv);
 
+        if (workspace.config.coreDump?.enabled) {
+            // default core dump size is 262144 blocks (if blocksize is 4096)
+            const defaultLimit:number=1073741824;
+
+            const rLimitCore = new EnvironmentVariable();
+            rLimitCore.setName("GITPOD_RLIMIT_CORE");
+            rLimitCore.setValue(JSON.stringify({
+                softLimit: workspace.config.coreDump?.softLimit || defaultLimit,
+                hardLimit: workspace.config.coreDump?.hardLimit || defaultLimit,
+            }));
+            envvars.push(rLimitCore);
+        }
+
         const createGitpodTokenPromise = (async () => {
             const scopes = this.createDefaultGitpodAPITokenScopes(workspace, instance);
             const token = crypto.randomBytes(30).toString("hex");

@@ -829,12 +829,25 @@ var ring2Cmd = &cobra.Command{
 			return
 		}
 
-		rlimit := syscall.Rlimit{
-			Cur: 0,
-			Max: 0,
+		type fakeRlimit struct {
+			Cur uint64 `json:"softLimit"`
+			Max uint64 `json:"hardLimit"`
 		}
-		if err := syscall.Setrlimit(syscall.RLIMIT_CORE, &rlimit); err != nil {
-			log.WithError(err).Error("cannot disable core dumps")
+
+		rLimitValue := os.Getenv("GITPOD_RLIMIT_CORE")
+		var rLimitCore fakeRlimit
+		err = json.Unmarshal([]byte(rLimitValue), &rLimitCore)
+		if err != nil {
+			log.WithError(err).WithField("data", rLimitValue).Error("cannot deserialize GITPOD_RLIMIT_CORE")
+		}
+
+		// we either set a limit or explicitly disable core dumps by setting 0 as values
+		err = unix.Setrlimit(unix.RLIMIT_CORE, &unix.Rlimit{
+			Cur: rLimitCore.Cur,
+			Max: rLimitCore.Max,
+		})
+		if err != nil {
+			log.WithError(err).WithField("rlimit", rLimitCore).Error("cannot configure core dumps")
 		}
 
 		// Now that we're in our new root filesystem, including proc and all, we can load

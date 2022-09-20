@@ -802,7 +802,8 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 				"GITPOD_RESOLVED_EXTENSIONS",
 				"GITPOD_EXTERNAL_EXTENSIONS",
 				"GITPOD_WORKSPACE_CLASS_INFO",
-				"GITPOD_IDE_ALIAS":
+				"GITPOD_IDE_ALIAS",
+				"GITPOD_RLIMIT_CORE":
 				// these variables are allowed - don't skip them
 			default:
 				if strings.HasPrefix(e.Name, "GITPOD_") {
