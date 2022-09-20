@@ -27,7 +27,7 @@ resource "azurerm_kubernetes_cluster" "k8s" {
 
   default_node_pool {
     name    = "services"
-    vm_size = local.machine
+    vm_size = var.services_machine_type
 
 
     node_taints = []
@@ -36,7 +36,7 @@ resource "azurerm_kubernetes_cluster" "k8s" {
 
     enable_auto_scaling  = true
     min_count            = 1
-    max_count            = 10
+    max_count            = var.max_node_count_services
     orchestrator_version = var.cluster_version
     node_labels = {
       "gitpod.io/workload_meta"               = true
@@ -66,11 +66,11 @@ resource "azurerm_kubernetes_cluster" "k8s" {
 resource "azurerm_kubernetes_cluster_node_pool" "regularws" {
   kubernetes_cluster_id = azurerm_kubernetes_cluster.k8s.id
   name                  = "regularws"
-  vm_size               = local.machine
+  vm_size               = var.workspaces_machine_type
 
   enable_auto_scaling  = true
   min_count            = 1
-  max_count            = 10
+  max_count            = var.max_node_count_regular_workspaces
   orchestrator_version = var.cluster_version
   node_labels          = { "gitpod.io/workload_workspace_regular" = true }
   vnet_subnet_id       = azurerm_subnet.network.id
@@ -79,11 +79,11 @@ resource "azurerm_kubernetes_cluster_node_pool" "regularws" {
 resource "azurerm_kubernetes_cluster_node_pool" "headlessws" {
   kubernetes_cluster_id = azurerm_kubernetes_cluster.k8s.id
   name                  = "headlessws"
-  vm_size               = local.machine
+  vm_size               = var.workspaces_machine_type
 
   enable_auto_scaling  = true
   min_count            = 1
-  max_count            = 10
+  max_count            = var.max_node_count_headless_workspaces
   orchestrator_version = var.cluster_version
   node_labels          = { "gitpod.io/workload_workspace_headless" = true }
   vnet_subnet_id       = azurerm_subnet.network.id
