@@ -298,6 +298,15 @@ export const WorkspaceFeatureFlags = {
     workspace_connection_limiting: undefined,
 };
 export type NamedWorkspaceFeatureFlag = keyof typeof WorkspaceFeatureFlags;
+export namespace NamedWorkspaceFeatureFlag {
+    export const WORKSPACE_PERSISTED_FEATTURE_FLAGS: NamedWorkspaceFeatureFlag[] = [
+        "full_workspace_backup",
+        "persistent_volume_claim",
+    ];
+    export function isWorkspacePersisted(ff: NamedWorkspaceFeatureFlag): boolean {
+        return WORKSPACE_PERSISTED_FEATTURE_FLAGS.includes(ff);
+    }
+}
 
 export interface EnvVarWithValue {
     name: string;

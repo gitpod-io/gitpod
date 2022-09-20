@@ -125,12 +125,8 @@ export class ConfigProvider {
              */
             delete config._featureFlags;
             if (!!user.featureFlags) {
-                const workspacePersistedFlags: NamedWorkspaceFeatureFlag[] = [
-                    "full_workspace_backup",
-                    "persistent_volume_claim",
-                ];
-                config._featureFlags = workspacePersistedFlags.filter((f) =>
-                    (user.featureFlags!.permanentWSFeatureFlags || []).includes(f),
+                config._featureFlags = (user.featureFlags!.permanentWSFeatureFlags || []).filter(
+                    NamedWorkspaceFeatureFlag.isWorkspacePersisted,
                 );
             }
 
