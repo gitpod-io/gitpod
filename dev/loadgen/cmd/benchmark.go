@@ -224,7 +224,7 @@ func confirmDeletion() bool {
 	fmt.Println("Do you want to delete the created workspaces? y/n")
 	var response string
 	_, err := fmt.Scanln(&response)
-	if err != nil {
+	if err != nil && err.Error() != "unexpected newline" {
 		log.Fatal(err)
 	}
 
