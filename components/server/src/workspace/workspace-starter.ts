@@ -823,6 +823,9 @@ export class WorkspaceStarter {
             }
             //#endregion
 
+            const billingTier = await this.entitlementService.getBillingTier(user);
+            const userTeams = await this.teamDB.findTeamsByUser(user.id);
+
             let featureFlags: NamedWorkspaceFeatureFlag[] = workspace.config._featureFlags || [];
             featureFlags = featureFlags.concat(this.config.workspaceDefaults.defaultFeatureFlags);
             if (user.featureFlags && user.featureFlags.permanentWSFeatureFlags) {
@@ -842,7 +845,13 @@ export class WorkspaceStarter {
                 );
             }
 
-            if (await getExperimentsClientForBackend().getValueAsync("protected_secrets", false, { user })) {
+            if (
+                await getExperimentsClientForBackend().getValueAsync("protected_secrets", false, {
+                    user,
+                    teams: userTeams,
+                    billingTier,
+                })
+            ) {
                 // We roll out the protected secrets feature using a ConfigCat feature flag, to ensure
                 // a smooth, gradual roll out without breaking users.
                 featureFlags = featureFlags.concat(["protected_secrets"]);
@@ -850,11 +859,10 @@ export class WorkspaceStarter {
 
             featureFlags = featureFlags.filter((f) => !excludeFeatureFlags.includes(f));
 
-            const userTeams = await this.teamDB.findTeamsByUser(user.id);
             const wsConnectionLimitingEnabled = await getExperimentsClientForBackend().getValueAsync(
                 "workspace_connection_limiting",
                 false,
-                { user, teams: userTeams },
+                { user, teams: userTeams, billingTier },
             );
             if (wsConnectionLimitingEnabled) {
                 const shouldLimitNetworkConnections = await this.entitlementService.limitNetworkConnections(
@@ -870,6 +878,7 @@ export class WorkspaceStarter {
             let classesEnabled = await getExperimentsClientForBackend().getValueAsync("workspace_classes", false, {
                 user,
                 teams: userTeams,
+                billingTier,
             });
             const usageAttributionId = await this.userService.getWorkspaceUsageAttributionId(user, workspace.projectId);
             const billingMode = await this.billingModes.getBillingMode(usageAttributionId, new Date());
