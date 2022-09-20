@@ -73,7 +73,7 @@ function renderBillingMenuEntries(billingMode?: BillingMode) {
                     link: [settingsPathBilling],
                 },
                 // We need to allow access to "Team Plans" here, at least for owners.
-                ...(billingMode.hasChargebeeTeamSubscription
+                ...(BillingMode.showTeamSubscriptionUI(billingMode)
                     ? [
                           {
                               title: "Team Plans",

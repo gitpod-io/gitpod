@@ -26,6 +26,16 @@ export namespace BillingMode {
         );
     }
 
+    export function showTeamSubscriptionUI(billingMode?: BillingMode): boolean {
+        if (!billingMode) {
+            return false;
+        }
+        return (
+            billingMode.mode === "chargebee" ||
+            (billingMode.mode === "usage-based" && !!billingMode.hasChargebeeTeamSubscription)
+        );
+    }
+
     export function canSetWorkspaceClass(billingMode?: BillingMode): boolean {
         if (!billingMode) {
             return false;
@@ -62,6 +72,6 @@ interface UsageBased {
     /** User is already converted, but is member with at least one Chargebee-based "Team Plan" */
     hasChargebeeTeamPlan?: boolean;
 
-    /** User is already converted, but is member in at least one Chargebee-based "Team Subscription" */
+    /** User is already converted, but is member or owner in at least one Chargebee-based "Team Subscription" */
     hasChargebeeTeamSubscription?: boolean;
 }

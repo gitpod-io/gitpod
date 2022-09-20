@@ -13,10 +13,10 @@ import { Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { Config } from "../../../src/config";
 import { StripeService } from "../user/stripe-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import { TeamDB, TeamSubscription2DB, UserDB } from "@gitpod/gitpod-db/lib";
+import { TeamDB, TeamSubscription2DB, TeamSubscriptionDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { TeamSubscription2 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
+import { TeamSubscription, TeamSubscription2 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
 
 export const BillingModes = Symbol("BillingModes");
 export interface BillingModes {
@@ -42,6 +42,7 @@ export class BillingModesImpl implements BillingModes {
     @inject(ConfigCatClientFactory) protected readonly configCatClientFactory: ConfigCatClientFactory;
     @inject(SubscriptionService) protected readonly subscriptionSvc: SubscriptionService;
     @inject(StripeService) protected readonly stripeSvc: StripeService;
+    @inject(TeamSubscriptionDB) protected readonly teamSubscriptionDb: TeamSubscriptionDB;
     @inject(TeamSubscription2DB) protected readonly teamSubscription2Db: TeamSubscription2DB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(UserDB) protected readonly userDB: UserDB;
@@ -96,6 +97,10 @@ export class BillingModesImpl implements BillingModes {
         const cbPersonalSubscriptions = cbSubscriptions.filter(
             (s) => !isTeamSubscription(s) && s.planId !== Plans.FREE_OPEN_SOURCE.chargebeeId,
         );
+        const cbOwnedTeamSubscriptions = (
+            await this.teamSubscriptionDb.findTeamSubscriptions({ userId: user.id })
+        ).filter((ts) => TeamSubscription.isActive(ts, now.toISOString()));
+
         let canUpgradeToUBB = false;
         if (cbPersonalSubscriptions.length > 0) {
             if (cbPersonalSubscriptions.every((s) => Subscription.isCancelled(s, now.toISOString()))) {
@@ -125,6 +130,7 @@ export class BillingModesImpl implements BillingModes {
         const hasUbbPaidTeam = teamsModes.some((tm) => tm.mode === "usage-based" && !!tm.paid);
         const hasCbTeam = teamsModes.some((tm) => tm.mode === "chargebee");
         const hasCbTeamSeat = cbTeamSubscriptions.length > 0;
+        const hasCbTeamSubscription = cbOwnedTeamSubscriptions.length > 0;
 
         if (hasUbbPaidTeam || hasUbbPersonal) {
             // UBB is greedy: once a user has at least a paid team membership, they should benefit from it!
@@ -132,7 +138,7 @@ export class BillingModesImpl implements BillingModes {
             if (hasCbTeam) {
                 result.hasChargebeeTeamPlan = true;
             }
-            if (hasCbTeamSeat) {
+            if (hasCbTeamSeat || hasCbTeamSubscription) {
                 result.hasChargebeeTeamSubscription = true;
             }
             return result;

@@ -24,6 +24,7 @@ import { Disposable } from "@gitpod/gitpod-protocol";
 import { PaymentContext } from "../payment-context";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { UserContext } from "../user-context";
+import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 
 export default function Teams() {
     return (
@@ -604,10 +605,8 @@ function AllTeams() {
         </React.Fragment>
     );
 
-    const showTeamPlans =
-        userBillingMode &&
-        (userBillingMode.mode === "chargebee" ||
-            (userBillingMode.mode === "usage-based" && !!userBillingMode.hasChargebeeTeamPlan));
+    // TOOD(gpl) We might want to reduce visibility of those actions similarly to how we guard access to that API, cmp.: https://github.com/gitpod-io/gitpod/blob/db90aefb9f7dc1d062e9cb73241c1fda2eccee4b/components/server/ee/src/workspace/gitpod-server-impl.ts#L2011
+    const showTeamPlans = BillingMode.showTeamSubscriptionUI(userBillingMode);
     return (
         <div>
             {showTeamPlans ? (
