@@ -6,6 +6,7 @@
 
 import { TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
 import {
+    BillingTier,
     Team,
     User,
     WorkspaceInstance,
@@ -145,5 +146,10 @@ export class EntitlementServiceUBP implements EntitlementService {
                 })
                 .catch(reject);
         });
+    }
+
+    async getBillingTier(user: User): Promise<BillingTier> {
+        const hasPaidPlan = await this.hasPaidSubscription(user, new Date());
+        return hasPaidPlan ? "paid" : "free";
     }
 }
