@@ -4,6 +4,8 @@
 
 set -e
 
+touch logs.txt
+
 # Set Domain to `preview.gitpod-self-hosted.com` if not set
 if [ -z "${DOMAIN}" ]; then
   export DOMAIN="preview.gitpod-self-hosted.com"
@@ -14,7 +16,8 @@ USER_ID="$(od -x /dev/urandom | head -1 | awk '{OFS="-"; print $2$3,$4,$5,$6,$7$
 export USER_ID
 
 if [ "$1" != "logging" ]; then
-  $0 logging 2>&1 | /prettylog
+  $0 logging > logs.txt 2>&1 &
+  /prettylog
   exit
 fi
 
