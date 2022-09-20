@@ -829,11 +829,22 @@ var ring2Cmd = &cobra.Command{
 			return
 		}
 
-		rlimit := syscall.Rlimit{
-			Cur: 0,
-			Max: 0,
+		type fakeRlimit struct {
+			Cur uint64 `json:"cur"`
+			Max uint64 `json:"max"`
 		}
-		if err := syscall.Setrlimit(syscall.RLIMIT_CORE, &rlimit); err != nil {
+
+		var rlimit fakeRlimit
+		err = json.Unmarshal([]byte(os.Getenv("GITPOD_RLIMIT_CORE")), &rlimit)
+		if err != nil {
+			log.WithError(err).WithField("data", os.Getenv("RLIMIT_CORE")).Error("cannot deserialize RLIMIT_CORE")
+		}
+
+		rlimitCore := &syscall.Rlimit{
+			Cur: rlimit.Cur,
+			Max: rlimit.Max,
+		}
+		if err := syscall.Setrlimit(syscall.RLIMIT_CORE, rlimitCore); err != nil {
 			log.WithError(err).Error("cannot disable core dumps")
 		}
 

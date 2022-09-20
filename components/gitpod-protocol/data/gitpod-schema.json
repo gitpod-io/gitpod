@@ -282,6 +282,25 @@
             "type": "boolean",
             "deprecationMessage": "The 'experimentalNetwork' property is deprecated.",
             "description": "Experimental network configuration in workspaces (deprecated). Enabled by default"
+        },
+        "coreDump": {
+            "type": "object",
+            "description": "Configure the default action of certain signals is to cause a process to terminate and produce a core dump file, a file containing an image of the process's memory at the time of termination. Disabled by default.",
+            "deprecationMessage": "The 'coreDump' property is experimental.",
+            "additionalProperties": false,
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "cur": {
+                    "type": "number",
+                    "description": "Cur specifies the soft limit"
+                },
+                "max": {
+                    "type": "number",
+                    "description": "Max specifies the hard limit"
+                }
+            }
         }
     },
     "additionalProperties": false,

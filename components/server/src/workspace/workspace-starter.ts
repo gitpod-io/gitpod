@@ -1416,6 +1416,17 @@ export class WorkspaceStarter {
         dotfileEnv.setValue(user.additionalData?.dotfileRepo || "");
         envvars.push(dotfileEnv);
 
+        if (workspace.config.coreDump.enabled) {
+            const noLimits:number=18446744073709551615;
+
+            const rLimitCur = new EnvironmentVariable();
+            rLimitCur.setName("GITPOD_RLIMIT_CORE");
+            rLimitCur.setValue(JSON.stringify({
+                cur: workspace.config.coreDump.cur === 0 ? noLimits : workspace.config.coreDump.cur,
+                max: workspace.config.coreDump.max === 0 ? noLimits : workspace.config.coreDump.max,
+            }));
+        }
+
         const createGitpodTokenPromise = (async () => {
             const scopes = this.createDefaultGitpodAPITokenScopes(workspace, instance);
             const token = crypto.randomBytes(30).toString("hex");
