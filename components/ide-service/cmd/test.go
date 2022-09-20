@@ -25,7 +25,7 @@ var testCommand = &cobra.Command{
 	Version: Version,
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg := getConfig()
-		conn, err := grpc.Dial(fmt.Sprintf("localhost%s", cfg.Server.Services.GRPC.Address), grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.Dial(cfg.Server.Services.GRPC.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			log.Fatal(err)
 		}
