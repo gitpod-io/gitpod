@@ -4,13 +4,14 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strings"
 
+	"github.com/hpcloud/tail"
 	"github.com/pterm/pterm"
 	"gopkg.in/segmentio/analytics-go.v3"
 )
@@ -38,21 +39,31 @@ var (
 )
 
 func main() {
-	dmp, err := os.OpenFile("logs.txt", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
-	if err != nil {
-		panic(err)
+	// Warn and wait for user approval
+	pterm.FgLightCyan.Println(`
+Welcome to the local preview of Gitpod. Please note the following limitations:
+  - Performance is limited by the capabilities of your machine - a minimum of 4 cores and 6GB of RAM are required
+  - ARM CPUs including Macs with Apple Silicon (e.g. M1) are currently not supported
+For more information about these limitation, please visit the local preview documentation: https://www.gitpod.io/docs/self-hosted/latest/local-preview`)
+
+	result, _ := pterm.DefaultInteractiveConfirm.WithDefaultText("Continue?").WithDefaultValue(true).Show()
+	if !result {
+		// send telemetry for user exit
+		send_telemetry("user exit")
+		return
 	}
-	defer dmp.Close()
 
-	r := io.TeeReader(os.Stdin, dmp)
+	file, err := tail.TailFile("logs.txt", tail.Config{Follow: true})
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	scan := bufio.NewScanner(r)
 	var msgIdx int
 	lastSpinner, _ := pterm.DefaultSpinner.Start(msgs[msgIdx].Msg)
 	// send Telemetry update for the first phase
 	send_telemetry(msgs[msgIdx].Status)
-	for scan.Scan() {
-		line := scan.Text()
+	for tailLine := range file.Lines {
+		line := tailLine.Text
 		msg := msgs[msgIdx]
 		var next bool
 		switch {
@@ -77,7 +88,7 @@ func main() {
 		send_telemetry(msgs[msgIdx].Status)
 
 	}
-	err = scan.Err()
+	err = file.Err()
 	if errors.Is(err, io.EOF) {
 		err = nil
 	}
