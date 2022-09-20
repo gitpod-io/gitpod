@@ -1,6 +1,11 @@
 # Change Log
 
 ## September 2022
+- Revert "[go] Add components into a go workspace" ([#13101](https://github.com/gitpod-io/gitpod/pull/13101)) - [@csweichel](https://github.com/csweichel)
+- Update GoLand IDE image to version 222.4167.25. ([#13084](https://github.com/gitpod-io/gitpod/pull/13084)) - [@roboquat](https://github.com/roboquat)
+- improved automated code configuration service for `go` ([#13057](https://github.com/gitpod-io/gitpod/pull/13057)) - [@Siddhant-K-code](https://github.com/Siddhant-K-code)
+- Update GitLab API library, which fixes paginated API requests. ([#13001](https://github.com/gitpod-io/gitpod/pull/13001)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- [kots]: note to explain the region limitation on registry S3 backing ([#13037](https://github.com/gitpod-io/gitpod/pull/13037)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Update stable Browser Code to `1.71.2` release ([#13052](https://github.com/gitpod-io/gitpod/pull/13052)) - [@mustard-mh](https://github.com/mustard-mh)
 - Update PyCharm IDE image to version 222.4167.33. ([#13032](https://github.com/gitpod-io/gitpod/pull/13032)) - [@roboquat](https://github.com/roboquat)
 - Update PhpStorm IDE image to version 222.4167.33. ([#13033](https://github.com/gitpod-io/gitpod/pull/13033)) - [@roboquat](https://github.com/roboquat)
