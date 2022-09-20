@@ -44,9 +44,15 @@ variable "services_machine_type" {
   default     = "n2d-standard-4"
 }
 
-variable "max_node_count_workspaces" {
+variable "max_node_count_regular_workspaces" {
   type        = number
-  description = "Maximum number of nodes in the workspaces NodePool. Must be >= 1."
+  description = "Maximum number of nodes in the regular workspaces NodePool. Must be >= 1."
+  default     = 50
+}
+
+variable "max_node_count_headless_workspaces" {
+  type        = number
+  description = "Maximum number of nodes in the headless workspaces NodePool. Must be >= 1."
   default     = 50
 }
 
