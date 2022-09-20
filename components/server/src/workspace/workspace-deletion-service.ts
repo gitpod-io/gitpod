@@ -69,8 +69,7 @@ export class WorkspaceDeletionService {
         const span = TraceContext.startSpan("garbageCollectWorkspace", ctx);
 
         try {
-            const deleteSnapshots = ws.softDeleted === "user";
-            const successfulDeleted = await this.deleteWorkspaceStorage({ span }, ws, deleteSnapshots);
+            const successfulDeleted = await this.deleteWorkspaceStorage({ span }, ws, true);
             await this.db.trace({ span }).updatePartial(ws.id, { contentDeletedTime: new Date().toISOString() });
             return successfulDeleted;
         } catch (err) {
