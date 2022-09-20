@@ -6,6 +6,7 @@
 
 import { UserDB } from "@gitpod/gitpod-db/lib";
 import {
+    BillingTier,
     User,
     WorkspaceInstance,
     WorkspaceTimeoutDuration,
@@ -60,5 +61,10 @@ export class EntitlementServiceLicense implements EntitlementService {
      */
     async limitNetworkConnections(user: User, date: Date): Promise<boolean> {
         return false;
+    }
+
+    async getBillingTier(user: User): Promise<BillingTier> {
+        // TODO(gpl) Is this true? Cross-check this whole interface with Self-Hosted before next release!
+        return "paid";
     }
 }

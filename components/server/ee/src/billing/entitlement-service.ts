@@ -5,6 +5,7 @@
  */
 
 import {
+    BillingTier,
     User,
     WorkspaceInstance,
     WorkspaceTimeoutDuration,
@@ -132,6 +133,28 @@ export class EntitlementServiceImpl implements EntitlementService {
         } catch (err) {
             log.error({ userId: user.id }, "EntitlementService error: limitNetworkConnections", err);
             return false;
+        }
+    }
+
+    /**
+     * Returns true if network connections should be limited
+     * @param user
+     */
+    async getBillingTier(user: User): Promise<BillingTier> {
+        try {
+            const now = new Date();
+            const billingMode = await this.billingModes.getBillingModeForUser(user, now);
+            switch (billingMode.mode) {
+                case "none":
+                    return this.license.getBillingTier(user);
+                case "chargebee":
+                    return this.chargebee.getBillingTier(user);
+                case "usage-based":
+                    return this.ubp.getBillingTier(user);
+            }
+        } catch (err) {
+            log.error({ userId: user.id }, "EntitlementService error: getBillingTier", err);
+            return "paid";
         }
     }
 }

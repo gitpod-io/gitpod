@@ -15,6 +15,7 @@ export const TEAM_ID_ATTRIBUTE = "team_id";
 export const TEAM_IDS_ATTRIBUTE = "team_ids";
 export const TEAM_NAME_ATTRIBUTE = "team_name";
 export const TEAM_NAMES_ATTRIBUTE = "team_names";
+export const BILLING_TIER_ATTRIBUTE = "billing_tier";
 
 export class ConfigCatClient implements Client {
     private client: IConfigCatClient;
@@ -52,6 +53,9 @@ export function attributesToUser(attributes: Attributes): ConfigCatUser {
     if (attributes.teams) {
         custom[TEAM_NAMES_ATTRIBUTE] = attributes.teams.map((t) => t.name).join(",");
         custom[TEAM_IDS_ATTRIBUTE] = attributes.teams.map((t) => t.id).join(",");
+    }
+    if (attributes.billingTier) {
+        custom[BILLING_TIER_ATTRIBUTE] = attributes.billingTier;
     }
 
     return new ConfigCatUser(userId, email, "", custom);

@@ -11,6 +11,7 @@ import {
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
 } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { BillingTier } from "@gitpod/gitpod-protocol/src/protocol";
 import { injectable } from "inversify";
 
 export interface MayStartWorkspaceResult {
@@ -68,6 +69,13 @@ export interface EntitlementService {
      * @param user
      */
     limitNetworkConnections(user: User, date: Date): Promise<boolean>;
+
+    /**
+     * Returns BillingTier of this particular user
+     *
+     * @param user
+     */
+    getBillingTier(user: User): Promise<BillingTier>;
 }
 
 /**
@@ -97,5 +105,9 @@ export class CommunityEntitlementService implements EntitlementService {
 
     async limitNetworkConnections(user: User): Promise<boolean> {
         return false;
+    }
+
+    async getBillingTier(user: User): Promise<BillingTier> {
+        return "free";
     }
 }

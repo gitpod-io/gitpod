@@ -7,6 +7,7 @@
 import { TeamDB, TeamSubscription2DB, TeamSubscriptionDB } from "@gitpod/gitpod-db/lib";
 import { Accounting, SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
 import {
+    BillingTier,
     User,
     WorkspaceInstance,
     WorkspaceTimeoutDuration,
@@ -188,8 +189,17 @@ export class EntitlementServiceChargebee implements EntitlementService {
      * @param user
      */
     async limitNetworkConnections(user: User, date: Date = new Date()): Promise<boolean> {
-        const subscriptions = await this.subscriptionService.getNotYetCancelledSubscriptions(user, date.toISOString());
-        const hasPaidPlan = subscriptions.some((s) => !Plans.isFreeTier(s.planId));
+        const hasPaidPlan = this.hasPaidSubscription(user, date);
         return !hasPaidPlan;
+    }
+
+    protected async hasPaidSubscription(user: User, date: Date): Promise<boolean> {
+        const subscriptions = await this.subscriptionService.getNotYetCancelledSubscriptions(user, date.toISOString());
+        return subscriptions.some((s) => !Plans.isFreeTier(s.planId));
+    }
+
+    async getBillingTier(user: User): Promise<BillingTier> {
+        const hasPaidPlan = await this.hasPaidSubscription(user, new Date());
+        return hasPaidPlan ? "paid" : "free";
     }
 }

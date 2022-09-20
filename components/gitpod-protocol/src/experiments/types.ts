@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { User } from "../protocol";
+import { BillingTier, User } from "../protocol";
 import { Team } from "../teams-projects-protocol";
 
 export const Client = Symbol("Client");
@@ -14,6 +14,9 @@ export const Client = Symbol("Client");
 export interface Attributes {
     // user.id is mapped to ConfigCat's "identifier" + "custom.user_id"
     user?: User | { id: string; email?: string };
+
+    // The BillingTier of this particular user
+    billingTier?: BillingTier;
 
     // Currently selected Gitpod Project ID (mapped to "custom.project_id")
     projectId?: string;

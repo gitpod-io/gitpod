@@ -286,6 +286,8 @@ export interface UserFeatureSettings {
     permanentWSFeatureFlags?: NamedWorkspaceFeatureFlag[];
 }
 
+export type BillingTier = "paid" | "free";
+
 /**
  * The values of this type MUST MATCH enum values in WorkspaceFeatureFlag from ws-manager/client/core_pb.d.ts
  * If they don't we'll break things during workspace startup.
