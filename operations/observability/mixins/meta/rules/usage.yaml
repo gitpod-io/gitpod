@@ -14,7 +14,7 @@ spec:
   groups:
   - name: usage
     rules:
-    - alert: GitpodUsageReconcileUsageFailures'
+    - alert: GitpodUsageReconcileUsageFailures
       expr: sum(increase(grpc_server_handled_total{grpc_service="usage.v1.UsageService", grpc_method="ReconcileUsage", grpc_code!="OK"})) > 1
       for: 30m
       labels:
@@ -25,7 +25,7 @@ spec:
         summary: There are failed usage reconciliations.
         description: We have accumulated {{ printf "%.2f" $value }} failures. This affects how up-to-date usage data is.
 
-    - alert: GitpodUsageReconcileInvoicesFailures'
+    - alert: GitpodUsageReconcileInvoicesFailures
       expr: sum(increase(grpc_server_handled_total{grpc_service="usage.v1.BillingService", grpc_method="ReconcileInvoices", grpc_code!="OK"})) > 1
       for: 30m
       labels:
