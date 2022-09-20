@@ -147,8 +147,7 @@ export class BillingModesImpl implements BillingModes {
         const hasCbTeamSeat = cbTeamSubscriptions.length > 0;
         const hasCbTeamSubscription = cbOwnedTeamSubscriptions.length > 0;
 
-        if (hasUbbPaidTeam || hasUbbPersonal) {
-            // UBB is greedy: once a user has at least a paid team membership, they should benefit from it!
+        function usageBased() {
             const result: BillingMode = { mode: "usage-based" };
             if (hasCbTeam) {
                 result.hasChargebeeTeamPlan = true;
@@ -158,6 +157,11 @@ export class BillingModesImpl implements BillingModes {
             }
             return result;
         }
+
+        if (hasUbbPaidTeam || hasUbbPersonal) {
+            // UBB is greedy: once a user has at least a paid team membership, they should benefit from it!
+            return usageBased();
+        }
         if (hasCbTeam || hasCbTeamSeat || canUpgradeToUBB) {
             // TODO(gpl): Q: How to test the free-tier, then? A: Make sure you have no CB seats anymore
             // For that we could add a new field here, which lists all seats that are "blocking" you, and display them in the UI somewhere.
@@ -165,7 +169,7 @@ export class BillingModesImpl implements BillingModes {
         }
 
         // UBB free tier
-        return { mode: "usage-based" };
+        return usageBased();
     }
 
     async getBillingModeForTeam(team: Team, _now: Date): Promise<BillingMode> {
