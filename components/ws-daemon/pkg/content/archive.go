@@ -58,9 +58,10 @@ func BuildTarbal(ctx context.Context, src string, dst string, fullWorkspaceBacku
 	}
 
 	tarReader, err := archive.TarWithOptions(src, &archive.TarOptions{
-		UIDMaps:     uidMaps,
-		GIDMaps:     gidMaps,
-		Compression: archive.Uncompressed,
+		UIDMaps:         uidMaps,
+		GIDMaps:         gidMaps,
+		Compression:     archive.Uncompressed,
+		ExcludePatterns: []string{"**core\\.[0-9]+"},
 	})
 	if err != nil {
 		return
