@@ -59,7 +59,7 @@ tasks:
   - name: Go
     init: |
       ./components/gitpod-protocol/go/scripts/generate-config.sh
-      leeway exec --filter-type go -v -- go mod verify
+      leeway exec --filter-type go -v -- go mod download
     openMode: split-right
   - name: Pre-commit
     init: pre-commit install --install-hooks
