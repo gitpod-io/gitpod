@@ -100,6 +100,9 @@
 /.werft/*installer-tests* @gitpod-io/engineering-self-hosted
 /.werft/jobs/build/self-hosted-* @gitpod-io/engineering-self-hosted
 
+/dev/preview/infrastructure/harvester @gitpod-io/platform
+/dev/preview/workflow @gitpod-io/platform
+
 #
 # Automation
 # The following files are updated automatically so we don't want to have a specific code-owner
