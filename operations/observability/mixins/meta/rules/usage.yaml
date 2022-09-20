@@ -36,6 +36,17 @@ spec:
         summary: There are failed Stripe invoice reconciliations.
         description: We have accumulated {{ printf "%.2f" $value }} failures. This affects how much customers will be billed.
 
+    - alert: GitpodUsageBillingServiceFinalizeInvoiceFailures
+      expr: sum(increase(grpc_server_handled_total{grpc_service="usage.v1.BillingService", grpc_method="FinalizeInvoice", grpc_code!="OK"})) > 1
+      for: 30m
+      labels:
+        severity: warning
+        team: webapp
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodUsageBillingServiceFinalizeInvoiceFailures.md
+        summary: Invoice finalization is failing. We are not balancing out user/team usage.
+        description: We have accumulated {{ printf "%.2f" $value }} failures. This affects if customers have their balance reset and can therefore start new workspaces.
+
     - alert: GitpodUsageTooLongSinceLastSuccessfulLedgerReconciliation
       expr: (time() - gitpod_usage_ledger_last_completed_time{outcome!="success"}) > 60 * 60
       for: 30m
