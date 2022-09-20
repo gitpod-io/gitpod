@@ -1,11 +1,4 @@
 locals {
-  labels = tomap({
-    workload_meta : "gitpod.io/workload_meta"
-    workload_ide : "gitpod.io/workload_ide"
-    workspace_services : "gitpod.io/workload_workspace_services"
-    workspace_regular : "gitpod.io/workload_workspace_regular"
-    workspace_headless : "gitpod.io/workload_workspace_headless"
-  })
   dns_enabled = var.domain_name != null
 
   name_format = join("-", [
@@ -75,16 +68,4 @@ locals {
       priority                   = 4096
     }
   ] : []
-  nodes = [
-    {
-      name = "services"
-      labels = {
-        lookup(local.labels, "workload_meta")      = true
-        lookup(local.labels, "workload_ide")       = true
-        lookup(local.labels, "workspace_services") = true
-        lookup(local.labels, "workspace_regular")  = true
-        lookup(local.labels, "workspace_headless") = true
-      }
-    }
-  ]
 }
