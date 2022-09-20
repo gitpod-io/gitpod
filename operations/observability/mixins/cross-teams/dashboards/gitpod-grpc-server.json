@@ -126,7 +126,7 @@
             "uid": "P4169E866C3094E38"
           },
           "editorMode": "code",
-          "expr": "sum(increase(grpc_server_started_total{grpc_service=~\"$service\", grpc_type=~\"$type\"}[1m])) by (grpc_service, grpc_method)",
+          "expr": "sum(increase(grpc_server_started_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=~\"$type\"}[1m])) by (grpc_service, grpc_method)",
           "legendFormat": "{{grpc_service}}.{{grpc_method}}",
           "range": true,
           "refId": "A"
