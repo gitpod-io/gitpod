@@ -114,7 +114,6 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billing/entitlement-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { BillingModes } from "../billing/billing-mode";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { BillingService } from "../billing/billing-service";
 import Stripe from "stripe";
 import { UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
@@ -2010,14 +2009,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             throw err;
         }
         return subscription;
-    }
-
-    protected async isUsageBasedFeatureFlagEnabled(user: User): Promise<boolean> {
-        const teams = await this.teamDB.findTeamsByUser(user.id);
-        return await getExperimentsClientForBackend().getValueAsync("isUsageBasedBillingEnabled", false, {
-            user,
-            teams: teams,
-        });
     }
 
     protected async ensureChargebeeApiIsAllowed(sub: { user?: User; team?: Team }): Promise<void> {
