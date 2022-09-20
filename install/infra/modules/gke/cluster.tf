@@ -67,8 +67,9 @@ resource "google_container_node_pool" "services" {
     ]
 
     labels = {
-      "gitpod.io/workload_meta" = true
-      "gitpod.io/workload_ide"  = true
+      "gitpod.io/workload_meta"               = true
+      "gitpod.io/workload_ide"                = true
+      "gitpod.io/workload_workspace_services" = true
     }
 
     preemptible  = false
@@ -93,8 +94,8 @@ resource "google_container_node_pool" "services" {
   }
 }
 
-resource "google_container_node_pool" "workspaces" {
-  name               = "workspaces-${var.cluster_name}"
+resource "google_container_node_pool" "regular-workspaces" {
+  name               = "regular-workspaces-${var.cluster_name}"
   location           = google_container_cluster.gitpod-cluster.location
   cluster            = google_container_cluster.gitpod-cluster.name
   version            = var.cluster_version // kubernetes version
@@ -108,8 +109,46 @@ resource "google_container_node_pool" "workspaces" {
     ]
 
     labels = {
-      "gitpod.io/workload_workspace_services" = true
       "gitpod.io/workload_workspace_regular"  = true
+    }
+
+    preemptible  = false
+    image_type   = "UBUNTU_CONTAINERD"
+    disk_type    = "pd-ssd"
+    disk_size_gb = var.workspaces_disk_size_gb
+    machine_type = var.workspaces_machine_type
+    tags         = ["gke-node", "${var.project}-gke"]
+    metadata = {
+      disable-legacy-endpoints = "true"
+    }
+  }
+
+  autoscaling {
+    min_node_count = 1
+    max_node_count = var.max_node_count_regular_workspaces
+  }
+
+  management {
+    auto_repair  = true
+    auto_upgrade = false
+  }
+}
+
+resource "google_container_node_pool" "headless-workspaces" {
+  name               = "headless-workspaces-${var.cluster_name}"
+  location           = google_container_cluster.gitpod-cluster.location
+  cluster            = google_container_cluster.gitpod-cluster.name
+  version            = var.cluster_version // kubernetes version
+  initial_node_count = 1
+  max_pods_per_node  = 110
+
+  node_config {
+    service_account = google_service_account.cluster_sa.email
+    oauth_scopes = [
+      "https://www.googleapis.com/auth/cloud-platform"
+    ]
+
+    labels = {
       "gitpod.io/workload_workspace_headless" = true
     }
 
@@ -126,7 +165,7 @@ resource "google_container_node_pool" "workspaces" {
 
   autoscaling {
     min_node_count = 1
-    max_node_count = var.max_node_count_workspaces
+    max_node_count = var.max_node_count_headless_workspaces
   }
 
   management {
@@ -136,7 +175,7 @@ resource "google_container_node_pool" "workspaces" {
 }
 
 module "gke_auth" {
-  depends_on = [google_container_node_pool.workspaces]
+  depends_on = [google_container_node_pool.regular-workspaces, google_container_node_pool.headless-workspaces]
 
   source = "terraform-google-modules/kubernetes-engine/google//modules/auth"
 
