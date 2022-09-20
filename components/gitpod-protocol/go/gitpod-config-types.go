@@ -23,6 +23,17 @@ type AdditionalRepositoriesItems struct {
 	Url string `yaml:"url"`
 }
 
+// CoreDump Configure the default action of certain signals is to cause a process to terminate and produce a core dump file, a file containing an image of the process's memory at the time of termination. Disabled by default.
+type CoreDump struct {
+	Enabled bool `yaml:"enabled,omitempty"`
+
+	// the hard limit acts as a ceiling for the soft limit. For more details please check https://man7.org/linux/man-pages/man2/getrlimit.2.html
+	HardLimit float64 `yaml:"hardLimit,omitempty"`
+
+	// upper limit on the size of the core dump file that will be produced if it receives a core dump signal
+	SoftLimit float64 `yaml:"softLimit,omitempty"`
+}
+
 // Env Environment variables to set.
 type Env struct {
 }
@@ -42,6 +53,9 @@ type GitpodConfig struct {
 
 	// Path to where the repository should be checked out relative to `/workspace`. Defaults to the simple repository name.
 	CheckoutLocation string `yaml:"checkoutLocation,omitempty"`
+
+	// Configure the default action of certain signals is to cause a process to terminate and produce a core dump file, a file containing an image of the process's memory at the time of termination. Disabled by default.
+	CoreDump *CoreDump `yaml:"coreDump,omitempty"`
 
 	// Experimental network configuration in workspaces (deprecated). Enabled by default
 	ExperimentalNetwork bool `yaml:"experimentalNetwork,omitempty"`
@@ -268,6 +282,76 @@ func (strct *AdditionalRepositoriesItems) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+func (strct *CoreDump) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0))
+	buf.WriteString("{")
+	comma := false
+	// Marshal the "enabled" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"enabled\": ")
+	if tmp, err := json.Marshal(strct.Enabled); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
+	// Marshal the "hardLimit" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"hardLimit\": ")
+	if tmp, err := json.Marshal(strct.HardLimit); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
+	// Marshal the "softLimit" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"softLimit\": ")
+	if tmp, err := json.Marshal(strct.SoftLimit); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
+
+	buf.WriteString("}")
+	rv := buf.Bytes()
+	return rv, nil
+}
+
+func (strct *CoreDump) UnmarshalJSON(b []byte) error {
+	var jsonMap map[string]json.RawMessage
+	if err := json.Unmarshal(b, &jsonMap); err != nil {
+		return err
+	}
+	// parse all the defined properties
+	for k, v := range jsonMap {
+		switch k {
+		case "enabled":
+			if err := json.Unmarshal([]byte(v), &strct.Enabled); err != nil {
+				return err
+			}
+		case "hardLimit":
+			if err := json.Unmarshal([]byte(v), &strct.HardLimit); err != nil {
+				return err
+			}
+		case "softLimit":
+			if err := json.Unmarshal([]byte(v), &strct.SoftLimit); err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("additional property not allowed: \"" + k + "\"")
+		}
+	}
+	return nil
+}
+
 func (strct *Github) MarshalJSON() ([]byte, error) {
 	buf := bytes.NewBuffer(make([]byte, 0))
 	buf.WriteString("{")
@@ -329,6 +413,17 @@ func (strct *GitpodConfig) MarshalJSON() ([]byte, error) {
 	}
 	buf.WriteString("\"checkoutLocation\": ")
 	if tmp, err := json.Marshal(strct.CheckoutLocation); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
+	// Marshal the "coreDump" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"coreDump\": ")
+	if tmp, err := json.Marshal(strct.CoreDump); err != nil {
 		return nil, err
 	} else {
 		buf.Write(tmp)
@@ -464,6 +559,10 @@ func (strct *GitpodConfig) UnmarshalJSON(b []byte) error {
 			}
 		case "checkoutLocation":
 			if err := json.Unmarshal([]byte(v), &strct.CheckoutLocation); err != nil {
+				return err
+			}
+		case "coreDump":
+			if err := json.Unmarshal([]byte(v), &strct.CoreDump); err != nil {
 				return err
 			}
 		case "experimentalNetwork":
