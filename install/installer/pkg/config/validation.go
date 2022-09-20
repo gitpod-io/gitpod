@@ -55,6 +55,8 @@ func Validate(version ConfigVersion, cfg interface{}) (r *ValidationResult, err 
 					res.Fatal = append(res.Fatal, fmt.Sprintf("Field '%s' is %s '%s'", v.Namespace(), tag, v.Param()))
 				case "startswith":
 					res.Fatal = append(res.Fatal, fmt.Sprintf("Field '%s' must start with '%s'", v.Namespace(), v.Param()))
+				case "block_new_users_passlist":
+					res.Fatal = append(res.Fatal, fmt.Sprintf("Field '%s' failed. If 'Enabled = true', there must be at least one fully-qualified domain name in the passlist", v.Namespace()))
 				default:
 					// General error message
 					res.Fatal = append(res.Fatal, fmt.Sprintf("Field '%s' failed %s validation", v.Namespace(), v.Tag()))
