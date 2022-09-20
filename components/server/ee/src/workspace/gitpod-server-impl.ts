@@ -1655,7 +1655,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const user = this.checkAndBlockUser("tsAddSlots");
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
-        await this.ensureChargebeeApiIsAllowedTS(ts);
 
         if (addQuantity <= 0) {
             const err = new Error(`Invalid quantity!`);
@@ -1689,7 +1688,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const user = this.checkAndBlockUser("tsAssignSlot");
         // assigning a slot can be done by third users
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, identityStr ? user.id : undefined);
-        await this.ensureChargebeeApiIsAllowedTS(ts);
         const logCtx = { userId: user.id };
 
         try {
@@ -1770,7 +1768,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const user = this.checkAndBlockUser("tsReassignSlot");
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
-        await this.ensureChargebeeApiIsAllowedTS(ts);
         const logCtx = { userId: user.id };
         const assigneeInfo = await this.findAssignee(logCtx, newIdentityStr);
 
@@ -1854,7 +1851,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const user = this.checkAndBlockUser("tsReactivateSlot");
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
-        await this.ensureChargebeeApiIsAllowedTS(ts);
 
         this.updateTeamSubscriptionQueue
             .enqueue(async () => {
@@ -1872,14 +1868,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             .catch((err) => {
                 /** ignore */
             });
-    }
-
-    protected async ensureChargebeeApiIsAllowedTS(ts: TeamSubscription): Promise<void> {
-        const tsOwner = await this.userDB.findUserById(ts.userId);
-        if (!tsOwner) {
-            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, "Cannot find TeamSubscription owner!");
-        }
-        await this.ensureChargebeeApiIsAllowed({ user: tsOwner });
     }
 
     async getGithubUpgradeUrls(ctx: TraceContext): Promise<GithubUpgradeURL[]> {
