@@ -19,7 +19,6 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import { DeleteVolumeSnapshotRequest } from "@gitpod/ws-manager/lib";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { reportWorkspacePurged } from "../prometheus-metrics";
 
 @injectable()
 export class WorkspaceDeletionService {
@@ -57,7 +56,6 @@ export class WorkspaceDeletionService {
     public async hardDeleteWorkspace(ctx: TraceContext, workspaceId: string): Promise<void> {
         await this.db.trace(ctx).hardDeleteWorkspace(workspaceId);
         log.info(`Purged Workspace ${workspaceId} and all WorkspaceInstances for this workspace`, { workspaceId });
-        reportWorkspacePurged();
     }
 
     /**
