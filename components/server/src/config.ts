@@ -173,6 +173,12 @@ export interface ConfigSerialized {
 
     vsxRegistryUrl: string;
 
+    /*
+     * The maximum event loop lag allowed before the liveness endpoint should return
+     * an error code.
+     */
+    maximumEventLoopLag: number;
+
     /**
      * Payment related options
      */
