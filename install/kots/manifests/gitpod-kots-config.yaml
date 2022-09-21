@@ -40,15 +40,15 @@ data:
   IMAGE_PULL_SECRET_NAME: repl{{ ImagePullSecretName | quote }}
 
   # Registry settings
-  REG_INCLUSTER_ENABLED: repl{{ ConfigOption "reg_incluster" | quote }}
-  REG_URL: repl{{ ConfigOption "reg_url" | quote }}
-  REG_INCLUSTER_STORAGE: repl{{ ConfigOption "reg_incluster_storage" | quote }}
-  REG_INCLUSTER_STORAGE_S3_REGION: repl{{ ConfigOption "reg_incluster_storage_s3_region" | quote }}
-  REG_INCLUSTER_STORAGE_S3_ENDPOINT: repl{{ ConfigOption "reg_incluster_storage_s3_endpoint" | quote }}
-  REG_INCLUSTER_STORAGE_S3_BUCKETNAME: repl{{ ConfigOption "reg_incluster_storage_s3_bucketname" | quote }}
-  REG_INCLUSTER_STORAGE_S3_CERTIFICATE_NAME: container-registry-s3-backend
-  REG_DOCKER_CONFIG_ENABLED: repl{{ ConfigOption "reg_docker_config_enable" | quote }}
-  REG_EXTERNAL_CERTIFICATE_NAME: container-registry
+  REGISTRY_INCLUSTER_ENABLED: repl{{ ConfigOption "reg_incluster" | quote }}
+  REGISTRY_URL: repl{{ ConfigOption "reg_url" | quote }}
+  REGISTRY_INCLUSTER_STORAGE: repl{{ ConfigOption "reg_incluster_storage" | quote }}
+  REGISTRY_INCLUSTER_STORAGE_S3_REGION: repl{{ ConfigOption "reg_incluster_storage_s3_region" | quote }}
+  REGISTRY_INCLUSTER_STORAGE_S3_ENDPOINT: repl{{ ConfigOption "reg_incluster_storage_s3_endpoint" | quote }}
+  REGISTRY_INCLUSTER_STORAGE_S3_BUCKET_NAME: repl{{ ConfigOption "reg_incluster_storage_s3_bucketname" | quote }}
+  REGISTRY_INCLUSTER_STORAGE_S3_CERTIFICATE_NAME: container-registry-s3-backend
+  REGISTRY_DOCKER_CONFIG_ENABLED: repl{{ ConfigOption "reg_docker_config_enable" | quote }}
+  REGISTRY_EXTERNAL_CERTIFICATE_NAME: container-registry
 
   # Storage settings
   STORE_PROVIDER: repl{{ ConfigOption "store_provider" | quote }}
@@ -72,7 +72,7 @@ data:
 
   # Advanced settings
   ADVANCED_MODE_ENABLED: repl{{ ConfigOption "advanced_mode_enabled" | quote }}
-  COMPONENT_PROXY_SERVICE_SERVICETYPE: repl{{ ConfigOption "component_proxy_service_serviceType" | quote }}
+  COMPONENT_PROXY_SERVICE_TYPE: repl{{ ConfigOption "component_proxy_service_serviceType" | quote }}
   CUSTOMIZATION_PATCH_ENABLED: repl{{ ConfigOptionNotEquals "customization_patch" "" | quote }} # Use comparison not value
 
   # Customizations

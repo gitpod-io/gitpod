@@ -41,7 +41,7 @@ func isTruthy(input string) bool {
 // ConfigEnvvars this maps the external environment variables to Golang values and forms part of our public contract
 type ConfigEnvvars struct {
 	AdvancedModeEnabled                  bool     `env:"ADVANCED_MODE_ENABLED"`
-	ComponentProxyServiceType            string   `env:"COMPONENT_PROXY_SERVICE_SERVICETYPE"`
+	ComponentProxyServiceType            string   `env:"COMPONENT_PROXY_SERVICE_TYPE"`
 	ConfigPatch                          string   `env:"CONFIG_PATCH"`
 	CustomizationPatch                   string   `env:"CUSTOMIZATION_PATCH"`
 	DBCloudSQLEnabled                    bool     `env:"DB_CLOUDSQL_ENABLED"`
@@ -60,16 +60,16 @@ type ConfigEnvvars struct {
 	LocalRegistryHost                    string   `env:"LOCAL_REGISTRY_HOST"`
 	LocalRegistryImagePullConfig         string   `env:"LOCAL_REGISTRY_IMAGE_PULL_DOCKER_CONFIG_JSON"`
 	OpenVSXUrl                           string   `env:"OPEN_VSX_URL"`
-	RegistryDockerConfigEnabled          bool     `env:"REG_DOCKER_CONFIG_ENABLED"`
-	RegistryDockerConfig                 string   `env:"REG_DOCKER_CONFIG_JSON"`
-	RegistryInClusterEnabled             bool     `env:"REG_INCLUSTER_ENABLED" envDefault:"1"`
-	RegistryInClusterStorageType         string   `env:"REG_INCLUSTER_STORAGE"`
-	RegistryInClusterStorageS3BucketName string   `env:"REG_INCLUSTER_STORAGE_S3_BUCKETNAME"`
-	RegistryInClusterStorageS3CertName   string   `env:"REG_INCLUSTER_STORAGE_S3_CERTIFICATE_NAME"`
-	RegistryInClusterStorageS3Endpoint   string   `env:"REG_INCLUSTER_STORAGE_S3_ENDPOINT"`
-	RegistryInClusterStorageS3Region     string   `env:"REG_INCLUSTER_STORAGE_S3_REGION"`
-	RegistryExternalCertName             string   `env:"REG_EXTERNAL_CERTIFICATE_NAME"`
-	RegistryExternalURL                  string   `env:"REG_URL"`
+	RegistryDockerConfigEnabled          bool     `env:"REGISTRY_DOCKER_CONFIG_ENABLED"`
+	RegistryDockerConfig                 string   `env:"REGISTRY_DOCKER_CONFIG_JSON"`
+	RegistryInClusterEnabled             bool     `env:"REGISTRY_INCLUSTER_ENABLED" envDefault:"1"`
+	RegistryInClusterStorageType         string   `env:"REGISTRY_INCLUSTER_STORAGE"`
+	RegistryInClusterStorageS3BucketName string   `env:"REGISTRY_INCLUSTER_STORAGE_S3_BUCKET_NAME"`
+	RegistryInClusterStorageS3CertName   string   `env:"REGISTRY_INCLUSTER_STORAGE_S3_CERTIFICATE_NAME"`
+	RegistryInClusterStorageS3Endpoint   string   `env:"REGISTRY_INCLUSTER_STORAGE_S3_ENDPOINT"`
+	RegistryInClusterStorageS3Region     string   `env:"REGISTRY_INCLUSTER_STORAGE_S3_REGION"`
+	RegistryExternalCertName             string   `env:"REGISTRY_EXTERNAL_CERTIFICATE_NAME"`
+	RegistryExternalURL                  string   `env:"REGISTRY_URL"`
 	SSHGatewayEnabled                    bool     `env:"SSH_GATEWAY"`
 	SSHGatewayHostKeyName                string   `env:"SSH_GATEWAY_HOST_KEY_NAME"`
 	StorageProvider                      string   `env:"STORE_PROVIDER" envDefault:"incluster"`

@@ -91,7 +91,7 @@ EOF
 
     # Combine the pull secrets
     echo "${LOCAL_REGISTRY_IMAGE_PULL_DOCKER_CONFIG_JSON}" > /tmp/kotsregistry.json
-    if [ "${REG_INCLUSTER_ENABLED}" = "1" ]; then
+    if [ "${REGISTRY_INCLUSTER_ENABLED}" = "1" ]; then
         echo "Gitpod: Add the local registry secret to the in-cluster registry secret"
 
         # Get the in-cluster registry secret
@@ -116,18 +116,18 @@ EOF
 
         echo "Gitpod: append the container-registry secret"
         echo "---" >> "${GITPOD_OBJECTS}/templates/gitpod.yaml"
-        kubectl create secret docker-registry "${REG_EXTERNAL_CERTIFICATE_NAME}" \
+        kubectl create secret docker-registry "${REGISTRY_EXTERNAL_CERTIFICATE_NAME}" \
             --namespace "${NAMESPACE}" \
             --from-file=.dockerconfigjson=/tmp/container-registry-secret \
             -o yaml --dry-run=client >> "${GITPOD_OBJECTS}/templates/gitpod.yaml"
     fi
 
-    if [ "${REG_DOCKER_CONFIG_ENABLED}" = "1" ];
+    if [ "${REGISTRY_DOCKER_CONFIG_ENABLED}" = "1" ];
     then
         # Work out the registry secret to use
-        if [ "${REG_INCLUSTER_ENABLED}" = "0" ];
+        if [ "${REGISTRY_INCLUSTER_ENABLED}" = "0" ];
         then
-            export REGISTRY_SECRET_NAME="${REG_EXTERNAL_CERTIFICATE_NAME}"
+            export REGISTRY_SECRET_NAME="${REGISTRY_EXTERNAL_CERTIFICATE_NAME}"
         else
             export REGISTRY_SECRET_NAME="builtin-registry-auth"
         fi

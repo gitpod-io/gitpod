@@ -5,9 +5,9 @@ envvars:
   DB_INCLUSTER_ENABLED: "0"
   DB_EXTERNAL_CERTIFICATE_NAME: azure-db-secret
   DOMAIN: gitpod.io
-  REG_INCLUSTER_ENABLED: "0"
-  REG_EXTERNAL_CERTIFICATE_NAME: azure-reg-secret
-  REG_URL: azure-reg-url
+  REGISTRY_INCLUSTER_ENABLED: "0"
+  REGISTRY_EXTERNAL_CERTIFICATE_NAME: azure-reg-secret
+  REGISTRY_URL: azure-reg-url
   STORE_PROVIDER: azure
   STORE_REGION: azure-region
   STORE_AZURE_CREDENTIALS_NAME: azure-store-secret
