@@ -123,6 +123,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		AllowComponents: []string{
 			"supervisor-frontend",
 			"vscode-workbench",
+			"vscode-server",
+			"vscode-web",
 		},
 	}
 
