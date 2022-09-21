@@ -162,15 +162,15 @@ func (c *CostCenterManager) ComputeInvoiceUsageRecord(ctx context.Context, attri
 	if err != nil {
 		return nil, err
 	}
-	if summary.CreditCentsBalanceAtEnd <= int64(0) {
-		// account has not debt, do nothing
+	if summary.CreditCentsBalanceAtEnd.ToCredits() <= 0 {
+		// account has no debt, do nothing
 		return nil, nil
 	}
 	return &Usage{
 		ID:            uuid.New(),
 		AttributionID: attributionID,
 		Description:   "Credits",
-		CreditCents:   CreditCents(summary.CreditCentsBalanceAtEnd * -1),
+		CreditCents:   summary.CreditCentsBalanceAtEnd * -1,
 		EffectiveTime: NewVarcharTime(now),
 		Kind:          InvoiceUsageKind,
 		Draft:         false,

@@ -103,13 +103,13 @@ func TestGetUsageSummary(t *testing.T) {
 		creditsAtEnd   int64
 		recordsInRange int
 	}{
-		{start, end, false, 300, 1000, 2},
-		{start, end, true, 200, 600, 1},
-		{end, end, false, 1000, 1000, 0},
-		{end, end, true, 600, 600, 0},
-		{start, start, false, 300, 300, 0},
-		{start.Add(-500 * 24 * time.Hour), end, false, 0, 1000, 4},
-		{start.Add(-500 * 24 * time.Hour), end.Add(500 * 24 * time.Hour), false, 0, 2000, 5},
+		{start, end, false, 3, 10, 2},
+		{start, end, true, 2, 6, 1},
+		{end, end, false, 10, 10, 0},
+		{end, end, true, 6, 6, 0},
+		{start, start, false, 3, 3, 0},
+		{start.Add(-500 * 24 * time.Hour), end, false, 0, 10, 4},
+		{start.Add(-500 * 24 * time.Hour), end.Add(500 * 24 * time.Hour), false, 0, 20, 5},
 	}
 
 	for i, test := range tests {
@@ -117,8 +117,8 @@ func TestGetUsageSummary(t *testing.T) {
 			metaData, err := db.GetUsageSummary(context.Background(), conn, attributionID, test.start, test.end, test.excludeDrafts)
 			require.NoError(t, err)
 
-			require.Equal(t, test.creditsAtStart, metaData.CreditCentsBalanceAtStart)
-			require.Equal(t, test.creditsAtEnd, metaData.CreditCentsBalanceAtEnd)
+			require.EqualValues(t, test.creditsAtStart, metaData.CreditCentsBalanceAtStart.ToCredits())
+			require.EqualValues(t, test.creditsAtEnd, metaData.CreditCentsBalanceAtEnd.ToCredits())
 			require.Equal(t, test.recordsInRange, metaData.NumRecordsInRange)
 		})
 	}

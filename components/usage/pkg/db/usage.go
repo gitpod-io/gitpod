@@ -163,8 +163,8 @@ func FindUsage(ctx context.Context, conn *gorm.DB, params *FindUsageParams) ([]U
 
 type UsageSummary struct {
 	NumRecordsInRange         int
-	CreditCentsBalanceAtStart int64
-	CreditCentsBalanceAtEnd   int64
+	CreditCentsBalanceAtStart CreditCents
+	CreditCentsBalanceAtEnd   CreditCents
 }
 
 func GetUsageSummary(ctx context.Context, conn *gorm.DB, attributionId AttributionID, from, to time.Time, excludeDrafts bool) (*UsageSummary, error) {
@@ -197,8 +197,8 @@ func GetUsageSummary(ctx context.Context, conn *gorm.DB, attributionId Attributi
 	}
 	return &UsageSummary{
 		NumRecordsInRange:         int(numRecordsInRange.Int32),
-		CreditCentsBalanceAtStart: creditCentsBalanceAtStart.Int64,
-		CreditCentsBalanceAtEnd:   creditCentsBalanceAtStart.Int64 + creditCentsBalanceInPeriod.Int64,
+		CreditCentsBalanceAtStart: CreditCents(creditCentsBalanceAtStart.Int64),
+		CreditCentsBalanceAtEnd:   CreditCents(creditCentsBalanceAtStart.Int64 + creditCentsBalanceInPeriod.Int64),
 	}, nil
 }
 
