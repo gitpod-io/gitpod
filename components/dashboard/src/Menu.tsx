@@ -27,6 +27,7 @@ import { PaymentContext } from "./payment-context";
 import FeedbackFormModal from "./feedback-form/FeedbackModal";
 import { inResource, isGitpodIo } from "./utils";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
+import { FeatureFlagContext } from "./contexts/FeatureFlagContext";
 
 interface Entry {
     title: string;
@@ -36,6 +37,7 @@ interface Entry {
 
 export default function Menu() {
     const { user, userBillingMode, refreshUserBillingMode } = useContext(UserContext);
+    const { showUsageView } = useContext(FeatureFlagContext);
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
@@ -199,7 +201,7 @@ export default function Menu() {
                     link: `/t/${team.slug}/members`,
                 },
             ];
-            if (teamBillingMode && teamBillingMode.mode === "usage-based") {
+            if (showUsageView || (teamBillingMode && teamBillingMode.mode === "usage-based")) {
                 teamSettingsList.push({
                     title: "Usage",
                     link: `/t/${team.slug}/usage`,
@@ -221,12 +223,12 @@ export default function Menu() {
             title: "Projects",
             link: "/projects",
         });
-        // if (userBillingMode?.mode === "usage-based") {
-        //     userMenu.push({
-        //         title: "Usage",
-        //         link: "/usage",
-        //     });
-        // }
+        if (showUsageView) {
+            userMenu.push({
+                title: "Usage",
+                link: "/usage",
+            });
+        }
         userMenu.push({
             title: "Settings",
             link: "/settings",
