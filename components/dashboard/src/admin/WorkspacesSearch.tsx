@@ -19,6 +19,7 @@ import moment from "moment";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
+import Pagination from "../Pagination/Pagination";
 import { getGitpodService } from "../service/service";
 import { getProject, WorkspaceStatusIndicator } from "../workspaces/WorkspaceEntry";
 import WorkspaceDetail from "./WorkspaceDetail";
@@ -43,6 +44,11 @@ export function WorkspaceSearch(props: Props) {
     const [queryTerm, setQueryTerm] = useState("");
     const [searching, setSearching] = useState(false);
     const [currentWorkspace, setCurrentWorkspaceState] = useState<WorkspaceAndInstance | undefined>(undefined);
+    const pageLength = 50;
+    const [currentPage, setCurrentPage] = useState(1);
+    useEffect(() => {
+        search();
+    }, [currentPage]);
 
     useEffect(() => {
         const workspaceId = location.pathname.split("/")[3];
@@ -72,11 +78,6 @@ export function WorkspaceSearch(props: Props) {
     }
 
     const search = async () => {
-        // Disables empty search on the workspace search page
-        if (!props.user && queryTerm.length === 0) {
-            return;
-        }
-
         setSearching(true);
         try {
             const query: AdminGetWorkspacesQuery = {
@@ -87,14 +88,11 @@ export function WorkspaceSearch(props: Props) {
             } else if (matchesNewWorkspaceIdExactly(queryTerm)) {
                 query.workspaceId = queryTerm;
             }
-            if (!query.ownerId && !query.instanceIdOrWorkspaceId && !query.workspaceId) {
-                return;
-            }
 
             const result = await getGitpodService().server.adminGetWorkspaces({
-                limit: 100,
+                limit: pageLength,
                 orderBy: "instanceCreationTime",
-                offset: 0,
+                offset: (currentPage - 1) * pageLength,
                 orderDir: "desc",
                 ...query,
             });
@@ -152,6 +150,11 @@ export function WorkspaceSearch(props: Props) {
                     <WorkspaceEntry ws={ws} />
                 ))}
             </div>
+            <Pagination
+                currentPage={currentPage}
+                setPage={setCurrentPage}
+                totalNumberOfPages={Math.ceil(searchResult.total / pageLength)}
+            />
         </>
     );
 }

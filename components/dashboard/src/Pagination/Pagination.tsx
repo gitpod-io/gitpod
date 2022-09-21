@@ -13,7 +13,12 @@ interface PaginationProps {
     setPage: (page: number) => void;
 }
 
-function Pagination({ totalNumberOfPages, currentPage, setPage }: PaginationProps) {
+function Pagination(props: PaginationProps) {
+    const { totalNumberOfPages, setPage } = props;
+    if (totalNumberOfPages <= 1 || props.currentPage < 1) {
+        return <></>;
+    }
+    const currentPage = Math.min(totalNumberOfPages, props.currentPage);
     const calculatedPagination = getPaginationNumbers(totalNumberOfPages, currentPage);
 
     const nextPage = () => {

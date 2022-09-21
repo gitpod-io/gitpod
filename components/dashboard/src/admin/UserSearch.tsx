@@ -9,6 +9,7 @@ import moment from "moment";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
+import Pagination from "../Pagination/Pagination";
 import { getGitpodService } from "../service/service";
 import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
 import UserDetail from "./UserDetail";
@@ -19,6 +20,11 @@ export default function UserSearch() {
     const [searchTerm, setSearchTerm] = useState("");
     const [searching, setSearching] = useState(false);
     const [currentUser, setCurrentUserState] = useState<User | undefined>(undefined);
+    const pageLength = 50;
+    const [currentPage, setCurrentPage] = useState(1);
+    useEffect(() => {
+        search();
+    }, [currentPage]);
 
     useEffect(() => {
         const userId = location.pathname.split("/")[3];
@@ -46,9 +52,9 @@ export default function UserSearch() {
         try {
             const result = await getGitpodService().server.adminGetUsers({
                 searchTerm,
-                limit: 50,
+                limit: pageLength,
                 orderBy: "creationDate",
-                offset: 0,
+                offset: (currentPage - 1) * pageLength,
                 orderDir: "desc",
             });
             setSearchResult(result);
@@ -103,6 +109,11 @@ export default function UserSearch() {
                         <UserEntry user={u} />
                     ))}
             </div>
+            <Pagination
+                currentPage={currentPage}
+                setPage={setCurrentPage}
+                totalNumberOfPages={Math.ceil(searchResult.total / pageLength)}
+            />
         </PageWithAdminSubMenu>
     );
 }
