@@ -51,7 +51,7 @@ func TestGitHubContexts(t *testing.T) {
 			Name:           "open tag",
 			ContextURL:     "github.com/gitpod-io/gitpod-test-repo/tree/integration-test-context-tag",
 			WorkspaceRoot:  "/workspace/gitpod-test-repo",
-			ExpectedBranch: "HEAD",
+			ExpectedBranch: "a89cab1135a2d05901ca3021d1608f24a0400932",
 		},
 		{
 			Name:           "Git LFS support",
