@@ -49,6 +49,7 @@ import { LocalMessageBroker } from "./messaging/local-message-broker";
 import { WsConnectionHandler } from "./express/ws-connection-handler";
 import { InstallationAdminController } from "./installation-admin/installation-admin-controller";
 import { WebhookEventGarbageCollector } from "./projects/webhook-event-garbage-collector";
+import { LivenessController } from "./liveness/liveness-controller";
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -65,6 +66,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(MessageBusIntegration) protected readonly messagebus: MessageBusIntegration;
     @inject(LocalMessageBroker) protected readonly localMessageBroker: LocalMessageBroker;
     @inject(WorkspaceDownloadService) protected readonly workspaceDownloadService: WorkspaceDownloadService;
+    @inject(LivenessController) protected readonly livenessController: LivenessController;
     @inject(MonitoringEndpointsApp) protected readonly monitoringEndpointsApp: MonitoringEndpointsApp;
     @inject(CodeSyncService) private readonly codeSyncService: CodeSyncService;
     @inject(HeadlessLogController) protected readonly headlessLogController: HeadlessLogController;
@@ -298,6 +300,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         app.use("/code-sync", this.codeSyncService.apiRouter);
         app.use(HEADLESS_LOGS_PATH_PREFIX, this.headlessLogController.headlessLogs);
         app.use(HEADLESS_LOG_DOWNLOAD_PATH_PREFIX, this.headlessLogController.headlessLogDownload);
+        app.use("/live", this.livenessController.apiRouter);
         app.use(this.newsletterSubscriptionController.apiRouter);
         app.use("/version", (req: express.Request, res: express.Response, next: express.NextFunction) => {
             res.send(this.config.version);

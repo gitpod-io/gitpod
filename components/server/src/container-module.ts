@@ -110,6 +110,7 @@ import {
 } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { VerificationService } from "./auth/verification-service";
 import { WebhookEventGarbageCollector } from "./projects/webhook-event-garbage-collector";
+import { LivenessController } from "./liveness/liveness-controller";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -218,6 +219,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(WorkspaceGarbageCollector).toSelf().inSingletonScope();
     bind(WorkspaceDownloadService).toSelf().inSingletonScope();
+    bind(LivenessController).toSelf().inSingletonScope();
 
     bind(OneTimeSecretServer).toSelf().inSingletonScope();
 
