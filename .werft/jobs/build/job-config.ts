@@ -192,6 +192,7 @@ export function parseWithIntegrationTests(werft: Werft, sliceID: string, value?:
         case "all":
         case "webapp":
         case "ide":
+        case "workspace":
         case "webapp":
             return value;
         case "":
