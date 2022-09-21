@@ -31,7 +31,7 @@ data "aws_iam_policy_document" "s3_policy" {
       "s3:DeleteObject",
       "s3:AbortMultipartUpload"
     ]
-    resources = [aws_s3_bucket.gitpod-storage[count.index].arn]
+    resources = ["${aws_s3_bucket.gitpod-storage[count.index].arn}/*"]
     effect    = "Allow"
   }
       statement {
@@ -45,14 +45,14 @@ data "aws_iam_policy_document" "s3_policy" {
 
 resource "aws_iam_policy" "policy" {
   count       = var.create_external_storage ? 1 : 0
-  name        = "spolicy-${var.cluster_name}"
+  name        = "policy-${var.cluster_name}"
   description = "Gitpod ${var.cluster_name} object storage bucket policy"
   policy      = data.aws_iam_policy_document.s3_policy[0].json
 }
 
 resource "aws_iam_user" "bucket_storage" {
   count = var.create_external_storage ? 1 : 0
-  name  = "suser-${var.cluster_name}"
+  name  = "user-${var.cluster_name}"
 
 }
 
@@ -102,7 +102,7 @@ data "aws_iam_policy_document" "s3_policy_registry" {
       "s3:DeleteObject",
       "s3:AbortMultipartUpload"
     ]
-    resources = [ws_s3_bucket.gitpod-registry-backend[count.index].arn]
+    resources = ["${aws_s3_bucket.gitpod-registry-backend[count.index].arn}/*"]
     effect    = "Allow"
   }
   statement {
