@@ -13,6 +13,7 @@ import ProjectDetail from "./ProjectDetail";
 import { getGitpodService } from "../service/service";
 import { AdminGetListResult, Project } from "@gitpod/gitpod-protocol";
 import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
+import Pagination from "../Pagination/Pagination";
 
 export default function ProjectsSearchPage() {
     return (
@@ -29,6 +30,11 @@ export function ProjectsSearch() {
     const [searchResult, setSearchResult] = useState<AdminGetListResult<Project>>({ total: 0, rows: [] });
     const [currentProject, setCurrentProject] = useState<Project | undefined>(undefined);
     const [currentProjectOwner, setCurrentProjectOwner] = useState<string | undefined>("");
+    const pageLength = 50;
+    const [currentPage, setCurrentPage] = useState(1);
+    useEffect(() => {
+        search();
+    }, [currentPage]);
 
     useEffect(() => {
         const projectId = location.pathname.split("/")[3];
@@ -75,9 +81,9 @@ export function ProjectsSearch() {
         try {
             const result = await getGitpodService().server.adminGetProjectsBySearchTerm({
                 searchTerm,
-                limit: 50,
+                limit: pageLength,
                 orderBy: "creationTime",
-                offset: 0,
+                offset: (currentPage - 1) * pageLength,
                 orderDir: "desc",
             });
             setSearchResult(result);
@@ -131,6 +137,11 @@ export function ProjectsSearch() {
                     <ProjectResultItem project={project} />
                 ))}
             </div>
+            <Pagination
+                currentPage={currentPage}
+                setPage={setCurrentPage}
+                totalNumberOfPages={Math.ceil(searchResult.total / pageLength)}
+            />
         </>
     );
 

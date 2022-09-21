@@ -14,6 +14,7 @@ import { getGitpodService } from "../service/service";
 import { AdminGetListResult, Team } from "@gitpod/gitpod-protocol";
 import Label from "./Label";
 import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
+import Pagination from "../Pagination/Pagination";
 
 export default function TeamsSearchPage() {
     return (
@@ -29,6 +30,11 @@ export function TeamsSearch() {
     const [searchTerm, setSearchTerm] = useState("");
     const [currentTeam, setCurrentTeam] = useState<Team | undefined>(undefined);
     const [searchResult, setSearchResult] = useState<AdminGetListResult<Team>>({ total: 0, rows: [] });
+    const pageLength = 50;
+    const [currentPage, setCurrentPage] = useState(1);
+    useEffect(() => {
+        search();
+    }, [currentPage]);
 
     useEffect(() => {
         const teamId = location.pathname.split("/")[3];
@@ -56,9 +62,9 @@ export function TeamsSearch() {
         try {
             const result = await getGitpodService().server.adminGetTeams({
                 searchTerm,
-                limit: 100,
+                limit: pageLength,
                 orderBy: "creationTime",
-                offset: 0,
+                offset: (currentPage - 1) * pageLength,
                 orderDir: "desc",
             });
             setSearchResult(result);
@@ -120,6 +126,11 @@ export function TeamsSearch() {
                     <TeamResultItem team={team} />
                 ))}
             </div>
+            <Pagination
+                currentPage={currentPage}
+                setPage={setCurrentPage}
+                totalNumberOfPages={Math.ceil(searchResult.total / pageLength)}
+            />
         </>
     );
 
