@@ -3,5 +3,5 @@
 
 envvars:
   DOMAIN: gitpod.io
-  REG_DOCKER_CONFIG_ENABLED: "1"
-  REG_DOCKER_CONFIG_JSON: '{ "auths": { "host1": "", "host2": "", "host3": "" } }'
+  REGISTRY_DOCKER_CONFIG_ENABLED: "1"
+  REGISTRY_DOCKER_CONFIG_JSON: '{ "auths": { "host1": "", "host2": "", "host3": "" } }'

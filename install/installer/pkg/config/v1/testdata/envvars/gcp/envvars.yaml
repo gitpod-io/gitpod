@@ -7,9 +7,9 @@ envvars:
   DB_CLOUDSQL_INSTANCE: gcp-db-instance
   DB_CLOUDSQL_ENABLED: "1"
   DOMAIN: gitpod.io
-  REG_INCLUSTER_ENABLED: "0"
-  REG_EXTERNAL_CERTIFICATE_NAME: gcp-reg-secret
-  REG_URL: gcp-reg-url
+  REGISTRY_INCLUSTER_ENABLED: "0"
+  REGISTRY_EXTERNAL_CERTIFICATE_NAME: gcp-reg-secret
+  REGISTRY_URL: gcp-reg-url
   STORE_PROVIDER: gcp
   STORE_REGION: gcp-region
   STORE_GCP_PROJECT: gcp-project-name
