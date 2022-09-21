@@ -150,8 +150,8 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 
 	return &v1.ListUsageResponse{
 		UsageEntries:         usageData,
-		CreditBalanceAtStart: float64(usageSummary.CreditCentsBalanceAtStart) / 100,
-		CreditBalanceAtEnd:   float64(usageSummary.CreditCentsBalanceAtEnd) / 100,
+		CreditBalanceAtStart: usageSummary.CreditCentsBalanceAtStart.ToCredits(),
+		CreditBalanceAtEnd:   usageSummary.CreditCentsBalanceAtEnd.ToCredits(),
 		Pagination:           &pagination,
 	}, nil
 }
