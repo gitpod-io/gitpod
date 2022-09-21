@@ -39,7 +39,7 @@ spec:
       containers:
         - name: installer
           # This will normally be the release tag
-          image: "eu.gcr.io/gitpod-core-dev/build/installer:sje-kots-refactoring.6"
+          image: "eu.gcr.io/gitpod-core-dev/build/installer:sje-kots-config-validate.7"
           volumeMounts:
             - mountPath: /mnt/node0
               name: node-fs0
