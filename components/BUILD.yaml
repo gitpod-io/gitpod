@@ -30,17 +30,17 @@ packages:
       - version
       - imageRepoBase
     deps:
-      - components/blobserve:docker
-      - components/content-service:docker
+      # - components/blobserve:docker
+      # - components/content-service:docker
       - components/dashboard:docker
-      - components/docker-up:docker
-      - components/ee/agent-smith:docker
-      - components/ee/db-sync:docker
-      - components/ee/payment-endpoint:docker
-      - components/gitpod-db:docker
-      - components/ide/code-desktop:docker
-      - components/ide/code-desktop:docker-insiders
-      - components/ide/code:docker
+      # - components/docker-up:docker
+      # - components/ee/agent-smith:docker
+      # - components/ee/db-sync:docker
+      # - components/ee/payment-endpoint:docker
+      # - components/gitpod-db:docker
+      # - components/ide/code-desktop:docker
+      # - components/ide/code-desktop:docker-insiders
+      # - components/ide/code:docker
       # - components/ide/jetbrains/backend-plugin:stable
       # - components/ide/jetbrains/backend-plugin:latest
       # - components/ide/jetbrains/image:goland
@@ -51,33 +51,33 @@ packages:
       # - components/ide/jetbrains/image:phpstorm-latest
       # - components/ide/jetbrains/image:pycharm
       # - components/ide/jetbrains/image:pycharm-latest
-      - components/image-builder-bob:docker
-      - components/image-builder-mk3:docker
-      - components/local-app:docker
-      - components/public-api-server:docker
-      - components/usage:docker
-      - components/openvsx-proxy:docker
-      - components/proxy:docker
-      - components/registry-facade:docker
-      - components/registry-facade/ca-updater:docker
-      - components/server:docker
-      - components/service-waiter:docker
-      - components/supervisor:docker
-      - components/installation-telemetry:docker
-      - components/workspacekit:docker
-      - components/ws-daemon:docker
-      - components/ws-daemon/seccomp-profile-installer:docker
-      - components/ws-daemon/shiftfs-module-loader:docker
-      - components/ws-manager-bridge:docker
-      - components/ws-manager:docker
-      - components/ws-proxy:docker
-      - components/ide-proxy:docker
-      - components/ide-metrics:docker
-      - components/ide-service:docker
-      - components/kots-config-check/database:docker
-      - components/kots-config-check/registry:docker
-      - components/kots-config-check/storage:docker
-      - test:docker
+      # - components/image-builder-bob:docker
+      # - components/image-builder-mk3:docker
+      # - components/local-app:docker
+      # - components/public-api-server:docker
+      # - components/usage:docker
+      # - components/openvsx-proxy:docker
+      # - components/proxy:docker
+      # - components/registry-facade:docker
+      # - components/registry-facade/ca-updater:docker
+      # - components/server:docker
+      # - components/service-waiter:docker
+      # - components/supervisor:docker
+      # - components/installation-telemetry:docker
+      # - components/workspacekit:docker
+      # - components/ws-daemon:docker
+      # - components/ws-daemon/seccomp-profile-installer:docker
+      # - components/ws-daemon/shiftfs-module-loader:docker
+      # - components/ws-manager-bridge:docker
+      # - components/ws-manager:docker
+      # - components/ws-proxy:docker
+      # - components/ide-proxy:docker
+      # - components/ide-metrics:docker
+      # - components/ide-service:docker
+      # - components/kots-config-check/database:docker
+      # - components/kots-config-check/registry:docker
+      # - components/kots-config-check/storage:docker
+      # - test:docker
       - dev/version-manifest:app
     config:
       commands:
