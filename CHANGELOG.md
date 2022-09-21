@@ -1,6 +1,9 @@
 # Change Log
 
 ## September 2022
+- [installer]: refactor the Installer config to build from envvars ([#12687](https://github.com/gitpod-io/gitpod/pull/12687)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Fix reading .gitpod.yml for self-managed GHE instances. ([#13108](https://github.com/gitpod-io/gitpod/pull/13108)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- [infra-tests] Add self-signed integration test ([#12910](https://github.com/gitpod-io/gitpod/pull/12910)) - [@Pothulapati](https://github.com/Pothulapati)
 - Revert "[go] Add components into a go workspace" ([#13101](https://github.com/gitpod-io/gitpod/pull/13101)) - [@csweichel](https://github.com/csweichel)
 - Update GoLand IDE image to version 222.4167.25. ([#13084](https://github.com/gitpod-io/gitpod/pull/13084)) - [@roboquat](https://github.com/roboquat)
 - improved automated code configuration service for `go` ([#13057](https://github.com/gitpod-io/gitpod/pull/13057)) - [@Siddhant-K-code](https://github.com/Siddhant-K-code)
