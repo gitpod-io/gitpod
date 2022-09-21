@@ -302,11 +302,9 @@ function UsageView({ attributionId }: UsageViewProps) {
                                                         <span className="text-right text-gray-500 dark:text-gray-400 font-medium">
                                                             {usage.credits}
                                                         </span>
-                                                        <div className="flex">
-                                                            <span className="text-right truncate text-sm text-gray-400 dark:text-gray-500">
-                                                                {getMinutes(usage)}
-                                                            </span>
-                                                        </div>
+                                                        <span className="text-right text-sm text-gray-400 dark:text-gray-500">
+                                                            {getMinutes(usage)}
+                                                        </span>
                                                     </div>
                                                     <div className="my-auto" />
                                                     <div className="flex flex-col col-span-3 my-auto">
