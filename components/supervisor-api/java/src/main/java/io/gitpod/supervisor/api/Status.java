@@ -244,6 +244,10 @@ public final class Status {
   }
 
   /**
+   * <pre>
+   * DEPRECATED(use PortsStatus.OnOpenAction)
+   * </pre>
+   *
    * Protobuf enum {@code supervisor.OnPortExposedAction}
    */
   public enum OnPortExposedAction
@@ -7307,22 +7311,26 @@ public final class Status {
 
     /**
      * <pre>
-     * action hint on expose
+     * DEPRECATED(use PortsStatus.on_open instead): action hint on expose
      * </pre>
      *
-     * <code>.supervisor.OnPortExposedAction on_exposed = 3;</code>
+     * <code>.supervisor.OnPortExposedAction on_exposed = 3 [deprecated = true];</code>
+     * @deprecated supervisor.ExposedPortInfo.on_exposed is deprecated.
+     *     See status.proto;l=158
      * @return The enum numeric value on the wire for onExposed.
      */
-    int getOnExposedValue();
+    @java.lang.Deprecated int getOnExposedValue();
     /**
      * <pre>
-     * action hint on expose
+     * DEPRECATED(use PortsStatus.on_open instead): action hint on expose
      * </pre>
      *
-     * <code>.supervisor.OnPortExposedAction on_exposed = 3;</code>
+     * <code>.supervisor.OnPortExposedAction on_exposed = 3 [deprecated = true];</code>
+     * @deprecated supervisor.ExposedPortInfo.on_exposed is deprecated.
+     *     See status.proto;l=158
      * @return The onExposed.
      */
-    io.gitpod.supervisor.api.Status.OnPortExposedAction getOnExposed();
+    @java.lang.Deprecated io.gitpod.supervisor.api.Status.OnPortExposedAction getOnExposed();
   }
   /**
    * Protobuf type {@code supervisor.ExposedPortInfo}
@@ -7501,24 +7509,28 @@ public final class Status {
     private int onExposed_;
     /**
      * <pre>
-     * action hint on expose
+     * DEPRECATED(use PortsStatus.on_open instead): action hint on expose
      * </pre>
      *
-     * <code>.supervisor.OnPortExposedAction on_exposed = 3;</code>
+     * <code>.supervisor.OnPortExposedAction on_exposed = 3 [deprecated = true];</code>
+     * @deprecated supervisor.ExposedPortInfo.on_exposed is deprecated.
+     *     See status.proto;l=158
      * @return The enum numeric value on the wire for onExposed.
      */
-    @java.lang.Override public int getOnExposedValue() {
+    @java.lang.Override @java.lang.Deprecated public int getOnExposedValue() {
       return onExposed_;
     }
     /**
      * <pre>
-     * action hint on expose
+     * DEPRECATED(use PortsStatus.on_open instead): action hint on expose
      * </pre>
      *
-     * <code>.supervisor.OnPortExposedAction on_exposed = 3;</code>
+     * <code>.supervisor.OnPortExposedAction on_exposed = 3 [deprecated = true];</code>
+     * @deprecated supervisor.ExposedPortInfo.on_exposed is deprecated.
+     *     See status.proto;l=158
      * @return The onExposed.
      */
-    @java.lang.Override public io.gitpod.supervisor.api.Status.OnPortExposedAction getOnExposed() {
+    @java.lang.Override @java.lang.Deprecated public io.gitpod.supervisor.api.Status.OnPortExposedAction getOnExposed() {
       @SuppressWarnings("deprecation")
       io.gitpod.supervisor.api.Status.OnPortExposedAction result = io.gitpod.supervisor.api.Status.OnPortExposedAction.valueOf(onExposed_);
       return result == null ? io.gitpod.supervisor.api.Status.OnPortExposedAction.UNRECOGNIZED : result;
@@ -8031,25 +8043,29 @@ public final class Status {
       private int onExposed_ = 0;
       /**
        * <pre>
-       * action hint on expose
+       * DEPRECATED(use PortsStatus.on_open instead): action hint on expose
        * </pre>
        *
-       * <code>.supervisor.OnPortExposedAction on_exposed = 3;</code>
+       * <code>.supervisor.OnPortExposedAction on_exposed = 3 [deprecated = true];</code>
+       * @deprecated supervisor.ExposedPortInfo.on_exposed is deprecated.
+       *     See status.proto;l=158
        * @return The enum numeric value on the wire for onExposed.
        */
-      @java.lang.Override public int getOnExposedValue() {
+      @java.lang.Override @java.lang.Deprecated public int getOnExposedValue() {
         return onExposed_;
       }
       /**
        * <pre>
-       * action hint on expose
+       * DEPRECATED(use PortsStatus.on_open instead): action hint on expose
        * </pre>
        *
-       * <code>.supervisor.OnPortExposedAction on_exposed = 3;</code>
+       * <code>.supervisor.OnPortExposedAction on_exposed = 3 [deprecated = true];</code>
+       * @deprecated supervisor.ExposedPortInfo.on_exposed is deprecated.
+       *     See status.proto;l=158
        * @param value The enum numeric value on the wire for onExposed to set.
        * @return This builder for chaining.
        */
-      public Builder setOnExposedValue(int value) {
+      @java.lang.Deprecated public Builder setOnExposedValue(int value) {
 
         onExposed_ = value;
         onChanged();
@@ -8057,28 +8073,32 @@ public final class Status {
       }
       /**
        * <pre>
-       * action hint on expose
+       * DEPRECATED(use PortsStatus.on_open instead): action hint on expose
        * </pre>
        *
-       * <code>.supervisor.OnPortExposedAction on_exposed = 3;</code>
+       * <code>.supervisor.OnPortExposedAction on_exposed = 3 [deprecated = true];</code>
+       * @deprecated supervisor.ExposedPortInfo.on_exposed is deprecated.
+       *     See status.proto;l=158
        * @return The onExposed.
        */
       @java.lang.Override
-      public io.gitpod.supervisor.api.Status.OnPortExposedAction getOnExposed() {
+      @java.lang.Deprecated public io.gitpod.supervisor.api.Status.OnPortExposedAction getOnExposed() {
         @SuppressWarnings("deprecation")
         io.gitpod.supervisor.api.Status.OnPortExposedAction result = io.gitpod.supervisor.api.Status.OnPortExposedAction.valueOf(onExposed_);
         return result == null ? io.gitpod.supervisor.api.Status.OnPortExposedAction.UNRECOGNIZED : result;
       }
       /**
        * <pre>
-       * action hint on expose
+       * DEPRECATED(use PortsStatus.on_open instead): action hint on expose
        * </pre>
        *
-       * <code>.supervisor.OnPortExposedAction on_exposed = 3;</code>
+       * <code>.supervisor.OnPortExposedAction on_exposed = 3 [deprecated = true];</code>
+       * @deprecated supervisor.ExposedPortInfo.on_exposed is deprecated.
+       *     See status.proto;l=158
        * @param value The onExposed to set.
        * @return This builder for chaining.
        */
-      public Builder setOnExposed(io.gitpod.supervisor.api.Status.OnPortExposedAction value) {
+      @java.lang.Deprecated public Builder setOnExposed(io.gitpod.supervisor.api.Status.OnPortExposedAction value) {
         if (value == null) {
           throw new NullPointerException();
         }
@@ -8089,13 +8109,15 @@ public final class Status {
       }
       /**
        * <pre>
-       * action hint on expose
+       * DEPRECATED(use PortsStatus.on_open instead): action hint on expose
        * </pre>
        *
-       * <code>.supervisor.OnPortExposedAction on_exposed = 3;</code>
+       * <code>.supervisor.OnPortExposedAction on_exposed = 3 [deprecated = true];</code>
+       * @deprecated supervisor.ExposedPortInfo.on_exposed is deprecated.
+       *     See status.proto;l=158
        * @return This builder for chaining.
        */
-      public Builder clearOnExposed() {
+      @java.lang.Deprecated public Builder clearOnExposed() {
 
         onExposed_ = 0;
         onChanged();
@@ -9346,6 +9368,25 @@ public final class Status {
      */
     com.google.protobuf.ByteString
         getNameBytes();
+
+    /**
+     * <pre>
+     * Action hint on open
+     * </pre>
+     *
+     * <code>.supervisor.PortsStatus.OnOpenAction on_open = 10;</code>
+     * @return The enum numeric value on the wire for onOpen.
+     */
+    int getOnOpenValue();
+    /**
+     * <pre>
+     * Action hint on open
+     * </pre>
+     *
+     * <code>.supervisor.PortsStatus.OnOpenAction on_open = 10;</code>
+     * @return The onOpen.
+     */
+    io.gitpod.supervisor.api.Status.PortsStatus.OnOpenAction getOnOpen();
   }
   /**
    * Protobuf type {@code supervisor.PortsStatus}
@@ -9363,6 +9404,7 @@ public final class Status {
       autoExposure_ = 0;
       description_ = "";
       name_ = "";
+      onOpen_ = 0;
     }
 
     @java.lang.Override
@@ -9449,6 +9491,12 @@ public final class Status {
               name_ = s;
               break;
             }
+            case 80: {
+              int rawValue = input.readEnum();
+
+              onOpen_ = rawValue;
+              break;
+            }
             default: {
               if (!parseUnknownField(
                   input, unknownFields, extensionRegistry, tag)) {
@@ -9481,6 +9529,141 @@ public final class Status {
       return io.gitpod.supervisor.api.Status.internal_static_supervisor_PortsStatus_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               io.gitpod.supervisor.api.Status.PortsStatus.class, io.gitpod.supervisor.api.Status.PortsStatus.Builder.class);
+    }
+
+    /**
+     * Protobuf enum {@code supervisor.PortsStatus.OnOpenAction}
+     */
+    public enum OnOpenAction
+        implements com.google.protobuf.ProtocolMessageEnum {
+      /**
+       * <code>ignore = 0;</code>
+       */
+      ignore(0),
+      /**
+       * <code>open_browser = 1;</code>
+       */
+      open_browser(1),
+      /**
+       * <code>open_preview = 2;</code>
+       */
+      open_preview(2),
+      /**
+       * <code>notify = 3;</code>
+       */
+      notify(3),
+      /**
+       * <code>notify_private = 4;</code>
+       */
+      notify_private(4),
+      UNRECOGNIZED(-1),
+      ;
+
+      /**
+       * <code>ignore = 0;</code>
+       */
+      public static final int ignore_VALUE = 0;
+      /**
+       * <code>open_browser = 1;</code>
+       */
+      public static final int open_browser_VALUE = 1;
+      /**
+       * <code>open_preview = 2;</code>
+       */
+      public static final int open_preview_VALUE = 2;
+      /**
+       * <code>notify = 3;</code>
+       */
+      public static final int notify_VALUE = 3;
+      /**
+       * <code>notify_private = 4;</code>
+       */
+      public static final int notify_private_VALUE = 4;
+
+
+      public final int getNumber() {
+        if (this == UNRECOGNIZED) {
+          throw new java.lang.IllegalArgumentException(
+              "Can't get the number of an unknown enum value.");
+        }
+        return value;
+      }
+
+      /**
+       * @param value The numeric wire value of the corresponding enum entry.
+       * @return The enum associated with the given numeric wire value.
+       * @deprecated Use {@link #forNumber(int)} instead.
+       */
+      @java.lang.Deprecated
+      public static OnOpenAction valueOf(int value) {
+        return forNumber(value);
+      }
+
+      /**
+       * @param value The numeric wire value of the corresponding enum entry.
+       * @return The enum associated with the given numeric wire value.
+       */
+      public static OnOpenAction forNumber(int value) {
+        switch (value) {
+          case 0: return ignore;
+          case 1: return open_browser;
+          case 2: return open_preview;
+          case 3: return notify;
+          case 4: return notify_private;
+          default: return null;
+        }
+      }
+
+      public static com.google.protobuf.Internal.EnumLiteMap<OnOpenAction>
+          internalGetValueMap() {
+        return internalValueMap;
+      }
+      private static final com.google.protobuf.Internal.EnumLiteMap<
+          OnOpenAction> internalValueMap =
+            new com.google.protobuf.Internal.EnumLiteMap<OnOpenAction>() {
+              public OnOpenAction findValueByNumber(int number) {
+                return OnOpenAction.forNumber(number);
+              }
+            };
+
+      public final com.google.protobuf.Descriptors.EnumValueDescriptor
+          getValueDescriptor() {
+        if (this == UNRECOGNIZED) {
+          throw new java.lang.IllegalStateException(
+              "Can't get the descriptor of an unrecognized enum value.");
+        }
+        return getDescriptor().getValues().get(ordinal());
+      }
+      public final com.google.protobuf.Descriptors.EnumDescriptor
+          getDescriptorForType() {
+        return getDescriptor();
+      }
+      public static final com.google.protobuf.Descriptors.EnumDescriptor
+          getDescriptor() {
+        return io.gitpod.supervisor.api.Status.PortsStatus.getDescriptor().getEnumTypes().get(0);
+      }
+
+      private static final OnOpenAction[] VALUES = values();
+
+      public static OnOpenAction valueOf(
+          com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+        if (desc.getType() != getDescriptor()) {
+          throw new java.lang.IllegalArgumentException(
+            "EnumValueDescriptor is not for this type.");
+        }
+        if (desc.getIndex() == -1) {
+          return UNRECOGNIZED;
+        }
+        return VALUES[desc.getIndex()];
+      }
+
+      private final int value;
+
+      private OnOpenAction(int value) {
+        this.value = value;
+      }
+
+      // @@protoc_insertion_point(enum_scope:supervisor.PortsStatus.OnOpenAction)
     }
 
     public static final int LOCAL_PORT_FIELD_NUMBER = 1;
@@ -9718,6 +9901,33 @@ public final class Status {
       }
     }
 
+    public static final int ON_OPEN_FIELD_NUMBER = 10;
+    private int onOpen_;
+    /**
+     * <pre>
+     * Action hint on open
+     * </pre>
+     *
+     * <code>.supervisor.PortsStatus.OnOpenAction on_open = 10;</code>
+     * @return The enum numeric value on the wire for onOpen.
+     */
+    @java.lang.Override public int getOnOpenValue() {
+      return onOpen_;
+    }
+    /**
+     * <pre>
+     * Action hint on open
+     * </pre>
+     *
+     * <code>.supervisor.PortsStatus.OnOpenAction on_open = 10;</code>
+     * @return The onOpen.
+     */
+    @java.lang.Override public io.gitpod.supervisor.api.Status.PortsStatus.OnOpenAction getOnOpen() {
+      @SuppressWarnings("deprecation")
+      io.gitpod.supervisor.api.Status.PortsStatus.OnOpenAction result = io.gitpod.supervisor.api.Status.PortsStatus.OnOpenAction.valueOf(onOpen_);
+      return result == null ? io.gitpod.supervisor.api.Status.PortsStatus.OnOpenAction.UNRECOGNIZED : result;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -9752,6 +9962,9 @@ public final class Status {
       }
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(name_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 9, name_);
+      }
+      if (onOpen_ != io.gitpod.supervisor.api.Status.PortsStatus.OnOpenAction.ignore.getNumber()) {
+        output.writeEnum(10, onOpen_);
       }
       unknownFields.writeTo(output);
     }
@@ -9788,6 +10001,10 @@ public final class Status {
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(name_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(9, name_);
       }
+      if (onOpen_ != io.gitpod.supervisor.api.Status.PortsStatus.OnOpenAction.ignore.getNumber()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(10, onOpen_);
+      }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
@@ -9822,6 +10039,7 @@ public final class Status {
           .equals(other.getDescription())) return false;
       if (!getName()
           .equals(other.getName())) return false;
+      if (onOpen_ != other.onOpen_) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -9852,6 +10070,8 @@ public final class Status {
       hash = (53 * hash) + getDescription().hashCode();
       hash = (37 * hash) + NAME_FIELD_NUMBER;
       hash = (53 * hash) + getName().hashCode();
+      hash = (37 * hash) + ON_OPEN_FIELD_NUMBER;
+      hash = (53 * hash) + onOpen_;
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -10007,6 +10227,8 @@ public final class Status {
 
         name_ = "";
 
+        onOpen_ = 0;
+
         return this;
       }
 
@@ -10048,6 +10270,7 @@ public final class Status {
         }
         result.description_ = description_;
         result.name_ = name_;
+        result.onOpen_ = onOpen_;
         onBuilt();
         return result;
       }
@@ -10118,6 +10341,9 @@ public final class Status {
         if (!other.getName().isEmpty()) {
           name_ = other.name_;
           onChanged();
+        }
+        if (other.onOpen_ != 0) {
+          setOnOpenValue(other.getOnOpenValue());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -10836,6 +11062,80 @@ public final class Status {
   checkByteStringIsUtf8(value);
 
         name_ = value;
+        onChanged();
+        return this;
+      }
+
+      private int onOpen_ = 0;
+      /**
+       * <pre>
+       * Action hint on open
+       * </pre>
+       *
+       * <code>.supervisor.PortsStatus.OnOpenAction on_open = 10;</code>
+       * @return The enum numeric value on the wire for onOpen.
+       */
+      @java.lang.Override public int getOnOpenValue() {
+        return onOpen_;
+      }
+      /**
+       * <pre>
+       * Action hint on open
+       * </pre>
+       *
+       * <code>.supervisor.PortsStatus.OnOpenAction on_open = 10;</code>
+       * @param value The enum numeric value on the wire for onOpen to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOnOpenValue(int value) {
+
+        onOpen_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Action hint on open
+       * </pre>
+       *
+       * <code>.supervisor.PortsStatus.OnOpenAction on_open = 10;</code>
+       * @return The onOpen.
+       */
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Status.PortsStatus.OnOpenAction getOnOpen() {
+        @SuppressWarnings("deprecation")
+        io.gitpod.supervisor.api.Status.PortsStatus.OnOpenAction result = io.gitpod.supervisor.api.Status.PortsStatus.OnOpenAction.valueOf(onOpen_);
+        return result == null ? io.gitpod.supervisor.api.Status.PortsStatus.OnOpenAction.UNRECOGNIZED : result;
+      }
+      /**
+       * <pre>
+       * Action hint on open
+       * </pre>
+       *
+       * <code>.supervisor.PortsStatus.OnOpenAction on_open = 10;</code>
+       * @param value The onOpen to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOnOpen(io.gitpod.supervisor.api.Status.PortsStatus.OnOpenAction value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+
+        onOpen_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Action hint on open
+       * </pre>
+       *
+       * <code>.supervisor.PortsStatus.OnOpenAction on_open = 10;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearOnOpen() {
+
+        onOpen_ = 0;
         onChanged();
         return this;
       }
@@ -16273,71 +16573,75 @@ public final class Status {
       "anary_available\030\001 \001(\010\"%\n\022PortsStatusRequ" +
       "est\022\017\n\007observe\030\001 \001(\010\"=\n\023PortsStatusRespo" +
       "nse\022&\n\005ports\030\001 \003(\0132\027.supervisor.PortsSta" +
-      "tus\"\203\001\n\017ExposedPortInfo\022.\n\nvisibility\030\001 " +
+      "tus\"\207\001\n\017ExposedPortInfo\022.\n\nvisibility\030\001 " +
       "\001(\0162\032.supervisor.PortVisibility\022\013\n\003url\030\002" +
-      " \001(\t\0223\n\non_exposed\030\003 \001(\0162\037.supervisor.On" +
-      "PortExposedAction\"\304\001\n\020TunneledPortInfo\022\023" +
-      "\n\013target_port\030\001 \001(\r\022/\n\nvisibility\030\002 \001(\0162" +
-      "\033.supervisor.TunnelVisiblity\022:\n\007clients\030" +
-      "\003 \003(\0132).supervisor.TunneledPortInfo.Clie" +
-      "ntsEntry\032.\n\014ClientsEntry\022\013\n\003key\030\001 \001(\t\022\r\n" +
-      "\005value\030\002 \001(\r:\0028\001\"\355\001\n\013PortsStatus\022\022\n\nloca" +
-      "l_port\030\001 \001(\r\022\016\n\006served\030\004 \001(\010\022,\n\007exposed\030" +
-      "\005 \001(\0132\033.supervisor.ExposedPortInfo\0223\n\rau" +
-      "to_exposure\030\007 \001(\0162\034.supervisor.PortAutoE" +
-      "xposure\022.\n\010tunneled\030\006 \001(\0132\034.supervisor.T" +
-      "unneledPortInfo\022\023\n\013description\030\010 \001(\t\022\014\n\004" +
-      "name\030\t \001(\tJ\004\010\002\020\003\"%\n\022TasksStatusRequest\022\017" +
-      "\n\007observe\030\001 \001(\010\"<\n\023TasksStatusResponse\022%" +
-      "\n\005tasks\030\001 \003(\0132\026.supervisor.TaskStatus\"\204\001" +
-      "\n\nTaskStatus\022\n\n\002id\030\001 \001(\t\022$\n\005state\030\002 \001(\0162" +
-      "\025.supervisor.TaskState\022\020\n\010terminal\030\003 \001(\t" +
-      "\0222\n\014presentation\030\004 \001(\0132\034.supervisor.Task" +
-      "Presentation\"D\n\020TaskPresentation\022\014\n\004name" +
-      "\030\001 \001(\t\022\017\n\007open_in\030\002 \001(\t\022\021\n\topen_mode\030\003 \001" +
-      "(\t\"\027\n\025ResourcesStatuRequest\"n\n\027Resources" +
-      "StatusResponse\022*\n\006memory\030\001 \001(\0132\032.supervi" +
-      "sor.ResourceStatus\022\'\n\003cpu\030\002 \001(\0132\032.superv" +
-      "isor.ResourceStatus\"c\n\016ResourceStatus\022\014\n" +
-      "\004used\030\001 \001(\003\022\r\n\005limit\030\002 \001(\003\0224\n\010severity\030\003" +
-      " \001(\0162\".supervisor.ResourceStatusSeverity" +
-      "*C\n\rContentSource\022\016\n\nfrom_other\020\000\022\017\n\013fro" +
-      "m_backup\020\001\022\021\n\rfrom_prebuild\020\002*?\n\016PortVis" +
-      "ibility\022\026\n\022private_visibility\020\000\022\025\n\021publi" +
-      "c_visibility\020\001*e\n\023OnPortExposedAction\022\n\n" +
-      "\006ignore\020\000\022\020\n\014open_browser\020\001\022\020\n\014open_prev" +
-      "iew\020\002\022\n\n\006notify\020\003\022\022\n\016notify_private\020\004*9\n" +
-      "\020PortAutoExposure\022\n\n\006trying\020\000\022\r\n\tsucceed" +
-      "ed\020\001\022\n\n\006failed\020\002*1\n\tTaskState\022\013\n\007opening" +
-      "\020\000\022\013\n\007running\020\001\022\n\n\006closed\020\002*=\n\026ResourceS" +
-      "tatusSeverity\022\n\n\006normal\020\000\022\013\n\007warning\020\001\022\n" +
-      "\n\006danger\020\0022\304\007\n\rStatusService\022|\n\020Supervis" +
-      "orStatus\022#.supervisor.SupervisorStatusRe" +
-      "quest\032$.supervisor.SupervisorStatusRespo" +
-      "nse\"\035\202\323\344\223\002\027\022\025/v1/status/supervisor\022\203\001\n\tI" +
-      "DEStatus\022\034.supervisor.IDEStatusRequest\032\035" +
-      ".supervisor.IDEStatusResponse\"9\202\323\344\223\0023\022\016/" +
-      "v1/status/ideZ!\022\037/v1/status/ide/wait/{wa" +
-      "it=true}\022\227\001\n\rContentStatus\022 .supervisor." +
-      "ContentStatusRequest\032!.supervisor.Conten" +
-      "tStatusResponse\"A\202\323\344\223\002;\022\022/v1/status/cont" +
-      "entZ%\022#/v1/status/content/wait/{wait=tru" +
-      "e}\022l\n\014BackupStatus\022\037.supervisor.BackupSt" +
-      "atusRequest\032 .supervisor.BackupStatusRes" +
-      "ponse\"\031\202\323\344\223\002\023\022\021/v1/status/backup\022\225\001\n\013Por" +
-      "tsStatus\022\036.supervisor.PortsStatusRequest" +
-      "\032\037.supervisor.PortsStatusResponse\"C\202\323\344\223\002" +
-      "=\022\020/v1/status/portsZ)\022\'/v1/status/ports/" +
-      "observe/{observe=true}0\001\022\225\001\n\013TasksStatus" +
-      "\022\036.supervisor.TasksStatusRequest\032\037.super" +
-      "visor.TasksStatusResponse\"C\202\323\344\223\002=\022\020/v1/s" +
-      "tatus/tasksZ)\022\'/v1/status/tasks/observe/" +
-      "{observe=true}0\001\022w\n\017ResourcesStatus\022!.su" +
-      "pervisor.ResourcesStatuRequest\032#.supervi" +
-      "sor.ResourcesStatusResponse\"\034\202\323\344\223\002\026\022\024/v1" +
-      "/status/resourcesBF\n\030io.gitpod.superviso" +
-      "r.apiZ*github.com/gitpod-io/gitpod/super" +
-      "visor/apib\006proto3"
+      " \001(\t\0227\n\non_exposed\030\003 \001(\0162\037.supervisor.On" +
+      "PortExposedActionB\002\030\001\"\304\001\n\020TunneledPortIn" +
+      "fo\022\023\n\013target_port\030\001 \001(\r\022/\n\nvisibility\030\002 " +
+      "\001(\0162\033.supervisor.TunnelVisiblity\022:\n\007clie" +
+      "nts\030\003 \003(\0132).supervisor.TunneledPortInfo." +
+      "ClientsEntry\032.\n\014ClientsEntry\022\013\n\003key\030\001 \001(" +
+      "\t\022\r\n\005value\030\002 \001(\r:\0028\001\"\204\003\n\013PortsStatus\022\022\n\n" +
+      "local_port\030\001 \001(\r\022\016\n\006served\030\004 \001(\010\022,\n\007expo" +
+      "sed\030\005 \001(\0132\033.supervisor.ExposedPortInfo\0223" +
+      "\n\rauto_exposure\030\007 \001(\0162\034.supervisor.PortA" +
+      "utoExposure\022.\n\010tunneled\030\006 \001(\0132\034.supervis" +
+      "or.TunneledPortInfo\022\023\n\013description\030\010 \001(\t" +
+      "\022\014\n\004name\030\t \001(\t\0225\n\007on_open\030\n \001(\0162$.superv" +
+      "isor.PortsStatus.OnOpenAction\"^\n\014OnOpenA" +
+      "ction\022\n\n\006ignore\020\000\022\020\n\014open_browser\020\001\022\020\n\014o" +
+      "pen_preview\020\002\022\n\n\006notify\020\003\022\022\n\016notify_priv" +
+      "ate\020\004J\004\010\002\020\003\"%\n\022TasksStatusRequest\022\017\n\007obs" +
+      "erve\030\001 \001(\010\"<\n\023TasksStatusResponse\022%\n\005tas" +
+      "ks\030\001 \003(\0132\026.supervisor.TaskStatus\"\204\001\n\nTas" +
+      "kStatus\022\n\n\002id\030\001 \001(\t\022$\n\005state\030\002 \001(\0162\025.sup" +
+      "ervisor.TaskState\022\020\n\010terminal\030\003 \001(\t\0222\n\014p" +
+      "resentation\030\004 \001(\0132\034.supervisor.TaskPrese" +
+      "ntation\"D\n\020TaskPresentation\022\014\n\004name\030\001 \001(" +
+      "\t\022\017\n\007open_in\030\002 \001(\t\022\021\n\topen_mode\030\003 \001(\t\"\027\n" +
+      "\025ResourcesStatuRequest\"n\n\027ResourcesStatu" +
+      "sResponse\022*\n\006memory\030\001 \001(\0132\032.supervisor.R" +
+      "esourceStatus\022\'\n\003cpu\030\002 \001(\0132\032.supervisor." +
+      "ResourceStatus\"c\n\016ResourceStatus\022\014\n\004used" +
+      "\030\001 \001(\003\022\r\n\005limit\030\002 \001(\003\0224\n\010severity\030\003 \001(\0162" +
+      "\".supervisor.ResourceStatusSeverity*C\n\rC" +
+      "ontentSource\022\016\n\nfrom_other\020\000\022\017\n\013from_bac" +
+      "kup\020\001\022\021\n\rfrom_prebuild\020\002*?\n\016PortVisibili" +
+      "ty\022\026\n\022private_visibility\020\000\022\025\n\021public_vis" +
+      "ibility\020\001*e\n\023OnPortExposedAction\022\n\n\006igno" +
+      "re\020\000\022\020\n\014open_browser\020\001\022\020\n\014open_preview\020\002" +
+      "\022\n\n\006notify\020\003\022\022\n\016notify_private\020\004*9\n\020Port" +
+      "AutoExposure\022\n\n\006trying\020\000\022\r\n\tsucceeded\020\001\022" +
+      "\n\n\006failed\020\002*1\n\tTaskState\022\013\n\007opening\020\000\022\013\n" +
+      "\007running\020\001\022\n\n\006closed\020\002*=\n\026ResourceStatus" +
+      "Severity\022\n\n\006normal\020\000\022\013\n\007warning\020\001\022\n\n\006dan" +
+      "ger\020\0022\304\007\n\rStatusService\022|\n\020SupervisorSta" +
+      "tus\022#.supervisor.SupervisorStatusRequest" +
+      "\032$.supervisor.SupervisorStatusResponse\"\035" +
+      "\202\323\344\223\002\027\022\025/v1/status/supervisor\022\203\001\n\tIDESta" +
+      "tus\022\034.supervisor.IDEStatusRequest\032\035.supe" +
+      "rvisor.IDEStatusResponse\"9\202\323\344\223\0023\022\016/v1/st" +
+      "atus/ideZ!\022\037/v1/status/ide/wait/{wait=tr" +
+      "ue}\022\227\001\n\rContentStatus\022 .supervisor.Conte" +
+      "ntStatusRequest\032!.supervisor.ContentStat" +
+      "usResponse\"A\202\323\344\223\002;\022\022/v1/status/contentZ%" +
+      "\022#/v1/status/content/wait/{wait=true}\022l\n" +
+      "\014BackupStatus\022\037.supervisor.BackupStatusR" +
+      "equest\032 .supervisor.BackupStatusResponse" +
+      "\"\031\202\323\344\223\002\023\022\021/v1/status/backup\022\225\001\n\013PortsSta" +
+      "tus\022\036.supervisor.PortsStatusRequest\032\037.su" +
+      "pervisor.PortsStatusResponse\"C\202\323\344\223\002=\022\020/v" +
+      "1/status/portsZ)\022\'/v1/status/ports/obser" +
+      "ve/{observe=true}0\001\022\225\001\n\013TasksStatus\022\036.su" +
+      "pervisor.TasksStatusRequest\032\037.supervisor" +
+      ".TasksStatusResponse\"C\202\323\344\223\002=\022\020/v1/status" +
+      "/tasksZ)\022\'/v1/status/tasks/observe/{obse" +
+      "rve=true}0\001\022w\n\017ResourcesStatus\022!.supervi" +
+      "sor.ResourcesStatuRequest\032#.supervisor.R" +
+      "esourcesStatusResponse\"\034\202\323\344\223\002\026\022\024/v1/stat" +
+      "us/resourcesBF\n\030io.gitpod.supervisor.api" +
+      "Z*github.com/gitpod-io/gitpod/supervisor" +
+      "/apib\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -16434,7 +16738,7 @@ public final class Status {
     internal_static_supervisor_PortsStatus_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_PortsStatus_descriptor,
-        new java.lang.String[] { "LocalPort", "Served", "Exposed", "AutoExposure", "Tunneled", "Description", "Name", });
+        new java.lang.String[] { "LocalPort", "Served", "Exposed", "AutoExposure", "Tunneled", "Description", "Name", "OnOpen", });
     internal_static_supervisor_TasksStatusRequest_descriptor =
       getDescriptor().getMessageTypes().get(13);
     internal_static_supervisor_TasksStatusRequest_fieldAccessorTable = new
