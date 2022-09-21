@@ -18,9 +18,11 @@ interface FeatureFlagConfig {
 const FeatureFlagContext = createContext<{
     showWorkspaceClassesUI: boolean;
     showPersistentVolumeClaimUI: boolean;
+    showUsageView: boolean;
 }>({
     showWorkspaceClassesUI: false,
     showPersistentVolumeClaimUI: false,
+    showUsageView: false,
 });
 
 const FeatureFlagContextProvider: React.FC = ({ children }) => {
@@ -31,15 +33,16 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const team = getCurrentTeam(location, teams);
     const [showWorkspaceClassesUI, setShowWorkspaceClassesUI] = useState<boolean>(false);
     const [showPersistentVolumeClaimUI, setShowPersistentVolumeClaimUI] = useState<boolean>(false);
-
-    const featureFlags: FeatureFlagConfig = {
-        workspace_classes: { defaultValue: true, setter: setShowWorkspaceClassesUI },
-        persistent_volume_claim: { defaultValue: true, setter: setShowPersistentVolumeClaimUI },
-    };
+    const [showUsageView, setShowUsageView] = useState<boolean>(false);
 
     useEffect(() => {
         if (!user) return;
         (async () => {
+            const featureFlags: FeatureFlagConfig = {
+                workspace_classes: { defaultValue: true, setter: setShowWorkspaceClassesUI },
+                persistent_volume_claim: { defaultValue: true, setter: setShowPersistentVolumeClaimUI },
+                usage_view: { defaultValue: true, setter: setShowUsageView },
+            };
             for (const [flagName, config] of Object.entries(featureFlags)) {
                 const flagValue = await getExperimentsClient().getValueAsync(flagName, config.defaultValue, {
                     user,
@@ -54,7 +57,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     }, [user, teams, team, project]);
 
     return (
-        <FeatureFlagContext.Provider value={{ showWorkspaceClassesUI, showPersistentVolumeClaimUI }}>
+        <FeatureFlagContext.Provider value={{ showWorkspaceClassesUI, showPersistentVolumeClaimUI, showUsageView }}>
             {children}
         </FeatureFlagContext.Provider>
     );
