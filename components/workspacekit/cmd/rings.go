@@ -834,11 +834,14 @@ var ring2Cmd = &cobra.Command{
 			Max uint64 `json:"hardLimit"`
 		}
 
-		rLimitValue := os.Getenv("GITPOD_RLIMIT_CORE")
 		var rLimitCore fakeRlimit
-		err = json.Unmarshal([]byte(rLimitValue), &rLimitCore)
-		if err != nil {
-			log.WithError(err).WithField("data", rLimitValue).Error("cannot deserialize GITPOD_RLIMIT_CORE")
+
+		rLimitValue := os.Getenv("GITPOD_RLIMIT_CORE")
+		if len(rLimitValue) != 0 {
+			err = json.Unmarshal([]byte(rLimitValue), &rLimitCore)
+			if err != nil {
+				log.WithError(err).WithField("data", rLimitValue).Error("cannot deserialize GITPOD_RLIMIT_CORE")
+			}
 		}
 
 		// we either set a limit or explicitly disable core dumps by setting 0 as values
