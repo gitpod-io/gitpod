@@ -15,6 +15,8 @@ DO_CLEANUP=0
 declare -A FAILURE_TESTS
 declare SIGNAL # used to record signal caught by trap
 
+BRANCH_TIMEOUT_SEC=10800
+
 context_name=$1
 context_repo=$2
 
@@ -69,6 +71,26 @@ function cleanup ()
     werft log slice "clean up" --done
 }
 
+function gc_integration_branches ()
+{
+    werft log phase "GC too old integration branches" "GC too old integration branches"
+    now=$(date --utc +%s)
+    for br in $(git branch --format="%(refname:short)" -a | grep -v HEAD); do 
+        if echo $br | grep -q "origin/wk-inte-test/*"; then
+            last_commite_date=$(date --utc --date "$(git show --format="%ci" $br | head -n 1)" +%s)
+            diff=$(( $now-$last_commite_date ))
+            if [[ $diff > $BRANCH_TIMEOUT_SEC ]]; then
+                local_branch_name=$(echo $br | cut -d '/' -f2-)
+                werft log slice "delete $local_branch_name"
+                set +e
+                git push origin :"$local_branch_name"
+                set -e
+                werft log slice "delete $local_branch_name" --done
+            fi
+        fi
+    done
+}
+
 sudo chown -R gitpod:gitpod /workspace
 gcloud auth activate-service-account --key-file /mnt/secrets/gcp-sa/service-account.json
 export GOOGLE_APPLICATION_CREDENTIALS="/home/gitpod/.config/gcloud/legacy_credentials/cd-gitpod-deployer@gitpod-core-dev.iam.gserviceaccount.com/adc.json"
@@ -76,6 +98,8 @@ export GOOGLE_APPLICATION_CREDENTIALS="/home/gitpod/.config/gcloud/legacy_creden
 git config --global user.name roboquat
 git config --global user.email roboquat@gitpod.io
 git remote set-url origin https://oauth2:"${ROBOQUAT_TOKEN}"@github.com/gitpod-io/gitpod.git
+
+gc_integration_branches
 
 werft log phase "build preview environment" "build preview environment"
 
@@ -185,3 +209,4 @@ do
 done
 
 exit $FAILURE_COUNT
+
