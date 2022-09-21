@@ -2082,39 +2082,42 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async createOrUpdateStripeCustomerForTeam(ctx: TraceContext, teamId: string, currency: string): Promise<void> {
-        const user = this.checkAndBlockUser("createOrUpdateStripeCustomerForTeam");
-        const team = await this.guardTeamOperation(teamId, "update");
-        await this.ensureStripeApiIsAllowed({ team });
-        try {
-            let customerId = await this.stripeService.findCustomerByTeamId(team!.id);
-            if (!customerId) {
-                customerId = await this.stripeService.createCustomerForTeam(user, team!);
-            }
-            await this.stripeService.setPreferredCurrencyForCustomer(customerId, currency);
-        } catch (error) {
-            log.error(`Failed to update Stripe customer profile for team '${teamId}'`, error);
-            throw new ResponseError(
-                ErrorCodes.INTERNAL_SERVER_ERROR,
-                `Failed to update Stripe customer profile for team '${teamId}'`,
-            );
+    async createStripeCustomer(ctx: TraceContext, attributionId: string, currency: string): Promise<void> {
+        const user = this.checkAndBlockUser("createStripeCustomer");
+        const attrId = AttributionId.parse(attributionId);
+        if (!attrId) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attributionId '${attributionId}'`);
         }
-    }
-
-    async createOrUpdateStripeCustomerForUser(ctx: TraceContext, currency: string): Promise<void> {
-        const user = this.checkAndBlockUser("createOrUpdateStripeCustomerForUser");
-        await this.ensureStripeApiIsAllowed({ user });
-        try {
-            let customerId = await this.stripeService.findCustomerByUserId(user.id);
-            if (!customerId) {
-                customerId = await this.stripeService.createCustomerForUser(user);
+        let team: Team | undefined;
+        if (attrId.kind === "team") {
+            team = await this.guardTeamOperation(attrId.teamId, "update");
+            await this.ensureStripeApiIsAllowed({ team });
+        } else {
+            if (attrId.userId !== user.id) {
+                throw new ResponseError(
+                    ErrorCodes.PERMISSION_DENIED,
+                    "Cannot create Stripe customer profile for another user",
+                );
             }
+            await this.ensureStripeApiIsAllowed({ user });
+        }
+        try {
+            if (await this.stripeService.findCustomerByAttributionId(attributionId)) {
+                throw new ResponseError(
+                    ErrorCodes.BAD_REQUEST,
+                    "A Stripe customer profile already exists for this attributionId",
+                );
+            }
+            const customerId =
+                attrId.kind === "team"
+                    ? await this.stripeService.createCustomerForTeam(user, team!)
+                    : await this.stripeService.createCustomerForUser(user);
             await this.stripeService.setPreferredCurrencyForCustomer(customerId, currency);
         } catch (error) {
-            log.error(`Failed to update Stripe customer profile for user '${user.id}'`, error);
+            log.error(`Failed to create Stripe customer profile for '${attributionId}'`, error);
             throw new ResponseError(
                 ErrorCodes.INTERNAL_SERVER_ERROR,
-                `Failed to update Stripe customer profile for user '${user.id}'`,
+                `Failed to create Stripe customer profile for '${attributionId}'`,
             );
         }
     }
@@ -2144,7 +2147,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             await this.stripeService.setDefaultPaymentMethodForCustomer(customerId, setupIntentId);
             await this.stripeService.createSubscriptionForCustomer(customerId);
 
-            // Creating a cost center for this team
+            // Creating a cost center for this customer
             await this.usageService.setCostCenter({
                 costCenter: {
                     attributionId: attributionId,
