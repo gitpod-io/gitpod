@@ -110,7 +110,8 @@ type managedPort struct {
 	Description  string
 	Name         string
 	URL          string
-	OnExposed    api.OnPortExposedAction
+	OnExposed    api.OnPortExposedAction // deprecated
+	OnOpen       api.PortsStatus_OnOpenAction
 	AutoExposure api.PortAutoExposure
 
 	LocalhostPort uint32
@@ -317,6 +318,7 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 		mp := &managedPort{
 			LocalhostPort: port,
 			OnExposed:     getOnExposedAction(config, port),
+			OnOpen:        getOnOpenAction(config, port),
 		}
 		if exists {
 			mp.Name = config.Name
@@ -551,6 +553,7 @@ func (pm *Manager) updateProxies() {
 	}
 }
 
+// deprecated
 func getOnExposedAction(config *gitpod.PortConfig, port uint32) api.OnPortExposedAction {
 	if config == nil {
 		// anything above 32767 seems odd (e.g. used by language servers)
@@ -571,6 +574,28 @@ func getOnExposedAction(config *gitpod.PortConfig, port uint32) api.OnPortExpose
 		return api.OnPortExposedAction_open_preview
 	}
 	return api.OnPortExposedAction_notify
+}
+
+func getOnOpenAction(config *gitpod.PortConfig, port uint32) api.PortsStatus_OnOpenAction {
+	if config == nil {
+		// anything above 32767 seems odd (e.g. used by language servers)
+		unusualRange := !(0 < port && port < 32767)
+		wellKnown := port <= 10000
+		if unusualRange || !wellKnown {
+			return api.PortsStatus_ignore
+		}
+		return api.PortsStatus_notify_private
+	}
+	if config.OnOpen == "ignore" {
+		return api.PortsStatus_ignore
+	}
+	if config.OnOpen == "open-browser" {
+		return api.PortsStatus_open_browser
+	}
+	if config.OnOpen == "open-preview" {
+		return api.PortsStatus_open_preview
+	}
+	return api.PortsStatus_notify
 }
 
 func (pm *Manager) boundInternally(port uint32) bool {
@@ -727,6 +752,7 @@ func (pm *Manager) getPortStatus(port uint32) *api.PortsStatus {
 		Served:      mp.Served,
 		Description: mp.Description,
 		Name:        mp.Name,
+		OnOpen:      mp.OnOpen,
 	}
 	if mp.Exposed && mp.URL != "" {
 		ps.Exposed = &api.ExposedPortInfo{
