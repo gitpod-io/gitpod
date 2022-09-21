@@ -25,6 +25,7 @@ for i in $(gsutil ls gs://nightly-tests/tf-state); do
     cloud=$(echo "$TF_VAR_TEST_ID" | sed 's/\(.*\)-/\1 /' | xargs | awk '{print $2}')
 
     if [[ "$TF_VAR_TEST_ID" == gitpod-* ]] ; then echo "$TF_VAR_TEST_ID has the pattern gitpod-*, skipping"; continue; fi
+    if [[ "$TF_VAR_TEST_ID" == release-* ]] ; then echo "$TF_VAR_TEST_ID has the pattern gitpod-*, skipping"; continue; fi
 
     if [ "$TF_VAR_TEST_ID" = "default" ] || [ "$TF_VAR_TEST_ID" = "" ]; then continue; fi
 
