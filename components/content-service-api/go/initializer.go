@@ -105,8 +105,25 @@ func WalkInitializer(path []string, init *WorkspaceInitializer, visitor func(pat
 	}
 
 	switch spec := init.Spec.(type) {
-	case *WorkspaceInitializer_Backup:
-		return visitor(append(path, "backup"), init)
+	case *WorkspaceInitializer_Empty:
+		return visitor(append(path, "empty"), init)
+	case *WorkspaceInitializer_Git:
+		return visitor(append(path, "git"), init)
+	case *WorkspaceInitializer_Snapshot:
+		return visitor(append(path, "snapshot"), init)
+	case *WorkspaceInitializer_Prebuild:
+		child := append(path, "prebuild")
+		err := visitor(child, init)
+		if err != nil {
+			return err
+		}
+		for i, g := range spec.Prebuild.Git {
+			err = WalkInitializer(append(child, strconv.Itoa(i)), &WorkspaceInitializer{Spec: &WorkspaceInitializer_Git{Git: g}}, visitor)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
 	case *WorkspaceInitializer_Composite:
 		path = append(path, "composite")
 		err := visitor(path, init)
@@ -122,23 +139,8 @@ func WalkInitializer(path []string, init *WorkspaceInitializer, visitor func(pat
 		return nil
 	case *WorkspaceInitializer_Download:
 		return visitor(append(path, "download"), init)
-	case *WorkspaceInitializer_Empty:
-		return visitor(append(path, "empty"), init)
-	case *WorkspaceInitializer_Git:
-		return visitor(append(path, "git"), init)
-	case *WorkspaceInitializer_Prebuild:
-		child := append(path, "prebuild")
-		err := visitor(child, init)
-		if err != nil {
-			return err
-		}
-		for i, g := range spec.Prebuild.Git {
-			err = WalkInitializer(append(child, strconv.Itoa(i)), &WorkspaceInitializer{Spec: &WorkspaceInitializer_Git{Git: g}}, visitor)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
+	case *WorkspaceInitializer_Backup:
+		return visitor(append(path, "backup"), init)
 
 	default:
 		return fmt.Errorf("unsupported workspace initializer in walkInitializer - this is a bug in Gitpod")
