@@ -236,6 +236,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ContentServiceAddr:           net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", contentservice.Component, ctx.Namespace), strconv.Itoa(contentservice.RPCPort)),
 		ImageBuilderAddr:             net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", common.ImageBuilderComponent, ctx.Namespace), strconv.Itoa(common.ImageBuilderRPCPort)),
 		UsageServiceAddr:             net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", usage.Component, ctx.Namespace), strconv.Itoa(usage.GRPCServicePort)),
+		MaximumEventLoopLag:          0.35,
 		CodeSync:                     CodeSync{},
 		VSXRegistryUrl:               fmt.Sprintf("https://open-vsx.%s", ctx.Config.Domain), // todo(sje): or "https://{{ .Values.vsxRegistry.host | default "open-vsx.org" }}" if not using OpenVSX proxy
 		EnablePayment:                chargebeeSecret != "" || stripeSecret != "" || stripeConfig != "",
