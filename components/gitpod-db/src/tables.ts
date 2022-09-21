@@ -291,6 +291,18 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             primaryKeys: ["id"],
             timeColumn: "_lastModified",
         },
+        {
+            name: "d_b_prebuilt_workspace_updatable",
+            primaryKeys: ["id"],
+            timeColumn: "_lastModified",
+            deletionColumn: "deleted",
+        },
+        {
+            name: "d_b_prebuilt_workspace",
+            primaryKeys: ["id"],
+            timeColumn: "_lastModified",
+            deletionColumn: "deleted",
+        },
     ];
 
     public getSortedTables(): TableDescription[] {
