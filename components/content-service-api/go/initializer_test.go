@@ -105,6 +105,17 @@ func TestGetCheckoutLocationsFromInitializer(t *testing.T) {
 		{
 			Name: "nil initializer",
 		},
+		{
+			Name: "snapshot initializer",
+			Initializer: &api.WorkspaceInitializer{
+				Spec: &api.WorkspaceInitializer_Snapshot{
+					Snapshot: &api.SnapshotInitializer{
+						Snapshot:           "foo",
+						FromVolumeSnapshot: true,
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
