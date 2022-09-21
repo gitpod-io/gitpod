@@ -2294,15 +2294,20 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const result = await super.getNotifications(ctx);
         const user = this.checkAndBlockUser("getNotifications");
 
-        const billingMode = await this.billingModes.getBillingModeForUser(user, new Date());
-        if (billingMode.mode === "usage-based") {
-            const limit = await this.billingService.checkUsageLimitReached(user);
-            if (limit.reached) {
-                result.unshift("The usage limit is reached.");
-            } else if (limit.almostReached) {
-                result.unshift("The usage limit is almost reached.");
+        try {
+            const billingMode = await this.billingModes.getBillingModeForUser(user, new Date());
+            if (billingMode.mode === "usage-based") {
+                const limit = await this.billingService.checkUsageLimitReached(user);
+                if (limit.reached) {
+                    result.unshift("The usage limit is reached.");
+                } else if (limit.almostReached) {
+                    result.unshift("The usage limit is almost reached.");
+                }
             }
+        } catch (error) {
+            log.warn({ userId: user.id }, "Could not get usage-based notifications for user", { error });
         }
+
         return result;
     }
 
