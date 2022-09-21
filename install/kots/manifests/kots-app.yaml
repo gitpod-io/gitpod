@@ -10,6 +10,7 @@ spec:
   icon: ""
   allowRollback: true
   kubectlVersion: ">= 1.21.0"
+  requireMinimalRBACPrivileges: true
   # daemonsets are not supported yet
   statusInformers:
     - deployment/blobserve

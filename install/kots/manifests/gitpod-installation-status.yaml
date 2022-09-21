@@ -26,7 +26,7 @@ spec:
         component: gitpod-installer-status
     spec:
       restartPolicy: Always
-      serviceAccountName: installer
+      serviceAccountName: kotsadm
       containers:
         - name: installation-status
           # This will normally be the release tag

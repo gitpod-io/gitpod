@@ -34,7 +34,7 @@ spec:
               - matchExpressions:
                 - key: gitpod.io/workload_workspace_headless
                   operator: Exists
-      serviceAccountName: installer
+      serviceAccountName: kotsadm
       restartPolicy: OnFailure
       containers:
         - name: installer
