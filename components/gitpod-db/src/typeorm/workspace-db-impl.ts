@@ -53,6 +53,13 @@ import { DBPrebuiltWorkspaceUpdatable } from "./entity/db-prebuilt-workspace-upd
 import { BUILTIN_WORKSPACE_PROBE_USER_ID } from "../user-db";
 import { DBPrebuildInfo } from "./entity/db-prebuild-info-entry";
 import { daysBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import {
+    reportPrebuildInfoPurged,
+    reportPrebuiltWorkspacePurged,
+    reportPrebuiltWorkspaceUpdatablePurged,
+    reportWorkspaceInstancePurged,
+    reportWorkspacePurged,
+} from "./metrics";
 
 type RawTo<T> = (instance: WorkspaceInstance, ws: Workspace) => T;
 interface OrderBy {
@@ -981,8 +988,35 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
      *       around to deleting them.
      */
     public async hardDeleteWorkspace(workspaceId: string): Promise<void> {
-        await (await this.getWorkspaceInstanceRepo()).update({ workspaceId }, { deleted: true });
-        await (await this.getWorkspaceRepo()).update(workspaceId, { deleted: true });
+        const logCtx = { workspaceId };
+        const prebuild = await this.findPrebuildByWorkspaceID(workspaceId);
+        if (prebuild !== undefined) {
+            // There are prebuilds linked to this workspace. We need to delete these first.
+            const prebuildsDeleted = await (
+                await this.getPrebuiltWorkspaceRepo()
+            ).update({ id: prebuild.id }, { deleted: true });
+            log.info(logCtx, `Hard deleted ${prebuildsDeleted.affected} prebuilds.`);
+            reportPrebuiltWorkspacePurged(prebuildsDeleted.affected || 0);
+
+            const updatableDeletes = await (
+                await this.getPrebuiltWorkspaceUpdatableRepo()
+            ).update({ id: prebuild.id }, { deleted: true });
+            log.info(logCtx, `Hard deleted ${updatableDeletes.affected} prebuild updatables.`);
+            reportPrebuiltWorkspaceUpdatablePurged(updatableDeletes.affected || 0);
+
+            const prebuildInfos = await (
+                await this.getPrebuildInfoRepo()
+            ).update({ prebuildId: prebuild.id }, { deleted: true });
+            log.info(logCtx, `Hard deleted ${prebuildInfos.affected} prebuild infos.`);
+            reportPrebuildInfoPurged(prebuildInfos.affected || 0);
+        }
+        const instances = await (await this.getWorkspaceInstanceRepo()).update({ workspaceId }, { deleted: true });
+        log.info(logCtx, `Hard deleted ${instances.affected} workspace instances.`);
+        reportWorkspaceInstancePurged(instances.affected || 0);
+
+        const workspaces = await (await this.getWorkspaceRepo()).update(workspaceId, { deleted: true });
+        log.info(logCtx, `Hard deleted ${workspaces.affected} workspaces.`);
+        reportWorkspacePurged(workspaces.affected || 0);
     }
 
     public async findAllWorkspaces(

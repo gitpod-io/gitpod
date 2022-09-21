@@ -77,4 +77,8 @@ export class DBPrebuiltWorkspace implements PrebuiltWorkspace {
         transformer: Transformer.MAP_BIGINT_TO_NUMBER,
     })
     statusVersion: number;
+
+    // This column triggers the db-sync deletion mechanism. It's not intended for public consumption.
+    @Column()
+    deleted?: boolean;
 }

@@ -59,4 +59,8 @@ export class DBPrebuiltWorkspaceUpdatable implements PrebuiltWorkspaceUpdatable 
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     label?: string;
+
+    // This column triggers the db-sync deletion mechanism. It's not intended for public consumption.
+    @Column()
+    deleted?: boolean;
 }
