@@ -7,6 +7,12 @@ metadata:
   name: gitpod
 spec:
   collectors:
+    # This will be overridden by the generate_preflight_checks in the Makefile - this must remain at position 0
+    - runPod:
+        name: validate-config
+        namespace: '{{repl Namespace }}'
+        podSpec:
+          containers: []
     - run:
         collectorName: database
         image: eu.gcr.io/gitpod-core-dev/build/kots-config-check/database:sje-kots-config-check.9
@@ -99,6 +105,23 @@ spec:
 
             echo "connection: ${CONNECTION}"
   analyzers:
+    - textAnalyze:
+        checkName: Gitpod configuration
+        fileName: validate-config/validate-config.log
+        regexGroups: 'Gitpod: status (?P<Status>\w+)'
+        outcomes:
+          - fail:
+              when: "Status == fail"
+              message: |
+                Your generated Gitpod config failed validation. Run
+                `kubectl get configmaps -n {{repl Namespace }} gitpod-installation-status -o jsonpath="{.data.gitpod-installer\.log}"`
+                to view the output.
+          - pass:
+              when: "Status == pass"
+              message: |
+                Your generated Gitpod config is valid. Run
+                `kubectl get configmaps -n {{repl Namespace }} gitpod-installation-status -o jsonpath="{.data.gitpod-installer\.log}"`
+                to view the output.
     - clusterVersion:
         outcomes:
           - fail:
