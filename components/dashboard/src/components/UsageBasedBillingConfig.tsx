@@ -295,13 +295,8 @@ function CreditCardInputForm(props: { attributionId: string }) {
         setBillingError(undefined);
         setIsLoading(true);
         try {
-            if (attrId.kind === "team") {
-                // Create Stripe customer for team & currency (or update currency)
-                await getGitpodService().server.createOrUpdateStripeCustomerForTeam(attrId.teamId, currency);
-            } else {
-                // Create Stripe customer for user & currency (or update currency)
-                await getGitpodService().server.createOrUpdateStripeCustomerForUser(currency);
-            }
+            // Create Stripe customer with currency
+            await getGitpodService().server.createStripeCustomer(props.attributionId, currency);
             const result = await stripe.confirmSetup({
                 elements,
                 confirmParams: {
