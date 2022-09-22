@@ -3,6 +3,8 @@ tracing:
   install: true
   honeycombAPIKey: ${HONEYCOMB_API_KEY}
   honeycombDataset: preview-environments
+  extraSpanAttributes:
+    preview.name: ${PREVIEW_NAME}
 certmanager:
   installServiceMonitors: true
 pyrra:
