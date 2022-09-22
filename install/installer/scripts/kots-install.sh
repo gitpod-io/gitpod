@@ -30,6 +30,28 @@ catch() {
     exit "${1}"
 }
 
+stop_running_workspaces() {
+    echo "Gitpod: shut down any running workspaces/image-builders"
+
+    # Create a context for gpctl
+    kubectl config set-context "${NAMESPACE}"
+    kubectl config use-context "${NAMESPACE}"
+    # gpctl doesn't have a namespace flag
+    kubectl config set-context --current --namespace="${NAMESPACE}"
+
+    # Get list of workspace instances from gpctl
+    for instance in $(/app/gpctl workspaces list -o json | jq -r 'select(. != null) | .[] | .Instance'); do
+        echo "Gitpod: shutting down workspace ${instance}"
+        /app/gpctl workspaces stop "${instance}" || eval "$(echo "Gitpod: retrying shutting down workspace" && \
+            sleep 10 && \
+            /app/gpctl workspaces stop "${instance}")"
+    done
+
+    # Delete the context
+    kubectl config unset "contexts.${NAMESPACE}"
+    kubectl config unset current-context
+}
+
 main() {
     if [ "${INSTALLER_DRY_RUN}" != "true" ]; then
         echo "Gitpod: Killing any in-progress installations"
@@ -155,6 +177,8 @@ EOF
     if [ "${CERT_SECRET}" = "" ]; then
         HELM_TIMEOUT="1h"
     fi
+
+    stop_running_workspaces
 
     # The long timeout is to ensure the TLS cert is created (if required)
     echo "Gitpod: Apply the Kubernetes objects with timeout of ${HELM_TIMEOUT}"
