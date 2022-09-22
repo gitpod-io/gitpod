@@ -1055,20 +1055,25 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         return await queryBuilder.getCount();
     }
 
-    public async getActiveUserCount(): Promise<number> {
-        const workspaceInstanceRepo = await this.getWorkspaceInstanceRepo();
+    public async countUsersWithActiveInstances(): Promise<number> {
+        const workspaceInstanceUserRepo = await this.getWorkspaceInstanceUserRepo();
         const since = new Date();
         since.setDate(since.getDate() - 7);
 
         // get the owners of workspaces with new instances created at-least
         // 3 days of the last 7 days
-        const queryBuilder = workspaceInstanceRepo
-            .createQueryBuilder("i")
-            .select("u.userId")
-            .where("i.startedTime  > :since", { since: since.toISOString() })
-            .innerJoinAndMapOne("i.user", DBWorkspaceInstanceUser, "u", "i.id = u.instanceId")
-            .groupBy("1")
-            .having("count(distinct date(i.startedTime)) >= 3");
+        const queryBuilder = workspaceInstanceUserRepo
+            .createQueryBuilder("wsi")
+            .select("user.userId")
+            .from((subQuery) => {
+                subQuery
+                    .select("u.userId")
+                    .from(DBWorkspaceInstance, "i")
+                    .where("i.startedTime  > :since", { since: since.toISOString() })
+                    .innerJoin(DBWorkspaceInstanceUser, "u", "i.id = u.instanceId")
+                    .groupBy("1")
+                    .having("count(distinct date(i.startedTime)) >= 3");
+            }, "user");
 
         // print query for debugging purposes
         log.debug(queryBuilder.getSql());
