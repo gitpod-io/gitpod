@@ -25,6 +25,7 @@ import { getProject, WorkspaceStatusIndicator } from "../workspaces/WorkspaceEnt
 import WorkspaceDetail from "./WorkspaceDetail";
 import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
 import Alert from "../components/Alert";
+import { isGitpodIo } from "../utils";
 
 interface Props {
     user?: User;
@@ -78,6 +79,11 @@ export function WorkspaceSearch(props: Props) {
     }
 
     const search = async () => {
+        // Disables empty search on the workspace search page
+        if (isGitpodIo() && !props.user && queryTerm.length === 0) {
+            return;
+        }
+
         setSearching(true);
         try {
             const query: AdminGetWorkspacesQuery = {
@@ -87,6 +93,9 @@ export function WorkspaceSearch(props: Props) {
                 query.instanceIdOrWorkspaceId = queryTerm;
             } else if (matchesNewWorkspaceIdExactly(queryTerm)) {
                 query.workspaceId = queryTerm;
+            }
+            if (isGitpodIo() && !query.ownerId && !query.instanceIdOrWorkspaceId && !query.workspaceId) {
+                return;
             }
 
             const result = await getGitpodService().server.adminGetWorkspaces({
