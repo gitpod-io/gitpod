@@ -101,7 +101,7 @@ import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace/workspace-cluster-imagebuilder-client-provider";
 import { UsageServiceClient, UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
-import { createChannel, createClient } from "nice-grpc";
+import { createChannel, createClient, createClientFactory } from "nice-grpc";
 import { CommunityEntitlementService, EntitlementService } from "./billing/entitlement-service";
 import {
     ConfigCatClientFactory,
@@ -111,6 +111,7 @@ import { VerificationService } from "./auth/verification-service";
 import { WebhookEventGarbageCollector } from "./projects/webhook-event-garbage-collector";
 import { LivenessController } from "./liveness/liveness-controller";
 import { IDEServiceClient, IDEServiceDefinition } from "@gitpod/ide-service-api/lib/ide.pb";
+import { prometheusClientMiddleware } from "@gitpod/gitpod-protocol/lib/util/nice-grpc";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -271,7 +272,10 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind<IDEServiceClient>(IDEServiceDefinition.name).toDynamicValue((ctx) => {
         const config = ctx.container.get<Config>(Config);
-        return createClient(IDEServiceDefinition, createChannel(config.ideServiceAddr));
+        const metricsClient = ctx.container.get<IClientCallMetrics>(IClientCallMetrics);
+        return createClientFactory()
+            .use(prometheusClientMiddleware(metricsClient))
+            .create(IDEServiceDefinition, createChannel(config.ideServiceAddr));
     });
 
     bind(EntitlementService).to(CommunityEntitlementService).inSingletonScope();
