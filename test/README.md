@@ -4,22 +4,23 @@ This directory contains Gitpod's integration tests, including the framework that
 
 Integration tests work by instrumenting Gitpod's components to modify and verify its state.
 Such tests are for example:
-  - [create bucket] by executing code within ws-daemon's context that loads the config file,
-    creates a remote storage instance, and attempts to create a bucket.
-  - [start workspace] by obtaining a Gitpod API token, calling "createWorkspace" and watching
-    for successful startup events.
-  - [task start] by starting a workspace using the ws-manager interface, instrumenting the
-    workspace container and ensuring that tasks have run.
 
-## Integrations
+|    test case    |                                                                description                                                                |
+|:---------------:|:-----------------------------------------------------------------------------------------------------------------------------------------:|
+|  create bucket  | executing code within ws-daemon's context that loads the config file, creates a remote storage instance, and attempts to create a bucket. |
+| start workspace | obtaining a Gitpod API token, calling "createWorkspace" and watching for successful startup events.                                       |
+|    task start   | starting a workspace using the ws-manager interface, instrumenting the workspace container and ensuring that tasks have run.              |
+
+# Integrations
+
 - instrumentation: agents that are compiled before/during the test, uploaded to a pod and executed there.
                    They communicate with the test using net/rpc.
 - API access: to all internal APIs, including ws-manager, ws-daemon, image-builder, registry-facade, server
 - DB access to the Gitpod DB
 
-## Running the tests
+# Running the tests
 
-### Automatically at Gitpod
+## Automatically at Gitpod
 
 You can opt-in to run the integrations tests as part of the build job. that runs the integration tests against preview environments.
 
@@ -29,15 +30,15 @@ You can opt-in to run the integrations tests as part of the build job. that runs
 
 Example command:
 
-```sh
+```console
 werft job run github -a with-preview=true -a with-integration-tests=webapp -f
 ```
 
-### Manually
+## Manually
 
 You may want to run tests to assert whether a Gitpod installation is successfully integrated.
 
-#### Go test
+### Go test
 
 This is best for when you're actively developing Gitpod.
 
@@ -52,7 +53,7 @@ There are 4 different types of tests:
 
 If you want to run an entire test suite, the easiest is to use `./test/run.sh`:
 
-```sh
+```console
 # This will run all test suites
 ./test/run.sh
 
@@ -60,9 +61,10 @@ If you want to run an entire test suite, the easiest is to use `./test/run.sh`:
 ./test/run.sh webapp
 ```
 
-If you're iterating on a single test, the easiest is to use `go test` directly. If your integration tests depends on having having a user token available, then you'll have to set USER_TOKEN manually (see run.sh on how to fetch the credentials that are used during our build)
+If you're iterating on a single test, the easiest is to use `go test` directly. 
+If your integration tests depends on having having a user token available, then you'll have to set `USER_TOKEN` manually (see `test/run.sh` on how to fetch the credentials that are used during our build)
 
-```sh
+```console
 cd test
 go test -v ./... \
     -run <test> \
@@ -75,10 +77,27 @@ go test -v ./... \
 
 A concrete example would be
 
-```sh
+```console
 cd test
 go test -v ./... \
-    -run TestAdminBlockUser \
     -kubeconfig=/home/gitpod/.kube/config \
-    -namespace=default
+    -namespace=default \
+    -run TestAdminBlockUser
 ```
+
+# Tips
+
+## Workspace
+
+### Where should I start?
+
+If you want to create a new test case, it is recommended that you copy `example_test.go`.
+
+### Be careful when writing tests
+
+- Be careful not to affect other test cases. e.g. Do not stop workspace at the end of the test
+
+### Be sure before merged your PR.
+
+- [ ] Have you run all tests?
+- [ ] Do you successfully test from werft? We are runinng the integration tests from werft everyday
