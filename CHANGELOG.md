@@ -1,6 +1,15 @@
 # Change Log
 
 ## September 2022
+- [terraform/eks] Run regular and headless workspaces on separate node pools ([#13141](https://github.com/gitpod-io/gitpod/pull/13141)) - [@adrienthebo](https://github.com/adrienthebo)
+- Enable configuration of core dump behavior in a workspace ([#13144](https://github.com/gitpod-io/gitpod/pull/13144)) - [@Furisto](https://github.com/Furisto), [@aledbf](https://github.com/aledbf)
+- Attaches correct permissions to the IAM user to have correct level of access to just the single S3 bucket we create for that user. ([#12968](https://github.com/gitpod-io/gitpod/pull/12968)) - [@mrzarquon](https://github.com/mrzarquon)
+- Added a usage view that displays past workspace sessions on individual and team accounts. ([#13065](https://github.com/gitpod-io/gitpod/pull/13065)) - [@svenefftinge](https://github.com/svenefftinge)
+- [kots]: change to the new installer config commands ([#12986](https://github.com/gitpod-io/gitpod/pull/12986)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [installer]: add validation rules to blockNewUsers in config block ([#13126](https://github.com/gitpod-io/gitpod/pull/13126)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [installer]: refactor the Installer config to build from envvars ([#12687](https://github.com/gitpod-io/gitpod/pull/12687)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Fix reading .gitpod.yml for self-managed GHE instances. ([#13108](https://github.com/gitpod-io/gitpod/pull/13108)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- [infra-tests] Add self-signed integration test ([#12910](https://github.com/gitpod-io/gitpod/pull/12910)) - [@Pothulapati](https://github.com/Pothulapati)
 - Revert "[go] Add components into a go workspace" ([#13101](https://github.com/gitpod-io/gitpod/pull/13101)) - [@csweichel](https://github.com/csweichel)
 - Update GoLand IDE image to version 222.4167.25. ([#13084](https://github.com/gitpod-io/gitpod/pull/13084)) - [@roboquat](https://github.com/roboquat)
 - improved automated code configuration service for `go` ([#13057](https://github.com/gitpod-io/gitpod/pull/13057)) - [@Siddhant-K-code](https://github.com/Siddhant-K-code)
