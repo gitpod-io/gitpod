@@ -11,4 +11,4 @@ packages:
       - REPLICATED_APP
     config:
       commands:
-        - ["make", "helm", "lint"]
+        - ["make", "helm", "lint", "REPLICATED_API_TOKEN=${REPLICATED_API_TOKEN}", "REPLICATED_APP=${REPLICATED_APP}"]

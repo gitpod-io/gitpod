@@ -62,5 +62,9 @@ logo:
 .PHONY: logo
 
 lint:
-	replicated release lint --yaml-dir ${YAML_DIR}
+	@if [ "${REPLICATED_API_TOKEN}" != "" ] && [ "${REPLICATED_APP}" != "" ]; then \
+		replicated release lint --yaml-dir ${YAML_DIR}; \
+	else \
+		echo "REPLICATED_API_TOKEN and REPLICATED_APP are not set. Skipping"; \
+	fi
 .PHONY: lint
