@@ -13,6 +13,9 @@ spec:
         namespace: '{{repl Namespace }}'
         podSpec:
           containers: []
+    - clusterResources:
+        namespaces:
+          - '{{repl Namespace }}'
     - run:
         collectorName: database
         image: eu.gcr.io/gitpod-core-dev/build/kots-config-check/database:sje-kots-config-check.9
@@ -429,3 +432,14 @@ spec:
               message: Registry is accessible
           - fail:
               message: Registry is inaccessible. Please check your network and firewall settings
+    - textAnalyze:
+        checkName: Check running workspaces
+        fileName: cluster-resources/pods/{{repl Namespace }}.json
+        regex: '"component": "workspace"'
+        outcomes:
+          - pass:
+              when: "false"
+              message: No running workspaces. Any workspaces started during the deployment process will be stopped.
+          - fail:
+              when: "true"
+              message: There are running workspaces. These will be stopped during the deployment process.
