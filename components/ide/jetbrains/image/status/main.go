@@ -82,6 +82,20 @@ func main() {
 	if err != nil {
 		log.WithError(err).Error("failed to parse .gitpod.yml")
 	}
+
+	// configure vmoptions
+	idePrefix := alias
+	if alias == "intellij" {
+		idePrefix = "idea"
+	}
+	// [idea64|goland64|pycharm64|phpstorm64].vmoptions
+	vmOptionsPath := fmt.Sprintf("/ide-desktop/backend/bin/%s64.vmoptions", idePrefix)
+	err = configureVMOptions(gitpodConfig, alias, vmOptionsPath)
+	if err != nil {
+		log.WithError(err).Error("failed to configure vmoptions")
+	}
+
+	// install project plugins
 	version_2022_1, _ := version.NewVersion("2022.1")
 	if version_2022_1.LessThanOrEqual(backendVersion) {
 		err = installPlugins(repoRoot, gitpodConfig, alias)
@@ -93,17 +107,7 @@ func main() {
 		}
 	}
 
-	idePrefix := alias
-	if alias == "intellij" {
-		idePrefix = "idea"
-	}
-	// [idea64|goland64|pycharm64|phpstorm64].vmoptions
-	vmOptionsPath := fmt.Sprintf("/ide-desktop/backend/bin/%s64.vmoptions", idePrefix)
-
-	err = configureVMOptions(gitpodConfig, alias, vmOptionsPath)
-	if err != nil {
-		log.WithError(err).Error("failed to configure vmoptions")
-	}
+	// install gitpod plugin
 	err = linkRemotePlugin()
 	if err != nil {
 		log.WithError(err).Error("failed to install gitpod-remote plugin")
