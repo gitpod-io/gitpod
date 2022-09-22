@@ -95,7 +95,7 @@ resource "google_container_node_pool" "services" {
 }
 
 resource "google_container_node_pool" "regular-workspaces" {
-  name               = "regular-workspaces-${var.cluster_name}"
+  name               = "regular-ws-${var.cluster_name}"
   location           = google_container_cluster.gitpod-cluster.location
   cluster            = google_container_cluster.gitpod-cluster.name
   version            = var.cluster_version // kubernetes version
@@ -135,7 +135,7 @@ resource "google_container_node_pool" "regular-workspaces" {
 }
 
 resource "google_container_node_pool" "headless-workspaces" {
-  name               = "headless-workspaces-${var.cluster_name}"
+  name               = "headless-ws-${var.cluster_name}"
   location           = google_container_cluster.gitpod-cluster.location
   cluster            = google_container_cluster.gitpod-cluster.name
   version            = var.cluster_version // kubernetes version
