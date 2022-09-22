@@ -93,6 +93,11 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 			log.WithError(err).WithField("location", ws.Location).Error("cannot configure fecth behavior")
 		}
 
+		err = ws.Git(ctx, "config", "--replace-all", "checkout.defaultRemote", "origin")
+		if err != nil {
+			log.WithError(err).WithField("location", ws.Location).Error("cannot configure checkout defaultRemote")
+		}
+
 		return nil
 	}
 	onGitCloneFailure := func(e error, d time.Duration) {
@@ -176,7 +181,12 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 			return err
 		}
 
-		if err := ws.Git(ctx, "switch", "-C", ws.CloneTarget); err != nil {
+		if err := ws.Git(ctx, "fetch", "--depth=1", "origin", ws.CloneTarget); err != nil {
+			log.WithError(err).WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Error("Cannot fetch remote branch")
+			return err
+		}
+
+		if err := ws.Git(ctx, "checkout", "--track", "-B", ws.CloneTarget, "origin/"+ws.CloneTarget); err != nil {
 			log.WithError(err).WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Error("Cannot fetch remote branch")
 			return err
 		}
@@ -194,7 +204,7 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 		}
 
 		// checkout specific commit
-		if err := ws.Git(ctx, "switch", "-C", ws.CloneTarget); err != nil {
+		if err := ws.Git(ctx, "checkout", "--track", "-B", ws.CloneTarget, "origin/"+ws.CloneTarget); err != nil {
 			return err
 		}
 	default:
