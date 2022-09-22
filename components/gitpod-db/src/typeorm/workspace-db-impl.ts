@@ -1070,6 +1070,9 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
             .groupBy("1")
             .having("count(distinct date(i.startedTime)) >= 3");
 
+        // print query for debugging purposes
+        log.debug(queryBuilder.getSql());
+
         return await queryBuilder.getCount();
     }
 
