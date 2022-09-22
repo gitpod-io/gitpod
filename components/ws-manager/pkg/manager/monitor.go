@@ -194,7 +194,7 @@ func (m *Monitor) onVolumesnapshotEvent(evt watch.Event) error {
 	}
 
 	vsc := *vs.Status.BoundVolumeSnapshotContentName
-	log.Infof("the vsc %s is ready to use", vsc)
+	log.Debugf("the vsc %s is ready to use", vsc)
 	if !pod.CreationTimestamp.IsZero() {
 		m.eventRecorder.Eventf(&pod, corev1.EventTypeNormal, "VolumeSnapshot", "Volume snapshot %q is ready to use", vs.Name)
 	}
