@@ -29,7 +29,7 @@ mv installer observability-installer
 
 tmpdir=$(mktemp -d)
 
-envsubst <"${SCRIPT_PATH}/manifests/monitoring-satellite.yaml" | ./observability-installer render --output-split-files "${tmpdir}" --config -
+envsubst <"${SCRIPT_PATH}/manifests/monitoring-satellite.yaml" | ./observability-installer render --app monitoring-satellite --output-split-files "${tmpdir}" --config -
 
 pushd "${tmpdir}"
 
