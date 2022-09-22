@@ -58,7 +58,7 @@ spec:
         sum(namespace_cpu:kube_pod_container_resource_requests:sum{}) - (sum(kube_node_status_allocatable{resource="cpu"}) - max(kube_node_status_allocatable{resource="cpu"})) > 0
         and
         (sum(kube_node_status_allocatable{resource="cpu"}) - max(kube_node_status_allocatable{resource="cpu"})) > 0
-      for: 10m
+      for: 60m
       labels:
         severity: warning
         team: platform
@@ -71,7 +71,7 @@ spec:
         sum(namespace_memory:kube_pod_container_resource_requests:sum{}) - (sum(kube_node_status_allocatable{resource="memory"}) - max(kube_node_status_allocatable{resource="memory"})) > 0
         and
         (sum(kube_node_status_allocatable{resource="memory"}) - max(kube_node_status_allocatable{resource="memory"})) > 0
-      for: 10m
+      for: 60m
       labels:
         severity: warning
         team: platform
