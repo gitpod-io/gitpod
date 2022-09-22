@@ -4160,6 +4160,7 @@ data:
       "contentServiceAddr": "content-service.default.svc.cluster.local:8080",
       "imageBuilderAddr": "image-builder-mk3.default.svc.cluster.local:8080",
       "usageServiceAddr": "usage.default.svc.cluster.local:9001",
+      "maximumEventLoopLag": 0.35,
       "vsxRegistryUrl": "https://open-vsx.gitpod.example.com",
       "chargebeeProviderOptionsFile": "/chargebee/providerOptions",
       "stripeSecretsFile": "/stripe-secret/apikeys",
@@ -8291,7 +8292,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: e815e4561d4c745651c63b726706a527b86b8a7eec74049d42415aef264b61a1
+        gitpod.io/checksum_config: 95f202b0069bd8027c0de410a88e31fdfbd82ac5c9ed999407d479cd2bc421cf
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8384,6 +8385,13 @@ spec:
           value: WwogIHsKICAgICJuYW1lIjogImRlZmF1bHQiLAogICAgInVybCI6ICJkbnM6Ly8vd3MtbWFuYWdlcjo4MDgwIiwKICAgICJ0bHMiOiB7CiAgICAgICJjYSI6ICIvd3MtbWFuYWdlci1jbGllbnQtdGxzLWNlcnRzL2NhLmNydCIsCiAgICAgICJjcnQiOiAiL3dzLW1hbmFnZXItY2xpZW50LXRscy1jZXJ0cy90bHMuY3J0IiwKICAgICAgImtleSI6ICIvd3MtbWFuYWdlci1jbGllbnQtdGxzLWNlcnRzL3Rscy5rZXkiCiAgICB9LAogICAgInN0YXRlIjogImF2YWlsYWJsZSIsCiAgICAibWF4U2NvcmUiOiAxMDAsCiAgICAic2NvcmUiOiA1MCwKICAgICJnb3Zlcm4iOiB0cnVlLAogICAgImFkbWlzc2lvbkNvbnN0cmFpbnRzIjogbnVsbAogIH0KXQ==
         image: eu.gcr.io/gitpod-core-dev/build/server:test
         imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 6
+          httpGet:
+            path: /live
+            port: 3000
+          initialDelaySeconds: 120
+          periodSeconds: 10
         name: server
         ports:
         - containerPort: 3000
