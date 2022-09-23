@@ -196,11 +196,9 @@ export class UserService {
     }
 
     protected async findTeamUsageBasedSubscriptionId(team: Team): Promise<string | undefined> {
-        const customerId = await this.stripeService.findCustomerByTeamId(team.id);
-        if (!customerId) {
-            return;
-        }
-        const subscriptionId = await this.stripeService.findUncancelledSubscriptionByCustomer(customerId);
+        const subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(
+            AttributionId.render({ kind: "team", teamId: team.id }),
+        );
         return subscriptionId;
     }
 
@@ -325,8 +323,8 @@ export class UserService {
             if (!membership) {
                 throw new Error("Cannot attribute to an unrelated team.");
             }
-            const teamCustomer = await this.stripeService.findCustomerByTeamId(attributionId.teamId);
-            if (!teamCustomer) {
+            const teamCustomerId = await this.stripeService.findCustomerByAttributionId(usageAttributionId);
+            if (!teamCustomerId) {
                 throw new Error("Cannot attribute to team without Stripe customer.");
             }
             user.usageAttributionId = usageAttributionId;

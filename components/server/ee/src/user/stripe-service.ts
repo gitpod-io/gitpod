@@ -34,14 +34,6 @@ export class StripeService {
         return await this.getStripe().setupIntents.create({ usage: "on_session" });
     }
 
-    async findCustomerByUserId(userId: string): Promise<string | undefined> {
-        return this.findCustomerByAttributionId(AttributionId.render({ kind: "user", userId }));
-    }
-
-    async findCustomerByTeamId(teamId: string): Promise<string | undefined> {
-        return this.findCustomerByAttributionId(AttributionId.render({ kind: "team", teamId }));
-    }
-
     async findCustomerByAttributionId(attributionId: string): Promise<string | undefined> {
         const query = `metadata['attributionId']:'${attributionId}'`;
         const result = await this.getStripe().customers.search({ query });
@@ -119,7 +111,9 @@ export class StripeService {
     }
 
     async getPortalUrlForTeam(team: Team): Promise<string> {
-        const customerId = await this.findCustomerByTeamId(team.id);
+        const customerId = await this.findCustomerByAttributionId(
+            AttributionId.render({ kind: "team", teamId: team.id }),
+        );
         if (!customerId) {
             throw new Error(`No Stripe Customer ID found for team '${team.id}'`);
         }
@@ -131,7 +125,9 @@ export class StripeService {
     }
 
     async getPortalUrlForUser(user: User): Promise<string> {
-        const customerId = await this.findCustomerByUserId(user.id);
+        const customerId = await this.findCustomerByAttributionId(
+            AttributionId.render({ kind: "user", userId: user.id }),
+        );
         if (!customerId) {
             throw new Error(`No Stripe Customer ID found for user '${user.id}'`);
         }
@@ -142,7 +138,11 @@ export class StripeService {
         return session.url;
     }
 
-    async findUncancelledSubscriptionByCustomer(customerId: string): Promise<string | undefined> {
+    async findUncancelledSubscriptionByAttributionId(attributionId: string): Promise<string | undefined> {
+        const customerId = await this.findCustomerByAttributionId(attributionId);
+        if (!customerId) {
+            return undefined;
+        }
         const result = await this.getStripe().subscriptions.list({
             customer: customerId,
         });

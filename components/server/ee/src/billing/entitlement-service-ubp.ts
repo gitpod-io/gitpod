@@ -114,21 +114,18 @@ export class EntitlementServiceUBP implements EntitlementService {
 
     protected async hasPaidSubscription(user: User, date: Date): Promise<boolean> {
         // Paid user?
-        const customerId = await this.stripeService.findCustomerByUserId(user.id);
-        if (customerId) {
-            const subscriptionId = await this.stripeService.findUncancelledSubscriptionByCustomer(customerId);
-            if (subscriptionId) {
-                return true;
-            }
+        const subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(
+            AttributionId.render({ kind: "user", userId: user.id }),
+        );
+        if (subscriptionId) {
+            return true;
         }
         // Member of paid team?
         const teams = await this.teamDB.findTeamsByUser(user.id);
         const isTeamSubscribedPromises = teams.map(async (team: Team) => {
-            const customerId = await this.stripeService.findCustomerByTeamId(team.id);
-            if (!customerId) {
-                return false;
-            }
-            const subscriptionId = await this.stripeService.findUncancelledSubscriptionByCustomer(customerId);
+            const subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(
+                AttributionId.render({ kind: "team", teamId: team.id }),
+            );
             return !!subscriptionId;
         });
         // Return the first truthy promise, or false if all the promises were falsy.
