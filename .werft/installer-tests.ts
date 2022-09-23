@@ -22,7 +22,8 @@ const skipTests: string = annotations.skipTests || "false"; // setting to true s
 const selfSigned: Boolean = annotations.selfSigned === "true";
 const deps: string = annotations.deps || ""; // options: ["external", "internal"] setting to `external` will ensure that all resource dependencies(storage, db, registry) will be external. if unset, a random selection will be used
 
-const baseDomain: string = "tests.gitpod-self-hosted.com";
+const baseDomain: string = annotations.domain || "tests.gitpod-self-hosted.com";
+const gcpDnsZone: string = baseDomain.replace(/\./g, '-');
 
 const slackHook = new Map<string, string>([
     ["self-hosted-jobs", process.env.SH_SLACK_NOTIFICATION_PATH.trim()],
@@ -382,7 +383,7 @@ function runIntegrationTests() {
 function callMakeTargets(phase: string, description: string, makeTarget: string, failable: boolean = false) {
     werft.log(phase, `Calling ${makeTarget}`);
     // exporting cloud env var is important for the make targets
-    var env = `export TF_VAR_cluster_version=${k8s_version} cloud=${cloud}`;
+    var env = `export TF_VAR_cluster_version=${k8s_version} cloud=${cloud} TF_VAR_domain=${baseDomain} TF_VAR_gcp_zone=${gcpDnsZone}`;
     if (selfSigned) {
         env = env.concat(` self_signed=${selfSigned}`)
     }
