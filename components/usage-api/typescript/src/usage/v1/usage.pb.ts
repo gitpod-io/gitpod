@@ -174,6 +174,14 @@ export interface SetCostCenterRequest {
 export interface SetCostCenterResponse {
 }
 
+export interface GetBalanceRequest {
+  attributionId: string;
+}
+
+export interface GetBalanceResponse {
+  credits: number;
+}
+
 export interface GetCostCenterRequest {
   attributionId: string;
 }
@@ -865,6 +873,100 @@ export const SetCostCenterResponse = {
   },
 };
 
+function createBaseGetBalanceRequest(): GetBalanceRequest {
+  return { attributionId: "" };
+}
+
+export const GetBalanceRequest = {
+  encode(message: GetBalanceRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.attributionId !== "") {
+      writer.uint32(10).string(message.attributionId);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetBalanceRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetBalanceRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.attributionId = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetBalanceRequest {
+    return { attributionId: isSet(object.attributionId) ? String(object.attributionId) : "" };
+  },
+
+  toJSON(message: GetBalanceRequest): unknown {
+    const obj: any = {};
+    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<GetBalanceRequest>): GetBalanceRequest {
+    const message = createBaseGetBalanceRequest();
+    message.attributionId = object.attributionId ?? "";
+    return message;
+  },
+};
+
+function createBaseGetBalanceResponse(): GetBalanceResponse {
+  return { credits: 0 };
+}
+
+export const GetBalanceResponse = {
+  encode(message: GetBalanceResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.credits !== 0) {
+      writer.uint32(33).double(message.credits);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetBalanceResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetBalanceResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 4:
+          message.credits = reader.double();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetBalanceResponse {
+    return { credits: isSet(object.credits) ? Number(object.credits) : 0 };
+  },
+
+  toJSON(message: GetBalanceResponse): unknown {
+    const obj: any = {};
+    message.credits !== undefined && (obj.credits = message.credits);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<GetBalanceResponse>): GetBalanceResponse {
+    const message = createBaseGetBalanceResponse();
+    message.credits = object.credits ?? 0;
+    return message;
+  },
+};
+
 function createBaseGetCostCenterRequest(): GetCostCenterRequest {
   return { attributionId: "" };
 }
@@ -1087,6 +1189,15 @@ export const UsageServiceDefinition = {
       responseStream: false,
       options: {},
     },
+    /** GetBalance returns the current credits balance for the given attributionId */
+    getBalance: {
+      name: "GetBalance",
+      requestType: GetBalanceRequest,
+      requestStream: false,
+      responseType: GetBalanceResponse,
+      responseStream: false,
+      options: {},
+    },
   },
 } as const;
 
@@ -1108,6 +1219,11 @@ export interface UsageServiceServiceImplementation<CallContextExt = {}> {
   ): Promise<DeepPartial<ReconcileUsageResponse>>;
   /** ListUsage retrieves all usage for the specified attributionId and theb given time range */
   listUsage(request: ListUsageRequest, context: CallContext & CallContextExt): Promise<DeepPartial<ListUsageResponse>>;
+  /** GetBalance returns the current credits balance for the given attributionId */
+  getBalance(
+    request: GetBalanceRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<GetBalanceResponse>>;
 }
 
 export interface UsageServiceClient<CallOptionsExt = {}> {
@@ -1128,6 +1244,11 @@ export interface UsageServiceClient<CallOptionsExt = {}> {
   ): Promise<ReconcileUsageResponse>;
   /** ListUsage retrieves all usage for the specified attributionId and theb given time range */
   listUsage(request: DeepPartial<ListUsageRequest>, options?: CallOptions & CallOptionsExt): Promise<ListUsageResponse>;
+  /** GetBalance returns the current credits balance for the given attributionId */
+  getBalance(
+    request: DeepPartial<GetBalanceRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<GetBalanceResponse>;
 }
 
 export interface DataLoaderOptions {

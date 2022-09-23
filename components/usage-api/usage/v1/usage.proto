@@ -19,6 +19,9 @@ service UsageService {
 
     // ListUsage retrieves all usage for the specified attributionId and theb given time range
     rpc ListUsage(ListUsageRequest) returns (ListUsageResponse) {}
+
+    // GetBalance returns the current credits balance for the given attributionId
+    rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse) {}
 }
 
 message ReconcileUsageRequest {
@@ -96,6 +99,14 @@ message SetCostCenterRequest {
 }
 
 message SetCostCenterResponse {
+}
+
+message GetBalanceRequest {
+    string attribution_id = 1;
+}
+
+message GetBalanceResponse {
+    double credits = 4;
 }
 
 message GetCostCenterRequest {

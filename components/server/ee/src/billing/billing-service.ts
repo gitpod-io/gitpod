@@ -40,13 +40,10 @@ export class BillingService {
             };
         }
 
-        const now = new Date();
-        const currentBalance = await this.usageService.listUsage({
+        const getBalanceResponse = await this.usageService.getBalance({
             attributionId: AttributionId.render(attributionId),
-            from: now,
-            to: now,
         });
-        const currentInvoiceCredits = currentBalance.creditBalanceAtEnd | 0;
+        const currentInvoiceCredits = getBalanceResponse.credits;
         if (currentInvoiceCredits >= (costCenter.spendingLimit || 0)) {
             log.info({ userId: user.id }, "Usage limit reached", {
                 attributionId,

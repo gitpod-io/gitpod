@@ -322,3 +322,37 @@ func TestListBalance(t *testing.T) {
 		CreditCents:   -50,
 	})
 }
+
+func TestGetBalance(t *testing.T) {
+	teamAttributionID := db.NewTeamAttributionID(uuid.New().String())
+	userAttributionID := db.NewUserAttributionID(uuid.New().String())
+
+	conn := dbtest.ConnectForTests(t)
+	dbtest.CreateUsageRecords(t, conn,
+		dbtest.NewUsage(t, db.Usage{
+			AttributionID: teamAttributionID,
+			CreditCents:   100,
+		}),
+		dbtest.NewUsage(t, db.Usage{
+			AttributionID: teamAttributionID,
+			CreditCents:   900,
+		}),
+		dbtest.NewUsage(t, db.Usage{
+			AttributionID: userAttributionID,
+			CreditCents:   450,
+		}),
+		dbtest.NewUsage(t, db.Usage{
+			AttributionID: userAttributionID,
+			CreditCents:   -500,
+			Kind:          db.InvoiceUsageKind,
+		}),
+	)
+
+	teamBalance, err := db.GetBalance(context.Background(), conn, teamAttributionID)
+	require.NoError(t, err)
+	require.EqualValues(t, 1000, int(teamBalance))
+
+	userBalance, err := db.GetBalance(context.Background(), conn, userAttributionID)
+	require.NoError(t, err)
+	require.EqualValues(t, -50, int(userBalance))
+}
