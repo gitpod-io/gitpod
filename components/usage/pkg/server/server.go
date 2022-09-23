@@ -6,7 +6,6 @@ package server
 
 import (
 	"fmt"
-	gitpod_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"net"
 	"os"
 	"time"
@@ -71,11 +70,15 @@ func Start(cfg Config, version string) error {
 	if err != nil {
 		return fmt.Errorf("failed to register grpc client metrics: %w", err)
 	}
-	selfConnection, err := grpc.Dial(srv.GRPCAddress(), append(
-		gitpod_grpc.DefaultClientOptions(),
+	selfConnection, err := grpc.Dial(srv.GRPCAddress(),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpcDialerWithInitialDelay(1*time.Second))...,
-	)
+		grpcDialerWithInitialDelay(1*time.Second),
+		grpc.WithUnaryInterceptor(grpcClientMetrics.UnaryClientInterceptor()),
+		grpc.WithStreamInterceptor(grpcClientMetrics.StreamClientInterceptor()),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(100*1024*1024),
+			grpc.MaxCallSendMsgSize(100*1024*1024),
+		))
 	if err != nil {
 		return fmt.Errorf("failed to create self-connection to grpc server: %w", err)
 	}
