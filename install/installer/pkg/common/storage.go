@@ -51,7 +51,7 @@ func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 				Endpoint:            context.Config.ObjectStorage.S3.Endpoint,
 				AccessKeyIdFile:     filepath.Join(storageMount, "accessKeyId"),
 				SecretAccessKeyFile: filepath.Join(storageMount, "secretAccessKey"),
-				Secure:              true,
+				Secure:              !context.Config.ObjectStorage.S3.AllowInsecureConnection,
 				Region:              context.Config.Metadata.Region,
 				ParallelUpload:      100,
 

@@ -245,6 +245,8 @@ type ObjectStorageS3 struct {
 	// BucketName sets the name of an existing bucket to enable the "single bucket mode"
 	// If no name is configured, the old "one bucket per user" behaviour kicks in.
 	BucketName string `json:"bucket"`
+
+	AllowInsecureConnection bool `json:"allowInsecureConnection"`
 }
 
 type ObjectStorageCloudStorage struct {
