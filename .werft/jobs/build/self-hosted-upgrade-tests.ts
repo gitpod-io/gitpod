@@ -44,19 +44,19 @@ export async function triggerUpgradeTests(werft: Werft, config: JobConfig, usern
     const channel: string = config.replicatedChannel || "beta";
 
     exec(`git config --global user.name "${username}"`);
-    var annotation = `-a version=${config.fromVersion} -a upgrade=true -a channel=${channel} -a preview=true -a skipTests=true`;
+    var annotation = ` -a deps=external -a version=${config.fromVersion} -a upgrade=true -a channel=${channel} -a preview=true -a skipTests=true`;
 
     // the following bit make sure that the subdomain stays the same upon multiple runs, and always start with release
-    const regex = /[\/,\.]/g;
-    const subdomain: string = config.repository.branch.replace(regex, '-')
-    annotation = annotation.concat(` -a subdomain=${subdomain}`)
+    // const regex = /[\/,\.]/g;
+    // const subdomain: string = config.repository.branch.replace(regex, '-')
+    const subdomain: string = "release"
 
     for (let phase in phases) {
         const upgradeConfig = phases[phase];
 
         werft.phase(upgradeConfig.phase, upgradeConfig.description);
 
-        annotation = `${annotation} -a cluster=${phase} -a updateGitHubStatus=gitpod-io/gitpod`
+        annotation = `${annotation} -a cluster=${phase} -a updateGitHubStatus=gitpod-io/gitpod -a subdomain=${subdomain}-${upgradeConfig.cloud}`
 
         const testFile: string = `.werft/${phase}-installer-tests.yaml`;
 
