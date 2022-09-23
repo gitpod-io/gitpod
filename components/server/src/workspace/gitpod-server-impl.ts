@@ -178,6 +178,7 @@ import { VerificationService } from "../auth/verification-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { EntitlementService } from "../billing/entitlement-service";
 import { WorkspaceClasses } from "./workspace-classes";
+import { formatPhoneNumber } from "../user/phone-numbers";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -469,16 +470,17 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return user;
     }
 
-    public async sendPhoneNumberVerificationToken(ctx: TraceContext, phoneNumber: string): Promise<void> {
+    public async sendPhoneNumberVerificationToken(ctx: TraceContext, rawPhoneNumber: string): Promise<void> {
         this.checkUser("sendPhoneNumberVerificationToken");
-        return this.verificationService.sendVerificationToken(phoneNumber);
+        return this.verificationService.sendVerificationToken(formatPhoneNumber(rawPhoneNumber));
     }
 
     public async verifyPhoneNumberVerificationToken(
         ctx: TraceContext,
-        phoneNumber: string,
+        rawPhoneNumber: string,
         token: string,
     ): Promise<boolean> {
+        const phoneNumber = formatPhoneNumber(rawPhoneNumber);
         const user = this.checkUser("verifyPhoneNumberVerificationToken");
         const checked = await this.verificationService.verifyVerificationToken(phoneNumber, token);
         if (!checked) {

@@ -146,6 +146,8 @@ export interface UserDB extends OAuthUserRepository, OAuthTokenRepository {
     storeGitpodToken(token: GitpodToken & { user: DBUser }): Promise<void>;
     deleteGitpodToken(tokenHash: string): Promise<void>;
     deleteGitpodTokensNamedLike(userId: string, namePattern: string): Promise<void>;
+    countUsagesOfPhoneNumber(phoneNumber: string): Promise<number>;
+    isBlockedPhoneNumber(phoneNumber: string): Promise<boolean>;
 }
 export type PartialUserUpdate = Partial<Omit<User, "identities">> & Pick<User, "id">;
 

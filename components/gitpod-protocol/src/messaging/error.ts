@@ -94,4 +94,7 @@ export namespace ErrorCodes {
 
     // 640 Headless logs are not available (yet)
     export const HEADLESS_LOG_NOT_YET_AVAILABLE = 640;
+
+    // 650 Invalid Value
+    export const INVALID_VALUE = 650;
 }

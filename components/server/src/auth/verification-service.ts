@@ -10,13 +10,16 @@ import { inject, injectable, postConstruct } from "inversify";
 import { Config } from "../config";
 import { Twilio } from "twilio";
 import { ServiceContext } from "twilio/lib/rest/verify/v2/service";
-import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ResponseError } from "vscode-ws-jsonrpc";
 
 @injectable()
 export class VerificationService {
     @inject(Config) protected config: Config;
     @inject(WorkspaceDB) protected workspaceDB: WorkspaceDB;
+    @inject(UserDB) protected userDB: UserDB;
     @inject(ConfigCatClientFactory) protected readonly configCatClientFactory: ConfigCatClientFactory;
 
     protected verifyService: ServiceContext;
@@ -58,6 +61,17 @@ export class VerificationService {
     public async sendVerificationToken(phoneNumber: string): Promise<void> {
         if (!this.verifyService) {
             throw new Error("No verification service configured.");
+        }
+        const isBlockedNumber = this.userDB.isBlockedPhoneNumber(phoneNumber);
+        const usages = await this.userDB.countUsagesOfPhoneNumber(phoneNumber);
+        if (usages > 3) {
+            throw new ResponseError(
+                ErrorCodes.INVALID_VALUE,
+                "The given phone number has been used more than three times.",
+            );
+        }
+        if (await isBlockedNumber) {
+            throw new ResponseError(ErrorCodes.INVALID_VALUE, "The given phone number is blocked due to abuse.");
         }
         const verification = await this.verifyService.verifications.create({ to: phoneNumber, channel: "sms" });
         log.info("Verification code sent", { phoneNumber, status: verification.status });
