@@ -478,6 +478,169 @@ func (r *WorkspaceReconciler) finalizeWorkspaceContent(ctx context.Context, work
 	}
 }
 
+// finalizeWorkspaceContent talks to a ws-daemon daemon on the node of the pod and creates a backup of the workspace content.
+func (r *WorkspaceReconciler) finalizeWorkspaceContent(ctx context.Context, workspace *workspacev1.Workspace) {
+	log := log.FromContext(ctx)
+
+	doBackup := conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionEverReady)) && !workspace.Status.Headless
+	doBackupLogs := workspace.Spec.Type == workspacev1.WorkspaceTypePrebuild
+	doSnapshot := workspace.Spec.Type == workspacev1.WorkspaceTypePrebuild
+	doFinalize := func() (worked bool, gitStatus *workspacev1.GitStatus, err error) {
+		r.finalizerMapLock.Lock()
+		_, alreadyFinalizing := r.finalizerMap[workspace.Name]
+		if alreadyFinalizing {
+			r.finalizerMapLock.Unlock()
+			return false, nil, nil
+		}
+
+		var hostIP string
+		if workspace.Status.Runtime != nil {
+			hostIP = workspace.Status.Runtime.HostIP
+		}
+
+		// Maybe the workspace never made it to a phase where we actually initialized a workspace.
+		// Assuming that once we've had a nodeName we've spoken to ws-daemon it's safe to assume that if
+		// we don't have a nodeName we don't need to dipose the workspace.
+		// Obviously that only holds if we do not require a backup. If we do require one, we want to
+		// fail as loud as we can in this case.
+		if !doBackup && !doSnapshot && hostIP == "" {
+			// we don't need a backup and have never spoken to ws-daemon: we're good here.
+			r.finalizerMapLock.Unlock()
+			return true, nil, nil
+		}
+
+		// we're not yet finalizing - start the process
+		snc, err := r.connectToWorkspaceDaemon(ctx, workspace)
+		if err != nil {
+			r.finalizerMapLock.Unlock()
+			return true, nil, err
+		}
+
+		ctx, cancelReq := context.WithTimeout(ctx, time.Duration(r.Config.Timeouts.ContentFinalization))
+		r.finalizerMap[workspace.Name] = cancelReq
+		r.finalizerMapLock.Unlock()
+		defer func() {
+			// we're done disposing - remove from the finalizerMap
+			r.finalizerMapLock.Lock()
+			delete(r.finalizerMap, workspace.Name)
+			r.finalizerMapLock.Unlock()
+		}()
+
+		if doSnapshot {
+			// if this is a prebuild take a snapshot and mark the workspace
+			var res *wsdaemon.TakeSnapshotResponse
+			res, err = snc.TakeSnapshot(ctx, &wsdaemon.TakeSnapshotRequest{Id: workspace.Name})
+			if err != nil {
+				log.Error(err, "cannot take snapshot")
+				err = xerrors.Errorf("cannot take snapshot: %v", err)
+			}
+
+			if res != nil {
+				r.modifyWorkspaceStatus(ctx, workspace.Name, func(status *workspacev1.WorkspaceStatus) error {
+					status.Snapshot = res.Url
+					return nil
+				})
+				if err != nil {
+					log.Error(err, "cannot mark headless workspace with snapshot - that's one prebuild lost")
+					err = xerrors.Errorf("cannot remember snapshot: %v", err)
+				}
+			}
+		}
+
+		// DiposeWorkspace will "degenerate" to a simple wait if the finalization/disposal process is already running.
+		// This is unlike the initialization process where we wait for things to finish in a later phase.
+		resp, err := snc.DisposeWorkspace(ctx, &wsdaemon.DisposeWorkspaceRequest{
+			Id:         workspace.Name,
+			Backup:     doBackup,
+			BackupLogs: doBackupLogs,
+		})
+		if resp != nil {
+			gitStatus = gitStatusfromContentServiceAPI(resp.GitStatus)
+		}
+		return true, gitStatus, err
+	}
+
+	var (
+		dataloss    bool
+		backupError error
+		gitStatus   *workspacev1.GitStatus
+	)
+	for i := 0; i < wsdaemonMaxAttempts; i++ {
+		didSometing, gs, err := doFinalize()
+		if !didSometing {
+			// someone else is managing finalization process ... we don't have to bother
+			return
+		}
+
+		// by default we assume the worst case scenario. If things aren't just as bad, we'll tune it down below.
+		dataloss = true
+		backupError = err
+		gitStatus = gs
+
+		// At this point one of three things may have happened:
+		//   1. the context deadline was exceeded, e.g. due to misconfiguration (not enough time to upload) or network issues. We'll try again.
+		//   2. the service was unavailable, in which case we'll try again.
+		//   3. none of the above, in which case we'll give up
+		st, isGRPCError := status.FromError(err)
+		if !isGRPCError {
+			break
+		}
+
+		if (err != nil && strings.Contains(err.Error(), context.DeadlineExceeded.Error())) ||
+			st.Code() == codes.Unavailable ||
+			st.Code() == codes.Canceled {
+			// service is currently unavailable or we did not finish in time - let's wait some time and try again
+			time.Sleep(wsdaemonRetryInterval)
+			continue
+		}
+
+		// service was available, we've tried to do the work and failed. Tell the world about it.
+		if (doBackup || doSnapshot) && isGRPCError {
+			switch st.Code() {
+			case codes.DataLoss:
+				// ws-daemon told us that it's lost data
+				dataloss = true
+			case codes.FailedPrecondition:
+				// the workspace content was not in the state we thought it was
+				dataloss = true
+			}
+		}
+		break
+	}
+
+	var backupFailure string
+	if backupError != nil {
+		if dataloss {
+			backupFailure = backupError.Error()
+		} else {
+			// internal errors make no difference to the user experience. The backup still worked, we just messed up some
+			// state management or cleanup. No need to worry the user.
+			log.Error(backupError, "internal error while disposing workspace content")
+		}
+	}
+	err := r.modifyWorkspaceStatus(ctx, workspace.Name, func(status *workspacev1.WorkspaceStatus) error {
+		status.Conditions = append(status.Conditions, metav1.Condition{
+			Type:               string(workspacev1.WorkspaceConditionBackupComplete),
+			Status:             metav1.ConditionTrue,
+			LastTransitionTime: metav1.Now(),
+		})
+		if backupFailure != "" {
+			status.Conditions = append(status.Conditions, metav1.Condition{
+				Type:               string(workspacev1.WorkspaceConditionBackupFailure),
+				Status:             metav1.ConditionTrue,
+				LastTransitionTime: metav1.Now(),
+				Message:            backupFailure,
+			})
+		}
+		status.GitStatus = gitStatus
+		log.V(1).Info("setting disposal status", "instanceID", workspace.Name)
+		return nil
+	})
+	if err != nil {
+		log.Error(err, "cannot update workspace disposal status")
+	}
+}
+
 func gitStatusfromContentServiceAPI(s *csapi.GitStatus) *workspacev1.GitStatus {
 	return &workspacev1.GitStatus{
 		Branch:               s.Branch,
