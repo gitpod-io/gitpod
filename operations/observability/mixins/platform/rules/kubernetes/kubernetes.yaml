@@ -118,6 +118,7 @@ spec:
     - alert: KubeNodeNotReady
       annotations:
         description: '{{ $labels.node }} has been unready for more than 15 minutes.'
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/KubeNodeNotReady.md
         summary: Node is not ready.
       expr: |
         kube_node_status_condition{job="kube-state-metrics",condition="Ready",status="true"} == 0
