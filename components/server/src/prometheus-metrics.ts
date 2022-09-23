@@ -6,10 +6,6 @@
 
 import * as prometheusClient from "prom-client";
 
-// Enable collection of default metrics.
-prometheusClient.collectDefaultMetrics();
-export const register = prometheusClient.register;
-
 export function registerServerMetrics(registry: prometheusClient.Registry) {
     registry.registerMetric(loginCounter);
     registry.registerMetric(apiConnectionCounter);
