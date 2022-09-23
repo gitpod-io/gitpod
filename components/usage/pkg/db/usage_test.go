@@ -93,33 +93,44 @@ func TestGetUsageSummary(t *testing.T) {
 		CreditCents:   1000,
 	})
 
-	dbtest.CreateUsageRecords(t, conn, draftBefore, nondraftBefore, draftInside, nonDraftInside, nonDraftAfter)
+	invoice := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		Kind:          db.InvoiceUsageKind,
+		EffectiveTime: db.NewVarcharTime(start.Add(2 * time.Hour)),
+		CreditCents:   -400,
+		Draft:         false,
+	})
+
+	dbtest.CreateUsageRecords(t, conn, draftBefore, nondraftBefore, draftInside, nonDraftInside, nonDraftAfter, invoice)
 
 	tests := []struct {
 		start, end    time.Time
 		excludeDrafts bool
 		// expectations
-		creditsAtStart int64
-		creditsAtEnd   int64
-		recordsInRange int
+		creditCents     db.CreditCents
+		numberOfRecords int
 	}{
-		{start, end, false, 3, 10, 2},
-		{start, end, true, 2, 6, 1},
-		{end, end, false, 10, 10, 0},
-		{end, end, true, 6, 6, 0},
-		{start, start, false, 3, 3, 0},
-		{start.Add(-500 * 24 * time.Hour), end, false, 0, 10, 4},
-		{start.Add(-500 * 24 * time.Hour), end.Add(500 * 24 * time.Hour), false, 0, 20, 5},
+		{start, end, false, 700, 2},
+		{start, end, true, 400, 1},
+		{end, end, false, 0, 0},
+		{end, end, true, 0, 0},
+		{start, start, false, 0, 0},
+		{start.Add(-500 * 24 * time.Hour), end, false, 1000, 4},
+		{start.Add(-500 * 24 * time.Hour), end.Add(500 * 24 * time.Hour), false, 2000, 5},
 	}
 
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("Running test no %d", i+1), func(t *testing.T) {
-			metaData, err := db.GetUsageSummary(context.Background(), conn, attributionID, test.start, test.end, test.excludeDrafts)
+			usageSummary, err := db.GetUsageSummary(context.Background(), conn, db.GetUsageSummaryParams{
+				AttributionId: attributionID,
+				From:          test.start,
+				To:            test.end,
+				ExcludeDrafts: test.excludeDrafts,
+			})
 			require.NoError(t, err)
 
-			require.EqualValues(t, test.creditsAtStart, metaData.CreditCentsBalanceAtStart.ToCredits())
-			require.EqualValues(t, test.creditsAtEnd, metaData.CreditCentsBalanceAtEnd.ToCredits())
-			require.Equal(t, test.recordsInRange, metaData.NumRecordsInRange)
+			require.EqualValues(t, test.creditCents, usageSummary.CreditCentsUsed)
+			require.EqualValues(t, test.numberOfRecords, usageSummary.NumberOfRecords)
 		})
 	}
 }
@@ -326,6 +337,7 @@ func TestListBalance(t *testing.T) {
 func TestGetBalance(t *testing.T) {
 	teamAttributionID := db.NewTeamAttributionID(uuid.New().String())
 	userAttributionID := db.NewUserAttributionID(uuid.New().String())
+	noUsageAttributionID := db.NewUserAttributionID(uuid.New().String())
 
 	conn := dbtest.ConnectForTests(t)
 	dbtest.CreateUsageRecords(t, conn,
@@ -355,4 +367,8 @@ func TestGetBalance(t *testing.T) {
 	userBalance, err := db.GetBalance(context.Background(), conn, userAttributionID)
 	require.NoError(t, err)
 	require.EqualValues(t, -50, int(userBalance))
+
+	noUsageBalance, err := db.GetBalance(context.Background(), conn, noUsageAttributionID)
+	require.NoError(t, err)
+	require.EqualValues(t, 0, int(noUsageBalance))
 }

@@ -62,7 +62,7 @@ function UsageView({ attributionId }: UsageViewProps) {
         try {
             const page = await getGitpodService().server.listUsage(request);
             setUsagePage(page);
-            setTotalCreditsUsed(page.creditBalanceAtEnd);
+            setTotalCreditsUsed(page.creditsUsed);
         } catch (error) {
             if (error.code === ErrorCodes.PERMISSION_DENIED) {
                 setErrorMessage("Access to usage details is restricted to team owners.");
@@ -173,7 +173,7 @@ function UsageView({ attributionId }: UsageViewProps) {
                                             <div className="text-base text-gray-500">Total usage</div>
                                             <div className="flex text-lg text-gray-600 font-semibold">
                                                 <CreditsSvg className="my-auto mr-1" />
-                                                <span>{totalCreditsUsed} Credits</span>
+                                                <span>{totalCreditsUsed.toLocaleString()} Credits</span>
                                             </div>
                                         </div>
                                         <div className="flex flex-col truncate mt-8 text-sm">
