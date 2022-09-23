@@ -7,7 +7,6 @@
 import { inject, injectable } from "inversify";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { WorkspaceStatus, WorkspaceType } from "@gitpod/ws-manager/lib";
-import { HeadlessWorkspaceEvent } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { PrebuildStateMapper } from "../../src/prebuild-state-mapper";
@@ -98,9 +97,10 @@ export class PrebuildUpdaterDB implements PrebuildUpdater {
 
                 // notify updates
                 // headless update
-                await this.messagebus.notifyHeadlessUpdate({ span }, userId, workspaceId, <HeadlessWorkspaceEvent>{
+                await this.messagebus.notifyHeadlessUpdate({ span }, userId, workspaceId, {
                     type: update.type,
                     workspaceID: workspaceId,
+                    text: "",
                 });
 
                 // prebuild info
