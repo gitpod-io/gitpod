@@ -4,9 +4,11 @@ import { JobConfig } from "./job-config";
 
 export async function validateChanges(werft: Werft, config: JobConfig) {
     werft.phase("validate-changes", "validating changes");
+    // We run pre-commit checks first to avoid potential race conditions with the
+    // other validation checks.
+    await preCommitCheck(werft);
     await Promise.all([
         branchNameCheck(werft, config),
-        preCommitCheck(werft),
         typecheckWerftJobs(werft),
         leewayVet(werft),
     ]);
