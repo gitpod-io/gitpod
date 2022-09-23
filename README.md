@@ -61,6 +61,8 @@ You can start using Gitpod in one or more of the following ways:
 All documentation can be found on https://www.gitpod.io/docs.
 For example, see [Introduction](https://www.gitpod.io/docs) and [Getting Started](https://www.gitpod.io/docs/getting-started) sections. 📚
 
+Also check out https://github.com/shaal/awesome-gitpod ✨
+
 ## Questions
 
 For questions and support please use [Discord](https://www.gitpod.io/chat).
