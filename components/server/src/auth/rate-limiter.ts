@@ -201,7 +201,7 @@ const defaultFunctions: FunctionsConfig = {
     getStripePublishableKey: { group: "default", points: 1 },
     getStripeSetupIntentClientSecret: { group: "default", points: 1 },
     findStripeSubscriptionId: { group: "default", points: 1 },
-    createStripeCustomer: { group: "default", points: 1 },
+    createStripeCustomerIfNeeded: { group: "default", points: 1 },
     subscribeToStripe: { group: "default", points: 1 },
     getStripePortalUrl: { group: "default", points: 1 },
     listUsage: { group: "default", points: 1 },

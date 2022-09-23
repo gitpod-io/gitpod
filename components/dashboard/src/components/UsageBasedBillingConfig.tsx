@@ -296,7 +296,7 @@ function CreditCardInputForm(props: { attributionId: string }) {
         setIsLoading(true);
         try {
             // Create Stripe customer with currency
-            await getGitpodService().server.createStripeCustomer(props.attributionId, currency);
+            await getGitpodService().server.createStripeCustomerIfNeeded(props.attributionId, currency);
             const result = await stripe.confirmSetup({
                 elements,
                 confirmParams: {
