@@ -207,6 +207,30 @@ type Balance struct {
 	CreditCents   CreditCents   `gorm:"column:creditCents;type:bigint;" json:"creditCents"`
 }
 
+func GetBalance(ctx context.Context, conn *gorm.DB, attributionId AttributionID) (CreditCents, error) {
+	rows, err := conn.WithContext(ctx).
+		Model(&Usage{}).
+		Select("sum(creditCents) as balance").
+		Where("attributionId = ?", string(attributionId)).
+		Group("attributionId").
+		Rows()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get rows for list balance query: %w", err)
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		return 0, nil
+	}
+
+	var balance CreditCents
+	err = conn.ScanRows(rows, &balance)
+	if err != nil {
+		return 0, fmt.Errorf("failed to scan row: %w", err)
+	}
+	return balance, nil
+}
+
 func ListBalance(ctx context.Context, conn *gorm.DB) ([]Balance, error) {
 	var balances []Balance
 	rows, err := conn.WithContext(ctx).

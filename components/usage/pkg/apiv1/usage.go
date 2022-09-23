@@ -156,6 +156,20 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 	}, nil
 }
 
+func (s *UsageService) GetBalance(ctx context.Context, in *v1.GetBalanceRequest) (*v1.GetBalanceResponse, error) {
+	attrId, err := db.ParseAttributionID(in.AttributionId)
+	if err != nil {
+		return nil, err
+	}
+	credits, err := db.GetBalance(ctx, s.conn, attrId)
+	if err != nil {
+		return nil, err
+	}
+	return &v1.GetBalanceResponse{
+		Credits: credits.ToCredits(),
+	}, nil
+}
+
 func (s *UsageService) GetCostCenter(ctx context.Context, in *v1.GetCostCenterRequest) (*v1.GetCostCenterResponse, error) {
 	if in.AttributionId == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "Empty attributionId")

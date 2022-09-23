@@ -34,6 +34,8 @@ type UsageServiceClient interface {
 	ReconcileUsage(ctx context.Context, in *ReconcileUsageRequest, opts ...grpc.CallOption) (*ReconcileUsageResponse, error)
 	// ListUsage retrieves all usage for the specified attributionId and theb given time range
 	ListUsage(ctx context.Context, in *ListUsageRequest, opts ...grpc.CallOption) (*ListUsageResponse, error)
+	// GetBalance returns the current credits balance for the given attributionId
+	GetBalance(ctx context.Context, in *GetBalanceRequest, opts ...grpc.CallOption) (*GetBalanceResponse, error)
 }
 
 type usageServiceClient struct {
@@ -80,6 +82,15 @@ func (c *usageServiceClient) ListUsage(ctx context.Context, in *ListUsageRequest
 	return out, nil
 }
 
+func (c *usageServiceClient) GetBalance(ctx context.Context, in *GetBalanceRequest, opts ...grpc.CallOption) (*GetBalanceResponse, error) {
+	out := new(GetBalanceResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/GetBalance", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UsageServiceServer is the server API for UsageService service.
 // All implementations must embed UnimplementedUsageServiceServer
 // for forward compatibility
@@ -92,6 +103,8 @@ type UsageServiceServer interface {
 	ReconcileUsage(context.Context, *ReconcileUsageRequest) (*ReconcileUsageResponse, error)
 	// ListUsage retrieves all usage for the specified attributionId and theb given time range
 	ListUsage(context.Context, *ListUsageRequest) (*ListUsageResponse, error)
+	// GetBalance returns the current credits balance for the given attributionId
+	GetBalance(context.Context, *GetBalanceRequest) (*GetBalanceResponse, error)
 	mustEmbedUnimplementedUsageServiceServer()
 }
 
@@ -110,6 +123,9 @@ func (UnimplementedUsageServiceServer) ReconcileUsage(context.Context, *Reconcil
 }
 func (UnimplementedUsageServiceServer) ListUsage(context.Context, *ListUsageRequest) (*ListUsageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListUsage not implemented")
+}
+func (UnimplementedUsageServiceServer) GetBalance(context.Context, *GetBalanceRequest) (*GetBalanceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBalance not implemented")
 }
 func (UnimplementedUsageServiceServer) mustEmbedUnimplementedUsageServiceServer() {}
 
@@ -196,6 +212,24 @@ func _UsageService_ListUsage_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UsageService_GetBalance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBalanceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsageServiceServer).GetBalance(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.UsageService/GetBalance",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsageServiceServer).GetBalance(ctx, req.(*GetBalanceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UsageService_ServiceDesc is the grpc.ServiceDesc for UsageService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -218,6 +252,10 @@ var UsageService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListUsage",
 			Handler:    _UsageService_ListUsage_Handler,
+		},
+		{
+			MethodName: "GetBalance",
+			Handler:    _UsageService_GetBalance_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
