@@ -195,8 +195,6 @@ func (c *Client) GitWithOutput(ctx context.Context, ignoreErr *string, subcomman
 		env = append(env, fmt.Sprintf("GIT_SSL_CAINFO=%s", v))
 	}
 
-	span.LogKV("args", fullArgs)
-
 	cmd := exec.Command("git", fullArgs...)
 	cmd.Dir = c.Location
 	cmd.Env = env
