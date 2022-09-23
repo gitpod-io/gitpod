@@ -157,6 +157,39 @@ EOF`);
         exec(`yq w -i ${this.options.installerConfigPath} workspace.resources.requests.memory "256Mi"`, {
             slice: slice,
         });
+
+        // create two workspace classes (default and small) in server-config configmap
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.workspaceClasses[+].id "default"`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.workspaceClasses[0].category "GENERAL PURPOSE"`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.workspaceClasses[0].displayName "Default"`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.workspaceClasses[0].description "Default workspace class (30GB disk)"`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.workspaceClasses[0].powerups 1`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.workspaceClasses[0].isDefault true`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.workspaceClasses[0].deprecated false`, { slice: slice });
+
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.workspaceClasses[+].id "small"`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.workspaceClasses[1].category "GENERAL PURPOSE"`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.workspaceClasses[1].displayName "Small"`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.workspaceClasses[1].description "Small workspace class (20GB disk)"`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.workspaceClasses[1].powerups 2`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.workspaceClasses[1].isDefault false`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.workspaceClasses[1].deprecated false`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.workspaceClasses[1].marker.moreResources true`, { slice: slice });
+
+        // create two workspace classes (default and small) in ws-manager configmap
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.workspace.classes["default"].name "default"`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.workspace.classes["default"].resources.requests.cpu 100m`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.workspace.classes["default"].resources.requests.memory 128Mi`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.workspace.classes["default"].pvc.size 30Gi`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.workspace.classes["default"].pvc.storageClass rook-ceph-block`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.workspace.classes["default"].pvc.snapshotClass csi-rbdplugin-snapclass`, { slice: slice });
+
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.workspace.classes["small"].name "small"`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.workspace.classes["small"].resources.requests.cpu 100m`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.workspace.classes["small"].resources.requests.memory 128Mi`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.workspace.classes["small"].pvc.size 20Gi`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.workspace.classes["small"].pvc.storageClass rook-ceph-block`, { slice: slice });
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.workspace.classes["small"].pvc.snapshotClass csi-rbdplugin-snapclass`, { slice: slice });
     }
 
     private configureObjectStorage(slice: string) {
