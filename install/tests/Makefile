@@ -7,8 +7,6 @@ TOPDIR=$(shell pwd)
 
 KUBECONFIG := "$(TOPDIR)/kubeconfig"
 
-DOMAIN := tests.gitpod-self-hosted.com
-
 check-env-sub-domain:
 ifndef TF_VAR_TEST_ID
 	$(error TF_VAR_TEST_ID is not defined)
@@ -203,7 +201,7 @@ get-github-config:
 ifneq ($(GITHUB_SCM_OAUTH),)
 	export SCM_OAUTH=./manifests/github-oauth.yaml && \
 	cat $$GITHUB_SCM_OAUTH/provider > $$SCM_OAUTH && \
-	yq w -i $$SCM_OAUTH 'oauth.callBackUrl' http://${TF_VAR_TEST_ID}.${DOMAIN}/auth/github.com/callback && \
+	yq w -i $$SCM_OAUTH 'oauth.callBackUrl' http://${TF_VAR_TEST_ID}.${TF_VAR_domain}/auth/github.com/callback && \
 	kubectl --kubeconfig=${KUBECONFIG} create namespace gitpod || echo "Gitpod namespace already exist" && \
 	kubectl --kubeconfig=${KUBECONFIG} delete secret github-oauth -n gitpod || echo "gitpod-oauth secret needs to be created" && \
 	kubectl --kubeconfig=${KUBECONFIG} create secret generic "github-oauth" --namespace gitpod --from-literal=provider="$$(cat $$SCM_OAUTH)" && \
@@ -216,7 +214,7 @@ KOTS_KONFIG := "./manifests/kots-config.yaml"
 
 get-base-config: get-github-config
 	export CONFIG_PATCH=./manifests/config-patch.yaml && \
-	export DOMAIN=${DOMAIN} && \
+	export DOMAIN=${TF_VAR_domain} && \
 	export PATCH=$$(cat $$CONFIG_PATCH | base64 -w 0) || export PATCH="" && \
 	envsubst < ${KOTS_KONFIG} > tmp_config.yml
 
@@ -301,7 +299,7 @@ self-signed-config:
 	cat "${HOME}"/.local/share/mkcert/rootCA.pem > ./ca.pem
 	mkcert -cert-file "./ssl.crt" \
 	  -key-file "./ssl.key" \
-	  "*.ws.${TF_VAR_TEST_ID}.${DOMAIN}" "*.${TF_VAR_TEST_ID}.${DOMAIN}" "${TF_VAR_TEST_ID}.${DOMAIN}"
+	  "*.ws.${TF_VAR_TEST_ID}.${TF_VAR_domain}" "*.${TF_VAR_TEST_ID}.${TF_VAR_domain}" "${TF_VAR_TEST_ID}.${TF_VAR_domain}"
 
 	export CA_CERT=$$(cat ./ca.pem | base64 -w 0) && \
 	export SSL_CERT=$$(cat ./ssl.crt | base64 -w 0) && \
@@ -383,11 +381,11 @@ check-kots-app:
 	kubectl kots get --kubeconfig=${KUBECONFIG} app gitpod -n gitpod | grep gitpod  | awk '{print $$2}' | grep "ready" || { $(MAKE) gitpod-debug-info; exit 1; }
 
 check-gitpod-installation: delete-cm-setup check-kots-app check-env-sub-domain
-	@echo "Curling https://${TF_VAR_TEST_ID}.${DOMAIN}/api/version"
+	@echo "Curling https://${TF_VAR_TEST_ID}.${TF_VAR_domain}/api/version"
 ifneq ($(self_signed),)
 	export SSL_CERT_FILE=./ca.pem
 endif
-	curl -i -X GET https://${TF_VAR_TEST_ID}.${DOMAIN}/api/version || { echo "Curling Gitpod endpoint failed"; exit 1; }
+	curl -i -X GET https://${TF_VAR_TEST_ID}.${TF_VAR_domain}/api/version || { echo "Curling Gitpod endpoint failed"; exit 1; }
 
 define runtests
 	./tests.sh ${KUBECONFIG} $(1)

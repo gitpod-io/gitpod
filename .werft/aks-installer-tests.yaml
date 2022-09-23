@@ -4,6 +4,10 @@ args:
   desc: "Subdomain to use. A terraform workspace of same name will be used"
   required: false
   default: ""
+- name: domain
+  desc: "domain to use. Make sure there is a DNS zone by the same name ('.' replaces by '-' under the project 'dns-for-playgrounds')"
+  required: false
+  default: "tests.gitpod-self-hosted.com"
 - name: channel
   desc: "Replicated channel to use"
   required: false
