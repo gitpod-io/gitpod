@@ -181,12 +181,17 @@ export class GithubApp {
             options.getRouter("/reconfigure").get(
                 "/",
                 asyncHandler(async (req: express.Request, res: express.Response) => {
-                    const gh = await app.auth();
-                    const data = await gh.apps.getAuthenticated();
-                    const slug = data.data.slug;
+                    try {
+                        const gh = await app.auth();
+                        const data = await gh.apps.getAuthenticated();
+                        const slug = data.data.slug;
 
-                    const state = req.query.state;
-                    res.redirect(`https://github.com/apps/${slug}/installations/new?state=${state}`);
+                        const state = req.query.state;
+                        res.redirect(`https://github.com/apps/${slug}/installations/new?state=${state}`);
+                    } catch (error) {
+                        console.error(error, { error });
+                        res.status(500).send("GitHub App is not configured.");
+                    }
                 }),
             );
         options.getRouter &&
@@ -398,6 +403,12 @@ export class GithubApp {
         const span = TraceContext.startSpan("GithubApp.handlePullRequest", {});
         span.setTag("request", ctx.id);
 
+        const event = await this.webhookEvents.createEvent({
+            type: ctx.name,
+            status: "received",
+            rawEvent: JSON.stringify(ctx.payload),
+        });
+
         try {
             const installationId = ctx.payload.installation?.id;
             const cloneURL = ctx.payload.repository.clone_url;
@@ -423,14 +434,37 @@ export class GithubApp {
             user = r.user;
             project = r.project;
 
-            const prebuildStartPromise = await this.onPrStartPrebuild({ span }, ctx, config, context, user, project);
-            if (prebuildStartPromise) {
-                await this.onPrAddCheck({ span }, config, ctx, prebuildStartPromise);
+            await this.webhookEvents.updateEvent(event.id, {
+                authorizedUserId: user.id,
+                projectId: project?.id,
+                cloneUrl: context.repository.cloneUrl,
+                branch: context.ref,
+                commit: context.revision,
+            });
+
+            const prebuildStartResult = await this.onPrStartPrebuild({ span }, ctx, config, context, user, project);
+            if (prebuildStartResult) {
+                await this.webhookEvents.updateEvent(event.id, {
+                    prebuildStatus: "prebuild_triggered",
+                    status: "processed",
+                    prebuildId: prebuildStartResult.prebuildId,
+                });
+
+                await this.onPrAddCheck({ span }, config, ctx, prebuildStartResult);
                 this.onPrAddBadge(config, ctx);
                 await this.onPrAddComment(config, ctx);
+            } else {
+                await this.webhookEvents.updateEvent(event.id, {
+                    prebuildStatus: "ignored_unconfigured",
+                    status: "processed",
+                });
             }
         } catch (e) {
             TraceContext.setError({ span }, e);
+            await this.webhookEvents.updateEvent(event.id, {
+                prebuildStatus: "prebuild_trigger_failed",
+                status: "processed",
+            });
             throw e;
         } finally {
             span.finish();
