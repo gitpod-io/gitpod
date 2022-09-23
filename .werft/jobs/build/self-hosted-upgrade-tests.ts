@@ -49,7 +49,7 @@ export async function triggerUpgradeTests(werft: Werft, config: JobConfig, usern
     // the following bit make sure that the subdomain stays the same upon multiple runs, and always start with release
     const regex = /[\/,\.]/g;
     const subdomain: string = config.repository.branch.replace(regex, '-')
-    annotation = annotation.concat(`-a subdomain=${subdomain}`)
+    annotation = annotation.concat(` -a subdomain=${subdomain}`)
 
     for (let phase in phases) {
         const upgradeConfig = phases[phase];
