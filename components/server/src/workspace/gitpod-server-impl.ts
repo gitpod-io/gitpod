@@ -598,7 +598,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async deleteAccount(ctx: TraceContext): Promise<void> {
         const user = this.checkAndBlockUser("deleteAccount");
         await this.guardAccess({ kind: "user", subject: user! }, "delete");
-
+        if (user.blocked) {
+            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `You are blocked and can't delete your account.`);
+        }
         await this.userDeletionService.deleteUser(user.id);
     }
 
