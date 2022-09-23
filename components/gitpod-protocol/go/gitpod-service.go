@@ -1766,6 +1766,11 @@ type WorkspaceInstancePort struct {
 	Visibility string  `json:"visibility,omitempty"`
 }
 
+const (
+	PortVisibilityPublic  = "public"
+	PortVisibilityPrivate = "private"
+)
+
 // GithubAppConfig is the GithubAppConfig message type
 type GithubAppConfig struct {
 	Prebuilds *GithubAppPrebuildConfig `json:"prebuilds,omitempty"`
