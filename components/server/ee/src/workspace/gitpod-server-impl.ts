@@ -2355,8 +2355,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                       totalPages: response.pagination.totalPages,
                   }
                 : undefined,
-            creditBalanceAtEnd: response.creditBalanceAtEnd,
-            creditBalanceAtStart: response.creditBalanceAtStart,
+            creditsUsed: response.creditsUsed,
         };
     }
 

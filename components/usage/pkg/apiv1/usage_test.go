@@ -313,15 +313,14 @@ func TestListUsage(t *testing.T) {
 	tests := []struct {
 		start, end time.Time
 		// expectations
-		creditsAtStart float64
-		creditsAtEnd   float64
+		creditsUsed    float64
 		recordsInRange int64
 	}{
-		{start, end, 3, 10, 2},
-		{end, end, 10, 10, 0},
-		{start, start, 3, 3, 0},
-		{start.Add(-200 * 24 * time.Hour), end, 0, 10, 4},
-		{start.Add(-200 * 24 * time.Hour), end.Add(10 * 24 * time.Hour), 0, 20, 5},
+		{start, end, 7, 2},
+		{end, end, 0, 0},
+		{start, start, 0, 0},
+		{start.Add(-200 * 24 * time.Hour), end, 10, 4},
+		{start.Add(-200 * 24 * time.Hour), end.Add(10 * 24 * time.Hour), 20, 5},
 	}
 
 	for i, test := range tests {
@@ -338,8 +337,7 @@ func TestListUsage(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			require.Equal(t, test.creditsAtStart, metaData.CreditBalanceAtStart)
-			require.Equal(t, test.creditsAtEnd, metaData.CreditBalanceAtEnd)
+			require.Equal(t, test.creditsUsed, metaData.CreditsUsed)
 			require.Equal(t, test.recordsInRange, metaData.Pagination.Total)
 		})
 	}

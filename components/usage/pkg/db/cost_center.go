@@ -158,11 +158,11 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, costCenter Cos
 
 func (c *CostCenterManager) ComputeInvoiceUsageRecord(ctx context.Context, attributionID AttributionID) (*Usage, error) {
 	now := time.Now()
-	summary, err := GetUsageSummary(ctx, c.conn, attributionID, now, now, false)
+	creditCents, err := GetBalance(ctx, c.conn, attributionID)
 	if err != nil {
 		return nil, err
 	}
-	if summary.CreditCentsBalanceAtEnd.ToCredits() <= 0 {
+	if creditCents.ToCredits() <= 0 {
 		// account has no debt, do nothing
 		return nil, nil
 	}
@@ -170,7 +170,7 @@ func (c *CostCenterManager) ComputeInvoiceUsageRecord(ctx context.Context, attri
 		ID:            uuid.New(),
 		AttributionID: attributionID,
 		Description:   "Credits",
-		CreditCents:   summary.CreditCentsBalanceAtEnd * -1,
+		CreditCents:   creditCents * -1,
 		EffectiveTime: NewVarcharTime(now),
 		Kind:          InvoiceUsageKind,
 		Draft:         false,

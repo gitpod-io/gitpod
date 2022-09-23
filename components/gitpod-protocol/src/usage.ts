@@ -28,8 +28,7 @@ export interface PaginationRequest {
 export interface ListUsageResponse {
     usageEntriesList: Usage[];
     pagination?: PaginationResponse;
-    creditBalanceAtStart: number;
-    creditBalanceAtEnd: number;
+    creditsUsed: number;
 }
 
 export interface PaginationResponse {

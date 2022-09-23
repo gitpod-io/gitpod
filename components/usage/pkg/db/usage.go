@@ -6,7 +6,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -139,7 +138,8 @@ func FindUsage(ctx context.Context, conn *gorm.DB, params *FindUsageParams) ([]U
 
 	db := conn.WithContext(ctx).
 		Where("attributionId = ?", params.AttributionId).
-		Where("effectiveTime >= ? AND effectiveTime < ?", TimeToISO8601(params.From), TimeToISO8601(params.To))
+		Where("effectiveTime >= ? AND effectiveTime < ?", TimeToISO8601(params.From), TimeToISO8601(params.To)).
+		Where("kind = ?", WorkspaceInstanceUsageKind)
 	if params.ExcludeDrafts {
 		db = db.Where("draft = ?", false)
 	}
@@ -158,48 +158,37 @@ func FindUsage(ctx context.Context, conn *gorm.DB, params *FindUsageParams) ([]U
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to get usage records: %s", result.Error)
 	}
+
 	return usageRecords, nil
 }
 
-type UsageSummary struct {
-	NumRecordsInRange         int
-	CreditCentsBalanceAtStart CreditCents
-	CreditCentsBalanceAtEnd   CreditCents
+type GetUsageSummaryParams struct {
+	AttributionId AttributionID
+	From, To      time.Time
+	ExcludeDrafts bool
 }
 
-func GetUsageSummary(ctx context.Context, conn *gorm.DB, attributionId AttributionID, from, to time.Time, excludeDrafts bool) (*UsageSummary, error) {
+type GetUsageSummaryResponse struct {
+	CreditCentsUsed CreditCents
+	NumberOfRecords int
+}
+
+func GetUsageSummary(ctx context.Context, conn *gorm.DB, params GetUsageSummaryParams) (GetUsageSummaryResponse, error) {
 	db := conn.WithContext(ctx)
 	query1 := db.Table((&Usage{}).TableName()).
-		Select("sum(creditCents) as creditCentsBalanceAtStart").
-		Where("attributionId = ?", attributionId).
-		Where("effectiveTime < ?", TimeToISO8601(from))
-	if excludeDrafts {
+		Select("sum(creditCents) as CreditCentsUsed, count(*) as NumberOfRecords").
+		Where("attributionId = ?", params.AttributionId).
+		Where("effectiveTime >= ? AND effectiveTime < ?", TimeToISO8601(params.From), TimeToISO8601(params.To)).
+		Where("kind = ?", WorkspaceInstanceUsageKind)
+	if params.ExcludeDrafts {
 		query1 = query1.Where("draft = ?", false)
 	}
-	var creditCentsBalanceAtStart sql.NullInt64
-	err := query1.Row().Scan(&creditCentsBalanceAtStart)
+	var result GetUsageSummaryResponse
+	err := query1.Find(&result).Error
 	if err != nil {
-		return nil, fmt.Errorf("failed to get usage meta data: %s", err)
+		return result, fmt.Errorf("failed to get usage meta data: %w", err)
 	}
-
-	query2 := db.Table((&Usage{}).TableName()).
-		Select("sum(creditCents) as creditCentsBalanceInPeriod", "count(id) as numRecordsInRange").
-		Where("attributionId = ?", attributionId).
-		Where("? <= effectiveTime AND effectiveTime < ?", TimeToISO8601(from), TimeToISO8601(to))
-	if excludeDrafts {
-		query2 = query2.Where("draft = ?", false)
-	}
-	var creditCentsBalanceInPeriod sql.NullInt64
-	var numRecordsInRange sql.NullInt32
-	err = query2.Row().Scan(&creditCentsBalanceInPeriod, &numRecordsInRange)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get usage meta data: %s", err)
-	}
-	return &UsageSummary{
-		NumRecordsInRange:         int(numRecordsInRange.Int32),
-		CreditCentsBalanceAtStart: CreditCents(creditCentsBalanceAtStart.Int64),
-		CreditCentsBalanceAtEnd:   CreditCents(creditCentsBalanceAtStart.Int64 + creditCentsBalanceInPeriod.Int64),
-	}, nil
+	return result, nil
 }
 
 type Balance struct {

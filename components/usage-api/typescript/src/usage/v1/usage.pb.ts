@@ -104,10 +104,8 @@ export interface ListUsageResponse {
   pagination:
     | PaginatedResponse
     | undefined;
-  /** the amount of credits the given account (attributionId) had at the beginning of the requested period */
-  creditBalanceAtStart: number;
-  /** the amount of credits the given account (attributionId) had at the end of the requested period */
-  creditBalanceAtEnd: number;
+  /** the amount of credits the given account (attributionId) has used during the requested period */
+  creditsUsed: number;
 }
 
 export interface Usage {
@@ -571,7 +569,7 @@ export const ListUsageRequest = {
 };
 
 function createBaseListUsageResponse(): ListUsageResponse {
-  return { usageEntries: [], pagination: undefined, creditBalanceAtStart: 0, creditBalanceAtEnd: 0 };
+  return { usageEntries: [], pagination: undefined, creditsUsed: 0 };
 }
 
 export const ListUsageResponse = {
@@ -582,11 +580,8 @@ export const ListUsageResponse = {
     if (message.pagination !== undefined) {
       PaginatedResponse.encode(message.pagination, writer.uint32(18).fork()).ldelim();
     }
-    if (message.creditBalanceAtStart !== 0) {
-      writer.uint32(25).double(message.creditBalanceAtStart);
-    }
-    if (message.creditBalanceAtEnd !== 0) {
-      writer.uint32(33).double(message.creditBalanceAtEnd);
+    if (message.creditsUsed !== 0) {
+      writer.uint32(25).double(message.creditsUsed);
     }
     return writer;
   },
@@ -605,10 +600,7 @@ export const ListUsageResponse = {
           message.pagination = PaginatedResponse.decode(reader, reader.uint32());
           break;
         case 3:
-          message.creditBalanceAtStart = reader.double();
-          break;
-        case 4:
-          message.creditBalanceAtEnd = reader.double();
+          message.creditsUsed = reader.double();
           break;
         default:
           reader.skipType(tag & 7);
@@ -622,8 +614,7 @@ export const ListUsageResponse = {
     return {
       usageEntries: Array.isArray(object?.usageEntries) ? object.usageEntries.map((e: any) => Usage.fromJSON(e)) : [],
       pagination: isSet(object.pagination) ? PaginatedResponse.fromJSON(object.pagination) : undefined,
-      creditBalanceAtStart: isSet(object.creditBalanceAtStart) ? Number(object.creditBalanceAtStart) : 0,
-      creditBalanceAtEnd: isSet(object.creditBalanceAtEnd) ? Number(object.creditBalanceAtEnd) : 0,
+      creditsUsed: isSet(object.creditsUsed) ? Number(object.creditsUsed) : 0,
     };
   },
 
@@ -636,8 +627,7 @@ export const ListUsageResponse = {
     }
     message.pagination !== undefined &&
       (obj.pagination = message.pagination ? PaginatedResponse.toJSON(message.pagination) : undefined);
-    message.creditBalanceAtStart !== undefined && (obj.creditBalanceAtStart = message.creditBalanceAtStart);
-    message.creditBalanceAtEnd !== undefined && (obj.creditBalanceAtEnd = message.creditBalanceAtEnd);
+    message.creditsUsed !== undefined && (obj.creditsUsed = message.creditsUsed);
     return obj;
   },
 
@@ -647,8 +637,7 @@ export const ListUsageResponse = {
     message.pagination = (object.pagination !== undefined && object.pagination !== null)
       ? PaginatedResponse.fromPartial(object.pagination)
       : undefined;
-    message.creditBalanceAtStart = object.creditBalanceAtStart ?? 0;
-    message.creditBalanceAtEnd = object.creditBalanceAtEnd ?? 0;
+    message.creditsUsed = object.creditsUsed ?? 0;
     return message;
   },
 };

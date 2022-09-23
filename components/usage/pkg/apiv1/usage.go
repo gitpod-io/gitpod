@@ -129,30 +129,31 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 	}
 
 	usageSummary, err := db.GetUsageSummary(ctx, s.conn,
-		attributionId,
-		from,
-		to,
-		excludeDrafts,
+		db.GetUsageSummaryParams{
+			AttributionId: attributionId,
+			From:          from,
+			To:            to,
+			ExcludeDrafts: excludeDrafts,
+		},
 	)
 
 	if err != nil {
 		logger.WithError(err).Error("Failed to fetch usage metadata.")
 		return nil, status.Error(codes.Internal, "unable to retrieve usage")
 	}
-	totalPages := int64(math.Ceil(float64(usageSummary.NumRecordsInRange) / float64(perPage)))
+	totalPages := int64(math.Ceil(float64(usageSummary.NumberOfRecords) / float64(perPage)))
 
 	pagination := v1.PaginatedResponse{
 		PerPage:    perPage,
 		Page:       page,
 		TotalPages: totalPages,
-		Total:      int64(usageSummary.NumRecordsInRange),
+		Total:      int64(usageSummary.NumberOfRecords),
 	}
 
 	return &v1.ListUsageResponse{
-		UsageEntries:         usageData,
-		CreditBalanceAtStart: usageSummary.CreditCentsBalanceAtStart.ToCredits(),
-		CreditBalanceAtEnd:   usageSummary.CreditCentsBalanceAtEnd.ToCredits(),
-		Pagination:           &pagination,
+		UsageEntries: usageData,
+		CreditsUsed:  usageSummary.CreditCentsUsed.ToCredits(),
+		Pagination:   &pagination,
 	}, nil
 }
 

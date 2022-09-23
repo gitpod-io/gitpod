@@ -70,11 +70,8 @@ message ListUsageRequest {
 message ListUsageResponse {
     repeated Usage usage_entries = 1;
     PaginatedResponse pagination = 2;
-    // the amount of credits the given account (attributionId) had at the beginning of the requested period
-    double credit_balance_at_start = 3;
-
-    // the amount of credits the given account (attributionId) had at the end of the requested period
-    double credit_balance_at_end = 4;
+    // the amount of credits the given account (attributionId) has used during the requested period
+    double credits_used = 3;
 }
 
 message Usage {
