@@ -51,7 +51,6 @@ import {
     WorkspaceInstanceStatus,
     WorkspaceProbeContext,
     Permission,
-    HeadlessWorkspaceEvent,
     HeadlessWorkspaceEventType,
     DisposableCollection,
     AdditionalContentContext,
@@ -718,21 +717,7 @@ export class WorkspaceStarter {
             await this.messageBus.notifyOnInstanceUpdate(workspace.ownerId, instance);
 
             // If we just attempted to start a workspace for a prebuild - and that failed, we have to fail the prebuild itself.
-            if (workspace.type === "prebuild") {
-                const prebuild = await this.workspaceDb.trace({ span }).findPrebuildByWorkspaceID(workspace.id);
-                if (prebuild && prebuild.state !== "failed") {
-                    prebuild.state = "failed";
-                    prebuild.error = err.toString();
-
-                    await this.workspaceDb.trace({ span }).storePrebuiltWorkspace(prebuild);
-                    await this.messageBus.notifyHeadlessUpdate({ span }, workspace.ownerId, workspace.id, <
-                        HeadlessWorkspaceEvent
-                    >{
-                        type: HeadlessWorkspaceEventType.Failed,
-                        // TODO: `workspaceID: workspace.id` not needed here? (found in ee/src/prebuilds/prebuild-queue-maintainer.ts and ee/src/bridge.ts)
-                    });
-                }
-            }
+            await this.failPrebuildWorkspace({ span }, err, workspace);
         } catch (err) {
             TraceContext.setError({ span }, err);
             log.error(
@@ -740,6 +725,31 @@ export class WorkspaceStarter {
                 "cannot properly fail workspace instance during start",
                 err,
             );
+        } finally {
+            span.finish();
+        }
+    }
+
+    protected async failPrebuildWorkspace(ctx: TraceContext, err: Error, workspace: Workspace) {
+        const span = TraceContext.startSpan("failInstanceStart", ctx);
+        try {
+            if (workspace.type === "prebuild") {
+                const prebuild = await this.workspaceDb.trace({ span }).findPrebuildByWorkspaceID(workspace.id);
+                if (prebuild && prebuild.state !== "failed") {
+                    prebuild.state = "failed";
+                    prebuild.error = err.toString();
+
+                    await this.workspaceDb.trace({ span }).storePrebuiltWorkspace(prebuild);
+                    await this.messageBus.notifyHeadlessUpdate({ span }, workspace.ownerId, workspace.id, {
+                        type: HeadlessWorkspaceEventType.Failed,
+                        workspaceID: workspace.id, // required in prebuild-queue-maintainer.ts
+                        text: "",
+                    });
+                }
+            }
+        } catch (err) {
+            TraceContext.setError({ span }, err);
+            throw err;
         } finally {
             span.finish();
         }
@@ -1286,6 +1296,11 @@ export class WorkspaceStarter {
                 stoppedTime: now,
                 stoppingTime: now,
             });
+
+            // Mark the PrebuildWorkspace as failed
+            await this.failPrebuildWorkspace({ span }, err, workspace);
+
+            // Push updated workspace instance over messagebus
             await this.messageBus.notifyOnInstanceUpdate(workspace.ownerId, instance);
 
             TraceContext.setError({ span }, err);
@@ -1419,14 +1434,16 @@ export class WorkspaceStarter {
 
         if (workspace.config.coreDump?.enabled) {
             // default core dump size is 262144 blocks (if blocksize is 4096)
-            const defaultLimit:number=1073741824;
+            const defaultLimit: number = 1073741824;
 
             const rLimitCore = new EnvironmentVariable();
             rLimitCore.setName("GITPOD_RLIMIT_CORE");
-            rLimitCore.setValue(JSON.stringify({
-                softLimit: workspace.config.coreDump?.softLimit || defaultLimit,
-                hardLimit: workspace.config.coreDump?.hardLimit || defaultLimit,
-            }));
+            rLimitCore.setValue(
+                JSON.stringify({
+                    softLimit: workspace.config.coreDump?.softLimit || defaultLimit,
+                    hardLimit: workspace.config.coreDump?.hardLimit || defaultLimit,
+                }),
+            );
             envvars.push(rLimitCore);
         }
 
