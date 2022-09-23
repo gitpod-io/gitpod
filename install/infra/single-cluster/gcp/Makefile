@@ -61,22 +61,22 @@ output-storage:
 	@echo "=============="
 	@echo "Choose 'GCP' Storage provider"
 	@echo ""
-	@echo "Storage region = $$(terraform output -json storage | yq r - region)"
-	@echo "Project ID     = $$(terraform output -json storage | yq r - project)"
+	@echo "Storage region = $$(terraform output -json storage | jq -r .region)"
+	@echo "Project ID     = $$(terraform output -json storage | jq -r .project)"
 	@echo "Service account key = Upload the file 'gs-credentials.json' created in this directory"
-	@terraform output -json storage | yq r - service_account_key > gs-credentials.json
+	@terraform output -json storage | jq -r .service_account_key > gs-credentials.json
 	@echo ""
 
 output-registry:
 	@echo ""
 	@echo "🟢 GCR registry:"
 	@echo "=================="
-	@echo "Container registry URL      = $$(terraform output -json registry | yq r - url)"
-	@echo "Container registry server   = $$(terraform output -json registry | yq r - server)"
-	@echo "Container registry username = $$(terraform output -json registry | yq r - username)"
+	@echo "Container registry URL      = $$(terraform output -json registry | jq -r .url)"
+	@echo "Container registry server   = $$(terraform output -json registry | jq -r .server)"
+	@echo "Container registry username = $$(terraform output -json registry | jq -r .username)"
 	@echo "Container registry password = Copy paste the following JSON key"
 	@echo ""
-	@terraform output -json registry | yq r - password
+	@terraform output -json registry | jq -r .password
 
 output-database:
 	@echo ""
@@ -84,18 +84,18 @@ output-database:
 	@echo "========"
 	@echo "Tick the option 'Use Google Cloud SQL Proxy' if using this database"
 	@echo ""
-	@echo "CloudSQL connection name = $$(terraform output -json database | yq r - instance)"
-	@echo "Username 				= $$(terraform output -json database | yq r - username)"
-	@echo "Password 				= $$(terraform output -json database | yq r - password)"
+	@echo "CloudSQL connection name = $$(terraform output -json database | jq -r .instance)"
+	@echo "Username 				= $$(terraform output -json database | jq -r .username)"
+	@echo "Password 				= $$(terraform output -json database | jq -r .password)"
 	@echo "GCP service account key  = Upload the file 'mysql-credentials.json' created in this directory"
-	@terraform output -json database | yq r - service_account_key > mysql-credentials.json
+	@terraform output -json database | jq -r .service_account_key > mysql-credentials.json
 	@echo ""
 
 output-issuer:
 	@echo ""
 	@echo "🟢 ClusterIssuer name:"
 	@echo "================="
-	@terraform output -json cluster_issuer | jq
+	@terraform output -json cluster_issuer | jq -r
 
 .PHONY: plan-cluster
 plan-cluster:
