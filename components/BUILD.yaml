@@ -55,6 +55,7 @@ packages:
       - components/local-app:docker
       - components/public-api-server:docker
       - components/usage:docker
+      - components/easy:docker
       - components/openvsx-proxy:docker
       - components/proxy:docker
       - components/registry-facade:docker
@@ -108,6 +109,7 @@ packages:
       - components/image-builder-mk3:app
       - components/openvsx-proxy:app
       - components/public-api-server:app
+      - components/easy:app
       - components/registry-facade:app
       - components/server:app
       - components/service-waiter:app
