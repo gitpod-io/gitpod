@@ -32,8 +32,17 @@ explain the execution of the terraform module in terms of these `make` targets.
 
 Before starting the installation process, you need:
 
-* A GCP account with administative access
+* A GCP account and project
   * [Create one now by clicking here](https://console.cloud.google.com/freetrial)
+* Enable these APIs in the GCP project:
+  * [Kubernetes Engine API](https://console.cloud.google.com/apis/library/container.googleapis.com)
+  * [Identity and Access Management (IAM) API](https://console.developers.google.com/apis/api/iam.googleapis.com/overview)
+  * [Cloud SQL Admin API](https://console.developers.google.com/apis/api/sqladmin.googleapis.com/overview)
+  * [Cloud DNS API](https://console.developers.google.com/apis/api/dns.googleapis.com/overview)
+  * [Cloud Resource Manager API](https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/overview)
+* A GCP service account with administative access:
+  * Use the [default service account or create a new one here](https://console.cloud.google.com/iam-admin/serviceaccounts)
+  * Create a new JSON key for the account and download it
 * Store the JSON credentials corresponding to the service account locally in a file
 * Create and configure GCS bucket for terraform backend
   * Create a [GCS bucket](https://cloud.google.com/storage) to store the terraform backend state
@@ -117,7 +126,7 @@ If the plan looks good, now you can go ahead and create the resources:
 make apply
 ```
 
-The `apply` target calls the `terraform` apply on `eks` module, `cert-manager`
+The `apply` target calls the `terraform` apply on `gke` module, `cert-manager`
 module, `external-dns` module and `cluster-issuer` module in that exact order.
 The entire operation would take around *30 minutes* to complete.
 
