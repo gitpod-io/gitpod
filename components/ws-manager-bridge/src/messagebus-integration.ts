@@ -44,7 +44,7 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
             await super.publish(
                 MessageBusHelperImpl.WORKSPACE_EXCHANGE_LOCAL,
                 topic,
-                new Buffer(JSON.stringify(instance)),
+                Buffer.from(JSON.stringify(instance)),
                 {
                     trace: { span },
                 },
@@ -63,7 +63,7 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
         }
 
         const topic = this.messageBusHelper.getWsTopicForPublishing(userId, workspaceId, "headless-log");
-        const msg = new Buffer(JSON.stringify(evt));
+        const msg = Buffer.from(JSON.stringify(evt));
         await this.messageBusHelper.assertWorkspaceExchange(this.channel);
         await super.publish(MessageBusHelperImpl.WORKSPACE_EXCHANGE_LOCAL, topic, msg, {
             trace: ctx,

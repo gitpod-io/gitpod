@@ -24,7 +24,7 @@ class TestEncryptionEngineImpl {
 
     @test basicSymmetry() {
         const plaintext = "12345678901234567890";
-        const key = new Buffer(this.testkey, "base64");
+        const key = Buffer.from(this.testkey, "base64");
 
         const cut = new EncryptionEngineImpl();
         const encryptedData = cut.encrypt(plaintext, key);

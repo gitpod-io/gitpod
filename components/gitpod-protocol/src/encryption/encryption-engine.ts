@@ -40,7 +40,7 @@ export class EncryptionEngineImpl {
     encrypt(data: string, key: Buffer): EncryptedData {
         const iv = crypto.randomBytes(16);
         const cipher = crypto.createCipheriv(this.algorithm, key, iv);
-        const encrypted = cipher.update(new Buffer(data, "utf8"));
+        const encrypted = cipher.update(Buffer.from(data, "utf8"));
         const finalEncrypted = Buffer.concat([encrypted, cipher.final()]);
         return {
             data: finalEncrypted.toString(this.enc),
@@ -51,8 +51,12 @@ export class EncryptionEngineImpl {
     }
 
     decrypt(encryptedData: EncryptedData, key: Buffer): string {
-        const decipher = crypto.createDecipheriv(this.algorithm, key, new Buffer(encryptedData.keyParams.iv, this.enc));
-        let decrypted = decipher.update(new Buffer(encryptedData.data, this.enc));
+        const decipher = crypto.createDecipheriv(
+            this.algorithm,
+            key,
+            Buffer.from(encryptedData.keyParams.iv, this.enc),
+        );
+        let decrypted = decipher.update(Buffer.from(encryptedData.data, this.enc));
         const finalDecrypted = Buffer.concat([decrypted, decipher.final()]);
         return finalDecrypted.toString("utf8");
     }

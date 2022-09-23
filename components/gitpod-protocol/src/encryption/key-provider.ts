@@ -71,7 +71,7 @@ export class KeyProviderImpl implements KeyProvider {
                 name: config.name,
                 version: config.version,
             },
-            material: new Buffer(config.material, "base64"),
+            material: Buffer.from(config.material, "base64"),
         };
     }
 }
