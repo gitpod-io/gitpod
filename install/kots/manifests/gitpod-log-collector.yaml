@@ -31,11 +31,10 @@ spec:
             - sh
             - -c
           args:
-            - while true; do echo "waiting" && sleep 60; done
+            - mkdir -p /gitpod/log-collector && while true; do echo "waiting" && sleep 60; done
           volumeMounts:
             - name: collector
               mountPath: /gitpod
-              readOnly: true
 
       labels:
         app: gitpod
