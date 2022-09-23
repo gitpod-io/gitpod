@@ -97,6 +97,20 @@ export class PrebuildManager {
         }
     }
 
+    protected async findNonFailedPrebuiltWorkspace(ctx: TraceContext, cloneURL: string, commitSHA: string) {
+        const existingPB = await this.workspaceDB.trace(ctx).findPrebuiltWorkspaceByCommit(cloneURL, commitSHA);
+
+        if (
+            !!existingPB &&
+            existingPB.state !== "aborted" &&
+            existingPB.state !== "failed" &&
+            existingPB.state !== "timeout"
+        ) {
+            return existingPB;
+        }
+        return undefined;
+    }
+
     async startPrebuild(
         ctx: TraceContext,
         { context, project, user, commitInfo }: StartPrebuildParams,
@@ -111,16 +125,10 @@ export class PrebuildManager {
             if (user.blocked) {
                 throw new Error(`Blocked users cannot start prebuilds (${user.name})`);
             }
-            const existingPB = await this.workspaceDB
-                .trace({ span })
-                .findPrebuiltWorkspaceByCommit(cloneURL, commitSHAIdentifier);
-            // If the existing prebuild is failed, we want to retrigger it.
-            if (
-                !!existingPB &&
-                existingPB.state !== "aborted" &&
-                existingPB.state !== "failed" &&
-                existingPB.state !== "timeout"
-            ) {
+            const existingPB = await this.findNonFailedPrebuiltWorkspace({ span }, cloneURL, commitSHAIdentifier);
+
+            // If the existing prebuild is failed, it will be retriggered in the afterwards
+            if (existingPB) {
                 // If the existing prebuild is based on an outdated project config, we also want to retrigger it.
                 const existingPBWS = await this.workspaceDB.trace({ span }).findById(existingPB.buildWorkspaceId);
                 const existingConfig = existingPBWS?.config;
