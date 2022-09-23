@@ -2076,8 +2076,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async createStripeCustomer(ctx: TraceContext, attributionId: string, currency: string): Promise<void> {
-        const user = this.checkAndBlockUser("createStripeCustomer");
+    async createStripeCustomerIfNeeded(ctx: TraceContext, attributionId: string, currency: string): Promise<void> {
+        const user = this.checkAndBlockUser("createStripeCustomerIfNeeded");
         const attrId = AttributionId.parse(attributionId);
         if (!attrId) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attributionId '${attributionId}'`);
@@ -2096,17 +2096,16 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             await this.ensureStripeApiIsAllowed({ user });
         }
         try {
-            if (await this.stripeService.findCustomerByAttributionId(attributionId)) {
-                throw new ResponseError(
-                    ErrorCodes.BAD_REQUEST,
-                    "A Stripe customer profile already exists for this attributionId",
+            if (!(await this.stripeService.findCustomerByAttributionId(attributionId))) {
+                const billingEmail = User.getPrimaryEmail(user);
+                const billingName = attrId.kind === "team" ? team!.name : User.getName(user);
+                await this.stripeService.createCustomerForAttributionId(
+                    attributionId,
+                    currency,
+                    billingEmail,
+                    billingName,
                 );
             }
-            const customerId =
-                attrId.kind === "team"
-                    ? await this.stripeService.createCustomerForTeam(user, team!)
-                    : await this.stripeService.createCustomerForUser(user);
-            await this.stripeService.setPreferredCurrencyForCustomer(customerId, currency);
         } catch (error) {
             log.error(`Failed to create Stripe customer profile for '${attributionId}'`, error);
             throw new ResponseError(

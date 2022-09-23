@@ -43,53 +43,30 @@ export class StripeService {
         return result.data[0]?.id;
     }
 
-    async createCustomerForUser(user: User): Promise<string> {
-        const attributionId = AttributionId.render({ kind: "user", userId: user.id });
+    async createCustomerForAttributionId(
+        attributionId: string,
+        preferredCurrency: string,
+        billingEmail?: string,
+        billingName?: string,
+    ): Promise<string> {
         if (await this.findCustomerByAttributionId(attributionId)) {
-            throw new Error(`A Stripe customer already exists for user '${user.id}'`);
+            throw new Error(`A Stripe customer already exists for '${attributionId}'`);
         }
         // Create the customer in Stripe
         const customer = await this.getStripe().customers.create({
-            email: User.getPrimaryEmail(user),
-            name: User.getName(user),
-            metadata: { attributionId },
+            email: billingEmail,
+            name: billingName,
+            metadata: { attributionId, preferredCurrency },
         });
         // Wait for the customer to show up in Stripe search results before proceeding
         let attempts = 0;
         while (!(await this.findCustomerByAttributionId(attributionId))) {
             await new Promise((resolve) => setTimeout(resolve, POLL_CREATED_CUSTOMER_INTERVAL_MS));
             if (++attempts > POLL_CREATED_CUSTOMER_MAX_ATTEMPTS) {
-                throw new Error(`Could not confirm Stripe customer creation for user '${user.id}'`);
+                throw new Error(`Could not confirm Stripe customer creation for '${attributionId}'`);
             }
         }
         return customer.id;
-    }
-
-    async createCustomerForTeam(user: User, team: Team): Promise<string> {
-        const attributionId = AttributionId.render({ kind: "team", teamId: team.id });
-        if (await this.findCustomerByAttributionId(attributionId)) {
-            throw new Error(`A Stripe customer already exists for team '${team.id}'`);
-        }
-        // Create the customer in Stripe
-        const userName = User.getName(user);
-        const customer = await this.getStripe().customers.create({
-            email: User.getPrimaryEmail(user),
-            name: userName ? `${userName} (${team.name})` : team.name,
-            metadata: { attributionId },
-        });
-        // Wait for the customer to show up in Stripe search results before proceeding
-        let attempts = 0;
-        while (!(await this.findCustomerByAttributionId(attributionId))) {
-            await new Promise((resolve) => setTimeout(resolve, POLL_CREATED_CUSTOMER_INTERVAL_MS));
-            if (++attempts > POLL_CREATED_CUSTOMER_MAX_ATTEMPTS) {
-                throw new Error(`Could not confirm Stripe customer creation for team '${team.id}'`);
-            }
-        }
-        return customer.id;
-    }
-
-    async setPreferredCurrencyForCustomer(customerId: string, currency: string): Promise<void> {
-        await this.getStripe().customers.update(customerId, { metadata: { preferredCurrency: currency } });
     }
 
     async setDefaultPaymentMethodForCustomer(customerId: string, setupIntentId: string): Promise<void> {
