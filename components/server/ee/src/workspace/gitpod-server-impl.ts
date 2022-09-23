@@ -1596,12 +1596,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 { teamId, chargebeeSubscriptionId },
             );
         }
-        const teamCustomerId = await this.stripeService.findCustomerByTeamId(teamId);
-        if (teamCustomerId) {
-            const subsciptionId = await this.stripeService.findUncancelledSubscriptionByCustomer(teamCustomerId);
-            if (subsciptionId) {
-                await this.stripeService.cancelSubscription(subsciptionId);
-            }
+        const subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(
+            AttributionId.render({ kind: "team", teamId: teamId }),
+        );
+        if (subscriptionId) {
+            await this.stripeService.cancelSubscription(subscriptionId);
         }
     }
 
@@ -2066,12 +2065,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             if (attrId.kind == "team") {
                 await this.guardTeamOperation(attrId.teamId, "get");
             }
-            const customerId = await this.stripeService.findCustomerByAttributionId(attributionId);
-            if (!customerId) {
-                return undefined;
-            }
-
-            const subscriptionId = await this.stripeService.findUncancelledSubscriptionByCustomer(customerId);
+            const subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(attributionId);
             return subscriptionId;
         } catch (error) {
             log.error(`Failed to get Stripe Subscription ID for '${attributionId}'`, error);

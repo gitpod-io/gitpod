@@ -41,7 +41,7 @@ export class BillingModesImpl implements BillingModes {
     @inject(Config) protected readonly config: Config;
     @inject(ConfigCatClientFactory) protected readonly configCatClientFactory: ConfigCatClientFactory;
     @inject(SubscriptionService) protected readonly subscriptionSvc: SubscriptionService;
-    @inject(StripeService) protected readonly stripeSvc: StripeService;
+    @inject(StripeService) protected readonly stripeService: StripeService;
     @inject(TeamSubscriptionDB) protected readonly teamSubscriptionDb: TeamSubscriptionDB;
     @inject(TeamSubscription2DB) protected readonly teamSubscription2Db: TeamSubscription2DB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
@@ -116,12 +116,11 @@ export class BillingModesImpl implements BillingModes {
 
         // Stripe: Active personal subsciption?
         let hasUbbPersonal = false;
-        const customerId = await this.stripeSvc.findCustomerByUserId(user.id);
-        if (customerId) {
-            const subscriptionId = await this.stripeSvc.findUncancelledSubscriptionByCustomer(customerId);
-            if (subscriptionId) {
-                hasUbbPersonal = true;
-            }
+        const subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(
+            AttributionId.render({ kind: "user", userId: user.id }),
+        );
+        if (subscriptionId) {
+            hasUbbPersonal = true;
         }
 
         // 3. Check team memberships/plans
@@ -192,12 +191,11 @@ export class BillingModesImpl implements BillingModes {
 
         // 3. Now we're usage-based. We only have to figure out whether we have a plan yet or not.
         const result: BillingMode = { mode: "usage-based" };
-        const customerId = await this.stripeSvc.findCustomerByTeamId(team.id);
-        if (customerId) {
-            const subscriptionId = await this.stripeSvc.findUncancelledSubscriptionByCustomer(customerId);
-            if (subscriptionId) {
-                result.paid = true;
-            }
+        const subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(
+            AttributionId.render({ kind: "team", teamId: team.id }),
+        );
+        if (subscriptionId) {
+            result.paid = true;
         }
         return result;
     }
