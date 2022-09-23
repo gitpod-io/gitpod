@@ -1,0 +1,16 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+apiVersion: v1
+domain: gitpod.example.com
+metadata:
+  region: local
+objectStorage:
+  inCluster: false
+  s3:
+    endpoint: s3-provider.com
+    allowInsecureConnection: true
+    bucket: s3-bucket
+    credentials:
+      kind: secret
+      name: s3-storage
