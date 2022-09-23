@@ -570,6 +570,22 @@ export class TypeORMUserDBImpl implements UserDB {
     async getByRefreshToken(refreshTokenToken: string): Promise<OAuthToken> {
         throw new Error("Not implemented");
     }
+
+    async countUsagesOfPhoneNumber(phoneNumber: string): Promise<number> {
+        return (await this.getUserRepo())
+            .createQueryBuilder()
+            .where("verificationPhoneNumber = :phoneNumber", { phoneNumber })
+            .getCount();
+    }
+
+    async isBlockedPhoneNumber(phoneNumber: string): Promise<boolean> {
+        const blockedUsers = await (await this.getUserRepo())
+            .createQueryBuilder()
+            .where("verificationPhoneNumber = :phoneNumber", { phoneNumber })
+            .andWhere("blocked = true")
+            .getCount();
+        return blockedUsers > 0;
+    }
 }
 
 export class TransactionalUserDBImpl extends TypeORMUserDBImpl {
