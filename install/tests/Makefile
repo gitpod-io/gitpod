@@ -12,6 +12,12 @@ ifndef TF_VAR_TEST_ID
 	$(error TF_VAR_TEST_ID is not defined)
 endif
 
+check-env-domain:
+ifndef TF_VAR_domain
+	$(error TF_VAR_domain is not defined)
+endif
+
+
 check-env-cloud:
 ifndef cloud
 	$(error cloud is not defined)
@@ -328,7 +334,7 @@ generate-kots-config: cloud_storage = $(if $(findstring external,$(storage)),$(c
 generate-kots-config: cloud_registry = $(if $(findstring external,$(registry)),$(cloud),incluster)
 generate-kots-config: cloud_db = $(if $(findstring external,$(db)),$(cloud),incluster)
 ## generate-kots-config: Generate the kots config based on test config
-generate-kots-config: select-workspace check-env-cloud get-base-config
+generate-kots-config: select-workspace check-env-cloud get-base-config check-env-domain check-env-sub-domain
 	$(MAKE) storage-config-${cloud_storage}
 	$(MAKE) db-config-${cloud_db}
 	$(MAKE) registry-config-${cloud_registry}
@@ -352,6 +358,8 @@ kots-install: preflight-flag = $(if $(preflights:true=),--skip-preflights,)
 kots-install: license-file = $(if $(license_community_$(channel)),$(license_community_$(channel)),"../licenses/$(channel).yaml")
 kots-install: install-kots-cli
 	kubectl kots remove ${app} -n gitpod --force --kubeconfig=${KUBECONFIG} || echo "No kots app existing, Installing"
+	$(MAKE) destroy-gitpod
+	export KUBECONFIG=${KUBECONFIG} && \
 	kubectl kots install ${app}/${channel} \
 	--skip-rbac-check ${version-flag} ${preflight-flag} \
 					--wait-duration "10m" \
@@ -361,7 +369,7 @@ kots-install: install-kots-cli
                     --no-port-forward \
                     --config-values tmp_config.yml
 
-time_to_sleep_azure := 600 # azure seem to take more time to fullfil DNS propogation
+time_to_sleep_azure := 800 # azure seem to take more time to fullfil DNS propogation
 time_to_sleep := 300
 
 wait_time := 180

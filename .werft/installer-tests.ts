@@ -313,6 +313,7 @@ export async function installerTests(config: TestConfig) {
                 new Error("Upgrade test failed"),
                 slackHook.get("self-hosted-jobs"),
             );
+            console.log("Upgrade tests have failed, please inspect!")
 
             return;
         }
