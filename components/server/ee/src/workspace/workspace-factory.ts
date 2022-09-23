@@ -89,18 +89,29 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
             const { project, branch } = context;
 
             const commitContext: CommitContext = context.actual;
-            const existingPWS = await this.db
-                .trace({ span })
-                .findPrebuiltWorkspaceByCommit(
-                    commitContext.repository.cloneUrl,
-                    CommitContext.computeHash(commitContext),
-                );
-            if (existingPWS) {
+
+            const asserNoPrebuildIsRunningForSameCommit = async () => {
+                const existingPWS = await this.db
+                    .trace({ span })
+                    .findPrebuiltWorkspaceByCommit(
+                        commitContext.repository.cloneUrl,
+                        CommitContext.computeHash(commitContext),
+                    );
+                if (!existingPWS) {
+                    return;
+                }
+                log.debug("Found existing prebuild in createForStartPrebuild.", {
+                    context,
+                    cloneUrl: commitContext.repository.cloneUrl,
+                    commit: CommitContext.computeHash(commitContext),
+                });
                 const wsInstance = await this.db.trace({ span }).findRunningInstance(existingPWS.buildWorkspaceId);
                 if (wsInstance) {
                     throw new Error("A prebuild is already running for this commit.");
                 }
-            }
+            };
+
+            await asserNoPrebuildIsRunningForSameCommit();
 
             const { config } = await this.configProvider.fetchConfig({ span }, user, context.actual);
             const imageSource = await this.imageSourceProvider.getImageSource(ctx, user, context.actual, config);
@@ -142,6 +153,9 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                         originalContext: commitContext,
                         prebuiltWorkspace: recentPrebuild.prebuild,
                     };
+
+                    await asserNoPrebuildIsRunningForSameCommit();
+
                     ws = await this.createForPrebuiltWorkspace(
                         { span },
                         user,
@@ -160,6 +174,8 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                     break;
                 }
             }
+            await asserNoPrebuildIsRunningForSameCommit();
+
             if (!ws) {
                 // No suitable parent prebuild was found -- create a (fresh) full prebuild.
                 ws = await this.createForCommit({ span }, user, commitContext, normalizedContextURL);
