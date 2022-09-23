@@ -397,6 +397,7 @@ export default function NewProject() {
                                     <div
                                         key={`repo-${index}-${r.account}-${r.name}`}
                                         className="flex p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light transition ease-in-out group"
+                                        title={r.cloneUrl}
                                     >
                                         <div className="flex-grow">
                                             <div
