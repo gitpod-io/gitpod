@@ -65,6 +65,7 @@ message ListUsageRequest {
     Ordering order = 4;
 
     PaginatedRequest pagination = 5;
+
 }
 
 message ListUsageResponse {
@@ -72,6 +73,18 @@ message ListUsageResponse {
     PaginatedResponse pagination = 2;
     // the amount of credits the given account (attributionId) has used during the requested period
     double credits_used = 3;
+    // data for the histogram
+    GraphData graph_data = 4;
+}
+
+message GraphData {
+    repeated string header_names = 1;
+    repeated RowData rows = 2;
+}
+
+message RowData {
+    string row_name = 1;
+    repeated double values = 2;
 }
 
 message Usage {

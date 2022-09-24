@@ -23,10 +23,27 @@ import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { ReactComponent as UsageIcon } from "../images/usage-default.svg";
 import { toRemoteURL } from "../projects/render-utils";
 import { WorkspaceType } from "@gitpod/gitpod-protocol";
+import { Chart } from "react-google-charts";
 import PillLabel from "./PillLabel";
 
 interface UsageViewProps {
     attributionId: AttributionId;
+}
+
+function getGraphData(usagePage: ListUsageResponse, start: Date, end: Date): (string | number)[][] {
+    const records: (string | number)[][] = [usagePage.graphData.headerNames];
+    var usageRowsIdx = 0;
+    const usageRows = usagePage.graphData.rows;
+    for (var date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+        const day = date.toISOString().slice(0, 10);
+        const entry = usageRows.length > usageRowsIdx ? usageRows[usageRowsIdx] : undefined;
+        if (entry && day === entry.rowName) {
+            records.push([day, ...entry.values]);
+        } else {
+            records.push([day, 0, 0]);
+        }
+    }
+    return records;
 }
 
 function UsageView({ attributionId }: UsageViewProps) {
@@ -139,7 +156,7 @@ function UsageView({ attributionId }: UsageViewProps) {
         return new Date(time).toLocaleDateString(undefined, options).replace("at ", "");
     };
 
-    const currentPaginatedResults = usagePage?.usageEntriesList.filter((u) => u.kind === "workspaceinstance") ?? [];
+    const currentPaginatedResults = usagePage?.usageEntriesList ?? [];
 
     return (
         <>
@@ -150,6 +167,29 @@ function UsageView({ attributionId }: UsageViewProps) {
                 ).toLocaleDateString()} (updated every 15 minutes).`}
             />
             <div className="app-container pt-5">
+                {usagePage && (
+                    <div>
+                        <Chart
+                            chartType="BarChart"
+                            width="100%"
+                            height="400px"
+                            data={getGraphData(usagePage, new Date(startDateOfBillMonth), new Date(endDateOfBillMonth))}
+                            options={{
+                                title: "Usage",
+                                chartArea: { width: "80%" },
+                                isStacked: true,
+                                hAxis: {
+                                    title: "Day",
+                                    minValue: 0,
+                                },
+                                vAxis: {
+                                    title: "Credits",
+                                },
+                                orientation: "horizontal",
+                            }}
+                        />
+                    </div>
+                )}
                 {errorMessage && <p className="text-base">{errorMessage}</p>}
                 {!errorMessage && (
                     <div className="flex space-x-16">

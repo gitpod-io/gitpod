@@ -29,6 +29,17 @@ export interface ListUsageResponse {
     usageEntriesList: Usage[];
     pagination?: PaginationResponse;
     creditsUsed: number;
+    graphData: GraphData;
+}
+
+export interface GraphData {
+    headerNames: string[];
+    rows: RowData[];
+}
+
+export interface RowData {
+    rowName: string;
+    values: number[];
 }
 
 export interface PaginationResponse {

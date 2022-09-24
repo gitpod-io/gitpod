@@ -106,6 +106,18 @@ export interface ListUsageResponse {
     | undefined;
   /** the amount of credits the given account (attributionId) has used during the requested period */
   creditsUsed: number;
+  /** data for the histogram */
+  graphData: GraphData | undefined;
+}
+
+export interface GraphData {
+  headerNames: string[];
+  rows: RowData[];
+}
+
+export interface RowData {
+  rowName: string;
+  values: number[];
 }
 
 export interface Usage {
@@ -569,7 +581,7 @@ export const ListUsageRequest = {
 };
 
 function createBaseListUsageResponse(): ListUsageResponse {
-  return { usageEntries: [], pagination: undefined, creditsUsed: 0 };
+  return { usageEntries: [], pagination: undefined, creditsUsed: 0, graphData: undefined };
 }
 
 export const ListUsageResponse = {
@@ -582,6 +594,9 @@ export const ListUsageResponse = {
     }
     if (message.creditsUsed !== 0) {
       writer.uint32(25).double(message.creditsUsed);
+    }
+    if (message.graphData !== undefined) {
+      GraphData.encode(message.graphData, writer.uint32(34).fork()).ldelim();
     }
     return writer;
   },
@@ -602,6 +617,9 @@ export const ListUsageResponse = {
         case 3:
           message.creditsUsed = reader.double();
           break;
+        case 4:
+          message.graphData = GraphData.decode(reader, reader.uint32());
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -615,6 +633,7 @@ export const ListUsageResponse = {
       usageEntries: Array.isArray(object?.usageEntries) ? object.usageEntries.map((e: any) => Usage.fromJSON(e)) : [],
       pagination: isSet(object.pagination) ? PaginatedResponse.fromJSON(object.pagination) : undefined,
       creditsUsed: isSet(object.creditsUsed) ? Number(object.creditsUsed) : 0,
+      graphData: isSet(object.graphData) ? GraphData.fromJSON(object.graphData) : undefined,
     };
   },
 
@@ -628,6 +647,8 @@ export const ListUsageResponse = {
     message.pagination !== undefined &&
       (obj.pagination = message.pagination ? PaginatedResponse.toJSON(message.pagination) : undefined);
     message.creditsUsed !== undefined && (obj.creditsUsed = message.creditsUsed);
+    message.graphData !== undefined &&
+      (obj.graphData = message.graphData ? GraphData.toJSON(message.graphData) : undefined);
     return obj;
   },
 
@@ -638,6 +659,146 @@ export const ListUsageResponse = {
       ? PaginatedResponse.fromPartial(object.pagination)
       : undefined;
     message.creditsUsed = object.creditsUsed ?? 0;
+    message.graphData = (object.graphData !== undefined && object.graphData !== null)
+      ? GraphData.fromPartial(object.graphData)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseGraphData(): GraphData {
+  return { headerNames: [], rows: [] };
+}
+
+export const GraphData = {
+  encode(message: GraphData, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    for (const v of message.headerNames) {
+      writer.uint32(10).string(v!);
+    }
+    for (const v of message.rows) {
+      RowData.encode(v!, writer.uint32(18).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GraphData {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGraphData();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.headerNames.push(reader.string());
+          break;
+        case 2:
+          message.rows.push(RowData.decode(reader, reader.uint32()));
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GraphData {
+    return {
+      headerNames: Array.isArray(object?.headerNames) ? object.headerNames.map((e: any) => String(e)) : [],
+      rows: Array.isArray(object?.rows) ? object.rows.map((e: any) => RowData.fromJSON(e)) : [],
+    };
+  },
+
+  toJSON(message: GraphData): unknown {
+    const obj: any = {};
+    if (message.headerNames) {
+      obj.headerNames = message.headerNames.map((e) => e);
+    } else {
+      obj.headerNames = [];
+    }
+    if (message.rows) {
+      obj.rows = message.rows.map((e) => e ? RowData.toJSON(e) : undefined);
+    } else {
+      obj.rows = [];
+    }
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<GraphData>): GraphData {
+    const message = createBaseGraphData();
+    message.headerNames = object.headerNames?.map((e) => e) || [];
+    message.rows = object.rows?.map((e) => RowData.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseRowData(): RowData {
+  return { rowName: "", values: [] };
+}
+
+export const RowData = {
+  encode(message: RowData, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.rowName !== "") {
+      writer.uint32(10).string(message.rowName);
+    }
+    writer.uint32(18).fork();
+    for (const v of message.values) {
+      writer.double(v);
+    }
+    writer.ldelim();
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): RowData {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRowData();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.rowName = reader.string();
+          break;
+        case 2:
+          if ((tag & 7) === 2) {
+            const end2 = reader.uint32() + reader.pos;
+            while (reader.pos < end2) {
+              message.values.push(reader.double());
+            }
+          } else {
+            message.values.push(reader.double());
+          }
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RowData {
+    return {
+      rowName: isSet(object.rowName) ? String(object.rowName) : "",
+      values: Array.isArray(object?.values) ? object.values.map((e: any) => Number(e)) : [],
+    };
+  },
+
+  toJSON(message: RowData): unknown {
+    const obj: any = {};
+    message.rowName !== undefined && (obj.rowName = message.rowName);
+    if (message.values) {
+      obj.values = message.values.map((e) => e);
+    } else {
+      obj.values = [];
+    }
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<RowData>): RowData {
+    const message = createBaseRowData();
+    message.rowName = object.rowName ?? "";
+    message.values = object.values?.map((e) => e) || [];
     return message;
   },
 };

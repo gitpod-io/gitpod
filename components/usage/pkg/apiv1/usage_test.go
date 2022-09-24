@@ -279,6 +279,9 @@ func TestListUsage(t *testing.T) {
 		CreditCents:   100,
 		Draft:         true,
 	})
+	require.NoError(t, draftBefore.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
+		WorkspaceType: db.WorkspaceType_Prebuild,
+	}))
 
 	nondraftBefore := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
@@ -286,6 +289,9 @@ func TestListUsage(t *testing.T) {
 		CreditCents:   200,
 		Draft:         false,
 	})
+	require.NoError(t, nondraftBefore.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
+		WorkspaceType: db.WorkspaceType_Regular,
+	}))
 
 	draftInside := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
@@ -293,18 +299,28 @@ func TestListUsage(t *testing.T) {
 		CreditCents:   300,
 		Draft:         true,
 	})
+	require.NoError(t, draftInside.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
+		WorkspaceType: db.WorkspaceType_Prebuild,
+	}))
+
 	nonDraftInside := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
 		EffectiveTime: db.NewVarcharTime(start.Add(2 * time.Hour)),
 		CreditCents:   400,
 		Draft:         false,
 	})
+	require.NoError(t, nonDraftInside.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
+		WorkspaceType: db.WorkspaceType_Regular,
+	}))
 
 	nonDraftAfter := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
 		EffectiveTime: db.NewVarcharTime(end.Add(2 * time.Hour)),
 		CreditCents:   1000,
 	})
+	require.NoError(t, nonDraftAfter.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
+		WorkspaceType: db.WorkspaceType_Regular,
+	}))
 
 	dbtest.CreateUsageRecords(t, conn, draftBefore, nondraftBefore, draftInside, nonDraftInside, nonDraftAfter)
 
@@ -315,12 +331,53 @@ func TestListUsage(t *testing.T) {
 		// expectations
 		creditsUsed    float64
 		recordsInRange int64
+		graphData      *v1.GraphData
 	}{
-		{start, end, 7, 2},
-		{end, end, 0, 0},
-		{start, start, 0, 0},
-		{start.Add(-200 * 24 * time.Hour), end, 10, 4},
-		{start.Add(-200 * 24 * time.Hour), end.Add(10 * 24 * time.Hour), 20, 5},
+		{start, end, 7, 2, &v1.GraphData{
+			HeaderNames: []string{"Day", "Prebuilds", "Workspaces"},
+			Rows: []*v1.RowData{
+				{
+					RowName: "2022-07-01",
+					Values:  []float64{3, 4},
+				},
+			},
+		}},
+		{end, end, 0, 0, &v1.GraphData{
+			HeaderNames: []string{"Day", "Prebuilds", "Workspaces"},
+		}},
+		{start, start, 0, 0, &v1.GraphData{
+			HeaderNames: []string{"Day", "Prebuilds", "Workspaces"},
+		}},
+		{start.Add(-200 * 24 * time.Hour), end, 10, 4, &v1.GraphData{
+			HeaderNames: []string{"Day", "Prebuilds", "Workspaces"},
+			Rows: []*v1.RowData{
+				{
+					RowName: "2022-06-30",
+					Values:  []float64{1, 2},
+				},
+				{
+					RowName: "2022-07-01",
+					Values:  []float64{3, 4},
+				},
+			},
+		}},
+		{start.Add(-200 * 24 * time.Hour), end.Add(10 * 24 * time.Hour), 20, 5, &v1.GraphData{
+			HeaderNames: []string{"Day", "Prebuilds", "Workspaces"},
+			Rows: []*v1.RowData{
+				{
+					RowName: "2022-06-30",
+					Values:  []float64{1, 2},
+				},
+				{
+					RowName: "2022-07-01",
+					Values:  []float64{3, 4},
+				},
+				{
+					RowName: "2022-08-01",
+					Values:  []float64{0, 10},
+				},
+			},
+		}},
 	}
 
 	for i, test := range tests {
@@ -339,6 +396,7 @@ func TestListUsage(t *testing.T) {
 
 			require.Equal(t, test.creditsUsed, metaData.CreditsUsed)
 			require.Equal(t, test.recordsInRange, metaData.Pagination.Total)
+			require.Equal(t, test.graphData, metaData.GraphData)
 		})
 	}
 

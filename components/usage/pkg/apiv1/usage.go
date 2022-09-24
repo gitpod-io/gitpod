@@ -150,10 +150,54 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 		Total:      int64(usageSummary.NumberOfRecords),
 	}
 
+	rawRows, err := s.conn.Table((&db.Usage{}).TableName()).
+		Select("SUBSTR(effectiveTime, 1, 10) as day, metadata->>'$.workspaceType' as workspaceType, sum(creditCents) as creditCents").
+		Where("attributionId = ?", attributionId).
+		Where("effectiveTime >= ? AND effectiveTime < ?", db.TimeToISO8601(from), db.TimeToISO8601(to)).
+		Where("kind = ?", db.WorkspaceInstanceUsageKind).
+		Group("day").Group("workspaceType").
+		Order("day").Order("workspaceType").
+		Rows()
+	if err != nil {
+		return nil, err
+	}
+
+	type Row struct {
+		day           string         `gorm:"column:day;type:varchar;size:255;"`
+		workspaceType string         `gorm:"column:workspaceType;type:varchar;size:255;"`
+		creditCents   db.CreditCents `gorm:"column:creditCents;type:bigint;"`
+	}
+	var currentDay *v1.RowData
+	graphData := v1.GraphData{
+		HeaderNames: []string{"Day", "Prebuilds", "Workspaces"},
+		Rows:        []*v1.RowData{},
+	}
+	for rawRows.Next() {
+		var r Row
+		err = rawRows.Scan(&r.day, &r.workspaceType, &r.creditCents)
+		if err != nil {
+			return nil, err
+		}
+		if currentDay == nil || r.day != currentDay.RowName {
+			currentDay = &v1.RowData{
+				RowName: r.day,
+				Values:  make([]float64, len(graphData.HeaderNames)-1),
+			}
+			graphData.Rows = append(graphData.Rows, currentDay)
+		}
+		switch r.workspaceType {
+		case string(db.WorkspaceType_Prebuild):
+			currentDay.Values[0] = r.creditCents.ToCredits()
+		case string(db.WorkspaceType_Regular):
+			currentDay.Values[1] = r.creditCents.ToCredits()
+		}
+	}
+
 	return &v1.ListUsageResponse{
 		UsageEntries: usageData,
 		CreditsUsed:  usageSummary.CreditCentsUsed.ToCredits(),
 		Pagination:   &pagination,
+		GraphData:    &graphData,
 	}, nil
 }
 

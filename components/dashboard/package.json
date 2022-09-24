@@ -15,6 +15,7 @@
     "query-string": "^7.1.1",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
+    "react-google-charts": "^4.0.0",
     "react-intl-tel-input": "^8.2.0",
     "react-router-dom": "^5.2.0",
     "xterm": "^4.11.0",

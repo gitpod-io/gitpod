@@ -2319,6 +2319,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                   }
                 : undefined,
             creditsUsed: response.creditsUsed,
+            graphData: response.graphData!,
         };
     }
 
