@@ -16,5 +16,6 @@
     'gitpod-cluster-autoscaler-k3s.json': (import 'dashboards/gitpod-cluster-autoscaler-k3s.json'),
     'gitpod-node-resource-metrics.json': (import 'dashboards/gitpod-node-resource-metrics.json'),
     'gitpod-grpc-server.json': (import 'dashboards/gitpod-grpc-server.json'),
+    'gitpod-grpc-client.json': (import 'dashboards/gitpod-grpc-client.json'),
   },
 }
