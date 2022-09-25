@@ -13,7 +13,7 @@ packages:
       - GOOS=linux
     prep:
       - ["mv", "docker-up/main.go", "."]
-      - ["rmdir", "docker-up"]
+      - ["rm", "-r", "docker-up"]
       - ["go", "generate"]
     config:
       dontTest: true

@@ -377,8 +377,6 @@ func installDocker() error {
 		//nolint:errcheck
 		os.Chtimes(dstpath, hdr.AccessTime, hdr.ModTime)
 	}
-
-	return nil
 }
 
 func installDockerCompose() error {
