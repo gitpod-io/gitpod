@@ -2,6 +2,6 @@
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
 envvars:
-  ADVANCED_MODE_ENABLED: "1"
+  # This will be ignored as advanced mode not enabled
   CONFIG_PATCH: "domain: override.gitpod.io"
   DOMAIN: gitpod.io

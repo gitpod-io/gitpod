@@ -1,7 +1,4 @@
 # Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
-envvars:
-  ADVANCED_MODE_ENABLED: "1"
-  CONFIG_PATCH: "domain: override.gitpod.io"
-  DOMAIN: gitpod.io
+domain: gitpod.io
