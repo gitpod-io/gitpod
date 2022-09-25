@@ -19,7 +19,6 @@ packages:
       - components/supervisor-api/go:lib
       - components/ws-manager-api/go:lib
     prep:
-      - ["go", "get", "-v", "./..."]
       - ["sh", "-c", "echo package main > main.go"]
       - ["sh", "-c", "echo 'func main() {}' >> main.go"]
       - ["go", "fmt", "main.go"]
