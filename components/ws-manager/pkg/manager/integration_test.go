@@ -45,6 +45,8 @@ import (
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/grpcpool"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/test"
+
+	volumesnapshotclientv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned"
 )
 
 var integrationFlag = flag.String("integration-test", "disabled", "configures integration tests. Valid values are disabled, local or a path to a kubeconfig file")
@@ -119,13 +121,19 @@ func forIntegrationTestGetManager(t *testing.T) *Manager {
 		return nil
 	}
 
+	volumesnapshotclientset, err := volumesnapshotclientv1.NewForConfig(cfg)
+	if err != nil {
+		t.Errorf("cannt create test environment: %v", err)
+		return nil
+	}
+
 	ctrlClient, err := ctrler_client.New(cfg, ctrler_client.Options{Scheme: scheme})
 	if err != nil {
 		t.Errorf("cannot create test environment: %v", err)
 		return nil
 	}
 
-	m, err := New(config, ctrlClient, clientset, &layer.Provider{Storage: &storage.PresignedNoopStorage{}})
+	m, err := New(config, ctrlClient, clientset, volumesnapshotclientset, &layer.Provider{Storage: &storage.PresignedNoopStorage{}})
 	if err != nil {
 		t.Fatalf("cannot create manager: %s", err.Error())
 	}

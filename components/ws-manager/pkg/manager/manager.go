@@ -52,16 +52,19 @@ import (
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/clock"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/grpcpool"
+
 	volumesnapshotv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
+	volumesnapshotclientv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned"
 )
 
 // Manager is a kubernetes backed implementation of a workspace manager
 type Manager struct {
-	Config    config.Configuration
-	Clientset client.Client
-	RawClient kubernetes.Interface
-	Content   *layer.Provider
-	OnChange  func(context.Context, *api.WorkspaceStatus)
+	Config               config.Configuration
+	Clientset            client.Client
+	RawClient            kubernetes.Interface
+	VolumeSnapshotClient volumesnapshotclientv1.Interface
+	Content              *layer.Provider
+	OnChange             func(context.Context, *api.WorkspaceStatus)
 
 	activity sync.Map
 	clock    *clock.HLC
@@ -127,7 +130,7 @@ const (
 )
 
 // New creates a new workspace manager
-func New(config config.Configuration, client client.Client, rawClient kubernetes.Interface, cp *layer.Provider) (*Manager, error) {
+func New(config config.Configuration, client client.Client, rawClient kubernetes.Interface, volumesnapshotClient volumesnapshotclientv1.Interface, cp *layer.Provider) (*Manager, error) {
 	wsdaemonConnfactory, err := newWssyncConnectionFactory(config)
 	if err != nil {
 		return nil, err
@@ -138,14 +141,15 @@ func New(config config.Configuration, client client.Client, rawClient kubernetes
 	eventRecorder := broadcaster.NewRecorder(runtime.NewScheme(), corev1.EventSource{Component: "ws-manager"})
 
 	m := &Manager{
-		Config:        config,
-		Clientset:     client,
-		RawClient:     rawClient,
-		Content:       cp,
-		clock:         clock.System(),
-		subscribers:   make(map[string]chan *api.SubscribeResponse),
-		wsdaemonPool:  grpcpool.New(wsdaemonConnfactory, checkWSDaemonEndpoint(config.Namespace, client)),
-		eventRecorder: eventRecorder,
+		Config:               config,
+		Clientset:            client,
+		RawClient:            rawClient,
+		VolumeSnapshotClient: volumesnapshotClient,
+		Content:              cp,
+		clock:                clock.System(),
+		subscribers:          make(map[string]chan *api.SubscribeResponse),
+		wsdaemonPool:         grpcpool.New(wsdaemonConnfactory, checkWSDaemonEndpoint(config.Namespace, client)),
+		eventRecorder:        eventRecorder,
 	}
 	m.metrics = newMetrics(m)
 	m.OnChange = m.onChange

@@ -27,10 +27,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
+	watchtools "k8s.io/client-go/tools/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gitpod-io/gitpod/common-go/kubernetes"
@@ -84,9 +88,6 @@ type Monitor struct {
 
 	OnError func(error)
 
-	notifyPod        map[string]chan string
-	notifyPodMapLock sync.Mutex
-
 	eventRecorder record.EventRecorder
 }
 
@@ -106,8 +107,6 @@ func (m *Manager) CreateMonitor() (*Monitor, error) {
 		OnError: func(err error) {
 			log.WithError(err).Error("workspace monitor error")
 		},
-
-		notifyPod: make(map[string]chan string),
 
 		eventRecorder: m.eventRecorder,
 	}
@@ -152,60 +151,11 @@ func (m *Monitor) handleEvent(evt watch.Event) {
 	switch evt.Object.(type) {
 	case *corev1.Pod:
 		err = m.onPodEvent(evt)
-	case *volumesnapshotv1.VolumeSnapshot:
-		err = m.onVolumesnapshotEvent(evt)
 	}
 
 	if err != nil {
 		m.OnError(err)
 	}
-}
-
-func (m *Monitor) onVolumesnapshotEvent(evt watch.Event) error {
-	vs, ok := evt.Object.(*volumesnapshotv1.VolumeSnapshot)
-	if !ok {
-		return xerrors.Errorf("received non-volume-snapshot event")
-	}
-
-	log := log.WithField("volumesnapshot", vs.Name)
-
-	if vs.Spec.Source.PersistentVolumeClaimName == nil {
-		// there is no pvc name within the VolumeSnapshot object
-		log.Warn("the spec.source.persistentVolumeClaimName is empty")
-		return nil
-	}
-
-	// the pod name is 1:1 mapping to pvc name
-	podName := *vs.Spec.Source.PersistentVolumeClaimName
-	log = log.WithField("pod", podName)
-
-	// get the pod resource
-	var pod corev1.Pod
-	err := m.manager.Clientset.Get(context.Background(), types.NamespacedName{Namespace: vs.Namespace, Name: podName}, &pod)
-	if err != nil && !k8serr.IsNotFound(err) {
-		log.WithError(err).Warnf("cannot get pod")
-	}
-
-	if vs.Status == nil || vs.Status.ReadyToUse == nil || !*vs.Status.ReadyToUse || vs.Status.BoundVolumeSnapshotContentName == nil {
-		if !pod.CreationTimestamp.IsZero() {
-			m.eventRecorder.Eventf(&pod, corev1.EventTypeNormal, "VolumeSnapshot", "Volume snapshot %q is in progress", vs.Name)
-		}
-		return nil
-	}
-
-	vsc := *vs.Status.BoundVolumeSnapshotContentName
-	log.Debugf("the vsc %s is ready to use", vsc)
-	if !pod.CreationTimestamp.IsZero() {
-		m.eventRecorder.Eventf(&pod, corev1.EventTypeNormal, "VolumeSnapshot", "Volume snapshot %q is ready to use", vs.Name)
-	}
-
-	m.notifyPodMapLock.Lock()
-	if m.notifyPod[podName] != nil {
-		m.notifyPod[podName] <- vsc
-	}
-	m.notifyPodMapLock.Unlock()
-
-	return nil
 }
 
 // onPodEvent interpretes Kubernetes events, translates and broadcasts them, and acts based on them
@@ -1150,31 +1100,65 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 				volumeSnapshotTime = time.Now()
 			}
 			if createdVolumeSnapshot {
-				m.notifyPodMapLock.Lock()
-				if m.notifyPod[wso.Pod.Name] == nil {
-					m.notifyPod[wso.Pod.Name] = make(chan string)
-				}
-				m.notifyPodMapLock.Unlock()
+				log = log.WithField("VolumeSnapshot.Name", pvcVolumeSnapshotName)
 
-				select {
-				case pvcVolumeSnapshotContentName = <-m.notifyPod[wso.Pod.Name]:
+				var volumeSnapshotWatcher *watchtools.RetryWatcher
+				volumeSnapshotWatcher, err = watchtools.NewRetryWatcher("1", &cache.ListWatch{
+					WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+						return m.manager.VolumeSnapshotClient.SnapshotV1().VolumeSnapshots(m.manager.Config.Namespace).Watch(ctx, metav1.ListOptions{
+							FieldSelector: fields.OneTermEqualSelector("metadata.name", pvcVolumeSnapshotName).String(),
+						})
+					},
+				})
+				if err != nil {
+					log.WithError(err).Info("fall back to exponential backoff retry")
+					// we can not create a retry watcher, we fall back to exponential backoff retry
+					backoff := wait.Backoff{
+						Steps:    30,
+						Duration: 100 * time.Millisecond,
+						Factor:   1.5,
+						Jitter:   0.1,
+						Cap:      10 * time.Minute,
+					}
+					err = wait.ExponentialBackoff(backoff, func() (bool, error) {
+						var vs volumesnapshotv1.VolumeSnapshot
+						err := m.manager.Clientset.Get(ctx, types.NamespacedName{Namespace: m.manager.Config.Namespace, Name: pvcVolumeSnapshotName}, &vs)
+						if err != nil {
+							if k8serr.IsNotFound(err) {
+								// volumesnapshot doesn't exist yet, retry again
+								return false, nil
+							}
+							log.WithError(err).Error("was unable to get volume snapshot")
+							return false, err
+						}
+						if vs.Status != nil && vs.Status.ReadyToUse != nil && *vs.Status.ReadyToUse && vs.Status.BoundVolumeSnapshotContentName != nil {
+							pvcVolumeSnapshotContentName = *vs.Status.BoundVolumeSnapshotContentName
+							return true, nil
+						}
+						return false, nil
+					})
+					if err != nil {
+						log.WithError(err).Errorf("failed while waiting for volume snapshot to get ready")
+						return nil, err
+					}
 					readyVolumeSnapshot = true
-				case <-ctx.Done():
-					// There might be a chance that the VolumeSnapshot is ready but somehow
-					// we did not receive the notification.
-					// For example, the ws-manager restarts before the VolumeSnapshot becomes ready.
-					// Let's give it the last chance to check the VolumeSnapshot is ready.
-					var vs volumesnapshotv1.VolumeSnapshot
-					err := m.manager.Clientset.Get(ctx, types.NamespacedName{Namespace: m.manager.Config.Namespace, Name: pvcVolumeSnapshotName}, &vs)
-					if err == nil && vs.Status != nil && vs.Status.ReadyToUse != nil && *vs.Status.ReadyToUse && vs.Status.BoundVolumeSnapshotContentName != nil {
-						pvcVolumeSnapshotContentName = *vs.Status.BoundVolumeSnapshotContentName
-						readyVolumeSnapshot = true
-						break
+				} else {
+					for event := range volumeSnapshotWatcher.ResultChan() {
+						vs, ok := event.Object.(*volumesnapshotv1.VolumeSnapshot)
+						if !ok {
+							log.Errorf("unexpected type assertion %T", event.Object)
+							continue
+						}
+
+						if vs != nil && vs.Status != nil && vs.Status.ReadyToUse != nil && *vs.Status.ReadyToUse && vs.Status.BoundVolumeSnapshotContentName != nil {
+							pvcVolumeSnapshotContentName = *vs.Status.BoundVolumeSnapshotContentName
+							readyVolumeSnapshot = true
+							break
+						}
 					}
 
-					err = xerrors.Errorf("%s timed out while waiting for volume snapshot to get ready", m.manager.Config.Timeouts.ContentFinalization.String())
-					log.Error(err.Error())
-					return nil, err
+					// stop the volume snapshot retry watcher
+					volumeSnapshotWatcher.Stop()
 				}
 
 				hist, err := m.manager.metrics.volumeSnapshotTimeHistVec.GetMetricWithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel])
