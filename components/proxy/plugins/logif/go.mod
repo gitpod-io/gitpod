@@ -8,7 +8,6 @@ require (
 	github.com/PaesslerAG/gval v1.1.2
 	github.com/buger/jsonparser v1.1.1
 	github.com/caddyserver/caddy/v2 v2.5.2
-	github.com/gitpod-io/gitpod/proxy/plugins/jsonselect v0.0.0-00010101000000-000000000000
 	go.uber.org/zap v1.21.0
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 )

@@ -6,21 +6,6 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/fatih/structtag v1.2.0
-	github.com/gitpod-io/gitpod/agent-smith v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/blobserve v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/ide-metrics-api v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/ide-service-api v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/image-builder/api v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/openvsx-proxy v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/public-api v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/registry-facade/api v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/usage v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/ws-daemon v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/ws-daemon/api v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/ws-proxy v0.0.0-00010101000000-000000000000
 	github.com/go-playground/validator/v10 v10.9.0
 	github.com/google/go-cmp v0.5.8
 	github.com/jetstack/cert-manager v1.5.0
@@ -105,9 +90,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.2 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/fvbommel/sortorder v1.0.1 // indirect
-	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000 // indirect
-	github.com/gitpod-io/gitpod/registry-facade v0.0.0-00010101000000-000000000000 // indirect
-	github.com/gitpod-io/gitpod/usage-api v0.0.0-00010101000000-000000000000 // indirect
+
 	github.com/gitpod-io/golang-crypto v0.0.0-20220823040820-b59f56dfbab3 // indirect
 	github.com/go-errors/errors v1.0.1 // indirect
 	github.com/go-gorp/gorp/v3 v3.0.2 // indirect
@@ -321,95 +304,3 @@ require (
 	sigs.k8s.io/kustomize/kyaml v0.13.6 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 )
-
-replace github.com/gitpod-io/gitpod/image-builder => ../components/image-builder-mk3 // leeway
-
-replace github.com/gitpod-io/gitpod/agent-smith => ../../components/ee/agent-smith // leeway
-
-replace github.com/gitpod-io/gitpod/blobserve => ../../components/blobserve // leeway
-
-replace github.com/gitpod-io/gitpod/common-go => ../../components/common-go // leeway
-
-replace github.com/gitpod-io/gitpod/content-service => ../../components/content-service // leeway
-
-replace github.com/gitpod-io/gitpod/content-service/api => ../../components/content-service-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/gitpod-protocol => ../../components/gitpod-protocol/go // leeway
-
-replace github.com/gitpod-io/gitpod/ide-metrics-api => ../../components/ide-metrics-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/ide-service-api => ../../components/ide-service-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/image-builder/api => ../../components/image-builder-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/openvsx-proxy => ../../components/openvsx-proxy // leeway
-
-replace github.com/gitpod-io/gitpod/public-api => ../../components/public-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/registry-facade => ../../components/registry-facade // leeway
-
-replace github.com/gitpod-io/gitpod/registry-facade/api => ../../components/registry-facade-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/supervisor/api => ../../components/supervisor-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/usage => ../../components/usage // leeway
-
-replace github.com/gitpod-io/gitpod/usage-api => ../../components/usage-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/ws-daemon => ../../components/ws-daemon // leeway
-
-replace github.com/gitpod-io/gitpod/ws-daemon/api => ../../components/ws-daemon-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/ws-manager/api => ../../components/ws-manager-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/ws-proxy => ../../components/ws-proxy // leeway
-
-replace k8s.io/api => k8s.io/api v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/apimachinery => k8s.io/apimachinery v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/apiserver => k8s.io/apiserver v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/cli-runtime => k8s.io/cli-runtime v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/client-go => k8s.io/client-go v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/cloud-provider => k8s.io/cloud-provider v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/code-generator => k8s.io/code-generator v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/component-base => k8s.io/component-base v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/cri-api => k8s.io/cri-api v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/kube-proxy => k8s.io/kube-proxy v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/kubelet => k8s.io/kubelet v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/metrics => k8s.io/metrics v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/component-helpers => k8s.io/component-helpers v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/controller-manager => k8s.io/controller-manager v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/kubectl => k8s.io/kubectl v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/mount-utils => k8s.io/mount-utils v0.24.4 // leeway indirect from components/common-go:lib
-
-replace k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.24.4 // leeway indirect from components/common-go:lib

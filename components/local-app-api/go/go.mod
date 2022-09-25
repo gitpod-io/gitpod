@@ -3,7 +3,6 @@ module github.com/gitpod-io/gitpod/local-app/api
 go 1.18
 
 require (
-	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.45.0
 	google.golang.org/protobuf v1.28.0
 )
@@ -16,5 +15,3 @@ require (
 	golang.org/x/text v0.3.5 // indirect
 	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced // indirect
 )
-
-replace github.com/gitpod-io/gitpod/supervisor/api => ../../supervisor-api/go // leeway
