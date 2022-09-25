@@ -370,6 +370,18 @@ func (v version) BuildFromEnvvars(in interface{}) error {
 		}
 	}
 
+	if telemetryValue := envvars.Distribution; telemetryValue != "" {
+		log.Infof("Setting deployment platform: %s", telemetryValue)
+		if cfg.Experimental == nil {
+			cfg.Experimental = &experimental.Config{}
+		}
+
+		if cfg.Experimental.Telemetry == nil {
+			cfg.Experimental.Telemetry = &experimental.TelemetryConfig{}
+		}
+		cfg.Experimental.Telemetry.Data.Platform = telemetryValue
+	}
+
 	cfg.Components = nil
 	cfg.Customization = nil
 	if envvars.AdvancedModeEnabled {
@@ -403,28 +415,17 @@ func (v version) BuildFromEnvvars(in interface{}) error {
 
 			cfg.Customization = customization.Customization
 		}
+
+		if cfgPatch := envvars.ConfigPatch; cfgPatch != "" {
+			log.Warnf("Applying patch customization - this may overwrite all settings: %+v", cfgPatch)
+
+			err := yaml.Unmarshal([]byte(cfgPatch), &cfg)
+			if err != nil {
+				return err
+			}
+		}
 	} else {
 		log.Info("No advanced configuration applied")
-	}
-
-	if telemetryValue := envvars.Distribution; telemetryValue != "" {
-		if cfg.Experimental == nil {
-			cfg.Experimental = &experimental.Config{}
-		}
-
-		if cfg.Experimental.Telemetry == nil {
-			cfg.Experimental.Telemetry = &experimental.TelemetryConfig{}
-		}
-		cfg.Experimental.Telemetry.Data.Platform = telemetryValue
-	}
-
-	if cfgPatch := envvars.ConfigPatch; cfgPatch != "" {
-		log.Warnf("Applying patch customization - this may overwrite all settings: %+v", cfgPatch)
-
-		err := yaml.Unmarshal([]byte(cfgPatch), &cfg)
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil
