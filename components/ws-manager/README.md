@@ -1,4 +1,4 @@
-# Introduction to ws-manager
+# Introduction to ws-manager does it push
 
 The workspace manager (aka `wsman`) controls workspaces and reports their state. It serves as our facade towards Kubernetes.
 
