@@ -8,14 +8,15 @@ RUN go get -u github.com/go-delve/delve/cmd/dlv
 
 FROM alpine:3.16 as dl
 WORKDIR /dl
-RUN apk add --no-cache curl \
-  && curl -OL https://github.com/opencontainers/runc/releases/download/v1.1.3/runc.amd64 \
-  && chmod +x runc.amd64
+RUN apk add --no-cache curl file \
+  && curl -OsSL https://github.com/opencontainers/runc/releases/download/v1.1.4/runc.amd64 \
+  && chmod +x runc.amd64 \
+  && if ! file runc.amd64 | grep -iq "ELF 64-bit LSB executable"; then echo "runc.amd64 is not a binary file"; exit 1;fi
 
 FROM ubuntu:22.04
 
 ## Installing coreutils is super important here as otherwise the loopback device creation fails!
-ARG CLOUD_SDK_VERSION=390.0.0
+ARG CLOUD_SDK_VERSION=402.0.0
 ENV CLOUD_SDK_VERSION=$CLOUD_SDK_VERSION
 ENV CLOUDSDK_CORE_DISABLE_PROMPTS=1
 
