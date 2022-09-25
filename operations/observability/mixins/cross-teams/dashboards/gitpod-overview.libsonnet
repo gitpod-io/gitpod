@@ -135,6 +135,60 @@ local wsNodeLoadAverageGraph =
   .addSeriesOverride({ alias: 'Node Max Load Avg', color: '#FF0000' })
 ;
 
+local wsNodeCpuPSIGraph =
+  graphPanel.new(
+    datasource='$datasource',
+    title="$cluster: Workspace node's cpu pressure stall information",
+    format='none',
+    fill=1,
+    fillGradient=5,
+    min=0,
+    max=1,
+    repeat='cluster',
+  )
+  .addTarget(prometheus.target(
+    |||
+      topk(5, rate(node_pressure_cpu_waiting_seconds_total{%(clusterLabel)s=~"$cluster", node=~"workspace.*"}[10s]))
+    ||| % _config, legendFormat='{{node}}'
+  ))
+;
+
+local wsNodeMemoryPSIGraph =
+  graphPanel.new(
+    datasource='$datasource',
+    title="$cluster: Workspace node's memory pressure stall information",
+    format='none',
+    fill=1,
+    fillGradient=5,
+    min=0,
+    max=1,
+    repeat='cluster',
+  )
+  .addTarget(prometheus.target(
+    |||
+      topk(5, rate(node_pressure_memory_waiting_seconds_total{%(clusterLabel)s=~"$cluster", node=~"workspace.*"}[10s]))
+    ||| % _config, legendFormat='{{node}}'
+  ))
+;
+
+local wsNodeIOPSIGraph =
+  graphPanel.new(
+    datasource='$datasource',
+    title="$cluster: Workspace node's IO pressure stall information",
+    format='none',
+    fill=1,
+    fillGradient=5,
+    min=0,
+    max=1,
+    repeat='cluster',
+  )
+  .addTarget(prometheus.target(
+    |||
+      topk(5, rate(node_pressure_io_waiting_seconds_total{%(clusterLabel)s=~"$cluster", node=~"workspace.*"}[10s]))
+    ||| % _config, legendFormat='{{node}}'
+  ))
+;
+
 local workspaceStartupTimeHeatMap =
   heatmapPanel.new(
     title='$cluster: Regular Workspace Startup time',
@@ -248,6 +302,18 @@ local clusterScaleSizeGraph =
       .addRow(
         row.new("Workspace node's normalized Load Average")
         .addPanel(wsNodeLoadAverageGraph)
+      )
+      .addRow(
+        row.new("Workspace node's cpu pressure stall information")
+        .addPanel(wsNodeCpuPSIGraph)
+      )
+      .addRow(
+        row.new("Workspace node's memory pressure stall information")
+        .addPanel(wsNodeMemoryPSIGraph)
+      )
+      .addRow(
+        row.new("Workspace node's IO pressure stall information")
+        .addPanel(wsNodeIOPSIGraph)
       )
       .addRow(
         row.new('Workspace Startup time')
