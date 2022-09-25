@@ -22,6 +22,8 @@ import (
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
+
+	volumesnapshotclientv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned"
 )
 
 // This file contains test infrastructure for this package. No function in here is meant for consumption outside of tests.
@@ -96,6 +98,12 @@ func forTestingOnlyGetManager(t *testing.T, objects ...client.Object) *Manager {
 		return nil
 	}
 
+	volumesnapshotclientset, err := volumesnapshotclientv1.NewForConfig(cfg)
+	if err != nil {
+		t.Errorf("cannt create test environment: %v", err)
+		return nil
+	}
+
 	ctrlClient, err := client.New(cfg, client.Options{Scheme: scheme})
 	if err != nil {
 		t.Errorf("cannot create test environment: %v", err)
@@ -122,7 +130,7 @@ func forTestingOnlyGetManager(t *testing.T, objects ...client.Object) *Manager {
 		}
 	}
 
-	m, err := New(config, ctrlClient, clientset, &layer.Provider{Storage: &storage.PresignedNoopStorage{}})
+	m, err := New(config, ctrlClient, clientset, volumesnapshotclientset, &layer.Provider{Storage: &storage.PresignedNoopStorage{}})
 	if err != nil {
 		t.Fatalf("cannot create manager: %s", err.Error())
 	}
