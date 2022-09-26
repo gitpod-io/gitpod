@@ -12,6 +12,7 @@ import (
 
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -31,7 +32,6 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 
 	switch len(pods.Items) {
 	case 0:
-		workspace.Status.Conditions.Deployed = false
 		if workspace.Status.Phase != workspacev1.WorkspacePhasePending {
 			workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
 		}
@@ -40,11 +40,21 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 		// continue below
 	default:
 		// This is exceptional - not sure what to do here. Probably fail the pod
-		workspace.Status.Conditions.Failed = "multiple pods exists - this should never happen"
+		workspace.Status.Conditions = addUniqueCondition(workspace.Status.Conditions, metav1.Condition{
+			Type:               string(workspacev1.WorkspaceConditionFailed),
+			Status:             metav1.ConditionTrue,
+			LastTransitionTime: metav1.Now(),
+			Message:            "multiple pods exists - this should never happen",
+		})
+
 		return nil
 	}
 
-	workspace.Status.Conditions.Deployed = true
+	workspace.Status.Conditions = addUniqueCondition(workspace.Status.Conditions, metav1.Condition{
+		Type:               string(workspacev1.WorkspaceConditionDeployed),
+		Status:             metav1.ConditionTrue,
+		LastTransitionTime: metav1.Now(),
+	})
 
 	pod := &pods.Items[0]
 
@@ -68,9 +78,17 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 	if phase != nil {
 		workspace.Status.Phase = *phase
 	}
-	if workspace.Status.Conditions.Failed == "" {
+
+	if !conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) {
 		// workspaces can fail only once - once there is a failed condition set, stick with it
-		workspace.Status.Conditions.Failed = failure
+		// TODO(cw): don't re-append if condition is already present
+		workspace.Status.Conditions = append(workspace.Status.Conditions, metav1.Condition{
+			Type:               string(workspacev1.WorkspaceConditionFailed),
+			Status:             metav1.ConditionTrue,
+			LastTransitionTime: metav1.Now(),
+			Message:            failure,
+		})
+
 	}
 
 	switch {
@@ -85,7 +103,8 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 			}
 		}
 		if hasFinalizer {
-			if workspace.Status.Disposal != nil && workspace.Status.Disposal.BackupComplete {
+			// TODO(cw): if the condition isn't present or not true, we should re-trigger the reconiliation
+			if conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) {
 				workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
 			}
 		} else {
