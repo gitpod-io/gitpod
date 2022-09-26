@@ -43,8 +43,8 @@ write_files:
       cat <<EOF >> /etc/containerd/config.toml
 
       [plugins."io.containerd.grpc.v1.cri".registry.configs."registry-1.docker.io".auth]
-        username = "${dockerhubUser}"
-        password = "${dockerhubPasswd}"
+        username = "${dockerhub_user}"
+        password = "${dockerhub_passwd}"
       EOF
 
       sudo systemctl restart containerd.service

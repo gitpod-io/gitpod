@@ -33,6 +33,16 @@ variable "vm_image" {
   description = "The image name"
 }
 
+variable "dockerhub_user" {
+  type = string
+  #  default = "/mnt/secrets/harvester-k3s-dockerhub-pull-account/username"
+}
+
+variable "dockerhub_password" {
+  type = string
+  #  default = "/mnt/secrets/harvester-k3s-dockerhub-pull-account/password"
+}
+
 variable "vm_storage_class" {
   type        = string
   default     = "longhorn-gitpod-k3s-202209251218-onereplica"
