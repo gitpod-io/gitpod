@@ -21,45 +21,16 @@ resource "aws_s3_bucket_versioning" "storage" {
   }
 }
 
-data "aws_iam_policy_document" "s3_policy" {
-  count = var.create_external_storage ? 1 : 0
-  statement {
-    actions   = [
-      "s3:PutObject",
-      "s3:ListMultipartUploadParts",
-      "s3:GetObject",
-      "s3:DeleteObject",
-      "s3:AbortMultipartUpload"
-    ]
-    resources = ["${aws_s3_bucket.gitpod-storage[count.index].arn}/*"]
-    effect    = "Allow"
-  }
-      statement {
-    actions   = ["s3:ListBucket",
-                "s3:GetBucketLocation",
-                "s3:ListBucketMultipartUploads"]
-    resources = [aws_s3_bucket.gitpod-storage[count.index].arn]
-    effect    = "Allow"
-  }
-}
-
-resource "aws_iam_policy" "policy" {
-  count       = var.create_external_storage ? 1 : 0
-  name        = "policy-${var.cluster_name}"
-  description = "Gitpod ${var.cluster_name} object storage bucket policy"
-  policy      = data.aws_iam_policy_document.s3_policy[0].json
-}
-
 resource "aws_iam_user" "bucket_storage" {
   count = var.create_external_storage ? 1 : 0
   name  = "user-${var.cluster_name}"
 
 }
 
-resource "aws_iam_user_policy_attachment" "attachment" {
+resource "aws_iam_user_policy_attachment" "full_access_attachment" {
   count      = var.create_external_storage ? 1 : 0
   user       = aws_iam_user.bucket_storage[0].name
-  policy_arn = aws_iam_policy.policy[0].arn
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
 resource "aws_iam_access_key" "bucket_storage_user" {
@@ -92,35 +63,6 @@ resource "aws_s3_bucket_versioning" "registry" {
   }
 }
 
-data "aws_iam_policy_document" "s3_policy_registry" {
-  count = var.create_external_storage_for_registry_backend ? 1 : 0
-  statement {
-    actions   = [
-      "s3:PutObject",
-      "s3:ListMultipartUploadParts",
-      "s3:GetObject",
-      "s3:DeleteObject",
-      "s3:AbortMultipartUpload"
-    ]
-    resources = ["${aws_s3_bucket.gitpod-registry-backend[count.index].arn}/*"]
-    effect    = "Allow"
-  }
-  statement {
-    actions   = ["s3:ListBucket",
-                "s3:GetBucketLocation",
-                "s3:ListBucketMultipartUploads"]
-    resources = [aws_s3_bucket.gitpod-registry-backend[count.index].arn]
-    effect    = "Allow"
-  }
-}
-
-resource "aws_iam_policy" "policy_registry" {
-  count       = var.create_external_storage_for_registry_backend ? 1 : 0
-  name        = "registry-policy-${var.cluster_name}"
-  description = "Gitpod ${var.cluster_name} registry backend storage bucket policy"
-  policy      = data.aws_iam_policy_document.s3_policy_registry[count.index].json
-}
-
 resource "aws_iam_user" "bucket_registry" {
   count = var.create_external_storage_for_registry_backend ? 1 : 0
   name  = "registry-user-${var.cluster_name}"
@@ -130,7 +72,7 @@ resource "aws_iam_user" "bucket_registry" {
 resource "aws_iam_user_policy_attachment" "registry_attachment" {
   count      = var.create_external_storage_for_registry_backend ? 1 : 0
   user       = aws_iam_user.bucket_registry[count.index].name
-  policy_arn = aws_iam_policy.policy_registry[count.index].arn
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
 resource "aws_iam_access_key" "bucket_registry_user" {
