@@ -9,5 +9,13 @@ data:
       "usageProductPriceIds": {
         "EUR": "price_1LiId7GadRXm50o3OayAS2y4",
         "USD": "price_1LiIdbGadRXm50o3ylg5S44r"
+      },
+      "individualUsagePriceIds": {
+        "EUR": "price_1LmFcFGadRXm50o3XUrEuajK",
+        "USD": "price_1LmFclGadRXm50o3mWTkir9g"
+      },
+      "teamUsagePriceIds": {
+        "EUR": "price_1LiId7GadRXm50o3OayAS2y4",
+        "USD": "price_1LiIdbGadRXm50o3ylg5S44r"
       }
     }
