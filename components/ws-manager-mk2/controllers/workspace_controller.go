@@ -24,7 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
-	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -198,7 +197,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 
 	switch {
 	// if there is a pod, and it's failed, delete it
-	case workspace.Status.Conditions.Failed != "" && !isPodBeingDeleted(pod):
+	case conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) && !isPodBeingDeleted(pod):
 		err := r.Client.Delete(ctx, pod)
 		if errors.IsNotFound(err) {
 			// pod is gone - nothing to do here
@@ -207,7 +206,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		}
 
 	// if the pod was stopped by request, delete it
-	case pointer.BoolDeref(workspace.Status.Conditions.StoppedByRequest, false) && !isPodBeingDeleted(pod):
+	case conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionStoppedByRequest)) && !isPodBeingDeleted(pod):
 		err := r.Client.Delete(ctx, pod)
 		if errors.IsNotFound(err) {
 			// pod is gone - nothing to do here
@@ -241,7 +240,12 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 					return err
 				}
 
-				ws.Status.Conditions.Failed = msg
+				// TODO(cw): update if the field exists already
+				ws.Status.Conditions = addUniqueCondition(ws.Status.Conditions, metav1.Condition{
+					Type:    string(workspacev1.WorkspaceConditionFailed),
+					Status:  metav1.ConditionTrue,
+					Message: msg,
+				})
 
 				return r.Status().Update(ctx, &ws)
 			})
@@ -299,183 +303,13 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 	return ctrl.Result{}, nil
 }
 
-// finalizeWorkspaceContent talks to a ws-daemon daemon on the node of the pod and creates a backup of the workspace content.
-func (r *WorkspaceReconciler) finalizeWorkspaceContent(ctx context.Context, workspace *workspacev1.Workspace) {
-	log := log.FromContext(ctx)
-
-	var disposalStatus *workspacev1.WorkspaceDisposalStatus
-	defer func() {
-		if disposalStatus == nil {
-			return
-		}
-
-		err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-			var ws workspacev1.Workspace
-			err := r.Client.Get(ctx, types.NamespacedName{Namespace: r.Config.Namespace, Name: workspace.Name}, &ws)
-			if err != nil {
-				return err
-			}
-
-			ws.Status.Disposal = disposalStatus
-			return r.Client.Update(ctx, &ws)
-		})
-		if err != nil {
-			log.Error(err, "was unable to update pod's disposal state - this will break someone's experience")
-		}
-	}()
-
-	doBackup := workspace.Status.Conditions.EverReady && !workspace.Status.Headless
-	doBackupLogs := workspace.Spec.Type == workspacev1.WorkspaceTypePrebuild
-	doSnapshot := workspace.Spec.Type == workspacev1.WorkspaceTypePrebuild
-	doFinalize := func() (worked bool, gitStatus *workspacev1.GitStatus, err error) {
-		r.finalizerMapLock.Lock()
-		_, alreadyFinalizing := r.finalizerMap[workspace.Name]
-		if alreadyFinalizing {
-			r.finalizerMapLock.Unlock()
-			return false, nil, nil
-		}
-
-		var hostIP string
-		if workspace.Status.Runtime != nil {
-			hostIP = workspace.Status.Runtime.HostIP
-		}
-
-		// Maybe the workspace never made it to a phase where we actually initialized a workspace.
-		// Assuming that once we've had a nodeName we've spoken to ws-daemon it's safe to assume that if
-		// we don't have a nodeName we don't need to dipose the workspace.
-		// Obviously that only holds if we do not require a backup. If we do require one, we want to
-		// fail as loud as we can in this case.
-		if !doBackup && !doSnapshot && hostIP == "" {
-			// we don't need a backup and have never spoken to ws-daemon: we're good here.
-			r.finalizerMapLock.Unlock()
-			return true, nil, nil
-		}
-
-		// we're not yet finalizing - start the process
-		snc, err := r.connectToWorkspaceDaemon(ctx, workspace)
-		if err != nil {
-			r.finalizerMapLock.Unlock()
-			return true, nil, err
-		}
-
-		ctx, cancelReq := context.WithTimeout(ctx, time.Duration(r.Config.Timeouts.ContentFinalization))
-		r.finalizerMap[workspace.Name] = cancelReq
-		r.finalizerMapLock.Unlock()
-		defer func() {
-			// we're done disposing - remove from the finalizerMap
-			r.finalizerMapLock.Lock()
-			delete(r.finalizerMap, workspace.Name)
-			r.finalizerMapLock.Unlock()
-		}()
-
-		if doSnapshot {
-			// if this is a prebuild take a snapshot and mark the workspace
-			var res *wsdaemon.TakeSnapshotResponse
-			res, err = snc.TakeSnapshot(ctx, &wsdaemon.TakeSnapshotRequest{Id: workspace.Name})
-			if err != nil {
-				log.Error(err, "cannot take snapshot")
-				err = xerrors.Errorf("cannot take snapshot: %v", err)
-			}
-
-			if res != nil {
-				r.modifyWorkspaceStatus(ctx, workspace.Name, func(status *workspacev1.WorkspaceStatus) error {
-					results := status.Results
-					if res == nil {
-						results = &workspacev1.WorkspaceResults{}
-					}
-					results.Snapshot = res.Url
-					status.Results = results
-					return nil
-				})
-				if err != nil {
-					log.Error(err, "cannot mark headless workspace with snapshot - that's one prebuild lost")
-					err = xerrors.Errorf("cannot remember snapshot: %v", err)
-				}
-			}
-		}
-
-		// DiposeWorkspace will "degenerate" to a simple wait if the finalization/disposal process is already running.
-		// This is unlike the initialization process where we wait for things to finish in a later phase.
-		resp, err := snc.DisposeWorkspace(ctx, &wsdaemon.DisposeWorkspaceRequest{
-			Id:         workspace.Name,
-			Backup:     doBackup,
-			BackupLogs: doBackupLogs,
-		})
-		if resp != nil {
-			gitStatus = gitStatusfromContentServiceAPI(resp.GitStatus)
-		}
-		return true, gitStatus, err
-	}
-
-	var (
-		dataloss    bool
-		backupError error
-		gitStatus   *workspacev1.GitStatus
-	)
-	for i := 0; i < wsdaemonMaxAttempts; i++ {
-		didSometing, gs, err := doFinalize()
-		if !didSometing {
-			// someone else is managing finalization process ... we don't have to bother
-			return
-		}
-
-		// by default we assume the worst case scenario. If things aren't just as bad, we'll tune it down below.
-		dataloss = true
-		backupError = err
-		gitStatus = gs
-
-		// At this point one of three things may have happened:
-		//   1. the context deadline was exceeded, e.g. due to misconfiguration (not enough time to upload) or network issues. We'll try again.
-		//   2. the service was unavailable, in which case we'll try again.
-		//   3. none of the above, in which case we'll give up
-		st, isGRPCError := status.FromError(err)
-		if !isGRPCError {
-			break
-		}
-
-		if (err != nil && strings.Contains(err.Error(), context.DeadlineExceeded.Error())) ||
-			st.Code() == codes.Unavailable ||
-			st.Code() == codes.Canceled {
-			// service is currently unavailable or we did not finish in time - let's wait some time and try again
-			time.Sleep(wsdaemonRetryInterval)
-			continue
-		}
-
-		// service was available, we've tried to do the work and failed. Tell the world about it.
-		if (doBackup || doSnapshot) && isGRPCError {
-			switch st.Code() {
-			case codes.DataLoss:
-				// ws-daemon told us that it's lost data
-				dataloss = true
-			case codes.FailedPrecondition:
-				// the workspace content was not in the state we thought it was
-				dataloss = true
-			}
-		}
-		break
-	}
-
-	disposalStatus = &workspacev1.WorkspaceDisposalStatus{
-		BackupComplete: true,
-		GitStatus:      gitStatus,
-	}
-	if backupError != nil {
-		if dataloss {
-			disposalStatus.BackupFailure = backupError.Error()
-		} else {
-			// internal errors make no difference to the user experience. The backup still worked, we just messed up some
-			// state management or cleanup. No need to worry the user.
-			log.Error(backupError, "internal error while disposing workspace content")
+func conditionPresentAndTrue(cond []metav1.Condition, tpe string) bool {
+	for _, c := range cond {
+		if c.Type == tpe {
+			return c.Status == metav1.ConditionTrue
 		}
 	}
-	err := r.modifyWorkspaceStatus(ctx, workspace.Name, func(status *workspacev1.WorkspaceStatus) error {
-		status.Disposal = disposalStatus
-		log.V(1).Info("setting disposal status", "instanceID", workspace.Name, "status", *disposalStatus)
-		return nil
-	})
-	if err != nil {
-		log.Error(err, "cannot update workspace disposal status")
-	}
+	return false
 }
 
 // finalizeWorkspaceContent talks to a ws-daemon daemon on the node of the pod and creates a backup of the workspace content.
@@ -619,13 +453,13 @@ func (r *WorkspaceReconciler) finalizeWorkspaceContent(ctx context.Context, work
 		}
 	}
 	err := r.modifyWorkspaceStatus(ctx, workspace.Name, func(status *workspacev1.WorkspaceStatus) error {
-		status.Conditions = append(status.Conditions, metav1.Condition{
+		status.Conditions = addUniqueCondition(status.Conditions, metav1.Condition{
 			Type:               string(workspacev1.WorkspaceConditionBackupComplete),
 			Status:             metav1.ConditionTrue,
 			LastTransitionTime: metav1.Now(),
 		})
 		if backupFailure != "" {
-			status.Conditions = append(status.Conditions, metav1.Condition{
+			status.Conditions = addUniqueCondition(status.Conditions, metav1.Condition{
 				Type:               string(workspacev1.WorkspaceConditionBackupFailure),
 				Status:             metav1.ConditionTrue,
 				LastTransitionTime: metav1.Now(),
@@ -891,4 +725,15 @@ func checkWSDaemonEndpoint(namespace string, clientset client.Client) func(strin
 
 		return false
 	}
+}
+
+func addUniqueCondition(conds []metav1.Condition, cond metav1.Condition) []metav1.Condition {
+	for i, c := range conds {
+		if c.Type == cond.Type {
+			conds[i] = cond
+			return conds
+		}
+	}
+
+	return append(conds, cond)
 }

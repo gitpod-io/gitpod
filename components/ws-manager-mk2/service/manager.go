@@ -224,7 +224,11 @@ func (wsm *WorkspaceManagerServer) StopWorkspace(ctx context.Context, req *wsman
 	err := wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
 		// TODO(cw): stopping the workspace by modifying the status is nasty.
 		// 			 instead we should modify the spec or delete the workspace object.
-		ws.Status.Conditions.StoppedByRequest = pointer.Bool(true)
+		ws.Status.Conditions = append(ws.Status.Conditions, metav1.Condition{
+			Type:               string(workspacev1.WorkspaceConditionStoppedByRequest),
+			Status:             metav1.ConditionTrue,
+			LastTransitionTime: metav1.Now(),
+		})
 		return nil
 	})
 	if err != nil {
@@ -514,30 +518,11 @@ func extractWorkspaceStatus(ws *workspacev1.Workspace) *wsmanapi.WorkspaceStatus
 		phase = wsmanapi.WorkspacePhase_UNKNOWN
 	}
 
-	var snapshot string
-	if ws.Status.Results != nil {
-		snapshot = ws.Status.Results.Snapshot
-	}
-
-	var deployed wsmanapi.WorkspaceConditionBool
-	if ws.Status.Conditions.Deployed {
-		deployed = api.WorkspaceConditionBool_TRUE
-	} else {
-		deployed = api.WorkspaceConditionBool_FALSE
-	}
-
 	var firstUserActivity *timestamppb.Timestamp
-	if ws.Status.Conditions.FirstUserActivity != nil {
-		firstUserActivity = timestamppb.New(ws.Status.Conditions.FirstUserActivity.Time)
-	}
-
-	var stoppedByRequest wsmanapi.WorkspaceConditionBool
-	if ws.Status.Conditions.StoppedByRequest == nil {
-		stoppedByRequest = wsmanapi.WorkspaceConditionBool_EMPTY
-	} else if *ws.Status.Conditions.StoppedByRequest {
-		stoppedByRequest = wsmanapi.WorkspaceConditionBool_TRUE
-	} else {
-		stoppedByRequest = wsmanapi.WorkspaceConditionBool_FALSE
+	for _, c := range ws.Status.Conditions {
+		if c.Type == string(workspacev1.WorkspaceConditionUserActivity) {
+			firstUserActivity = timestamppb.New(c.LastTransitionTime.Time)
+		}
 	}
 
 	var runtime *wsmanapi.WorkspaceRuntimeInfo
@@ -580,13 +565,13 @@ func extractWorkspaceStatus(ws *workspacev1.Workspace) *wsmanapi.WorkspaceStatus
 		},
 		Phase: phase,
 		Conditions: &wsmanapi.WorkspaceConditions{
-			Failed:             ws.Status.Conditions.Failed,
-			Timeout:            ws.Status.Conditions.Timeout,
-			Snapshot:           snapshot,
-			Deployed:           deployed,
+			Failed:             getConditionMessageIfTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)),
+			Timeout:            getConditionMessageIfTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionTimeout)),
+			Snapshot:           ws.Status.Snapshot,
+			Deployed:           convertCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionDeployed)),
 			FirstUserActivity:  firstUserActivity,
-			HeadlessTaskFailed: ws.Status.Conditions.HeadlessTaskFailed,
-			StoppedByRequest:   stoppedByRequest,
+			HeadlessTaskFailed: getConditionMessageIfTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionsHeadlessTaskFailed)),
+			StoppedByRequest:   convertCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionStoppedByRequest)),
 		},
 		Runtime: runtime,
 		Auth: &wsmanapi.WorkspaceAuthentication{
@@ -595,6 +580,38 @@ func extractWorkspaceStatus(ws *workspacev1.Workspace) *wsmanapi.WorkspaceStatus
 		},
 	}
 	return res
+}
+
+func getConditionMessageIfTrue(conds []metav1.Condition, tpe string) string {
+	for _, c := range conds {
+		if c.Type == tpe && c.Status == metav1.ConditionTrue {
+			return c.Message
+		}
+	}
+	return ""
+}
+
+func convertCondition(conds []metav1.Condition, tpe string) wsmanapi.WorkspaceConditionBool {
+	var res *metav1.Condition
+	for _, c := range conds {
+		if c.Type == tpe {
+			res = &c
+			break
+		}
+	}
+
+	if res == nil {
+		return wsmanapi.WorkspaceConditionBool_EMPTY
+	}
+
+	switch res.Status {
+	case metav1.ConditionTrue:
+		return wsmanapi.WorkspaceConditionBool_TRUE
+	case metav1.ConditionFalse:
+		return wsmanapi.WorkspaceConditionBool_FALSE
+	default:
+		return wsmanapi.WorkspaceConditionBool_EMPTY
+	}
 }
 
 func matchesMetadataAnnotations(ws *workspacev1.Workspace, filter *wsmanapi.MetadataFilter) bool {

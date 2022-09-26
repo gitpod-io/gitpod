@@ -7,7 +7,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
+    controller-gen.kubebuilder.io/version: v0.10.0
   creationTimestamp: null
   name: workspaces.workspace.gitpod.io
 spec:
@@ -42,6 +42,10 @@ spec:
               admission:
                 properties:
                   level:
+                    default: Owner
+                    enum:
+                    - Owner
+                    - Everyone
                     type: string
                 required:
                 - level
@@ -88,6 +92,7 @@ spec:
                           required:
                           - key
                           type: object
+                          x-kubernetes-map-type: atomic
                         fieldRef:
                           description: 'Selects a field of the pod: supports metadata.name,
                             metadata.namespace, `metadata.labels[''<KEY>'']`, `metadata.annotations[''<KEY>'']`,
@@ -105,6 +110,7 @@ spec:
                           required:
                           - fieldPath
                           type: object
+                          x-kubernetes-map-type: atomic
                         resourceFieldRef:
                           description: 'Selects a resource of the container: only
                             resources limits and requests (limits.cpu, limits.memory,
@@ -129,6 +135,7 @@ spec:
                           required:
                           - resource
                           type: object
+                          x-kubernetes-map-type: atomic
                         secretKeyRef:
                           description: Selects a key of a secret in the pod's namespace
                           properties:
@@ -147,6 +154,7 @@ spec:
                           required:
                           - key
                           type: object
+                          x-kubernetes-map-type: atomic
                       type: object
                   required:
                   - name
@@ -210,11 +218,16 @@ spec:
                       format: int32
                       type: integer
                     visibility:
+                      default: Owner
+                      enum:
+                      - Owner
+                      - Everyone
                       type: string
                   required:
                   - port
                   - visibility
                   type: object
+                minItems: 0
                 type: array
               timeout:
                 properties:
@@ -235,7 +248,7 @@ spec:
             - image
             - initializer
             - ownership
-            - timeout
+            - ports
             - type
             - workspaceLocation
             type: object
@@ -243,107 +256,131 @@ spec:
             description: WorkspaceStatus defines the observed state of Workspace
             properties:
               conditions:
+                items:
+                  description: "Condition contains details for one aspect of the current
+                    state of this API Resource. --- This struct is intended for direct
+                    use as an array at the field path .status.conditions.  For example,
+                    type FooStatus struct{ // Represents the observations of a foo's
+                    current state. // Known .status.conditions.type are: \"Available\",
+                    \"Progressing\", and \"Degraded\" // +patchMergeKey=type // +patchStrategy=merge
+                    // +listType=map // +listMapKey=type Conditions []metav1.Condition
+                    `json:\"conditions,omitempty\" patchStrategy:\"merge\" patchMergeKey:\"type\"
+                    protobuf:\"bytes,1,rep,name=conditions\"` \n // other fields }"
+                  properties:
+                    lastTransitionTime:
+                      description: lastTransitionTime is the last time the condition
+                        transitioned from one status to another. This should be when
+                        the underlying condition changed.  If that is not known, then
+                        using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: message is a human readable message indicating
+                        details about the transition. This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: observedGeneration represents the .metadata.generation
+                        that the condition was set based upon. For instance, if .metadata.generation
+                        is currently 12, but the .status.conditions[x].observedGeneration
+                        is 9, the condition is out of date with respect to the current
+                        state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: reason contains a programmatic identifier indicating
+                        the reason for the condition's last transition. Producers
+                        of specific condition types may define expected values and
+                        meanings for this field, and whether the values are considered
+                        a guaranteed API. The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                        --- Many .condition.type values are consistent across resources
+                        like Available, but because arbitrary conditions can be useful
+                        (see .node.status.conditions), the ability to deconflict is
+                        important. The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              git:
                 properties:
-                  deployed:
-                    description: Deployed indicates if a workspace pod is currently
-                      deployed. If this condition is false, there is no means for
-                      the user to alter the workspace content.
-                    type: boolean
-                  everReady:
-                    description: EverReady becomes true if the workspace was ever
-                      ready to be used
-                    type: boolean
-                  failed:
-                    description: Failed contains the reason the workspace failed to
-                      operate. If this field is empty, the workspace has not failed.
+                  branch:
+                    description: branch is branch we're currently on
                     type: string
-                  firstUserActivity:
-                    description: FirstUserActivity is the time when MarkActive was
-                      first called on the workspace
-                    format: date-time
+                  latestCommit:
+                    description: latest_commit is the most recent commit on the current
+                      branch
                     type: string
-                  headlessTaskFailed:
-                    description: HeadlessTaskFailed indicates that a headless workspace
-                      task failed
-                    type: string
-                  stoppedByRequest:
-                    description: StoppedByRequest is true if the workspace was stopped
-                      using a StopWorkspace call
-                    type: boolean
-                  timeout:
-                    description: Timeout contains the reason the workspace has timed
-                      out. If this field is empty, the workspace has not timed out.
-                    type: string
-                type: object
-              disposal:
-                description: workspaceDisposalStatus indicates the status of the workspace
-                  diposal
-                properties:
-                  backupComplete:
-                    type: boolean
-                  backupFailure:
-                    type: string
-                  git:
-                    properties:
-                      branch:
-                        description: branch is branch we're currently on
-                        type: string
-                      latest_commit:
-                        description: latest_commit is the most recent commit on the
-                          current branch
-                        type: string
-                      total_uncommited_files:
-                        description: the total number of uncommited files
-                        format: int64
-                        type: integer
-                      total_unpushed_commits:
-                        description: the total number of unpushed changes
-                        format: int64
-                        type: integer
-                      total_untracked_files:
-                        description: the total number of untracked files
-                        format: int64
-                        type: integer
-                      uncommited_files:
-                        description: uncommited_files is the number of uncommitted
-                          files, possibly truncated
-                        items:
-                          type: string
-                        type: array
-                      unpushed_commits:
-                        description: unpushed_commits is the number of unpushed changes
-                          in the workspace, possibly truncated
-                        items:
-                          type: string
-                        type: array
-                      untracked_files:
-                        description: untracked_files is the number of untracked files
-                          in the workspace, possibly truncated
-                        items:
-                          type: string
-                        type: array
-                    type: object
+                  totalUncommitedFiles:
+                    description: the total number of uncommited files
+                    format: int64
+                    type: integer
+                  totalUnpushedCommits:
+                    description: the total number of unpushed changes
+                    format: int64
+                    type: integer
+                  totalUntrackedFiles:
+                    description: the total number of untracked files
+                    format: int64
+                    type: integer
+                  uncommitedFiles:
+                    description: uncommited_files is the number of uncommitted files,
+                      possibly truncated
+                    items:
+                      type: string
+                    type: array
+                  unpushedCommits:
+                    description: unpushed_commits is the number of unpushed changes
+                      in the workspace, possibly truncated
+                    items:
+                      type: string
+                    type: array
+                  untrackedFiles:
+                    description: untracked_files is the number of untracked files
+                      in the workspace, possibly truncated
+                    items:
+                      type: string
+                    type: array
                 type: object
               headless:
                 type: boolean
               ownerToken:
                 type: string
               phase:
+                default: Unknown
+                enum:
+                - Unknown
+                - Pending
+                - Imagebuild
+                - Creating
+                - Initializing
+                - Running
+                - Stopping
+                - Stopped
                 type: string
               podStarts:
                 type: integer
-              results:
-                properties:
-                  headlessTaskFailed:
-                    description: HeadlessTaskFailed indicates that a headless workspace
-                      task failed
-                    type: string
-                  snapshot:
-                    description: Snapshot contains a snapshot URL if a snapshot was
-                      produced prior to shutting the workspace down. This condition
-                      is only used for headless workspaces.
-                    type: string
-                type: object
               runtime:
                 properties:
                   hostIP:
@@ -355,6 +392,11 @@ spec:
                   podName:
                     type: string
                 type: object
+              snapshot:
+                description: Snapshot contains a snapshot URL if a snapshot was produced
+                  prior to shutting the workspace down. This condition is only used
+                  for headless workspaces.
+                type: string
               url:
                 type: string
             required:
@@ -366,9 +408,3 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []

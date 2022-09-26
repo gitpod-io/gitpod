@@ -1624,6 +1624,9 @@ data:
           "wsManager": {
             "version": "test"
           },
+          "wsManagerMk2": {
+            "version": "test"
+          },
           "wsManagerBridge": {
             "version": "test"
           },
@@ -6319,6 +6322,14 @@ rules:
   - ""
   resources:
   - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - workspace.gitpod.io
+  resources:
+  - workspaces
   verbs:
   - get
   - list
