@@ -146,11 +146,11 @@ add-ns-record: check-env-cloud
 	terraform apply -target=module.$(cloud)-add-dns-record  -var kubeconfig=${KUBECONFIG} --auto-approve
 	@echo "Done adding NS record"
 
-self_signed ?= "false"
+self_signed ?= false
 .PHONY:
 ## cluster-issuer: Creates a cluster issuer for the correspondign provider
 cluster-issuer: check-env-cloud
-ifneq ($(self_signed), "true")
+ifeq (true,$(self_signed))
 	@echo "Skipped creating cluster issuer"
 else
 	terraform init --upgrade && \
@@ -391,9 +391,11 @@ gitpod-debug-info:
 check-kots-app:
 	kubectl kots get --kubeconfig=${KUBECONFIG} app gitpod -n gitpod | grep gitpod  | awk '{print $$2}' | grep "ready" || { $(MAKE) gitpod-debug-info; exit 1; }
 
+self_signed ?= false
+
 check-gitpod-installation: delete-cm-setup check-kots-app check-env-sub-domain
 	@echo "Curling https://${TF_VAR_TEST_ID}.${TF_VAR_domain}/api/version"
-ifneq ($(self_signed),)
+ifeq (true,$(self_signed))
 	export SSL_CERT_FILE=./ca.pem
 endif
 	curl -i -X GET https://${TF_VAR_TEST_ID}.${TF_VAR_domain}/api/version || { echo "Curling Gitpod endpoint failed"; exit 1; }
