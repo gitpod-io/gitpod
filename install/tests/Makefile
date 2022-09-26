@@ -150,7 +150,7 @@ self_signed ?= "false"
 .PHONY:
 ## cluster-issuer: Creates a cluster issuer for the correspondign provider
 cluster-issuer: check-env-cloud
-ifneq ($(self_signed), "false")
+ifneq ($(self_signed), "true")
 	@echo "Skipped creating cluster issuer"
 else
 	terraform init --upgrade && \
