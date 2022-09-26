@@ -49,7 +49,6 @@ import {
     WorkspaceInstance,
     WorkspaceInstanceConfiguration,
     WorkspaceInstanceStatus,
-    WorkspaceProbeContext,
     Permission,
     HeadlessWorkspaceEventType,
     DisposableCollection,
@@ -493,8 +492,6 @@ export class WorkspaceStarter {
             let type: WorkspaceType = WorkspaceType.REGULAR;
             if (workspace.type === "prebuild") {
                 type = WorkspaceType.PREBUILD;
-            } else if (workspace.type === "probe") {
-                type = WorkspaceType.PROBE;
             }
 
             // create spec
@@ -1758,8 +1755,6 @@ export class WorkspaceStarter {
                 init.addGit(initializer);
             }
             result.setPrebuild(init);
-        } else if (WorkspaceProbeContext.is(context)) {
-            // workspace probes have no workspace initializer as they need no content
         } else if (CommitContext.is(context)) {
             const { initializer } = await this.createCommitInitializer(traceCtx, workspace, context, user);
             if (initializer instanceof CompositeInitializer) {
