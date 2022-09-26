@@ -107,6 +107,8 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 	integration.SkipWithoutUsername(t, username)
 	integration.SkipWithoutUserToken(t, userToken)
 
+	parallelLimiter := make(chan struct{}, 2)
+
 	f := features.New("context").
 		WithLabel("component", "server").
 		Assess("should run context tests", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
@@ -141,11 +143,20 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 			for _, ff := range ffs {
 				for _, test := range tests {
 					t.Run(test.ContextURL+"_"+ff.Name, func(t *testing.T) {
-						t.Parallel()
-
 						if test.Skip {
 							t.SkipNow()
 						}
+						t.Logf("Waiting %s", test.ContextURL+"_"+ff.Name)
+
+						t.Parallel()
+
+						parallelLimiter <- struct{}{}
+						defer func() {
+							<-parallelLimiter
+						}()
+
+						t.Logf("Running %s", test.ContextURL+"_"+ff.Name)
+
 						username := username + ff.Name
 
 						ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
