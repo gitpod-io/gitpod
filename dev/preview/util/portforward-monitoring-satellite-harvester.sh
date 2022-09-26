@@ -11,8 +11,6 @@ if [[ -z "${VM_NAME:-}" ]]; then
     VM_NAME="$(preview-name-from-branch)"
 fi
 
-NAMESPACE="preview-${VM_NAME}"
-
 echo "
 Starting port-forwarding:
 
@@ -35,4 +33,4 @@ pkill -f "kubectl port-forward (.*)9090:9090"
 #   2. Deals with process termination. If you ^C this script xargs will kill the underlying
 #.     processes.
 #
-echo "3000:3000 9090:9090" | xargs  -n 1 -P 2 kubectl port-forward --context=harvester -n "${NAMESPACE}" svc/proxy
+echo "svc/grafana 3000:3000 svc/prometheus-k8s 9090:9090" | xargs  -n 2 -P 2 kubectl port-forward --context="$VM_NAME" -n "monitoring-satellite"
