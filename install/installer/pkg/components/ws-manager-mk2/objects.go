@@ -13,7 +13,9 @@ import (
 var Objects common.RenderFunc = func(cfg *common.RenderContext) ([]runtime.Object, error) {
 	var useMk2 bool
 	_ = cfg.WithExperimental(func(ucfg *experimental.Config) error {
-		useMk2 = ucfg.Workspace.UseWsmanagerMk2
+		if ucfg.Workspace != nil {
+			useMk2 = ucfg.Workspace.UseWsmanagerMk2
+		}
 		return nil
 	})
 	if !useMk2 {
