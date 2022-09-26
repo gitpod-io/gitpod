@@ -413,7 +413,11 @@ func (s *builtinServices) ListenAndServe() error {
 			return err
 		}
 		s.Health.Addr = l.Addr().String()
-		return s.Health.Serve(l)
+		err = s.Health.Serve(l)
+		if err == http.ErrServerClosed {
+			return nil
+		}
+		return err
 	})
 	return eg.Wait()
 }
