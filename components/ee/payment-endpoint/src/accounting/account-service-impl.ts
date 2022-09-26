@@ -288,11 +288,6 @@ export class AccountServiceImpl implements AccountService {
             return true;
         }
 
-        // no probe workspaces get billed (shouldn't matter - they're never on the account of a "real" user anyways)
-        if (s.workspace.type == "probe") {
-            return false;
-        }
-
         // no prebuilds get billed
         if (s.workspace.type == "prebuild") {
             return false;

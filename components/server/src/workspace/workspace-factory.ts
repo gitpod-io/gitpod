@@ -15,9 +15,7 @@ import {
     SnapshotContext,
     User,
     Workspace,
-    WorkspaceConfig,
     WorkspaceContext,
-    WorkspaceProbeContext,
 } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { generateWorkspaceID } from "@gitpod/gitpod-protocol/lib/util/generate-workspace-id";
@@ -47,58 +45,9 @@ export class WorkspaceFactory {
             return this.createForSnapshot(ctx, user, context);
         } else if (CommitContext.is(context)) {
             return this.createForCommit(ctx, user, context, normalizedContextURL);
-        } else if (WorkspaceProbeContext.is(context)) {
-            return this.createForWorkspaceProbe(ctx, user, context, normalizedContextURL);
         }
         log.error({ userId: user.id }, "Couldn't create workspace for context", context);
         throw new Error("Couldn't create workspace for context");
-    }
-
-    protected async createForWorkspaceProbe(
-        ctx: TraceContext,
-        user: User,
-        context: WorkspaceProbeContext,
-        contextURL: string,
-    ): Promise<Workspace> {
-        const span = TraceContext.startSpan("createForWorkspaceProbe", ctx);
-
-        try {
-            // TODO: we need to find a better base image.
-            const image = "csweichel/alpine-curl:latest";
-            const config: WorkspaceConfig = {
-                image,
-                tasks: [
-                    {
-                        init: `curl -sSLu Bearer:${context.responseToken} ${context.responseURL}`,
-                    },
-                ],
-            };
-
-            // This only works because image is a string, otherwise we'd have to go through the full workspace build process.
-            // Basically we're using the raw alpine image bait-and-switch style without adding the GP layer.
-            const imageSource = await this.imageSourceProvider.getImageSource(ctx, user, null as any, config);
-
-            const id = await this.generateWorkspaceID(context);
-            const date = new Date().toISOString();
-            const newWs: Workspace = {
-                id,
-                type: "probe",
-                creationTime: date,
-                ownerId: user.id,
-                config,
-                context,
-                contextURL,
-                imageSource,
-                description: "workspace probe",
-            };
-            await this.db.trace({ span }).store(newWs);
-            return newWs;
-        } catch (e) {
-            TraceContext.setError({ span }, e);
-            throw e;
-        } finally {
-            span.finish();
-        }
     }
 
     protected async createForSnapshot(ctx: TraceContext, user: User, context: SnapshotContext): Promise<Workspace> {

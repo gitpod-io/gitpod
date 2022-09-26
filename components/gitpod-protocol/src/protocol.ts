@@ -728,7 +728,7 @@ export interface Workspace {
 
 export type WorkspaceSoftDeletion = "user" | "gc";
 
-export type WorkspaceType = "regular" | "prebuild" | "probe"; // TODO(gpl) Removed prove here
+export type WorkspaceType = "regular" | "prebuild";
 
 export namespace Workspace {
     export function getFullRepositoryName(ws: Workspace): string | undefined {
@@ -1162,17 +1162,6 @@ export interface WithEnvvarsContext extends WorkspaceContext {
 export namespace WithEnvvarsContext {
     export function is(context: any): context is WithEnvvarsContext {
         return context && "envvars" in context;
-    }
-}
-
-export interface WorkspaceProbeContext extends WorkspaceContext {
-    responseURL: string;
-    responseToken: string;
-}
-
-export namespace WorkspaceProbeContext {
-    export function is(context: any): context is WorkspaceProbeContext {
-        return context && "responseURL" in context && "responseToken" in context;
     }
 }
 
