@@ -452,7 +452,13 @@ export class WorkspaceManagerBridge implements Disposable {
 
                     // Control running workspace instances against ws-manager
                     try {
-                        await this.controlNonStoppedWSManagerManagedInstances(ctx, nonStoppedInstances, clientProvider);
+                        await this.controlNonStoppedWSManagerManagedInstances(
+                            ctx,
+                            nonStoppedInstances,
+                            clientProvider,
+                            this.config.timeouts.pendingPhaseSeconds,
+                            this.config.timeouts.stoppingPhaseSeconds,
+                        );
 
                         disconnectStarted = Number.MAX_SAFE_INTEGER; // Reset disconnect period
                     } catch (err) {
@@ -489,6 +495,8 @@ export class WorkspaceManagerBridge implements Disposable {
         parentCtx: TraceContext,
         runningInstances: RunningWorkspaceInfo[],
         clientProvider: ClientProvider,
+        pendingPhaseSeconds: number,
+        stoppingPhaseSeconds: number,
     ) {
         const installation = this.config.installation;
 
@@ -508,36 +516,33 @@ export class WorkspaceManagerBridge implements Disposable {
             for (const [instanceId, ri] of runningInstancesIdx.entries()) {
                 const instance = ri.latestInstance;
                 const phase = instance.status.phase;
-                if (phase !== "running") {
-                    // This below if block is to validate the planned fix
-                    if (
-                        phase === "pending" ||
-                        phase === "creating" ||
-                        phase === "initializing" ||
-                        (phase === "stopping" &&
-                            instance.stoppingTime &&
-                            durationLongerThanSeconds(Date.parse(instance.stoppingTime), 10))
-                    ) {
-                        log.info(
-                            { instanceId, workspaceId: instance.workspaceId },
-                            "Logging to validate #12902. Should mark as stopped in database.",
-                            { installation },
-                            { phase },
-                        );
-                    }
-                    log.debug({ instanceId }, "Skipping instance", {
-                        phase: instance.status.phase,
-                        creationTime: instance.creationTime,
-                        region: instance.region,
-                    });
+
+                // When ws-manager is not aware of the following instances outside of the timeout duration,
+                // they should be marked as stopped.
+                // pending states timeout is 1 hour after creationTime.
+                // stopping states timeout is 1 hour after stoppingTime.
+                if (
+                    phase === "running" ||
+                    (phase === "pending" &&
+                        durationLongerThanSeconds(Date.parse(instance.creationTime), pendingPhaseSeconds)) ||
+                    (phase === "stopping" &&
+                        instance.stoppingTime &&
+                        durationLongerThanSeconds(Date.parse(instance.stoppingTime), stoppingPhaseSeconds))
+                ) {
+                    log.info(
+                        { instanceId, workspaceId: instance.workspaceId },
+                        "Database says the instance is present, but ws-man does not know about it. Marking as stopped in database.",
+                        { installation, phase },
+                    );
+                    await this.markWorkspaceInstanceAsStopped(ctx, ri, new Date());
                     continue;
                 }
 
-                log.info(
-                    "Database says the instance is running, but wsman does not know about it. Marking as stopped in database.",
-                    { instanceId, workspaceId: instance.workspaceId, installation, phase },
-                );
-                await this.markWorkspaceInstanceAsStopped(ctx, ri, new Date());
+                log.debug({ instanceId }, "Skipping instance", {
+                    phase: phase,
+                    creationTime: instance.creationTime,
+                    region: instance.region,
+                });
             }
 
             log.debug("Done controlling running instances.", { installation });
