@@ -92,12 +92,12 @@ export default function Menu() {
 
     const userFullName = user?.fullName || user?.name || "...";
 
-    {
-        // updating last team selection
-        try {
+    // updating last team selection
+    try {
+        if (team) {
             localStorage.setItem("team-selection", team ? team.slug : "");
-        } catch {}
-    }
+        }
+    } catch {}
 
     // Hide most of the top menu when in a full-page form.
     const isMinimalUI = inResource(location.pathname, ["new", "teams/new", "open"]);
