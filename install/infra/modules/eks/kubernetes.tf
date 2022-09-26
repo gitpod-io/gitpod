@@ -103,6 +103,18 @@ module "eks" {
     enable_bootstrap_user_data = true
     vpc_security_group_ids     = [aws_security_group.nodes.id]
     ebs_optimized              = true
+
+    post_bootstrap_user_data = <<-EOT
+      #!/bin/bash
+      cat << CONFIG >> /etc/containerd/config.toml
+
+      [plugins."io.containerd.grpc.v1.cri".registry]
+      config_path = "/etc/containerd/certs.d"
+
+      CONFIG
+
+      service containerd restart
+      EOT
   }
 
   eks_managed_node_groups = {
@@ -144,7 +156,7 @@ module "eks" {
         export CONTAINER_RUNTIME="containerd"
         export USE_MAX_PODS=false
         EOF
-        # Source extra environment 5ariables in bootstrap script
+        # Source extra environment variables in bootstrap script
         sed -i '/^set -o errexit/a\\nsource /etc/profile.d/bootstrap.sh' /etc/eks/bootstrap.sh
         EOT
     }
@@ -170,7 +182,7 @@ module "eks" {
       desired_size               = 2
       enable_bootstrap_user_data = true
       labels = {
-        "gitpod.io/workload_workspace_regular"  = true
+        "gitpod.io/workload_workspace_regular" = true
       }
 
       tags = {
@@ -262,14 +274,14 @@ resource "null_resource" "kubeconfig" {
 
 data "aws_iam_policy_document" "eks_policy" {
   statement {
-    actions   = [
+    actions = [
       "eks:DescribeCluster",
       "eks:ListClusters"
     ]
     resources = [
       "*",
     ]
-    effect    = "Allow"
+    effect = "Allow"
   }
 }
 
@@ -281,7 +293,7 @@ resource "aws_iam_policy" "eks_policy" {
 
 resource "aws_iam_user" "eks_user" {
   force_destroy = true
-  name  = "eks-user-${var.cluster_name}"
+  name          = "eks-user-${var.cluster_name}"
 }
 
 resource "aws_iam_user_policy_attachment" "eks_attachment" {
@@ -290,5 +302,5 @@ resource "aws_iam_user_policy_attachment" "eks_attachment" {
 }
 
 resource "aws_iam_access_key" "eks_user_key" {
-  user  = aws_iam_user.eks_user.name
+  user = aws_iam_user.eks_user.name
 }
