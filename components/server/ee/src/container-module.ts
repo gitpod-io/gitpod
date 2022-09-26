@@ -28,7 +28,6 @@ import { WorkspaceFactory } from "../../src/workspace/workspace-factory";
 import { WorkspaceFactoryEE } from "./workspace/workspace-factory";
 import { MonitoringEndpointsAppEE } from "./monitoring-endpoint-ee";
 import { MonitoringEndpointsApp } from "../../src/monitoring-endpoints";
-import { WorkspaceHealthMonitoring } from "./workspace/workspace-health-monitoring";
 import { AccountService } from "@gitpod/gitpod-payment-endpoint/lib/accounting/account-service";
 import {
     AccountServiceImpl,
@@ -73,7 +72,6 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     rebind(WorkspaceFactory).to(WorkspaceFactoryEE).inSingletonScope();
     rebind(MonitoringEndpointsApp).to(MonitoringEndpointsAppEE).inSingletonScope();
 
-    bind(WorkspaceHealthMonitoring).toSelf().inSingletonScope();
     bind(PrebuildManager).toSelf().inSingletonScope();
     bind(IPrefixContextParser).to(StartPrebuildContextParser).inSingletonScope();
     bind(GithubApp).toSelf().inSingletonScope();
