@@ -25,7 +25,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": 76,
+  "id": 7,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -647,7 +647,10 @@
   "refresh": false,
   "schemaVersion": 37,
   "style": "dark",
-  "tags": [],
+  "tags": [
+    "grpc",
+    "client"
+  ],
   "templating": {
     "list": [
       {
@@ -655,16 +658,10 @@
         "current": {
           "selected": true,
           "text": [
-            "etcdserverpb.KV",
-            "etcdserverpb.Lease",
-            "etcdserverpb.Maintenance",
-            "etcdserverpb.Watch"
+            "All"
           ],
           "value": [
-            "etcdserverpb.KV",
-            "etcdserverpb.Lease",
-            "etcdserverpb.Maintenance",
-            "etcdserverpb.Watch"
+            "$__all"
           ]
         },
         "datasource": {
@@ -776,6 +773,6 @@
   "timezone": "utc",
   "title": "gRPC / Client",
   "uid": "dxEjpXn4z",
-  "version": 3,
+  "version": 1,
   "weekStart": "monday"
 }
