@@ -8,6 +8,7 @@ RUN apk add --no-cache bash curl jq openssh-keygen yq  \
     && curl -L "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" -o /usr/local/bin/kubectl \
     && chmod +x /usr/local/bin/kubectl
 COPY install-installer--app/installer install-installer--app/provenance-bundle.jsonl /app/
+COPY dev-gpctl--app/gpctl /app/
 COPY scripts/*.sh /app/scripts/
 ENTRYPOINT [ "/app/installer" ]
 CMD [ "help" ]

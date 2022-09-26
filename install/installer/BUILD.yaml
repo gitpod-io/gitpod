@@ -60,6 +60,7 @@ packages:
       - "scripts/*.sh"
     deps:
       - :app
+      - dev/gpctl:app
     argdeps:
       - imageRepoBase
     config:
