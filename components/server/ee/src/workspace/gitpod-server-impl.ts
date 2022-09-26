@@ -2246,7 +2246,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             costCenter: {
                 attributionId,
                 spendingLimit: usageLimit,
-                billingStrategy: CostCenter_BillingStrategy.BILLING_STRATEGY_OTHER,
+                billingStrategy: response.costCenter.billingStrategy,
             },
         });
 
