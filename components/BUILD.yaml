@@ -13,6 +13,7 @@ packages:
       - :publish-api
       - dev:all-app
       - install/installer:docker
+      - install/preview:docker
       - install/kots:lint
       - components/gitpod-protocol:all
   - name: docker-versions
