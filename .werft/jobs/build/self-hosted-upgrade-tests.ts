@@ -114,7 +114,7 @@ export async function triggerSelfHostedPreview(werft: Werft, config: JobConfig, 
 
     exec(`git config --global user.name "${username}"`);
 
-    annotation = `${annotation} -a channel=${replicatedChannel} -a preview=true -a deps=external`;
+    annotation = `${annotation} -a channel=${replicatedChannel} -a preview=true -a runTests=false -a deps=external`;
 
     werft.phase("self-hosted-preview", `Create self-hosted preview in ${cluster}`);
 
