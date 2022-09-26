@@ -86,7 +86,7 @@ are kubernetes version and region specific. You can find a list of AMI IDs
 [here](https://cloud-images.ubuntu.com/docs/aws/eks/).
 
 Make sure you provide the corresponding kubernetes version as a value to the
-variable `cluster_version`. We officially support kubernetes versions >= `1.20`.
+variable `cluster_version`. Please see the [Gitpod Compatibility Matrix](https://www.gitpod.io/docs/references/product-compatibility-matrix?admin) for officially supported Kubernetes versions.
 
 ### Domain name configuration
 
