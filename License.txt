@@ -3,7 +3,7 @@ please resort to the header of that file.
 
 If the file has no header, the following rules apply
 1. install scripts are licensed under MIT, see License.MIT.txt
-2. enterprise features are licensed under Gitpod Self-Hosted Free Licensing Terms, see License.GPF.txt
+2. enterprise features are licensed under Gitpod Self-Hosted Free Licensing Terms, see License.enterprise.txt
 3. source code that is neither (1) nor (2) is licensed under AGPL, see License.AGPL.txt
 
 On request, licenses under different terms are available.
