@@ -57,14 +57,14 @@ func TestBackup(t *testing.T) {
 						api.Done(t)
 					})
 
+					// TODO: change to use server API to launch the workspace, so we could run the integration test as the user code flow
+					//       which is client -> server -> ws-manager rather than client -> ws-manager directly
 					ws1, stopWs1, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(w *wsmanapi.StartWorkspaceRequest) error {
 						w.Spec.FeatureFlags = test.FF
 						w.Spec.Initializer = &csapi.WorkspaceInitializer{
 							Spec: &csapi.WorkspaceInitializer_Git{
 								Git: &csapi.GitInitializer{
 									RemoteUri:        test.ContextURL,
-									TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,
-									CloneTaget:       "main",
 									CheckoutLocation: test.CheckoutLocation,
 									Config:           &csapi.GitConfig{},
 								},
@@ -209,13 +209,13 @@ func TestExistingWorkspaceEnablePVC(t *testing.T) {
 				})
 
 				// Create a new workspace without the PVC feature flag
+				// TODO: change to use server API to launch the workspace, so we could run the integration test as the user code flow
+				//       which is client -> server -> ws-manager rather than client -> ws-manager directly
 				ws1, stopWs1, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(w *wsmanapi.StartWorkspaceRequest) error {
 					w.Spec.Initializer = &csapi.WorkspaceInitializer{
 						Spec: &csapi.WorkspaceInitializer_Git{
 							Git: &csapi.GitInitializer{
 								RemoteUri:        test.ContextURL,
-								TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,
-								CloneTaget:       "main",
 								CheckoutLocation: test.CheckoutLocation,
 								Config:           &csapi.GitConfig{},
 							},
