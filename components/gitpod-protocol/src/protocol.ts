@@ -817,8 +817,8 @@ export interface RepositoryCloneInformation {
 
 export interface CoreDumpConfig {
     enabled?: boolean;
-	softLimit?: number;
-	hardLimit?: number;
+    softLimit?: number;
+    hardLimit?: number;
 }
 
 export interface WorkspaceConfig {
@@ -1520,6 +1520,12 @@ export interface Terms {
     readonly updateMessage: string;
     readonly content: string;
     readonly formElements?: object;
+}
+
+export interface StripeConfig {
+    usageProductPriceIds: { [currency: string]: string };
+    individualUsagePriceIds?: { [currency: string]: string };
+    teamUsagePriceIds?: { [currency: string]: string };
 }
 
 export type BillingStrategy = "other" | "stripe";

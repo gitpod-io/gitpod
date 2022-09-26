@@ -7,7 +7,7 @@
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { AuthProviderParams, normalizeAuthProviderParams } from "./auth/auth-provider";
 
-import { NamedWorkspaceFeatureFlag } from "@gitpod/gitpod-protocol";
+import { NamedWorkspaceFeatureFlag, StripeConfig } from "@gitpod/gitpod-protocol";
 
 import { RateLimiterConfig } from "./auth/rate-limiter";
 import { CodeSyncConfig } from "./code-sync/code-sync-service";
@@ -27,7 +27,7 @@ export type Config = Omit<
     workspaceDefaults: WorkspaceDefaults;
     chargebeeProviderOptions?: ChargebeeProviderOptions;
     stripeSecrets?: { publishableKey: string; secretKey: string };
-    stripeConfig?: { usageProductPriceIds: { [currency: string]: string } };
+    stripeConfig?: StripeConfig;
     builtinAuthProvidersConfigured: boolean;
     inactivityPeriodForRepos?: number;
 };
@@ -266,7 +266,7 @@ export namespace ConfigFile {
                 log.error("Could not load Stripe secrets", error);
             }
         }
-        let stripeConfig: { usageProductPriceIds: { EUR: string; USD: string } } | undefined;
+        let stripeConfig: StripeConfig | undefined;
         if (config.enablePayment && config.stripeConfigFile) {
             try {
                 stripeConfig = JSON.parse(fs.readFileSync(filePathTelepresenceAware(config.stripeConfigFile), "utf-8"));
