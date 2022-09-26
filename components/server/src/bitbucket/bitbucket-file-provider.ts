@@ -63,7 +63,7 @@ export class BitbucketFileProvider implements FileProvider {
             ).data;
             return contents as string;
         } catch (err) {
-            log.debug({ userId: user.id }, err);
+            log.error({ userId: user.id }, err);
         }
     }
 }

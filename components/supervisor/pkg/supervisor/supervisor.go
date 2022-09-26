@@ -5,6 +5,7 @@
 package supervisor
 
 import (
+	"bufio"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
@@ -50,6 +51,7 @@ import (
 	"github.com/gitpod-io/gitpod/content-service/pkg/executor"
 	"github.com/gitpod-io/gitpod/content-service/pkg/git"
 	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
+	"github.com/gitpod-io/gitpod/content-service/pkg/logs"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/activation"
@@ -388,17 +390,59 @@ func Run(options ...RunOption) {
 	}
 
 	log.Info("received SIGTERM (or shutdown) - tearing down")
-	cancel()
+
 	err = termMux.Close()
 	if err != nil {
 		log.WithError(err).Error("terminal closure failed")
 	}
 
+	cancel()
 	// terminate all child processes once the IDE is gone
 	ideWG.Wait()
 	terminateChildProcesses()
 
 	wg.Wait()
+}
+
+func runTask(ctx context.Context, termMuxSrv *terminal.MuxTerminalService, task string, taskName string) {
+	if task == "" {
+		return
+	}
+	openTerminalResponse, err := termMuxSrv.Open(ctx, &api.OpenTerminalRequest{})
+	if err != nil {
+		log.WithError(err).Errorf("error running '%q' task", taskName)
+	}
+	term, ok := termMuxSrv.Mux.Get(openTerminalResponse.Terminal.Alias)
+	if !ok {
+		log.Errorf("cannot obtain terminal for '%q'.", taskName)
+	} else {
+		term.PTY.Write([]byte(task + "; exit\n"))
+	}
+	stdout := term.Stdout.ListenWithOptions(terminal.TermListenOptions{
+		// ensure logging of entire task output
+		ReadTimeout: terminal.NoTimeout,
+	})
+
+	fileName := logs.TerminalStoreLocation + "/" + taskName + ".log"
+	file, err := os.Create(fileName)
+	var fileWriter *bufio.Writer
+	if err != nil {
+		log.WithError(err).Errorf("cannot create an '%q' log file", taskName)
+		fileWriter = bufio.NewWriter(io.Discard)
+	} else {
+		defer file.Close()
+		log.Info("Writing build output to " + fileName)
+		fileWriter = bufio.NewWriter(file)
+		defer fileWriter.Flush()
+	}
+	_, err = io.Copy(fileWriter, stdout)
+	if err != nil {
+		log.WithError(err).Errorf("cannot copy from '%q' task", taskName)
+	}
+	_, err = term.Wait()
+	if err != nil {
+		log.WithError(err).Errorf("terminal exited errorneous")
+	}
 }
 
 func isShallowRepository(rootDir string, env []string) bool {

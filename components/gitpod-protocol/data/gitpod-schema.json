@@ -86,6 +86,10 @@
                         "type": "string",
                         "description": "The main shell command to run after `before` and `init`. This command is executed last on every start and doesn't have to terminate."
                     },
+                    "shutdown": {
+                        "type": "string",
+                        "description": "A shell command to run before a workspace stops. This command needs to finish with `terminationGracePeriodSeconds` and will be force killed if it runs longer."
+                    },
                     "env": {
                         "type": "object",
                         "description": "Environment variables to set."
@@ -113,6 +117,10 @@
                 },
                 "additionalProperties": false
             }
+        },
+        "terminationGracePeriodSeconds": {
+            "type": "number",
+            "description": "The grace period for all processes to stop before beeing force killed. Default is 15 seconds."
         },
         "image": {
             "type": [

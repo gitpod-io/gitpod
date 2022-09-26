@@ -85,6 +85,7 @@ func TestTaskManager(t *testing.T) {
 			ExpectedReporter: testHeadlessTaskProgressReporter{
 				Done:    true,
 				Success: true,
+				Data:    "foo",
 			},
 		},
 		{
@@ -243,9 +244,11 @@ func TestTaskManager(t *testing.T) {
 type testHeadlessTaskProgressReporter struct {
 	Done    bool
 	Success bool
+	Data    string
 }
 
 func (r *testHeadlessTaskProgressReporter) write(data string, task *task, terminal *terminal.Term) {
+	r.Data = r.Data + data
 }
 
 func (r *testHeadlessTaskProgressReporter) done(success taskSuccess) {

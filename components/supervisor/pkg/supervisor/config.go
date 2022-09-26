@@ -294,6 +294,7 @@ type TaskConfig struct {
 	Init     *string                 `json:"init,omitempty"`
 	Prebuild *string                 `json:"prebuild,omitempty"`
 	Command  *string                 `json:"command,omitempty"`
+	Shutdown *string                 `json:"shutdown,omitempty"`
 	Env      *map[string]interface{} `json:"env,omitempty"`
 	OpenIn   *string                 `json:"openIn,omitempty"`
 	OpenMode *string                 `json:"openMode,omitempty"`

@@ -827,6 +827,7 @@ export interface WorkspaceConfig {
     image?: ImageConfig;
     ports?: PortConfig[];
     tasks?: TaskConfig[];
+    terminationGracePeriodSeconds?: number;
     checkoutLocation?: string;
     workspaceLocation?: string;
     gitConfig?: { [config: string]: string };
@@ -993,6 +994,7 @@ export interface TaskConfig {
     init?: string;
     prebuild?: string;
     command?: string;
+    shutdown?: string;
     env?: { [env: string]: any };
     openIn?: "bottom" | "main" | "left" | "right";
     openMode?: "split-top" | "split-left" | "split-right" | "split-bottom" | "tab-before" | "tab-after";
