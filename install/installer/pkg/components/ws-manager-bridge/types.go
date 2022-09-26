@@ -26,6 +26,8 @@ type Timeouts struct {
 	PreparingPhaseSeconds int32 `json:"preparingPhaseSeconds"`
 	BuildingPhaseSeconds  int32 `json:"buildingPhaseSeconds"`
 	UnknownPhaseSeconds   int32 `json:"unknownPhaseSeconds"`
+	PendingPhaseSeconds   int32 `json:"pendingPhaseSeconds"`
+	StoppingPhaseSeconds  int32 `json:"stoppingPhaseSeconds"`
 }
 
 // WorkspaceCluster from components/gitpod-protocol/src/workspace-cluster.ts

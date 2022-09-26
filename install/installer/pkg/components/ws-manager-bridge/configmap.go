@@ -28,6 +28,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			PreparingPhaseSeconds: 3600,
 			BuildingPhaseSeconds:  3600,
 			UnknownPhaseSeconds:   600,
+			PendingPhaseSeconds:   3600,
+			StoppingPhaseSeconds:  3600,
 		},
 		EmulatePreparingIntervalSeconds: 10,
 		StaticBridges:                   WSManagerList(ctx),

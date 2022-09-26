@@ -5681,7 +5681,9 @@ data:
       "timeouts": {
         "preparingPhaseSeconds": 3600,
         "buildingPhaseSeconds": 3600,
-        "unknownPhaseSeconds": 600
+        "unknownPhaseSeconds": 600,
+        "pendingPhaseSeconds": 3600,
+        "stoppingPhaseSeconds": 3600
       },
       "clusterSyncIntervalSeconds": 60
     }
@@ -10360,7 +10362,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: fdb0c0adb6ea187bd587fb7c286084b4853439fdfafa7f32bbdcacee744e5c3e
+        gitpod.io/checksum_config: 2d645aacfa07b22cc2e8f2a80d3b797031f470a1af284ab923fc9678ff81efac
         hello: world
       creationTimestamp: null
       labels:
