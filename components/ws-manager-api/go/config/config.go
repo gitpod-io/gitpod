@@ -169,6 +169,7 @@ type WorkspacePodTemplateConfiguration struct {
 	// PrebuildPath is a path to an additional workspace pod template YAML file for prebuild workspaces
 	PrebuildPath string `json:"prebuildPath,omitempty"`
 	// ProbePath is a path to an additional workspace pod template YAML file for probe workspaces
+	// Deprecated
 	ProbePath string `json:"probePath,omitempty"`
 	// ImagebuildPath is a path to an additional workspace pod template YAML file for imagebuild workspaces
 	ImagebuildPath string `json:"imagebuildPath,omitempty"`

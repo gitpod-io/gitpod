@@ -644,9 +644,8 @@ enum WorkspaceType {
     // Prebuild workspaces are workspaces used to pre-build the content of other workspaces. They run headless and have no direct user-interaction.
     PREBUILD = 1;
 
-    // Probe workspaces are used to perform end-to-end health checks on the system. They require little to no resources, run headless and never
-    // interact with users directly.
-    PROBE = 2;
+    // DEPRECATED: Probe workspaces.
+    reserved 2;
 
     // DEPRECATED Ghost workspaces
     reserved 3;

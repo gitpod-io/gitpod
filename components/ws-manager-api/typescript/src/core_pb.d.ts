@@ -1275,6 +1275,5 @@ export enum WorkspaceFeatureFlag {
 export enum WorkspaceType {
     REGULAR = 0,
     PREBUILD = 1,
-    PROBE = 2,
     IMAGEBUILD = 4,
 }

@@ -70,8 +70,6 @@ func (m *Manager) createWorkspacePod(startContext *startWorkspaceContext) (*core
 		typeSpecificTpl, err = config.GetWorkspacePodTemplate(templates.RegularPath)
 	case api.WorkspaceType_PREBUILD:
 		typeSpecificTpl, err = config.GetWorkspacePodTemplate(templates.PrebuildPath)
-	case api.WorkspaceType_PROBE:
-		typeSpecificTpl, err = config.GetWorkspacePodTemplate(templates.ProbePath)
 	case api.WorkspaceType_IMAGEBUILD:
 		typeSpecificTpl, err = config.GetWorkspacePodTemplate(templates.ImagebuildPath)
 	}
@@ -101,8 +99,6 @@ func podName(req *api.StartWorkspaceRequest) string {
 	switch req.Type {
 	case api.WorkspaceType_PREBUILD:
 		prefix = "prebuild"
-	case api.WorkspaceType_PROBE:
-		prefix = "probe"
 	case api.WorkspaceType_IMAGEBUILD:
 		prefix = "imagebuild"
 	default:
@@ -251,8 +247,6 @@ func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) 
 	switch req.Type {
 	case api.WorkspaceType_PREBUILD:
 		prefix = "prebuild"
-	case api.WorkspaceType_PROBE:
-		prefix = "probe"
 	case api.WorkspaceType_IMAGEBUILD:
 		prefix = "imagebuild"
 	default:

@@ -9877,7 +9877,6 @@ proto.wsman.WorkspaceFeatureFlag = {
 proto.wsman.WorkspaceType = {
   REGULAR: 0,
   PREBUILD: 1,
-  PROBE: 2,
   IMAGEBUILD: 4
 };
 
