@@ -41,4 +41,4 @@ ARG VERSION
 ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
 ENV GITPOD_BUILD_VERSION=${VERSION}
 
-CMD [ "caddy", "run", "-adapter", "inject-ssh-tunnel" , "-watch", "-config", "/etc/caddy/Caddyfile" ]
+CMD [ "caddy", "run", "--adapter", "inject-ssh-tunnel" , "--watch", "--config", "/etc/caddy/Caddyfile" ]
