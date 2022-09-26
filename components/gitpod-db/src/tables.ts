@@ -59,6 +59,12 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             deletionColumn: "deleted",
         },
         {
+            name: "d_b_volume_snapshot",
+            primaryKeys: ["id"],
+            timeColumn: "_lastModified",
+            deletionColumn: "deleted",
+        },
+        {
             name: "d_b_blocked_repository",
             primaryKeys: ["id"],
             timeColumn: "updatedAt",
