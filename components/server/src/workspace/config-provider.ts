@@ -31,6 +31,9 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { AuthorizationService } from "../user/authorization-service";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { Config } from "../config";
+import { EntitlementService } from "../billing/entitlement-service";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { TeamDB } from "@gitpod/gitpod-db/lib";
 
 const POD_PATH_WORKSPACE_BASE = "/workspace";
 
@@ -48,6 +51,8 @@ export class ConfigProvider {
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
     @inject(Config) protected readonly config: Config;
     @inject(ConfigurationService) protected readonly configurationService: ConfigurationService;
+    @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
+    @inject(TeamDB) protected readonly teamDB: TeamDB;
 
     public async fetchConfig(
         ctx: TraceContext,
@@ -128,6 +133,18 @@ export class ConfigProvider {
                 config._featureFlags = (user.featureFlags!.permanentWSFeatureFlags || []).filter(
                     NamedWorkspaceFeatureFlag.isWorkspacePersisted,
                 );
+            }
+            const billingTier = await this.entitlementService.getBillingTier(user);
+            const userTeams = await this.teamDB.findTeamsByUser(user.id);
+            // this allows to control user`s PVC feature flag via ConfigCat
+            if (
+                await getExperimentsClientForBackend().getValueAsync("user_pvc", false, {
+                    user,
+                    teams: userTeams,
+                    billingTier,
+                })
+            ) {
+                config._featureFlags = (config._featureFlags || []).concat(["persistent_volume_claim"]);
             }
 
             return { config, literalConfig };

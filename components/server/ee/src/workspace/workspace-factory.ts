@@ -32,12 +32,15 @@ import { UserDB } from "@gitpod/gitpod-db/lib";
 import { UserCounter } from "../user/user-counter";
 import { increasePrebuildsStartedCounter } from "../../../src/prometheus-metrics";
 import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
+import { EntitlementService } from "../../../src/billing/entitlement-service";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 @injectable()
 export class WorkspaceFactoryEE extends WorkspaceFactory {
     @inject(LicenseEvaluator) protected readonly licenseEvaluator: LicenseEvaluator;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(UserCounter) protected readonly userCounter: UserCounter;
+    @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
 
     @inject(UserDB) protected readonly userDB: UserDB;
 
@@ -355,6 +358,18 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
 
             // Special case for PVC: While it's a workspace-persisted feature flag, we support the upgrade path (non-pvc -> pvc), so we apply it here
             if (user.featureFlags?.permanentWSFeatureFlags?.includes("persistent_volume_claim")) {
+                config._featureFlags = (config._featureFlags || []).concat(["persistent_volume_claim"]);
+            }
+            const billingTier = await this.entitlementService.getBillingTier(user);
+            const userTeams = await this.teamDB.findTeamsByUser(user.id);
+            // this allows to control user`s PVC feature flag via ConfigCat
+            if (
+                await getExperimentsClientForBackend().getValueAsync("user_pvc", false, {
+                    user,
+                    teams: userTeams,
+                    billingTier,
+                })
+            ) {
                 config._featureFlags = (config._featureFlags || []).concat(["persistent_volume_claim"]);
             }
 
