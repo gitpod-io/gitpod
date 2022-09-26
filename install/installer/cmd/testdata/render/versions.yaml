@@ -125,6 +125,8 @@ components:
     version: test
   wsManager:
     version: test
+  wsManagerMk2:
+    version: test
   wsManagerBridge:
     version: test
   wsProxy:
