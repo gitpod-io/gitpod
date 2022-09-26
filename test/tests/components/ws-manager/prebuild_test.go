@@ -66,6 +66,8 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 						api.Done(t)
 					})
 
+					// TODO: change to use server API to launch the workspace, so we could run the integration test as the user code flow
+					//       which is client -> server -> ws-manager rather than client -> ws-manager directly
 					_, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
 						req.Type = wsmanapi.WorkspaceType_PREBUILD
 
@@ -83,8 +85,6 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 							Spec: &csapi.WorkspaceInitializer_Git{
 								Git: &csapi.GitInitializer{
 									RemoteUri:        test.ContextURL,
-									TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,
-									CloneTaget:       "main",
 									CheckoutLocation: test.CheckoutLocation,
 									Config:           &csapi.GitConfig{},
 								},
@@ -233,6 +233,8 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 					})
 
 					// create a prebuild and stop workspace
+					// TODO: change to use server API to launch the workspace, so we could run the integration test as the user code flow
+					//       which is client -> server -> ws-manager rather than client -> ws-manager directly
 					_, prebuildStopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
 						req.Type = wsmanapi.WorkspaceType_PREBUILD
 						req.Spec.Envvars = append(req.Spec.Envvars, &wsmanapi.EnvironmentVariable{
@@ -244,8 +246,6 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 							Spec: &csapi.WorkspaceInitializer_Git{
 								Git: &csapi.GitInitializer{
 									RemoteUri:        test.ContextURL,
-									TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,
-									CloneTaget:       "main",
 									CheckoutLocation: test.CheckoutLocation,
 									Config:           &csapi.GitConfig{},
 								},
@@ -265,6 +265,8 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 					t.Logf("prebuild snapshot: %s, vsName: %s, vsHandle: %s", prebuildSnapshot, vsInfo.VolumeSnapshotName, vsInfo.VolumeSnapshotHandle)
 
 					// launch the workspace from prebuild
+					// TODO: change to use server API to launch the workspace, so we could run the integration test as the user code flow
+					//       which is client -> server -> ws-manager rather than client -> ws-manager directly
 					ws, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
 						req.Spec.FeatureFlags = test.FF
 						req.Spec.Initializer = &csapi.WorkspaceInitializer{
@@ -277,8 +279,6 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 									Git: []*csapi.GitInitializer{
 										{
 											RemoteUri:        test.ContextURL,
-											TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,
-											CloneTaget:       "main",
 											CheckoutLocation: test.CheckoutLocation,
 											Config:           &csapi.GitConfig{},
 										},

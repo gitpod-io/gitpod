@@ -80,8 +80,6 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 							Spec: &csapi.WorkspaceInitializer_Git{
 								Git: &csapi.GitInitializer{
 									RemoteUri:        testRepo,
-									TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,
-									CloneTaget:       "main",
 									CheckoutLocation: testRepoName,
 									Config:           &csapi.GitConfig{},
 								},
@@ -91,6 +89,8 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 						return nil
 					}
 
+					// TODO: change to use server API to launch the workspace, so we could run the integration test as the user code flow
+					//       which is client -> server -> ws-manager rather than client -> ws-manager directly
 					nfo, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(addInitTask))
 					if err != nil {
 						t.Fatal(err)
