@@ -493,8 +493,6 @@ export class WorkspaceStarter {
             let type: WorkspaceType = WorkspaceType.REGULAR;
             if (workspace.type === "prebuild") {
                 type = WorkspaceType.PREBUILD;
-            } else if (workspace.type === "probe") {
-                type = WorkspaceType.PROBE;
             }
 
             // create spec
