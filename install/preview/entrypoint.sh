@@ -188,6 +188,7 @@ yq e -i '.workspace.pvc.size = "10Gi"' config.yaml
 yq e -i '.workspace.resources.requests.memory = "500Mi"' config.yaml
 yq e -i '.workspace.resources.requests.cpu = "500m"' config.yaml
 yq e -i '.experimental.telemetry.data.platform = "local-preview"' config.yaml
+yq e -i '.containerRegistry.privateBaseImageAllowList |= ["docker.io"] | ..style="double"' config.yaml
 
 echo "extracting images to download ahead..."
 /gitpod-installer render --use-experimental-config --config config.yaml | grep 'image:' | sed 's/ *//g' | sed 's/image://g' | sed 's/\"//g' | sed 's/^-//g' | sort | uniq > /gitpod-images.txt
