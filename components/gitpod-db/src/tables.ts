@@ -133,11 +133,6 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             timeColumn: "_lastModified",
         },
         {
-            name: "d_b_prebuilt_workspace",
-            primaryKeys: ["id"],
-            timeColumn: "_lastModified",
-        },
-        {
             name: "d_b_app_installation",
             primaryKeys: ["platform", "installationID", "state"],
             timeColumn: "creationTime",
