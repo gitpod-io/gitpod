@@ -32,6 +32,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/prometheus/common/route"
@@ -1107,6 +1108,15 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 		)
 	}
 
+	grpcMetrics := grpc_prometheus.NewServerMetrics()
+	grpcMetrics.EnableHandlingTimeHistogram(
+		grpc_prometheus.WithHistogramBuckets([]float64{.005, .025, .05, .1, .5, 1, 2.5, 5, 30, 60, 120, 240, 600}),
+	)
+	opts = append(opts,
+		grpc.StreamInterceptor(grpcMetrics.StreamServerInterceptor()),
+		grpc.UnaryInterceptor(grpcMetrics.UnaryServerInterceptor()),
+	)
+
 	m := cmux.New(l)
 	restMux := grpcruntime.NewServeMux()
 	grpcMux := m.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
@@ -1131,8 +1141,13 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 		return true
 	}))
 
+	metricsRegistry := prometheus.NewRegistry()
+	err = metricsRegistry.Register(grpcMetrics)
+	if err != nil {
+		log.WithError(err).Error("supervisor: failed to register grpc metrics")
+	}
 	metricStore := storage.NewDiskMetricStore("", time.Minute*5, prometheus.DefaultGatherer, nil)
-	metricsGatherer := prometheus.Gatherers{prometheus.GathererFunc(func() ([]*dto.MetricFamily, error) {
+	metricsGatherer := prometheus.Gatherers{metricsRegistry, prometheus.GathererFunc(func() ([]*dto.MetricFamily, error) {
 		return metricStore.GetMetricFamilies(), nil
 	})}
 
