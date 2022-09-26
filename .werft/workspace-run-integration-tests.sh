@@ -108,7 +108,7 @@ werft log phase "build preview environment" "build preview environment"
     git checkout -B "${BRANCH}" && \
     git commit -m "${TEMP_COMMIT_MSG}" --allow-empty  && \
     git push --set-upstream origin "${BRANCH}" && \
-    werft run github -a with-preview=true
+    werft run github -a with-preview=true -a with-large-vm=true
 ) | werft log slice "build preview environment"
 
 for signal in SIGINT SIGTERM EXIT; do
@@ -184,7 +184,7 @@ args+=( "-kubeconfig=/home/gitpod/.kube/config" )
 args+=( "-namespace=default" )
 [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
 args+=( "-timeout=120m" )
-args+=( "-p=1" )
+args+=( "-p=2" )
 
 WK_TEST_LIST=(/workspace/test/tests/components/content-service /workspace/test/tests/components/image-builder /workspace/test/tests/components/ws-daemon /workspace/test/tests/components/ws-manager /workspace/test/tests/workspace)
 for TEST_PATH in "${WK_TEST_LIST[@]}"

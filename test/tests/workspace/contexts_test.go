@@ -141,6 +141,8 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 			for _, ff := range ffs {
 				for _, test := range tests {
 					t.Run(test.ContextURL+"_"+ff.Name, func(t *testing.T) {
+						t.Parallel()
+
 						if test.Skip {
 							t.SkipNow()
 						}
