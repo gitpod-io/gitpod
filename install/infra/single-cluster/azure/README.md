@@ -65,8 +65,8 @@ includes a mysql database, a Azure block storage account and an Azure container 
 
 ### Kubernetes version
 
-Make sure you provide an [Azure supported kubernetes version](https://docs.microsoft.com/en-us/azure/aks/supported-kubernetes-versions) as a value to the
-variable `cluster_version`. We officially support kubernetes versions >= `1.21`.
+Make sure you provide an [Azure supported Kubernetes version](https://docs.microsoft.com/en-us/azure/aks/supported-kubernetes-versions) as a value to the
+variable `cluster_version`. Please see the [Gitpod Compatibility Matrix](https://www.gitpod.io/docs/references/product-compatibility-matrix?admin) for officially supported Kubernetes versions.
 
 ### Domain name configuration
 
