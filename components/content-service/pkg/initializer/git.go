@@ -192,7 +192,7 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 		}
 	case LocalBranch:
 		// checkout local branch based on remote HEAD
-		if err := ws.Git(ctx, "checkout", "origin/HEAD", "--no-track"); err != nil {
+		if err := ws.Git(ctx, "checkout", "-B", ws.CloneTarget, "origin/HEAD", "--no-track"); err != nil {
 			return err
 		}
 	case RemoteCommit:
