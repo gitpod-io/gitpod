@@ -13,6 +13,7 @@ import { Transformer } from "../transformer";
 @Entity()
 @Index("ind_dbsync", ["creationTime"]) // DBSync
 @Index("ind_workspaceId_creationTime", ["workspaceId", "creationTime"]) // findVolumeSnapshotForGCByWorkspaceId
+// on DB but not Typeorm: @Index("ind_lastModified", ["_lastModified"])   // DBSync
 export class DBVolumeSnapshot implements VolumeSnapshot {
     @PrimaryColumn(TypeORM.WORKSPACE_ID_COLUMN_TYPE)
     id: string;
