@@ -9,16 +9,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // WorkspaceSpec defines the desired state of Workspace
 type WorkspaceSpec struct {
 	// +kubebuilder:validation:Required
 	Ownership Ownership `json:"ownership"`
 
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Enum:=Regular;Prebuild;ImageBuild
 	Type WorkspaceType `json:"type"`
 
 	Class string `json:"class"`
@@ -35,11 +31,13 @@ type WorkspaceSpec struct {
 
 	Git *GitSpec `json:"git,omitempty"`
 
-	Timeout TimeoutSpec `json:"timeout"`
+	Timeout TimeoutSpec `json:"timeout,omitempty"`
 
+	// +kubebuilder:validation:Required
 	Admission AdmissionSpec `json:"admission"`
 
-	Ports []PortSpec `json:"ports,omitempty"`
+	// +kubebuilder:validation:MinItems=0
+	Ports []PortSpec `json:"ports"`
 }
 
 type Ownership struct {
@@ -47,10 +45,13 @@ type Ownership struct {
 	Owner string `json:"owner"`
 	// +kubebuilder:validation:Required
 	WorkspaceID string `json:"workspaceID"`
-	Team        string `json:"team,omitempty"`
-	Tenant      string `json:"tenant,omitempty"`
+	// +kubebuilder:validation:Optional
+	Team string `json:"team,omitempty"`
+	// +kubebuilder:validation:Optional
+	Tenant string `json:"tenant,omitempty"`
 }
 
+// +kubebuilder:validation:Enum=Regular;Prebuild;ImageBuild
 type WorkspaceType string
 
 const (
@@ -84,14 +85,16 @@ type TimeoutSpec struct {
 }
 
 type AdmissionSpec struct {
+	// +kubebuilder:default=Owner
 	Level AdmissionLevel `json:"level"`
 }
 
+// +kubebuilder:validation:Enum=Owner;Everyone
 type AdmissionLevel string
 
 const (
-	AdmissionLevelOwner    AdmissionLevel = "owner"
-	AdmissionLevelEveryone AdmissionLevel = "everyone"
+	AdmissionLevelOwner    AdmissionLevel = "Owner"
+	AdmissionLevelEveryone AdmissionLevel = "Everyone"
 )
 
 type PortSpec struct {
@@ -99,40 +102,79 @@ type PortSpec struct {
 	Port uint32 `json:"port"`
 
 	// +kubebuilder:validation:Required
+	// +kubebuilder:default=Owner
 	Visibility AdmissionLevel `json:"visibility"`
 }
 
 // WorkspaceStatus defines the observed state of Workspace
 type WorkspaceStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
 	PodStarts  int    `json:"podStarts"`
 	Headless   bool   `json:"headless"`
 	URL        string `json:"url,omitempty"`
 	OwnerToken string `json:"ownerToken,omitempty"`
 
-	// +kubebuilder:validation:Optional
+	// +kubebuilder:default=Unknown
 	Phase WorkspacePhase `json:"phase,omitempty"`
-	// +kubebuilder:validation:Optional
-	Conditions WorkspaceConditions      `json:"conditions,omitempty"`
-	Results    *WorkspaceResults        `json:"results,omitempty"`
-	Disposal   *WorkspaceDisposalStatus `json:"disposal,omitempty"`
 
+	// +kubebuilder:validation:Optional
+	Conditions []metav1.Condition `json:"conditions"`
+
+	// Snapshot contains a snapshot URL if a snapshot was produced prior to shutting the workspace down. This condition is only used for headless workspaces.
+	// +kubebuilder:validation:Optional
+	Snapshot string `json:"snapshot,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	GitStatus *GitStatus `json:"git,omitempty"`
+
+	// +kubebuilder:validation:Optional
 	Runtime *WorkspaceRuntimeStatus `json:"runtime,omitempty"`
 }
 
+// +kubebuilder:validation:Enum=Deployed;Failed;Timeout;UserActivity;HeadlessTaskFailed;StoppedByRequest;EverReady;BackupComplete;BackupFailure
+type WorkspaceCondition string
+
+const (
+	// Deployed indicates if a workspace pod is currently deployed.
+	// If this condition is false, there is no means for the user to alter the workspace content.
+	WorkspaceConditionDeployed WorkspaceCondition = "Deployed"
+
+	// Failed contains the reason the workspace failed to operate.
+	WorkspaceConditionFailed WorkspaceCondition = "Failed"
+
+	// Timeout contains the reason the workspace has timed out.
+	WorkspaceConditionTimeout WorkspaceCondition = "Timeout"
+
+	// UserActivity is the time when MarkActive was first called on the workspace
+	WorkspaceConditionUserActivity WorkspaceCondition = "UserActivity"
+
+	// HeadlessTaskFailed indicates that a headless workspace task failed
+	WorkspaceConditionsHeadlessTaskFailed WorkspaceCondition = "HeadlessTaskFailed"
+
+	// StoppedByRequest is true if the workspace was stopped using a StopWorkspace call
+	WorkspaceConditionStoppedByRequest WorkspaceCondition = "StoppedByRequest"
+
+	// EverReady becomes true if the workspace was ever ready to be used
+	WorkspaceConditionEverReady WorkspaceCondition = "EverReady"
+
+	// BackupComplete is true once the backup has happened
+	WorkspaceConditionBackupComplete WorkspaceCondition = "BackupComplete"
+
+	// BackupFailure contains information about the backup failure
+	WorkspaceConditionBackupFailure WorkspaceCondition = "BackupFailure"
+)
+
+// +kubebuilder:validation:Enum:=Unknown;Pending;Imagebuild;Creating;Initializing;Running;Stopping;Stopped
 type WorkspacePhase string
 
 const (
-	WorkspacePhaseUnknown      WorkspacePhase = "unknown"
-	WorkspacePhasePending      WorkspacePhase = "pending"
-	WorkspacePhaseImageBuild   WorkspacePhase = "imagebuild"
-	WorkspacePhaseCreating     WorkspacePhase = "creating"
-	WorkspacePhaseInitializing WorkspacePhase = "initializing"
-	WorkspacePhaseRunning      WorkspacePhase = "running"
-	WorkspacePhaseStopping     WorkspacePhase = "stopping"
-	WorkspacePhaseStopped      WorkspacePhase = "stopped"
+	WorkspacePhaseUnknown      WorkspacePhase = "Unknown"
+	WorkspacePhasePending      WorkspacePhase = "Pending"
+	WorkspacePhaseImageBuild   WorkspacePhase = "Imagebuild"
+	WorkspacePhaseCreating     WorkspacePhase = "Creating"
+	WorkspacePhaseInitializing WorkspacePhase = "Initializing"
+	WorkspacePhaseRunning      WorkspacePhase = "Running"
+	WorkspacePhaseStopping     WorkspacePhase = "Stopping"
+	WorkspacePhaseStopped      WorkspacePhase = "Stopped"
 )
 
 type WorkspaceConditions struct {
@@ -159,38 +201,23 @@ type WorkspaceConditions struct {
 	EverReady bool `json:"everReady,omitempty"`
 }
 
-type WorkspaceResults struct {
-	// Snapshot contains a snapshot URL if a snapshot was produced prior to shutting the workspace down. This condition is only used for headless workspaces.
-	Snapshot string `json:"snapshot,omitempty"`
-
-	// HeadlessTaskFailed indicates that a headless workspace task failed
-	HeadlessTaskFailed string `json:"headlessTaskFailed,omitempty"`
-}
-
-// workspaceDisposalStatus indicates the status of the workspace diposal
-type WorkspaceDisposalStatus struct {
-	BackupComplete bool       `json:"backupComplete,omitempty"`
-	BackupFailure  string     `json:"backupFailure,omitempty"`
-	GitStatus      *GitStatus `json:"git,omitempty"`
-}
-
 type GitStatus struct {
 	// branch is branch we're currently on
 	Branch string `json:"branch,omitempty"`
 	// latest_commit is the most recent commit on the current branch
-	LatestCommit string `json:"latest_commit,omitempty"`
+	LatestCommit string `json:"latestCommit,omitempty"`
 	// uncommited_files is the number of uncommitted files, possibly truncated
-	UncommitedFiles []string `json:"uncommited_files,omitempty"`
+	UncommitedFiles []string `json:"uncommitedFiles,omitempty"`
 	// the total number of uncommited files
-	TotalUncommitedFiles int64 `json:"total_uncommited_files,omitempty"`
+	TotalUncommitedFiles int64 `json:"totalUncommitedFiles,omitempty"`
 	// untracked_files is the number of untracked files in the workspace, possibly truncated
-	UntrackedFiles []string `json:"untracked_files,omitempty"`
+	UntrackedFiles []string `json:"untrackedFiles,omitempty"`
 	// the total number of untracked files
-	TotalUntrackedFiles int64 `json:"total_untracked_files,omitempty"`
+	TotalUntrackedFiles int64 `json:"totalUntrackedFiles,omitempty"`
 	// unpushed_commits is the number of unpushed changes in the workspace, possibly truncated
-	UnpushedCommits []string `json:"unpushed_commits,omitempty"`
+	UnpushedCommits []string `json:"unpushedCommits,omitempty"`
 	// the total number of unpushed changes
-	TotalUnpushedCommits int64 `json:"total_unpushed_commits,omitempty"`
+	TotalUnpushedCommits int64 `json:"totalUnpushedCommits,omitempty"`
 }
 
 type WorkspaceRuntimeStatus struct {
