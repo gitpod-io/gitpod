@@ -111,6 +111,11 @@ EOF
         return 0
     fi
 
+    # Delete old serviceaccount/clusterrolebinding
+    echo "Deleting pre-2022.9.0 serviceaccount/clusterrolebinding"
+    kubectl delete serviceaccounts -n "${NAMESPACE}" installer || true
+    kubectl delete clusterrolebindings -n "${NAMESPACE}" installer || true
+
     # Combine the pull secrets
     echo "${LOCAL_REGISTRY_IMAGE_PULL_DOCKER_CONFIG_JSON}" > /tmp/kotsregistry.json
     if [ "${REGISTRY_INCLUSTER_ENABLED}" = "1" ]; then
