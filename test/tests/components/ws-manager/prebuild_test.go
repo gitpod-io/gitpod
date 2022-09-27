@@ -182,20 +182,23 @@ const (
 	prebuildLogPath string = "/workspace/.gitpod"
 	prebuildLog     string = "'🤙 This task ran as a workspace prebuild'"
 	initTask        string = "echo \"some output\" > someFile; sleep 90;"
+	regularPrefix   string = "ws-"
 )
 
 // TestOpenWorkspaceFromPrebuild
 // - create a prebuild
-// - open the workspace from prebuild
-// - make sure the .git/ folder with correct permission
+// - open the regular workspace from prebuild
+// - make sure the regular workspace PVC object should exist or not
 // - make sure either one of the condition mets
 //   - the prebuild log message exists
 //   - the init task message exists
 //   - the init task generated file exists
 //
+// - make sure the .git/ folder with correct permission
 // - write a new file foobar.txt
-// - stop the workspace
-// - relaunch the workspace
+// - stop the regular workspace
+// - relaunch the regular workspace
+// - make sure the regular workspace PVC object should exist or not
 // - make sure the file foobar.txt exists
 func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 	f := features.New("prebuild").
@@ -263,7 +266,11 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 					if err != nil {
 						t.Fatalf("stop workspace and find snapshot error: %v", err)
 					}
-					t.Logf("prebuild snapshot: %s, vsName: %s, vsHandle: %s", prebuildSnapshot, vsInfo.VolumeSnapshotName, vsInfo.VolumeSnapshotHandle)
+
+					t.Logf("prebuild snapshot: %s", prebuildSnapshot)
+					if vsInfo != nil {
+						t.Logf("vsName: %s, vsHandle: %s", vsInfo.VolumeSnapshotName, vsInfo.VolumeSnapshotHandle)
+					}
 
 					// launch the workspace from prebuild
 					// TODO: change to use server API to launch the workspace, so we could run the integration test as the user code flow
@@ -295,6 +302,9 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 						t.Fatalf("cannot launch a workspace: %q", err)
 					}
 
+					// check the PVC object should exist or not
+					checkPVCObject(t, api, test.FF, regularPrefix+ws.Req.Id)
+
 					defer func() {
 						// stop workspace in defer function to prevent we forget to stop the workspace
 						if err := stopWorkspace(t, cfg, stopWs); err != nil {
@@ -313,7 +323,7 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 					})
 					integration.DeferCloser(t, closer)
 
-					// checkPrebuildLogExist checks the prebuild log message exists
+					// check prebuild log message exists
 					checkPrebuildLogExist(t, cfg, rsa, ws, test.WorkspaceRoot)
 
 					// check the files/folders permission under .git/ is not root
@@ -341,7 +351,10 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 					if err != nil {
 						t.Fatal(err)
 					}
-					t.Logf("vsName: %s, vsHandle: %s", vsInfo.VolumeSnapshotName, vsInfo.VolumeSnapshotHandle)
+
+					if vsInfo != nil {
+						t.Logf("vsName: %s, vsHandle: %s", vsInfo.VolumeSnapshotName, vsInfo.VolumeSnapshotHandle)
+					}
 
 					// reopen the workspace and make sure the file foobar.txt exists
 					ws1, stopWs1, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
@@ -364,6 +377,9 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 					if err != nil {
 						t.Fatalf("cannot launch a workspace: %q", err)
 					}
+
+					// check the PVC object should exist or not
+					checkPVCObject(t, api, test.FF, regularPrefix+ws1.Req.Id)
 
 					defer func() {
 						// stop workspace in defer function to prevent we forget to stop the workspace
@@ -555,7 +571,7 @@ func TestPrebuildAndRegularWorkspaceDifferentWorkspaceClass(t *testing.T) {
 					})
 					integration.DeferCloser(t, closer)
 
-					// checkPrebuildLogExist checks the prebuild log message exists
+					// check prebuild log message exists
 					checkPrebuildLogExist(t, cfg, rsa, ws, test.WorkspaceRoot)
 
 					// check the files/folders permission under .git/ is not root
@@ -567,6 +583,21 @@ func TestPrebuildAndRegularWorkspaceDifferentWorkspaceClass(t *testing.T) {
 		Feature()
 
 	testEnv.Test(t, f)
+}
+
+// checkPVCObject checks the PVC object should exist or not
+func checkPVCObject(t *testing.T, api *integration.ComponentAPI, ff []wsmanapi.WorkspaceFeatureFlag, pvcName string) {
+	if reflect.DeepEqual(ff, []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM}) {
+		// check the PVC object exist
+		if !api.IsPVCExist(pvcName) {
+			t.Fatal("prebuild PVC object should exist")
+		}
+		return
+	}
+	// check the PVC object not exist
+	if api.IsPVCExist(pvcName) {
+		t.Fatal("prebuild PVC object should not exist")
+	}
 }
 
 // checkPrebuildLogExist checks the prebuild log message exists

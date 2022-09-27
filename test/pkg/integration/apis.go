@@ -1148,3 +1148,8 @@ func (c *ComponentAPI) portFwdWithRetry(ctx context.Context, portFwdF portFwdFun
 		}
 	}
 }
+
+func (c *ComponentAPI) IsPVCExist(pvcName string) bool {
+	var pvc corev1.PersistentVolumeClaim
+	return c.client.Resources().Get(context.Background(), pvcName, c.namespace, &pvc) == nil
+}
