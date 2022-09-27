@@ -56,6 +56,7 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/pkg/config"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/dropwriter"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/process"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -396,9 +397,38 @@ func Run(options ...RunOption) {
 
 	// terminate all child processes once the IDE is gone
 	ideWG.Wait()
-	terminateChildProcesses()
+	err = process.VisitProcessTree(os.Getpid(), terminateProcess)
+	if err != nil {
+		log.WithError(err).Debug("Couldn't terminate child processes")
+	}
 
 	wg.Wait()
+}
+
+func terminateProcess(proc procfs.Proc) error {
+	if os.Getpid() == proc.PID {
+		// don't terminate ourselve
+		return nil
+	}
+	status, err := proc.NewStatus()
+	if err != nil {
+		log.WithError(err).WithField("pid", proc.PID).Debug("couldn't retrieve status information child process")
+		return nil
+	}
+	uid, err := strconv.Atoi(status.UIDs[0])
+	if err != nil {
+		log.WithError(err).WithField("pid", proc.PID).Debug("couldn't obtain UID for child process")
+	}
+	if uid != initializer.GitpodUID {
+		cmd := exec.Command("kill", "-SIGTERM", fmt.Sprintf("%v", proc.PID))
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		err = cmd.Run()
+	} else {
+		err = syscall.Kill(proc.PID, unix.SIGTERM)
+	}
+	log.WithError(err).WithField("pid", proc.PID).Debug("SIGTERM'ed child process")
+	return nil
 }
 
 func isShallowRepository(rootDir string, env []string) bool {
@@ -1399,77 +1429,6 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 
 	log.WithField("source", src).Info("supervisor: workspace content init finished")
 	cst.MarkContentReady(src)
-}
-
-func terminateChildProcesses() {
-	parent := os.Getpid()
-
-	children, err := processesWithParent(parent)
-	if err != nil {
-		log.WithError(err).WithField("pid", parent).Warn("cannot find children processes")
-		return
-	}
-
-	for pid, uid := range children {
-		privileged := false
-		if initializer.GitpodUID != uid {
-			privileged = true
-		}
-
-		terminateProcess(pid, privileged)
-	}
-}
-
-func terminateProcess(pid int, privileged bool) {
-	var err error
-	if privileged {
-		cmd := exec.Command("kill", "-SIGTERM", fmt.Sprintf("%v", pid))
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err = cmd.Run()
-	} else {
-		err = syscall.Kill(pid, unix.SIGTERM)
-	}
-
-	if err != nil {
-		log.WithError(err).WithField("pid", pid).Debug("child process is already terminated")
-		return
-	}
-
-	log.WithField("pid", pid).Debug("SIGTERM'ed child process")
-}
-
-func processesWithParent(ppid int) (map[int]int, error) {
-	procs, err := procfs.AllProcs()
-	if err != nil {
-		return nil, err
-	}
-
-	children := make(map[int]int)
-	for _, proc := range procs {
-		stat, err := proc.Stat()
-		if err != nil {
-			continue
-		}
-
-		if stat.PPID != ppid {
-			continue
-		}
-
-		status, err := proc.NewStatus()
-		if err != nil {
-			continue
-		}
-
-		uid, err := strconv.Atoi(status.UIDs[0])
-		if err != nil {
-			continue
-		}
-
-		children[proc.PID] = uid
-	}
-
-	return children, nil
 }
 
 func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *terminal.Mux) {

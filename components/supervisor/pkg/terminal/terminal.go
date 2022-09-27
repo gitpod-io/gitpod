@@ -17,12 +17,14 @@ import (
 
 	"github.com/creack/pty"
 	"github.com/google/uuid"
+	"github.com/prometheus/procfs"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/supervisor/api"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/process"
 )
 
 // NewMux creates a new terminal mux.
@@ -148,30 +150,40 @@ func (m *Mux) doClose(alias string, gracePeriod time.Duration) error {
 
 func (term *Term) gracefullyShutdownProcess(gracePeriod time.Duration) error {
 	if term.Command.Process == nil {
-		// process is alrady gone
+		// process is already gone
 		return nil
 	}
 	if gracePeriod == 0 {
 		return term.shutdownProcessImmediately()
 	}
-
-	err := term.Command.Process.Signal(unix.SIGTERM)
-	if err != nil {
-		return err
-	}
-	schan := make(chan error, 1)
-	go func() {
-		_, err := term.Wait()
-		schan <- err
-	}()
-	select {
-	case err = <-schan:
-		if err == nil {
-			// process is gone now - we're good
+	err := process.VisitProcessTree(term.Command.Process.Pid, func(proc procfs.Proc) error {
+		process, err := os.FindProcess(proc.PID)
+		if err != nil {
+			log.WithField("pid", proc.PID).Debugf("process doesn't exist anymore")
 			return nil
 		}
-		log.WithError(err).Warn("unexpected terminal error")
-	case <-time.After(gracePeriod):
+		err = process.Signal(unix.SIGTERM)
+		if err != nil {
+			return err
+		}
+		schan := make(chan error, 1)
+		go func() {
+			_, err := term.Wait()
+			schan <- err
+		}()
+		select {
+		case err = <-schan:
+			if err == nil {
+				// process is gone now - we're good
+				return nil
+			}
+			log.WithError(err).Warn("unexpected terminal error")
+		case <-time.After(gracePeriod):
+		}
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	// process did not exit in time. Let's kill.
