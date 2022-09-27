@@ -379,11 +379,17 @@ func (rs *remoteContentStorage) EnsureExists(ctx context.Context) error {
 
 // Download always returns false and does nothing
 func (rs *remoteContentStorage) Download(ctx context.Context, destination string, name string, mappings []archive.IDMapping) (exists bool, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "remoteContentStorage.Download")
+	span.SetTag("destination", destination)
+	span.SetTag("name", name)
+	defer tracing.FinishSpan(span, &err)
+
 	info, exists := rs.RemoteContent[name]
 	if !exists {
 		return false, nil
 	}
 
+	span.SetTag("URL", info.URL)
 	resp, err := http.Get(info.URL)
 	if err != nil {
 		return true, err
