@@ -86,14 +86,14 @@ export class StripeService {
         });
     }
 
-    async getPortalUrlForAttributionId(attributionId: string): Promise<string> {
+    async getPortalUrlForAttributionId(attributionId: string, returnUrl: string): Promise<string> {
         const customerId = await this.findCustomerByAttributionId(attributionId);
         if (!customerId) {
             throw new Error(`No Stripe Customer ID found for '${attributionId}'`);
         }
         const session = await this.getStripe().billingPortal.sessions.create({
             customer: customerId,
-            return_url: this.config.hostUrl.with(() => ({ pathname: `/billing` })).toString(),
+            return_url: returnUrl,
         });
         return session.url;
     }
