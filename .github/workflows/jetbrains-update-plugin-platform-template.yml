@@ -89,7 +89,7 @@ jobs:
                       _This PR was created automatically with GitHub Actions using [this](https://github.com/gitpod-io/gitpod/blob/main/.github/workflows/jetbrains-update-plugin-platform-template.yml) template._
                   commit-message: "Update Platform Version of ${{ inputs.pluginName }} to ${{ steps.latest-version.outputs.result }}"
                   branch: "jetbrains/${{ inputs.pluginId }}-platform"
-                  labels: "team: IDE"
+                  labels: "team: IDE,editor: jetbrains"
                   team-reviewers: "engineering-ide"
             - name: Create Pull Request for Backend Plugin
               if: ${{ inputs.pluginId == 'backend-plugin' && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
