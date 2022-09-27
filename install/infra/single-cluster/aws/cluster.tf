@@ -11,7 +11,7 @@ module "eks" {
   create_external_database = var.create_external_database
   create_external_storage  = var.create_external_storage
   service_machine_type     = "m6i.xlarge"
-  workspace_machine_type   = "m6i.2xlarge"
+  workspace_machine_type   = "m6i.4xlarge"
 
   create_external_storage_for_registry_backend = var.create_external_storage_for_registry_backend
 }
