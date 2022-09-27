@@ -89,6 +89,8 @@ pod:
       value: "/mnt/secrets/sh-playground-sa-perm/sh-sa.json"
     - name: TF_VAR_dns_sa_creds
       value: "/mnt/secrets/sh-playground-dns-perm/sh-dns-sa.json"
+    - name: TF_VAR_sa_creds
+      value: "/mnt/secrets/sh-playground-sa-perm/sh-sa.json"
     - name: NODENAME
       valueFrom:
         fieldRef:

@@ -314,6 +314,9 @@ self-signed-config:
 	envsubst < ./manifests/kots-config-self-signed.yaml > tmp_2_config.yml
 	yq m -i tmp_config.yml tmp_2_config.yml
 
+	# upload the Custom CA Cert into tf-state
+	gsutil cp ./ca.pem gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-ca.pem
+
 storage-config-incluster:
 	@echo "Nothing to do"
 
@@ -449,6 +452,9 @@ destroy-kubeconfig:
 	gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
 	gsutil rm gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-kubeconfig || echo "No kubeconfig"
 	gsutil rm gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-creds || echo "No credentials file"
+ifeq (true,$(self_signed))
+	gsutil rm gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-ca.pem || echo "No custom CA cert file"
+endif
 	rm ${KUBECONFIG} || echo "No kubeconfig"
 
 select-workspace:
