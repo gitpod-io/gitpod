@@ -31,6 +31,7 @@ type ConfigSerialized struct {
 	ContentServiceAddr                string   `json:"contentServiceAddr"`
 	ImageBuilderAddr                  string   `json:"imageBuilderAddr"`
 	UsageServiceAddr                  string   `json:"usageServiceAddr"`
+	IDEServiceAddr                    string   `json:"ideServiceAddr"`
 	MaximumEventLoopLag               float64  `json:"maximumEventLoopLag"`
 	VSXRegistryUrl                    string   `json:"vsxRegistryUrl"`
 	ChargebeeProviderOptionsFile      string   `json:"chargebeeProviderOptionsFile"`

@@ -89,7 +89,6 @@ import { ProjectsService } from "./projects/projects-service";
 import { NewsletterSubscriptionController } from "./user/newsletter-subscription-controller";
 import { Config, ConfigFile } from "./config";
 import { defaultGRPCOptions } from "@gitpod/gitpod-protocol/lib/util/grpc";
-import { IDEConfigService } from "./ide-config";
 import { PrometheusClientCallMetrics } from "@gitpod/gitpod-protocol/lib/messaging/client-call-metrics";
 import { IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
@@ -111,10 +110,10 @@ import {
 import { VerificationService } from "./auth/verification-service";
 import { WebhookEventGarbageCollector } from "./projects/webhook-event-garbage-collector";
 import { LivenessController } from "./liveness/liveness-controller";
+import { IDEServiceClient, IDEServiceDefinition } from "@gitpod/ide-service-api/lib/ide.pb";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
-    bind(IDEConfigService).toSelf().inSingletonScope();
     bind(IDEService).toSelf().inSingletonScope();
 
     bind(UserService).toSelf().inSingletonScope();
@@ -268,6 +267,11 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind<BillingServiceClient>(BillingServiceDefinition.name).toDynamicValue((ctx) => {
         const config = ctx.container.get<Config>(Config);
         return createClient(BillingServiceDefinition, createChannel(config.usageServiceAddr));
+    });
+
+    bind<IDEServiceClient>(IDEServiceDefinition.name).toDynamicValue((ctx) => {
+        const config = ctx.container.get<Config>(Config);
+        return createClient(IDEServiceDefinition, createChannel(config.ideServiceAddr));
     });
 
     bind(EntitlementService).to(CommunityEntitlementService).inSingletonScope();

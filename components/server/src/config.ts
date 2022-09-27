@@ -169,6 +169,12 @@ export interface ConfigSerialized {
      */
     usageServiceAddr: string;
 
+    /**
+     * The address ide service clients connect to
+     * Example: ide-service:9001
+     */
+    ideServiceAddr: string;
+
     codeSync: CodeSyncConfig;
 
     vsxRegistryUrl: string;

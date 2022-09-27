@@ -11,9 +11,6 @@ COPY components-server--app /installer/
 WORKDIR /app
 RUN /installer/install.sh
 
-FROM golang:1.17.2 as oci-tool-builder
-RUN go install github.com/csweichel/oci-tool@v0.1.1
-
 FROM node:16.13.0-slim
 ENV NODE_OPTIONS="--unhandled-rejections=warn --max_old_space_size=2048"
 # Using ssh-keygen for RSA keypair generation
@@ -27,7 +24,6 @@ RUN apt-get update && apt-get install -yq \
 
 EXPOSE 3000
 
-COPY --from=oci-tool-builder /go /go/
 ENV PATH="/go/bin:${PATH}"
 
 # '--no-log-init': see https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user
