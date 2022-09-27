@@ -60,7 +60,8 @@ tasks:
     before: pre-commit install --install-hooks
     init: |
       ./components/gitpod-protocol/go/scripts/generate-config.sh
-      leeway exec --filter-type go -v -- go mod verify
+      go work sync
+      leeway exec --filter-type go --components -v -- go mod download -x
     openMode: split-right
 vscode:
   extensions:
