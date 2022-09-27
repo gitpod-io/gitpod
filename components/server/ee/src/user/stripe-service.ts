@@ -6,9 +6,7 @@
 
 import { inject, injectable } from "inversify";
 import Stripe from "stripe";
-import { Team, User } from "@gitpod/gitpod-protocol";
 import { Config } from "../../../src/config";
-import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 const POLL_CREATED_CUSTOMER_INTERVAL_MS = 1000;
@@ -87,26 +85,10 @@ export class StripeService {
         });
     }
 
-    async getPortalUrlForTeam(team: Team): Promise<string> {
-        const customerId = await this.findCustomerByAttributionId(
-            AttributionId.render({ kind: "team", teamId: team.id }),
-        );
+    async getPortalUrlForAttributionId(attributionId: string): Promise<string> {
+        const customerId = await this.findCustomerByAttributionId(attributionId);
         if (!customerId) {
-            throw new Error(`No Stripe Customer ID found for team '${team.id}'`);
-        }
-        const session = await this.getStripe().billingPortal.sessions.create({
-            customer: customerId,
-            return_url: this.config.hostUrl.with(() => ({ pathname: `/t/${team.slug}/billing` })).toString(),
-        });
-        return session.url;
-    }
-
-    async getPortalUrlForUser(user: User): Promise<string> {
-        const customerId = await this.findCustomerByAttributionId(
-            AttributionId.render({ kind: "user", userId: user.id }),
-        );
-        if (!customerId) {
-            throw new Error(`No Stripe Customer ID found for user '${user.id}'`);
+            throw new Error(`No Stripe Customer ID found for '${attributionId}'`);
         }
         const session = await this.getStripe().billingPortal.sessions.create({
             customer: customerId,

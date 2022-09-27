@@ -2168,30 +2168,21 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const user = this.checkAndBlockUser("getStripePortalUrl");
 
-        let url: string;
         if (attrId.kind === "user") {
             await this.ensureStripeApiIsAllowed({ user });
-            try {
-                url = await this.stripeService.getPortalUrlForUser(user);
-            } catch (error) {
-                log.error(`Failed to get Stripe portal URL for user '${user.id}'`, error);
-                throw new ResponseError(
-                    ErrorCodes.INTERNAL_SERVER_ERROR,
-                    `Failed to get Stripe portal URL for user '${user.id}'`,
-                );
-            }
         } else {
             const team = await this.guardTeamOperation(attrId.teamId, "update");
             await this.ensureStripeApiIsAllowed({ team });
-            try {
-                url = await this.stripeService.getPortalUrlForTeam(team);
-            } catch (error) {
-                log.error(`Failed to get Stripe portal URL for team '${team.id}'`, error);
-                throw new ResponseError(
-                    ErrorCodes.INTERNAL_SERVER_ERROR,
-                    `Failed to get Stripe portal URL for team '${team.id}'`,
-                );
-            }
+        }
+        let url: string;
+        try {
+            url = await this.stripeService.getPortalUrlForAttributionId(attributionId);
+        } catch (error) {
+            log.error(`Failed to get Stripe portal URL for '${attributionId}'`, error);
+            throw new ResponseError(
+                ErrorCodes.INTERNAL_SERVER_ERROR,
+                `Failed to get Stripe portal URL for '${attributionId}'`,
+            );
         }
         return url;
     }
