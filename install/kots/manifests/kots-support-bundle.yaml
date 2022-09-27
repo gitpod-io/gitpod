@@ -102,6 +102,11 @@ spec:
           - app=gitpod
         namespace: '{{repl Namespace }}'
         includeAllData: true
+    - configMap:
+        selector:
+          - kots.io/kotsadm=true
+        namespace: '{{repl Namespace }}'
+        includeAllData: true
     - secret:
         selector:
           - app=gitpod
