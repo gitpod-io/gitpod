@@ -4315,24 +4315,12 @@ data:
           "docker.io/gitpod/workspace-full:latest"
         ]
       },
-      "service": {
-        "address": "0.0.0.0:8080",
-        "tls": {
-          "ca": "",
-          "crt": "",
-          "key": ""
+      "server": {
+        "services": {
+          "grpc": {
+            "address": "0.0.0.0:8080"
+          }
         }
-      },
-      "prometheus": {
-        "address": "127.0.0.1:9500",
-        "tls": {
-          "ca": "",
-          "crt": "",
-          "key": ""
-        }
-      },
-      "pprof": {
-        "address": "127.0.0.1:6060"
       }
     }
 kind: ConfigMap
@@ -8672,7 +8660,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 96743936096936609b76bcab7e6b4c5d2ae5b0cd63b73268b03984c82bdf3d3e
+        gitpod.io/checksum_config: 6b82d310231a10f059f0a9efebcf1422f6b2e72eacb55b1ac68f283695b1a167
       creationTimestamp: null
       labels:
         app: gitpod
