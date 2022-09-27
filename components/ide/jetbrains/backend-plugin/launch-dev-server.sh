@@ -26,7 +26,7 @@ unzip $GITPOD_PLUGIN_DIST -d $TEST_PLUGINS_DIR
 TEST_DIR=/workspace/test-repo
 if [ ! -d "$TEST_DIR" ]; then
   TEST_REPO=https://github.com/gitpod-io/spring-petclinic
-  while getopts "r:" OPTION
+  while getopts "r:" OPTIONt
   do
      case $OPTION in
          r) TEST_REPO=$OPTARG ;;
@@ -37,7 +37,7 @@ if [ ! -d "$TEST_DIR" ]; then
 fi
 
 export JB_DEV=true
-export JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:0"
+export JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:44483"
 
 # Set default config and system directories under /workspace to preserve between restarts
 export IJ_HOST_CONFIG_BASE_DIR=/workspace/.config/JetBrains

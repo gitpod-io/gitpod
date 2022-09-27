@@ -118,4 +118,9 @@
             <add-to-group group-id="UnattendedHostDropdownGroup" anchor="last"/>
         </action>
     </actions>
+
+    <applicationListeners>
+        <listener class="com.intellij.util.indexing.FileBasedIndexPluginListener"
+                  topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+    </applicationListeners>
 </idea-plugin>

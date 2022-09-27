@@ -6,6 +6,7 @@ package io.gitpod.jetbrains.remote
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginStateManager
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -79,13 +80,13 @@ class GitpodManager : Disposable {
         // Rate of low memory after GC notifications in the last 5 minutes:
         // rate(gitpod_jb_backend_low_memory_after_gc_total[5m])
         val lowMemoryCounter = Counter.build()
-            .name("gitpod_jb_backend_low_memory_after_gc")
-            .help("Low memory notifications after GC")
-            .labelNames("product", "qualifier")
-            .register(registry)
+                .name("gitpod_jb_backend_low_memory_after_gc")
+                .help("Low memory notifications after GC")
+                .labelNames("product", "qualifier")
+                .register(registry)
         LowMemoryWatcher.register({
             lowMemoryCounter.labels(backendKind, backendQualifier).inc()
-         }, LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC, this)
+        }, LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC, this)
     }
 
     init {
@@ -93,7 +94,7 @@ class GitpodManager : Disposable {
             if (application.isHeadlessEnvironment) {
                 return@launch
             }
-            val pg = if(devMode) null else PushGateway("localhost:22999")
+            val pg = if (devMode) null else PushGateway("localhost:22999")
             // Heap usage at any time in the last 5 minutes:
             // max_over_time(gitpod_jb_backend_memory_used_bytes[5m:])/max_over_time(gitpod_jb_backend_memory_max_bytes[5m:])
             val allocatedGauge = Gauge.build()
@@ -131,20 +132,20 @@ class GitpodManager : Disposable {
             try {
                 val backendPort = BuiltInServerManager.getInstance().waitForStart().port
                 val httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS)
-                    .connectTimeout(Duration.ofSeconds(5))
-                    .build()
+                        .connectTimeout(Duration.ofSeconds(5))
+                        .build()
                 val httpRequest = HttpRequest.newBuilder()
-                    .uri(URI.create("http://localhost:24000/gatewayLink?backendPort=$backendPort"))
-                    .GET()
-                    .build()
+                        .uri(URI.create("http://localhost:24000/gatewayLink?backendPort=$backendPort"))
+                        .GET()
+                        .build()
                 val response =
-                    httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString())
+                        httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString())
                 if (response.statusCode() == 200) {
                     val gatewayLink = response.body()
                     thisLogger().warn(
-                        "\n\n\n*********************************************************\n\n" +
-                                "Gitpod gateway link: $gatewayLink" +
-                                "\n\n*********************************************************\n\n\n"
+                            "\n\n\n*********************************************************\n\n" +
+                                    "Gitpod gateway link: $gatewayLink" +
+                                    "\n\n*********************************************************\n\n\n"
                     )
                 } else {
                     throw Exception("" + response.statusCode())
@@ -170,45 +171,45 @@ class GitpodManager : Disposable {
             try {
                 val f = CompletableFuture<Void>()
                 notifications.subscribe(
-                    SubscribeRequest.newBuilder().build(),
-                    object : ClientResponseObserver<SubscribeRequest, SubscribeResponse> {
+                        SubscribeRequest.newBuilder().build(),
+                        object : ClientResponseObserver<SubscribeRequest, SubscribeResponse> {
 
-                        override fun beforeStart(requestStream: ClientCallStreamObserver<SubscribeRequest>) {
-                            // TODO(ak): actually should be bound to cancellation of notifications job
-                            lifetime.onTerminationOrNow {
-                                requestStream.cancel(null, null)
+                            override fun beforeStart(requestStream: ClientCallStreamObserver<SubscribeRequest>) {
+                                // TODO(ak): actually should be bound to cancellation of notifications job
+                                lifetime.onTerminationOrNow {
+                                    requestStream.cancel(null, null)
+                                }
                             }
-                        }
 
-                        override fun onNext(n: SubscribeResponse) {
-                            val request = n.request
-                            val type = when (request.level) {
-                                NotifyRequest.Level.ERROR -> NotificationType.ERROR
-                                NotifyRequest.Level.WARNING -> NotificationType.WARNING
-                                else -> NotificationType.INFORMATION
+                            override fun onNext(n: SubscribeResponse) {
+                                val request = n.request
+                                val type = when (request.level) {
+                                    NotifyRequest.Level.ERROR -> NotificationType.ERROR
+                                    NotifyRequest.Level.WARNING -> NotificationType.WARNING
+                                    else -> NotificationType.INFORMATION
+                                }
+                                val notification = notificationGroup.createNotification(request.message, type)
+                                for (action in request.actionsList) {
+                                    notification.addAction(NotificationAction.createSimpleExpiring(action) {
+                                        futureNotifications.respond(
+                                                RespondRequest.newBuilder()
+                                                        .setRequestId(n.requestId)
+                                                        .setResponse(NotifyResponse.newBuilder().setAction(action).build())
+                                                        .build()
+                                        )
+                                    })
+                                }
+                                notification.notify(null)
                             }
-                            val notification = notificationGroup.createNotification(request.message, type)
-                            for (action in request.actionsList) {
-                                notification.addAction(NotificationAction.createSimpleExpiring(action) {
-                                    futureNotifications.respond(
-                                        RespondRequest.newBuilder()
-                                            .setRequestId(n.requestId)
-                                            .setResponse(NotifyResponse.newBuilder().setAction(action).build())
-                                            .build()
-                                    )
-                                })
+
+                            override fun onError(t: Throwable) {
+                                f.completeExceptionally(t)
                             }
-                            notification.notify(null)
-                        }
 
-                        override fun onError(t: Throwable) {
-                            f.completeExceptionally(t)
-                        }
-
-                        override fun onCompleted() {
-                            f.complete(null)
-                        }
-                    })
+                            override fun onCompleted() {
+                                f.complete(null)
+                            }
+                        })
                 f.await()
             } catch (t: Throwable) {
                 if (t is CancellationException) {
@@ -219,6 +220,7 @@ class GitpodManager : Disposable {
             delay(1000L)
         }
     }
+
     init {
         lifetime.onTerminationOrNow {
             notificationsJob.cancel()
@@ -246,6 +248,7 @@ class GitpodManager : Disposable {
             pendingInfo.completeExceptionally(t)
         }
     }
+
     init {
         lifetime.onTerminationOrNow {
             infoJob.cancel()
@@ -340,6 +343,7 @@ class GitpodManager : Disposable {
         }
         thisLogger().warn("$gitpodHost: connection permanently closed: $closeReason")
     }
+
     init {
         lifetime.onTerminationOrNow {
             serverJob.cancel()
@@ -393,9 +397,34 @@ class GitpodManager : Disposable {
             delay(1000L)
         }
     }
+
     init {
         lifetime.onTerminationOrNow {
             metricsJob.cancel()
+        }
+    }
+
+    private val listPluginsJob = GlobalScope.launch {
+        if (application.isHeadlessEnvironment) {
+            return@launch
+        }
+
+        try {
+            PluginStateManager.addStateListener(GitpodPluginStateListener())
+
+            val plugins = PluginManagerCore.getLoadedPlugins().filterNot { it.isBundled }
+
+            for (plugin in plugins) {
+                thisLogger().warn("gitpod: detected installed plugin: ${plugin.pluginId}:${plugin.version}")
+            }
+        } catch (t: Throwable) {
+            thisLogger().error("gitpod: failed to retrieve loaded plugins: ", t)
+        }
+    }
+
+    init {
+        lifetime.onTerminationOrNow {
+            listPluginsJob.cancel()
         }
     }
 
