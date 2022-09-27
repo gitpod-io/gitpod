@@ -15,8 +15,11 @@ defaultArgs:
   golandDownloadUrl: "https://download.jetbrains.com/go/goland-2022.2.3.tar.gz"
   pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2022.2.2.tar.gz"
   phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2022.2.2.tar.gz"
+  # Used by the kots installer
   REPLICATED_API_TOKEN: ""
   REPLICATED_APP: ""
+  # Used by local-preview
+  SEGMENT_IO_TOKEN: ""
 provenance:
   enabled: true
   slsa: true
