@@ -2138,7 +2138,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             }
 
             await this.stripeService.setDefaultPaymentMethodForCustomer(customerId, setupIntentId);
-            await this.stripeService.createSubscriptionForCustomer(customerId);
+            await this.stripeService.createSubscriptionForCustomer(customerId, attributionId);
 
             // Creating a cost center for this customer
             await this.usageService.setCostCenter({

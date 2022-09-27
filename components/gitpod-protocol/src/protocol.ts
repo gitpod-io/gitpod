@@ -1512,9 +1512,8 @@ export interface Terms {
 }
 
 export interface StripeConfig {
-    usageProductPriceIds: { [currency: string]: string };
-    individualUsagePriceIds?: { [currency: string]: string };
-    teamUsagePriceIds?: { [currency: string]: string };
+    individualUsagePriceIds: { [currency: string]: string };
+    teamUsagePriceIds: { [currency: string]: string };
 }
 
 export type BillingStrategy = "other" | "stripe";
