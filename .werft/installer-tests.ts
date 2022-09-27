@@ -347,6 +347,12 @@ export async function installerTests(config: TestConfig) {
             console.error("Failed to send message to Slack", error);
         });
 
+        if (selfSigned === "true") {
+            exec(
+                `werft log result -d  "Custom CA Certificate store underd GCP project 'sh-automated-tests'" url "gs://nightly-tests/tf-state/${process.env["TF_VAR_TEST_ID"]}-ca.pem"`,
+            );
+        }
+
         exec(
             `werft log result -d  "Terraform state" url "Terraform state file name is ${process.env["TF_VAR_TEST_ID"]}"`,
         );
@@ -384,10 +390,7 @@ function runIntegrationTests() {
 function callMakeTargets(phase: string, description: string, makeTarget: string, failable: boolean = false) {
     werft.log(phase, `Calling ${makeTarget}`);
     // exporting cloud env var is important for the make targets
-    var env = `export TF_VAR_cluster_version=${k8s_version} cloud=${cloud} TF_VAR_domain=${baseDomain} TF_VAR_gcp_zone=${gcpDnsZone}`;
-    if (selfSigned) {
-        env = env.concat(` self_signed=${selfSigned}`)
-    }
+    const env = `export TF_VAR_cluster_version=${k8s_version} cloud=${cloud} TF_VAR_domain=${baseDomain} TF_VAR_gcp_zone=${gcpDnsZone}`;
 
     const response = exec(
         `${env} && make -C ${makefilePath} ${makeTarget}`,
