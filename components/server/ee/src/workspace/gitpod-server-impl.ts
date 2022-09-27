@@ -2168,15 +2168,17 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const user = this.checkAndBlockUser("getStripePortalUrl");
 
+        let returnUrl = this.config.hostUrl.with(() => ({ pathname: `/billing` })).toString();
         if (attrId.kind === "user") {
             await this.ensureStripeApiIsAllowed({ user });
-        } else {
+        } else if (attrId.kind === "team") {
             const team = await this.guardTeamOperation(attrId.teamId, "update");
             await this.ensureStripeApiIsAllowed({ team });
+            returnUrl = this.config.hostUrl.with(() => ({ pathname: `/t/${team.slug}/billing` })).toString();
         }
         let url: string;
         try {
-            url = await this.stripeService.getPortalUrlForAttributionId(attributionId);
+            url = await this.stripeService.getPortalUrlForAttributionId(attributionId, returnUrl);
         } catch (error) {
             log.error(`Failed to get Stripe portal URL for '${attributionId}'`, error);
             throw new ResponseError(
