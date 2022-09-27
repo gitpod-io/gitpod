@@ -7,7 +7,7 @@
 import { Workspace, User, WorkspaceInstance, NamedWorkspaceFeatureFlag } from "@gitpod/gitpod-protocol";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { injectable } from "inversify";
-import { IDEConfig } from "../../../src/ide-config";
+import { IDEConfig } from "../../../src/ide-service";
 import { WorkspaceStarter } from "../../../src/workspace/workspace-starter";
 
 @injectable()

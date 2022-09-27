@@ -106,7 +106,7 @@ import { ImageSourceProvider } from "./image-source-provider";
 import { MessageBusIntegration } from "./messagebus-integration";
 import * as path from "path";
 import * as grpc from "@grpc/grpc-js";
-import { IDEConfig, IDEConfigService } from "../ide-config";
+import { IDEConfig, IDEService } from "../ide-service";
 import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { ExtendedUser } from "@gitpod/ws-manager/lib/constraints";
@@ -116,7 +116,6 @@ import {
     increaseSuccessfulInstanceStartCounter,
 } from "../prometheus-metrics";
 import { ContextParser } from "./context-parser-service";
-import { IDEService } from "../ide-service";
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-imagebuilder-client-provider";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { WorkspaceClasses, WorkspaceClassesConfig } from "./workspace-classes";
@@ -256,7 +255,6 @@ class StartInstanceError extends Error {
 export class WorkspaceStarter {
     @inject(WorkspaceManagerClientProvider) protected readonly clientProvider: WorkspaceManagerClientProvider;
     @inject(Config) protected readonly config: Config;
-    @inject(IDEConfigService) private readonly ideConfigService: IDEConfigService;
     @inject(IDEService) private readonly ideService: IDEService;
     @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
     @inject(TracedUserDB) protected readonly userDB: DBWithTracing<UserDB>;
@@ -348,7 +346,7 @@ export class WorkspaceStarter {
                 );
             }
 
-            const ideConfig = await this.ideConfigService.config;
+            const ideConfig = await this.ideService.getIDEConfig();
 
             // create and store instance
             let instance = await this.workspaceDb

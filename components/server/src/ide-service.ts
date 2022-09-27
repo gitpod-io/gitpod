@@ -5,10 +5,38 @@
  */
 
 import { JetBrainsConfig, TaskConfig, Workspace } from "@gitpod/gitpod-protocol";
-import { injectable } from "inversify";
+import { IDEOptions, IDEClient } from "@gitpod/gitpod-protocol/lib/ide-protocol";
+import { IDEServiceClient, IDEServiceDefinition } from "@gitpod/ide-service-api/lib/ide.pb";
+import { inject, injectable } from "inversify";
 
+export interface IDEConfig {
+    supervisorImage: string;
+    ideOptions: IDEOptions;
+    clients?: { [id: string]: IDEClient };
+}
 @injectable()
 export class IDEService {
+    @inject(IDEServiceDefinition.name)
+    protected readonly ideService: IDEServiceClient;
+
+    private cacheConfig?: IDEConfig;
+
+    async getIDEConfig(): Promise<IDEConfig> {
+        try {
+            let resp = await this.ideService.getConfig({});
+            let config: IDEConfig = JSON.parse(resp.content);
+            this.cacheConfig = config;
+            return config;
+        } catch (e) {
+            console.error("failed get ide config:", e);
+            if (this.cacheConfig == null) {
+                throw new Error("failed get ide config:" + e.message);
+            } else {
+                return this.cacheConfig;
+            }
+        }
+    }
+
     resolveGitpodTasks(ws: Workspace): TaskConfig[] {
         const tasks: TaskConfig[] = [];
         if (ws.config.tasks) {

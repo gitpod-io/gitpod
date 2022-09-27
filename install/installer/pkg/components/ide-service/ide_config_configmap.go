@@ -8,7 +8,6 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace/ide"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
@@ -168,10 +167,10 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&corev1.ConfigMap{
 			TypeMeta: common.TypeMetaConfigmap,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:        fmt.Sprintf("%s-ide-config", server.Component),
+				Name:        "server-ide-config",
 				Namespace:   ctx.Namespace,
-				Labels:      common.CustomizeLabel(ctx, server.Component, common.TypeMetaConfigmap),
-				Annotations: common.CustomizeAnnotation(ctx, server.Component, common.TypeMetaConfigmap),
+				Labels:      common.CustomizeLabel(ctx, "server", common.TypeMetaConfigmap),
+				Annotations: common.CustomizeAnnotation(ctx, "server", common.TypeMetaConfigmap),
 			},
 			Data: map[string]string{
 				"config.json": string(fc),

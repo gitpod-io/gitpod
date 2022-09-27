@@ -161,7 +161,6 @@ import { ProjectsService } from "../projects/projects-service";
 import { LocalMessageBroker } from "../messaging/local-message-broker";
 import { CachingBlobServiceClientProvider } from "@gitpod/content-service/lib/sugar";
 import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
-import { IDEConfigService } from "../ide-config";
 import { PartialProject } from "@gitpod/gitpod-protocol/src/teams-projects-protocol";
 import { ClientMetadata, traceClientMetadata } from "../websocket/websocket-connection-manager";
 import { ConfigurationService } from "../config/configuration-service";
@@ -179,6 +178,7 @@ import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { EntitlementService } from "../billing/entitlement-service";
 import { WorkspaceClasses } from "./workspace-classes";
 import { formatPhoneNumber } from "../user/phone-numbers";
+import { IDEService } from "../ide-service";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -245,7 +245,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     @inject(ConfigurationService) protected readonly configurationService: ConfigurationService;
 
-    @inject(IDEConfigService) protected readonly ideConfigService: IDEConfigService;
+    @inject(IDEService) protected readonly ideService: IDEService;
 
     @inject(VerificationService) protected readonly verificationService: VerificationService;
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
@@ -2966,7 +2966,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async getIDEOptions(ctx: TraceContext): Promise<IDEOptions> {
-        const ideConfig = await this.ideConfigService.config;
+        const ideConfig = await this.ideService.getIDEConfig();
         return ideConfig.ideOptions;
     }
 

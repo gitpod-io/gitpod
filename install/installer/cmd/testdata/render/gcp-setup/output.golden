@@ -4162,6 +4162,7 @@ data:
       "contentServiceAddr": "content-service.default.svc.cluster.local:8080",
       "imageBuilderAddr": "image-builder-mk3.default.svc.cluster.local:8080",
       "usageServiceAddr": "usage.default.svc.cluster.local:9001",
+      "ideServiceAddr": "ide-service.default.svc.cluster.local:9001",
       "maximumEventLoopLag": 0.35,
       "vsxRegistryUrl": "https://open-vsx.gitpod.example.com",
       "chargebeeProviderOptionsFile": "/chargebee/providerOptions",
@@ -8294,7 +8295,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: f494f4b9ea8f35ead669c76cc215ace1626a68609c5fd5451de5e364c6367a9b
+        gitpod.io/checksum_config: 73fa19472813179dc8c919dc7f879256916481ff520144b6362fefaa7d5e2f15
       creationTimestamp: null
       labels:
         app: gitpod
