@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gitpod-io/gitpod/image-builder/api/config"
-	"io/ioutil"
 	"os"
 
 	"github.com/mattn/go-isatty"
@@ -51,7 +50,7 @@ func Execute() {
 }
 
 func getConfig() *config.ServiceConfig {
-	ctnt, err := ioutil.ReadFile(configFile)
+	ctnt, err := os.ReadFile(configFile)
 	if err != nil {
 		log.WithError(xerrors.Errorf("cannot read config: %w", err)).Error("cannot read configuration. Maybe missing --config?")
 		os.Exit(1)
