@@ -8,6 +8,7 @@ import { inject, injectable } from "inversify";
 import Stripe from "stripe";
 import { Config } from "../../../src/config";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 
 const POLL_CREATED_CUSTOMER_INTERVAL_MS = 1000;
 const POLL_CREATED_CUSTOMER_MAX_ATTEMPTS = 30;
@@ -115,15 +116,29 @@ export class StripeService {
         await this.getStripe().subscriptions.del(subscriptionId);
     }
 
-    async createSubscriptionForCustomer(customerId: string): Promise<void> {
+    async createSubscriptionForCustomer(customerId: string, attributionId: string): Promise<void> {
         const customer = await this.getStripe().customers.retrieve(customerId, { expand: ["tax"] });
         if (!customer || customer.deleted) {
             throw new Error(`Stripe customer '${customerId}' could not be found`);
         }
+        const attrId = AttributionId.parse(attributionId);
+        if (!attrId) {
+            throw new Error(`Invalid attributionId '${attributionId}'`);
+        }
         const currency = customer.metadata.preferredCurrency || "USD";
-        const priceId = this.config?.stripeConfig?.usageProductPriceIds[currency];
+        let priceIds: { [currency: string]: string } | undefined;
+        if (attrId.kind === "team") {
+            priceIds = this.config.stripeConfig?.teamUsagePriceIds;
+        } else if (attrId.kind === "user") {
+            priceIds = this.config.stripeConfig?.individualUsagePriceIds;
+        } else {
+            throw new Error(`Unsupported attribution kind '${(attrId as any).kind}'`);
+        }
+        const priceId = priceIds && priceIds[currency];
         if (!priceId) {
-            throw new Error(`No Stripe Price ID configured for currency '${currency}'`);
+            throw new Error(
+                `No Stripe Price ID configured for attribution kind '${attrId.kind}' and currency '${currency}'`,
+            );
         }
         const isAutomaticTaxSupported = customer.tax?.automatic_tax === "supported";
         if (!isAutomaticTaxSupported) {
