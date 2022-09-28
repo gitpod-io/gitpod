@@ -38,12 +38,14 @@ func (d *CostCenter) TableName() string {
 	return "d_b_cost_center"
 }
 
-type DefaultSpendingLimit struct {
-	ForTeams int32 `json:"forTeams"`
-	ForUsers int32 `json:"forUsers"`
+type DefaultUsageLimits struct {
+	ForTeams       int32 `json:"forTeams"`
+	ForUsers       int32 `json:"forUsers"`
+	ForStripeTeams int32 `json:"forStripeTeams"`
+	ForStripeUsers int32 `json:"forStripeUsers"`
 }
 
-func NewCostCenterManager(conn *gorm.DB, cfg DefaultSpendingLimit) *CostCenterManager {
+func NewCostCenterManager(conn *gorm.DB, cfg DefaultUsageLimits) *CostCenterManager {
 	return &CostCenterManager{
 		conn: conn,
 		cfg:  cfg,
@@ -52,7 +54,7 @@ func NewCostCenterManager(conn *gorm.DB, cfg DefaultSpendingLimit) *CostCenterMa
 
 type CostCenterManager struct {
 	conn *gorm.DB
-	cfg  DefaultSpendingLimit
+	cfg  DefaultUsageLimits
 }
 
 // GetOrCreateCostCenter returns the latest version of cost center for the given attributionID.
@@ -132,11 +134,20 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, costCenter Cos
 					return CostCenter{}, err
 				}
 			}
+			// update the usage limit
+			switch {
+			case costCenter.ID.IsEntity(AttributionEntity_Team):
+				costCenter.SpendingLimit = c.cfg.ForStripeTeams
+			case costCenter.ID.IsEntity(AttributionEntity_User):
+				costCenter.SpendingLimit = c.cfg.ForStripeUsers
+			default:
+				return CostCenter{}, fmt.Errorf("unsupported attributionID %s", costCenter.ID)
+			}
 			// we don't manage stripe billing cycle
 			costCenter.NextBillingTime = VarcharTime{}
 
 		case CostCenter_Other:
-			// cancelled from stripe reset the spending limit
+			// cancelled from stripe reset the usage limit
 			if costCenter.ID.IsEntity(AttributionEntity_Team) {
 				costCenter.SpendingLimit = c.cfg.ForTeams
 			} else {

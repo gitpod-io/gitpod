@@ -37,9 +37,11 @@ func TestCostCenter_WriteRead(t *testing.T) {
 
 func TestCostCenterManager_GetOrCreateCostCenter(t *testing.T) {
 	conn := dbtest.ConnectForTests(t)
-	mnr := db.NewCostCenterManager(conn, db.DefaultSpendingLimit{
-		ForTeams: 0,
-		ForUsers: 500,
+	mnr := db.NewCostCenterManager(conn, db.DefaultUsageLimits{
+		ForTeams:       0,
+		ForUsers:       500,
+		ForStripeTeams: 1000,
+		ForStripeUsers: 1000,
 	})
 	team := db.NewTeamAttributionID(uuid.New().String())
 	user := db.NewUserAttributionID(uuid.New().String())
@@ -58,9 +60,11 @@ func TestCostCenterManager_GetOrCreateCostCenter(t *testing.T) {
 
 func TestCostCenterManager_UpdateCostCenter(t *testing.T) {
 	conn := dbtest.ConnectForTests(t)
-	mnr := db.NewCostCenterManager(conn, db.DefaultSpendingLimit{
-		ForTeams: 0,
-		ForUsers: 500,
+	mnr := db.NewCostCenterManager(conn, db.DefaultUsageLimits{
+		ForTeams:       0,
+		ForUsers:       500,
+		ForStripeTeams: 1000,
+		ForStripeUsers: 1000,
 	})
 	team := db.NewTeamAttributionID(uuid.New().String())
 	cleanUp(t, conn, team)
@@ -82,9 +86,11 @@ func TestCostCenterManager_UpdateCostCenter(t *testing.T) {
 
 func TestSaveCostCenterMovedToStripe(t *testing.T) {
 	conn := dbtest.ConnectForTests(t)
-	mnr := db.NewCostCenterManager(conn, db.DefaultSpendingLimit{
-		ForTeams: 20,
-		ForUsers: 500,
+	mnr := db.NewCostCenterManager(conn, db.DefaultUsageLimits{
+		ForTeams:       20,
+		ForUsers:       500,
+		ForStripeTeams: 400050,
+		ForStripeUsers: 1000,
 	})
 	team := db.NewTeamAttributionID(uuid.New().String())
 	cleanUp(t, conn, team)
@@ -93,7 +99,6 @@ func TestSaveCostCenterMovedToStripe(t *testing.T) {
 	require.Equal(t, int32(20), teamCC.SpendingLimit)
 
 	teamCC.BillingStrategy = db.CostCenter_Stripe
-	teamCC.SpendingLimit = 400050
 	teamCC, err = mnr.UpdateCostCenter(context.Background(), teamCC)
 	require.NoError(t, err)
 	require.Equal(t, db.CostCenter_Stripe, teamCC.BillingStrategy)

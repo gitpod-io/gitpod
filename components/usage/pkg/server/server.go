@@ -37,7 +37,7 @@ type Config struct {
 
 	Server *baseserver.Configuration `json:"server,omitempty"`
 
-	DefaultSpendingLimit db.DefaultSpendingLimit `json:"defaultSpendingLimit"`
+	DefaultSpendingLimit db.DefaultUsageLimits `json:"defaultSpendingLimit"`
 }
 
 func Start(cfg Config, version string) error {

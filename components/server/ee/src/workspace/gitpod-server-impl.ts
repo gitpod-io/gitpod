@@ -2117,7 +2117,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    protected defaultSpendingLimit = 100;
     async subscribeToStripe(ctx: TraceContext, attributionId: string, setupIntentId: string): Promise<void> {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
@@ -2131,7 +2130,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             if (attrId.kind === "team") {
                 const team = await this.guardTeamOperation(attrId.teamId, "update");
                 await this.ensureStripeApiIsAllowed({ team });
-            } else {
+            } else if (attrId.kind === "user") {
                 await this.ensureStripeApiIsAllowed({ user });
             }
             const customerId = await this.stripeService.findCustomerByAttributionId(attributionId);
@@ -2145,8 +2144,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             // Creating a cost center for this customer
             await this.usageService.setCostCenter({
                 costCenter: {
-                    attributionId: attributionId,
-                    spendingLimit: this.defaultSpendingLimit,
+                    attributionId,
                     billingStrategy: CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE,
                 },
             });
