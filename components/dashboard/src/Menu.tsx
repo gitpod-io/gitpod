@@ -13,7 +13,7 @@ import { countries } from "countries-list";
 import gitpodIcon from "./icons/gitpod.svg";
 import { getGitpodService, gitpodHostUrl } from "./service/service";
 import { UserContext } from "./user-context";
-import { TeamsContext, getCurrentTeam } from "./teams/teams-context";
+import { TeamsContext, getCurrentTeam, getSelectedTeamSlug } from "./teams/teams-context";
 import getSettingsMenu from "./settings/settings-menu";
 import { getAdminMenu } from "./admin/admin-menu";
 import ContextMenu from "./components/ContextMenu";
@@ -91,13 +91,6 @@ export default function Menu() {
     }
 
     const userFullName = user?.fullName || user?.name || "...";
-
-    {
-        // updating last team selection
-        try {
-            localStorage.setItem("team-selection", team ? team.slug : "");
-        } catch {}
-    }
 
     // Hide most of the top menu when in a full-page form.
     const isMinimalUI = inResource(location.pathname, ["new", "teams/new", "open"]);
@@ -260,33 +253,23 @@ export default function Menu() {
     const onFeedbackFormClose = () => {
         setFeedbackFormVisible(false);
     };
+    const isTeamLevelActive = !projectSlug && !isWorkspacesUI && !isAdminUI && teamOrUserSlug;
     const renderTeamMenu = () => {
         const classes =
             "flex h-full text-base py-0 " +
-            (!projectSlug && !isWorkspacesUI && !isAdminUI && teamOrUserSlug
-                ? "text-gray-50 bg-gray-800 dark:text-gray-900 dark:bg-gray-50 border-gray-700"
-                : "text-gray-500 bg-gray-50 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700  dark:border-gray-700");
+            (isTeamLevelActive
+                ? "text-gray-50  bg-gray-800 dark:bg-gray-50  dark:text-gray-900 border-gray-700 dark:border-gray-200"
+                : "text-gray-500 bg-gray-50  dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-700");
         return (
             <div className="flex p-1 pl-3">
-                {projectSlug && (
-                    <Link to={team ? `/t/${team.slug}/projects` : `/projects`}>
-                        <span
-                            className={`${classes} rounded-tl-2xl rounded-bl-2xl  dark:border-gray-700 border-r pl-3 pr-2 py-1 bg-gray-50  font-semibold`}
-                        >
-                            {team?.name || userFullName}
-                        </span>
-                    </Link>
-                )}
-                {!projectSlug && (
-                    <Link to={team ? `/t/${team.slug}/projects` : `/projects`}>
-                        <span
-                            className={`${classes} rounded-tl-2xl rounded-bl-2xl  dark:border-gray-200 border-r pl-3 pr-2 py-1 bg-gray-50  font-semibold`}
-                        >
-                            {team?.name || userFullName}
-                        </span>
-                    </Link>
-                )}
-                <div className={`${classes} rounded-tr-2xl rounded-br-2xl dark:border-gray-700  px-1 bg-gray-50`}>
+                <Link to={getSelectedTeamSlug() ? `/t/${getSelectedTeamSlug()}/projects` : `/projects`}>
+                    <span
+                        className={`${classes} rounded-tl-2xl rounded-bl-2xl border-r pl-3 pr-2 py-1 bg-gray-50  font-semibold`}
+                    >
+                        {teams?.find((t) => t.slug === getSelectedTeamSlug())?.name || userFullName}
+                    </span>
+                </Link>
+                <div className={`${classes} rounded-tr-2xl rounded-br-2xl px-1`}>
                     <ContextMenu
                         customClasses="w-64 left-0"
                         menuEntries={[
@@ -300,7 +283,7 @@ export default function Menu() {
                                         <span className="">Personal Account</span>
                                     </div>
                                 ),
-                                active: !team,
+                                active: getSelectedTeamSlug() === "",
                                 separator: true,
                                 link: "/projects",
                             },
@@ -321,7 +304,7 @@ export default function Menu() {
                                             </span>
                                         </div>
                                     ),
-                                    active: team && team.id === t.id,
+                                    active: getSelectedTeamSlug() === t.slug,
                                     separator: true,
                                     link: `/t/${t.slug}`,
                                 }))

@@ -10,7 +10,7 @@ import { Redirect, Route, Switch } from "react-router";
 
 import { Login } from "./Login";
 import { UserContext } from "./user-context";
-import { TeamsContext } from "./teams/teams-context";
+import { getSelectedTeamSlug, TeamsContext } from "./teams/teams-context";
 import { ThemeContext } from "./theme-context";
 import { getGitpodService } from "./service/service";
 import { shouldSeeWhatsNew, WhatsNew } from "./whatsnew/WhatsNew";
@@ -179,7 +179,7 @@ function App() {
                     const isRoot = window.location.pathname === "/" && hash === "";
                     if (isRoot) {
                         try {
-                            const teamSlug = localStorage.getItem("team-selection");
+                            const teamSlug = getSelectedTeamSlug();
                             if (teams.some((t) => t.slug === teamSlug)) {
                                 history.push(`/t/${teamSlug}`);
                             }

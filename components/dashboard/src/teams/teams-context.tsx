@@ -21,9 +21,18 @@ export const TeamsContextProvider: React.FC = ({ children }) => {
 };
 
 export function getCurrentTeam(location: Location<any>, teams?: Team[]): Team | undefined {
-    const slug = location.pathname.startsWith("/t/") ? location.pathname.split("/")[2] : undefined;
-    if (!slug || !teams) {
+    if (!teams) {
         return;
     }
-    return teams.find((t) => t.slug === slug);
+    const slug = location.pathname.startsWith("/t/") ? location.pathname.split("/")[2] : undefined;
+    if (slug === undefined && ["projects", "usage", "settings"].indexOf(location.pathname.split("/")[1]) === -1) {
+        return undefined;
+    }
+    const team = teams.find((t) => t.slug === slug);
+    localStorage.setItem("team-selection", team?.slug || "");
+    return team;
+}
+
+export function getSelectedTeamSlug(): string {
+    return localStorage.getItem("team-selection") || "";
 }
