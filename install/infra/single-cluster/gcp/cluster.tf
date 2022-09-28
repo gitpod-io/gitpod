@@ -1,13 +1,13 @@
 module "gke" {
   source = "../../modules/gke"
 
-  cluster_name           = var.cluster_name
-  kubeconfig             = var.kubeconfig
-  cluster_version        = var.cluster_version
-  project                = var.project
-  region                 = var.region
-  zone                   = var.zone
-  workspace_machine_type = "n2d-standard-16"
+  cluster_name            = var.cluster_name
+  kubeconfig              = var.kubeconfig
+  cluster_version         = var.cluster_version
+  project                 = var.project
+  region                  = var.region
+  zone                    = var.zone
+  workspaces_machine_type = "n2d-standard-16"
 
   domain_name = var.domain_name
   enable_external_database = var.enable_external_database
