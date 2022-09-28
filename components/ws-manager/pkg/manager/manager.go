@@ -351,14 +351,14 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 			return nil, status.Error(codes.AlreadyExists, "workspace instance already exists")
 		}
 
-		clog.WithError(err).WithField("pod", string(safePod)).Warn("was unable to start workspace")
+		clog.WithError(err).WithField("pod", string(safePod)).Warn("was unable to create workspace pod")
 		return nil, err
 	}
 
 	// if we reach this point the pod is created
 	err = wait.PollImmediateWithContext(ctx, 100*time.Millisecond, 7*time.Minute, podRunning(m.Clientset, pod.Name, pod.Namespace))
 	if err != nil {
-		clog.WithError(err).WithField("pod", pod.Name).Warn("was unable to start workspace")
+		clog.WithError(err).WithField("pod", pod.Name).Warn("workspace pod did not transition to running state")
 		if err == wait.ErrWaitTimeout && isPodUnschedulable(m.Clientset, pod.Name, pod.Namespace) {
 			// this could be an error due to a scale-up event
 			delErr := deleteWorkspacePodForce(m.Clientset, pod.Name, pod.Namespace)
