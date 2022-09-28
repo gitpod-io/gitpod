@@ -20,8 +20,8 @@ args:
   desc: "Version of gitpod to install(in the case of upgrade tests, this is the initial install version and will later get upgraded to latest"
   required: false
   default: ""
-- name: runTests
-  desc: "Set this to true to run integration tests"
+- name: skipTests
+  desc: "Set this to true to skip integration tests"
   required: false
   default: false
 - name: selfSigned
@@ -120,6 +120,8 @@ pod:
             secretKeyRef:
               name: integration-test-user
               key: token
+        - name: self_hosted_jobs
+          value: true
       command:
         - bash
         - -c

@@ -18,7 +18,7 @@ const kotsApp: string = annotations.replicatedApp || "gitpod";
 const version: string = annotations.version || "-";
 const preview: string = annotations.preview || "false"; // setting to true will not destroy the setup
 const upgrade: string = annotations.upgrade || "false"; // setting to true will not KOTS upgrade to the latest version. Set the channel to beta or stable in this case.
-const runTests: string = annotations.runTests || "false"; // setting to true runs the integration tests
+const skipTests: string = annotations.skipTests || "false"; // setting to true skip the integration tests
 const selfSigned: string = annotations.selfSigned || "false";
 const deps: string = annotations.deps || ""; // options: ["external", "internal"] setting to `external` will ensure that all resource dependencies(storage, db, registry) will be external. if unset, a random selection will be used
 
@@ -155,7 +155,7 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
     },
     GENERATE_KOTS_CONFIG: {
         phase: "generate-kots-config",
-        makeTarget: `generate-kots-config storage=${randDeps()} registry=${randDeps()} db=${randDeps()} runTests=${runTests} self_signed=${selfSigned}`,
+        makeTarget: `generate-kots-config storage=${randDeps()} registry=${randDeps()} db=${randDeps()} skipTests=${skipTests} self_signed=${selfSigned}`,
         description: `Generate KOTS Config file`,
     },
     CLUSTER_ISSUER: {
@@ -319,7 +319,7 @@ export async function installerTests(config: TestConfig) {
         }
     }
 
-    if (runTests === "false") {
+    if (skipTests === "true") {
         console.log("Skipping integration tests");
     } else {
         runIntegrationTests();
