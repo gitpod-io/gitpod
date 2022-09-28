@@ -2,8 +2,6 @@ module github.com/gitpod-io/gitpod/workspacekit
 
 go 1.18
 
-replace github.com/seccomp/libseccomp-golang => github.com/gitpod-io/libseccomp-golang v0.9.2-0.20220701021458-9bf1c833815b
-
 require (
 	github.com/google/go-cmp v0.5.8
 	github.com/moby/sys/mountinfo v0.6.1
