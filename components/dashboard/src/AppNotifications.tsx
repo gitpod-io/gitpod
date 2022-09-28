@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from "react";
 import Alert from "./components/Alert";
-import { getGitpodService } from "./service/service";
+import { getGitpodService, gitpodHostUrl } from "./service/service";
 
 const KEY_APP_NOTIFICATIONS = "gitpod-app-notifications";
 
@@ -36,6 +36,7 @@ export function AppNotifications() {
     };
 
     const topNotification = notifications[0];
+
     if (topNotification === undefined) {
         return null;
     }
@@ -43,6 +44,25 @@ export function AppNotifications() {
     const dismissNotification = () => {
         removeLocalStorageObject(KEY_APP_NOTIFICATIONS);
         setNotifications([]);
+    };
+
+    const getManageBilling = () => {
+        let href;
+        if (notifications.length === 1) {
+            href = `${gitpodHostUrl}billing`;
+        } else if (notifications.length === 2) {
+            href = `${gitpodHostUrl}t/${notifications[notifications.length - 1]}/billing`;
+        }
+        return (
+            <span>
+                {" "}
+                Manage
+                <a className="gp-link hover:text-gray-600" href={href}>
+                    {" "}
+                    billing.
+                </a>
+            </span>
+        );
     };
 
     return (
@@ -55,6 +75,7 @@ export function AppNotifications() {
                 className="flex rounded mb-2 w-full"
             >
                 <span>{topNotification}</span>
+                {getManageBilling()}
             </Alert>
         </div>
     );

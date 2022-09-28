@@ -2256,10 +2256,31 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             const billingMode = await this.billingModes.getBillingModeForUser(user, new Date());
             if (billingMode.mode === "usage-based") {
                 const limit = await this.billingService.checkUsageLimitReached(user);
-                if (limit.reached) {
-                    result.unshift("The usage limit is reached.");
-                } else if (limit.almostReached) {
-                    result.unshift("The usage limit is almost reached.");
+                let teamOrUser;
+                switch (limit.attributionId.kind) {
+                    case "user": {
+                        if (limit.reached) {
+                            result.unshift(`You have reached your usage limit.`);
+                        } else if (limit.almostReached) {
+                            result.unshift(`You have reached 80% or more of your usage limit.`);
+                        }
+                        break;
+                    }
+                    case "team": {
+                        teamOrUser = await this.teamDB.findTeamById(limit.attributionId.teamId);
+                        if (teamOrUser) {
+                            if (limit.reached) {
+                                result.push(teamOrUser?.slug);
+                                result.unshift(`Your team '${teamOrUser?.name}' has reached its usage limit.`);
+                            } else if (limit.almostReached) {
+                                result.push(teamOrUser?.slug);
+                                result.unshift(
+                                    `Your team '${teamOrUser?.name}' has reached 80% or more of its usage limit.`,
+                                );
+                            }
+                        }
+                        break;
+                    }
                 }
             }
         } catch (error) {
