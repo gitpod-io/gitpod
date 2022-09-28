@@ -5,7 +5,6 @@
 package main
 
 import (
-	_ "embed"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -29,10 +28,8 @@ import (
 )
 
 var (
-	// Version : current version
-	Version = strings.TrimSpace(version)
-	//go:embed version.txt
-	version string
+	// Version - set during build
+	Version = "dev"
 )
 
 func main() {
