@@ -738,7 +738,8 @@ func makeHostnameLocal(ring2root string) error {
 }
 
 func receiveSeccmpFd(conn *net.UnixConn) (libseccomp.ScmpFd, error) {
-	buf := make([]byte, unix.CmsgSpace(4))
+	oobSpace := unix.CmsgSpace(4)
+	oob := make([]byte, oobSpace)
 
 	err := conn.SetDeadline(time.Now().Add(5 * time.Second))
 	if err != nil {
@@ -752,12 +753,16 @@ func receiveSeccmpFd(conn *net.UnixConn) (libseccomp.ScmpFd, error) {
 	defer f.Close()
 	connfd := int(f.Fd())
 
-	_, _, _, _, err = unix.Recvmsg(connfd, nil, buf, 0)
+	_, oobn, _, _, err := unix.Recvmsg(connfd, nil, oob, 0)
 	if err != nil {
 		return 0, xerrors.Errorf("cannot recvmsg from fd '%d': %v", connfd, err)
 	}
 
-	msgs, err := unix.ParseSocketControlMessage(buf)
+	if oobn != oobSpace {
+		return 0, xerrors.Errorf("recvfd: incorrect number of bytes read (obn=%d)", oobn)
+	}
+
+	msgs, err := unix.ParseSocketControlMessage(oob[:oobn])
 	if err != nil {
 		return 0, xerrors.Errorf("cannot parse socket control message: %v", err)
 	}
