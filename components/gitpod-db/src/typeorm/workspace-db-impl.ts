@@ -775,7 +775,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
 
     public async deleteVolumeSnapshot(volumeSnapshotId: string): Promise<void> {
         const volumeSnapshots = await this.getVolumeSnapshotRepo();
-        await volumeSnapshots.delete(volumeSnapshotId);
+        await volumeSnapshots.update(volumeSnapshotId, { deleted: true });
     }
 
     public async updateVolumeSnapshot(
