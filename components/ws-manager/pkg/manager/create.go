@@ -317,26 +317,31 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	}
 
 	ideRef := startContext.Request.Spec.DeprecatedIdeImage
-	var desktopIdeRef string
-	var desktopIdePluginRef string
 	if startContext.Request.Spec.IdeImage != nil && len(startContext.Request.Spec.IdeImage.WebRef) > 0 {
 		ideRef = startContext.Request.Spec.IdeImage.WebRef
-		desktopIdeRef = startContext.Request.Spec.IdeImage.DesktopRef
-		desktopIdePluginRef = startContext.Request.Spec.IdeImage.DesktopPluginRef
 	}
-
 	var supervisorRef string
 	if startContext.Request.Spec.IdeImage != nil && len(startContext.Request.Spec.IdeImage.SupervisorRef) > 0 {
 		supervisorRef = startContext.Request.Spec.IdeImage.SupervisorRef
 	}
-
 	spec := regapi.ImageSpec{
-		BaseRef:             startContext.Request.Spec.WorkspaceImage,
-		IdeRef:              ideRef,
-		DesktopIdeRef:       desktopIdeRef,
-		SupervisorRef:       supervisorRef,
-		DesktopIdePluginRef: desktopIdePluginRef,
+		BaseRef:       startContext.Request.Spec.WorkspaceImage,
+		IdeRef:        ideRef,
+		SupervisorRef: supervisorRef,
 	}
+
+	if len(startContext.Request.Spec.IdeImageLayers) == 0 {
+		var desktopIdeRef string
+		var desktopIdePluginRef string
+		if startContext.Request.Spec.IdeImage != nil {
+			desktopIdeRef = startContext.Request.Spec.IdeImage.DesktopRef
+			desktopIdePluginRef = startContext.Request.Spec.IdeImage.DesktopPluginRef
+		}
+		spec.IdeLayerRef = []string{desktopIdeRef, desktopIdePluginRef}
+	} else {
+		spec.IdeLayerRef = startContext.Request.Spec.IdeImageLayers
+	}
+
 	imageSpec, err := spec.ToBase64()
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create remarshal image spec: %w", err)
@@ -592,7 +597,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 				}
 
 				for i, env := range c.Env {
-					if !isProtectedEnvVar(env.Name) {
+					if !isProtectedEnvVar(env.Name, req.Spec.SysEnvvars) {
 						continue
 					}
 
@@ -786,6 +791,17 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 		result = append(result, corev1.EnvVar{Name: "GITPOD_GIT_USER_EMAIL", Value: spec.Git.Email})
 	}
 
+	// System level env vars
+	if spec.SysEnvvars != nil {
+		for _, e := range spec.SysEnvvars {
+			env := corev1.EnvVar{
+				Name:  e.Name,
+				Value: e.Value,
+			}
+			result = append(result, env)
+		}
+	}
+
 	// User-defined env vars (i.e. those coming from the request)
 	if spec.Envvars != nil {
 		for _, e := range spec.Envvars {
@@ -836,13 +852,17 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 		result = append(result, corev1.EnvVar{Name: "GITPOD_HEADLESS", Value: "true"})
 	}
 
-	// remove empty env vars
+	// remove empty or dup env vars
 	cleanResult := make([]corev1.EnvVar, 0)
+	envMap := make(map[string]struct{})
 	for _, v := range result {
 		if v.Name == "" || (v.Value == "" && v.ValueFrom == nil) {
 			continue
 		}
-
+		if _, exist := envMap[v.Name]; exist {
+			continue
+		}
+		envMap[v.Name] = struct{}{}
 		cleanResult = append(cleanResult, v)
 	}
 
@@ -856,12 +876,20 @@ func isGitpodInternalEnvVar(name string) bool {
 		strings.HasPrefix(name, "THEIA_")
 }
 
-func isProtectedEnvVar(name string) bool {
+func isProtectedEnvVar(name string, sysEnvvars []*api.EnvironmentVariable) bool {
 	switch name {
 	case "THEIA_SUPERVISOR_TOKENS":
 		return true
 	default:
-		return !isGitpodInternalEnvVar(name)
+		if isGitpodInternalEnvVar(name) {
+			return false
+		}
+		for _, env := range sysEnvvars {
+			if env.Name == name {
+				return false
+			}
+		}
+		return true
 	}
 }
 
