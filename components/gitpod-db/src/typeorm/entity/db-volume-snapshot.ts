@@ -31,4 +31,8 @@ export class DBVolumeSnapshot implements VolumeSnapshot {
 
     @Column("varchar")
     volumeHandle: string;
+
+    // This column triggers the db-sync deletion mechanism. It's not intended for public consumption.
+    @Column()
+    deleted: boolean;
 }

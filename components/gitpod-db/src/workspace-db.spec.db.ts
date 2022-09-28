@@ -682,12 +682,14 @@ class WorkspaceDBSpec {
         expect(vss).to.deep.equal([
             {
                 creationTime: "",
+                deleted: false,
                 id: "456",
                 volumeHandle: "some-handle2",
                 workspaceId: "ws-123",
             },
             {
                 creationTime: "",
+                deleted: false,
                 id: "123",
                 volumeHandle: "some-handle",
                 workspaceId: "ws-123",
