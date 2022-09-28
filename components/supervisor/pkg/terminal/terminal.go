@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/creack/pty"
@@ -77,20 +78,23 @@ func (m *Mux) Start(cmd *exec.Cmd, options TermOptions) (alias string, err error
 	go func() {
 		term.waitErr = cmd.Wait()
 		close(term.waitDone)
-		_ = m.CloseTerminal(alias, 0*time.Second)
+
+		m.mu.Lock()
+		defer m.mu.Unlock()
+		_ = m.doClose(alias, unix.SIGKILL)
 	}()
 
 	return alias, nil
 }
 
-// Close closes all terminals with closeTerminaldefaultGracePeriod.
+// Close closes all terminals
 func (m *Mux) Close() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	var err error
 	for k := range m.terms {
-		cerr := m.doClose(k, closeTerminaldefaultGracePeriod)
+		cerr := m.doClose(k, unix.SIGTERM)
 		if cerr != nil {
 			log.WithError(cerr).WithField("alias", k).Warn("cannot properly close terminal")
 			if err != nil {
@@ -102,27 +106,27 @@ func (m *Mux) Close() error {
 }
 
 // CloseTerminal closes a terminal and ends the process that runs in it.
-func (m *Mux) CloseTerminal(alias string, gracePeriod time.Duration) error {
+func (m *Mux) CloseTerminal(alias string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	return m.doClose(alias, gracePeriod)
+	return m.doClose(alias, unix.SIGHUP)
 }
 
 // doClose closes a terminal and ends the process that runs in it.
-// First, the process receives SIGTERM and is given gracePeriod time
+// First, the process foreground group receives SIGTERM and is given gracePeriod time
 // to stop. If it still runs after that time, it receives SIGKILL.
 //
 // Callers are expected to hold mu.
-func (m *Mux) doClose(alias string, gracePeriod time.Duration) error {
+func (m *Mux) doClose(alias string, sig unix.Signal) error {
 	term, ok := m.terms[alias]
 	if !ok {
 		return ErrNotFound
 	}
 
-	log := log.WithField("alias", alias)
+	log := log.WithField("alias", alias).WithField("sig", sig).WithField("closeGracePeiod", term.closeGracePeiod)
 	log.Info("closing terminal")
-	err := term.gracefullyShutdownProcess(gracePeriod)
+	err := term.gracefullyShutdownProcess(sig)
 	if err != nil {
 		log.WithError(err).Warn("did not gracefully shut down terminal")
 	}
@@ -146,35 +150,49 @@ func (m *Mux) doClose(alias string, gracePeriod time.Duration) error {
 	return nil
 }
 
-func (term *Term) gracefullyShutdownProcess(gracePeriod time.Duration) error {
+func (term *Term) gracefullyShutdownProcess(sig syscall.Signal) (err error) {
 	if term.Command.Process == nil {
-		// process is alrady gone
+		// process is already gone
 		return nil
 	}
-	if gracePeriod == 0 {
+
+	if sig == unix.SIGKILL {
 		return term.shutdownProcessImmediately()
 	}
 
-	err := term.Command.Process.Signal(unix.SIGTERM)
-	if err != nil {
-		return err
-	}
-	schan := make(chan error, 1)
-	go func() {
-		_, err := term.Wait()
-		schan <- err
-	}()
-	select {
-	case err = <-schan:
+	// 1. ask to terminate
+	pid := term.Command.Process.Pid
+	// only SIGHUP is propagated to child processes by shell
+	// see https://www.gnu.org/software/bash/manual/html_node/Signals.html
+	if sig != unix.SIGHUP {
+		// otherwise we try to send signal to the foreground process group
+		// it is aligned with how other supervisor systems, i.e. systemd or Docker
+		// see https://veithen.io/2014/11/16/sigterm-propagation.html
+		var pgrp int
+		pgrp, err = unix.IoctlGetInt(term.fd, unix.TIOCGPGRP)
 		if err == nil {
-			// process is gone now - we're good
-			return nil
+			pid = pgrp
+		} else {
+			log.WithError(err).Error("terminal: failed to resolve the foreground process group")
 		}
-		log.WithError(err).Warn("unexpected terminal error")
-	case <-time.After(gracePeriod):
+	}
+	alive := syscall.Kill(pid, sig) == nil
+	if !alive {
+		return
 	}
 
-	// process did not exit in time. Let's kill.
+	// 2. wait to terminate
+	for i := time.Duration(0); alive && i < term.closeGracePeiod; i += time.Second {
+		alive = syscall.Kill(pid, syscall.Signal(0)) == nil
+		if alive {
+			time.Sleep(time.Second)
+		}
+	}
+	if !alive {
+		return
+	}
+
+	// 3. process did not exit in time. Let's kill.
 	return term.shutdownProcessImmediately()
 }
 
@@ -222,6 +240,8 @@ func newTerm(alias string, pty *os.File, cmd *exec.Cmd, options TermOptions) (*T
 		StarterToken: token.String(),
 
 		waitDone: make(chan struct{}),
+
+		closeGracePeiod: 10 * time.Second,
 	}
 	if res.annotations == nil {
 		res.annotations = make(map[string]string)
@@ -282,6 +302,10 @@ type Term struct {
 	waitDone chan struct{}
 
 	fd int
+
+	// closeTerminaldefaultGracePeriod is the time terminal
+	// processes get between SIGTERM and SIGKILL.
+	closeGracePeiod time.Duration
 }
 
 func (term *Term) GetTitle() (string, api.TerminalTitleSource, error) {
