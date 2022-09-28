@@ -738,6 +738,8 @@ func makeHostnameLocal(ring2root string) error {
 }
 
 func receiveSeccmpFd(conn *net.UnixConn) (libseccomp.ScmpFd, error) {
+	const bufLength = 4096
+	stateBuf := make([]byte, bufLength)
 	oobSpace := unix.CmsgSpace(4)
 	oob := make([]byte, oobSpace)
 
@@ -753,12 +755,12 @@ func receiveSeccmpFd(conn *net.UnixConn) (libseccomp.ScmpFd, error) {
 	defer f.Close()
 	connfd := int(f.Fd())
 
-	_, oobn, _, _, err := unix.Recvmsg(connfd, nil, oob, 0)
+	n, oobn, _, _, err := unix.Recvmsg(connfd, stateBuf, oob, 0)
 	if err != nil {
 		return 0, xerrors.Errorf("cannot recvmsg from fd '%d': %v", connfd, err)
 	}
 
-	if oobn != oobSpace {
+	if n >= bufLength || oobn != oobSpace {
 		return 0, xerrors.Errorf("recvfd: incorrect number of bytes read (obn=%d)", oobn)
 	}
 
@@ -861,6 +863,7 @@ var ring2Cmd = &cobra.Command{
 		// Now that we're in our new root filesystem, including proc and all, we can load
 		// our seccomp filter, and tell our parent about it.
 		scmpFd, err := seccomp.LoadFilter()
+		log.Infof("seccomp fd is %v", scmpFd)
 		if err != nil {
 			log.WithError(err).Error("cannot load seccomp filter - syscall handling would be broken")
 			return
