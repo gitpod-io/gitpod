@@ -1596,11 +1596,13 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 { teamId, chargebeeSubscriptionId },
             );
         }
-        const subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(
-            AttributionId.render({ kind: "team", teamId: teamId }),
-        );
-        if (subscriptionId) {
-            await this.stripeService.cancelSubscription(subscriptionId);
+        if (this.config.enablePayment) {
+            const subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(
+                AttributionId.render({ kind: "team", teamId: teamId }),
+            );
+            if (subscriptionId) {
+                await this.stripeService.cancelSubscription(subscriptionId);
+            }
         }
     }
 
