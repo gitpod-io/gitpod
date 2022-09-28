@@ -247,11 +247,11 @@ type PublicAPIConfig struct {
 }
 
 type UsageConfig struct {
-	Enabled                          bool                     `json:"enabled"`
-	Schedule                         string                   `json:"schedule"`
-	BillInstancesAfter               *time.Time               `json:"billInstancesAfter"`
-	DefaultSpendingLimit             *db.DefaultSpendingLimit `json:"defaultSpendingLimit"`
-	CreditsPerMinuteByWorkspaceClass map[string]float64       `json:"creditsPerMinuteByWorkspaceClass"`
+	Enabled                          bool                   `json:"enabled"`
+	Schedule                         string                 `json:"schedule"`
+	BillInstancesAfter               *time.Time             `json:"billInstancesAfter"`
+	DefaultSpendingLimit             *db.DefaultUsageLimits `json:"defaultSpendingLimit"`
+	CreditsPerMinuteByWorkspaceClass map[string]float64     `json:"creditsPerMinuteByWorkspaceClass"`
 }
 
 type WebAppWorkspaceClass struct {

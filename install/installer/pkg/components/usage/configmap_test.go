@@ -25,8 +25,10 @@ func TestConfigMap_ContainsSchedule(t *testing.T) {
        "controllerSchedule": "2m",
        "stripeCredentialsFile": "stripe-secret/apikeys",
 	   "defaultSpendingLimit": {
+		"forTeams": 1000000000,
 		"forUsers": 1000000000,
-		"forTeams": 1000000000
+		"forStripeTeams": 1000,
+		"forStripeUsers": 1000
 	   },
        "server": {
          "services": {

@@ -79,9 +79,11 @@ func newUsageService(t *testing.T, dbconn *gorm.DB) v1.UsageServiceClient {
 		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
 	)
 
-	costCenterManager := db.NewCostCenterManager(dbconn, db.DefaultSpendingLimit{
-		ForTeams: 0,
-		ForUsers: 500,
+	costCenterManager := db.NewCostCenterManager(dbconn, db.DefaultUsageLimits{
+		ForTeams:       0,
+		ForUsers:       500,
+		ForStripeTeams: 1000,
+		ForStripeUsers: 1000,
 	})
 
 	v1.RegisterUsageServiceServer(srv.GRPC(), NewUsageService(dbconn, DefaultWorkspacePricer, costCenterManager))
@@ -238,7 +240,7 @@ func TestGetAndSetCostCenter(t *testing.T) {
 		},
 		{
 			AttributionId:   string(db.NewTeamAttributionID(uuid.New().String())),
-			SpendingLimit:   8000,
+			SpendingLimit:   1000,
 			BillingStrategy: v1.CostCenter_BILLING_STRATEGY_STRIPE,
 		},
 		{

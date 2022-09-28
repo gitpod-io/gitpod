@@ -1,8 +1,10 @@
 {
   "controllerSchedule": "1h",
   "defaultSpendingLimit": {
-    "forUsers": 5000,
-    "forTeams": 0
+    "forTeams": 0,
+    "forUsers": 500,
+    "forStripeTeams": 1000,
+    "forStripeUsers": 1000
   },
   "creditsPerMinuteByWorkspaceClass": {
     "default": 0.1666666667,
