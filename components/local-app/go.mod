@@ -5,6 +5,9 @@ go 1.18
 require (
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/local-app/api v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.7
 	github.com/google/uuid v1.1.2
@@ -42,3 +45,9 @@ require (
 	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
+
+replace github.com/gitpod-io/gitpod/gitpod-protocol => ../gitpod-protocol/go // leeway
+
+replace github.com/gitpod-io/gitpod/local-app/api => ../local-app-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/supervisor/api => ../supervisor-api/go // leeway
