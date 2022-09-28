@@ -8,7 +8,7 @@ require (
 	github.com/google/go-cmp v0.5.8
 	github.com/moby/sys/mountinfo v0.6.1
 	github.com/rootless-containers/rootlesskit v1.0.1
-	github.com/seccomp/libseccomp-golang v0.9.2-0.20220502022130-f33da4d89646
+	github.com/seccomp/libseccomp-golang v0.9.1
 	github.com/spf13/cobra v1.5.0
 	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f
