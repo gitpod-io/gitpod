@@ -273,11 +273,30 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 					clog.WithError(err).Error("was unable to restore volume snapshot")
 					return nil, err
 				}
+
+				// get again to update the volumeSnapshot variable
+				if err := m.Clientset.Get(ctx, types.NamespacedName{Namespace: m.Config.Namespace, Name: startContext.VolumeSnapshot.VolumeSnapshotName}, &volumeSnapshot); err != nil {
+					return nil, err
+				}
 			} else if err != nil {
 				clog.WithError(err).Error("was unable to get volume snapshot")
 				return nil, err
 			}
+
+			// check the PVC size is not less than the volume snapshot size
+			PVCConfig := m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PVC
+			if startContext.Class != nil {
+				PVCConfig = startContext.Class.PVC
+			}
+
+			if volumeSnapshot.Status != nil &&
+				volumeSnapshot.Status.RestoreSize != nil &&
+				PVCConfig.Size.Cmp(*volumeSnapshot.Status.RestoreSize) == -1 {
+				return nil, xerrors.Errorf("cannot restore volume snapshot from size %s to pvc size %s", volumeSnapshot.Status.RestoreSize.String(), PVCConfig.Size.String())
+			}
 		}
+
+		// create PVC object
 		pvc, err = m.createPVCForWorkspacePod(startContext)
 		if err != nil {
 			return nil, xerrors.Errorf("cannot create pvc for workspace pod: %w", err)
