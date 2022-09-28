@@ -51,4 +51,11 @@ repos:
         language: system
         pass_filenames: false
 
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.75.0
+    hooks:
+      - id: terraform_fmt
+        args:
+          - --args=-diff
+
 exclude: ^install/installer/.*/.*\.golden$
