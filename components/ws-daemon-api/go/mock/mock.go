@@ -100,6 +100,26 @@ func (mr *MockWorkspaceContentServiceClientMockRecorder) InitWorkspace(arg0, arg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitWorkspace", reflect.TypeOf((*MockWorkspaceContentServiceClient)(nil).InitWorkspace), varargs...)
 }
 
+// IsWorkspaceExists mocks base method.
+func (m *MockWorkspaceContentServiceClient) IsWorkspaceExists(arg0 context.Context, arg1 *api.IsWorkspaceExistsRequest, arg2 ...grpc.CallOption) (*api.IsWorkspaceExistsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "IsWorkspaceExists", varargs...)
+	ret0, _ := ret[0].(*api.IsWorkspaceExistsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsWorkspaceExists indicates an expected call of IsWorkspaceExists.
+func (mr *MockWorkspaceContentServiceClientMockRecorder) IsWorkspaceExists(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsWorkspaceExists", reflect.TypeOf((*MockWorkspaceContentServiceClient)(nil).IsWorkspaceExists), varargs...)
+}
+
 // TakeSnapshot mocks base method.
 func (m *MockWorkspaceContentServiceClient) TakeSnapshot(arg0 context.Context, arg1 *api.TakeSnapshotRequest, arg2 ...grpc.CallOption) (*api.TakeSnapshotResponse, error) {
 	m.ctrl.T.Helper()
@@ -207,6 +227,21 @@ func (m *MockWorkspaceContentServiceServer) InitWorkspace(arg0 context.Context, 
 func (mr *MockWorkspaceContentServiceServerMockRecorder) InitWorkspace(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitWorkspace", reflect.TypeOf((*MockWorkspaceContentServiceServer)(nil).InitWorkspace), arg0, arg1)
+}
+
+// IsWorkspaceExists mocks base method.
+func (m *MockWorkspaceContentServiceServer) IsWorkspaceExists(arg0 context.Context, arg1 *api.IsWorkspaceExistsRequest) (*api.IsWorkspaceExistsResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsWorkspaceExists", arg0, arg1)
+	ret0, _ := ret[0].(*api.IsWorkspaceExistsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsWorkspaceExists indicates an expected call of IsWorkspaceExists.
+func (mr *MockWorkspaceContentServiceServerMockRecorder) IsWorkspaceExists(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsWorkspaceExists", reflect.TypeOf((*MockWorkspaceContentServiceServer)(nil).IsWorkspaceExists), arg0, arg1)
 }
 
 // TakeSnapshot mocks base method.
