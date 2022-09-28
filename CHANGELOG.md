@@ -1,6 +1,9 @@
 # Change Log
 
 ## September 2022
+- [kots]: configure support bundle to get KOTS configmaps ([#13378](https://github.com/gitpod-io/gitpod/pull/13378)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Update node sizes for self hosted reference architectures ([#13356](https://github.com/gitpod-io/gitpod/pull/13356)) - [@Furisto](https://github.com/Furisto)
+- Avoid second prebuild been triggered on same commit. ([#13295](https://github.com/gitpod-io/gitpod/pull/13295)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - [kots]: update the support bundle to use the latest apiversion ([#13337](https://github.com/gitpod-io/gitpod/pull/13337)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - [kots]: delete workspace pods before installing Gitpod ([#13215](https://github.com/gitpod-io/gitpod/pull/13215)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Fail prebuild if image build fails. ([#13296](https://github.com/gitpod-io/gitpod/pull/13296)) - [@AlexTugarev](https://github.com/AlexTugarev)
