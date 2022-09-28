@@ -69,7 +69,8 @@ For more information about these limitation, please visit the local preview docu
 		switch {
 		case msg.Fail != "" && strings.Contains(line, msg.Fail):
 			lastSpinner.Fail()
-			next = true
+			pterm.FgLightRed.Println("Failed with error: " + line)
+			return
 		case msg.Success != "" && strings.Contains(line, msg.Success):
 			lastSpinner.Success()
 			next = true
