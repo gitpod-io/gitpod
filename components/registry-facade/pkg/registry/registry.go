@@ -142,45 +142,17 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 		staticLayer.Update(l)
 	}
 
-	// IDE layer
-	ideRefSource := func(s *api.ImageSpec) (ref string, err error) {
-		return s.IdeRef, nil
+	// ide layer
+	ideRefSource := func(s *api.ImageSpec) (ref []string, err error) {
+		ref = append(ref, s.IdeRef, s.SupervisorRef)
+		ref = append(ref, s.IdeLayerRef...)
+		return ref, nil
 	}
 	ideLayerSource, err := NewSpecMappedImageSource(newResolver, ideRefSource)
 	if err != nil {
 		return nil, err
 	}
 	layerSources = append(layerSources, ideLayerSource)
-
-	// desktop IDE layer
-	desktopIdeRefSource := func(s *api.ImageSpec) (ref string, err error) {
-		return s.DesktopIdeRef, nil
-	}
-	desktopIdeLayerSource, err := NewSpecMappedImageSource(newResolver, desktopIdeRefSource)
-	if err != nil {
-		return nil, err
-	}
-	layerSources = append(layerSources, desktopIdeLayerSource)
-
-	// desktop IDE plugin layer
-	desktopIdePluginRefSource := func(s *api.ImageSpec) (ref string, err error) {
-		return s.GetDesktopIdePluginRef(), nil
-	}
-	desktopIdePluginLayerSource, err := NewSpecMappedImageSource(newResolver, desktopIdePluginRefSource)
-	if err != nil {
-		return nil, err
-	}
-	layerSources = append(layerSources, desktopIdePluginLayerSource)
-
-	// supervisor layer
-	supervisorRefSource := func(s *api.ImageSpec) (ref string, err error) {
-		return s.SupervisorRef, nil
-	}
-	supervisorLayerSource, err := NewSpecMappedImageSource(newResolver, supervisorRefSource)
-	if err != nil {
-		return nil, err
-	}
-	layerSources = append(layerSources, supervisorLayerSource)
 
 	// content layer
 	clsrc, err := NewContentLayerSource()
