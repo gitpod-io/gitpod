@@ -66,4 +66,4 @@ spec:
         summary: Network connection numbers remain high for 5 minutes.
         description: Network connection numbers remain high for 5 minutes.
       expr: |
-        node_nf_conntrack_entries{instance=~"workspace-.*", instance!~"serv.*"} > 20000
+        node_nf_conntrack_entries{instance=~"workspace-.*", instance!~"serv.*", pod=~"ws-.*"} > 20000
