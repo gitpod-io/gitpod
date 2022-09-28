@@ -90,3 +90,5 @@ replace (
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.24.4
 	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.11.2
 )
+
+replace github.com/seccomp/libseccomp-golang => github.com/gitpod-io/libseccomp-golang v0.9.2-0.20220701021458-9bf1c833815b
