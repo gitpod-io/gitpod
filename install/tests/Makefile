@@ -44,9 +44,9 @@ upload-gcp-cluster-creds:
 	gsutil cp gcp-creds gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-creds
 
 download-cluster-creds:
-	[[ -z $$TF_VAR_sa_creds ]] || gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
+	[[ -z $$self_hosted_jobs ]] || gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
 	gcloud config set project sh-automated-tests
-	[[ -n $$TF_VAR_sa_creds ]] || gsutil cp gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-creds gcs-creds
+	[[ -n $$self_hosted_jobs ]] || gsutil cp gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-creds gcs-creds
 	[[ -f gcs-creds ]]  && cat gcs-creds | tr -d '"' | base64 -d > ${TF_VAR_TEST_ID}-key.json || echo "No GCP credentials"
 	rm -f gcs-creds
 	[[ -f ${TF_VAR_TEST_ID}-key.json ]] || cp ${GOOGLE_APPLICATION_CREDENTIALS} ${TF_VAR_TEST_ID}-key.json
@@ -56,7 +56,7 @@ upload-kubeconfig-to-gcp:
 	gsutil cp ${KUBECONFIG} gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-kubeconfig
 
 sync-kubeconfig:
-	[[ -z $$TF_VAR_sa_creds ]] || gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
+	[[ -z $$self_hosted_jobs ]] || gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
 	gcloud config set project sh-automated-tests
 	gsutil cp gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-kubeconfig ${KUBECONFIG} || echo "No kubeconfig"
 
@@ -79,9 +79,9 @@ azure-kubeconfig:
 
 ## aws-kubeconfig: Get the kubeconfig configuration for AWS EKS
 aws-kubeconfig:
-	[[ -z $$TF_VAR_sa_creds ]] || gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
+	[[ -z $$self_hosted_jobs ]] || gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
 	gcloud config set project sh-automated-tests
-	[[ -n $$TF_VAR_sa_creds ]] || gsutil cp gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-creds ${TF_VAR_TEST_ID}-creds
+	[[ -n $$self_hosted_jobs ]] || gsutil cp gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-creds ${TF_VAR_TEST_ID}-creds
 	[[ -f ${TF_VAR_TEST_ID}-creds ]] || touch ${TF_VAR_TEST_ID}-creds
 	source ${TF_VAR_TEST_ID}-creds; \
 	aws eks update-kubeconfig --name ${TF_VAR_TEST_ID} --region eu-west-1 --kubeconfig ${KUBECONFIG} || echo "No cluster present"
@@ -333,7 +333,7 @@ endif
 storage ?= incluster
 registry ?= incluster
 db ?= incluster
-runTests ?= "false"
+skipTests ?= "false"
 self_signed ?= "false"
 .PHONY:
 generate-kots-config: cloud_storage = $(if $(findstring external,$(storage)),$(cloud),incluster)
@@ -341,7 +341,7 @@ generate-kots-config: cloud_registry = $(if $(findstring external,$(registry)),$
 generate-kots-config: cloud_db = $(if $(findstring external,$(db)),$(cloud),incluster)
 ## generate-kots-config: Generate the kots config based on test config
 generate-kots-config: select-workspace check-env-cloud check-env-domain check-env-sub-domain
-	if [[ $$runTests == "true" ]]; then $(MAKE) get-github-config; fi
+	if [[ $$skipTests == "false" ]]; then $(MAKE) get-github-config; fi
 	$(MAKE) get-base-config
 	$(MAKE) storage-config-${cloud_storage}
 	$(MAKE) db-config-${cloud_db}
@@ -364,7 +364,9 @@ kots-install: preflight-flag = $(if $(preflights:true=),--skip-preflights,)
 kots-install: license-file = $(if $(license_community_$(channel)),$(license_community_$(channel)),"../licenses/$(channel).yaml")
 kots-install: install-kots-cli
 	kubectl kots remove ${app} -n gitpod --force --kubeconfig=${KUBECONFIG} || echo "No kots app existing, Installing"
+	kubectl get secret -n gitpod https-certificate -o yaml > https-secret.yaml || echo "No existing certificate"
 	$(MAKE) destroy-gitpod
+	[[ -f https-secret.yaml ]] && kubectl apply -f https-secret.yaml || echo "No existing certificate"
 	export KUBECONFIG=${KUBECONFIG} && \
 	kubectl kots install ${app}/${channel} \
 	--skip-rbac-check ${version-flag} ${preflight-flag} \
@@ -452,9 +454,7 @@ destroy-kubeconfig:
 	gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
 	gsutil rm gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-kubeconfig || echo "No kubeconfig"
 	gsutil rm gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-creds || echo "No credentials file"
-ifeq (true,$(self_signed))
 	gsutil rm gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-ca.pem || echo "No custom CA cert file"
-endif
 	rm ${KUBECONFIG} || echo "No kubeconfig"
 
 select-workspace:

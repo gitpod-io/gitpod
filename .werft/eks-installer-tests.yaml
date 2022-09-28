@@ -20,8 +20,8 @@ args:
   desc: "Version of gitpod to install(in the case of upgrade tests, this is the initial install version and will later get upgraded to latest"
   required: false
   default: ""
-- name: runTests
-  desc: "Set this to true to run integration tests"
+- name: skipTests
+  desc: "Set this to true to skip integration tests"
   required: false
   default: false
 - name: upgrade
@@ -89,8 +89,6 @@ pod:
       value: "/mnt/secrets/sh-playground-sa-perm/sh-sa.json"
     - name: TF_VAR_dns_sa_creds
       value: "/mnt/secrets/sh-playground-dns-perm/sh-dns-sa.json"
-    - name: TF_VAR_sa_creds
-      value: "/mnt/secrets/sh-playground-sa-perm/sh-sa.json"
     - name: NODENAME
       valueFrom:
         fieldRef:
@@ -135,6 +133,8 @@ pod:
         secretKeyRef:
           name: integration-test-user
           key: token
+    - name: self_hosted_jobs
+      value: true
     command:
       - bash
       - -c

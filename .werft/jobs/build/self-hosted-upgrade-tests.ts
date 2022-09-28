@@ -81,9 +81,9 @@ export async function triggerUpgradeTests(werft: Werft, config: JobConfig, usern
 export async function triggerSelfHostedPreview(werft: Werft, config: JobConfig, username: string) {
     const replicatedChannel =  config.replicatedChannel || config.repository.branch;
     const cluster =  config.cluster || "k3s";
-    const formattedBranch = config.repository.branch.replace("/", "-").slice(0,10)
+    const formattedBranch = config.repository.branch.replace("/", "-").slice(0,11)
     const phase = phases[cluster]
-    const subdomain =  `${formattedBranch}x-${phase.cloud}`
+    const subdomain =  `${formattedBranch}-${phase.cloud}`
 
     const replicatedApp = process.env.REPLICATED_APP
 
