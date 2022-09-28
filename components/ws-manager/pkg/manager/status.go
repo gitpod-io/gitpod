@@ -205,11 +205,10 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 	}
 
 	var (
-		wsImage               = workspaceContainer.Image
-		ideImage              string
-		desktopIdeImage       string
-		supervisorImage       string
-		desktopIdePluginImage string
+		wsImage         = workspaceContainer.Image
+		ideImage        string
+		supervisorImage string
+		ideImagesLayers []string
 	)
 	if ispec, ok := wso.Pod.Annotations[kubernetes.WorkspaceImageSpecAnnotation]; ok {
 		spec, err := regapi.ImageSpecFromBase64(ispec)
@@ -218,9 +217,8 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 		}
 		wsImage = spec.BaseRef
 		ideImage = spec.IdeRef
-		desktopIdeImage = spec.DesktopIdeRef
 		supervisorImage = spec.SupervisorRef
-		desktopIdePluginImage = spec.DesktopIdePluginRef
+		ideImagesLayers = spec.IdeLayerRef
 	}
 
 	ownerToken, ok := wso.Pod.Annotations[kubernetes.OwnerTokenAnnotation]
@@ -249,15 +247,14 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 			WorkspaceImage:     wsImage,
 			DeprecatedIdeImage: ideImage,
 			IdeImage: &api.IDEImage{
-				WebRef:           ideImage,
-				DesktopRef:       desktopIdeImage,
-				SupervisorRef:    supervisorImage,
-				DesktopPluginRef: desktopIdePluginImage,
+				WebRef:        ideImage,
+				SupervisorRef: supervisorImage,
 			},
-			Url:     wsurl,
-			Type:    tpe,
-			Timeout: timeout,
-			Class:   wso.Pod.Labels[workspaceClassLabel],
+			IdeImageLayers: ideImagesLayers,
+			Url:            wsurl,
+			Type:           tpe,
+			Timeout:        timeout,
+			Class:          wso.Pod.Labels[workspaceClassLabel],
 		},
 		Conditions: &api.WorkspaceConditions{
 			Snapshot: wso.Pod.Annotations[workspaceSnapshotAnnotation],
