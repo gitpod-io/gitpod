@@ -6,8 +6,6 @@ package server
 
 import (
 	"context"
-	_ "embed"
-	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
@@ -20,10 +18,8 @@ import (
 )
 
 var (
-	// Version : current version
-	Version string = strings.TrimSpace(version)
-	//go:embed version.txt
-	version string
+	// Version - set during build
+	Version = "dev"
 )
 
 func GetWSInfo(ctx context.Context) (*supervisor.WorkspaceInfoResponse, error) {
