@@ -23,7 +23,7 @@ spec:
         summary: Open-VSX registry is possibly down
         description: Open-VSX registry is possibly down. We cannot pull VSCode extensions we don't have in our caches
       expr: |
-          sum(rate(gitpod_openvsx_proxy_requests_total{status=~"5..|error"}[5m])) / sum(rate(gitpod_openvsx_proxy_requests_total[5m])) > 0.01
+          sum(rate(gitpod_vscode_extension_gallery_query_total{status="failure",errorCode!="canceled"}[5m])) / sum(rate(gitpod_vscode_extension_gallery_query_total[5m])) > 0.01
 
     - alert: GitpodOpenVSXUnavailable
       labels:
