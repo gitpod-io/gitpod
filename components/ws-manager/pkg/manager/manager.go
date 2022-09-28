@@ -200,8 +200,9 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 
 	clog.Info("StartWorkspace")
 	reqs, _ := protojson.Marshal(req)
-	safeReqs, _ := log.RedactJSON(reqs)
-	clog.WithField("req", string(safeReqs)).Debug("StartWorkspace request received")
+	redactedReqs, _ := log.RedactJSON(reqs)
+	safeReqs := string(redactedReqs)
+	clog.WithField("req", safeReqs).Debug("StartWorkspace request received")
 
 	// Make sure the objects we're about to create do not exist already
 	switch req.Type {
@@ -347,23 +348,23 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		safePod, _ := log.RedactJSON(m)
 
 		if k8serr.IsAlreadyExists(err) {
-			clog.WithError(err).WithField("req", req).WithField("pod", string(safePod)).Warn("was unable to start workspace which already exists")
+			clog.WithError(err).WithField("req", safeReqs).WithField("pod", string(safePod)).Warn("was unable to start workspace which already exists")
 			return nil, status.Error(codes.AlreadyExists, "workspace instance already exists")
 		}
 
-		clog.WithError(err).WithField("req", req).WithField("pod", string(safePod)).Warn("was unable to start workspace")
+		clog.WithError(err).WithField("req", safeReqs).WithField("pod", string(safePod)).Warn("was unable to start workspace")
 		return nil, err
 	}
 
 	// if we reach this point the pod is created
 	err = wait.PollImmediateWithContext(ctx, 100*time.Millisecond, 7*time.Minute, podRunning(m.Clientset, pod.Name, pod.Namespace))
 	if err != nil {
-		clog.WithError(err).WithField("req", req).WithField("pod", pod.Name).Warn("was unable to start workspace")
+		clog.WithError(err).WithField("req", safeReqs).WithField("pod", pod.Name).Warn("was unable to start workspace")
 		if err == wait.ErrWaitTimeout && isPodUnschedulable(m.Clientset, pod.Name, pod.Namespace) {
 			// this could be an error due to a scale-up event
 			delErr := deleteWorkspacePodForce(m.Clientset, pod.Name, pod.Namespace)
 			if delErr != nil {
-				clog.WithError(delErr).WithField("req", req).WithField("pod", pod.Name).Warn("was unable to delete workspace pod")
+				clog.WithError(delErr).WithField("req", safeReqs).WithField("pod", pod.Name).Warn("was unable to delete workspace pod")
 				return nil, xerrors.Errorf("workspace pod never reached Running state: %w", err)
 			}
 
