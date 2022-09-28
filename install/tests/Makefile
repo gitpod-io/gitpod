@@ -85,6 +85,7 @@ aws-kubeconfig:
 	[[ -f ${TF_VAR_TEST_ID}-creds ]] || touch ${TF_VAR_TEST_ID}-creds
 	source ${TF_VAR_TEST_ID}-creds; \
 	aws eks update-kubeconfig --name ${TF_VAR_TEST_ID} --region eu-west-1 --kubeconfig ${KUBECONFIG} || echo "No cluster present"
+	@echo -e "\033[0;33mAWS service account credentials fetched, run 'source $$(pwd)/$${TF_VAR_TEST_ID}-creds' to load them into your environment\033[0;m"
 
 .PHONY:
 ## gke-standard-cluster: Creates a zonal GKE cluster
