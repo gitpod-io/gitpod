@@ -27,8 +27,6 @@ total_mem_kb=$(awk '/MemTotal:/ {print $2}' /proc/meminfo)
 if [ "${total_mem_kb}" -lt "${REQUIRED_MEM_KB}" ]; then
     echo "Gitpod local preview requires a system with at least 6GB of memory"
     exit 1
-else
-  set -x
 fi
 
 REQUIRED_CORES=4
