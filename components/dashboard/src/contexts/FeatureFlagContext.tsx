@@ -41,7 +41,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
             const featureFlags: FeatureFlagConfig = {
                 workspace_classes: { defaultValue: true, setter: setShowWorkspaceClassesUI },
                 persistent_volume_claim: { defaultValue: true, setter: setShowPersistentVolumeClaimUI },
-                usage_view: { defaultValue: true, setter: setShowUsageView },
+                usage_view: { defaultValue: false, setter: setShowUsageView },
             };
             for (const [flagName, config] of Object.entries(featureFlags)) {
                 const flagValue = await getExperimentsClient().getValueAsync(flagName, config.defaultValue, {
