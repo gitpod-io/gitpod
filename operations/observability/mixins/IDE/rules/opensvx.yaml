@@ -22,6 +22,7 @@ spec:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodOpenVsxRegistryDown.md
         summary: Open-VSX registry is possibly down
         description: Open-VSX registry is possibly down. We cannot pull VSCode extensions we don't have in our caches
+        dashboard_url: https://grafana.gitpod.io/d/HNOvmGpxgd/openvsx-proxy
       expr: |
           sum(rate(gitpod_vscode_extension_gallery_query_total{status="failure",errorCode!="canceled"}[5m])) / sum(rate(gitpod_vscode_extension_gallery_query_total[5m])) > 0.01
 
