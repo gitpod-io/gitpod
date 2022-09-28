@@ -1,12 +1,7 @@
-variable credentials {}
 variable nameservers {}
 variable domain_name {}
 variable managed_dns_zone {}
 variable dns_project {}
-
-provider "google" {
-  credentials = var.credentials
-}
 
 resource "google_dns_record_set" "gitpod-dns-3" {
   name         = "${var.domain_name}."

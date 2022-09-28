@@ -59,7 +59,7 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         CLOUD: "gcp",
         DESCRIPTION: `${op} Gitpod on GKE managed cluster(version ${k8s_version})`,
         PHASES: [
-            "STANDARD_GKE_CLUSTER",
+            "STANDARD_CLUSTER",
             "CERT_MANAGER",
             "GCP_MANAGED_DNS",
             "CLUSTER_ISSUER",
@@ -123,6 +123,11 @@ const cloud: string = config.CLOUD;
 // Each phase should contain a `makeTarget` which
 // corresponds to a target in the Makefile in ../install/tests/Makefile
 const INFRA_PHASES: { [name: string]: InfraConfig } = {
+    STANDARD_CLUSTER: {
+        phase: "create-ref-arch-single-cluster",
+        makeTarget: `std-single-cluster os_version=${os_version}`,
+        description: `Create a ${cloud} kubernetes cluster(version: ${k8s_version}) using single-cluster ref-arch`
+    },
     STANDARD_GKE_CLUSTER: {
         phase: "create-std-gke-cluster",
         makeTarget: `gke-standard-cluster`,
