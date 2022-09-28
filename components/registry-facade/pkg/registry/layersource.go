@@ -366,7 +366,7 @@ func (cs CompositeLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec,
 }
 
 // RefSource extracts an image reference from an image spec
-type RefSource func(*api.ImageSpec) (ref string, err error)
+type RefSource func(*api.ImageSpec) (ref []string, err error)
 
 // NewSpecMappedImageSource creates a new spec mapped image source
 func NewSpecMappedImageSource(resolver ResolverProvider, refSource RefSource) (*SpecMappedImagedSource, error) {
@@ -392,71 +392,104 @@ type SpecMappedImagedSource struct {
 
 // Envs returns the list of env modifiers
 func (src *SpecMappedImagedSource) Envs(ctx context.Context, spec *api.ImageSpec) ([]EnvModifier, error) {
-	lsrc, err := src.getDelegate(ctx, spec)
+	lsrcs, err := src.getDelegate(ctx, spec)
 	if err != nil {
 		return nil, err
 	}
-	if lsrc == nil {
-		return []EnvModifier{}, nil
+	var res []EnvModifier
+	for _, lsrc := range lsrcs {
+		if lsrc == nil {
+			continue
+		}
+		envs, err := lsrc.Envs(ctx, spec)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, envs...)
 	}
-	return lsrc.Envs(ctx, spec)
+	return res, nil
 }
 
 // GetLayer returns the list of all layers from this source
 func (src *SpecMappedImagedSource) GetLayer(ctx context.Context, spec *api.ImageSpec) ([]AddonLayer, error) {
-	lsrc, err := src.getDelegate(ctx, spec)
+	lsrcs, err := src.getDelegate(ctx, spec)
 	if err != nil {
 		return nil, err
 	}
-	if lsrc == nil {
-		return []AddonLayer{}, nil
+	var res []AddonLayer
+	for _, lsrc := range lsrcs {
+		if lsrc == nil {
+			continue
+		}
+		ls, err := lsrc.GetLayer(ctx, spec)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, ls...)
 	}
-	return lsrc.GetLayer(ctx, spec)
+	return res, nil
 }
 
 // HasBlob checks if a digest can be served by this blob source
 func (src *SpecMappedImagedSource) HasBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) bool {
-	lsrc, err := src.getDelegate(ctx, spec)
+	lsrcs, err := src.getDelegate(ctx, spec)
 	if err != nil {
 		return false
 	}
-	if lsrc == nil {
-		return false
+	for _, lsrc := range lsrcs {
+		if lsrc == nil {
+			continue
+		}
+		if lsrc.HasBlob(ctx, spec, dgst) {
+			return true
+		}
 	}
-	return lsrc.HasBlob(ctx, spec, dgst)
+	return false
 }
 
 // GetBlob provides access to a blob. If a ReadCloser is returned the receiver is expected to
 // call close on it eventually.
 func (src *SpecMappedImagedSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (dontCache bool, mediaType string, url string, data io.ReadCloser, err error) {
-	lsrc, err := src.getDelegate(ctx, spec)
+	lsrcs, err := src.getDelegate(ctx, spec)
 	if err != nil {
 		return
 	}
-	return lsrc.GetBlob(ctx, spec, dgst)
+	for _, lsrc := range lsrcs {
+		if lsrc == nil {
+			continue
+		}
+		if lsrc.HasBlob(ctx, spec, dgst) {
+			return lsrc.GetBlob(ctx, spec, dgst)
+		}
+	}
+	err = errdefs.ErrNotFound
+	return
 }
 
 // getDelegate returns the cached layer source delegate computed from the image spec
-func (src *SpecMappedImagedSource) getDelegate(ctx context.Context, spec *api.ImageSpec) (LayerSource, error) {
-	ref, err := src.RefSource(spec)
+func (src *SpecMappedImagedSource) getDelegate(ctx context.Context, spec *api.ImageSpec) ([]LayerSource, error) {
+	refs, err := src.RefSource(spec)
 	if err != nil {
 		return nil, err
 	}
-	if ref == "" {
-		return nil, nil
-	}
+	layers := make([]LayerSource, len(refs))
 
-	if s, ok := src.cache.Get(ref); ok {
-		return s.(LayerSource), nil
+	for i, ref := range refs {
+		if ref == "" {
+			continue
+		}
+		if s, ok := src.cache.Get(ref); ok {
+			layers[i] = s.(LayerSource)
+			continue
+		}
+		lsrc, err := NewStaticSourceFromImage(ctx, src.Resolver(), ref)
+		if err != nil {
+			return nil, err
+		}
+		src.cache.Add(ref, lsrc)
+		layers[i] = lsrc
 	}
-
-	lsrc, err := NewStaticSourceFromImage(ctx, src.Resolver(), ref)
-	if err != nil {
-		return nil, err
-	}
-	src.cache.Add(ref, lsrc)
-
-	return lsrc, nil
+	return layers, nil
 }
 
 // NewContentLayerSource creates a new layer source providing the content layer of an image spec
