@@ -3,6 +3,7 @@ module github.com/gitpod-io/gitpod/ide-service-api
 go 1.18
 
 require (
+	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f
 	google.golang.org/grpc v1.49.0
 	google.golang.org/protobuf v1.28.1
@@ -35,3 +36,5 @@ require (
 	google.golang.org/genproto v0.0.0-20201019141844-1ed22bb0c154 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
+
+replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway

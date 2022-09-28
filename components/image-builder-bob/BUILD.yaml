@@ -12,6 +12,8 @@ packages:
   - GOOS=linux
   deps:
   - components/common-go:lib
+  prep:
+  - ["go", "mod", "tidy"]
   config:
     packaging: app
 - name: runc-facade
@@ -27,6 +29,7 @@ packages:
   - components/common-go:lib
   prep:
     - ["mv", "cmd/runc-facade/main.go", "main.go"]
+    - ["go", "mod", "tidy"]
   config:
     packaging: app
 - name: docker
