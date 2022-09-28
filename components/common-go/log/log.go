@@ -10,6 +10,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path"
+	"runtime"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -111,12 +114,18 @@ func Init(service, version string, json, verbose bool) {
 	Log = log.WithFields(log.Fields{
 		"serviceContext": ServiceContext{service, version},
 	})
+	log.SetReportCaller(true)
 
 	if json {
 		Log.Logger.SetFormatter(&gcpFormatter{
 			log.JSONFormatter{
 				FieldMap: log.FieldMap{
 					log.FieldKeyMsg: "message",
+				},
+				CallerPrettyfier: func(f *runtime.Frame) (string, string) {
+					s := strings.Split(f.Function, ".")
+					funcName := s[len(s)-1]
+					return funcName, fmt.Sprintf("%s:%d", path.Base(f.File), f.Line)
 				},
 			},
 		})
