@@ -639,42 +639,71 @@ func (m *Monitor) waitForWorkspaceReady(ctx context.Context, pod *corev1.Pod) (e
 		return xerrors.Errorf("cannot connect to workspace daemon: %w", err)
 	}
 
-	// Note: we don't have to use the same cancelable context that we used for the original Init call.
-	//       If the init call gets canceled, WaitForInit will return as well. We're synchronizing through
-	//		 wsdaemon here.
+	workspaceExists := false
 	err = retryIfUnavailable(ctx, func(ctx context.Context) error {
-		_, err = snc.WaitForInit(ctx, &wsdaemon.WaitForInitRequest{Id: workspaceID})
+		res, err := snc.IsWorkspaceExists(ctx, &wsdaemon.IsWorkspaceExistsRequest{Id: workspaceID})
+		if err == nil {
+			workspaceExists = res.Exists
+		}
 		return err
 	})
-
 	if err != nil {
-		// Check if it's a gRPC error.
-		// - if not, do nothing.
-		// - if yes, check the gRPC status code.
-		if grpcErr, ok := grpc_status.FromError(err); ok {
-			switch grpcErr.Code() {
-			case codes.NotFound:
-				// Looks like we have missed the CREATING phase in which we'd otherwise start the workspace content initialization.
-				// Let's see if we're initializing already. If so, there's something very wrong because ws-daemon does not know about
-				// this workspace yet. In that case we'll run another desperate attempt to initialize the workspace.
-				if _, alreadyInitializing := m.initializerMap.Load(pod.Name); alreadyInitializing {
-					// we're already initializing but wsdaemon does not know about this workspace. That's very bad.
-					log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Error("we were already initializing but wsdaemon does not know about this workspace (bug in ws-daemon?). Trying again!")
-					m.clearInitializerFromMap(pod.Name)
-				}
+		return xerrors.Errorf("cannot check if workspace exists on ws-daemon: %w", err)
+	}
+	if !workspaceExists {
+		// Looks like we have missed the CREATING phase in which we'd otherwise start the workspace content initialization.
+		// Let's see if we're initializing already. If so, there's something very wrong because ws-daemon does not know about
+		// this workspace yet. In that case we'll run another desperate attempt to initialize the workspace.
+		if _, alreadyInitializing := m.initializerMap.Load(pod.Name); alreadyInitializing {
+			// we're already initializing but wsdaemon does not know about this workspace. That's very bad.
+			log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Error("we were already initializing but wsdaemon does not know about this workspace (bug in ws-daemon?). Trying again!")
+			m.clearInitializerFromMap(pod.Name)
+		}
 
-				// It's ok - maybe we were restarting in that time. Instead of waiting for things to finish, we'll just start the
-				// initialization now.
-				err = m.initializeWorkspaceContent(ctx, pod)
-			case codes.Unavailable:
-				err = xerrors.Errorf("workspace initialization is currently unavailable - please try again")
-			default:
-				err = xerrors.Errorf(grpcErr.Message())
+		// It's ok - maybe we were restarting in that time. Instead of waiting for things to finish, we'll just start the
+		// initialization now.
+		err = m.initializeWorkspaceContent(ctx, pod)
+		if err != nil {
+			return xerrors.Errorf("initializeWorkspaceContent failed: %w", err)
+		}
+	} else {
+		// Note: we don't have to use the same cancelable context that we used for the original Init call.
+		//       If the init call gets canceled, WaitForInit will return as well. We're synchronizing through
+		//		 wsdaemon here.
+		err = retryIfUnavailable(ctx, func(ctx context.Context) error {
+			_, err = snc.WaitForInit(ctx, &wsdaemon.WaitForInitRequest{Id: workspaceID})
+			return err
+		})
+
+		if err != nil {
+			// Check if it's a gRPC error.
+			// - if not, do nothing.
+			// - if yes, check the gRPC status code.
+			if grpcErr, ok := grpc_status.FromError(err); ok {
+				switch grpcErr.Code() {
+				case codes.NotFound:
+					// Looks like we have missed the CREATING phase in which we'd otherwise start the workspace content initialization.
+					// Let's see if we're initializing already. If so, there's something very wrong because ws-daemon does not know about
+					// this workspace yet. In that case we'll run another desperate attempt to initialize the workspace.
+					if _, alreadyInitializing := m.initializerMap.Load(pod.Name); alreadyInitializing {
+						// we're already initializing but wsdaemon does not know about this workspace. That's very bad.
+						log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Error("we were already initializing but wsdaemon does not know about this workspace (bug in ws-daemon?). Trying again!")
+						m.clearInitializerFromMap(pod.Name)
+					}
+
+					// It's ok - maybe we were restarting in that time. Instead of waiting for things to finish, we'll just start the
+					// initialization now.
+					err = m.initializeWorkspaceContent(ctx, pod)
+				case codes.Unavailable:
+					err = xerrors.Errorf("workspace initialization is currently unavailable - please try again")
+				default:
+					err = xerrors.Errorf(grpcErr.Message())
+				}
 			}
 		}
-	}
-	if err != nil {
-		return xerrors.Errorf("cannot wait for workspace to initialize: %w", err)
+		if err != nil {
+			return xerrors.Errorf("cannot wait for workspace to initialize: %w", err)
+		}
 	}
 	m.clearInitializerFromMap(pod.Name)
 	span.LogKV("event", "contentInitDone")
@@ -1057,6 +1086,17 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		if err != nil {
 			tracing.LogError(span, err)
 			return nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
+		}
+
+		var workspaceExistsResult *wsdaemon.IsWorkspaceExistsResponse
+		workspaceExistsResult, err = snc.IsWorkspaceExists(ctx, &wsdaemon.IsWorkspaceExistsRequest{Id: workspaceID})
+		if err != nil {
+			tracing.LogError(span, err)
+			return nil, err
+		}
+		if !workspaceExistsResult.Exists {
+			// nothing to backup, workspace does not exist
+			return nil, status.Error(codes.NotFound, "workspace does not exist")
 		}
 
 		// make sure that workspace was ready, otherwise there is no need to backup anything

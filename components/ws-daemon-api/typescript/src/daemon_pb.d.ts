@@ -139,6 +139,46 @@ export namespace WaitForInitResponse {
     }
 }
 
+export class IsWorkspaceExistsRequest extends jspb.Message {
+    getId(): string;
+    setId(value: string): IsWorkspaceExistsRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): IsWorkspaceExistsRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: IsWorkspaceExistsRequest): IsWorkspaceExistsRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: IsWorkspaceExistsRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): IsWorkspaceExistsRequest;
+    static deserializeBinaryFromReader(message: IsWorkspaceExistsRequest, reader: jspb.BinaryReader): IsWorkspaceExistsRequest;
+}
+
+export namespace IsWorkspaceExistsRequest {
+    export type AsObject = {
+        id: string,
+    }
+}
+
+export class IsWorkspaceExistsResponse extends jspb.Message {
+    getExists(): boolean;
+    setExists(value: boolean): IsWorkspaceExistsResponse;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): IsWorkspaceExistsResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: IsWorkspaceExistsResponse): IsWorkspaceExistsResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: IsWorkspaceExistsResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): IsWorkspaceExistsResponse;
+    static deserializeBinaryFromReader(message: IsWorkspaceExistsResponse, reader: jspb.BinaryReader): IsWorkspaceExistsResponse;
+}
+
+export namespace IsWorkspaceExistsResponse {
+    export type AsObject = {
+        exists: boolean,
+    }
+}
+
 export class TakeSnapshotRequest extends jspb.Message {
     getId(): string;
     setId(value: string): TakeSnapshotRequest;
