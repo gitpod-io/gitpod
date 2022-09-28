@@ -18,7 +18,6 @@ packages:
       - go.sum
       - "**/*.go"
     deps:
-      - :version
       - components/supervisor-api/go:lib
       - components/gitpod-protocol/go:lib
       - components/local-app-api/go:lib
@@ -26,10 +25,9 @@ packages:
       - CGO_ENABLED=0
       - GOOS=linux
       - GOARCH=amd64
-    prep:
-      - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
     config:
       packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app.Version=commit-${__git_commit}'"]
   - name: app-linux-arm64
     type: go
     srcs:
@@ -37,7 +35,6 @@ packages:
       - go.sum
       - "**/*.go"
     deps:
-      - :version
       - components/supervisor-api/go:lib
       - components/gitpod-protocol/go:lib
       - components/local-app-api/go:lib
@@ -45,10 +42,9 @@ packages:
       - CGO_ENABLED=0
       - GOOS=linux
       - GOARCH=arm64
-    prep:
-      - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
     config:
       packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app.Version=commit-${__git_commit}'"]
   - name: app-darwin-amd64
     type: go
     srcs:
@@ -56,7 +52,6 @@ packages:
       - go.sum
       - "**/*.go"
     deps:
-      - :version
       - components/supervisor-api/go:lib
       - components/gitpod-protocol/go:lib
       - components/local-app-api/go:lib
@@ -64,10 +59,9 @@ packages:
       - CGO_ENABLED=0
       - GOOS=darwin
       - GOARCH=amd64
-    prep:
-      - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
     config:
       packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app.Version=commit-${__git_commit}'"]
   - name: app-darwin-arm64
     type: go
     srcs:
@@ -75,7 +69,6 @@ packages:
       - go.sum
       - "**/*.go"
     deps:
-      - :version
       - components/supervisor-api/go:lib
       - components/gitpod-protocol/go:lib
       - components/local-app-api/go:lib
@@ -83,10 +76,9 @@ packages:
       - CGO_ENABLED=0
       - GOOS=darwin
       - GOARCH=arm64
-    prep:
-      - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
     config:
       packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app.Version=commit-${__git_commit}'"]
   - name: app-windows-amd64
     type: go
     srcs:
@@ -94,7 +86,6 @@ packages:
       - go.sum
       - "**/*.go"
     deps:
-      - :version
       - components/supervisor-api/go:lib
       - components/gitpod-protocol/go:lib
       - components/local-app-api/go:lib
@@ -102,10 +93,9 @@ packages:
       - CGO_ENABLED=0
       - GOOS=windows
       - GOARCH=amd64
-    prep:
-      - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
     config:
       packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app.Version=commit-${__git_commit}'"]
   - name: app-windows-386
     type: go
     srcs:
@@ -113,7 +103,6 @@ packages:
       - go.sum
       - "**/*.go"
     deps:
-      - :version
       - components/supervisor-api/go:lib
       - components/gitpod-protocol/go:lib
       - components/local-app-api/go:lib
@@ -121,10 +110,9 @@ packages:
       - CGO_ENABLED=0
       - GOOS=windows
       - GOARCH=386
-    prep:
-      - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
     config:
       packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app.Version=commit-${__git_commit}'"]
   - name: app-windows-arm64
     type: go
     srcs:
@@ -132,7 +120,6 @@ packages:
       - go.sum
       - "**/*.go"
     deps:
-      - :version
       - components/supervisor-api/go:lib
       - components/gitpod-protocol/go:lib
       - components/local-app-api/go:lib
@@ -140,18 +127,9 @@ packages:
       - CGO_ENABLED=0
       - GOOS=windows
       - GOARCH=arm64
-    prep:
-      - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
     config:
       packaging: app
-  - name: version
-    type: generic
-    argdeps:
-      - localAppVersion
-    config:
-      commands:
-        - ["sh", "-c", "echo '${localAppVersion}' > version.txt"]
-        - ["echo", "Local App Version: ${localAppVersion}"]
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app.Version=commit-${__git_commit}'"]
   - name: docker
     type: docker
     deps:
