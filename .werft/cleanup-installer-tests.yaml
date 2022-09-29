@@ -108,6 +108,8 @@ pod:
         secretKeyRef:
           name: replicated
           key: app
+    - name: self_hosted_jobs
+      value: "true"
     command:
       - bash
       - -c
