@@ -15,17 +15,22 @@ import (
 func TestQueriesForCustomersWithAttributionID_Single(t *testing.T) {
 	testCases := []struct {
 		Name            string
-		AttributionIDs  []db.AttributionID
+		AttributionIDs  map[db.AttributionID]int64
 		ExpectedQueries []string
 	}{
 		{
-			Name:            "1 team id",
-			AttributionIDs:  []db.AttributionID{db.NewTeamAttributionID("abcd-123")},
+			Name: "1 team id",
+			AttributionIDs: map[db.AttributionID]int64{
+				db.NewTeamAttributionID("abcd-123"): 1,
+			},
 			ExpectedQueries: []string{"metadata['attributionId']:'team:abcd-123'"},
 		},
 		{
-			Name:            "1 team id, 1 user id",
-			AttributionIDs:  []db.AttributionID{db.NewTeamAttributionID("abcd-123"), db.NewUserAttributionID("abcd-456")},
+			Name: "1 team id, 1 user id",
+			AttributionIDs: map[db.AttributionID]int64{
+				db.NewTeamAttributionID("abcd-123"): 1,
+				db.NewUserAttributionID("abcd-456"): 1,
+			},
 			ExpectedQueries: []string{"metadata['attributionId']:'team:abcd-123' OR metadata['attributionId']:'user:abcd-456'"},
 		},
 	}
@@ -67,10 +72,10 @@ func TestCustomerQueriesForTeamIds_MultipleQueries(t *testing.T) {
 		},
 	}
 
-	buildTeamIds := func(numberOfTeamIds int) []db.AttributionID {
-		var attributionIDs []db.AttributionID
+	buildTeamIds := func(numberOfTeamIds int) map[db.AttributionID]int64 {
+		attributionIDs := map[db.AttributionID]int64{}
 		for i := 0; i < numberOfTeamIds; i++ {
-			attributionIDs = append(attributionIDs, db.NewTeamAttributionID(fmt.Sprintf("abcd-%d", i)))
+			attributionIDs[db.NewTeamAttributionID(fmt.Sprintf("abcd-%d", i))] = 1
 		}
 		return attributionIDs
 	}
