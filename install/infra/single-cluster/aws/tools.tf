@@ -29,3 +29,8 @@ module "cluster-autoscaler" {
   cluster_id        = module.eks.cluster_id
   oidc_provider_arn = module.eks.oidc_provider_arn
 }
+
+module "calico" {
+  source     = "../../modules/tools/aws-calico"
+  kubeconfig = var.kubeconfig
+}

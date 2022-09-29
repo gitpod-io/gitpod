@@ -1,7 +1,7 @@
-variable settings {}
-variable domain_name { default = "test"}
-variable kubeconfig { default = "conf"}
-variable txt_owner_id { default = "nightly-test"}
+variable "settings" {}
+variable "domain_name" { default = "test" }
+variable "kubeconfig" { default = "conf" }
+variable "txt_owner_id" { default = "nightly-test" }
 
 provider "helm" {
   kubernetes {

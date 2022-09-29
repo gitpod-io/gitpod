@@ -43,7 +43,7 @@ variable "vpc_availability_zones" {
 }
 
 variable "domain_name" {
-  default = ""
+  default     = ""
   description = "Domain name to associate with the route53 zone"
 }
 

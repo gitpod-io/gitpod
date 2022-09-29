@@ -3,7 +3,7 @@ output "url" {
 }
 
 output "cluster_name" {
-  value     = var.cluster_name
+  value = var.cluster_name
 }
 
 output "registry_backend" {
