@@ -24,4 +24,8 @@ export class DBPendingGithubEvent implements PendingGithubEvent {
 
     @Column()
     event: string;
+
+    // This column triggers the db-sync deletion mechanism. It's not intended for public consumption.
+    @Column()
+    deleted: boolean;
 }

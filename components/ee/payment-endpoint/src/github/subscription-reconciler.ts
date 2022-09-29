@@ -45,7 +45,8 @@ export class GithubSubscriptionReconciler {
                 event: JSON.stringify(evt),
                 githubUserId: evt.payload.marketplace_purchase.account.id.toString(),
                 id: evt.id,
-                type: `marketplace_purchase.${evt.payload.action}`
+                type: `marketplace_purchase.${evt.payload.action}`,
+                deleted: false
             });
         }
     }
