@@ -91,8 +91,9 @@ class GitpodPortForwardingService(private val project: Project) {
         for (port in response.portsList) {
             val hostPort = port.localPort
             val isServed = port.served
+            val isForwarded = forwardedPortsList.find { it.hostPort == hostPort } != null
 
-            if (isServed && !forwardedPortsList.containsKey(hostPort)) {
+            if (isServed && !isForwarded) {
                 val portEventsProcessor = object : PortEventsProcessor {
                     override fun onPortForwarded(hostPort: Int, clientPort: Int) {
                         portsService.setForwardedPort(hostPort, clientPort)
@@ -111,7 +112,10 @@ class GitpodPortForwardingService(private val project: Project) {
                 val portInfo = ForwardedPortInfo(
                         hostPort,
                         RdPortType.HTTP,
-                        FORWARDED_PORT_LABEL,
+                        port.exposed.url,
+                        port.name,
+                        port.description,
+                        setOf(FORWARDED_PORT_LABEL),
                         emptyList(),
                         portEventsProcessor
                 )
@@ -119,7 +123,7 @@ class GitpodPortForwardingService(private val project: Project) {
                 portForwardingManager.forwardPort(portInfo)
             }
 
-            if (!isServed && forwardedPortsList.containsKey(hostPort)) {
+            if (!isServed && isForwarded) {
                 portForwardingManager.removePort(hostPort)
                 portsService.removeForwardedPort(hostPort)
                 thisLogger().info("gitpod: Stopped forwarding port $hostPort.")
