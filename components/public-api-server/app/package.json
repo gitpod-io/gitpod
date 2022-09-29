@@ -1,0 +1,13 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "@improbable-eng/grpc-web": "^0.15.0",
+    "nice-grpc-web": "^2.0.0"
+  },
+  "devDependencies": {
+    "parcel": "^2.7.0"
+  }
+}

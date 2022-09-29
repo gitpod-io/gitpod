@@ -476,6 +476,7 @@ type CreateAndStartWorkspaceRequest struct {
 
 	IdempotencyToken string `protobuf:"bytes,1,opt,name=idempotency_token,json=idempotencyToken,proto3" json:"idempotency_token,omitempty"`
 	// Types that are assignable to Source:
+	//
 	//	*CreateAndStartWorkspaceRequest_ContextUrl
 	//	*CreateAndStartWorkspaceRequest_PrebuildId
 	Source    isCreateAndStartWorkspaceRequest_Source `protobuf_oneof:"source"`
@@ -1294,6 +1295,7 @@ type WorkspaceContext struct {
 	// which led to the creation of a workspace.
 	ContextUrl string `protobuf:"bytes,1,opt,name=context_url,json=contextUrl,proto3" json:"context_url,omitempty"`
 	// Types that are assignable to Details:
+	//
 	//	*WorkspaceContext_Git_
 	//	*WorkspaceContext_Prebuild_
 	//	*WorkspaceContext_Snapshot_

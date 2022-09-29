@@ -60,7 +60,7 @@ typescript_ts_protoc() {
             --ts_proto_opt=stringEnums=true \
             --ts_proto_out="$TARGET_DIR" \
             --ts_proto_opt=fileSuffix=.pb \
-            --ts_proto_opt=outputServices=nice-grpc,outputServices=generic-definitions,useExactTypes=false \
+            --ts_proto_opt=env=browser,outputServices=nice-grpc,outputServices=generic-definitions,outputJsonMethods=false,useExactTypes=false \
             -I /usr/lib/protoc/include -I"$ROOT_DIR" -I.. -I"../$PROTO_DIR" \
             "../$PROTO_DIR"/*.proto
 

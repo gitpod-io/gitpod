@@ -46,15 +46,20 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 		return fmt.Errorf("failed to initialize public api server: %w", err)
 	}
 
-	wrappedGRPC := grpcweb.WrapServer(srv.GRPC())
+	wrappedGRPC := grpcweb.WrapServer(srv.GRPC(),
+		grpcweb.WithOriginFunc(func(origin string) bool {
+			return true
+		}),
+		grpcweb.WithCorsForRegisteredEndpointsOnly(false))
 	srv.HTTPMux().Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.WithField("headers", r.Header).Infof("Handling %s", r.URL.Path)
 		if wrappedGRPC.IsGrpcWebRequest(r) {
 			wrappedGRPC.ServeHTTP(w, r)
 			return
 		}
 
 		// Fall back to other servers.
-		http.DefaultServeMux.ServeHTTP(w, r)
+		//http.DefaultServeMux.ServeHTTP(w, r)
 	}))
 
 	var billingService billingservice.Interface = &billingservice.NoOpClient{}
