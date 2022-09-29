@@ -72,6 +72,16 @@ export class RepoUrlTest {
             repo: "yolo",
         });
     }
+
+    @test public parseScmCloneUrl_with_port() {
+        const testUrl = RepoURL.parseRepoUrl("https://foo.bar.com:12345/scm/proj/repoName.git");
+        expect(testUrl).to.deep.include({
+            host: "foo.bar.com:12345",
+            repoKind: "projects",
+            owner: "proj",
+            repo: "repoName",
+        });
+    }
 }
 
 module.exports = new RepoUrlTest();
