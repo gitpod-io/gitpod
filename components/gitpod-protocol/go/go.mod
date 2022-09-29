@@ -10,4 +10,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 )
 
-require golang.org/x/sys v0.0.0-20210510120138-977fb7262007 // indirect
+require (
+	github.com/cenkalti/backoff/v4 v4.1.3
+	golang.org/x/sys v0.0.0-20210510120138-977fb7262007 // indirect
+)
