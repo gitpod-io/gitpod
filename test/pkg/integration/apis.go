@@ -34,10 +34,13 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/e2e-framework/klient"
+	"sigs.k8s.io/e2e-framework/klient/k8s"
 
 	// Gitpod uses mysql, so it makes sense to make this DB driver available
 	// by default.
@@ -1152,4 +1155,50 @@ func (c *ComponentAPI) portFwdWithRetry(ctx context.Context, portFwdF portFwdFun
 func (c *ComponentAPI) IsPVCExist(pvcName string) bool {
 	var pvc corev1.PersistentVolumeClaim
 	return c.client.Resources().Get(context.Background(), pvcName, c.namespace, &pvc) == nil
+}
+
+// RestartDeployment rollout restart the deployment by updating the
+// spec.template.metadata.annotations["kubectl.kubernetes.io/restartedAt"] = time.Now()
+func (c *ComponentAPI) RestartDeployment(deployName, namespace string, wait bool) error {
+	var deploy appsv1.Deployment
+	if err := c.client.Resources().WithNamespace(namespace).Get(context.Background(), deployName, namespace, &deploy); err != nil {
+		return err
+	}
+
+	patchData := map[string]interface{}{
+		"spec": map[string]interface{}{
+			"template": map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"annotations": map[string]interface{}{
+						"kubectl.kubernetes.io/restartedAt": time.Now().Format(time.Stamp),
+					},
+				},
+			},
+		},
+	}
+
+	encodedPatchData, err := json.Marshal(patchData)
+	if err != nil {
+		return err
+	}
+
+	if err := c.client.Resources().WithNamespace(namespace).Patch(context.Background(), &deploy, k8s.Patch{PatchType: types.MergePatchType, Data: encodedPatchData}); err != nil {
+		return err
+	}
+
+	if !wait {
+		return nil
+	}
+
+	// waits for the deployment rollout status, maximum to one minute
+	for i := 0; i < 10; i++ {
+		if err := c.client.Resources().WithNamespace(namespace).Get(context.Background(), deployName, namespace, &deploy); err != nil {
+			return err
+		}
+		if deploy.Status.UnavailableReplicas == 0 {
+			break
+		}
+		time.Sleep(6 * time.Second)
+	}
+	return nil
 }
