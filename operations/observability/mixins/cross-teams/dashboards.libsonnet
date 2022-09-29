@@ -3,10 +3,6 @@
  * Licensed under the MIT License. See License-MIT.txt in the project root for license information.
  */
 
-(import './dashboards/gitpod-overview.libsonnet') +
-(import './dashboards/gitpod-nodes-overview.libsonnet') +
-(import './dashboards/gitpod-admin-workspace.libsonnet') +
-(import './dashboards/gitpod-admin-node.libsonnet') +
 (import './dashboards/SLOs/workspace-startup-time.libsonnet') +
 {
   grafanaDashboards+:: {
@@ -17,5 +13,9 @@
     'gitpod-node-resource-metrics.json': (import 'dashboards/gitpod-node-resource-metrics.json'),
     'gitpod-grpc-server.json': (import 'dashboards/gitpod-grpc-server.json'),
     'gitpod-grpc-client.json': (import 'dashboards/gitpod-grpc-client.json'),
+    'gitpod-overview.json': (import 'dashboards/gitpod-overview.json'),
+    'gitpod-nodes-overview.json': (import 'dashboards/gitpod-nodes-overview.json'),
+    'gitpod-admin-node.json': (import 'dashboards/gitpod-admin-node.json'),
+    'gitpod-admin-workspace.json': (import 'dashboards/gitpod-admin-workspace.json')
   },
 }

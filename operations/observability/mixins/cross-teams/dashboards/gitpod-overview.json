@@ -1,0 +1,1091 @@
+{
+  "__inputs": [],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "panel",
+      "id": "bargauge",
+      "name": "Bar gauge",
+      "version": ""
+    },
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "9.1.5"
+    },
+    {
+      "type": "panel",
+      "id": "graph",
+      "name": "Graph (old)",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "heatmap",
+      "name": "Heatmap",
+      "version": ""
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": true,
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 11,
+      "panels": [
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "decimals": 0,
+              "links": [],
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": []
+              },
+              "unit": "none"
+            }
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 0,
+            "y": 1
+          },
+          "id": 2,
+          "links": [],
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "center",
+            "orientation": "vertical",
+            "reduceOptions": {
+              "calcs": [
+                "mean"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "pluginVersion": "7",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "sum(avg_over_time(gitpod_ws_manager_workspace_phase_total{phase=\"RUNNING\"}[7d]))",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Avg",
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "sum(min_over_time(gitpod_ws_manager_workspace_phase_total{phase=\"RUNNING\"}[7d]))",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Min",
+              "refId": "B"
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "sum(max_over_time(gitpod_ws_manager_workspace_phase_total{phase=\"RUNNING\"}[7d]))",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Max",
+              "refId": "C"
+            }
+          ],
+          "title": "Stats(7d)",
+          "transparent": false,
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "fixedColor": "semi-dark-orange",
+                "mode": "fixed"
+              },
+              "decimals": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": []
+              }
+            }
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 8,
+            "y": 1
+          },
+          "id": 3,
+          "options": {
+            "displayMode": "lcd",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "mean"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showUnfilled": true
+          },
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "sum(gitpod_ws_manager_workspace_phase_total{}) by (phase)",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "{{ label_name }}",
+              "refId": "A"
+            }
+          ],
+          "title": "Workspaces by phase",
+          "type": "bargauge"
+        },
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "fixedColor": "green",
+                "mode": "fixed"
+              },
+              "decimals": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": []
+              }
+            }
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 16,
+            "y": 1
+          },
+          "id": 4,
+          "options": {
+            "displayMode": "lcd",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "mean"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showUnfilled": true
+          },
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "sum(gitpod_ws_manager_workspace_phase_total{phase=\"RUNNING\"}) by (cluster,type)",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "{{cluster}}: {{type}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Running workspaces",
+          "type": "bargauge"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "grafana"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Summary",
+      "type": "row"
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
+      "id": 12,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "grafana"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Running workspaces",
+      "type": "row"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "$datasource"
+      },
+      "fill": 1,
+      "fillGradient": 5,
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 2
+      },
+      "hiddenSeries": false,
+      "id": 5,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "9.1.5",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "repeat": "cluster",
+      "seriesOverrides": [
+        {
+          "alias": "REGULAR",
+          "color": "#73BF69"
+        },
+        {
+          "alias": "PREBUILD",
+          "color": "#5794F2"
+        },
+        {
+          "alias": "PROBE",
+          "color": "#B877D9"
+        },
+        {
+          "alias": "Regular Not Active",
+          "color": "#FADE2A"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "expr": "sum(gitpod_ws_manager_workspace_phase_total{cluster=~\"$cluster\", phase=\"RUNNING\"}) by (type)",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "{{ type }}",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "expr": "sum(gitpod_ws_manager_workspace_activity_total{cluster=~\"$cluster\",active=\"false\"})",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "Regular Not Active",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeRegions": [],
+      "title": "$cluster: Running Workspaces",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "none",
+          "logBase": 1,
+          "min": 0,
+          "show": true
+        },
+        {
+          "format": "none",
+          "logBase": 1,
+          "min": 0,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false
+      }
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 13,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "grafana"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Workspace node's normalized Load Average",
+      "type": "row"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "$datasource"
+      },
+      "description": "Nodes with a high normalized load average do not represent a real problem, it only means that pods should probably not be scheduled to them.\n\nIf you'd like to see more details about resource consumption of a particular node, you can do so by clicking at the node name.\n",
+      "fill": 1,
+      "fillGradient": 5,
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 17
+      },
+      "hiddenSeries": false,
+      "id": 6,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "9.1.5",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "repeat": "cluster",
+      "seriesOverrides": [
+        {
+          "alias": "Node Max Load Avg",
+          "color": "#FF0000"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "expr": "topk(5, sum(nodepool:node_load1:normalized{cluster=~\"$cluster\", nodepool=~\".*workspace.*\"}) by (node))\n",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "{{node}}",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "expr": "1\n",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "Node Max Load Avg",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeRegions": [],
+      "title": "$cluster: Workspace node's normalized load average",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "none",
+          "logBase": 1,
+          "min": 0,
+          "show": true
+        },
+        {
+          "format": "none",
+          "logBase": 1,
+          "min": 0,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false
+      }
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 31
+      },
+      "id": 14,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "grafana"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Workspace Startup time",
+      "type": "row"
+    },
+    {
+      "cards": {},
+      "color": {
+        "cardColor": "#b4ff00",
+        "colorScale": "sqrt",
+        "colorScheme": "interpolateGreens",
+        "exponent": 0.5,
+        "mode": "spectrum"
+      },
+      "dataFormat": "tsbuckets",
+      "datasource": {
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 32
+      },
+      "heatmap": {},
+      "hideZeroBuckets": true,
+      "highlightCards": true,
+      "id": 7,
+      "legend": {
+        "show": false
+      },
+      "repeat": "cluster",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "expr": "sum(rate(gitpod_ws_manager_workspace_startup_seconds_bucket{cluster=~\"$cluster\",type=\"REGULAR\"}[$__rate_interval])) by (le)",
+          "format": "heatmap",
+          "intervalFactor": 2,
+          "legendFormat": "{{le}}",
+          "refId": "A"
+        }
+      ],
+      "title": "$cluster: Regular Workspace Startup time",
+      "tooltip": {
+        "show": true,
+        "showHistogram": false
+      },
+      "type": "heatmap",
+      "xAxis": {
+        "show": true
+      },
+      "yAxis": {
+        "format": "s",
+        "show": true
+      },
+      "yBucketBound": "auto"
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 46
+      },
+      "id": 15,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "grafana"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Workspace Phases",
+      "type": "row"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "$datasource"
+      },
+      "fill": 1,
+      "fillGradient": 5,
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 47
+      },
+      "id": 8,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "repeat": "cluster",
+      "seriesOverrides": [
+        {
+          "alias": "REGULAR - INITIALIZING",
+          "color": "#C8F2C2"
+        },
+        {
+          "alias": "REGULAR - CREATING",
+          "color": "#96D98D"
+        },
+        {
+          "alias": "REGULAR - PENDING",
+          "color": "#56A64B"
+        },
+        {
+          "alias": "REGULAR - STOPPING",
+          "color": "#37872D"
+        },
+        {
+          "alias": "REGULAR - STOPPED",
+          "color": "rgb(30, 80, 30)"
+        },
+        {
+          "alias": "PREBUILD - INITIALIZING",
+          "color": "#C0D8FF"
+        },
+        {
+          "alias": "PREBUILD - CREATING",
+          "color": "#8AB8FF"
+        },
+        {
+          "alias": "PREBUILD - PENDING",
+          "color": "#3274D9"
+        },
+        {
+          "alias": "PREBUILD - STOPPING",
+          "color": "#1F60C4"
+        },
+        {
+          "alias": "PREBUILD - STOPPED",
+          "color": "rgb(30, 30, 80)"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "expr": "sum by (type, phase)(gitpod_ws_manager_workspace_phase_total{cluster=~\"$cluster\", phase!=\"RUNNING\"})",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "{{type}} - {{phase}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "title": "$cluster: Workspace Phases",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "none",
+          "logBase": 1,
+          "min": 0,
+          "show": true
+        },
+        {
+          "format": "none",
+          "logBase": 1,
+          "min": 0,
+          "show": true
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 61
+      },
+      "id": 16,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "grafana"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Workspace failures",
+      "type": "row"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "$datasource"
+      },
+      "fill": 1,
+      "fillGradient": 5,
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 62
+      },
+      "id": 9,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "repeat": "cluster",
+      "seriesOverrides": [
+        {
+          "alias": "REGULAR",
+          "color": "#73BF69"
+        },
+        {
+          "alias": "PREBUILD",
+          "color": "#5794F2"
+        },
+        {
+          "alias": "PROBE",
+          "color": "#B877D9"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "expr": "sum(\n  rate(gitpod_ws_manager_workspace_stops_total{cluster=~\"$cluster\", reason=\"failed\"}[5m])\n) by (cluster, type) OR on() vector(0)\n",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "{{type}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "title": "$cluster: Workspace Failures per second",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "none",
+          "logBase": 1,
+          "min": 0,
+          "show": true
+        },
+        {
+          "format": "none",
+          "logBase": 1,
+          "min": 0,
+          "show": true
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 76
+      },
+      "id": 17,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "grafana"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Cluster size",
+      "type": "row"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "$datasource"
+      },
+      "fill": 1,
+      "fillGradient": 5,
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 77
+      },
+      "id": 10,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "repeat": "cluster",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "expr": "count(kube_node_labels{cluster=~\"$cluster\"}) by (nodepool)",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "{{nodepool}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "title": "$cluster: Number of nodes",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "min": 0,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "min": 0,
+          "show": true
+        }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 37,
+  "style": "dark",
+  "tags": [
+    "gitpod-mixin"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "VictoriaMetrics",
+          "value": "VictoriaMetrics"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "uid": "$datasource"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "cluster",
+        "options": [],
+        "query": {
+          "query": "label_values(gitpod_ws_manager_workspace_phase_total, cluster)",
+          "refId": "VictoriaMetrics-cluster-Variable-Query"
+        },
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "tagValuesQuery": "",
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "utc",
+  "title": "Gitpod / Overview",
+  "uid": "gitpod-overview",
+  "version": 1,
+  "weekStart": ""
+}
