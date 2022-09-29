@@ -270,13 +270,15 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
         return createClient(BillingServiceDefinition, createChannel(config.usageServiceAddr));
     });
 
-    bind<IDEServiceClient>(IDEServiceDefinition.name).toDynamicValue((ctx) => {
-        const config = ctx.container.get<Config>(Config);
-        const metricsClient = ctx.container.get<IClientCallMetrics>(IClientCallMetrics);
-        return createClientFactory()
-            .use(prometheusClientMiddleware(metricsClient))
-            .create(IDEServiceDefinition, createChannel(config.ideServiceAddr));
-    });
+    bind<IDEServiceClient>(IDEServiceDefinition.name)
+        .toDynamicValue((ctx) => {
+            const config = ctx.container.get<Config>(Config);
+            const metricsClient = ctx.container.get<IClientCallMetrics>(IClientCallMetrics);
+            return createClientFactory()
+                .use(prometheusClientMiddleware(metricsClient))
+                .create(IDEServiceDefinition, createChannel(config.ideServiceAddr));
+        })
+        .inSingletonScope();
 
     bind(EntitlementService).to(CommunityEntitlementService).inSingletonScope();
 
