@@ -59,6 +59,9 @@ pod:
   - name: sh-playground-dns-perm
     secret:
       secretName: sh-playground-dns-perm
+  - name: self-hosted-github-oauth
+    secret:
+      secretName: self-hosted-github-oauth
   containers:
   - name: nightly-test
     image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway.36
@@ -69,7 +72,11 @@ pod:
       mountPath: /mnt/secrets/sh-playground-sa-perm
     - name: sh-playground-dns-perm # this sa is used for the DNS management
       mountPath: /mnt/secrets/sh-playground-dns-perm
+    - name: self-hosted-github-oauth
+      mountPath: "/mnt/secrets/github-oauth"
     env:
+    - name: GITHUB_SCM_OAUTH
+      value: "/mnt/secrets/github-oauth/provider"
     - name: ARM_SUBSCRIPTION_ID
       valueFrom:
         secretKeyRef:

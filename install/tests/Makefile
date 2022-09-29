@@ -365,9 +365,7 @@ kots-install: preflight-flag = $(if $(preflights:true=),--skip-preflights,)
 kots-install: license-file = $(if $(license_community_$(channel)),$(license_community_$(channel)),"../licenses/$(channel).yaml")
 kots-install: install-kots-cli
 	kubectl kots remove ${app} -n gitpod --force --kubeconfig=${KUBECONFIG} || echo "No kots app existing, Installing"
-	kubectl get secret -n gitpod https-certificate -o yaml > https-secret.yaml || echo "No existing certificate"
 	$(MAKE) destroy-gitpod
-	[[ -f https-secret.yaml ]] && kubectl apply -f https-secret.yaml || echo "No existing certificate"
 	export KUBECONFIG=${KUBECONFIG} && \
 	kubectl kots install ${app}/${channel} \
 	--skip-rbac-check ${version-flag} ${preflight-flag} \
@@ -378,11 +376,11 @@ kots-install: install-kots-cli
                     --no-port-forward \
                     --config-values tmp_config.yml
 
-time_to_sleep_azure := 800 # azure seem to take more time to fullfil DNS propogation
-time_to_sleep := 300
+time_to_sleep_azure := 1000 # azure seem to take more time to fullfil DNS propogation
+time_to_sleep := 800
 
 wait_time := 180
-wait_time_azure := 180
+wait_time_azure := 300
 
 delete-cm-setup: sleeptime=$(if $(time_to_sleep_$(cloud)),$(time_to_sleep_$(cloud)),${time_to_sleep})
 delete-cm-setup: waittime=$(if $(wait_time_$(cloud)),$(wait_time_$(cloud)),${wait_time})
