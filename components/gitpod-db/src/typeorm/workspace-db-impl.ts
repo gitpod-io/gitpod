@@ -792,6 +792,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         const qb = volumeSnapshotRepo
             .createQueryBuilder("vs")
             .select("vs.workspaceId", "workspaceId")
+            .where("vs.deleted = 0")
             .groupBy("vs.workspaceId")
             .having("COUNT(*) > 1")
             .limit(limit);
@@ -805,6 +806,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         const results = await volumeSnapshotRepo
             .createQueryBuilder("vs")
             .where("vs.workspaceId = :wsId", { wsId })
+            .andWhere("vs.deleted = 0")
             .orderBy("vs.creationTime", "DESC")
             .limit(limit)
             .getMany();
