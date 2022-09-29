@@ -1,6 +1,11 @@
 # Change Log
 
 ## September 2022
+- [local-preview] Failure with more specific information ([#13403](https://github.com/gitpod-io/gitpod/pull/13403)) - [@Pothulapati](https://github.com/Pothulapati)
+- [server] Fix for the inability to delete teams that were not subscribed to usage based pricing ([#13402](https://github.com/gitpod-io/gitpod/pull/13402)) - [@andrew-farries](https://github.com/andrew-farries)
+- Keep the last selected team selected ([#13318](https://github.com/gitpod-io/gitpod/pull/13318)) - [@svenefftinge](https://github.com/svenefftinge)
+- [experimental] show an error if the PVC size is less than the restore volume snapshot ([#13268](https://github.com/gitpod-io/gitpod/pull/13268)) - [@jenting](https://github.com/jenting)
+- [single-cluster/aws] Make `self-signed` work ([#13305](https://github.com/gitpod-io/gitpod/pull/13305)) - [@Pothulapati](https://github.com/Pothulapati)
 - [kots]: configure support bundle to get KOTS configmaps ([#13378](https://github.com/gitpod-io/gitpod/pull/13378)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Update node sizes for self hosted reference architectures ([#13356](https://github.com/gitpod-io/gitpod/pull/13356)) - [@Furisto](https://github.com/Furisto)
 - Avoid second prebuild been triggered on same commit. ([#13295](https://github.com/gitpod-io/gitpod/pull/13295)) - [@AlexTugarev](https://github.com/AlexTugarev)
