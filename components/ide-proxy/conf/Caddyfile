@@ -53,13 +53,13 @@
 		header {
 			Access-Control-Allow-Origin *
 			Access-Control-Allow-Methods "GET, OPTIONS"
+			Cross-Origin-Resource-Policy cross-origin
+			Vary Origin
 		}
 
 		reverse_proxy blobserve.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:4000 {
 			import upstream_headers
 			import upstream_connection
-
-			flush_interval -1
 		}
 	}
 
