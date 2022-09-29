@@ -664,6 +664,24 @@ class WorkspaceDBSpec {
     }
 
     @test(timeout(10000))
+    public async testCanFindVolumeSnapshotById() {
+        await this.threeVolumeSnapshotsForTwoWorkspaces();
+
+        const volSnapshot = await this.db.findVolumeSnapshotById("123");
+
+        expect(volSnapshot?.id).to.eq("123");
+    }
+
+    @test(timeout(10000))
+    public async testCantFindDeletedVolumeSnapshotById() {
+        await this.threeVolumeSnapshotsForTwoWorkspaces();
+
+        const volSnapshot = await this.db.findVolumeSnapshotById("456b");
+
+        expect(volSnapshot).to.be.undefined;
+    }
+
+    @test(timeout(10000))
     public async testFindVolumeSnapshotWorkspacesForGC() {
         await this.threeVolumeSnapshotsForTwoWorkspaces();
 
