@@ -6,7 +6,6 @@ package io.gitpod.jetbrains.remote
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.BrowserUtil
-import com.intellij.idea.StartupUtil
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
@@ -29,7 +28,6 @@ import io.grpc.stub.ClientCallStreamObserver
 import io.grpc.stub.ClientResponseObserver
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
-import org.jetbrains.ide.BuiltInServerManager
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 
@@ -43,6 +41,8 @@ class GitpodClientProjectSessionTracker(
 
     private lateinit var info: Info.WorkspaceInfoResponse
     private val lifetime = Lifetime.Eternal.createNested()
+
+    private val ignoredPortsForNotificationService = service<GitpodIgnoredPortsForNotificationService>()
 
     override fun dispose() {
         lifetime.terminate()
@@ -118,10 +118,6 @@ class GitpodClientProjectSessionTracker(
             return@launch
         }
 
-        // Ignore ports that aren't actually used by the user (e.g. ports used internally by JetBrains IDEs)
-        val backendPort = BuiltInServerManager.getInstance().waitForStart().port
-        val serverPort = StartupUtil.getServerFuture().await().port
-        val ignorePorts = listOf(backendPort, serverPort, 5990)
         val portsStatus = hashMapOf<Int, PortsStatus>()
 
         val status = StatusServiceGrpc.newStub(GitpodManager.supervisorChannel)
@@ -141,7 +137,7 @@ class GitpodClientProjectSessionTracker(
                             override fun onNext(ps: Status.PortsStatusResponse) {
                                 for (port in ps.portsList) {
                                     // Avoiding undesired notifications
-                                    if (ignorePorts.contains(port.localPort)) {
+                                    if (ignoredPortsForNotificationService.getIgnoredPorts().contains(port.localPort)) {
                                         continue
                                     }
 

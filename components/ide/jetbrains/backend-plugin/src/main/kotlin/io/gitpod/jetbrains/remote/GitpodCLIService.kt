@@ -25,13 +25,17 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.QueryStringDecoder
 import io.prometheus.client.exporter.common.TextFormat
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.ide.RestService
 import org.jetbrains.io.response
 import java.io.OutputStreamWriter
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
-@Suppress("UnstableApiUsage")
+@Suppress("UnstableApiUsage", "OPT_IN_USAGE")
 class GitpodCLIService : RestService() {
 
     private val manager = service<GitpodManager>()
@@ -65,7 +69,11 @@ class GitpodCLIService : RestService() {
             val file = parseFilePath(fileStr) ?: return "invalid file"
             val shouldWait = getBooleanParameter("wait", urlDecoder)
             return withClient(request, context) {
-                CommandLineProcessor.doOpenFileOrProject(file, shouldWait).future.get()
+                GlobalScope.launch {
+                    withContext(Dispatchers.IO) {
+                        CommandLineProcessor.doOpenFileOrProject(file, shouldWait).future.get()
+                    }
+                }
             }
         }
         if (operation == "preview") {
