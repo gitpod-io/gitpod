@@ -73,6 +73,7 @@ packages:
       - components/ide-proxy:docker
       - components/ide-metrics:docker
       - components/ide-service:docker
+      - components/kots-config-check/certificate:docker
       - components/kots-config-check/database:docker
       - components/kots-config-check/registry:docker
       - components/kots-config-check/storage:docker
