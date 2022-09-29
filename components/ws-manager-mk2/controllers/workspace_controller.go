@@ -124,6 +124,10 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	if workspace.Status.Conditions == nil {
+		workspace.Status.Conditions = []metav1.Condition{}
+	}
+
 	log.Info("reconciling workspace", "ws", req.NamespacedName)
 
 	var workspacePods corev1.PodList
@@ -145,7 +149,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	err = r.Status().Update(ctx, &workspace)
 	if err != nil {
-		log.Error(err, "unable to update workspace status")
+		// log.WithValues("status", workspace).Error(err, "unable to update workspace status")
 		return ctrl.Result{Requeue: true}, err
 	}
 
@@ -171,6 +175,10 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		pod, err := r.createWorkspacePod(sctx)
 		if err != nil {
 			logger.Error(err, "unable to produce workspace pod")
+			return ctrl.Result{}, err
+		}
+
+		if err := ctrl.SetControllerReference(workspace, pod, r.Scheme); err != nil {
 			return ctrl.Result{}, err
 		}
 
@@ -247,7 +255,8 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 					Message: msg,
 				})
 
-				return r.Status().Update(ctx, &ws)
+				// return r.Status().Update(ctx, &ws)
+				return nil
 			})
 			if err != nil {
 				logger.Error(err, "was unable to mark workspace as failed")
@@ -370,10 +379,10 @@ func (r *WorkspaceReconciler) finalizeWorkspaceContent(ctx context.Context, work
 			}
 
 			if res != nil {
-				r.modifyWorkspaceStatus(ctx, workspace.Name, func(status *workspacev1.WorkspaceStatus) error {
-					status.Snapshot = res.Url
-					return nil
-				})
+				// r.modifyWorkspaceStatus(ctx, workspace.Name, func(status *workspacev1.WorkspaceStatus) error {
+				// 	status.Snapshot = res.Url
+				// 	return nil
+				// })
 				if err != nil {
 					log.Error(err, "cannot mark headless workspace with snapshot - that's one prebuild lost")
 					err = xerrors.Errorf("cannot remember snapshot: %v", err)
@@ -397,10 +406,10 @@ func (r *WorkspaceReconciler) finalizeWorkspaceContent(ctx context.Context, work
 	var (
 		dataloss    bool
 		backupError error
-		gitStatus   *workspacev1.GitStatus
+		// gitStatus   *workspacev1.GitStatus
 	)
 	for i := 0; i < wsdaemonMaxAttempts; i++ {
-		didSometing, gs, err := doFinalize()
+		didSometing, _, err := doFinalize()
 		if !didSometing {
 			// someone else is managing finalization process ... we don't have to bother
 			return
@@ -409,7 +418,7 @@ func (r *WorkspaceReconciler) finalizeWorkspaceContent(ctx context.Context, work
 		// by default we assume the worst case scenario. If things aren't just as bad, we'll tune it down below.
 		dataloss = true
 		backupError = err
-		gitStatus = gs
+		// gitStatus = gs
 
 		// At this point one of three things may have happened:
 		//   1. the context deadline was exceeded, e.g. due to misconfiguration (not enough time to upload) or network issues. We'll try again.
@@ -442,37 +451,37 @@ func (r *WorkspaceReconciler) finalizeWorkspaceContent(ctx context.Context, work
 		break
 	}
 
-	var backupFailure string
+	// var backupFailure string
 	if backupError != nil {
 		if dataloss {
-			backupFailure = backupError.Error()
+			// backupFailure = backupError.Error()
 		} else {
 			// internal errors make no difference to the user experience. The backup still worked, we just messed up some
 			// state management or cleanup. No need to worry the user.
 			log.Error(backupError, "internal error while disposing workspace content")
 		}
 	}
-	err := r.modifyWorkspaceStatus(ctx, workspace.Name, func(status *workspacev1.WorkspaceStatus) error {
-		status.Conditions = addUniqueCondition(status.Conditions, metav1.Condition{
-			Type:               string(workspacev1.WorkspaceConditionBackupComplete),
-			Status:             metav1.ConditionTrue,
-			LastTransitionTime: metav1.Now(),
-		})
-		if backupFailure != "" {
-			status.Conditions = addUniqueCondition(status.Conditions, metav1.Condition{
-				Type:               string(workspacev1.WorkspaceConditionBackupFailure),
-				Status:             metav1.ConditionTrue,
-				LastTransitionTime: metav1.Now(),
-				Message:            backupFailure,
-			})
-		}
-		status.GitStatus = gitStatus
-		log.V(1).Info("setting disposal status", "instanceID", workspace.Name)
-		return nil
-	})
-	if err != nil {
-		log.Error(err, "cannot update workspace disposal status")
-	}
+	// err := r.modifyWorkspaceStatus(ctx, workspace.Name, func(status *workspacev1.WorkspaceStatus) error {
+	// 	status.Conditions = addUniqueCondition(status.Conditions, metav1.Condition{
+	// 		Type:               string(workspacev1.WorkspaceConditionBackupComplete),
+	// 		Status:             metav1.ConditionTrue,
+	// 		LastTransitionTime: metav1.Now(),
+	// 	})
+	// 	if backupFailure != "" {
+	// 		status.Conditions = addUniqueCondition(status.Conditions, metav1.Condition{
+	// 			Type:               string(workspacev1.WorkspaceConditionBackupFailure),
+	// 			Status:             metav1.ConditionTrue,
+	// 			LastTransitionTime: metav1.Now(),
+	// 			Message:            backupFailure,
+	// 		})
+	// 	}
+	// 	status.GitStatus = gitStatus
+	// 	log.V(1).Info("setting disposal status", "instanceID", workspace.Name)
+	// 	return nil
+	// })
+	// if err != nil {
+	// 	log.Error(err, "cannot update workspace disposal status")
+	// }
 }
 
 func gitStatusfromContentServiceAPI(s *csapi.GitStatus) *workspacev1.GitStatus {
@@ -537,22 +546,22 @@ func (r *WorkspaceReconciler) connectToWorkspaceDaemon(ctx context.Context, work
 
 // modifyWorkspaceStatus modifies a workspace object using the mod function. If the mod function returns a gRPC status error, that error
 // is returned directly. If mod returns a non-gRPC error it is turned into one.
-func (r *WorkspaceReconciler) modifyWorkspaceStatus(ctx context.Context, id string, mod func(ws *workspacev1.WorkspaceStatus) error) error {
-	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		var ws workspacev1.Workspace
-		err := r.Client.Get(ctx, types.NamespacedName{Namespace: r.Config.Namespace, Name: id}, &ws)
-		if err != nil {
-			return err
-		}
+// func (r *WorkspaceReconciler) modifyWorkspaceStatus(ctx context.Context, id string, mod func(ws *workspacev1.WorkspaceStatus) error) error {
+// 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+// 		var ws workspacev1.Workspace
+// 		err := r.Client.Get(ctx, types.NamespacedName{Namespace: r.Config.Namespace, Name: id}, &ws)
+// 		if err != nil {
+// 			return err
+// 		}
 
-		err = mod(&ws.Status)
-		if err != nil {
-			return err
-		}
+// 		err = mod(&ws.Status)
+// 		if err != nil {
+// 			return err
+// 		}
 
-		return r.Client.Status().Update(ctx, &ws)
-	})
-}
+// 		return r.Client.Status().Update(ctx, &ws)
+// 	})
+// }
 
 // initializeWorkspaceContent talks to a ws-daemon daemon on the node of the pod and initializes the workspace content.
 // If we're already initializing the workspace, thus function will return immediately. If we were not initializing,
@@ -728,6 +737,10 @@ func checkWSDaemonEndpoint(namespace string, clientset client.Client) func(strin
 }
 
 func addUniqueCondition(conds []metav1.Condition, cond metav1.Condition) []metav1.Condition {
+	if cond.Reason == "" {
+		cond.Reason = "Foo"
+	}
+
 	for i, c := range conds {
 		if c.Type == cond.Type {
 			conds[i] = cond
