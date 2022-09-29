@@ -16,6 +16,11 @@ output "storage" {
   value     = module.eks.storage
 }
 
+output "registry" {
+  sensitive = true
+  value     = module.eks.registry
+}
+
 output "database" {
   sensitive = true
   value     = module.eks.database
@@ -23,10 +28,15 @@ output "database" {
 
 output "nameservers" {
   sensitive = false
-  value     = module.eks.domain_nameservers
+  value     = module.eks.name_servers
 }
 
 output "cluster_issuer" {
   sensitive = false
   value     = module.cluster-issuer.cluster_issuer
+}
+
+output "aws_cluster_user" {
+    sensitive = true
+    value = module.eks.cluster_user
 }

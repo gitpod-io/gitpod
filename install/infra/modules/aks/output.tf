@@ -27,7 +27,7 @@ output "database" {
   }, {})
 }
 
-output "domain_nameservers" {
+output "name_servers" {
   value = try(azurerm_dns_zone.dns.0.name_servers, null)
 }
 

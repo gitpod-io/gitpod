@@ -34,3 +34,9 @@ output "storage" {
   sensitive = true
   value     = module.gke.storage
 }
+
+output "gke_user_key" {
+    sensitive = true
+    value = try(module.gke.cluster-sa, null)
+}
+
