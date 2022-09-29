@@ -59,7 +59,6 @@ type CostCenterManager struct {
 // This method creates a codt center and stores it in the DB if there is no preexisting one.
 func (c *CostCenterManager) GetOrCreateCostCenter(ctx context.Context, attributionID AttributionID) (CostCenter, error) {
 	logger := log.WithField("attributionId", attributionID)
-	logger.Info("Get or create CostCenter")
 
 	result, err := getCostCenter(ctx, c.conn, attributionID)
 	if err != nil {
