@@ -347,7 +347,6 @@ func TestRoutes(t *testing.T) {
 					"Cache-Control":  {"public, max-age=31536000"},
 					"Content-Length": {"54"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
-					"Vary":           {"Accept-Encoding"},
 				},
 				Body: "blobserve hit: /image/test.html\nhost: localhost:20003\n",
 			},
