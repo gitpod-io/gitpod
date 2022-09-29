@@ -1,8 +1,6 @@
 packages:
   - name: docker
     type: generic
-    argdeps:
-      - version
     deps:
       - :stable
       - :latest
@@ -12,7 +10,6 @@ packages:
       - :plugin-stable
     argdeps:
       - imageRepoBase
-      - version
     config:
       dockerfile: leeway.Dockerfile
       metadata:
@@ -27,7 +24,6 @@ packages:
       - :plugin-latest
     argdeps:
       - imageRepoBase
-      - version
     config:
       dockerfile: leeway.Dockerfile
       metadata:
