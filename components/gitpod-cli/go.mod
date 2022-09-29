@@ -27,6 +27,7 @@ require (
 )
 
 require (
+	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
