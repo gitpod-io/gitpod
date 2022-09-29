@@ -7,6 +7,20 @@ metadata:
   name: gitpod
 spec:
   collectors:
+    - runPod:
+        name: certificate
+        namespace: '{{repl Namespace }}'
+        podSpec:
+          serviceAccountName: kotsadm
+          containers:
+            - name: certificate
+              image: eu.gcr.io/gitpod-core-dev/build/kots-config-check/certificate:mrsimonemms-add-kots-support-bundle-11865.7
+              args:
+                - '{{repl ConfigOption "domain" }}' # DOMAIN
+                - '{{repl Namespace }}' # NAMESPACE
+                - https-certificates # SECRET_NAME
+                - tls.crt # TLS_CRT_KEY
+                - tls.key # TLS_KEY_KEY
     - run:
         collectorName: database
         image: eu.gcr.io/gitpod-core-dev/build/kots-config-check/database:sje-kots-config-check.9
@@ -125,3 +139,34 @@ spec:
           - '{{repl LicenseFieldValue "appSlug" }}'
           - --namespace
           - '{{repl Namespace }}'
+  analyzers:
+    - textAnalyze:
+        checkName: TLS certificate exists
+        fileName: certificate/certificate.log
+        regexGroups: 'cert_exists: (?P<Valid>\w+)'
+        outcomes:
+          - pass:
+              when: "Valid == ok"
+              message: TLS certificate exists
+          - fail:
+              message: TLS certificate does not exist. If using cert-manager, please check your settings and that your domain name is pointing to the correct name server. If you are supplying your own certificate, this will need to be re-uploaded.
+    - textAnalyze:
+        checkName: TLS certificate domain name
+        fileName: certificate/certificate.log
+        regexGroups: 'domain_name: (?P<Valid>\w+)'
+        outcomes:
+          - pass:
+              when: "Valid == ok"
+              message: TLS certificate has the correct domain names
+          - fail:
+              message: TLS certificate does not have the correct domain names. It requires the DNS names `{{repl ConfigOption "domain" }}`, `*.{{repl ConfigOption "domain" }}` and `*.ws.{{repl ConfigOption "domain" }}` on the certificate.
+    - textAnalyze:
+        checkName: TLS certificate in date
+        fileName: certificate/certificate.log
+        regexGroups: 'in_date: (?P<Valid>\w+)'
+        outcomes:
+          - pass:
+              when: "Valid == ok"
+              message: TLS certificate is in date
+          - fail:
+              message: TLS certificate is not date and will need to be reissued. If using cert-manager, please check your settings and that your domain name is pointing to the correct name server. If you are supplying your own certificate, this will need to be re-uploaded.
