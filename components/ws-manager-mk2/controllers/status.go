@@ -79,16 +79,14 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 		workspace.Status.Phase = *phase
 	}
 
-	if !conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) {
+	if failure != "" && !conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) {
 		// workspaces can fail only once - once there is a failed condition set, stick with it
-		// TODO(cw): don't re-append if condition is already present
-		workspace.Status.Conditions = append(workspace.Status.Conditions, metav1.Condition{
+		workspace.Status.Conditions = addUniqueCondition(workspace.Status.Conditions, metav1.Condition{
 			Type:               string(workspacev1.WorkspaceConditionFailed),
 			Status:             metav1.ConditionTrue,
 			LastTransitionTime: metav1.Now(),
 			Message:            failure,
 		})
-
 	}
 
 	switch {
