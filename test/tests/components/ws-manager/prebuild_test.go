@@ -46,16 +46,16 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 						{Init: "echo \"some output\" > someFile; sleep 20; exit 0;"},
 					},
 				},
-				{
-					Name:             "pvc",
-					ContextURL:       "https://github.com/gitpod-io/empty",
-					CheckoutLocation: "empty",
-					WorkspaceRoot:    "/workspace/empty",
-					Task: []gitpod.TasksItems{
-						{Init: "echo \"some output\" > someFile; sleep 20; exit 0;"},
-					},
-					FF: []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM},
-				},
+				// {
+				// 	Name:             "pvc",
+				// 	ContextURL:       "https://github.com/gitpod-io/empty",
+				// 	CheckoutLocation: "empty",
+				// 	WorkspaceRoot:    "/workspace/empty",
+				// 	Task: []gitpod.TasksItems{
+				// 		{Init: "echo \"some output\" > someFile; sleep 20; exit 0;"},
+				// 	},
+				// 	FF: []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM},
+				// },
 			}
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*len(tests))*time.Minute)
 			defer cancel()
@@ -214,13 +214,13 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 					CheckoutLocation: "empty",
 					WorkspaceRoot:    "/workspace/empty",
 				},
-				{
-					Name:             "pvc",
-					ContextURL:       "https://github.com/gitpod-io/empty",
-					CheckoutLocation: "empty",
-					WorkspaceRoot:    "/workspace/empty",
-					FF:               []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM},
-				},
+				// {
+				// 	Name:             "pvc",
+				// 	ContextURL:       "https://github.com/gitpod-io/empty",
+				// 	CheckoutLocation: "empty",
+				// 	WorkspaceRoot:    "/workspace/empty",
+				// 	FF:               []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM},
+				// },
 			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10*len(tests))*time.Minute)
@@ -420,154 +420,154 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 // - create a prebuild with large workspace class (30Gi disk) separately
 // - create the workspace from prebuild with small workspace class (20Gi disk) separately
 // - make sure the workspace can't start
-func TestPrebuildAndRegularWorkspaceDifferentWorkspaceClass(t *testing.T) {
-	f := features.New("prebuild").
-		WithLabel("component", "ws-manager").
-		Assess("it should open workspace with different workspace class", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			tests := []struct {
-				Name                             string
-				PrebuildWorkspaceClass           string
-				RegularWorkspaceClass            string
-				ContextURL                       string
-				WorkspaceRoot                    string
-				CheckoutLocation                 string
-				ShouldFailToOpenRegularWorkspace bool
-			}{
-				{
-					Name: "prebuild-small-regular-large-workspace-class",
-					// TODO: do not use hard-code workspace class name to prevent if we change to different environment to run the test
-					PrebuildWorkspaceClass: "small",
-					RegularWorkspaceClass:  "default",
-					//
-					ContextURL:       "https://github.com/gitpod-io/empty",
-					CheckoutLocation: "empty",
-					WorkspaceRoot:    "/workspace/empty",
-				},
-				{
-					Name: "prebuild-large-regular-small-workspace-class",
-					// TODO: do not use hard-code workspace class name to prevent if we change to different environment to run the test
-					PrebuildWorkspaceClass: "default",
-					RegularWorkspaceClass:  "small",
-					//
-					ContextURL:                       "https://github.com/gitpod-io/empty",
-					CheckoutLocation:                 "empty",
-					WorkspaceRoot:                    "/workspace/empty",
-					ShouldFailToOpenRegularWorkspace: true,
-				},
-			}
-
-			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10*len(tests))*time.Minute)
-			defer cancel()
-
-			for _, test := range tests {
-				t.Run(test.Name, func(t *testing.T) {
-					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
-					t.Cleanup(func() {
-						api.Done(t)
-					})
-
-					// create a prebuild and stop workspace
-					_, prebuildStopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
-						req.Type = wsmanapi.WorkspaceType_PREBUILD
-						req.Spec.Class = test.PrebuildWorkspaceClass
-						req.Spec.Envvars = append(req.Spec.Envvars, &wsmanapi.EnvironmentVariable{
-							Name:  "GITPOD_TASKS",
-							Value: fmt.Sprintf(`[{ "init": %q }]`, initTask),
-						})
-						req.Spec.FeatureFlags = []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM}
-						req.Spec.Initializer = &csapi.WorkspaceInitializer{
-							Spec: &csapi.WorkspaceInitializer_Git{
-								Git: &csapi.GitInitializer{
-									RemoteUri:        test.ContextURL,
-									CheckoutLocation: test.CheckoutLocation,
-									Config:           &csapi.GitConfig{},
-								},
-							},
-						}
-						req.Spec.WorkspaceLocation = test.CheckoutLocation
-						return nil
-					}))
-					if err != nil {
-						t.Fatalf("cannot launch a workspace: %q", err)
-					}
-
-					prebuildSnapshot, vsInfo, err := stopWorkspaceAndFindSnapshot(prebuildStopWs, api)
-					if err != nil {
-						t.Fatalf("stop workspace and find snapshot error: %v", err)
-					}
-
-					t.Logf("prebuild snapshot: %s", prebuildSnapshot)
-					if vsInfo != nil {
-						t.Logf("vsName: %s, vsHandle: %s", vsInfo.VolumeSnapshotName, vsInfo.VolumeSnapshotHandle)
-					}
-
-					// launch the workspace from prebuild
-					ws, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
-						req.Spec.Class = test.RegularWorkspaceClass
-						req.Spec.FeatureFlags = []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM}
-						req.Spec.Initializer = &csapi.WorkspaceInitializer{
-							Spec: &csapi.WorkspaceInitializer_Prebuild{
-								Prebuild: &csapi.PrebuildInitializer{
-									Prebuild: &csapi.SnapshotInitializer{
-										Snapshot:           prebuildSnapshot,
-										FromVolumeSnapshot: true,
-									},
-									Git: []*csapi.GitInitializer{
-										{
-											RemoteUri:        test.ContextURL,
-											CheckoutLocation: test.CheckoutLocation,
-											Config:           &csapi.GitConfig{},
-										},
-									},
-								},
-							},
-						}
-						req.Spec.VolumeSnapshot = vsInfo
-						req.Spec.WorkspaceLocation = test.CheckoutLocation
-						return nil
-					}))
-					if err != nil {
-						if test.ShouldFailToOpenRegularWorkspace {
-							return
-						}
-						t.Fatalf("cannot launch a workspace: %q", err)
-					}
-					if test.ShouldFailToOpenRegularWorkspace {
-						t.Fatal("should failed on launch a workspace")
-						return
-					}
-
-					defer func() {
-						// stop workspace in defer function to prevent we forget to stop the workspace
-						if err := stopWorkspace(t, cfg, stopWs); err != nil {
-							t.Errorf("cannot stop workspace: %q", err)
-						}
-					}()
-
-					rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(),
-						integration.WithInstanceID(ws.Req.Id),
-					)
-					if err != nil {
-						t.Fatal(err)
-					}
-					t.Cleanup(func() {
-						rsa.Close()
-					})
-					integration.DeferCloser(t, closer)
-
-					// checkPrebuildLogExist checks the prebuild log message exists
-					checkPrebuildLogExist(t, cfg, rsa, ws, test.WorkspaceRoot)
-
-					// check the files/folders permission under .git/ is not root
-					checkGitFolderPermission(t, rsa, test.WorkspaceRoot)
-				})
-			}
-			return ctx
-		}).
-		Feature()
-
-	testEnv.Test(t, f)
-}
+// func TestPrebuildAndRegularWorkspaceDifferentWorkspaceClass(t *testing.T) {
+// 	f := features.New("prebuild").
+// 		WithLabel("component", "ws-manager").
+// 		Assess("it should open workspace with different workspace class", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+// 			tests := []struct {
+// 				Name                             string
+// 				PrebuildWorkspaceClass           string
+// 				RegularWorkspaceClass            string
+// 				ContextURL                       string
+// 				WorkspaceRoot                    string
+// 				CheckoutLocation                 string
+// 				ShouldFailToOpenRegularWorkspace bool
+// 			}{
+// 				{
+// 					Name: "prebuild-small-regular-large-workspace-class",
+// 					// TODO: do not use hard-code workspace class name to prevent if we change to different environment to run the test
+// 					PrebuildWorkspaceClass: "small",
+// 					RegularWorkspaceClass:  "default",
+// 					//
+// 					ContextURL:       "https://github.com/gitpod-io/empty",
+// 					CheckoutLocation: "empty",
+// 					WorkspaceRoot:    "/workspace/empty",
+// 				},
+// 				{
+// 					Name: "prebuild-large-regular-small-workspace-class",
+// 					// TODO: do not use hard-code workspace class name to prevent if we change to different environment to run the test
+// 					PrebuildWorkspaceClass: "default",
+// 					RegularWorkspaceClass:  "small",
+// 					//
+// 					ContextURL:                       "https://github.com/gitpod-io/empty",
+// 					CheckoutLocation:                 "empty",
+// 					WorkspaceRoot:                    "/workspace/empty",
+// 					ShouldFailToOpenRegularWorkspace: true,
+// 				},
+// 			}
+//
+// 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10*len(tests))*time.Minute)
+// 			defer cancel()
+//
+// 			for _, test := range tests {
+// 				t.Run(test.Name, func(t *testing.T) {
+// 					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+// 					t.Cleanup(func() {
+// 						api.Done(t)
+// 					})
+//
+// 					// create a prebuild and stop workspace
+// 					_, prebuildStopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
+// 						req.Type = wsmanapi.WorkspaceType_PREBUILD
+// 						req.Spec.Class = test.PrebuildWorkspaceClass
+// 						req.Spec.Envvars = append(req.Spec.Envvars, &wsmanapi.EnvironmentVariable{
+// 							Name:  "GITPOD_TASKS",
+// 							Value: fmt.Sprintf(`[{ "init": %q }]`, initTask),
+// 						})
+// 						req.Spec.FeatureFlags = []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM}
+// 						req.Spec.Initializer = &csapi.WorkspaceInitializer{
+// 							Spec: &csapi.WorkspaceInitializer_Git{
+// 								Git: &csapi.GitInitializer{
+// 									RemoteUri:        test.ContextURL,
+// 									CheckoutLocation: test.CheckoutLocation,
+// 									Config:           &csapi.GitConfig{},
+// 								},
+// 							},
+// 						}
+// 						req.Spec.WorkspaceLocation = test.CheckoutLocation
+// 						return nil
+// 					}))
+// 					if err != nil {
+// 						t.Fatalf("cannot launch a workspace: %q", err)
+// 					}
+//
+// 					prebuildSnapshot, vsInfo, err := stopWorkspaceAndFindSnapshot(prebuildStopWs, api)
+// 					if err != nil {
+// 						t.Fatalf("stop workspace and find snapshot error: %v", err)
+// 					}
+//
+// 					t.Logf("prebuild snapshot: %s", prebuildSnapshot)
+// 					if vsInfo != nil {
+// 						t.Logf("vsName: %s, vsHandle: %s", vsInfo.VolumeSnapshotName, vsInfo.VolumeSnapshotHandle)
+// 					}
+//
+// 					// launch the workspace from prebuild
+// 					ws, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
+// 						req.Spec.Class = test.RegularWorkspaceClass
+// 						req.Spec.FeatureFlags = []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM}
+// 						req.Spec.Initializer = &csapi.WorkspaceInitializer{
+// 							Spec: &csapi.WorkspaceInitializer_Prebuild{
+// 								Prebuild: &csapi.PrebuildInitializer{
+// 									Prebuild: &csapi.SnapshotInitializer{
+// 										Snapshot:           prebuildSnapshot,
+// 										FromVolumeSnapshot: true,
+// 									},
+// 									Git: []*csapi.GitInitializer{
+// 										{
+// 											RemoteUri:        test.ContextURL,
+// 											CheckoutLocation: test.CheckoutLocation,
+// 											Config:           &csapi.GitConfig{},
+// 										},
+// 									},
+// 								},
+// 							},
+// 						}
+// 						req.Spec.VolumeSnapshot = vsInfo
+// 						req.Spec.WorkspaceLocation = test.CheckoutLocation
+// 						return nil
+// 					}))
+// 					if err != nil {
+// 						if test.ShouldFailToOpenRegularWorkspace {
+// 							return
+// 						}
+// 						t.Fatalf("cannot launch a workspace: %q", err)
+// 					}
+// 					if test.ShouldFailToOpenRegularWorkspace {
+// 						t.Fatal("should failed on launch a workspace")
+// 						return
+// 					}
+//
+// 					defer func() {
+// 						// stop workspace in defer function to prevent we forget to stop the workspace
+// 						if err := stopWorkspace(t, cfg, stopWs); err != nil {
+// 							t.Errorf("cannot stop workspace: %q", err)
+// 						}
+// 					}()
+//
+// 					rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(),
+// 						integration.WithInstanceID(ws.Req.Id),
+// 					)
+// 					if err != nil {
+// 						t.Fatal(err)
+// 					}
+// 					t.Cleanup(func() {
+// 						rsa.Close()
+// 					})
+// 					integration.DeferCloser(t, closer)
+//
+// 					// checkPrebuildLogExist checks the prebuild log message exists
+// 					checkPrebuildLogExist(t, cfg, rsa, ws, test.WorkspaceRoot)
+//
+// 					// check the files/folders permission under .git/ is not root
+// 					checkGitFolderPermission(t, rsa, test.WorkspaceRoot)
+// 				})
+// 			}
+// 			return ctx
+// 		}).
+// 		Feature()
+//
+// 	testEnv.Test(t, f)
+// }
 
 // checkPrebuildLogExist checks the prebuild log message exists
 func checkPrebuildLogExist(t *testing.T, cfg *envconf.Config, rsa *rpc.Client, ws *integration.LaunchWorkspaceDirectlyResult, wsRoot string) {
