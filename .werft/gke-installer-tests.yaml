@@ -61,7 +61,7 @@ pod:
         secretName: sh-playground-dns-perm
   containers:
     - name: nightly-test
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway.36
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:alt-aws-update-awscliv2.3
       workingDir: /workspace
       imagePullPolicy: Always
       volumeMounts:
