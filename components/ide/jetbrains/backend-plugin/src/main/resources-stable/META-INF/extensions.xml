@@ -3,7 +3,9 @@
  Licensed under the GNU Affero General Public License (AGPL).
  See License-AGPL.txt in the project root for license information.
 -->
+<!--suppress PluginXmlValidity -->
 <idea-plugin>
     <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceInterface="io.gitpod.jetbrains.remote.GitpodIgnoredPortsForNotificationService" serviceImplementation="io.gitpod.jetbrains.remote.stable.GitpodIgnoredPortsForNotificationServiceImpl" preload="true"/>
     </extensions>
 </idea-plugin>
