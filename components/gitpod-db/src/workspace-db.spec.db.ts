@@ -719,6 +719,16 @@ class WorkspaceDBSpec {
             workspaceId,
         });
 
+        const longBeforeNow = new Date(2018, 2, 15, 10, 0, 0).toISOString();
+        const id2b = "456b";
+        await repo.save({
+            id: id2b,
+            creationTime: longBeforeNow,
+            volumeHandle: "some-handle2b",
+            workspaceId,
+            deleted: true,
+        });
+
         const someOtherTime = new Date(2018, 2, 10, 6, 5).toISOString();
         const id3 = "789";
         const workspaceId2 = "ws-789";
@@ -727,6 +737,16 @@ class WorkspaceDBSpec {
             creationTime: someOtherTime,
             volumeHandle: "some-handle3",
             workspaceId: workspaceId2,
+        });
+
+        const yetAnotherTime = new Date(2018, 2, 10, 5, 5).toISOString();
+        const id4 = "012";
+        await repo.save({
+            id: id4,
+            creationTime: yetAnotherTime,
+            volumeHandle: "some-handle4",
+            workspaceId: workspaceId2,
+            deleted: true,
         });
     }
 
