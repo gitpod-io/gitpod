@@ -21,6 +21,7 @@ import (
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/webhooks"
 	v1 "github.com/gitpod-io/gitpod/public-api/v1"
+	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
@@ -44,6 +45,17 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	if err != nil {
 		return fmt.Errorf("failed to initialize public api server: %w", err)
 	}
+
+	wrappedGRPC := grpcweb.WrapServer(srv.GRPC())
+	srv.HTTPMux().Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if wrappedGRPC.IsGrpcWebRequest(r) {
+			wrappedGRPC.ServeHTTP(w, r)
+			return
+		}
+
+		// Fall back to other servers.
+		http.DefaultServeMux.ServeHTTP(w, r)
+	}))
 
 	var billingService billingservice.Interface = &billingservice.NoOpClient{}
 	if cfg.BillingServiceAddress != "" {
