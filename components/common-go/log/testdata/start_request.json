@@ -1,0 +1,53 @@
+{
+	"instanceId": "21473566-c15c-4ecd-9356-d1e8fdff2797",
+	"level": "error",
+	"message": "workspace failed",
+	"serviceContext": {
+		"service": "ws-manager",
+		"version": "commit-13cccd83246668023ae59d02fa69911f04b17c82"
+	},
+	"severity": "ERROR",
+	"status": {
+		"id": "21473566-c15c-4ecd-9356-d1e8fdff2797",
+		"status_version": 109078584033281,
+		"metadata": {
+			"owner": "59f72bb5-6fd4-4535-9428-9efcb84267a6",
+			"meta_id": "ascend-devtools-yuzabh8j0ur",
+			"started_at": {
+				"seconds": 1664406817
+			}
+		},
+		"spec": {
+			"workspace_image": "eu.gcr.io/gitpod-dev/workspace-images:625c1c93fc512563a3d1592344643aed059ba3758ae77138ab8918eb8931f983",
+			"deprecated_ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-97cff52e43760ad3ad96aa82d9fba934c5f53be8",
+			"headless": true,
+			"url": "https://ascend-devtools-yuzabh8j0ur.ws-us67.gitpod.io",
+			"type": 1,
+			"timeout": "30m0s",
+			"ide_image": {
+				"web_ref": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-97cff52e43760ad3ad96aa82d9fba934c5f53be8",
+				"supervisor_ref": "eu.gcr.io/gitpod-core-dev/build/supervisor:commit-e4d1566f088bd3470ece34a281beb03bb83351b8"
+			},
+			"class": "default"
+		},
+		"phase": 6,
+		"conditions": {
+			"failed": "headless task failed: context canceled",
+			"headless_task_failed": "headless task failed: context canceled",
+			"stopped_by_request": 1,
+			"volume_snapshot": {},
+			"aborted": 1
+		},
+		"runtime": {
+			"node_name": "headless-ws-us67-pool-nzrc",
+			"pod_name": "prebuild-21473566-c15c-4ecd-9356-d1e8fdff2797",
+			"node_ip": "10.10.0.28"
+		},
+		"auth": {
+			"owner_token": "goXO78L43jtDkY9owZaVocHDDv08uMR8"
+		}
+	},
+	"time": "2022-09-28T23:18:25Z",
+	"userId": "59f72bb5-6fd4-4535-9428-9efcb84267a6",
+	"workspaceId": "ascend-devtools-yuzabh8j0ur"
+}

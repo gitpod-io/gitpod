@@ -1,0 +1,14 @@
+{
+    "level": "panic",
+    "msg": "",
+    "req": {
+        "auth_password": "[REDACTED]",
+        "email": "[REDACTED]",
+        "env": [],
+        "envvars": [],
+        "instanceId": "21473566-c15c-4ecd-9356-d1e8fdff2797",
+        "owner_token": "[REDACTED]",
+        "ssh_public_keys": []
+    },
+    "time": "0001-01-01T00:00:00Z"
+}

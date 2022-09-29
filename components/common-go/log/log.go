@@ -118,9 +118,9 @@ func Init(service, version string, json, verbose bool) {
 
 	if json {
 		Log.Logger.SetFormatter(&gcpFormatter{
-			log.JSONFormatter{
-				FieldMap: log.FieldMap{
-					log.FieldKeyMsg: "message",
+			JSONFormatter{
+				FieldMap: FieldMap{
+					logrus.FieldKeyMsg: "message",
 				},
 				CallerPrettyfier: func(f *runtime.Frame) (string, string) {
 					s := strings.Split(f.Function, ".")
@@ -143,7 +143,7 @@ func Init(service, version string, json, verbose bool) {
 
 // gcpFormatter formats errors according to GCP rules, see
 type gcpFormatter struct {
-	log.JSONFormatter
+	JSONFormatter
 }
 
 func (f *gcpFormatter) Format(entry *log.Entry) ([]byte, error) {

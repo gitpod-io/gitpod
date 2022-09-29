@@ -1,0 +1,15 @@
+{
+	"instanceId": "21473566-c15c-4ecd-9356-d1e8fdff2797",
+	"envvars": [
+		"this should not be here"
+	],
+	"ssh_public_keys": [
+		"this should not be here"
+	],
+	"env": [
+		"this should not be here"
+	],
+	"auth_password": "this should not be here",
+	"email": "this should not be here",
+	"owner_token": "this should not be here"
+}
