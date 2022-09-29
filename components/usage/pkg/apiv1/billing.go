@@ -44,20 +44,19 @@ func (s *BillingService) ReconcileInvoices(ctx context.Context, in *v1.Reconcile
 		return nil, status.Errorf(codes.Internal, "Failed to reconcile invoices.")
 	}
 
-	//TODO (se) make it one query
-	stripeBalances := []db.Balance{}
+	creditSummaryForTeams := map[db.AttributionID]int64{}
 	for _, balance := range balances {
+		// filter out balances for non-stripe attribution IDs
 		costCenter, err := s.ccManager.GetOrCreateCostCenter(ctx, balance.AttributionID)
 		if err != nil {
 			return nil, err
 		}
-		if costCenter.BillingStrategy == db.CostCenter_Stripe {
-			stripeBalances = append(stripeBalances, balance)
-		}
-	}
 
-	creditSummaryForTeams := map[db.AttributionID]int64{}
-	for _, balance := range stripeBalances {
+		// We only update Stripe usage when the AttributionID is billed against Stripe (determined through CostCenter)
+		if costCenter.BillingStrategy == db.CostCenter_Stripe {
+			continue
+		}
+
 		creditSummaryForTeams[balance.AttributionID] = int64(math.Ceil(balance.CreditCents.ToCredits()))
 	}
 

@@ -69,11 +69,7 @@ type Invoice struct {
 // UpdateUsage updates teams' Stripe subscriptions with usage data
 // `usageForTeam` is a map from team name to total workspace seconds used within a billing period.
 func (c *Client) UpdateUsage(ctx context.Context, creditsPerAttributionID map[db.AttributionID]int64) error {
-	attributionIDs := make([]db.AttributionID, 0, len(creditsPerAttributionID))
-	for k := range creditsPerAttributionID {
-		attributionIDs = append(attributionIDs, k)
-	}
-	queries := queriesForCustomersWithAttributionIDs(attributionIDs)
+	queries := queriesForCustomersWithAttributionIDs(creditsPerAttributionID)
 
 	for _, query := range queries {
 		logger := log.WithField("stripe_query", query)
@@ -249,7 +245,12 @@ func GetAttributionID(ctx context.Context, customer *stripe.Customer) (db.Attrib
 // queriesForCustomersWithAttributionIDs constructs Stripe query strings to find the Stripe Customer for each teamId
 // It returns multiple queries, each being a big disjunction of subclauses so that we can process multiple teamIds in one query.
 // `clausesPerQuery` is a limit enforced by the Stripe API.
-func queriesForCustomersWithAttributionIDs(attributionIDs []db.AttributionID) []string {
+func queriesForCustomersWithAttributionIDs(creditsByAttributionID map[db.AttributionID]int64) []string {
+	attributionIDs := make([]db.AttributionID, 0, len(creditsByAttributionID))
+	for k := range creditsByAttributionID {
+		attributionIDs = append(attributionIDs, k)
+	}
+
 	const clausesPerQuery = 10
 	var queries []string
 	sb := strings.Builder{}
