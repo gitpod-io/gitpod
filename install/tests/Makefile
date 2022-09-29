@@ -73,7 +73,7 @@ gcp-kubeconfig:
 
 ## azure-kubeconfig: Get the kubeconfig configuration for Azure AKS
 azure-kubeconfig:
-	[[ -n "$$ARM_CLIENT_SECRET" ]] && az login --service-principal -u $$ARM_CLIENT_ID -p $$ARM_CLIENT_SECRET  --tenant $$ARM_TENANT_ID || { echo "Please login to azure using az login command"; exit 1; }
+	[[ -z "$$self_hosted_jobs" ]] || az login --service-principal -u $$ARM_CLIENT_ID -p $$ARM_CLIENT_SECRET  --tenant $$ARM_TENANT_ID
 	export KUBECONFIG=${KUBECONFIG} && \
 	az aks get-credentials --name p$$TF_VAR_TEST_ID-cluster --resource-group p$$TF_VAR_TEST_ID --file ${KUBECONFIG} || echo "No cluster present"
 
