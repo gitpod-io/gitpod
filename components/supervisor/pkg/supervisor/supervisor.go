@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -1101,20 +1102,23 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 		log.WithError(err).Fatal("cannot start health endpoint")
 	}
 
+	var unaryInterceptors []grpc.UnaryServerInterceptor
+	var streamInterceptors []grpc.StreamServerInterceptor
 	if cfg.DebugEnable {
-		opts = append(opts,
-			grpc.UnaryInterceptor(grpc_logrus.UnaryServerInterceptor(log.Log)),
-			grpc.StreamInterceptor(grpc_logrus.StreamServerInterceptor(log.Log)),
-		)
+		unaryInterceptors = append(unaryInterceptors, grpc_logrus.UnaryServerInterceptor(log.Log))
+		streamInterceptors = append(streamInterceptors, grpc_logrus.StreamServerInterceptor(log.Log))
 	}
 
 	grpcMetrics := grpc_prometheus.NewServerMetrics()
 	grpcMetrics.EnableHandlingTimeHistogram(
 		grpc_prometheus.WithHistogramBuckets([]float64{.005, .025, .05, .1, .5, 1, 2.5, 5, 30, 60, 120, 240, 600}),
 	)
+	unaryInterceptors = append(unaryInterceptors, grpcMetrics.UnaryServerInterceptor())
+	streamInterceptors = append(streamInterceptors, grpcMetrics.StreamServerInterceptor())
+
 	opts = append(opts,
-		grpc.StreamInterceptor(grpcMetrics.StreamServerInterceptor()),
-		grpc.UnaryInterceptor(grpcMetrics.UnaryServerInterceptor()),
+		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptors...)),
+		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(streamInterceptors...)),
 	)
 
 	m := cmux.New(l)
