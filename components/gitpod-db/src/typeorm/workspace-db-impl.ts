@@ -764,7 +764,11 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
 
     public async findVolumeSnapshotById(volumeSnapshotId: string): Promise<VolumeSnapshot | undefined> {
         const volumeSnapshots = await this.getVolumeSnapshotRepo();
-        return volumeSnapshots.findOne(volumeSnapshotId);
+        return volumeSnapshots
+            .createQueryBuilder("vs")
+            .where("vs.deleted = 0")
+            .andWhere("vs.id = :id", { id: volumeSnapshotId })
+            .getOne();
     }
 
     public async storeVolumeSnapshot(volumeSnapshot: VolumeSnapshot): Promise<VolumeSnapshot> {
