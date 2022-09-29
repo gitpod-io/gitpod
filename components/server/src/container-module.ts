@@ -260,15 +260,19 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(NewsletterSubscriptionController).toSelf().inSingletonScope();
 
-    bind<UsageServiceClient>(UsageServiceDefinition.name).toDynamicValue((ctx) => {
-        const config = ctx.container.get<Config>(Config);
-        return createClient(UsageServiceDefinition, createChannel(config.usageServiceAddr));
-    });
+    bind<UsageServiceClient>(UsageServiceDefinition.name)
+        .toDynamicValue((ctx) => {
+            const config = ctx.container.get<Config>(Config);
+            return createClient(UsageServiceDefinition, createChannel(config.usageServiceAddr));
+        })
+        .inSingletonScope();
 
-    bind<BillingServiceClient>(BillingServiceDefinition.name).toDynamicValue((ctx) => {
-        const config = ctx.container.get<Config>(Config);
-        return createClient(BillingServiceDefinition, createChannel(config.usageServiceAddr));
-    });
+    bind<BillingServiceClient>(BillingServiceDefinition.name)
+        .toDynamicValue((ctx) => {
+            const config = ctx.container.get<Config>(Config);
+            return createClient(BillingServiceDefinition, createChannel(config.usageServiceAddr));
+        })
+        .inSingletonScope();
 
     bind<IDEServiceClient>(IDEServiceDefinition.name).toDynamicValue((ctx) => {
         const config = ctx.container.get<Config>(Config);
