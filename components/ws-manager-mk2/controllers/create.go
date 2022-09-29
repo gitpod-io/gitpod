@@ -284,9 +284,6 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 		"prometheus.io/port":   strconv.Itoa(int(sctx.IDEPort)),
 		// TODO(cw): post Kubernetes 1.19 use GA form for settings those profiles
 		"container.apparmor.security.beta.kubernetes.io/workspace": "unconfined",
-		// We're using a custom seccomp profile for user namespaces to allow clone, mount and chroot.
-		// Those syscalls don't make much sense in a non-userns setting, where we default to runtime/default using the PodSecurityPolicy.
-		"seccomp.security.alpha.kubernetes.io/pod": sctx.Config.SeccompProfile,
 		// prevent cluster-autoscaler from removing a node
 		// https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md#what-types-of-pods-can-prevent-ca-from-removing-a-node
 		"cluster-autoscaler.kubernetes.io/safe-to-evict": "false",
@@ -409,6 +406,14 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 			SchedulerName:                sctx.Config.SchedulerName,
 			EnableServiceLinks:           pointer.Bool(false),
 			Affinity:                     affinity,
+			SecurityContext: &corev1.PodSecurityContext{
+				// We're using a custom seccomp profile for user namespaces to allow clone, mount and chroot.
+				// Those syscalls don't make much sense in a non-userns setting, where we default to runtime/default using the PodSecurityPolicy.
+				SeccompProfile: &corev1.SeccompProfile{
+					Type:             corev1.SeccompProfileTypeLocalhost,
+					LocalhostProfile: pointer.String(sctx.Config.SeccompProfile),
+				},
+			},
 			Containers: []corev1.Container{
 				*workspaceContainer,
 			},
