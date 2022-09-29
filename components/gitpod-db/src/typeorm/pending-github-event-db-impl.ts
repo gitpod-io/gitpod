@@ -39,12 +39,12 @@ export class TypeORMPendingGithubEventDBImpl implements PendingGithubEventDB {
         return await repo
             .createQueryBuilder("pghe")
             .where(`pghe.githubUserId = :accountId AND pghe.type LIKE :tpe`, { accountId, tpe: `${type}%` })
+            .andWhere(`pghe.deleted = 0`)
             .getMany();
     }
 
     public async delete(evt: PendingGithubEvent) {
-        // pending events is not synchronized via DB sync so we can delete it
-        (await this.getRepo()).delete(evt.id);
+        (await this.getRepo()).update(evt.id, { deleted: true });
     }
 
     public async findWithUser(type: string): Promise<PendingGithubEventWithUser[]> {
@@ -55,6 +55,7 @@ export class TypeORMPendingGithubEventDBImpl implements PendingGithubEventDB {
             .innerJoinAndSelect("ident.user", "user")
             .where('ident.authProviderId = "Public-GitHub"')
             .andWhere(`ident.deleted != true`)
+            .andWhere(`pghe.deleted = 0`)
             .orderBy("pghe.creationDate", "ASC")
             .getMany();
 

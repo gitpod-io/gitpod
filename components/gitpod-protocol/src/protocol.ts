@@ -639,6 +639,7 @@ export interface PendingGithubEvent {
     creationDate: Date;
     type: string;
     event: string;
+    deleted: boolean;
 }
 
 export interface Snapshot {
