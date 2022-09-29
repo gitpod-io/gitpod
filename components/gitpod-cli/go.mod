@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/gitpod-cli
 
-go 1.18
+go 1.19
 
 require (
 	github.com/creack/pty v1.1.17
