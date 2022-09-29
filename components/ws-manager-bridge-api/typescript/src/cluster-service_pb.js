@@ -1167,7 +1167,7 @@ proto.workspacemanagerbridge.RegistrationHints.prototype.setGovern = function(va
  * @private {!Array<!Array<number>>}
  * @const
  */
-proto.workspacemanagerbridge.AdmissionConstraint.oneofGroups_ = [[1,2,3,4]];
+proto.workspacemanagerbridge.AdmissionConstraint.oneofGroups_ = [[1,2]];
 
 /**
  * @enum {number}
@@ -1175,9 +1175,7 @@ proto.workspacemanagerbridge.AdmissionConstraint.oneofGroups_ = [[1,2,3,4]];
 proto.workspacemanagerbridge.AdmissionConstraint.ConstraintCase = {
   CONSTRAINT_NOT_SET: 0,
   HAS_FEATURE_PREVIEW: 1,
-  HAS_PERMISSION: 2,
-  HAS_USER_LEVEL: 3,
-  HAS_MORE_RESOURCES: 4
+  HAS_PERMISSION: 2
 };
 
 /**
@@ -1219,9 +1217,7 @@ proto.workspacemanagerbridge.AdmissionConstraint.prototype.toObject = function(o
 proto.workspacemanagerbridge.AdmissionConstraint.toObject = function(includeInstance, msg) {
   var f, obj = {
     hasFeaturePreview: (f = msg.getHasFeaturePreview()) && proto.workspacemanagerbridge.AdmissionConstraint.FeaturePreview.toObject(includeInstance, f),
-    hasPermission: (f = msg.getHasPermission()) && proto.workspacemanagerbridge.AdmissionConstraint.HasPermission.toObject(includeInstance, f),
-    hasUserLevel: jspb.Message.getFieldWithDefault(msg, 3, ""),
-    hasMoreResources: jspb.Message.getBooleanFieldWithDefault(msg, 4, false)
+    hasPermission: (f = msg.getHasPermission()) && proto.workspacemanagerbridge.AdmissionConstraint.HasPermission.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -1268,14 +1264,6 @@ proto.workspacemanagerbridge.AdmissionConstraint.deserializeBinaryFromReader = f
       reader.readMessage(value,proto.workspacemanagerbridge.AdmissionConstraint.HasPermission.deserializeBinaryFromReader);
       msg.setHasPermission(value);
       break;
-    case 3:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setHasUserLevel(value);
-      break;
-    case 4:
-      var value = /** @type {boolean} */ (reader.readBool());
-      msg.setHasMoreResources(value);
-      break;
     default:
       reader.skipField();
       break;
@@ -1319,20 +1307,6 @@ proto.workspacemanagerbridge.AdmissionConstraint.serializeBinaryToWriter = funct
       2,
       f,
       proto.workspacemanagerbridge.AdmissionConstraint.HasPermission.serializeBinaryToWriter
-    );
-  }
-  f = /** @type {string} */ (jspb.Message.getField(message, 3));
-  if (f != null) {
-    writer.writeString(
-      3,
-      f
-    );
-  }
-  f = /** @type {boolean} */ (jspb.Message.getField(message, 4));
-  if (f != null) {
-    writer.writeBool(
-      4,
-      f
     );
   }
 };
@@ -1640,78 +1614,6 @@ proto.workspacemanagerbridge.AdmissionConstraint.prototype.clearHasPermission = 
  */
 proto.workspacemanagerbridge.AdmissionConstraint.prototype.hasHasPermission = function() {
   return jspb.Message.getField(this, 2) != null;
-};
-
-
-/**
- * optional string has_user_level = 3;
- * @return {string}
- */
-proto.workspacemanagerbridge.AdmissionConstraint.prototype.getHasUserLevel = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.workspacemanagerbridge.AdmissionConstraint} returns this
- */
-proto.workspacemanagerbridge.AdmissionConstraint.prototype.setHasUserLevel = function(value) {
-  return jspb.Message.setOneofField(this, 3, proto.workspacemanagerbridge.AdmissionConstraint.oneofGroups_[0], value);
-};
-
-
-/**
- * Clears the field making it undefined.
- * @return {!proto.workspacemanagerbridge.AdmissionConstraint} returns this
- */
-proto.workspacemanagerbridge.AdmissionConstraint.prototype.clearHasUserLevel = function() {
-  return jspb.Message.setOneofField(this, 3, proto.workspacemanagerbridge.AdmissionConstraint.oneofGroups_[0], undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.workspacemanagerbridge.AdmissionConstraint.prototype.hasHasUserLevel = function() {
-  return jspb.Message.getField(this, 3) != null;
-};
-
-
-/**
- * optional bool has_more_resources = 4;
- * @return {boolean}
- */
-proto.workspacemanagerbridge.AdmissionConstraint.prototype.getHasMoreResources = function() {
-  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 4, false));
-};
-
-
-/**
- * @param {boolean} value
- * @return {!proto.workspacemanagerbridge.AdmissionConstraint} returns this
- */
-proto.workspacemanagerbridge.AdmissionConstraint.prototype.setHasMoreResources = function(value) {
-  return jspb.Message.setOneofField(this, 4, proto.workspacemanagerbridge.AdmissionConstraint.oneofGroups_[0], value);
-};
-
-
-/**
- * Clears the field making it undefined.
- * @return {!proto.workspacemanagerbridge.AdmissionConstraint} returns this
- */
-proto.workspacemanagerbridge.AdmissionConstraint.prototype.clearHasMoreResources = function() {
-  return jspb.Message.setOneofField(this, 4, proto.workspacemanagerbridge.AdmissionConstraint.oneofGroups_[0], undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.workspacemanagerbridge.AdmissionConstraint.prototype.hasHasMoreResources = function() {
-  return jspb.Message.getField(this, 4) != null;
 };
 
 
