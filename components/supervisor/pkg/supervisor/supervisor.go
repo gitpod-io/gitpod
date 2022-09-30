@@ -634,7 +634,7 @@ func createExposedPortsImpl(cfg *Config, gitpodService *gitpod.APIoverJSONRPC) p
 		log.Error("auto-port exposure won't work")
 		return &ports.NoopExposedPorts{}
 	}
-	return ports.NewGitpodExposedPorts(cfg.WorkspaceID, cfg.WorkspaceInstanceID, gitpodService)
+	return ports.NewGitpodExposedPorts(cfg.WorkspaceID, cfg.WorkspaceInstanceID, cfg.WorkspaceUrl, gitpodService)
 }
 
 // supervisor ships some binaries we want in the PATH. We could just add some directory to the path, but
