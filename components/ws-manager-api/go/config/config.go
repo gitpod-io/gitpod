@@ -6,6 +6,7 @@ package config
 
 import (
 	"bytes"
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"html/template"
 	iofs "io/fs"
 	"net/url"
@@ -20,7 +21,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
-	"github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	cntntcfg "github.com/gitpod-io/gitpod/content-service/api/config"
 )
@@ -44,25 +44,28 @@ type ServiceConfiguration struct {
 	Content struct {
 		Storage cntntcfg.StorageConfig `json:"storage"`
 	} `json:"content"`
-	RPCServer struct {
-		Addr string `json:"addr"`
-		TLS  struct {
-			CA          string `json:"ca"`
-			Certificate string `json:"crt"`
-			PrivateKey  string `json:"key"`
-		} `json:"tls"`
-		RateLimits map[string]grpc.RateLimit `json:"ratelimits"`
-	} `json:"rpcServer"`
-	ImageBuilderProxy struct {
-		TargetAddr string `json:"targetAddr"`
-	} `json:"imageBuilderProxy"`
 
-	PProf struct {
-		Addr string `json:"addr"`
-	} `json:"pprof"`
-	Prometheus struct {
-		Addr string `json:"addr"`
-	} `json:"prometheus"`
+	Server *baseserver.Configuration `json:"server"`
+
+	//RPCServer struct {
+	//	Addr string `json:"addr"`
+	//	TLS  struct {
+	//		CA          string `json:"ca"`
+	//		Certificate string `json:"crt"`
+	//		PrivateKey  string `json:"key"`
+	//	} `json:"tls"`
+	//	RateLimits map[string]grpc.RateLimit `json:"ratelimits"`
+	//} `json:"rpcServer"`
+	//ImageBuilderProxy struct {
+	//	TargetAddr string `json:"targetAddr"`
+	//} `json:"imageBuilderProxy"`
+	//
+	//PProf struct {
+	//	Addr string `json:"addr"`
+	//} `json:"pprof"`
+	//Prometheus struct {
+	//	Addr string `json:"addr"`
+	//} `json:"prometheus"`
 }
 
 // Configuration is the configuration of the ws-manager

@@ -3,10 +3,12 @@ import {
     createPromiseClient,
 } from "@bufbuild/connect-web";
 import {WorkspacesService} from "./gitpod/v1/workspaces_connectweb";
+import { GetWorkspaceRequest } from "./gitpod/v1/workspaces_pb";
 
 
 const transport = createConnectTransport({
-    baseUrl: "http://localhost:9002/",
+    baseUrl: "https://9002-gitpodio-gitpod-rxp4lp9t33p.ws-eu67.gitpod.io",
+    useBinaryFormat: true,
     // credentials: "include",
 });
 
@@ -15,12 +17,16 @@ const transport = createConnectTransport({
 const client = createPromiseClient(WorkspacesService, transport);
 
 async function getWS() {
-    const resp = await client.getWorkspace({})
+    const resp = await client.getWorkspace(new GetWorkspaceRequest({
+        workspaceId: "123"
+    }), {
+        timeoutMs: 1000
+    })
     console.log(resp);
 }
 
 async function getWSJSON() {
-    const res = await fetch("http://localhost:9002/gitpod.v1.WorkspacesService/GetWorkspace", {
+    const res = await fetch("https://9002-gitpodio-gitpod-rxp4lp9t33p.ws-eu67.gitpod.io/gitpod.v1.WorkspacesService/GetWorkspace", {
         method: "POST",
         headers: {"content-type": "application/json"},
         body: `{"workspaceId": "foo-bar"}`,
@@ -32,4 +38,4 @@ async function getWSJSON() {
 
 getWS()
 
-// getWSJSON()
+getWSJSON()

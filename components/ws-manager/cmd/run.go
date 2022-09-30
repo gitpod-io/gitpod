@@ -6,17 +6,20 @@ package cmd
 
 import (
 	"context"
-	"net"
-
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"github.com/bombsimon/logrusr/v2"
-	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
+	imgbldr "github.com/gitpod-io/gitpod/image-builder/api"
+	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager"
+	"github.com/gitpod-io/gitpod/ws-manager/pkg/proxy"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -24,15 +27,6 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	"sigs.k8s.io/controller-runtime/pkg/metrics"
-
-	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/pprof"
-	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
-	imgbldr "github.com/gitpod-io/gitpod/image-builder/api"
-	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager"
-	"github.com/gitpod-io/gitpod/ws-manager/pkg/proxy"
 
 	volumesnapshotv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 	volumesnapshotclientv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned"
@@ -52,7 +46,9 @@ var runCmd = &cobra.Command{
 		}
 		log.Info("wsman configuration is valid")
 
-		common_grpc.SetupLogging()
+		srv, err := baseserver.New("ws-manager", baseserver.WithConfig(cfg.Server))
+
+		//common_grpc.SetupLogging()
 
 		ctrl.SetLogger(logrusr.New(log.Log))
 
@@ -65,13 +61,13 @@ var runCmd = &cobra.Command{
 			LeaderElectionID:       "ws-manager-leader.gitpod.io",
 		}
 
-		if cfg.Prometheus.Addr != "" {
-			opts.MetricsBindAddress = cfg.Prometheus.Addr
-			err := metrics.Registry.Register(common_grpc.ClientMetrics())
-			if err != nil {
-				log.WithError(err).Error("Prometheus metrics incomplete")
-			}
-		}
+		//if cfg.Prometheus.Addr != "" {
+		//	opts.MetricsBindAddress = cfg.Prometheus.Addr
+		//	err := metrics.Registry.Register(common_grpc.ClientMetrics())
+		//	if err != nil {
+		//		log.WithError(err).Error("Prometheus metrics incomplete")
+		//	}
+		//}
 
 		mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), opts)
 		if err != nil {
@@ -116,47 +112,18 @@ var runCmd = &cobra.Command{
 		}
 		defer mgmt.Close()
 
-		if cfg.Prometheus.Addr != "" {
-			err = mgmt.RegisterMetrics(metrics.Registry)
-			if err != nil {
-				log.WithError(err).Error("Prometheus metrics incomplete")
-			}
-		}
+		mgmt.RegisterMetrics(srv.MetricsRegistry())
 
 		if len(cfg.RPCServer.RateLimits) > 0 {
 			log.WithField("ratelimits", cfg.RPCServer.RateLimits).Info("imposing rate limits on the gRPC interface")
 		}
 		ratelimits := common_grpc.NewRatelimitingInterceptor(cfg.RPCServer.RateLimits)
-		metrics.Registry.MustRegister(ratelimits)
 
-		grpcMetrics := grpc_prometheus.NewServerMetrics()
-		grpcMetrics.EnableHandlingTimeHistogram(
-			grpc_prometheus.WithHistogramBuckets([]float64{.005, .025, .05, .1, .5, 1, 2.5, 5, 30, 60, 120, 240, 600}),
-		)
-		metrics.Registry.MustRegister(grpcMetrics)
+		srv.MetricsRegistry().MustRegister(ratelimits)
 
 		grpcOpts := common_grpc.ServerOptionsWithInterceptors(
-			[]grpc.StreamServerInterceptor{grpcMetrics.StreamServerInterceptor()},
-			[]grpc.UnaryServerInterceptor{grpcMetrics.UnaryServerInterceptor(), ratelimits.UnaryInterceptor()},
+			[]grpc.UnaryServerInterceptor{ratelimits.UnaryInterceptor()},
 		)
-		if cfg.RPCServer.TLS.CA != "" && cfg.RPCServer.TLS.Certificate != "" && cfg.RPCServer.TLS.PrivateKey != "" {
-			tlsConfig, err := common_grpc.ClientAuthTLSConfig(
-				cfg.RPCServer.TLS.CA, cfg.RPCServer.TLS.Certificate, cfg.RPCServer.TLS.PrivateKey,
-				common_grpc.WithSetClientCAs(true),
-				common_grpc.WithServerName("ws-manager"),
-			)
-			if err != nil {
-				log.WithError(err).Fatal("cannot load ws-manager certs")
-			}
-
-			grpcOpts = append(grpcOpts, grpc.Creds(credentials.NewTLS(tlsConfig)))
-		} else {
-			log.Warn("no TLS configured - gRPC server will be unsecured")
-		}
-
-		grpcServer := grpc.NewServer(grpcOpts...)
-		defer grpcServer.Stop()
-		grpc_prometheus.Register(grpcServer)
 
 		if cfg.ImageBuilderProxy.TargetAddr != "" {
 			// Note: never use block here, because image-builder connects to ws-manager,
@@ -168,13 +135,14 @@ var runCmd = &cobra.Command{
 			imgbldr.RegisterImageBuilderServer(grpcServer, proxy.ImageBuilder{D: imgbldr.NewImageBuilderClient(conn)})
 		}
 
-		manager.Register(grpcServer, mgmt)
-		lis, err := net.Listen("tcp", cfg.RPCServer.Addr)
-		if err != nil {
-			log.WithError(err).WithField("addr", cfg.RPCServer.Addr).Fatal("cannot start RPC server")
-		}
+		manager.Register(srv.GRPC(), mgmt)
+
 		//nolint:errcheck
-		go grpcServer.Serve(lis)
+		go func() {
+			if err := srv.ListenAndServe(); err != nil {
+
+			}
+		}()
 		log.WithField("addr", cfg.RPCServer.Addr).Info("started gRPC server")
 
 		monitor, err := mgmt.CreateMonitor()
@@ -202,10 +170,6 @@ var runCmd = &cobra.Command{
 		}).SetupWithManager(mgr)
 		if err != nil {
 			log.WithError(err).Fatal("unable to create controller", "controller", "Pod")
-		}
-
-		if cfg.PProf.Addr != "" {
-			go pprof.Serve(cfg.PProf.Addr)
 		}
 
 		// run until we're told to stop

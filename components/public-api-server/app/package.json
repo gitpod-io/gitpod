@@ -5,5 +5,9 @@
   "license": "MIT",
   "devDependencies": {
     "parcel": "^2.7.0"
+  },
+  "dependencies": {
+    "@bufbuild/connect-web": "^0.2.1",
+    "@bufbuild/protobuf": "^0.1.1"
   }
 }

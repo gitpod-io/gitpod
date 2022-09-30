@@ -106,38 +106,19 @@ func register(srv *baseserver.Server, serverAPIURL *url.URL, registry *prometheu
 	wsSvc := &WorkspaceService{}
 
 	route, handler := v1connect.NewWorkspacesServiceHandler(wsSvc)
-	//v1.RegisterWorkspacesServiceServer(srv.GRPC(), apiv1.NewWorkspaceService(connPool))
-	//v1.RegisterPrebuildsServiceServer(srv.GRPC(), v1.UnimplementedPrebuildsServiceServer{})
 
-	//router.(handler)
-	//srv.HTTPMux().Handle(path, handler)
+	srv.HTTPMux().Handle(route, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Infof("Handling request %s %s", r.URL.Path, r.Method)
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "*")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 
-	headersOk := handlers.AllowedHeaders([]string{"*"})
-	originsOk := handlers.AllowedOrigins([]string{"*"})
-	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
+		handler.ServeHTTP(w, r)
+	}))
 
-	srv.HTTPMux().Handle(route, handlers.CORS(headersOk, originsOk, methodsOk)(handler))
-
-	//srv.HTTPMux().HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-	//	//router.ServeHTTP(w, r)
-	//	log.Infof("Handling request %s %s", r.URL.Path, r.Method)
-	//	if r.Method == http.MethodOptions {
-	//		w.Header().Set("Access-Control-Allow-Origin", "*")
-	//		w.Header().Set("Access-Control-Allow-Headers", "*")
-	//		w.WriteHeader(http.StatusOK)
-	//		return
-	//	}
-	//
-	//	log.Info("handler is handling request")
-	//	handler.ServeHTTP(w, r)
-	//})
-
-	//srv.HTTPMux().Handler(r)
-	//http.ListenAndServe(
-	//	"localhost:8080",
-	//	// Use h2c so we can serve HTTP/2 without TLS.
-	//	h2c.NewHandler(mux, &http2.Server{}),
-	//)
 	return nil
 }
 
