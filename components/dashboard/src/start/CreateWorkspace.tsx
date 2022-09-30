@@ -283,6 +283,16 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
         return (
             <StartPage phase={phase} error={error}>
                 {statusMessage}
+                {error && isGitpodIo() && (
+                    <FeedbackComponent
+                        isModal={false}
+                        message={"Was this error message helpful?"}
+                        isError={true}
+                        initialSize={24}
+                        errorObject={error}
+                        errorMessage={error?.message}
+                    />
+                )}
                 {error && (
                     <div>
                         <a href={gitpodHostUrl.asDashboard().toString()}>
