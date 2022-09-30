@@ -174,11 +174,29 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 	// checkout branch
 	switch ws.TargetMode {
 	case RemoteBranch:
-		// check remote branch exists before git checkout
-		gitout, err := ws.GitWithOutput(ctx, nil, "ls-remote", "--exit-code", "origin", ws.CloneTarget)
-		if err != nil || len(gitout) == 0 {
-			log.WithError(err).WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Error("Remote branch doesn't exist.")
-			return err
+		// we already cloned the git repository but we need to check CloneTarget exists,
+		// except when the name is main or master because either value could be wrong
+		// and we are going to use the incorrect value (default is main).
+		if ws.CloneTarget == "main" || ws.CloneTarget == "master" {
+			// confirm the value of the default branch name using rev-parse
+			gitout, _ := ws.GitWithOutput(ctx, nil, "rev-parse", "--abbrev-ref", "origin/HEAD")
+			defaultBranch := strings.TrimSpace(strings.Replace(string(gitout), "origin/", "", -1))
+			if defaultBranch != ws.CloneTarget {
+				// the default branch name we cloned is not the one specified by the user
+				// check if the branch exits in the repository
+				gitout, err := ws.GitWithOutput(ctx, nil, "ls-remote", "--exit-code", "origin", ws.CloneTarget)
+				if err != nil || len(gitout) == 0 {
+					log.WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Warnf("Invalid default branch name. Changing to %v", defaultBranch)
+					ws.CloneTarget = defaultBranch
+				}
+			}
+		} else {
+			// check remote branch exists before git checkout when the branch is not the default
+			gitout, err := ws.GitWithOutput(ctx, nil, "ls-remote", "--exit-code", "origin", ws.CloneTarget)
+			if err != nil || len(gitout) == 0 {
+				log.WithError(err).WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Error("Remote branch doesn't exist.")
+				return xerrors.Errorf("Remote branch %v does not exist in %v", ws.CloneTarget, ws.RemoteURI)
+			}
 		}
 
 		if err := ws.Git(ctx, "fetch", "--depth=1", "origin", ws.CloneTarget); err != nil {
