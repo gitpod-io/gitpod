@@ -399,7 +399,7 @@ spec:
           when: '{{repl ConfigOptionEquals "advanced_mode_enabled" "1" }}'
           help_text: |
             A file configured to override annotations, labels and environment variables in components. See our
-            [advanced documentation](https://www.gitpod.io/docs/self-hosted/latest/advanced/customization) for
+            [advanced documentation](https://www.gitpod.io/docs/configure/self-hosted/latest/advanced/customization) for
             more details and the format.
 
         - name: config_patch
