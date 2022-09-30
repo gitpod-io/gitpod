@@ -5,6 +5,7 @@
 package log
 
 import (
+	"os"
 	"testing"
 )
 
@@ -36,4 +37,22 @@ func TestRedactJSON(t *testing.T) {
 			}
 		}
 	}
+}
+
+func BenchmarkRedactJSON(b *testing.B) {
+	fc, err := os.ReadFile("testdata/status_workspaceCompleted_01.json")
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	var res []byte
+	b.ReportAllocs()
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		res, err = RedactJSON(fc)
+		if err != nil {
+			b.Fatalf("cannot format message: %v", err)
+		}
+	}
+	benchmarkDontLetTheCompilerOptimize = res
 }

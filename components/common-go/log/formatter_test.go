@@ -6,6 +6,7 @@ package log
 
 import (
 	"encoding/json"
+	"os"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -50,5 +51,41 @@ func TestFormatterRedaction(t *testing.T) {
 	}
 
 	test.Run()
+}
 
+var benchmarkDontLetTheCompilerOptimize []byte
+
+func BenchmarkFormatterRe(b *testing.B) {
+	input := new(map[string]interface{})
+	fc, err := os.ReadFile("testdata/status_workspaceCompleted_01.json")
+	if err != nil {
+		b.Fatal(err)
+	}
+	err = json.Unmarshal(fc, input)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	f := &JSONFormatter{}
+
+	err = f.SetFilters(WSManagerFilters)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	logEntry := &logrus.Entry{
+		Data:   logrus.Fields{"req": input},
+		Logger: Log.Logger,
+	}
+
+	var res []byte
+	b.ReportAllocs()
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		res, err = f.Format(logEntry)
+		if err != nil {
+			b.Fatalf("cannot format message: %v", err)
+		}
+	}
+	benchmarkDontLetTheCompilerOptimize = res
 }
