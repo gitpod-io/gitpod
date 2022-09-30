@@ -15,7 +15,7 @@ ARG SUPERVISOR_IDE_CONFIG
 COPY --from=base_builder --chown=33333:33333 /ide-desktop/ /ide-desktop/
 COPY --chown=33333:33333 ${SUPERVISOR_IDE_CONFIG} /ide-desktop/supervisor-ide-config.json
 COPY --chown=33333:33333 startup.sh /ide-desktop/
-COPY --chown=33333:33333 components-ide-jetbrains-image-download--${JETBRAINS_DOWNLOAD_QUALIFIER}/backend /ide-desktop/backend
+COPY --chown=33333:33333 components-ide-jetbrains-image--download-${JETBRAINS_DOWNLOAD_QUALIFIER}/backend /ide-desktop/backend
 COPY --chown=33333:33333 components-ide-jetbrains-image-status--app/status /ide-desktop
 
 ARG JETBRAINS_BACKEND_QUALIFIER
