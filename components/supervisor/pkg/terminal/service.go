@@ -25,12 +25,6 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
-const (
-	// closeTerminaldefaultGracePeriod is the time terminal
-	// processes get between SIGTERM and SIGKILL.
-	closeTerminaldefaultGracePeriod = 10 * time.Second
-)
-
 // NewMuxTerminalService creates a new terminal service.
 func NewMuxTerminalService(m *Mux) *MuxTerminalService {
 	shell := os.Getenv("SHELL")
@@ -139,7 +133,7 @@ func (srv *MuxTerminalService) OpenWithOptions(ctx context.Context, req *api.Ope
 
 // Close closes a terminal for the given alias.
 func (srv *MuxTerminalService) Shutdown(ctx context.Context, req *api.ShutdownTerminalRequest) (*api.ShutdownTerminalResponse, error) {
-	err := srv.Mux.CloseTerminal(req.Alias, closeTerminaldefaultGracePeriod)
+	err := srv.Mux.CloseTerminal(req.Alias)
 	if err == ErrNotFound {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}

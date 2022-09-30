@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 
@@ -311,6 +313,43 @@ func TestConcurrent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestClose(t *testing.T) {
+	terminals := NewMux()
+
+	alias, err := terminals.Start(exec.Command("/bin/bash", "-i"), TermOptions{
+		ReadTimeout: 0,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	term, ok := terminals.Get(alias)
+	if !ok {
+		t.Fatal("terminal is not found")
+	}
+	dir, err := ioutil.TempDir("", "terminal_test_close")
+	expectedFile := dir + "/done.txt"
+	require.NoError(t, err)
+
+	_, err = term.PTY.Write([]byte(`bash <<'EOF'
+	echo "starting"
+	trap 'echo \"Be patient\"' SIGTERM SIGINT SIGHUP
+	for ((n=4; n; n--))
+	do
+		sleep 1
+	done
+	touch ` + expectedFile + `
+	EOF
+	`))
+	require.NoError(t, err)
+	_, err = term.PTY.Write([]byte("\r\n"))
+	require.NoError(t, err)
+	// give a bit of time to actually start the bash script
+	time.Sleep(1 * time.Second)
+
+	terminals.Close()
+	require.FileExists(t, expectedFile)
 }
 
 func TestWorkDirProvider(t *testing.T) {

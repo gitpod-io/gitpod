@@ -11,12 +11,13 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/creack/pty"
 	"github.com/google/uuid"
+	"github.com/prometheus/procfs"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
@@ -77,20 +78,21 @@ func (m *Mux) Start(cmd *exec.Cmd, options TermOptions) (alias string, err error
 	go func() {
 		term.waitErr = cmd.Wait()
 		close(term.waitDone)
-		_ = m.CloseTerminal(alias, 0*time.Second)
+		_ = m.CloseTerminal(alias)
 	}()
 
 	return alias, nil
 }
 
-// Close closes all terminals with closeTerminaldefaultGracePeriod.
+// Close closes all terminals.
 func (m *Mux) Close() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	var wg sync.WaitGroup
 	var err error
 	for k := range m.terms {
-		cerr := m.doClose(k, closeTerminaldefaultGracePeriod)
+		cerr := m.doClose(&wg, k)
 		if cerr != nil {
 			log.WithError(cerr).WithField("alias", k).Warn("cannot properly close terminal")
 			if err != nil {
@@ -98,23 +100,24 @@ func (m *Mux) Close() error {
 			}
 		}
 	}
+	wg.Wait()
 	return err
 }
 
 // CloseTerminal closes a terminal and ends the process that runs in it.
-func (m *Mux) CloseTerminal(alias string, gracePeriod time.Duration) error {
+func (m *Mux) CloseTerminal(alias string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-
-	return m.doClose(alias, gracePeriod)
+	var wg sync.WaitGroup
+	defer wg.Wait()
+	return m.doClose(&wg, alias)
 }
 
 // doClose closes a terminal and ends the process that runs in it.
-// First, the process receives SIGTERM and is given gracePeriod time
-// to stop. If it still runs after that time, it receives SIGKILL.
+// The foreground process receives SIGTERM and we wait for it to terminate.
 //
 // Callers are expected to hold mu.
-func (m *Mux) doClose(alias string, gracePeriod time.Duration) error {
+func (m *Mux) doClose(wg *sync.WaitGroup, alias string) error {
 	term, ok := m.terms[alias]
 	if !ok {
 		return ErrNotFound
@@ -122,7 +125,7 @@ func (m *Mux) doClose(alias string, gracePeriod time.Duration) error {
 
 	log := log.WithField("alias", alias)
 	log.Info("closing terminal")
-	err := term.gracefullyShutdownProcess(gracePeriod)
+	err := term.gracefullyShutdownProcess(wg)
 	if err != nil {
 		log.WithError(err).Warn("did not gracefully shut down terminal")
 	}
@@ -146,44 +149,63 @@ func (m *Mux) doClose(alias string, gracePeriod time.Duration) error {
 	return nil
 }
 
-func (term *Term) gracefullyShutdownProcess(gracePeriod time.Duration) error {
+func (term *Term) gracefullyShutdownProcess(wg *sync.WaitGroup) error {
 	if term.Command.Process == nil {
-		// process is alrady gone
+		// process is already gone
 		return nil
 	}
-	if gracePeriod == 0 {
-		return term.shutdownProcessImmediately()
-	}
-
-	err := term.Command.Process.Signal(unix.SIGTERM)
-	if err != nil {
-		return err
-	}
-	schan := make(chan error, 1)
+	pid := term.Command.Process.Pid
+	wg.Add(1)
 	go func() {
-		_, err := term.Wait()
-		schan <- err
-	}()
-	select {
-	case err = <-schan:
-		if err == nil {
-			// process is gone now - we're good
-			return nil
+		defer wg.Done()
+		waitForChildProcessesToTerminate(pid)
+		err := unix.Kill(pid, unix.SIGTERM)
+		if err != nil {
+			return
 		}
-		log.WithError(err).Warn("unexpected terminal error")
-	case <-time.After(gracePeriod):
-	}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			_, err := term.Wait()
+			if err != nil {
+				log.WithError(err).Debug("error waiting for terminal")
+			}
+		}()
+	}()
 
-	// process did not exit in time. Let's kill.
-	return term.shutdownProcessImmediately()
+	return nil
 }
 
-func (term *Term) shutdownProcessImmediately() error {
-	err := term.Command.Process.Kill()
-	if err != nil && !strings.Contains(err.Error(), "os: process already finished") {
-		return err
+func waitForChildProcessesToTerminate(PID int) {
+	var wg sync.WaitGroup
+	defer wg.Wait()
+	processes, err := procfs.AllProcs()
+	if err != nil {
+		return
 	}
-	return nil
+	// terminate direct child processes
+	for _, p := range processes {
+		stat, err := p.Stat()
+		if err != nil || stat.PPID != PID {
+			continue
+		}
+
+		err = syscall.Kill(stat.PID, unix.SIGTERM)
+		if err != nil {
+			return
+		}
+		wg.Add(1)
+		go func(stat procfs.ProcStat) {
+			defer wg.Done()
+			for {
+				alive := syscall.Kill(stat.PID, syscall.Signal(0)) == nil
+				if !alive {
+					return
+				}
+				time.Sleep(100 * time.Millisecond)
+			}
+		}(stat)
+	}
 }
 
 // terminalBacklogSize is the number of bytes of output we'll store in RAM for each terminal.
