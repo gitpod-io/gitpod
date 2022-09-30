@@ -122,9 +122,6 @@ pod:
 
         curl -sLS https://get.k3sup.dev | sh
         curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-        unzip awscliv2.zip
-        sudo ./aws/install
 
         (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
         printf '{{ toJson . }}' > context.json
