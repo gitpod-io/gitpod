@@ -91,6 +91,16 @@ func register(srv *baseserver.Server, serverAPIURL *url.URL, registry *prometheu
 	//v1.RegisterPrebuildsServiceServer(srv.GRPC(), v1.UnimplementedPrebuildsServiceServer{})
 
 	srv.HTTPMux().Handle(path, handler)
+	srv.HTTPMux().HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		log.Infof("Handling request %s %s", r.URL.Path, r.Method)
+		if r.Method == http.MethodOptions {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Headers", "*")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+	})
+
 	//http.ListenAndServe(
 	//	"localhost:8080",
 	//	// Use h2c so we can serve HTTP/2 without TLS.
