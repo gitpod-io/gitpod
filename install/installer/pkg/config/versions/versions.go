@@ -55,6 +55,10 @@ type Components struct {
 			PyCharmLatestImage                Versioned `json:"pycharmLatest"`
 			PhpStormImage                     Versioned `json:"phpstorm"`
 			PhpStormLatestImage               Versioned `json:"phpstormLatest"`
+			RubyMineImage                     Versioned `json:"rubymine"`
+			RubyMineLatestImage               Versioned `json:"rubymineLatest"`
+			WebStormImage                     Versioned `json:"webstorm"`
+			WebStormLatestImage               Versioned `json:"webstormLatest"`
 			JetBrainsBackendPluginImage       Versioned `json:"jbBackendPlugin"`
 			JetBrainsBackendPluginLatestImage Versioned `json:"jbBackendPluginLatest"`
 		} `json:"desktopIdeImages"`
