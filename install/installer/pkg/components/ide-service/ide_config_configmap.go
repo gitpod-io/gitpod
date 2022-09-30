@@ -31,6 +31,8 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	goland := "goland"
 	pycharm := "pycharm"
 	phpstorm := "phpstorm"
+	rubymine := "rubymine"
+	webstorm := "webstorm"
 
 	resolveLatestImage := func(name string, tag string, bundledLatest versions.Versioned) string {
 		resolveLatest := true
@@ -68,7 +70,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 				"jetbrains-gateway": {
 					DefaultDesktopIDE: intellij,
-					DesktopIDEs:       []string{intellij, goland, pycharm, phpstorm},
+					DesktopIDEs:       []string{intellij, goland, pycharm, phpstorm, rubymine, webstorm},
 					InstallationSteps: []string{
 						"If you don't see an open dialog in your browser, make sure you have the <a target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'>JetBrains Gateway with Gitpod Plugin</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
 					},
@@ -129,6 +131,26 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Logo:              getIdeLogoPath("phpstormLogo"),
 					Image:             ctx.ImageName(ctx.Config.Repository, ide.PhpStormDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PhpStormImage.Version),
 					LatestImage:       resolveLatestImage(ide.PhpStormDesktopIdeImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PhpStormLatestImage),
+					PluginImage:       jbPluginImage,
+					PluginLatestImage: jbPluginLatestImage,
+				},
+				rubymine: {
+					OrderKey:          "08",
+					Title:             "RubyMine",
+					Type:              ide_config.IDETypeDesktop,
+					Logo:              getIdeLogoPath("rubymineLogo"),
+					Image:             ctx.ImageName(ctx.Config.Repository, ide.RubyMineDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.RubyMineImage.Version),
+					LatestImage:       resolveLatestImage(ide.RubyMineDesktopIdeImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.RubyMineLatestImage),
+					PluginImage:       jbPluginImage,
+					PluginLatestImage: jbPluginLatestImage,
+				},
+				webstorm: {
+					OrderKey:          "09",
+					Title:             "WebStorm",
+					Type:              ide_config.IDETypeDesktop,
+					Logo:              getIdeLogoPath("webstormLogo"),
+					Image:             ctx.ImageName(ctx.Config.Repository, ide.WebStormDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.WebStormImage.Version),
+					LatestImage:       resolveLatestImage(ide.WebStormDesktopIdeImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.WebStormLatestImage),
 					PluginImage:       jbPluginImage,
 					PluginLatestImage: jbPluginLatestImage,
 				},

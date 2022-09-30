@@ -1792,6 +1792,18 @@ data:
               "phpstormLatest": {
                 "version": "test"
               },
+              "rubymine": {
+                "version": "test"
+              },
+              "rubymineLatest": {
+                "version": "test"
+              },
+              "webstorm": {
+                "version": "test"
+              },
+              "webstormLatest": {
+                "version": "test"
+              },
               "jbBackendPlugin": {
                 "version": "test"
               },
@@ -3874,6 +3886,26 @@ data:
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:latest",
             "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
             "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+          },
+          "rubymine": {
+            "orderKey": "08",
+            "title": "RubyMine",
+            "type": "desktop",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/rubymineLogo.svg",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/rubymine:test",
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/rubymine:latest",
+            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+          },
+          "webstorm": {
+            "orderKey": "09",
+            "title": "WebStorm",
+            "type": "desktop",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/webstormLogo.svg",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/webstorm:test",
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/webstorm:latest",
+            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
           }
         },
         "defaultIde": "code",
@@ -3885,7 +3917,9 @@ data:
               "intellij",
               "goland",
               "pycharm",
-              "phpstorm"
+              "phpstorm",
+              "rubymine",
+              "webstorm"
             ],
             "installationSteps": [
               "If you don't see an open dialog in your browser, make sure you have the \u003ca target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'\u003eJetBrains Gateway with Gitpod Plugin\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."
@@ -5116,6 +5150,26 @@ data:
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:latest",
             "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
             "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+          },
+          "rubymine": {
+            "orderKey": "08",
+            "title": "RubyMine",
+            "type": "desktop",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/rubymineLogo.svg",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/rubymine:test",
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/rubymine:latest",
+            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+          },
+          "webstorm": {
+            "orderKey": "09",
+            "title": "WebStorm",
+            "type": "desktop",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/webstormLogo.svg",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/webstorm:test",
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/webstorm:latest",
+            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
           }
         },
         "defaultIde": "code",
@@ -5127,7 +5181,9 @@ data:
               "intellij",
               "goland",
               "pycharm",
-              "phpstorm"
+              "phpstorm",
+              "rubymine",
+              "webstorm"
             ],
             "installationSteps": [
               "If you don't see an open dialog in your browser, make sure you have the \u003ca target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'\u003eJetBrains Gateway with Gitpod Plugin\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."

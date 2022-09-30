@@ -80,6 +80,14 @@ components:
         version: test
       pycharmLatest:
         version: test
+      rubymine:
+        version: test
+      rubymineLatest:
+        version: test
+      webstorm:
+        version: test
+      webstormLatest:
+        version: test
       jbBackendPlugin:
         version: test
       jbBackendPluginLatest:
