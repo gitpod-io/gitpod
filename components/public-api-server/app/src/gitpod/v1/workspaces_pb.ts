@@ -1507,4 +1507,3 @@ export class StartWorkspaceSpec extends Message<StartWorkspaceSpec> {
     return proto3.util.equals(StartWorkspaceSpec, a, b);
   }
 }
-

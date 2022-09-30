@@ -538,4 +538,3 @@ proto3.util.setEnumType(PrebuildStatus_Result, "gitpod.v1.PrebuildStatus.Result"
   { no: 3, name: "RESULT_SYSTEM_FAILURE" },
   { no: 4, name: "RESULT_TASK_FAILURE" },
 ]);
-

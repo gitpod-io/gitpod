@@ -5,8 +5,11 @@
 package server
 
 import (
+	"context"
 	"fmt"
+	connect_go "github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	v1 "github.com/gitpod-io/gitpod/public-api/v1"
 	"github.com/gitpod-io/gitpod/public-api/v1/v1connect"
 	"net/http"
 	"net/url"
@@ -26,6 +29,21 @@ import (
 
 type WorkspaceService struct {
 	v1connect.UnimplementedWorkspacesServiceHandler
+}
+
+func (s *WorkspaceService) GetWorkspace(context.Context, *connect_go.Request[v1.GetWorkspaceRequest]) (*connect_go.Response[v1.GetWorkspaceResponse], error) {
+	fmt.Println("responding to GetWorkspace")
+	return &connect_go.Response[v1.GetWorkspaceResponse]{
+		Msg: &v1.GetWorkspaceResponse{
+			Result: &v1.Workspace{
+				WorkspaceId: "123",
+				OwnerId:     "",
+				ProjectId:   "",
+				Context:     nil,
+				Description: "",
+			},
+		},
+	}, nil
 }
 
 func Start(logger *logrus.Entry, version string, cfg *config.Configuration) error {
@@ -86,21 +104,35 @@ func register(srv *baseserver.Server, serverAPIURL *url.URL, registry *prometheu
 	//connPool := &proxy.NoConnectionPool{ServerAPI: serverAPIURL}
 
 	wsSvc := &WorkspaceService{}
-	path, handler := v1connect.NewWorkspacesServiceHandler(wsSvc)
+
+	route, handler := v1connect.NewWorkspacesServiceHandler(wsSvc)
 	//v1.RegisterWorkspacesServiceServer(srv.GRPC(), apiv1.NewWorkspaceService(connPool))
 	//v1.RegisterPrebuildsServiceServer(srv.GRPC(), v1.UnimplementedPrebuildsServiceServer{})
 
-	srv.HTTPMux().Handle(path, handler)
-	srv.HTTPMux().HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Infof("Handling request %s %s", r.URL.Path, r.Method)
-		if r.Method == http.MethodOptions {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Headers", "*")
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-	})
+	//router.(handler)
+	//srv.HTTPMux().Handle(path, handler)
 
+	headersOk := handlers.AllowedHeaders([]string{"*"})
+	originsOk := handlers.AllowedOrigins([]string{"*"})
+	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
+
+	srv.HTTPMux().Handle(route, handlers.CORS(headersOk, originsOk, methodsOk)(handler))
+
+	//srv.HTTPMux().HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	//	//router.ServeHTTP(w, r)
+	//	log.Infof("Handling request %s %s", r.URL.Path, r.Method)
+	//	if r.Method == http.MethodOptions {
+	//		w.Header().Set("Access-Control-Allow-Origin", "*")
+	//		w.Header().Set("Access-Control-Allow-Headers", "*")
+	//		w.WriteHeader(http.StatusOK)
+	//		return
+	//	}
+	//
+	//	log.Info("handler is handling request")
+	//	handler.ServeHTTP(w, r)
+	//})
+
+	//srv.HTTPMux().Handler(r)
 	//http.ListenAndServe(
 	//	"localhost:8080",
 	//	// Use h2c so we can serve HTTP/2 without TLS.
