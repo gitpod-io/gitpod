@@ -119,6 +119,8 @@ type WorkspaceConfig struct {
 		// Deprecated
 		UsageReportBucketName string `json:"usageReportBucketName"`
 	} `json:"contentService"`
+
+	EnableProtectedSecrets bool `json:"enableProtectedSecrets"`
 }
 
 type PersistentVolumeClaim struct {
