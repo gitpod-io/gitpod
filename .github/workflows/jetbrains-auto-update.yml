@@ -42,3 +42,21 @@ jobs:
       projectId: ${{ secrets.GCP_PROJECT_ID }}
       serviceAccountKey: ${{ secrets.GCP_SA_KEY }}
       slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+  rubymine:
+    uses: ./.github/workflows/jetbrains-auto-update-template.yml
+    with:
+      productId: rubymine
+      productCode: RM
+    secrets:
+      projectId: ${{ secrets.GCP_PROJECT_ID }}
+      serviceAccountKey: ${{ secrets.GCP_SA_KEY }}
+      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+  webstorm:
+    uses: ./.github/workflows/jetbrains-auto-update-template.yml
+    with:
+      productId: webstorm
+      productCode: WS
+    secrets:
+      projectId: ${{ secrets.GCP_PROJECT_ID }}
+      serviceAccountKey: ${{ secrets.GCP_SA_KEY }}
+      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
