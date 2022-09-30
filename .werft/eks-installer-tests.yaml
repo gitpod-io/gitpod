@@ -167,9 +167,6 @@ pod:
 
           (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
           printf '{{ toJson . }}' > context.json
-          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-          unzip awscliv2.zip
-          sudo ./aws/install
 
           npx ts-node .werft/installer-tests.ts "STANDARD_EKS_TEST"
 
