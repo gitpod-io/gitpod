@@ -1,6 +1,11 @@
 # Change Log
 
 ## September 2022
+- Update Gitpod workspace image to with awscliv2 ([#12278](https://github.com/gitpod-io/gitpod/pull/12278)) - [@adrienthebo](https://github.com/adrienthebo)
+- [terraform/gcp] Run regular and headless workspaces on separate node pools ([#13140](https://github.com/gitpod-io/gitpod/pull/13140)) - [@adrienthebo](https://github.com/adrienthebo)
+- Gitpod Plugin was updated to work with the JetBrains IDEs v2022.3 (EAP). ([#13400](https://github.com/gitpod-io/gitpod/pull/13400)) - [@felladrin](https://github.com/felladrin)
+- [gp-cli] add command to change ports visibility ([#13253](https://github.com/gitpod-io/gitpod/pull/13253)) - [@mustard-mh](https://github.com/mustard-mh)
+- Fix missing port in parsed clone URL. ([#13438](https://github.com/gitpod-io/gitpod/pull/13438)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - [local-preview] Failure with more specific information ([#13403](https://github.com/gitpod-io/gitpod/pull/13403)) - [@Pothulapati](https://github.com/Pothulapati)
 - [server] Fix for the inability to delete teams that were not subscribed to usage based pricing ([#13402](https://github.com/gitpod-io/gitpod/pull/13402)) - [@andrew-farries](https://github.com/andrew-farries)
 - Keep the last selected team selected ([#13318](https://github.com/gitpod-io/gitpod/pull/13318)) - [@svenefftinge](https://github.com/svenefftinge)
