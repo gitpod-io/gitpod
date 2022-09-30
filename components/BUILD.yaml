@@ -50,6 +50,10 @@ packages:
       - components/ide/jetbrains/image:phpstorm-latest
       - components/ide/jetbrains/image:pycharm
       - components/ide/jetbrains/image:pycharm-latest
+      - components/ide/jetbrains/image:rubymine
+      - components/ide/jetbrains/image:rubymine-latest
+      - components/ide/jetbrains/image:webstorm
+      - components/ide/jetbrains/image:webstorm-latest
       - components/image-builder-bob:docker
       - components/image-builder-mk3:docker
       - components/local-app:docker

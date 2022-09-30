@@ -1,0 +1,10 @@
+{
+    "entrypoint": "/ide-desktop/startup.sh",
+    "entrypointArgs": [ "{DESKTOPIDEPORT}", "rubymine", "Open in RubyMine" ],
+    "readinessProbe": {
+        "type": "http",
+        "http": {
+            "path": "/status"
+        }
+      }
+}

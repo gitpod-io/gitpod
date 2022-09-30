@@ -19,6 +19,14 @@ const ideConfigs = [
         name: "phpstorm",
         productCode: "PS",
     },
+    {
+        name: "rubymine",
+        productCode: "RM",
+    },
+    {
+        name: "webstorm",
+        productCode: "WS",
+    },
 ];
 
 const packages = [];
