@@ -25,31 +25,43 @@ import (
 var repos = []struct {
 	RemoteUri        string
 	CloneTarget      string
+	ExpectedBranch   string
 	CheckoutLocation string
 }{
 	{
 		RemoteUri:        "https://github.com/gitpod-io/gitpod",
 		CloneTarget:      "main",
+		ExpectedBranch:   "main",
+		CheckoutLocation: "gitpod",
+	},
+	{
+		RemoteUri:        "https://github.com/gitpod-io/gitpod",
+		CloneTarget:      "master",
+		ExpectedBranch:   "main",
 		CheckoutLocation: "gitpod",
 	},
 	{
 		RemoteUri:        "https://github.com/gitpod-io/website",
 		CloneTarget:      "main",
+		ExpectedBranch:   "main",
 		CheckoutLocation: "website",
 	},
 	{
 		RemoteUri:        "https://github.com/gitpod-io/dazzle",
 		CloneTarget:      "main",
+		ExpectedBranch:   "main",
 		CheckoutLocation: "dazzle",
 	},
 	{
 		RemoteUri:        "https://github.com/gitpod-io/leeway",
 		CloneTarget:      "main",
+		ExpectedBranch:   "main",
 		CheckoutLocation: "leeway",
 	},
 	{
 		RemoteUri:        "https://github.com/gitpod-io/ws-manager-integration-test",
-		CloneTarget:      "master",
+		CloneTarget:      "master", // default branch is main
+		ExpectedBranch:   "master",
 		CheckoutLocation: "ws-manager-integration-test",
 	},
 }
@@ -154,7 +166,7 @@ func assertRepositories(t *testing.T, rsa *rpc.Client) {
 			Branch string
 		}{
 			Cloned: false,
-			Branch: r.CloneTarget,
+			Branch: r.ExpectedBranch,
 		}
 	}
 
