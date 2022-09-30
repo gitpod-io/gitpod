@@ -129,7 +129,7 @@ const cloud: string = config.CLOUD;
 const INFRA_PHASES: { [name: string]: InfraConfig } = {
     STANDARD_CLUSTER: {
         phase: "create-ref-arch-single-cluster",
-        makeTarget: `std-single-cluster os_version=${os_version}`,
+        makeTarget: `std-single-cluster`,
         description: `Create a ${cloud} kubernetes cluster(version: ${k8s_version}) using single-cluster ref-arch`
     },
     UPLOAD_CREDENTIALS: {
@@ -384,7 +384,7 @@ function runIntegrationTests() {
 function callMakeTargets(phase: string, description: string, makeTarget: string, failable: boolean = false) {
     werft.log(phase, `Calling ${makeTarget}`);
     // exporting cloud env var is important for the make targets
-    const env = `export TF_VAR_cluster_version=${k8s_version} cloud=${cloud} TF_VAR_domain=${baseDomain} TF_VAR_gcp_zone=${gcpDnsZone}`;
+    const env = `export CLUSTER_VERSION=${k8s_version} cloud=${cloud} DOMAIN=${baseDomain} GCP_ZONE=${gcpDnsZone} os_version=${os_version}`;
 
     const response = exec(
         `${env} && make -C ${makefilePath} ${makeTarget}`,

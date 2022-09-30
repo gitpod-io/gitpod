@@ -22,7 +22,7 @@ help: Makefile
 	@echo
 
 tf-init: check-var-cloud
-	$(MAKE) -C ${TF_MOD} init
+	 @terraform -chdir=${TF_MOD} init --upgrade
 
 tf-ws: check-var-cloud
 	@terraform -chdir=${TF_MOD} workspace new ${TF_VAR_TEST_ID} || terraform -chdir=${TF_MOD} workspace select ${TF_VAR_TEST_ID}
@@ -58,6 +58,11 @@ endif
 upload-creds: tf-output create-eks-user
 	@gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
 	@gsutil cp $(TF_VAR_TEST_ID)-output.json gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-creds.json || echo "Could not upload credentials"
+	[[ $(cloud) = k3s ]] || $(MAKE) upload-kubeconfig-to-gcp
+
+upload-kubeconfig-to-gcp:
+	@gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
+	@gsutil cp ${KUBECONFIG} gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-kubeconfig
 
 download-creds: tf-output
 	@gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
@@ -67,24 +72,37 @@ ami_id_121 := "ami-060637af2651bc8bb"
 ami_id_122 := "ami-0733d755ed2c97a4d"
 ami_id_123 := "ami-05ec8881b9c2740d4"
 
+# K3S ubuntu image ID
+image_id_1804 := "ubuntu-1804-bionic-v20220712"
+image_id_2004 := "ubuntu-2004-focal-v20220712"
+image_id_2204 := "ubuntu-2204-jammy-v20220712a"
+
+os_version ?= "2004"
+
+.PHONY:
+prepare-terraform: ami_id = $(if $(ami_id_${cluster_version//.}),$(ami_id_${cluster_version//.}),$(ami_id_122))
+prepare-terraform: ubuntu_image_id = $(if $(image_id_$(os_version)),$(image_id_$(os_version)),$(image_id_2004))
+prepare-terraform: check-var-cloud check-var-CLUSTER_VERSION check-var-DOMAIN check-var-GCP_DNS
+	@export KUBECONFIG=${KUBECONFIG} IMAGE_ID=${ami_id} UBUNTU_IMAGE=${ubuntu_image_id} && \
+	envsubst < ./manifests/$(cloud)-terraform.tfvars > $(TF_MOD)/terraform.tfvars && \
+	cp ./manifests/tf-backend.tf $(TF_MOD)/main.tf  # we set the backend to be gcs based
+	@$(MAKE) copy-dns-tf
+	@echo "Done setting up tf backend and terraform.tfvars file"
+
+
 cluster_gcp := gke
 cluster_k3s := k3s
 cluster_aws := eks
 cluster_azure := aks
 
-.PHONY:
-prepare-terraform: cluster_mod = $(cluster_$(cloud))
-prepare-terraform: ami_id = $(if $(ami_id_${cluster_version//.}),$(ami_id_${cluster_version//.}),$(ami_id_122))
-prepare-terraform: check-var-cloud check-var-CLUSTER_VERSION check-var-DOMAIN
-	@export KUBECONFIG=${KUBECONFIG} IMAGE_ID=${ami_id} cluster=$(cluster_mod) && \
-	envsubst < ./manifests/$(cloud)-terraform.tfvars > $(TF_MOD)/terraform.tfvars && \
+copy-dns-tf: cluster_mod = $(cluster_$(cloud))
+copy-dns-tf:
+	@export cluster=$(cluster_mod) && \
 	envsubst < ./manifests/managed-dns.tf > $(TF_MOD)/managed-dns.tf
-	@cp ./manifests/tf-backend.tf $(TF_MOD)/main.tf  # we set the backend to be gcs based
-	@echo "Done setting up tf backend and terraform.tfvars file"
+	@echo "Copied managed-dns.tf to create NS record entries"
 
 .PHONY:
 standard-cluster: check-var-cloud check-var-TF_VAR_TEST_ID prepare-terraform tf-init tf-apply
-
 
 .PHONY:
 ## add-ns-record: Adds NS record for subdomain under gitpod-selfhosted.com
@@ -122,6 +140,7 @@ endif
 get-kubeconfig:
 	@echo "Getting kubeconfig for $$TF_VAR_TEST_ID terraform state" && \
     export provider=$$(echo "$$TF_VAR_TEST_ID" | sed 's/\(.*\)-/\1 /' | xargs | awk '{print $$2}') && \
+	export provider=k3s && \
 	$(MAKE) $$provider-kubeconfig && echo "kubeconfig written to ${KUBECONFIG}"
 
 sync-kubeconfig:
@@ -147,7 +166,7 @@ gcp-kubeconfig:
 azure-kubeconfig:
 	@[[ -z "$$self_hosted_jobs" ]] || az login --service-principal -u $$ARM_CLIENT_ID -p $$ARM_CLIENT_SECRET  --tenant $$ARM_TENANT_ID
 	@export KUBECONFIG=${KUBECONFIG} && \
-	az aks get-credentials --name p$$TF_VAR_TEST_ID-cluster --resource-group p$$TF_VAR_TEST_ID --file ${KUBECONFIG} || echo "No cluster present"
+	az aks get-credentials --name gp-$$TF_VAR_TEST_ID-cluster --resource-group gp-$$TF_VAR_TEST_ID --file ${KUBECONFIG} || echo "No cluster present"
 
 get-aws-secret:
 	@gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS} --project=sh-automated-tests
@@ -185,6 +204,31 @@ get-base-config:
 	@export CONFIG_PATCH=./manifests/config-patch.yaml && \
 	export PATCH=$$(cat $$CONFIG_PATCH | base64 -w 0) || export PATCH="" && \
 	envsubst < ${KOTS_KONFIG} > tmp_config.yml
+
+storage-config-k3s:
+	export k3s_storage_credentials=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'storage.value.service_account_key_path') && \
+	[[ $$k3s_storage_credentials = /* ]] || export k3s_storage_credentials=$$(realpath $(TF_MOD)/$$k3s_storage_credentials) && \
+	export BASE64_GCP_KEY=$$(cat $$k3s_storage_credentials | tr -d '\n' | base64 -w 0) && \
+	envsubst < ./manifests/kots-config-gcp-storage.yaml > tmp_2_config.yml
+	yq m -i tmp_config.yml tmp_2_config.yml
+
+registry-config-k3s:
+	export k3s_registry_credentials=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'registry.value.password_file_path') && \
+	[[ $$k3s_registry_credentials = /* ]] || export k3s_registry_credentials=$$(realpath $(TF_MOD)/$$k3s_registry_credentials) && \
+	export GCP_KEY=$$(cat $$k3s_registry_credentials | tr -d '\n' | jq -Rsa .) && \
+	envsubst < ./manifests/kots-config-gcp-registry.yaml > tmp_4_config.yml
+	yq m -i tmp_config.yml tmp_4_config.yml
+
+db-config-k3s:
+	export k3s_db_credentials=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'database.value.service_account_key_path') && \
+	[[ $$k3s_db_credentials = /* ]] || export k3s_db_credentials=$$(realpath $(TF_MOD)/$$k3s_db_credentials) && \
+	export BASE64_GCP_KEY=$$(cat $$k3s_db_credentials | tr -d '\n' | base64 -w 0) && \
+	export DB_INSTANCE=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'database.value.instance') && \
+	export DB_PASSWORD=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'database.value.password') && \
+	export DB_USER=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'database.value.username') && \
+	envsubst < ./manifests/kots-config-gcp-db.yaml > tmp_4_config.yml
+	envsubst < tmp_4_config.yml > tmp_5_config.yml
+	yq m -i tmp_config.yml tmp_5_config.yml
 
 storage-config-gcp:
 	@echo "Creating GCP storage configuration"

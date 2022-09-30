@@ -7,9 +7,6 @@ module "k3s" {
   gcp_zone         = var.zone
   credentials      = var.credentials_path
   kubeconfig       = var.kubeconfig
-  dns_sa_creds     = var.credentials_path
-  dns_project      = var.project
-  managed_dns_zone = var.managed_dns_zone
   domain_name      = var.domain_name
   cluster_version  = var.cluster_version
   image_id         = var.image_id

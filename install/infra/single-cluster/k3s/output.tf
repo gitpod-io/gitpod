@@ -20,3 +20,7 @@ output "url" {
 output "cluster_issuer" {
   value     = module.cluster-issuer.cluster_issuer
 }
+
+output "name_servers" {
+  value = module.k3s.name_servers
+}
