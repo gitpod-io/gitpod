@@ -1,4 +1,4 @@
-import {createChannel, createClient} from 'nice-grpc-web';
+import {createChannel, createClient, Metadata} from 'nice-grpc-web';
 import {
     GetWorkspaceRequest,
     WorkspacesServiceClient,
@@ -17,7 +17,11 @@ const req: GetWorkspaceRequest = {
 }
 
 async function yay() {
-    const resp = await client.getWorkspace(req)
+    const resp = await client.getWorkspace(req, {
+        metadata: new Metadata({
+            "authorization": "foo-bar"
+        })
+    })
     console.log(resp)
 }
 

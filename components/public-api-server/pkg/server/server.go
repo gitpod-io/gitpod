@@ -50,9 +50,16 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 		grpcweb.WithOriginFunc(func(origin string) bool {
 			return true
 		}),
-		grpcweb.WithCorsForRegisteredEndpointsOnly(false))
+	)
 	srv.HTTPMux().Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.WithField("headers", r.Header).Infof("Handling %s", r.URL.Path)
+		log.WithField("headers", r.Header).WithField("method", r.Method).Infof("Handling %s", r.URL.Path)
+		if r.Method == http.MethodOptions {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Headers", "*")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
 		if wrappedGRPC.IsGrpcWebRequest(r) {
 			wrappedGRPC.ServeHTTP(w, r)
 			return
