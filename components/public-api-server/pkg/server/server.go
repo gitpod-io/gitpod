@@ -7,6 +7,7 @@ package server
 import (
 	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/public-api/v1/v1connect"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,14 +17,16 @@ import (
 	"github.com/gorilla/handlers"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
-	"github.com/gitpod-io/gitpod/public-api-server/pkg/apiv1"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/webhooks"
-	v1 "github.com/gitpod-io/gitpod/public-api/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
+
+type WorkspaceService struct {
+	v1connect.UnimplementedWorkspacesServiceHandler
+}
 
 func Start(logger *logrus.Entry, version string, cfg *config.Configuration) error {
 	logger.WithField("config", cfg).Info("Starting public-api.")
@@ -80,11 +83,19 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 func register(srv *baseserver.Server, serverAPIURL *url.URL, registry *prometheus.Registry) error {
 	proxy.RegisterMetrics(registry)
 
-	connPool := &proxy.NoConnectionPool{ServerAPI: serverAPIURL}
+	//connPool := &proxy.NoConnectionPool{ServerAPI: serverAPIURL}
 
-	v1.RegisterWorkspacesServiceServer(srv.GRPC(), apiv1.NewWorkspaceService(connPool))
-	v1.RegisterPrebuildsServiceServer(srv.GRPC(), v1.UnimplementedPrebuildsServiceServer{})
+	wsSvc := &WorkspaceService{}
+	path, handler := v1connect.NewWorkspacesServiceHandler(wsSvc)
+	//v1.RegisterWorkspacesServiceServer(srv.GRPC(), apiv1.NewWorkspaceService(connPool))
+	//v1.RegisterPrebuildsServiceServer(srv.GRPC(), v1.UnimplementedPrebuildsServiceServer{})
 
+	srv.HTTPMux().Handle(path, handler)
+	//http.ListenAndServe(
+	//	"localhost:8080",
+	//	// Use h2c so we can serve HTTP/2 without TLS.
+	//	h2c.NewHandler(mux, &http2.Server{}),
+	//)
 	return nil
 }
 

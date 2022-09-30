@@ -20,9 +20,11 @@ source "$ROOT_DIR"/scripts/protoc-generator.sh
 lint
 
 install_dependencies
+rm -rf go/v1
+
 go_protoc "$COMPONENTS_DIR" "gitpod/v1"
 mkdir -p go/v1
-mv go/gitpod/v1/*.pb.go go/v1
+mv go/gitpod/v1 go/
 rm -rf go/gitpod
 typescript_protoc "$COMPONENTS_DIR" "gitpod/v1"
 

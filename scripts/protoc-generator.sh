@@ -6,6 +6,8 @@
 
 install_dependencies() {
     go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28.0
+    go install github.com/bufbuild/connect-go/cmd/protoc-gen-connect-go@latest
+
 
     go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2.0
 
@@ -28,11 +30,12 @@ go_protoc() {
     local PROTO_DIR=${2:-.}
     # shellcheck disable=2035
     protoc \
+        --plugin=/workspace/go/bin/protoc-gen-connect-go \
         -I /usr/lib/protoc/include -I"$ROOT_DIR" -I. \
         --go_out=go \
         --go_opt=paths=source_relative \
-        --go-grpc_out=go \
-        --go-grpc_opt=paths=source_relative \
+        --connect-go_out=go \
+        --connect-go_opt=paths=source_relative \
         "${PROTO_DIR}"/*.proto
 }
 
@@ -83,18 +86,28 @@ typescript_protoc() {
     rm -rf "$MODULE_DIR"/typescript/src/*pb*.*
 
     echo "[protoc] Generating TypeScript files"
-    protoc \
-        --plugin=protoc-gen-grpc="$MODULE_DIR"/typescript/node_modules/.bin/grpc_tools_node_protoc_plugin \
-        --js_out=import_style=commonjs,binary:src \
-        --grpc_out=grpc_js:src \
-        -I /usr/lib/protoc/include -I"$ROOT_DIR" -I.. -I"../$PROTO_DIR" \
-        "../$PROTO_DIR"/*.proto
+#    protoc \
+#        --plugin=protoc-gen-grpc="$MODULE_DIR"/typescript/node_modules/.bin/grpc_tools_node_protoc_plugin \
+#        --js_out=import_style=commonjs,binary:src \
+#        --grpc_out=grpc_js:src \
+#        -I /usr/lib/protoc/include -I"$ROOT_DIR" -I.. -I"../$PROTO_DIR" \
+#        "../$PROTO_DIR"/*.proto
+#
+#    protoc \
+#        --plugin=protoc-gen-ts="$MODULE_DIR"/typescript/node_modules/.bin/protoc-gen-ts \
+#        --ts_out=grpc_js:src \
+#        -I /usr/lib/protoc/include -I"$ROOT_DIR" -I.. -I"../$PROTO_DIR" \
+#        "../$PROTO_DIR"/*.proto
 
     protoc \
-        --plugin=protoc-gen-ts="$MODULE_DIR"/typescript/node_modules/.bin/protoc-gen-ts \
-        --ts_out=grpc_js:src \
-        -I /usr/lib/protoc/include -I"$ROOT_DIR" -I.. -I"../$PROTO_DIR" \
-        "../$PROTO_DIR"/*.proto
+      --plugin=protoc-gen-es="$MODULE_DIR"/typescript/node_modules/.bin/protoc-gen-es \
+      --plugin=protoc-gen-connect-web="$MODULE_DIR"/typescript/node_modules/.bin/protoc-gen-connect-web \
+      --es_out src \
+      --es_opt target=ts \
+      --connect-web_out src \
+      --connect-web_opt target=ts \
+      -I /usr/lib/protoc/include -I"$ROOT_DIR" -I.. -I"../$PROTO_DIR" \
+      "../$PROTO_DIR"/*.proto
 
     # remove trailing spaces
     find "$MODULE_DIR"/typescript/src -maxdepth 1 -name "*_pb.d.ts" -exec sed -i -e "s/[[:space:]]*$//" {} \;
