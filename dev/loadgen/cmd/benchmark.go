@@ -43,6 +43,9 @@ var benchmarkCommand = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fn := args[0]
 		fc, err := ioutil.ReadFile(fn)
+		if runOpts.Debug {
+			log.SetLevel(log.DebugLevel)
+		}
 		if err != nil {
 			log.WithError(err).WithField("fn", fn).Fatal("cannot read scenario file")
 		}

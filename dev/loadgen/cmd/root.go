@@ -28,4 +28,5 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().BoolVar(&runOpts.Interactive, "interactive", false, "loadgen will prompt before destructive actions")
+	rootCmd.PersistentFlags().BoolVar(&runOpts.Debug, "debug", false, "debugging mode")
 }

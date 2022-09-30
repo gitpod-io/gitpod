@@ -32,6 +32,7 @@ import (
 var runOpts struct {
 	TLSPath     string
 	Interactive bool
+	Debug       bool
 }
 
 // runCmd represents the run command
