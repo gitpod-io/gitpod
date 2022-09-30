@@ -46,3 +46,23 @@ jobs:
       exampleRepo: https://github.com/gitpod-io/template-php-laravel-mysql
     secrets:
       slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+  rubymine:
+    uses: ./.github/workflows/jetbrains-updates-template.yml
+    with:
+      productName: RubyMine
+      productId: rubymine
+      productCode: RM
+      productType: release
+      exampleRepo: https://github.com/gitpod-io/template-jetbrains-rubymine
+    secrets:
+      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+  webstorm:
+    uses: ./.github/workflows/jetbrains-updates-template.yml
+    with:
+      productName: WebStorm
+      productId: webstorm
+      productCode: WS
+      productType: release
+      exampleRepo: https://github.com/gitpod-io/template-jetbrains-webstorm
+    secrets:
+      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
