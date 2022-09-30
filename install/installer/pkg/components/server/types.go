@@ -148,6 +148,7 @@ type NamedWorkspaceFeatureFlag string
 
 const (
 	NamedWorkspaceFeatureFlagFullWorkspaceBackup NamedWorkspaceFeatureFlag = "full_workspace_backup"
+	NamedWorkspaceFeatureProtectedSecrets        NamedWorkspaceFeatureFlag = "protected_secrets"
 )
 
 type WorkspaceClassCategory string
