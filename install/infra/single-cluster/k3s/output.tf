@@ -1,16 +1,16 @@
 output "database" {
-    sensitive = true
-    value = module.k3s.database
+  sensitive = true
+  value     = module.k3s.database
 }
 
 output "registry" {
-    sensitive = true
-    value = module.k3s.registry
+  sensitive = true
+  value     = module.k3s.registry
 }
 
 output "storage" {
-    sensitive = true
-    value = module.k3s.storage
+  sensitive = true
+  value     = module.k3s.storage
 }
 
 output "url" {
@@ -18,7 +18,7 @@ output "url" {
 }
 
 output "cluster_issuer" {
-  value     = module.cluster-issuer.cluster_issuer
+  value = module.cluster-issuer.cluster_issuer
 }
 
 output "name_servers" {

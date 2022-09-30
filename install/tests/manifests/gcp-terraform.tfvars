@@ -8,10 +8,10 @@ region  = "europe-west1"
 zone    = "europe-west1-d"
 project = "sh-automated-tests"
 
-cluster_version = CLUSTER_VERSION
+cluster_version = "${CLUSTER_VERSION}"
 
 enable_external_database = true
 enable_external_storage  = true
 enable_external_registry = true
 
-kubeconfig = KUBECONFIG
+kubeconfig = "${KUBECONFIG}"

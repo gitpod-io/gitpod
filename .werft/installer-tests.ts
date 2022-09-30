@@ -70,7 +70,7 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         ],
     },
     STANDARD_K3S_TEST: {
-        CLOUD: "gcp", // the cloud provider is still GCP
+        CLOUD: "k3s",
         DESCRIPTION: `${op} Gitpod on a K3s cluster(version ${k8s_version}) on a GCP instance with ubuntu ${os_version}`,
         PHASES: [
             "STANDARD_CLUSTER",
@@ -129,7 +129,7 @@ const cloud: string = config.CLOUD;
 const INFRA_PHASES: { [name: string]: InfraConfig } = {
     STANDARD_CLUSTER: {
         phase: "create-ref-arch-single-cluster",
-        makeTarget: `std-single-cluster`,
+        makeTarget: `standard-cluster`,
         description: `Create a ${cloud} kubernetes cluster(version: ${k8s_version}) using single-cluster ref-arch`
     },
     UPLOAD_CREDENTIALS: {

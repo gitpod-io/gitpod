@@ -22,7 +22,7 @@ help: Makefile
 	@echo
 
 tf-init: check-var-cloud
-	 @terraform -chdir=${TF_MOD} init --upgrade
+	@terraform -chdir=${TF_MOD} init --upgrade
 
 tf-ws: check-var-cloud
 	@terraform -chdir=${TF_MOD} workspace new ${TF_VAR_TEST_ID} || terraform -chdir=${TF_MOD} workspace select ${TF_VAR_TEST_ID}
@@ -80,9 +80,9 @@ image_id_2204 := "ubuntu-2204-jammy-v20220712a"
 os_version ?= "2004"
 
 .PHONY:
-prepare-terraform: ami_id = $(if $(ami_id_${cluster_version//.}),$(ami_id_${cluster_version//.}),$(ami_id_122))
+prepare-terraform: ami_id = $(if $(ami_id_${CLUSTER_VERSION//.}),$(ami_id_${CLUSTER_VERSION//.}),$(ami_id_122))
 prepare-terraform: ubuntu_image_id = $(if $(image_id_$(os_version)),$(image_id_$(os_version)),$(image_id_2004))
-prepare-terraform: check-var-cloud check-var-CLUSTER_VERSION check-var-DOMAIN check-var-GCP_DNS
+prepare-terraform: check-var-cloud check-var-CLUSTER_VERSION check-var-DOMAIN check-var-GCP_ZONE
 	@export KUBECONFIG=${KUBECONFIG} IMAGE_ID=${ami_id} UBUNTU_IMAGE=${ubuntu_image_id} && \
 	envsubst < ./manifests/$(cloud)-terraform.tfvars > $(TF_MOD)/terraform.tfvars && \
 	cp ./manifests/tf-backend.tf $(TF_MOD)/main.tf  # we set the backend to be gcs based
@@ -484,7 +484,7 @@ destroy-gitpod:
 		|| true
 
 list-state:
-	@terraform state list
+	@terraform -chdir=${TF_MOD} init --upgrade
 
 cleanup-old-tests:
 	./cleanup.sh
