@@ -284,21 +284,21 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
         return (
             <StartPage phase={phase} error={error}>
                 {statusMessage}
-                {error && isGitpodIo() && (
-                    <FeedbackComponent
-                        isModal={false}
-                        message={"Was this error message helpful?"}
-                        isError={true}
-                        initialSize={24}
-                        errorObject={error}
-                        errorMessage={errorMessage}
-                    />
-                )}
                 {error && (
                     <div>
                         <a href={gitpodHostUrl.asDashboard().toString()}>
                             <button className="mt-8 secondary">Go to Dashboard</button>
                         </a>
+                        {isGitpodIo() && (
+                            <FeedbackComponent
+                                isModal={false}
+                                message={"Was this error message helpful?"}
+                                isError={true}
+                                initialSize={24}
+                                errorObject={error}
+                                errorMessage={errorMessage}
+                            />
+                        )}
                         <p className="mt-14 text-base text-gray-400 flex space-x-2">
                             <a
                                 className="hover:text-blue-600 dark:hover:text-blue-400"
