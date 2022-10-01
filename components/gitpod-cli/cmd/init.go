@@ -56,17 +56,17 @@ Create a Gitpod configuration for this project.
 
 ## This '.gitpod.yml' file when placed at the root of a project instructs
 ## Gitpod how to prepare & build the project, start development environments
-## and configure continuous prebuilds. Prebuilds when enabled builds a project
+## and configure continuous prebuilds. Prebuilds (when enabled) builds a project
 ## like a CI server so you can start coding right away - no more waiting for
-## dependencies to download and builds to finish when reviewing pull-requests
+## dependencies to download and builds to finish when reviewing pull requests
 ## or hacking on something new.
 
 ## With Gitpod you can develop software from any device (even iPads) via
 ## desktop or browser based versions of VS Code or any JetBrains IDE and
-## customise it to your individual needs - from themes to extensions, you
+## customize it to your individual needs - from themes to extensions, you
 ## have full control.
 
-## The easiest way to try out Gitpod is install the browser extenion:
+## The easiest way to try out Gitpod is to install the browser extension:
 ## 'https://www.gitpod.io/docs/configure/user-settings/browser-extension' or by prefixing
 ## 'https://gitpod.io#' to the source control URL of any project.
 ##
@@ -147,7 +147,7 @@ Create a Gitpod configuration for this project.
 ## the OpenVSX.org registry to be installed upon workspace startup. OpenVSX
 ## is an open alternative to the proprietary Visual Studio Code Marketplace
 ## and extensions can be added by sending a pull-request with the extension
-## identifier to https://github.com/open-vsx/publish-extensions
+## identifier to https://www.gitpod.io/docs/references/gitpod-yml/#vscodeextensions
 
 ## The identifier of an extension is always ${publisher}.${name}.
 
