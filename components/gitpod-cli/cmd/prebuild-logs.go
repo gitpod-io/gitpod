@@ -5,10 +5,10 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 // initCmd represents the init command
@@ -19,7 +19,6 @@ var prebuildLogs = &cobra.Command{
 Opens all logs of Gitpod prebuilds.
 Number of logs depends upon the init tasks you have configured.
 	`,
-	// Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 
 		const prebuildFilePath = "/workspace/.gitpod/prebuild-log-*"
@@ -27,12 +26,6 @@ Number of logs depends upon the init tasks you have configured.
 
 		if err != nil {
 			log.WithError(err)
-			return
-		}
-
-		pcmd := os.Getenv("GP_OPEN_EDITOR")
-		if pcmd == "" {
-			log.Fatal("GP_OPEN_EDITOR is not set")
 			return
 		}
 	},
@@ -52,7 +45,8 @@ func openPrebuildLogs(prebuildFilePath string) error {
 	for {
 		_, err := service.OpenFile(theialib.OpenFileRequest{Path: prebuildFilePath})
 		if err != nil {
-			log.WithError(err).Println("Prebuild logs not found.\nMake sure you have configured prebuilds.\nLearn more about Prebuilds: https://www.gitpod.io/docs/configure/projects/prebuilds")
+			log.WithError(err)
+			fmt.Println("Prebuild logs not found.\nMake sure you have configured prebuilds.\nLearn more about Prebuilds: https://www.gitpod.io/docs/configure/projects/prebuilds")
 			return nil
 		}
 	}
