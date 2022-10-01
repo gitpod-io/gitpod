@@ -169,22 +169,21 @@ Create a Gitpod configuration for this project.
 ## Learn more at 'https://www.gitpod.io/docs/configure/projects/prebuilds'
 
 github:
-prebuilds:
-# enable for the default branch
-master: true
-# enable for all branches in this repo
-branches: true
-# enable for pull requests coming from this repo
-pullRequests: true
-# enable for pull requests coming from forks
-pullRequestsFromForks: true
-# add a check to pull requests
-addCheck: true
-# add a "Review in Gitpod" button as a comment to pull requests
-addComment: false
-# add a "Review in Gitpod" button to the pull request's description
-addBadge: true
-
+    prebuilds:
+        # enable for the default branch
+        master: true
+        # enable for all branches in this repo
+        branches: true
+        # enable for pull requests coming from this repo
+        pullRequests: true
+        # enable for pull requests coming from forks
+        pullRequestsFromForks: true
+        # add a check to pull requests
+        addCheck: true
+        # add a "Review in Gitpod" button as a comment to pull requests
+        addComment: false
+        # add a "Review in Gitpod" button to the pull request's description
+        addBadge: true
 `)
 		} else {
 			fmt.Printf("\n\n---\n%s", d)
