@@ -81,7 +81,7 @@ function FeedbackComponent(props: {
                 <div
                     className={
                         "flex flex-col justify-center px-6 py-4 border-gray-200 dark:border-gray-800 " +
-                        (props.isError ? "mt-20 bg-gray-100 dark:bg-gray-800 rounded-xl" : "border-t")
+                        (props.isError ? "mt-14 bg-gray-100 dark:bg-gray-800 rounded-xl" : "border-t")
                     }
                 >
                     <p

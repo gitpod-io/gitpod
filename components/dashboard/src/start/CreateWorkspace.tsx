@@ -141,6 +141,8 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
                             </p>
                         </div>
                     );
+                    errorMessage +=
+                        "\nAre you trying to open a Git repository from a self-hosted instance? [Add integration]";
                     break;
                 case ErrorCodes.INVALID_GITPOD_YML:
                     statusMessage = (
@@ -155,6 +157,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
                             </button>
                         </div>
                     );
+                    errorMessage += "\n[Continue with default configuration]";
                     break;
                 case ErrorCodes.NOT_AUTHENTICATED:
                     statusMessage = (
@@ -169,9 +172,11 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
                             </button>
                         </div>
                     );
+                    errorMessage += "\n[Authorize with {host}]";
                     break;
                 case ErrorCodes.PERMISSION_DENIED:
                     statusMessage = <p className="text-base text-gitpod-red w-96">Access is not allowed</p>;
+                    errorMessage += "\n[Access is not allowed]";
                     break;
                 case ErrorCodes.USER_BLOCKED:
                     window.location.href = "/blocked";
@@ -214,6 +219,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
                             Unknown Error: {JSON.stringify(this.state?.error, null, 2)}
                         </p>
                     );
+                    errorMessage += "\nUnknown Error";
                     break;
             }
         }
@@ -289,16 +295,6 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
                         <a href={gitpodHostUrl.asDashboard().toString()}>
                             <button className="mt-8 secondary">Go to Dashboard</button>
                         </a>
-                        {isGitpodIo() && (
-                            <FeedbackComponent
-                                isModal={false}
-                                message={"Was this error message helpful?"}
-                                isError={true}
-                                initialSize={24}
-                                errorObject={error}
-                                errorMessage={errorMessage}
-                            />
-                        )}
                         <p className="mt-14 text-base text-gray-400 flex space-x-2">
                             <a
                                 className="hover:text-blue-600 dark:hover:text-blue-400"
@@ -322,6 +318,16 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
                             </a>
                         </p>
                     </div>
+                )}
+                {error && isGitpodIo() && (
+                    <FeedbackComponent
+                        isModal={false}
+                        message={"Was this error message helpful?"}
+                        isError={true}
+                        initialSize={24}
+                        errorObject={error}
+                        errorMessage={errorMessage}
+                    />
                 )}
             </StartPage>
         );
