@@ -23,4 +23,6 @@ cf_patch=$(echo "$cf_patch" |jq ".supervisorImage = \"$dev_image\"")
 cf_patch=$(echo "$cf_patch" |jq tostring)
 cf_patch="{\"data\": {\"config.json\": $cf_patch}}"
 
-kubectl patch cm server-ide-config --type=merge -p "$cf_patch"
+kubectl patch cm ide-config --type=merge -p "$cf_patch"
+
+kubectl rollout restart deployment ide-service

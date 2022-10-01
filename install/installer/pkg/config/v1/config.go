@@ -220,6 +220,9 @@ type Analytics struct {
 type Tracing struct {
 	Endpoint  *string `json:"endpoint,omitempty"`
 	AgentHost *string `json:"agentHost,omitempty"`
+	// Name of the kubernetes secret to use for Jaeger authentication
+	// The secret should contains two definitions: JAEGER_USER and JAEGER_PASSWORD
+	SecretName *string `json:"secretName,omitempty"`
 }
 
 type Database struct {

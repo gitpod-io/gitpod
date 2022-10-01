@@ -13,10 +13,13 @@ variable "project" { default = "sh-automated-tests" }
 variable "sa_creds" { default = null }
 variable "dns_sa_creds" { default = null }
 
-data local_file "dns_credentials" {
+data "local_file" "dns_credentials" {
   filename = var.dns_sa_creds
 }
 
+data "local_file" "sa_credentials" {
+  filename = var.sa_creds
+}
 
 variable "eks_node_image_id" {
   default = null
@@ -43,38 +46,35 @@ module "gke" {
   region          = "europe-west1"
   zone            = "europe-west1-d"
   cluster_version = var.cluster_version
+  domain_name     = "${var.TEST_ID}.${var.domain}"
 }
 
 module "k3s" {
   # source = "github.com/gitpod-io/gitpod//install/infra/terraform/k3s?ref=main" # we can later use tags here
   source = "../infra/modules/k3s" # we can later use tags here
 
-  name             = var.TEST_ID
-  gcp_project      = var.project
-  credentials      = var.sa_creds
-  kubeconfig       = var.kubeconfig
-  dns_sa_creds     = var.dns_sa_creds
-  dns_project      = "dns-for-playgrounds"
-  managed_dns_zone = var.gcp_zone
-  domain_name      = "${var.TEST_ID}.${var.domain}"
-  cluster_version  = var.cluster_version
-  image_id         = var.k3s_node_image_id
+  name            = var.TEST_ID
+  gcp_project     = var.project
+  credentials     = var.sa_creds
+  kubeconfig      = var.kubeconfig
+  domain_name     = "${var.TEST_ID}.${var.domain}"
+  cluster_version = var.cluster_version
+  image_id        = var.k3s_node_image_id
 }
 
 module "gcp-issuer" {
-  source      = "../infra/modules/tools/issuer"
-  kubeconfig  = var.kubeconfig
-  gcp_credentials = data.local_file.dns_credentials.content
-  issuer_name = "cloudDNS"
+  source          = "../infra/modules/tools/issuer"
+  kubeconfig      = var.kubeconfig
+  gcp_credentials = data.local_file.sa_credentials.content
+  issuer_name     = "cloudDNS"
   cert_manager_issuer = {
-    project = "dns-for-playgrounds"
+    project = var.project
     serviceAccountSecretRef = {
       name = "clouddns-dns01-solver"
       key  = "keys.json"
     }
   }
 }
-
 
 module "aks" {
   # source = "github.com/gitpod-io/gitpod//install/infra/terraform/aks?ref=main" # we can later use tags here
@@ -91,14 +91,14 @@ module "aks" {
 }
 
 module "eks" {
-  source                 = "../infra/modules/eks"
-  domain_name            = "${var.TEST_ID}.${var.domain}"
-  cluster_name           = var.TEST_ID
-  region                 = "eu-west-1"
-  vpc_availability_zones = ["eu-west-1c", "eu-west-1b"]
-  image_id               = var.eks_node_image_id
-  kubeconfig             = var.kubeconfig
-  cluster_version        = var.cluster_version
+  source                   = "../infra/modules/eks"
+  domain_name              = "${var.TEST_ID}.${var.domain}"
+  cluster_name             = var.TEST_ID
+  region                   = "eu-west-1"
+  vpc_availability_zones   = ["eu-west-1c", "eu-west-1b"]
+  image_id                 = var.eks_node_image_id
+  kubeconfig               = var.kubeconfig
+  cluster_version          = var.cluster_version
   create_external_registry = true
   create_external_database = true
   create_external_storage  = true
@@ -110,15 +110,15 @@ module "certmanager" {
   # source = "github.com/gitpod-io/gitpod//install/infra/terraform/tools/cert-manager?ref=main"
   source = "../infra/modules/tools/cert-manager"
 
-  kubeconfig  = var.kubeconfig
+  kubeconfig = var.kubeconfig
 }
 
 module "clouddns-externaldns" {
   # source = "github.com/gitpod-io/gitpod//install/infra/terraform/tools/external-dns?ref=main"
   source      = "../infra/modules/tools/cloud-dns-external-dns"
   kubeconfig  = var.kubeconfig
-  credentials = data.local_file.dns_credentials.content
-  project     = "dns-for-playgrounds"
+  credentials = data.local_file.sa_credentials.content
+  project     = var.project
 }
 
 module "azure-externaldns" {
@@ -152,10 +152,28 @@ module "aws-issuer" {
   issuer_name         = "route53"
 }
 
+module "k3s-add-dns-record" {
+  source           = "../infra/modules/tools/cloud-dns-ns"
+  credentials      = var.dns_sa_creds
+  nameservers      = module.k3s.name_servers
+  dns_project      = "dns-for-playgrounds"
+  managed_dns_zone = var.gcp_zone
+  domain_name      = "${var.TEST_ID}.${var.domain}"
+}
+
+module "gcp-add-dns-record" {
+  source           = "../infra/modules/tools/cloud-dns-ns"
+  credentials      = var.dns_sa_creds
+  nameservers      = module.gke.name_servers
+  dns_project      = "dns-for-playgrounds"
+  managed_dns_zone = var.gcp_zone
+  domain_name      = "${var.TEST_ID}.${var.domain}"
+}
+
 module "azure-add-dns-record" {
   source           = "../infra/modules/tools/cloud-dns-ns"
   credentials      = var.dns_sa_creds
-  nameservers      = module.aks.domain_nameservers
+  nameservers      = module.aks.name_servers
   dns_project      = "dns-for-playgrounds"
   managed_dns_zone = var.gcp_zone
   domain_name      = "${var.TEST_ID}.${var.domain}"
@@ -164,7 +182,7 @@ module "azure-add-dns-record" {
 module "aws-add-dns-record" {
   source           = "../infra/modules/tools/cloud-dns-ns"
   credentials      = var.dns_sa_creds
-  nameservers      = module.eks.domain_nameservers
+  nameservers      = module.eks.name_servers
   dns_project      = "dns-for-playgrounds"
   managed_dns_zone = var.gcp_zone
   domain_name      = "${var.TEST_ID}.${var.domain}"

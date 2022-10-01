@@ -1228,6 +1228,37 @@
   resolved "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
+"@bufbuild/connect-web@^0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/connect-web/-/connect-web-0.2.1.tgz#a7ee2914bf1b77d640fc4ee3c3a89d626f3015fa"
+  integrity sha512-L580cL9VZCXcjwXMCvIvdFBqdQofVBQcL+jmSis7m8ZxPj5NQ4p7fUhQRTsZMWHkyWINdlZnr7WsHQL0BT7wPQ==
+
+"@bufbuild/protobuf@0.1.1", "@bufbuild/protobuf@^0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-0.1.1.tgz#163dee03af49e82d300dfa2bf60c8c0f04c80b4c"
+  integrity sha512-HAs82bdlN5aUsoTaJNsPd8driezDenOtAh7dVpO5xKEmyB6ibmRIV08MTlIVudnMYbFc1qw7RxhFHoQy0rSvgg==
+
+"@bufbuild/protoc-gen-connect-web@^0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-connect-web/-/protoc-gen-connect-web-0.2.1.tgz#0b29d583f46bec759592aacc2f21604552c2cc2b"
+  integrity sha512-A/M/tXRe5LsdD8xeUBEBxhe8TCqzD6eqKbld9j0KNgsRbrRlYQEMtIBarXXb+dADg+dwcTGS9W/DcfdO9R+Icg==
+  dependencies:
+    "@bufbuild/protoplugin" "0.1.1"
+
+"@bufbuild/protoc-gen-es@^0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-es/-/protoc-gen-es-0.1.1.tgz#526aa846dd14d4515e5c67f9f0619a5df8b8d7e9"
+  integrity sha512-FFY8GfbMgcgN/nt4DtB+IiLvLmfGjQ7dKYVb6ciKCMymXx5MsRxs4xnJXHtpEv2rDVpDYCOhPkjri8o4AYeSPQ==
+  dependencies:
+    "@bufbuild/protoplugin" "0.1.1"
+
+"@bufbuild/protoplugin@0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoplugin/-/protoplugin-0.1.1.tgz#b51e68b5219d1f66a4ea91e248cb6c3b7af09542"
+  integrity sha512-+zCwqiq6xbeM6OG02+eNCd4Rinu1Mtn+HsjMF8U8h5FazOj1fEP9SnXEabOfImOR83vHfk2jocqzrB4IkSZV2Q==
+  dependencies:
+    "@bufbuild/protobuf" "0.1.1"
+
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
   resolved "https://registry.npmjs.org/@cnakazawa/watch/-/watch-1.0.4.tgz"

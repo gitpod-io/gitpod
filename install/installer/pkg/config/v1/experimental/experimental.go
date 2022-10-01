@@ -120,7 +120,7 @@ type WorkspaceConfig struct {
 		UsageReportBucketName string `json:"usageReportBucketName"`
 	} `json:"contentService"`
 
-	EnableProtectedSecrets bool `json:"enableProtectedSecrets"`
+	EnableProtectedSecrets *bool `json:"enableProtectedSecrets"`
 }
 
 type PersistentVolumeClaim struct {

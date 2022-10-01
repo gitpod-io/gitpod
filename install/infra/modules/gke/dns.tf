@@ -9,7 +9,7 @@ resource "google_project_iam_member" "dns-sa-iam" {
   count = var.domain_name == null ? 0 : 1
 
   project = var.project
-  role = "roles/dns.admin"
+  role    = "roles/dns.admin"
 
   member = "serviceAccount:${google_service_account.dns_sa[count.index].email}"
 }

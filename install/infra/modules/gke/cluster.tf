@@ -109,7 +109,7 @@ resource "google_container_node_pool" "regular-workspaces" {
     ]
 
     labels = {
-      "gitpod.io/workload_workspace_regular"  = true
+      "gitpod.io/workload_workspace_regular" = true
     }
 
     preemptible  = false

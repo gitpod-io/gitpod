@@ -1,11 +1,11 @@
 output "cert_manager_issuer" {
   value = try({
-        subscriptionID    = data.azurerm_client_config.current.subscription_id
-        resourceGroupName = azurerm_resource_group.gitpod.name
-        hostedZoneName    = azurerm_dns_zone.dns.0.name
-        managedIdentity = {
-          clientID = azurerm_kubernetes_cluster.k8s.kubelet_identity.0.client_id
-        }
+    subscriptionID    = data.azurerm_client_config.current.subscription_id
+    resourceGroupName = azurerm_resource_group.gitpod.name
+    hostedZoneName    = azurerm_dns_zone.dns.0.name
+    managedIdentity = {
+      clientID = azurerm_kubernetes_cluster.k8s.kubelet_identity.0.client_id
+    }
   }, {})
 }
 
@@ -27,7 +27,7 @@ output "database" {
   }, {})
 }
 
-output "domain_nameservers" {
+output "name_servers" {
   value = try(azurerm_dns_zone.dns.0.name_servers, null)
 }
 
@@ -38,28 +38,28 @@ output "external_dns_secrets" {
 output "external_dns_settings" {
   value = [
     {
-      "name": "provider",
-      "value": "azure"
+      "name" : "provider",
+      "value" : "azure"
     },
     {
-      "name": "azure.resourceGroup",
-      "value": azurerm_resource_group.gitpod.name,
+      "name" : "azure.resourceGroup",
+      "value" : azurerm_resource_group.gitpod.name,
     },
     {
-      "name": "azure.subscriptionId",
-      "value": data.azurerm_client_config.current.subscription_id,
+      "name" : "azure.subscriptionId",
+      "value" : data.azurerm_client_config.current.subscription_id,
     },
     {
-      "name": "azure.tenantId",
-      "value": data.azurerm_client_config.current.tenant_id,
+      "name" : "azure.tenantId",
+      "value" : data.azurerm_client_config.current.tenant_id,
     },
     {
-      "name": "azure.useManagedIdentityExtension",
-      "value": true
+      "name" : "azure.useManagedIdentityExtension",
+      "value" : true
     },
     {
-      "name": "azure.userAssignedIdentityID",
-      "value": azurerm_kubernetes_cluster.k8s.kubelet_identity.0.client_id
+      "name" : "azure.userAssignedIdentityID",
+      "value" : azurerm_kubernetes_cluster.k8s.kubelet_identity.0.client_id
     },
   ]
 }

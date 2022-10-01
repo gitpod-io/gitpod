@@ -69,7 +69,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						}},
 						Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 							common.DefaultEnv(&ctx.Config),
-							common.WorkspaceTracingEnv(ctx),
+							common.WorkspaceTracingEnv(ctx, Component),
 							common.NodeNameEnv(ctx),
 						)),
 						SecurityContext: &corev1.SecurityContext{

@@ -23,7 +23,7 @@ provider "google" {
 
 provider "google" {
   alias       = "dns"
-  credentials = var.dns_sa_creds
+  credentials = var.dns_sa_creds == "" ? var.credentials : var.dns_sa_creds
 }
 
 resource "google_service_account" "gcp_instance" {
@@ -124,58 +124,10 @@ resource "null_resource" "k3sup_install" {
   }
 }
 
-resource "google_dns_record_set" "gitpod-dns" {
-  provider     = google.dns
-  count        = (var.domain_name == null) || (var.managed_dns_zone == null) ? 0 : 1
-  name         = "${var.domain_name}."
-  managed_zone = var.managed_dns_zone
-  project      = var.dns_project == null ? var.gcp_project : var.dns_project
-  type         = "A"
-  ttl          = 5
-
-  rrdatas = [google_compute_instance.k3s_master_instance.network_interface[0].access_config[0].nat_ip]
-}
-
-resource "google_dns_record_set" "gitpod-dns-1" {
-  provider     = google.dns
-  count        = (var.domain_name == null) || (var.managed_dns_zone == null) ? 0 : 1
-  name         = "ws.${var.domain_name}."
-  managed_zone = var.managed_dns_zone
-  project      = var.dns_project == null ? var.gcp_project : var.dns_project
-  type         = "A"
-  ttl          = 5
-
-  rrdatas = [google_compute_instance.k3s_master_instance.network_interface[0].access_config[0].nat_ip]
-}
-
-resource "google_dns_record_set" "gitpod-dns-2" {
-  provider     = google.dns
-  count        = (var.domain_name == null) || (var.managed_dns_zone == null) ? 0 : 1
-  name         = "*.${var.domain_name}."
-  managed_zone = var.managed_dns_zone
-  project      = var.dns_project == null ? var.gcp_project : var.dns_project
-  type         = "A"
-  ttl          = 5
-
-  rrdatas = [google_compute_instance.k3s_master_instance.network_interface[0].access_config[0].nat_ip]
-}
-
-resource "google_dns_record_set" "gitpod-dns-3" {
-  provider     = google.dns
-  count        = (var.domain_name == null) || (var.managed_dns_zone == null) ? 0 : 1
-  name         = "*.ws.${var.domain_name}."
-  managed_zone = var.managed_dns_zone
-  project      = var.dns_project == null ? var.gcp_project : var.dns_project
-  type         = "A"
-  ttl          = 5
-
-  rrdatas = [google_compute_instance.k3s_master_instance.network_interface[0].access_config[0].nat_ip]
-}
-
 resource "random_string" "random" {
-  length           = 4
-  upper            = false
-  special          = false
+  length  = 4
+  upper   = false
+  special = false
 }
 
 resource "google_sql_database_instance" "gitpod" {

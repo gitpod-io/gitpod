@@ -150,7 +150,11 @@ api.{$GITPOD_DOMAIN} {
         output stdout
     }
 
-    reverse_proxy h2c://public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9001
+	gitpod.cors_origin {
+		allowed_origins https://{$GITPOD_DOMAIN}
+	}
+
+	reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002
 }
 
 

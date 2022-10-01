@@ -4008,7 +4008,7 @@ data:
             "type": "browser",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "label": "Browser",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-97cff52e43760ad3ad96aa82d9fba934c5f53be8",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-15ce65ee88cc4bd36d1fdadd5735de4e65b7af05",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
           },
           "code-desktop": {
@@ -5184,7 +5184,9 @@ data:
       "workspaceDefaults": {
         "workspaceImage": "docker.io/gitpod/workspace-full:latest",
         "previewFeatureFlags": [],
-        "defaultFeatureFlags": []
+        "defaultFeatureFlags": [
+          "protected_secrets"
+        ]
       },
       "session": {
         "maxAgeMs": 259200000,
@@ -5300,7 +5302,7 @@ data:
             "type": "browser",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "label": "Browser",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-97cff52e43760ad3ad96aa82d9fba934c5f53be8",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-15ce65ee88cc4bd36d1fdadd5735de4e65b7af05",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
           },
           "code-desktop": {
@@ -9980,7 +9982,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: 129c0d1edb891b6482586f3946cb0173c86ea693948b3f99017a0bf9c7ffdf36
+        gitpod.io/checksum_config: a7fdc707c129e43ce4768f9df84743a94f1232de05359df0078db77748e5a0b3
         hello: world
       creationTimestamp: null
       labels:
@@ -10854,6 +10856,22 @@ spec:
             secretKeyRef:
               key: encryptionKeys
               name: mysql
+        - name: GITPOD_DOMAIN
+          value: gitpod.example.com
+        - name: GITPOD_INSTALLATION_SHORTNAME
+          value: default
+        - name: GITPOD_REGION
+          value: local
+        - name: HOST_URL
+          value: https://gitpod.example.com
+        - name: KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBE_DOMAIN
+          value: svc.cluster.local
+        - name: LOG_LEVEL
+          value: info
         image: eu.gcr.io/gitpod-core-dev/build/db-migrations:test
         imagePullPolicy: IfNotPresent
         name: migrations

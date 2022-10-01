@@ -5,15 +5,23 @@
 package cmd
 
 import (
+	"context"
+	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
+	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/process"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/supervisor"
+	"github.com/prometheus/procfs"
+	reaper "github.com/ramr/go-reaper"
 	"github.com/spf13/cobra"
-	"golang.org/x/sys/unix"
 )
 
 var initCmd = &cobra.Command{
@@ -21,34 +29,14 @@ var initCmd = &cobra.Command{
 	Short: "init the supervisor",
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, true, false)
-		// Because we're reaping with PID -1, we'll catch the child process for
-		// which we've missed the notification anyways.
+		cfg, err := supervisor.GetConfig()
+		if err != nil {
+			log.WithError(err).Info("cannnot load config")
+		}
 		var (
-			sigInput      = make(chan os.Signal, 1)
-			sigReaper     = make(chan os.Signal, 1)
-			sigSupervisor = make(chan os.Signal, 1)
+			sigInput = make(chan os.Signal, 1)
 		)
-		signal.Notify(sigInput, syscall.SIGCHLD, os.Interrupt, syscall.SIGTERM)
-		go func() {
-			for s := range sigInput {
-				switch s {
-				default:
-					sigSupervisor <- s
-					// the reaper needs all signals so that it can turn into
-					// a terminating reaper if need be.
-					fallthrough
-				case syscall.SIGCHLD:
-					// we don't want to blob the SIGINT/SIGTERM behaviour because
-					// the reaper is still busy.
-					select {
-					case sigReaper <- s:
-					default:
-					}
-				}
-			}
-		}()
-
-		go reaper(sigReaper)
+		signal.Notify(sigInput, os.Interrupt, syscall.SIGTERM)
 
 		supervisorPath, err := os.Executable()
 		if err != nil {
@@ -76,66 +64,132 @@ var initCmd = &cobra.Command{
 				return
 			}
 		}()
+		// start the reaper to clean up zombie processes
+		reaper.Reap()
 
 		select {
 		case <-supervisorDone:
 			// supervisor has ended - we're all done here
 			return
-		case s := <-sigSupervisor:
+		case <-sigInput:
 			// we received a terminating signal - pass on to supervisor and wait for it to finish
-			_ = runCommand.Process.Signal(s)
-			<-supervisorDone
+			ctx, cancel := context.WithTimeout(context.Background(), cfg.GetTerminationGracePeriod())
+			defer cancel()
+			slog := newShutdownLogger()
+			defer slog.Close()
+			slog.write("Shutting down all processes")
+
+			terminationDone := make(chan struct{})
+			go func() {
+				defer close(terminationDone)
+				slog.TerminateSync(ctx, runCommand.Process.Pid)
+				terminateAllProcesses(ctx, slog)
+				close(supervisorDone)
+			}()
+			// wait for either successful termination or the timeout
+			select {
+			case <-ctx.Done():
+				// Time is up, but we give all the goroutines a bit more time to react to this.
+				time.Sleep(time.Millisecond * 500)
+			case <-terminationDone:
+			}
+			slog.write("Finished shutting down all processes.")
 		}
 	},
+}
+
+// terminateAllProcesses terminates all processes but ours until there are none anymore or the context is cancelled
+// on context cancellation any still running processes receive a SIGKILL
+func terminateAllProcesses(ctx context.Context, slog shutdownLogger) {
+	for {
+		processes, err := procfs.AllProcs()
+		if err != nil {
+			log.WithError(err).Error("Cannot list processes")
+			slog.write(fmt.Sprintf("Cannot list processes: %s", err))
+			return
+		}
+		// only one process (must be us)
+		if len(processes) == 1 {
+			return
+		}
+		// terminate all processes but ourself
+		var wg sync.WaitGroup
+		for _, proc := range processes {
+			if proc.PID == os.Getpid() {
+				continue
+			}
+			p := proc
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				slog.TerminateSync(ctx, p.PID)
+			}()
+		}
+		wg.Wait()
+	}
 }
 
 func init() {
 	rootCmd.AddCommand(initCmd)
 }
 
-func reaper(sigs <-chan os.Signal) {
-	// The reaper can be turned into a terminating reaper by writing true to this channel.
-	// When in terminating mode, the reaper will send SIGTERM to each child that gets reparented
-	// to us and is still running. We use this mechanism to send SIGTERM to a shell child processes
-	// that get reparented once their parent shell terminates during shutdown.
-	var terminating bool
+type shutdownLogger interface {
+	write(s string)
+	TerminateSync(ctx context.Context, pid int)
+	io.Closer
+}
 
-	for s := range sigs {
-		if s != syscall.SIGCHLD {
-			terminating = true
-			continue
+func newShutdownLogger() shutdownLogger {
+	file := "/workspace/.gitpod/supervisor-termination.log"
+	f, err := os.Create(file)
+	if err != nil {
+		log.WithError(err).WithField("file", file).Error("Couldn't create shutdown log file")
+	}
+	result := shutdownLoggerImpl{
+		file:      f,
+		startTime: time.Now(),
+	}
+	return &result
+}
+
+type shutdownLoggerImpl struct {
+	file      *os.File
+	startTime time.Time
+}
+
+func (l *shutdownLoggerImpl) write(s string) {
+	if l.file != nil {
+		_, err := l.file.WriteString(fmt.Sprintf("[%s] %s \n", time.Since(l.startTime), s))
+		if err != nil {
+			log.WithError(err).Error("couldn't write to log file")
 		}
-
-		for {
-			// wait on the process, hence remove it from the process table
-			pid, err := unix.Wait4(-1, nil, 0, nil)
-			// if we've been interrupted, try again until we're done
-			for err == syscall.EINTR {
-				pid, err = unix.Wait4(-1, nil, 0, nil)
-			}
-			// The calling process does not have any unwaited-for children. Let's wait for a SIGCHLD notification.
-			if err == unix.ECHILD {
-				break
-			}
-			if err != nil {
-				log.WithField("pid", pid).WithError(err).Debug("cannot call waitpid() for re-parented child")
-			}
-			if !terminating {
-				continue
-			}
-			proc, err := os.FindProcess(pid)
-			if err != nil {
-				log.WithField("pid", pid).WithError(err).Debug("cannot find re-parented process")
-				continue
-			}
-			err = proc.Signal(syscall.SIGTERM)
-			if err != nil {
-				if !strings.Contains(err.Error(), "os: process already finished") {
-					log.WithField("pid", pid).WithError(err).Debug("cannot send SIGTERM to re-parented process")
-				}
-				continue
-			}
-			log.WithField("pid", pid).Debug("SIGTERM'ed reparented child process")
+	} else {
+		log.Debug(s)
+	}
+}
+func (l *shutdownLoggerImpl) Close() error {
+	return l.file.Close()
+}
+func (l *shutdownLoggerImpl) TerminateSync(ctx context.Context, pid int) {
+	proc, err := procfs.NewProc(pid)
+	if err != nil {
+		l.write(fmt.Sprintf("Couldn't obtain process information for PID %d.", pid))
+		return
+	}
+	stat, err := proc.Stat()
+	if err != nil {
+		l.write(fmt.Sprintf("Couldn't obtain process information for PID %d.", pid))
+	} else if stat.State == "Z" {
+		return
+	} else {
+		l.write(fmt.Sprintf("Terminating process %s with PID %d (state: %s, cmdlind: %s).", stat.Comm, pid, stat.State, fmt.Sprint(proc.CmdLine())))
+	}
+	err = process.TerminateSync(ctx, pid)
+	if err != nil {
+		if err == process.ErrForceKilled {
+			l.write("Terminating process didn't finish, but had to be force killed")
+		} else {
+			l.write(fmt.Sprintf("Terminating main process errored: %s", err))
 		}
 	}
 }

@@ -79,7 +79,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	env := common.MergeEnv(
 		common.DefaultEnv(&ctx.Config),
 		common.DatabaseEnv(&ctx.Config),
-		common.WebappTracingEnv(ctx),
+		common.WebappTracingEnv(ctx, Component),
 		common.AnalyticsEnv(&ctx.Config),
 		common.MessageBusEnv(&ctx.Config),
 		common.ConfigcatEnv(ctx),

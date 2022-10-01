@@ -31,15 +31,14 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/prometheus/common/route"
-	"github.com/prometheus/procfs"
 	"github.com/soheilhy/cmux"
 	"golang.org/x/crypto/ssh"
-	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
@@ -50,7 +49,6 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/executor"
 	"github.com/gitpod-io/gitpod/content-service/pkg/git"
-	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/activation"
@@ -389,15 +387,15 @@ func Run(options ...RunOption) {
 	}
 
 	log.Info("received SIGTERM (or shutdown) - tearing down")
+	terminalShutdownCtx, cancelTermination := context.WithTimeout(context.Background(), cfg.GetTerminationGracePeriod())
+	defer cancelTermination()
 	cancel()
-	err = termMux.Close()
-	if err != nil {
-		log.WithError(err).Error("terminal closure failed")
-	}
-
-	// terminate all child processes once the IDE is gone
 	ideWG.Wait()
-	terminateChildProcesses()
+	// terminate all terminal processes once the IDE is gone
+	err = termMux.Close(terminalShutdownCtx)
+	if err != nil {
+		log.WithError(err).Error("terminal closing failed")
+	}
 
 	wg.Wait()
 }
@@ -636,7 +634,7 @@ func createExposedPortsImpl(cfg *Config, gitpodService *gitpod.APIoverJSONRPC) p
 		log.Error("auto-port exposure won't work")
 		return &ports.NoopExposedPorts{}
 	}
-	return ports.NewGitpodExposedPorts(cfg.WorkspaceID, cfg.WorkspaceInstanceID, gitpodService)
+	return ports.NewGitpodExposedPorts(cfg.WorkspaceID, cfg.WorkspaceInstanceID, cfg.WorkspaceUrl, gitpodService)
 }
 
 // supervisor ships some binaries we want in the PATH. We could just add some directory to the path, but
@@ -1101,20 +1099,23 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 		log.WithError(err).Fatal("cannot start health endpoint")
 	}
 
+	var unaryInterceptors []grpc.UnaryServerInterceptor
+	var streamInterceptors []grpc.StreamServerInterceptor
 	if cfg.DebugEnable {
-		opts = append(opts,
-			grpc.UnaryInterceptor(grpc_logrus.UnaryServerInterceptor(log.Log)),
-			grpc.StreamInterceptor(grpc_logrus.StreamServerInterceptor(log.Log)),
-		)
+		unaryInterceptors = append(unaryInterceptors, grpc_logrus.UnaryServerInterceptor(log.Log))
+		streamInterceptors = append(streamInterceptors, grpc_logrus.StreamServerInterceptor(log.Log))
 	}
 
 	grpcMetrics := grpc_prometheus.NewServerMetrics()
 	grpcMetrics.EnableHandlingTimeHistogram(
 		grpc_prometheus.WithHistogramBuckets([]float64{.005, .025, .05, .1, .5, 1, 2.5, 5, 30, 60, 120, 240, 600}),
 	)
+	unaryInterceptors = append(unaryInterceptors, grpcMetrics.UnaryServerInterceptor())
+	streamInterceptors = append(streamInterceptors, grpcMetrics.StreamServerInterceptor())
+
 	opts = append(opts,
-		grpc.StreamInterceptor(grpcMetrics.StreamServerInterceptor()),
-		grpc.UnaryInterceptor(grpcMetrics.UnaryServerInterceptor()),
+		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptors...)),
+		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(streamInterceptors...)),
 	)
 
 	m := cmux.New(l)
@@ -1414,77 +1415,6 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 
 	log.WithField("source", src).Info("supervisor: workspace content init finished")
 	cst.MarkContentReady(src)
-}
-
-func terminateChildProcesses() {
-	parent := os.Getpid()
-
-	children, err := processesWithParent(parent)
-	if err != nil {
-		log.WithError(err).WithField("pid", parent).Warn("cannot find children processes")
-		return
-	}
-
-	for pid, uid := range children {
-		privileged := false
-		if initializer.GitpodUID != uid {
-			privileged = true
-		}
-
-		terminateProcess(pid, privileged)
-	}
-}
-
-func terminateProcess(pid int, privileged bool) {
-	var err error
-	if privileged {
-		cmd := exec.Command("kill", "-SIGTERM", fmt.Sprintf("%v", pid))
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err = cmd.Run()
-	} else {
-		err = syscall.Kill(pid, unix.SIGTERM)
-	}
-
-	if err != nil {
-		log.WithError(err).WithField("pid", pid).Debug("child process is already terminated")
-		return
-	}
-
-	log.WithField("pid", pid).Debug("SIGTERM'ed child process")
-}
-
-func processesWithParent(ppid int) (map[int]int, error) {
-	procs, err := procfs.AllProcs()
-	if err != nil {
-		return nil, err
-	}
-
-	children := make(map[int]int)
-	for _, proc := range procs {
-		stat, err := proc.Stat()
-		if err != nil {
-			continue
-		}
-
-		if stat.PPID != ppid {
-			continue
-		}
-
-		status, err := proc.NewStatus()
-		if err != nil {
-			continue
-		}
-
-		uid, err := strconv.Atoi(status.UIDs[0])
-		if err != nil {
-			continue
-		}
-
-		children[proc.PID] = uid
-	}
-
-	return children, nil
 }
 
 func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *terminal.Mux) {

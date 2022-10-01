@@ -8,6 +8,7 @@ install_dependencies() {
     go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28.0
 
     go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2.0
+    go install github.com/bufbuild/connect-go/cmd/protoc-gen-connect-go@v0.5.0
 
     go install github.com/golang/mock/mockgen@v1.6.0
 
@@ -28,12 +29,43 @@ go_protoc() {
     local PROTO_DIR=${2:-.}
     # shellcheck disable=2035
     protoc \
+        --plugin=/workspace/go/bin/protoc-gen-connect-go \
         -I /usr/lib/protoc/include -I"$ROOT_DIR" -I. \
         --go_out=go \
         --go_opt=paths=source_relative \
         --go-grpc_out=go \
         --go-grpc_opt=paths=source_relative \
+        --connect-go_out=go \
+        --connect-go_opt=paths=source_relative \
         "${PROTO_DIR}"/*.proto
+}
+
+typescript_connect() {
+   local ROOT_DIR=$1
+   local PROTO_DIR=${2:-.}
+   local MODULE_DIR
+   # Assigning external program output directly
+   # after the `local` keyword masks the return value (Could be an error).
+   # Should be done in a separate line.
+   MODULE_DIR=$(pwd)
+   TARGET_DIR="$MODULE_DIR"/typescript/src
+
+   pushd typescript > /dev/null || exit
+
+   yarn install
+
+   rm -rf "$TARGET_DIR"
+   mkdir -p "$TARGET_DIR"
+
+   echo "[protoc] Generating TypeScript Connect files"
+   protoc \
+         --plugin=protoc-gen-es="$MODULE_DIR"/typescript/node_modules/.bin/protoc-gen-es \
+         --plugin=protoc-gen-connect-web="$MODULE_DIR"/typescript/node_modules/.bin/protoc-gen-connect-web \
+         --es_out=src \
+         --connect-web_out=src \
+         --connect-web_opt=target=ts \
+         -I /usr/lib/protoc/include -I"$ROOT_DIR" -I.. -I"../$PROTO_DIR" \
+         "../$PROTO_DIR"/*.proto
 }
 
 typescript_ts_protoc() {
