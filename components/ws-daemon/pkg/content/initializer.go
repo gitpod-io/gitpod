@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -390,13 +389,28 @@ func (rs *remoteContentStorage) Download(ctx context.Context, destination string
 	}
 
 	span.SetTag("URL", info.URL)
-	resp, err := http.Get(info.URL)
-	if err != nil {
-		return true, err
-	}
-	defer resp.Body.Close()
 
-	err = archive.ExtractTarbal(ctx, resp.Body, destination, archive.WithUIDMapping(mappings), archive.WithGIDMapping(mappings))
+	tempFile, err := os.CreateTemp("", "remote-content-")
+	if err != nil {
+		return true, xerrors.Errorf("cannot create temporal file: %w", err)
+	}
+	defer tempFile.Close()
+	defer os.Remove(tempFile.Name())
+
+	args := []string{
+		"-x16", "-j12",
+		info.URL,
+		"-o", tempFile.Name(),
+	}
+	cmd := exec.Command("aria2c", args...)
+	var out []byte
+	out, err = cmd.CombinedOutput()
+	if err != nil {
+		log.WithError(err).WithField("out", string(out)).Error("unexpected error downloading file")
+		return true, xerrors.Errorf("unexpected error downloading file")
+	}
+
+	err = archive.ExtractTarbal(ctx, tempFile, destination, archive.WithUIDMapping(mappings), archive.WithGIDMapping(mappings))
 	if err != nil {
 		return true, xerrors.Errorf("tar %s: %s", destination, err.Error())
 	}
