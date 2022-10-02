@@ -98,7 +98,7 @@ export function TeamsSearch() {
                             placeholder="Search Teams"
                             onKeyDown={(k) => k.key === "Enter" && search()}
                             onChange={(v) => {
-                                setSearchTerm(v.target.value.trim());
+                                setSearchTerm(v.target.value.trim().replace(/-/g, " "));
                             }}
                         />
                     </div>
