@@ -162,6 +162,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	defaultFeatureFlags := []NamedWorkspaceFeatureFlag{}
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.Workspace != nil && cfg.Workspace.EnableProtectedSecrets {
+			defaultFeatureFlags = append(defaultFeatureFlags, NamedWorkspaceFeatureProtectedSecrets)
+		}
+		return nil
+	})
+
 	// todo(sje): all these values are configurable
 	scfg := ConfigSerialized{
 		Version:               ctx.VersionManifest.Version,
@@ -175,7 +183,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		WorkspaceDefaults: WorkspaceDefaults{
 			WorkspaceImage:      workspaceImage,
 			PreviewFeatureFlags: []NamedWorkspaceFeatureFlag{},
-			DefaultFeatureFlags: []NamedWorkspaceFeatureFlag{},
+			DefaultFeatureFlags: defaultFeatureFlags,
 			TimeoutDefault:      ctx.Config.Workspace.TimeoutDefault,
 			TimeoutExtended:     ctx.Config.Workspace.TimeoutExtended,
 		},
