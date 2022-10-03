@@ -28,7 +28,6 @@ import {
     WhitelistedRepository,
     Snapshot,
     VolumeSnapshot,
-    LayoutData,
     PrebuiltWorkspace,
     RunningWorkspaceInfo,
     PrebuiltWorkspaceUpdatable,
@@ -42,7 +41,6 @@ import {
 import { TypeORM } from "./typeorm";
 import { DBWorkspace } from "./entity/db-workspace";
 import { DBWorkspaceInstance } from "./entity/db-workspace-instance";
-import { DBLayoutData } from "./entity/db-layout-data";
 import { DBSnapshot } from "./entity/db-snapshot";
 import { DBVolumeSnapshot } from "./entity/db-volume-snapshot";
 import { DBWorkspaceInstanceUser } from "./entity/db-workspace-instance-user";
@@ -107,10 +105,6 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         return await (
             await this.getManager()
         ).getRepository<DBPrebuiltWorkspaceUpdatable>(DBPrebuiltWorkspaceUpdatable);
-    }
-
-    protected async getLayoutDataRepo(): Promise<Repository<DBLayoutData>> {
-        return await (await this.getManager()).getRepository<DBLayoutData>(DBLayoutData);
     }
 
     public async connect(maxTries: number = 3, timeout: number = 2000): Promise<void> {
@@ -975,17 +969,6 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         }
 
         return (await query.getMany()) as any;
-    }
-
-    public async findLayoutDataByWorkspaceId(workspaceId: string): Promise<LayoutData | undefined> {
-        const layoutDataRepo = await this.getLayoutDataRepo();
-        return layoutDataRepo.findOne(workspaceId);
-    }
-
-    public async storeLayoutData(layoutData: LayoutData): Promise<LayoutData> {
-        const layoutDataRepo = await this.getLayoutDataRepo();
-        const dbLayoutData = layoutData as DBLayoutData;
-        return await layoutDataRepo.save(dbLayoutData);
     }
 
     /**

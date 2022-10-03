@@ -1805,50 +1805,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return [];
     }
 
-    /**
-     * stores/updates layout information for the given workspace
-     */
-    async storeLayout(ctx: TraceContext, workspaceId: string, layoutData: string): Promise<void> {
-        traceAPIParams(ctx, { workspaceId }); // leave out layoutData because of size (> 64KiB in some cases)
-        traceWI(ctx, { workspaceId });
-
-        const user = this.checkAndBlockUser("storeLayout");
-        const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
-        if (!workspace || workspace.ownerId !== user.id) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} does not exist.`);
-        }
-
-        await this.guardAccess({ kind: "workspace", subject: workspace }, "update");
-
-        await this.workspaceDb.trace(ctx).storeLayoutData({
-            workspaceId,
-            lastUpdatedTime: new Date().toISOString(),
-            layoutData,
-        });
-    }
-
-    /**
-     * retrieves layout information for the given workspace
-     */
-    async getLayout(ctx: TraceContext, workspaceId: string): Promise<string | undefined> {
-        traceAPIParams(ctx, { workspaceId });
-        traceWI(ctx, { workspaceId });
-
-        this.checkUser("getLayout");
-
-        const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
-        if (!workspace) {
-            return;
-        }
-        await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
-
-        const layoutData = await this.workspaceDb.trace(ctx).findLayoutDataByWorkspaceId(workspaceId);
-        if (!layoutData) {
-            return;
-        }
-        return layoutData.layoutData;
-    }
-
     // Get environment variables (filter by repository pattern precedence)
     async getEnvVars(ctx: TraceContext): Promise<UserEnvVarValue[]> {
         const user = this.checkUser("getEnvVars");
