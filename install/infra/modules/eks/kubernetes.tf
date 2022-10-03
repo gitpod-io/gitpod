@@ -85,9 +85,6 @@ module "eks" {
   subnet_ids = module.vpc.public_subnets
 
   cluster_addons = {
-    coredns = {
-      resolve_conflicts = "OVERWRITE"
-    }
     vpc-cni = {
       resolve_conflicts        = "OVERWRITE"
       service_account_role_arn = module.vpc_cni_irsa.iam_role_arn
