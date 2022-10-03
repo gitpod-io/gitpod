@@ -386,6 +386,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
         const span = TraceContext.startSpan(method, undefined);
         const ctx = { span };
         const userId = this.clientMetadata.userId;
+        const timer = apiCallDurationHistogram.startTimer();
         try {
             // generic tracing data
             traceClientMetadata(ctx, this.clientMetadata);
@@ -424,14 +425,14 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
             }
 
             // actual call
-            const end = apiCallDurationHistogram.startTimer();
             const result = await this.target[method](ctx, ...args); // we can inject TraceContext here because of GitpodServerWithTracing
             increaseApiCallCounter(method, 200);
-            observeAPICallsDuration(method, end());
+            observeAPICallsDuration(method, 200, timer());
             return result;
         } catch (e) {
             if (e instanceof ResponseError) {
                 increaseApiCallCounter(method, e.code);
+                observeAPICallsDuration(method, e.code, timer());
                 TraceContext.setJsonRPCError(ctx, method, e);
 
                 log.info({ userId }, `Request ${method} unsuccessful: ${e.code}/"${e.message}"`, { method, args });
@@ -440,6 +441,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
 
                 const err = new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, "internal server error");
                 increaseApiCallCounter(method, err.code);
+                observeAPICallsDuration(method, err.code, timer());
                 TraceContext.setJsonRPCError(ctx, method, err, true);
 
                 log.error({ userId }, `Request ${method} failed with internal server error`, e, { method, args });
