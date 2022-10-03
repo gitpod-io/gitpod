@@ -21,11 +21,6 @@ provider "google" {
   zone        = var.gcp_zone
 }
 
-provider "google" {
-  alias       = "dns"
-  credentials = var.dns_sa_creds == "" ? var.credentials : var.dns_sa_creds
-}
-
 resource "google_service_account" "gcp_instance" {
   account_id   = "sa-${var.name}"
   display_name = "Service Account"
