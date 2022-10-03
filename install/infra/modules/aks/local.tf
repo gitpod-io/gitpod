@@ -14,9 +14,9 @@ locals {
   ])
 
   workspace_name = replace(terraform.workspace, "/[\\W\\-]/", "") # alphanumeric workspace name
-  db       = "GP_Gen5_2"
-  location = substr(var.location, 0, 3) # Short code for location
-  machine  = "Standard_D4_v3"
+  db             = "GP_Gen5_2"
+  location       = substr(var.location, 0, 3) # Short code for location
+  machine        = "Standard_D4_v3"
   network_security_rules = var.enable_airgapped ? [
     {
       name                       = "AllowContainerRegistry"
@@ -78,7 +78,7 @@ locals {
   nodes = [
     {
       name = "services"
-       labels = {
+      labels = {
         lookup(local.labels, "workload_meta")      = true
         lookup(local.labels, "workload_ide")       = true
         lookup(local.labels, "workspace_services") = true

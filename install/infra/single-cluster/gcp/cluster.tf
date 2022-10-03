@@ -9,7 +9,7 @@ module "gke" {
   zone                    = var.zone
   workspaces_machine_type = "n2d-standard-16"
 
-  domain_name = var.domain_name
+  domain_name              = var.domain_name
   enable_external_database = var.enable_external_database
   enable_external_storage  = var.enable_external_storage
   enable_external_registry = var.enable_external_registry
