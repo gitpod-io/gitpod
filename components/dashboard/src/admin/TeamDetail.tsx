@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import moment from "moment";
+import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { Team, TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
 import { getGitpodService } from "../service/service";
@@ -60,7 +60,7 @@ export default function TeamDetail(props: { team: Team }) {
                     </div>
                     <span className="mb-6 text-gray-400">/t/{team.slug}</span>
                     <span className="text-gray-400"> · </span>
-                    <span className="text-gray-400">Created on {moment(team.creationTime).format("MMM D, YYYY")}</span>
+                    <span className="text-gray-400">Created on {dayjs(team.creationTime).format("MMM D, YYYY")}</span>
                 </div>
             </div>
             <div className="flex mt-6">
@@ -127,7 +127,7 @@ export default function TeamDetail(props: { team: Team }) {
                                 </Link>
                             </ItemField>
                             <ItemField className="my-auto">
-                                <span className="text-gray-400">{moment(m.memberSince).fromNow()}</span>
+                                <span className="text-gray-400">{dayjs(m.memberSince).fromNow()}</span>
                             </ItemField>
                             <ItemField className="flex items-center my-auto">
                                 <span className="text-gray-400 capitalize">

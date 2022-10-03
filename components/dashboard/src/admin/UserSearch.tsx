@@ -5,7 +5,7 @@
  */
 
 import { AdminGetListResult, User } from "@gitpod/gitpod-protocol";
-import moment from "moment";
+import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
@@ -138,7 +138,7 @@ function UserEntry(p: { user: User }) {
                     </div>
                 </div>
                 <div className="flex w-5/12 self-center">
-                    <div className="text-sm w-full text-gray-400 truncate">{moment(p.user.creationDate).fromNow()}</div>
+                    <div className="text-sm w-full text-gray-400 truncate">{dayjs(p.user.creationDate).fromNow()}</div>
                 </div>
             </div>
         </Link>

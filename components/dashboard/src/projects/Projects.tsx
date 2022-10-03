@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import moment from "moment";
+import dayjs from "dayjs";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import projectsEmpty from "../images/projects-empty.svg";
@@ -84,8 +84,8 @@ export default function () {
     };
 
     function hasNewerPrebuild(p0: Project, p1: Project): number {
-        return moment(lastPrebuilds.get(p1.id)?.info?.startedAt || "1970-01-01").diff(
-            moment(lastPrebuilds.get(p0.id)?.info?.startedAt || "1970-01-01"),
+        return dayjs(lastPrebuilds.get(p1.id)?.info?.startedAt || "1970-01-01").diff(
+            dayjs(lastPrebuilds.get(p0.id)?.info?.startedAt || "1970-01-01"),
         );
     }
 
@@ -266,7 +266,7 @@ export default function () {
                                                         ·
                                                     </span>
                                                     <div className="flex-shrink-0 text-gray-400 dark:text-gray-500 group-hover:text-gray-800 dark:group-hover:text-gray-300">
-                                                        {moment(lastPrebuilds.get(p.id)?.info?.startedAt).fromNow()}
+                                                        {dayjs(lastPrebuilds.get(p.id)?.info?.startedAt).fromNow()}
                                                     </div>
                                                 </Link>
                                                 <Link

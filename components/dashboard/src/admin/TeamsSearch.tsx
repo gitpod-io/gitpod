@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import moment from "moment";
+import dayjs from "dayjs";
 import { useState, useEffect } from "react";
 
 import TeamDetail from "./TeamDetail";
@@ -150,7 +150,7 @@ export function TeamsSearch() {
                     </div>
                     <div className="flex w-5/12 self-center">
                         <div className="text-sm w-full text-gray-400 truncate">
-                            {moment(props.team.creationTime).format("MMM D, YYYY")}
+                            {dayjs(props.team.creationTime).format("MMM D, YYYY")}
                         </div>
                     </div>
                 </div>

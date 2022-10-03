@@ -15,7 +15,7 @@ import {
     matchesInstanceIdOrLegacyWorkspaceIdExactly,
     matchesNewWorkspaceIdExactly,
 } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
-import moment from "moment";
+import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
@@ -195,7 +195,7 @@ function WorkspaceEntry(p: { ws: WorkspaceAndInstance }) {
                 </div>
                 <div className="flex w-2/12 self-center">
                     <div className="text-sm w-full text-gray-400 truncate">
-                        {moment(p.ws.instanceCreationTime || p.ws.workspaceCreationTime).fromNow()}
+                        {dayjs(p.ws.instanceCreationTime || p.ws.workspaceCreationTime).fromNow()}
                     </div>
                 </div>
             </div>

@@ -5,7 +5,7 @@
  */
 
 import { TeamMemberInfo, TeamMemberRole, TeamMembershipInvite } from "@gitpod/gitpod-protocol";
-import moment from "moment";
+import dayjs from "dayjs";
 import { useContext, useEffect, useState } from "react";
 import { useHistory, useLocation } from "react-router";
 import Header from "../components/Header";
@@ -218,7 +218,7 @@ export default function () {
                                     </div>
                                 </ItemField>
                                 <ItemField className="my-auto">
-                                    <span className="text-gray-400">{moment(m.memberSince).fromNow()}</span>
+                                    <span className="text-gray-400">{dayjs(m.memberSince).fromNow()}</span>
                                 </ItemField>
                                 <ItemField className="flex items-center my-auto">
                                     <span className="text-gray-400 capitalize">
