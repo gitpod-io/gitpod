@@ -85,9 +85,6 @@ module "eks" {
   subnet_ids = module.vpc.public_subnets
 
   cluster_addons = {
-    coredns = {
-      resolve_conflicts = "OVERWRITE"
-    }
     vpc-cni = {
       resolve_conflicts        = "OVERWRITE"
       service_account_role_arn = module.vpc_cni_irsa.iam_role_arn
@@ -132,26 +129,26 @@ resource "null_resource" "kubeconfig" {
 // Install Calico Here
 
 module "service-nodes" {
-  depends_on = [module.eks]
 
   source  = "terraform-aws-modules/eks/aws//modules/eks-managed-node-group"
-  version = "18.30.0"
+  version = "18.8.1"
 
   cluster_name        = var.cluster_name
   cluster_version     = var.cluster_version
   cluster_endpoint    = module.eks.cluster_endpoint
   cluster_auth_base64 = module.eks.cluster_certificate_authority_data
+  vpc_id              = module.vpc.vpc_id
+  iam_role_name       = format("%s-%s", substr("${var.cluster_name}-svc-ng", 0, 58), random_string.ng_role_suffix.result)
+  subnet_ids          = module.vpc.public_subnets
+  vpc_security_group_ids = [
+    module.eks.cluster_security_group_id,
+  ]
 
-  enable_bootstrap_user_data = true
-  instance_types             = [var.service_machine_type]
-  name                       = "service-${var.cluster_name}"
-  create_iam_role            = false
-  iam_role_arn               = module.vpc_cni_irsa.iam_role_arn
-  iam_role_name              = format("%s-%s", substr("${var.cluster_name}-svc-ng", 0, 58), random_string.ng_role_suffix.result)
-  subnet_ids                 = module.vpc.public_subnets
-  min_size                   = 1
-  max_size                   = 4
-  desired_size               = 2
+  instance_types = [var.service_machine_type]
+  name           = "service-${var.cluster_name}"
+  min_size       = 1
+  max_size       = 4
+  desired_size   = 2
   block_device_mappings = [{
     device_name = "/dev/sda1"
 
