@@ -93,17 +93,6 @@ export class WorkspaceFactory {
                 basedOnSnapshotId: context.snapshotId,
                 imageSource: workspace.imageSource,
             };
-            if (snapshot.layoutData) {
-                // we don't need to await here, as the layoutdata will be requested earliest in a couple of seconds by the theia IDE
-                /** no await */ this.db
-                    .trace({ span })
-                    .storeLayoutData({
-                        workspaceId: id,
-                        lastUpdatedTime: date,
-                        layoutData: snapshot.layoutData,
-                    })
-                    .catch((err) => log.error("createForSnapshot.storeLayoutData", err));
-            }
             await this.db.trace({ span }).store(newWs);
             return newWs;
         } catch (e) {

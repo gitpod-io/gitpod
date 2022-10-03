@@ -14,7 +14,6 @@ import {
     WhitelistedRepository,
     Snapshot,
     VolumeSnapshot,
-    LayoutData,
     PrebuiltWorkspace,
     PrebuiltWorkspaceUpdatable,
     RunningWorkspaceInfo,
@@ -195,9 +194,6 @@ export interface WorkspaceDB {
     findUpdatablesForPrebuild(pwsid: string): Promise<PrebuiltWorkspaceUpdatable[]>;
     markUpdatableResolved(updatableId: string): Promise<void>;
     getUnresolvedUpdatables(limit?: number): Promise<PrebuiltUpdatableAndWorkspace[]>;
-
-    findLayoutDataByWorkspaceId(workspaceId: string): Promise<LayoutData | undefined>;
-    storeLayoutData(layoutData: LayoutData): Promise<LayoutData>;
 
     hardDeleteWorkspace(workspaceID: string): Promise<void>;
 

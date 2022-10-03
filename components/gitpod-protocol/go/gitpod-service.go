@@ -77,8 +77,6 @@ type APIInterface interface {
 	TakeSnapshot(ctx context.Context, options *TakeSnapshotOptions) (res string, err error)
 	WaitForSnapshot(ctx context.Context, snapshotId string) (err error)
 	GetSnapshots(ctx context.Context, workspaceID string) (res []*string, err error)
-	StoreLayout(ctx context.Context, workspaceID string, layoutData string) (err error)
-	GetLayout(ctx context.Context, workspaceID string) (res string, err error)
 	GuessGitTokenScopes(ctx context.Context, params *GuessGitTokenScopesParams) (res *GuessedGitTokenScopes, err error)
 	TrackEvent(ctx context.Context, event *RemoteTrackMessage) (err error)
 	GetSupportedWorkspaceClasses(ctx context.Context) (res []*SupportedWorkspaceClass, err error)
@@ -196,10 +194,6 @@ const (
 	FunctionTakeSnapshot FunctionName = "takeSnapshot"
 	// FunctionGetSnapshots is the name of the getSnapshots function
 	FunctionGetSnapshots FunctionName = "getSnapshots"
-	// FunctionStoreLayout is the name of the storeLayout function
-	FunctionStoreLayout FunctionName = "storeLayout"
-	// FunctionGetLayout is the name of the getLayout function
-	FunctionGetLayout FunctionName = "getLayout"
 	// FunctionGuessGitTokenScopes is the name of the guessGitTokenScopes function
 	FunctionGuessGitTokenScope FunctionName = "guessGitTokenScopes"
 	// FunctionTrackEvent is the name of the trackEvent function
@@ -1342,45 +1336,6 @@ func (gp *APIoverJSONRPC) GetSnapshots(ctx context.Context, workspaceID string) 
 	return
 }
 
-// StoreLayout calls storeLayout on the server
-func (gp *APIoverJSONRPC) StoreLayout(ctx context.Context, workspaceID string, layoutData string) (err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	_params = append(_params, workspaceID)
-	_params = append(_params, layoutData)
-
-	err = gp.C.Call(ctx, "storeLayout", _params, nil)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-// GetLayout calls getLayout on the server
-func (gp *APIoverJSONRPC) GetLayout(ctx context.Context, workspaceID string) (res string, err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	_params = append(_params, workspaceID)
-
-	var result string
-	err = gp.C.Call(ctx, "getLayout", _params, &result)
-	if err != nil {
-		return
-	}
-	res = result
-
-	return
-}
-
 // GuessGitTokenScopes calls GuessGitTokenScopes on the server
 func (gp *APIoverJSONRPC) GuessGitTokenScopes(ctx context.Context, params *GuessGitTokenScopesParams) (res *GuessedGitTokenScopes, err error) {
 	if gp == nil {
@@ -1865,7 +1820,6 @@ type GenerateNewGitpodTokenOptions struct {
 
 // TakeSnapshotOptions is the TakeSnapshotOptions message type
 type TakeSnapshotOptions struct {
-	LayoutData  string `json:"layoutData,omitempty"`
 	WorkspaceID string `json:"workspaceId,omitempty"`
 	DontWait    bool   `json:"dontWait,omitempty"`
 }
