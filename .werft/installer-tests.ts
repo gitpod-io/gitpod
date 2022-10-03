@@ -21,6 +21,7 @@ const upgrade: string = annotations.upgrade || "false"; // setting to true will 
 const skipTests: string = annotations.skipTests || "false"; // setting to true skip the integration tests
 const selfSigned: string = annotations.selfSigned || "false";
 const deps: string = annotations.deps || ""; // options: ["external", "internal"] setting to `external` will ensure that all resource dependencies(storage, db, registry) will be external. if unset, a random selection will be used
+const deleteOnFail: string = annotations.deleteOnFail || "true";
 
 const baseDomain: string = annotations.domain || "tests.gitpod-self-hosted.com";
 const gcpDnsZone: string = baseDomain.replace(/\./g, '-');
@@ -265,7 +266,9 @@ if (config === undefined) {
 }
 
 installerTests(TEST_CONFIGURATIONS[testConfig]).catch((err) => {
-    cleanup();
+    if(deleteOnFail == "true") {
+        cleanup();
+    }
     console.error(err);
     process.exit(1);
 });
