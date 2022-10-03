@@ -13,7 +13,7 @@ install_dependencies() {
 
     go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.10.0
 
-    curl -sSo /tmp/protoc-gen-grpc-java https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/1.45.0/protoc-gen-grpc-java-1.45.0-linux-x86_64.exe
+    curl -sSo /tmp/protoc-gen-grpc-java https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/1.49.0/protoc-gen-grpc-java-1.49.0-linux-x86_64.exe
     chmod +x /tmp/protoc-gen-grpc-java
 }
 

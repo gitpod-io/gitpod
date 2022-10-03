@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
-	github.com/opencontainers/runtime-spec v1.0.3-0.20220601164019-72c1f0b44f79
+	github.com/opencontainers/runtime-spec v1.0.3-0.20220909204839-494a5a6aca78
 	github.com/rootless-containers/rootlesskit v1.0.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/pflag v1.0.5
