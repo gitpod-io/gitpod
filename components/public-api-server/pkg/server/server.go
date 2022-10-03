@@ -6,11 +6,12 @@ package server
 
 import (
 	"fmt"
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 
 	"github.com/gitpod-io/gitpod/public-api/config"
 	"github.com/gorilla/handlers"
@@ -33,12 +34,9 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 		return fmt.Errorf("failed to parse Gitpod API URL: %w", err)
 	}
 
-	registry := prometheus.NewRegistry()
-
 	srv, err := baseserver.New("public_api_server",
 		baseserver.WithLogger(logger),
 		baseserver.WithConfig(cfg.Server),
-		baseserver.WithMetricsRegistry(registry),
 		baseserver.WithVersion(version),
 	)
 	if err != nil {
@@ -66,7 +64,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 
 	srv.HTTPMux().Handle("/stripe/invoices/webhook", handlers.ContentTypeHandler(stripeWebhookHandler, "application/json"))
 
-	if registerErr := register(srv, gitpodAPI, registry); registerErr != nil {
+	if registerErr := register(srv, gitpodAPI, srv.MetricsRegistry()); registerErr != nil {
 		return fmt.Errorf("failed to register services: %w", registerErr)
 	}
 
