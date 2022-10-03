@@ -322,7 +322,7 @@ self-signed-config:
 	@cat "${HOME}"/.local/share/mkcert/rootCA.pem > ./ca.pem
 	@mkcert -cert-file "./ssl.crt" \
 	  -key-file "./ssl.key" \
-	  "*.ws.${TF_VAR_TEST_ID}.${TF_VAR_domain}" "*.${TF_VAR_TEST_ID}.${TF_VAR_domain}" "${TF_VAR_TEST_ID}.${TF_VAR_domain}"
+	  "*.ws.${TF_VAR_TEST_ID}.${DOMAIN}" "*.${TF_VAR_TEST_ID}.${DOMAIN}" "${TF_VAR_TEST_ID}.${DOMAIN}"
 
 	@export CA_CERT=$$(cat ./ca.pem | base64 -w 0) && \
 	export SSL_CERT=$$(cat ./ssl.crt | base64 -w 0) && \
@@ -419,11 +419,11 @@ check-kots-app:
 self_signed ?= false
 
 check-gitpod-installation: delete-cm-setup check-kots-app check-var-TF_VAR_TEST_ID
-	@echo "Curling https://${TF_VAR_TEST_ID}.${TF_VAR_domain}/api/version"
+	@echo "Curling https://${TF_VAR_TEST_ID}.${DOMAIN}/api/version"
 ifeq (true,$(self_signed))
 	export SSL_CERT_FILE=./ca.pem
 endif
-	@curl -i -X GET https://${TF_VAR_TEST_ID}.${TF_VAR_domain}/api/version || { echo "Curling Gitpod endpoint failed"; exit 1; }
+	@curl -i -X GET https://${TF_VAR_TEST_ID}.${DOMAIN}/api/version || { echo "Curling Gitpod endpoint failed"; exit 1; }
 
 define runtests
 	./tests.sh ${KUBECONFIG} $(1)

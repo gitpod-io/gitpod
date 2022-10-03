@@ -14,4 +14,4 @@ create_external_database = true
 create_external_storage  = true
 create_external_registry = true
 
-kubeconfig = KUBECONFIG
+kubeconfig = "${KUBECONFIG}"

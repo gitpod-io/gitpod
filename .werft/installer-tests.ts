@@ -60,8 +60,8 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         DESCRIPTION: `${op} Gitpod on GKE managed cluster(version ${k8s_version})`,
         PHASES: [
             "STANDARD_CLUSTER",
+            "EXTERNALDNS",
             "CERT_MANAGER",
-            "GCP_MANAGED_DNS",
             "CLUSTER_ISSUER",
             "UPLOAD_CREDENTIALS",
             "GENERATE_KOTS_CONFIG",

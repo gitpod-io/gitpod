@@ -8,10 +8,10 @@ region  = "europe-west1"
 zone    = "europe-west1-b"
 project = "sh-automated-tests"
 
-credentials_path = GOOGLE_APPLICATION_CREDENTIALS
+credentials_path = "${GOOGLE_APPLICATION_CREDENTIALS}"
 
-cluster_version = CLUSTER_VERSION
+cluster_version = "${CLUSTER_VERSION}"
 
-image_id = UBUNTU_IMAGE
+image_id = "${UBUNTU_IMAGE}"
 
-kubeconfig = KUBECONFIG
+kubeconfig = "${KUBECONFIG}"
