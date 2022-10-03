@@ -5,15 +5,15 @@
  */
 
 import { CodeChallengeMethod, OAuthAuthCode, OAuthClient, OAuthScope } from "@jmondi/oauth2-server";
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { Transformer } from "../transformer";
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from "typeorm";
 import { TypeORM } from "../typeorm";
+import { Transformer } from "../transformer";
 import { DBUser } from "./db-user";
 
 @Entity({ name: "d_b_oauth_auth_code_entry" })
 export class DBOAuthAuthCodeEntry implements OAuthAuthCode {
-    @PrimaryGeneratedColumn()
-    id: number;
+    @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
+    id: string;
 
     @Column({
         type: "varchar",
