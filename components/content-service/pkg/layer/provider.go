@@ -346,31 +346,27 @@ func (s *Provider) GetContentLayerPVC(ctx context.Context, owner, workspaceID st
 			return
 		}
 	}
-	if gis := initializer.GetGit(); gis != nil {
-		span.LogKV("initializer", "Git")
-
-		cdesc, err := executor.Prepare(initializer, nil)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		layer, err = contentDescriptorToLayerPVC(cdesc)
-		if err != nil {
-			return nil, nil, err
-		}
-		layerReady, err := workspaceReadyLayerPVC(csapi.WorkspaceInitFromOther)
-		if err != nil {
-			return nil, nil, err
-		}
-		return []Layer{*layer, *layerReady}, nil, nil
-	}
 	if initializer.GetBackup() != nil {
 		// We were asked to restore a backup and have tried above. We've failed to restore the backup,
 		// hance the backup initializer failed.
 		return nil, nil, xerrors.Errorf("no backup found")
 	}
 
-	return nil, nil, xerrors.Errorf("no backup or valid initializer present")
+	// catch all for all other initializers
+	cdesc, err := executor.Prepare(initializer, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	layer, err = contentDescriptorToLayerPVC(cdesc)
+	if err != nil {
+		return nil, nil, err
+	}
+	layerReady, err := workspaceReadyLayerPVC(csapi.WorkspaceInitFromOther)
+	if err != nil {
+		return nil, nil, err
+	}
+	return []Layer{*layer, *layerReady}, nil, nil
 }
 
 func (s *Provider) getSnapshotContentLayer(ctx context.Context, sp *csapi.SnapshotInitializer) (l []Layer, manifest *csapi.WorkspaceContentManifest, err error) {
