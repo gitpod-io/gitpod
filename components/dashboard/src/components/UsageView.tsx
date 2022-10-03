@@ -24,6 +24,7 @@ import { ReactComponent as UsageIcon } from "../images/usage-default.svg";
 import { toRemoteURL } from "../projects/render-utils";
 import { WorkspaceType } from "@gitpod/gitpod-protocol";
 import PillLabel from "./PillLabel";
+import dayjs from "dayjs";
 
 interface UsageViewProps {
     attributionId: AttributionId;
@@ -32,11 +33,9 @@ interface UsageViewProps {
 function UsageView({ attributionId }: UsageViewProps) {
     const [usagePage, setUsagePage] = useState<ListUsageResponse | undefined>(undefined);
     const [errorMessage, setErrorMessage] = useState("");
-    const today = new Date();
-    const startOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const timestampStartOfCurrentMonth = startOfCurrentMonth.getTime();
-    const [startDateOfBillMonth, setStartDateOfBillMonth] = useState(timestampStartOfCurrentMonth);
-    const [endDateOfBillMonth, setEndDateOfBillMonth] = useState(Date.now());
+    const startOfCurrentMonth = dayjs().startOf("month");
+    const [startDateOfBillMonth, setStartDateOfBillMonth] = useState(startOfCurrentMonth);
+    const [endDateOfBillMonth, setEndDateOfBillMonth] = useState(dayjs());
     const [totalCreditsUsed, setTotalCreditsUsed] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -51,8 +50,8 @@ function UsageView({ attributionId }: UsageViewProps) {
         }
         const request: ListUsageRequest = {
             attributionId: AttributionId.render(attributionId),
-            from: startDateOfBillMonth,
-            to: endDateOfBillMonth,
+            from: startDateOfBillMonth.unix(),
+            to: endDateOfBillMonth.unix(),
             order: Ordering.ORDERING_DESCENDING,
             pagination: {
                 perPage: 50,
@@ -101,7 +100,7 @@ function UsageView({ attributionId }: UsageViewProps) {
         return inMinutes + " min";
     };
 
-    const handleMonthClick = (start: any, end: any) => {
+    const handleMonthClick = (start: dayjs.Dayjs, end: dayjs.Dayjs) => {
         setStartDateOfBillMonth(start);
         setEndDateOfBillMonth(end);
     };
@@ -109,19 +108,19 @@ function UsageView({ attributionId }: UsageViewProps) {
     const getBillingHistory = () => {
         let rows = [];
         // This goes back 6 months from the current month
+        const startOfCurrentMonth = dayjs().startOf("month");
+
         for (let i = 1; i < 7; i++) {
-            const endDateVar = i - 1;
-            const startDate = new Date(today.getFullYear(), today.getMonth() - i);
-            const endDate = new Date(today.getFullYear(), today.getMonth() - endDateVar, 0);
-            const timeStampOfStartDate = startDate.getTime();
-            const timeStampOfEndDate = endDate.getTime();
+            const start = startOfCurrentMonth.subtract(i, "month");
+            const end = start.endOf("month");
+
             rows.push(
                 <div
                     key={`billing${i}`}
                     className="text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500 truncate cursor-pointer gp-link"
-                    onClick={() => handleMonthClick(timeStampOfStartDate, timeStampOfEndDate)}
+                    onClick={() => handleMonthClick(start, end)}
                 >
-                    {startDate.toLocaleString("default", { month: "long" })} {startDate.getFullYear()}
+                    {start.toDate().toLocaleString("default", { month: "long" })} {start.toDate().getFullYear()}
                 </div>,
             );
         }
@@ -145,9 +144,9 @@ function UsageView({ attributionId }: UsageViewProps) {
         <>
             <Header
                 title="Usage"
-                subtitle={`${new Date(startDateOfBillMonth).toLocaleDateString()} - ${new Date(
-                    endDateOfBillMonth,
-                ).toLocaleDateString()} (updated every 15 minutes).`}
+                subtitle={`${startDateOfBillMonth.toDate().toLocaleDateString()} - ${endDateOfBillMonth
+                    .toDate()
+                    .toLocaleDateString()} (updated every 15 minutes).`}
             />
             <div className="app-container pt-5">
                 {errorMessage && <p className="text-base">{errorMessage}</p>}
@@ -159,10 +158,10 @@ function UsageView({ attributionId }: UsageViewProps) {
                                     <div className="text-base text-gray-500 truncate">Current Month</div>
                                     <div
                                         className="text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500 truncate cursor-pointer mb-5"
-                                        onClick={() => handleMonthClick(timestampStartOfCurrentMonth, Date.now())}
+                                        onClick={() => handleMonthClick(startOfCurrentMonth, dayjs())}
                                     >
-                                        {startOfCurrentMonth.toLocaleString("default", { month: "long" })}{" "}
-                                        {startOfCurrentMonth.getFullYear()}
+                                        {startOfCurrentMonth.toDate().toLocaleString("default", { month: "long" })}{" "}
+                                        {startOfCurrentMonth.toDate().getFullYear()}
                                     </div>
                                     <div className="text-base text-gray-500 truncate">Previous Months</div>
                                     {getBillingHistory()}
@@ -217,10 +216,10 @@ function UsageView({ attributionId }: UsageViewProps) {
                                             workspaces
                                         </a>{" "}
                                         in{" "}
-                                        {new Date(startDateOfBillMonth).toLocaleString("default", {
+                                        {startDateOfBillMonth.toDate().toLocaleString("default", {
                                             month: "long",
                                         })}{" "}
-                                        {new Date(startDateOfBillMonth).getFullYear()} or checked your other teams?
+                                        {startDateOfBillMonth.toDate().getFullYear()} or checked your other teams?
                                     </p>
                                 </div>
                             )}
