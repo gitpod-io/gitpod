@@ -7,6 +7,10 @@ TOPDIR=$(shell pwd)
 
 KUBECONFIG := "$(TOPDIR)/kubeconfig"
 
+cert_secret := ${TF_VAR_TEST_ID}-cert-secret.yaml
+github_oauth_secret := ${TF_VAR_TEST_ID}-github-secret.yaml
+config_patch := ./manifests/config_patch.yaml
+
 check-env-sub-domain:
 ifndef TF_VAR_TEST_ID
 	$(error TF_VAR_TEST_ID is not defined)
@@ -210,21 +214,21 @@ get-github-config:
 ifneq ($(GITHUB_SCM_OAUTH),)
 	export SCM_OAUTH=./manifests/github-oauth.yaml && \
 	cat $$GITHUB_SCM_OAUTH > $$SCM_OAUTH && \
-	yq w -i $$SCM_OAUTH 'oauth.callBackUrl' https://scm.${DOMAIN}/auth/github.com/callback?state=${TF_VAR_TEST_ID} && \
-	kubectl --kubeconfig=${KUBECONFIG} create namespace gitpod || echo "Gitpod namespace already exist" && \
-	kubectl --kubeconfig=${KUBECONFIG} delete secret github-oauth -n gitpod || echo "gitpod-oauth secret needs to be created" && \
-	kubectl --kubeconfig=${KUBECONFIG} create secret generic "github-oauth" --namespace gitpod --from-literal=provider="$$(cat $$SCM_OAUTH)" && \
-	echo -en  "authProviders:\n  - kind: secret\n    name: github-oauth\n" > ./manifests/config-patch.yaml
+	yq w -i $$SCM_OAUTH 'oauth.callBackUrl' https://scm.${TF_VAR_domain}/auth/github.com/callback?state=${TF_VAR_TEST_ID} && \
+	kubectl --kubeconfig=${KUBECONFIG} create secret generic "github-oauth" \
+		--from-literal=provider="$$(cat $$SCM_OAUTH)" \
+		-o yaml --dry-run=client > ${github_oauth_secret}
+	echo -en  "authProviders:\n  - kind: secret\n    name: github-oauth\n" | base64 -w 0 > ${config_patch}
 else
 	echo "Skipping github setup since var GITHUB_SCM_OAUTH is not set"
 endif
 
+
 KOTS_KONFIG := "./manifests/kots-config.yaml"
 
-get-base-config:
-	export CONFIG_PATCH=./manifests/config-patch.yaml && \
+get-base-config: get-github-config
 	export DOMAIN=${TF_VAR_domain} && \
-	export PATCH=$$(cat $$CONFIG_PATCH | base64 -w 0) || export PATCH="" && \
+	export PATCH=$$(cat ${config_patch}) || export PATCH="" && \
 	envsubst < ${KOTS_KONFIG} > tmp_config.yml
 
 storage-config-gcp:
@@ -350,6 +354,17 @@ generate-kots-config: select-workspace check-env-cloud check-env-domain check-en
 	$(MAKE) registry-config-${cloud_registry}
 	if [[ $$self_signed == "true" ]]; then $(MAKE) self-signed-config; fi
 
+download-certs:
+	@echo "Trying to download pre-existing secrets for certificate from GCS"
+	@gsutil cp gs://nightly-tests/nightly-tests-certs/${cert_secret} ${cert_secret} || { echo "No certificate found"; rm -f ${cert_secret}; }
+
+create-secrets: download-certs
+	@echo ${github_oauth_secret}
+	@echo "Creating secrets for SSL certificate and Github oauth"
+	@kubectl --kubeconfig=${KUBECONFIG} create ns gitpod || echo "Namespace already exists"
+	@[[ -f ${cert_secret} ]] && kubectl --kubeconfig=${KUBECONFIG} apply -f ${cert_secret} -n gitpod || echo "Skipping certificate restore"
+	@[[ -f ${github_oauth_secret} ]] && kubectl --kubeconfig=${KUBECONFIG} apply -f ${github_oauth_secret} -n gitpod || echo "Skipping Github oauth setup"
+
 license_community_beta := "../licenses/Community (Beta).yaml"
 license_community_stable := "../licenses/Community.yaml"
 license_community_unstable := "../licenses/Community (Unstable).yaml"
@@ -364,10 +379,7 @@ version ?= -
 kots-install: version-flag = $(if $(version:-=),--app-version-label=$(version),)
 kots-install: preflight-flag = $(if $(preflights:true=),--skip-preflights,)
 kots-install: license-file = $(if $(license_community_$(channel)),$(license_community_$(channel)),"../licenses/$(channel).yaml")
-kots-install: install-kots-cli
-	kubectl kots remove ${app} -n gitpod --force --kubeconfig=${KUBECONFIG} || echo "No kots app existing, Installing"
-	$(MAKE) destroy-gitpod
-	export KUBECONFIG=${KUBECONFIG} && \
+kots-install: install-kots-cli destroy-gitpod create-secrets
 	kubectl kots install ${app}/${channel} \
 	--skip-rbac-check ${version-flag} ${preflight-flag} \
 					--wait-duration "10m" \
@@ -482,7 +494,7 @@ destroy-gke: select-workspace
 #
 # The sleep following deletion adds a bit of padding so that external resources (such
 # as AWS ELBs generated from LoadBalancer type services) can terminate.
-destroy-gitpod:
+destroy-gitpod: backup-cert
 	[[ -f ${KUBECONFIG} ]] \
 		&& kubectl --kubeconfig=${KUBECONFIG} delete namespace/gitpod --now --timeout 180s \
 		|| true
@@ -502,6 +514,11 @@ destroy-azure:
 	ls ${KUBECONFIG} && terraform destroy -target=module.azure-externaldns -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
 	ls ${KUBECONFIG} && terraform destroy -target=module.certmanager -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
 	terraform destroy -target=module.aks -var kubeconfig=${KUBECONFIG} --auto-approve
+
+backup-cert:
+	@echo "Backing up certificate secret to GCS"
+	@kubectl --kubeconfig=${KUBECONFIG} get secret -n gitpod https-certificates -o yaml > ${cert_secret} || { echo "No existing secret"; rm -f ${cert_secret}; }
+	@[[ -f ${cert_secret} ]] && gsutil cp ${cert_secret} gs://nightly-tests/nightly-tests-certs/${cert_secret} || echo "No certificate secret file exist"
 
 list-state:
 	terraform state list
