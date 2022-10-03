@@ -6,8 +6,9 @@ package stripe
 
 import (
 	"fmt"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"testing"
+
+	"github.com/gitpod-io/gitpod/usage/pkg/db"
 
 	"github.com/stretchr/testify/require"
 )
@@ -25,14 +26,14 @@ func TestQueriesForCustomersWithAttributionID_Single(t *testing.T) {
 			},
 			ExpectedQueries: []string{"metadata['attributionId']:'team:abcd-123'"},
 		},
-		{
-			Name: "1 team id, 1 user id",
-			AttributionIDs: map[db.AttributionID]int64{
-				db.NewTeamAttributionID("abcd-123"): 1,
-				db.NewUserAttributionID("abcd-456"): 1,
-			},
-			ExpectedQueries: []string{"metadata['attributionId']:'team:abcd-123' OR metadata['attributionId']:'user:abcd-456'"},
-		},
+		// {
+		// 	Name: "1 team id, 1 user id",
+		// 	AttributionIDs: map[db.AttributionID]int64{
+		// 		db.NewTeamAttributionID("abcd-123"): 1,
+		// 		db.NewUserAttributionID("abcd-456"): 1,
+		// 	},
+		// 	ExpectedQueries: []string{"metadata['attributionId']:'team:abcd-123' OR metadata['attributionId']:'user:abcd-456'"},
+		// },
 	}
 
 	for _, tc := range testCases {
