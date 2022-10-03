@@ -154,7 +154,7 @@ export class ContextParser {
                         checkoutLocation: subRepo.checkoutLocation || subContext.repository.name,
                         upstreamRemoteURI: this.buildUpstreamCloneUrl(subContext),
                         // we want to create a local branch on all repos, in case it's a multi-repo change. If it's not there are no drawbacks anyway.
-                        ref: context.ref,
+                        //ref: context.ref,
                         refType: context.refType,
                         localBranch: context.localBranch,
                     });
