@@ -59,22 +59,24 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         CLOUD: "gcp",
         DESCRIPTION: `${op} Gitpod on GKE managed cluster(version ${k8s_version})`,
         PHASES: [
-            "STANDARD_GKE_CLUSTER",
+            "STANDARD_CLUSTER",
+            "EXTERNALDNS",
             "CERT_MANAGER",
-            "GCP_MANAGED_DNS",
             "CLUSTER_ISSUER",
+            "UPLOAD_CREDENTIALS",
             "GENERATE_KOTS_CONFIG",
             "INSTALL_GITPOD",
             "CHECK_INSTALLATION",
         ],
     },
     STANDARD_K3S_TEST: {
-        CLOUD: "gcp", // the cloud provider is still GCP
+        CLOUD: "k3s",
         DESCRIPTION: `${op} Gitpod on a K3s cluster(version ${k8s_version}) on a GCP instance with ubuntu ${os_version}`,
         PHASES: [
-            "STANDARD_K3S_CLUSTER_ON_GCP",
+            "STANDARD_CLUSTER",
             "CERT_MANAGER",
             "CLUSTER_ISSUER",
+            "UPLOAD_CREDENTIALS",
             "GENERATE_KOTS_CONFIG",
             "INSTALL_GITPOD",
             "CHECK_INSTALLATION",
@@ -84,11 +86,12 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         CLOUD: "azure",
         DESCRIPTION: `${op} Gitpod on AKS(version ${k8s_version})`,
         PHASES: [
-            "STANDARD_AKS_CLUSTER",
+            "STANDARD_CLUSTER",
             "CERT_MANAGER",
             "CLUSTER_ISSUER",
             "EXTERNALDNS",
             "ADD_NS_RECORD",
+            "UPLOAD_CREDENTIALS",
             "GENERATE_KOTS_CONFIG",
             "INSTALL_GITPOD",
             "CHECK_INSTALLATION",
@@ -98,11 +101,12 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         CLOUD: "aws",
         DESCRIPTION: `${op} an EKS cluster(version ${k8s_version})`,
         PHASES: [
-            "STANDARD_EKS_CLUSTER",
+            "STANDARD_CLUSTER",
             "CERT_MANAGER",
             "EXTERNALDNS",
             "CLUSTER_ISSUER",
             "ADD_NS_RECORD",
+            "UPLOAD_CREDENTIALS",
             "GENERATE_KOTS_CONFIG",
             "INSTALL_GITPOD",
             "CHECK_INSTALLATION",
@@ -123,25 +127,15 @@ const cloud: string = config.CLOUD;
 // Each phase should contain a `makeTarget` which
 // corresponds to a target in the Makefile in ../install/tests/Makefile
 const INFRA_PHASES: { [name: string]: InfraConfig } = {
-    STANDARD_GKE_CLUSTER: {
-        phase: "create-std-gke-cluster",
-        makeTarget: `gke-standard-cluster`,
-        description: `Creating a GCP GKE cluster(version: ${k8s_version}) with 1 nodepool each for workspace and server`,
+    STANDARD_CLUSTER: {
+        phase: "create-ref-arch-single-cluster",
+        makeTarget: `standard-cluster`,
+        description: `Create a ${cloud} kubernetes cluster(version: ${k8s_version}) using single-cluster ref-arch`
     },
-    STANDARD_K3S_CLUSTER_ON_GCP: {
-        phase: "create-std-k3s-cluster",
-        makeTarget: `k3s-standard-cluster os_version=${os_version}`,
-        description: `Creating a k3s(version: ${k8s_version}) cluster on GCP with 1 node`,
-    },
-    STANDARD_AKS_CLUSTER: {
-        phase: "create-std-aks-cluster",
-        makeTarget: `aks-standard-cluster`,
-        description: `Creating an Azure AKS cluster(version: ${k8s_version})`,
-    },
-    STANDARD_EKS_CLUSTER: {
-        phase: "create-std-eks-cluster",
-        makeTarget: `eks-standard-cluster`,
-        description: `Creating a AWS EKS cluster(version: ${k8s_version}) with 1 nodepool each for workspace and server`,
+    UPLOAD_CREDENTIALS: {
+        phase: "upload-credentials",
+        makeTarget: `upload-creds`,
+        description: `Upload ${cloud} kubernetes credentials to GCS`,
     },
     CERT_MANAGER: {
         phase: "setup-cert-manager",
@@ -390,7 +384,7 @@ function runIntegrationTests() {
 function callMakeTargets(phase: string, description: string, makeTarget: string, failable: boolean = false) {
     werft.log(phase, `Calling ${makeTarget}`);
     // exporting cloud env var is important for the make targets
-    const env = `export TF_VAR_cluster_version=${k8s_version} cloud=${cloud} TF_VAR_domain=${baseDomain} TF_VAR_gcp_zone=${gcpDnsZone}`;
+    const env = `export CLUSTER_VERSION=${k8s_version} cloud=${cloud} DOMAIN=${baseDomain} GCP_ZONE=${gcpDnsZone} os_version=${os_version}`;
 
     const response = exec(
         `${env} && make -C ${makefilePath} ${makeTarget}`,
