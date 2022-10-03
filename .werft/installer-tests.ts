@@ -62,6 +62,7 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
             "STANDARD_GKE_CLUSTER",
             "CERT_MANAGER",
             "GCP_MANAGED_DNS",
+            "ADD_NS_RECORD",
             "CLUSTER_ISSUER",
             "GENERATE_KOTS_CONFIG",
             "INSTALL_GITPOD",

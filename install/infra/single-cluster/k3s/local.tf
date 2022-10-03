@@ -1,3 +1,3 @@
 locals {
-  credentials = "${file(var.credentials_path)}"
+  credentials = file(var.credentials_path)
 }
