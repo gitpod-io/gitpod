@@ -66,12 +66,12 @@ export function increaseApiCallCounter(method: string, statusCode: number) {
 export const apiCallDurationHistogram = new prometheusClient.Histogram({
     name: "gitpod_server_api_calls_duration_seconds",
     help: "Duration of API calls in seconds",
-    labelNames: ["method"],
+    labelNames: ["method", "statusCode"],
     buckets: [0.1, 0.5, 1, 5, 10, 15, 30],
 });
 
-export function observeAPICallsDuration(method: string, duration: number) {
-    apiCallDurationHistogram.observe({ method }, duration);
+export function observeAPICallsDuration(method: string, statusCode: number, duration: number) {
+    apiCallDurationHistogram.observe({ method, statusCode }, duration);
 }
 
 const apiCallUserCounter = new prometheusClient.Counter({
