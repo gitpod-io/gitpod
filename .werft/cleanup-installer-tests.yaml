@@ -126,6 +126,13 @@ pod:
         (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
         printf '{{ toJson . }}' > context.json
 
+        export domain="{{ .Annotations.subdomain }}"
+        if [[ "$domain" == "<no value>" ]]; then
+          echo "Cleanup all old workspaces"
+        else
+          export TF_VAR_TEST_ID="$domain"
+        fi
+
         TESTCONFIG="CLEANUP_OLD_TESTS"
 
         npx ts-node .werft/installer-tests.ts ${TESTCONFIG}
