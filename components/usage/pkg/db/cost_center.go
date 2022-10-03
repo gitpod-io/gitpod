@@ -137,8 +137,10 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, costCenter Cos
 			// update the usage limit
 			switch {
 			case costCenter.ID.IsEntity(AttributionEntity_Team):
+				log.WithField("limit", c.cfg.ForStripeTeams).Info("setting usage limit")
 				costCenter.SpendingLimit = c.cfg.ForStripeTeams
 			case costCenter.ID.IsEntity(AttributionEntity_User):
+				log.WithField("limit", c.cfg.ForStripeUsers).Info("setting usage limit")
 				costCenter.SpendingLimit = c.cfg.ForStripeUsers
 			default:
 				return CostCenter{}, fmt.Errorf("unsupported attributionID %s", costCenter.ID)
@@ -149,8 +151,10 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, costCenter Cos
 		case CostCenter_Other:
 			// cancelled from stripe reset the usage limit
 			if costCenter.ID.IsEntity(AttributionEntity_Team) {
+				log.WithField("limit", c.cfg.ForTeams).Info("resetting usage limit")
 				costCenter.SpendingLimit = c.cfg.ForTeams
 			} else {
+				log.WithField("limit", c.cfg.ForUsers).Info("resetting usage limit")
 				costCenter.SpendingLimit = c.cfg.ForUsers
 			}
 			// see you next month
