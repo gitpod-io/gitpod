@@ -495,9 +495,6 @@ export default function () {
             <p className="truncate" title="8 Parallel Workspaces">
                 ✓ 8 Parallel Workspaces
             </p>
-            <p className="truncate" title="Teams">
-                ✓ Teams
-            </p>
         </>
     );
 
