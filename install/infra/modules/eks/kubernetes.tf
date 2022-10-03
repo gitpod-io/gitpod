@@ -88,6 +88,10 @@ module "eks" {
     coredns = {
       resolve_conflicts = "OVERWRITE"
     }
+    vpc-cni = {
+      resolve_conflicts        = "OVERWRITE"
+      service_account_role_arn = module.vpc_cni_irsa.iam_role_arn
+    }
     kube-proxy = {}
     vpc-cni = {
       resolve_conflicts        = "OVERWRITE"
@@ -116,133 +120,74 @@ module "eks" {
       service containerd restart
       EOT
   }
+}
 
-  eks_managed_node_groups = {
-    Services = {
-      enable_bootstrap_user_data = true
-      instance_types             = [var.service_machine_type]
-      name                       = "service-${var.cluster_name}"
-      iam_role_name              = format("%s-%s", substr("${var.cluster_name}-svc-ng", 0, 58), random_string.ng_role_suffix.result)
-      subnet_ids                 = module.vpc.public_subnets
-      min_size                   = 1
-      max_size                   = 4
-      desired_size               = 2
-      block_device_mappings = [{
-        device_name = "/dev/sda1"
-
-        ebs = [{
-          volume_size           = 300
-          volume_type           = "gp3"
-          throughput            = 500
-          iops                  = 6000
-          delete_on_termination = true
-        }]
-      }]
-      labels = {
-        "gitpod.io/workload_meta"               = true
-        "gitpod.io/workload_ide"                = true
-        "gitpod.io/workload_workspace_services" = true
-      }
-
-      tags = {
-        "k8s.io/cluster-autoscaler/enabled" = true
-        "k8s.io/cluster-autoscaler/gitpod"  = "owned"
-      }
-
-      pre_bootstrap_user_data = <<-EOT
-        #!/bin/bash
-        set -ex
-        cat <<-EOF > /etc/profile.d/bootstrap.sh
-        export CONTAINER_RUNTIME="containerd"
-        export USE_MAX_PODS=false
-        EOF
-        # Source extra environment variables in bootstrap script
-        sed -i '/^set -o errexit/a\\nsource /etc/profile.d/bootstrap.sh' /etc/eks/bootstrap.sh
-        EOT
-    }
-
-    RegularWorkspaces = {
-      instance_types = [var.workspace_machine_type]
-      name           = "ws-regular-${var.cluster_name}"
-      iam_role_name  = format("%s-%s", substr("${var.cluster_name}-regular-ws-ng", 0, 58), random_string.ng_role_suffix.result)
-      subnet_ids     = module.vpc.public_subnets
-      min_size       = 1
-      max_size       = 50
-      block_device_mappings = [{
-        device_name = "/dev/sda1"
-
-        ebs = [{
-          volume_size           = 512
-          volume_type           = "gp3"
-          throughput            = 500
-          iops                  = 6000
-          delete_on_termination = true
-        }]
-      }]
-      desired_size               = 2
-      enable_bootstrap_user_data = true
-      labels = {
-        "gitpod.io/workload_workspace_regular" = true
-      }
-
-      tags = {
-        "k8s.io/cluster-autoscaler/enabled" = true
-        "k8s.io/cluster-autoscaler/gitpod"  = "owned"
-      }
-
-      pre_bootstrap_user_data = <<-EOT
-        #!/bin/bash
-        set -ex
-        cat <<-EOF > /etc/profile.d/bootstrap.sh
-        export CONTAINER_RUNTIME="containerd"
-        export USE_MAX_PODS=false
-        EOF
-        # Source extra environment variables in bootstrap script
-        sed -i '/^set -o errexit/a\\nsource /etc/profile.d/bootstrap.sh' /etc/eks/bootstrap.sh
-        EOT
-    }
-
-    HeadlessWorkspaces = {
-      instance_types = [var.workspace_machine_type]
-      name           = "ws-headless-${var.cluster_name}"
-      iam_role_name  = format("%s-%s", substr("${var.cluster_name}-headless-ws-ng", 0, 58), random_string.ng_role_suffix.result)
-      subnet_ids     = module.vpc.public_subnets
-      min_size       = 1
-      max_size       = 50
-      block_device_mappings = [{
-        device_name = "/dev/sda1"
-
-        ebs = [{
-          volume_size           = 512
-          volume_type           = "gp3"
-          throughput            = 500
-          iops                  = 6000
-          delete_on_termination = true
-        }]
-      }]
-      desired_size               = 2
-      enable_bootstrap_user_data = true
-      labels = {
-        "gitpod.io/workload_workspace_headless" = true
-      }
-
-      tags = {
-        "k8s.io/cluster-autoscaler/enabled" = true
-        "k8s.io/cluster-autoscaler/gitpod"  = "owned"
-      }
-
-      pre_bootstrap_user_data = <<-EOT
-        #!/bin/bash
-        set -ex
-        cat <<-EOF > /etc/profile.d/bootstrap.sh
-        export CONTAINER_RUNTIME="containerd"
-        export USE_MAX_PODS=false
-        EOF
-        # Source extra environment variables in bootstrap script
-        sed -i '/^set -o errexit/a\\nsource /etc/profile.d/bootstrap.sh' /etc/eks/bootstrap.sh
-        EOT
-    }
+resource "null_resource" "kubeconfig" {
+  depends_on = [module.eks]
+  provisioner "local-exec" {
+    command = "aws eks update-kubeconfig --region ${var.region} --name ${var.cluster_name} --kubeconfig ${var.kubeconfig}"
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+// Install Calico Here
+
+module "service-nodes" {
+  depends_on = [module.eks]
+
+  source  = "terraform-aws-modules/eks/aws//modules/eks-managed-node-group"
+  version = "18.30.0"
+
+  cluster_name        = var.cluster_name
+  cluster_version     = var.cluster_version
+  cluster_endpoint    = module.eks.cluster_endpoint
+  cluster_auth_base64 = module.eks.cluster_certificate_authority_data
+
+  enable_bootstrap_user_data = true
+  instance_types             = [var.service_machine_type]
+  name                       = "service-${var.cluster_name}"
+  create_iam_role            = false
+  iam_role_arn               = module.vpc_cni_irsa.iam_role_arn
+  iam_role_name              = format("%s-%s", substr("${var.cluster_name}-svc-ng", 0, 58), random_string.ng_role_suffix.result)
+  subnet_ids                 = module.vpc.public_subnets
+  min_size                   = 1
+  max_size                   = 4
+  desired_size               = 2
+  block_device_mappings = [{
+    device_name = "/dev/sda1"
+
+    ebs = [{
+      volume_size           = 300
+      volume_type           = "gp3"
+      throughput            = 500
+      iops                  = 6000
+      delete_on_termination = true
+    }]
+  }]
+  labels = {
+    "gitpod.io/workload_meta"               = true
+    "gitpod.io/workload_ide"                = true
+    "gitpod.io/workload_workspace_services" = true
+  }
+
+  tags = {
+    "k8s.io/cluster-autoscaler/enabled" = true
+    "k8s.io/cluster-autoscaler/gitpod"  = "owned"
+  }
+
+  pre_bootstrap_user_data = <<-EOT
+        #!/bin/bash
+        set -ex
+        cat <<-EOF > /etc/profile.d/bootstrap.sh
+        export CONTAINER_RUNTIME="containerd"
+        export USE_MAX_PODS=false
+        EOF
+        # Source extra environment variables in bootstrap script
+        sed -i '/^set -o errexit/a\\nsource /etc/profile.d/bootstrap.sh' /etc/eks/bootstrap.sh
+        EOT
 }
 
 module "vpc_cni_irsa" {
@@ -258,17 +203,6 @@ module "vpc_cni_irsa" {
       provider_arn               = module.eks.oidc_provider_arn
       namespace_service_accounts = ["kube-system:aws-node"]
     }
-  }
-}
-
-resource "null_resource" "kubeconfig" {
-  depends_on = [module.eks]
-  provisioner "local-exec" {
-    command = "aws eks update-kubeconfig --region ${var.region} --name ${var.cluster_name} --kubeconfig ${var.kubeconfig}"
-  }
-
-  lifecycle {
-    create_before_destroy = true
   }
 }
 
