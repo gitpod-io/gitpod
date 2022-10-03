@@ -192,7 +192,12 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 			}
 		}
 
-		if err := ws.Git(ctx, "checkout", "-B", ws.CloneTarget, "origin/"+ws.CloneTarget); err != nil {
+		if err := ws.Git(ctx, "fetch", "--depth=1", "origin", ws.CloneTarget); err != nil {
+			log.WithError(err).WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Error("Cannot fetch remote branch")
+			return err
+		}
+
+		if err := ws.Git(ctx, "checkout", ws.CloneTarget); err != nil {
 			log.WithError(err).WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Error("Cannot fetch remote branch")
 			return err
 		}
