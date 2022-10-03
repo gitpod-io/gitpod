@@ -1,6 +1,8 @@
 # Change Log
 
 ## September 2022
+- Add `RubyMine` and `WebStorm` IDEs ([#13488](https://github.com/gitpod-io/gitpod/pull/13488)) - [@mustard-mh](https://github.com/mustard-mh)
+- Add experimental support for protected secrets ([#13484](https://github.com/gitpod-io/gitpod/pull/13484)) - [@csweichel](https://github.com/csweichel)
 - Update Gitpod workspace image to with awscliv2 ([#12278](https://github.com/gitpod-io/gitpod/pull/12278)) - [@adrienthebo](https://github.com/adrienthebo)
 - [terraform/gcp] Run regular and headless workspaces on separate node pools ([#13140](https://github.com/gitpod-io/gitpod/pull/13140)) - [@adrienthebo](https://github.com/adrienthebo)
 - Gitpod Plugin was updated to work with the JetBrains IDEs v2022.3 (EAP). ([#13400](https://github.com/gitpod-io/gitpod/pull/13400)) - [@felladrin](https://github.com/felladrin)
