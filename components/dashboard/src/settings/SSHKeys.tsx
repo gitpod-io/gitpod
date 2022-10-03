@@ -11,7 +11,7 @@ import { Item, ItemField, ItemFieldContextMenu } from "../components/ItemsList";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { SSHPublicKeyValue, UserSSHPublicKeyValue } from "@gitpod/gitpod-protocol";
 import { getGitpodService } from "../service/service";
-import moment from "moment";
+import dayjs from "dayjs";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 
 interface AddModalProps {
@@ -241,9 +241,9 @@ function KeyItem(props: { sshKey: UserSSHPublicKeyValue }) {
         <ItemField className="flex flex-col gap-y box-border overflow-hidden">
             <p className="truncate text-gray-400 dark:text-gray-600">SHA256:{key.fingerprint}</p>
             <div className="truncate my-1 text-xl text-gray-800 dark:text-gray-100 font-semibold">{key.name}</div>
-            <p className="truncate mt-4">Added on {moment(key.creationTime).format("MMM D, YYYY, hh:mm A")}</p>
+            <p className="truncate mt-4">Added on {dayjs(key.creationTime).format("MMM D, YYYY, hh:mm A")}</p>
             {!!key.lastUsedTime && (
-                <p className="truncate">Last used on {moment(key.lastUsedTime).format("MMM D, YYYY, hh:mm A")}</p>
+                <p className="truncate">Last used on {dayjs(key.lastUsedTime).format("MMM D, YYYY, hh:mm A")}</p>
             )}
         </ItemField>
     );

@@ -15,7 +15,7 @@ import CaretDown from "../icons/CaretDown.svg";
 import Plus from "../icons/Plus.svg";
 import Switch from "../icons/Switch.svg";
 import search from "../icons/search.svg";
-import moment from "moment";
+import dayjs from "dayjs";
 import { UserContext } from "../user-context";
 import { trackEvent } from "../Analytics";
 import exclamation from "../images/exclamation.svg";
@@ -408,7 +408,7 @@ export default function NewProject() {
                                             >
                                                 {toSimpleName(r.name)}
                                             </div>
-                                            {r.updatedAt && <p>Updated {moment(r.updatedAt).fromNow()}</p>}
+                                            {r.updatedAt && <p>Updated {dayjs(r.updatedAt).fromNow()}</p>}
                                         </div>
                                         <div className="flex justify-end">
                                             <div className="h-full my-auto flex self-center opacity-0 group-hover:opacity-100 items-center mr-2 text-right">

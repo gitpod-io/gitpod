@@ -4,11 +4,11 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import moment from "moment";
 import { Link } from "react-router-dom";
 import { Project } from "@gitpod/gitpod-protocol";
 import Prebuilds from "../projects/Prebuilds";
 import Property from "./Property";
+import dayjs from "dayjs";
 
 export default function ProjectDetail(props: { project: Project; owner: string | undefined }) {
     return (
@@ -24,7 +24,7 @@ export default function ProjectDetail(props: { project: Project; owner: string |
             </div>
             <div className="flex flex-col w-full">
                 <div className="flex w-full mt-6">
-                    <Property name="Created">{moment(props.project.creationTime).format("MMM D, YYYY")}</Property>
+                    <Property name="Created">{dayjs(props.project.creationTime).format("MMM D, YYYY")}</Property>
                     <Property name="Repository">
                         <a
                             className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400 truncate"

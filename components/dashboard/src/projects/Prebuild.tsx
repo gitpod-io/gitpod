@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import moment from "moment";
+import dayjs from "dayjs";
 import { PrebuildWithStatus } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { useHistory, useLocation, useRouteMatch } from "react-router";
@@ -88,7 +88,7 @@ export default function () {
             <div className="flex">
                 <div className="my-auto">
                     <p>
-                        {startedByAvatar}Triggered {moment(prebuild.info.startedAt).fromNow()}
+                        {startedByAvatar}Triggered {dayjs(prebuild.info.startedAt).fromNow()}
                     </p>
                 </div>
                 <p className="mx-2 my-auto">·</p>
