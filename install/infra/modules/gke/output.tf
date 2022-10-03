@@ -4,7 +4,7 @@ output "kubernetes_endpoint" {
 }
 
 output "name_servers" {
-  value = google_dns_managed_zone.gitpod-dns-zone[0].name_servers
+  value = try(google_dns_managed_zone.gitpod-dns-zone[0].name_servers, [])
 }
 
 output "client_token" {

@@ -4,7 +4,7 @@ variable "kubeconfig" {
 }
 
 variable "project" {
-  description = "Google cloud Region to perform operations in"
+  description = "Google cloud project to to create resources in"
 }
 
 variable "region" {
@@ -39,10 +39,5 @@ variable "cluster_version" {
 
 variable "domain_name" {
   description = "Domain name to add to add DNS map to"
-  default     = null
-}
-
-variable "managed_dns_zone" {
-  description = "The Cloud DNS managed zone where Gitpod A records will be created"
   default     = null
 }

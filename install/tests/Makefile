@@ -176,6 +176,7 @@ k3s-standard-cluster: check-env-cluster-version
 	rm -f ${KUBECONFIG} && \
 	$(MAKE) get-kubeconfig && \
 	[[ -f ${KUBECONFIG} ]] || terraform apply -target=module.k3s -var kubeconfig=${KUBECONFIG} -var k3s_node_image_id=${image_id} --auto-approve && \
+	terraform apply -target=module.k3s-add-dns-record  -var kubeconfig=${KUBECONFIG} --auto-approve
 	$(MAKE) upload-kubeconfig-to-gcp # we upload the file to GCP since we cannot retrieve the file against without SSHing to the master
 	@echo "Done creating k3s cluster"
 
