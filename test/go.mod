@@ -13,6 +13,7 @@ require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/google/go-github/v42 v42.0.0
 	github.com/google/uuid v1.3.0
+	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.2.0
 	github.com/prometheus/procfs v0.7.3
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
