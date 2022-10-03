@@ -173,7 +173,7 @@ module "gcp-add-dns-record" {
 module "azure-add-dns-record" {
   source           = "../infra/modules/tools/cloud-dns-ns"
   credentials      = var.dns_sa_creds
-  nameservers      = module.aks.domain_nameservers
+  nameservers      = module.aks.name_servers
   dns_project      = "dns-for-playgrounds"
   managed_dns_zone = var.gcp_zone
   domain_name      = "${var.TEST_ID}.${var.domain}"
@@ -182,7 +182,7 @@ module "azure-add-dns-record" {
 module "aws-add-dns-record" {
   source           = "../infra/modules/tools/cloud-dns-ns"
   credentials      = var.dns_sa_creds
-  nameservers      = module.eks.domain_nameservers
+  nameservers      = module.eks.name_servers
   dns_project      = "dns-for-playgrounds"
   managed_dns_zone = var.gcp_zone
   domain_name      = "${var.TEST_ID}.${var.domain}"
