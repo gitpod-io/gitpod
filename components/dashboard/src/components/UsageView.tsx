@@ -24,6 +24,7 @@ import { ReactComponent as UsageIcon } from "../images/usage-default.svg";
 import { toRemoteURL } from "../projects/render-utils";
 import { WorkspaceType } from "@gitpod/gitpod-protocol";
 import PillLabel from "./PillLabel";
+import moment from "moment";
 
 interface UsageViewProps {
     attributionId: AttributionId;
@@ -32,11 +33,8 @@ interface UsageViewProps {
 function UsageView({ attributionId }: UsageViewProps) {
     const [usagePage, setUsagePage] = useState<ListUsageResponse | undefined>(undefined);
     const [errorMessage, setErrorMessage] = useState("");
-    const today = new Date();
-    const startOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const timestampStartOfCurrentMonth = startOfCurrentMonth.getTime();
-    const [startDateOfBillMonth, setStartDateOfBillMonth] = useState(timestampStartOfCurrentMonth);
-    const [endDateOfBillMonth, setEndDateOfBillMonth] = useState(Date.now());
+    const [startDateOfBillMonth, setStartDateOfBillMonth] = useState(moment().subtract(30, "days"));
+    const [endDateOfBillMonth, setEndDateOfBillMonth] = useState(moment());
     const [totalCreditsUsed, setTotalCreditsUsed] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -51,8 +49,8 @@ function UsageView({ attributionId }: UsageViewProps) {
         }
         const request: ListUsageRequest = {
             attributionId: AttributionId.render(attributionId),
-            from: startDateOfBillMonth,
-            to: endDateOfBillMonth,
+            from: startDateOfBillMonth.unix(),
+            to: endDateOfBillMonth.unix(),
             order: Ordering.ORDERING_DESCENDING,
             pagination: {
                 perPage: 50,
@@ -101,30 +99,57 @@ function UsageView({ attributionId }: UsageViewProps) {
         return inMinutes + " min";
     };
 
-    const handleMonthClick = (start: any, end: any) => {
+    const handleMonthClick = (start: moment.Moment, end: moment.Moment) => {
         setStartDateOfBillMonth(start);
         setEndDateOfBillMonth(end);
     };
 
     const getBillingHistory = () => {
-        let rows = [];
-        // This goes back 6 months from the current month
-        for (let i = 1; i < 7; i++) {
-            const endDateVar = i - 1;
-            const startDate = new Date(today.getFullYear(), today.getMonth() - i);
-            const endDate = new Date(today.getFullYear(), today.getMonth() - endDateVar, 0);
-            const timeStampOfStartDate = startDate.getTime();
-            const timeStampOfEndDate = endDate.getTime();
-            rows.push(
-                <div
-                    key={`billing${i}`}
-                    className="text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500 truncate cursor-pointer gp-link"
-                    onClick={() => handleMonthClick(timeStampOfStartDate, timeStampOfEndDate)}
-                >
-                    {startDate.toLocaleString("default", { month: "long" })} {startDate.getFullYear()}
-                </div>,
-            );
-        }
+        const rows = [
+            <div
+                key={`period-1d`}
+                className="text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500 truncate cursor-pointer gp-link"
+                onClick={() => handleMonthClick(moment().subtract(1, "days"), moment())}
+            >
+                Last day
+            </div>,
+            <div
+                key={`period-3d`}
+                className="text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500 truncate cursor-pointer gp-link"
+                onClick={() => handleMonthClick(moment().subtract(3, "days"), moment())}
+            >
+                Last 3 days
+            </div>,
+            <div
+                key={`period-7d`}
+                className="text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500 truncate cursor-pointer gp-link"
+                onClick={() => handleMonthClick(moment().subtract(7, "days"), moment())}
+            >
+                Last 7 days
+            </div>,
+            <div
+                key={`period-30d`}
+                className="text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500 truncate cursor-pointer gp-link"
+                onClick={() => handleMonthClick(moment().subtract(30, "days"), moment())}
+            >
+                Last 30 days
+            </div>,
+            <div
+                key={`period-60d`}
+                className="text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500 truncate cursor-pointer gp-link"
+                onClick={() => handleMonthClick(moment().subtract(60, "days"), moment())}
+            >
+                Last 60 days
+            </div>,
+            <div
+                key={`period-90d`}
+                className="text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500 truncate cursor-pointer gp-link"
+                onClick={() => handleMonthClick(moment().subtract(90, "days"), moment())}
+            >
+                Last 90 days
+            </div>,
+        ];
+
         return rows;
     };
 
@@ -145,9 +170,9 @@ function UsageView({ attributionId }: UsageViewProps) {
         <>
             <Header
                 title="Usage"
-                subtitle={`${new Date(startDateOfBillMonth).toLocaleDateString()} - ${new Date(
-                    endDateOfBillMonth,
-                ).toLocaleDateString()} (updated every 15 minutes).`}
+                subtitle={`${startDateOfBillMonth.toDate().toLocaleDateString()} - ${endDateOfBillMonth
+                    .toDate()
+                    .toLocaleDateString()} (updated every 15 minutes).`}
             />
             <div className="app-container pt-5">
                 {errorMessage && <p className="text-base">{errorMessage}</p>}
@@ -155,18 +180,7 @@ function UsageView({ attributionId }: UsageViewProps) {
                     <div className="flex space-x-16">
                         <div className="flex">
                             <div className="space-y-8 mb-6" style={{ width: "max-content" }}>
-                                <div className="flex flex-col truncate">
-                                    <div className="text-base text-gray-500 truncate">Current Month</div>
-                                    <div
-                                        className="text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500 truncate cursor-pointer mb-5"
-                                        onClick={() => handleMonthClick(timestampStartOfCurrentMonth, Date.now())}
-                                    >
-                                        {startOfCurrentMonth.toLocaleString("default", { month: "long" })}{" "}
-                                        {startOfCurrentMonth.getFullYear()}
-                                    </div>
-                                    <div className="text-base text-gray-500 truncate">Previous Months</div>
-                                    {getBillingHistory()}
-                                </div>
+                                <div className="flex flex-col truncate">{getBillingHistory()}</div>
                                 {!isLoading && (
                                     <div>
                                         <div className="flex flex-col truncate">
@@ -216,11 +230,15 @@ function UsageView({ attributionId }: UsageViewProps) {
                                             {" "}
                                             workspaces
                                         </a>{" "}
-                                        in{" "}
-                                        {new Date(startDateOfBillMonth).toLocaleString("default", {
+                                        between{" "}
+                                        {startDateOfBillMonth.toDate().toLocaleString("default", {
+                                            month: "long",
+                                        })}
+                                        {" and "}
+                                        {endDateOfBillMonth.toDate().toLocaleString("default", {
                                             month: "long",
                                         })}{" "}
-                                        {new Date(startDateOfBillMonth).getFullYear()} or checked your other teams?
+                                        or checked your other teams?
                                     </p>
                                 </div>
                             )}
