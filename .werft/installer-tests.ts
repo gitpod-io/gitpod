@@ -99,6 +99,7 @@ const TEST_CONFIGURATIONS: { [name: string]: TestConfig } = {
         DESCRIPTION: `${op} an EKS cluster(version ${k8s_version})`,
         PHASES: [
             "STANDARD_EKS_CLUSTER",
+            "CALICO",
             "CERT_MANAGER",
             "EXTERNALDNS",
             "CLUSTER_ISSUER",
@@ -167,6 +168,11 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
         phase: "external-dns",
         makeTarget: "external-dns",
         description: `Deploys external-dns with ${cloud} provider`,
+    },
+    CALICO: {
+        phase: "calico",
+        makeTarget: "calico",
+        description: `Deploys Calico`,
     },
     ADD_NS_RECORD: {
         phase: "add-ns-record",

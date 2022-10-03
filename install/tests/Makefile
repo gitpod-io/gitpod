@@ -180,9 +180,15 @@ k3s-standard-cluster: check-env-cluster-version
 	@echo "Done creating k3s cluster"
 
 .PHONY:
-## cert-manager: Installs cert-manager, optionally create secret for cloud-dns access
-cert-manager:
+## calico: Installs calico
+calico:
 	$(MAKE) select-workspace && \
+	terraform apply -target=module.aws-calico -var kubeconfig=${KUBECONFIG} --auto-approve
+	@echo "Done installing Calico"
+
+.PHONY:
+## cert-manager: Installs cert-manager, optionally create secret for cloud-dns access
+cert-manager: check-env-cloud select-workspace
 	terraform apply -target=module.certmanager -var kubeconfig=${KUBECONFIG} --auto-approve
 	@echo "Done installing cert-manager"
 

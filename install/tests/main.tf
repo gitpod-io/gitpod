@@ -13,7 +13,7 @@ variable "project" { default = "sh-automated-tests" }
 variable "sa_creds" { default = null }
 variable "dns_sa_creds" { default = null }
 
-data local_file "dns_credentials" {
+data "local_file" "dns_credentials" {
   filename = var.dns_sa_creds
 }
 
@@ -62,10 +62,10 @@ module "k3s" {
 }
 
 module "gcp-issuer" {
-  source      = "../infra/modules/tools/issuer"
-  kubeconfig  = var.kubeconfig
+  source          = "../infra/modules/tools/issuer"
+  kubeconfig      = var.kubeconfig
   gcp_credentials = data.local_file.dns_credentials.content
-  issuer_name = "cloudDNS"
+  issuer_name     = "cloudDNS"
   cert_manager_issuer = {
     project = "dns-for-playgrounds"
     serviceAccountSecretRef = {
@@ -91,14 +91,14 @@ module "aks" {
 }
 
 module "eks" {
-  source                 = "../infra/modules/eks"
-  domain_name            = "${var.TEST_ID}.${var.domain}"
-  cluster_name           = var.TEST_ID
-  region                 = "eu-west-1"
-  vpc_availability_zones = ["eu-west-1c", "eu-west-1b"]
-  image_id               = var.eks_node_image_id
-  kubeconfig             = var.kubeconfig
-  cluster_version        = var.cluster_version
+  source                   = "../infra/modules/eks"
+  domain_name              = "${var.TEST_ID}.${var.domain}"
+  cluster_name             = var.TEST_ID
+  region                   = "eu-west-1"
+  vpc_availability_zones   = ["eu-west-1c", "eu-west-1b"]
+  image_id                 = var.eks_node_image_id
+  kubeconfig               = var.kubeconfig
+  cluster_version          = var.cluster_version
   create_external_registry = true
   create_external_database = true
   create_external_storage  = true
@@ -110,7 +110,7 @@ module "certmanager" {
   # source = "github.com/gitpod-io/gitpod//install/infra/terraform/tools/cert-manager?ref=main"
   source = "../infra/modules/tools/cert-manager"
 
-  kubeconfig  = var.kubeconfig
+  kubeconfig = var.kubeconfig
 }
 
 module "clouddns-externaldns" {
@@ -159,6 +159,11 @@ module "azure-add-dns-record" {
   dns_project      = "dns-for-playgrounds"
   managed_dns_zone = var.gcp_zone
   domain_name      = "${var.TEST_ID}.${var.domain}"
+}
+
+module "aws-calico" {
+  source     = "../infra/modules/tools/aws-calico"
+  kubeconfig = var.kubeconfig
 }
 
 module "aws-add-dns-record" {
