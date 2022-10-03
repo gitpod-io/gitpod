@@ -190,21 +190,9 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 					ws.CloneTarget = defaultBranch
 				}
 			}
-		} else {
-			// check remote branch exists before git checkout when the branch is not the default
-			gitout, err := ws.GitWithOutput(ctx, nil, "ls-remote", "--exit-code", "origin", ws.CloneTarget)
-			if err != nil || len(gitout) == 0 {
-				log.WithError(err).WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Error("Remote branch doesn't exist.")
-				return xerrors.Errorf("Remote branch %v does not exist in %v", ws.CloneTarget, ws.RemoteURI)
-			}
 		}
 
-		if err := ws.Git(ctx, "fetch", "--depth=1", "origin", ws.CloneTarget); err != nil {
-			log.WithError(err).WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Error("Cannot fetch remote branch")
-			return err
-		}
-
-		if err := ws.Git(ctx, "checkout", ws.CloneTarget); err != nil {
+		if err := ws.Git(ctx, "checkout", "-B", ws.CloneTarget, "origin/"+ws.CloneTarget); err != nil {
 			log.WithError(err).WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Error("Cannot fetch remote branch")
 			return err
 		}
