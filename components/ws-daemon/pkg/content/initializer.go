@@ -390,6 +390,9 @@ func (rs *remoteContentStorage) Download(ctx context.Context, destination string
 
 	span.SetTag("URL", info.URL)
 
+	// ensure the temp directory exists
+	_ = os.MkdirAll(os.TempDir(), 0777)
+
 	tempFile, err := os.CreateTemp("", "remote-content-")
 	if err != nil {
 		return true, xerrors.Errorf("cannot create temporal file: %w", err)
