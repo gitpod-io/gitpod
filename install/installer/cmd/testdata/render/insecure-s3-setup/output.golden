@@ -512,7 +512,7 @@ spec:
       - system-node-critical
 status: {}
 ---
-# cert-manager.io/v1/Issuer ca-issuer
+# cert-manager.io/v1/Issuer gitpod
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
@@ -520,11 +520,11 @@ metadata:
   labels:
     app: gitpod
     component: cluster
-  name: ca-issuer
+  name: gitpod
   namespace: default
 spec:
   ca:
-    secretName: ca-issuer-ca
+    secretName: gitpod-ca
 status: {}
 ---
 # cert-manager.io/v1/Issuer gitpod-selfsigned-issuer
@@ -558,7 +558,7 @@ spec:
   issuerRef:
     group: cert-manager.io
     kind: Issuer
-    name: ca-issuer
+    name: gitpod
   secretName: builtin-registry-certs
   secretTemplate:
     labels:
@@ -583,7 +583,7 @@ spec:
   issuerRef:
     group: cert-manager.io
     kind: Issuer
-    name: ca-issuer
+    name: gitpod
   secretName: builtin-registry-facade-cert
   secretTemplate:
     labels:
@@ -591,7 +591,7 @@ spec:
       component: registry-facade
 status: {}
 ---
-# cert-manager.io/v1/Certificate ca-issuer-ca
+# cert-manager.io/v1/Certificate gitpod-ca
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -599,10 +599,10 @@ metadata:
   labels:
     app: gitpod
     component: cluster
-  name: ca-issuer-ca
+  name: gitpod-ca
   namespace: default
 spec:
-  commonName: ca-issuer-ca
+  commonName: gitpod-ca
   duration: 2160h0m0s
   isCA: true
   issuerRef:
@@ -612,7 +612,7 @@ spec:
   privateKey:
     algorithm: ECDSA
     size: 256
-  secretName: ca-issuer-ca
+  secretName: gitpod-ca
   secretTemplate:
     labels:
       app: gitpod
@@ -639,7 +639,7 @@ spec:
   issuerRef:
     group: cert-manager.io
     kind: Issuer
-    name: ca-issuer
+    name: gitpod
   secretName: ws-daemon-tls
   secretTemplate:
     labels:
@@ -668,7 +668,7 @@ spec:
   issuerRef:
     group: cert-manager.io
     kind: Issuer
-    name: ca-issuer
+    name: gitpod
   secretName: ws-manager-client-tls
   secretTemplate:
     labels:
@@ -696,7 +696,7 @@ spec:
   issuerRef:
     group: cert-manager.io
     kind: Issuer
-    name: ca-issuer
+    name: gitpod
   secretName: ws-manager-tls
   secretTemplate:
     labels:
@@ -1429,7 +1429,7 @@ data:
   versions.json: |-
     {
       "versions": {
-        "version": "pd-ide-metrics.23",
+        "version": "main.4991",
         "components": {
           "agentSmith": {
             "version": "test"
@@ -1657,7 +1657,7 @@ data:
       labels:
         app: gitpod
         component: cluster
-      name: ca-issuer-ca
+      name: gitpod-ca
       namespace: default
     ---
     apiVersion: cert-manager.io/v1
@@ -1667,7 +1667,7 @@ data:
       labels:
         app: gitpod
         component: cluster
-      name: ca-issuer
+      name: gitpod
       namespace: default
     ---
     apiVersion: rbac.authorization.k8s.io/v1
@@ -4526,7 +4526,7 @@ apiVersion: v1
 data:
   config.json: |-
     {
-      "version": "pd-ide-metrics.23",
+      "version": "main.4991",
       "hostUrl": "https://gitpod.example.com",
       "installationShortname": "default",
       "devBranch": "",
@@ -4940,7 +4940,7 @@ data:
       "manager": {
         "namespace": "default",
         "schedulerName": "",
-        "seccompProfile": "workspace_default_pd-ide-metrics.23.json",
+        "seccompProfile": "workspace_default_main.4991.json",
         "timeouts": {
           "startup": "1h0m0s",
           "initialization": "30m0s",
@@ -7316,7 +7316,7 @@ spec:
       - command:
         - /bin/sh
         - -c
-        - cp -f /installer/workspace_default.json /mnt/dst/workspace_default_pd-ide-metrics.23.json
+        - cp -f /installer/workspace_default.json /mnt/dst/workspace_default_main.4991.json
         image: eu.gcr.io/gitpod-core-dev/build/seccomp-profile-installer:test
         name: seccomp-profile-installer
         resources: {}
@@ -8984,7 +8984,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: adc398b5039ad75f724b2585a5da8a95110b918a32c0b854630fc3fa03a91722
+        gitpod.io/checksum_config: 335eefdfe860f52d0179553001668f61a018772186c32866863d80b10152b009
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9259,7 +9259,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 059ee7fb00faa64f55167fa6467dc78d13af0d03219878e93c2e67e3606c00c0
+        gitpod.io/checksum_config: b92b2bc5e00e99fa252a5e193827aa9cc185ab8aad0b090cfbee43adf8624890
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9906,7 +9906,7 @@ spec:
             - send
             env:
             - name: GITPOD_INSTALLATION_VERSION
-              value: pd-ide-metrics.23
+              value: main.4991
             - name: GITPOD_INSTALLATION_PLATFORM
               value: unknown
             - name: SERVER_URL

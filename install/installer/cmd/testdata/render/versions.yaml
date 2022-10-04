@@ -1,8 +1,8 @@
 # Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
-commit: 5c9e6394c1372f4c73031671ae786909a85d5730
-version: pd-ide-metrics.23
+commit: f4a71fa6cca9a8e774da2bca818347e1aa9d159e
+version: main.4991
 components:
   agentSmith:
     version: test
@@ -20,9 +20,9 @@ components:
     version: test
   ideMetrics:
     version: test
-  ideService:
-    version: test
   ideProxy:
+    version: test
+  ideService:
     version: test
   imageBuilderMk3:
     builderImage:
@@ -33,6 +33,8 @@ components:
   integrationTest:
     version: test
   kots-config-check:
+    certificate:
+      version: test
     database:
       version: test
     registry:
@@ -72,6 +74,10 @@ components:
         version: test
       intellijLatest:
         version: test
+      jbBackendPlugin:
+        version: test
+      jbBackendPluginLatest:
+        version: test
       phpstorm:
         version: test
       phpstormLatest:
@@ -87,10 +93,6 @@ components:
       webstorm:
         version: test
       webstormLatest:
-        version: test
-      jbBackendPlugin:
-        version: test
-      jbBackendPluginLatest:
         version: test
       version: test
     dockerUp:

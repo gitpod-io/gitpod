@@ -305,7 +305,7 @@ spec:
             certificate and install it to your browser.
 
             To download the certificate, run
-            `kubectl get secrets -n {{repl Namespace }}  ca-issuer-ca -o jsonpath='{.data.ca\.crt}' | base64 -d > ./ca.crt`
+            `kubectl get secrets -n {{repl Namespace }}  gitpod-ca -o jsonpath='{.data.ca\.crt}' | base64 -d > ./ca.crt`
 
         - name: cert_manager_enabled
           title: Use cert-manager

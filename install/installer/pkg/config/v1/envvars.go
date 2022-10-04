@@ -348,7 +348,7 @@ func (v version) BuildFromEnvvars(in interface{}) error {
 		log.Info("Generating a self-signed certificate with the internal CA")
 		cfg.CustomCACert = &ObjectRef{
 			Kind: ObjectRefSecret,
-			Name: "ca-issuer-ca", // This comes from common/constants.go
+			Name: "gitpod-ca", // This comes from common/constants.go
 		}
 	} else if !envvars.TLSCertManagerEnabled && envvars.TLSCustomCACertEnabled {
 		log.Info("Setting the CA to be used for the certificate")
