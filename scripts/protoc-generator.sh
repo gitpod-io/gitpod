@@ -13,10 +13,13 @@ install_dependencies() {
 
     go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.11.3
 
+    # To use buf as a codegeneration utility for protobuf plugins and linting
     go install github.com/bufbuild/buf/cmd/buf@v1.8.0
 
-    curl -sSo /tmp/protoc-gen-grpc-java https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/1.49.0/protoc-gen-grpc-java-1.49.0-linux-x86_64.exe
+    # To generate connect-go (https://github.com/bufbuild/connect-go) interfaces
+    go install github.com/bufbuild/connect-go/cmd/protoc-gen-connect-go@v1.0.0
 
+    curl -sSo /tmp/protoc-gen-grpc-java https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/1.49.0/protoc-gen-grpc-java-1.49.0-linux-x86_64.exe
     chmod +x /tmp/protoc-gen-grpc-java
 }
 
