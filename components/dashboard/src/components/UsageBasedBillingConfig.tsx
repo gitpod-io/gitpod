@@ -17,23 +17,18 @@ import DropDown from "../components/DropDown";
 import Modal from "../components/Modal";
 import Alert from "./Alert";
 
-interface hasId {
-    id: string;
-}
-
 type PendingStripeSubscription = { pendingSince: number };
 
 interface Props {
-    subject?: hasId;
-    attributionId: string;
+    attributionId?: string;
 }
 
-export default function UsageBasedBillingConfig({ subject, attributionId }: Props) {
+export default function UsageBasedBillingConfig({ attributionId }: Props) {
     const location = useLocation();
     const [showUpdateLimitModal, setShowUpdateLimitModal] = useState<boolean>(false);
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
     const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | undefined>();
-    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [isLoadingStripeSubscription, setIsLoadingStripeSubscription] = useState<boolean>(true);
     const [stripePortalUrl, setStripePortalUrl] = useState<string | undefined>();
     const [pollStripeSubscriptionTimeout, setPollStripeSubscriptionTimeout] = useState<NodeJS.Timeout | undefined>();
     const [usageLimit, setUsageLimit] = useState<number | undefined>();
@@ -43,39 +38,39 @@ export default function UsageBasedBillingConfig({ subject, attributionId }: Prop
     const localStorageKey = `pendingStripeSubscriptionFor${attributionId}`;
 
     useEffect(() => {
-        if (!subject) {
+        if (!attributionId) {
             return;
         }
         (async () => {
             setStripeSubscriptionId(undefined);
-            setIsLoading(true);
+            setIsLoadingStripeSubscription(true);
             try {
-                const subscriptionId = await getGitpodService().server.findStripeSubscriptionId(attributionId);
+                const [subscriptionId, limit] = await Promise.all([
+                    getGitpodService().server.findStripeSubscriptionId(attributionId),
+                    getGitpodService().server.getUsageLimit(attributionId),
+                ]);
                 setStripeSubscriptionId(subscriptionId);
+                setUsageLimit(limit);
             } catch (error) {
                 console.error(error);
             } finally {
-                setIsLoading(false);
+                setIsLoadingStripeSubscription(false);
             }
         })();
-    }, [subject]);
+    }, [attributionId]);
 
     useEffect(() => {
-        if (!subject || !stripeSubscriptionId) {
+        if (!attributionId || !stripeSubscriptionId) {
             return;
         }
         (async () => {
-            const [portalUrl, spendingLimit] = await Promise.all([
-                getGitpodService().server.getStripePortalUrl(attributionId),
-                getGitpodService().server.getUsageLimit(attributionId),
-            ]);
+            const portalUrl = await getGitpodService().server.getStripePortalUrl(attributionId);
             setStripePortalUrl(portalUrl);
-            setUsageLimit(spendingLimit);
         })();
-    }, [subject, stripeSubscriptionId]);
+    }, [attributionId, stripeSubscriptionId]);
 
     useEffect(() => {
-        if (!subject) {
+        if (!attributionId) {
             return;
         }
         const params = new URLSearchParams(location.search);
@@ -91,18 +86,18 @@ export default function UsageBasedBillingConfig({ subject, attributionId }: Prop
             try {
                 await getGitpodService().server.subscribeToStripe(attributionId, setupIntentId);
             } catch (error) {
-                console.error("Could not subscribe subject to Stripe", error);
+                console.error("Could not subscribe to Stripe", error);
                 window.localStorage.removeItem(localStorageKey);
                 clearTimeout(pollStripeSubscriptionTimeout!);
                 setPendingStripeSubscription(undefined);
-                setBillingError(`Could not subscribe subject to Stripe. ${error?.message || String(error)}`);
+                setBillingError(`Could not subscribe to Stripe. ${error?.message || String(error)}`);
             }
         })();
-    }, [location.search, subject]);
+    }, [attributionId, location.search]);
 
     useEffect(() => {
         setPendingStripeSubscription(undefined);
-        if (!subject) {
+        if (!attributionId) {
             return;
         }
         try {
@@ -113,12 +108,12 @@ export default function UsageBasedBillingConfig({ subject, attributionId }: Prop
             const pending = JSON.parse(pendingStripeSubscription);
             setPendingStripeSubscription(pending);
         } catch (error) {
-            console.error("Could not load pending stripe subscription", subject.id, error);
+            console.error("Could not load pending Stripe subscription", attributionId, error);
         }
-    }, [subject]);
+    }, [attributionId, localStorageKey]);
 
     useEffect(() => {
-        if (!pendingStripeSubscription || !subject) {
+        if (!pendingStripeSubscription || !attributionId) {
             return;
         }
         if (!!stripeSubscriptionId) {
@@ -144,30 +139,30 @@ export default function UsageBasedBillingConfig({ subject, attributionId }: Prop
             }, 5000);
             setPollStripeSubscriptionTimeout(timeout);
         }
-    }, [pendingStripeSubscription, pollStripeSubscriptionTimeout, stripeSubscriptionId, subject]);
+    }, [
+        pendingStripeSubscription,
+        pollStripeSubscriptionTimeout,
+        stripeSubscriptionId,
+        attributionId,
+        localStorageKey,
+    ]);
 
-    const showSpinner = isLoading || !!pendingStripeSubscription;
+    const showSpinner = !attributionId || isLoadingStripeSubscription || !!pendingStripeSubscription;
     const showUpgradeBilling = !showSpinner && !stripeSubscriptionId;
     const showManageBilling = !showSpinner && !!stripeSubscriptionId;
 
-    const doUpdateLimit = async (newLimit: number) => {
-        if (!subject) {
+    const updateUsageLimit = async (newLimit: number) => {
+        if (!attributionId) {
             return;
         }
-        const oldLimit = usageLimit;
-        setUsageLimit(newLimit);
+        setShowUpdateLimitModal(false);
         try {
             await getGitpodService().server.setUsageLimit(attributionId, newLimit);
+            setUsageLimit(newLimit);
         } catch (error) {
-            setUsageLimit(oldLimit);
             console.error(error);
-            alert(error?.message || "Failed to update usage limit. See console for error message.");
+            setBillingError(`Failed to update usage limit. ${error?.message || String(error)}`);
         }
-    };
-
-    const onLimitUpdated = async (newLimit: number) => {
-        await doUpdateLimit(newLimit);
-        setShowUpdateLimitModal(false);
     };
 
     return (
@@ -221,14 +216,14 @@ export default function UsageBasedBillingConfig({ subject, attributionId }: Prop
                     </div>
                 )}
             </div>
-            {showBillingSetupModal && (
+            {!!attributionId && showBillingSetupModal && (
                 <BillingSetupModal attributionId={attributionId} onClose={() => setShowBillingSetupModal(false)} />
             )}
             {showUpdateLimitModal && (
                 <UpdateLimitModal
                     currentValue={usageLimit}
                     onClose={() => setShowUpdateLimitModal(false)}
-                    onUpdate={(newLimit) => onLimitUpdated(newLimit)}
+                    onUpdate={(newLimit) => updateUsageLimit(newLimit)}
                 />
             )}
         </div>
