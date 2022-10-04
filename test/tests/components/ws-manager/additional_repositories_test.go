@@ -6,6 +6,8 @@ package wsmanager
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -13,6 +15,7 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 )
@@ -37,6 +40,7 @@ func TestAdditionalRepositories(t *testing.T) {
 					CloneTaget: "aledbf/test-additional-repositories-with-branches",
 				},
 			}
+
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*len(tests))*time.Minute)
 			defer cancel()
 
@@ -47,16 +51,17 @@ func TestAdditionalRepositories(t *testing.T) {
 						api.Done(t)
 					})
 
+					testRepoName := "gitpod-test-repo"
 					ws, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
-						testRepoName := "gitpod-test-repo"
 						req.Spec.WorkspaceLocation = testRepoName
 						req.Spec.Initializer = &csapi.WorkspaceInitializer{
 							Spec: &csapi.WorkspaceInitializer_Git{
 								Git: &csapi.GitInitializer{
-									RemoteUri:  test.ContextURL,
-									CloneTaget: test.CloneTaget,
-									Config:     &csapi.GitConfig{},
-									TargetMode: csapi.CloneTargetMode_REMOTE_BRANCH,
+									RemoteUri:        test.ContextURL,
+									CloneTaget:       test.CloneTaget,
+									Config:           &csapi.GitConfig{},
+									TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,
+									CheckoutLocation: testRepoName,
 								},
 							},
 						}
@@ -83,6 +88,24 @@ func TestAdditionalRepositories(t *testing.T) {
 
 					integration.DeferCloser(t, closer)
 					defer rsa.Close()
+
+					var gitOut agent.ExecResponse
+					err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+						Dir:     fmt.Sprintf("/workspace/%v", testRepoName),
+						Command: "bash",
+						Args: []string{
+							"-c",
+							"git symbolic-ref --short HEAD",
+						},
+					}, &gitOut)
+					if err != nil {
+						t.Fatal(err)
+					}
+
+					out := strings.TrimSpace(gitOut.Stdout)
+					if test.CloneTaget != out {
+						t.Errorf("returned branch %v is not %v", out, test.CloneTaget)
+					}
 				})
 			}
 
