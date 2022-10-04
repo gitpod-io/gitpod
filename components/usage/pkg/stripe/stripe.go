@@ -89,19 +89,17 @@ func (c *Client) UpdateUsage(ctx context.Context, creditsPerAttributionID map[db
 				continue
 			}
 
-			_, err = c.updateUsageForCustomer(ctx, customer, creditsPerAttributionID[attributionID])
-			if err != nil {
-				logger.WithField("customer_id", customer.ID).
-					WithField("customer_name", customer.Name).
-					WithField("subscriptions", customer.Subscriptions).
-					WithField("attribution_id", attributionID).
-					WithError(err).
-					Errorf("Failed to update usage.")
+			lgr := logger.
+				WithField("customer_id", customer.ID).
+				WithField("customer_name", customer.Name).
+				WithField("subscriptions", customer.Subscriptions).
+				WithField("attribution_id", attributionID)
 
-				reportStripeUsageUpdate(err)
-				continue
+			err = c.updateUsageForCustomer(ctx, customer, creditsPerAttributionID[attributionID])
+			if err != nil {
+				lgr.WithError(err).Errorf("Failed to update usage.")
 			}
-			reportStripeUsageUpdate(nil)
+			reportStripeUsageUpdate(err)
 		}
 	}
 	return nil
@@ -128,26 +126,32 @@ func (c *Client) findCustomers(ctx context.Context, query string) ([]*stripe.Cus
 	return customers, nil
 }
 
-func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Customer, credits int64) (*UsageRecord, error) {
+func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Customer, credits int64) error {
+	logger := log.
+		WithField("customer_id", customer.ID).
+		WithField("customer_name", customer.Name).
+		WithField("credits", credits)
 	if credits < 0 {
-		log.WithField("customer_id", customer.ID).
-			WithField("customer_name", customer.Name).
-			WithField("credits", credits).
-			Infof("Received request to update customer %s usage to negative value, updating to 0 instead.", customer.ID)
+		logger.Infof("Received request to update customer %s usage to negative value, updating to 0 instead.", customer.ID)
 
 		// nullify any existing usage, but do not set it to negative value - negative invoice doesn't make sense...
 		credits = 0
 	}
 
 	subscriptions := customer.Subscriptions.Data
-	if len(subscriptions) != 1 {
-		return nil, fmt.Errorf("customer has an unexpected number of subscriptions %v (expected 1, got %d)", subscriptions, len(subscriptions))
+	if len(subscriptions) == 0 {
+		logger.Info("Customer does not have a valid (one) subscription. This happens when a customer has cancelled their subscription but still exist as a Customer in stripe.")
+		return nil
 	}
+	if len(subscriptions) > 1 {
+		return fmt.Errorf("customer has more than 1 subscription (got: %d), this is a consistency error and requires a manual intervention", len(subscriptions))
+	}
+
 	subscription := customer.Subscriptions.Data[0]
 
 	log.Infof("Customer has subscription: %q", subscription.ID)
 	if len(subscription.Items.Data) != 1 {
-		return nil, fmt.Errorf("subscription %s has an unexpected number of subscriptionItems (expected 1, got %d)", subscription.ID, len(subscription.Items.Data))
+		return fmt.Errorf("subscription %s has an unexpected number of subscriptionItems (expected 1, got %d)", subscription.ID, len(subscription.Items.Data))
 	}
 
 	subscriptionItemId := subscription.Items.Data[0].ID
@@ -160,13 +164,10 @@ func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Cu
 		Quantity:         stripe.Int64(credits),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to register usage for customer %q on subscription item %s", customer.Name, subscriptionItemId)
+		return fmt.Errorf("failed to register usage for customer %q on subscription item %s", customer.Name, subscriptionItemId)
 	}
 
-	return &UsageRecord{
-		SubscriptionItemID: subscriptionItemId,
-		Quantity:           credits,
-	}, nil
+	return nil
 }
 
 func (c *Client) GetCustomerByTeamID(ctx context.Context, teamID string) (*stripe.Customer, error) {
