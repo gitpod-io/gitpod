@@ -12,6 +12,7 @@ import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { Ordering } from "@gitpod/gitpod-protocol/lib/usage";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
+import { ReactComponent as Check } from "../images/check-circle.svg";
 import { ThemeContext } from "../theme-context";
 import { PaymentContext } from "../payment-context";
 import { getGitpodService } from "../service/service";
@@ -27,6 +28,7 @@ interface Props {
 
 export default function UsageBasedBillingConfig({ attributionId }: Props) {
     const location = useLocation();
+    const { currency } = useContext(PaymentContext);
     const [showUpdateLimitModal, setShowUpdateLimitModal] = useState<boolean>(false);
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
     const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | undefined>();
@@ -168,7 +170,10 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
 
     const showSpinner = !attributionId || isLoadingStripeSubscription || !!pendingStripeSubscription;
     const showBalance = !showSpinner && !(AttributionId.parse(attributionId)?.kind === "team" && !stripeSubscriptionId);
-    const showUpgradeBilling = !showSpinner && !stripeSubscriptionId;
+    const showUpgradeTeam =
+        !showSpinner && AttributionId.parse(attributionId)?.kind === "team" && !stripeSubscriptionId;
+    const showUpgradeUser =
+        !showSpinner && AttributionId.parse(attributionId)?.kind === "user" && !stripeSubscriptionId;
     const showManageBilling = !showSpinner && !!stripeSubscriptionId;
 
     const updateUsageLimit = async (newLimit: number) => {
@@ -195,7 +200,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                     </Alert>
                 )}
                 {showSpinner && (
-                    <div className="flex flex-col mt-4 h-32 p-4 rounded-xl bg-gray-50 dark:bg-gray-900">
+                    <div className="flex flex-col mt-4 h-52 p-4 rounded-xl bg-gray-50 dark:bg-gray-900">
                         <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Balance</div>
                         <Spinner className="m-2 h-5 w-5 animate-spin" />
                     </div>
@@ -244,21 +249,136 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                         </div>
                     </div>
                 )}
-                {showUpgradeBilling && (
-                    <div className="flex flex-col mt-4 h-32 p-4 rounded-xl bg-gray-100 dark:bg-gray-800">
-                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Billing</div>
-                        <div className="text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">Inactive</div>
-                        <button className="self-end" onClick={() => setShowBillingSetupModal(true)}>
+                {showUpgradeTeam && (
+                    <div className="flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-900">
+                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Upgrade Plan</div>
+                        <div className="mt-1 text-xl font-semibold flex-grow text-gray-500 dark:text-gray-400">
+                            Pay-as-you-go
+                        </div>
+                        <div className="mt-4 flex space-x-1 text-gray-400 dark:text-gray-500">
+                            <Check className="m-0.5 w-5 h-5" />
+                            <div className="flex flex-col">
+                                <span>
+                                    36¢ for 10 credits or 1 hour of Standard workspace usage.{" "}
+                                    <a
+                                        className="gp-link"
+                                        href="https://www.gitpod.io/docs/configure/billing/usage-based-billing"
+                                    >
+                                        Learn more about credits
+                                    </a>
+                                </span>
+                            </div>
+                        </div>
+                        <button className="mt-5 self-end" onClick={() => setShowBillingSetupModal(true)}>
                             Upgrade Plan
                         </button>
                     </div>
                 )}
+                {showUpgradeUser && (
+                    <div className="flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-900">
+                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Current Plan</div>
+                        <div className="mt-1 text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">
+                            Free
+                        </div>
+                        <div className="mt-4 flex space-x-1 text-gray-400 dark:text-gray-500">
+                            <Check className="m-0.5 w-5 h-5 text-orange-500" />
+                            <div className="flex flex-col">
+                                <span className="font-bold text-gray-500 dark:text-gray-400">500 credits</span>
+                                <span>
+                                    50 hours of Standard workspace usage.{" "}
+                                    <a
+                                        className="gp-link"
+                                        href="https://www.gitpod.io/docs/configure/billing/usage-based-billing"
+                                    >
+                                        Learn more about credits
+                                    </a>
+                                </span>
+                            </div>
+                        </div>
+                        <div className="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-800 -m-4 p-4 mt-8 rounded-b-xl">
+                            <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Upgrade Plan</div>
+                            <div className="mt-1 text-xl font-semibold flex-grow text-gray-500 dark:text-gray-400">
+                                {currency === "EUR" ? "€" : "$"}9 / month
+                            </div>
+                            <div className="mt-4 flex space-x-1 text-gray-400 dark:text-gray-500">
+                                <Check className="m-0.5 w-5 h-5" />
+                                <div className="flex flex-col">
+                                    <span className="font-bold">1,000 credits</span>
+                                </div>
+                            </div>
+                            <div className="mt-2 flex space-x-1 text-gray-400 dark:text-gray-500">
+                                <Check className="m-0.5 w-5 h-5" />
+                                <div className="flex flex-col">
+                                    <span className="font-bold">Pay-as-you-go after 1,000 credits</span>
+                                    <span>36¢ for 10 credits or 1 hour of Standard workspace usage.</span>
+                                </div>
+                            </div>
+                            <div className="mt-5 flex flex-col">
+                                <button className="self-end" onClick={() => setShowBillingSetupModal(true)}>
+                                    Upgrade Plan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 {showManageBilling && (
                     <div className="max-w-xl flex space-x-4">
-                        <div className="flex-grow flex flex-col mt-4 h-32 p-4 rounded-xl bg-gray-50 dark:bg-gray-900">
+                        <div className="flex-grow flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-900">
                             <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Current Plan</div>
-                            <div className="text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">Paid</div>
-                            <a className="self-end" href={stripePortalUrl}>
+                            {AttributionId.parse(attributionId)?.kind === "user" ? (
+                                <>
+                                    <div className="mt-1 text-xl font-semibold flex-grow text-gray-800 dark:text-gray-100">
+                                        {currency === "EUR" ? "€" : "$"}9 / month
+                                    </div>
+                                    <div className="mt-4 flex space-x-1 text-gray-400 dark:text-gray-500">
+                                        <Check className="m-0.5 w-5 h-5 text-orange-500" />
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-gray-500 dark:text-gray-400">
+                                                1,000 credits
+                                            </span>
+                                            <span>
+                                                100 hours of Standard workspace usage.{" "}
+                                                <a
+                                                    className="gp-link"
+                                                    href="https://www.gitpod.io/docs/configure/billing/usage-based-billing"
+                                                >
+                                                    Learn more about credits
+                                                </a>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="mt-3 flex space-x-1 text-gray-400 dark:text-gray-500">
+                                        <Check className="m-0.5 w-5 h-5 text-orange-500" />
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-gray-500 dark:text-gray-400">
+                                                Pay-as-you-go after 1,000 credits
+                                            </span>
+                                            <span>36¢ for 10 credits or 1 hour of Standard workspace usage.</span>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="mt-1 text-xl font-semibold flex-grow text-gray-800 dark:text-gray-100">
+                                        Pay-as-you-go
+                                    </div>
+                                    <div className="mt-4 flex space-x-1 text-gray-400 dark:text-gray-500">
+                                        <Check className="m-0.5 w-5 h-5 text-orange-500" />
+                                        <div className="flex flex-col">
+                                            <span>
+                                                36¢ for 10 credits or 1 hour of Standard workspace usage.{" "}
+                                                <a
+                                                    className="gp-link"
+                                                    href="https://www.gitpod.io/docs/configure/billing/usage-based-billing"
+                                                >
+                                                    Learn more about credits
+                                                </a>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                            <a className="mt-5 self-end" href={stripePortalUrl}>
                                 <button className="secondary" disabled={!stripePortalUrl}>
                                     Manage Plan
                                 </button>
