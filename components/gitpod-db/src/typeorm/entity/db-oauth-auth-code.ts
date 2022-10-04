@@ -62,7 +62,4 @@ export class DBOAuthAuthCodeEntry implements OAuthAuthCode {
         nullable: false,
     })
     scopes: OAuthScope[];
-
-    @Column(TypeORM.UUID_COLUMN_TYPE)
-    uid: string;
 }
