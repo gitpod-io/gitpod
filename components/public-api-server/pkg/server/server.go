@@ -62,6 +62,9 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 		log.Info("No stripe webhook secret is configured, endpoints will return NotImplemented")
 	}
 
+	srv.HTTPMux().Handle("/test", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`test`))
+	}))
 	srv.HTTPMux().Handle("/stripe/invoices/webhook", handlers.ContentTypeHandler(stripeWebhookHandler, "application/json"))
 
 	if registerErr := register(srv, gitpodAPI, srv.MetricsRegistry()); registerErr != nil {
