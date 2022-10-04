@@ -2256,7 +2256,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             const billingMode = await this.billingModes.getBillingModeForUser(user, new Date());
             if (billingMode.mode === "usage-based") {
                 const limit = await this.billingService.checkUsageLimitReached(user);
-                let teamOrUser;
+                await this.guardCostCenterAccess(ctx, user.id, limit.attributionId, "get");
+
                 switch (limit.attributionId.kind) {
                     case "user": {
                         if (limit.reached) {
@@ -2267,7 +2268,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                         break;
                     }
                     case "team": {
-                        teamOrUser = await this.teamDB.findTeamById(limit.attributionId.teamId);
+                        const teamOrUser = await this.teamDB.findTeamById(limit.attributionId.teamId);
                         if (teamOrUser) {
                             if (limit.reached) {
                                 result.push(teamOrUser?.slug);
