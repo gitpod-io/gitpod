@@ -44,7 +44,7 @@ export default function (props: SelectIDEModalProps) {
             visible={visible}
             onClose={handleContinue}
             closeable={true}
-            className="_max-w-xl"
+            className="max-w-2xl"
             buttons={<button onClick={handleContinue}>Continue</button>}
         >
             <p className="text-gray-500 dark:text-gray-400 text-base pb-3">
