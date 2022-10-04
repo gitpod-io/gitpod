@@ -32,9 +32,10 @@ export function ProjectsSearch() {
     const [currentProjectOwner, setCurrentProjectOwner] = useState<string | undefined>("");
     const pageLength = 50;
     const [currentPage, setCurrentPage] = useState(1);
-    useEffect(() => {
+    const updateCurrentPage = (page: number) => {
+        setCurrentPage(page);
         search();
-    }, [currentPage]);
+    };
 
     useEffect(() => {
         const projectId = location.pathname.split("/")[3];
@@ -139,7 +140,7 @@ export function ProjectsSearch() {
             </div>
             <Pagination
                 currentPage={currentPage}
-                setPage={setCurrentPage}
+                setPage={updateCurrentPage}
                 totalNumberOfPages={Math.ceil(searchResult.total / pageLength)}
             />
         </>

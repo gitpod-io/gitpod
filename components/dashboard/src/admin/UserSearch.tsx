@@ -22,9 +22,10 @@ export default function UserSearch() {
     const [currentUser, setCurrentUserState] = useState<User | undefined>(undefined);
     const pageLength = 50;
     const [currentPage, setCurrentPage] = useState(1);
-    useEffect(() => {
+    const updateCurrentPage = (page: number) => {
+        setCurrentPage(page);
         search();
-    }, [currentPage]);
+    };
 
     useEffect(() => {
         const userId = location.pathname.split("/")[3];
@@ -111,7 +112,7 @@ export default function UserSearch() {
             </div>
             <Pagination
                 currentPage={currentPage}
-                setPage={setCurrentPage}
+                setPage={updateCurrentPage}
                 totalNumberOfPages={Math.ceil(searchResult.total / pageLength)}
             />
         </PageWithAdminSubMenu>
