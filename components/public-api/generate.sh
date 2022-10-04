@@ -17,13 +17,12 @@ COMPONENTS_DIR="$ROOT_DIR"/components
 # shellcheck disable=SC1090,SC1091
 source "$ROOT_DIR"/scripts/protoc-generator.sh
 
+install_dependencies
+
 lint
 
-install_dependencies
-go_protoc "$COMPONENTS_DIR" "gitpod/v1"
-mkdir -p go/v1
-mv go/gitpod/v1/*.pb.go go/v1
-rm -rf go/gitpod
+protoc_buf_generate
+
 typescript_protoc "$COMPONENTS_DIR" "gitpod/v1"
 
 update_license

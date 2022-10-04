@@ -13,14 +13,19 @@ install_dependencies() {
 
     go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.11.3
 
+    go install github.com/bufbuild/buf/cmd/buf@v1.8.0
+
     curl -sSo /tmp/protoc-gen-grpc-java https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/1.49.0/protoc-gen-grpc-java-1.49.0-linux-x86_64.exe
+
     chmod +x /tmp/protoc-gen-grpc-java
 }
 
 lint() {
-    local PROTO_DIR=${1:-.}
+    buf lint || exit 1
+}
 
-    docker run --rm --volume "$PWD/$PROTO_DIR:/workspace" --workdir /workspace bufbuild/buf lint || exit 1
+protoc_buf_generate() {
+    buf generate || exit 1
 }
 
 go_protoc() {
