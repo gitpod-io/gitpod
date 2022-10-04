@@ -117,7 +117,9 @@ type WsmanExecutor struct {
 
 // StartWorkspace starts a new workspace
 func (w *WsmanExecutor) StartWorkspace(spec *StartWorkspaceSpec) (callDuration time.Duration, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 240*time.Second)
+	// Make the start workspace timeout same as the ws-manager start workspace timeout
+	// https://github.com/gitpod-io/gitpod/blob/f0d464788dbf1ec9495b0802849c95ff86500c98/components/ws-manager/pkg/manager/manager.go#L182
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
 	s := *spec
