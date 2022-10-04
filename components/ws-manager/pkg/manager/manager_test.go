@@ -78,6 +78,10 @@ func TestControlPort(t *testing.T) {
 			fixture := input.(*fixture)
 
 			manager := forTestingOnlyGetManager(t)
+			if manager == nil {
+				t.Errorf("cannot create test manager; this is a bug in the unit test itself")
+				return nil
+			}
 
 			startCtx, err := forTestingOnlyCreateStartWorkspaceContext(manager, fixture.Request.Id, api.WorkspaceType_REGULAR)
 			if err != nil {
@@ -142,6 +146,10 @@ func TestGetWorkspaces(t *testing.T) {
 			fixture := input.(*fixture)
 
 			manager := forTestingOnlyGetManager(t)
+			if manager == nil {
+				t.Errorf("cannot create test manager; this is a bug in the unit test itself")
+				return nil
+			}
 
 			for _, o := range fixture.Pods {
 				err := manager.Clientset.Create(context.Background(), o)
@@ -233,6 +241,10 @@ func TestFindWorkspacePod(t *testing.T) {
 		t.Run(test.Description, func(t *testing.T) {
 			var objs []client.Object
 			manager := forTestingOnlyGetManager(t)
+			if manager == nil {
+				t.Errorf("cannot create test manager; this is a bug in the unit test itself")
+				return
+			}
 			for _, pd := range test.State {
 				startCtx, err := forTestingOnlyCreateStartWorkspaceContext(manager, pd.WorkspaceID, pd.Type)
 				if err != nil {
@@ -392,6 +404,10 @@ func TestConnectToWorkspaceDaemon(t *testing.T) {
 	}
 	for _, tt := range tests {
 		manager := forTestingOnlyGetManager(t, tt.Args.Objs...)
+		if manager == nil {
+			t.Errorf("cannot create test manager; this is a bug in the unit test itself")
+			return
+		}
 		// Add dummy daemon pool - slightly hacky but we aren't testing the actual connectivity here
 		manager.wsdaemonPool = grpcpool.New(func(host string) (*grpc.ClientConn, error) {
 			return nil, nil
