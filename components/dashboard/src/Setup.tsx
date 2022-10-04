@@ -33,7 +33,7 @@ export default function Setup() {
         })();
     };
 
-    const headerText = "Configure a Git integration with a GitLab or GitHub instance.";
+    const headerText = "Configure a Git integration with a GitLab, GitHub, or Bitbucket instance.";
 
     return (
         <div>
