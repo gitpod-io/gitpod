@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
@@ -246,10 +247,11 @@ func GetAttributionID(ctx context.Context, customer *stripe.Customer) (db.Attrib
 // It returns multiple queries, each being a big disjunction of subclauses so that we can process multiple teamIds in one query.
 // `clausesPerQuery` is a limit enforced by the Stripe API.
 func queriesForCustomersWithAttributionIDs(creditsByAttributionID map[db.AttributionID]int64) []string {
-	attributionIDs := make([]db.AttributionID, 0, len(creditsByAttributionID))
+	attributionIDs := make([]string, 0, len(creditsByAttributionID))
 	for k := range creditsByAttributionID {
-		attributionIDs = append(attributionIDs, k)
+		attributionIDs = append(attributionIDs, string(k))
 	}
+	sort.Strings(attributionIDs)
 
 	const clausesPerQuery = 10
 	var queries []string
