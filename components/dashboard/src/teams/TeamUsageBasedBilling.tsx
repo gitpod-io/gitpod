@@ -17,7 +17,6 @@ export default function TeamUsageBasedBilling() {
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
     const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
-    const attributionId: AttributionId = { kind: "team", teamId: team?.id || "" };
 
     useEffect(() => {
         if (!team) return;
@@ -35,7 +34,7 @@ export default function TeamUsageBasedBilling() {
     return (
         <>
             <h3>Usage-Based Billing</h3>
-            <UsageBasedBillingConfig subject={team} attributionId={AttributionId.render(attributionId)} />
+            <UsageBasedBillingConfig attributionId={team && AttributionId.render({ kind: "team", teamId: team.id })} />
         </>
     );
 }
