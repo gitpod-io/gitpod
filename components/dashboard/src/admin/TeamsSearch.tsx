@@ -32,9 +32,10 @@ export function TeamsSearch() {
     const [searchResult, setSearchResult] = useState<AdminGetListResult<Team>>({ total: 0, rows: [] });
     const pageLength = 50;
     const [currentPage, setCurrentPage] = useState(1);
-    useEffect(() => {
+    const updateCurrentPage = (page: number) => {
+        setCurrentPage(page);
         search();
-    }, [currentPage]);
+    };
 
     useEffect(() => {
         const teamId = location.pathname.split("/")[3];
@@ -128,7 +129,7 @@ export function TeamsSearch() {
             </div>
             <Pagination
                 currentPage={currentPage}
-                setPage={setCurrentPage}
+                setPage={updateCurrentPage}
                 totalNumberOfPages={Math.ceil(searchResult.total / pageLength)}
             />
         </>

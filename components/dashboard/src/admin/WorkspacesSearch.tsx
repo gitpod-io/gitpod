@@ -47,9 +47,10 @@ export function WorkspaceSearch(props: Props) {
     const [currentWorkspace, setCurrentWorkspaceState] = useState<WorkspaceAndInstance | undefined>(undefined);
     const pageLength = 50;
     const [currentPage, setCurrentPage] = useState(1);
-    useEffect(() => {
+    const updateCurrentPage = (page: number) => {
+        setCurrentPage(page);
         search();
-    }, [currentPage]);
+    };
 
     useEffect(() => {
         const workspaceId = location.pathname.split("/")[3];
@@ -161,7 +162,7 @@ export function WorkspaceSearch(props: Props) {
             </div>
             <Pagination
                 currentPage={currentPage}
-                setPage={setCurrentPage}
+                setPage={updateCurrentPage}
                 totalNumberOfPages={Math.ceil(searchResult.total / pageLength)}
             />
         </>
