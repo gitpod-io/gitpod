@@ -28,6 +28,10 @@ func TestMarkWorkspace(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Description, func(t *testing.T) {
 			manager := forTestingOnlyGetManager(t)
+			if manager == nil {
+				t.Errorf("cannot create test manager; this is a bug in the unit test itself")
+				return
+			}
 			startCtx, err := forTestingOnlyCreateStartWorkspaceContext(manager, "foo", api.WorkspaceType_REGULAR)
 			if err != nil {
 				t.Errorf("cannot create test pod start context; this is a bug in the unit test itself: %v", err)
@@ -104,6 +108,10 @@ func TestModifyFinalizer(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Description, func(t *testing.T) {
 			manager := forTestingOnlyGetManager(t)
+			if manager == nil {
+				t.Errorf("cannot create test manager; this is a bug in the unit test itself")
+				return
+			}
 			startCtx, err := forTestingOnlyCreateStartWorkspaceContext(manager, "foo", api.WorkspaceType_REGULAR)
 			if err != nil {
 				t.Errorf("cannot create test pod start context; this is a bug in the unit test itself: %v", err)
