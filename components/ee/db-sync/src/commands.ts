@@ -46,6 +46,25 @@ export class RunCommand implements ICommand {
     async run(args: any): Promise<void> {
         const config = JSON.parse(readFileSync(args.config).toString()) as ReplicationConfig;
 
+        if (process.env.DB_PASSWORD) {
+            console.info("Found DB_PASSWORD env var, using it to establish connections.");
+            if (config.source) {
+                config.source.password = process.env.DB_PASSWORD;
+            }
+            for (const target of config.targets) {
+                target.password = process.env.DB_PASSWORD;
+            }
+        }
+        if (process.env.DB_USERNAME) {
+            console.info("Found DB_USERNAME env var, using it to establish connections.");
+            if (config.source) {
+                config.source.user = process.env.DB_USERNAME;
+            }
+            for (const target of config.targets) {
+                target.user = process.env.DB_USERNAME;
+            }
+        }
+
         if (config.roundRobin) {
             if (config.source) {
                 console.warn("Running in round robin mode. Ignoring source connection configuration!");
@@ -118,6 +137,9 @@ export class RunCommand implements ICommand {
                 }, config.syncPeriod);
             });
         } else {
+            if (!config.source) {
+                throw new Error("Running in single-source mode requires a source!");
+            }
             const source = await connect(config.source);
             const targets = await Promise.all(config.targets.map((t) => connect(t)));
             const replicator = await this.replicatorProvider(source, targets, config.syncPeriod, config.tableSet);
