@@ -69,7 +69,7 @@
     }
 
     button.gp-link {
-        @apply bg-transparent hover:bg-transparent p-0 rounded-none;
+        @apply bg-transparent hover:bg-transparent p-0 font-normal rounded-none;
     }
 
     a.gp-link,
