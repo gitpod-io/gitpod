@@ -46,6 +46,13 @@ func TestBackup(t *testing.T) {
 					CheckoutLocation: "empty",
 					FF:               []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM},
 				},
+				{
+					Name:             "pvc-non-gitpodified",
+					ContextURL:       "https://github.com/gitpod-io/non-gitpodified-repo",
+					WorkspaceRoot:    "/workspace/non-gitpodified-repo",
+					CheckoutLocation: "non-gitpodified-repo",
+					FF:               []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM},
+				},
 			}
 			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
 			defer cancel()
