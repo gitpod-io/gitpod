@@ -14,6 +14,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 
 	"github.com/gitpod-io/gitpod/public-api/config"
+	"github.com/gitpod-io/gitpod/public-api/v1/v1connect"
 	"github.com/gorilla/handlers"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
@@ -22,7 +23,6 @@ import (
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/webhooks"
 	v1 "github.com/gitpod-io/gitpod/public-api/v1"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
 
@@ -62,12 +62,9 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 		log.Info("No stripe webhook secret is configured, endpoints will return NotImplemented")
 	}
 
-	srv.HTTPMux().Handle("/test", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`test`))
-	}))
 	srv.HTTPMux().Handle("/stripe/invoices/webhook", handlers.ContentTypeHandler(stripeWebhookHandler, "application/json"))
 
-	if registerErr := register(srv, gitpodAPI, srv.MetricsRegistry()); registerErr != nil {
+	if registerErr := register(srv, gitpodAPI); registerErr != nil {
 		return fmt.Errorf("failed to register services: %w", registerErr)
 	}
 
@@ -78,13 +75,16 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	return nil
 }
 
-func register(srv *baseserver.Server, serverAPIURL *url.URL, registry *prometheus.Registry) error {
-	proxy.RegisterMetrics(registry)
+func register(srv *baseserver.Server, serverAPIURL *url.URL) error {
+	proxy.RegisterMetrics(srv.MetricsRegistry())
 
 	connPool := &proxy.NoConnectionPool{ServerAPI: serverAPIURL}
 
 	v1.RegisterWorkspacesServiceServer(srv.GRPC(), apiv1.NewWorkspaceService(connPool))
 	v1.RegisterPrebuildsServiceServer(srv.GRPC(), v1.UnimplementedPrebuildsServiceServer{})
+
+	workspacesRoute, workspacesServiceHandler := v1connect.NewWorkspacesServiceHandler(&v1connect.UnimplementedWorkspacesServiceHandler{})
+	srv.HTTPMux().Handle(workspacesRoute, workspacesServiceHandler)
 
 	return nil
 }

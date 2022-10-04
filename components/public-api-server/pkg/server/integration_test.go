@@ -6,12 +6,14 @@ package server
 
 import (
 	"context"
+	"net/http"
 	"net/url"
 	"testing"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	v1 "github.com/gitpod-io/gitpod/public-api/v1"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/gitpod-io/gitpod/public-api/v1/v1connect"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -25,12 +27,11 @@ func TestPublicAPIServer_v1_WorkspaceService(t *testing.T) {
 	srv := baseserver.NewForTests(t,
 		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
 	)
-	registry := prometheus.NewRegistry()
 
 	gitpodAPI, err := url.Parse("wss://main.preview.gitpod-dev.com/api/v1")
 	require.NoError(t, err)
 
-	require.NoError(t, register(srv, gitpodAPI, registry))
+	require.NoError(t, register(srv, gitpodAPI))
 	baseserver.StartServerForTests(t, srv)
 
 	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -69,12 +70,11 @@ func TestPublicAPIServer_v1_WorkspaceService(t *testing.T) {
 func TestPublicAPIServer_v1_PrebuildService(t *testing.T) {
 	ctx := context.Background()
 	srv := baseserver.NewForTests(t, baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)))
-	registry := prometheus.NewRegistry()
 
 	gitpodAPI, err := url.Parse("wss://main.preview.gitpod-dev.com/api/v1")
 	require.NoError(t, err)
 
-	require.NoError(t, register(srv, gitpodAPI, registry))
+	require.NoError(t, register(srv, gitpodAPI))
 
 	baseserver.StartServerForTests(t, srv)
 
@@ -98,6 +98,58 @@ func TestPublicAPIServer_v1_PrebuildService(t *testing.T) {
 	require.NoError(t, err)
 	_, err = listenToLogsStream.Recv()
 	requireErrorStatusCode(t, codes.Unimplemented, err)
+}
+
+func TestPublicAPIServer_WorkspaceServiceHandler(t *testing.T) {
+	ctx := context.Background()
+	srv := baseserver.NewForTests(t,
+		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
+		baseserver.WithHTTP(baseserver.MustUseRandomLocalAddress(t)),
+	)
+
+	gitpodAPI, err := url.Parse("wss://main.preview.gitpod-dev.com/api/v1")
+	require.NoError(t, err)
+
+	require.NoError(t, register(srv, gitpodAPI))
+	baseserver.StartServerForTests(t, srv)
+
+	client := v1connect.NewWorkspacesServiceClient(http.DefaultClient, srv.HTTPAddress())
+
+	_, err = client.ListWorkspaces(ctx, connect.NewRequest(&v1.ListWorkspacesRequest{}))
+	require.Equal(t, connect.CodeUnimplemented.String(), connect.CodeOf(err).String())
+
+	_, err = client.GetWorkspace(ctx, connect.NewRequest(&v1.GetWorkspaceRequest{}))
+	require.Equal(t, connect.CodeUnimplemented.String(), connect.CodeOf(err).String())
+
+	_, err = client.GetOwnerToken(ctx, connect.NewRequest(&v1.GetOwnerTokenRequest{}))
+	require.Equal(t, connect.CodeUnimplemented.String(), connect.CodeOf(err).String())
+
+	_, err = client.CreateAndStartWorkspace(ctx, connect.NewRequest(&v1.CreateAndStartWorkspaceRequest{}))
+	require.Equal(t, connect.CodeUnimplemented.String(), connect.CodeOf(err).String())
+
+	_, err = client.StartWorkspace(ctx, connect.NewRequest(&v1.StartWorkspaceRequest{}))
+	require.Equal(t, connect.CodeUnimplemented.String(), connect.CodeOf(err).String())
+
+	_, err = client.GetActiveWorkspaceInstance(ctx, connect.NewRequest(&v1.GetActiveWorkspaceInstanceRequest{}))
+	require.Equal(t, connect.CodeUnimplemented.String(), connect.CodeOf(err).String())
+
+	_, err = client.GetWorkspaceInstanceOwnerToken(ctx, connect.NewRequest(&v1.GetWorkspaceInstanceOwnerTokenRequest{}))
+	require.Equal(t, connect.CodeUnimplemented.String(), connect.CodeOf(err).String())
+
+	stream, err := client.ListenToWorkspaceInstance(ctx, connect.NewRequest(&v1.ListenToWorkspaceInstanceRequest{}))
+	require.NoError(t, err)
+	stream.Receive()
+	require.Equal(t, connect.CodeUnimplemented.String(), connect.CodeOf(stream.Err()).String())
+
+	logsStream, err := client.ListenToImageBuildLogs(ctx, connect.NewRequest(&v1.ListenToImageBuildLogsRequest{}))
+	require.NoError(t, err)
+	logsStream.Receive()
+	require.Equal(t, connect.CodeUnimplemented.String(), connect.CodeOf(logsStream.Err()).String())
+
+	stopStream, err := client.StopWorkspace(ctx, connect.NewRequest(&v1.StopWorkspaceRequest{}))
+	require.NoError(t, err)
+	stopStream.Receive()
+	require.Equal(t, connect.CodeUnimplemented.String(), connect.CodeOf(stopStream.Err()).String())
 }
 
 func requireErrorStatusCode(t *testing.T, expected codes.Code, err error) {
