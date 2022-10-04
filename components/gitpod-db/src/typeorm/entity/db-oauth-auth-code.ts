@@ -7,6 +7,7 @@
 import { CodeChallengeMethod, OAuthAuthCode, OAuthClient, OAuthScope } from "@jmondi/oauth2-server";
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Transformer } from "../transformer";
+import { TypeORM } from "../typeorm";
 import { DBUser } from "./db-user";
 
 @Entity({ name: "d_b_oauth_auth_code_entry" })
@@ -38,7 +39,7 @@ export class DBOAuthAuthCodeEntry implements OAuthAuthCode {
         type: "varchar",
         length: 10,
     })
-    codeChallengeMethod: CodeChallengeMethod
+    codeChallengeMethod: CodeChallengeMethod;
 
     @Column({
         type: "timestamp",
@@ -61,4 +62,7 @@ export class DBOAuthAuthCodeEntry implements OAuthAuthCode {
         nullable: false,
     })
     scopes: OAuthScope[];
+
+    @Column(TypeORM.UUID_COLUMN_TYPE)
+    uid: string;
 }
