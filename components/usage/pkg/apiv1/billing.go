@@ -44,23 +44,17 @@ func (s *BillingService) ReconcileInvoices(ctx context.Context, in *v1.Reconcile
 		return nil, status.Errorf(codes.Internal, "Failed to reconcile invoices.")
 	}
 
-	creditSummaryForTeams := map[db.AttributionID]int64{}
-	for _, balance := range balances {
-		// filter out balances for non-stripe attribution IDs
-		costCenter, err := s.ccManager.GetOrCreateCostCenter(ctx, balance.AttributionID)
-		if err != nil {
-			return nil, err
-		}
-
-		// We only update Stripe usage when the AttributionID is billed against Stripe (determined through CostCenter)
-		if costCenter.BillingStrategy != db.CostCenter_Stripe {
-			continue
-		}
-
-		creditSummaryForTeams[balance.AttributionID] = int64(math.Ceil(balance.CreditCents.ToCredits()))
+	stripeBalances, err := balancesForStripeCostCenters(ctx, s.ccManager, balances)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to identify stripe balances.")
 	}
 
-	err = s.stripeClient.UpdateUsage(ctx, creditSummaryForTeams)
+	creditCentsByAttribution := map[db.AttributionID]int64{}
+	for _, balance := range stripeBalances {
+		creditCentsByAttribution[balance.AttributionID] = int64(math.Ceil(balance.CreditCents.ToCredits()))
+	}
+
+	err = s.stripeClient.UpdateUsage(ctx, creditCentsByAttribution)
 	if err != nil {
 		log.WithError(err).Errorf("Failed to udpate usage in stripe.")
 		return nil, status.Errorf(codes.Internal, "Failed to update usage in stripe")
@@ -156,4 +150,24 @@ func (s *BillingService) CancelSubscription(ctx context.Context, in *v1.CancelSu
 		return nil, err
 	}
 	return &v1.CancelSubscriptionResponse{}, nil
+}
+
+func balancesForStripeCostCenters(ctx context.Context, cm *db.CostCenterManager, balances []db.Balance) ([]db.Balance, error) {
+	var result []db.Balance
+	for _, balance := range balances {
+		// filter out balances for non-stripe attribution IDs
+		costCenter, err := cm.GetOrCreateCostCenter(ctx, balance.AttributionID)
+		if err != nil {
+			return nil, err
+		}
+
+		// We only update Stripe usage when the AttributionID is billed against Stripe (determined through CostCenter)
+		if costCenter.BillingStrategy != db.CostCenter_Stripe {
+			continue
+		}
+
+		result = append(result, balance)
+	}
+
+	return result, nil
 }
