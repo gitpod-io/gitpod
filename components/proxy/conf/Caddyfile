@@ -157,6 +157,9 @@ api.{$GITPOD_DOMAIN} {
 		reverse_proxy h2c://public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9001
 	}
 
+	gitpod.cors_origin {
+		base_domain {$GITPOD_DOMAIN}
+	}
 	# Non-grpc traffic goes to an HTTP server
 	reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002
 }
