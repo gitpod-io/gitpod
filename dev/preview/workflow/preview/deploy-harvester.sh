@@ -36,6 +36,11 @@ terraform_init
 PLAN_EXIT_CODE=0
 terraform_plan || PLAN_EXIT_CODE=$?
 
+if [[ ${PLAN_EXIT_CODE} == 1 ]]; then
+  log_error "Terraform plan failed"
+  exit "${ERROR_PLAN_FAIL}"
+fi
+
 # If there are changes
 if [[ ${PLAN_EXIT_CODE} == 2 ]]; then
   # If we're NOT in werft, ask if we want to apply the plan

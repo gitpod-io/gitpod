@@ -10,6 +10,7 @@ export ERROR_CHANGE_DIR=31
 export ERROR_NO_WORKSPACE=32
 export ERROR_NO_DIR=33
 export ERROR_NO_PLAN=34
+export ERROR_PLAN_FAIL=35
 
 function import() {
   local file="${SCRIPT_PATH}/${1}"
