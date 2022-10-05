@@ -795,6 +795,8 @@ export interface JetBrainsConfig {
     goland?: JetBrainsProductConfig;
     pycharm?: JetBrainsProductConfig;
     phpstorm?: JetBrainsProductConfig;
+    rubymine?: JetBrainsProductConfig;
+    webstorm?: JetBrainsProductConfig;
 }
 export interface JetBrainsProductConfig {
     prebuilds?: JetBrainsPrebuilds;

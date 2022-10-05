@@ -275,6 +275,14 @@
                 "phpstorm": {
                     "$ref": "#/definitions/jetbrainsProduct",
                     "description": "Configure PhpStorm integration"
+                },
+                "rubymine": {
+                    "$ref": "#/definitions/jetbrainsProduct",
+                    "description": "Configure RubyMine integration"
+                },
+                "webstorm": {
+                    "$ref": "#/definitions/jetbrainsProduct",
+                    "description": "Configure WebStorm integration"
                 }
             }
         },

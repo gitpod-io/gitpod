@@ -52,6 +52,8 @@ func init() {
 	ideProjectMap["intellij"] = "https://github.com/gitpod-io/spring-petclinic"
 	ideProjectMap["phpstorm"] = "https://github.com/gitpod-io/template-php-laravel-mysql"
 	ideProjectMap["pycharm"] = "https://github.com/gitpod-io/template-python-django"
+	ideProjectMap["rubymine"] = "https://github.com/gitpod-io/template-ruby-on-rails-postgres"
+	ideProjectMap["webstorm"] = "https://github.com/gitpod-io/template-typescript-react"
 }
 
 func GetHttpContent(url string) ([]byte, error) {

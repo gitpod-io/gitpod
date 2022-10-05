@@ -115,6 +115,12 @@ type Jetbrains struct {
 
 	// Configure PyCharm integration
 	Pycharm *JetbrainsProduct `yaml:"pycharm,omitempty"`
+
+	// Configure RubyMine integration
+	Rubymine *JetbrainsProduct `yaml:"rubymine,omitempty"`
+
+	// Configure WebStorm integration
+	Webstorm *JetbrainsProduct `yaml:"webstorm,omitempty"`
 }
 
 // JetbrainsProduct
@@ -734,6 +740,28 @@ func (strct *Jetbrains) MarshalJSON() ([]byte, error) {
 		buf.Write(tmp)
 	}
 	comma = true
+	// Marshal the "rubymine" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"rubymine\": ")
+	if tmp, err := json.Marshal(strct.Rubymine); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
+	// Marshal the "webstorm" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"webstorm\": ")
+	if tmp, err := json.Marshal(strct.Webstorm); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
 
 	buf.WriteString("}")
 	rv := buf.Bytes()
@@ -766,6 +794,14 @@ func (strct *Jetbrains) UnmarshalJSON(b []byte) error {
 			}
 		case "pycharm":
 			if err := json.Unmarshal([]byte(v), &strct.Pycharm); err != nil {
+				return err
+			}
+		case "rubymine":
+			if err := json.Unmarshal([]byte(v), &strct.Rubymine); err != nil {
+				return err
+			}
+		case "webstorm":
+			if err := json.Unmarshal([]byte(v), &strct.Webstorm); err != nil {
 				return err
 			}
 		default:
