@@ -33,11 +33,13 @@ provider "harvester" {
 }
 
 provider "k8s" {
-  alias       = "dev"
-  config_path = var.dev_kube_path
+  alias          = "dev"
+  config_path    = var.dev_kube_path
+  config_context = "dev"
 }
 
 provider "k8s" {
-  alias       = "harvester"
-  config_path = var.harvester_kube_path
+  alias          = "harvester"
+  config_path    = var.harvester_kube_path
+  config_context = "harvester"
 }
