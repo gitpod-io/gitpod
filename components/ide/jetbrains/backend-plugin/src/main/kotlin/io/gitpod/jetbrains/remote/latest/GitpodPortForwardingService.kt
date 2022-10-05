@@ -4,17 +4,17 @@
 
 package io.gitpod.jetbrains.remote.latest
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.client.ClientProjectSession
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.util.application
-import com.jetbrains.codeWithMe.model.RdPortType
+import com.jetbrains.rd.platform.codeWithMe.portForwarding.*
 import com.jetbrains.rd.platform.util.lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeStatus
-import com.jetbrains.rdserver.portForwarding.ForwardedPortInfo
-import com.jetbrains.rdserver.portForwarding.PortForwardingManager
-import com.jetbrains.rdserver.portForwarding.remoteDev.PortEventsProcessor
+import io.gitpod.jetbrains.remote.GitpodIgnoredPortsForNotificationService
 import io.gitpod.jetbrains.remote.GitpodManager
 import io.gitpod.jetbrains.remote.GitpodPortsService
 import io.gitpod.supervisor.api.Status
@@ -24,14 +24,18 @@ import io.grpc.stub.ClientResponseObserver
 import io.ktor.utils.io.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import javax.swing.Icon
 
 @Suppress("UnstableApiUsage")
-class GitpodPortForwardingService(private val project: Project) {
+class GitpodPortForwardingService(private val session: ClientProjectSession) {
     companion object {
         const val FORWARDED_PORT_LABEL = "gitpod"
     }
 
     private val portsService = service<GitpodPortsService>()
+    private val perClientPortForwardingManager = service<PerClientPortForwardingManager>()
+    private val ignoredPortsForNotificationService = service<GitpodIgnoredPortsForNotificationService>()
+    private val portToDisposableMap = mutableMapOf<Int,Disposable>()
 
     init { start() }
 
@@ -42,7 +46,7 @@ class GitpodPortForwardingService(private val project: Project) {
     }
 
     private fun observePortsListWhileProjectIsOpen() = application.executeOnPooledThread {
-        while (project.lifetime.status == LifetimeStatus.Alive) {
+        while (session.project.lifetime.status == LifetimeStatus.Alive) {
             try {
                 observePortsList().get()
             } catch (throwable: Throwable) {
@@ -70,7 +74,7 @@ class GitpodPortForwardingService(private val project: Project) {
         val portsStatusResponseObserver = object :
                 ClientResponseObserver<Status.PortsStatusRequest, Status.PortsStatusResponse> {
             override fun beforeStart(request: ClientCallStreamObserver<Status.PortsStatusRequest>) {
-                project.lifetime.onTerminationOrNow { request.cancel("gitpod: Project terminated.", null) }
+                session.project.lifetime.onTerminationOrNow { request.cancel("gitpod: Project terminated.", null) }
             }
             override fun onNext(response: Status.PortsStatusResponse) {
                 application.invokeLater { updateForwardedPortsList(response) }
@@ -85,48 +89,88 @@ class GitpodPortForwardingService(private val project: Project) {
     }
 
     private fun updateForwardedPortsList(response: Status.PortsStatusResponse) {
-        val portForwardingManager = PortForwardingManager.getInstance(project)
-        val forwardedPortsList = portForwardingManager.getForwardedPortsWithLabel(FORWARDED_PORT_LABEL)
+        val ignoredPorts = ignoredPortsForNotificationService.getIgnoredPorts()
 
         for (port in response.portsList) {
+            if (ignoredPorts.contains(port.localPort)) continue
+
             val hostPort = port.localPort
             val isServed = port.served
-            val isForwarded = forwardedPortsList.find { it.hostPort == hostPort } != null
+            val isForwarded = perClientPortForwardingManager.getPorts(hostPort).isNotEmpty()
 
             if (isServed && !isForwarded) {
-                val portEventsProcessor = object : PortEventsProcessor {
-                    override fun onPortForwarded(hostPort: Int, clientPort: Int) {
-                        portsService.setForwardedPort(hostPort, clientPort)
-                        thisLogger().info("gitpod: Forwarded port $hostPort to client's port $clientPort.")
-                    }
-
-                    override fun onPortForwardingEnded(hostPort: Int) {
-                        thisLogger().info("gitpod: Finished forwarding port $hostPort.")
-                    }
-
-                    override fun onPortForwardingFailed(hostPort: Int, reason: String) {
-                        thisLogger().error("gitpod: Failed to forward port $hostPort: $reason")
-                    }
-                }
-
-                val portInfo = ForwardedPortInfo(
+                try {
+                    val forwardedPort = perClientPortForwardingManager.forwardPort(
                         hostPort,
-                        RdPortType.HTTP,
-                        port.exposed.url,
-                        port.name,
-                        port.description,
+                        PortType.TCP,
                         setOf(FORWARDED_PORT_LABEL),
-                        emptyList(),
-                        portEventsProcessor
-                )
+                        hostPort,
+                        ClientPortPickingStrategy.REASSIGN_WHEN_BUSY
+                    ) {
+                        this.name = port.name
+                        this.description = port.description
+                        this.icon = null
+                        this.tooltip = "Forwarded Port"
+                    }
 
-                portForwardingManager.forwardPort(portInfo)
+                    val portListenerDisposable = portToDisposableMap.getOrPut(hostPort, fun() = Disposer.newDisposable())
+
+                    forwardedPort.addPortListener(portListenerDisposable, object: ForwardedPortListener {
+                        override fun becameReadOnly(port: ForwardedPort, reason: String?) {
+                            thisLogger().warn("gitpod: becameReadOnly($port, $reason)")
+                        }
+
+                        override fun descriptionChanged(port: ForwardedPort, oldDescription: String?, newDescription: String?) {
+                            thisLogger().warn("gitpod: descriptionChanged($port, $oldDescription, $newDescription)")
+                        }
+
+                        override fun exposedUrlChanged(port: ForwardedPort, newUrl: String) {
+                            thisLogger().warn("gitpod: exposedUrlChanged($port, $newUrl)")
+                        }
+
+                        override fun iconChanged(port: ForwardedPort, oldIcon: Icon?, newIcon: Icon?) {
+                            thisLogger().warn("gitpod: iconChanged($port, $oldIcon, $newIcon)")
+                        }
+
+                        override fun nameChanged(port: ForwardedPort, oldName: String?, newName: String?) {
+                            thisLogger().warn("gitpod: nameChanged($port, $oldName, $newName)")
+                        }
+
+                        override fun stateChanged(port: ForwardedPort, newState: ClientPortState) {
+                            when (newState) {
+                                is ClientPortState.Assigned -> {
+                                    thisLogger().warn("gitpod: Started forwarding host port $hostPort to client port ${newState.clientPort}.")
+                                    portsService.setForwardedPort(hostPort, newState.clientPort)
+                                }
+                                is ClientPortState.FailedToAssign -> {
+                                    thisLogger().warn("gitpod: Detected that host port $hostPort failed to be assigned to a client port.")
+                                }
+                                else -> {
+                                    thisLogger().warn("gitpod: Detected that host port $hostPort is not assigned to any client port.")
+                                }
+                            }
+                        }
+
+                        override fun tooltipChanged(port: ForwardedPort, oldTooltip: String?, newTooltip: String?) {
+                            thisLogger().warn("gitpod: tooltipChanged($port, $oldTooltip, $newTooltip)")
+                        }
+                    })
+                } catch (error: Error) {
+                    thisLogger().warn("gitpod: ${error.message}")
+                }
             }
 
             if (!isServed && isForwarded) {
-                portForwardingManager.removePort(hostPort)
+                val portListenerDisposable = portToDisposableMap[hostPort]
+                if (portListenerDisposable != null) {
+                    portListenerDisposable.dispose()
+                    portToDisposableMap.remove(hostPort)
+                }
+                perClientPortForwardingManager.getPorts(hostPort).forEach { portToRemove ->
+                    perClientPortForwardingManager.removePort(portToRemove)
+                }
                 portsService.removeForwardedPort(hostPort)
-                thisLogger().info("gitpod: Stopped forwarding port $hostPort.")
+                thisLogger().warn("gitpod: Stopped forwarding port $hostPort.")
             }
         }
     }
