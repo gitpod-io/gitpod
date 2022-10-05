@@ -23,6 +23,18 @@ export interface FinalizeInvoiceRequest {
 export interface FinalizeInvoiceResponse {
 }
 
+export interface GetSubscriptionRequest {
+}
+
+export interface GetSubscriptionResponse {
+}
+
+export interface CreateSubscriptionRequest {
+}
+
+export interface CreateSubscriptionResponse {
+}
+
 export interface CancelSubscriptionRequest {
   subscriptionId: string;
 }
@@ -194,6 +206,162 @@ export const FinalizeInvoiceResponse = {
   },
 };
 
+function createBaseGetSubscriptionRequest(): GetSubscriptionRequest {
+  return {};
+}
+
+export const GetSubscriptionRequest = {
+  encode(_: GetSubscriptionRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetSubscriptionRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetSubscriptionRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): GetSubscriptionRequest {
+    return {};
+  },
+
+  toJSON(_: GetSubscriptionRequest): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial(_: DeepPartial<GetSubscriptionRequest>): GetSubscriptionRequest {
+    const message = createBaseGetSubscriptionRequest();
+    return message;
+  },
+};
+
+function createBaseGetSubscriptionResponse(): GetSubscriptionResponse {
+  return {};
+}
+
+export const GetSubscriptionResponse = {
+  encode(_: GetSubscriptionResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetSubscriptionResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetSubscriptionResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): GetSubscriptionResponse {
+    return {};
+  },
+
+  toJSON(_: GetSubscriptionResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial(_: DeepPartial<GetSubscriptionResponse>): GetSubscriptionResponse {
+    const message = createBaseGetSubscriptionResponse();
+    return message;
+  },
+};
+
+function createBaseCreateSubscriptionRequest(): CreateSubscriptionRequest {
+  return {};
+}
+
+export const CreateSubscriptionRequest = {
+  encode(_: CreateSubscriptionRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CreateSubscriptionRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateSubscriptionRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): CreateSubscriptionRequest {
+    return {};
+  },
+
+  toJSON(_: CreateSubscriptionRequest): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial(_: DeepPartial<CreateSubscriptionRequest>): CreateSubscriptionRequest {
+    const message = createBaseCreateSubscriptionRequest();
+    return message;
+  },
+};
+
+function createBaseCreateSubscriptionResponse(): CreateSubscriptionResponse {
+  return {};
+}
+
+export const CreateSubscriptionResponse = {
+  encode(_: CreateSubscriptionResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CreateSubscriptionResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateSubscriptionResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): CreateSubscriptionResponse {
+    return {};
+  },
+
+  toJSON(_: CreateSubscriptionResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial(_: DeepPartial<CreateSubscriptionResponse>): CreateSubscriptionResponse {
+    const message = createBaseCreateSubscriptionResponse();
+    return message;
+  },
+};
+
 function createBaseCancelSubscriptionRequest(): CancelSubscriptionRequest {
   return { subscriptionId: "" };
 }
@@ -309,6 +477,24 @@ export const BillingServiceDefinition = {
       responseStream: false,
       options: {},
     },
+    /** GetSubscription retrieves a Stripe subscription */
+    getSubscription: {
+      name: "GetSubscription",
+      requestType: GetSubscriptionRequest,
+      requestStream: false,
+      responseType: GetSubscriptionResponse,
+      responseStream: false,
+      options: {},
+    },
+    /** CreateSubscription creates Stripe subscription. */
+    createSubscription: {
+      name: "CreateSubscription",
+      requestType: CreateSubscriptionRequest,
+      requestStream: false,
+      responseType: CreateSubscriptionResponse,
+      responseStream: false,
+      options: {},
+    },
     /**
      * CancelSubscription cancels a stripe subscription in our system
      * Called by a stripe webhook
@@ -341,6 +527,16 @@ export interface BillingServiceServiceImplementation<CallContextExt = {}> {
     request: FinalizeInvoiceRequest,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<FinalizeInvoiceResponse>>;
+  /** GetSubscription retrieves a Stripe subscription */
+  getSubscription(
+    request: GetSubscriptionRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<GetSubscriptionResponse>>;
+  /** CreateSubscription creates Stripe subscription. */
+  createSubscription(
+    request: CreateSubscriptionRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<CreateSubscriptionResponse>>;
   /**
    * CancelSubscription cancels a stripe subscription in our system
    * Called by a stripe webhook
@@ -368,6 +564,16 @@ export interface BillingServiceClient<CallOptionsExt = {}> {
     request: DeepPartial<FinalizeInvoiceRequest>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<FinalizeInvoiceResponse>;
+  /** GetSubscription retrieves a Stripe subscription */
+  getSubscription(
+    request: DeepPartial<GetSubscriptionRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<GetSubscriptionResponse>;
+  /** CreateSubscription creates Stripe subscription. */
+  createSubscription(
+    request: DeepPartial<CreateSubscriptionRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<CreateSubscriptionResponse>;
   /**
    * CancelSubscription cancels a stripe subscription in our system
    * Called by a stripe webhook

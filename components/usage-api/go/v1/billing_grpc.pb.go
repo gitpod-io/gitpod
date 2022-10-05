@@ -32,6 +32,10 @@ type BillingServiceClient interface {
 	// FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
 	// having been invoiced.
 	FinalizeInvoice(ctx context.Context, in *FinalizeInvoiceRequest, opts ...grpc.CallOption) (*FinalizeInvoiceResponse, error)
+	// GetSubscription retrieves a Stripe subscription
+	GetSubscription(ctx context.Context, in *GetSubscriptionRequest, opts ...grpc.CallOption) (*GetSubscriptionResponse, error)
+	// CreateSubscription creates Stripe subscription.
+	CreateSubscription(ctx context.Context, in *CreateSubscriptionRequest, opts ...grpc.CallOption) (*CreateSubscriptionResponse, error)
 	// CancelSubscription cancels a stripe subscription in our system
 	// Called by a stripe webhook
 	CancelSubscription(ctx context.Context, in *CancelSubscriptionRequest, opts ...grpc.CallOption) (*CancelSubscriptionResponse, error)
@@ -63,6 +67,24 @@ func (c *billingServiceClient) FinalizeInvoice(ctx context.Context, in *Finalize
 	return out, nil
 }
 
+func (c *billingServiceClient) GetSubscription(ctx context.Context, in *GetSubscriptionRequest, opts ...grpc.CallOption) (*GetSubscriptionResponse, error) {
+	out := new(GetSubscriptionResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.BillingService/GetSubscription", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *billingServiceClient) CreateSubscription(ctx context.Context, in *CreateSubscriptionRequest, opts ...grpc.CallOption) (*CreateSubscriptionResponse, error) {
+	out := new(CreateSubscriptionResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.BillingService/CreateSubscription", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *billingServiceClient) CancelSubscription(ctx context.Context, in *CancelSubscriptionRequest, opts ...grpc.CallOption) (*CancelSubscriptionResponse, error) {
 	out := new(CancelSubscriptionResponse)
 	err := c.cc.Invoke(ctx, "/usage.v1.BillingService/CancelSubscription", in, out, opts...)
@@ -82,6 +104,10 @@ type BillingServiceServer interface {
 	// FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
 	// having been invoiced.
 	FinalizeInvoice(context.Context, *FinalizeInvoiceRequest) (*FinalizeInvoiceResponse, error)
+	// GetSubscription retrieves a Stripe subscription
+	GetSubscription(context.Context, *GetSubscriptionRequest) (*GetSubscriptionResponse, error)
+	// CreateSubscription creates Stripe subscription.
+	CreateSubscription(context.Context, *CreateSubscriptionRequest) (*CreateSubscriptionResponse, error)
 	// CancelSubscription cancels a stripe subscription in our system
 	// Called by a stripe webhook
 	CancelSubscription(context.Context, *CancelSubscriptionRequest) (*CancelSubscriptionResponse, error)
@@ -97,6 +123,12 @@ func (UnimplementedBillingServiceServer) ReconcileInvoices(context.Context, *Rec
 }
 func (UnimplementedBillingServiceServer) FinalizeInvoice(context.Context, *FinalizeInvoiceRequest) (*FinalizeInvoiceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FinalizeInvoice not implemented")
+}
+func (UnimplementedBillingServiceServer) GetSubscription(context.Context, *GetSubscriptionRequest) (*GetSubscriptionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSubscription not implemented")
+}
+func (UnimplementedBillingServiceServer) CreateSubscription(context.Context, *CreateSubscriptionRequest) (*CreateSubscriptionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateSubscription not implemented")
 }
 func (UnimplementedBillingServiceServer) CancelSubscription(context.Context, *CancelSubscriptionRequest) (*CancelSubscriptionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelSubscription not implemented")
@@ -150,6 +182,42 @@ func _BillingService_FinalizeInvoice_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BillingService_GetSubscription_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSubscriptionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).GetSubscription(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.BillingService/GetSubscription",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).GetSubscription(ctx, req.(*GetSubscriptionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BillingService_CreateSubscription_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateSubscriptionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).CreateSubscription(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.BillingService/CreateSubscription",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).CreateSubscription(ctx, req.(*CreateSubscriptionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _BillingService_CancelSubscription_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CancelSubscriptionRequest)
 	if err := dec(in); err != nil {
@@ -182,6 +250,14 @@ var BillingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FinalizeInvoice",
 			Handler:    _BillingService_FinalizeInvoice_Handler,
+		},
+		{
+			MethodName: "GetSubscription",
+			Handler:    _BillingService_GetSubscription_Handler,
+		},
+		{
+			MethodName: "CreateSubscription",
+			Handler:    _BillingService_CreateSubscription_Handler,
 		},
 		{
 			MethodName: "CancelSubscription",
