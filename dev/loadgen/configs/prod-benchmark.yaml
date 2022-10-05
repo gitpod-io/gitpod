@@ -78,7 +78,7 @@ repos:
     score: 20
     workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest
     workspaceClass: "gitpodio-internal-xl"
-  - cloneURL: https://github.com/gitpod-io/template-python-flask
+  - cloneURL: https://github.com/gitpod-io/non-gitpodified-repo
     score: 20
     cloneTarget: main
     workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest
