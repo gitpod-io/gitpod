@@ -4,23 +4,15 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { SupervisorStatusResponse, IDEStatusResponse, ContentStatusResponse } from '@gitpod/supervisor-api-grpc/lib/status_pb'
-import { GitpodServiceClient } from './gitpod-service-client';
+import { SupervisorStatusResponse, IDEStatusResponse } from '@gitpod/supervisor-api-grpc/lib/status_pb'
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 
 export class SupervisorServiceClient {
-    readonly supervisorReady = this.checkReady('supervisor');
-    readonly ideReady = this.supervisorReady.then(() => this.checkReady('ide'))
-    readonly contentReady = Promise.all([
-        this.supervisorReady,
-        this.gitpodServiceClient.auth
-    ]).then(() => this.checkReady('content'));
+    readonly ideReady = this.checkReady('supervisor').then(() => this.checkReady('ide'))
 
-    constructor(
-        private readonly gitpodServiceClient: GitpodServiceClient
-    ) { }
+    constructor() { }
 
-    private async checkReady(kind: 'content' | 'ide' | 'supervisor', delay?: boolean): Promise<any> {
+    private async checkReady(kind: 'ide' | 'supervisor', delay?: boolean): Promise<any> {
         if (delay) {
             await new Promise((resolve) => setTimeout(resolve, 1000));
         }
@@ -50,9 +42,6 @@ export class SupervisorServiceClient {
                 if (kind === 'supervisor' && (result as SupervisorStatusResponse.AsObject).ok) {
                     return;
                 }
-                if (kind === 'content' && (result as ContentStatusResponse.AsObject).available) {
-                    return;
-                }
                 if (kind === 'ide' && (result as IDEStatusResponse.AsObject).ok) {
                     return result;
                 }
@@ -63,5 +52,4 @@ export class SupervisorServiceClient {
         }
         return this.checkReady(kind, true);
     }
-
 }

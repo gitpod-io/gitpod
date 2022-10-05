@@ -91,8 +91,8 @@ const toStop = new DisposableCollection();
             });
         });
     }
-    const supervisorServiceClient = new SupervisorServiceClient(gitpodServiceClient);
-    const [ideStatus] = await Promise.all([supervisorServiceClient.ideReady, supervisorServiceClient.contentReady, loadingIDE]);
+    const supervisorServiceClient = new SupervisorServiceClient();
+    const [ideStatus] = await Promise.all([supervisorServiceClient.ideReady, gitpodServiceClient.auth, loadingIDE]);
     if (isWorkspaceInstancePhase('stopping') || isWorkspaceInstancePhase('stopped')) {
         return;
     }
@@ -122,8 +122,6 @@ const toStop = new DisposableCollection();
     if (gitpodServiceClient.info.workspace.type !== 'regular') {
         return;
     }
-
-    const supervisorServiceClient = new SupervisorServiceClient(gitpodServiceClient);
 
     let hideDesktopIde = false;
     const serverOrigin = startUrl.url.origin;
@@ -269,6 +267,7 @@ const toStop = new DisposableCollection();
         updateCurrentFrame();
         trackIDEStatusRenderedEvent();
     });
+    const supervisorServiceClient = new SupervisorServiceClient();
     supervisorServiceClient.ideReady.then(newIdeStatus => {
         ideStatus = newIdeStatus;
         isDesktopIde = !!ideStatus && !!ideStatus.desktop && !!ideStatus.desktop.link;
