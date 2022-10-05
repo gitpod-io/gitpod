@@ -106,8 +106,8 @@ function createVM(werft: Werft, config: JobConfig) {
     if (ctx.code > 0) {
         werft.log(prepareSlices.BOOT_VM, "Err ctx");
     }
-    exec(`sleep 5000000`, {slice: prepareSlices.BOOT_VM})
-    const kubepaths = `KUBECONFIG=${HARVESTER_KUBECONFIG_PATH} GOOGLE_BACKEND_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} TF_VAR_dev_kube_path=${HARVESTER_KUBECONFIG_PATH} TF_VAR_harvester_kube_path=${CORE_DEV_KUBECONFIG_PATH}`
+    #exec(`sleep 5000000`, {slice: prepareSlices.BOOT_VM})
+    const kubepaths = `KUBECONFIG=${HARVESTER_KUBECONFIG_PATH} GOOGLE_BACKEND_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} TF_VAR_dev_kube_path=${CORE_DEV_KUBECONFIG_PATH} TF_VAR_harvester_kube_path=${HARVESTER_KUBECONFIG_PATH}`
     if (config.cleanSlateDeployment) {
         werft.log(prepareSlices.BOOT_VM, "Cleaning previously created VM");
         // VM.deleteVM({name: config.previewEnvironment.destname});
