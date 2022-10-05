@@ -53,6 +53,13 @@ func ReadConfigFromFile(path string) (ClientConfig, error) {
 
 // New authenticates a Stripe client using the provided config
 func New(config ClientConfig) (*Client, error) {
+	return NewWithHTTPClient(config, &http.Client{
+		Transport: StripeClientMetricsRoundTripper(http.DefaultTransport),
+		Timeout:   10 * time.Second,
+	})
+}
+
+func NewWithHTTPClient(config ClientConfig, c *http.Client) (*Client, error) {
 	sc := &client.API{}
 
 	sc.Init(config.SecretKey, stripe.NewBackends(&http.Client{
