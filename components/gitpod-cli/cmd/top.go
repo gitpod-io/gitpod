@@ -75,21 +75,21 @@ var topCmd = &cobra.Command{
 			fmt.Println(string(content))
 			return
 		}
-		outputWorkspaceClass(data.WorkspaceClass)
-		outputTable(data.Resources)
+		outputTable(data.Resources, data.WorkspaceClass)
 	},
 }
 
-func outputWorkspaceClass(workspaceClass *supervisor.WorkspaceInfoResponse_WorkspaceClass) {
+func formatWorkspaceClass(workspaceClass *supervisor.WorkspaceInfoResponse_WorkspaceClass) string {
 	if workspaceClass == nil || workspaceClass.DisplayName == "" {
-		return
+		return ""
 	}
-	fmt.Printf("%s: %s\n\n", workspaceClass.DisplayName, workspaceClass.Description)
+	return fmt.Sprintf("%s: %s", workspaceClass.DisplayName, workspaceClass.Description)
 }
 
-func outputTable(workspaceResources *supervisor.ResourcesStatusResponse) {
+func outputTable(workspaceResources *supervisor.ResourcesStatusResponse, workspaceClass *supervisor.WorkspaceInfoResponse_WorkspaceClass) {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetBorder(false)
+	table.SetColWidth(50)
 	table.SetColumnSeparator(":")
 
 	cpuFraction := int64((float64(workspaceResources.Cpu.Used) / float64(workspaceResources.Cpu.Limit)) * 100)
@@ -103,6 +103,7 @@ func outputTable(workspaceResources *supervisor.ResourcesStatusResponse) {
 		memoryColors = []tablewriter.Colors{nil, {getColor(workspaceResources.Memory.Severity)}}
 	}
 
+	table.Append([]string{"Workspace class", formatWorkspaceClass(workspaceClass)})
 	table.Rich([]string{"CPU (millicores)", cpu}, cpuColors)
 	table.Rich([]string{"Memory (bytes)", memory}, memoryColors)
 
