@@ -15,7 +15,7 @@ import "terraform.sh"
 PROJECT_ROOT=$(realpath "${SCRIPT_PATH}/../../../../")
 
 if [[ -n ${WERFT_HOST+x} ]]; then
-  TF_CLI_ARGS="${TF_CLI_ARGS} -input=false"
+  TF_CLI_ARGS="-input=false"
   TF_IN_AUTOMATION=true
 fi
 
