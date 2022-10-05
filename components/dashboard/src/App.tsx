@@ -151,7 +151,7 @@ export function getURLHash() {
 }
 
 function App() {
-    const { user, setUser } = useContext(UserContext);
+    const { user, setUser, refreshUserBillingMode } = useContext(UserContext);
     const { teams, setTeams } = useContext(TeamsContext);
     const { setIsDark } = useContext(ThemeContext);
 
@@ -273,6 +273,11 @@ function App() {
             refreshSearchData("", user);
         }
     }, [user]);
+
+    useEffect(() => {
+        // Refresh billing mode (side effect on other components per UserContext!)
+        refreshUserBillingMode();
+    }, [teams]);
 
     // redirect to website for any website slugs
     if (isGitpodIo() && isWebsiteSlug(window.location.pathname)) {
