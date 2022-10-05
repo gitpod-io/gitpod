@@ -157,3 +157,73 @@ func (s *BillingService) CancelSubscription(ctx context.Context, in *v1.CancelSu
 	}
 	return &v1.CancelSubscriptionResponse{}, nil
 }
+
+func (s *BillingService) GetStripeCustomer(ctx context.Context, req *v1.GetStripeCustomerRequest) (*v1.GetStripeCustomerResponse, error) {
+	attributionID, err := db.ParseAttributionID(req.AttributionId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid field attribution ID")
+	}
+
+	logger := log.WithField("attribution_id", attributionID)
+
+	customer, err := db.GetStripeStripeCustomer(ctx, s.conn, attributionID)
+	if err == nil {
+		return &v1.GetStripeCustomerResponse{
+			Customer: stripeCustomerToProto(customer),
+		}, nil
+	}
+
+	logger.Infof("Did not find customer for attribution ID %s in DB, searching in stripe", string(attributionID))
+
+	customerFromStripe, err := s.stripeClient.GetCustomerByAttributionID(string(attributionID))
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "Customer with attribution ID %s does not exist", string(attributionID))
+	}
+
+	// we got a customer, persist it in the DB so next time we don't have to go to Stripe
+	customer = db.StripeCustomer{
+		CustomerID:    customerFromStripe.ID,
+		AttributionID: attributionID,
+	}
+	_, err = db.CreateStripeCustomer(ctx, s.conn, customer)
+	if err != nil {
+		logger.WithError(err).Warn("Failed to persist stripe customer into the db, will attempt again next time this attribution is requested.")
+	}
+
+	return &v1.GetStripeCustomerResponse{
+		Customer: stripeCustomerToProto(customer),
+	}, nil
+}
+func (s *BillingService) CreateStripeCustomer(ctx context.Context, req *v1.CreateStripeCustomerRequest) (*v1.CreateStripeCustomerResponse, error) {
+	attributionID, err := db.ParseAttributionID(req.GetCustomer().GetAttributionId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid field attribution ID")
+	}
+
+	logger := log.WithField("attribution_id", attributionID)
+
+	// ensure the customer actually exists in Stripe
+	_, err = s.stripeClient.GetCustomerByID(ctx, req.Customer.Id)
+	if err != nil {
+		logger.WithError(err).Errorf("Failed to find customer %s in Stripe", req.Customer.Id)
+		return nil, status.Errorf(codes.NotFound, "Failed to find customer in Stripe")
+	}
+
+	_, err = db.CreateStripeCustomer(ctx, s.conn, db.StripeCustomer{
+		CustomerID:    req.Customer.Id,
+		AttributionID: attributionID,
+	})
+	if err != nil {
+		logger.WithError(err).Error("Failed to persist stripe customer into the db.")
+		return nil, status.Errorf(codes.Internal, "Failed to persist StripeCustomer")
+	}
+
+	return &v1.CreateStripeCustomerResponse{}, nil
+}
+
+func stripeCustomerToProto(c db.StripeCustomer) *v1.StripeCustomer {
+	return &v1.StripeCustomer{
+		Id:            c.CustomerID,
+		AttributionId: string(c.AttributionID),
+	}
+}

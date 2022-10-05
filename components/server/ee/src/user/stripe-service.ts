@@ -9,18 +9,14 @@ import Stripe from "stripe";
 import { Config } from "../../../src/config";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
-import { UsageServiceClient } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
-
-const POLL_CREATED_CUSTOMER_INTERVAL_MS = 1000;
-const POLL_CREATED_CUSTOMER_MAX_ATTEMPTS = 30;
+import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 
 @injectable()
 export class StripeService {
     @inject(Config) protected readonly config: Config;
 
-    @inject(UsageServiceDefinition.name)
-    protected readonly usageService: UsageServiceClient;
+    @inject(BillingServiceDefinition.name)
+    protected readonly billingService: BillingServiceClient;
 
     protected _stripe: Stripe | undefined;
 
@@ -39,12 +35,10 @@ export class StripeService {
     }
 
     async findCustomerByAttributionId(attributionId: string): Promise<string | undefined> {
-        const query = `metadata['attributionId']:'${attributionId}'`;
-        const result = await this.getStripe().customers.search({ query });
-        if (result.data.length > 1) {
-            throw new Error(`Found more than one Stripe customer for query '${query}'`);
-        }
-        return result.data[0]?.id;
+        const resp = await this.billingService.getStripeCustomer({
+            attributionId,
+        });
+        return resp.customer?.id;
     }
 
     async createCustomerForAttributionId(
@@ -62,14 +56,15 @@ export class StripeService {
             name: billingName,
             metadata: { attributionId, preferredCurrency },
         });
-        // Wait for the customer to show up in Stripe search results before proceeding
-        let attempts = 0;
-        while (!(await this.findCustomerByAttributionId(attributionId))) {
-            await new Promise((resolve) => setTimeout(resolve, POLL_CREATED_CUSTOMER_INTERVAL_MS));
-            if (++attempts > POLL_CREATED_CUSTOMER_MAX_ATTEMPTS) {
-                throw new Error(`Could not confirm Stripe customer creation for '${attributionId}'`);
-            }
-        }
+
+        // For now, we persist the created Stripe Customer ID in the billing service
+        // Eventually, we want to also move the actual Stripe customer create call over as well.
+        await this.billingService.createStripeCustomer({
+            customer: {
+                attributionId,
+                id: customer.id,
+            },
+        });
         return customer.id;
     }
 

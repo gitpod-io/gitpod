@@ -36,13 +36,15 @@ message FinalizeInvoiceResponse {
 }
 
 message GetStripeCustomerRequest {
-
+  string attribution_id = 1;
 }
 
-message GetStripeCustomerResponse {}
+message GetStripeCustomerResponse {
+  StripeCustomer customer = 1;
+}
 
 message CreateStripeCustomerRequest {
-
+  StripeCustomer customer = 1;
 }
 
 message CreateStripeCustomerResponse {}
@@ -52,4 +54,10 @@ message CancelSubscriptionRequest {
 }
 
 message CancelSubscriptionResponse {
+}
+
+message StripeCustomer {
+  // id is the Stripe Customer ID
+  string id = 1;
+  string attribution_id = 2;
 }
