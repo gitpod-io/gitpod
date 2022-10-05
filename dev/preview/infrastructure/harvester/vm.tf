@@ -1,4 +1,5 @@
 resource "harvester_virtualmachine" "harvester" {
+  provider             = harvester.harvester
   name                 = var.preview_name
   namespace            = kubernetes_namespace.preview_namespace.metadata[0].name
   restart_after_update = true
@@ -56,6 +57,7 @@ resource "harvester_virtualmachine" "harvester" {
 }
 
 resource "harvester_ssh_key" "harvester_ssh_key" {
+  provider  = harvester.harvester
   name      = "${var.preview_name}-ssh-key"
   namespace = kubernetes_namespace.preview_namespace.metadata[0].name
 
