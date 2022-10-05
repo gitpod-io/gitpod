@@ -189,7 +189,7 @@ export class EntitlementServiceChargebee implements EntitlementService {
      * @param user
      */
     async limitNetworkConnections(user: User, date: Date = new Date()): Promise<boolean> {
-        const hasPaidPlan = this.hasPaidSubscription(user, date);
+        const hasPaidPlan = await this.hasPaidSubscription(user, date);
         return !hasPaidPlan;
     }
 
