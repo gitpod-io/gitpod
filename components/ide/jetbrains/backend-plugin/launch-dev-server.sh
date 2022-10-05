@@ -22,7 +22,7 @@ do
    esac
 done
 
-TEST_BACKEND_DIR=/workspace/ide-backend
+TEST_BACKEND_DIR="/workspace/ide-backend-$JB_QUALIFIER"
 if [ ! -d "$TEST_BACKEND_DIR" ]; then
   mkdir -p $TEST_BACKEND_DIR
   if [[ $JB_QUALIFIER == "stable" ]]; then
@@ -31,8 +31,8 @@ if [ ! -d "$TEST_BACKEND_DIR" ]; then
     PRODUCT_TYPE="release,rc,eap"
   fi
   (cd $TEST_BACKEND_DIR &&
-  echo "Downloading the ${JB_QUALIFIER} version of IntelliJ IDEA..." &&
-  curl -sSLo backend.tar.gz "https://download.jetbrains.com/product?type=${PRODUCT_TYPE}&distribution=linux&code=IIU" &&
+  echo "Downloading the $JB_QUALIFIER version of IntelliJ IDEA..." &&
+  curl -sSLo backend.tar.gz "https://download.jetbrains.com/product?type=$PRODUCT_TYPE&distribution=linux&code=IIU" &&
   tar -xf backend.tar.gz --strip-components=1 &&
   rm backend.tar.gz)
 fi
