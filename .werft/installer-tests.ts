@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as https from "https";
 import { join } from "path";
-import { exec } from "./util/shell";
+import { exec, execStream } from "./util/shell";
 import { Werft } from "./util/werft";
 import { deleteReplicatedLicense } from "./jobs/build/self-hosted-upgrade-tests";
 
@@ -292,7 +292,7 @@ export async function installerTests(config: TestConfig) {
     werft.phase(majorPhase, phaseMessage);
     for (let phase of config.PHASES) {
         const phaseSteps = INFRA_PHASES[phase];
-        const ret = callMakeTargets(phaseSteps.phase, phaseSteps.description, phaseSteps.makeTarget);
+        const ret = await callMakeTargets(phaseSteps.phase, phaseSteps.description, phaseSteps.makeTarget);
         if (ret) {
             // there is not point in continuing if one stage fails for infra setup
             const err: Error = new Error("Cluster creation failed");
@@ -319,7 +319,7 @@ export async function installerTests(config: TestConfig) {
         // runIntegrationTests()
 
         const upgradePhase = INFRA_PHASES["KOTS_UPGRADE"];
-        const ret = callMakeTargets(upgradePhase.phase, upgradePhase.description, upgradePhase.makeTarget);
+        const ret = await callMakeTargets(upgradePhase.phase, upgradePhase.description, upgradePhase.makeTarget);
         if (ret) {
             sendFailureSlackAlert(
                 upgradePhase.description,
@@ -335,7 +335,7 @@ export async function installerTests(config: TestConfig) {
     if (skipTests === "true") {
         console.log("Skipping integration tests");
     } else {
-        runIntegrationTests();
+        await runIntegrationTests();
     }
 
     // if the preview flag is set to true, the script will print the result and exits
@@ -377,12 +377,12 @@ export async function installerTests(config: TestConfig) {
     }
 }
 
-function runIntegrationTests() {
+async function runIntegrationTests() {
     werft.phase("run-integration-tests", "Run all existing integration tests");
     const slackAlerts = new Map<string, string>([]);
     for (let test in TESTS) {
         const testPhase = TESTS[test];
-        const ret = callMakeTargets(testPhase.phase, testPhase.description, testPhase.makeTarget);
+        const ret = await callMakeTargets(testPhase.phase, testPhase.description, testPhase.makeTarget);
         if (ret) {
             exec(
                 `werft log result -d "failed test" url "${testPhase.description}(Phase ${testPhase.phase}) failed. Please refer logs."`,
@@ -400,12 +400,12 @@ function runIntegrationTests() {
     werft.done("run-integration-tests");
 }
 
-function callMakeTargets(phase: string, description: string, makeTarget: string, failable: boolean = false) {
+async function callMakeTargets(phase: string, description: string, makeTarget: string, failable: boolean = false) {
     werft.log(phase, `Calling ${makeTarget}`);
     // exporting cloud env var is important for the make targets
     const env = `export TF_VAR_cluster_version=${k8s_version} cloud=${cloud} TF_VAR_domain=${baseDomain} TF_VAR_gcp_zone=${gcpDnsZone}`;
 
-    const response = exec(
+    const response = await execStream(
         `${env} && make -C ${makefilePath} ${makeTarget}`,
         {
             slice: phase,
