@@ -8,9 +8,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"google.golang.org/grpc/codes"
@@ -51,7 +53,14 @@ func ReadConfigFromFile(path string) (ClientConfig, error) {
 
 // New authenticates a Stripe client using the provided config
 func New(config ClientConfig) (*Client, error) {
-	return &Client{sc: client.New(config.SecretKey, nil)}, nil
+	sc := &client.API{}
+
+	sc.Init(config.SecretKey, stripe.NewBackends(&http.Client{
+		Transport: StripeClientMetricsRoundTripper(http.DefaultTransport),
+		Timeout:   10 * time.Second,
+	}))
+
+	return &Client{sc: sc}, nil
 }
 
 type UsageRecord struct {
