@@ -19,8 +19,6 @@ if [[ -n ${WERFT_HOST+x} ]]; then
   TF_IN_AUTOMATION=true
 fi
 
-gcloud auth activate-service-account --key-file "/mnt/secrets/gcp-sa/service-account.json"
-
 WORKSPACE="${TF_VAR_preview_name:-$WORKSPACE}"
 TARGET_DIR="${PROJECT_ROOT}/dev/preview/infrastructure/harvester"
 # Setting the TF_DATA_DIR is advisable if we set the PLAN_LOCATION in a different place than the dir with the tf
