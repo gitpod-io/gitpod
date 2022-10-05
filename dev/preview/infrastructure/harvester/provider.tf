@@ -28,9 +28,9 @@ provider "google" {
 }
 
 provider "harvester" {
-  alias = "harvester"
-  #  kubeconfig = var.harvester_kube_path
-  kubeconfig = "/Users/vlk/.kube/harvester"
+  alias      = "harvester"
+  kubeconfig = var.harvester_kube_path
+  #  kubeconfig = "/Users/vlk/.kube/harvester"
 }
 
 provider "k8s" {
