@@ -5,15 +5,17 @@
  */
 
 import { CodeChallengeMethod, OAuthAuthCode, OAuthClient, OAuthScope } from "@jmondi/oauth2-server";
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from "typeorm";
 import { Transformer } from "../transformer";
 import { TypeORM } from "../typeorm";
 import { DBUser } from "./db-user";
 
 @Entity({ name: "d_b_oauth_auth_code_entry" })
 export class DBOAuthAuthCodeEntry implements OAuthAuthCode {
-    @PrimaryGeneratedColumn()
-    id: number;
+    // The type of the primary key used to be `int`.
+    // Some (old) rows in the table have integer keys; new values use uids.
+    @PrimaryColumn()
+    id: string;
 
     @Column({
         type: "varchar",
