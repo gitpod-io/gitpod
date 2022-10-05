@@ -27,16 +27,6 @@ variable "vm_cpu" {
   description = "CPU for the VM"
 }
 
-#variable "dockerhub_user" {
-#  type        = string
-#  description = "The dockerhub user used to pull images in k3s"
-#}
-#
-#variable "dockerhub_password" {
-#  type        = string
-#  description = "The password for the dockerhub user used to pull images in k3s"
-#}
-
 variable "vm_storage_class" {
   type        = string
   default     = "longhorn-gitpod-k3s-202209251218-onereplica"

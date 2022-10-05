@@ -29,17 +29,15 @@ provider "google" {
 
 provider "harvester" {
   alias      = "harvester"
-  kubeconfig = file(var.harvester_kube_path)
+  kubeconfig = var.harvester_kube_path
 }
 
 provider "k8s" {
-  alias          = "dev"
-  config_path    = var.dev_kube_path
-  config_context = "dev"
+  alias       = "dev"
+  config_path = var.dev_kube_path
 }
 
 provider "k8s" {
-  alias          = "harvester"
-  config_path    = var.harvester_kube_path
-  config_context = "harvester"
+  alias       = "harvester"
+  config_path = var.harvester_kube_path
 }

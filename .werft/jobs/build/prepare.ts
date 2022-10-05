@@ -102,7 +102,7 @@ function shouldCreateVM(config: JobConfig) {
 // createVM only triggers the VM creation.
 // Readiness is not guaranted.
 function createVM(werft: Werft, config: JobConfig) {
-    const kubepaths = `GOOGLE_BACKEND_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} TF_VAR_dev_kube_path=${HARVESTER_KUBECONFIG_PATH} TF_VAR_harvester_kube_path=${CORE_DEV_KUBECONFIG_PATH}`
+    const kubepaths = `KUBECONFIG=${HARVESTER_KUBECONFIG_PATH} GOOGLE_BACKEND_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} TF_VAR_dev_kube_path=${HARVESTER_KUBECONFIG_PATH} TF_VAR_harvester_kube_path=${CORE_DEV_KUBECONFIG_PATH}`
     if (config.cleanSlateDeployment) {
         werft.log(prepareSlices.BOOT_VM, "Cleaning previously created VM");
         // VM.deleteVM({name: config.previewEnvironment.destname});
