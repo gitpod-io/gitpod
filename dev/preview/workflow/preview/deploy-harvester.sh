@@ -15,9 +15,11 @@ import "terraform.sh"
 PROJECT_ROOT=$(realpath "${SCRIPT_PATH}/../../../../")
 
 if [[ -n ${WERFT_HOST+x} ]]; then
-  TF_CLI_ARGS="-input=false"
+  TF_CLI_ARGS="${TF_CLI_ARGS} -input=false"
   TF_IN_AUTOMATION=true
 fi
+
+gcloud auth activate-service-account --key-file "/mnt/secrets/gcp-sa/service-account.json"
 
 WORKSPACE="${TF_VAR_preview_name:-$WORKSPACE}"
 TARGET_DIR="${PROJECT_ROOT}/dev/preview/infrastructure/harvester"
