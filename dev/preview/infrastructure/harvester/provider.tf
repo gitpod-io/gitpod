@@ -15,7 +15,16 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = ">= 2.0"
     }
+    google = {
+      source  = "hashicorp/google"
+      version = ">=4.39.0"
+    }
   }
+}
+
+provider "google" {
+  project = "gitpod-core-dev"
+  alias   = "gitpod-core-dev"
 }
 
 provider "harvester" {

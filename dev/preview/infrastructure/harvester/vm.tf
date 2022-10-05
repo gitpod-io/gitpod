@@ -75,14 +75,32 @@ resource "kubernetes_secret" "cloudinit" {
   }
 }
 
+#data "google_secret_manager_secret_version" "harvester-k3s-dockerhub-pull-account" {
+#  provider = google.gitpod-core-dev
+#  secret   = "harvester-k3s-dockerhub-pull-account"
+#}
+
+resource "kubernetes_secret" "harvester-k3s-dockerhub-pull-account" {
+  provider = k8s.dev
+  metadata {
+    name      = "harvester-k3s-dockerhub-pull-account"
+    namespace = "werft"
+  }
+}
+
 locals {
   vm_cloud_init_secret_name = "userdata-${var.preview_name}"
   cloudinit_user_data = templatefile("${path.module}/cloudinit.yaml", {
-    dockerhub_user      = var.dockerhub_user
-    dockerhub_passwd    = var.dockerhub_password
+    #    dockerhub_user      = local.dockerhub_creds.username
+    #    dockerhub_passwd    = local.dockerhub_creds.password
+    dockerhub_user      = kubernetes_secret.harvester-k3s-dockerhub-pull-account.data["username"]
+    dockerhub_passwd    = kubernetes_secret.harvester-k3s-dockerhub-pull-account.data["password"]
     vm_name             = var.preview_name
     ssh_authorized_keys = local.ssh_key
   })
+
+  #  dockerhub_creds = kubernetes_secret.harvester-k3s-dockerhub-pull-account.data["username"]
+  #  dockerhub_creds = jsondecode(data.google_secret_manager_secret_version.harvester-k3s-dockerhub-pull-account.secret_data)
 
   ssh_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC/aB/HYsb56V0NBOEab6j33v3LIxRiGqG4fmidAryAXevLyTANJPF8m44KSzSQg7AI7PMy6egxQp/JqH2b+3z1cItWuHZSU+klsKNuf5HxK7AOrND3ahbejZfyYewtKFQ3X9rv5Sk8TAR5gw5oPbkTR61jiLa58Sw7UkhLm2EDguGASb6mBal8iboiF8Wpl8QIvPmJaGIOY2YwXLepwFA3S3kVqW88eh2WFmjTMre5ASLguYNkHXjyb/TuhVFzAvphzpl84RAaEyjKYnk45fh4xRXx+oKqlfKRJJ/Owxa7SmGO+/4rWb3chdnpodHeu7XjERmjYLY+r46sf6n6ySgEht1xAWjMb1uqZqkDx+fDDsjFSeaN3ncX6HSoDOrphFmXYSwaMpZ8v67A791fuUPrMLC+YMckhTuX2g4i3XUdumIWvhaMvKhy/JRRMsfUH0h+KAkBLI6tn5ozoXiQhgM4SAE5HsMr6CydSIzab0yY3sq0avmZgeoc78+8PKPkZG1zRMEspV/hKKBC8hq7nm0bu4IgzuEIYHowOD8svqA0ufhDWxTt6A4Jo0xDzhFyKme7KfmW7SIhpejf3T1Wlf+QINs1hURr8LSOZEyY2SzYmAoQ49N0SSPb5xyG44cptpKcj0WCAJjBJoZqz0F5x9TjJ8XToB5obyJfRHD1JjxoMQ== dev@gitpod.io"
 }
