@@ -27,12 +27,16 @@ else
     prop="pluginLatestImage"
 fi
 
-cf_patch=$(kubectl get cm server-ide-config -o=json | jq '.data."config.json"' |jq -r)
+cf_patch=$(kubectl get cm ide-config -o=json | jq '.data."config.json"' |jq -r)
 cf_patch=$(echo "$cf_patch" |jq ".ideOptions.options.intellij.$prop = \"$dev_image\"")
 cf_patch=$(echo "$cf_patch" |jq ".ideOptions.options.goland.$prop = \"$dev_image\"")
 cf_patch=$(echo "$cf_patch" |jq ".ideOptions.options.pycharm.$prop = \"$dev_image\"")
 cf_patch=$(echo "$cf_patch" |jq ".ideOptions.options.phpstorm.$prop = \"$dev_image\"")
+cf_patch=$(echo "$cf_patch" |jq ".ideOptions.options.rubymine.$prop = \"$dev_image\"")
+cf_patch=$(echo "$cf_patch" |jq ".ideOptions.options.webstorm.$prop = \"$dev_image\"")
 cf_patch=$(echo "$cf_patch" |jq tostring)
 cf_patch="{\"data\": {\"config.json\": $cf_patch}}"
 
-kubectl patch cm server-ide-config --type=merge -p "$cf_patch"
+kubectl patch cm ide-config --type=merge -p "$cf_patch"
+
+kubectl rollout restart deployment ide-service
