@@ -89,24 +89,22 @@ func outputWorkspaceClass(workspaceClass *supervisor.WorkspaceInfoResponse_Works
 
 func outputTable(workspaceResources *supervisor.ResourcesStatusResponse) {
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"CPU (millicores)", "Memory (bytes)"})
-	table.SetBorders(tablewriter.Border{Left: true, Top: true, Right: true, Bottom: false})
-	table.SetCenterSeparator("|")
+	table.SetBorder(false)
+	table.SetColumnSeparator(":")
 
 	cpuFraction := int64((float64(workspaceResources.Cpu.Used) / float64(workspaceResources.Cpu.Limit)) * 100)
 	memFraction := int64((float64(workspaceResources.Memory.Used) / float64(workspaceResources.Memory.Limit)) * 100)
 	cpu := fmt.Sprintf("%dm/%dm (%d%%)", workspaceResources.Cpu.Used, workspaceResources.Cpu.Limit, cpuFraction)
-	memory := fmt.Sprintf("%dMi/%dMi (%d%%)\n", workspaceResources.Memory.Used/(1024*1024), workspaceResources.Memory.Limit/(1024*1024), memFraction)
+	memory := fmt.Sprintf("%dMi/%dMi (%d%%)", workspaceResources.Memory.Used/(1024*1024), workspaceResources.Memory.Limit/(1024*1024), memFraction)
 
-	colors := []tablewriter.Colors{}
-
+	var cpuColors, memoryColors []tablewriter.Colors
 	if !noColor && utils.ColorsEnabled() {
-		cpuColor := getColor(workspaceResources.Cpu.Severity)
-		memoryColor := getColor(workspaceResources.Memory.Severity)
-		colors = []tablewriter.Colors{{cpuColor}, {memoryColor}}
+		cpuColors = []tablewriter.Colors{nil, {getColor(workspaceResources.Cpu.Severity)}}
+		memoryColors = []tablewriter.Colors{nil, {getColor(workspaceResources.Memory.Severity)}}
 	}
 
-	table.Rich([]string{cpu, memory}, colors)
+	table.Rich([]string{"CPU (millicores)", cpu}, cpuColors)
+	table.Rich([]string{"Memory (bytes)", memory}, memoryColors)
 
 	table.Render()
 }
