@@ -17,8 +17,8 @@ type StripeCustomer struct {
 	CustomerID    string        `gorm:"primary_key;column:customerId;type:char;size:36;" json:"customerId"`
 	AttributionID AttributionID `gorm:"column:attributionId;type:varchar;size:255;" json:"attributionId"`
 
-	// CreationTime is the time when this record was created.
-	CreationTime VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
+	// Created is the time when this record was created.
+	Created time.Time `gorm:"column:_created;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_created"`
 
 	LastModified time.Time `gorm:"->:column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
 }
@@ -29,10 +29,6 @@ func (d *StripeCustomer) TableName() string {
 }
 
 func CreateStripeCustomer(ctx context.Context, conn *gorm.DB, sub StripeCustomer) (StripeCustomer, error) {
-	if !sub.CreationTime.IsSet() {
-		sub.CreationTime = NewVarcharTime(time.Now())
-	}
-
 	tx := conn.WithContext(ctx).Create(&sub)
 	if tx.Error != nil {
 		return StripeCustomer{}, fmt.Errorf("failed to create stripe subscription: %w", tx.Error)

@@ -23,16 +23,16 @@ export interface FinalizeInvoiceRequest {
 export interface FinalizeInvoiceResponse {
 }
 
-export interface GetSubscriptionRequest {
+export interface GetStripeCustomerRequest {
 }
 
-export interface GetSubscriptionResponse {
+export interface GetStripeCustomerResponse {
 }
 
-export interface CreateSubscriptionRequest {
+export interface CreateStripeCustomerRequest {
 }
 
-export interface CreateSubscriptionResponse {
+export interface CreateStripeCustomerResponse {
 }
 
 export interface CancelSubscriptionRequest {
@@ -206,19 +206,19 @@ export const FinalizeInvoiceResponse = {
   },
 };
 
-function createBaseGetSubscriptionRequest(): GetSubscriptionRequest {
+function createBaseGetStripeCustomerRequest(): GetStripeCustomerRequest {
   return {};
 }
 
-export const GetSubscriptionRequest = {
-  encode(_: GetSubscriptionRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const GetStripeCustomerRequest = {
+  encode(_: GetStripeCustomerRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetSubscriptionRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetStripeCustomerRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetSubscriptionRequest();
+    const message = createBaseGetStripeCustomerRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -230,34 +230,34 @@ export const GetSubscriptionRequest = {
     return message;
   },
 
-  fromJSON(_: any): GetSubscriptionRequest {
+  fromJSON(_: any): GetStripeCustomerRequest {
     return {};
   },
 
-  toJSON(_: GetSubscriptionRequest): unknown {
+  toJSON(_: GetStripeCustomerRequest): unknown {
     const obj: any = {};
     return obj;
   },
 
-  fromPartial(_: DeepPartial<GetSubscriptionRequest>): GetSubscriptionRequest {
-    const message = createBaseGetSubscriptionRequest();
+  fromPartial(_: DeepPartial<GetStripeCustomerRequest>): GetStripeCustomerRequest {
+    const message = createBaseGetStripeCustomerRequest();
     return message;
   },
 };
 
-function createBaseGetSubscriptionResponse(): GetSubscriptionResponse {
+function createBaseGetStripeCustomerResponse(): GetStripeCustomerResponse {
   return {};
 }
 
-export const GetSubscriptionResponse = {
-  encode(_: GetSubscriptionResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const GetStripeCustomerResponse = {
+  encode(_: GetStripeCustomerResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetSubscriptionResponse {
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetStripeCustomerResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetSubscriptionResponse();
+    const message = createBaseGetStripeCustomerResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -269,34 +269,34 @@ export const GetSubscriptionResponse = {
     return message;
   },
 
-  fromJSON(_: any): GetSubscriptionResponse {
+  fromJSON(_: any): GetStripeCustomerResponse {
     return {};
   },
 
-  toJSON(_: GetSubscriptionResponse): unknown {
+  toJSON(_: GetStripeCustomerResponse): unknown {
     const obj: any = {};
     return obj;
   },
 
-  fromPartial(_: DeepPartial<GetSubscriptionResponse>): GetSubscriptionResponse {
-    const message = createBaseGetSubscriptionResponse();
+  fromPartial(_: DeepPartial<GetStripeCustomerResponse>): GetStripeCustomerResponse {
+    const message = createBaseGetStripeCustomerResponse();
     return message;
   },
 };
 
-function createBaseCreateSubscriptionRequest(): CreateSubscriptionRequest {
+function createBaseCreateStripeCustomerRequest(): CreateStripeCustomerRequest {
   return {};
 }
 
-export const CreateSubscriptionRequest = {
-  encode(_: CreateSubscriptionRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const CreateStripeCustomerRequest = {
+  encode(_: CreateStripeCustomerRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): CreateSubscriptionRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): CreateStripeCustomerRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCreateSubscriptionRequest();
+    const message = createBaseCreateStripeCustomerRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -308,34 +308,34 @@ export const CreateSubscriptionRequest = {
     return message;
   },
 
-  fromJSON(_: any): CreateSubscriptionRequest {
+  fromJSON(_: any): CreateStripeCustomerRequest {
     return {};
   },
 
-  toJSON(_: CreateSubscriptionRequest): unknown {
+  toJSON(_: CreateStripeCustomerRequest): unknown {
     const obj: any = {};
     return obj;
   },
 
-  fromPartial(_: DeepPartial<CreateSubscriptionRequest>): CreateSubscriptionRequest {
-    const message = createBaseCreateSubscriptionRequest();
+  fromPartial(_: DeepPartial<CreateStripeCustomerRequest>): CreateStripeCustomerRequest {
+    const message = createBaseCreateStripeCustomerRequest();
     return message;
   },
 };
 
-function createBaseCreateSubscriptionResponse(): CreateSubscriptionResponse {
+function createBaseCreateStripeCustomerResponse(): CreateStripeCustomerResponse {
   return {};
 }
 
-export const CreateSubscriptionResponse = {
-  encode(_: CreateSubscriptionResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const CreateStripeCustomerResponse = {
+  encode(_: CreateStripeCustomerResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): CreateSubscriptionResponse {
+  decode(input: _m0.Reader | Uint8Array, length?: number): CreateStripeCustomerResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCreateSubscriptionResponse();
+    const message = createBaseCreateStripeCustomerResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -347,17 +347,17 @@ export const CreateSubscriptionResponse = {
     return message;
   },
 
-  fromJSON(_: any): CreateSubscriptionResponse {
+  fromJSON(_: any): CreateStripeCustomerResponse {
     return {};
   },
 
-  toJSON(_: CreateSubscriptionResponse): unknown {
+  toJSON(_: CreateStripeCustomerResponse): unknown {
     const obj: any = {};
     return obj;
   },
 
-  fromPartial(_: DeepPartial<CreateSubscriptionResponse>): CreateSubscriptionResponse {
-    const message = createBaseCreateSubscriptionResponse();
+  fromPartial(_: DeepPartial<CreateStripeCustomerResponse>): CreateStripeCustomerResponse {
+    const message = createBaseCreateStripeCustomerResponse();
     return message;
   },
 };
@@ -477,21 +477,21 @@ export const BillingServiceDefinition = {
       responseStream: false,
       options: {},
     },
-    /** GetSubscription retrieves a Stripe subscription */
-    getSubscription: {
-      name: "GetSubscription",
-      requestType: GetSubscriptionRequest,
+    /** GetSubscription retrieves a Stripe customer */
+    getStripeCustomer: {
+      name: "GetStripeCustomer",
+      requestType: GetStripeCustomerRequest,
       requestStream: false,
-      responseType: GetSubscriptionResponse,
+      responseType: GetStripeCustomerResponse,
       responseStream: false,
       options: {},
     },
-    /** CreateSubscription creates Stripe subscription. */
-    createSubscription: {
-      name: "CreateSubscription",
-      requestType: CreateSubscriptionRequest,
+    /** CreateStripeCustomer creates Stripe StripeCustomer. */
+    createStripeCustomer: {
+      name: "CreateStripeCustomer",
+      requestType: CreateStripeCustomerRequest,
       requestStream: false,
-      responseType: CreateSubscriptionResponse,
+      responseType: CreateStripeCustomerResponse,
       responseStream: false,
       options: {},
     },
@@ -527,16 +527,16 @@ export interface BillingServiceServiceImplementation<CallContextExt = {}> {
     request: FinalizeInvoiceRequest,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<FinalizeInvoiceResponse>>;
-  /** GetSubscription retrieves a Stripe subscription */
-  getSubscription(
-    request: GetSubscriptionRequest,
+  /** GetSubscription retrieves a Stripe customer */
+  getStripeCustomer(
+    request: GetStripeCustomerRequest,
     context: CallContext & CallContextExt,
-  ): Promise<DeepPartial<GetSubscriptionResponse>>;
-  /** CreateSubscription creates Stripe subscription. */
-  createSubscription(
-    request: CreateSubscriptionRequest,
+  ): Promise<DeepPartial<GetStripeCustomerResponse>>;
+  /** CreateStripeCustomer creates Stripe StripeCustomer. */
+  createStripeCustomer(
+    request: CreateStripeCustomerRequest,
     context: CallContext & CallContextExt,
-  ): Promise<DeepPartial<CreateSubscriptionResponse>>;
+  ): Promise<DeepPartial<CreateStripeCustomerResponse>>;
   /**
    * CancelSubscription cancels a stripe subscription in our system
    * Called by a stripe webhook
@@ -564,16 +564,16 @@ export interface BillingServiceClient<CallOptionsExt = {}> {
     request: DeepPartial<FinalizeInvoiceRequest>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<FinalizeInvoiceResponse>;
-  /** GetSubscription retrieves a Stripe subscription */
-  getSubscription(
-    request: DeepPartial<GetSubscriptionRequest>,
+  /** GetSubscription retrieves a Stripe customer */
+  getStripeCustomer(
+    request: DeepPartial<GetStripeCustomerRequest>,
     options?: CallOptions & CallOptionsExt,
-  ): Promise<GetSubscriptionResponse>;
-  /** CreateSubscription creates Stripe subscription. */
-  createSubscription(
-    request: DeepPartial<CreateSubscriptionRequest>,
+  ): Promise<GetStripeCustomerResponse>;
+  /** CreateStripeCustomer creates Stripe StripeCustomer. */
+  createStripeCustomer(
+    request: DeepPartial<CreateStripeCustomerRequest>,
     options?: CallOptions & CallOptionsExt,
-  ): Promise<CreateSubscriptionResponse>;
+  ): Promise<CreateStripeCustomerResponse>;
   /**
    * CancelSubscription cancels a stripe subscription in our system
    * Called by a stripe webhook

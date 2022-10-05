@@ -13,11 +13,11 @@ service BillingService {
   // having been invoiced.
   rpc FinalizeInvoice(FinalizeInvoiceRequest) returns (FinalizeInvoiceResponse) {};
 
-  // GetSubscription retrieves a Stripe subscription
-  rpc GetSubscription(GetSubscriptionRequest) returns (GetSubscriptionResponse) {};
+  // GetSubscription retrieves a Stripe customer
+  rpc GetStripeCustomer(GetStripeCustomerRequest) returns (GetStripeCustomerResponse) {};
 
-  // CreateSubscription creates Stripe subscription.
-  rpc CreateSubscription(CreateSubscriptionRequest) returns (CreateSubscriptionResponse) {};
+  // CreateStripeCustomer creates Stripe StripeCustomer.
+  rpc CreateStripeCustomer(CreateStripeCustomerRequest) returns (CreateStripeCustomerResponse) {};
 
   // CancelSubscription cancels a stripe subscription in our system
   // Called by a stripe webhook
@@ -35,17 +35,17 @@ message FinalizeInvoiceRequest {
 message FinalizeInvoiceResponse {
 }
 
-message GetSubscriptionRequest {
+message GetStripeCustomerRequest {
 
 }
 
-message GetSubscriptionResponse {}
+message GetStripeCustomerResponse {}
 
-message CreateSubscriptionRequest {
+message CreateStripeCustomerRequest {
 
 }
 
-message CreateSubscriptionResponse {}
+message CreateStripeCustomerResponse {}
 
 message CancelSubscriptionRequest {
   string subscription_id = 1;

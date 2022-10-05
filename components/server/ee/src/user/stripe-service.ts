@@ -9,6 +9,8 @@ import Stripe from "stripe";
 import { Config } from "../../../src/config";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
+import { UsageServiceClient } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 
 const POLL_CREATED_CUSTOMER_INTERVAL_MS = 1000;
 const POLL_CREATED_CUSTOMER_MAX_ATTEMPTS = 30;
@@ -16,6 +18,9 @@ const POLL_CREATED_CUSTOMER_MAX_ATTEMPTS = 30;
 @injectable()
 export class StripeService {
     @inject(Config) protected readonly config: Config;
+
+    @inject(UsageServiceDefinition.name)
+    protected readonly usageService: UsageServiceClient;
 
     protected _stripe: Stripe | undefined;
 
