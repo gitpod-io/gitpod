@@ -102,8 +102,17 @@ export async function execStream(command: string, options: ExecOptions ): Promis
                 resolve(code);
             } else {
                 // The process was terminated by a signal
-                stderr += `\nTerminated with signal ${code}`;
-                resolve(1);
+                let msg = `\nTerminated with signal ${code}`;
+                if (options.slice) {
+                    werft.logOutput(options.slice, msg);
+                } else {
+                    console.error(msg);
+                }
+                // In the most strict of terms we should be doing 128 + signum, but childprocess
+                // is returning the name of the signal that terminated the subprocess, not the signal
+                // number itself. For now it'll suffice to return 128; printing an error message
+                // and an usual exit code will be sufficient to support diagnostics of killed processes.
+                resolve(128);
             }
         });
     });
