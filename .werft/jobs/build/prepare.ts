@@ -102,23 +102,31 @@ function shouldCreateVM(config: JobConfig) {
 // createVM only triggers the VM creation.
 // Readiness is not guaranted.
 function createVM(werft: Werft, config: JobConfig) {
-    const ctx = exec(`kubectl config get-contexts`, {slice: prepareSlices.BOOT_VM})
-    if (ctx.code > 0) {
-        werft.log(prepareSlices.BOOT_VM, "Err ctx");
-    }
-    // exec(`sleep 5000000`, {slice: prepareSlices.BOOT_VM})
-    const kubepaths = `KUBECONFIG=${HARVESTER_KUBECONFIG_PATH} GOOGLE_BACKEND_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} TF_VAR_dev_kube_path=${CORE_DEV_KUBECONFIG_PATH} TF_VAR_harvester_kube_path=${HARVESTER_KUBECONFIG_PATH}`
+    const commonVars = `GOOGLE_BACKEND_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
+                        TF_VAR_dev_kube_path=${CORE_DEV_KUBECONFIG_PATH} \
+                        TF_VAR_harvester_kube_path=${HARVESTER_KUBECONFIG_PATH} \
+                        TF_VAR_preview_name=${config.previewEnvironment.destname}`
+
     if (config.cleanSlateDeployment) {
         werft.log(prepareSlices.BOOT_VM, "Cleaning previously created VM");
         // VM.deleteVM({name: config.previewEnvironment.destname});
-        exec(`DESTROY=true ${kubepaths} TF_VAR_preview_name=${config.previewEnvironment.destname} ./dev/preview/workflow/preview/deploy-harvester.sh`, {slice: prepareSlices.BOOT_VM});
+        exec(`${commonVars} \
+                        DESTROY=true \
+                        ./dev/preview/workflow/preview/deploy-harvester.sh`,
+            {slice: prepareSlices.BOOT_VM}
+        );
     }
 
     werft.log(prepareSlices.BOOT_VM, "Creating  VM");
     const cpu = config.withLargeVM ? 12 : 6;
     const memory = config.withLargeVM ? 24 : 12;
 
-    const createVM = exec(`${kubepaths} TF_VAR_vm_cpu=${cpu} TF_VAR_vm_memory=${memory}Gi TF_VAR_preview_name=${config.previewEnvironment.destname} ./dev/preview/workflow/preview/deploy-harvester.sh`, {slice: prepareSlices.BOOT_VM});
+    const createVM = exec(`${commonVars} \
+                                    TF_VAR_vm_cpu=${cpu} \
+                                    TF_VAR_vm_memory=${memory}Gi \
+                                    ./dev/preview/workflow/preview/deploy-harvester.sh`,
+        {slice: prepareSlices.BOOT_VM}
+    );
 
     if (createVM.code > 0) {
         const err = new Error(`Failed creating VM`)
