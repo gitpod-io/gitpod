@@ -1,7 +1,7 @@
 ## start with
 ##    loadgen benchmark prod-benchmark-pvc.yaml
 
-workspaces: 1
+workspaces: 100
 ideImage: eu.gcr.io/gitpod-core-dev/build/ide/code:commit-ff263e14024f00d0ed78386b4417dfa6bcd4ae2f
 waitForRunning: "600s"
 waitForStopping: "600s"
