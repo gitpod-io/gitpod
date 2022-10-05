@@ -25,7 +25,7 @@ export function getCurrentTeam(location: Location<any>, teams?: Team[]): Team | 
         return;
     }
     const slug = location.pathname.startsWith("/t/") ? location.pathname.split("/")[2] : undefined;
-    if (slug === undefined && ["projects", "usage", "settings"].indexOf(location.pathname.split("/")[1]) === -1) {
+    if (slug === undefined && ["projects"].indexOf(location.pathname.split("/")[1]) === -1) {
         return undefined;
     }
     const team = teams.find((t) => t.slug === slug);

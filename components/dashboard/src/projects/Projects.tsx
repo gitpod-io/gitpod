@@ -19,6 +19,7 @@ import { toRemoteURL } from "./render-utils";
 import ContextMenu from "../components/ContextMenu";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { prebuildStatusIcon } from "./Prebuilds";
+import Alert from "../components/Alert";
 
 export default function () {
     const location = useLocation();
@@ -128,6 +129,18 @@ export default function () {
                     onClose={() => setRemoveModalVisible(false)}
                     onConfirm={removeProjectHandler}
                 />
+            )}
+            {!team && (
+                <div className="app-container pt-2">
+                    <Alert type={"message"} closable={false} showIcon={true} className="flex rounded mb-2 w-full">
+                        <p>
+                            We'll remove projects under personal accounts in Q1'2023.{" "}
+                            <Link to="/new" className="gp-link">
+                                Create a team.
+                            </Link>
+                        </p>
+                    </Alert>
+                </div>
             )}
             <Header title="Projects" subtitle="Manage recently added projects." />
             {projects.length === 0 && (

@@ -14,9 +14,8 @@ import gitpodIcon from "./icons/gitpod.svg";
 import { getGitpodService, gitpodHostUrl } from "./service/service";
 import { UserContext } from "./user-context";
 import { TeamsContext, getCurrentTeam, getSelectedTeamSlug } from "./teams/teams-context";
-import getSettingsMenu from "./settings/settings-menu";
 import { getAdminMenu } from "./admin/admin-menu";
-import ContextMenu from "./components/ContextMenu";
+import ContextMenu, { ContextMenuEntry } from "./components/ContextMenu";
 import Separator from "./components/Separator";
 import PillMenuItem from "./components/PillMenuItem";
 import TabMenuItem from "./components/TabMenuItem";
@@ -36,7 +35,7 @@ interface Entry {
 }
 
 export default function Menu() {
-    const { user, userBillingMode, refreshUserBillingMode } = useContext(UserContext);
+    const { user } = useContext(UserContext);
     const { showUsageView } = useContext(FeatureFlagContext);
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
@@ -45,6 +44,11 @@ export default function Menu() {
     const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
     const { project, setProject } = useContext(ProjectContext);
     const [isFeedbackFormVisible, setFeedbackFormVisible] = useState<boolean>(false);
+
+    const [hasIndividualProjects, setHasIndividualProjects] = useState(false);
+    getGitpodService()
+        .server.getUserProjects()
+        .then((projects) => setHasIndividualProjects(projects.length > 0));
 
     const match = useRouteMatch<{ segment1?: string; segment2?: string; segment3?: string }>(
         "/(t/)?:segment1/:segment2?/:segment3?",
@@ -90,14 +94,21 @@ export default function Menu() {
         return all.some((n) => n === path || n + "/" === path);
     }
 
-    const userFullName = user?.fullName || user?.name || "...";
-
     // Hide most of the top menu when in a full-page form.
     const isMinimalUI = inResource(location.pathname, ["new", "teams/new", "open"]);
     const isWorkspacesUI = inResource(location.pathname, ["workspaces"]);
+    const isAccountUI = inResource(location.pathname, [
+        "account",
+        "notifications",
+        "variables",
+        "keys",
+        "integrations",
+        "preferences",
+    ]);
     const isAdminUI = inResource(window.location.pathname, ["admin"]);
 
     const [teamMembers, setTeamMembers] = useState<Record<string, TeamMemberInfo[]>>({});
+
     useEffect(() => {
         if (!teams) {
             return;
@@ -154,13 +165,8 @@ export default function Menu() {
         }
     }, [team]);
 
-    useEffect(() => {
-        // Refresh billing mode
-        refreshUserBillingMode();
-    }, [teams]);
-
     const teamOrUserSlug = !!team ? "/t/" + team.slug : "/projects";
-    const leftMenu: Entry[] = (() => {
+    const secondLevelMenu: Entry[] = (() => {
         // Project menu
         if (projectSlug) {
             return [
@@ -180,55 +186,45 @@ export default function Menu() {
             ];
         }
         // Team menu
-        if (team) {
-            const currentUserInTeam = (teamMembers[team.id] || []).find((m) => m.userId === user?.id);
-
-            const teamSettingsList = [
-                {
-                    title: "Projects",
-                    link: `/t/${team.slug}/projects`,
-                    alternatives: [] as string[],
-                },
-                {
-                    title: "Members",
-                    link: `/t/${team.slug}/members`,
-                },
-            ];
-            if (showUsageView || (teamBillingMode && teamBillingMode.mode === "usage-based")) {
-                teamSettingsList.push({
-                    title: "Usage",
-                    link: `/t/${team.slug}/usage`,
-                });
-            }
-            if (currentUserInTeam?.role === "owner") {
-                teamSettingsList.push({
-                    title: "Settings",
-                    link: `/t/${team.slug}/settings`,
-                    alternatives: getTeamSettingsMenu({ team, billingMode: teamBillingMode }).flatMap((e) => e.link),
-                });
-            }
-
-            return teamSettingsList;
+        if (!team) {
+            return [];
         }
-        // User menu
-        const userMenu = [];
-        userMenu.push({
-            title: "Projects",
-            link: "/projects",
-        });
-        if (showUsageView) {
-            userMenu.push({
+        const currentUserInTeam = (teamMembers[team.id] || []).find((m) => m.userId === user?.id);
+
+        const teamSettingsList = [
+            {
+                title: "Projects",
+                link: `/t/${team.slug}/projects`,
+                alternatives: [] as string[],
+            },
+            {
+                title: "Members",
+                link: `/t/${team.slug}/members`,
+            },
+        ];
+        if (showUsageView || (teamBillingMode && teamBillingMode.mode === "usage-based")) {
+            teamSettingsList.push({
                 title: "Usage",
-                link: "/usage",
+                link: `/t/${team.slug}/usage`,
             });
         }
-        userMenu.push({
-            title: "Settings",
-            link: "/settings",
-            alternatives: getSettingsMenu({ userBillingMode }).flatMap((e) => e.link),
-        });
-        return userMenu;
+        if (currentUserInTeam?.role === "owner") {
+            teamSettingsList.push({
+                title: "Settings",
+                link: `/t/${team.slug}/settings`,
+                alternatives: getTeamSettingsMenu({ team, billingMode: teamBillingMode }).flatMap((e) => e.link),
+            });
+        }
+
+        return teamSettingsList;
     })();
+    const leftMenu: Entry[] = [
+        {
+            title: "Workspaces",
+            link: "/workspaces",
+            alternatives: ["/"],
+        },
+    ];
     const rightMenu: Entry[] = [
         ...(user?.rolesOrPermissions?.includes("admin")
             ? [
@@ -239,11 +235,6 @@ export default function Menu() {
                   },
               ]
             : []),
-        {
-            title: "Workspaces",
-            link: "/workspaces",
-            alternatives: ["/"],
-        },
     ];
 
     const handleFeedbackFormClick = () => {
@@ -253,86 +244,93 @@ export default function Menu() {
     const onFeedbackFormClose = () => {
         setFeedbackFormVisible(false);
     };
-    const isTeamLevelActive = !projectSlug && !isWorkspacesUI && !isAdminUI && teamOrUserSlug;
+    const isTeamLevelActive = !projectSlug && !isWorkspacesUI && !isAccountUI && !isAdminUI && teamOrUserSlug;
     const renderTeamMenu = () => {
+        if (!teams || teams.length === 0) {
+            return (
+                <div className="p-1 text-base text-gray-500 dark:text-gray-400 border-gray-800">
+                    <PillMenuItem
+                        additionalClasses="border-2 border-gray-200 dark:border-gray-700 border-dashed"
+                        name="New Team →"
+                        link="/teams/new"
+                    />
+                </div>
+            );
+        }
+        const userFullName = user?.fullName || user?.name || "...";
+        const entries: (ContextMenuEntry & { slug: string })[] = [
+            ...(hasIndividualProjects
+                ? [
+                      {
+                          title: userFullName,
+                          customContent: (
+                              <div className="w-full text-gray-500 flex flex-col">
+                                  <span className="text-gray-800 dark:text-gray-100 text-base font-semibold">
+                                      {userFullName}
+                                  </span>
+                                  <span className="">Personal Account</span>
+                              </div>
+                          ),
+                          active: getSelectedTeamSlug() === "",
+                          separator: true,
+                          slug: "",
+                          link: "/projects",
+                      },
+                  ]
+                : []),
+            ...(teams || [])
+                .map((t) => ({
+                    slug: t.slug,
+                    title: t.name,
+                    customContent: (
+                        <div className="w-full text-gray-400 flex flex-col">
+                            <span className="text-gray-800 dark:text-gray-300 text-base font-semibold">{t.name}</span>
+                            <span className="">
+                                {!!teamMembers[t.id]
+                                    ? `${teamMembers[t.id].length} member${teamMembers[t.id].length === 1 ? "" : "s"}`
+                                    : "..."}
+                            </span>
+                        </div>
+                    ),
+                    active: getSelectedTeamSlug() === t.slug,
+                    separator: true,
+                    link: `/t/${t.slug}`,
+                }))
+                .sort((a, b) => (a.title.toLowerCase() > b.title.toLowerCase() ? 1 : -1)),
+            {
+                slug: "new",
+                title: "Create a new team",
+                customContent: (
+                    <div className="w-full text-gray-400 flex items-center">
+                        <span className="flex-1 font-semibold">New Team</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" className="w-3.5">
+                            <path
+                                fill="currentColor"
+                                fillRule="evenodd"
+                                d="M7 0a1 1 0 011 1v5h5a1 1 0 110 2H8v5a1 1 0 11-2 0V8H1a1 1 0 010-2h5V1a1 1 0 011-1z"
+                                clipRule="evenodd"
+                            />
+                        </svg>
+                    </div>
+                ),
+                link: "/teams/new",
+            },
+        ];
         const classes =
             "flex h-full text-base py-0 " +
             (isTeamLevelActive
                 ? "text-gray-50  bg-gray-800 dark:bg-gray-50  dark:text-gray-900 border-gray-700 dark:border-gray-200"
                 : "text-gray-500 bg-gray-50  dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-700");
+        const selectedEntry = entries.find((e) => e.slug === getSelectedTeamSlug()) || entries[0];
         return (
-            <div className="flex p-1 pl-3">
-                <Link to={getSelectedTeamSlug() ? `/t/${getSelectedTeamSlug()}/projects` : `/projects`}>
-                    <span
-                        className={`${classes} rounded-tl-2xl rounded-bl-2xl border-r pl-3 pr-2 py-1 bg-gray-50  font-semibold`}
-                    >
-                        {teams?.find((t) => t.slug === getSelectedTeamSlug())?.name || userFullName}
+            <div className="flex p-1">
+                <Link to={selectedEntry.link!}>
+                    <span className={`${classes} rounded-tl-2xl rounded-bl-2xl border-r pl-3 pr-2 py-1 font-semibold`}>
+                        {selectedEntry.title!}
                     </span>
                 </Link>
                 <div className={`${classes} rounded-tr-2xl rounded-br-2xl px-1`}>
-                    <ContextMenu
-                        customClasses="w-64 left-0"
-                        menuEntries={[
-                            {
-                                title: userFullName,
-                                customContent: (
-                                    <div className="w-full text-gray-500 flex flex-col">
-                                        <span className="text-gray-800 dark:text-gray-100 text-base font-semibold">
-                                            {userFullName}
-                                        </span>
-                                        <span className="">Personal Account</span>
-                                    </div>
-                                ),
-                                active: getSelectedTeamSlug() === "",
-                                separator: true,
-                                link: "/projects",
-                            },
-                            ...(teams || [])
-                                .map((t) => ({
-                                    title: t.name,
-                                    customContent: (
-                                        <div className="w-full text-gray-400 flex flex-col">
-                                            <span className="text-gray-800 dark:text-gray-300 text-base font-semibold">
-                                                {t.name}
-                                            </span>
-                                            <span className="">
-                                                {!!teamMembers[t.id]
-                                                    ? `${teamMembers[t.id].length} member${
-                                                          teamMembers[t.id].length === 1 ? "" : "s"
-                                                      }`
-                                                    : "..."}
-                                            </span>
-                                        </div>
-                                    ),
-                                    active: getSelectedTeamSlug() === t.slug,
-                                    separator: true,
-                                    link: `/t/${t.slug}`,
-                                }))
-                                .sort((a, b) => (a.title.toLowerCase() > b.title.toLowerCase() ? 1 : -1)),
-                            {
-                                title: "Create a new team",
-                                customContent: (
-                                    <div className="w-full text-gray-400 flex items-center">
-                                        <span className="flex-1 font-semibold">New Team</span>
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 14 14"
-                                            className="w-3.5"
-                                        >
-                                            <path
-                                                fill="currentColor"
-                                                fillRule="evenodd"
-                                                d="M7 0a1 1 0 011 1v5h5a1 1 0 110 2H8v5a1 1 0 11-2 0V8H1a1 1 0 010-2h5V1a1 1 0 011-1z"
-                                                clipRule="evenodd"
-                                            />
-                                        </svg>
-                                    </div>
-                                ),
-                                link: "/teams/new",
-                            },
-                        ]}
-                    >
+                    <ContextMenu customClasses="w-64 left-0" menuEntries={entries}>
                         <div className="flex h-full pl-0 pr-1 py-1.5 text-gray-50">
                             <svg width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path
@@ -391,7 +389,22 @@ export default function Menu() {
                         <Link to="/">
                             <img src={gitpodIcon} className="h-6" alt="Gitpod's logo" />
                         </Link>
-                        {!isMinimalUI && <div className="ml-2 text-base">{renderTeamMenu()}</div>}
+                        {!isMinimalUI && (
+                            <>
+                                <div className="pl-2 text-base text-gray-500 dark:text-gray-400 flex">
+                                    {leftMenu.map((entry) => (
+                                        <div className="p-1" key={entry.title}>
+                                            <PillMenuItem
+                                                name={entry.title}
+                                                selected={isSelected(entry, location)}
+                                                link={entry.link}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                                {renderTeamMenu()}
+                            </>
+                        )}
                     </div>
                     <div className="flex flex-1 items-center w-auto" id="menu">
                         <nav className="flex-1">
@@ -454,9 +467,9 @@ export default function Menu() {
                     </div>
                     {isFeedbackFormVisible && <FeedbackFormModal onClose={onFeedbackFormClose} />}
                 </div>
-                {!isMinimalUI && !prebuildId && !isWorkspacesUI && !isAdminUI && (
+                {!isMinimalUI && !prebuildId && !isWorkspacesUI && !isAccountUI && !isAdminUI && (
                     <nav className="flex">
-                        {leftMenu.map((entry: Entry) => (
+                        {secondLevelMenu.map((entry: Entry) => (
                             <TabMenuItem
                                 key={entry.title}
                                 name={entry.title}

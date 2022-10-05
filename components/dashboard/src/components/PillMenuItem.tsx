@@ -10,13 +10,17 @@ export default function PillMenuItem(p: {
     name: string;
     selected?: boolean;
     link?: string;
+    additionalClasses?: string;
     onClick?: (event: React.MouseEvent) => void;
 }) {
-    const classes =
+    let classes =
         "flex block font-medium dark:text-gray-400 px-3 py-1 rounded-2xl transition ease-in-out font-semibold " +
         (p.selected
             ? "text-gray-50 bg-gray-800 dark:text-gray-900 dark:bg-gray-50"
             : "hover:bg-gray-100 dark:hover:bg-gray-700");
+    if (p.additionalClasses) {
+        classes = classes + " " + p.additionalClasses;
+    }
     return !p.link || p.link.startsWith("https://") ? (
         <a className={classes} href={p.link} onClick={p.onClick} data-analytics='{"button_type":"pill_menu"}'>
             {p.name}
