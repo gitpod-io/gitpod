@@ -1,11 +1,10 @@
-import { previewNameFromBranchName } from "../../util/preview";
-import { exec } from "../../util/shell";
-import { Werft } from "../../util/werft";
+import {previewNameFromBranchName} from "../../util/preview";
+import {exec} from "../../util/shell";
+import {Werft} from "../../util/werft";
 import * as VM from "../../vm/vm";
-import { CORE_DEV_KUBECONFIG_PATH, GCLOUD_SERVICE_ACCOUNT_PATH, HARVESTER_KUBECONFIG_PATH } from "./const";
-import { issueMetaCerts } from "./deploy-to-preview-environment";
-import { JobConfig } from "./job-config";
-import * as Manifests from "../../vm/manifests";
+import {CORE_DEV_KUBECONFIG_PATH, GCLOUD_SERVICE_ACCOUNT_PATH, HARVESTER_KUBECONFIG_PATH} from "./const";
+import {issueMetaCerts} from "./deploy-to-preview-environment";
+import {JobConfig} from "./job-config";
 
 const phaseName = "prepare";
 const prepareSlices = {
@@ -23,8 +22,7 @@ export async function prepare(werft: Werft, config: JobConfig) {
         configureDocker();
         configureStaticClustersAccess();
         werft.done(prepareSlices.CONFIGURE_CORE_DEV);
-        if (!config.withPreview)
-        {
+        if (!config.withPreview) {
             return
         }
         var certReady = issueCertificate(werft, config);
@@ -47,7 +45,7 @@ function activateCoreDevServiceAccount() {
 }
 
 function configureDocker() {
-    const rcDocker = exec("gcloud auth configure-docker --quiet", { slice: prepareSlices.CONFIGURE_CORE_DEV }).code;
+    const rcDocker = exec("gcloud auth configure-docker --quiet", {slice: prepareSlices.CONFIGURE_CORE_DEV}).code;
     const rcDockerRegistry = exec("gcloud auth configure-docker europe-docker.pkg.dev --quiet", {
         slice: prepareSlices.CONFIGURE_CORE_DEV,
     }).code;
@@ -60,7 +58,7 @@ function configureDocker() {
 function configureStaticClustersAccess() {
     const rcCoreDev = exec(
         `KUBECONFIG=${CORE_DEV_KUBECONFIG_PATH} gcloud container clusters get-credentials core-dev --zone europe-west1-b --project gitpod-core-dev`,
-        { slice: prepareSlices.CONFIGURE_CORE_DEV },
+        {slice: prepareSlices.CONFIGURE_CORE_DEV},
     ).code;
     if (rcCoreDev != 0) {
         throw new Error("Failed to get core-dev kubeconfig credentials.");
@@ -68,7 +66,7 @@ function configureStaticClustersAccess() {
 
     const rcHarvester = exec(
         `cp /mnt/secrets/harvester-kubeconfig/harvester-kubeconfig.yml ${HARVESTER_KUBECONFIG_PATH}`,
-        { slice: prepareSlices.CONFIGURE_CORE_DEV },
+        {slice: prepareSlices.CONFIGURE_CORE_DEV},
     ).code;
 
     if (rcHarvester != 0) {
@@ -90,14 +88,14 @@ function decideHarvesterVMCreation(werft: Werft, config: JobConfig) {
     if (shouldCreateVM(config)) {
         createVM(werft, config);
     }
-    applyLoadBalancer({ name: config.previewEnvironment.destname });
+    // applyLoadBalancer({ name: config.previewEnvironment.destname });
     werft.done(prepareSlices.BOOT_VM);
 }
 
 function shouldCreateVM(config: JobConfig) {
     return (
         config.withPreview &&
-        (!VM.vmExists({ name: config.previewEnvironment.destname }) || config.cleanSlateDeployment)
+        (!VM.vmExists({name: config.previewEnvironment.destname}) || config.cleanSlateDeployment)
     );
 }
 
@@ -106,24 +104,51 @@ function shouldCreateVM(config: JobConfig) {
 function createVM(werft: Werft, config: JobConfig) {
     if (config.cleanSlateDeployment) {
         werft.log(prepareSlices.BOOT_VM, "Cleaning previously created VM");
-        VM.deleteVM({ name: config.previewEnvironment.destname });
+        // VM.deleteVM({name: config.previewEnvironment.destname});
+        exec(`DESTROY=true TF_VAR_preview_name=${config.previewEnvironment.destname} ./dev/preview/workflow/preview/deploy-harvester.sh`, {slice: prepareSlices.BOOT_VM});
     }
 
     werft.log(prepareSlices.BOOT_VM, "Creating  VM");
     const cpu = config.withLargeVM ? 12 : 6;
     const memory = config.withLargeVM ? 24 : 12;
-    VM.startVM({ name: config.previewEnvironment.destname, cpu, memory });
+
+    const createVM = exec(`TF_VAR_vm_cpu=${cpu} TF_VAR_vm_memory=${memory}Gi TF_VAR_preview_name=${config.previewEnvironment.destname} ./dev/preview/workflow/preview/deploy-harvester.sh`, {slice: prepareSlices.BOOT_VM});
+
+    if (createVM.code > 0) {
+        const err = new Error(`Failed creating VM`)
+        createVM.stderr.split('\n').forEach(stderrLine => werft.log(prepareSlices.BOOT_VM, stderrLine))
+        werft.failSlice(prepareSlices.BOOT_VM, err)
+        return
+    }
+
+    // VM.startVM({name: config.previewEnvironment.destname, cpu, memory});
     werft.currentPhaseSpan.setAttribute("preview.created_vm", true);
 }
 
-function applyLoadBalancer(option: { name: string }) {
-    function kubectlApplyManifest(manifest: string, options?: { validate?: boolean }) {
-        exec(`
-            cat <<EOF | kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} apply --validate=${!!options?.validate} -f -
-${manifest}
-EOF
-        `);
-    }
-    kubectlApplyManifest(Manifests.LBDeployManifest({ name: option.name }));
-    kubectlApplyManifest(Manifests.LBServiceManifest({ name: option.name }));
-}
+// createVM only triggers the VM creation.
+// Readiness is not guaranted.
+// function createVM(werft: Werft, config: JobConfig) {
+//     if (config.cleanSlateDeployment) {
+//         werft.log(prepareSlices.BOOT_VM, "Cleaning previously created VM");
+//         VM.deleteVM({ name: config.previewEnvironment.destname });
+//     }
+//
+//     werft.log(prepareSlices.BOOT_VM, "Creating  VM");
+//     const cpu = config.withLargeVM ? 12 : 6;
+//     const memory = config.withLargeVM ? 24 : 12;
+//     VM.startVM({ name: config.previewEnvironment.destname, cpu, memory });
+//     werft.currentPhaseSpan.setAttribute("preview.created_vm", true);
+// }
+
+// function applyLoadBalancer(option: { name: string }) {
+//     function kubectlApplyManifest(manifest: string, options?: { validate?: boolean }) {
+//         exec(`
+//             cat <<EOF | kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} apply --validate=${!!options?.validate} -f -
+// ${manifest}
+// EOF
+//         `);
+//     }
+//
+//     kubectlApplyManifest(Manifests.LBDeployManifest({name: option.name}));
+//     kubectlApplyManifest(Manifests.LBServiceManifest({name: option.name}));
+// }
