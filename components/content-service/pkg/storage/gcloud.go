@@ -623,7 +623,7 @@ func (p *PresignedGCPStorage) downloadInfo(ctx context.Context, client *gcpstora
 		Method:         "GET",
 		GoogleAccessID: p.accessID,
 		PrivateKey:     p.privateKey,
-		Expires:        time.Now().Add(30 * time.Minute),
+		Expires:        time.Now().Add(1 * time.Hour),
 		ContentType:    options.ContentType,
 	})
 	if err != nil {
