@@ -102,17 +102,18 @@ function shouldCreateVM(config: JobConfig) {
 // createVM only triggers the VM creation.
 // Readiness is not guaranted.
 function createVM(werft: Werft, config: JobConfig) {
+    const kubepaths = `TF_VAR_dev_kube_path=${HARVESTER_KUBECONFIG_PATH} TF_VAR_harvester_kube_path=${CORE_DEV_KUBECONFIG_PATH}`
     if (config.cleanSlateDeployment) {
         werft.log(prepareSlices.BOOT_VM, "Cleaning previously created VM");
         // VM.deleteVM({name: config.previewEnvironment.destname});
-        exec(`DESTROY=true TF_VAR_preview_name=${config.previewEnvironment.destname} ./dev/preview/workflow/preview/deploy-harvester.sh`, {slice: prepareSlices.BOOT_VM});
+        exec(`DESTROY=true ${kubepaths} TF_VAR_preview_name=${config.previewEnvironment.destname} ./dev/preview/workflow/preview/deploy-harvester.sh`, {slice: prepareSlices.BOOT_VM});
     }
 
     werft.log(prepareSlices.BOOT_VM, "Creating  VM");
     const cpu = config.withLargeVM ? 12 : 6;
     const memory = config.withLargeVM ? 24 : 12;
 
-    const createVM = exec(`TF_VAR_vm_cpu=${cpu} TF_VAR_vm_memory=${memory}Gi TF_VAR_preview_name=${config.previewEnvironment.destname} ./dev/preview/workflow/preview/deploy-harvester.sh`, {slice: prepareSlices.BOOT_VM});
+    const createVM = exec(`${kubepaths} TF_VAR_vm_cpu=${cpu} TF_VAR_vm_memory=${memory}Gi TF_VAR_preview_name=${config.previewEnvironment.destname} ./dev/preview/workflow/preview/deploy-harvester.sh`, {slice: prepareSlices.BOOT_VM});
 
     if (createVM.code > 0) {
         const err = new Error(`Failed creating VM`)
