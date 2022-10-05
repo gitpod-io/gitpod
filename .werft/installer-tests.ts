@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as https from "https";
 import { join } from "path";
-import { exec } from "./util/shell";
+import { exec, execStream } from "./util/shell";
 import { Werft } from "./util/werft";
 import { deleteReplicatedLicense } from "./jobs/build/self-hosted-upgrade-tests";
 
@@ -282,11 +282,15 @@ if (config === undefined) {
 }
 
 installerTests(TEST_CONFIGURATIONS[testConfig]).catch((err) => {
-    if(deleteOnFail == "true") {
-        cleanup();
-    }
     console.error(err);
-    process.exit(1);
+
+    if(deleteOnFail == "true") {
+        cleanup().finally(() => {
+            process.exit(1);
+        });
+    } else {
+        process.exit(1);
+    }
 });
 
 function logJobConfig(): void {
@@ -332,7 +336,7 @@ export async function installerTests(config: TestConfig) {
     werft.phase(majorPhase, phaseMessage);
     for (let phase of config.PHASES) {
         const phaseSteps = INFRA_PHASES[phase];
-        const ret = callMakeTargets(phaseSteps.phase, phaseSteps.description, phaseSteps.makeTarget);
+        const ret = await callMakeTargets(phaseSteps.phase, phaseSteps.description, phaseSteps.makeTarget);
         if (ret) {
             // there is not point in continuing if one stage fails for infra setup
             const err: Error = new Error("Cluster creation failed");
@@ -359,7 +363,7 @@ export async function installerTests(config: TestConfig) {
         // runIntegrationTests()
 
         const upgradePhase = INFRA_PHASES["KOTS_UPGRADE"];
-        const ret = callMakeTargets(upgradePhase.phase, upgradePhase.description, upgradePhase.makeTarget);
+        const ret = await callMakeTargets(upgradePhase.phase, upgradePhase.description, upgradePhase.makeTarget);
         if (ret) {
             sendFailureSlackAlert(
                 upgradePhase.description,
@@ -375,7 +379,7 @@ export async function installerTests(config: TestConfig) {
     if (skipTests === "true") {
         console.log("Skipping integration tests");
     } else {
-        runIntegrationTests();
+        await runIntegrationTests();
     }
 
     // if the preview flag is set to true, the script will print the result and exits
@@ -413,11 +417,11 @@ export async function installerTests(config: TestConfig) {
         werft.done("print-output");
     } else {
         // if we are not doing preview, we delete the infrastructure
-        cleanup();
+        await cleanup();
     }
 }
 
-function runIntegrationTests() {
+async function runIntegrationTests() {
     werft.phase(`run-${testSuite}-integration-tests`, `Run all ${testSuite} integration tests`);
 
     const componentTests = TestMap[testSuite.toLowerCase()]
@@ -431,7 +435,7 @@ function runIntegrationTests() {
     console.log(`Running ${testSuite} tests`)
     for (let test in componentTests) {
         const testPhase = componentTests[test];
-        const ret = callMakeTargets(testPhase.phase, testPhase.description, testPhase.makeTarget);
+        const ret = await callMakeTargets(testPhase.phase, testPhase.description, testPhase.makeTarget);
         if (ret) {
             exec(
                 `werft log result -d "failed test" url "${testPhase.description}(Phase ${testPhase.phase}) failed. Please refer logs."`,
@@ -449,33 +453,38 @@ function runIntegrationTests() {
     werft.done("run-integration-tests");
 }
 
-function callMakeTargets(phase: string, description: string, makeTarget: string, failable: boolean = false) {
-    werft.log(phase, `Calling ${makeTarget}`);
+/**
+ * Run a make target within a werft slice.
+ *
+ * @return The make target return code
+ */
+async function callMakeTargets(slice: string, description: string, makeTarget: string, failable: boolean = false): Promise<number> {
+    werft.log(slice, `Calling ${makeTarget}`);
     // exporting cloud env var is important for the make targets
     const env = `export TF_VAR_cluster_version=${k8s_version} cloud=${cloud} TF_VAR_domain=${baseDomain} TF_VAR_gcp_zone=${gcpDnsZone}`;
 
-    const response = exec(
+    const code = await execStream(
         `${env} && make -C ${makefilePath} ${makeTarget}`,
         {
-            slice: phase,
+            slice: slice,
             dontCheckRc: true,
         },
     );
 
-    if (response.code) {
-        console.error(`Error: ${response.stderr}`);
+    if (code !== 0) {
+        console.error(`Error: make target ${makeTarget} exited with code ${code}`);
 
         if (failable) {
-            werft.fail(phase, "Operation failed");
-            return response.code;
+            werft.fail(slice, "Operation failed");
+            return code;
         }
-        werft.log(phase, `'${description}' failed`);
+        werft.log(slice, `'${description}' failed`);
     } else {
-        werft.log(phase, `'${description}' succeeded`);
-        werft.done(phase);
+        werft.log(slice, `'${description}' succeeded`);
+        werft.done(slice);
     }
 
-    return response.code;
+    return code;
 }
 
 function randomize(options: string[]): string {
@@ -526,40 +535,43 @@ function randOsVersion(): string {
     return randomize(options);
 }
 
-function cleanup() {
+async function cleanup(): Promise<void> {
     const phase = INFRA_PHASES["DESTROY"];
     werft.phase(phase.phase, phase.description);
 
-    const ret = callMakeTargets(phase.phase, phase.description, phase.makeTarget);
+    try {
+        const ret = await callMakeTargets("cleanup", phase.description, phase.makeTarget);
 
-    // if the destroy command fail, we check if any resources are pending to be removed
-    // if nothing is yet to be cleaned, we return with success
-    // else we list the rest of the resources to be cleaned up
-    if (ret) {
-        const existingState = exec(`make -C ${makefilePath} list-state`, { slice: "get-uncleaned-resources" });
-
-        if (existingState.code) {
-            console.error(`Error: Failed to check for the left over resources`);
-        }
-
-        const itemsTobeCleaned = existingState.stdout.toString().split("\n").slice(1, -1);
-
-        if (itemsTobeCleaned.length == 0) {
-            console.log("Eventhough it was not a clean run, all resources has been cleaned. Nothing to do");
+        // if the destroy command fail, we check if any resources are pending to be removed
+        // if nothing is yet to be cleaned, we return with success
+        // else we list the rest of the resources to be cleaned up
+        if (ret === 0) {
             werft.done(phase.phase);
-            return;
+        } else {
+            const existingState = exec(`make -C ${makefilePath} list-state`, { slice: "get-uncleaned-resources" });
+
+            if (existingState.code) {
+                console.error(`Error: Failed to check for the left over resources`);
+            }
+
+            const itemsTobeCleaned = existingState.stdout.toString().split("\n").slice(1, -1);
+
+            if (itemsTobeCleaned.length === 0) {
+                console.log("Eventhough it was not a clean run, all resources has been cleaned. Nothing to do");
+                werft.done(phase.phase);
+                return;
+            }
+
+            console.log(`Cleanup the following resources manually: ${itemsTobeCleaned}`);
+
+            werft.failSlice(phase.phase, new Error("Failed to cleanup resources"));
+
+            await sendFailureSlackAlert(phase.description, new Error("Cleanup job failed"), slackHook.get("self-hosted-jobs"));
         }
-
-        console.log(`Cleanup the following resources manually: ${itemsTobeCleaned}`);
-
-        sendFailureSlackAlert(phase.description, new Error("Cleanup job failed"), slackHook.get("self-hosted-jobs"));
     }
-
-    werft.done(phase.phase);
-
-    deleteReplicatedLicense(werft, process.env["TF_VAR_TEST_ID"]);
-
-    return ret;
+    finally {
+        await deleteReplicatedLicense(werft, process.env["TF_VAR_TEST_ID"])
+    }
 }
 
 export function sendFailureSlackAlert(phase: string, err: Error, hook: string): Promise<void> {
