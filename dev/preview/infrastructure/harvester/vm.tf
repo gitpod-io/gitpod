@@ -80,7 +80,7 @@ resource "kubernetes_secret" "cloudinit" {
 #  secret   = "harvester-k3s-dockerhub-pull-account"
 #}
 
-resource "kubernetes_secret" "harvester-k3s-dockerhub-pull-account" {
+data "kubernetes_secret" "harvester-k3s-dockerhub-pull-account" {
   provider = k8s.dev
   metadata {
     name      = "harvester-k3s-dockerhub-pull-account"
@@ -93,8 +93,8 @@ locals {
   cloudinit_user_data = templatefile("${path.module}/cloudinit.yaml", {
     #    dockerhub_user      = local.dockerhub_creds.username
     #    dockerhub_passwd    = local.dockerhub_creds.password
-    dockerhub_user      = kubernetes_secret.harvester-k3s-dockerhub-pull-account.data["username"]
-    dockerhub_passwd    = kubernetes_secret.harvester-k3s-dockerhub-pull-account.data["password"]
+    dockerhub_user      = data.kubernetes_secret.harvester-k3s-dockerhub-pull-account.data["username"]
+    dockerhub_passwd    = data.kubernetes_secret.harvester-k3s-dockerhub-pull-account.data["password"]
     vm_name             = var.preview_name
     ssh_authorized_keys = local.ssh_key
   })
