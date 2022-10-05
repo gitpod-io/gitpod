@@ -398,7 +398,12 @@ wait_time_azure := 300
 delete-cm-setup: sleeptime=$(if $(time_to_sleep_$(cloud)),$(time_to_sleep_$(cloud)),${time_to_sleep})
 delete-cm-setup: waittime=$(if $(wait_time_$(cloud)),$(wait_time_$(cloud)),${wait_time})
 delete-cm-setup:
-	sleep ${waittime} && kubectl --kubeconfig=${KUBECONFIG} delete pods --all -n cert-manager && sleep ${sleeptime};
+	@echo "Waiting ${waittime} for cert-manager to become ready"
+	kubectl --kubeconfig=${KUBECONFIG} --namespace cert-manager wait --for=condition=Available deployment/cert-manager --timeout=${waittime}s
+	kubectl --kubeconfig=${KUBECONFIG} delete pods --all -n cert-manager
+	@echo Waiting for up to ${sleeptime} seconds for cert-manager to become ready
+	kubectl --kubeconfig=${KUBECONFIG} --namespace gitpod wait --for=condition=Ready certificate/https-certificates --timeout ${sleeptime}s || true
+
 
 gitpod-debug-info:
 	@echo -e "\033[;31mGitpod is not ready\033[0;m"
