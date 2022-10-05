@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:alt-aws-update-awscliv2.3
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aa-update-img-tf-version.0
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
