@@ -53,7 +53,7 @@ func (s *BillingService) ReconcileInvoices(ctx context.Context, in *v1.Reconcile
 		}
 
 		// We only update Stripe usage when the AttributionID is billed against Stripe (determined through CostCenter)
-		if costCenter.BillingStrategy == db.CostCenter_Stripe {
+		if costCenter.BillingStrategy != db.CostCenter_Stripe {
 			continue
 		}
 

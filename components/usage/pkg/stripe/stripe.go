@@ -77,7 +77,7 @@ func (c *Client) UpdateUsage(ctx context.Context, creditsPerAttributionID map[db
 
 		customers, err := c.findCustomers(ctx, query)
 		if err != nil {
-			return fmt.Errorf("failed to udpate usage: %w", err)
+			return fmt.Errorf("failed to find customers: %w", err)
 		}
 
 		for _, customer := range customers {
