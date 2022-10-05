@@ -15,13 +15,12 @@ COMPONENTS_DIR="$ROOT_DIR"/components
 # shellcheck disable=SC1090,SC1091
 source "$ROOT_DIR"/scripts/protoc-generator.sh
 
-lint
+
 
 install_dependencies
-go_protoc "$COMPONENTS_DIR" "usage/v1"
-mkdir -p go/v1
-mv go/usage/v1/*.pb.go go/v1
-rm -rf go/usage
+lint
+protoc_buf_generate
+
 typescript_ts_protoc "$COMPONENTS_DIR" "usage/v1"
 
 update_license
