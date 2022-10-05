@@ -398,7 +398,9 @@ func (rs *remoteContentStorage) Download(ctx context.Context, destination string
 	tempFile.Close()
 
 	args := []string{
-		"-x16", "-j12",
+		"-s10", "-x16", "-j12",
+		"--retry-wait=5",
+		"--log-level=error",
 		"--allow-overwrite=true", // rewrite temporal empty file
 		info.URL,
 		"-o", tempFile.Name(),
