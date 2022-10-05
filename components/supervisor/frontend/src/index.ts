@@ -66,6 +66,7 @@ const ideService = IDEFrontendService.create();
 const pendingGitpodServiceClient = GitpodServiceClient.create();
 const loadingIDE = new Promise(resolve => window.addEventListener('DOMContentLoaded', resolve, { once: true }));
 const toStop = new DisposableCollection();
+const supervisorServiceClient = new SupervisorServiceClient();
 
 (async () => {
     const gitpodServiceClient = await pendingGitpodServiceClient;
@@ -91,7 +92,6 @@ const toStop = new DisposableCollection();
             });
         });
     }
-    const supervisorServiceClient = new SupervisorServiceClient();
     const [ideStatus] = await Promise.all([supervisorServiceClient.ideReady, gitpodServiceClient.auth, loadingIDE]);
     if (isWorkspaceInstancePhase('stopping') || isWorkspaceInstancePhase('stopped')) {
         return;
@@ -267,7 +267,6 @@ const toStop = new DisposableCollection();
         updateCurrentFrame();
         trackIDEStatusRenderedEvent();
     });
-    const supervisorServiceClient = new SupervisorServiceClient();
     supervisorServiceClient.ideReady.then(newIdeStatus => {
         ideStatus = newIdeStatus;
         isDesktopIde = !!ideStatus && !!ideStatus.desktop && !!ideStatus.desktop.link;
