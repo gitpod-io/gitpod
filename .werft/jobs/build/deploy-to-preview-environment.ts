@@ -133,6 +133,8 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
     VM.waitForVMReadiness({ name: destname, timeoutSeconds: 60 * 10, slice: vmSlices.VM_READINESS });
     werft.done(vmSlices.VM_READINESS);
 
+    exec(`sleep 30`)
+
     werft.log(vmSlices.START_KUBECTL_PORT_FORWARDS, "Starting SSH port forwarding");
     VM.startSSHProxy({ name: destname, slice: vmSlices.START_KUBECTL_PORT_FORWARDS });
     werft.done(vmSlices.START_KUBECTL_PORT_FORWARDS);
