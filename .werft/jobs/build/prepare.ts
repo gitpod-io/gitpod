@@ -112,7 +112,8 @@ function createVM(werft: Werft, config: JobConfig) {
                         TF_VAR_harvester_kube_path=${HARVESTER_KUBECONFIG_PATH} \
                         TF_VAR_preview_name=${config.previewEnvironment.destname} \
                         TF_VAR_vm_cpu=${cpu} \
-                        TF_VAR_vm_memory=${memory}Gi`
+                        TF_VAR_vm_memory=${memory}Gi \
+                        TF_VAR_vm_storage_class="longhorn-gitpod-k3s-202209251218-onereplica"`
 
     if (config.cleanSlateDeployment) {
         werft.log(prepareSlices.BOOT_VM, "Cleaning previously created VM");
