@@ -276,11 +276,20 @@ installerTests(TEST_CONFIGURATIONS[testConfig]).catch((err) => {
 
 export async function installerTests(config: TestConfig) {
     console.log(config.DESCRIPTION);
-    // these phases sets up or clean up the infrastructure
-    // If the cloud variable is not set, we have a cleanup job in hand
-    const majorPhase: string = cloud == "" ? "cleanup-infra" : `create-${cloud}-infra`;
 
-    werft.phase(majorPhase, `Manage the infrastructure in ${cloud}`);
+    // these phases sets up or clean up the infrastructure
+    let majorPhase: string;
+    let phaseMessage: string;
+    if (cloud == "") {
+        // If the cloud variable is not set, we have a cleanup job in hand
+        majorPhase = "cleanup-infra";
+        phaseMessage = "Cleanup preview and test environment infrastructure";
+    } else {
+        majorPhase = `create-${cloud}-infra`;
+        phaseMessage = `${op} Gitpod infrastructure on ${cloud}`;
+    }
+
+    werft.phase(majorPhase, phaseMessage);
     for (let phase of config.PHASES) {
         const phaseSteps = INFRA_PHASES[phase];
         const ret = callMakeTargets(phaseSteps.phase, phaseSteps.description, phaseSteps.makeTarget);
@@ -292,7 +301,7 @@ export async function installerTests(config: TestConfig) {
 
             await sendFailureSlackAlert(phaseSteps.description, err, slackHook.get("self-hosted-jobs"));
 
-            werft.fail(`create-${cloud}-infra`, err.message);
+            werft.fail(majorPhase, err.message);
 
             return;
         }
