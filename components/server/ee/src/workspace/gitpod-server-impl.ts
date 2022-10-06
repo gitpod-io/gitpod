@@ -114,9 +114,7 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billing/entitlement-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { BillingModes } from "../billing/billing-mode";
-import { BillingService } from "../billing/billing-service";
 import { UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
-import { MessageBusIntegration } from "../../../src/workspace/messagebus-integration";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -162,9 +160,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
 
     @inject(BillingModes) protected readonly billingModes: BillingModes;
-    @inject(BillingService) protected readonly billingService: BillingService;
-
-    @inject(MessageBusIntegration) protected readonly messageBus: MessageBusIntegration;
 
     initialize(
         client: GitpodClient | undefined,
@@ -284,13 +279,14 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     protected async mayStartWorkspace(
         ctx: TraceContext,
         user: User,
+        workspace: Workspace,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<void> {
-        await super.mayStartWorkspace(ctx, user, runningInstances);
+        await super.mayStartWorkspace(ctx, user, workspace, runningInstances);
 
         let result: MayStartWorkspaceResult = {};
         try {
-            result = await this.entitlementService.mayStartWorkspace(user, new Date(), runningInstances);
+            result = await this.entitlementService.mayStartWorkspace(user, workspace, new Date(), runningInstances);
             TraceContext.addNestedTags(ctx, { mayStartWorkspace: { result } });
         } catch (err) {
             log.error({ userId: user.id }, "EntitlementSerivce.mayStartWorkspace error", err);
@@ -2255,7 +2251,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         try {
             const billingMode = await this.billingModes.getBillingModeForUser(user, new Date());
             if (billingMode.mode === "usage-based") {
-                const limit = await this.billingService.checkUsageLimitReached(user);
+                const limit = await this.userService.checkUsageLimitReached(user);
                 await this.guardCostCenterAccess(ctx, user.id, limit.attributionId, "get");
 
                 switch (limit.attributionId.kind) {

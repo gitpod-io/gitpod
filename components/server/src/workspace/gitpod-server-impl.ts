@@ -179,6 +179,8 @@ import { EntitlementService } from "../billing/entitlement-service";
 import { WorkspaceClasses } from "./workspace-classes";
 import { formatPhoneNumber } from "../user/phone-numbers";
 import { IDEService } from "../ide-service";
+import { MessageBusIntegration } from "./messagebus-integration";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -249,6 +251,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     @inject(VerificationService) protected readonly verificationService: VerificationService;
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
+    @inject(MessageBusIntegration) protected readonly messageBus: MessageBusIntegration;
 
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
@@ -676,12 +679,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = this.checkAndBlockUser("startWorkspace", undefined, { workspaceId });
         await this.checkTermsAcceptance();
 
+        const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace(ctx));
         const mayStartPromise = this.mayStartWorkspace(
             ctx,
             user,
+            workspace,
             this.workspaceDb.trace(ctx).findRegularRunningInstances(user.id),
         );
-        const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace(ctx));
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
 
         const runningInstance = await this.workspaceDb.trace(ctx).findRunningInstance(workspace.id);
@@ -1077,7 +1081,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             // make sure we've checked that the user has enough credit before consuming any resources.
             // Be sure to check this before prebuilds and create workspace, too!
             let context = await contextPromise;
-            await this.mayStartWorkspace(ctx, user, runningInstancesPromise);
 
             if (SnapshotContext.is(context)) {
                 // TODO(janx): Remove snapshot access tracking once we're certain that enforcing repository read access doesn't disrupt the snapshot UX.
@@ -1167,6 +1170,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             }
 
             const workspace = await this.workspaceFactory.createForContext(ctx, user, context, normalizedContextUrl);
+            await this.mayStartWorkspace(ctx, user, workspace, runningInstancesPromise);
             try {
                 await this.guardAccess({ kind: "workspace", subject: workspace }, "create");
             } catch (err) {
@@ -1277,6 +1281,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     protected async mayStartWorkspace(
         ctx: TraceContext,
         user: User,
+        workspace: Workspace,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<void> {}
 
@@ -3113,7 +3118,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async setUsageAttribution(ctx: TraceContext, usageAttributionId: string): Promise<void> {
         const user = this.checkAndBlockUser("setUsageAttribution");
         try {
-            await this.userService.setUsageAttribution(user, usageAttributionId);
+            const attrId = AttributionId.parse(usageAttributionId);
+            if (attrId) {
+                await this.userService.setUsageAttribution(user, usageAttributionId);
+                this.messageBus.notifyOnSubscriptionUpdate(ctx, attrId).catch();
+            }
         } catch (error) {
             log.error("cannot set usage attribution", error, { userId: user.id, usageAttributionId });
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `cannot set usage attribution`);

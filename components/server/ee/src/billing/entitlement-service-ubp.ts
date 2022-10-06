@@ -9,6 +9,7 @@ import {
     BillingTier,
     Team,
     User,
+    Workspace,
     WorkspaceInstance,
     WorkspaceTimeoutDuration,
     WORKSPACE_TIMEOUT_DEFAULT_LONG,
@@ -22,9 +23,9 @@ import {
     MayStartWorkspaceResult,
 } from "../../../src/billing/entitlement-service";
 import { Config } from "../../../src/config";
+import { UserService } from "../../../src/user/user-service";
 import { StripeService } from "../user/stripe-service";
 import { BillingModes } from "./billing-mode";
-import { BillingService } from "./billing-service";
 
 const MAX_PARALLEL_WORKSPACES_FREE = 4;
 const MAX_PARALLEL_WORKSPACES_PAID = 16;
@@ -37,12 +38,13 @@ export class EntitlementServiceUBP implements EntitlementService {
     @inject(Config) protected readonly config: Config;
     @inject(UserDB) protected readonly userDb: UserDB;
     @inject(BillingModes) protected readonly billingModes: BillingModes;
-    @inject(BillingService) protected readonly billingService: BillingService;
+    @inject(UserService) protected readonly userService: UserService;
     @inject(StripeService) protected readonly stripeService: StripeService;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
 
     async mayStartWorkspace(
         user: User,
+        workspace: Workspace,
         date: Date,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult> {
@@ -59,7 +61,7 @@ export class EntitlementServiceUBP implements EntitlementService {
             }
         };
         const [usageLimitReachedOnCostCenter, hitParallelWorkspaceLimit] = await Promise.all([
-            this.checkUsageLimitReached(user, date),
+            this.checkUsageLimitReached(user, workspace, date),
             hasHitParallelWorkspaceLimit(),
         ]);
         return {
@@ -68,8 +70,12 @@ export class EntitlementServiceUBP implements EntitlementService {
         };
     }
 
-    protected async checkUsageLimitReached(user: User, date: Date): Promise<AttributionId | undefined> {
-        const result = await this.billingService.checkUsageLimitReached(user);
+    protected async checkUsageLimitReached(
+        user: User,
+        workspace: Workspace,
+        date: Date,
+    ): Promise<AttributionId | undefined> {
+        const result = await this.userService.checkUsageLimitReached(user, workspace);
         if (result.reached) {
             return result.attributionId;
         }
