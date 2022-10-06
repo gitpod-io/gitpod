@@ -20,6 +20,7 @@ export function registerServerMetrics(registry: prometheusClient.Registry) {
     registry.registerMetric(instanceStartsSuccessTotal);
     registry.registerMetric(instanceStartsFailedTotal);
     registry.registerMetric(prebuildsStartedTotal);
+    registry.registerMetric(stripeClientRequestsCompletedDurationSeconds);
 }
 
 const loginCounter = new prometheusClient.Counter({
@@ -164,4 +165,14 @@ const prebuildsStartedTotal = new prometheusClient.Counter({
 
 export function increasePrebuildsStartedCounter() {
     prebuildsStartedTotal.inc();
+}
+
+export const stripeClientRequestsCompletedDurationSeconds = new prometheusClient.Histogram({
+    name: "gitpod_server_stripe_client_requests_completed_duration_seconds",
+    help: "Completed stripe client requests, by outcome and operation",
+    labelNames: ["operation", "outcome"],
+});
+
+export function observeStripeClientRequestsCompleted(operation: string, outcome: string, durationInSeconds: number) {
+    stripeClientRequestsCompletedDurationSeconds.observe({ operation, outcome }, durationInSeconds);
 }
