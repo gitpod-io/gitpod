@@ -74,7 +74,7 @@ export function AppNotifications() {
                 showIcon={true}
                 className="flex rounded mb-2 w-full"
             >
-                <span>{topNotification}</span>
+                {topNotification}
                 {getManageBilling()}
             </Alert>
         </div>
