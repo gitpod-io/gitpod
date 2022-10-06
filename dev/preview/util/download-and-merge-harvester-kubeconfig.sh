@@ -12,14 +12,13 @@ function log {
 }
 
 function has-dev-access {
-  kubectl config get-contexts
     kubectl --context=$KUBE_CONTEXT auth can-i get secrets > /dev/null 2>&1 || false
 }
 
-if ! has-dev-access; then
-    log "The workspace isn't configured to have core-dev access. Exiting."
-    exit 1
-fi
+#if ! has-dev-access; then
+#    log "The workspace isn't configured to have core-dev access. Exiting."
+#    exit 1
+#fi
 
 log "Downloading and preparing Harvester kubeconfig"
 kubectl --context=$KUBE_CONTEXT -n werft get secret harvester-kubeconfig -o jsonpath='{.data}' \
