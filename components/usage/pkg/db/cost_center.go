@@ -29,8 +29,10 @@ type CostCenter struct {
 	CreationTime    VarcharTime     `gorm:"primary_key;column:creationTime;type:varchar;size:255;" json:"creationTime"`
 	SpendingLimit   int32           `gorm:"column:spendingLimit;type:int;default:0;" json:"spendingLimit"`
 	BillingStrategy BillingStrategy `gorm:"column:billingStrategy;type:varchar;size:255;" json:"billingStrategy"`
-	NextBillingTime VarcharTime     `gorm:"column:nextBillingTime;type:varchar;size:255;" json:"nextBillingTime"`
-	LastModified    time.Time       `gorm:"->:column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
+	// StripeCustomerID is the Stripe Customer ID used when the BillingStrategy is set to CostCenter_Stripe
+	StripeCustomerID string      `gorm:"column:stripeCustomerId;type:varchar;size:255;" json:"stripeCustomerId"`
+	NextBillingTime  VarcharTime `gorm:"column:nextBillingTime;type:varchar;size:255;" json:"nextBillingTime"`
+	LastModified     time.Time   `gorm:"->:column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
 }
 
 // TableName sets the insert table name for this struct type
@@ -121,6 +123,10 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, costCenter Cos
 	if costCenter.BillingStrategy != existingCostCenter.BillingStrategy {
 		switch costCenter.BillingStrategy {
 		case CostCenter_Stripe:
+			if costCenter.StripeCustomerID == "" {
+				return CostCenter{}, errors.New("billing strategy is Stripe, but StripeCustomerID is missing")
+			}
+
 			// moving to stripe -> let's run a finalization
 			finalizationUsage, err := c.ComputeInvoiceUsageRecord(ctx, costCenter.ID)
 			if err != nil {
@@ -142,8 +148,12 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, costCenter Cos
 			} else {
 				costCenter.SpendingLimit = c.cfg.ForUsers
 			}
+
 			// see you next month
 			costCenter.NextBillingTime = NewVarcharTime(now.AddDate(0, 1, 0))
+
+			// unset any Stripe customer reference
+			costCenter.StripeCustomerID = ""
 		}
 	}
 
