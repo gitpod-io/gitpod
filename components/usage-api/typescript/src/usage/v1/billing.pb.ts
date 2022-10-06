@@ -30,6 +30,20 @@ export interface CancelSubscriptionRequest {
 export interface CancelSubscriptionResponse {
 }
 
+export interface GetStripeCustomerRequest {
+  attributionId: string | undefined;
+  stripeCustomerId: string | undefined;
+}
+
+export interface GetStripeCustomerResponse {
+  customer: StripeCustomer | undefined;
+  attributionId: string;
+}
+
+export interface StripeCustomer {
+  id: string;
+}
+
 function createBaseReconcileInvoicesRequest(): ReconcileInvoicesRequest {
   return {};
 }
@@ -280,6 +294,172 @@ export const CancelSubscriptionResponse = {
   },
 };
 
+function createBaseGetStripeCustomerRequest(): GetStripeCustomerRequest {
+  return { attributionId: undefined, stripeCustomerId: undefined };
+}
+
+export const GetStripeCustomerRequest = {
+  encode(message: GetStripeCustomerRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.attributionId !== undefined) {
+      writer.uint32(10).string(message.attributionId);
+    }
+    if (message.stripeCustomerId !== undefined) {
+      writer.uint32(18).string(message.stripeCustomerId);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetStripeCustomerRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetStripeCustomerRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.attributionId = reader.string();
+          break;
+        case 2:
+          message.stripeCustomerId = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetStripeCustomerRequest {
+    return {
+      attributionId: isSet(object.attributionId) ? String(object.attributionId) : undefined,
+      stripeCustomerId: isSet(object.stripeCustomerId) ? String(object.stripeCustomerId) : undefined,
+    };
+  },
+
+  toJSON(message: GetStripeCustomerRequest): unknown {
+    const obj: any = {};
+    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
+    message.stripeCustomerId !== undefined && (obj.stripeCustomerId = message.stripeCustomerId);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<GetStripeCustomerRequest>): GetStripeCustomerRequest {
+    const message = createBaseGetStripeCustomerRequest();
+    message.attributionId = object.attributionId ?? undefined;
+    message.stripeCustomerId = object.stripeCustomerId ?? undefined;
+    return message;
+  },
+};
+
+function createBaseGetStripeCustomerResponse(): GetStripeCustomerResponse {
+  return { customer: undefined, attributionId: "" };
+}
+
+export const GetStripeCustomerResponse = {
+  encode(message: GetStripeCustomerResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.customer !== undefined) {
+      StripeCustomer.encode(message.customer, writer.uint32(10).fork()).ldelim();
+    }
+    if (message.attributionId !== "") {
+      writer.uint32(18).string(message.attributionId);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetStripeCustomerResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetStripeCustomerResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.customer = StripeCustomer.decode(reader, reader.uint32());
+          break;
+        case 2:
+          message.attributionId = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetStripeCustomerResponse {
+    return {
+      customer: isSet(object.customer) ? StripeCustomer.fromJSON(object.customer) : undefined,
+      attributionId: isSet(object.attributionId) ? String(object.attributionId) : "",
+    };
+  },
+
+  toJSON(message: GetStripeCustomerResponse): unknown {
+    const obj: any = {};
+    message.customer !== undefined &&
+      (obj.customer = message.customer ? StripeCustomer.toJSON(message.customer) : undefined);
+    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<GetStripeCustomerResponse>): GetStripeCustomerResponse {
+    const message = createBaseGetStripeCustomerResponse();
+    message.customer = (object.customer !== undefined && object.customer !== null)
+      ? StripeCustomer.fromPartial(object.customer)
+      : undefined;
+    message.attributionId = object.attributionId ?? "";
+    return message;
+  },
+};
+
+function createBaseStripeCustomer(): StripeCustomer {
+  return { id: "" };
+}
+
+export const StripeCustomer = {
+  encode(message: StripeCustomer, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): StripeCustomer {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStripeCustomer();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.id = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): StripeCustomer {
+    return { id: isSet(object.id) ? String(object.id) : "" };
+  },
+
+  toJSON(message: StripeCustomer): unknown {
+    const obj: any = {};
+    message.id !== undefined && (obj.id = message.id);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<StripeCustomer>): StripeCustomer {
+    const message = createBaseStripeCustomer();
+    message.id = object.id ?? "";
+    return message;
+  },
+};
+
 export type BillingServiceDefinition = typeof BillingServiceDefinition;
 export const BillingServiceDefinition = {
   name: "BillingService",
@@ -321,6 +501,15 @@ export const BillingServiceDefinition = {
       responseStream: false,
       options: {},
     },
+    /** GetStripeCustomer retrieves a Stripe Customer */
+    getStripeCustomer: {
+      name: "GetStripeCustomer",
+      requestType: GetStripeCustomerRequest,
+      requestStream: false,
+      responseType: GetStripeCustomerResponse,
+      responseStream: false,
+      options: {},
+    },
   },
 } as const;
 
@@ -349,6 +538,11 @@ export interface BillingServiceServiceImplementation<CallContextExt = {}> {
     request: CancelSubscriptionRequest,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<CancelSubscriptionResponse>>;
+  /** GetStripeCustomer retrieves a Stripe Customer */
+  getStripeCustomer(
+    request: GetStripeCustomerRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<GetStripeCustomerResponse>>;
 }
 
 export interface BillingServiceClient<CallOptionsExt = {}> {
@@ -376,6 +570,11 @@ export interface BillingServiceClient<CallOptionsExt = {}> {
     request: DeepPartial<CancelSubscriptionRequest>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<CancelSubscriptionResponse>;
+  /** GetStripeCustomer retrieves a Stripe Customer */
+  getStripeCustomer(
+    request: DeepPartial<GetStripeCustomerRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<GetStripeCustomerResponse>;
 }
 
 export interface DataLoaderOptions {
