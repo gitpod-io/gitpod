@@ -9,7 +9,6 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
@@ -162,7 +161,7 @@ func (d *DispatchListener) sink(id string, limit Bandwidth, burst bool) {
 	d.workspacesBurstCounterVec.WithLabelValues("none").Inc()
 
 	changed, err := ws.CFS.SetLimit(limit)
-	if err != nil && !strings.HasPrefix(err.Error(), "failed to read") {
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		log.WithError(err).WithFields(ws.OWI).Warn("cannot set CPU limit")
 	}
 	if changed {
