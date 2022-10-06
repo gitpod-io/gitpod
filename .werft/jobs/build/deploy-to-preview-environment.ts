@@ -138,7 +138,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
     werft.done(vmSlices.START_KUBECTL_PORT_FORWARDS);
 
     werft.log(vmSlices.KUBECONFIG, "Copying k3s kubeconfig");
-    VM.copyk3sKubeconfig({ name: destname, timeoutMS: 1000 * 60 * 3, slice: vmSlices.KUBECONFIG });
+    VM.copyk3sKubeconfig({ name: destname, timeoutMS: 1000 * 60 * 6, slice: vmSlices.KUBECONFIG });
     werft.done(vmSlices.KUBECONFIG);
 
     werft.log(vmSlices.WAIT_K3S, "Wait for k3s");
