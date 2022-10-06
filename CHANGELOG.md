@@ -1,6 +1,14 @@
 # Change Log
 
-## September 2022
+## October 2022
+- Gitpod CLI: `gp top` table output updated to match `gp info` ([#13607](https://github.com/gitpod-io/gitpod/pull/13607)) - [@WVerlaek](https://github.com/WVerlaek)
+- Gitpod CLI: Added new cmd `gp info` to display the workspace info such as IDs, class, etc ([#13537](https://github.com/gitpod-io/gitpod/pull/13537)) - [@WVerlaek](https://github.com/WVerlaek)
+- Deprecation of the ability to create projects under an individual account for new users. ([#13414](https://github.com/gitpod-io/gitpod/pull/13414)) - [@svenefftinge](https://github.com/svenefftinge)
+- Update free plan name ([#13538](https://github.com/gitpod-io/gitpod/pull/13538)) - [@gtsiolis](https://github.com/gtsiolis)
+- [experimental] remove PVC object if the workspace pod fails to up ([#13429](https://github.com/gitpod-io/gitpod/pull/13429)) - [@jenting](https://github.com/jenting)
+- [certificates]: validate that certs are valid for a Gitpod install ([#13471](https://github.com/gitpod-io/gitpod/pull/13471)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+
+##  September 2022
 - Add `RubyMine` and `WebStorm` IDEs ([#13488](https://github.com/gitpod-io/gitpod/pull/13488)) - [@mustard-mh](https://github.com/mustard-mh)
 - Add experimental support for protected secrets ([#13484](https://github.com/gitpod-io/gitpod/pull/13484)) - [@csweichel](https://github.com/csweichel)
 - Update Gitpod workspace image to with awscliv2 ([#12278](https://github.com/gitpod-io/gitpod/pull/12278)) - [@adrienthebo](https://github.com/adrienthebo)
