@@ -300,18 +300,6 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 			return xerrors.Errorf("cannot stop workspace: %w", err)
 		}
 
-		// Delete PVC if it exists
-		// Note that: the PVC removal is postponed until the PVC is no longer actively used by its workspace pod.
-		//            Therefore, the PVC is removed after the workspace pod finalizer is removed.
-		//            No data loss unless we remove the workspace pod finalizer incorrectly.
-		_, createPVC := pod.Labels[pvcWorkspaceFeatureLabel]
-		if !createPVC {
-			return nil
-		}
-		err = manager.deleteWorkspacePVC(ctx, pod.Name)
-		if err != nil {
-			return xerrors.Errorf("cannot remove PVC: %w", err)
-		}
 		return nil
 	} else if status.Conditions.StoppedByRequest == api.WorkspaceConditionBool_TRUE {
 		span.LogKV("event", "stopped by request")
