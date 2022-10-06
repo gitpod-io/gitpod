@@ -26,6 +26,10 @@ export class InstallCertificateParams {
 }
 
 export async function issueCertificate(werft: Werft, params: IssueCertificateParams, shellOpts: ExecOptions): Promise<boolean> {
+    if (isCertReady(params.certName)){
+        return true
+    }
+
     var subdomains = [];
     werft.log(shellOpts.slice, `Subdomains: ${params.additionalSubdomains}`);
     for (const sd of params.additionalSubdomains) {
@@ -41,7 +45,7 @@ export async function issueCertificate(werft: Werft, params: IssueCertificatePar
         werft.log(shellOpts.slice, `Creating cert: Attempt ${i}`);
         createCertificateResource(werft, shellOpts, params, subdomains);
         werft.log(shellOpts.slice, `Checking for cert readiness: Attempt ${i}`);
-        if (isCertReady(params.certName)) {
+        if (waitCertReady(params.certName)) {
             certReady = true;
             break;
         }
@@ -54,13 +58,21 @@ export async function issueCertificate(werft: Werft, params: IssueCertificatePar
     return certReady
 }
 
-function isCertReady(certName: string): boolean {
+function waitCertReady(certName: string): boolean {
     const timeout = "180s"
     const rc = exec(
         `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} wait --for=condition=Ready --timeout=${timeout} -n certs certificate ${certName}`,
         { dontCheckRc: true },
     ).code
     return rc == 0
+}
+
+function isCertReady(certName: string): boolean {
+    const rc = exec(
+        `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n certs get certificate ${certName} -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'`
+    ).stdout.trim();
+
+    return rc == "True";
 }
 
 function retrieveFailedCertDebug(certName: string, slice: string) {
