@@ -100,8 +100,8 @@ export async function execStream(command: string, options: ExecOptions ): Promis
         child.on('close', (code) => {
             if (typeof code === "number") {
                 resolve(code);
-            } else {
-                // The process was terminated by a signal
+            } else if (options.dontCheckRc) {
+                // The process was terminated by a signal but we can tolerate a non-zero exit code.
                 let msg = `\nTerminated with signal ${code}`;
                 if (options.slice) {
                     werft.logOutput(options.slice, msg);
@@ -113,6 +113,8 @@ export async function execStream(command: string, options: ExecOptions ): Promis
                 // number itself. For now it'll suffice to return 128; printing an error message
                 // and an usual exit code will be sufficient to support diagnostics of killed processes.
                 resolve(128);
+            } else {
+                reject(new Error(`Process terminated with signal ${code}`))
             }
         });
     });
