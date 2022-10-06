@@ -19,6 +19,8 @@ const version: string = annotations.version || "-";
 const preview: string = annotations.preview || "false"; // setting to true will not destroy the setup
 const upgrade: string = annotations.upgrade || "false"; // setting to true will not KOTS upgrade to the latest version. Set the channel to beta or stable in this case.
 const skipTests: string = annotations.skipTests || "false"; // setting to true skip the integration tests
+// we can explicitly specify which tests is it that we want to run or the cron will randomly pick a suite
+const testSuite: string = annotations.testSuite || randomize(["workspaces", "ide", "webapp"])
 const selfSigned: string = annotations.selfSigned || "false";
 const deps: string = annotations.deps || ""; // options: ["external", "internal"] setting to `external` will ensure that all resource dependencies(storage, db, registry) will be external. if unset, a random selection will be used
 const deleteOnFail: string = annotations.deleteOnFail || "true";
@@ -208,13 +210,28 @@ const INFRA_PHASES: { [name: string]: InfraConfig } = {
     },
 };
 
-const TESTS: { [name: string]: InfraConfig } = {
+const WORKSPACES_TESTS: { [name: string]: InfraConfig } = {
     WORKSPACE_TEST: {
         phase: "run-workspace-tests",
         makeTarget: "run-workspace-tests",
         description: "Workspace integration tests",
         slackhook: slackHook.get("workspace-jobs"),
     },
+    WS_DAEMON_TEST: {
+        phase: "run-ws-daemon-component-tests",
+        makeTarget: "run-wsd-component-tests",
+        description: "ws-daemon integration tests",
+        slackhook: slackHook.get("workspace-jobs"),
+    },
+    WS_MNGR_TEST: {
+        phase: "run-ws-manager-component-tests",
+        makeTarget: "run-wsm-component-tests",
+        description: "ws-manager integration tests",
+        slackhook: slackHook.get("workspace-jobs"),
+    },
+};
+
+const IDE_TESTS: { [name: string]: InfraConfig } = {
     VSCODE_IDE_TEST: {
         phase: "run-vscode-ide-tests",
         makeTarget: "run-vscode-ide-tests",
@@ -226,40 +243,38 @@ const TESTS: { [name: string]: InfraConfig } = {
         makeTarget: "run-jb-ide-tests",
         description: "jetbrains IDE tests",
         slackhook: slackHook.get("ide-jobs"),
-    },
+    }
+}
+
+
+const WEBAPP_TESTS: { [name: string]: InfraConfig } = {
     CONTENTSERVICE_TEST: {
-        phase: "run-cs-component-tests",
+        phase: "run-content-service-tests",
         makeTarget: "run-cs-component-tests",
         description: "content-service tests",
     },
     DB_TEST: {
-        phase: "run-db-component-tests",
+        phase: "run-database-tests",
         makeTarget: "run-db-component-tests",
         description: "database integration tests",
     },
     IMAGEBUILDER_TEST: {
-        phase: "run-ib-component-tests",
+        phase: "run-image-builder-tests",
         makeTarget: "run-ib-component-tests",
         description: "image-builder tests",
     },
     SERVER_TEST: {
-        phase: "run-server-component-tests",
+        phase: "run-server-tests",
         makeTarget: "run-server-component-tests",
         description: "server integration tests",
     },
-    WS_DAEMON_TEST: {
-        phase: "run-wsd-component-tests",
-        makeTarget: "run-wsd-component-tests",
-        description: "ws-daemon integration tests",
-        slackhook: slackHook.get("workspace-jobs"),
-    },
-    WS_MNGR_TEST: {
-        phase: "run-wsm-component-tests",
-        makeTarget: "run-wsm-component-tests",
-        description: "ws-manager integration tests",
-        slackhook: slackHook.get("workspace-jobs"),
-    },
-};
+}
+
+const TestMap = {
+    "workspaces": WORKSPACES_TESTS,
+    "ide": IDE_TESTS,
+    "webapp": WEBAPP_TESTS,
+}
 
 if (config === undefined) {
     console.log(`Unknown configuration specified: "${testConfig}", Exiting...`);
@@ -378,10 +393,19 @@ export async function installerTests(config: TestConfig) {
 }
 
 function runIntegrationTests() {
-    werft.phase("run-integration-tests", "Run all existing integration tests");
+    werft.phase(`run-${testSuite}-integration-tests`, `Run all ${testSuite} integration tests`);
+
+    const componentTests = TestMap[testSuite.toLowerCase()]
+    if(componentTests === undefined) {
+        console.log("'%s' is not a valid testSuite name, options are: 'workspaces', 'ide', 'webapp'", testSuite)
+        werft.fail(`run-${testSuite}-integration-tests`, "Error finding the testSuite")
+        return
+    }
+
     const slackAlerts = new Map<string, string>([]);
-    for (let test in TESTS) {
-        const testPhase = TESTS[test];
+    console.log(`Running ${testSuite} tests`)
+    for (let test in componentTests) {
+        const testPhase = componentTests[test];
         const ret = callMakeTargets(testPhase.phase, testPhase.description, testPhase.makeTarget);
         if (ret) {
             exec(
