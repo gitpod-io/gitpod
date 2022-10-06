@@ -550,12 +550,16 @@ restore-cert:
 
 backup-cert:
 	@echo "Backing up certificate secret to GCS"
-	kubectl --kubeconfig="${KUBECONFIG}" wait --namespace gitpod --for=condition=Ready certificate/https-certificates --timeout=120s
-	@kubectl --kubeconfig=${KUBECONFIG} get secret -n gitpod https-certificates -o yaml > ${cert_secret} \
+	kubectl --kubeconfig="${KUBECONFIG}" get --namespace gitpod certificate/https-certificates \
+	&& { \
+		kubectl --kubeconfig="${KUBECONFIG}" wait --namespace gitpod --for=condition=Ready certificate/https-certificates --timeout=120s \
+		&& kubectl --kubeconfig=${KUBECONFIG} get secret -n gitpod https-certificates -o yaml > ${cert_secret} \
 		&& echo "---" >> ${cert_secret} \
 		&& kubectl --kubeconfig=${KUBECONFIG} get certificate -n gitpod https-certificates -o yaml >> ${cert_secret} \
-		|| { echo "No existing secret"; rm -f ${cert_secret}; }
-	@[[ -f ${cert_secret} ]] && gsutil cp ${cert_secret} gs://nightly-tests/nightly-tests-certs/${cert_secret} || echo "No certificate secret file exist"
+		&& gsutil cp ${cert_secret} gs://nightly-tests/nightly-tests-certs/${cert_secret} \
+		; \
+	} \
+	|| { echo "No existing secret"; rm -f ${cert_secret}; }
 
 list-state:
 	terraform state list
