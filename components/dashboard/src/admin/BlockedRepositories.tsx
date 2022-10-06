@@ -149,9 +149,7 @@ export function BlockedRepositoriesList(props: Props) {
             </div>
 
             <Alert type={"info"} closable={false} showIcon={true} className="flex rounded p-2 mb-2 w-full">
-                <span>
-                    Search entries by their repository URL <abbr title="regular expression">RegEx</abbr>.
-                </span>
+                Search entries by their repository URL <abbr title="regular expression">RegEx</abbr>.
             </Alert>
             <div className="flex flex-col space-y-2">
                 <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
@@ -242,10 +240,10 @@ function AddBlockedRepositoryModal(p: AddBlockedRepositoryModalProps) {
             ]}
         >
             <Alert type={"warning"} closable={false} showIcon={true} className="flex rounded p-2 w-2/3 mb-2 w-full">
-                <span>Entries in this table have an immediate effect on all users. Please use it carefully.</span>
+                Entries in this table have an immediate effect on all users. Please use it carefully.
             </Alert>
             <Alert type={"message"} closable={false} showIcon={true} className="flex rounded p-2 w-2/3 mb-2 w-full">
-                <span>Repositories are blocked by matching their URL against this regular expression.</span>
+                Repositories are blocked by matching their URL against this regular expression.
             </Alert>
             <Details br={br} update={update} error={error} />
         </Modal>

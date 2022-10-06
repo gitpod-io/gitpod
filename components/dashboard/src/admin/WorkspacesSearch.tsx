@@ -147,7 +147,7 @@ export function WorkspaceSearch(props: Props) {
                 </div>
             </div>
             <Alert type={"info"} closable={false} showIcon={true} className="flex rounded p-2 mb-2 w-full">
-                <span>Search workspaces using workspace ID.</span>
+                Search workspaces using workspace ID.
             </Alert>
             <div className="flex flex-col space-y-2">
                 <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">

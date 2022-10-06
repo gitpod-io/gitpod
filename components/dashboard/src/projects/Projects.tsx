@@ -133,12 +133,10 @@ export default function () {
             {!team && (
                 <div className="app-container pt-2">
                     <Alert type={"message"} closable={false} showIcon={true} className="flex rounded mb-2 w-full">
-                        <p>
-                            We'll remove projects under personal accounts in Q1'2023.{" "}
-                            <Link to="/new" className="gp-link">
-                                Create a team.
-                            </Link>
-                        </p>
+                        We'll remove projects under personal accounts in Q1'2023.{" "}
+                        <Link to="/new" className="gp-link">
+                            Create a team.
+                        </Link>
                     </Alert>
                 </div>
             )}
