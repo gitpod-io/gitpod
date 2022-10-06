@@ -89,7 +89,7 @@ jobs:
             _This PR was created automatically with GitHub Actions using [this](https://github.com/gitpod-io/gitpod/blob/main/.github/workflows/jetbrains-updates-template.yml) template_
           commit-message: "[${{ inputs.productId }}] Update IDE image to build version ${{ steps.latest-release.outputs.version }}"
           branch: "jetbrains/${{ inputs.productId }}-${{ steps.latest-release.outputs.version2 }}"
-          labels: "team: IDE"
+          labels: "team: IDE,editor: jetbrains"
           team-reviewers: "engineering-ide"
       - name: Get previous job's status
         id: lastrun
