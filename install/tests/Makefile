@@ -379,7 +379,7 @@ version ?= -
 kots-install: version-flag = $(if $(version:-=),--app-version-label=$(version),)
 kots-install: preflight-flag = $(if $(preflights:true=),--skip-preflights,)
 kots-install: license-file = $(if $(license_community_$(channel)),$(license_community_$(channel)),"../licenses/$(channel).yaml")
-kots-install: install-kots-cli destroy-gitpod create-secrets
+kots-install: install-kots-cli destroy-gitpod create-secrets restore-cert
 	kubectl kots install ${app}/${channel} \
 	--skip-rbac-check ${version-flag} ${preflight-flag} \
 					--wait-duration "10m" \
@@ -533,8 +533,20 @@ destroy-azure:
 	ls ${KUBECONFIG} && terraform destroy -target=module.certmanager -var kubeconfig=${KUBECONFIG} --auto-approve || echo "No kubeconfig file"
 	terraform destroy -target=module.aks -var kubeconfig=${KUBECONFIG} --auto-approve
 
+restore-cert:
+	@echo "Restoring certificate for '${TF_VAR_domain}' (if present)"
+	gsutil ls gs://nightly-tests/nightly-tests-certs/${cert_secret} 1>/dev/null 2>/dev/null \
+		&& { \
+	 		gsutil cp gs://nightly-tests/nightly-tests-certs/${cert_secret} ${cert_secret} \
+			&& kubectl --kubeconfig="${KUBECONFIG}" create namespace gitpod \
+			&& kubectl --kubeconfig="${KUBECONFIG}" apply -f ${cert_secret} \
+			; \
+		} \
+		|| { echo "Certificate secrets for '${TF_VAR_domain}' not backed up, skipping restore"; } \
+
 backup-cert:
 	@echo "Backing up certificate secret to GCS"
+	kubectl --kubeconfig="${KUBECONFIG}" wait --namespace gitpod --for=condition=Ready certificate/https-certificates --timeout=120s
 	@kubectl --kubeconfig=${KUBECONFIG} get secret -n gitpod https-certificates -o yaml > ${cert_secret} \
 		&& echo "---" >> ${cert_secret} \
 		&& kubectl --kubeconfig=${KUBECONFIG} get certificate -n gitpod https-certificates -o yaml >> ${cert_secret} \
