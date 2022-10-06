@@ -196,7 +196,7 @@ export function copyk3sKubeconfigShell(options: { name: string; timeoutMS: numbe
     while (true) {
         const status = exec(
             `./dev/preview/install-k3s-kubeconfig.sh`,
-            {  slice: options.slice },
+            { dontCheckRc: true, slice: options.slice },
         );
 
         if (status.code == 0) {
