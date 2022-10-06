@@ -24,7 +24,7 @@ do
     esac
 done
 
-if [[ "${BRANCH}" == "" ]]; then
+if [[ "${BRANCH}" == "" ]] && [ -z "${VM_NAME}" ]; then
     VM_NAME="$(preview-name-from-branch)"
 else
     VM_NAME="$(preview-name-from-branch "$BRANCH")"

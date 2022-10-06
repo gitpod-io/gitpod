@@ -195,7 +195,7 @@ export function copyk3sKubeconfigShell(options: { name: string; timeoutMS: numbe
     const startTime = Date.now();
     while (true) {
         const status = exec(
-            `./dev/preview/install-k3s-kubeconfig.sh`,
+            `VM_NAME=${options.name} ./dev/preview/install-k3s-kubeconfig.sh`,
             { dontCheckRc: true, slice: options.slice },
         );
 
