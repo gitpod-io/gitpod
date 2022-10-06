@@ -27,6 +27,7 @@ export class InstallCertificateParams {
 
 export async function issueCertificate(werft: Werft, params: IssueCertificateParams, shellOpts: ExecOptions): Promise<boolean> {
     if (isCertReady(params.certName)){
+        werft.log(shellOpts.slice, `Certificate ready`);
         return true
     }
 
