@@ -190,6 +190,35 @@ export function waitForVMReadiness(options: { name: string; timeoutSeconds: numb
  * Copies the k3s kubeconfig out of the VM and places it at `path`
  * If it doesn't manage to do so before the timeout it will throw an Error
  */
+export function copyk3sKubeconfigShell(options: { name: string; timeoutMS: number; slice: string }) {
+    const werft = getGlobalWerftInstance();
+    const startTime = Date.now();
+    while (true) {
+        const status = exec(
+            `./dev/preview/install-k3s-kubeconfig.sh`,
+            {  slice: options.slice },
+        );
+
+        if (status.code == 0) {
+            return;
+        }
+
+        const elapsedTimeMs = Date.now() - startTime;
+        if (elapsedTimeMs > options.timeoutMS) {
+            throw new Error(
+                `Wasn't able to copy out the kubeconfig before the timeout. Exit code ${status.code}. Stderr: ${status.stderr}. Stdout: ${status.stdout}`,
+            );
+        }
+
+        werft.log(options.slice, `Wasn't able to copy out kubeconfig yet. Sleeping 5 seconds`);
+        exec("sleep 5", { silent: true, slice: options.slice });
+    }
+}
+
+/**
+ * Copies the k3s kubeconfig out of the VM and places it at `path`
+ * If it doesn't manage to do so before the timeout it will throw an Error
+ */
 export function copyk3sKubeconfig(options: { name: string; timeoutMS: number; slice: string }) {
     const werft = getGlobalWerftInstance();
     const startTime = Date.now();
