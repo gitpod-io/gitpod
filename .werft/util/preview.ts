@@ -155,7 +155,7 @@ export class HarvesterPreviewEnvironment {
             VM.startSSHProxy({ name: this.name, slice: sliceID });
             exec("sleep 5", { silent: true, slice: sliceID });
 
-            VM.copyk3sKubeconfig({ name: this.name, timeoutMS: 1000 * 60 * 3, slice: sliceID });
+            VM.copyk3sKubeconfig({ name: this.name, timeoutMS: 1000 * 60 * 6, slice: sliceID });
             const kubectclCmd = `KUBECONFIG=${PREVIEW_K3S_KUBECONFIG_PATH} kubectl --insecure-skip-tls-verify`;
 
             this.werft.log(sliceID, `${this.name} (${this.k3sNamespace}) - Checking status of the MySQL pod`);
