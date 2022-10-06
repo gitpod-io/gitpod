@@ -268,10 +268,11 @@ if (config === undefined) {
 
 installerTests(TEST_CONFIGURATIONS[testConfig]).catch((err) => {
     if(deleteOnFail == "true") {
-        cleanup();
+        cleanup().finally(() => {
+            console.error(err);
+            process.exit(1);
+        });
     }
-    console.error(err);
-    process.exit(1);
 });
 
 export async function installerTests(config: TestConfig) {
@@ -373,7 +374,7 @@ export async function installerTests(config: TestConfig) {
         werft.done("print-output");
     } else {
         // if we are not doing preview, we delete the infrastructure
-        cleanup();
+        await cleanup();
     }
 }
 
@@ -400,6 +401,11 @@ async function runIntegrationTests() {
     werft.done("run-integration-tests");
 }
 
+/**
+ * Run a make target within a werft slice.
+ *
+ * @return The make target return code
+ */
 async function callMakeTargets(phase: string, description: string, makeTarget: string, failable: boolean = false) {
     werft.log(phase, `Calling ${makeTarget}`);
     // exporting cloud env var is important for the make targets
@@ -477,40 +483,41 @@ function randOsVersion(): string {
     return randomize(options);
 }
 
-function cleanup() {
+async function cleanup(): Promise<void> {
     const phase = INFRA_PHASES["DESTROY"];
     werft.phase(phase.phase, phase.description);
 
-    const ret = callMakeTargets(phase.phase, phase.description, phase.makeTarget);
+    return await callMakeTargets(phase.phase, phase.description, phase.makeTarget)
+        .then((ret) => {
 
-    // if the destroy command fail, we check if any resources are pending to be removed
-    // if nothing is yet to be cleaned, we return with success
-    // else we list the rest of the resources to be cleaned up
-    if (ret) {
-        const existingState = exec(`make -C ${makefilePath} list-state`, { slice: "get-uncleaned-resources" });
+            // if the destroy command fail, we check if any resources are pending to be removed
+            // if nothing is yet to be cleaned, we return with success
+            // else we list the rest of the resources to be cleaned up
+            if (ret) {
+                const existingState = exec(`make -C ${makefilePath} list-state`, { slice: "get-uncleaned-resources" });
 
-        if (existingState.code) {
-            console.error(`Error: Failed to check for the left over resources`);
-        }
+                if (existingState.code) {
+                    console.error(`Error: Failed to check for the left over resources`);
+                }
 
-        const itemsTobeCleaned = existingState.stdout.toString().split("\n").slice(1, -1);
+                const itemsTobeCleaned = existingState.stdout.toString().split("\n").slice(1, -1);
 
-        if (itemsTobeCleaned.length == 0) {
-            console.log("Eventhough it was not a clean run, all resources has been cleaned. Nothing to do");
+                if (itemsTobeCleaned.length == 0) {
+                    console.log("Eventhough it was not a clean run, all resources has been cleaned. Nothing to do");
+                    werft.done(phase.phase);
+                    return;
+                }
+
+                console.log(`Cleanup the following resources manually: ${itemsTobeCleaned}`);
+
+                werft.failSlice(phase.phase, new Error("Failed to cleanup resources"));
+
+                sendFailureSlackAlert(phase.description, new Error("Cleanup job failed"), slackHook.get("self-hosted-jobs"));
+            }
             werft.done(phase.phase);
-            return;
-        }
-
-        console.log(`Cleanup the following resources manually: ${itemsTobeCleaned}`);
-
-        sendFailureSlackAlert(phase.description, new Error("Cleanup job failed"), slackHook.get("self-hosted-jobs"));
-    }
-
-    werft.done(phase.phase);
-
-    deleteReplicatedLicense(werft, process.env["TF_VAR_TEST_ID"]);
-
-    return ret;
+        })
+        .finally(() => deleteReplicatedLicense(werft, process.env["TF_VAR_TEST_ID"])
+        );
 }
 
 export function sendFailureSlackAlert(phase: string, err: Error, hook: string): Promise<void> {
