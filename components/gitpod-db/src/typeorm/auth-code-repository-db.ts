@@ -58,7 +58,6 @@ export class AuthCodeRepositoryDB implements OAuthAuthCodeRepository {
     public async persist(authCode: DBOAuthAuthCodeEntry): Promise<void> {
         const authCodeRepo = await this.getOauthAuthCodeRepo();
         authCode.id = uuidv4();
-        authCode.uid = uuidv4();
         authCodeRepo.save(authCode);
     }
     public async isRevoked(authCodeCode: string): Promise<boolean> {
