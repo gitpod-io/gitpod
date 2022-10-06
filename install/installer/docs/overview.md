@@ -12,7 +12,6 @@ The best way to get started with Gitpod is by using our recommended & default in
 
 > The installer is an internal tool and as such not expected to be used by those external to Gitpod.
 
-[![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod)](https://gitpod.io/from-referrer/)
 
 # Requirements
 
@@ -580,10 +579,3 @@ Kubernetes objects, such as your TLS certificate or connection secrets.
 ```shell
 kubectl create namespace gitpod
 ```
-
-# Todo
-
-PRs/comments welcome
-
-- [ ] [Improve distribution of gitpod-installer binaries](https://github.com/gitpod-io/gitpod/issues/6766)
-- [ ] [Create a Gitpod workspace that can be used for installing a Gitpod instance](https://github.com/gitpod-io/gitpod/issues/6801)
