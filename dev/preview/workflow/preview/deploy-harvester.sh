@@ -15,7 +15,7 @@ import "terraform.sh"
 PROJECT_ROOT=$(realpath "${SCRIPT_PATH}/../../../../")
 
 if [[ -n ${WERFT_HOST+x} ]]; then
-  TF_CLI_ARGS="-input=false"
+  export TF_INPUT=0
   TF_IN_AUTOMATION=true
 fi
 
@@ -36,19 +36,23 @@ terraform_init
 PLAN_EXIT_CODE=0
 terraform_plan || PLAN_EXIT_CODE=$?
 
-if [[ ${PLAN_EXIT_CODE} == 1 ]]; then
+case ${PLAN_EXIT_CODE} in
+0)
+  log_success "No changes to the plan"
+  exit 0
+  ;;
+1)
   log_error "Terraform plan failed"
   exit "${ERROR_PLAN_FAIL}"
-fi
-
-# If there are changes
-if [[ ${PLAN_EXIT_CODE} == 2 ]]; then
+  ;;
+2)
   # If we're NOT in werft, ask if we want to apply the plan
   if [ -z ${WERFT_HOST+x} ]; then
     ask "Do you want to apply the plan?"
   fi
   terraform_apply
-fi
+  ;;
+esac
 
 if [ -n "${DESTROY-}" ] && [ -n "${WORKSPACE}" ]; then
   pushd "${TARGET_DIR}"

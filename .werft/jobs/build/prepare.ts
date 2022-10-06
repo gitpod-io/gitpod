@@ -102,28 +102,31 @@ function shouldCreateVM(config: JobConfig) {
 // createVM only triggers the VM creation.
 // Readiness is not guaranted.
 function createVM(werft: Werft, config: JobConfig) {
+    const cpu = config.withLargeVM ? 12 : 6;
+    const memory = config.withLargeVM ? 24 : 12;
+
+    // set some common vars for TF
+    // We pass the GCP credentials explicitly, otherwise for some reason TF doesn't pick them up
     const commonVars = `GOOGLE_BACKEND_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
                         TF_VAR_dev_kube_path=${CORE_DEV_KUBECONFIG_PATH} \
                         TF_VAR_harvester_kube_path=${HARVESTER_KUBECONFIG_PATH} \
-                        TF_VAR_preview_name=${config.previewEnvironment.destname}`
+                        TF_VAR_preview_name=${config.previewEnvironment.destname} \
+                        TF_VAR_vm_cpu=${cpu} \
+                        TF_VAR_vm_memory=${memory}Gi`
 
     if (config.cleanSlateDeployment) {
         werft.log(prepareSlices.BOOT_VM, "Cleaning previously created VM");
-        // VM.deleteVM({name: config.previewEnvironment.destname});
+        // -replace=... forces recreation of the resource
         exec(`${commonVars} \
-                        DESTROY=true \
+                        TF_CLI_ARGS_plan="-replace=harvester_virtualmachine.harvester" \
                         ./dev/preview/workflow/preview/deploy-harvester.sh`,
             {slice: prepareSlices.BOOT_VM}
         );
     }
 
     werft.log(prepareSlices.BOOT_VM, "Creating  VM");
-    const cpu = config.withLargeVM ? 12 : 6;
-    const memory = config.withLargeVM ? 24 : 12;
 
     const createVM = exec(`${commonVars} \
-                                    TF_VAR_vm_cpu=${cpu} \
-                                    TF_VAR_vm_memory=${memory}Gi \
                                     ./dev/preview/workflow/preview/deploy-harvester.sh`,
         {slice: prepareSlices.BOOT_VM}
     );
@@ -135,7 +138,6 @@ function createVM(werft: Werft, config: JobConfig) {
         return
     }
 
-    // VM.startVM({name: config.previewEnvironment.destname, cpu, memory});
     werft.currentPhaseSpan.setAttribute("preview.created_vm", true);
 }
 
