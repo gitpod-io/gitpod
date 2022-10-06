@@ -169,6 +169,7 @@ pod:
           (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
           printf '{{ toJson . }}' > context.json
 
+          npm config set update-notifier false
           npx ts-node .werft/installer-tests.ts "STANDARD_AKS_TEST"
 
 # The bit below makes this a cron job
