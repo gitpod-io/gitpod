@@ -12,6 +12,7 @@ function log {
 }
 
 function has-dev-access {
+  kubectl config get-contexts
     kubectl --context=$KUBE_CONTEXT auth can-i get secrets > /dev/null 2>&1 || false
 }
 

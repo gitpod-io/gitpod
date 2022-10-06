@@ -28,11 +28,14 @@ do
     esac
 done
 
-if [[ "${BRANCH}" == "" ]]; then
-    VM_NAME="$(preview-name-from-branch)"
-else
-    VM_NAME="$(preview-name-from-branch "$BRANCH")"
+if [ -z "${VM_NAME:-}" ]; then
+  if [[ "${BRANCH}" == "" ]]; then
+      VM_NAME="$(preview-name-from-branch)"
+  else
+      VM_NAME="$(preview-name-from-branch "$BRANCH")"
+  fi
 fi
+
 NAMESPACE="preview-${VM_NAME}"
 
 

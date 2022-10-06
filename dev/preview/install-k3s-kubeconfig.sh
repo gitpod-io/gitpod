@@ -9,7 +9,9 @@ source "$THIS_DIR/util/preview-name-from-branch.sh"
 PRIVATE_KEY=$HOME/.ssh/vm_id_rsa
 PUBLIC_KEY=$HOME/.ssh/vm_id_rsa.pub
 USER="ubuntu"
-BRANCH=""
+
+#BRANCH="${BRANCH:-""}"
+#VM_NAME="${$VM_NAME:-}"
 
 KUBECONFIG_PATH="/home/gitpod/.kube/config"
 K3S_KUBECONFIG_PATH="$(mktemp)"
@@ -24,10 +26,12 @@ do
     esac
 done
 
-if [[ "${BRANCH}" == "" ]] && [ -z "${VM_NAME}" ]; then
-    VM_NAME="$(preview-name-from-branch)"
-else
-    VM_NAME="$(preview-name-from-branch "$BRANCH")"
+if [ -z "${VM_NAME:-}" ]; then
+  if [[ "${BRANCH}" == "" ]]; then
+      VM_NAME="$(preview-name-from-branch)"
+  else
+      VM_NAME="$(preview-name-from-branch "$BRANCH")"
+  fi
 fi
 
 echo "Installing context from VM: $VM_NAME"

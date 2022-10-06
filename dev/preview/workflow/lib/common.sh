@@ -45,22 +45,16 @@ function log_info() {
   echo -e "${BLUE}INFO: ${NC}${text}"
 }
 
-# Checks if we have the correct context or exits with an error
-function check_kubectx() {
-  local expected=$1
-  if [[ $(kubectl config current-context) != "${expected}" ]]; then
-    log_error "Wrong context. Wanted [${expected}], got [$(kubectl config current-context)]"
-    exit "${ERROR_WRONG_KUBECTX}"
-  fi
-}
-
 function ask() {
-    while true; do
-        # shellcheck disable=SC2162
-        read -p "$* [y/n]: " yn
-        case $yn in
-            [Yy]*) return 0  ;;
-            [Nn]*) echo "Aborted" ; return  1 ;;
-        esac
-    done
+  while true; do
+    # shellcheck disable=SC2162
+    read -p "$* [y/n]: " yn
+    case $yn in
+    [Yy]*) return 0 ;;
+    [Nn]*)
+      echo "Aborted"
+      return 1
+      ;;
+    esac
+  done
 }
