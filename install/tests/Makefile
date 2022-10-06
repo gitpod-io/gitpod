@@ -389,6 +389,10 @@ kots-install: install-kots-cli destroy-gitpod create-secrets restore-cert
                     --no-port-forward \
                     --config-values tmp_config.yml
 
+	sleep 30
+	$(MAKE) delete-cm-setup || { $(MAKE) gitpod-debug-info; exit 1; }
+	$(MAKE) backup-cert || true
+
 time_to_sleep_azure := 1000 # azure seem to take more time to fullfil DNS propogation
 time_to_sleep := 800
 
