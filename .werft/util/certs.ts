@@ -70,7 +70,8 @@ function waitCertReady(certName: string): boolean {
 
 function isCertReady(certName: string): boolean {
     const rc = exec(
-        `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n certs get certificate ${certName} -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'`
+        `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n certs get certificate ${certName} -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'`,
+        { dontCheckRc: true }
     ).stdout.trim();
 
     return rc == "True";
