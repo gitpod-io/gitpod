@@ -4,6 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import { User } from "./protocol";
+import { Team } from "./teams-projects-protocol";
+
 export type AttributionId = UserAttributionId | TeamAttributionId;
 export type AttributionTarget = "user" | "team";
 
@@ -18,6 +21,14 @@ export interface TeamAttributionId {
 
 export namespace AttributionId {
     const SEPARATOR = ":";
+
+    export function create(userOrTeam: User | Team): AttributionId {
+        if (User.is(userOrTeam)) {
+            return { kind: "user", userId: userOrTeam.id };
+        } else {
+            return { kind: "team", teamId: userOrTeam.id };
+        }
+    }
 
     export function parse(s: string): UserAttributionId | TeamAttributionId | undefined {
         if (!s) {

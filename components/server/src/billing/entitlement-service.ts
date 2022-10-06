@@ -6,6 +6,7 @@
 
 import {
     User,
+    Workspace,
     WorkspaceInstance,
     WorkspaceTimeoutDuration,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
@@ -35,11 +36,13 @@ export interface EntitlementService {
      * Whether a user is allowed to start a workspace
      * !!! This is executed on the hot path of workspace startup, be careful with async when changing !!!
      * @param user
+     * @param workspace
      * @param date now
      * @param runningInstances
      */
     mayStartWorkspace(
         user: User,
+        workspace: Workspace,
         date: Date,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult>;
@@ -85,6 +88,7 @@ export interface EntitlementService {
 export class CommunityEntitlementService implements EntitlementService {
     async mayStartWorkspace(
         user: User,
+        workspace: Workspace,
         date: Date,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult> {
