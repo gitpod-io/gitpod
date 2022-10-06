@@ -25,7 +25,6 @@ import { Analytics, Installer } from "./installer/installer";
 import { previewNameFromBranchName } from "../../util/preview";
 import { createDNSRecord } from "../../util/gcloud";
 import { SpanStatusCode } from "@opentelemetry/api";
-import {copyk3sKubeconfigShell} from "../../vm/vm";
 
 // used by Installer
 const PROXY_SECRET_NAME = "proxy-config-certificates";
