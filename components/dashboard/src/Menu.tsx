@@ -97,9 +97,12 @@ export default function Menu() {
     // Hide most of the top menu when in a full-page form.
     const isMinimalUI = inResource(location.pathname, ["new", "teams/new", "open"]);
     const isWorkspacesUI = inResource(location.pathname, ["workspaces"]);
-    const isAccountUI = inResource(location.pathname, [
+    const isPersonalSettingsUI = inResource(location.pathname, [
         "account",
         "notifications",
+        "billing",
+        "plans",
+        "teams",
         "variables",
         "keys",
         "integrations",
@@ -244,7 +247,7 @@ export default function Menu() {
     const onFeedbackFormClose = () => {
         setFeedbackFormVisible(false);
     };
-    const isTeamLevelActive = !projectSlug && !isWorkspacesUI && !isAccountUI && !isAdminUI && teamOrUserSlug;
+    const isTeamLevelActive = !projectSlug && !isWorkspacesUI && !isPersonalSettingsUI && !isAdminUI && teamOrUserSlug;
     const renderTeamMenu = () => {
         if (!teams || teams.length === 0) {
             return (
@@ -467,7 +470,7 @@ export default function Menu() {
                     </div>
                     {isFeedbackFormVisible && <FeedbackFormModal onClose={onFeedbackFormClose} />}
                 </div>
-                {!isMinimalUI && !prebuildId && !isWorkspacesUI && !isAccountUI && !isAdminUI && (
+                {!isMinimalUI && !prebuildId && !isWorkspacesUI && !isPersonalSettingsUI && !isAdminUI && (
                     <nav className="flex">
                         {secondLevelMenu.map((entry: Entry) => (
                             <TabMenuItem
