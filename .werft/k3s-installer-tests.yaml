@@ -41,6 +41,7 @@ args:
   required: false
 pod:
   serviceAccount: werft
+  restartPolicy: Never
   affinity:
   nodeAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:

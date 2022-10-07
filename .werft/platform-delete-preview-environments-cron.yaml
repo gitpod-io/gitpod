@@ -1,5 +1,6 @@
 pod:
   serviceAccount: werft
+  restartPolicy: Never
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:

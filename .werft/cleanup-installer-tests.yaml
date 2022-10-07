@@ -1,6 +1,7 @@
 # debug using `werft run github -f -s .werft/installer-tests.ts -j .werft/self-hosted-installer-tests.yaml -a debug=true`
 pod:
   serviceAccount: werft
+  restartPolicy: Never
   affinity:
   nodeAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
