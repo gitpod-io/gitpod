@@ -4279,7 +4279,8 @@ data:
             "supervisor-frontend",
             "vscode-workbench",
             "vscode-server",
-            "vscode-web"
+            "vscode-web",
+            "gitod-cli"
           ]
         }
       },
@@ -8397,7 +8398,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 261a9080da877b0199c3588c8342e2bf262b31768577d9149ad91decc34870d1
+        gitpod.io/checksum_config: e3036e9137104898ca63a2de740d51a1994a1d8719542df1ace792c634f1ea2c
       creationTimestamp: null
       labels:
         app: gitpod

@@ -6,7 +6,9 @@ require (
 	github.com/creack/pty v1.1.17
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/ide-metrics-api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
+	github.com/go-errors/errors v1.4.2
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.8
 	github.com/google/shlex v0.0.0-20181106134648-c34317bd91bf
@@ -21,7 +23,7 @@ require (
 	github.com/spf13/cobra v1.1.3
 	golang.org/x/sys v0.0.0-20220610221304-9f5ed59c137d
 	golang.org/x/term v0.0.0-20220526004731-065cf7ba2467
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
+	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f
 	google.golang.org/grpc v1.49.0
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -45,5 +47,7 @@ require (
 replace github.com/gitpod-io/gitpod/gitpod-protocol => ../gitpod-protocol/go // leeway
 
 replace github.com/gitpod-io/gitpod/supervisor/api => ../supervisor-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/ide-metrics-api => ../ide-metrics-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway

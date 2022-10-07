@@ -8,14 +8,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	supervisor_helper "github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor-helper"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"os"
-	"time"
 )
 
 var infoCmdOpts struct {
@@ -37,7 +37,16 @@ var infoCmd = &cobra.Command{
 		}
 		defer conn.Close()
 
-		data, err := fetchInfo(ctx, conn)
+		wsInfo, err := supervisor_helper.FetchInfo(ctx, conn)
+
+		data := &infoData{
+			WorkspaceId:    wsInfo.WorkspaceId,
+			InstanceId:     wsInfo.InstanceId,
+			WorkspaceClass: wsInfo.WorkspaceClass,
+			WorkspaceUrl:   wsInfo.WorkspaceUrl,
+			ClusterHost:    wsInfo.WorkspaceClusterHost,
+		}
+
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -52,19 +61,12 @@ var infoCmd = &cobra.Command{
 	},
 }
 
-func fetchInfo(ctx context.Context, conn *grpc.ClientConn) (*infoData, error) {
-	wsInfo, err := supervisor.NewInfoServiceClient(conn).WorkspaceInfo(ctx, &supervisor.WorkspaceInfoRequest{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve workspace info: %w", err)
-	}
-
-	return &infoData{
-		WorkspaceId:    wsInfo.WorkspaceId,
-		InstanceId:     wsInfo.InstanceId,
-		WorkspaceClass: wsInfo.WorkspaceClass,
-		WorkspaceUrl:   wsInfo.WorkspaceUrl,
-		ClusterHost:    wsInfo.WorkspaceClusterHost,
-	}, nil
+type infoData struct {
+	WorkspaceId    string                                           `json:"workspace_id"`
+	InstanceId     string                                           `json:"instance_id"`
+	WorkspaceClass *supervisor.WorkspaceInfoResponse_WorkspaceClass `json:"workspace_class"`
+	WorkspaceUrl   string                                           `json:"workspace_url"`
+	ClusterHost    string                                           `json:"cluster_host"`
 }
 
 func outputInfo(info *infoData) {
@@ -78,14 +80,6 @@ func outputInfo(info *infoData) {
 	table.Append([]string{"Workspace URL", info.WorkspaceUrl})
 	table.Append([]string{"Cluster host", info.ClusterHost})
 	table.Render()
-}
-
-type infoData struct {
-	WorkspaceId    string                                           `json:"workspace_id"`
-	InstanceId     string                                           `json:"instance_id"`
-	WorkspaceClass *supervisor.WorkspaceInfoResponse_WorkspaceClass `json:"workspace_class"`
-	WorkspaceUrl   string                                           `json:"workspace_url"`
-	ClusterHost    string                                           `json:"cluster_host"`
 }
 
 func init() {
