@@ -92,6 +92,7 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
     menuEntries.push({
         title: "Download",
         href: downloadURL,
+        download: `${ws.id}.tar`,
     });
     if (!isAdmin) {
         menuEntries.push(
