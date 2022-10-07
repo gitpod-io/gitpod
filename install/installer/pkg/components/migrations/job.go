@@ -46,6 +46,7 @@ func job(ctx *common.RenderContext) ([]runtime.Object, error) {
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 							common.DatabaseEnv(&ctx.Config),
+							common.DefaultEnv(&ctx.Config),
 						)),
 						Command: []string{
 							"sh",
