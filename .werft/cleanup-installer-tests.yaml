@@ -3,14 +3,14 @@ pod:
   serviceAccount: werft
   restartPolicy: Never
   affinity:
-  nodeAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-      - matchExpressions:
-        - key: dev/workload
-          operator: In
-          values:
-          - "builds"
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: dev/workload
+            operator: In
+            values:
+            - "builds"
   securityContext:
     runAsUser: 0
   volumes:
