@@ -406,7 +406,7 @@ async function runIntegrationTests() {
  *
  * @return The make target return code
  */
-async function callMakeTargets(phase: string, description: string, makeTarget: string, failable: boolean = false) {
+async function callMakeTargets(phase: string, description: string, makeTarget: string, failable: boolean = false): Promise<number> {
     werft.log(phase, `Calling ${makeTarget}`);
     // exporting cloud env var is important for the make targets
     const env = `export TF_VAR_cluster_version=${k8s_version} cloud=${cloud} TF_VAR_domain=${baseDomain} TF_VAR_gcp_zone=${gcpDnsZone}`;
