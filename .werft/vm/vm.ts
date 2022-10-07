@@ -1,127 +1,36 @@
-import { HARVESTER_KUBECONFIG_PATH, PREVIEW_K3S_KUBECONFIG_PATH } from "../jobs/build/const";
+import {
+    CORE_DEV_KUBECONFIG_PATH,
+    GCLOUD_SERVICE_ACCOUNT_PATH,
+    HARVESTER_KUBECONFIG_PATH,
+    PREVIEW_K3S_KUBECONFIG_PATH
+} from "../jobs/build/const";
 import { exec } from "../util/shell";
 import { getGlobalWerftInstance } from "../util/werft";
 
-import * as Manifests from "./manifests";
 import * as shell from "shelljs";
 
 /**
- * Convenience function to kubectl apply a manifest from stdin.
- */
-function kubectlApplyManifest(manifest: string, options?: { validate?: boolean }) {
-    exec(`
-        cat <<EOF | kubectl --kubeconfig ${HARVESTER_KUBECONFIG_PATH} apply --validate=${!!options?.validate} -f -
-${manifest}
-EOF
-    `);
-}
-
-/**
- * Convenience function to kubectl delete a manifest from stdin.
- */
-function kubectlDeleteManifest(manifest: string) {
-    exec(`
-        cat <<EOF | kubectl --kubeconfig ${HARVESTER_KUBECONFIG_PATH} delete --ignore-not-found=true -f -
-${manifest}
-EOF
-    `);
-}
-
-/**
- * Start a VM
- * Does not wait for the VM to be ready.
- */
-export function startVM(options: { name: string, cpu: number, memory: number }) {
-    const namespace = `preview-${options.name}`;
-    const userDataSecretName = `userdata-${options.name}`;
-
-    kubectlApplyManifest(
-        Manifests.NamespaceManifest({
-            namespace,
-        }),
-    );
-
-    kubectlApplyManifest(
-        Manifests.UserDataSecretManifest({
-            vmName: options.name,
-            namespace,
-            secretName: userDataSecretName,
-        }),
-    );
-
-    kubectlApplyManifest(
-        Manifests.VirtualMachineManifest({
-            namespace,
-            vmName: options.name,
-            claimName: `${options.name}-${Date.now()}`,
-            storageClaimName: `${options.name}-storage-${Date.now()}`,
-            userDataSecretName,
-            cpu: options.cpu,
-            memory: options.memory
-        }),
-        { validate: false },
-    );
-
-    kubectlApplyManifest(
-        Manifests.ServiceManifest({
-            vmName: options.name,
-            namespace,
-        }),
-    );
-}
-
-/**
- * Remove a VM with its Namespace
+ * Remove all VM resources - Namespace+VM+Proxy svc on Harvester, LB+SVC on DEV
  */
 export function deleteVM(options: { name: string }) {
-    const namespace = `preview-${options.name}`;
-    const userDataSecretName = `userdata-${options.name}`;
+    const werft = getGlobalWerftInstance();
 
-    kubectlDeleteManifest(
-        Manifests.ServiceManifest({
-            vmName: options.name,
-            namespace,
-        }),
-    );
+    try {
+        exec(`DESTROY=true \
+                                    GOOGLE_BACKEND_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
+                                    TF_VAR_dev_kube_path=${CORE_DEV_KUBECONFIG_PATH} \
+                                    TF_VAR_harvester_kube_path=${HARVESTER_KUBECONFIG_PATH} \
+                                    TF_VAR_preview_name=${options.name} \
+                                    ./dev/preview/workflow/preview/deploy-harvester.sh`,
+            {slice: "Deleting VM."})
+    } catch (err) {
+        werft.currentPhaseSpan.setAttribute("preview.deleted_vm", false);
+        werft.fail("Deleting VM.", new Error(`Failed creating VM: ${err}`))
+        return;
+    }
 
-    kubectlDeleteManifest(
-        Manifests.UserDataSecretManifest({
-            vmName: options.name,
-            namespace,
-            secretName: userDataSecretName,
-        }),
-    );
 
-    kubectlDeleteManifest(
-        Manifests.VirtualMachineManifest({
-            namespace,
-            vmName: options.name,
-            claimName: `${options.name}-${Date.now()}`,
-            storageClaimName: `${options.name}-storage-${Date.now()}`,
-            userDataSecretName,
-            cpu: 0,
-            memory: 0,
-        }),
-    );
-
-    kubectlDeleteManifest(
-        Manifests.NamespaceManifest({
-            namespace,
-        }),
-    );
-}
-
-/**
- * Check if a VM with the given name already exists.
- * @returns true if the VM already exists
- */
-export function vmExists(options: { name: string }) {
-    const namespace = `preview-${options.name}`;
-    const status = exec(`kubectl --kubeconfig ${HARVESTER_KUBECONFIG_PATH} -n ${namespace} get vmi ${options.name}`, {
-        dontCheckRc: true,
-        silent: true,
-    });
-    return status.code == 0;
+    werft.currentPhaseSpan.setAttribute("preview.deleted_vm", true);
 }
 
 export class NotFoundError extends Error {
@@ -190,20 +99,19 @@ export function waitForVMReadiness(options: { name: string; timeoutSeconds: numb
  * Copies the k3s kubeconfig out of the VM and places it at `path`
  * If it doesn't manage to do so before the timeout it will throw an Error
  */
-export function copyk3sKubeconfig(options: { name: string; timeoutMS: number; slice: string }) {
+export function copyk3sKubeconfigShell(options: { name: string; timeoutMS: number; slice: string }) {
     const werft = getGlobalWerftInstance();
     const startTime = Date.now();
     while (true) {
         const status = exec(
-            `ssh -i /workspace/.ssh/id_rsa_harvester_vm ubuntu@127.0.0.1 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no 'sudo cat /etc/rancher/k3s/k3s.yaml' > ${PREVIEW_K3S_KUBECONFIG_PATH}`,
-            { silent: true, dontCheckRc: true, slice: options.slice },
+            `VM_NAME=${options.name} \
+                      K3S_KUBECONFIG_PATH=${PREVIEW_K3S_KUBECONFIG_PATH} \
+                      GCLOUD_SERVICE_ACCOUNT_PATH=${GCLOUD_SERVICE_ACCOUNT_PATH} \
+                      ./dev/preview/install-k3s-kubeconfig.sh`,
+            { dontCheckRc: true, slice: options.slice },
         );
 
         if (status.code == 0) {
-            exec(
-                `kubectl --kubeconfig ${PREVIEW_K3S_KUBECONFIG_PATH} config set clusters.default.server https://${options.name}.kube.gitpod-dev.com:6443`,
-                { silent: true, slice: options.slice },
-            );
             return;
         }
 
@@ -214,22 +122,9 @@ export function copyk3sKubeconfig(options: { name: string; timeoutMS: number; sl
             );
         }
 
-        werft.log(options.slice, `Wasn't able to copy out kubeconfig yet. Sleeping 5 seconds`);
-        exec("sleep 5", { silent: true, slice: options.slice });
+        werft.log(options.slice, `Wasn't able to copy out kubeconfig yet. Sleeping 10 seconds`);
+        exec("sleep 10", { silent: true, slice: options.slice });
     }
-}
-
-/**
- * Proxy 127.0.0.1:22 to :22 in the VM through the k8s service
- */
-export function startSSHProxy(options: { name: string; slice: string }) {
-    const namespace = `preview-${options.name}`;
-    exec(`sudo kubectl --kubeconfig=${HARVESTER_KUBECONFIG_PATH} -n ${namespace} port-forward service/proxy 22:2200`, {
-        async: true,
-        silent: true,
-        slice: options.slice,
-        dontCheckRc: true,
-    });
 }
 
 /**

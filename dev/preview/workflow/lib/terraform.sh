@@ -8,7 +8,11 @@ SCRIPT_PATH=$(dirname "${BASH_SOURCE[0]}")
 source "${SCRIPT_PATH}/common.sh"
 
 if [ -n "${DESTROY-}" ]; then
-  export TF_CLI_ARGS_plan="-destroy"
+  if [ -n "${TF_CLI_ARGS_plan-}" ] && ! grep -q "destroy" <<<"${TF_CLI_ARGS_plan}"; then
+    TF_CLI_ARGS_plan="${TF_CLI_ARGS_plan} -destroy"
+  else
+    export TF_CLI_ARGS_plan="-destroy"
+  fi
 fi
 
 function check_workspace() {
@@ -79,10 +83,6 @@ function terraform_plan() {
   # therefore we capture the output so our function doesn't cause a script to terminate if the caller has `set -e`
   EXIT_CODE=0
   terraform plan -detailed-exitcode -out="${plan_location}" || EXIT_CODE=$?
-
-  if [[ ${EXIT_CODE} = 2 ]]; then
-    terraform show "${plan_location}"
-  fi
 
   popd || exit "${ERROR_CHANGE_DIR}"
 
