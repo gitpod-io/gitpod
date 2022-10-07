@@ -37,6 +37,47 @@ type BillingService struct {
 	v1.UnimplementedBillingServiceServer
 }
 
+func (s *BillingService) GetStripeCustomer(ctx context.Context, req *v1.GetStripeCustomerRequest) (*v1.GetStripeCustomerResponse, error) {
+	switch identifier := req.GetIdentifier().(type) {
+	case *v1.GetStripeCustomerRequest_AttributionId:
+		attributionID, err := db.ParseAttributionID(identifier.AttributionId)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "Invalid attribution ID %s", attributionID)
+		}
+
+		customer, err := s.stripeClient.GetCustomerByAttributionID(ctx, string(attributionID))
+		if err != nil {
+			return nil, err
+		}
+
+		return &v1.GetStripeCustomerResponse{
+			AttributionId: string(attributionID),
+			Customer: &v1.StripeCustomer{
+				Id: customer.ID,
+			},
+		}, nil
+	case *v1.GetStripeCustomerRequest_StripeCustomerId:
+		customer, err := s.stripeClient.GetCustomer(ctx, identifier.StripeCustomerId)
+		if err != nil {
+			return nil, err
+		}
+
+		attributionID, err := stripe.GetAttributionID(ctx, customer)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "Failed to parse attribution ID from Stripe customer %s", customer.ID)
+		}
+
+		return &v1.GetStripeCustomerResponse{
+			AttributionId: string(attributionID),
+			Customer: &v1.StripeCustomer{
+				Id: customer.ID,
+			},
+		}, nil
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "Unknown identifier")
+	}
+}
+
 func (s *BillingService) ReconcileInvoices(ctx context.Context, in *v1.ReconcileInvoicesRequest) (*v1.ReconcileInvoicesResponse, error) {
 	balances, err := db.ListBalance(ctx, s.conn)
 	if err != nil {
