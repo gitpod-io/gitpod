@@ -1,6 +1,8 @@
 # Change Log
 
 ## October 2022
+- Update IntelliJ IDEA IDE image to version 222.4345.14. ([#13642](https://github.com/gitpod-io/gitpod/pull/13642)) - [@roboquat](https://github.com/roboquat)
+- Fix rendering Personal/Team billing menu entries ([#13621](https://github.com/gitpod-io/gitpod/pull/13621)) - [@geropl](https://github.com/geropl)
 - Gitpod CLI: `gp top` table output updated to match `gp info` ([#13607](https://github.com/gitpod-io/gitpod/pull/13607)) - [@WVerlaek](https://github.com/WVerlaek)
 - Gitpod CLI: Added new cmd `gp info` to display the workspace info such as IDs, class, etc ([#13537](https://github.com/gitpod-io/gitpod/pull/13537)) - [@WVerlaek](https://github.com/WVerlaek)
 - Deprecation of the ability to create projects under an individual account for new users. ([#13414](https://github.com/gitpod-io/gitpod/pull/13414)) - [@svenefftinge](https://github.com/svenefftinge)
