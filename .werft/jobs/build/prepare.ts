@@ -26,7 +26,7 @@ export async function prepare(werft: Werft, config: JobConfig) {
             return
         }
         var certReady = issueCertificate(werft, config);
-        decideHarvesterVMCreation(werft, config);
+        await decideHarvesterVMCreation(werft, config);
         await certReady
     } catch (err) {
         werft.fail(phaseName, err);
@@ -84,10 +84,10 @@ async function issueCertificate(werft: Werft, config: JobConfig): Promise<boolea
     return certReady
 }
 
-function decideHarvesterVMCreation(werft: Werft, config: JobConfig) {
+async function decideHarvesterVMCreation(werft: Werft, config: JobConfig) {
     // always try to create - usually it will be no-op, but if tf changed for any reason we would reconcile
     if (config.withPreview) {
-        createVM(werft, config);
+        await createVM(werft, config);
     }
     werft.done(prepareSlices.BOOT_VM);
 }
