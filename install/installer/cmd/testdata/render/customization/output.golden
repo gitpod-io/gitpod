@@ -4786,7 +4786,8 @@ data:
             "supervisor-frontend",
             "vscode-workbench",
             "vscode-server",
-            "vscode-web"
+            "vscode-web",
+            "gitpod-cli"
           ]
         }
       },
@@ -9111,7 +9112,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: b38c9ab42d890627d631b81f9f714127b1246ebb1f89b0153bf18351c9d2f9c8
+        gitpod.io/checksum_config: 65c2787dfe20e5495f212f970c59a5f515ff39fd592324bb4bd0f8dbce1eedf5
         hello: world
       creationTimestamp: null
       labels:

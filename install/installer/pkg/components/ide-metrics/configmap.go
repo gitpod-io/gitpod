@@ -125,6 +125,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			"vscode-workbench",
 			"vscode-server",
 			"vscode-web",
+			"gitpod-cli",
 		},
 	}
 

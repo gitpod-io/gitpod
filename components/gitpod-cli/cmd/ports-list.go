@@ -14,7 +14,6 @@ import (
 	supervisor_helper "github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor-helper"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/olekukonko/tablewriter"
@@ -30,7 +29,7 @@ var listPortsCmd = &cobra.Command{
 		ports, portsListError := supervisor_helper.GetPortsList(ctx)
 
 		if portsListError != nil {
-			log.WithError(portsListError).Error("Could not get the ports list.")
+			utils.LogError(ctx, portsListError, "Could not get the ports list.")
 			return
 		}
 
