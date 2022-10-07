@@ -162,10 +162,15 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
-	defaultFeatureFlags := []NamedWorkspaceFeatureFlag{}
+	// Enable protected_secrets by default
+	defaultFeatureFlags := []NamedWorkspaceFeatureFlag{NamedWorkspaceFeatureProtectedSecrets}
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.Workspace != nil && cfg.Workspace.EnableProtectedSecrets {
-			defaultFeatureFlags = append(defaultFeatureFlags, NamedWorkspaceFeatureProtectedSecrets)
+		if cfg == nil || cfg.Workspace == nil || cfg.Workspace.EnableProtectedSecrets == nil {
+			return nil
+		}
+		if !*cfg.Workspace.EnableProtectedSecrets {
+			// Disable protected_secrets unless explicitly set to false in the installer configuration
+			defaultFeatureFlags = []NamedWorkspaceFeatureFlag{}
 		}
 		return nil
 	})
