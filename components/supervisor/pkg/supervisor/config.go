@@ -279,6 +279,9 @@ type WorkspaceConfig struct {
 	//
 	// The format of the content downloaded from this URL is expected to be JSON in the form of [{"name":"name", "value":"value"}]
 	EnvvarOTS string `env:"SUPERVISOR_ENVVAR_OTS"`
+
+	// TerminationGracePeriodSeconds is the max number of seconds the workspace can take to shut down all its processes after SIGTERM was sent.
+	TerminationGracePeriodSeconds *int `env:"GITPOD_TERMINATION_GRACE_PERIOD_SECONDS"`
 }
 
 // WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service.
@@ -408,6 +411,14 @@ func (c WorkspaceConfig) getCommit() (commit *gitpod.Commit, err error) {
 		return nil, xerrors.Errorf("cannot parse workspace context as a commit: %w", err)
 	}
 	return
+}
+
+func (c WorkspaceConfig) GetTerminationGracePeriod() time.Duration {
+	defaultGracePeriod := 15 * time.Second
+	if c.TerminationGracePeriodSeconds == nil || *c.TerminationGracePeriodSeconds <= 0 {
+		return defaultGracePeriod
+	}
+	return time.Duration(*c.TerminationGracePeriodSeconds) * time.Second
 }
 
 // GetConfig loads the supervisor configuration.
