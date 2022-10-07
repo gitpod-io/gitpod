@@ -27,6 +27,7 @@ export interface ContextMenuEntry {
     href?: string;
     link?: string;
     target?: HTMLAttributeAnchorTarget;
+    download?: string;
 }
 
 function ContextMenu(props: ContextMenuProps) {
@@ -138,7 +139,13 @@ function ContextMenu(props: ContextMenuProps) {
                                 );
                             } else if (e.href) {
                                 return (
-                                    <a key={key} href={e.href} onClick={e.onClick} target={e.target}>
+                                    <a
+                                        key={key}
+                                        download={e.download}
+                                        href={e.href}
+                                        onClick={e.onClick}
+                                        target={e.target}
+                                    >
                                         {entry}
                                     </a>
                                 );
