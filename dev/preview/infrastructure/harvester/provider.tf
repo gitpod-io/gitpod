@@ -20,7 +20,7 @@ terraform {
 
 provider "harvester" {
   alias      = "harvester"
-  kubeconfig = file(var.harvester_kube_path)
+  kubeconfig = var.harvester_kube_path
 }
 
 provider "k8s" {
@@ -32,3 +32,4 @@ provider "k8s" {
   alias       = "harvester"
   config_path = var.harvester_kube_path
 }
+

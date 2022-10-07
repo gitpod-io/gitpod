@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC2069
+
 set -euo pipefail
+
 
 THIS_DIR="$(dirname "$0")"
 
@@ -10,10 +13,11 @@ PRIVATE_KEY=$HOME/.ssh/vm_id_rsa
 PUBLIC_KEY=$HOME/.ssh/vm_id_rsa.pub
 USER="ubuntu"
 BRANCH=""
+GCLOUD_SERVICE_ACCOUNT_PATH=${GCLOUD_SERVICE_ACCOUNT_PATH:-}
 
 KUBECONFIG_PATH="/home/gitpod/.kube/config"
-K3S_KUBECONFIG_PATH="$(mktemp)"
-MERGED_KUBECONFIG_PATH="$(mktemp)"
+K3S_KUBECONFIG_PATH=${K3S_KUBECONFIG_PATH:-$(mktemp)}
+MERGED_KUBECONFIG_PATH=${MERGED_KUBECONFIG_PATH:-$(mktemp)}
 
 while getopts n:p:u:b: flag
 do
@@ -24,16 +28,32 @@ do
     esac
 done
 
-if [[ "${BRANCH}" == "" ]]; then
-    VM_NAME="$(preview-name-from-branch)"
-else
-    VM_NAME="$(preview-name-from-branch "$BRANCH")"
+if [ -z "${VM_NAME:-}" ]; then
+  if [[ "${BRANCH}" == "" ]]; then
+      VM_NAME="$(preview-name-from-branch)"
+  else
+      VM_NAME="$(preview-name-from-branch "$BRANCH")"
+  fi
+fi
+
+K3S_CONTEXT="${VM_NAME}"
+K3S_ENDPOINT="${VM_NAME}.kube.gitpod-dev.com"
+
+# If we can access the k3s cluster, there's nothing to do
+if kubectl --context="${K3S_CONTEXT}" auth can-i get secrets 2>&1 1>/dev/null ;then
+  exit 0
 fi
 
 echo "Installing context from VM: $VM_NAME"
 
-K3S_CONTEXT="${VM_NAME}"
-K3S_ENDPOINT="${VM_NAME}.kube.gitpod-dev.com"
+# Run this part only in automation and if we don't have access to dev/harvester
+if [ -n "${WERFT_SERVICE_HOST-}" ];then
+  for ctx in dev harvester;do
+    if ! kubectl --context="${ctx}" auth can-i get secrets 2>&1 1>/dev/null; then
+      "$THIS_DIR"/util/setup-access.sh
+    fi
+  done
+fi
 
 function log {
     echo "[$(date)] $*"
@@ -60,8 +80,5 @@ KUBECONFIG="${K3S_KUBECONFIG_PATH}:${KUBECONFIG_PATH}" \
 
 log "Overwriting ${KUBECONFIG_PATH}"
 mv "${MERGED_KUBECONFIG_PATH}" "${KUBECONFIG_PATH}"
-
-log "Cleaning up temporary K3S kubeconfig"
-rm "${K3S_KUBECONFIG_PATH}"
 
 log "Done"

@@ -10,6 +10,7 @@ export ERROR_CHANGE_DIR=31
 export ERROR_NO_WORKSPACE=32
 export ERROR_NO_DIR=33
 export ERROR_NO_PLAN=34
+export ERROR_PLAN_FAIL=35
 
 function import() {
   local file="${SCRIPT_PATH}/${1}"
@@ -42,15 +43,6 @@ function log_success() {
 function log_info() {
   local text=$1
   echo -e "${BLUE}INFO: ${NC}${text}"
-}
-
-# Checks if we have the correct context or exits with an error
-function check_kubectx() {
-  local expected=$1
-  if [[ $(kubectl config current-context) != "${expected}" ]]; then
-    log_error "Wrong context. Wanted [${expected}], got [$(kubectl config current-context)]"
-    exit "${ERROR_WRONG_KUBECTX}"
-  fi
 }
 
 function ask() {

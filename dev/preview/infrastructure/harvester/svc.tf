@@ -56,7 +56,7 @@ resource "kubernetes_service" "harvester-svc" {
       name        = "https"
       protocol    = "TCP"
       port        = 443
-      target_port = 4430
+      target_port = 443
     }
     port {
       name        = "kube-api"

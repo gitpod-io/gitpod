@@ -1,4 +1,5 @@
 resource "harvester_virtualmachine" "harvester" {
+  provider             = harvester.harvester
   name                 = var.preview_name
   namespace            = kubernetes_namespace.preview_namespace.metadata[0].name
   restart_after_update = true
@@ -56,6 +57,7 @@ resource "harvester_virtualmachine" "harvester" {
 }
 
 resource "harvester_ssh_key" "harvester_ssh_key" {
+  provider  = harvester.harvester
   name      = "${var.preview_name}-ssh-key"
   namespace = kubernetes_namespace.preview_namespace.metadata[0].name
 
@@ -75,11 +77,19 @@ resource "kubernetes_secret" "cloudinit" {
   }
 }
 
+data "kubernetes_secret" "harvester-k3s-dockerhub-pull-account" {
+  provider = k8s.dev
+  metadata {
+    name      = "harvester-k3s-dockerhub-pull-account"
+    namespace = "werft"
+  }
+}
+
 locals {
   vm_cloud_init_secret_name = "userdata-${var.preview_name}"
   cloudinit_user_data = templatefile("${path.module}/cloudinit.yaml", {
-    dockerhub_user      = var.dockerhub_user
-    dockerhub_passwd    = var.dockerhub_password
+    dockerhub_user      = data.kubernetes_secret.harvester-k3s-dockerhub-pull-account.data["username"]
+    dockerhub_passwd    = data.kubernetes_secret.harvester-k3s-dockerhub-pull-account.data["password"]
     vm_name             = var.preview_name
     ssh_authorized_keys = local.ssh_key
   })
