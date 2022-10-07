@@ -401,9 +401,22 @@ delete-cm-setup:
 	sleep ${waittime} && kubectl --kubeconfig=${KUBECONFIG} delete pods --all -n cert-manager && sleep ${sleeptime};
 
 gitpod-debug-info:
-	@echo "Gitpod is not ready"
+	@echo -e "\033[;31mGitpod is not ready\033[0;m"
 	@kubectl --kubeconfig=${KUBECONFIG} get pods -n gitpod
 	@kubectl --kubeconfig=${KUBECONFIG} get certificate -n gitpod
+	@echo "Uploading diagnostics to gs://nightly-tests/nightly-tests-errors/${TF_VAR_TEST_ID}"
+
+	kubectl kots --kubeconfig=${KUBECONFIG} --namespace gitpod get app gitpod
+
+	kubectl --kubeconfig=${KUBECONFIG} --namespace gitpod get pod -ojson > pods.json \
+	&& gsutil cp pods.json gs://nightly-tests/nightly-tests-errors/${TF_VAR_TEST_ID}/pods.json
+
+	kubectl --kubeconfig=${KUBECONFIG} --namespace gitpod get event --sort-by '.metadata.creationTimestamp' > events.log \
+	&& gsutil cp events.log gs://nightly-tests/nightly-tests-errors/${TF_VAR_TEST_ID}/events.log
+
+	kubectl --kubeconfig=${KUBECONFIG} --namespace gitpod describe certificate https-certificates > cert.log \
+	&& gsutil cp cert.log gs://nightly-tests/nightly-tests-errors/${TF_VAR_TEST_ID}/cert.log
+
 
 check-kots-app:
 	kubectl kots get --kubeconfig=${KUBECONFIG} app gitpod -n gitpod | grep gitpod  | awk '{print $$2}' | grep "ready" || { $(MAKE) gitpod-debug-info; exit 1; }
