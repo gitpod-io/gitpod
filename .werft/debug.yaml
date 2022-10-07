@@ -1,6 +1,7 @@
 # debug using `werft run github -f -s .werft/build.js -j .werft/build.yaml -a debug=true`
 pod:
   serviceAccount: werft
+  restartPolicy: Never
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:

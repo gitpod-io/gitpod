@@ -5,6 +5,7 @@
 #
 pod:
   serviceAccount: werft
+  restartPolicy: Never
   nodeSelector:
     dev/workload: builds
   imagePullSecrets:
