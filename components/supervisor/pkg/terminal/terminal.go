@@ -6,22 +6,24 @@ package terminal
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/creack/pty"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/process"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
@@ -77,36 +79,39 @@ func (m *Mux) Start(cmd *exec.Cmd, options TermOptions) (alias string, err error
 	go func() {
 		term.waitErr = cmd.Wait()
 		close(term.waitDone)
-		_ = m.CloseTerminal(alias, 0*time.Second)
+		_ = m.CloseTerminal(context.Background(), alias)
 	}()
 
 	return alias, nil
 }
 
-// Close closes all terminals with closeTerminaldefaultGracePeriod.
-func (m *Mux) Close() error {
+// Close closes all terminals.
+// force kills it's processes when the context gets cancelled
+func (m *Mux) Close(ctx context.Context) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	var err error
-	for k := range m.terms {
-		cerr := m.doClose(k, closeTerminaldefaultGracePeriod)
-		if cerr != nil {
-			log.WithError(cerr).WithField("alias", k).Warn("cannot properly close terminal")
-			if err != nil {
-				err = cerr
+	g := new(errgroup.Group)
+	for term := range m.terms {
+		k := term
+		g.Go(func() error {
+			cerr := m.doClose(ctx, k)
+			if cerr != nil {
+				log.WithError(cerr).WithField("alias", k).Warn("cannot properly close terminal")
+				return cerr
 			}
-		}
+			return nil
+		})
 	}
-	return err
+	return g.Wait()
 }
 
 // CloseTerminal closes a terminal and ends the process that runs in it.
-func (m *Mux) CloseTerminal(alias string, gracePeriod time.Duration) error {
+func (m *Mux) CloseTerminal(ctx context.Context, alias string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	return m.doClose(alias, gracePeriod)
+	return m.doClose(ctx, alias)
 }
 
 // doClose closes a terminal and ends the process that runs in it.
@@ -114,7 +119,7 @@ func (m *Mux) CloseTerminal(alias string, gracePeriod time.Duration) error {
 // to stop. If it still runs after that time, it receives SIGKILL.
 //
 // Callers are expected to hold mu.
-func (m *Mux) doClose(alias string, gracePeriod time.Duration) error {
+func (m *Mux) doClose(ctx context.Context, alias string) error {
 	term, ok := m.terms[alias]
 	if !ok {
 		return ErrNotFound
@@ -122,11 +127,14 @@ func (m *Mux) doClose(alias string, gracePeriod time.Duration) error {
 
 	log := log.WithField("alias", alias)
 	log.Info("closing terminal")
-	err := term.gracefullyShutdownProcess(gracePeriod)
-	if err != nil {
-		log.WithError(err).Warn("did not gracefully shut down terminal")
+	if term.Command.Process != nil {
+		err := process.TerminateSync(ctx, term.Command.Process.Pid)
+		if err != nil {
+			log.WithError(err).Infof("cannot terminate process %s.", fmt.Sprint(term.Command.Args))
+		}
 	}
-	err = term.Stdout.Close()
+
+	err := term.Stdout.Close()
 	if err != nil {
 		log.WithError(err).Warn("cannot close connection to terminal clients")
 	}
@@ -143,46 +151,6 @@ func (m *Mux) doClose(alias string, gracePeriod time.Duration) error {
 	}
 	delete(m.terms, alias)
 
-	return nil
-}
-
-func (term *Term) gracefullyShutdownProcess(gracePeriod time.Duration) error {
-	if term.Command.Process == nil {
-		// process is alrady gone
-		return nil
-	}
-	if gracePeriod == 0 {
-		return term.shutdownProcessImmediately()
-	}
-
-	err := term.Command.Process.Signal(unix.SIGTERM)
-	if err != nil {
-		return err
-	}
-	schan := make(chan error, 1)
-	go func() {
-		_, err := term.Wait()
-		schan <- err
-	}()
-	select {
-	case err = <-schan:
-		if err == nil {
-			// process is gone now - we're good
-			return nil
-		}
-		log.WithError(err).Warn("unexpected terminal error")
-	case <-time.After(gracePeriod):
-	}
-
-	// process did not exit in time. Let's kill.
-	return term.shutdownProcessImmediately()
-}
-
-func (term *Term) shutdownProcessImmediately() error {
-	err := term.Command.Process.Kill()
-	if err != nil && !strings.Contains(err.Error(), "os: process already finished") {
-		return err
-	}
 	return nil
 }
 
