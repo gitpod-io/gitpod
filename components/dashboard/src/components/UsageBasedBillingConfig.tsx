@@ -41,7 +41,9 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
     const [billingError, setBillingError] = useState<string | undefined>();
 
     const localStorageKey = `pendingStripeSubscriptionFor${attributionId}`;
-    const now = new Date();
+    const billingPeriodFrom = new Date(new Date().toISOString().slice(0, 7) + "-01"); // First day of this month: YYYY-MM-01T00:00:00.000Z
+    const billingPeriodTo = new Date(billingPeriodFrom.getUTCFullYear(), billingPeriodFrom.getMonth() + 1); // First day of next month
+    billingPeriodTo.setMilliseconds(billingPeriodTo.getMilliseconds() - 1); // Last millisecond of this month
 
     useEffect(() => {
         if (!attributionId) {
@@ -161,7 +163,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
             const response = await getGitpodService().server.listUsage({
                 attributionId,
                 order: Ordering.ORDERING_DESCENDING,
-                from: new Date(now.toISOString().slice(0, 7) + "-01").getTime(),
+                from: billingPeriodFrom.getTime(),
                 to: Date.now(),
             });
             setCurrentUsage(response.creditsUsed);
@@ -225,7 +227,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                     </button>
                                 )}
                             </span>
-                            {typeof currentUsage === "number" && typeof usageLimit === "number" && (
+                            {typeof currentUsage === "number" && typeof usageLimit === "number" && usageLimit > 0 && (
                                 <span className="text-gray-400 dark:text-gray-500">
                                     {Math.round((100 * currentUsage) / usageLimit)}% used
                                 </span>
@@ -238,7 +240,12 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                             <div className="flex-grow">
                                 <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Current Period</div>
                                 <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                    {now.toLocaleString("default", { month: "long" })} {now.getFullYear()}
+                                    <span className="font-semibold">
+                                        {billingPeriodFrom.toLocaleString("default", { month: "long" })}{" "}
+                                        {billingPeriodFrom.getFullYear()}
+                                    </span>{" "}
+                                    ({billingPeriodFrom.toLocaleString("default", { month: "short", day: "numeric" })} -{" "}
+                                    {billingPeriodTo.toLocaleString("default", { month: "short", day: "numeric" })})
                                 </div>
                             </div>
                             <div>
