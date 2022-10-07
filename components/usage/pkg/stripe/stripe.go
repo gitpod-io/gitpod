@@ -187,36 +187,40 @@ func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Cu
 	return nil
 }
 
-func (c *Client) GetCustomerByTeamID(ctx context.Context, teamID string) (*stripe.Customer, error) {
-	customers, err := c.findCustomers(ctx, fmt.Sprintf("metadata['teamId']:'%s'", teamID))
+func (c *Client) GetCustomerByAttributionID(ctx context.Context, attributionID string) (*stripe.Customer, error) {
+	customers, err := c.findCustomers(ctx, fmt.Sprintf("metadata['attributionId']:'%s'", attributionID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to find customers: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to find customers: %v", err)
 	}
 
 	if len(customers) == 0 {
-		return nil, fmt.Errorf("no team customer found for id: %s", teamID)
+		return nil, status.Errorf(codes.NotFound, "no team customer found for attribution_id: %s", attributionID)
 	}
 	if len(customers) > 1 {
-		return nil, fmt.Errorf("found multiple team customers for id: %s", teamID)
+		return nil, status.Errorf(codes.FailedPrecondition, "found multiple customers for attributiuon_id: %s", attributionID)
 	}
 
 	return customers[0], nil
 }
 
-func (c *Client) GetCustomerByUserID(ctx context.Context, userID string) (*stripe.Customer, error) {
-	customers, err := c.findCustomers(ctx, fmt.Sprintf("metadata['userId']:'%s'", userID))
+func (c *Client) GetCustomer(ctx context.Context, customerID string) (*stripe.Customer, error) {
+	customer, err := c.sc.Customers.Get(customerID, &stripe.CustomerParams{
+		Params: stripe.Params{
+			Context: ctx,
+		},
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to find customers: %w", err)
+		if stripeErr, ok := err.(*stripe.Error); ok {
+			switch stripeErr.Code {
+			case stripe.ErrorCodeMissing:
+				return nil, status.Errorf(codes.NotFound, "customer %s does not exist in stripe", customerID)
+			}
+		}
+
+		return nil, fmt.Errorf("failed to get customer by customer ID %s", customerID)
 	}
 
-	if len(customers) == 0 {
-		return nil, fmt.Errorf("no user customer found for id: %s", userID)
-	}
-	if len(customers) > 1 {
-		return nil, fmt.Errorf("found multiple user customers for id: %s", userID)
-	}
-
-	return customers[0], nil
+	return customer, nil
 }
 
 func (c *Client) GetInvoiceWithCustomer(ctx context.Context, invoiceID string) (*stripe.Invoice, error) {
