@@ -124,7 +124,7 @@
         @apply h-2 rounded;
     }
     progress::-webkit-progress-bar {
-        @apply rounded-md bg-gray-200;
+        @apply rounded-md bg-gray-200 dark:bg-gray-600;
     }
     progress::-webkit-progress-value {
         @apply rounded-md bg-green-500;
