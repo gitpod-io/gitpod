@@ -43,9 +43,18 @@ var listPortsCmd = &cobra.Command{
 		table.SetCenterSeparator("|")
 
 		for _, port := range ports {
-			status := "not served"
+			status := ""
 			statusColor := tablewriter.FgHiBlackColor
-			if port.Exposed == nil && port.Tunneled == nil {
+			accessible := port.Exposed != nil || port.Tunneled != nil
+
+			exposedUrl := ""
+			if port.Exposed != nil {
+				exposedUrl = port.Exposed.Url
+			}
+
+			if !port.Served {
+				status = "not served"
+			} else if !accessible {
 				if port.AutoExposure == supervisor.PortAutoExposure_failed {
 					status = "failed to expose"
 					statusColor = tablewriter.FgRedColor
@@ -53,12 +62,23 @@ var listPortsCmd = &cobra.Command{
 					status = "detecting..."
 					statusColor = tablewriter.FgYellowColor
 				}
-			} else if port.Served {
-				status = "open (" + port.Exposed.Visibility.String() + ")"
+			} else if port.Exposed != nil {
 				if port.Exposed.Visibility == supervisor.PortVisibility_public {
+					status = "open (public)"
 					statusColor = tablewriter.FgHiGreenColor
-				} else {
+				}
+				if port.Exposed.Visibility == supervisor.PortVisibility_private {
+					status = "open (private)"
 					statusColor = tablewriter.FgHiCyanColor
+				}
+			} else if port.Tunneled != nil {
+				if port.Tunneled.Visibility == supervisor.TunnelVisiblity(supervisor.TunnelVisiblity_value["network"]) {
+					status = "open on all interfaces"
+					statusColor = tablewriter.FgHiGreenColor
+				}
+				if port.Tunneled.Visibility == supervisor.TunnelVisiblity(supervisor.TunnelVisiblity_value["host"]) {
+					status = "open on localhost"
+					statusColor = tablewriter.FgHiGreenColor
 				}
 			}
 
@@ -77,7 +97,7 @@ var listPortsCmd = &cobra.Command{
 			}
 
 			table.Rich(
-				[]string{fmt.Sprint(port.LocalPort), status, port.Exposed.Url, nameAndDescription},
+				[]string{fmt.Sprint(port.LocalPort), status, exposedUrl, nameAndDescription},
 				colors,
 			)
 		}
