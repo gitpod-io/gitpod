@@ -428,6 +428,8 @@ gitpod-debug-info:
 
 
 check-kots-app:
+	@echo "Waiting for up to 5 minutes for gitpod to become available"
+	kubectl --kubeconfig=${KUBECONFIG} --namespace gitpod wait --for=condition=Available deployment/installation-status --timeout 5m || true
 	kubectl kots get --kubeconfig=${KUBECONFIG} app gitpod -n gitpod | grep gitpod  | awk '{print $$2}' | grep "ready" || { $(MAKE) gitpod-debug-info; exit 1; }
 
 self_signed ?= false
