@@ -13,6 +13,7 @@ import {
     observeStripeClientRequestsCompleted,
     stripeClientRequestsCompletedDurationSeconds,
 } from "../../../src/prometheus-metrics";
+import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 
 const POLL_CREATED_CUSTOMER_INTERVAL_MS = 1000;
 const POLL_CREATED_CUSTOMER_MAX_ATTEMPTS = 30;
@@ -22,6 +23,9 @@ export class StripeService {
     @inject(Config) protected readonly config: Config;
 
     protected _stripe: Stripe | undefined;
+
+    @inject(BillingServiceDefinition.name)
+    protected readonly billingService: BillingServiceClient;
 
     protected getStripe(): Stripe {
         if (!this._stripe) {
@@ -40,6 +44,16 @@ export class StripeService {
     }
 
     async findCustomerByAttributionId(attributionId: string): Promise<string | undefined> {
+        try {
+            const resp = await this.billingService.getStripeCustomer({ attributionId: attributionId });
+            return resp.customer?.id;
+        } catch (e) {
+            log.warn("Failed to retrieve Stripe Customer ID from billing service, falling back to search.", {
+                attributionId,
+            });
+        }
+
+        // Fallback to searching against stripe. To be removed once we've got confidence in billingService.getStripeCustomer
         const query = `metadata['attributionId']:'${attributionId}'`;
 
         const result = await reportStripeOutcome("customers_search", () => {
