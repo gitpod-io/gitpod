@@ -200,13 +200,13 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                     </Alert>
                 )}
                 {showSpinner && (
-                    <div className="flex flex-col mt-4 h-52 p-4 rounded-xl bg-gray-50 dark:bg-gray-900">
+                    <div className="flex flex-col mt-4 h-52 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
                         <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Balance</div>
                         <Spinner className="m-2 h-5 w-5 animate-spin" />
                     </div>
                 )}
                 {showBalance && (
-                    <div className="flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-900">
+                    <div className="flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
                         <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Balance</div>
                         <div className="mt-1 text-xl font-semibold flex-grow">
                             <span className="text-gray-900 dark:text-gray-100">
@@ -234,7 +234,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                         <div className="mt-2 flex">
                             <progress className="h-4 flex-grow rounded-xl" value={currentUsage} max={usageLimit} />
                         </div>
-                        <div className="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-800 -m-4 p-4 mt-4 rounded-b-xl flex">
+                        <div className="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 -m-4 p-4 mt-4 rounded-b-xl flex">
                             <div className="flex-grow">
                                 <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Current Period</div>
                                 <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -250,7 +250,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                     </div>
                 )}
                 {showUpgradeTeam && (
-                    <div className="flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-900">
+                    <div className="flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
                         <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Upgrade Plan</div>
                         <div className="mt-1 text-xl font-semibold flex-grow text-gray-500 dark:text-gray-400">
                             Pay-as-you-go
@@ -275,7 +275,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                     </div>
                 )}
                 {showUpgradeUser && (
-                    <div className="flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-900">
+                    <div className="flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
                         <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Current Plan</div>
                         <div className="mt-1 text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">
                             Free
@@ -295,7 +295,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                 </span>
                             </div>
                         </div>
-                        <div className="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-800 -m-4 p-4 mt-8 rounded-b-xl">
+                        <div className="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 -m-4 p-4 mt-8 rounded-b-xl">
                             <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Upgrade Plan</div>
                             <div className="mt-1 text-xl font-semibold flex-grow text-gray-500 dark:text-gray-400">
                                 {currency === "EUR" ? "€" : "$"}9 / month
@@ -323,7 +323,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                 )}
                 {showManageBilling && (
                     <div className="max-w-xl flex space-x-4">
-                        <div className="flex-grow flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-900">
+                        <div className="flex-grow flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
                             <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Current Plan</div>
                             {AttributionId.parse(attributionId)?.kind === "user" ? (
                                 <>
@@ -380,7 +380,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                             )}
                             <a className="mt-5 self-end" href={stripePortalUrl}>
                                 <button className="secondary" disabled={!stripePortalUrl}>
-                                    Manage Plan
+                                    Manage Plan ↗
                                 </button>
                             </a>
                         </div>
@@ -417,7 +417,7 @@ function BillingSetupModal(props: { attributionId: string; onClose: () => void }
     return (
         <Modal visible={true} onClose={props.onClose}>
             <h3 className="flex">Upgrade Plan</h3>
-            <div className="border-t border-gray-200 dark:border-gray-800 mt-4 pt-2 -mx-6 px-6 flex flex-col">
+            <div className="border-t border-gray-200 dark:border-gray-700 mt-4 pt-2 -mx-6 px-6 flex flex-col">
                 {(!stripePromise || !stripeSetupIntentClientSecret) && (
                     <div className="h-80 flex items-center justify-center">
                         <Spinner className="h-5 w-5 animate-spin" />
@@ -533,7 +533,7 @@ function UpdateLimitModal(props: {
     return (
         <Modal visible={true} onClose={props.onClose}>
             <h3 className="flex">Usage Limit</h3>
-            <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col">
+            <div className="border-t border-b border-gray-200 dark:border-gray-700 -mx-6 px-6 py-4 flex flex-col">
                 <p className="pb-4 text-gray-500 text-base">Set usage limit in total credits per month.</p>
 
                 <label className="font-medium">

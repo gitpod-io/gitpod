@@ -313,7 +313,7 @@ export default function TeamBilling() {
         <PageWithSubMenu
             subMenu={getTeamSettingsMenu({ team, billingMode: teamBillingMode })}
             title="Billing"
-            subtitle="Manage team billing and plans."
+            subtitle="Configure and manage billing for your team."
         >
             {teamBillingMode === undefined ? (
                 <div className="p-20">
