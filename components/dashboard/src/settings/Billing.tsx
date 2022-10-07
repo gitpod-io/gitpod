@@ -15,11 +15,11 @@ export default function Billing() {
     const { user } = useContext(UserContext);
 
     return (
-        <PageWithSettingsSubMenu title="Billing" subtitle="Usage-Based Billing.">
+        <PageWithSettingsSubMenu title="Billing" subtitle="Configure and manage billing for your personal account.">
             <div>
                 <h3>Billing Account</h3>
                 <BillingAccountSelector />
-                <h3 className="mt-12">Usage-Based Billing</h3>
+                <h3 className="mt-12">Personal Plan</h3>
                 <UsageBasedBillingConfig
                     attributionId={user && AttributionId.render({ kind: "user", userId: user.id })}
                 />
