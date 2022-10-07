@@ -34,6 +34,7 @@ export interface JobConfig {
     workspaceFeatureFlags: string[];
     previewEnvironment: PreviewEnvironmentConfig;
     repository: Repository;
+    replicatedVersion: string;
     observability: Observability;
     withLargeVM: boolean;
 }
@@ -85,6 +86,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const replicatedChannel = buildConfig["channel"];
     const cluster = buildConfig["cluster"];
     const withSelfHostedPreview = "with-sh-preview" in buildConfig;
+    const replicatedVersion = withSelfHostedPreview ? buildConfig["version"] : "";
     const publishToNpm = "publish-to-npm" in buildConfig || mainBuild;
     const publishToJBMarketplace = "publish-to-jb-marketplace" in buildConfig || mainBuild;
     const publishToKots = "publish-to-kots" in buildConfig || withSelfHostedPreview || mainBuild;
@@ -142,6 +144,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         publishToNpm,
         publishToKots,
         replicatedChannel,
+        replicatedVersion,
         repository,
         retag,
         storage,

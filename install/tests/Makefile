@@ -226,7 +226,7 @@ endif
 
 KOTS_KONFIG := "./manifests/kots-config.yaml"
 
-get-base-config: get-github-config
+get-base-config:
 	export DOMAIN=${TF_VAR_domain} && \
 	export PATCH=$$(cat ${config_patch}) || export PATCH="" && \
 	envsubst < ${KOTS_KONFIG} > tmp_config.yml
