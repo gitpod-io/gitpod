@@ -567,6 +567,9 @@ message StartWorkspaceSpec {
 
     // ssh_public_keys is user's uploaded ssh public keys
     repeated string ssh_public_keys = 15;
+
+    // termination_grace_period_seconds sets the TerminationGracePeriodSeconds, defaults to 30 seconds
+    int64 termination_grace_period_seconds = 16;
 }
 
 // WorkspaceFeatureFlag enable non-standard behaviour in workspaces

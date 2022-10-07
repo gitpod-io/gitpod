@@ -16,7 +16,7 @@
         {
             "Func": "stopWorkspace",
             "Params": {
-                "gracePeriod": 30000000000,
+                "gracePeriod": 300000000000,
                 "workspaceID": "5031df46-db5e-43ae-91bd-1448305c001d"
             }
         }

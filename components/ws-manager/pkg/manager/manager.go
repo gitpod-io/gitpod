@@ -118,7 +118,8 @@ const (
 
 const (
 	// stopWorkspaceNormallyGracePeriod is the grace period we use when stopping a pod with StopWorkspaceNormally policy
-	stopWorkspaceNormallyGracePeriod = 30 * time.Second
+	// it is set to the max amount of gracePeriod we allow a workspace to have.
+	stopWorkspaceNormallyGracePeriod = 5 * time.Minute
 	// stopWorkspaceImmediatelyGracePeriod is the grace period we use when stopping a pod as soon as possbile
 	stopWorkspaceImmediatelyGracePeriod = 1 * time.Second
 	// wsdaemonDialTimeout is the time we allow for trying to connect to ws-daemon.

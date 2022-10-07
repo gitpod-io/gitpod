@@ -112,6 +112,10 @@
                             "value": "test-foobarservice-gitpod.io"
                         },
                         {
+                            "name": "GITPOD_TERMINATION_GRACE_PERIOD_SECONDS",
+                            "value": "30"
+                        },
+                        {
                             "name": "THEIA_SUPERVISOR_ENDPOINT",
                             "value": ":22999"
                         },
@@ -216,6 +220,7 @@
                 }
             ],
             "restartPolicy": "Never",
+            "terminationGracePeriodSeconds": 30,
             "serviceAccountName": "workspace",
             "automountServiceAccountToken": false,
             "securityContext": {

@@ -7900,7 +7900,8 @@ proto.wsman.StartWorkspaceSpec.toObject = function(includeInstance, msg) {
     ideImage: (f = msg.getIdeImage()) && proto.wsman.IDEImage.toObject(includeInstance, f),
     pb_class: jspb.Message.getFieldWithDefault(msg, 13, ""),
     volumeSnapshot: (f = msg.getVolumeSnapshot()) && proto.wsman.VolumeSnapshotInfo.toObject(includeInstance, f),
-    sshPublicKeysList: (f = jspb.Message.getRepeatedField(msg, 15)) == null ? undefined : f
+    sshPublicKeysList: (f = jspb.Message.getRepeatedField(msg, 15)) == null ? undefined : f,
+    terminationGracePeriodSeconds: jspb.Message.getFieldWithDefault(msg, 16, 0)
   };
 
   if (includeInstance) {
@@ -8000,6 +8001,10 @@ proto.wsman.StartWorkspaceSpec.deserializeBinaryFromReader = function(msg, reade
     case 15:
       var value = /** @type {string} */ (reader.readString());
       msg.addSshPublicKeys(value);
+      break;
+    case 16:
+      var value = /** @type {number} */ (reader.readInt64());
+      msg.setTerminationGracePeriodSeconds(value);
       break;
     default:
       reader.skipField();
@@ -8131,6 +8136,13 @@ proto.wsman.StartWorkspaceSpec.serializeBinaryToWriter = function(message, write
   if (f.length > 0) {
     writer.writeRepeatedString(
       15,
+      f
+    );
+  }
+  f = message.getTerminationGracePeriodSeconds();
+  if (f !== 0) {
+    writer.writeInt64(
+      16,
       f
     );
   }
@@ -8540,6 +8552,24 @@ proto.wsman.StartWorkspaceSpec.prototype.addSshPublicKeys = function(value, opt_
  */
 proto.wsman.StartWorkspaceSpec.prototype.clearSshPublicKeysList = function() {
   return this.setSshPublicKeysList([]);
+};
+
+
+/**
+ * optional int64 termination_grace_period_seconds = 16;
+ * @return {number}
+ */
+proto.wsman.StartWorkspaceSpec.prototype.getTerminationGracePeriodSeconds = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 16, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.wsman.StartWorkspaceSpec} returns this
+ */
+proto.wsman.StartWorkspaceSpec.prototype.setTerminationGracePeriodSeconds = function(value) {
+  return jspb.Message.setProto3IntField(this, 16, value);
 };
 
 

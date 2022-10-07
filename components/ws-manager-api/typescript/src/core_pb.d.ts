@@ -1017,6 +1017,8 @@ export class StartWorkspaceSpec extends jspb.Message {
     getSshPublicKeysList(): Array<string>;
     setSshPublicKeysList(value: Array<string>): StartWorkspaceSpec;
     addSshPublicKeys(value: string, index?: number): string;
+    getTerminationGracePeriodSeconds(): number;
+    setTerminationGracePeriodSeconds(value: number): StartWorkspaceSpec;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StartWorkspaceSpec.AsObject;
@@ -1044,6 +1046,7 @@ export namespace StartWorkspaceSpec {
         pb_class: string,
         volumeSnapshot?: VolumeSnapshotInfo.AsObject,
         sshPublicKeysList: Array<string>,
+        terminationGracePeriodSeconds: number,
     }
 }
 

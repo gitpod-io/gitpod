@@ -81,6 +81,9 @@ type GitpodConfig struct {
 	// List of tasks to run on start. Each task will open a terminal in the IDE.
 	Tasks []*TasksItems `yaml:"tasks,omitempty"`
 
+	// The grace period for all processes to stop before beeing force killed. Default is 30 seconds. The allowed maximum is 300 seconds.
+	TerminationGracePeriodSeconds float64 `yaml:"terminationGracePeriodSeconds,omitempty"`
+
 	// Configure VS Code integration
 	Vscode *Vscode `yaml:"vscode,omitempty"`
 
@@ -523,6 +526,17 @@ func (strct *GitpodConfig) MarshalJSON() ([]byte, error) {
 		buf.Write(tmp)
 	}
 	comma = true
+	// Marshal the "terminationGracePeriodSeconds" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"terminationGracePeriodSeconds\": ")
+	if tmp, err := json.Marshal(strct.TerminationGracePeriodSeconds); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
 	// Marshal the "vscode" field
 	if comma {
 		buf.WriteString(",")
@@ -601,6 +615,10 @@ func (strct *GitpodConfig) UnmarshalJSON(b []byte) error {
 			}
 		case "tasks":
 			if err := json.Unmarshal([]byte(v), &strct.Tasks); err != nil {
+				return err
+			}
+		case "terminationGracePeriodSeconds":
+			if err := json.Unmarshal([]byte(v), &strct.TerminationGracePeriodSeconds); err != nil {
 				return err
 			}
 		case "vscode":

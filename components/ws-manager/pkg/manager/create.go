@@ -495,6 +495,8 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		},
 	}
 
+	terminationGracePeriodSeconds := getTerminationGracePeriodSeconds(req.Spec)
+
 	pod := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        podName(req),
@@ -521,8 +523,9 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			Containers: []corev1.Container{
 				*workspaceContainer,
 			},
-			RestartPolicy: corev1.RestartPolicyNever,
-			Volumes:       volumes,
+			RestartPolicy:                 corev1.RestartPolicyNever,
+			Volumes:                       volumes,
+			TerminationGracePeriodSeconds: &terminationGracePeriodSeconds,
 			Tolerations: []corev1.Toleration{
 				{
 					Key:      "node.kubernetes.io/disk-pressure",
@@ -641,6 +644,18 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	}
 
 	return &pod, nil
+}
+
+func getTerminationGracePeriodSeconds(spec *api.StartWorkspaceSpec) int64 {
+	var minGracePeriodSeconds int64 = 30
+	var maxGracePeriodSeconds int64 = int64(stopWorkspaceNormallyGracePeriod.Seconds())
+	if spec.TerminationGracePeriodSeconds < minGracePeriodSeconds {
+		return minGracePeriodSeconds
+	}
+	if spec.TerminationGracePeriodSeconds > maxGracePeriodSeconds {
+		return maxGracePeriodSeconds
+	}
+	return spec.TerminationGracePeriodSeconds
 }
 
 func removeVolume(pod *corev1.Pod, name string) {
@@ -775,6 +790,8 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 	result = append(result, corev1.EnvVar{Name: "GITPOD_WORKSPACE_URL", Value: startContext.WorkspaceURL})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_WORKSPACE_CLUSTER_HOST", Value: m.Config.WorkspaceClusterHost})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_WORKSPACE_CLASS", Value: startContext.Request.Spec.Class})
+	result = append(result, corev1.EnvVar{Name: "GITPOD_TERMINATION_GRACE_PERIOD_SECONDS", Value: strconv.Itoa(int(getTerminationGracePeriodSeconds(startContext.Request.Spec)))})
+
 	result = append(result, corev1.EnvVar{Name: "THEIA_SUPERVISOR_ENDPOINT", Value: fmt.Sprintf(":%d", startContext.SupervisorPort)})
 	// TODO(ak) remove THEIA_WEBVIEW_EXTERNAL_ENDPOINT and THEIA_MINI_BROWSER_HOST_PATTERN when Theia is removed
 	result = append(result, corev1.EnvVar{Name: "THEIA_WEBVIEW_EXTERNAL_ENDPOINT", Value: "webview-{{hostname}}"})

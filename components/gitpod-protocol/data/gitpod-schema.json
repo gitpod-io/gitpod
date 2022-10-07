@@ -114,6 +114,10 @@
                 "additionalProperties": false
             }
         },
+        "terminationGracePeriodSeconds": {
+            "type": "number",
+            "description": "The grace period for all processes to stop before beeing force killed. Default is 30 seconds. The allowed maximum is 300 seconds."
+        },
         "image": {
             "type": [
                 "object",
