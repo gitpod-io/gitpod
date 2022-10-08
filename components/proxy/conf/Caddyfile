@@ -150,14 +150,7 @@ api.{$GITPOD_DOMAIN} {
         output stdout
     }
 
-	@grpc protocol grpc
-
-	handle @grpc {
-		# gRPC traffic goes to gRPC server
-		reverse_proxy h2c://public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9001
-	}
-
-	# Non-grpc traffic goes to an HTTP server
+	# All traffic goes to HTTP endpoint. We handle gRPC using connect.build
 	reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002
 }
 
