@@ -1,6 +1,12 @@
 # Change Log
 
 ## October 2022
+- Release VS Code Browser `1.72` ([#13617](https://github.com/gitpod-io/gitpod/pull/13617)) - [@filiptronicek](https://github.com/filiptronicek)
+-  ([#13660](https://github.com/gitpod-io/gitpod/pull/13660)) - [@andreafalzetti](https://github.com/andreafalzetti)
+- All running processes receive a SIGTERM when a workspace shuts down. ([#13495](https://github.com/gitpod-io/gitpod/pull/13495)) - [@svenefftinge](https://github.com/svenefftinge)
+- Enable the protected secrets by default ([#13664](https://github.com/gitpod-io/gitpod/pull/13664)) - [@kylos101](https://github.com/kylos101)
+- Update IntelliJ IDEA IDE image to version 222.4345.14. ([#13642](https://github.com/gitpod-io/gitpod/pull/13642)) - [@roboquat](https://github.com/roboquat)
+- Fix rendering Personal/Team billing menu entries ([#13621](https://github.com/gitpod-io/gitpod/pull/13621)) - [@geropl](https://github.com/geropl)
 - Gitpod CLI: `gp top` table output updated to match `gp info` ([#13607](https://github.com/gitpod-io/gitpod/pull/13607)) - [@WVerlaek](https://github.com/WVerlaek)
 - Gitpod CLI: Added new cmd `gp info` to display the workspace info such as IDs, class, etc ([#13537](https://github.com/gitpod-io/gitpod/pull/13537)) - [@WVerlaek](https://github.com/WVerlaek)
 - Deprecation of the ability to create projects under an individual account for new users. ([#13414](https://github.com/gitpod-io/gitpod/pull/13414)) - [@svenefftinge](https://github.com/svenefftinge)
