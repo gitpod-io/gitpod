@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/log"
 
 	"github.com/gitpod-io/gitpod/public-api/config"
@@ -19,6 +20,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/apiv1"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/webhooks"
@@ -83,8 +85,17 @@ func register(srv *baseserver.Server, serverAPIURL *url.URL) error {
 	v1.RegisterWorkspacesServiceServer(srv.GRPC(), apiv1.NewWorkspaceService(connPool))
 	v1.RegisterPrebuildsServiceServer(srv.GRPC(), v1.UnimplementedPrebuildsServiceServer{})
 
-	workspacesRoute, workspacesServiceHandler := v1connect.NewWorkspacesServiceHandler(&v1connect.UnimplementedWorkspacesServiceHandler{})
+	handlerOptions := []connect.HandlerOption{
+		connect.WithInterceptors(
+			auth.NewServerInterceptor(),
+		),
+	}
+
+	workspacesRoute, workspacesServiceHandler := v1connect.NewWorkspacesServiceHandler(&v1connect.UnimplementedWorkspacesServiceHandler{}, handlerOptions...)
 	srv.HTTPMux().Handle(workspacesRoute, workspacesServiceHandler)
+
+	prebuildsRoute, prebuildsServiceHandler := v1connect.NewPrebuildsServiceHandler(&v1connect.UnimplementedPrebuildsServiceHandler{}, handlerOptions...)
+	srv.HTTPMux().Handle(prebuildsRoute, prebuildsServiceHandler)
 
 	return nil
 }
