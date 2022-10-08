@@ -12,6 +12,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	v1 "github.com/gitpod-io/gitpod/public-api/v1"
 	"github.com/gitpod-io/gitpod/public-api/v1/v1connect"
 	"github.com/stretchr/testify/require"
@@ -113,7 +114,7 @@ func TestPublicAPIServer_WorkspaceServiceHandler(t *testing.T) {
 	require.NoError(t, register(srv, gitpodAPI))
 	baseserver.StartServerForTests(t, srv)
 
-	client := v1connect.NewWorkspacesServiceClient(http.DefaultClient, srv.HTTPAddress())
+	client := v1connect.NewWorkspacesServiceClient(http.DefaultClient, srv.HTTPAddress(), connect.WithInterceptors(auth.NewClientInterceptor("token")))
 
 	_, err = client.ListWorkspaces(ctx, connect.NewRequest(&v1.ListWorkspacesRequest{}))
 	require.Equal(t, connect.CodeUnimplemented.String(), connect.CodeOf(err).String())
@@ -157,4 +158,43 @@ func requireErrorStatusCode(t *testing.T, expected codes.Code, err error) {
 	st, ok := status.FromError(err)
 	require.True(t, ok)
 	require.Equalf(t, expected, st.Code(), "expected: %s but got: %s", expected.String(), st.String())
+}
+
+func TestConnectWorkspaceService_RequiresAuth(t *testing.T) {
+	srv := baseserver.NewForTests(t,
+		baseserver.WithHTTP(baseserver.MustUseRandomLocalAddress(t)),
+		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
+	)
+
+	gitpodAPI, err := url.Parse("wss://main.preview.gitpod-dev.com/api/v1")
+	require.NoError(t, err)
+
+	require.NoError(t, register(srv, gitpodAPI))
+
+	baseserver.StartServerForTests(t, srv)
+
+	clientWithoutAuth := v1connect.NewWorkspacesServiceClient(http.DefaultClient, srv.HTTPAddress())
+	_, err = clientWithoutAuth.GetWorkspace(context.Background(), connect.NewRequest(&v1.GetWorkspaceRequest{WorkspaceId: "123"}))
+	require.Error(t, err)
+	require.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
+
+}
+
+func TestConnectPrebuildsService_RequiresAuth(t *testing.T) {
+	srv := baseserver.NewForTests(t,
+		baseserver.WithHTTP(baseserver.MustUseRandomLocalAddress(t)),
+		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
+	)
+
+	gitpodAPI, err := url.Parse("wss://main.preview.gitpod-dev.com/api/v1")
+	require.NoError(t, err)
+
+	require.NoError(t, register(srv, gitpodAPI))
+
+	baseserver.StartServerForTests(t, srv)
+
+	clientWithoutAuth := v1connect.NewPrebuildsServiceClient(http.DefaultClient, srv.HTTPAddress())
+	_, err = clientWithoutAuth.GetPrebuild(context.Background(), connect.NewRequest(&v1.GetPrebuildRequest{PrebuildId: "123"}))
+	require.Error(t, err)
+	require.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 }
