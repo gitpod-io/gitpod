@@ -48,8 +48,8 @@ type ProcessPriorityV2 struct {
 func (c *ProcessPriorityV2) Name() string  { return "process-priority-v2" }
 func (c *ProcessPriorityV2) Type() Version { return Version2 }
 
-func (c *ProcessPriorityV2) Apply(ctx context.Context, basePath, cgroupPath string) error {
-	fullCgroupPath := filepath.Join(basePath, cgroupPath)
+func (c *ProcessPriorityV2) Apply(ctx context.Context, opts *PluginOptions) error {
+	fullCgroupPath := filepath.Join(opts.BasePath, opts.CgroupPath)
 
 	_, err := os.Stat(fullCgroupPath)
 	if errors.Is(err, fs.ErrNotExist) {
