@@ -87,7 +87,7 @@ func (host *PluginHost) WorkspaceAdded(ctx context.Context, ws *dispatch.Workspa
 	opts := &PluginOptions{
 		BasePath:   host.CGroupBasePath,
 		CgroupPath: cgroupPath,
-		InstanceID: ws.InstanceID,
+		InstanceId: ws.InstanceID,
 	}
 
 	for _, plg := range host.Plugins {
@@ -128,5 +128,5 @@ const (
 type PluginOptions struct {
 	BasePath   string
 	CgroupPath string
-	InstanceID string
+	InstanceId string
 }

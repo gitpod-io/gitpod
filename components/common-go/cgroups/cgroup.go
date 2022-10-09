@@ -14,7 +14,6 @@ import (
 
 	"github.com/containerd/cgroups"
 	v2 "github.com/containerd/cgroups/v2"
-	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 const DefaultMountPoint = "/sys/fs/cgroup"
@@ -100,12 +99,15 @@ func ReadPSIValue(path string) (PSI, error) {
 	var psi PSI
 	for scanner.Scan() {
 		line := scanner.Text()
+		if err = scanner.Err(); err != nil {
+			return PSI{}, fmt.Errorf("could not read psi file: %w", err)
+		}
+
 		i := strings.LastIndex(line, "total=")
 		if i == -1 {
 			return PSI{}, fmt.Errorf("could not find total stalled time")
 		}
 
-		log.Infof("total is %v", line[i+6:])
 		total, err := strconv.ParseUint(line[i+6:], 10, 64)
 		if err != nil {
 			return PSI{}, fmt.Errorf("could not parse total stalled time: %w", err)
