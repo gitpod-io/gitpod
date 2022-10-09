@@ -63,3 +63,8 @@ func (m *Memory) Stat() (*cgroups.MemoryStats, error) {
 		InactiveFileTotal: statMap["inactive_file"],
 	}, nil
 }
+
+func (m *Memory) PSI() (cgroups.PSI, error) {
+	path := filepath.Join(m.path, "memory.pressure")
+	return cgroups.ReadPSIValue(path)
+}

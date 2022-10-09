@@ -5,6 +5,8 @@
 package cgroups
 
 import (
+	"bufio"
+	"fmt"
 	"math"
 	"os"
 	"strconv"
@@ -12,6 +14,7 @@ import (
 
 	"github.com/containerd/cgroups"
 	v2 "github.com/containerd/cgroups/v2"
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 const DefaultMountPoint = "/sys/fs/cgroup"
@@ -84,4 +87,43 @@ func ReadFlatKeyedFile(path string) (map[string]uint64, error) {
 	}
 
 	return kv, nil
+}
+
+func ReadPSIValue(path string) (PSI, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return PSI{}, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	var psi PSI
+	for scanner.Scan() {
+		line := scanner.Text()
+		i := strings.LastIndex(line, "total=")
+		if i == -1 {
+			return PSI{}, fmt.Errorf("could not find total stalled time")
+		}
+
+		log.Infof("total is %v", line[i+6:])
+		total, err := strconv.ParseUint(line[i+6:], 10, 64)
+		if err != nil {
+			return PSI{}, fmt.Errorf("could not parse total stalled time: %w", err)
+		}
+
+		if strings.HasPrefix(line, "some") {
+			psi.Some = total
+		}
+
+		if strings.HasPrefix(line, "full") {
+			psi.Full = total
+		}
+	}
+
+	return psi, nil
+}
+
+type PSI struct {
+	Some uint64
+	Full uint64
 }
