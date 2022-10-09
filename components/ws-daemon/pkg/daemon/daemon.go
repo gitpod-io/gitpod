@@ -87,6 +87,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 			},
 		},
 		procV2Plugin,
+		cgroup.NewPSIMetrics(reg),
 	)
 	if err != nil {
 		return nil, err
