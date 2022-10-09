@@ -75,7 +75,7 @@ function gc_integration_branches ()
 {
     werft log phase "GC too old integration branches" "GC too old integration branches"
     now=$(date --utc +%s)
-    for br in $(git branch --format="%(refname:short)" -a | grep -v HEAD); do 
+    for br in $(git branch --format="%(refname:short)" -a | grep -v HEAD); do
         if echo $br | grep -q "origin/wk-inte-test/*"; then
             last_commite_date=$(date --utc --date "$(git show --format="%ci" $br | head -n 1)" +%s)
             diff=$(( $now-$last_commite_date ))
