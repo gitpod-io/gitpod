@@ -84,3 +84,8 @@ func (c *Cpu) Stat() (*cgroups.CpuStats, error) {
 
 	return &stats, nil
 }
+
+func (c *Cpu) PSI() (cgroups.PSI, error) {
+	path := filepath.Join(c.path, "cpu.pressure")
+	return cgroups.ReadPSIValue(path)
+}
