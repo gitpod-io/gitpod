@@ -54,7 +54,7 @@ func ReadConfigFromFile(path string) (ClientConfig, error) {
 // New authenticates a Stripe client using the provided config
 func New(config ClientConfig) (*Client, error) {
 	return NewWithHTTPClient(config, &http.Client{
-		Transport: StripeClientMetricsRoundTripper(http.DefaultTransport),
+		Transport: http.DefaultTransport,
 		Timeout:   10 * time.Second,
 	})
 }
@@ -63,7 +63,7 @@ func NewWithHTTPClient(config ClientConfig, c *http.Client) (*Client, error) {
 	sc := &client.API{}
 
 	sc.Init(config.SecretKey, stripe.NewBackends(&http.Client{
-		Transport: StripeClientMetricsRoundTripper(http.DefaultTransport),
+		Transport: http.DefaultTransport,
 		Timeout:   10 * time.Second,
 	}))
 
@@ -122,7 +122,13 @@ func (c *Client) UpdateUsage(ctx context.Context, creditsPerAttributionID map[db
 	return nil
 }
 
-func (c *Client) findCustomers(ctx context.Context, query string) ([]*stripe.Customer, error) {
+func (c *Client) findCustomers(ctx context.Context, query string) (customers []*stripe.Customer, err error) {
+	now := time.Now()
+	reportStripeRequestStarted("customers_search")
+	defer func() {
+		reportStripeRequestCompleted("customers_search", err, time.Since(now))
+	}()
+
 	params := &stripe.CustomerSearchParams{
 		SearchParams: stripe.SearchParams{
 			Query:   query,
@@ -131,19 +137,18 @@ func (c *Client) findCustomers(ctx context.Context, query string) ([]*stripe.Cus
 		},
 	}
 	iter := c.sc.Customers.Search(params)
-	if iter.Err() != nil {
-		return nil, fmt.Errorf("failed to search for customers: %w", iter.Err())
-	}
 
-	var customers []*stripe.Customer
 	for iter.Next() {
 		customers = append(customers, iter.Customer())
+	}
+	if iter.Err() != nil {
+		return nil, fmt.Errorf("failed to search for customers: %w", iter.Err())
 	}
 
 	return customers, nil
 }
 
-func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Customer, credits int64) error {
+func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Customer, credits int64) (err error) {
 	logger := log.
 		WithField("customer_id", customer.ID).
 		WithField("customer_name", customer.Name).
@@ -173,7 +178,13 @@ func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Cu
 
 	subscriptionItemId := subscription.Items.Data[0].ID
 	log.Infof("Registering usage against subscriptionItem %q", subscriptionItemId)
-	_, err := c.sc.UsageRecords.New(&stripe.UsageRecordParams{
+
+	reportStripeRequestStarted("usage_record_update")
+	now := time.Now()
+	defer func() {
+		reportStripeRequestCompleted("usage_record_update", err, time.Since(now))
+	}()
+	_, err = c.sc.UsageRecords.New(&stripe.UsageRecordParams{
 		Params: stripe.Params{
 			Context: ctx,
 		},
@@ -203,8 +214,14 @@ func (c *Client) GetCustomerByAttributionID(ctx context.Context, attributionID s
 	return customers[0], nil
 }
 
-func (c *Client) GetCustomer(ctx context.Context, customerID string) (*stripe.Customer, error) {
-	customer, err := c.sc.Customers.Get(customerID, &stripe.CustomerParams{
+func (c *Client) GetCustomer(ctx context.Context, customerID string) (customer *stripe.Customer, err error) {
+	now := time.Now()
+	reportStripeRequestStarted("customer_get")
+	defer func() {
+		reportStripeRequestCompleted("customer_get", err, time.Since(now))
+	}()
+
+	customer, err = c.sc.Customers.Get(customerID, &stripe.CustomerParams{
 		Params: stripe.Params{
 			Context: ctx,
 		},
@@ -223,12 +240,18 @@ func (c *Client) GetCustomer(ctx context.Context, customerID string) (*stripe.Cu
 	return customer, nil
 }
 
-func (c *Client) GetInvoiceWithCustomer(ctx context.Context, invoiceID string) (*stripe.Invoice, error) {
+func (c *Client) GetInvoiceWithCustomer(ctx context.Context, invoiceID string) (invoice *stripe.Invoice, err error) {
 	if invoiceID == "" {
 		return nil, fmt.Errorf("no invoice ID specified")
 	}
 
-	invoice, err := c.sc.Invoices.Get(invoiceID, &stripe.InvoiceParams{
+	now := time.Now()
+	reportStripeRequestStarted("invoice_get")
+	defer func() {
+		reportStripeRequestCompleted("invoice_get", err, time.Since(now))
+	}()
+
+	invoice, err = c.sc.Invoices.Get(invoiceID, &stripe.InvoiceParams{
 		Params: stripe.Params{
 			Context: ctx,
 			Expand:  []*string{stripe.String("customer")},
@@ -240,12 +263,18 @@ func (c *Client) GetInvoiceWithCustomer(ctx context.Context, invoiceID string) (
 	return invoice, nil
 }
 
-func (c *Client) GetSubscriptionWithCustomer(ctx context.Context, subscriptionID string) (*stripe.Subscription, error) {
+func (c *Client) GetSubscriptionWithCustomer(ctx context.Context, subscriptionID string) (subscription *stripe.Subscription, err error) {
 	if subscriptionID == "" {
 		return nil, fmt.Errorf("no subscriptionID specified")
 	}
 
-	subscription, err := c.sc.Subscriptions.Get(subscriptionID, &stripe.SubscriptionParams{
+	now := time.Now()
+	reportStripeRequestStarted("subscription_get")
+	defer func() {
+		reportStripeRequestCompleted("subscription_get", err, time.Since(now))
+	}()
+
+	subscription, err = c.sc.Subscriptions.Get(subscriptionID, &stripe.SubscriptionParams{
 		Params: stripe.Params{
 			Expand: []*string{stripe.String("customer")},
 		},
