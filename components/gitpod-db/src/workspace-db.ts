@@ -202,4 +202,6 @@ export interface WorkspaceDB {
 
     storePrebuildInfo(prebuildInfo: PrebuildInfo): Promise<void>;
     findPrebuildInfos(prebuildIds: string[]): Promise<PrebuildInfo[]>;
+
+    findProbeWorkspaceIDs(limit: number): Promise<string[]>;
 }
