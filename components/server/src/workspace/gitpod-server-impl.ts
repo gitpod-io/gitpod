@@ -181,6 +181,7 @@ import { formatPhoneNumber } from "../user/phone-numbers";
 import { IDEService } from "../ide-service";
 import { MessageBusIntegration } from "./messagebus-integration";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import * as grpc from "@grpc/grpc-js";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -1524,8 +1525,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         req.setSpec(spec);
         req.setExpose(true);
 
-        const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
-        await client.controlPort(ctx, req);
+        try {
+            const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
+            await client.controlPort(ctx, req);
+        } catch (e) {
+            throw this.mapGrpcError(e);
+        }
     }
 
     protected portVisibilityFromProto(visibility: ProtoPortVisibility): PortVisibility {
@@ -3177,5 +3182,22 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getNotifications(ctx: TraceContext): Promise<string[]> {
         this.checkAndBlockUser("getNotifications");
         return [];
+    }
+
+    protected mapGrpcError(err: Error): Error {
+        function isGrpcError(err: any): err is grpc.StatusObject {
+            return err.code && err.details;
+        }
+
+        if (!isGrpcError(err)) {
+            return err;
+        }
+
+        switch (err.code) {
+            case grpc.status.RESOURCE_EXHAUSTED:
+                return new ResponseError(ErrorCodes.TOO_MANY_REQUESTS, err.details);
+            default:
+                return new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, err.details);
+        }
     }
 }
