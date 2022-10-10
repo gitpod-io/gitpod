@@ -181,7 +181,9 @@ export default function () {
                     ) : prebuild?.status === "available" ? (
                         <a
                             className="my-auto"
-                            href={gitpodHostUrl.withContext(`${prebuild?.info.changeUrl}`).toString()}
+                            href={gitpodHostUrl
+                                .withContext(`open-prebuild/${prebuild?.info.id}/${prebuild?.info.changeUrl}`)
+                                .toString()}
                         >
                             <button>New Workspace ({prebuild?.info.branch})</button>
                         </a>

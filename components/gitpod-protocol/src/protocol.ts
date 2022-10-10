@@ -1200,6 +1200,16 @@ export namespace AdditionalContentContext {
     }
 }
 
+export interface OpenPrebuildContext extends WorkspaceContext {
+    openPrebuilID: string;
+}
+
+export namespace OpenPrebuildContext {
+    export function is(ctx: any): ctx is OpenPrebuildContext {
+        return "openPrebuildID" in ctx;
+    }
+}
+
 export interface CommitContext extends WorkspaceContext, GitCheckoutInfo {
     /** @deprecated Moved to .repository.cloneUrl, left here for backwards-compatibility for old workspace contextes in the DB */
     cloneUrl?: string;
