@@ -55,7 +55,7 @@ func (m CorsOrigin) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 	if m.AnyDomain {
 		allowedOrigins = []string{"*"}
 	} else {
-		allowedOrigins = []string{"*." + m.BaseDomain}
+		allowedOrigins = []string{"*." + m.BaseDomain, m.BaseDomain}
 	}
 	c := cors.New(cors.Options{
 		AllowedOrigins:   allowedOrigins,
