@@ -879,16 +879,11 @@ export class WorkspaceStarter {
                 }
             }
 
-            let workspaceClass = "";
-            let classesEnabled = await getExperimentsClientForBackend().getValueAsync("workspace_classes", false, {
-                user,
-                teams: userTeams,
-                billingTier,
-            });
             const usageAttributionId = await this.userService.getWorkspaceUsageAttributionId(user, workspace.projectId);
             const billingMode = await this.billingModes.getBillingMode(usageAttributionId, new Date());
 
-            if (classesEnabled || BillingMode.canSetWorkspaceClass(billingMode)) {
+            let workspaceClass = "";
+            if (BillingMode.canSetWorkspaceClass(billingMode)) {
                 // this is either the first time we start the workspace or the workspace was started
                 // before workspace classes and does not have a class yet
                 workspaceClass = await getWorkspaceClassForInstance(
