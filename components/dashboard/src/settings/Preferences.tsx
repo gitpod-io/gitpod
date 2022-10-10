@@ -13,7 +13,6 @@ import { trackEvent } from "../Analytics";
 import SelectIDE from "./SelectIDE";
 import SelectWorkspaceClass from "./selectClass";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 
 type Theme = "light" | "dark" | "system";
@@ -21,7 +20,6 @@ type Theme = "light" | "dark" | "system";
 export default function Preferences() {
     const { user, userBillingMode } = useContext(UserContext);
     const { setIsDark } = useContext(ThemeContext);
-    const { showWorkspaceClassesUI } = useContext(FeatureFlagContext);
 
     const [theme, setTheme] = useState<Theme>(localStorage.theme || "system");
     const actuallySetTheme = (theme: Theme) => {
@@ -57,9 +55,7 @@ export default function Preferences() {
                 <h3>Editor</h3>
                 <p className="text-base text-gray-500 dark:text-gray-400">Choose the editor for opening workspaces.</p>
                 <SelectIDE location="preferences" />
-                <SelectWorkspaceClass
-                    enabled={showWorkspaceClassesUI || BillingMode.canSetWorkspaceClass(userBillingMode)}
-                />
+                <SelectWorkspaceClass enabled={BillingMode.canSetWorkspaceClass(userBillingMode)} />
                 <h3 className="mt-12">Theme</h3>
                 <p className="text-base text-gray-500 dark:text-gray-400">Early bird or night owl? Choose your side.</p>
                 <div className="mt-4 space-x-3 flex">
