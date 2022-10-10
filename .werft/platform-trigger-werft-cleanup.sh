@@ -59,7 +59,7 @@ function cordon-node-if-almost-full {
 
 function is_node_empty {
   local node=$1
-  pods=$(kubectl -n werft get pods -o wide --field-selector spec.nodeName="${node}")
+  pods=$(kubectl -n werft get pods -o wide --field-selector spec.nodeName="${node}" 2>&1)
   if [[ "${pods}" == "No resources found in werft namespace." ]]; then
     return 0
   fi
