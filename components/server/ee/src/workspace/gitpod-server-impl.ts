@@ -47,6 +47,7 @@ import {
     TeamMemberRole,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
     PrebuildEvent,
+    OpenPrebuildContext,
 } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import {
@@ -963,9 +964,19 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
             const logCtx: LogContext = { userId: user.id };
             const cloneUrl = context.repository.cloneUrl;
-            const prebuiltWorkspace = await this.workspaceDb
-                .trace(ctx)
-                .findPrebuiltWorkspaceByCommit(cloneUrl, commitSHAs);
+            let prebuiltWorkspace: PrebuiltWorkspace | undefined;
+            if (OpenPrebuildContext.is(context)) {
+                prebuiltWorkspace = await this.workspaceDb.trace(ctx).findPrebuildByID(context.openPrebuildID);
+                if (prebuiltWorkspace?.cloneURL !== cloneUrl) {
+                    // prevent users from opening arbitrary prebuilds this way - they must match the clone URL so that the resource guards are correct.
+                    return;
+                }
+            } else {
+                prebuiltWorkspace = await this.workspaceDb
+                    .trace(ctx)
+                    .findPrebuiltWorkspaceByCommit(cloneUrl, commitSHAs);
+            }
+
             const logPayload = { mode, cloneUrl, commit: commitSHAs, prebuiltWorkspace };
             log.debug(logCtx, "Looking for prebuilt workspace: ", logPayload);
             if (!prebuiltWorkspace) {
@@ -994,7 +1005,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 const makeResult = (instanceID: string): WorkspaceCreationResult => {
                     return <WorkspaceCreationResult>{
                         runningWorkspacePrebuild: {
-                            prebuildID: prebuiltWorkspace.id,
+                            prebuildID: prebuiltWorkspace!.id,
                             workspaceID,
                             instanceID,
                             starting: "queued",

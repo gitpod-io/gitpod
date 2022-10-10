@@ -21,6 +21,7 @@ import {
     PrebuiltWorkspace,
     WorkspaceConfig,
     WorkspaceImageSource,
+    OpenPrebuildContext,
 } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
@@ -369,6 +370,18 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                 })
             ) {
                 config._featureFlags = (config._featureFlags || []).concat(["persistent_volume_claim"]);
+            }
+
+            if (OpenPrebuildContext.is(context.originalContext)) {
+                // Because of incremental prebuilds, createForContext will take over the original context.
+                // To ensure we get the right commit when forcing a prebuild, we force the context here.
+                context.originalContext = buildWorkspace.context;
+
+                if (CommitContext.is(context.originalContext)) {
+                    // We force the checkout of the revision rather than the ref/branch.
+                    // Otherwise we'd the correct prebuild with the "wrong" Git status.
+                    delete context.originalContext.ref;
+                }
             }
 
             const id = await this.generateWorkspaceID(context);
