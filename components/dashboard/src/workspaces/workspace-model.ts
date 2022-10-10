@@ -71,7 +71,7 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
         };
 
         const transport = createConnectTransport({
-            baseUrl: window.location.origin + "/public",
+            baseUrl: "https://api." + window.location.host,
             interceptors: [authInterceptor],
         });
         const client = createPromiseClient(WorkspacesService, transport);
