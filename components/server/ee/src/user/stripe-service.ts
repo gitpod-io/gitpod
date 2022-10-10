@@ -6,6 +6,7 @@
 
 import { inject, injectable } from "inversify";
 import Stripe from "stripe";
+import * as grpc from "@grpc/grpc-js";
 import { Config } from "../../../src/config";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
@@ -48,21 +49,13 @@ export class StripeService {
             const resp = await this.billingService.getStripeCustomer({ attributionId: attributionId });
             return resp.customer?.id;
         } catch (e) {
-            log.warn("Failed to retrieve Stripe Customer ID from billing service, falling back to search.", {
-                attributionId,
-            });
-        }
+            if (e.code === grpc.status.NOT_FOUND) {
+                return undefined;
+            }
 
-        // Fallback to searching against stripe. To be removed once we've got confidence in billingService.getStripeCustomer
-        const query = `metadata['attributionId']:'${attributionId}'`;
-
-        const result = await reportStripeOutcome("customers_search", () => {
-            return this.getStripe().customers.search({ query });
-        });
-        if (result.data.length > 1) {
-            throw new Error(`Found more than one Stripe customer for query '${query}'`);
+            log.error("Failed to get stripe customer", e, { attributionId });
+            throw e;
         }
-        return result.data[0]?.id;
     }
 
     async createCustomerForAttributionId(
