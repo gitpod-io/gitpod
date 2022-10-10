@@ -40,11 +40,31 @@ function cordon-node-if-almost-full {
     if [ "$disk_used_pct" -gt "$DISK_USED_THRESHOLD" ]; then
         echo "${disk_used_pct} is greater than ${DISK_USED_THRESHOLD}. Cordining node" | werft log slice "$slice_id"
         kubectl cordon "$node" | werft log slice "$slice_id"
+
+        if [[ "${node}" =~ "builds-static" ]]; then
+          echo "Cleaning up static node [${node}]"
+          while ! is_node_empty "${node}";do
+            echo "Node is not empty yet. Sleeping for 15 seconds."
+            sleep 15
+          done
+
+          gcloud compute instances delete "${node}" --zone="${zone}" -q
+        fi
     else
         echo "${disk_used_pct} is less than the trehold of ${DISK_USED_THRESHOLD}. Skipping node" | werft log slice "$slice_id"
     fi
 
     werft log slice "$slice_id" --done
+}
+
+function is_node_empty {
+  local node=$1
+  pods=$(kubectl -n werft get pods -o wide --field-selector spec.nodeName="${node}")
+  if [[ "${pods}" == "No resources found in werft namespace." ]]; then
+    return 0
+  fi
+
+  return 1
 }
 
 # Activate service account and install core-dev context
