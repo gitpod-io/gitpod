@@ -16,11 +16,9 @@ interface FeatureFlagConfig {
 }
 
 const FeatureFlagContext = createContext<{
-    showWorkspaceClassesUI: boolean;
     showPersistentVolumeClaimUI: boolean;
     showUsageView: boolean;
 }>({
-    showWorkspaceClassesUI: false,
     showPersistentVolumeClaimUI: false,
     showUsageView: false,
 });
@@ -31,7 +29,6 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const { project } = useContext(ProjectContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
-    const [showWorkspaceClassesUI, setShowWorkspaceClassesUI] = useState<boolean>(false);
     const [showPersistentVolumeClaimUI, setShowPersistentVolumeClaimUI] = useState<boolean>(false);
     const [showUsageView, setShowUsageView] = useState<boolean>(false);
 
@@ -39,7 +36,6 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
         if (!user) return;
         (async () => {
             const featureFlags: FeatureFlagConfig = {
-                workspace_classes: { defaultValue: true, setter: setShowWorkspaceClassesUI },
                 persistent_volume_claim: { defaultValue: true, setter: setShowPersistentVolumeClaimUI },
                 usage_view: { defaultValue: false, setter: setShowUsageView },
             };
@@ -57,7 +53,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     }, [user, teams, team, project]);
 
     return (
-        <FeatureFlagContext.Provider value={{ showWorkspaceClassesUI, showPersistentVolumeClaimUI, showUsageView }}>
+        <FeatureFlagContext.Provider value={{ showPersistentVolumeClaimUI, showUsageView }}>
             {children}
         </FeatureFlagContext.Provider>
     );
