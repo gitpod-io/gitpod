@@ -7,6 +7,7 @@ import (
 	"flag"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -75,6 +76,8 @@ func TestRender(t *testing.T) {
 			f, err := os.OpenFile(goldenPath, os.O_RDWR, 0644)
 			defer f.Close()
 			require.NoError(t, err)
+			cmd := exec.Command("sed", "-i", "-e", "\"s/[[:space:]]*$//\"", goldenPath)
+                        defer cmd.Run()
 
 			content, err := ioutil.ReadAll(f)
 			if err != nil {
