@@ -68,7 +68,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 				common.DefaultEnv(&ctx.Config),
-				common.WorkspaceTracingEnv(ctx),
+				common.WorkspaceTracingEnv(ctx, Component),
 				[]corev1.EnvVar{{
 					Name:  "GRPC_GO_RETRY",
 					Value: "on",

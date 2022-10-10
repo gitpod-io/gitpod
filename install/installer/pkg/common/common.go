@@ -112,7 +112,7 @@ func DefaultEnv(cfg *config.Config) []corev1.EnvVar {
 	)
 }
 
-func WorkspaceTracingEnv(context *RenderContext) (res []corev1.EnvVar) {
+func WorkspaceTracingEnv(context *RenderContext, component string) (res []corev1.EnvVar) {
 	var tracing *experimental.Tracing
 
 	_ = context.WithExperimental(func(cfg *experimental.Config) error {
@@ -122,10 +122,10 @@ func WorkspaceTracingEnv(context *RenderContext) (res []corev1.EnvVar) {
 		return nil
 	})
 
-	return tracingEnv(context, tracing)
+	return tracingEnv(context, component, tracing)
 }
 
-func WebappTracingEnv(context *RenderContext) (res []corev1.EnvVar) {
+func WebappTracingEnv(context *RenderContext, component string) (res []corev1.EnvVar) {
 	var tracing *experimental.Tracing
 
 	_ = context.WithExperimental(func(cfg *experimental.Config) error {
@@ -135,10 +135,10 @@ func WebappTracingEnv(context *RenderContext) (res []corev1.EnvVar) {
 		return nil
 	})
 
-	return tracingEnv(context, tracing)
+	return tracingEnv(context, component, tracing)
 }
 
-func tracingEnv(context *RenderContext, tracing *experimental.Tracing) (res []corev1.EnvVar) {
+func tracingEnv(context *RenderContext, component string, tracing *experimental.Tracing) (res []corev1.EnvVar) {
 	if context.Config.Observability.Tracing == nil {
 		res = append(res, corev1.EnvVar{Name: "JAEGER_DISABLED", Value: "true"})
 		return
@@ -152,6 +152,41 @@ func tracingEnv(context *RenderContext, tracing *experimental.Tracing) (res []co
 		// TODO(cw): think about proper error handling here.
 		//			 Returning an error would be the appropriate thing to do,
 		//			 but would make env var composition more cumbersome.
+	}
+
+	if context.Config.Observability.Tracing.SecretName != nil {
+		res = append(res, corev1.EnvVar{
+			Name: "JAEGER_USER",
+			ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{Name: *context.Config.Observability.Tracing.SecretName},
+				Key:                  "JAEGER_USER",
+			}},
+		})
+
+		res = append(res, corev1.EnvVar{
+			Name: "JAEGER_PASSWORD",
+			ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{Name: *context.Config.Observability.Tracing.SecretName},
+				Key:                  "JAEGER_PASSWORD",
+			}},
+		})
+	}
+
+	res = append(res, corev1.EnvVar{Name: "JAEGER_SERVICE_NAME", Value: component})
+
+	jaegerTags := []string{}
+	if context.Config.Metadata.InstallationShortname != "" {
+		jaegerTags = append(jaegerTags, fmt.Sprintf("cluster=%v", context.Config.Metadata.InstallationShortname))
+	}
+
+	if context.Config.Metadata.Region != "" {
+		jaegerTags = append(jaegerTags, fmt.Sprintf("region=%v", context.Config.Metadata.Region))
+	}
+
+	if len(jaegerTags) > 0 {
+		res = append(res,
+			corev1.EnvVar{Name: "JAEGER_TAGS", Value: strings.Join(jaegerTags, ",")},
+		)
 	}
 
 	samplerType := experimental.TracingSampleTypeConst
