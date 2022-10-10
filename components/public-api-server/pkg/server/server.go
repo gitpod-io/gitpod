@@ -24,7 +24,6 @@ import (
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/webhooks"
-	v1 "github.com/gitpod-io/gitpod/public-api/v1"
 	"github.com/sirupsen/logrus"
 )
 
@@ -35,6 +34,8 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	if err != nil {
 		return fmt.Errorf("failed to parse Gitpod API URL: %w", err)
 	}
+
+	connPool := &proxy.NoConnectionPool{ServerAPI: gitpodAPI}
 
 	srv, err := baseserver.New("public_api_server",
 		baseserver.WithLogger(logger),
@@ -66,7 +67,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 
 	srv.HTTPMux().Handle("/stripe/invoices/webhook", handlers.ContentTypeHandler(stripeWebhookHandler, "application/json"))
 
-	if registerErr := register(srv, gitpodAPI); registerErr != nil {
+	if registerErr := register(srv, connPool); registerErr != nil {
 		return fmt.Errorf("failed to register services: %w", registerErr)
 	}
 
@@ -77,13 +78,8 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	return nil
 }
 
-func register(srv *baseserver.Server, serverAPIURL *url.URL) error {
+func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool) error {
 	proxy.RegisterMetrics(srv.MetricsRegistry())
-
-	connPool := &proxy.NoConnectionPool{ServerAPI: serverAPIURL}
-
-	v1.RegisterWorkspacesServiceServer(srv.GRPC(), apiv1.NewWorkspaceService(connPool))
-	v1.RegisterPrebuildsServiceServer(srv.GRPC(), v1.UnimplementedPrebuildsServiceServer{})
 
 	handlerOptions := []connect.HandlerOption{
 		connect.WithInterceptors(
@@ -91,10 +87,10 @@ func register(srv *baseserver.Server, serverAPIURL *url.URL) error {
 		),
 	}
 
-	workspacesRoute, workspacesServiceHandler := v1connect.NewWorkspacesServiceHandler(&v1connect.UnimplementedWorkspacesServiceHandler{}, handlerOptions...)
+	workspacesRoute, workspacesServiceHandler := v1connect.NewWorkspacesServiceHandler(apiv1.NewWorkspaceService(connPool), handlerOptions...)
 	srv.HTTPMux().Handle(workspacesRoute, workspacesServiceHandler)
 
-	prebuildsRoute, prebuildsServiceHandler := v1connect.NewPrebuildsServiceHandler(&v1connect.UnimplementedPrebuildsServiceHandler{}, handlerOptions...)
+	prebuildsRoute, prebuildsServiceHandler := v1connect.NewPrebuildsServiceHandler(apiv1.NewPrebuildService(), handlerOptions...)
 	srv.HTTPMux().Handle(prebuildsRoute, prebuildsServiceHandler)
 
 	return nil

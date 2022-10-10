@@ -7,21 +7,20 @@ package apiv1
 import (
 	"context"
 	"errors"
+	"net/http"
 	"testing"
 	"time"
 
 	fuzz "github.com/AdaLogics/go-fuzz-headers"
+	"github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	v1 "github.com/gitpod-io/gitpod/public-api/v1"
+	"github.com/gitpod-io/gitpod/public-api/v1/v1connect"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -33,21 +32,22 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 	)
 
 	srv := baseserver.NewForTests(t,
-		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
+		baseserver.WithHTTP(baseserver.MustUseRandomLocalAddress(t)),
 	)
 
 	connPool := &FakeServerConnPool{}
-	v1.RegisterWorkspacesServiceServer(srv.GRPC(), NewWorkspaceService(connPool))
+
+	route, handler := v1connect.NewWorkspacesServiceHandler(NewWorkspaceService(connPool))
+	srv.HTTPMux().Handle(route, handler)
+
 	baseserver.StartServerForTests(t, srv)
 
-	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	require.NoError(t, err)
-
-	client := v1.NewWorkspacesServiceClient(conn)
-	ctx := metadata.AppendToOutgoingContext(context.Background(), "authorization", bearerToken)
+	client := v1connect.NewWorkspacesServiceClient(http.DefaultClient, srv.HTTPAddress(), connect.WithInterceptors(
+		auth.NewClientInterceptor(bearerToken),
+	))
 
 	type Expectation struct {
-		Code     codes.Code
+		Code     connect.Code
 		Response *v1.GetWorkspaceResponse
 	}
 
@@ -64,7 +64,6 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 				foundWorkspaceID: workspaceTestData[0].Protocol,
 			},
 			Expect: Expectation{
-				Code: codes.OK,
 				Response: &v1.GetWorkspaceResponse{
 					Result: workspaceTestData[0].API.Result,
 				},
@@ -74,7 +73,7 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 			name:        "not found when workspace is not found by ID",
 			WorkspaceID: "some-not-found-workspace-id",
 			Expect: Expectation{
-				Code: codes.NotFound,
+				Code: connect.CodeNotFound,
 			},
 		},
 	}
@@ -93,17 +92,16 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 			})
 			connPool.api = srv
 
-			resp, err := client.GetWorkspace(ctx, &v1.GetWorkspaceRequest{
+			resp, err := client.GetWorkspace(context.Background(), connect.NewRequest(&v1.GetWorkspaceRequest{
 				WorkspaceId: test.WorkspaceID,
-			})
-			if diff := cmp.Diff(test.Expect, Expectation{
-				Code:     status.Code(err),
-				Response: resp,
-			}, protocmp.Transform()); diff != "" {
-				t.Errorf("unexpected difference:\n%v", diff)
+			}))
+			requireErrorCode(t, test.Expect.Code, err)
+			if test.Expect.Response != nil {
+				if diff := cmp.Diff(test.Expect.Response, resp.Msg, protocmp.Transform()); diff != "" {
+					t.Errorf("unexpected difference:\n%v", diff)
+				}
 			}
 		})
-
 	}
 }
 
@@ -115,24 +113,24 @@ func TestWorkspaceService_GetOwnerToken(t *testing.T) {
 	)
 
 	srv := baseserver.NewForTests(t,
-		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
+		baseserver.WithHTTP(baseserver.MustUseRandomLocalAddress(t)),
 	)
 
 	connPool := &FakeServerConnPool{}
-	v1.RegisterWorkspacesServiceServer(srv.GRPC(), NewWorkspaceService(connPool))
+
+	route, handler := v1connect.NewWorkspacesServiceHandler(NewWorkspaceService(connPool))
+	srv.HTTPMux().Handle(route, handler)
+
 	baseserver.StartServerForTests(t, srv)
 
-	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	require.NoError(t, err)
-
-	client := v1.NewWorkspacesServiceClient(conn)
-	ctx := metadata.AppendToOutgoingContext(context.Background(), "authorization", bearerToken)
+	client := v1connect.NewWorkspacesServiceClient(http.DefaultClient, srv.HTTPAddress(), connect.WithInterceptors(
+		auth.NewClientInterceptor(bearerToken),
+	))
 
 	type Expectation struct {
-		Code     codes.Code
+		Code     connect.Code
 		Response *v1.GetOwnerTokenResponse
 	}
-
 	tests := []struct {
 		name        string
 		WorkspaceID string
@@ -144,7 +142,6 @@ func TestWorkspaceService_GetOwnerToken(t *testing.T) {
 			WorkspaceID: foundWorkspaceID,
 			Tokens:      map[string]string{foundWorkspaceID: ownerToken},
 			Expect: Expectation{
-				Code: codes.OK,
 				Response: &v1.GetOwnerTokenResponse{
 					Token: ownerToken,
 				},
@@ -154,7 +151,7 @@ func TestWorkspaceService_GetOwnerToken(t *testing.T) {
 			name:        "not found when workspace is not found by ID",
 			WorkspaceID: "some-not-found-workspace-id",
 			Expect: Expectation{
-				Code: codes.NotFound,
+				Code: connect.CodeNotFound,
 			},
 		},
 	}
@@ -173,15 +170,14 @@ func TestWorkspaceService_GetOwnerToken(t *testing.T) {
 			})
 			connPool.api = srv
 
-			resp, err := client.GetOwnerToken(ctx, &v1.GetOwnerTokenRequest{
+			resp, err := client.GetOwnerToken(context.Background(), connect.NewRequest(&v1.GetOwnerTokenRequest{
 				WorkspaceId: test.WorkspaceID,
-			})
-			act := Expectation{
-				Code:     status.Code(err),
-				Response: resp,
-			}
-			if diff := cmp.Diff(test.Expect, act, protocmp.Transform()); diff != "" {
-				t.Errorf("unexpected difference:\n%v", diff)
+			}))
+			requireErrorCode(t, test.Expect.Code, err)
+			if test.Expect.Response != nil {
+				if diff := cmp.Diff(test.Expect.Response, resp.Msg, protocmp.Transform()); diff != "" {
+					t.Errorf("unexpected difference:\n%v", diff)
+				}
 			}
 		})
 	}
@@ -191,23 +187,25 @@ func TestWorkspaceService_ListWorkspaces(t *testing.T) {
 	const (
 		bearerToken = "bearer-token-for-tests"
 	)
+	ctx := context.Background()
 
 	srv := baseserver.NewForTests(t,
-		baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)),
+		baseserver.WithHTTP(baseserver.MustUseRandomLocalAddress(t)),
 	)
 
 	connPool := &FakeServerConnPool{}
-	v1.RegisterWorkspacesServiceServer(srv.GRPC(), NewWorkspaceService(connPool))
+
+	route, handler := v1connect.NewWorkspacesServiceHandler(NewWorkspaceService(connPool))
+	srv.HTTPMux().Handle(route, handler)
+
 	baseserver.StartServerForTests(t, srv)
 
-	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	require.NoError(t, err)
-
-	client := v1.NewWorkspacesServiceClient(conn)
-	ctx := metadata.AppendToOutgoingContext(context.Background(), "authorization", bearerToken)
+	client := v1connect.NewWorkspacesServiceClient(http.DefaultClient, srv.HTTPAddress(), connect.WithInterceptors(
+		auth.NewClientInterceptor(bearerToken),
+	))
 
 	type Expectation struct {
-		Code     codes.Code
+		Code     connect.Code
 		Response *v1.ListWorkspacesResponse
 	}
 
@@ -222,7 +220,6 @@ func TestWorkspaceService_ListWorkspaces(t *testing.T) {
 			Name:       "empty list",
 			Workspaces: []*protocol.WorkspaceInfo{},
 			Expectation: Expectation{
-				Code:     codes.OK,
 				Response: &v1.ListWorkspacesResponse{},
 			},
 		},
@@ -232,7 +229,6 @@ func TestWorkspaceService_ListWorkspaces(t *testing.T) {
 				&workspaceTestData[0].Protocol,
 			},
 			Expectation: Expectation{
-				Code: codes.OK,
 				Response: &v1.ListWorkspacesResponse{
 					Result: []*v1.ListWorkspacesResponse_WorkspaceAndInstance{
 						&workspaceTestData[0].API,
@@ -250,7 +246,7 @@ func TestWorkspaceService_ListWorkspaces(t *testing.T) {
 				return []*protocol.WorkspaceInfo{&ws}
 			}(),
 			Expectation: Expectation{
-				Code: codes.FailedPrecondition,
+				Code: connect.CodeFailedPrecondition,
 			},
 		},
 		{
@@ -266,7 +262,6 @@ func TestWorkspaceService_ListWorkspaces(t *testing.T) {
 			},
 			PageSize: 42,
 			Expectation: Expectation{
-				Code:     codes.OK,
 				Response: &v1.ListWorkspacesResponse{},
 			},
 		},
@@ -274,7 +269,7 @@ func TestWorkspaceService_ListWorkspaces(t *testing.T) {
 			Name:     "excessive page size",
 			PageSize: 1000,
 			Expectation: Expectation{
-				Code: codes.InvalidArgument,
+				Code: connect.CodeInvalidArgument,
 			},
 		},
 	}
@@ -296,17 +291,15 @@ func TestWorkspaceService_ListWorkspaces(t *testing.T) {
 			}
 			connPool.api = srv
 
-			resp, err := client.ListWorkspaces(ctx, &v1.ListWorkspacesRequest{
+			resp, err := client.ListWorkspaces(ctx, connect.NewRequest(&v1.ListWorkspacesRequest{
 				Pagination: pagination,
-			})
+			}))
+			requireErrorCode(t, test.Expectation.Code, err)
 
-			act := Expectation{
-				Code:     status.Code(err),
-				Response: resp,
-			}
-
-			if diff := cmp.Diff(test.Expectation, act, protocmp.Transform()); diff != "" {
-				t.Errorf("unexpected difference:\n%v", diff)
+			if test.Expectation.Response != nil {
+				if diff := cmp.Diff(test.Expectation.Response, resp.Msg, protocmp.Transform()); diff != "" {
+					t.Errorf("unexpected difference:\n%v", diff)
+				}
 			}
 		})
 	}
@@ -446,4 +439,14 @@ type FakeServerConnPool struct {
 
 func (f *FakeServerConnPool) Get(ctx context.Context, token string) (protocol.APIInterface, error) {
 	return f.api, nil
+}
+
+func requireErrorCode(t *testing.T, expected connect.Code, err error) {
+	t.Helper()
+	if expected == 0 && err == nil {
+		return
+	}
+
+	actual := connect.CodeOf(err)
+	require.Equal(t, expected, actual, "expected code %s, but got %s from error %v", expected.String(), actual.String(), err)
 }
