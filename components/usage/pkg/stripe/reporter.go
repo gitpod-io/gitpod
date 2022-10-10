@@ -6,11 +6,10 @@ package stripe
 
 import (
 	"fmt"
-	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stripe/stripe-go/v72"
 )
 
 var (
@@ -26,14 +25,14 @@ var (
 		Subsystem: "stripe",
 		Name:      "requests_started_total",
 		Help:      "Counter of requests started by stripe clients",
-	}, []string{"method", "path"})
+	}, []string{"resource"})
 
 	stripeClientRequestsCompletedSeconds = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "gitpod",
 		Subsystem: "stripe",
 		Name:      "requests_completed_seconds",
 		Help:      "Histogram of requests completed by stripe clients",
-	}, []string{"method", "path", "code"})
+	}, []string{"resource", "code"})
 )
 
 func RegisterMetrics(reg *prometheus.Registry) error {
@@ -60,27 +59,15 @@ func reportStripeUsageUpdate(err error) {
 	stripeUsageUpdateTotal.WithLabelValues(outcome).Inc()
 }
 
-type stripeRoundTripper struct {
-	next http.RoundTripper
+func reportStripeRequestStarted(resource string) {
+	stripeClientRequestsStarted.WithLabelValues(resource).Inc()
 }
 
-func (rt *stripeRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
-	now := time.Now()
-	path := r.URL.Path
-	method := r.Method
-	stripeClientRequestsStarted.WithLabelValues(method, path).Inc()
-
-	resp, err := rt.next.RoundTrip(r)
-	took := time.Since(now)
-	code := 0
-	if err == nil && resp != nil {
-		code = resp.StatusCode
+func reportStripeRequestCompleted(resource string, err error, took time.Duration) {
+	code := "unknown"
+	if stripeErr, ok := err.(*stripe.Error); ok {
+		code = string(stripeErr.Code)
 	}
 
-	stripeClientRequestsCompletedSeconds.WithLabelValues(method, path, strconv.Itoa(code)).Observe(took.Seconds())
-	return resp, err
-}
-
-func StripeClientMetricsRoundTripper(next http.RoundTripper) http.RoundTripper {
-	return &stripeRoundTripper{next: next}
+	stripeClientRequestsCompletedSeconds.WithLabelValues(resource, code).Observe(took.Seconds())
 }
