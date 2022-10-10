@@ -9,15 +9,13 @@ set -o nounset
 set -o pipefail
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/../../
-COMPONENTS_DIR="$ROOT_DIR"/components
 
 # include protoc bash functions
 # shellcheck disable=SC1090,SC1091
 source "$ROOT_DIR"/scripts/protoc-generator.sh
 
 install_dependencies
-go_protoc "$COMPONENTS_DIR"
-typescript_protoc "$COMPONENTS_DIR"
+protoc_buf_generate
 
 go generate typescript/util/generate-ws-ready.go
 
