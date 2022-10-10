@@ -152,6 +152,7 @@ api.{$GITPOD_DOMAIN} {
 
 	gitpod.cors_origin {
 		base_domain {$GITPOD_DOMAIN}
+		debug true
 	}
 
 	# All traffic goes to HTTP endpoint. We handle gRPC using connect.build
