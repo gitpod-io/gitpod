@@ -196,7 +196,7 @@ fi
 				}},
 				Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 					common.DefaultEnv(&cfg),
-					common.WorkspaceTracingEnv(ctx),
+					common.WorkspaceTracingEnv(ctx, Component),
 					common.NodeNameEnv(ctx),
 				)),
 				Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{Requests: corev1.ResourceList{
