@@ -84,4 +84,10 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
         })(),
     })
     admissionConstraints?: AdmissionConstraint[];
+
+    @Column({
+        type: "varchar",
+        length: 255,
+    })
+    applicationCluster: string;
 }
