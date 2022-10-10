@@ -39,6 +39,7 @@ class TestClientProvider {
                         state: "cordoned",
                         url: "",
                         admissionConstraints: [],
+                        applicationCluster: "xx01",
                     },
                     {
                         name: "c2",
@@ -48,6 +49,7 @@ class TestClientProvider {
                         state: "cordoned",
                         url: "",
                         admissionConstraints: [],
+                        applicationCluster: "xx01",
                     },
                     {
                         name: "c3",
@@ -57,6 +59,7 @@ class TestClientProvider {
                         state: "cordoned",
                         url: "",
                         admissionConstraints: [],
+                        applicationCluster: "xx01",
                     },
                     {
                         name: "a1",
@@ -66,6 +69,7 @@ class TestClientProvider {
                         state: "available",
                         url: "",
                         admissionConstraints: [],
+                        applicationCluster: "xx01",
                     },
                     {
                         name: "a2",
@@ -75,6 +79,7 @@ class TestClientProvider {
                         state: "available",
                         url: "",
                         admissionConstraints: [],
+                        applicationCluster: "xx01",
                     },
                     {
                         name: "a3",
@@ -84,6 +89,7 @@ class TestClientProvider {
                         state: "available",
                         url: "",
                         admissionConstraints: [],
+                        applicationCluster: "xx01",
                     },
                     {
                         name: "con1",
@@ -93,6 +99,7 @@ class TestClientProvider {
                         state: "available",
                         url: "",
                         admissionConstraints: [{ type: "has-permission", permission: "new-workspace-cluster" }],
+                        applicationCluster: "xx01",
                     },
                     {
                         name: "con2",
@@ -104,6 +111,7 @@ class TestClientProvider {
                         admissionConstraints: [
                             { type: "has-permission", permission: "monitor" }, // This is meant to representent a permission that does not take special predence (cmp. constraints.ts)
                         ],
+                        applicationCluster: "xx01",
                     },
                 ];
                 return <WorkspaceManagerClientProviderSource>{
