@@ -151,7 +151,7 @@ api.{$GITPOD_DOMAIN} {
     }
 
 	gitpod.cors_origin {
-		base_domain {$GITPOD_DOMAIN}
+		base_domain https://{$GITPOD_DOMAIN}
 		debug true
 	}
 
