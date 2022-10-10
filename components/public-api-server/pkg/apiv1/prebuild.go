@@ -6,23 +6,24 @@ package apiv1
 
 import (
 	"context"
+
+	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/public-api/v1"
+	"github.com/gitpod-io/gitpod/public-api/v1/v1connect"
 )
 
 func NewPrebuildService() *PrebuildService {
-	return &PrebuildService{
-		UnimplementedPrebuildsServiceServer: &v1.UnimplementedPrebuildsServiceServer{},
-	}
+	return &PrebuildService{}
 }
 
 type PrebuildService struct {
-	*v1.UnimplementedPrebuildsServiceServer
+	v1connect.UnimplementedPrebuildsServiceHandler
 }
 
-func (p *PrebuildService) GetPrebuild(ctx context.Context, req *v1.GetPrebuildRequest) (*v1.GetPrebuildResponse, error) {
-	return &v1.GetPrebuildResponse{
+func (p *PrebuildService) GetPrebuild(ctx context.Context, req *connect.Request[v1.GetPrebuildRequest]) (*connect.Response[v1.GetPrebuildResponse], error) {
+	return connect.NewResponse(&v1.GetPrebuildResponse{
 		Prebuild: &v1.Prebuild{
-			PrebuildId: req.GetPrebuildId(),
+			PrebuildId: req.Msg.GetPrebuildId(),
 			Spec: &v1.PrebuildSpec{
 				Context: &v1.WorkspaceContext{
 					ContextUrl: "https://github.com/gitpod-io/gitpod",
@@ -32,5 +33,5 @@ func (p *PrebuildService) GetPrebuild(ctx context.Context, req *v1.GetPrebuildRe
 			},
 			Status: nil,
 		},
-	}, nil
+	}), nil
 }

@@ -5,9 +5,9 @@
 package proxy
 
 import (
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"strings"
+
+	"github.com/bufbuild/connect-go"
 )
 
 func ConvertError(err error) error {
@@ -18,23 +18,23 @@ func ConvertError(err error) error {
 	s := err.Error()
 
 	if strings.Contains(s, "code 401") {
-		return status.Error(codes.PermissionDenied, s)
+		return connect.NewError(connect.CodePermissionDenied, err)
 	}
 
 	// components/gitpod-protocol/src/messaging/error.ts
 	if strings.Contains(s, "code 403") {
-		return status.Error(codes.PermissionDenied, s)
+		return connect.NewError(connect.CodePermissionDenied, err)
 	}
 
 	// components/gitpod-protocol/src/messaging/error.ts
 	if strings.Contains(s, "code 404") {
-		return status.Error(codes.NotFound, s)
+		return connect.NewError(connect.CodeNotFound, err)
 	}
 
 	// components/gitpod-messagebus/src/jsonrpc-server.ts#47
 	if strings.Contains(s, "code -32603") {
-		return status.Error(codes.Internal, s)
+		return connect.NewError(connect.CodeInternal, err)
 	}
 
-	return status.Error(codes.Internal, s)
+	return connect.NewError(connect.CodeInternal, err)
 }
