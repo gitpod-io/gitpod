@@ -13,6 +13,8 @@ import {
 } from "@gitpod/gitpod-protocol";
 import { hoursBefore, isDateSmallerOrEqual } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { getGitpodService } from "../service/service";
+import { createConnectTransport, createPromiseClient, Interceptor } from "@bufbuild/connect-web";
+import { WorkspacesService } from "@gitpod/public-api/lib/gitpod/v1/workspaces_connectweb";
 
 export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
     protected workspaces = new Map<string, WorkspaceInfo>();
@@ -51,6 +53,31 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
                 includeWithoutProject: true,
             }),
         ]);
+
+        const token = await getGitpodService().server.generateNewGitpodToken({
+            type: 1,
+            scopes: [
+                "function:getGitpodTokenScopes",
+                "function:getWorkspace",
+                "function:getWorkspaces",
+                "function:listenForWorkspaceInstanceUpdates",
+                "resource:default",
+            ],
+        });
+
+        const authInterceptor: Interceptor = (next) => async (req) => {
+            req.header.set("Authorization", `Bearer ${token}`);
+            return await next(req);
+        };
+
+        const transport = createConnectTransport({
+            baseUrl: window.location.origin + "/public",
+            interceptors: [authInterceptor],
+        });
+        const client = createPromiseClient(WorkspacesService, transport);
+
+        const resp = await client.listWorkspaces({});
+        console.log(resp);
 
         this.updateMap(infos);
         // Additional fetch pinned workspaces

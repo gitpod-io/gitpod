@@ -8,7 +8,7 @@
 	# set default SNI for old clients
 	default_sni {$GITPOD_DOMAIN}
 
-	# debug
+	debug
 
 	# configure plugin order
 	# https://caddyserver.com/docs/caddyfile/directives#directive-order
@@ -149,6 +149,10 @@ api.{$GITPOD_DOMAIN} {
         level DEBUG
         output stdout
     }
+
+	gitpod.cors_origin {
+		base_domain {$GITPOD_DOMAIN}
+	}
 
 	# All traffic goes to HTTP endpoint. We handle gRPC using connect.build
 	reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002

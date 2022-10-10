@@ -17,6 +17,7 @@ packages:
       - scripts/run-integration-tests.sh
     deps:
       - components/gitpod-protocol:lib
+      - components/public-api/typescript:lib
     config:
       commands:
         build: ["yarn", "build"]
