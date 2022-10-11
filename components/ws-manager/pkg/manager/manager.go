@@ -671,13 +671,6 @@ func podRunning(clientset client.Client, podName, namespace string) wait.Conditi
 					return true, nil
 				}
 			}
-			// if we failed to mount volume, we need to re-create the pod
-			// ref: https://github.com/gitpod-io/gitpod/issues/13353
-			// ref: https://github.com/kubernetes-sigs/gcp-compute-persistent-disk-csi-driver/issues/608
-			if strings.Contains(pod.Status.Reason, "MountVolume.MountDevice failed for volume") {
-				return false, xerrors.Errorf("failed mounting volume, reason: %s", pod.Status.Reason)
-			}
-
 			// if pod is pending, wait for it to get scheduled
 			return false, nil
 		case corev1.PodRunning:
