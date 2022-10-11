@@ -225,10 +225,6 @@ https://{$GITPOD_DOMAIN} {
 
 	@backend path /api/* /headless-logs/*
 	handle @backend {
-		gitpod.cors_origin {
-			base_domain {$GITPOD_DOMAIN}
-		}
-
 		# note: no compression, as that breaks streaming for headless logs
 
 		uri strip_prefix /api
