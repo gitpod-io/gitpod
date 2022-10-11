@@ -150,7 +150,10 @@ api.{$GITPOD_DOMAIN} {
         output stdout
     }
 
-	# All traffic goes to HTTP endpoint. We handle gRPC using connect.build
+	gitpod.cors_origin {
+		allowed_origins https://{$GITPOD_DOMAIN}
+	}
+
 	reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002
 }
 
