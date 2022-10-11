@@ -35,7 +35,10 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 		return fmt.Errorf("failed to parse Gitpod API URL: %w", err)
 	}
 
-	connPool := &proxy.NoConnectionPool{ServerAPI: gitpodAPI}
+	connPool, err := proxy.NewConnectionPool(gitpodAPI, 3000)
+	if err != nil {
+		return fmt.Errorf("failed to setup connection pool: %w", err)
+	}
 
 	srv, err := baseserver.New("public_api_server",
 		baseserver.WithLogger(logger),
@@ -82,7 +85,6 @@ func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool) error
 	proxy.RegisterMetrics(srv.MetricsRegistry())
 
 	connectMetrics := NewConnectMetrics()
-
 	err := connectMetrics.Register(srv.MetricsRegistry())
 	if err != nil {
 		return err
