@@ -96,5 +96,10 @@
       "eg2.vscode-npm-script": true,
       "ethan-reesor.vscode-go-test-adapter": true
     },
-    "migrateToPreRelease": {}
+    "migrateToPreRelease": {
+      "julialang.language-julia-insider": {
+        "id": "julialang.language-julia",
+        "displayName": "Julia"
+      }
+    }
   }
