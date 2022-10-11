@@ -57,7 +57,10 @@ export class HarvesterPreviewEnvironment {
     constructor(werft: Werft, namespace: string) {
         this.werft = werft;
         this.namespace = namespace;
-        this.name = namespace.replace(HarvesterPreviewEnvironment.namespacePrefix, "");
+        this.name = namespace;
+        if (this.namespace.startsWith(HarvesterPreviewEnvironment.namespacePrefix)){
+            this.name = namespace.slice(HarvesterPreviewEnvironment.namespacePrefix.length);
+        }
     }
 
     async delete(): Promise<void> {
