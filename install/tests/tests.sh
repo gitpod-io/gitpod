@@ -3,6 +3,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
+TIMEOUT=${3:-10}
 CURRENT=$(pwd)
 TESTPATH="../../$2"
 DATE_BIN=$(command -v date)
@@ -12,7 +13,7 @@ echo "Starting test on ${DATE} for ${TESTPATH}"
 
 cd "${TESTPATH}" ||  echo "Path invalid ${TESTPATH}"
 
-go test -v ./... "-kubeconfig=$1" -namespace=gitpod -username=gitpod-integration-test 2>&0 -coverprofile=coverage.out
+go test -v ./... "-timeout=${TIMEOUT}m" "-kubeconfig=$1" -namespace=gitpod -username=gitpod-integration-test 2>&0 -coverprofile=coverage.out
 
 TEST_STATUS=$?
 echo ${TEST_STATUS}

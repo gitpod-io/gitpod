@@ -418,7 +418,7 @@ endif
 	curl -i -X GET https://${TF_VAR_TEST_ID}.${TF_VAR_domain}/api/version || { echo "Curling Gitpod endpoint failed"; exit 1; }
 
 define runtests
-	./tests.sh ${KUBECONFIG} $(1)
+	./tests.sh ${KUBECONFIG} $(1) $(2)
 endef
 
 run-workspace-tests:
@@ -428,7 +428,7 @@ run-vscode-ide-tests:
 	$(call runtests,"test/tests/ide/vscode/")
 
 run-jb-ide-tests:
-	$(call runtests,"test/tests/ide/jetbrains/")
+	$(call runtests,"test/tests/ide/jetbrains/", 30)
 
 run-cs-component-tests:
 	$(call runtests,"test/tests/components/content-service/")
