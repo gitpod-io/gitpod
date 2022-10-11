@@ -32,4 +32,3 @@ provider "k8s" {
   alias       = "harvester"
   config_path = var.harvester_kube_path
 }
-

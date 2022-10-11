@@ -1,21 +1,8 @@
 import { exec, ExecOptions } from "./shell";
-import * as path from "path";
-import { CORE_DEV_KUBECONFIG_PATH } from "../jobs/build/const";
+import {CORE_DEV_KUBECONFIG_PATH, GCLOUD_SERVICE_ACCOUNT_PATH, HARVESTER_KUBECONFIG_PATH} from "../jobs/build/const";
 import { Werft } from "./werft";
 import { reportCertificateError } from "../util/slack";
-
-export class IssueCertificateParams {
-    pathToTemplate: string;
-    gcpSaPath: string;
-    dnsZoneDomain: string;
-    domain: string;
-    ip: string;
-    additionalSubdomains: string[];
-    bucketPrefixTail: string;
-    certName: string;
-    certNamespace: string;
-    previewName: string
-}
+import {JobConfig} from "../jobs/build/job-config";
 
 export class InstallCertificateParams {
     certName: string;
@@ -25,37 +12,38 @@ export class InstallCertificateParams {
     destinationKubeconfig: string;
 }
 
-export async function issueCertificate(werft: Werft, params: IssueCertificateParams, shellOpts: ExecOptions): Promise<boolean> {
-    if (isCertReady(params.certName)){
-        werft.log(shellOpts.slice, `Certificate ready`);
+export async function certReady(werft: Werft, config: JobConfig, slice: string): Promise<boolean> {
+    const certName = `harvester-${config.previewEnvironment.destname}`;
+
+    if (isCertReady(certName)){
+        werft.log(slice, `Certificate ready`);
         return true
     }
-
-    var subdomains = [];
-    werft.log(shellOpts.slice, `Subdomains: ${params.additionalSubdomains}`);
-    for (const sd of params.additionalSubdomains) {
-        subdomains.push(sd);
-    }
-
-    werft.log(shellOpts.slice, `"Domain: ${params.domain}, Subdomains: ${subdomains}"`);
-    validateSubdomains(werft, shellOpts.slice, params.domain, subdomains);
 
     const maxAttempts = 5
     var certReady = false
     for (var i = 1;i<=maxAttempts;i++) {
-        werft.log(shellOpts.slice, `Creating cert: Attempt ${i}`);
-        createCertificateResource(werft, shellOpts, params, subdomains);
-        werft.log(shellOpts.slice, `Checking for cert readiness: Attempt ${i}`);
-        if (waitCertReady(params.certName)) {
+        werft.log(slice, `Creating cert: Attempt ${i}`);
+        exec(`GOOGLE_BACKEND_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
+                        TF_VAR_dev_kube_path=${CORE_DEV_KUBECONFIG_PATH} \
+                        TF_VAR_harvester_kube_path=${HARVESTER_KUBECONFIG_PATH} \
+                        TF_VAR_preview_name=${config.previewEnvironment.destname} \
+                        TF_CLI_ARGS_plan="-replace=kubernetes_manifest.cert" \
+                        ./dev/preview/workflow/preview/deploy-harvester.sh`,
+            {slice: slice})
+
+        werft.log(slice, `Checking for cert readiness: Attempt ${i}`);
+        if (waitCertReady(certName)) {
             certReady = true;
             break;
         }
-        deleteCertificateResource(werft, shellOpts, params)
     }
+
     if (!certReady) {
-        retrieveFailedCertDebug(params.certName, shellOpts.slice)
-        werft.fail(shellOpts.slice, `Certificate ${params.certName} never reached the Ready state`)
+        retrieveFailedCertDebug(certName, slice)
+        werft.fail(slice, `Certificate ${certName} never reached the Ready state`)
     }
+
     return certReady
 }
 
@@ -89,64 +77,6 @@ function retrieveFailedCertDebug(certName: string, slice: string) {
     reportCertificateError({ certificateName: certName, certifiateYAML: certificateYAML, certificateDebug: certificateDebug }).catch((error: Error) =>
         console.error("Failed to send message to Slack", error),
     );
-}
-
-function validateSubdomains(werft: Werft, slice: string, domain: string, subdomains: string[]): void {
-    // sanity: check if there is a "SAN short enough to fit into CN (63 characters max)"
-    // source: https://community.letsencrypt.org/t/certbot-errors-with-obtaining-a-new-certificate-an-unexpected-error-occurred-the-csr-is-unacceptable-e-g-due-to-a-short-key-error-finalizing-order-issuing-precertificate-csr-doesnt-contain-a-san-short-enough-to-fit-in-cn/105513/2
-    if (
-        !subdomains.some((sd) => {
-            const san = sd + domain;
-            return san.length <= 63;
-        })
-    ) {
-        werft.fail(
-            slice,
-            `there is no subdomain + '${domain}' shorter or equal to 63 characters, max. allowed length for CN. No HTTPS certs for you! Consider using a short branch name...`,
-        );
-    }
-}
-
-function createCertificateResource(
-    werft: Werft,
-    shellOpts: ExecOptions,
-    params: IssueCertificateParams,
-    subdomains: string[],
-) {
-    // Certificates are always issued in the core-dev cluster.
-    // They might be copied to other clusters in future steps.
-    var cmd = `set -x \
-    && cd ${path.join(params.pathToTemplate)} \
-    && cp cert-manager_certificate.tpl cert.yaml \
-    && yq w -i cert.yaml metadata.name '${params.certName}' \
-    && yq w -i cert.yaml spec.secretName '${params.certName}' \
-    && yq w -i cert.yaml metadata.namespace '${params.certNamespace}' \
-    && yq w -i cert.yaml spec.issuerRef.name 'letsencrypt-issuer-gitpod-core-dev' \
-    && yq w -i cert.yaml metadata.annotations.preview/owner '${params.previewName}' \
-    ${subdomains.map((s) => `&& yq w -i cert.yaml spec.dnsNames[+] '${s + params.domain}'`).join("  ")} \
-    && kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} apply -f cert.yaml`;
-
-    werft.log(shellOpts.slice, "Creating certificate Custom Resource");
-    const rc = exec(cmd, { slice: shellOpts.slice, dontCheckRc: true }).code;
-
-    if (rc != 0) {
-        werft.fail(shellOpts.slice, `Failed to create the certificate (${params.certName}) Custom Resource`);
-    }
-}
-
-function deleteCertificateResource(
-    werft: Werft,
-    shellOpts: ExecOptions,
-    params: IssueCertificateParams,
-) {
-    const rc = exec(
-        `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n ${params.certNamespace} delete ${params.certName}`,
-        { slice: shellOpts.slice, dontCheckRc: true }
-    ).code;
-
-    if (rc != 0) {
-        werft.fail(shellOpts.slice, `Failed to delete the certificate (${params.certName}) Custom Resource`);
-    }
 }
 
 export async function installCertificate(werft, params: InstallCertificateParams, shellOpts: ExecOptions) {
