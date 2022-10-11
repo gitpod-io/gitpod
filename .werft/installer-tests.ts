@@ -516,8 +516,9 @@ async function cleanup(): Promise<void> {
                 werft.failSlice(phase.phase, new Error("Failed to cleanup resources"));
 
                 sendFailureSlackAlert(phase.description, new Error("Cleanup job failed"), slackHook.get("self-hosted-jobs"));
+            } else {
+                werft.done(phase.phase);
             }
-            werft.done(phase.phase);
         })
         .finally(() => deleteReplicatedLicense(werft, process.env["TF_VAR_TEST_ID"])
         );
