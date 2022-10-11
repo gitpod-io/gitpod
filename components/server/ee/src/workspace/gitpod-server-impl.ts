@@ -2113,8 +2113,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    protected defaultSpendingLimit = 100;
-    async subscribeToStripe(ctx: TraceContext, attributionId: string, setupIntentId: string): Promise<void> {
+    async subscribeToStripe(
+        ctx: TraceContext,
+        attributionId: string,
+        setupIntentId: string,
+        usageLimit: number,
+    ): Promise<void> {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
@@ -2142,7 +2146,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             await this.usageService.setCostCenter({
                 costCenter: {
                     attributionId: attributionId,
-                    spendingLimit: this.defaultSpendingLimit,
+                    spendingLimit: usageLimit,
                     billingStrategy: CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE,
                 },
             });
