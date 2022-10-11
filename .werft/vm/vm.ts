@@ -33,6 +33,19 @@ export function deleteVM(options: { name: string }) {
     werft.currentPhaseSpan.setAttribute("preview.deleted_vm", true);
 }
 
+/**
+ * Check if a VM with the given name already exists.
+ * @returns true if the VM already exists
+ */
+export function vmExists(options: { name: string }) {
+    const namespace = `preview-${options.name}`;
+    const status = exec(`kubectl --kubeconfig ${HARVESTER_KUBECONFIG_PATH} -n ${namespace} get vmi ${options.name}`, {
+        dontCheckRc: true,
+        silent: true,
+    });
+    return status.code == 0;
+}
+
 export class NotFoundError extends Error {
     constructor(message: string) {
         super(message);

@@ -11,13 +11,11 @@ import {
     waitForApiserver,
 } from "../../util/kubectl";
 import {
-    issueCertificate,
     installCertificate,
-    IssueCertificateParams,
     InstallCertificateParams,
 } from "../../util/certs";
 import { sleep, env } from "../../util/util";
-import { CORE_DEV_KUBECONFIG_PATH, GCLOUD_SERVICE_ACCOUNT_PATH, PREVIEW_K3S_KUBECONFIG_PATH } from "./const";
+import { CORE_DEV_KUBECONFIG_PATH, PREVIEW_K3S_KUBECONFIG_PATH } from "./const";
 import { Werft } from "../../util/werft";
 import { JobConfig } from "./job-config";
 import * as VM from "../../vm/vm";
@@ -461,29 +459,6 @@ async function addVMDNSRecord(werft: Werft, name: string, domain: string) {
     werft.done(installerSlices.DNS_ADD_RECORD);
 }
 
-export async function issueMetaCerts(
-    werft: Werft,
-    certName: string,
-    certsNamespace: string,
-    domain: string,
-    branch: string,
-    slice: string,
-): Promise<boolean> {
-    const additionalSubdomains: string[] = ["", "*.", `*.ws.`];
-    var metaClusterCertParams = new IssueCertificateParams();
-    metaClusterCertParams.pathToTemplate = "/workspace/.werft/util/templates";
-    metaClusterCertParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
-    metaClusterCertParams.certName = certName;
-    metaClusterCertParams.certNamespace = certsNamespace;
-    metaClusterCertParams.previewName = previewNameFromBranchName(branch);
-    metaClusterCertParams.dnsZoneDomain = "gitpod-dev.com";
-    metaClusterCertParams.domain = domain;
-    metaClusterCertParams.ip = getCoreDevIngressIP();
-    metaClusterCertParams.bucketPrefixTail = "";
-    metaClusterCertParams.additionalSubdomains = additionalSubdomains;
-    return issueCertificate(werft, metaClusterCertParams, { ...metaEnv(), slice });
-}
-
 async function installMetaCertificates(
     werft: Werft,
     branch: string,
@@ -498,11 +473,6 @@ async function installMetaCertificates(
     metaInstallCertParams.destinationNamespace = destNamespace;
     metaInstallCertParams.destinationKubeconfig = destinationKubeconfig;
     await installCertificate(werft, metaInstallCertParams, { ...metaEnv(), slice: slice });
-}
-
-// returns the static IP address
-function getCoreDevIngressIP(): string {
-    return "104.199.27.246";
 }
 
 // returns the static IP address

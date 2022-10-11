@@ -1,19 +1,18 @@
-import { previewNameFromBranchName } from "../../util/preview";
 import { exec } from "../../util/shell";
 import { Werft } from "../../util/werft";
 import { CORE_DEV_KUBECONFIG_PATH, GCLOUD_SERVICE_ACCOUNT_PATH, HARVESTER_KUBECONFIG_PATH } from "./const";
-import { issueMetaCerts } from "./deploy-to-preview-environment";
 import { JobConfig } from "./job-config";
+import {certReady} from "../../util/certs";
+import {vmExists} from "../../vm/vm";
 
 const phaseName = "prepare";
 const prepareSlices = {
     CONFIGURE_CORE_DEV: "Configuring core-dev access.",
     BOOT_VM: "Booting VM.",
-    ISSUE_CERTIFICATES: "Issuing certificates for the preview.",
+    WAIT_CERTIFICATES: "Waiting for certificates to be ready for the preview.",
 };
 
 export async function prepare(werft: Werft, config: JobConfig) {
-
     werft.phase(phaseName);
     try {
         werft.log(prepareSlices.CONFIGURE_CORE_DEV, prepareSlices.CONFIGURE_CORE_DEV);
@@ -25,9 +24,8 @@ export async function prepare(werft: Werft, config: JobConfig) {
         {
             return
         }
-        var certReady = issueCertificate(werft, config);
         await decideHarvesterVMCreation(werft, config);
-        await certReady
+        await certReady(werft, config, prepareSlices.WAIT_CERTIFICATES);
     } catch (err) {
         werft.fail(phaseName, err);
     }
@@ -74,19 +72,9 @@ function configureStaticClustersAccess() {
     }
 }
 
-async function issueCertificate(werft: Werft, config: JobConfig): Promise<boolean> {
-    const certName = `harvester-${previewNameFromBranchName(config.repository.branch)}`;
-    const domain = `${config.previewEnvironment.destname}.preview.gitpod-dev.com`;
-
-    werft.log(prepareSlices.ISSUE_CERTIFICATES, prepareSlices.ISSUE_CERTIFICATES);
-    var certReady = await issueMetaCerts(werft, certName, "certs", domain, config.repository.branch, prepareSlices.ISSUE_CERTIFICATES);
-    werft.done(prepareSlices.ISSUE_CERTIFICATES);
-    return certReady
-}
-
 async function decideHarvesterVMCreation(werft: Werft, config: JobConfig) {
     // always try to create - usually it will be no-op, but if tf changed for any reason we would reconcile
-    if (config.withPreview) {
+    if (config.withPreview && (!vmExists({ name: config.previewEnvironment.destname }) || config.cleanSlateDeployment)) {
         await createVM(werft, config);
     }
     werft.done(prepareSlices.BOOT_VM);
