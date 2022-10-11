@@ -92,7 +92,15 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
             setPendingStripeSubscription(pendingSubscription);
             window.localStorage.setItem(localStorageKey, JSON.stringify(pendingSubscription));
             try {
-                await getGitpodService().server.subscribeToStripe(attributionId, setupIntentId);
+                // Pick a good initial value for the Stripe usage limit (1000 * team_size)
+                // FIXME: Should we ask the customer to confirm or edit this default limit?
+                let limit = 1000;
+                const attrId = AttributionId.parse(attributionId);
+                if (attrId?.kind === "team") {
+                    const members = await getGitpodService().server.getTeamMembers(attrId.teamId);
+                    limit = 1000 * members.length;
+                }
+                await getGitpodService().server.subscribeToStripe(attributionId, setupIntentId, limit);
             } catch (error) {
                 console.error("Could not subscribe to Stripe", error);
                 window.localStorage.removeItem(localStorageKey);
