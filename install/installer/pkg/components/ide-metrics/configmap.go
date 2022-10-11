@@ -24,6 +24,83 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	statusCodes = append(statusCodes, "unknown")
 
 	counterMetrics := []config.CounterMetricsConfiguration{
+		// we could also create a generator later similar to https://github.com/grpc/grpc-go/tree/master/cmd/protoc-gen-go-grpc if there is abuse
+		{
+			Name: "grpc_server_handled_total",
+			Help: "Total number of RPCs completed on the server, regardless of success or failure.",
+			Labels: []config.LabelAllowList{
+				{
+					Name:        "grpc_method",
+					AllowValues: []string{"*"},
+				},
+				{
+					Name:        "grpc_service",
+					AllowValues: []string{"*"},
+				},
+				{
+					Name:        "grpc_type",
+					AllowValues: []string{"*"},
+				},
+				{
+					Name:        "grpc_code",
+					AllowValues: []string{"*"},
+				},
+			},
+		},
+		{
+			Name: "grpc_server_msg_received_total",
+			Help: "Total number of RPC stream messages received on the server.",
+			Labels: []config.LabelAllowList{
+				{
+					Name:        "grpc_method",
+					AllowValues: []string{"*"},
+				},
+				{
+					Name:        "grpc_service",
+					AllowValues: []string{"*"},
+				},
+				{
+					Name:        "grpc_type",
+					AllowValues: []string{"*"},
+				},
+			},
+		},
+		{
+			Name: "grpc_server_msg_sent_total",
+			Help: "Total number of gRPC stream messages sent by the server.",
+			Labels: []config.LabelAllowList{
+				{
+					Name:        "grpc_method",
+					AllowValues: []string{"*"},
+				},
+				{
+					Name:        "grpc_service",
+					AllowValues: []string{"*"},
+				},
+				{
+					Name:        "grpc_type",
+					AllowValues: []string{"*"},
+				},
+			},
+		},
+		{
+			Name: "grpc_server_started_total",
+			Help: "Total number of RPCs started on the server",
+			Labels: []config.LabelAllowList{
+				{
+					Name:        "grpc_method",
+					AllowValues: []string{"*"},
+				},
+				{
+					Name:        "grpc_service",
+					AllowValues: []string{"*"},
+				},
+				{
+					Name:        "grpc_type",
+					AllowValues: []string{"*"},
+				},
+			},
+		},
 		{
 			Name: "gitpod_supervisor_frontend_error_total",
 			Help: "Total count of supervisor frontend client errors",
@@ -119,6 +196,29 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 	}
 
+	aggregatedHistogramMetrics := []config.HistogramMetricsConfiguration{
+		// we could also create a generator later similar to https://github.com/grpc/grpc-go/tree/master/cmd/protoc-gen-go-grpc if there is abuse
+		{
+			Name: "grpc_server_handling_seconds",
+			Help: "Histogram of response latency (seconds) of gRPC that had been application-level handled by the server.",
+			Labels: []config.LabelAllowList{
+				{
+					Name:        "grpc_method",
+					AllowValues: []string{"*"},
+				},
+				{
+					Name:        "grpc_service",
+					AllowValues: []string{"*"},
+				},
+				{
+					Name:        "grpc_type",
+					AllowValues: []string{"*"},
+				},
+			},
+			Buckets: []float64{.005, .025, .05, .1, .5, 1, 2.5, 5, 30, 60, 120, 240, 600},
+		},
+	}
+
 	errorReporting := config.ErrorReportingConfiguration{
 		AllowComponents: []string{
 			"supervisor-frontend",
@@ -133,9 +233,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Server: config.MetricsServerConfiguration{
 			Port: ContainerPort,
 			// RateLimits: , // TODO(pd) ratelimit
-			CounterMetrics:   counterMetrics,
-			HistogramMetrics: histogramMetrics,
-			ErrorReporting:   errorReporting,
+			CounterMetrics:             counterMetrics,
+			HistogramMetrics:           histogramMetrics,
+			AggregatedHistogramMetrics: aggregatedHistogramMetrics,
+			ErrorReporting:             errorReporting,
 		},
 		Prometheus: struct {
 			Addr string `json:"addr"`
