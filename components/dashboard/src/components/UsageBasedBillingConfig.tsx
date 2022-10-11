@@ -407,6 +407,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
             )}
             {showUpdateLimitModal && (
                 <UpdateLimitModal
+                    minValue={AttributionId.parse(attributionId || "")?.kind === "user" ? 1000 : 0}
                     currentValue={usageLimit}
                     onClose={() => setShowUpdateLimitModal(false)}
                     onUpdate={(newLimit) => updateUsageLimit(newLimit)}
@@ -537,12 +538,13 @@ function CreditCardInputForm(props: { attributionId: string }) {
 }
 
 function UpdateLimitModal(props: {
+    minValue?: number;
     currentValue: number | undefined;
     onClose: () => void;
     onUpdate: (newLimit: number) => {};
 }) {
     const [newLimit, setNewLimit] = useState<string | undefined>(
-        props.currentValue ? String(props.currentValue) : undefined,
+        typeof props.currentValue === "number" ? String(props.currentValue) : undefined,
     );
 
     return (
@@ -556,7 +558,7 @@ function UpdateLimitModal(props: {
                     <div className="w-full">
                         <input
                             type="number"
-                            min={0}
+                            min={props.minValue || 0}
                             value={newLimit}
                             className="rounded-md w-full truncate overflow-x-scroll pr-8"
                             onChange={(e) => setNewLimit(e.target.value)}
