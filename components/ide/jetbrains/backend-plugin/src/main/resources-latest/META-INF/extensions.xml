@@ -7,6 +7,6 @@
 <idea-plugin>
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceInterface="io.gitpod.jetbrains.remote.GitpodIgnoredPortsForNotificationService" serviceImplementation="io.gitpod.jetbrains.remote.latest.GitpodIgnoredPortsForNotificationServiceImpl" preload="true"/>
-        <projectService serviceImplementation="io.gitpod.jetbrains.remote.latest.GitpodPortForwardingService" preload="true"/>
+        <projectService serviceImplementation="io.gitpod.jetbrains.remote.latest.GitpodPortForwardingService" preload="true" client="guest"/>
     </extensions>
 </idea-plugin>
