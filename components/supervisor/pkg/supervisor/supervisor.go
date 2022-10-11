@@ -54,6 +54,7 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/pkg/activation"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/config"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/dropwriter"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/metrics"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
 
@@ -252,6 +253,7 @@ func Run(options ...RunOption) {
 	topService := NewTopService()
 	topService.Observe(ctx)
 
+	var metricsReporter *metrics.GrpcMetricsReporter
 	if opts.RunGP {
 		cstate.MarkContentReady(csapi.WorkspaceInitFromOther)
 	} else {
@@ -259,6 +261,13 @@ func Run(options ...RunOption) {
 		defer analytics.Close()
 		go analyseConfigChanges(ctx, cfg, analytics, gitpodConfigService, gitpodService)
 		go analysePerfChanges(ctx, cfg, analytics, topService, gitpodService)
+
+		_, gitpodHost, err := cfg.GitpodAPIEndpoint()
+		if err != nil {
+			log.WithError(err).Error("supervisor: grpc metrics: failed to parse gitpod host")
+		} else {
+			metricsReporter = metrics.NewGrpcMetricsReporter(gitpodHost)
+		}
 	}
 
 	termMux := terminal.NewMux()
@@ -323,7 +332,7 @@ func Run(options ...RunOption) {
 	wg.Add(1)
 	go startContentInit(ctx, cfg, &wg, cstate)
 	wg.Add(1)
-	go startAPIEndpoint(ctx, cfg, &wg, apiServices, tunneledPortsService, apiEndpointOpts...)
+	go startAPIEndpoint(ctx, cfg, &wg, apiServices, tunneledPortsService, metricsReporter, apiEndpointOpts...)
 	wg.Add(1)
 	go startSSHServer(ctx, cfg, &wg, childProcEnvvars)
 	wg.Add(1)
@@ -1090,7 +1099,7 @@ func isBlacklistedEnvvar(name string) bool {
 	return false
 }
 
-func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, services []RegisterableService, tunneled *ports.TunneledPortsService, opts ...grpc.ServerOption) {
+func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, services []RegisterableService, tunneled *ports.TunneledPortsService, metricsReporter *metrics.GrpcMetricsReporter, opts ...grpc.ServerOption) {
 	defer wg.Done()
 	defer log.Debug("startAPIEndpoint shutdown")
 
@@ -1106,17 +1115,27 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 		streamInterceptors = append(streamInterceptors, grpc_logrus.StreamServerInterceptor(log.Log))
 	}
 
-	grpcMetrics := grpc_prometheus.NewServerMetrics()
-	grpcMetrics.EnableHandlingTimeHistogram(
-		grpc_prometheus.WithHistogramBuckets([]float64{.005, .025, .05, .1, .5, 1, 2.5, 5, 30, 60, 120, 240, 600}),
-	)
-	unaryInterceptors = append(unaryInterceptors, grpcMetrics.UnaryServerInterceptor())
-	streamInterceptors = append(streamInterceptors, grpcMetrics.StreamServerInterceptor())
+	if metricsReporter != nil {
+		grpcMetrics := grpc_prometheus.NewServerMetrics()
+		grpcMetrics.EnableHandlingTimeHistogram(
+			// it should be aligned with https://github.com/gitpod-io/gitpod/blob/196a109eee50bfb7da2c6b858a3e78f2a2d0b26f/install/installer/pkg/components/ide-metrics/configmap.go#L199
+			grpc_prometheus.WithHistogramBuckets([]float64{.005, .025, .05, .1, .5, 1, 2.5, 5, 30, 60, 120, 240, 600}),
+		)
+		unaryInterceptors = append(unaryInterceptors, grpcMetrics.UnaryServerInterceptor())
+		streamInterceptors = append(streamInterceptors, grpcMetrics.StreamServerInterceptor())
 
-	opts = append(opts,
-		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptors...)),
-		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(streamInterceptors...)),
-	)
+		opts = append(opts,
+			grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptors...)),
+			grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(streamInterceptors...)),
+		)
+
+		err = metricsReporter.Registry.Register(grpcMetrics)
+		if err != nil {
+			log.WithError(err).Error("supervisor: failed to register grpc metrics")
+		} else {
+			go metricsReporter.Report(ctx)
+		}
+	}
 
 	m := cmux.New(l)
 	restMux := grpcruntime.NewServeMux()
@@ -1142,13 +1161,9 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 		return true
 	}))
 
-	metricsRegistry := prometheus.NewRegistry()
-	err = metricsRegistry.Register(grpcMetrics)
-	if err != nil {
-		log.WithError(err).Error("supervisor: failed to register grpc metrics")
-	}
+	// TODO(ak) remove it, refactor clients to use IDE proxy
 	metricStore := storage.NewDiskMetricStore("", time.Minute*5, prometheus.DefaultGatherer, nil)
-	metricsGatherer := prometheus.Gatherers{metricsRegistry, prometheus.GathererFunc(func() ([]*dto.MetricFamily, error) {
+	metricsGatherer := prometheus.Gatherers{prometheus.GathererFunc(func() ([]*dto.MetricFamily, error) {
 		return metricStore.GetMetricFamilies(), nil
 	})}
 

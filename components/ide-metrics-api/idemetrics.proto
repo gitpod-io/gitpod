@@ -24,6 +24,12 @@ service MetricsService {
             body : "*"
         };
     }
+    rpc AddHistogram(AddHistogramRequest) returns (AddHistogramResponse) {
+        option (google.api.http) = {
+            post : "/metrics/histogram/add/{name}"
+            body : "*"
+        };
+    }
     rpc reportError(ReportErrorRequest) returns (ReportErrorResponse) {
         option (google.api.http) = {
             post: "/reportError"
@@ -47,6 +53,16 @@ message ObserveHistogramRequest {
 }
 
 message ObserveHistogramResponse {}
+
+message AddHistogramRequest {
+    string name = 1;
+    map<string, string> labels = 2;
+    uint64 count = 3;
+    double sum = 4;
+    repeated uint64 buckets = 5;
+}
+
+message AddHistogramResponse {}
 
 message ReportErrorRequest {
     string error_stack = 1;
