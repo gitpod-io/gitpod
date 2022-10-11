@@ -490,7 +490,7 @@ async function cleanup(): Promise<void> {
     const phase = INFRA_PHASES["DESTROY"];
     werft.phase(phase.phase, phase.description);
 
-    return await callMakeTargets(phase.phase, phase.description, phase.makeTarget)
+    return callMakeTargets(phase.phase, phase.description, phase.makeTarget)
         .then((ret) => {
 
             // if the destroy command fail, we check if any resources are pending to be removed
