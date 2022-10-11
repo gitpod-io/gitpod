@@ -1263,7 +1263,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         const repo = await this.getWorkspaceRepo();
         const results = (await repo.query(
             `
-                SELECT ws.id AS id,
+                SELECT ws.id AS id
                 FROM d_b_workspace ws
                 WHERE ws.type = 'probe'
                 LIMIT ?;
