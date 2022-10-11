@@ -267,11 +267,14 @@ if (config === undefined) {
 }
 
 installerTests(TEST_CONFIGURATIONS[testConfig]).catch((err) => {
+    console.error(err);
+
     if(deleteOnFail == "true") {
         cleanup().finally(() => {
-            console.error(err);
             process.exit(1);
         });
+    } else {
+        process.exit(1);
     }
 });
 
