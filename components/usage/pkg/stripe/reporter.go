@@ -64,9 +64,12 @@ func reportStripeRequestStarted(resource string) {
 }
 
 func reportStripeRequestCompleted(resource string, err error, took time.Duration) {
-	code := "unknown"
-	if stripeErr, ok := err.(*stripe.Error); ok {
-		code = string(stripeErr.Code)
+	code := "ok"
+	if err != nil {
+		code = "unknown"
+		if stripeErr, ok := err.(*stripe.Error); ok {
+			code = string(stripeErr.Code)
+		}
 	}
 
 	stripeClientRequestsCompletedSeconds.WithLabelValues(resource, code).Observe(took.Seconds())
