@@ -203,6 +203,18 @@ export class TeamDBImpl implements TeamDB {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "A team with this ID could not be found");
         }
         const membershipRepo = await this.getMembershipRepo();
+
+        if (role != "owner") {
+            const ownerCount = await membershipRepo.count({
+                teamId,
+                role: "owner",
+                deleted: false,
+            });
+            if (ownerCount <= 1) {
+                throw new ResponseError(ErrorCodes.CONFLICT, "Team must retain at least one owner");
+            }
+        }
+
         const membership = await membershipRepo.findOne({ teamId, userId, deleted: false });
         if (!membership) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "The user is not currently a member of this team");
