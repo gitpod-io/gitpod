@@ -19,6 +19,7 @@ import { Config } from "../config";
 import { TokenProvider } from "../user/token-provider";
 import { BitbucketServerApi } from "./bitbucket-server-api";
 import { HostContextProvider } from "../auth/host-context-provider";
+import { URL } from "url";
 
 @suite(timeout(10000), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER"))
 class TestBitbucketServerContextParser {
@@ -303,6 +304,14 @@ class TestBitbucketServerContextParser {
                 },
             },
         });
+    }
+
+    @test.only test_toSimpleBranchName() {
+        const url = new URL(
+            "https://bitbucket.gitpod-self-hosted.com/projects/FOO/repos/repo123/browse?at=refs%2Fheads%2Ffoo",
+        );
+        const branchName = this.parser.toSimpleBranchName(url.searchParams.get("at")!);
+        expect(branchName).to.equal("foo");
     }
 }
 
