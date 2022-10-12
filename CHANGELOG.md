@@ -1,6 +1,12 @@
 # Change Log
 
 ## October 2022
+- Update PhpStorm IDE image to version 222.4345.15. ([#13759](https://github.com/gitpod-io/gitpod/pull/13759)) - [@roboquat](https://github.com/roboquat)
+- Update WebStorm IDE image to version 222.4345.14. ([#13757](https://github.com/gitpod-io/gitpod/pull/13757)) - [@roboquat](https://github.com/roboquat)
+- Update RubyMine IDE image to version 222.4345.14. ([#13758](https://github.com/gitpod-io/gitpod/pull/13758)) - [@roboquat](https://github.com/roboquat)
+- Add option to add authentication to Jaeger and configure default tags with `metadata.shortName` and `metadata.region` ([#13728](https://github.com/gitpod-io/gitpod/pull/13728)) - [@aledbf](https://github.com/aledbf)
+- [teams] Disallow removing all Owners from a team ([#13744](https://github.com/gitpod-io/gitpod/pull/13744)) - [@easyCZ](https://github.com/easyCZ)
+- Fix branch context for BitBucket Server ([#13745](https://github.com/gitpod-io/gitpod/pull/13745)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Release VS Code Browser `1.72` ([#13617](https://github.com/gitpod-io/gitpod/pull/13617)) - [@filiptronicek](https://github.com/filiptronicek)
 - All running processes receive a SIGTERM when a workspace shuts down. ([#13495](https://github.com/gitpod-io/gitpod/pull/13495)) - [@svenefftinge](https://github.com/svenefftinge)
 - Enable the protected secrets by default ([#13664](https://github.com/gitpod-io/gitpod/pull/13664)) - [@kylos101](https://github.com/kylos101)
