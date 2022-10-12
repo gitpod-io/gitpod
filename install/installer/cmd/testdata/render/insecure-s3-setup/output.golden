@@ -30,7 +30,19 @@ metadata:
   namespace: default
 spec:
   ingress:
-    - {}
+    - from:
+        - podSelector:
+            matchLabels:
+              component: proxy
+        - podSelector:
+            matchLabels:
+              component: ws-proxy
+        - podSelector:
+            matchLabels:
+              component: ide-proxy
+      ports:
+        - port: 32224
+          protocol: TCP
   podSelector:
     matchLabels:
       app: gitpod
@@ -83,59 +95,6 @@ spec:
     matchLabels:
       app: gitpod
       component: dashboard
-  policyTypes:
-    - Ingress
-
----
-# networking.k8s.io/v1/NetworkPolicy ide-metrics
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: ide-metrics
-  name: ide-metrics
-  namespace: default
-spec:
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              component: proxy
-        - podSelector:
-            matchLabels:
-              component: ide-proxy
-      ports:
-        - port: 3000
-          protocol: TCP
-  podSelector:
-    matchLabels:
-      app: gitpod
-      component: ide-metrics
-  policyTypes:
-    - Ingress
-
----
-# networking.k8s.io/v1/NetworkPolicy ide-service
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: ide-service
-  name: ide-service
-  namespace: default
-spec:
-  ingress:
-    - ports:
-        - port: 9001
-          protocol: TCP
-  podSelector:
-    matchLabels:
-      app: gitpod
-      component: ide-service
   policyTypes:
     - Ingress
 
@@ -831,18 +790,6 @@ metadata:
   name: ide-proxy
   namespace: default
 ---
-# v1/ServiceAccount ide-service
-apiVersion: v1
-automountServiceAccountToken: true
-kind: ServiceAccount
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: ide-service
-  name: ide-service
-  namespace: default
----
 # v1/ServiceAccount image-builder-mk3
 apiVersion: v1
 automountServiceAccountToken: true
@@ -1285,7 +1232,7 @@ data:
   config.json: |-
     {
       "service": {
-        "address": "0.0.0.0:8080"
+        "address": ":8080"
       },
       "storage": {
         "stage": "",
@@ -1306,6 +1253,9 @@ data:
           "bucket": "s3-bucket"
         },
         "blobQuota": 5368709120
+      },
+      "usageReport": {
+        "bucketName": "gitpod-usage-reports"
       }
     }
 kind: ConfigMap
@@ -1458,9 +1408,6 @@ data:
           "ideMetrics": {
             "version": "test"
           },
-          "ideService": {
-            "version": "test"
-          },
           "imageBuilder": {
             "version": ""
           },
@@ -1542,12 +1489,6 @@ data:
                 "version": "test"
               },
               "phpstormLatest": {
-                "version": "test"
-              },
-              "jbBackendPlugin": {
-                "version": "test"
-              },
-              "jbBackendPluginLatest": {
                 "version": "test"
               }
             }
@@ -2038,16 +1979,6 @@ data:
       name: ide-metrics
       namespace: default
     ---
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: ide-metrics
-      name: ide-metrics
-      namespace: default
-    ---
     apiVersion: v1
     kind: ServiceAccount
     metadata:
@@ -2056,105 +1987,6 @@ data:
         app: gitpod
         component: ide-metrics
       name: ide-metrics
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: ide-service
-      name: ide-service
-      namespace: default
-    ---
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: ide-service
-      name: ide-service
-      namespace: default
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRoleBinding
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: ide-service
-      name: default-ide-service-kube-rbac-proxy
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRoleBinding
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: ide-service
-      name: ide-service
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: RoleBinding
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: ide-service
-      name: ide-service
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: Service
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: ide-service
-        kind: service
-      name: ide-service
-      namespace: default
-    ---
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: ide-service
-      name: ide-service
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: ide-service
-      name: ide-config
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: server
-      name: server-ide-config
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: ide-service
-      name: ide-service
       namespace: default
     ---
     apiVersion: apps/v1
@@ -2419,6 +2251,16 @@ data:
         app: gitpod
         component: server
       name: server
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: server
+      name: server-ide-config
       namespace: default
     ---
     apiVersion: networking.k8s.io/v1
@@ -3391,117 +3233,6 @@ metadata:
   namespace: default
 
 ---
-# v1/ConfigMap ide-config
-apiVersion: v1
-data:
-  config.json: |-
-    {
-      "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:test",
-      "ideOptions": {
-        "options": {
-          "code": {
-            "orderKey": "00",
-            "title": "VS Code",
-            "type": "browser",
-            "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
-            "label": "Browser",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-97cff52e43760ad3ad96aa82d9fba934c5f53be8",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
-          },
-          "code-desktop": {
-            "orderKey": "02",
-            "title": "VS Code",
-            "type": "desktop",
-            "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code-desktop:test",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code-desktop-insiders:test"
-          },
-          "goland": {
-            "orderKey": "05",
-            "title": "GoLand",
-            "type": "desktop",
-            "logo": "https://ide.gitpod.example.com/image/ide-logo/golandLogo.svg",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/goland:test",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/goland:latest",
-            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
-          },
-          "intellij": {
-            "orderKey": "04",
-            "title": "IntelliJ IDEA",
-            "type": "desktop",
-            "logo": "https://ide.gitpod.example.com/image/ide-logo/intellijIdeaLogo.svg",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:test",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:latest",
-            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
-          },
-          "phpstorm": {
-            "orderKey": "07",
-            "title": "PhpStorm",
-            "type": "desktop",
-            "logo": "https://ide.gitpod.example.com/image/ide-logo/phpstormLogo.svg",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:test",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:latest",
-            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
-          },
-          "pycharm": {
-            "orderKey": "06",
-            "title": "PyCharm",
-            "type": "desktop",
-            "logo": "https://ide.gitpod.example.com/image/ide-logo/pycharmLogo.svg",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:test",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:latest",
-            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
-          }
-        },
-        "defaultIde": "code",
-        "defaultDesktopIde": "code-desktop",
-        "clients": {
-          "jetbrains-gateway": {
-            "defaultDesktopIDE": "intellij",
-            "desktopIDEs": [
-              "intellij",
-              "goland",
-              "pycharm",
-              "phpstorm"
-            ],
-            "installationSteps": [
-              "If you don't see an open dialog in your browser, make sure you have the \u003ca target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'\u003eJetBrains Gateway with Gitpod Plugin\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."
-            ]
-          },
-          "vscode": {
-            "defaultDesktopIDE": "code-desktop",
-            "desktopIDEs": [
-              "code-desktop"
-            ],
-            "installationSteps": [
-              "If you don't see an open dialog in your browser, make sure you have \u003ca target='_blank' class='gp-link' href='https://code.visualstudio.com/download'\u003eVS Code\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."
-            ]
-          },
-          "vscode-insiders": {
-            "defaultDesktopIDE": "code-desktop",
-            "desktopIDEs": [
-              "code-desktop"
-            ],
-            "installationSteps": [
-              "If you don't see an open dialog in your browser, make sure you have \u003ca target='_blank' class='gp-link' href='https://code.visualstudio.com/insiders'\u003eVS Code Insiders\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."
-            ]
-          }
-        }
-      }
-    }
-kind: ConfigMap
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: ide-service
-  name: ide-config
-  namespace: default
----
 # v1/ConfigMap ide-metrics
 apiVersion: v1
 data:
@@ -3514,651 +3245,15 @@ data:
           {
             "name": "gitpod_supervisor_frontend_error_total",
             "help": "Total count of supervisor frontend client errors",
-            "labels": [
-              {
-                "name": "resource",
-                "allowValues": [
-                  "vscode-web-workbench",
-                  "unknown"
-                ],
-                "defaultValue": "unknown"
-              },
-              {
-                "name": "error",
-                "allowValues": [
-                  "LoadError",
-                  "Unknown"
-                ],
-                "defaultValue": "Unknown"
-              }
-            ]
-          },
-          {
-            "name": "gitpod_vscode_web_load_total",
-            "help": "Total count of attempts to load VS Code Web workbench",
-            "labels": [
-              {
-                "name": "status",
-                "allowValues": [
-                  "loading",
-                  "failed"
-                ],
-                "defaultValue": ""
-              }
-            ]
+            "labels": null
           },
           {
             "name": "gitpod_supervisor_frontend_client_total",
             "help": "Total count of supervisor frontend client",
             "labels": null
-          },
-          {
-            "name": "gitpod_vscode_extension_gallery_operation_total",
-            "help": "Total count of extension operations",
-            "labels": [
-              {
-                "name": "operation",
-                "allowValues": [
-                  "install",
-                  "update",
-                  "uninstall",
-                  "unknown"
-                ],
-                "defaultValue": "unknown"
-              },
-              {
-                "name": "status",
-                "allowValues": [
-                  "success",
-                  "failure",
-                  "unknown"
-                ],
-                "defaultValue": "unknown"
-              }
-            ]
-          },
-          {
-            "name": "gitpod_vscode_extension_gallery_query_total",
-            "help": "Total count of extension gallery queries",
-            "labels": [
-              {
-                "name": "status",
-                "allowValues": [
-                  "success",
-                  "failure",
-                  "unknown"
-                ],
-                "defaultValue": "unknown"
-              },
-              {
-                "name": "statusCode",
-                "allowValues": [
-                  "100",
-                  "101",
-                  "102",
-                  "103",
-                  "104",
-                  "105",
-                  "106",
-                  "107",
-                  "108",
-                  "109",
-                  "110",
-                  "111",
-                  "112",
-                  "113",
-                  "114",
-                  "115",
-                  "116",
-                  "117",
-                  "118",
-                  "119",
-                  "120",
-                  "121",
-                  "122",
-                  "123",
-                  "124",
-                  "125",
-                  "126",
-                  "127",
-                  "128",
-                  "129",
-                  "130",
-                  "131",
-                  "132",
-                  "133",
-                  "134",
-                  "135",
-                  "136",
-                  "137",
-                  "138",
-                  "139",
-                  "140",
-                  "141",
-                  "142",
-                  "143",
-                  "144",
-                  "145",
-                  "146",
-                  "147",
-                  "148",
-                  "149",
-                  "150",
-                  "151",
-                  "152",
-                  "153",
-                  "154",
-                  "155",
-                  "156",
-                  "157",
-                  "158",
-                  "159",
-                  "160",
-                  "161",
-                  "162",
-                  "163",
-                  "164",
-                  "165",
-                  "166",
-                  "167",
-                  "168",
-                  "169",
-                  "170",
-                  "171",
-                  "172",
-                  "173",
-                  "174",
-                  "175",
-                  "176",
-                  "177",
-                  "178",
-                  "179",
-                  "180",
-                  "181",
-                  "182",
-                  "183",
-                  "184",
-                  "185",
-                  "186",
-                  "187",
-                  "188",
-                  "189",
-                  "190",
-                  "191",
-                  "192",
-                  "193",
-                  "194",
-                  "195",
-                  "196",
-                  "197",
-                  "198",
-                  "199",
-                  "200",
-                  "201",
-                  "202",
-                  "203",
-                  "204",
-                  "205",
-                  "206",
-                  "207",
-                  "208",
-                  "209",
-                  "210",
-                  "211",
-                  "212",
-                  "213",
-                  "214",
-                  "215",
-                  "216",
-                  "217",
-                  "218",
-                  "219",
-                  "220",
-                  "221",
-                  "222",
-                  "223",
-                  "224",
-                  "225",
-                  "226",
-                  "227",
-                  "228",
-                  "229",
-                  "230",
-                  "231",
-                  "232",
-                  "233",
-                  "234",
-                  "235",
-                  "236",
-                  "237",
-                  "238",
-                  "239",
-                  "240",
-                  "241",
-                  "242",
-                  "243",
-                  "244",
-                  "245",
-                  "246",
-                  "247",
-                  "248",
-                  "249",
-                  "250",
-                  "251",
-                  "252",
-                  "253",
-                  "254",
-                  "255",
-                  "256",
-                  "257",
-                  "258",
-                  "259",
-                  "260",
-                  "261",
-                  "262",
-                  "263",
-                  "264",
-                  "265",
-                  "266",
-                  "267",
-                  "268",
-                  "269",
-                  "270",
-                  "271",
-                  "272",
-                  "273",
-                  "274",
-                  "275",
-                  "276",
-                  "277",
-                  "278",
-                  "279",
-                  "280",
-                  "281",
-                  "282",
-                  "283",
-                  "284",
-                  "285",
-                  "286",
-                  "287",
-                  "288",
-                  "289",
-                  "290",
-                  "291",
-                  "292",
-                  "293",
-                  "294",
-                  "295",
-                  "296",
-                  "297",
-                  "298",
-                  "299",
-                  "300",
-                  "301",
-                  "302",
-                  "303",
-                  "304",
-                  "305",
-                  "306",
-                  "307",
-                  "308",
-                  "309",
-                  "310",
-                  "311",
-                  "312",
-                  "313",
-                  "314",
-                  "315",
-                  "316",
-                  "317",
-                  "318",
-                  "319",
-                  "320",
-                  "321",
-                  "322",
-                  "323",
-                  "324",
-                  "325",
-                  "326",
-                  "327",
-                  "328",
-                  "329",
-                  "330",
-                  "331",
-                  "332",
-                  "333",
-                  "334",
-                  "335",
-                  "336",
-                  "337",
-                  "338",
-                  "339",
-                  "340",
-                  "341",
-                  "342",
-                  "343",
-                  "344",
-                  "345",
-                  "346",
-                  "347",
-                  "348",
-                  "349",
-                  "350",
-                  "351",
-                  "352",
-                  "353",
-                  "354",
-                  "355",
-                  "356",
-                  "357",
-                  "358",
-                  "359",
-                  "360",
-                  "361",
-                  "362",
-                  "363",
-                  "364",
-                  "365",
-                  "366",
-                  "367",
-                  "368",
-                  "369",
-                  "370",
-                  "371",
-                  "372",
-                  "373",
-                  "374",
-                  "375",
-                  "376",
-                  "377",
-                  "378",
-                  "379",
-                  "380",
-                  "381",
-                  "382",
-                  "383",
-                  "384",
-                  "385",
-                  "386",
-                  "387",
-                  "388",
-                  "389",
-                  "390",
-                  "391",
-                  "392",
-                  "393",
-                  "394",
-                  "395",
-                  "396",
-                  "397",
-                  "398",
-                  "399",
-                  "400",
-                  "401",
-                  "402",
-                  "403",
-                  "404",
-                  "405",
-                  "406",
-                  "407",
-                  "408",
-                  "409",
-                  "410",
-                  "411",
-                  "412",
-                  "413",
-                  "414",
-                  "415",
-                  "416",
-                  "417",
-                  "418",
-                  "419",
-                  "420",
-                  "421",
-                  "422",
-                  "423",
-                  "424",
-                  "425",
-                  "426",
-                  "427",
-                  "428",
-                  "429",
-                  "430",
-                  "431",
-                  "432",
-                  "433",
-                  "434",
-                  "435",
-                  "436",
-                  "437",
-                  "438",
-                  "439",
-                  "440",
-                  "441",
-                  "442",
-                  "443",
-                  "444",
-                  "445",
-                  "446",
-                  "447",
-                  "448",
-                  "449",
-                  "450",
-                  "451",
-                  "452",
-                  "453",
-                  "454",
-                  "455",
-                  "456",
-                  "457",
-                  "458",
-                  "459",
-                  "460",
-                  "461",
-                  "462",
-                  "463",
-                  "464",
-                  "465",
-                  "466",
-                  "467",
-                  "468",
-                  "469",
-                  "470",
-                  "471",
-                  "472",
-                  "473",
-                  "474",
-                  "475",
-                  "476",
-                  "477",
-                  "478",
-                  "479",
-                  "480",
-                  "481",
-                  "482",
-                  "483",
-                  "484",
-                  "485",
-                  "486",
-                  "487",
-                  "488",
-                  "489",
-                  "490",
-                  "491",
-                  "492",
-                  "493",
-                  "494",
-                  "495",
-                  "496",
-                  "497",
-                  "498",
-                  "499",
-                  "500",
-                  "501",
-                  "502",
-                  "503",
-                  "504",
-                  "505",
-                  "506",
-                  "507",
-                  "508",
-                  "509",
-                  "510",
-                  "511",
-                  "512",
-                  "513",
-                  "514",
-                  "515",
-                  "516",
-                  "517",
-                  "518",
-                  "519",
-                  "520",
-                  "521",
-                  "522",
-                  "523",
-                  "524",
-                  "525",
-                  "526",
-                  "527",
-                  "528",
-                  "529",
-                  "530",
-                  "531",
-                  "532",
-                  "533",
-                  "534",
-                  "535",
-                  "536",
-                  "537",
-                  "538",
-                  "539",
-                  "540",
-                  "541",
-                  "542",
-                  "543",
-                  "544",
-                  "545",
-                  "546",
-                  "547",
-                  "548",
-                  "549",
-                  "550",
-                  "551",
-                  "552",
-                  "553",
-                  "554",
-                  "555",
-                  "556",
-                  "557",
-                  "558",
-                  "559",
-                  "560",
-                  "561",
-                  "562",
-                  "563",
-                  "564",
-                  "565",
-                  "566",
-                  "567",
-                  "568",
-                  "569",
-                  "570",
-                  "571",
-                  "572",
-                  "573",
-                  "574",
-                  "575",
-                  "576",
-                  "577",
-                  "578",
-                  "579",
-                  "580",
-                  "581",
-                  "582",
-                  "583",
-                  "584",
-                  "585",
-                  "586",
-                  "587",
-                  "588",
-                  "589",
-                  "590",
-                  "591",
-                  "592",
-                  "593",
-                  "594",
-                  "595",
-                  "596",
-                  "597",
-                  "598",
-                  "599",
-                  "unknown"
-                ],
-                "defaultValue": "unknown"
-              },
-              {
-                "name": "errorCode",
-                "allowValues": [
-                  "canceled",
-                  "timeout",
-                  "failed",
-                  "unknown"
-                ],
-                "defaultValue": "unknown"
-              }
-            ]
           }
         ],
-        "histogramMetrics": [
-          {
-            "name": "gitpod_vscode_extension_gallery_operation_duration_seconds",
-            "help": "Duration of extension operations in seconds",
-            "labels": [
-              {
-                "name": "operation",
-                "allowValues": [
-                  "install",
-                  "update",
-                  "uninstall",
-                  "unknown"
-                ],
-                "defaultValue": "unknown"
-              }
-            ],
-            "buckets": [
-              0.1,
-              0.5,
-              1,
-              5,
-              10,
-              15,
-              30
-            ]
-          },
-          {
-            "name": "gitpod_vscode_extension_gallery_query_duration_seconds",
-            "help": "Duration of extension gallery query in seconds",
-            "labels": null,
-            "buckets": [
-              0.1,
-              0.5,
-              1,
-              5,
-              10,
-              15,
-              30
-            ]
-          }
-        ],
-        "errorReporting": {
-          "allowComponents": [
-            "supervisor-frontend",
-            "vscode-workbench",
-            "vscode-server",
-            "vscode-web"
-          ]
-        }
+        "histogramMetrics": []
       },
       "debug": false,
       "pprof": {
@@ -4175,29 +3270,6 @@ metadata:
     app: gitpod
     component: ide-metrics
   name: ide-metrics
-  namespace: default
----
-# v1/ConfigMap ide-service
-apiVersion: v1
-data:
-  config.json: |-
-    {
-      "server": {
-        "services": {
-          "grpc": {
-            "address": "0.0.0.0:9001"
-          }
-        }
-      },
-      "ideConfigPath": "/ide-config/config.json"
-    }
-kind: ConfigMap
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: ide-service
-  name: ide-service
   namespace: default
 ---
 # v1/ConfigMap image-builder-mk3-config
@@ -4227,7 +3299,7 @@ data:
         ]
       },
       "service": {
-        "address": "0.0.0.0:8080",
+        "address": ":8080",
         "tls": {
           "ca": "",
           "crt": "",
@@ -4519,10 +3591,9 @@ data:
       "makeNewUsersAdmin": false,
       "defaultBaseImageRegistryWhitelist": [],
       "runDbDeleter": true,
-      "contentServiceAddr": "content-service.default.svc.cluster.local:8080",
-      "imageBuilderAddr": "image-builder-mk3.default.svc.cluster.local:8080",
-      "usageServiceAddr": "usage.default.svc.cluster.local:9001",
-      "maximumEventLoopLag": 0.35,
+      "contentServiceAddr": "content-service:8080",
+      "imageBuilderAddr": "image-builder-mk3:8080",
+      "usageServiceAddr": "usage:9001",
       "vsxRegistryUrl": "https://open-vsx.gitpod.example.com",
       "chargebeeProviderOptionsFile": "/chargebee/providerOptions",
       "stripeSecretsFile": "/stripe-secret/apikeys",
@@ -4555,14 +3626,11 @@ data:
       "workspaceGarbageCollection": {
         "disabled": false,
         "startDate": 0,
-        "intervalSeconds": 1800,
         "chunkLimit": 1000,
         "minAgeDays": 14,
         "minAgePrebuildDays": 7,
         "contentRetentionPeriodDays": 21,
-        "contentChunkLimit": 1000,
-        "purgeRetentionPeriodDays": 365,
-        "purgeChunkLimit": 5000
+        "contentChunkLimit": 1000
       },
       "authProviderConfigFiles": [],
       "incrementalPrebuilds": {
@@ -4646,7 +3714,7 @@ data:
             "type": "browser",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "label": "Browser",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-97cff52e43760ad3ad96aa82d9fba934c5f53be8",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-c47714bb26bbdbf55f0abdd7560a7ef14f92a742",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
           },
           "code-desktop": {
@@ -4663,9 +3731,7 @@ data:
             "type": "desktop",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/golandLogo.svg",
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/goland:test",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/goland:latest",
-            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/goland:latest"
           },
           "intellij": {
             "orderKey": "04",
@@ -4673,9 +3739,7 @@ data:
             "type": "desktop",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/intellijIdeaLogo.svg",
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:test",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:latest",
-            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:latest"
           },
           "phpstorm": {
             "orderKey": "07",
@@ -4683,9 +3747,7 @@ data:
             "type": "desktop",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/phpstormLogo.svg",
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:test",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:latest",
-            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:latest"
           },
           "pycharm": {
             "orderKey": "06",
@@ -4693,9 +3755,7 @@ data:
             "type": "desktop",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/pycharmLogo.svg",
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:test",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:latest",
-            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:latest"
           }
         },
         "defaultIde": "code",
@@ -4843,8 +3903,8 @@ data:
         "procLimit": 0,
         "netlimit": {
           "enabled": false,
-          "connectionsPerMinute": 3000,
-          "bucketSize": 1000
+          "connectionsPerMinute": 0,
+          "bucketSize": 0
         },
         "hosts": {
           "enabled": true,
@@ -4870,7 +3930,7 @@ data:
         }
       },
       "service": {
-        "address": "0.0.0.0:8080",
+        "address": ":8080",
         "tls": {
           "caPath": "/certs/ca.crt",
           "certPath": "/certs/tls.crt",
@@ -5055,8 +4115,8 @@ data:
   config.json: |-
     {
       "ingress": {
-        "httpAddress": "0.0.0.0:8080",
-        "httpsAddress": "0.0.0.0:9090",
+        "httpAddress": ":8080",
+        "httpsAddress": ":9090",
         "header": "x-wsproxy-host"
       },
       "proxy": {
@@ -5314,24 +4374,6 @@ subjects:
   name: ide-metrics
   namespace: default
 ---
-# rbac.authorization.k8s.io/v1/ClusterRoleBinding default-ide-service-kube-rbac-proxy
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: ide-service
-  name: default-ide-service-kube-rbac-proxy
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: default-kube-rbac-proxy
-subjects:
-- kind: ServiceAccount
-  name: ide-service
-  namespace: default
----
 # rbac.authorization.k8s.io/v1/ClusterRoleBinding default-image-builder-mk3-proxy-kube-rbac-proxy
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -5546,24 +4588,6 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: ide-metrics
-  namespace: default
----
-# rbac.authorization.k8s.io/v1/ClusterRoleBinding ide-service
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: ide-service
-  name: ide-service
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: ide-service
-subjects:
-- kind: ServiceAccount
-  name: ide-service
   namespace: default
 ---
 # rbac.authorization.k8s.io/v1/ClusterRoleBinding ws-manager
@@ -5909,24 +4933,6 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: ide-proxy
----
-# rbac.authorization.k8s.io/v1/RoleBinding ide-service
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: ide-service
-  name: ide-service
-  namespace: default
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: default-ns-psp:restricted-root-user
-subjects:
-- kind: ServiceAccount
-  name: ide-service
 ---
 # rbac.authorization.k8s.io/v1/RoleBinding image-builder-mk3
 apiVersion: rbac.authorization.k8s.io/v1
@@ -6341,30 +5347,6 @@ spec:
   selector:
     app: gitpod
     component: ide-proxy
-  type: ClusterIP
-status:
-  loadBalancer: {}
----
-# v1/Service ide-service
-apiVersion: v1
-kind: Service
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: ide-service
-    kind: service
-  name: ide-service
-  namespace: default
-spec:
-  ports:
-  - name: grpc
-    port: 9001
-    protocol: TCP
-    targetPort: 9001
-  selector:
-    app: gitpod
-    component: ide-service
   type: ClusterIP
 status:
   loadBalancer: {}
@@ -7095,7 +6077,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 707e266a9ce1d118c63137dfeee9740d7577326c2c6fa509b2f79b6a2a02aa47
+        gitpod.io/checksum_config: 786a279e80e5f61c3722ee09ce9862d4fd37b4349a76080f410b56f19df2d46e
         seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
       creationTimestamp: null
       labels:
@@ -7896,7 +6878,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: gitpod.io/workload_ide
+              - key: gitpod.io/workload_workspace_services
                 operator: Exists
       containers:
       - args:
@@ -8021,7 +7003,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 55b82a9f4f41ab5582209c883bcb86b8305411fc9f2489a2f41fd576bfc5ccf9
+        gitpod.io/checksum_config: 5dd6792b178f8a8a7ef56bc7aeca0ab6e5209671eabc9e6a2dc268d5f938ccb7
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8227,7 +7209,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 261a9080da877b0199c3588c8342e2bf262b31768577d9149ad91decc34870d1
+        gitpod.io/checksum_config: 429b9479c206dc66164883793af80586bca4017bb59e108fa7501a530d24ef57
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8402,130 +7384,6 @@ spec:
       terminationGracePeriodSeconds: 30
 status: {}
 ---
-# apps/v1/Deployment ide-service
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: ide-service
-  name: ide-service
-  namespace: default
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: gitpod
-      component: ide-service
-  strategy:
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
-    type: RollingUpdate
-  template:
-    metadata:
-      annotations:
-        gitpod.io/checksum_config: 96f0e9e2b0ef57685361631147d448545bddf8e1230493ac99530513b2fe7783
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: ide-service
-      name: ide-service
-      namespace: default
-    spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: gitpod.io/workload_meta
-                operator: Exists
-      containers:
-      - args:
-        - run
-        - --config
-        - /config/config.json
-        env:
-        - name: GITPOD_DOMAIN
-          value: gitpod.example.com
-        - name: GITPOD_INSTALLATION_SHORTNAME
-          value: default
-        - name: GITPOD_REGION
-          value: local
-        - name: HOST_URL
-          value: https://gitpod.example.com
-        - name: KUBE_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        - name: KUBE_DOMAIN
-          value: svc.cluster.local
-        - name: LOG_LEVEL
-          value: info
-        image: eu.gcr.io/gitpod-core-dev/build/ide-service:test
-        imagePullPolicy: IfNotPresent
-        name: ide-service
-        ports:
-        - containerPort: 9001
-          name: grpc
-        readinessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /ready
-            port: 9501
-          successThreshold: 1
-          timeoutSeconds: 1
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-        securityContext:
-          privileged: false
-        volumeMounts:
-        - mountPath: /config
-          name: config
-          readOnly: true
-        - mountPath: /ide-config
-          name: ide-config
-          readOnly: true
-      - args:
-        - --logtostderr
-        - --insecure-listen-address=[$(IP)]:9500
-        - --upstream=http://127.0.0.1:9500/
-        env:
-        - name: IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        image: quay.io/brancz/kube-rbac-proxy:v0.12.0
-        name: kube-rbac-proxy
-        ports:
-        - containerPort: 9500
-          name: metrics
-        resources:
-          requests:
-            cpu: 1m
-            memory: 30Mi
-        securityContext:
-          runAsGroup: 65532
-          runAsNonRoot: true
-          runAsUser: 65532
-        terminationMessagePolicy: FallbackToLogsOnError
-      dnsPolicy: ClusterFirst
-      enableServiceLinks: false
-      restartPolicy: Always
-      serviceAccountName: ide-service
-      terminationGracePeriodSeconds: 30
-      volumes:
-      - configMap:
-          name: ide-service
-        name: config
-      - configMap:
-          name: ide-config
-        name: ide-config
-status: {}
----
 # apps/v1/Deployment image-builder-mk3
 apiVersion: apps/v1
 kind: Deployment
@@ -8550,7 +7408,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 96743936096936609b76bcab7e6b4c5d2ae5b0cd63b73268b03984c82bdf3d3e
+        gitpod.io/checksum_config: 5a02760487dc021fb50bdfc0d92a3a453348b226fb74729cd57a33927d5b6e08
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8937,7 +7795,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: bf68cc4a7116d9616d776cb6f70b478533681e14350d22f09083c96ab2ab1983
+        gitpod.io/checksum_config: 0bc76c867af13d6037264732e25991af8de7c19a2f2e91d1fb1e64df1a9833db
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9036,13 +7894,6 @@ spec:
           value: WwogIHsKICAgICJuYW1lIjogImRlZmF1bHQiLAogICAgInVybCI6ICJkbnM6Ly8vd3MtbWFuYWdlcjo4MDgwIiwKICAgICJ0bHMiOiB7CiAgICAgICJjYSI6ICIvd3MtbWFuYWdlci1jbGllbnQtdGxzLWNlcnRzL2NhLmNydCIsCiAgICAgICJjcnQiOiAiL3dzLW1hbmFnZXItY2xpZW50LXRscy1jZXJ0cy90bHMuY3J0IiwKICAgICAgImtleSI6ICIvd3MtbWFuYWdlci1jbGllbnQtdGxzLWNlcnRzL3Rscy5rZXkiCiAgICB9LAogICAgInN0YXRlIjogImF2YWlsYWJsZSIsCiAgICAibWF4U2NvcmUiOiAxMDAsCiAgICAic2NvcmUiOiA1MCwKICAgICJnb3Zlcm4iOiB0cnVlLAogICAgImFkbWlzc2lvbkNvbnN0cmFpbnRzIjogbnVsbAogIH0KXQ==
         image: eu.gcr.io/gitpod-core-dev/build/server:test
         imagePullPolicy: IfNotPresent
-        livenessProbe:
-          failureThreshold: 6
-          httpGet:
-            path: /live
-            port: 3000
-          initialDelaySeconds: 120
-          periodSeconds: 10
         name: server
         ports:
         - containerPort: 3000
@@ -9071,9 +7922,6 @@ spec:
           readOnly: true
         - mountPath: /ws-manager-client-tls-certs
           name: ws-manager-client-tls-certs
-          readOnly: true
-        - mountPath: /twilio-config
-          name: twilio-secret-volume
           readOnly: true
       - args:
         - --logtostderr
@@ -9182,10 +8030,6 @@ spec:
       - name: ws-manager-client-tls-certs
         secret:
           secretName: ws-manager-client-tls
-      - name: twilio-secret-volume
-        secret:
-          optional: true
-          secretName: twilio-secret
 status: {}
 ---
 # apps/v1/Deployment ws-manager
@@ -9591,7 +8435,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: f88055f3ce58c8eca0064866deeb5131473b6ba2980dce8bf4f9989e997f1ff5
+        gitpod.io/checksum_config: dcbc53af67e4007a4affc029e880c338b93e4484010727f4bf0a08ad7c93a112
       creationTimestamp: null
       labels:
         app: gitpod
