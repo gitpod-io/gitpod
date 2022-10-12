@@ -31,13 +31,7 @@ class GitpodConnector : GatewayConnector {
         return "Connect to Gitpod workspaces"
     }
 
-    override fun getDocumentationLink(): ActionLink {
-        val documentationLink = ActionLink("Documentation") {
-            BrowserUtil.browse("https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway")
-        }
-        documentationLink.setExternalLinkIcon()
-        return documentationLink
-    }
+    override fun getDocumentationLink() = GatewayConnectorDocumentationPage("https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway")
 
     override fun getConnectorId(): String = "gitpod.connector"
 
