@@ -11,7 +11,7 @@ export class AddColumnToWorkspaceClusterTable1665071320428 implements MigrationI
         const installationShortname = process.env.GITPOD_INSTALLATION_SHORTNAME ?? "";
 
         await queryRunner.query(
-            `ALTER TABLE d_b_workspace_cluster ADD COLUMN applicationCluster varchar(255) NOT NULL DEFAULT ''`,
+            `ALTER TABLE d_b_workspace_cluster ADD COLUMN applicationCluster varchar(60) NOT NULL DEFAULT ''`,
         );
 
         await queryRunner.query(`UPDATE d_b_workspace_cluster SET applicationCluster = '${installationShortname}'`);

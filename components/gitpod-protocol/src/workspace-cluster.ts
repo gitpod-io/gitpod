@@ -16,6 +16,7 @@ export interface WorkspaceCluster {
     name: string;
 
     // The name of the application cluster to which this cluster should be registered.
+    // The name can be at most 60 characters.
     applicationCluster: string;
 
     // URL of the cluster's ws-manager API
