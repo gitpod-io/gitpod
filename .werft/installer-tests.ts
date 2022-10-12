@@ -414,7 +414,7 @@ async function callMakeTargets(phase: string, description: string, makeTarget: s
     // exporting cloud env var is important for the make targets
     const env = `export TF_VAR_cluster_version=${k8s_version} cloud=${cloud} TF_VAR_domain=${baseDomain} TF_VAR_gcp_zone=${gcpDnsZone}`;
 
-    const response = await execStream(
+    const code = await execStream(
         `${env} && make -C ${makefilePath} ${makeTarget}`,
         {
             slice: phase,
@@ -422,12 +422,12 @@ async function callMakeTargets(phase: string, description: string, makeTarget: s
         },
     );
 
-    if (response.code) {
-        console.error(`Error: ${response.stderr}`);
+    if (code !== 0) {
+        console.error(`Error: make target ${makeTarget} exited with code ${code}`);
 
         if (failable) {
             werft.fail(phase, "Operation failed");
-            return response.code;
+            return code;
         }
         werft.log(phase, `'${description}' failed`);
     } else {
@@ -435,7 +435,7 @@ async function callMakeTargets(phase: string, description: string, makeTarget: s
         werft.done(phase);
     }
 
-    return response.code;
+    return code;
 }
 
 function randomize(options: string[]): string {

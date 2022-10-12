@@ -67,8 +67,10 @@ export function exec(cmd: string, options?: ExecOptions): ChildProcess | shell.S
  *
  * If a slice is given logs are streamed using the werft log syntax; else they're streamed directly
  * to stderr/stdout.
+ *
+ * @return The process exit code
  */
-export async function execStream(command: string, options: ExecOptions ): Promise<ExecResult> {
+export async function execStream(command: string, options: ExecOptions ): Promise<number> {
     const werft = getGlobalWerftInstance();
 
     options = options || {};
@@ -79,21 +81,16 @@ export async function execStream(command: string, options: ExecOptions ): Promis
 
     const child = shell.exec(command, {...options, async: true});
 
-    let stdout = '';
-    let stderr = '';
-
     // note: the stdout/stderr event handlers aren't guaranteed to receive buffers that are always
     // newline terminated. The original log messages can be preserved by finding the index of the
     // last newline, printing up until that newline, buffering the remaining message, appending
     // to that buffer on the next call, and finally flushing the buffers then the process exits.
     child.stdout.on('data', (data) => {
         if (options.slice) werft.logOutput(options.slice, data.trim());
-        stdout += data;
     });
 
     child.stderr.on('data', (data) => {
         if (options.slice) werft.logOutput(options.slice, data.trim());
-        stderr += data;
     });
 
     const code = await new Promise<number>((resolve, reject) => {
@@ -106,7 +103,7 @@ export async function execStream(command: string, options: ExecOptions ): Promis
         });
     });
 
-    return { code, stdout, stderr };
+    return code;
 }
 
 // gitTag tags the current state and pushes that tag to the repo origin
