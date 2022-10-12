@@ -40,6 +40,7 @@ type WorkspaceCluster struct {
 	Score                int32                 `json:"score"`
 	Govern               bool                  `json:"govern"`
 	AdmissionConstraints []AdmissionConstraint `json:"admissionConstraints"`
+	ApplicationCluster   string                `json:"applicationCluster"`
 }
 
 // WorkspaceClusterTLS is the struct we use in ws-manager-bridge cluster registrations.
