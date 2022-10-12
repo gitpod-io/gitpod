@@ -96,6 +96,7 @@ message SetCostCenterRequest {
 }
 
 message SetCostCenterResponse {
+    CostCenter cost_center = 1;
 }
 
 message GetBalanceRequest {
