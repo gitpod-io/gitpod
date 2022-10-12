@@ -409,15 +409,15 @@ async function runIntegrationTests() {
  *
  * @return The make target return code
  */
-async function callMakeTargets(phase: string, description: string, makeTarget: string, failable: boolean = false): Promise<number> {
-    werft.log(phase, `Calling ${makeTarget}`);
+async function callMakeTargets(slice: string, description: string, makeTarget: string, failable: boolean = false): Promise<number> {
+    werft.log(slice, `Calling ${makeTarget}`);
     // exporting cloud env var is important for the make targets
     const env = `export TF_VAR_cluster_version=${k8s_version} cloud=${cloud} TF_VAR_domain=${baseDomain} TF_VAR_gcp_zone=${gcpDnsZone}`;
 
     const code = await execStream(
         `${env} && make -C ${makefilePath} ${makeTarget}`,
         {
-            slice: phase,
+            slice: slice,
             dontCheckRc: true,
         },
     );
@@ -426,13 +426,13 @@ async function callMakeTargets(phase: string, description: string, makeTarget: s
         console.error(`Error: make target ${makeTarget} exited with code ${code}`);
 
         if (failable) {
-            werft.fail(phase, "Operation failed");
+            werft.fail(slice, "Operation failed");
             return code;
         }
-        werft.log(phase, `'${description}' failed`);
+        werft.log(slice, `'${description}' failed`);
     } else {
-        werft.log(phase, `'${description}' succeeded`);
-        werft.done(phase);
+        werft.log(slice, `'${description}' succeeded`);
+        werft.done(slice);
     }
 
     return code;
@@ -490,7 +490,7 @@ async function cleanup(): Promise<void> {
     const phase = INFRA_PHASES["DESTROY"];
     werft.phase(phase.phase, phase.description);
 
-    return callMakeTargets(phase.phase, phase.description, phase.makeTarget)
+    return callMakeTargets("cleanup", phase.description, phase.makeTarget)
         .then((ret) => {
 
             // if the destroy command fail, we check if any resources are pending to be removed
