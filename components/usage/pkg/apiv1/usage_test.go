@@ -80,8 +80,9 @@ func newUsageService(t *testing.T, dbconn *gorm.DB) v1.UsageServiceClient {
 	)
 
 	costCenterManager := db.NewCostCenterManager(dbconn, db.DefaultSpendingLimit{
-		ForTeams: 0,
-		ForUsers: 500,
+		ForTeams:            0,
+		ForUsers:            500,
+		MinForUsersOnStripe: 1000,
 	})
 
 	v1.RegisterUsageServiceServer(srv.GRPC(), NewUsageService(dbconn, DefaultWorkspacePricer, costCenterManager))
@@ -227,13 +228,13 @@ func TestGetAndSetCostCenter(t *testing.T) {
 	conn := dbtest.ConnectForTests(t)
 	costCenterUpdates := []*v1.CostCenter{
 		{
-			AttributionId:   string(db.NewTeamAttributionID(uuid.New().String())),
-			SpendingLimit:   5000,
-			BillingStrategy: v1.CostCenter_BILLING_STRATEGY_OTHER,
+			AttributionId:   string(db.NewUserAttributionID(uuid.New().String())),
+			SpendingLimit:   8000,
+			BillingStrategy: v1.CostCenter_BILLING_STRATEGY_STRIPE,
 		},
 		{
-			AttributionId:   string(db.NewTeamAttributionID(uuid.New().String())),
-			SpendingLimit:   8000,
+			AttributionId:   string(db.NewUserAttributionID(uuid.New().String())),
+			SpendingLimit:   500,
 			BillingStrategy: v1.CostCenter_BILLING_STRATEGY_OTHER,
 		},
 		{
@@ -243,7 +244,7 @@ func TestGetAndSetCostCenter(t *testing.T) {
 		},
 		{
 			AttributionId:   string(db.NewTeamAttributionID(uuid.New().String())),
-			SpendingLimit:   5000,
+			SpendingLimit:   0,
 			BillingStrategy: v1.CostCenter_BILLING_STRATEGY_OTHER,
 		},
 	}

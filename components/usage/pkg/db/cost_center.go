@@ -12,6 +12,8 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 )
 
@@ -39,8 +41,9 @@ func (d *CostCenter) TableName() string {
 }
 
 type DefaultSpendingLimit struct {
-	ForTeams int32 `json:"forTeams"`
-	ForUsers int32 `json:"forUsers"`
+	ForTeams            int32 `json:"forTeams"`
+	ForUsers            int32 `json:"forUsers"`
+	MinForUsersOnStripe int32 `json:"minForUsersOnStripe"`
 }
 
 func NewCostCenterManager(conn *gorm.DB, cfg DefaultSpendingLimit) *CostCenterManager {
@@ -102,57 +105,112 @@ func getCostCenter(ctx context.Context, conn *gorm.DB, attributionId Attribution
 	return costCenter, nil
 }
 
-func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, costCenter CostCenter) (CostCenter, error) {
+func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCenter) (CostCenter, error) {
+	if newCC.SpendingLimit < 0 {
+		return CostCenter{}, status.Errorf(codes.InvalidArgument, "Spending limit cannot be set below zero.")
+	}
 
+	attributionID := newCC.ID
 	// retrieving the existing cost center to maintain the readonly values
-	existingCostCenter, err := c.GetOrCreateCostCenter(ctx, costCenter.ID)
+	existingCC, err := c.GetOrCreateCostCenter(ctx, newCC.ID)
 	if err != nil {
-		return CostCenter{}, err
+		return CostCenter{}, status.Errorf(codes.NotFound, "cost center does not exist")
 	}
 
 	now := time.Now()
 
 	// we always update the creationTime
-	costCenter.CreationTime = NewVarcharTime(now)
+	newCC.CreationTime = NewVarcharTime(now)
 	// we don't allow setting the nextBillingTime from outside
-	costCenter.NextBillingTime = existingCostCenter.NextBillingTime
+	newCC.NextBillingTime = existingCC.NextBillingTime
 
-	// Do we have a billing strategy update?
-	if costCenter.BillingStrategy != existingCostCenter.BillingStrategy {
-		switch costCenter.BillingStrategy {
-		case CostCenter_Stripe:
-			// moving to stripe -> let's run a finalization
-			finalizationUsage, err := c.ComputeInvoiceUsageRecord(ctx, costCenter.ID)
+	isTeam := attributionID.IsEntity(AttributionEntity_Team)
+	isUser := attributionID.IsEntity(AttributionEntity_User)
+
+	if isUser {
+		// New billing strategy is Stripe
+		if newCC.BillingStrategy == CostCenter_Stripe {
+			if newCC.SpendingLimit < c.cfg.MinForUsersOnStripe {
+				return CostCenter{}, status.Errorf(codes.FailedPrecondition, "individual users cannot lower their spending below %d", c.cfg.ForUsers)
+			}
+		}
+
+		// Billing strategy remains unchanged (Other)
+		if newCC.BillingStrategy == CostCenter_Other && existingCC.BillingStrategy == CostCenter_Other {
+			if newCC.SpendingLimit != existingCC.SpendingLimit {
+				return CostCenter{}, status.Errorf(codes.FailedPrecondition, "individual users on a free plan cannot adjust their spending limit")
+			}
+		}
+
+		// Downgrading from stripe
+		if existingCC.BillingStrategy == CostCenter_Stripe && newCC.BillingStrategy == CostCenter_Other {
+			newCC.SpendingLimit = c.cfg.ForUsers
+			// see you next month
+			newCC.NextBillingTime = NewVarcharTime(now.AddDate(0, 1, 0))
+		}
+
+		// Upgrading to Stripe
+		if existingCC.BillingStrategy == CostCenter_Other && newCC.BillingStrategy == CostCenter_Stripe {
+			err := c.upgradeToStripe(ctx, attributionID)
 			if err != nil {
 				return CostCenter{}, err
 			}
-			if finalizationUsage != nil {
-				err = UpdateUsage(ctx, c.conn, *finalizationUsage)
-				if err != nil {
-					return CostCenter{}, err
-				}
-			}
-			// we don't manage stripe billing cycle
-			costCenter.NextBillingTime = VarcharTime{}
 
-		case CostCenter_Other:
-			// cancelled from stripe reset the spending limit
-			if costCenter.ID.IsEntity(AttributionEntity_Team) {
-				costCenter.SpendingLimit = c.cfg.ForTeams
-			} else {
-				costCenter.SpendingLimit = c.cfg.ForUsers
+			// we don't manage stripe billing cycle
+			newCC.NextBillingTime = VarcharTime{}
+		}
+	} else if isTeam {
+		// Billing strategy is Other, and it remains unchanged
+		if existingCC.BillingStrategy == CostCenter_Other && newCC.BillingStrategy == CostCenter_Other {
+			// It is impossible for a team without Stripe billing to change their spending limit
+			if newCC.SpendingLimit != c.cfg.ForTeams {
+				return CostCenter{}, status.Errorf(codes.FailedPrecondition, "teams without a subscription cannot change their spending limit")
 			}
+		}
+
+		// Downgrading from stripe
+		if existingCC.BillingStrategy == CostCenter_Stripe && newCC.BillingStrategy == CostCenter_Other {
+			newCC.SpendingLimit = c.cfg.ForTeams
 			// see you next month
-			costCenter.NextBillingTime = NewVarcharTime(now.AddDate(0, 1, 0))
+			newCC.NextBillingTime = NewVarcharTime(now.AddDate(0, 1, 0))
+		}
+
+		// Upgrading to Stripe
+		if existingCC.BillingStrategy == CostCenter_Other && newCC.BillingStrategy == CostCenter_Stripe {
+			err := c.upgradeToStripe(ctx, attributionID)
+			if err != nil {
+				return CostCenter{}, err
+			}
+
+			// we don't manage stripe billing cycle
+			newCC.NextBillingTime = VarcharTime{}
+		}
+	} else {
+		return CostCenter{}, status.Errorf(codes.InvalidArgument, "Unknown attribution entity %s", string(attributionID))
+	}
+
+	log.WithField("cost_center", newCC).Info("saving cost center.")
+	db := c.conn.Save(&newCC)
+	if db.Error != nil {
+		return CostCenter{}, fmt.Errorf("failed to save cost center for attributionID %s: %w", newCC.ID, db.Error)
+	}
+	return newCC, nil
+}
+
+func (c *CostCenterManager) upgradeToStripe(ctx context.Context, attributionID AttributionID) error {
+	// moving to stripe -> let's run a finalization
+	finalizationUsage, err := c.ComputeInvoiceUsageRecord(ctx, attributionID)
+	if err != nil {
+		return err
+	}
+	if finalizationUsage != nil {
+		err = UpdateUsage(ctx, c.conn, *finalizationUsage)
+		if err != nil {
+			return err
 		}
 	}
 
-	log.WithField("cost_center", costCenter).Info("saving cost center.")
-	db := c.conn.Save(&costCenter)
-	if db.Error != nil {
-		return CostCenter{}, fmt.Errorf("failed to save cost center for attributionID %s: %w", costCenter.ID, db.Error)
-	}
-	return costCenter, nil
+	return nil
 }
 
 func (c *CostCenterManager) ComputeInvoiceUsageRecord(ctx context.Context, attributionID AttributionID) (*Usage, error) {
