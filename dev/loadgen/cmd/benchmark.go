@@ -75,7 +75,7 @@ var benchmarkCommand = &cobra.Command{
 					Username: "foobar",
 				},
 				FeatureFlags:   scenario.FeatureFlags,
-				Timeout:        "5m",
+				Timeout:        scenario.WorkspaceTimeout,
 				WorkspaceImage: "will-be-overriden",
 				Envvars:        scenario.Environment,
 				Class:          scenario.WorkspaceClass,
@@ -191,16 +191,17 @@ func init() {
 }
 
 type BenchmarkScenario struct {
-	Workspaces      int                        `json:"workspaces"`
-	IDEImage        string                     `json:"ideImage"`
-	Repos           []loadgen.WorkspaceCfg     `json:"repos"`
-	Environment     []*api.EnvironmentVariable `json:"environment"`
-	RunningTimeout  string                     `json:"waitForRunning"`
-	StoppingTimeout string                     `json:"waitForStopping"`
-	SuccessRate     float32                    `json:"successRate"`
-	WorkspaceClass  string                     `json:"workspaceClass"`
-	FeatureFlags    []api.WorkspaceFeatureFlag `json:"featureFlags"`
-	RepositoryAuth  *loadgen.RepositoryAuth    `json:"repoAuth,omitempty"`
+	Workspaces       int                        `json:"workspaces"`
+	IDEImage         string                     `json:"ideImage"`
+	Repos            []loadgen.WorkspaceCfg     `json:"repos"`
+	Environment      []*api.EnvironmentVariable `json:"environment"`
+	RunningTimeout   string                     `json:"waitForRunning"`
+	StoppingTimeout  string                     `json:"waitForStopping"`
+	SuccessRate      float32                    `json:"successRate"`
+	WorkspaceClass   string                     `json:"workspaceClass"`
+	FeatureFlags     []api.WorkspaceFeatureFlag `json:"featureFlags"`
+	RepositoryAuth   *loadgen.RepositoryAuth    `json:"repoAuth,omitempty"`
+	WorkspaceTimeout string                     `json:"workspaceTimeout,omitempty"`
 }
 
 func handleWorkspaceDeletion(timeout string, executor loadgen.Executor, canceled bool) error {

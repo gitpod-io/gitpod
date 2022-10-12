@@ -41,6 +41,7 @@ In order to configure the benchmark, you can use the configuration file
 | successRate | Percentage of started workspaces that should enter running state to count as a successful run |
 | environment | Global environment variables that will be set for all repositories |
 | workspaceClass | The workspace class to use for workspaces. This setting can be overriden for individual repositories |
+| workspaceTimeout | The workspace timeout value |
 | repoAuth | The authentication for a repository. This setting can be overriden for individual repositories |
 | repoAuth.authUser | The user that should be used for authentication |
 | repoAuth.authPassword | The password that should be used for authentication |
