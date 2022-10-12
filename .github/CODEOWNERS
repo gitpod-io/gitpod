@@ -77,7 +77,7 @@
 /components/ws-daemon-api @aledbf @Furisto
 /components/ws-daemon @gitpod-io/engineering-workspace
 /components/ws-manager-api @aledbf @sagor999
-/components/ws-manager-bridge-api @csweichel @geropl
+/components/ws-manager-bridge-api @gitpod-io/engineering-webapp
 /components/ws-manager-bridge @gitpod-io/engineering-webapp
 /components/ws-manager @gitpod-io/engineering-workspace
 /components/ws-proxy @gitpod-io/engineering-workspace
