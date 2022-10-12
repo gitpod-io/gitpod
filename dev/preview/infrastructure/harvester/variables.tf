@@ -15,19 +15,18 @@ variable "dev_kube_path" {
 
 variable "vm_memory" {
   type        = string
-  default     = "2Gi"
+  default     = "12Gi"
   description = "Memory for the VM"
 }
 
 variable "vm_cpu" {
   type        = number
-  default     = 2
+  default     = 6
   description = "CPU for the VM"
 }
 
 variable "vm_storage_class" {
   type        = string
-  default     = "longhorn-gitpod-k3s-202209251218-onereplica"
   description = "The storage class for the VM"
 }
 
