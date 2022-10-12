@@ -116,10 +116,12 @@ import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billin
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { BillingModes } from "../billing/billing-mode";
 import { UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
+import { IncrementalPrebuildsService } from "../prebuilds/incremental-prebuilds-service";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
+    @inject(IncrementalPrebuildsService) protected readonly incrementalPrebuildsService: IncrementalPrebuildsService;
     @inject(LicenseDB) protected readonly licenseDB: LicenseDB;
     @inject(LicenseKeySource) protected readonly licenseKeySource: LicenseKeySource;
 
@@ -979,6 +981,14 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
             const logPayload = { mode, cloneUrl, commit: commitSHAs, prebuiltWorkspace };
             log.debug(logCtx, "Looking for prebuilt workspace: ", logPayload);
+            if (prebuiltWorkspace?.state !== "available" && mode === CreateWorkspaceMode.UseLastSuccessfulPrebuild) {
+                const history = await this.incrementalPrebuildsService.getCommitHistoryForContext(context, user);
+                prebuiltWorkspace = await this.incrementalPrebuildsService.findGoodBaseForIncrementalBuild(
+                    context,
+                    history,
+                    user,
+                );
+            }
             if (!prebuiltWorkspace) {
                 return;
             }

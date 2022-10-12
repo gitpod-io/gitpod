@@ -33,6 +33,7 @@ import { inject, injectable } from "inversify";
 import * as opentracing from "opentracing";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
 import { error } from "console";
+import { IncrementalPrebuildsService } from "./incremental-prebuilds-service";
 
 export class WorkspaceRunningError extends Error {
     constructor(msg: string, public instance: WorkspaceInstance) {
@@ -59,6 +60,7 @@ export class PrebuildManager {
     @inject(ConfigProvider) protected readonly configProvider: ConfigProvider;
     @inject(Config) protected readonly config: Config;
     @inject(ProjectsService) protected readonly projectService: ProjectsService;
+    @inject(IncrementalPrebuildsService) protected readonly incrementalPrebuildsService: IncrementalPrebuildsService;
 
     async abortPrebuildsForBranch(ctx: TraceContext, project: Project, user: User, branch: string): Promise<void> {
         const span = TraceContext.startSpan("abortPrebuildsForBranch", ctx);
@@ -172,36 +174,15 @@ export class PrebuildManager {
             };
 
             if (this.shouldPrebuildIncrementally(context.repository.cloneUrl, project)) {
-                const maxDepth = this.config.incrementalPrebuilds.commitHistory;
-                const hostContext = this.hostContextProvider.get(context.repository.host);
-                const repoProvider = hostContext?.services?.repositoryProvider;
-                if (repoProvider) {
-                    prebuildContext.commitHistory = await repoProvider.getCommitHistory(
-                        user,
-                        context.repository.owner,
-                        context.repository.name,
-                        context.revision,
-                        maxDepth,
-                    );
-                    if (
-                        context.additionalRepositoryCheckoutInfo &&
-                        context.additionalRepositoryCheckoutInfo.length > 0
-                    ) {
-                        const histories = context.additionalRepositoryCheckoutInfo.map(async (info) => {
-                            const commitHistory = await repoProvider.getCommitHistory(
-                                user,
-                                info.repository.owner,
-                                info.repository.name,
-                                info.revision,
-                                maxDepth,
-                            );
-                            return {
-                                cloneUrl: info.repository.cloneUrl,
-                                commitHistory,
-                            };
-                        });
-                        prebuildContext.additionalRepositoryCommitHistories = await Promise.all(histories);
-                    }
+                // We store the commit histories in the `StartPrebuildContext` in order to pass them down to
+                // `WorkspaceFactoryEE.createForStartPrebuild`.
+                const { commitHistory, additionalRepositoryCommitHistories } =
+                    await this.incrementalPrebuildsService.getCommitHistoryForContext(context, user);
+                if (commitHistory) {
+                    prebuildContext.commitHistory = commitHistory;
+                }
+                if (additionalRepositoryCommitHistories) {
+                    prebuildContext.additionalRepositoryCommitHistories = additionalRepositoryCommitHistories;
                 }
             }
 
