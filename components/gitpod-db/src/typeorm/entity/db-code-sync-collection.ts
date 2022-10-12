@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Entity, PrimaryColumn } from "typeorm";
+import { Column, Entity, PrimaryColumn } from "typeorm";
 import { TypeORM } from "../typeorm";
 
 @Entity()
@@ -15,4 +15,7 @@ export class DBCodeSyncCollection {
 
     @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
     collection: string;
+
+    @Column()
+    deleted: boolean;
 }

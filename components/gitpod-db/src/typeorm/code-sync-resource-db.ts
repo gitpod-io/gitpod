@@ -134,7 +134,7 @@ export class CodeSyncResourceDB {
                 .createQueryBuilder()
                 .update(DBCodeSyncResource)
                 .set({ deleted: true })
-                .where("userId = :userId AND kind != 'editSessions' AND collection = :collection AND deleted = 0", {
+                .where("userId = :userId AND kind != 'editSessions' AND collection = :collection", {
                     userId,
                     collection: uuid.NIL,
                 })
@@ -155,8 +155,8 @@ export class CodeSyncResourceDB {
             await connection.transaction(async (manager) => {
                 await manager
                     .createQueryBuilder()
-                    .delete()
-                    .from(DBCodeSyncResource)
+                    .update(DBCodeSyncResource)
+                    .set({ deleted: true })
                     .where("userId = :userId AND kind = :kind AND rev = :rev AND collection = :collection", {
                         userId,
                         kind,
@@ -275,7 +275,7 @@ export class CodeSyncResourceDB {
         const connection = await this.typeORM.getConnection();
         const result = await connection.manager
             .createQueryBuilder(DBCodeSyncCollection, "collection")
-            .where("collection.userId = :userId", { userId })
+            .where("collection.userId = :userId AND collection.deleted = 0", { userId })
             .getMany();
         return result.map((r) => r.collection);
     }
@@ -284,7 +284,10 @@ export class CodeSyncResourceDB {
         const connection = await this.typeORM.getConnection();
         const result = await connection.manager
             .createQueryBuilder(DBCodeSyncCollection, "collection")
-            .where("collection.userId = :userId AND collection.collection = :collection", { userId, collection })
+            .where("collection.userId = :userId AND collection.collection = :collection AND collection.deleted = 0", {
+                userId,
+                collection,
+            })
             .getOne();
         return !!result;
     }
@@ -315,7 +318,7 @@ export class CodeSyncResourceDB {
                 await manager
                     .createQueryBuilder()
                     .update(DBCodeSyncCollection)
-                    .delete()
+                    .set({ deleted: true })
                     .where("userId = :userId AND collection = :collection", { userId, collection })
                     .execute();
                 await manager
@@ -332,7 +335,7 @@ export class CodeSyncResourceDB {
                 await manager
                     .createQueryBuilder()
                     .update(DBCodeSyncCollection)
-                    .delete()
+                    .set({ deleted: true })
                     .where("userId = :userId", { userId })
                     .execute();
                 await manager
