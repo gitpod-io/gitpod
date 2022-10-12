@@ -81,22 +81,48 @@ export async function execStream(command: string, options: ExecOptions ): Promis
 
     const child = shell.exec(command, {...options, async: true});
 
-    // note: the stdout/stderr event handlers aren't guaranteed to receive buffers that are always
-    // newline terminated. The original log messages can be preserved by finding the index of the
-    // last newline, printing up until that newline, buffering the remaining message, appending
-    // to that buffer on the next call, and finally flushing the buffers then the process exits.
+    // Collect output from a subprocess file and print newline terminated log messages.
+    //
+    // The event handlers attached to the child process stdout/stderr aren't guaranteed to be newline
+    // terminated. Because werft.logOutput appends newlines we manually buffer stream output and
+    // split it on newlines so that the underlying streams are faithfully reproduced with the
+    // appropriate newlines..
+    const bufferedLog = (slice: string, buffer: string, data: string) => {
+        buffer += data;
+        const lastIndex = buffer.lastIndexOf("\n");
+        if (lastIndex >= 0) {
+            // Extract the substring till the last newline in the buffer, and trim off the newline
+            // as werft.logOutput will append a newline to the log message.
+            let msg = buffer.slice(0, lastIndex + 1).trimEnd();
+            werft.logOutput(slice, msg);
+
+            buffer = buffer.slice(lastIndex + 1);
+        }
+
+    };
+
+    let stdoutBuffer: string = '';
     child.stdout.on('data', (data) => {
-        if (options.slice) werft.logOutput(options.slice, data.trim());
+        if (options.slice) bufferedLog(options.slice, stdoutBuffer, data);
     });
 
+    let stderrBuffer: string = '';
     child.stderr.on('data', (data) => {
-        if (options.slice) werft.logOutput(options.slice, data.trim());
+        if (options.slice) bufferedLog(options.slice, stderrBuffer, data);
     });
 
     const code = await new Promise<number>((resolve, reject) => {
         child.on('close', (code, _signal) => {
+            if (options.slice) {
+                // The child process stdout and stderr buffers may not be fully flushed as the child process
+                // may emit logs that aren't terminated with a newline; upon process close we ensure those
+                // buffers are fully flushed.
+                if (stdoutBuffer.length > 0) werft.logOutput(options.slice, stdoutBuffer.trimEnd());
+                if (stderrBuffer.length > 0) werft.logOutput(options.slice, stderrBuffer.trimEnd());
+            }
+
             if (code === 0 || options.dontCheckRc) {
-                return code;
+                resolve(code)
             } else {
                 reject(new Error(`Process exited non-zero exit code ${code}`))
             }
