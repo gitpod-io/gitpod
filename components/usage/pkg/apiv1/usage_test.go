@@ -251,12 +251,8 @@ func TestGetAndSetCostCenter(t *testing.T) {
 	service := newUsageService(t, conn)
 
 	for _, costCenter := range costCenterUpdates {
-		_, err := service.SetCostCenter(context.Background(), &v1.SetCostCenterRequest{
+		retrieved, err := service.SetCostCenter(context.Background(), &v1.SetCostCenterRequest{
 			CostCenter: costCenter,
-		})
-		require.NoError(t, err)
-		retrieved, err := service.GetCostCenter(context.Background(), &v1.GetCostCenterRequest{
-			AttributionId: costCenter.AttributionId,
 		})
 		require.NoError(t, err)
 
