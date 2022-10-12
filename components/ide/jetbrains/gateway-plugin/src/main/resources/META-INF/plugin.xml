@@ -4,7 +4,9 @@
  See License-AGPL.txt in the project root for license information.
 -->
 
-<idea-plugin require-restart="false">
+<idea-plugin require-restart="false" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <xi:include href="/META-INF/extensions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
     <id>io.gitpod.jetbrains.gateway</id>
     <name>Gitpod Gateway</name>
     <vendor>Gitpod</vendor>
@@ -26,7 +28,6 @@
 
     <extensions defaultExtensionNs="com.jetbrains">
         <gatewayConnectionProvider implementation="io.gitpod.jetbrains.gateway.GitpodConnectionProvider"/>
-        <gatewayConnector implementation="io.gitpod.jetbrains.gateway.GitpodConnector"/>
     </extensions>
 
     <applicationListeners>

@@ -2,18 +2,19 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package io.gitpod.jetbrains.gateway
+package io.gitpod.jetbrains.gateway.latest
 
+import com.intellij.ide.BrowserUtil
+import com.intellij.ui.components.ActionLink
 import com.jetbrains.gateway.api.GatewayConnector
 import com.jetbrains.gateway.api.GatewayConnectorView
 import com.jetbrains.gateway.api.GatewayRecentConnections
 import com.jetbrains.rd.util.lifetime.Lifetime
+import io.gitpod.jetbrains.gateway.GitpodRecentConnections
 import io.gitpod.jetbrains.icons.GitpodIcons
 import java.awt.Component
 import javax.swing.Icon
 import javax.swing.JComponent
-import com.intellij.ui.components.ActionLink
-import com.intellij.ide.BrowserUtil
 
 class GitpodConnector : GatewayConnector {
     override val icon: Icon
