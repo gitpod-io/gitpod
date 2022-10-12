@@ -28,6 +28,7 @@ variable "vm_cpu" {
 variable "vm_storage_class" {
   type        = string
   description = "The storage class for the VM"
+  default     = "longhorn-gitpod-k3s-202209251218-onereplica"
 }
 
 variable "harvester_ingress_ip" {
