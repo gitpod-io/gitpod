@@ -274,8 +274,33 @@ installerTests(TEST_CONFIGURATIONS[testConfig]).catch((err) => {
     process.exit(1);
 });
 
+function logJobConfig(): void {
+    werft.phase("Job configuration");
+    const sliceId = "Parsing job configuration";
+
+    const jobConfig = {
+        config,
+        k8s_version,
+        os_version,
+        deps,
+        version,
+        preview,
+        upgrade,
+        skipTests,
+        selfSigned,
+        deleteOnFail,
+        baseDomain,
+        gcpDnsZone,
+    };
+
+    werft.logOutput(sliceId, JSON.stringify(jobConfig, null, 2));
+
+    werft.log(sliceId, "Expand to see the job configuration");
+    werft.done(sliceId);
+}
+
 export async function installerTests(config: TestConfig) {
-    console.log(config.DESCRIPTION);
+    logJobConfig();
 
     // these phases sets up or clean up the infrastructure
     let majorPhase: string;
