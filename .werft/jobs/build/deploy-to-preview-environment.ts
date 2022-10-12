@@ -69,7 +69,6 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         version,
         analytics,
         cleanSlateDeployment,
-        withPayment,
         withObservability,
         installEELicense,
         workspaceFeatureFlags,
@@ -99,7 +98,6 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         cleanSlateDeployment,
         installEELicense,
         imagePullAuth,
-        withPayment,
         withObservability,
     };
 
@@ -335,7 +333,6 @@ async function deployToDevWithInstaller(
         workspaceFeatureFlags: workspaceFeatureFlags,
         gitpodDaemonsetPorts: { registryFacade: registryNodePortMeta, wsDaemon: wsdaemonPortMeta },
         smithToken: token,
-        withPayment: deploymentConfig.withPayment,
     });
     try {
         werft.log(phases.DEPLOY, "deploying using installer");
@@ -396,7 +393,6 @@ interface DeploymentConfig {
     cleanSlateDeployment: boolean;
     installEELicense: boolean;
     imagePullAuth: string;
-    withPayment: boolean;
     withObservability: boolean;
 }
 

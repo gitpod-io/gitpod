@@ -29,7 +29,6 @@ export interface JobConfig {
     withUpgradeTests: boolean;
     withSelfHostedPreview: boolean;
     withObservability: boolean;
-    withPayment: boolean;
     withLocalPreview: boolean;
     workspaceFeatureFlags: string[];
     previewEnvironment: PreviewEnvironmentConfig;
@@ -95,7 +94,6 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const retag = "with-retag" in buildConfig ? "" : "--dont-retag";
     const cleanSlateDeployment = mainBuild || "with-clean-slate-deployment" in buildConfig;
     const installEELicense = !("without-ee-license" in buildConfig) || mainBuild;
-    const withPayment = "with-payment" in buildConfig && !mainBuild;
     const withObservability = "with-observability" in buildConfig && !mainBuild;
     const withLargeVM = "with-large-vm" in buildConfig && !mainBuild;
     const withLocalPreview = "with-local-preview" in buildConfig || mainBuild
@@ -152,7 +150,6 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         withContrib,
         withIntegrationTests,
         withObservability,
-        withPayment,
         withUpgradeTests,
         withSelfHostedPreview,
         withLocalPreview,
