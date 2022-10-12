@@ -35,7 +35,6 @@ export type InstallerOptions = {
     workspaceFeatureFlags: string[];
     gitpodDaemonsetPorts: GitpodDaemonsetPorts;
     smithToken: string;
-    withPayment: boolean;
 };
 
 export class Installer {
@@ -82,23 +81,21 @@ export class Installer {
                 this.dontIncludeAnalytics(slice);
             }
 
-            if (this.options.withPayment) {
-                // let installer know that there is a chargbee config
-                exec(
-                    `yq w -i ${this.options.installerConfigPath} experimental.webapp.server.chargebeeSecret chargebee-config`,
-                    { slice: slice },
-                );
+            // let installer know that there is a chargbee config
+            exec(
+                `yq w -i ${this.options.installerConfigPath} experimental.webapp.server.chargebeeSecret chargebee-config`,
+                { slice: slice },
+            );
 
-                // let installer know that there is a stripe config
-                exec(
-                    `yq w -i ${this.options.installerConfigPath} experimental.webapp.server.stripeSecret stripe-api-keys`,
-                    { slice: slice },
-                );
-                exec(
-                    `yq w -i ${this.options.installerConfigPath} experimental.webapp.server.stripeConfig stripe-config`,
-                    { slice: slice },
-                );
-            }
+            // let installer know that there is a stripe config
+            exec(
+                `yq w -i ${this.options.installerConfigPath} experimental.webapp.server.stripeSecret stripe-api-keys`,
+                { slice: slice },
+            );
+            exec(
+                `yq w -i ${this.options.installerConfigPath} experimental.webapp.server.stripeConfig stripe-config`,
+                { slice: slice },
+            );
         } catch (err) {
             throw new Error(err);
         }
