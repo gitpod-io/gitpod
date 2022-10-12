@@ -821,10 +821,8 @@ func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan
 		}()
 
 		err = cmd.Wait()
-		if err != nil {
-			if errSignalTerminated.Error() != err.Error() {
-				log.WithField("ide", ide.String()).WithError(err).Warn("IDE was stopped")
-			}
+		if err != nil && err.Error() != errSignalTerminated.Error() {
+			log.WithField("ide", ide.String()).WithError(err).Warn("IDE was stopped")
 
 			ideWasReady, _ := ideReady.Get()
 			if !ideWasReady {
