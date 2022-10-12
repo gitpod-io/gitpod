@@ -17,6 +17,7 @@ export function deleteVM(options: { name: string }) {
 
     try {
         exec(`DESTROY=true \
+                                    GOOGLE_APPLICATION_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
                                     GOOGLE_BACKEND_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
                                     TF_VAR_dev_kube_path=${CORE_DEV_KUBECONFIG_PATH} \
                                     TF_VAR_harvester_kube_path=${HARVESTER_KUBECONFIG_PATH} \

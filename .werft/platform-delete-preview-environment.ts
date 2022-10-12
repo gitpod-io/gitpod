@@ -90,7 +90,6 @@ async function removePreviewEnvironment(previewEnvironment: PreviewEnvironment) 
     werft.log(SLICES.DELETING_PREVIEW, `Starting deletion of all resources related to ${previewEnvironment.name}`);
     try {
         // We're running these promises sequentially to make it easier to read the log output.
-        await previewEnvironment.removeDNSRecords(SLICES.DELETING_PREVIEW);
         await previewEnvironment.delete();
         werft.done(SLICES.DELETING_PREVIEW);
     } catch (e) {

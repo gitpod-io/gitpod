@@ -14,14 +14,13 @@ import {
     installCertificate,
     InstallCertificateParams,
 } from "../../util/certs";
-import { sleep, env } from "../../util/util";
+import { env } from "../../util/util";
 import { CORE_DEV_KUBECONFIG_PATH, PREVIEW_K3S_KUBECONFIG_PATH } from "./const";
 import { Werft } from "../../util/werft";
 import { JobConfig } from "./job-config";
 import * as VM from "../../vm/vm";
 import { Analytics, Installer } from "./installer/installer";
 import { previewNameFromBranchName } from "../../util/preview";
-import { createDNSRecord } from "../../util/gcloud";
 import { SpanStatusCode } from "@opentelemetry/api";
 
 // used by Installer
@@ -240,7 +239,7 @@ async function deployToDevWithInstaller(
 ) {
     // to test this function, change files in your workspace, sideload (-s) changed files into werft or set annotations (-a) like so:
     // werft run github -f -j ./.werft/build.yaml -s ./.werft/build.ts -s ./.werft/jobs/build/installer/post-process.sh -a with-clean-slate-deployment=true
-    const { version, destname, namespace, domain } = deploymentConfig;
+    const { version, namespace } = deploymentConfig;
     const deploymentKubeconfig = PREVIEW_K3S_KUBECONFIG_PATH;
 
     // find free ports
@@ -357,7 +356,6 @@ async function deployToDevWithInstaller(
     });
     werft.done(installerSlices.DEPLOYMENT_WAITING);
 
-    await addVMDNSRecord(werft, destname, domain);
     addAgentSmithToken(werft, deploymentConfig.namespace, installer.options.kubeconfigPath, tokenHash);
 
     werft.done(phases.DEPLOY);
@@ -402,63 +400,6 @@ interface DeploymentConfig {
     withObservability: boolean;
 }
 
-async function addVMDNSRecord(werft: Werft, name: string, domain: string) {
-    const ingressIP = getHarvesterIngressIP();
-    let proxyLBIP = null;
-    werft.log(installerSlices.DNS_ADD_RECORD, "Getting loadbalancer IP");
-    for (let i = 0; i < 60; i++) {
-        try {
-            let lb = exec(
-                `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n loadbalancers get service lb-${name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'`,
-                { silent: true },
-            );
-            if (lb.length > 4) {
-                proxyLBIP = lb.toString();
-                break;
-            }
-            await sleep(1000);
-        } catch (err) {
-            await sleep(1000);
-        }
-    }
-    if (proxyLBIP == null) {
-        werft.fail(installerSlices.DNS_ADD_RECORD, new Error("Can't get loadbalancer IP"));
-    }
-    werft.log(installerSlices.DNS_ADD_RECORD, "Get loadbalancer IP: " + proxyLBIP);
-
-    await Promise.all([
-        createDNSRecord({
-            domain: domain,
-            projectId: "gitpod-core-dev",
-            dnsZone: "preview-gitpod-dev-com",
-            IP: ingressIP,
-            slice: installerSlices.DNS_ADD_RECORD,
-        }),
-        createDNSRecord({
-            domain: `*.${domain}`,
-            projectId: "gitpod-core-dev",
-            dnsZone: "preview-gitpod-dev-com",
-            IP: ingressIP,
-            slice: installerSlices.DNS_ADD_RECORD,
-        }),
-        createDNSRecord({
-            domain: `*.ws.${domain}`,
-            projectId: "gitpod-core-dev",
-            dnsZone: "preview-gitpod-dev-com",
-            IP: ingressIP,
-            slice: installerSlices.DNS_ADD_RECORD,
-        }),
-        createDNSRecord({
-            domain: `*.ssh.ws.${domain}`,
-            projectId: "gitpod-core-dev",
-            dnsZone: "preview-gitpod-dev-com",
-            IP: proxyLBIP,
-            slice: installerSlices.DNS_ADD_RECORD,
-        }),
-    ]);
-    werft.done(installerSlices.DNS_ADD_RECORD);
-}
-
 async function installMetaCertificates(
     werft: Werft,
     branch: string,
@@ -473,11 +414,6 @@ async function installMetaCertificates(
     metaInstallCertParams.destinationNamespace = destNamespace;
     metaInstallCertParams.destinationKubeconfig = destinationKubeconfig;
     await installCertificate(werft, metaInstallCertParams, { ...metaEnv(), slice: slice });
-}
-
-// returns the static IP address
-function getHarvesterIngressIP(): string {
-    return "159.69.172.117";
 }
 
 function metaEnv(_parent?: ExecOptions): ExecOptions {
