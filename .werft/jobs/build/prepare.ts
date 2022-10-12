@@ -89,6 +89,7 @@ function createVM(werft: Werft, config: JobConfig) {
     // set some common vars for TF
     // We pass the GCP credentials explicitly, otherwise for some reason TF doesn't pick them up
     const commonVars = `GOOGLE_BACKEND_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
+                        GOOGLE_APPLICATION_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
                         TF_VAR_dev_kube_path=${CORE_DEV_KUBECONFIG_PATH} \
                         TF_VAR_harvester_kube_path=${HARVESTER_KUBECONFIG_PATH} \
                         TF_VAR_preview_name=${config.previewEnvironment.destname} \

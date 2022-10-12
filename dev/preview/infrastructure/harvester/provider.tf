@@ -15,6 +15,10 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = ">= 2.0"
     }
+    google = {
+      source  = "hashicorp/google"
+      version = ">=4.40.0"
+    }
   }
 }
 
@@ -31,4 +35,9 @@ provider "k8s" {
 provider "k8s" {
   alias       = "harvester"
   config_path = var.harvester_kube_path
+}
+
+provider "google" {
+  project = "gitpod-core-dev"
+  region  = "us-central1"
 }

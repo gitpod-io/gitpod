@@ -1,6 +1,5 @@
 import { createHash } from "crypto";
 import { PREVIEW_K3S_KUBECONFIG_PATH } from "../jobs/build/const";
-import { deleteDNSRecord } from "./gcloud";
 import * as VM from "../vm/vm";
 import { exec } from "./shell";
 import { Werft } from "./werft";
@@ -62,68 +61,6 @@ export class HarvesterPreviewEnvironment {
 
     async delete(): Promise<void> {
         VM.deleteVM({ name: this.name });
-    }
-
-    async removeDNSRecords(sliceID: string) {
-        this.werft.log(sliceID, "Deleting harvester related DNS records for the preview environment");
-        await Promise.all([
-            deleteDNSRecord(
-                "A",
-                `*.ssh.ws.${this.name}.preview.gitpod-dev.com`,
-                "gitpod-core-dev",
-                "preview-gitpod-dev-com",
-                sliceID,
-            ),
-            deleteDNSRecord(
-                "A",
-                `*.ws.${this.name}.preview.gitpod-dev.com`,
-                "gitpod-core-dev",
-                "preview-gitpod-dev-com",
-                sliceID,
-            ),
-            deleteDNSRecord(
-                "A",
-                `*.${this.name}.preview.gitpod-dev.com`,
-                "gitpod-core-dev",
-                "preview-gitpod-dev-com",
-                sliceID,
-            ),
-            deleteDNSRecord(
-                "A",
-                `${this.name}.preview.gitpod-dev.com`,
-                "gitpod-core-dev",
-                "preview-gitpod-dev-com",
-                sliceID,
-            ),
-            deleteDNSRecord(
-                "A",
-                `prometheus-${this.name}.preview.gitpod-dev.com`,
-                "gitpod-core-dev",
-                "preview-gitpod-dev-com",
-                sliceID,
-            ),
-            deleteDNSRecord(
-                "TXT",
-                `prometheus-${this.name}.preview.gitpod-dev.com`,
-                "gitpod-core-dev",
-                "preview-gitpod-dev-com",
-                sliceID,
-            ),
-            deleteDNSRecord(
-                "A",
-                `grafana-${this.name}.preview.gitpod-dev.com`,
-                "gitpod-core-dev",
-                "preview-gitpod-dev-com",
-                sliceID,
-            ),
-            deleteDNSRecord(
-                "TXT",
-                `grafana-${this.name}.preview.gitpod-dev.com`,
-                "gitpod-core-dev",
-                "preview-gitpod-dev-com",
-                sliceID,
-            ),
-        ]);
     }
 
     /**

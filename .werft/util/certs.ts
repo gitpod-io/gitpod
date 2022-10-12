@@ -25,6 +25,7 @@ export async function certReady(werft: Werft, config: JobConfig, slice: string):
     for (var i = 1;i<=maxAttempts;i++) {
         werft.log(slice, `Creating cert: Attempt ${i}`);
         exec(`GOOGLE_BACKEND_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
+                        GOOGLE_APPLICATION_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
                         TF_VAR_dev_kube_path=${CORE_DEV_KUBECONFIG_PATH} \
                         TF_VAR_harvester_kube_path=${HARVESTER_KUBECONFIG_PATH} \
                         TF_VAR_preview_name=${config.previewEnvironment.destname} \
