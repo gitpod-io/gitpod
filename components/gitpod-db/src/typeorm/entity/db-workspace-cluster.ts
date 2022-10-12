@@ -87,7 +87,7 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
 
     @Column({
         type: "varchar",
-        length: 255,
+        length: 60,
     })
     applicationCluster: string;
 }
