@@ -15,14 +15,14 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 
 	"github.com/gitpod-io/gitpod/public-api/config"
-	"github.com/gitpod-io/gitpod/public-api/v1/v1connect"
+	"github.com/gitpod-io/gitpod/public-api/stable/v1/v1connect"
 	"github.com/gorilla/handlers"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
-	"github.com/gitpod-io/gitpod/public-api-server/pkg/apiv1"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/stable/apiv1"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/webhooks"
 	"github.com/sirupsen/logrus"
 )

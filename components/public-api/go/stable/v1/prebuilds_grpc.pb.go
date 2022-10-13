@@ -6,7 +6,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             (unknown)
-// source: gitpod/v1/prebuilds.proto
+// source: gitpod/stable/v1/prebuilds.proto
 
 package v1
 
@@ -52,7 +52,7 @@ func NewPrebuildsServiceClient(cc grpc.ClientConnInterface) PrebuildsServiceClie
 
 func (c *prebuildsServiceClient) GetPrebuild(ctx context.Context, in *GetPrebuildRequest, opts ...grpc.CallOption) (*GetPrebuildResponse, error) {
 	out := new(GetPrebuildResponse)
-	err := c.cc.Invoke(ctx, "/gitpod.v1.PrebuildsService/GetPrebuild", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/gitpod.stable.v1.PrebuildsService/GetPrebuild", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (c *prebuildsServiceClient) GetPrebuild(ctx context.Context, in *GetPrebuil
 
 func (c *prebuildsServiceClient) GetRunningPrebuild(ctx context.Context, in *GetRunningPrebuildRequest, opts ...grpc.CallOption) (*GetRunningPrebuildResponse, error) {
 	out := new(GetRunningPrebuildResponse)
-	err := c.cc.Invoke(ctx, "/gitpod.v1.PrebuildsService/GetRunningPrebuild", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/gitpod.stable.v1.PrebuildsService/GetRunningPrebuild", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (c *prebuildsServiceClient) GetRunningPrebuild(ctx context.Context, in *Get
 }
 
 func (c *prebuildsServiceClient) ListenToPrebuildStatus(ctx context.Context, in *ListenToPrebuildStatusRequest, opts ...grpc.CallOption) (PrebuildsService_ListenToPrebuildStatusClient, error) {
-	stream, err := c.cc.NewStream(ctx, &PrebuildsService_ServiceDesc.Streams[0], "/gitpod.v1.PrebuildsService/ListenToPrebuildStatus", opts...)
+	stream, err := c.cc.NewStream(ctx, &PrebuildsService_ServiceDesc.Streams[0], "/gitpod.stable.v1.PrebuildsService/ListenToPrebuildStatus", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func (x *prebuildsServiceListenToPrebuildStatusClient) Recv() (*ListenToPrebuild
 }
 
 func (c *prebuildsServiceClient) ListenToPrebuildLogs(ctx context.Context, in *ListenToPrebuildLogsRequest, opts ...grpc.CallOption) (PrebuildsService_ListenToPrebuildLogsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &PrebuildsService_ServiceDesc.Streams[1], "/gitpod.v1.PrebuildsService/ListenToPrebuildLogs", opts...)
+	stream, err := c.cc.NewStream(ctx, &PrebuildsService_ServiceDesc.Streams[1], "/gitpod.stable.v1.PrebuildsService/ListenToPrebuildLogs", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +192,7 @@ func _PrebuildsService_GetPrebuild_Handler(srv interface{}, ctx context.Context,
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gitpod.v1.PrebuildsService/GetPrebuild",
+		FullMethod: "/gitpod.stable.v1.PrebuildsService/GetPrebuild",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PrebuildsServiceServer).GetPrebuild(ctx, req.(*GetPrebuildRequest))
@@ -210,7 +210,7 @@ func _PrebuildsService_GetRunningPrebuild_Handler(srv interface{}, ctx context.C
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gitpod.v1.PrebuildsService/GetRunningPrebuild",
+		FullMethod: "/gitpod.stable.v1.PrebuildsService/GetRunningPrebuild",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PrebuildsServiceServer).GetRunningPrebuild(ctx, req.(*GetRunningPrebuildRequest))
@@ -264,7 +264,7 @@ func (x *prebuildsServiceListenToPrebuildLogsServer) Send(m *ListenToPrebuildLog
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var PrebuildsService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "gitpod.v1.PrebuildsService",
+	ServiceName: "gitpod.stable.v1.PrebuildsService",
 	HandlerType: (*PrebuildsServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -288,5 +288,5 @@ var PrebuildsService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "gitpod/v1/prebuilds.proto",
+	Metadata: "gitpod/stable/v1/prebuilds.proto",
 }

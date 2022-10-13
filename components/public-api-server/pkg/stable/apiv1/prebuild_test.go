@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/bufbuild/connect-go"
-	v1 "github.com/gitpod-io/gitpod/public-api/v1"
+	v1 "github.com/gitpod-io/gitpod/public-api/stable/v1"
 	"github.com/stretchr/testify/require"
 )
 

@@ -8,8 +8,8 @@ import (
 	"context"
 
 	"github.com/bufbuild/connect-go"
-	v1 "github.com/gitpod-io/gitpod/public-api/v1"
-	"github.com/gitpod-io/gitpod/public-api/v1/v1connect"
+	v1 "github.com/gitpod-io/gitpod/public-api/stable/v1"
+	"github.com/gitpod-io/gitpod/public-api/stable/v1/v1connect"
 )
 
 func NewPrebuildService() *PrebuildService {

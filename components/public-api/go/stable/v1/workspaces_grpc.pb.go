@@ -6,7 +6,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             (unknown)
-// source: gitpod/v1/workspaces.proto
+// source: gitpod/stable/v1/workspaces.proto
 
 package v1
 
@@ -68,7 +68,7 @@ func NewWorkspacesServiceClient(cc grpc.ClientConnInterface) WorkspacesServiceCl
 
 func (c *workspacesServiceClient) ListWorkspaces(ctx context.Context, in *ListWorkspacesRequest, opts ...grpc.CallOption) (*ListWorkspacesResponse, error) {
 	out := new(ListWorkspacesResponse)
-	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspacesService/ListWorkspaces", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/gitpod.stable.v1.WorkspacesService/ListWorkspaces", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func (c *workspacesServiceClient) ListWorkspaces(ctx context.Context, in *ListWo
 
 func (c *workspacesServiceClient) GetWorkspace(ctx context.Context, in *GetWorkspaceRequest, opts ...grpc.CallOption) (*GetWorkspaceResponse, error) {
 	out := new(GetWorkspaceResponse)
-	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspacesService/GetWorkspace", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/gitpod.stable.v1.WorkspacesService/GetWorkspace", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (c *workspacesServiceClient) GetWorkspace(ctx context.Context, in *GetWorks
 
 func (c *workspacesServiceClient) GetOwnerToken(ctx context.Context, in *GetOwnerTokenRequest, opts ...grpc.CallOption) (*GetOwnerTokenResponse, error) {
 	out := new(GetOwnerTokenResponse)
-	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspacesService/GetOwnerToken", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/gitpod.stable.v1.WorkspacesService/GetOwnerToken", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (c *workspacesServiceClient) GetOwnerToken(ctx context.Context, in *GetOwne
 
 func (c *workspacesServiceClient) CreateAndStartWorkspace(ctx context.Context, in *CreateAndStartWorkspaceRequest, opts ...grpc.CallOption) (*CreateAndStartWorkspaceResponse, error) {
 	out := new(CreateAndStartWorkspaceResponse)
-	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspacesService/CreateAndStartWorkspace", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/gitpod.stable.v1.WorkspacesService/CreateAndStartWorkspace", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ func (c *workspacesServiceClient) CreateAndStartWorkspace(ctx context.Context, i
 
 func (c *workspacesServiceClient) StartWorkspace(ctx context.Context, in *StartWorkspaceRequest, opts ...grpc.CallOption) (*StartWorkspaceResponse, error) {
 	out := new(StartWorkspaceResponse)
-	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspacesService/StartWorkspace", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/gitpod.stable.v1.WorkspacesService/StartWorkspace", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func (c *workspacesServiceClient) StartWorkspace(ctx context.Context, in *StartW
 
 func (c *workspacesServiceClient) GetActiveWorkspaceInstance(ctx context.Context, in *GetActiveWorkspaceInstanceRequest, opts ...grpc.CallOption) (*GetActiveWorkspaceInstanceResponse, error) {
 	out := new(GetActiveWorkspaceInstanceResponse)
-	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspacesService/GetActiveWorkspaceInstance", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/gitpod.stable.v1.WorkspacesService/GetActiveWorkspaceInstance", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func (c *workspacesServiceClient) GetActiveWorkspaceInstance(ctx context.Context
 
 func (c *workspacesServiceClient) GetWorkspaceInstanceOwnerToken(ctx context.Context, in *GetWorkspaceInstanceOwnerTokenRequest, opts ...grpc.CallOption) (*GetWorkspaceInstanceOwnerTokenResponse, error) {
 	out := new(GetWorkspaceInstanceOwnerTokenResponse)
-	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspacesService/GetWorkspaceInstanceOwnerToken", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/gitpod.stable.v1.WorkspacesService/GetWorkspaceInstanceOwnerToken", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +130,7 @@ func (c *workspacesServiceClient) GetWorkspaceInstanceOwnerToken(ctx context.Con
 }
 
 func (c *workspacesServiceClient) ListenToWorkspaceInstance(ctx context.Context, in *ListenToWorkspaceInstanceRequest, opts ...grpc.CallOption) (WorkspacesService_ListenToWorkspaceInstanceClient, error) {
-	stream, err := c.cc.NewStream(ctx, &WorkspacesService_ServiceDesc.Streams[0], "/gitpod.v1.WorkspacesService/ListenToWorkspaceInstance", opts...)
+	stream, err := c.cc.NewStream(ctx, &WorkspacesService_ServiceDesc.Streams[0], "/gitpod.stable.v1.WorkspacesService/ListenToWorkspaceInstance", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +162,7 @@ func (x *workspacesServiceListenToWorkspaceInstanceClient) Recv() (*ListenToWork
 }
 
 func (c *workspacesServiceClient) ListenToImageBuildLogs(ctx context.Context, in *ListenToImageBuildLogsRequest, opts ...grpc.CallOption) (WorkspacesService_ListenToImageBuildLogsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &WorkspacesService_ServiceDesc.Streams[1], "/gitpod.v1.WorkspacesService/ListenToImageBuildLogs", opts...)
+	stream, err := c.cc.NewStream(ctx, &WorkspacesService_ServiceDesc.Streams[1], "/gitpod.stable.v1.WorkspacesService/ListenToImageBuildLogs", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +194,7 @@ func (x *workspacesServiceListenToImageBuildLogsClient) Recv() (*ListenToImageBu
 }
 
 func (c *workspacesServiceClient) StopWorkspace(ctx context.Context, in *StopWorkspaceRequest, opts ...grpc.CallOption) (WorkspacesService_StopWorkspaceClient, error) {
-	stream, err := c.cc.NewStream(ctx, &WorkspacesService_ServiceDesc.Streams[2], "/gitpod.v1.WorkspacesService/StopWorkspace", opts...)
+	stream, err := c.cc.NewStream(ctx, &WorkspacesService_ServiceDesc.Streams[2], "/gitpod.stable.v1.WorkspacesService/StopWorkspace", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -319,7 +319,7 @@ func _WorkspacesService_ListWorkspaces_Handler(srv interface{}, ctx context.Cont
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gitpod.v1.WorkspacesService/ListWorkspaces",
+		FullMethod: "/gitpod.stable.v1.WorkspacesService/ListWorkspaces",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkspacesServiceServer).ListWorkspaces(ctx, req.(*ListWorkspacesRequest))
@@ -337,7 +337,7 @@ func _WorkspacesService_GetWorkspace_Handler(srv interface{}, ctx context.Contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gitpod.v1.WorkspacesService/GetWorkspace",
+		FullMethod: "/gitpod.stable.v1.WorkspacesService/GetWorkspace",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkspacesServiceServer).GetWorkspace(ctx, req.(*GetWorkspaceRequest))
@@ -355,7 +355,7 @@ func _WorkspacesService_GetOwnerToken_Handler(srv interface{}, ctx context.Conte
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gitpod.v1.WorkspacesService/GetOwnerToken",
+		FullMethod: "/gitpod.stable.v1.WorkspacesService/GetOwnerToken",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkspacesServiceServer).GetOwnerToken(ctx, req.(*GetOwnerTokenRequest))
@@ -373,7 +373,7 @@ func _WorkspacesService_CreateAndStartWorkspace_Handler(srv interface{}, ctx con
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gitpod.v1.WorkspacesService/CreateAndStartWorkspace",
+		FullMethod: "/gitpod.stable.v1.WorkspacesService/CreateAndStartWorkspace",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkspacesServiceServer).CreateAndStartWorkspace(ctx, req.(*CreateAndStartWorkspaceRequest))
@@ -391,7 +391,7 @@ func _WorkspacesService_StartWorkspace_Handler(srv interface{}, ctx context.Cont
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gitpod.v1.WorkspacesService/StartWorkspace",
+		FullMethod: "/gitpod.stable.v1.WorkspacesService/StartWorkspace",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkspacesServiceServer).StartWorkspace(ctx, req.(*StartWorkspaceRequest))
@@ -409,7 +409,7 @@ func _WorkspacesService_GetActiveWorkspaceInstance_Handler(srv interface{}, ctx 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gitpod.v1.WorkspacesService/GetActiveWorkspaceInstance",
+		FullMethod: "/gitpod.stable.v1.WorkspacesService/GetActiveWorkspaceInstance",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkspacesServiceServer).GetActiveWorkspaceInstance(ctx, req.(*GetActiveWorkspaceInstanceRequest))
@@ -427,7 +427,7 @@ func _WorkspacesService_GetWorkspaceInstanceOwnerToken_Handler(srv interface{}, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gitpod.v1.WorkspacesService/GetWorkspaceInstanceOwnerToken",
+		FullMethod: "/gitpod.stable.v1.WorkspacesService/GetWorkspaceInstanceOwnerToken",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkspacesServiceServer).GetWorkspaceInstanceOwnerToken(ctx, req.(*GetWorkspaceInstanceOwnerTokenRequest))
@@ -502,7 +502,7 @@ func (x *workspacesServiceStopWorkspaceServer) Send(m *StopWorkspaceResponse) er
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var WorkspacesService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "gitpod.v1.WorkspacesService",
+	ServiceName: "gitpod.stable.v1.WorkspacesService",
 	HandlerType: (*WorkspacesServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -551,5 +551,5 @@ var WorkspacesService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "gitpod/v1/workspaces.proto",
+	Metadata: "gitpod/stable/v1/workspaces.proto",
 }

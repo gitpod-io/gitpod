@@ -6,7 +6,7 @@ package cmd
 
 import (
 	"github.com/gitpod-io/gitpod/common-go/log"
-	v1 "github.com/gitpod-io/gitpod/public-api/v1"
+	v1 "github.com/gitpod-io/gitpod/public-api/stable/v1"
 	"github.com/spf13/cobra"
 )
 
