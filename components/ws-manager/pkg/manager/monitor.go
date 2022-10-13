@@ -54,7 +54,7 @@ const (
 	// eventpoolWorkers is the number of workers in the event workpool. This number limits how many workspace events can be handled
 	// in parallel; that is NOT the same as "how many workspaces can start in parallel". The event handling per workspace is written
 	// so that it's quick in the "hot path" (i.e. less than 500ms). Thus this number should be around 0.5*expected(events per second).
-	eventpoolWorkers = 100
+	eventpoolWorkers = 1
 )
 
 var (
