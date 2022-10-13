@@ -6,17 +6,21 @@ package proxy
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"net/url"
 	"time"
+
+	"github.com/bufbuild/connect-go"
+	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 )
 
 type ServerConnectionPool interface {
 	// Get retrieves or creates a new connection for the specified token
 	// Connections must not be shared across tokens
-	Get(ctx context.Context, token string) (gitpod.APIInterface, error)
+	Get(ctx context.Context) (gitpod.APIInterface, error)
 }
 
 // NoConnectionPool is a simple version of the ServerConnectionPool which always creates a new connection.
@@ -24,8 +28,12 @@ type NoConnectionPool struct {
 	ServerAPI *url.URL
 }
 
-func (p *NoConnectionPool) Get(ctx context.Context, token string) (gitpod.APIInterface, error) {
+func (p *NoConnectionPool) Get(ctx context.Context) (gitpod.APIInterface, error) {
 	logger := ctxlogrus.Extract(ctx)
+	token := auth.TokenFromContext(ctx)
+	if token == "" {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("No access token specified."))
+	}
 
 	start := time.Now()
 	defer func() {

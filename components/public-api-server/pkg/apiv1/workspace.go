@@ -10,7 +10,6 @@ import (
 
 	connect "github.com/bufbuild/connect-go"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
-	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	v1 "github.com/gitpod-io/gitpod/public-api/v1"
 	"github.com/gitpod-io/gitpod/public-api/v1/v1connect"
@@ -32,10 +31,13 @@ type WorkspaceService struct {
 }
 
 func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Request[v1.GetWorkspaceRequest]) (*connect.Response[v1.GetWorkspaceResponse], error) {
-	token := auth.TokenFromContext(ctx)
 	logger := ctxlogrus.Extract(ctx)
 
-	server, err := s.connectionPool.Get(ctx, token)
+	if req.Msg.GetWorkspaceId() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("workspace ID is a required parameter"))
+	}
+
+	server, err := s.connectionPool.Get(ctx)
 	if err != nil {
 		logger.WithError(err).Error("Failed to get connection to server.")
 		return nil, connect.NewError(connect.CodeInternal, err)
@@ -66,9 +68,12 @@ func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Reques
 
 func (s *WorkspaceService) GetOwnerToken(ctx context.Context, req *connect.Request[v1.GetOwnerTokenRequest]) (*connect.Response[v1.GetOwnerTokenResponse], error) {
 	logger := ctxlogrus.Extract(ctx)
-	token := auth.TokenFromContext(ctx)
 
-	server, err := s.connectionPool.Get(ctx, token)
+	if req.Msg.GetWorkspaceId() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("workspace ID is a required parameter"))
+	}
+
+	server, err := s.connectionPool.Get(ctx)
 	if err != nil {
 		logger.WithError(err).Error("Failed to get connection to server.")
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to establish connection to downstream services"))
@@ -86,9 +91,8 @@ func (s *WorkspaceService) GetOwnerToken(ctx context.Context, req *connect.Reque
 
 func (s *WorkspaceService) ListWorkspaces(ctx context.Context, req *connect.Request[v1.ListWorkspacesRequest]) (*connect.Response[v1.ListWorkspacesResponse], error) {
 	logger := ctxlogrus.Extract(ctx)
-	token := auth.TokenFromContext(ctx)
 
-	server, err := s.connectionPool.Get(ctx, token)
+	server, err := s.connectionPool.Get(ctx)
 	if err != nil {
 		logger.WithError(err).Error("Failed to get connection to server.")
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to establish connection to downstream services"))
