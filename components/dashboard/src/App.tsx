@@ -428,21 +428,20 @@ function App() {
                         <Route
                             exact
                             path={projectsPathMainWithParams}
-                            render={(props) => {
-                                const { resourceOrPrebuild } = props.match.params;
-                                if (resourceOrPrebuild === "events") {
-                                    return <Events />;
+                            render={({ match }) => {
+                                const { resourceOrPrebuild } = match.params;
+                                switch (resourceOrPrebuild) {
+                                    case "events":
+                                        return <Events />;
+                                    case "prebuilds":
+                                        return <Prebuilds />;
+                                    case "settings":
+                                        return <ProjectSettings />;
+                                    case "variables":
+                                        return <ProjectVariables />;
+                                    default:
+                                        return resourceOrPrebuild ? <Prebuild /> : <Project />;
                                 }
-                                if (resourceOrPrebuild === "prebuilds") {
-                                    return <Prebuilds />;
-                                }
-                                if (resourceOrPrebuild === "settings") {
-                                    return <ProjectSettings />;
-                                }
-                                if (resourceOrPrebuild === "variables") {
-                                    return <ProjectVariables />;
-                                }
-                                return resourceOrPrebuild ? <Prebuild /> : <Project />;
                             }}
                         />
                     </Route>
@@ -459,39 +458,36 @@ function App() {
                             <Route
                                 exact
                                 path={`/t/${team.slug}/:maybeProject/:resourceOrPrebuild?`}
-                                render={(props) => {
-                                    const { maybeProject, resourceOrPrebuild } = props.match.params;
-                                    if (maybeProject === "projects") {
-                                        return <Projects />;
+                                render={({ match }) => {
+                                    const { maybeProject, resourceOrPrebuild } = match.params;
+                                    switch (maybeProject) {
+                                        case "projects":
+                                            return <Projects />;
+                                        case "workspaces":
+                                            return <Workspaces />;
+                                        case "members":
+                                            return <Members />;
+                                        case "settings":
+                                            return <TeamSettings />;
+                                        case "billing":
+                                            return <TeamBilling />;
+                                        case "usage":
+                                            return <TeamUsage />;
+                                        default:
+                                            break;
                                     }
-                                    if (maybeProject === "workspaces") {
-                                        return <Workspaces />;
+                                    switch (resourceOrPrebuild) {
+                                        case "events":
+                                            return <Events />;
+                                        case "prebuilds":
+                                            return <Prebuilds />;
+                                        case "settings":
+                                            return <ProjectSettings />;
+                                        case "variables":
+                                            return <ProjectVariables />;
+                                        default:
+                                            return resourceOrPrebuild ? <Prebuild /> : <Project />;
                                     }
-                                    if (maybeProject === "members") {
-                                        return <Members />;
-                                    }
-                                    if (maybeProject === "settings") {
-                                        return <TeamSettings />;
-                                    }
-                                    if (maybeProject === "billing") {
-                                        return <TeamBilling />;
-                                    }
-                                    if (maybeProject === "usage") {
-                                        return <TeamUsage />;
-                                    }
-                                    if (resourceOrPrebuild === "events") {
-                                        return <Events />;
-                                    }
-                                    if (resourceOrPrebuild === "prebuilds") {
-                                        return <Prebuilds />;
-                                    }
-                                    if (resourceOrPrebuild === "settings") {
-                                        return <ProjectSettings />;
-                                    }
-                                    if (resourceOrPrebuild === "variables") {
-                                        return <ProjectVariables />;
-                                    }
-                                    return resourceOrPrebuild ? <Prebuild /> : <Project />;
                                 }}
                             />
                         </Route>
