@@ -7,6 +7,7 @@ package wsmanager
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/rpc"
 	"path/filepath"
@@ -48,7 +49,7 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 					CheckoutLocation: "empty",
 					WorkspaceRoot:    "/workspace/empty",
 					Task: []gitpod.TasksItems{
-						{Init: "echo \"some output\" > someFile; sleep 20; exit 0;"},
+						{Init: "echo \"some output\" > someFile; sleep 10; exit 0;"},
 					},
 				},
 				{
@@ -57,7 +58,7 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 					CheckoutLocation: "empty",
 					WorkspaceRoot:    "/workspace/empty",
 					Task: []gitpod.TasksItems{
-						{Init: "echo \"some output\" > someFile; sleep 20; exit 0;"},
+						{Init: "echo \"some output\" > someFile; sleep 10; exit 0;"},
 					},
 					FF: []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM},
 				},
@@ -74,7 +75,7 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 
 					// TODO: change to use server API to launch the workspace, so we could run the integration test as the user code flow
 					//       which is client -> server -> ws-manager rather than client -> ws-manager directly
-					_, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
+					ws, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
 						req.Type = wsmanapi.WorkspaceType_PREBUILD
 
 						tasks, err := json.Marshal(test.Task)
@@ -103,17 +104,24 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 						t.Fatalf("cannot launch a workspace: %q", err)
 					}
 					defer func() {
-						sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
-						defer scancel()
-
-						sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
-						defer sapi.Done(t)
-
-						_, err = stopWs(true, sapi)
-						if err != nil {
+						// stop workspace in defer function to prevent we forget to stop the workspace
+						if err := stopWorkspace(t, cfg, stopWs); err != nil {
 							t.Errorf("cannot stop workspace: %q", err)
 						}
 					}()
+					_, err = integration.WaitForWorkspace(ctx, api, ws.Req.Id, func(status *wsmanapi.WorkspaceStatus) bool {
+						if status.Phase != wsmanapi.WorkspacePhase_STOPPED {
+							return false
+						}
+						if status.Conditions.HeadlessTaskFailed != "" {
+							t.Logf("Conditions: %v", status.Conditions)
+							t.Fatal("unexpected HeadlessTaskFailed condition")
+						}
+						return true
+					})
+					if err != nil {
+						t.Fatalf("failed for wait workspace stop: %q", err)
+					}
 				})
 			}
 			return ctx
@@ -124,8 +132,6 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 }
 
 func TestPrebuildWorkspaceTaskFail(t *testing.T) {
-	t.Skip("status never returns HeadlessTaskFailed (exit 1)")
-
 	f := features.New("prebuild").
 		WithLabel("component", "server").
 		Assess("it should create a prebuild and fail after running the defined tasks", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
@@ -141,7 +147,7 @@ func TestPrebuildWorkspaceTaskFail(t *testing.T) {
 				req.Type = wsmanapi.WorkspaceType_PREBUILD
 				req.Spec.Envvars = append(req.Spec.Envvars, &wsmanapi.EnvironmentVariable{
 					Name:  "GITPOD_TASKS",
-					Value: `[{ "init": "echo \"some output\" > someFile; sleep 20; exit 1;" }]`,
+					Value: `[{ "init": "echo \"some output\" > someFile; sleep 10; exit 1;" }]`,
 				})
 				return nil
 			}))
@@ -150,15 +156,9 @@ func TestPrebuildWorkspaceTaskFail(t *testing.T) {
 			}
 
 			defer func() {
-				sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
-				defer scancel()
-
-				sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
-				defer sapi.Done(t)
-
-				_, err = stopWs(true, sapi)
-				if err != nil {
-					t.Fatal(err)
+				// stop workspace in defer function to prevent we forget to stop the workspace
+				if err := stopWorkspace(t, cfg, stopWs); err != nil {
+					t.Errorf("cannot stop workspace: %q", err)
 				}
 			}()
 
@@ -173,7 +173,7 @@ func TestPrebuildWorkspaceTaskFail(t *testing.T) {
 				return true
 			})
 			if err != nil {
-				t.Fatalf("cannot start workspace: %q", err)
+				t.Fatalf("failed for wait workspace stop: %q", err)
 			}
 
 			return ctx
@@ -186,7 +186,7 @@ func TestPrebuildWorkspaceTaskFail(t *testing.T) {
 const (
 	prebuildLogPath string = "/workspace/.gitpod"
 	prebuildLog     string = "'🤙 This task ran as a workspace prebuild'"
-	initTask        string = "echo \"some output\" > someFile; sleep 90;"
+	initTask        string = "echo \"some output\" > someFile; sleep 10;"
 	regularPrefix   string = "ws-"
 )
 
@@ -256,7 +256,7 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 					// create a prebuild and stop workspace
 					// TODO: change to use server API to launch the workspace, so we could run the integration test as the user code flow
 					//       which is client -> server -> ws-manager rather than client -> ws-manager directly
-					_, prebuildStopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
+					ws, prebuildStopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
 						req.Type = wsmanapi.WorkspaceType_PREBUILD
 						req.Spec.Envvars = append(req.Spec.Envvars, &wsmanapi.EnvironmentVariable{
 							Name:  "GITPOD_TASKS",
@@ -278,8 +278,13 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 					if err != nil {
 						t.Fatalf("cannot launch a workspace: %q", err)
 					}
-
-					prebuildSnapshot, prebuildVSInfo, err := stopWorkspaceAndFindSnapshot(prebuildStopWs, api)
+					defer func() {
+						// stop workspace in defer function to prevent we forget to stop the workspace
+						if err := stopWorkspace(t, cfg, prebuildStopWs); err != nil {
+							t.Errorf("cannot stop workspace: %q", err)
+						}
+					}()
+					prebuildSnapshot, prebuildVSInfo, err := watchStopWorkspaceAndFindSnapshot(ctx, ws.Req.Id, api)
 					if err != nil {
 						t.Fatalf("stop workspace and find snapshot error: %v", err)
 					}
@@ -551,7 +556,7 @@ func TestPrebuildAndRegularWorkspaceDifferentWorkspaceClass(t *testing.T) {
 					})
 
 					// create a prebuild and stop workspace
-					_, prebuildStopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
+					ws, prebuildStopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
 						req.Type = wsmanapi.WorkspaceType_PREBUILD
 						req.Spec.Class = test.PrebuildWorkspaceClass
 						req.Spec.Envvars = append(req.Spec.Envvars, &wsmanapi.EnvironmentVariable{
@@ -574,8 +579,14 @@ func TestPrebuildAndRegularWorkspaceDifferentWorkspaceClass(t *testing.T) {
 					if err != nil {
 						t.Fatalf("cannot launch a workspace: %q", err)
 					}
+					defer func() {
+						// stop workspace in defer function to prevent we forget to stop the workspace
+						if err := stopWorkspace(t, cfg, prebuildStopWs); err != nil {
+							t.Errorf("cannot stop workspace: %q", err)
+						}
+					}()
 
-					prebuildSnapshot, vsInfo, err := stopWorkspaceAndFindSnapshot(prebuildStopWs, api)
+					prebuildSnapshot, vsInfo, err := watchStopWorkspaceAndFindSnapshot(ctx, ws.Req.Id, api)
 					if err != nil {
 						t.Fatalf("stop workspace and find snapshot error: %v", err)
 					}
@@ -821,10 +832,13 @@ func findVolumeSnapshot(ctx context.Context, isPVCEnable bool, instanceID, names
 	return vsInfo, nil
 }
 
-func stopWorkspaceAndFindSnapshot(StopWorkspaceFunc integration.StopWorkspaceFunc, api *integration.ComponentAPI) (string, *wsmanapi.VolumeSnapshotInfo, error) {
-	lastStatus, err := StopWorkspaceFunc(true, api)
+func watchStopWorkspaceAndFindSnapshot(ctx context.Context, instanceId string, api *integration.ComponentAPI) (string, *wsmanapi.VolumeSnapshotInfo, error) {
+	lastStatus, err := integration.WaitForWorkspaceStop(ctx, api, instanceId)
 	if err != nil {
 		return "", nil, err
+	}
+	if lastStatus.Conditions.HeadlessTaskFailed != "" {
+		return "", nil, errors.New("unexpected HeadlessTaskFailed condition")
 	}
 	if lastStatus == nil || lastStatus.Conditions == nil || lastStatus.Conditions.VolumeSnapshot == nil {
 		return "", nil, nil
