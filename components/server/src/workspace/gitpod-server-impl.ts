@@ -3106,7 +3106,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         attributionId: string,
         setupIntentId: string,
         usageLimit: number,
-    ): Promise<void> {
+    ): Promise<number | undefined> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
     async getStripePortalUrl(ctx: TraceContext, attributionId: string): Promise<string> {

@@ -2118,7 +2118,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         attributionId: string,
         setupIntentId: string,
         usageLimit: number,
-    ): Promise<void> {
+    ): Promise<number | undefined> {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
@@ -2143,7 +2143,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             await this.stripeService.createSubscriptionForCustomer(customerId, attributionId);
 
             // Creating a cost center for this customer
-            await this.usageService.setCostCenter({
+            const { costCenter } = await this.usageService.setCostCenter({
                 costCenter: {
                     attributionId: attributionId,
                     spendingLimit: usageLimit,
@@ -2152,6 +2152,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             });
 
             this.messageBus.notifyOnSubscriptionUpdate(ctx, attrId).catch();
+
+            return costCenter?.spendingLimit;
         } catch (error) {
             log.error(`Failed to subscribe '${attributionId}' to Stripe`, error);
             throw new ResponseError(

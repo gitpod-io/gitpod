@@ -102,9 +102,10 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                     const members = await getGitpodService().server.getTeamMembers(attrId.teamId);
                     limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS * members.length;
                 }
-                await getGitpodService().server.subscribeToStripe(attributionId, setupIntentId, limit);
-                const newLimit = await getGitpodService().server.getUsageLimit(attributionId);
-                setUsageLimit(newLimit);
+                const newLimit = await getGitpodService().server.subscribeToStripe(attributionId, setupIntentId, limit);
+                if (newLimit) {
+                    setUsageLimit(newLimit);
+                }
             } catch (error) {
                 console.error("Could not subscribe to Stripe", error);
                 window.localStorage.removeItem(localStorageKey);
