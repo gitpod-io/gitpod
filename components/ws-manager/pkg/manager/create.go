@@ -873,7 +873,8 @@ func isGitpodInternalEnvVar(name string) bool {
 	return strings.HasPrefix(name, "GITPOD_") ||
 		strings.HasPrefix(name, "SUPERVISOR_") ||
 		strings.HasPrefix(name, "BOB_") ||
-		strings.HasPrefix(name, "THEIA_")
+		strings.HasPrefix(name, "THEIA_") ||
+		name == "NODE_EXTRA_CA_CERTS"
 }
 
 func isProtectedEnvVar(name string, sysEnvvars []*api.EnvironmentVariable) bool {
