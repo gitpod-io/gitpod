@@ -1054,6 +1054,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		}
 	}
 
+	var snc wsdaemon.WorkspaceContentServiceClient
 	doBackup := wso.WasEverReady() && !wso.IsWorkspaceHeadless()
 	doBackupLogs := tpe == api.WorkspaceType_PREBUILD
 	doSnapshot := tpe == api.WorkspaceType_PREBUILD
@@ -1069,49 +1070,22 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			return &csapi.GitStatus{}, nil
 		}
 
-		// we're not yet finalizing - start the process
-		snc, err := m.manager.connectToWorkspaceDaemon(ctx, *wso)
-		if err != nil {
-			tracing.LogError(span, err)
-			return nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
-		}
-
-		var workspaceExistsResult *wsdaemon.IsWorkspaceExistsResponse
-		workspaceExistsResult, err = snc.IsWorkspaceExists(ctx, &wsdaemon.IsWorkspaceExistsRequest{Id: workspaceID})
-		if err != nil {
-			tracing.LogError(span, err)
-			return nil, err
-		}
-		if !workspaceExistsResult.Exists {
-			// nothing to backup, workspace does not exist
-			return nil, status.Error(codes.NotFound, "workspace does not exist")
-		}
-
-		// make sure that workspace was ready, otherwise there is no need to backup anything
-		// as we might backup corrupted workspace state
-		// this also ensures that if INITIALIZING still going, that we will wait for it to finish before disposing the workspace
-		_, err = snc.WaitForInit(ctx, &wsdaemon.WaitForInitRequest{Id: workspaceID})
-		if err != nil {
-			tracing.LogError(span, err)
-			return nil, err
-		}
-
-		// only set status to started if we actually confirmed that workspace is ready and we are about to do actual disposal
-		// otherwise we risk overwriting previous disposal status
-		if !markedDisposalStatusStarted {
-			statusStarted := &workspaceDisposalStatus{
-				Status: DisposalStarted,
-			}
-			err = m.manager.markDisposalStatus(ctx, workspaceID, statusStarted)
-			if err != nil {
-				tracing.LogError(span, err)
-				log.WithError(err).Error("was unable to update pod's start disposal status - this might cause an incorrect disposal status")
-			} else {
-				markedDisposalStatusStarted = true
-			}
-		}
-
 		if pvcFeatureEnabled {
+			// only set status to started if we actually confirmed that workspace is ready and we are about to do actual disposal
+			// otherwise we risk overwriting previous disposal status
+			if !markedDisposalStatusStarted {
+				statusStarted := &workspaceDisposalStatus{
+					Status: DisposalStarted,
+				}
+				err = m.manager.markDisposalStatus(ctx, workspaceID, statusStarted)
+				if err != nil {
+					tracing.LogError(span, err)
+					log.WithError(err).Error("was unable to update pod's start disposal status - this might cause an incorrect disposal status")
+				} else {
+					markedDisposalStatusStarted = true
+				}
+			}
+
 			// pvc was created with the name of the pod. see createDefiniteWorkspacePod()
 			pvcName := wso.Pod.Name
 			if !createdVolumeSnapshot {
@@ -1267,6 +1241,48 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 				deletedPVC = true
 			}
 		} else if doSnapshot {
+			// we're not yet finalizing - start the process
+			snc, err = m.manager.connectToWorkspaceDaemon(ctx, *wso)
+			if err != nil {
+				tracing.LogError(span, err)
+				return nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
+			}
+
+			var workspaceExistsResult *wsdaemon.IsWorkspaceExistsResponse
+			workspaceExistsResult, err = snc.IsWorkspaceExists(ctx, &wsdaemon.IsWorkspaceExistsRequest{Id: workspaceID})
+			if err != nil {
+				tracing.LogError(span, err)
+				return nil, err
+			}
+			if !workspaceExistsResult.Exists {
+				// nothing to backup, workspace does not exist
+				return nil, status.Error(codes.NotFound, "workspace does not exist")
+			}
+
+			// make sure that workspace was ready, otherwise there is no need to backup anything
+			// as we might backup corrupted workspace state
+			// this also ensures that if INITIALIZING still going, that we will wait for it to finish before disposing the workspace
+			_, err = snc.WaitForInit(ctx, &wsdaemon.WaitForInitRequest{Id: workspaceID})
+			if err != nil {
+				tracing.LogError(span, err)
+				return nil, err
+			}
+
+			// only set status to started if we actually confirmed that workspace is ready and we are about to do actual disposal
+			// otherwise we risk overwriting previous disposal status
+			if !markedDisposalStatusStarted {
+				statusStarted := &workspaceDisposalStatus{
+					Status: DisposalStarted,
+				}
+				err = m.manager.markDisposalStatus(ctx, workspaceID, statusStarted)
+				if err != nil {
+					tracing.LogError(span, err)
+					log.WithError(err).Error("was unable to update pod's start disposal status - this might cause an incorrect disposal status")
+				} else {
+					markedDisposalStatusStarted = true
+				}
+			}
+
 			// if this is a prebuild take a snapshot and mark the workspace
 			var res *wsdaemon.TakeSnapshotResponse
 			res, err = snc.TakeSnapshot(ctx, &wsdaemon.TakeSnapshotRequest{Id: workspaceID})
@@ -1296,6 +1312,13 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 
 		// DiposeWorkspace will "degenerate" to a simple wait if the finalization/disposal process is already running.
 		// This is unlike the initialization process where we wait for things to finish in a later phase.
+		// we're not yet finalizing - start the process
+		snc, err = m.manager.connectToWorkspaceDaemon(ctx, *wso)
+		if err != nil {
+			tracing.LogError(span, err)
+			return nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
+		}
+
 		resp, err := snc.DisposeWorkspace(ctx, &wsdaemon.DisposeWorkspaceRequest{
 			Id:         workspaceID,
 			Backup:     doBackup && !pvcFeatureEnabled,
