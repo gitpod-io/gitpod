@@ -54,12 +54,10 @@ RUN ./configure \
     --with-privsep-user=nobody \
     --with-ssl-engine
 
-COPY supervisorenv.patch .
 ENV aports=https://raw.githubusercontent.com/alpinelinux/aports/master/main/openssh
 RUN curl -fsSL \
     "${aports}/{avoid-redefined-warnings-when-building-with-utmps,disable-forwarding-by-default,fix-utmp,fix-verify-dns-segfault,gss-serv.c,sftp-interactive}.patch" \
     | patch -p1
-RUN cat supervisorenv.patch | patch -p1
 RUN make install-nosysconf exec_prefix=/openssh
 
 RUN TEST_SSH_UNSAFE_PERMISSIONS=1 \
