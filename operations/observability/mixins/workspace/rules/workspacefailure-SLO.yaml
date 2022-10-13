@@ -18,15 +18,15 @@ spec:
       expr: |
         (
           (
-            sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD"}[5m]))
+            sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD", cluster!~"ephemeral.*"}[5m]))
             /
-            sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD"}[5m]))
+            sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD", cluster!~"ephemeral.*"}[5m]))
           )
         ) + (
           (
-            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace",grpc_code!~"OK|ResourceExhausted"}[5m]))
+            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace",grpc_code!~"OK|ResourceExhausted", cluster!~"ephemeral.*"}[5m]))
             /
-            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace"}[5m]))
+            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace", cluster!~"ephemeral.*"}[5m]))
           )
         )
 
@@ -34,15 +34,15 @@ spec:
       expr: |
         (
           (
-            sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD"}[30m]))
+            sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD", cluster!~"ephemeral.*"}[30m]))
             /
-            sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD"}[30m]))
+            sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD", cluster!~"ephemeral.*"}[30m]))
           )
         ) + (
           (
-            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace",grpc_code!~"OK|ResourceExhausted"}[30m]))
+            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace",grpc_code!~"OK|ResourceExhausted", cluster!~"ephemeral.*"}[30m]))
             /
-            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace"}[30m]))
+            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace", cluster!~"ephemeral.*"}[30m]))
           )
         )
 
@@ -50,15 +50,15 @@ spec:
       expr: |
         (
           (
-            sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD"}[1h]))
+            sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD", cluster!~"ephemeral.*"}[1h]))
             /
-            sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD"}[1h]))
+            sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD", cluster!~"ephemeral.*"}[1h]))
           )
         ) + (
           (
-            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace",grpc_code!~"OK|ResourceExhausted"}[1h]))
+            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace",grpc_code!~"OK|ResourceExhausted", cluster!~"ephemeral.*"}[1h]))
             /
-            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace"}[1h]))
+            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace", cluster!~"ephemeral.*"}[1h]))
           )
         )
 
@@ -66,15 +66,15 @@ spec:
       expr: |
         (
           (
-            sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD"}[2h]))
+            sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD", cluster!~"ephemeral.*"}[2h]))
             /
-            sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD"}[2h]))
+            sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD", cluster!~"ephemeral.*"}[2h]))
           )
         ) + (
           (
-            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace",grpc_code!~"OK|ResourceExhausted"}[2h]))
+            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace",grpc_code!~"OK|ResourceExhausted", cluster!~"ephemeral.*"}[2h]))
             /
-            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace"}[2h]))
+            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace", cluster!~"ephemeral.*"}[2h]))
           )
         )
 
@@ -82,15 +82,15 @@ spec:
       expr: |
         (
           (
-            sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD"}[6h]))
+            sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD", cluster!~"ephemeral.*"}[6h]))
             /
-            sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD"}[6h]))
+            sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD", cluster!~"ephemeral.*"}[6h]))
           )
         ) + (
           (
-            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace",grpc_code!~"OK|ResourceExhausted"}[6h]))
+            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace",grpc_code!~"OK|ResourceExhausted", cluster!~"ephemeral.*"}[6h]))
             /
-            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace"}[6h]))
+            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace", cluster!~"ephemeral.*"}[6h]))
           )
         )
 
@@ -98,15 +98,15 @@ spec:
       expr: |
         (
           (
-            sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD"}[1d]))
+            sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD", cluster!~"ephemeral.*"}[1d]))
             /
-            sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD"}[1d]))
+            sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD", cluster!~"ephemeral.*"}[1d]))
           )
         ) + (
           (
-            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace",grpc_code!~"OK|ResourceExhausted"}[1d]))
+            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace",grpc_code!~"OK|ResourceExhausted", cluster!~"ephemeral.*"}[1d]))
             /
-            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace"}[1d]))
+            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace", cluster!~"ephemeral.*"}[1d]))
           )
         )
 
@@ -114,15 +114,15 @@ spec:
       expr: |
         (
           (
-            sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD"}[3d]))
+            sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD", cluster!~"ephemeral.*"}[3d]))
             /
-            sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD"}[3d]))
+            sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD", cluster!~"ephemeral.*"}[3d]))
           )
         ) + (
           (
-            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace",grpc_code!~"OK|ResourceExhausted"}[3d]))
+            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace",grpc_code!~"OK|ResourceExhausted", cluster!~"ephemeral.*"}[3d]))
             /
-            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace"}[3d]))
+            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace", cluster!~"ephemeral.*"}[3d]))
           )
         )
 
@@ -130,15 +130,15 @@ spec:
       expr: |
         (
           (
-            sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD"}[30d]))
+            sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD", cluster!~"ephemeral.*"}[30d]))
             /
-            sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD"}[30d]))
+            sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD", cluster!~"ephemeral.*"}[30d]))
           )
         ) + (
           (
-            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace",grpc_code!~"OK|ResourceExhausted"}[30d]))
+            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace",grpc_code!~"OK|ResourceExhausted", cluster!~"ephemeral.*"}[30d]))
             /
-            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace"}[30d]))
+            sum(rate(grpc_server_handled_total{grpc_method="StartWorkspace", cluster!~"ephemeral.*"}[30d]))
           )
         )
 
