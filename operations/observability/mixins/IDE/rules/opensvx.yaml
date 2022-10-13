@@ -22,9 +22,9 @@ spec:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodOpenVsxRegistryDown.md
         summary: Open-VSX registry is possibly down
         description: Open-VSX registry is possibly down. We cannot pull VSCode extensions we don't have in our caches
-        dashboard_url: https://grafana.gitpod.io/d/HNOvmGpxgd/openvsx-proxy
+        dashboard_url: https://grafana.gitpod.io/d/HNOvmGpxgd/openvsx-proxy?var-cluster={{ $labels.cluster }}
       expr: |
-          sum(rate(gitpod_vscode_extension_gallery_query_total{status="failure",errorCode!="canceled"}[5m])) / sum(rate(gitpod_vscode_extension_gallery_query_total[5m])) > 0.01
+          sum(rate(gitpod_vscode_extension_gallery_query_total{status="failure",errorCode!="canceled"}[5m])) by(cluster) / sum(rate(gitpod_vscode_extension_gallery_query_total[5m])) by(cluster) > 0.01
 
     - alert: GitpodOpenVSXUnavailable
       labels:
@@ -33,5 +33,5 @@ spec:
       for: 10m
       annotations:
         summary: Prometheus is failing to scrape OpenVSX-proxy
-        description: OpenVSX-proxy is possibly down, or prometheus is failing to scrape it.
+        description: OpenVSX-proxy(Pod {{ $labels.pod }}, cluster {{ $labels.cluster }}) is possibly down, or prometheus is failing to scrape it.
       expr: up{job="openvsx-proxy"} == 0
