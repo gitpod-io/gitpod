@@ -33,9 +33,9 @@ func newSSHServer(ctx context.Context, cfg *Config, envvars []string) (*sshServe
 			return nil, xerrors.Errorf("unexpected error creating SSH key: %w", err)
 		}
 	}
-	err = writeSSHEnv(cfg, envvars)
+	err = ensureSSHDir(cfg)
 	if err != nil {
-		return nil, xerrors.Errorf("unexpected error creating SSH env: %w", err)
+		return nil, xerrors.Errorf("unexpected error creating SSH dir: %w", err)
 	}
 
 	return &sshServer{
@@ -101,6 +101,18 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 		"-oSubsystem sftp internal-sftp",
 		"-oStrictModes no", // don't care for home directory and file permissions
 		"-oLogLevel DEBUG", // enabled DEBUG mode by default
+	}
+
+	envs := make([]string, 0)
+	for _, env := range s.envvars {
+		s := strings.SplitN(env, "=", 2)
+		if len(s) != 2 {
+			continue
+		}
+		envs = append(envs, fmt.Sprintf("%s=%s", s[0], fmt.Sprintf("\"%s\"", strings.ReplaceAll(s[1], "\"", "\\\""))))
+	}
+	if len(envs) > 0 {
+		args = append(args, fmt.Sprintf("-oSetEnv %s", strings.Join(envs, " ")))
 	}
 
 	socketFD, err := conn.(*net.TCPConn).File()
@@ -189,7 +201,7 @@ func prepareSSHKey(ctx context.Context, sshkey string) error {
 	return nil
 }
 
-func writeSSHEnv(cfg *Config, envvars []string) error {
+func ensureSSHDir(cfg *Config) error {
 	home := "/home/gitpod"
 
 	d := filepath.Join(home, ".ssh")
@@ -197,13 +209,6 @@ func writeSSHEnv(cfg *Config, envvars []string) error {
 	if err != nil {
 		return xerrors.Errorf("cannot create $HOME/.ssh: %w", err)
 	}
-
-	fn := filepath.Join(d, "supervisor_env")
-	err = os.WriteFile(fn, []byte(strings.Join(envvars, "\n")), 0o644)
-	if err != nil {
-		return xerrors.Errorf("cannot write %s: %w", fn, err)
-	}
-
 	_ = exec.Command("chown", "-R", fmt.Sprintf("%d:%d", gitpodUID, gitpodGID), d).Run()
 
 	return nil
