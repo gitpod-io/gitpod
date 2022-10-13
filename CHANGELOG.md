@@ -1,6 +1,8 @@
 # Change Log
 
 ## October 2022
+- [terraform/aks] Separate workloads into different pools, expose terraform variables for max node pool counts ([#13143](https://github.com/gitpod-io/gitpod/pull/13143)) - [@adrienthebo](https://github.com/adrienthebo)
+- Update PyCharm IDE image to version 222.4345.23. ([#13797](https://github.com/gitpod-io/gitpod/pull/13797)) - [@roboquat](https://github.com/roboquat)
 - Update PhpStorm IDE image to version 222.4345.15. ([#13759](https://github.com/gitpod-io/gitpod/pull/13759)) - [@roboquat](https://github.com/roboquat)
 - Update WebStorm IDE image to version 222.4345.14. ([#13757](https://github.com/gitpod-io/gitpod/pull/13757)) - [@roboquat](https://github.com/roboquat)
 - Update RubyMine IDE image to version 222.4345.14. ([#13758](https://github.com/gitpod-io/gitpod/pull/13758)) - [@roboquat](https://github.com/roboquat)
