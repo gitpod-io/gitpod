@@ -115,6 +115,7 @@ import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billin
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { BillingModes } from "../billing/billing-mode";
 import { UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
+import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -156,6 +157,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     @inject(UsageServiceDefinition.name)
     protected readonly usageService: UsageServiceClient;
+
+    @inject(BillingServiceDefinition.name)
+    protected readonly billingService: BillingServiceClient;
 
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
 
@@ -2134,22 +2138,29 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             } else {
                 await this.ensureStripeApiIsAllowed({ user });
             }
-            const customerId = await this.stripeService.findCustomerByAttributionId(attributionId);
-            if (!customerId) {
-                throw new Error(`No Stripe customer profile for '${attributionId}'`);
-            }
 
-            await this.stripeService.setDefaultPaymentMethodForCustomer(customerId, setupIntentId);
-            await this.stripeService.createSubscriptionForCustomer(customerId, attributionId);
-
-            // Creating a cost center for this customer
-            const { costCenter } = await this.usageService.setCostCenter({
-                costCenter: {
-                    attributionId: attributionId,
-                    spendingLimit: usageLimit,
-                    billingStrategy: CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE,
-                },
+            const { costCenter } = await this.billingService.createStripeSubscription({
+                attributionId: attributionId,
+                stripeIntentId: setupIntentId,
+                usageLimit,
             });
+
+            // const customerId = await this.stripeService.findCustomerByAttributionId(attributionId);
+            // if (!customerId) {
+            //     throw new Error(`No Stripe customer profile for '${attributionId}'`);
+            // }
+
+            // await this.stripeService.setDefaultPaymentMethodForCustomer(customerId, setupIntentId);
+            // await this.stripeService.createSubscriptionForCustomer(customerId, attributionId);
+
+            // // Creating a cost center for this customer
+            // const { costCenter } = await this.usageService.setCostCenter({
+            //     costCenter: {
+            //         attributionId: attributionId,
+            //         spendingLimit: usageLimit,
+            //         billingStrategy: CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE,
+            //     },
+            // });
 
             this.messageBus.notifyOnSubscriptionUpdate(ctx, attrId).catch();
 

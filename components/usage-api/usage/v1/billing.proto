@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package usage.v1;
 
+import "usage/v1/usage.proto";
+
 option go_package = "github.com/gitpod-io/gitpod/usage-api/v1";
 
 service BillingService {
@@ -12,6 +14,8 @@ service BillingService {
   // FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
   // having been invoiced.
   rpc FinalizeInvoice(FinalizeInvoiceRequest) returns (FinalizeInvoiceResponse) {};
+
+  rpc CreateStripeSubscription(CreateStripeSubscriptionRequest) returns (CreateStripeSubscriptionResponse) {};
 
   // CancelSubscription cancels a stripe subscription in our system
   // Called by a stripe webhook
@@ -31,6 +35,18 @@ message FinalizeInvoiceRequest {
 }
 
 message FinalizeInvoiceResponse {
+}
+
+message CreateStripeSubscriptionRequest {
+  string attribution_id = 1;
+  string stripe_intent_id = 2;
+
+  int32 usage_limit = 3;
+}
+
+message CreateStripeSubscriptionResponse {
+  StripeCustomer customer = 1;
+  v1.CostCenter cost_center = 2;
 }
 
 message CancelSubscriptionRequest {

@@ -7,6 +7,7 @@
 /* eslint-disable */
 import { CallContext, CallOptions } from "nice-grpc-common";
 import * as _m0 from "protobufjs/minimal";
+import { CostCenter } from "./usage.pb";
 
 export const protobufPackage = "usage.v1";
 
@@ -21,6 +22,17 @@ export interface FinalizeInvoiceRequest {
 }
 
 export interface FinalizeInvoiceResponse {
+}
+
+export interface CreateStripeSubscriptionRequest {
+  attributionId: string;
+  stripeIntentId: string;
+  usageLimit: number;
+}
+
+export interface CreateStripeSubscriptionResponse {
+  customer: StripeCustomer | undefined;
+  costCenter: CostCenter | undefined;
 }
 
 export interface CancelSubscriptionRequest {
@@ -204,6 +216,137 @@ export const FinalizeInvoiceResponse = {
 
   fromPartial(_: DeepPartial<FinalizeInvoiceResponse>): FinalizeInvoiceResponse {
     const message = createBaseFinalizeInvoiceResponse();
+    return message;
+  },
+};
+
+function createBaseCreateStripeSubscriptionRequest(): CreateStripeSubscriptionRequest {
+  return { attributionId: "", stripeIntentId: "", usageLimit: 0 };
+}
+
+export const CreateStripeSubscriptionRequest = {
+  encode(message: CreateStripeSubscriptionRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.attributionId !== "") {
+      writer.uint32(10).string(message.attributionId);
+    }
+    if (message.stripeIntentId !== "") {
+      writer.uint32(18).string(message.stripeIntentId);
+    }
+    if (message.usageLimit !== 0) {
+      writer.uint32(24).int32(message.usageLimit);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CreateStripeSubscriptionRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateStripeSubscriptionRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.attributionId = reader.string();
+          break;
+        case 2:
+          message.stripeIntentId = reader.string();
+          break;
+        case 3:
+          message.usageLimit = reader.int32();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateStripeSubscriptionRequest {
+    return {
+      attributionId: isSet(object.attributionId) ? String(object.attributionId) : "",
+      stripeIntentId: isSet(object.stripeIntentId) ? String(object.stripeIntentId) : "",
+      usageLimit: isSet(object.usageLimit) ? Number(object.usageLimit) : 0,
+    };
+  },
+
+  toJSON(message: CreateStripeSubscriptionRequest): unknown {
+    const obj: any = {};
+    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
+    message.stripeIntentId !== undefined && (obj.stripeIntentId = message.stripeIntentId);
+    message.usageLimit !== undefined && (obj.usageLimit = Math.round(message.usageLimit));
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<CreateStripeSubscriptionRequest>): CreateStripeSubscriptionRequest {
+    const message = createBaseCreateStripeSubscriptionRequest();
+    message.attributionId = object.attributionId ?? "";
+    message.stripeIntentId = object.stripeIntentId ?? "";
+    message.usageLimit = object.usageLimit ?? 0;
+    return message;
+  },
+};
+
+function createBaseCreateStripeSubscriptionResponse(): CreateStripeSubscriptionResponse {
+  return { customer: undefined, costCenter: undefined };
+}
+
+export const CreateStripeSubscriptionResponse = {
+  encode(message: CreateStripeSubscriptionResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.customer !== undefined) {
+      StripeCustomer.encode(message.customer, writer.uint32(10).fork()).ldelim();
+    }
+    if (message.costCenter !== undefined) {
+      CostCenter.encode(message.costCenter, writer.uint32(18).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CreateStripeSubscriptionResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateStripeSubscriptionResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.customer = StripeCustomer.decode(reader, reader.uint32());
+          break;
+        case 2:
+          message.costCenter = CostCenter.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateStripeSubscriptionResponse {
+    return {
+      customer: isSet(object.customer) ? StripeCustomer.fromJSON(object.customer) : undefined,
+      costCenter: isSet(object.costCenter) ? CostCenter.fromJSON(object.costCenter) : undefined,
+    };
+  },
+
+  toJSON(message: CreateStripeSubscriptionResponse): unknown {
+    const obj: any = {};
+    message.customer !== undefined &&
+      (obj.customer = message.customer ? StripeCustomer.toJSON(message.customer) : undefined);
+    message.costCenter !== undefined &&
+      (obj.costCenter = message.costCenter ? CostCenter.toJSON(message.costCenter) : undefined);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<CreateStripeSubscriptionResponse>): CreateStripeSubscriptionResponse {
+    const message = createBaseCreateStripeSubscriptionResponse();
+    message.customer = (object.customer !== undefined && object.customer !== null)
+      ? StripeCustomer.fromPartial(object.customer)
+      : undefined;
+    message.costCenter = (object.costCenter !== undefined && object.costCenter !== null)
+      ? CostCenter.fromPartial(object.costCenter)
+      : undefined;
     return message;
   },
 };
@@ -489,6 +632,14 @@ export const BillingServiceDefinition = {
       responseStream: false,
       options: {},
     },
+    createStripeSubscription: {
+      name: "CreateStripeSubscription",
+      requestType: CreateStripeSubscriptionRequest,
+      requestStream: false,
+      responseType: CreateStripeSubscriptionResponse,
+      responseStream: false,
+      options: {},
+    },
     /**
      * CancelSubscription cancels a stripe subscription in our system
      * Called by a stripe webhook
@@ -530,6 +681,10 @@ export interface BillingServiceServiceImplementation<CallContextExt = {}> {
     request: FinalizeInvoiceRequest,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<FinalizeInvoiceResponse>>;
+  createStripeSubscription(
+    request: CreateStripeSubscriptionRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<CreateStripeSubscriptionResponse>>;
   /**
    * CancelSubscription cancels a stripe subscription in our system
    * Called by a stripe webhook
@@ -562,6 +717,10 @@ export interface BillingServiceClient<CallOptionsExt = {}> {
     request: DeepPartial<FinalizeInvoiceRequest>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<FinalizeInvoiceResponse>;
+  createStripeSubscription(
+    request: DeepPartial<CreateStripeSubscriptionRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<CreateStripeSubscriptionResponse>;
   /**
    * CancelSubscription cancels a stripe subscription in our system
    * Called by a stripe webhook
