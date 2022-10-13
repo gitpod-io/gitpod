@@ -70,6 +70,9 @@ func (p *WorkspaceReadyProbe) Run(ctx context.Context) WorkspaceProbeResult {
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
 	}
 
 	for {
