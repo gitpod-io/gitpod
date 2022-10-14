@@ -4,7 +4,7 @@ import {
     HARVESTER_KUBECONFIG_PATH,
     PREVIEW_K3S_KUBECONFIG_PATH
 } from "../jobs/build/const";
-import { exec } from "../util/shell";
+import {exec, execStream} from "../util/shell";
 import { getGlobalWerftInstance } from "../util/werft";
 
 import * as shell from "shelljs";
@@ -12,11 +12,11 @@ import * as shell from "shelljs";
 /**
  * Remove all VM resources - Namespace+VM+Proxy svc on Harvester, LB+SVC on DEV
  */
-export function deleteVM(options: { name: string }) {
+export async function deleteVM(options: { name: string }) {
     const werft = getGlobalWerftInstance();
 
     try {
-        exec(`DESTROY=true \
+        await execStream(`DESTROY=true \
                                     GOOGLE_APPLICATION_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
                                     GOOGLE_BACKEND_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
                                     TF_VAR_dev_kube_path=${CORE_DEV_KUBECONFIG_PATH} \
@@ -29,7 +29,6 @@ export function deleteVM(options: { name: string }) {
         werft.fail("Deleting VM.", new Error(`Failed creating VM: ${err}`))
         return;
     }
-
 
     werft.currentPhaseSpan.setAttribute("preview.deleted_vm", true);
 }
