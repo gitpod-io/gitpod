@@ -6,7 +6,7 @@ package ide
 
 const (
 	CodeIDEImage                = "ide/code"
-	CodeIDEImageStableVersion   = "commit-46e9df494af98d87fc4fb65d9c251f0d9bcc1cd2" // stable version that will be updated manually on demand
+	CodeIDEImageStableVersion   = "commit-02a29e83c566d3ccb4295d050773541b7458c1ad" // stable version that will be updated manually on demand
 	CodeDesktopIDEImage         = "ide/code-desktop"
 	CodeDesktopInsidersIDEImage = "ide/code-desktop-insiders"
 	IntelliJDesktopIDEImage     = "ide/intellij"
