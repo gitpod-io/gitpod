@@ -12,14 +12,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
+	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
+	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
-
-	"github.com/gitpod-io/gitpod/common-go/log"
-	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
-	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
 func TestPortsUpdateState(t *testing.T) {
@@ -64,8 +63,8 @@ func TestPortsUpdateState(t *testing.T) {
 				[]*api.PortsStatus{{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify_private}},
 				[]*api.PortsStatus{{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}},
 				[]*api.PortsStatus{{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}, {LocalPort: 60000, Served: true}},
-				[]*api.PortsStatus{{LocalPort: 8080, Served: false, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}, {LocalPort: 60000, Served: true}},
-				[]*api.PortsStatus{{LocalPort: 8080, Served: false, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}},
+				[]*api.PortsStatus{{LocalPort: 60000, Served: true}},
+				{},
 			},
 		},
 		{
@@ -86,15 +85,18 @@ func TestPortsUpdateState(t *testing.T) {
 		{
 			Desc: "basic port publically exposed",
 			Changes: []Change{
-				{Exposed: []ExposedPort{{LocalPort: 8080, Public: false, URL: "foobar"}}},
-				{Exposed: []ExposedPort{{LocalPort: 8080, Public: true, URL: "foobar"}}},
 				{Served: []ServedPort{{Port: 8080}}},
+				{Exposed: []ExposedPort{{LocalPort: 8080, Public: true, URL: "foobar"}}},
+				{Exposed: []ExposedPort{{LocalPort: 8080, Public: false, URL: "foobar"}}},
+			},
+			ExpectedExposure: ExposureExpectation{
+				{LocalPort: 8080},
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				[]*api.PortsStatus{{LocalPort: 8080, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, Url: "foobar", OnExposed: api.OnPortExposedAction_notify_private}}},
-				[]*api.PortsStatus{{LocalPort: 8080, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "foobar", OnExposed: api.OnPortExposedAction_notify_private}}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify_private}},
 				[]*api.PortsStatus{{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "foobar", OnExposed: api.OnPortExposedAction_notify_private}}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, Url: "foobar", OnExposed: api.OnPortExposedAction_notify_private}}},
 			},
 		},
 		{
@@ -745,4 +747,90 @@ func TestPortsConcurrentSubscribe(t *testing.T) {
 	}
 
 	wg.Wait()
+}
+
+func TestManager_getStatus(t *testing.T) {
+	type fields struct {
+		orderInYaml []any
+		state       []uint32
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   []uint32
+	}{
+		{
+			name: "happy path",
+			fields: fields{
+				// The port number (e.g. 1337) or range (e.g. 3000-3999) to expose.
+				orderInYaml: []any{1002, 1000, "3000-3999", 1001},
+				state:       []uint32{1000, 1001, 1002, 3003, 3001, 3002, 4002, 4000, 5000, 5005},
+			},
+			want: []uint32{1002, 1000, 3001, 3002, 3003, 1001, 4000, 4002, 5000, 5005},
+		},
+		{
+			name: "order for ranged ports and inside ranged order by number ASC",
+			fields: fields{
+				orderInYaml: []any{1002, "3000-3999", 1009, "4000-4999"},
+				state:       []uint32{5000, 1000, 1009, 4000, 4001, 3000, 3009},
+			},
+			want: []uint32{3000, 3009, 1009, 4000, 4001, 1000, 5000},
+		},
+		{
+			name: "served ports order by number ASC",
+			fields: fields{
+				orderInYaml: []any{},
+				state:       []uint32{4000, 4003, 4007, 4001, 4006},
+			},
+			want: []uint32{4000, 4001, 4003, 4006, 4007},
+		},
+
+		// It will not works because we do not `Run` ports Manger
+		// As ports Manger will autoExpose those ports (but not ranged port) in yaml
+		// and they will exists in state
+		// {
+		// 	name: "not ignore ports that not served but exists in yaml",
+		// 	fields: fields{
+		// 		orderInYaml: []any{1002, 1000, 1001},
+		// 		state:       []uint32{},
+		// 	},
+		// 	want: []uint32{1002, 1000, 1001},
+		// },
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			state := make(map[uint32]*managedPort)
+			for _, port := range tt.fields.state {
+				state[port] = &managedPort{
+					Served:             true,
+					LocalhostPort:      port,
+					TunneledTargetPort: port,
+					TunneledClients:    map[string]uint32{},
+				}
+			}
+			portsItems := []*gitpod.PortsItems{}
+			for _, port := range tt.fields.orderInYaml {
+				portsItems = append(portsItems, &gitpod.PortsItems{Port: port})
+			}
+			portsConfig, rangeConfig := parseInstanceConfigs(portsItems)
+			pm := &Manager{
+				configs: &Configs{
+					instancePortConfigs:  portsConfig,
+					instanceRangeConfigs: rangeConfig,
+				},
+				state: state,
+			}
+			got := pm.getStatus()
+			if len(got) != len(tt.want) {
+				t.Errorf("Manager.getStatus() length = %v, want %v", len(got), len(tt.want))
+			}
+			gotPorts := []uint32{}
+			for _, g := range got {
+				gotPorts = append(gotPorts, g.LocalPort)
+			}
+			if diff := cmp.Diff(gotPorts, tt.want); diff != "" {
+				t.Errorf("unexpected exposures (-want +got):\n%s", diff)
+			}
+		})
+	}
 }
