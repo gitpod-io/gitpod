@@ -361,12 +361,10 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                 config._featureFlags = (config._featureFlags || []).concat(["persistent_volume_claim"]);
             }
             const billingTier = await this.entitlementService.getBillingTier(user);
-            const userTeams = await this.teamDB.findTeamsByUser(user.id);
             // this allows to control user`s PVC feature flag via ConfigCat
             if (
                 await getExperimentsClientForBackend().getValueAsync("user_pvc", false, {
                     user,
-                    teams: userTeams,
                     billingTier,
                 })
             ) {
