@@ -7,8 +7,10 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"time"
 
 	log "github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -23,6 +25,11 @@ func Execute() {
 	log.Init("bob", "", true, false)
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
+
+		if log.Log.Logger.IsLevelEnabled(logrus.DebugLevel) {
+			time.Sleep(1 * time.Minute)
+		}
+
 		os.Exit(1)
 	}
 }
