@@ -109,7 +109,7 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 		if len(s) != 2 {
 			continue
 		}
-		envs = append(envs, fmt.Sprintf("%s=%s", s[0], fmt.Sprintf("\"%s\"", strings.ReplaceAll(s[1], "\"", "\\\""))))
+		envs = append(envs, fmt.Sprintf("%s=%s", s[0], fmt.Sprintf("\"%s\"", strings.ReplaceAll(strings.ReplaceAll(s[1], `\`, `\\`), `"`, `\"`))))
 	}
 	if len(envs) > 0 {
 		args = append(args, fmt.Sprintf("-oSetEnv %s", strings.Join(envs, " ")))
