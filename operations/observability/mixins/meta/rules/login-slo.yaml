@@ -9,7 +9,6 @@ metadata:
     prometheus: k8s
     role: alert-rules
   name: login-slo-monitoring-rules
-  namespace: monitoring-satellite
 spec:
   groups:
   - name: login-slo-recording-rules
