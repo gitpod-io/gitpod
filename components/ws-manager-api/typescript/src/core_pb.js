@@ -5889,7 +5889,7 @@ proto.wsman.IDEImage.prototype.setDesktopPluginRef = function(value) {
  * @private {!Array<number>}
  * @const
  */
-proto.wsman.WorkspaceSpec.repeatedFields_ = [5];
+proto.wsman.WorkspaceSpec.repeatedFields_ = [5,10];
 
 
 
@@ -5931,7 +5931,8 @@ proto.wsman.WorkspaceSpec.toObject = function(includeInstance, msg) {
     type: jspb.Message.getFieldWithDefault(msg, 6, 0),
     timeout: jspb.Message.getFieldWithDefault(msg, 7, ""),
     ideImage: (f = msg.getIdeImage()) && proto.wsman.IDEImage.toObject(includeInstance, f),
-    pb_class: jspb.Message.getFieldWithDefault(msg, 9, "")
+    pb_class: jspb.Message.getFieldWithDefault(msg, 9, ""),
+    ideImageLayersList: (f = jspb.Message.getRepeatedField(msg, 10)) == null ? undefined : f
   };
 
   if (includeInstance) {
@@ -6005,6 +6006,10 @@ proto.wsman.WorkspaceSpec.deserializeBinaryFromReader = function(msg, reader) {
     case 9:
       var value = /** @type {string} */ (reader.readString());
       msg.setClass(value);
+      break;
+    case 10:
+      var value = /** @type {string} */ (reader.readString());
+      msg.addIdeImageLayers(value);
       break;
     default:
       reader.skipField();
@@ -6097,6 +6102,13 @@ proto.wsman.WorkspaceSpec.serializeBinaryToWriter = function(message, writer) {
   if (f.length > 0) {
     writer.writeString(
       9,
+      f
+    );
+  }
+  f = message.getIdeImageLayersList();
+  if (f.length > 0) {
+    writer.writeRepeatedString(
+      10,
       f
     );
   }
@@ -6301,6 +6313,43 @@ proto.wsman.WorkspaceSpec.prototype.getClass = function() {
  */
 proto.wsman.WorkspaceSpec.prototype.setClass = function(value) {
   return jspb.Message.setProto3StringField(this, 9, value);
+};
+
+
+/**
+ * repeated string ide_image_layers = 10;
+ * @return {!Array<string>}
+ */
+proto.wsman.WorkspaceSpec.prototype.getIdeImageLayersList = function() {
+  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 10));
+};
+
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.wsman.WorkspaceSpec} returns this
+ */
+proto.wsman.WorkspaceSpec.prototype.setIdeImageLayersList = function(value) {
+  return jspb.Message.setField(this, 10, value || []);
+};
+
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.wsman.WorkspaceSpec} returns this
+ */
+proto.wsman.WorkspaceSpec.prototype.addIdeImageLayers = function(value, opt_index) {
+  return jspb.Message.addToRepeatedField(this, 10, value, opt_index);
+};
+
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.wsman.WorkspaceSpec} returns this
+ */
+proto.wsman.WorkspaceSpec.prototype.clearIdeImageLayersList = function() {
+  return this.setIdeImageLayersList([]);
 };
 
 
@@ -7852,7 +7901,7 @@ proto.wsman.WorkspaceAuthentication.prototype.setOwnerToken = function(value) {
  * @private {!Array<number>}
  * @const
  */
-proto.wsman.StartWorkspaceSpec.repeatedFields_ = [3,5,6,15];
+proto.wsman.StartWorkspaceSpec.repeatedFields_ = [3,5,6,15,16,17];
 
 
 
@@ -7900,7 +7949,10 @@ proto.wsman.StartWorkspaceSpec.toObject = function(includeInstance, msg) {
     ideImage: (f = msg.getIdeImage()) && proto.wsman.IDEImage.toObject(includeInstance, f),
     pb_class: jspb.Message.getFieldWithDefault(msg, 13, ""),
     volumeSnapshot: (f = msg.getVolumeSnapshot()) && proto.wsman.VolumeSnapshotInfo.toObject(includeInstance, f),
-    sshPublicKeysList: (f = jspb.Message.getRepeatedField(msg, 15)) == null ? undefined : f
+    sshPublicKeysList: (f = jspb.Message.getRepeatedField(msg, 15)) == null ? undefined : f,
+    sysEnvvarsList: jspb.Message.toObjectList(msg.getSysEnvvarsList(),
+    proto.wsman.EnvironmentVariable.toObject, includeInstance),
+    ideImageLayersList: (f = jspb.Message.getRepeatedField(msg, 17)) == null ? undefined : f
   };
 
   if (includeInstance) {
@@ -8000,6 +8052,15 @@ proto.wsman.StartWorkspaceSpec.deserializeBinaryFromReader = function(msg, reade
     case 15:
       var value = /** @type {string} */ (reader.readString());
       msg.addSshPublicKeys(value);
+      break;
+    case 16:
+      var value = new proto.wsman.EnvironmentVariable;
+      reader.readMessage(value,proto.wsman.EnvironmentVariable.deserializeBinaryFromReader);
+      msg.addSysEnvvars(value);
+      break;
+    case 17:
+      var value = /** @type {string} */ (reader.readString());
+      msg.addIdeImageLayers(value);
       break;
     default:
       reader.skipField();
@@ -8131,6 +8192,21 @@ proto.wsman.StartWorkspaceSpec.serializeBinaryToWriter = function(message, write
   if (f.length > 0) {
     writer.writeRepeatedString(
       15,
+      f
+    );
+  }
+  f = message.getSysEnvvarsList();
+  if (f.length > 0) {
+    writer.writeRepeatedMessage(
+      16,
+      f,
+      proto.wsman.EnvironmentVariable.serializeBinaryToWriter
+    );
+  }
+  f = message.getIdeImageLayersList();
+  if (f.length > 0) {
+    writer.writeRepeatedString(
+      17,
       f
     );
   }
@@ -8540,6 +8616,81 @@ proto.wsman.StartWorkspaceSpec.prototype.addSshPublicKeys = function(value, opt_
  */
 proto.wsman.StartWorkspaceSpec.prototype.clearSshPublicKeysList = function() {
   return this.setSshPublicKeysList([]);
+};
+
+
+/**
+ * repeated EnvironmentVariable sys_envvars = 16;
+ * @return {!Array<!proto.wsman.EnvironmentVariable>}
+ */
+proto.wsman.StartWorkspaceSpec.prototype.getSysEnvvarsList = function() {
+  return /** @type{!Array<!proto.wsman.EnvironmentVariable>} */ (
+    jspb.Message.getRepeatedWrapperField(this, proto.wsman.EnvironmentVariable, 16));
+};
+
+
+/**
+ * @param {!Array<!proto.wsman.EnvironmentVariable>} value
+ * @return {!proto.wsman.StartWorkspaceSpec} returns this
+*/
+proto.wsman.StartWorkspaceSpec.prototype.setSysEnvvarsList = function(value) {
+  return jspb.Message.setRepeatedWrapperField(this, 16, value);
+};
+
+
+/**
+ * @param {!proto.wsman.EnvironmentVariable=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.wsman.EnvironmentVariable}
+ */
+proto.wsman.StartWorkspaceSpec.prototype.addSysEnvvars = function(opt_value, opt_index) {
+  return jspb.Message.addToRepeatedWrapperField(this, 16, opt_value, proto.wsman.EnvironmentVariable, opt_index);
+};
+
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.wsman.StartWorkspaceSpec} returns this
+ */
+proto.wsman.StartWorkspaceSpec.prototype.clearSysEnvvarsList = function() {
+  return this.setSysEnvvarsList([]);
+};
+
+
+/**
+ * repeated string ide_image_layers = 17;
+ * @return {!Array<string>}
+ */
+proto.wsman.StartWorkspaceSpec.prototype.getIdeImageLayersList = function() {
+  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 17));
+};
+
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.wsman.StartWorkspaceSpec} returns this
+ */
+proto.wsman.StartWorkspaceSpec.prototype.setIdeImageLayersList = function(value) {
+  return jspb.Message.setField(this, 17, value || []);
+};
+
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.wsman.StartWorkspaceSpec} returns this
+ */
+proto.wsman.StartWorkspaceSpec.prototype.addIdeImageLayers = function(value, opt_index) {
+  return jspb.Message.addToRepeatedField(this, 17, value, opt_index);
+};
+
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.wsman.StartWorkspaceSpec} returns this
+ */
+proto.wsman.StartWorkspaceSpec.prototype.clearIdeImageLayersList = function() {
+  return this.setIdeImageLayersList([]);
 };
 
 

@@ -7,17 +7,19 @@ set -e
 set -o pipefail
 
 # Default Options
-DEBUG_PORT=0
+DEBUG_PORT=44444
 JB_QUALIFIER="latest"
 TEST_REPO=https://github.com/gitpod-io/spring-petclinic
+RUN_FROM="release"
 
 # Parsing Custom Options
-while getopts "p:r:s" OPTION
+while getopts "p:r:su" OPTION
 do
    case $OPTION in
        s) JB_QUALIFIER="stable" ;;
        r) TEST_REPO=$OPTARG ;;
        p) DEBUG_PORT=$OPTARG ;;
+       u) RUN_FROM="snapshot" ;;
        *) ;;
    esac
 done
@@ -25,16 +27,30 @@ done
 TEST_BACKEND_DIR="/workspace/ide-backend-$JB_QUALIFIER"
 if [ ! -d "$TEST_BACKEND_DIR" ]; then
   mkdir -p $TEST_BACKEND_DIR
-  if [[ $JB_QUALIFIER == "stable" ]]; then
-    PRODUCT_TYPE="release"
+  if [[ $RUN_FROM == "snapshot" ]]; then
+    (cd $TEST_BACKEND_DIR &&
+    SNAPSHOT_VERSION=$(grep "platformVersion=" "gradle-$JB_QUALIFIER.properties" | sed 's/platformVersion=//') &&
+    echo "Downloading the $JB_QUALIFIER version of IntelliJ IDEA ($SNAPSHOT_VERSION)..." &&
+    curl -sSLo backend.zip "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/$SNAPSHOT_VERSION/ideaIU-$SNAPSHOT_VERSION.zip" &&
+    unzip backend.zip &&
+    rm backend.zip &&
+    ln -s "ideaIU-$SNAPSHOT_VERSION" . &&
+    rm -r "ideaIU-$SNAPSHOT_VERSION" &&
+    cp -r /ide-desktop/backend/jbr . &&
+    cp /ide-desktop/backend/bin/idea.properties ./bin &&
+    cp /ide-desktop/backend/bin/idea64.vmoptions ./bin)
   else
-    PRODUCT_TYPE="release,rc,eap"
+    if [[ $JB_QUALIFIER == "stable" ]]; then
+      PRODUCT_TYPE="release"
+    else
+      PRODUCT_TYPE="release,rc,eap"
+    fi
+    (cd $TEST_BACKEND_DIR &&
+    echo "Downloading the $JB_QUALIFIER version of IntelliJ IDEA..." &&
+    curl -sSLo backend.tar.gz "https://download.jetbrains.com/product?type=$PRODUCT_TYPE&distribution=linux&code=IIU" &&
+    tar -xf backend.tar.gz --strip-components=1 &&
+    rm backend.tar.gz)
   fi
-  (cd $TEST_BACKEND_DIR &&
-  echo "Downloading the $JB_QUALIFIER version of IntelliJ IDEA..." &&
-  curl -sSLo backend.tar.gz "https://download.jetbrains.com/product?type=$PRODUCT_TYPE&distribution=linux&code=IIU" &&
-  tar -xf backend.tar.gz --strip-components=1 &&
-  rm backend.tar.gz)
 fi
 
 TEST_PLUGINS_DIR="$TEST_BACKEND_DIR/plugins"

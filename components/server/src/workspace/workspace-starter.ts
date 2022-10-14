@@ -829,7 +829,6 @@ export class WorkspaceStarter {
             //#endregion
 
             const billingTier = await this.entitlementService.getBillingTier(user);
-            const userTeams = await this.teamDB.findTeamsByUser(user.id);
 
             let featureFlags: NamedWorkspaceFeatureFlag[] = workspace.config._featureFlags || [];
             featureFlags = featureFlags.concat(this.config.workspaceDefaults.defaultFeatureFlags);
@@ -853,7 +852,6 @@ export class WorkspaceStarter {
             if (
                 await getExperimentsClientForBackend().getValueAsync("protected_secrets", false, {
                     user,
-                    teams: userTeams,
                     billingTier,
                 })
             ) {
@@ -867,8 +865,12 @@ export class WorkspaceStarter {
             const wsConnectionLimitingEnabled = await getExperimentsClientForBackend().getValueAsync(
                 "workspace_connection_limiting",
                 false,
-                { user, teams: userTeams, billingTier },
+                {
+                    user,
+                    billingTier,
+                },
             );
+
             if (wsConnectionLimitingEnabled) {
                 const shouldLimitNetworkConnections = await this.entitlementService.limitNetworkConnections(
                     user,
@@ -1928,12 +1930,11 @@ export class WorkspaceStarter {
      * @returns
      */
     protected async getImageBuilderClient(user: User, workspace: Workspace, instance?: WorkspaceInstance) {
-        const teams = await this.teamDB.findTeamsByUser(user.id);
         const isMovedImageBuilder = await getExperimentsClientForBackend().getValueAsync("movedImageBuilder", false, {
             user,
             projectId: workspace.projectId,
-            teams,
         });
+
         log.info(
             { userId: user.id, workspaceId: workspace.id, instanceId: instance?.id },
             "image-builder in workspace cluster?",

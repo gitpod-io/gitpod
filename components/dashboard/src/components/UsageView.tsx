@@ -249,7 +249,7 @@ function UsageView({ attributionId }: UsageViewProps) {
                                             <span>Credits</span>
                                         </ItemField>
                                         <ItemField className="my-auto" />
-                                        <ItemField className="col-span-3 my-auto cursor-pointer">
+                                        <ItemField className="my-auto">
                                             <span>Timestamp</span>
                                         </ItemField>
                                     </Item>

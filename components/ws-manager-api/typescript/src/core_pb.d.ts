@@ -740,6 +740,10 @@ export class WorkspaceSpec extends jspb.Message {
     setIdeImage(value?: IDEImage): WorkspaceSpec;
     getClass(): string;
     setClass(value: string): WorkspaceSpec;
+    clearIdeImageLayersList(): void;
+    getIdeImageLayersList(): Array<string>;
+    setIdeImageLayersList(value: Array<string>): WorkspaceSpec;
+    addIdeImageLayers(value: string, index?: number): string;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceSpec.AsObject;
@@ -762,6 +766,7 @@ export namespace WorkspaceSpec {
         timeout: string,
         ideImage?: IDEImage.AsObject,
         pb_class: string,
+        ideImageLayersList: Array<string>,
     }
 }
 
@@ -1017,6 +1022,14 @@ export class StartWorkspaceSpec extends jspb.Message {
     getSshPublicKeysList(): Array<string>;
     setSshPublicKeysList(value: Array<string>): StartWorkspaceSpec;
     addSshPublicKeys(value: string, index?: number): string;
+    clearSysEnvvarsList(): void;
+    getSysEnvvarsList(): Array<EnvironmentVariable>;
+    setSysEnvvarsList(value: Array<EnvironmentVariable>): StartWorkspaceSpec;
+    addSysEnvvars(value?: EnvironmentVariable, index?: number): EnvironmentVariable;
+    clearIdeImageLayersList(): void;
+    getIdeImageLayersList(): Array<string>;
+    setIdeImageLayersList(value: Array<string>): StartWorkspaceSpec;
+    addIdeImageLayers(value: string, index?: number): string;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StartWorkspaceSpec.AsObject;
@@ -1044,6 +1057,8 @@ export namespace StartWorkspaceSpec {
         pb_class: string,
         volumeSnapshot?: VolumeSnapshotInfo.AsObject,
         sshPublicKeysList: Array<string>,
+        sysEnvvarsList: Array<EnvironmentVariable.AsObject>,
+        ideImageLayersList: Array<string>,
     }
 }
 

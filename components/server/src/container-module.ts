@@ -81,7 +81,6 @@ import { GitTokenValidator } from "./workspace/git-token-validator";
 import { newAnalyticsWriterFromEnv } from "@gitpod/gitpod-protocol/lib/util/analytics";
 import { OAuthController } from "./oauth-server/oauth-controller";
 import { ImageBuildPrefixContextParser } from "./workspace/imagebuild-prefix-context-parser";
-import { AdditionalContentPrefixContextParser } from "./workspace/additional-content-prefix-context-parser";
 import { HeadlessLogService } from "./workspace/headless-log-service";
 import { HeadlessLogController } from "./workspace/headless-log-controller";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
@@ -113,6 +112,7 @@ import { LivenessController } from "./liveness/liveness-controller";
 import { IDEServiceClient, IDEServiceDefinition } from "@gitpod/ide-service-api/lib/ide.pb";
 import { prometheusClientMiddleware } from "@gitpod/gitpod-protocol/lib/util/nice-grpc";
 import { UsageService } from "./user/usage-service";
+import { OpenPrebuildPrefixContextParser } from "./workspace/open-prebuild-prefix-context-parser";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -188,7 +188,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(IPrefixContextParser).to(ReferrerPrefixParser).inSingletonScope();
     bind(IPrefixContextParser).to(EnvvarPrefixParser).inSingletonScope();
     bind(IPrefixContextParser).to(ImageBuildPrefixContextParser).inSingletonScope();
-    bind(IPrefixContextParser).to(AdditionalContentPrefixContextParser).inSingletonScope();
+    bind(IPrefixContextParser).to(OpenPrebuildPrefixContextParser).inSingletonScope();
 
     bind(GitTokenScopeGuesser).toSelf().inSingletonScope();
     bind(GitTokenValidator).toSelf().inSingletonScope();

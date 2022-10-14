@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package io.gitpod.jetbrains.gateway
+package io.gitpod.jetbrains.gateway.stable
 
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.ui.dsl.builder.BottomGap
@@ -12,6 +12,7 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.jetbrains.gateway.api.GatewayConnectorView
 import com.jetbrains.gateway.api.GatewayUI
 import com.jetbrains.rd.util.lifetime.Lifetime
+import io.gitpod.jetbrains.gateway.GitpodWorkspacesView
 
 class GitpodConnectorView(
     lifetime: Lifetime
