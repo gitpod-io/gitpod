@@ -1,0 +1,30 @@
+on:
+  pull_request:
+    types:
+      - labeled
+      - unlabeled
+      - opened
+      - edited
+      - closed
+      - reopened
+      - synchronize
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout website repo
+        uses: actions/checkout@v3
+        with:
+          repository: gitpod-io/website
+          # todo(ft): use main after testing is complete
+          ref: ft/auto-changelog-prs
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: 'npm'
+      - run: npm ci
+      - run: node scripts/changelog/commentOnPr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
