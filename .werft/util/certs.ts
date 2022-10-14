@@ -1,4 +1,4 @@
-import { exec, ExecOptions } from "./shell";
+import {exec, ExecOptions, execStream} from "./shell";
 import {CORE_DEV_KUBECONFIG_PATH, GCLOUD_SERVICE_ACCOUNT_PATH, HARVESTER_KUBECONFIG_PATH} from "../jobs/build/const";
 import { Werft } from "./werft";
 import { reportCertificateError } from "../util/slack";
@@ -43,7 +43,7 @@ export async function certReady(werft: Werft, config: JobConfig, slice: string):
         }
 
         werft.log(slice, `Creating cert: Attempt ${i}`);
-        exec(`${commonVars} \
+        await execStream(`${commonVars} \
                         TF_CLI_ARGS_plan="-replace=kubernetes_manifest.cert" \
                         ./dev/preview/workflow/preview/deploy-harvester.sh`,
             {slice: slice})
