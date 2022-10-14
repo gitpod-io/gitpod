@@ -7,6 +7,9 @@ metadata:
     app.kubernetes.io/name: argocd
     app.kubernetes.io/part-of: kube-prometheus
 spec:
+  namespaceSelector:
+    matchNames:
+    - argocd
   selector:
     matchLabels:
       app.kubernetes.io/name: argocd-metrics
@@ -22,6 +25,9 @@ metadata:
     app.kubernetes.io/name: argocd
     app.kubernetes.io/part-of: kube-prometheus
 spec:
+  namespaceSelector:
+    matchNames:
+    - argocd
   selector:
     matchLabels:
       app.kubernetes.io/name: argocd-server-metrics
@@ -37,6 +43,9 @@ metadata:
     app.kubernetes.io/name: argocd-repo-server
     app.kubernetes.io/part-of: kube-prometheus
 spec:
+  namespaceSelector:
+    matchNames:
+    - argocd
   selector:
     matchLabels:
       app.kubernetes.io/name: argocd-repo-server
@@ -52,6 +61,9 @@ metadata:
     app.kubernetes.io/name: argocd-applicationset-controller
     app.kubernetes.io/part-of: kube-prometheus
 spec:
+  namespaceSelector:
+    matchNames:
+    - argocd
   selector:
     matchLabels:
       app.kubernetes.io/name: argocd-applicationset-controller
