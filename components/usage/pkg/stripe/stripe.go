@@ -285,6 +285,49 @@ func (c *Client) GetSubscriptionWithCustomer(ctx context.Context, subscriptionID
 	return subscription, nil
 }
 
+func (c *Client) SetDefaultPaymentMethod(ctx context.Context, customerID string, intentID string) error {
+	intent, err := c.sc.SetupIntents.Get(intentID, &stripe.SetupIntentParams{
+		Params: stripe.Params{
+			Context: ctx,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to get setup intent %s: %w", intentID, err)
+	}
+	if intent.PaymentMethod.ID == "" {
+		return status.Errorf(codes.InvalidArgument, "setup intent %s does not have a valid payment method attached", intentID)
+	}
+
+	paymentMethod, err := c.sc.PaymentMethods.Attach(intent.PaymentMethod.ID, &stripe.PaymentMethodAttachParams{
+		Params: stripe.Params{
+			Context: ctx,
+		},
+		Customer: stripe.String(customerID),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to attach payment method %s to customer %s: %w", intent.PaymentMethod.ID, customerID, err)
+	}
+
+	var address *stripe.AddressParams
+	if paymentMethod.BillingDetails.Address != nil {
+		address = &stripe.AddressParams{
+			Line1:   stripe.String(""),
+			Country: stripe.String(paymentMethod.BillingDetails.Address.Country),
+		}
+	}
+	_, err = c.sc.Customers.Update(customerID, &stripe.CustomerParams{
+		InvoiceSettings: &stripe.CustomerInvoiceSettingsParams{
+			DefaultPaymentMethod: &paymentMethod.ID,
+		},
+		Address: address,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to udpate stripe customer %s with default payment settings and address", customerID)
+	}
+
+	return nil
+}
+
 func GetAttributionID(ctx context.Context, customer *stripe.Customer) (db.AttributionID, error) {
 	if customer == nil {
 		log.Error("No customer information available for invoice.")

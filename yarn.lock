@@ -17350,6 +17350,18 @@ ts-proto@^1.125.0:
     ts-poet "^6.1.0"
     ts-proto-descriptors "1.7.1"
 
+ts-proto@^1.128.0:
+  version "1.128.0"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.128.0.tgz#3d99b7bf023022c3eaf67379f341acf6f702e388"
+  integrity sha512-1rn9+FHCnJc+C6V4o3ckublXttzTWIP8HOHfiMV4NtmRv0M5zKrMERfkubbxwPbAXNEzi1srOCimoQZpsxG/CQ==
+  dependencies:
+    "@types/object-hash" "^1.3.0"
+    dataloader "^1.4.0"
+    object-hash "^1.3.1"
+    protobufjs "^6.11.3"
+    ts-poet "^6.1.0"
+    ts-proto-descriptors "1.7.1"
+
 ts-protoc-gen@^0.13.0:
   version "0.13.0"
   resolved "https://registry.npmjs.org/ts-protoc-gen/-/ts-protoc-gen-0.13.0.tgz"

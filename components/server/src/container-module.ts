@@ -279,6 +279,9 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
         .toDynamicValue((ctx) => {
             const config = ctx.container.get<Config>(Config);
             const metricsClient = ctx.container.get<IClientCallMetrics>(IClientCallMetrics);
+
+            // createClient(WorkspacesSer)
+
             return createClientFactory()
                 .use(prometheusClientMiddleware(metricsClient))
                 .create(IDEServiceDefinition, createChannel(config.ideServiceAddr));

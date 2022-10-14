@@ -18,6 +18,7 @@ packages:
       - components/ws-manager-api/typescript:lib
       - components/supervisor-api/typescript-grpcweb:lib
       - components/usage-api/typescript:lib
+      - components/public-api/typescript:lib
       - components/ide-service-api/typescript:lib
     config:
       packaging: offline-mirror

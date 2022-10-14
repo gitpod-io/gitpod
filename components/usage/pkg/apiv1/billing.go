@@ -163,6 +163,31 @@ func (s *BillingService) FinalizeInvoice(ctx context.Context, in *v1.FinalizeInv
 	return &v1.FinalizeInvoiceResponse{}, nil
 }
 
+func (c *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.CreateStripeSubscriptionRequest) (*v1.CreateStripeSubscriptionResponse, error) {
+	if req.GetAttributionId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "attribution id is required, got empty")
+	}
+	if req.GetStripeIntentId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "stripe intent id is required, got empty")
+	}
+
+	attributionID, err := db.ParseAttributionID(req.GetAttributionId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to parse attribution id: %s", req.GetAttributionId())
+	}
+
+	customer, err := c.stripeClient.GetCustomerByAttributionID(ctx, string(attributionID))
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "Stripe customer with attributionID: %s does not exist", string(attributionID))
+	}
+
+	err = c.stripeClient.SetDefaultPaymentMethod(ctx, customer.ID, req.StripeIntentId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to setup default payment method: %w", err)
+	}
+
+}
+
 func (s *BillingService) CancelSubscription(ctx context.Context, in *v1.CancelSubscriptionRequest) (*v1.CancelSubscriptionResponse, error) {
 	logger := log.WithField("subscription_id", in.GetSubscriptionId())
 	logger.Infof("Subscription ended. Setting cost center back to free.")

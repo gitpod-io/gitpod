@@ -15,13 +15,14 @@
     "@bufbuild/connect-web": "^0.2.1",
     "@bufbuild/protobuf": "^0.1.1",
     "@bufbuild/protoc-gen-connect-web": "^0.2.1",
-    "@bufbuild/protoc-gen-es": "^0.1.1"
+    "@bufbuild/protoc-gen-es": "^0.1.1",
+    "ts-proto": "^1.128.0"
   },
   "devDependencies": {
+    "@gitpod/gitpod-protocol": "0.1.5",
     "@testdeck/mocha": "0.1.2",
     "@types/chai": "^4.1.2",
     "@types/node": "^16.11.0",
-    "typescript": "~4.4.2",
-    "@gitpod/gitpod-protocol": "0.1.5"
+    "typescript": "~4.4.2"
   }
 }
