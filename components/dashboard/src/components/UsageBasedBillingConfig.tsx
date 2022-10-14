@@ -216,13 +216,13 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                 )}
                 {showSpinner && (
                     <div className="flex flex-col mt-4 h-52 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
-                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Balance</div>
+                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Balance Used</div>
                         <Spinner className="m-2 h-5 w-5 animate-spin" />
                     </div>
                 )}
                 {showBalance && (
                     <div className="flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
-                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Balance</div>
+                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Balance Used</div>
                         <div className="mt-1 text-xl font-semibold flex-grow">
                             <span className="text-gray-900 dark:text-gray-100">
                                 {typeof currentUsage === "number" ? Math.round(currentUsage) : "?"}
@@ -279,7 +279,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                             <Check className="m-0.5 w-5 h-5" />
                             <div className="flex flex-col">
                                 <span>
-                                    36¢ for 10 credits or 1 hour of Standard workspace usage.{" "}
+                                    $0.36 for 10 credits or 1 hour of Standard workspace usage.{" "}
                                     <a
                                         className="gp-link"
                                         href="https://www.gitpod.io/docs/configure/billing/usage-based-billing"
@@ -330,7 +330,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                 <Check className="m-0.5 w-5 h-5" />
                                 <div className="flex flex-col">
                                     <span className="font-bold">Pay-as-you-go after 1,000 credits</span>
-                                    <span>36¢ for 10 credits or 1 hour of Standard workspace usage.</span>
+                                    <span>$0.36 for 10 credits or 1 hour of Standard workspace usage.</span>
                                 </div>
                             </div>
                             <div className="mt-5 flex flex-col">
@@ -373,7 +373,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                             <span className="font-bold text-gray-500 dark:text-gray-400">
                                                 Pay-as-you-go after 1,000 credits
                                             </span>
-                                            <span>36¢ for 10 credits or 1 hour of Standard workspace usage.</span>
+                                            <span>$0.36 for 10 credits or 1 hour of Standard workspace usage.</span>
                                         </div>
                                     </div>
                                 </>
@@ -386,7 +386,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                         <Check className="m-0.5 w-5 h-5 text-orange-500" />
                                         <div className="flex flex-col">
                                             <span>
-                                                36¢ for 10 credits or 1 hour of Standard workspace usage.{" "}
+                                                $0.36 for 10 credits or 1 hour of Standard workspace usage.{" "}
                                                 <a
                                                     className="gp-link"
                                                     href="https://www.gitpod.io/docs/configure/billing/usage-based-billing"
