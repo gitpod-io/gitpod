@@ -9,7 +9,6 @@ metadata:
     prometheus: k8s
     role: alert-rules
   name: usage-monitoring-rules
-  namespace: monitoring-satellite
 spec:
   groups:
   - name: usage

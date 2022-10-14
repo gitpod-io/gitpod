@@ -9,7 +9,6 @@ metadata:
     prometheus: k8s
     role: alert-rules
   name: messagebus-monitoring-rules
-  namespace: monitoring-satellite
 spec:
   groups:
   - name: messagebus
