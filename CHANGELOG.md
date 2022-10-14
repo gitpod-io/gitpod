@@ -1,6 +1,14 @@
 # Change Log
 
 ## October 2022
+- Fix an issue with a workspace not starting with a self-signed cluster ([#13821](https://github.com/gitpod-io/gitpod/pull/13821)) - [@utam0k](https://github.com/utam0k)
+- VSCode Browser: Fix portsView address open twice in some browsers ([#13844](https://github.com/gitpod-io/gitpod/pull/13844)) - [@mustard-mh](https://github.com/mustard-mh)
+- Fixed the auto-port-forwarding on JetBrains EAP IDEs ([#13747](https://github.com/gitpod-io/gitpod/pull/13747)) - [@felladrin](https://github.com/felladrin)
+- Support multi-line environment variables in SSH ([#13822](https://github.com/gitpod-io/gitpod/pull/13822)) - [@iQQBot](https://github.com/iQQBot)
+- VSCode Browser/Desktop: Responsive portsView ([#13838](https://github.com/gitpod-io/gitpod/pull/13838)) - [@mustard-mh](https://github.com/mustard-mh)
+- Update GoLand IDE image to version 222.4345.24. ([#13836](https://github.com/gitpod-io/gitpod/pull/13836)) - [@roboquat](https://github.com/roboquat)
+- [terraform/aks] Separate workloads into different pools, expose terraform variables for max node pool counts ([#13143](https://github.com/gitpod-io/gitpod/pull/13143)) - [@adrienthebo](https://github.com/adrienthebo)
+- Update PyCharm IDE image to version 222.4345.23. ([#13797](https://github.com/gitpod-io/gitpod/pull/13797)) - [@roboquat](https://github.com/roboquat)
 - Update PhpStorm IDE image to version 222.4345.15. ([#13759](https://github.com/gitpod-io/gitpod/pull/13759)) - [@roboquat](https://github.com/roboquat)
 - Update WebStorm IDE image to version 222.4345.14. ([#13757](https://github.com/gitpod-io/gitpod/pull/13757)) - [@roboquat](https://github.com/roboquat)
 - Update RubyMine IDE image to version 222.4345.14. ([#13758](https://github.com/gitpod-io/gitpod/pull/13758)) - [@roboquat](https://github.com/roboquat)
