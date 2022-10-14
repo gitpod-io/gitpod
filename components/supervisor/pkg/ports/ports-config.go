@@ -21,6 +21,7 @@ type RangeConfig struct {
 	*gitpod.PortsItems
 	Start uint32
 	End   uint32
+	Sort  uint32
 }
 
 // Configs provides access to port configurations.
@@ -79,6 +80,7 @@ func (configs *Configs) Get(port uint32) (*gitpod.PortConfig, ConfigKind, bool) 
 				Visibility:  rangeConfig.Visibility,
 				Description: rangeConfig.Description,
 				Name:        rangeConfig.Name,
+				Sort:        rangeConfig.Sort,
 			}, RangeConfigKind, true
 		}
 	}
@@ -184,7 +186,7 @@ func parseWorkspaceConfigs(ports []*gitpod.PortConfig) (portConfigs map[uint32]*
 }
 
 func parseInstanceConfigs(ports []*gitpod.PortsItems) (portConfigs map[uint32]*gitpod.PortConfig, rangeConfigs []*RangeConfig) {
-	for _, config := range ports {
+	for index, config := range ports {
 		if config == nil {
 			continue
 		}
@@ -204,6 +206,7 @@ func parseInstanceConfigs(ports []*gitpod.PortsItems) (portConfigs map[uint32]*g
 					Visibility:  config.Visibility,
 					Description: config.Description,
 					Name:        config.Name,
+					Sort:        uint32(index),
 				}
 			}
 			continue
@@ -224,6 +227,7 @@ func parseInstanceConfigs(ports []*gitpod.PortsItems) (portConfigs map[uint32]*g
 			PortsItems: config,
 			Start:      uint32(start),
 			End:        uint32(end),
+			Sort:       uint32(index),
 		})
 	}
 	return portConfigs, rangeConfigs
