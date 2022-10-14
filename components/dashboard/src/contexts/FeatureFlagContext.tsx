@@ -40,12 +40,28 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 usage_view: { defaultValue: false, setter: setShowUsageView },
             };
             for (const [flagName, config] of Object.entries(featureFlags)) {
+                if (teams) {
+                    for (const team of teams) {
+                        const flagValue = await getExperimentsClient().getValueAsync(flagName, config.defaultValue, {
+                            user,
+                            projectId: project?.id,
+                            teamId: team.id,
+                            teamName: team?.name,
+                        });
+
+                        // We got an explicit override value from ConfigCat
+                        if (flagValue !== config.defaultValue) {
+                            config.setter(flagValue);
+                            return;
+                        }
+                    }
+                }
+
                 const flagValue = await getExperimentsClient().getValueAsync(flagName, config.defaultValue, {
                     user,
                     projectId: project?.id,
                     teamId: team?.id,
                     teamName: team?.name,
-                    teams,
                 });
                 config.setter(flagValue);
             }

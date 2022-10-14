@@ -3162,12 +3162,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
      * @returns
      */
     protected async getImageBuilderClient(user: User, workspace: Workspace, instance?: WorkspaceInstance) {
-        const teams = await this.teamDB.findTeamsByUser(user.id);
         const isMovedImageBuilder = await getExperimentsClientForBackend().getValueAsync("movedImageBuilder", false, {
             user,
             projectId: workspace.projectId,
-            teams,
         });
+
         log.info(
             { userId: user.id, workspaceId: workspace.id, instanceId: instance?.id },
             "image-builder in workspace cluster?",

@@ -5,7 +5,6 @@
  */
 
 import { BillingTier, User } from "../protocol";
-import { Team } from "../teams-projects-protocol";
 
 export const Client = Symbol("Client");
 
@@ -25,9 +24,6 @@ export interface Attributes {
     teamId?: string;
     // Currently selected Gitpod Team Name (mapped to "custom.team_name")
     teamName?: string;
-
-    // All the Gitpod Teams that the user is a member (or owner) of (mapped to "custom.team_names" and "custom.team_ids")
-    teams?: Team[];
 }
 
 export interface Client {
