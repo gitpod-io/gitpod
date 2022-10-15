@@ -180,6 +180,7 @@ func Run(options ...RunOption) {
 		log.WithError(err).Fatal("cannot ensure Gitpod user exists")
 	}
 	symlinkBinaries(cfg)
+	installGpCliCompletion()
 	configureGit(cfg, childProcEnvvars)
 
 	tokenService := NewInMemoryTokenService()
@@ -592,6 +593,72 @@ func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTok
 		// TODO(cw): tell the user
 		log.WithError(err).Warn("installing dotfiles failed")
 	}
+}
+
+func installGpCliCompletion() {
+	supervisorPath, err := os.Executable()
+	if err != nil {
+		log.WithError(err).Error("supervisor bin missing")
+		return
+	}
+
+	basedir := filepath.Dir(supervisorPath)
+	gpcli := filepath.Join(basedir, "gitpod-cli")
+	gpcli_name := filepath.Base(gpcli)
+
+	if _, err := os.Stat(gpcli); err != nil {
+		log.WithError(err).Error(gpcli_name, "bin is missing")
+		return
+	}
+
+	write_comp := func(bin string, basedir string, shell string) {
+
+		target := filepath.Join(basedir, "gitpod-cli")
+
+		// No need to write completion if it already exists
+		if _, err := os.Stat(target); err == nil {
+			return
+		}
+
+		if err := os.MkdirAll(basedir, 0644); err == nil {
+			if file, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644); err == nil {
+				defer file.Close()
+
+				cmd := exec.Command(bin, "completion", shell)
+				cmd.Stdout = file
+
+				if err := cmd.Run(); err != nil {
+					log.WithError(err).Error("Failed to write completion for", shell)
+				}
+			}
+		}
+	}
+
+	// bash
+	bash_profile := filepath.FromSlash("/etc/profile")
+	bash_comp_dir := filepath.FromSlash("/usr/share/bash-completion/completions")
+
+	if _, err := os.Stat(bash_comp_dir); err == nil {
+		write_comp(gpcli, bash_comp_dir, "bash")
+		// Unless bash-completion package is installed, do not use it's path and fallback to profile
+	} else if file, err := os.OpenFile(bash_profile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644); err == nil {
+		defer file.Close()
+
+		if _, err := file.WriteString(`
+if [ "${PS1-}" ] && [ "${BASH-}" ] && [ "$BASH" != "/bin/sh" ]; then
+	source <(gp completion bash)
+fi
+		`); err != nil {
+			log.Error(err)
+		}
+	}
+
+	// fish
+	write_comp(gpcli, filepath.FromSlash("/usr/local/share/fish/vendor_completions.d"), "fish")
+
+	// zsh
+	write_comp(gpcli, filepath.FromSlash("/usr/local/share/zsh/site-functions"), "zsh")
+
 }
 
 func createGitpodService(cfg *Config, tknsrv api.TokenServiceServer) *gitpod.APIoverJSONRPC {
