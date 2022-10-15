@@ -1,6 +1,8 @@
 # Change Log
 
 ## October 2022
+- [prebuild] Add support for opening specific prebuilds ([#13768](https://github.com/gitpod-io/gitpod/pull/13768)) - [@csweichel](https://github.com/csweichel)
+- remove `/#additionalContent/...` ContextParser ([#13841](https://github.com/gitpod-io/gitpod/pull/13841)) - [@geropl](https://github.com/geropl)
 - Fix an issue with a workspace not starting with a self-signed cluster ([#13821](https://github.com/gitpod-io/gitpod/pull/13821)) - [@utam0k](https://github.com/utam0k)
 - VSCode Browser: Fix portsView address open twice in some browsers ([#13844](https://github.com/gitpod-io/gitpod/pull/13844)) - [@mustard-mh](https://github.com/mustard-mh)
 - Fixed the auto-port-forwarding on JetBrains EAP IDEs ([#13747](https://github.com/gitpod-io/gitpod/pull/13747)) - [@felladrin](https://github.com/felladrin)
