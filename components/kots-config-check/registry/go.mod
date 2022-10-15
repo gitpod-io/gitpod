@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/kots-config-check/registry
 
-go 1.18
+go 1.19
 
 require (
 	github.com/heroku/docker-registry-client v0.0.0-20211012143308-9463674c8930

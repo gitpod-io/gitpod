@@ -1,6 +1,35 @@
 # Change Log
 
-## September 2022
+## October 2022
+- Fix an issue with a workspace not starting with a self-signed cluster ([#13821](https://github.com/gitpod-io/gitpod/pull/13821)) - [@utam0k](https://github.com/utam0k)
+- VSCode Browser: Fix portsView address open twice in some browsers ([#13844](https://github.com/gitpod-io/gitpod/pull/13844)) - [@mustard-mh](https://github.com/mustard-mh)
+- Fixed the auto-port-forwarding on JetBrains EAP IDEs ([#13747](https://github.com/gitpod-io/gitpod/pull/13747)) - [@felladrin](https://github.com/felladrin)
+- Support multi-line environment variables in SSH ([#13822](https://github.com/gitpod-io/gitpod/pull/13822)) - [@iQQBot](https://github.com/iQQBot)
+- VSCode Browser/Desktop: Responsive portsView ([#13838](https://github.com/gitpod-io/gitpod/pull/13838)) - [@mustard-mh](https://github.com/mustard-mh)
+- Update GoLand IDE image to version 222.4345.24. ([#13836](https://github.com/gitpod-io/gitpod/pull/13836)) - [@roboquat](https://github.com/roboquat)
+- [terraform/aks] Separate workloads into different pools, expose terraform variables for max node pool counts ([#13143](https://github.com/gitpod-io/gitpod/pull/13143)) - [@adrienthebo](https://github.com/adrienthebo)
+- Update PyCharm IDE image to version 222.4345.23. ([#13797](https://github.com/gitpod-io/gitpod/pull/13797)) - [@roboquat](https://github.com/roboquat)
+- Update PhpStorm IDE image to version 222.4345.15. ([#13759](https://github.com/gitpod-io/gitpod/pull/13759)) - [@roboquat](https://github.com/roboquat)
+- Update WebStorm IDE image to version 222.4345.14. ([#13757](https://github.com/gitpod-io/gitpod/pull/13757)) - [@roboquat](https://github.com/roboquat)
+- Update RubyMine IDE image to version 222.4345.14. ([#13758](https://github.com/gitpod-io/gitpod/pull/13758)) - [@roboquat](https://github.com/roboquat)
+- Add option to add authentication to Jaeger and configure default tags with `metadata.shortName` and `metadata.region` ([#13728](https://github.com/gitpod-io/gitpod/pull/13728)) - [@aledbf](https://github.com/aledbf)
+- [teams] Disallow removing all Owners from a team ([#13744](https://github.com/gitpod-io/gitpod/pull/13744)) - [@easyCZ](https://github.com/easyCZ)
+- Fix branch context for BitBucket Server ([#13745](https://github.com/gitpod-io/gitpod/pull/13745)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- Release VS Code Browser `1.72` ([#13617](https://github.com/gitpod-io/gitpod/pull/13617)) - [@filiptronicek](https://github.com/filiptronicek)
+- All running processes receive a SIGTERM when a workspace shuts down. ([#13495](https://github.com/gitpod-io/gitpod/pull/13495)) - [@svenefftinge](https://github.com/svenefftinge)
+- Enable the protected secrets by default ([#13664](https://github.com/gitpod-io/gitpod/pull/13664)) - [@kylos101](https://github.com/kylos101)
+- Update IntelliJ IDEA IDE image to version 222.4345.14. ([#13642](https://github.com/gitpod-io/gitpod/pull/13642)) - [@roboquat](https://github.com/roboquat)
+- Fix rendering Personal/Team billing menu entries ([#13621](https://github.com/gitpod-io/gitpod/pull/13621)) - [@geropl](https://github.com/geropl)
+- Gitpod CLI: `gp top` table output updated to match `gp info` ([#13607](https://github.com/gitpod-io/gitpod/pull/13607)) - [@WVerlaek](https://github.com/WVerlaek)
+- Gitpod CLI: Added new cmd `gp info` to display the workspace info such as IDs, class, etc ([#13537](https://github.com/gitpod-io/gitpod/pull/13537)) - [@WVerlaek](https://github.com/WVerlaek)
+- Deprecation of the ability to create projects under an individual account for new users. ([#13414](https://github.com/gitpod-io/gitpod/pull/13414)) - [@svenefftinge](https://github.com/svenefftinge)
+- Update free plan name ([#13538](https://github.com/gitpod-io/gitpod/pull/13538)) - [@gtsiolis](https://github.com/gtsiolis)
+- [experimental] remove PVC object if the workspace pod fails to up ([#13429](https://github.com/gitpod-io/gitpod/pull/13429)) - [@jenting](https://github.com/jenting)
+- [certificates]: validate that certs are valid for a Gitpod install ([#13471](https://github.com/gitpod-io/gitpod/pull/13471)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+
+##  September 2022
+- Add `RubyMine` and `WebStorm` IDEs ([#13488](https://github.com/gitpod-io/gitpod/pull/13488)) - [@mustard-mh](https://github.com/mustard-mh)
+- Add experimental support for protected secrets ([#13484](https://github.com/gitpod-io/gitpod/pull/13484)) - [@csweichel](https://github.com/csweichel)
 - Update Gitpod workspace image to with awscliv2 ([#12278](https://github.com/gitpod-io/gitpod/pull/12278)) - [@adrienthebo](https://github.com/adrienthebo)
 - [terraform/gcp] Run regular and headless workspaces on separate node pools ([#13140](https://github.com/gitpod-io/gitpod/pull/13140)) - [@adrienthebo](https://github.com/adrienthebo)
 - Gitpod Plugin was updated to work with the JetBrains IDEs v2022.3 (EAP). ([#13400](https://github.com/gitpod-io/gitpod/pull/13400)) - [@felladrin](https://github.com/felladrin)

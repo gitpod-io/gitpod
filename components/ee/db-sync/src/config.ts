@@ -11,9 +11,9 @@ export type NamedConnectionConfig = ConnectionConfig & { name?: string };
 export interface ReplicationConfig {
     syncPeriod: number;
     roundRobin: boolean;
-    source: NamedConnectionConfig,
-    targets: NamedConnectionConfig[],
-    tableSet: "gitpod" | "gitpod-sessions",
-    disableTransactions: boolean,
-    replicationLogDir: string | undefined
+    source?: NamedConnectionConfig;
+    targets: NamedConnectionConfig[];
+    tableSet: "gitpod" | "gitpod-sessions";
+    disableTransactions: boolean;
+    replicationLogDir: string | undefined;
 }

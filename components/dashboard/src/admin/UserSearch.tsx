@@ -5,7 +5,7 @@
  */
 
 import { AdminGetListResult, User } from "@gitpod/gitpod-protocol";
-import moment from "moment";
+import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
@@ -22,9 +22,10 @@ export default function UserSearch() {
     const [currentUser, setCurrentUserState] = useState<User | undefined>(undefined);
     const pageLength = 50;
     const [currentPage, setCurrentPage] = useState(1);
-    useEffect(() => {
+    const updateCurrentPage = (page: number) => {
+        setCurrentPage(page);
         search();
-    }, [currentPage]);
+    };
 
     useEffect(() => {
         const userId = location.pathname.split("/")[3];
@@ -111,7 +112,7 @@ export default function UserSearch() {
             </div>
             <Pagination
                 currentPage={currentPage}
-                setPage={setCurrentPage}
+                setPage={updateCurrentPage}
                 totalNumberOfPages={Math.ceil(searchResult.total / pageLength)}
             />
         </PageWithAdminSubMenu>
@@ -138,7 +139,7 @@ function UserEntry(p: { user: User }) {
                     </div>
                 </div>
                 <div className="flex w-5/12 self-center">
-                    <div className="text-sm w-full text-gray-400 truncate">{moment(p.user.creationDate).fromNow()}</div>
+                    <div className="text-sm w-full text-gray-400 truncate">{dayjs(p.user.creationDate).fromNow()}</div>
                 </div>
             </div>
         </Link>

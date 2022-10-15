@@ -8,8 +8,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"google.golang.org/grpc/codes"
@@ -50,7 +53,21 @@ func ReadConfigFromFile(path string) (ClientConfig, error) {
 
 // New authenticates a Stripe client using the provided config
 func New(config ClientConfig) (*Client, error) {
-	return &Client{sc: client.New(config.SecretKey, nil)}, nil
+	return NewWithHTTPClient(config, &http.Client{
+		Transport: http.DefaultTransport,
+		Timeout:   10 * time.Second,
+	})
+}
+
+func NewWithHTTPClient(config ClientConfig, c *http.Client) (*Client, error) {
+	sc := &client.API{}
+
+	sc.Init(config.SecretKey, stripe.NewBackends(&http.Client{
+		Transport: http.DefaultTransport,
+		Timeout:   10 * time.Second,
+	}))
+
+	return &Client{sc: sc}, nil
 }
 
 type UsageRecord struct {
@@ -76,7 +93,7 @@ func (c *Client) UpdateUsage(ctx context.Context, creditsPerAttributionID map[db
 
 		customers, err := c.findCustomers(ctx, query)
 		if err != nil {
-			return fmt.Errorf("failed to udpate usage: %w", err)
+			return fmt.Errorf("failed to find customers: %w", err)
 		}
 
 		for _, customer := range customers {
@@ -89,25 +106,29 @@ func (c *Client) UpdateUsage(ctx context.Context, creditsPerAttributionID map[db
 				continue
 			}
 
-			_, err = c.updateUsageForCustomer(ctx, customer, creditsPerAttributionID[attributionID])
-			if err != nil {
-				logger.WithField("customer_id", customer.ID).
-					WithField("customer_name", customer.Name).
-					WithField("subscriptions", customer.Subscriptions).
-					WithField("attribution_id", attributionID).
-					WithError(err).
-					Errorf("Failed to update usage.")
+			lgr := logger.
+				WithField("customer_id", customer.ID).
+				WithField("customer_name", customer.Name).
+				WithField("subscriptions", customer.Subscriptions).
+				WithField("attribution_id", attributionID)
 
-				reportStripeUsageUpdate(err)
-				continue
+			err = c.updateUsageForCustomer(ctx, customer, creditsPerAttributionID[attributionID])
+			if err != nil {
+				lgr.WithError(err).Errorf("Failed to update usage.")
 			}
-			reportStripeUsageUpdate(nil)
+			reportStripeUsageUpdate(err)
 		}
 	}
 	return nil
 }
 
-func (c *Client) findCustomers(ctx context.Context, query string) ([]*stripe.Customer, error) {
+func (c *Client) findCustomers(ctx context.Context, query string) (customers []*stripe.Customer, err error) {
+	now := time.Now()
+	reportStripeRequestStarted("customers_search")
+	defer func() {
+		reportStripeRequestCompleted("customers_search", err, time.Since(now))
+	}()
+
 	params := &stripe.CustomerSearchParams{
 		SearchParams: stripe.SearchParams{
 			Query:   query,
@@ -116,43 +137,54 @@ func (c *Client) findCustomers(ctx context.Context, query string) ([]*stripe.Cus
 		},
 	}
 	iter := c.sc.Customers.Search(params)
-	if iter.Err() != nil {
-		return nil, fmt.Errorf("failed to search for customers: %w", iter.Err())
-	}
 
-	var customers []*stripe.Customer
 	for iter.Next() {
 		customers = append(customers, iter.Customer())
+	}
+	if iter.Err() != nil {
+		return nil, fmt.Errorf("failed to search for customers: %w", iter.Err())
 	}
 
 	return customers, nil
 }
 
-func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Customer, credits int64) (*UsageRecord, error) {
+func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Customer, credits int64) (err error) {
+	logger := log.
+		WithField("customer_id", customer.ID).
+		WithField("customer_name", customer.Name).
+		WithField("credits", credits)
 	if credits < 0 {
-		log.WithField("customer_id", customer.ID).
-			WithField("customer_name", customer.Name).
-			WithField("credits", credits).
-			Infof("Received request to update customer %s usage to negative value, updating to 0 instead.", customer.ID)
+		logger.Infof("Received request to update customer %s usage to negative value, updating to 0 instead.", customer.ID)
 
 		// nullify any existing usage, but do not set it to negative value - negative invoice doesn't make sense...
 		credits = 0
 	}
 
 	subscriptions := customer.Subscriptions.Data
-	if len(subscriptions) != 1 {
-		return nil, fmt.Errorf("customer has an unexpected number of subscriptions %v (expected 1, got %d)", subscriptions, len(subscriptions))
+	if len(subscriptions) == 0 {
+		logger.Info("Customer does not have a valid (one) subscription. This happens when a customer has cancelled their subscription but still exist as a Customer in stripe.")
+		return nil
 	}
+	if len(subscriptions) > 1 {
+		return fmt.Errorf("customer has more than 1 subscription (got: %d), this is a consistency error and requires a manual intervention", len(subscriptions))
+	}
+
 	subscription := customer.Subscriptions.Data[0]
 
 	log.Infof("Customer has subscription: %q", subscription.ID)
 	if len(subscription.Items.Data) != 1 {
-		return nil, fmt.Errorf("subscription %s has an unexpected number of subscriptionItems (expected 1, got %d)", subscription.ID, len(subscription.Items.Data))
+		return fmt.Errorf("subscription %s has an unexpected number of subscriptionItems (expected 1, got %d)", subscription.ID, len(subscription.Items.Data))
 	}
 
 	subscriptionItemId := subscription.Items.Data[0].ID
 	log.Infof("Registering usage against subscriptionItem %q", subscriptionItemId)
-	_, err := c.sc.UsageRecords.New(&stripe.UsageRecordParams{
+
+	reportStripeRequestStarted("usage_record_update")
+	now := time.Now()
+	defer func() {
+		reportStripeRequestCompleted("usage_record_update", err, time.Since(now))
+	}()
+	_, err = c.sc.UsageRecords.New(&stripe.UsageRecordParams{
 		Params: stripe.Params{
 			Context: ctx,
 		},
@@ -160,53 +192,66 @@ func (c *Client) updateUsageForCustomer(ctx context.Context, customer *stripe.Cu
 		Quantity:         stripe.Int64(credits),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to register usage for customer %q on subscription item %s", customer.Name, subscriptionItemId)
+		return fmt.Errorf("failed to register usage for customer %q on subscription item %s", customer.Name, subscriptionItemId)
 	}
 
-	return &UsageRecord{
-		SubscriptionItemID: subscriptionItemId,
-		Quantity:           credits,
-	}, nil
+	return nil
 }
 
-func (c *Client) GetCustomerByTeamID(ctx context.Context, teamID string) (*stripe.Customer, error) {
-	customers, err := c.findCustomers(ctx, fmt.Sprintf("metadata['teamId']:'%s'", teamID))
+func (c *Client) GetCustomerByAttributionID(ctx context.Context, attributionID string) (*stripe.Customer, error) {
+	customers, err := c.findCustomers(ctx, fmt.Sprintf("metadata['attributionId']:'%s'", attributionID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to find customers: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to find customers: %v", err)
 	}
 
 	if len(customers) == 0 {
-		return nil, fmt.Errorf("no team customer found for id: %s", teamID)
+		return nil, status.Errorf(codes.NotFound, "no team customer found for attribution_id: %s", attributionID)
 	}
 	if len(customers) > 1 {
-		return nil, fmt.Errorf("found multiple team customers for id: %s", teamID)
+		return nil, status.Errorf(codes.FailedPrecondition, "found multiple customers for attributiuon_id: %s", attributionID)
 	}
 
 	return customers[0], nil
 }
 
-func (c *Client) GetCustomerByUserID(ctx context.Context, userID string) (*stripe.Customer, error) {
-	customers, err := c.findCustomers(ctx, fmt.Sprintf("metadata['userId']:'%s'", userID))
+func (c *Client) GetCustomer(ctx context.Context, customerID string) (customer *stripe.Customer, err error) {
+	now := time.Now()
+	reportStripeRequestStarted("customer_get")
+	defer func() {
+		reportStripeRequestCompleted("customer_get", err, time.Since(now))
+	}()
+
+	customer, err = c.sc.Customers.Get(customerID, &stripe.CustomerParams{
+		Params: stripe.Params{
+			Context: ctx,
+		},
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to find customers: %w", err)
+		if stripeErr, ok := err.(*stripe.Error); ok {
+			switch stripeErr.Code {
+			case stripe.ErrorCodeMissing:
+				return nil, status.Errorf(codes.NotFound, "customer %s does not exist in stripe", customerID)
+			}
+		}
+
+		return nil, fmt.Errorf("failed to get customer by customer ID %s", customerID)
 	}
 
-	if len(customers) == 0 {
-		return nil, fmt.Errorf("no user customer found for id: %s", userID)
-	}
-	if len(customers) > 1 {
-		return nil, fmt.Errorf("found multiple user customers for id: %s", userID)
-	}
-
-	return customers[0], nil
+	return customer, nil
 }
 
-func (c *Client) GetInvoiceWithCustomer(ctx context.Context, invoiceID string) (*stripe.Invoice, error) {
+func (c *Client) GetInvoiceWithCustomer(ctx context.Context, invoiceID string) (invoice *stripe.Invoice, err error) {
 	if invoiceID == "" {
 		return nil, fmt.Errorf("no invoice ID specified")
 	}
 
-	invoice, err := c.sc.Invoices.Get(invoiceID, &stripe.InvoiceParams{
+	now := time.Now()
+	reportStripeRequestStarted("invoice_get")
+	defer func() {
+		reportStripeRequestCompleted("invoice_get", err, time.Since(now))
+	}()
+
+	invoice, err = c.sc.Invoices.Get(invoiceID, &stripe.InvoiceParams{
 		Params: stripe.Params{
 			Context: ctx,
 			Expand:  []*string{stripe.String("customer")},
@@ -218,12 +263,18 @@ func (c *Client) GetInvoiceWithCustomer(ctx context.Context, invoiceID string) (
 	return invoice, nil
 }
 
-func (c *Client) GetSubscriptionWithCustomer(ctx context.Context, subscriptionID string) (*stripe.Subscription, error) {
+func (c *Client) GetSubscriptionWithCustomer(ctx context.Context, subscriptionID string) (subscription *stripe.Subscription, err error) {
 	if subscriptionID == "" {
 		return nil, fmt.Errorf("no subscriptionID specified")
 	}
 
-	subscription, err := c.sc.Subscriptions.Get(subscriptionID, &stripe.SubscriptionParams{
+	now := time.Now()
+	reportStripeRequestStarted("subscription_get")
+	defer func() {
+		reportStripeRequestCompleted("subscription_get", err, time.Since(now))
+	}()
+
+	subscription, err = c.sc.Subscriptions.Get(subscriptionID, &stripe.SubscriptionParams{
 		Params: stripe.Params{
 			Expand: []*string{stripe.String("customer")},
 		},
@@ -246,10 +297,11 @@ func GetAttributionID(ctx context.Context, customer *stripe.Customer) (db.Attrib
 // It returns multiple queries, each being a big disjunction of subclauses so that we can process multiple teamIds in one query.
 // `clausesPerQuery` is a limit enforced by the Stripe API.
 func queriesForCustomersWithAttributionIDs(creditsByAttributionID map[db.AttributionID]int64) []string {
-	attributionIDs := make([]db.AttributionID, 0, len(creditsByAttributionID))
+	attributionIDs := make([]string, 0, len(creditsByAttributionID))
 	for k := range creditsByAttributionID {
-		attributionIDs = append(attributionIDs, k)
+		attributionIDs = append(attributionIDs, string(k))
 	}
+	sort.Strings(attributionIDs)
 
 	const clausesPerQuery = 10
 	var queries []string

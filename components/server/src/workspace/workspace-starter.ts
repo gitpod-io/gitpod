@@ -829,7 +829,6 @@ export class WorkspaceStarter {
             //#endregion
 
             const billingTier = await this.entitlementService.getBillingTier(user);
-            const userTeams = await this.teamDB.findTeamsByUser(user.id);
 
             let featureFlags: NamedWorkspaceFeatureFlag[] = workspace.config._featureFlags || [];
             featureFlags = featureFlags.concat(this.config.workspaceDefaults.defaultFeatureFlags);
@@ -853,7 +852,6 @@ export class WorkspaceStarter {
             if (
                 await getExperimentsClientForBackend().getValueAsync("protected_secrets", false, {
                     user,
-                    teams: userTeams,
                     billingTier,
                 })
             ) {
@@ -867,8 +865,12 @@ export class WorkspaceStarter {
             const wsConnectionLimitingEnabled = await getExperimentsClientForBackend().getValueAsync(
                 "workspace_connection_limiting",
                 false,
-                { user, teams: userTeams, billingTier },
+                {
+                    user,
+                    billingTier,
+                },
             );
+
             if (wsConnectionLimitingEnabled) {
                 const shouldLimitNetworkConnections = await this.entitlementService.limitNetworkConnections(
                     user,
@@ -879,16 +881,11 @@ export class WorkspaceStarter {
                 }
             }
 
-            let workspaceClass = "";
-            let classesEnabled = await getExperimentsClientForBackend().getValueAsync("workspace_classes", false, {
-                user,
-                teams: userTeams,
-                billingTier,
-            });
             const usageAttributionId = await this.userService.getWorkspaceUsageAttributionId(user, workspace.projectId);
             const billingMode = await this.billingModes.getBillingMode(usageAttributionId, new Date());
 
-            if (classesEnabled || BillingMode.canSetWorkspaceClass(billingMode)) {
+            let workspaceClass = "";
+            if (BillingMode.canSetWorkspaceClass(billingMode)) {
                 // this is either the first time we start the workspace or the workspace was started
                 // before workspace classes and does not have a class yet
                 workspaceClass = await getWorkspaceClassForInstance(
@@ -1609,11 +1606,9 @@ export class WorkspaceStarter {
             "function:getOpenPorts",
             "function:openPort",
             "function:closePort",
-            "function:getLayout",
             "function:generateNewGitpodToken",
             "function:takeSnapshot",
             "function:waitForSnapshot",
-            "function:storeLayout",
             "function:stopWorkspace",
             "function:getToken",
             "function:getGitpodTokenScopes",
@@ -1935,12 +1930,11 @@ export class WorkspaceStarter {
      * @returns
      */
     protected async getImageBuilderClient(user: User, workspace: Workspace, instance?: WorkspaceInstance) {
-        const teams = await this.teamDB.findTeamsByUser(user.id);
         const isMovedImageBuilder = await getExperimentsClientForBackend().getValueAsync("movedImageBuilder", false, {
             user,
             projectId: workspace.projectId,
-            teams,
         });
+
         log.info(
             { userId: user.id, workspaceId: workspace.id, instanceId: instance?.id },
             "image-builder in workspace cluster?",

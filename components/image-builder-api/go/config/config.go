@@ -5,60 +5,19 @@
 package config
 
 import (
-	"crypto/tls"
-
-	"golang.org/x/xerrors"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-
-	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 )
-
-type PProf struct {
-	Addr string `json:"address"`
-}
-
-type Service struct {
-	Addr string    `json:"address"`
-	TLS  TLSConfig `json:"tls"`
-}
 
 type ServiceConfig struct {
 	Orchestrator Configuration  `json:"orchestrator"`
 	RefCache     RefCacheConfig `json:"refCache,omitempty"`
-	Service      Service        `json:"service"`
-	Prometheus   Service        `json:"prometheus"`
-	PProf        PProf          `json:"pprof"`
+
+	Server *baseserver.Configuration `json:"server"`
 }
 
 type RefCacheConfig struct {
 	Interval string   `json:"interval"`
 	Refs     []string `json:"refs"`
-}
-
-type TLSConfig struct {
-	Authority   string `json:"ca"`
-	Certificate string `json:"crt"`
-	PrivateKey  string `json:"key"`
-}
-
-// ServerOption produces the GRPC option that configures a server to use this TLS configuration
-func (c *TLSConfig) ServerOption() (grpc.ServerOption, error) {
-	if c.Authority == "" || c.Certificate == "" || c.PrivateKey == "" {
-		return nil, nil
-	}
-
-	tlsConfig, err := common_grpc.ClientAuthTLSConfig(
-		c.Authority, c.Certificate, c.PrivateKey,
-		common_grpc.WithSetClientCAs(true),
-		common_grpc.WithClientAuth(tls.RequireAndVerifyClientCert),
-		common_grpc.WithServerName("ws-manager"),
-	)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot load certs: %w", err)
-	}
-
-	return grpc.Creds(credentials.NewTLS(tlsConfig)), nil
 }
 
 // Configuration configures the orchestrator

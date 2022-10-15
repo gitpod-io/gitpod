@@ -41,15 +41,16 @@ args:
   required: false
 pod:
   serviceAccount: werft
+  restartPolicy: Never
   affinity:
-  nodeAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-        - matchExpressions:
-            - key: dev/workload
-              operator: In
-              values:
-                - "builds"
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: dev/workload
+                operator: In
+                values:
+                  - "builds"
   securityContext:
     runAsUser: 0
   volumes:
@@ -64,7 +65,7 @@ pod:
       secretName: self-hosted-github-oauth
   containers:
   - name: nightly-test
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:alt-aws-update-awscliv2.3
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aa-update-img-tf-version.0
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
@@ -169,6 +170,7 @@ pod:
           (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
           printf '{{ toJson . }}' > context.json
 
+          npm config set update-notifier false
           npx ts-node .werft/installer-tests.ts "STANDARD_AKS_TEST"
 
 # The bit below makes this a cron job

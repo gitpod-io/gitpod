@@ -3,7 +3,7 @@
 set -euo pipefail
 
 KUBE_CONTEXT="dev"
-KUBECONFIG_PATH="/home/gitpod/.kube/config"
+KUBECONFIG_PATH=${KUBECONFIG_PATH:-"/home/gitpod/.kube/config"}
 HARVESTER_KUBECONFIG_PATH="$(mktemp)"
 MERGED_KUBECONFIG_PATH="$(mktemp)"
 
@@ -12,7 +12,8 @@ function log {
 }
 
 function has-dev-access {
-    kubectl --context=$KUBE_CONTEXT auth can-i get secrets > /dev/null 2>&1 || false
+    # shellcheck disable=SC2069
+    kubectl --context=$KUBE_CONTEXT auth can-i get secrets 2>&1 1> /dev/null  || false
 }
 
 if ! has-dev-access; then

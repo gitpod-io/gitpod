@@ -14,7 +14,6 @@ import {
     ContextURL,
 } from "@gitpod/gitpod-protocol";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
-import moment from "moment";
 import { useRef, useState } from "react";
 import ConfirmationModal from "../components/ConfirmationModal";
 import Modal from "../components/Modal";
@@ -25,6 +24,7 @@ import Tooltip from "../components/Tooltip";
 import { WorkspaceModel } from "./workspace-model";
 import { getGitpodService } from "../service/service";
 import ConnectToSSHModal from "./ConnectToSSHModal";
+import dayjs from "dayjs";
 
 function getLabel(state: WorkspaceInstancePhase, conditions?: WorkspaceInstanceConditions) {
     if (conditions?.failed) {
@@ -187,9 +187,9 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
                 </div>
             </ItemField>
             <ItemField className="w-2/12 flex my-auto">
-                <Tooltip content={`Created ${moment(desc.workspace.creationTime).fromNow()}`}>
+                <Tooltip content={`Created ${dayjs(desc.workspace.creationTime).fromNow()}`}>
                     <div className="text-sm w-full text-gray-400 overflow-ellipsis truncate">
-                        {moment(WorkspaceInfo.lastActiveISODate(desc)).fromNow()}
+                        {dayjs(WorkspaceInfo.lastActiveISODate(desc)).fromNow()}
                     </div>
                 </Tooltip>
             </ItemField>

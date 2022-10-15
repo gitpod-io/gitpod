@@ -227,16 +227,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
      */
     getSnapshots(workspaceID: string): Promise<string[]>;
 
-    /**
-     * stores/updates layout information for the given workspace
-     */
-    storeLayout(workspaceId: string, layoutData: string): Promise<void>;
-
-    /**
-     * retrieves layout information for the given workspace
-     */
-    getLayout(workspaceId: string): Promise<string | undefined>;
-
     guessGitTokenScopes(params: GuessGitTokenScopesParams): Promise<GuessedGitTokenScopes>;
 
     /**
@@ -288,7 +278,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getStripeSetupIntentClientSecret(): Promise<string>;
     findStripeSubscriptionId(attributionId: string): Promise<string | undefined>;
     createStripeCustomerIfNeeded(attributionId: string, currency: string): Promise<void>;
-    subscribeToStripe(attributionId: string, setupIntentId: string): Promise<void>;
+    subscribeToStripe(attributionId: string, setupIntentId: string, usageLimit: number): Promise<number | undefined>;
     getStripePortalUrl(attributionId: string): Promise<string>;
     getUsageLimit(attributionId: string): Promise<number | undefined>;
     setUsageLimit(attributionId: string, usageLimit: number): Promise<void>;
@@ -438,7 +428,6 @@ export namespace GitpodServer {
     }
     export interface TakeSnapshotOptions {
         workspaceId: string;
-        layoutData?: string;
         /* this is here to enable backwards-compatibility and untangling rollout between workspace, IDE and meta */
         dontWait?: boolean;
     }

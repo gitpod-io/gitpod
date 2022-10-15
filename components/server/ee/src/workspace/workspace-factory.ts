@@ -21,6 +21,7 @@ import {
     PrebuiltWorkspace,
     WorkspaceConfig,
     WorkspaceImageSource,
+    OpenPrebuildContext,
 } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
@@ -32,12 +33,15 @@ import { UserDB } from "@gitpod/gitpod-db/lib";
 import { UserCounter } from "../user/user-counter";
 import { increasePrebuildsStartedCounter } from "../../../src/prometheus-metrics";
 import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
+import { EntitlementService } from "../../../src/billing/entitlement-service";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 @injectable()
 export class WorkspaceFactoryEE extends WorkspaceFactory {
     @inject(LicenseEvaluator) protected readonly licenseEvaluator: LicenseEvaluator;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(UserCounter) protected readonly userCounter: UserCounter;
+    @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
 
     @inject(UserDB) protected readonly userDB: UserDB;
 
@@ -356,6 +360,28 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
             // Special case for PVC: While it's a workspace-persisted feature flag, we support the upgrade path (non-pvc -> pvc), so we apply it here
             if (user.featureFlags?.permanentWSFeatureFlags?.includes("persistent_volume_claim")) {
                 config._featureFlags = (config._featureFlags || []).concat(["persistent_volume_claim"]);
+            }
+            const billingTier = await this.entitlementService.getBillingTier(user);
+            // this allows to control user`s PVC feature flag via ConfigCat
+            if (
+                await getExperimentsClientForBackend().getValueAsync("user_pvc", false, {
+                    user,
+                    billingTier,
+                })
+            ) {
+                config._featureFlags = (config._featureFlags || []).concat(["persistent_volume_claim"]);
+            }
+
+            if (OpenPrebuildContext.is(context.originalContext)) {
+                // Because of incremental prebuilds, createForContext will take over the original context.
+                // To ensure we get the right commit when forcing a prebuild, we force the context here.
+                context.originalContext = buildWorkspace.context;
+
+                if (CommitContext.is(context.originalContext)) {
+                    // We force the checkout of the revision rather than the ref/branch.
+                    // Otherwise we'd the correct prebuild with the "wrong" Git status.
+                    delete context.originalContext.ref;
+                }
             }
 
             const id = await this.generateWorkspaceID(context);

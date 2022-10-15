@@ -179,6 +179,9 @@ import { EntitlementService } from "../billing/entitlement-service";
 import { WorkspaceClasses } from "./workspace-classes";
 import { formatPhoneNumber } from "../user/phone-numbers";
 import { IDEService } from "../ide-service";
+import { MessageBusIntegration } from "./messagebus-integration";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import * as grpc from "@grpc/grpc-js";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -249,6 +252,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     @inject(VerificationService) protected readonly verificationService: VerificationService;
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
+    @inject(MessageBusIntegration) protected readonly messageBus: MessageBusIntegration;
 
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
@@ -676,12 +680,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = this.checkAndBlockUser("startWorkspace", undefined, { workspaceId });
         await this.checkTermsAcceptance();
 
+        const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace(ctx));
         const mayStartPromise = this.mayStartWorkspace(
             ctx,
             user,
+            workspace,
             this.workspaceDb.trace(ctx).findRegularRunningInstances(user.id),
         );
-        const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace(ctx));
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
 
         const runningInstance = await this.workspaceDb.trace(ctx).findRunningInstance(workspace.id);
@@ -1077,7 +1082,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             // make sure we've checked that the user has enough credit before consuming any resources.
             // Be sure to check this before prebuilds and create workspace, too!
             let context = await contextPromise;
-            await this.mayStartWorkspace(ctx, user, runningInstancesPromise);
 
             if (SnapshotContext.is(context)) {
                 // TODO(janx): Remove snapshot access tracking once we're certain that enforcing repository read access doesn't disrupt the snapshot UX.
@@ -1167,6 +1171,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             }
 
             const workspace = await this.workspaceFactory.createForContext(ctx, user, context, normalizedContextUrl);
+            await this.mayStartWorkspace(ctx, user, workspace, runningInstancesPromise);
             try {
                 await this.guardAccess({ kind: "workspace", subject: workspace }, "create");
             } catch (err) {
@@ -1277,6 +1282,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     protected async mayStartWorkspace(
         ctx: TraceContext,
         user: User,
+        workspace: Workspace,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<void> {}
 
@@ -1519,8 +1525,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         req.setSpec(spec);
         req.setExpose(true);
 
-        const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
-        await client.controlPort(ctx, req);
+        try {
+            const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
+            await client.controlPort(ctx, req);
+        } catch (e) {
+            throw this.mapGrpcError(e);
+        }
     }
 
     protected portVisibilityFromProto(visibility: ProtoPortVisibility): PortVisibility {
@@ -1803,50 +1813,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getSnapshots(ctx: TraceContext, workspaceId: string): Promise<string[]> {
         // this is an EE feature. Throwing an exception here would break the dashboard though.
         return [];
-    }
-
-    /**
-     * stores/updates layout information for the given workspace
-     */
-    async storeLayout(ctx: TraceContext, workspaceId: string, layoutData: string): Promise<void> {
-        traceAPIParams(ctx, { workspaceId }); // leave out layoutData because of size (> 64KiB in some cases)
-        traceWI(ctx, { workspaceId });
-
-        const user = this.checkAndBlockUser("storeLayout");
-        const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
-        if (!workspace || workspace.ownerId !== user.id) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} does not exist.`);
-        }
-
-        await this.guardAccess({ kind: "workspace", subject: workspace }, "update");
-
-        await this.workspaceDb.trace(ctx).storeLayoutData({
-            workspaceId,
-            lastUpdatedTime: new Date().toISOString(),
-            layoutData,
-        });
-    }
-
-    /**
-     * retrieves layout information for the given workspace
-     */
-    async getLayout(ctx: TraceContext, workspaceId: string): Promise<string | undefined> {
-        traceAPIParams(ctx, { workspaceId });
-        traceWI(ctx, { workspaceId });
-
-        this.checkUser("getLayout");
-
-        const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
-        if (!workspace) {
-            return;
-        }
-        await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
-
-        const layoutData = await this.workspaceDb.trace(ctx).findLayoutDataByWorkspaceId(workspaceId);
-        if (!layoutData) {
-            return;
-        }
-        return layoutData.layoutData;
     }
 
     // Get environment variables (filter by repository pattern precedence)
@@ -3135,7 +3101,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async createStripeCustomerIfNeeded(ctx: TraceContext, attributionId: string, currency: string): Promise<void> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async subscribeToStripe(ctx: TraceContext, attributionId: string, setupIntentId: string): Promise<void> {
+    async subscribeToStripe(
+        ctx: TraceContext,
+        attributionId: string,
+        setupIntentId: string,
+        usageLimit: number,
+    ): Promise<number | undefined> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
     async getStripePortalUrl(ctx: TraceContext, attributionId: string): Promise<string> {
@@ -3157,7 +3128,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async setUsageAttribution(ctx: TraceContext, usageAttributionId: string): Promise<void> {
         const user = this.checkAndBlockUser("setUsageAttribution");
         try {
-            await this.userService.setUsageAttribution(user, usageAttributionId);
+            const attrId = AttributionId.parse(usageAttributionId);
+            if (attrId) {
+                await this.userService.setUsageAttribution(user, usageAttributionId);
+                this.messageBus.notifyOnSubscriptionUpdate(ctx, attrId).catch();
+            }
         } catch (error) {
             log.error("cannot set usage attribution", error, { userId: user.id, usageAttributionId });
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `cannot set usage attribution`);
@@ -3187,12 +3162,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
      * @returns
      */
     protected async getImageBuilderClient(user: User, workspace: Workspace, instance?: WorkspaceInstance) {
-        const teams = await this.teamDB.findTeamsByUser(user.id);
         const isMovedImageBuilder = await getExperimentsClientForBackend().getValueAsync("movedImageBuilder", false, {
             user,
             projectId: workspace.projectId,
-            teams,
         });
+
         log.info(
             { userId: user.id, workspaceId: workspace.id, instanceId: instance?.id },
             "image-builder in workspace cluster?",
@@ -3212,5 +3186,22 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getNotifications(ctx: TraceContext): Promise<string[]> {
         this.checkAndBlockUser("getNotifications");
         return [];
+    }
+
+    protected mapGrpcError(err: Error): Error {
+        function isGrpcError(err: any): err is grpc.StatusObject {
+            return err.code && err.details;
+        }
+
+        if (!isGrpcError(err)) {
+            return err;
+        }
+
+        switch (err.code) {
+            case grpc.status.RESOURCE_EXHAUSTED:
+                return new ResponseError(ErrorCodes.TOO_MANY_REQUESTS, err.details);
+            default:
+                return new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, err.details);
+        }
     }
 }

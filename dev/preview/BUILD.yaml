@@ -1,0 +1,8 @@
+scripts:
+  - name: build
+    description: Build all packages needed to deploy Gitpod to preview environments
+    script: ./workflow/preview/build.sh
+
+  - name: deploy-gitpod
+    description: Deploys Gitpod to an existing preview environment
+    script: ./workflow/preview/deploy-gitpod.sh

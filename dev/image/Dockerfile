@@ -189,7 +189,7 @@ RUN curl -L "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.7.25.zip" -o
     && rm -f awscliv2.zip
 
 # Install Terraform
-ARG RELEASE_URL="https://releases.hashicorp.com/terraform/1.1.7/terraform_1.1.7_linux_amd64.zip"
+ARG RELEASE_URL="https://releases.hashicorp.com/terraform/1.3.1/terraform_1.3.1_linux_amd64.zip"
 RUN mkdir -p ~/.terraform \
     && cd ~/.terraform \
     && curl -fsSL -o terraform_linux_amd64.zip ${RELEASE_URL} \

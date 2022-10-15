@@ -13,7 +13,7 @@ function ErrorMessage(props: { imgSrc: string; imgAlt?: string; message: string 
         <>
             <div className="mt-16 w-96">
                 <Alert closable={false} showIcon={true} type="error">
-                    <span>{props.message}</span>
+                    {props.message}
                 </Alert>
             </div>
             {isGitpodIo() && (

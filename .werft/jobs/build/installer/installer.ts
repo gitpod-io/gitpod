@@ -35,7 +35,6 @@ export type InstallerOptions = {
     workspaceFeatureFlags: string[];
     gitpodDaemonsetPorts: GitpodDaemonsetPorts;
     smithToken: string;
-    withPayment: boolean;
 };
 
 export class Installer {
@@ -82,23 +81,21 @@ export class Installer {
                 this.dontIncludeAnalytics(slice);
             }
 
-            if (this.options.withPayment) {
-                // let installer know that there is a chargbee config
-                exec(
-                    `yq w -i ${this.options.installerConfigPath} experimental.webapp.server.chargebeeSecret chargebee-config`,
-                    { slice: slice },
-                );
+            // let installer know that there is a chargbee config
+            exec(
+                `yq w -i ${this.options.installerConfigPath} experimental.webapp.server.chargebeeSecret chargebee-config`,
+                { slice: slice },
+            );
 
-                // let installer know that there is a stripe config
-                exec(
-                    `yq w -i ${this.options.installerConfigPath} experimental.webapp.server.stripeSecret stripe-api-keys`,
-                    { slice: slice },
-                );
-                exec(
-                    `yq w -i ${this.options.installerConfigPath} experimental.webapp.server.stripeConfig stripe-config`,
-                    { slice: slice },
-                );
-            }
+            // let installer know that there is a stripe config
+            exec(
+                `yq w -i ${this.options.installerConfigPath} experimental.webapp.server.stripeSecret stripe-api-keys`,
+                { slice: slice },
+            );
+            exec(
+                `yq w -i ${this.options.installerConfigPath} experimental.webapp.server.stripeConfig stripe-config`,
+                { slice: slice },
+            );
         } catch (err) {
             throw new Error(err);
         }
@@ -277,6 +274,7 @@ EOF`);
         exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.billInstancesAfter "2022-08-11T08:05:32.499Z"`, { slice: slice })
         exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.defaultSpendingLimit.forUsers 500`, { slice: slice })
         exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.defaultSpendingLimit.forTeams 0`, { slice: slice })
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.defaultSpendingLimit.minForUsersOnStripe 1000`, { slice: slice })
         exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.creditsPerMinuteByWorkspaceClass['default'] 0.1666666667`, { slice: slice })
         exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.creditsPerMinuteByWorkspaceClass['gitpodio-internal-xl'] 0.3333333333`, { slice: slice })
     }

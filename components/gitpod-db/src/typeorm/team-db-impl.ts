@@ -15,6 +15,8 @@ import { DBTeam } from "./entity/db-team";
 import { DBTeamMembership } from "./entity/db-team-membership";
 import { DBUser } from "./entity/db-user";
 import { DBTeamMembershipInvite } from "./entity/db-team-membership-invite";
+import { ResponseError } from "vscode-jsonrpc";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 @injectable()
 export class TeamDBImpl implements TeamDB {
@@ -122,14 +124,17 @@ export class TeamDBImpl implements TeamDB {
 
     public async createTeam(userId: string, name: string): Promise<Team> {
         if (!name) {
-            throw new Error("Team name cannot be empty");
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Team name cannot be empty");
         }
         if (!/^[A-Za-z0-9 '_-]+$/.test(name)) {
-            throw new Error("Please choose a team name containing only letters, numbers, -, _, ', or spaces.");
+            throw new ResponseError(
+                ErrorCodes.BAD_REQUEST,
+                "Please choose a team name containing only letters, numbers, -, _, ', or spaces.",
+            );
         }
         const slug = name.toLocaleLowerCase().replace(/[ ']/g, "-");
         if (blocklist.indexOf(slug) !== -1) {
-            throw new Error("Creating a team with this name is not allowed");
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Creating a team with this name is not allowed");
         }
         const userRepo = await this.getUserRepo();
         const existingUsers = await userRepo.query(
@@ -137,12 +142,12 @@ export class TeamDBImpl implements TeamDB {
             [name, slug],
         );
         if (Number.parseInt(existingUsers[0].count) > 0) {
-            throw new Error("A team cannot have the same name as an existing user");
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "A team cannot have the same name as an existing user");
         }
         const teamRepo = await this.getTeamRepo();
         const existingTeam = await teamRepo.findOne({ slug, deleted: false, markedDeleted: false });
         if (!!existingTeam) {
-            throw new Error("A team with this name already exists");
+            throw new ResponseError(ErrorCodes.CONFLICT, "A team with this name already exists");
         }
         const team: Team = {
             id: uuidv4(),
@@ -175,12 +180,12 @@ export class TeamDBImpl implements TeamDB {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOne(teamId);
         if (!team || !!team.deleted) {
-            throw new Error("A team with this ID could not be found");
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "A team with this ID could not be found");
         }
         const membershipRepo = await this.getMembershipRepo();
         const membership = await membershipRepo.findOne({ teamId, userId, deleted: false });
         if (!!membership) {
-            throw new Error(`You are already a member of this team. (${team.slug})`);
+            throw new ResponseError(ErrorCodes.CONFLICT, `You are already a member of this team. (${team.slug})`);
         }
         await membershipRepo.save({
             id: uuidv4(),
@@ -195,12 +200,24 @@ export class TeamDBImpl implements TeamDB {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOne(teamId);
         if (!team || !!team.deleted) {
-            throw new Error("A team with this ID could not be found");
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "A team with this ID could not be found");
         }
         const membershipRepo = await this.getMembershipRepo();
+
+        if (role != "owner") {
+            const ownerCount = await membershipRepo.count({
+                teamId,
+                role: "owner",
+                deleted: false,
+            });
+            if (ownerCount <= 1) {
+                throw new ResponseError(ErrorCodes.CONFLICT, "Team must retain at least one owner");
+            }
+        }
+
         const membership = await membershipRepo.findOne({ teamId, userId, deleted: false });
         if (!membership) {
-            throw new Error("The user is not currently a member of this team");
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "The user is not currently a member of this team");
         }
         membership.role = role;
         await membershipRepo.save(membership);
@@ -210,12 +227,12 @@ export class TeamDBImpl implements TeamDB {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOne(teamId);
         if (!team || !!team.deleted) {
-            throw new Error("A team with this ID could not be found");
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "A team with this ID could not be found");
         }
         const membershipRepo = await this.getMembershipRepo();
         const membership = await membershipRepo.findOne({ teamId, userId, deleted: false });
         if (!membership) {
-            throw new Error("The user is not currently a member of this team");
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "The user is not currently a member of this team");
         }
         membership.subscriptionId = subscriptionId;
         await membershipRepo.save(membership);
@@ -225,12 +242,12 @@ export class TeamDBImpl implements TeamDB {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOne(teamId);
         if (!team || !!team.deleted) {
-            throw new Error("A team with this ID could not be found");
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "A team with this ID could not be found");
         }
         const membershipRepo = await this.getMembershipRepo();
         const membership = await membershipRepo.findOne({ teamId, userId, deleted: false });
         if (!membership) {
-            throw new Error("You are not currently a member of this team");
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "You are not currently a member of this team");
         }
         membership.deleted = true;
         await membershipRepo.save(membership);
@@ -240,7 +257,7 @@ export class TeamDBImpl implements TeamDB {
         const inviteRepo = await this.getMembershipInviteRepo();
         const invite = await inviteRepo.findOne(inviteId);
         if (!invite) {
-            throw new Error("No invite found for the given ID.");
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "No invite found for the given ID.");
         }
         return invite;
     }

@@ -16,6 +16,10 @@ service BillingService {
   // CancelSubscription cancels a stripe subscription in our system
   // Called by a stripe webhook
   rpc CancelSubscription(CancelSubscriptionRequest) returns (CancelSubscriptionResponse) {};
+
+  // GetStripeCustomer retrieves a Stripe Customer
+  rpc GetStripeCustomer(GetStripeCustomerRequest) returns (GetStripeCustomerResponse) {};
+
 }
 
 message ReconcileInvoicesRequest {}
@@ -34,4 +38,20 @@ message CancelSubscriptionRequest {
 }
 
 message CancelSubscriptionResponse {
+}
+
+message GetStripeCustomerRequest {
+  oneof identifier {
+    string attribution_id = 1;
+    string stripe_customer_id = 2;
+  }
+}
+
+message GetStripeCustomerResponse {
+  StripeCustomer customer = 1;
+  string attribution_id = 2;
+}
+
+message StripeCustomer {
+  string id = 1;
 }

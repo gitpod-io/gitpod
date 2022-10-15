@@ -6,6 +6,7 @@ package image_builder_mk3
 
 import (
 	"fmt"
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"strings"
 	"time"
 
@@ -66,14 +67,12 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				workspaceImage,
 			},
 		},
-		Service: config.Service{
-			Addr: fmt.Sprintf("0.0.0.0:%d", RPCPort),
-		},
-		Prometheus: config.Service{
-			Addr: common.LocalhostPrometheusAddr(),
-		},
-		PProf: config.PProf{
-			Addr: common.LocalhostPprofAddr(),
+		Server: &baseserver.Configuration{
+			Services: baseserver.ServicesConfiguration{
+				GRPC: &baseserver.ServerConfiguration{
+					Address: fmt.Sprintf("0.0.0.0:%d", RPCPort),
+				},
+			},
 		},
 	}
 

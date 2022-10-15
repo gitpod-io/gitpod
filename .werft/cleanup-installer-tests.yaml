@@ -1,15 +1,16 @@
 # debug using `werft run github -f -s .werft/installer-tests.ts -j .werft/self-hosted-installer-tests.yaml -a debug=true`
 pod:
   serviceAccount: werft
+  restartPolicy: Never
   affinity:
-  nodeAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-      - matchExpressions:
-        - key: dev/workload
-          operator: In
-          values:
-          - "builds"
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: dev/workload
+            operator: In
+            values:
+            - "builds"
   securityContext:
     runAsUser: 0
   volumes:
@@ -24,7 +25,7 @@ pod:
       secretName: aks-credentials
   containers:
   - name: nightly-test
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:alt-aws-update-awscliv2.3
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aa-update-img-tf-version.0
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
@@ -122,12 +123,16 @@ pod:
 
         curl -sLS https://get.k3sup.dev | sh
         curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-        unzip awscliv2.zip
-        sudo ./aws/install
 
         (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
         printf '{{ toJson . }}' > context.json
+
+        export domain="{{ .Annotations.subdomain }}"
+        if [[ "$domain" == "<no value>" ]]; then
+          echo "Cleanup all old workspaces"
+        else
+          export TF_VAR_TEST_ID="$domain"
+        fi
 
         TESTCONFIG="CLEANUP_OLD_TESTS"
 

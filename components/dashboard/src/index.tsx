@@ -17,8 +17,12 @@ import { ThemeContextProvider } from "./theme-context";
 import { FeatureFlagContextProvider } from "./contexts/FeatureFlagContext";
 import { StartWorkspaceModalContextProvider } from "./workspaces/start-workspace-modal-context";
 import { BrowserRouter } from "react-router-dom";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 
 import "./index.css";
+
+dayjs.extend(relativeTime);
 
 ReactDOM.render(
     <React.StrictMode>

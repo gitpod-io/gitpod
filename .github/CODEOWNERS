@@ -27,9 +27,10 @@
 /components/image-builder-api @csweichel @geropl
 /components/image-builder-bob @gitpod-io/engineering-workspace
 /components/image-builder-mk3 @gitpod-io/engineering-workspace
-/components/installation-telemetry @gitpod-io/engineering-self-hosted
-/install @gitpod-io/engineering-self-hosted
-/install/installer @gitpod-io/engineering-self-hosted
+/components/installation-telemetry @gitpod-io/engineering-delivery-operations-experience
+/components/kots-config-check @gitpod-io/engineering-delivery-operations-experience
+/install @gitpod-io/engineering-delivery-operations-experience
+/install/installer @gitpod-io/engineering-delivery-operations-experience
 # For testdata a single review from anyone who is allowed to review PRs is sufficent.
 /install/installer/cmd/testdata
 /install/installer/pkg/components/agent-smith @gitpod-io/engineering-workspace
@@ -76,7 +77,7 @@
 /components/ws-daemon-api @aledbf @Furisto
 /components/ws-daemon @gitpod-io/engineering-workspace
 /components/ws-manager-api @aledbf @sagor999
-/components/ws-manager-bridge-api @csweichel @geropl
+/components/ws-manager-bridge-api @gitpod-io/engineering-webapp
 /components/ws-manager-bridge @gitpod-io/engineering-webapp
 /components/ws-manager @gitpod-io/engineering-workspace
 /components/ws-proxy @gitpod-io/engineering-workspace
@@ -84,21 +85,21 @@
 /dev/gpctl/api/ @gitpod-io/engineering-webapp
 /dev/loadgen @gitpod-io/engineering-workspace
 /dev/preview @gitpod-io/platform
-/operations/observability/mixins @gitpod-io/platform
+/operations/observability/mixins @gitpod-io/engineering-delivery-operations-experience
 /operations/observability/mixins/IDE @gitpod-io/engineering-ide
 /operations/observability/mixins/meta @gitpod-io/engineering-webapp
 /operations/observability/mixins/workspace @gitpod-io/engineering-workspace
-/operations/observability/mixins/cross-teams @gitpod-io/engineering-workspace @gitpod-io/engineering-webapp @gitpod-io/engineering-ide @gitpod-io/platform
+/operations/observability/mixins/cross-teams @gitpod-io/engineering-workspace @gitpod-io/engineering-webapp @gitpod-io/engineering-ide @gitpod-io/platform @gitpod-io/engineering-delivery-operations-experience
 
-/.werft/observability @gitpod-io/platform
+/.werft/observability @gitpod-io/engineering-delivery-operations-experience
 
 /.werft/ide-* @gitpod-io/engineering-ide
 /.werft/platform-* @gitpod-io/platform
 /.werft/webapp-* @gitpod-io/engineering-webapp
 /.werft/workspace-* @gitpod-io/engineering-workspace
-/.werft/self-hosted-* @gitpod-io/engineering-self-hosted
-/.werft/*installer-tests* @gitpod-io/engineering-self-hosted
-/.werft/jobs/build/self-hosted-* @gitpod-io/engineering-self-hosted
+/.werft/self-hosted-* @gitpod-io/engineering-delivery-operations-experience
+/.werft/*installer-tests* @gitpod-io/engineering-delivery-operations-experience
+/.werft/jobs/build/self-hosted-* @gitpod-io/engineering-delivery-operations-experience
 
 /dev/preview/infrastructure/harvester @gitpod-io/platform
 /dev/preview/workflow @gitpod-io/platform

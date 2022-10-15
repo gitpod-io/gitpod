@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import moment from "moment";
+import dayjs from "dayjs";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import projectsEmpty from "../images/projects-empty.svg";
@@ -19,6 +19,7 @@ import { toRemoteURL } from "./render-utils";
 import ContextMenu from "../components/ContextMenu";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { prebuildStatusIcon } from "./Prebuilds";
+import Alert from "../components/Alert";
 
 export default function () {
     const location = useLocation();
@@ -84,8 +85,8 @@ export default function () {
     };
 
     function hasNewerPrebuild(p0: Project, p1: Project): number {
-        return moment(lastPrebuilds.get(p1.id)?.info?.startedAt || "1970-01-01").diff(
-            moment(lastPrebuilds.get(p0.id)?.info?.startedAt || "1970-01-01"),
+        return dayjs(lastPrebuilds.get(p1.id)?.info?.startedAt || "1970-01-01").diff(
+            dayjs(lastPrebuilds.get(p0.id)?.info?.startedAt || "1970-01-01"),
         );
     }
 
@@ -128,6 +129,16 @@ export default function () {
                     onClose={() => setRemoveModalVisible(false)}
                     onConfirm={removeProjectHandler}
                 />
+            )}
+            {!team && (
+                <div className="app-container pt-2">
+                    <Alert type={"message"} closable={false} showIcon={true} className="flex rounded mb-2 w-full">
+                        We'll remove projects under personal accounts in Q1'2023.{" "}
+                        <Link to="/new" className="gp-link">
+                            Create a team.
+                        </Link>
+                    </Alert>
+                </div>
             )}
             <Header title="Projects" subtitle="Manage recently added projects." />
             {projects.length === 0 && (
@@ -266,7 +277,7 @@ export default function () {
                                                         ·
                                                     </span>
                                                     <div className="flex-shrink-0 text-gray-400 dark:text-gray-500 group-hover:text-gray-800 dark:group-hover:text-gray-300">
-                                                        {moment(lastPrebuilds.get(p.id)?.info?.startedAt).fromNow()}
+                                                        {dayjs(lastPrebuilds.get(p.id)?.info?.startedAt).fromNow()}
                                                     </div>
                                                 </Link>
                                                 <Link

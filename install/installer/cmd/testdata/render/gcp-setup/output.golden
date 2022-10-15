@@ -3167,7 +3167,7 @@ data:
             "type": "browser",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "label": "Browser",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-97cff52e43760ad3ad96aa82d9fba934c5f53be8",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-02a29e83c566d3ccb4295d050773541b7458c1ad",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
           },
           "code-desktop": {
@@ -3940,7 +3940,8 @@ data:
             "supervisor-frontend",
             "vscode-workbench",
             "vscode-server",
-            "vscode-web"
+            "vscode-web",
+            "gitpod-cli"
           ]
         }
       },
@@ -4010,24 +4011,12 @@ data:
           "docker.io/gitpod/workspace-full:latest"
         ]
       },
-      "service": {
-        "address": "0.0.0.0:8080",
-        "tls": {
-          "ca": "",
-          "crt": "",
-          "key": ""
+      "server": {
+        "services": {
+          "grpc": {
+            "address": "0.0.0.0:8080"
+          }
         }
-      },
-      "prometheus": {
-        "address": "127.0.0.1:9500",
-        "tls": {
-          "ca": "",
-          "crt": "",
-          "key": ""
-        }
-      },
-      "pprof": {
-        "address": "127.0.0.1:6060"
       }
     }
 kind: ConfigMap
@@ -4210,7 +4199,9 @@ data:
       "workspaceDefaults": {
         "workspaceImage": "docker.io/gitpod/workspace-full:latest",
         "previewFeatureFlags": [],
-        "defaultFeatureFlags": []
+        "defaultFeatureFlags": [
+          "protected_secrets"
+        ]
       },
       "session": {
         "maxAgeMs": 259200000,
@@ -4321,7 +4312,7 @@ data:
             "type": "browser",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "label": "Browser",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-97cff52e43760ad3ad96aa82d9fba934c5f53be8",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-02a29e83c566d3ccb4295d050773541b7458c1ad",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
           },
           "code-desktop": {
@@ -7738,7 +7729,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 261a9080da877b0199c3588c8342e2bf262b31768577d9149ad91decc34870d1
+        gitpod.io/checksum_config: fdc9ff8f999c3d8a17c1f429e1cc71a26f19d63026c25396685cab9ff8101fcd
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8061,7 +8052,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 5f4a04af2e695c2ff89d6271a3698b7de0c290d212284db8703f8a38c0668c2c
+        gitpod.io/checksum_config: 99cc1fee844c39bd5073fe15bcf0636ee345fd13dbce15a6708ae656d6de7a9f
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8353,7 +8344,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 73fa19472813179dc8c919dc7f879256916481ff520144b6362fefaa7d5e2f15
+        gitpod.io/checksum_config: 6992584742d8c0130c85e9635aefdcfbb7d252a4e968a7a38f7d296f8600acc5
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9263,6 +9254,22 @@ spec:
             secretKeyRef:
               key: encryptionKeys
               name: gcp-database
+        - name: GITPOD_DOMAIN
+          value: gitpod.example.com
+        - name: GITPOD_INSTALLATION_SHORTNAME
+          value: default
+        - name: GITPOD_REGION
+          value: europe-west2
+        - name: HOST_URL
+          value: https://gitpod.example.com
+        - name: KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBE_DOMAIN
+          value: svc.cluster.local
+        - name: LOG_LEVEL
+          value: info
         image: eu.gcr.io/gitpod-core-dev/build/db-migrations:test
         imagePullPolicy: IfNotPresent
         name: migrations

@@ -131,7 +131,7 @@ export namespace Plans {
         githubPlanNumber: 1,
 
         type: "free",
-        name: "Open Source",
+        name: "Free",
         currency: "USD",
         pricePerMonth: 0,
         hoursPerMonth: 100,
@@ -146,7 +146,7 @@ export namespace Plans {
         githubPlanNumber: 5,
 
         type: "free-50",
-        name: "Open Source",
+        name: "Free",
         currency: "USD",
         pricePerMonth: 0,
         hoursPerMonth: 50,

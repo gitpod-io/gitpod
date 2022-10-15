@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import moment from "moment";
+import dayjs from "dayjs";
 import { PrebuildWithStatus, PrebuiltWorkspaceState, Project } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { useLocation, useRouteMatch } from "react-router";
@@ -147,7 +147,7 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
     };
 
     const formatDate = (date: string | undefined) => {
-        return date ? moment(date).fromNow() : "";
+        return date ? dayjs(date).fromNow() : "";
     };
 
     return (

@@ -1,15 +1,16 @@
 ## start with
 ##    loadgen benchmark prod-benchmark-pvc.yaml
 
-workspaces: 1
+workspaces: 100
 ideImage: eu.gcr.io/gitpod-core-dev/build/ide/code:commit-ff263e14024f00d0ed78386b4417dfa6bcd4ae2f
 waitForRunning: "600s"
 waitForStopping: "600s"
 successRate: 1
 environment:
   - name: "THEIA_SUPERVISOR_TOKENS"
-    value: '[{"token":"foobar","host":"gitpod-staging.com","scope":["function:getWorkspace","function:getLoggedInUser","function:getPortAuthenticationToken","function:getWorkspaceOwner","function:getWorkspaceUsers","function:isWorkspaceOwner","function:controlAdmission","function:setWorkspaceTimeout","function:getWorkspaceTimeout","function:sendHeartBeat","function:getOpenPorts","function:openPort","function:closePort","function:getLayout","function:generateNewGitpodToken","function:takeSnapshot","function:storeLayout","function:stopWorkspace","resource:workspace::fa498dcc-0a84-448f-9666-79f297ad821a::get/update","resource:workspaceInstance::e0a17083-6a78-441a-9b97-ef90d6aff463::get/update/delete","resource:snapshot::*::create/get","resource:gitpodToken::*::create","resource:userStorage::*::create/get/update"],"expiryDate":"2020-12-01T07:55:12.501Z","reuse":2}]'
+    value: '[{"token":"foobar","host":"gitpod-staging.com","scope":["function:getWorkspace","function:getLoggedInUser","function:getPortAuthenticationToken","function:getWorkspaceOwner","function:getWorkspaceUsers","function:isWorkspaceOwner","function:controlAdmission","function:setWorkspaceTimeout","function:getWorkspaceTimeout","function:sendHeartBeat","function:getOpenPorts","function:openPort","function:closePort","function:generateNewGitpodToken","function:takeSnapshot","function:stopWorkspace","resource:workspace::fa498dcc-0a84-448f-9666-79f297ad821a::get/update","resource:workspaceInstance::e0a17083-6a78-441a-9b97-ef90d6aff463::get/update/delete","resource:snapshot::*::create/get","resource:gitpodToken::*::create","resource:userStorage::*::create/get/update"],"expiryDate":"2020-12-01T07:55:12.501Z","reuse":2}]'
 workspaceClass: "g1-standard-pvc"
+workspaceTimeout: 1h
 featureFlags:
 # https://github.com/gitpod-io/gitpod/blob/e437e1868072dfad1d195031a4709a254bd60dc8/components/ws-manager-api/core.proto#L596
 # from core.proto: PERSISTENT_VOLUME_CLAIM = 7;
@@ -84,7 +85,7 @@ repos:
     cloneTarget: main
     score: 20
     workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest
-  - cloneURL: https://github.com/gitpod-io/template-python-flask
+  - cloneURL: https://github.com/gitpod-io/non-gitpodified-repo
     score: 20
     cloneTarget: main
     workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest

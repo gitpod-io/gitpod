@@ -78,7 +78,7 @@ func (m *buildMonitor) Run() {
 		})
 		if err != nil {
 			log.WithError(err).Info("cannot get running builds from ws-manager - retrying")
-			time.Sleep(5 * time.Second)
+			time.Sleep(1 * time.Second)
 			continue
 		}
 
@@ -106,7 +106,7 @@ func (m *buildMonitor) Run() {
 			msg, err := sub.Recv()
 			if err != nil {
 				log.WithError(err).Info("connection to ws-manager lost - retrying")
-				time.Sleep(5 * time.Second)
+				time.Sleep(1 * time.Second)
 				break
 			}
 

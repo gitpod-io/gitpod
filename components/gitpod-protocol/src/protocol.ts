@@ -648,7 +648,6 @@ export interface Snapshot {
     availableTime?: string;
     originalWorkspaceId: string;
     bucketId: string;
-    layoutData?: string;
     state: SnapshotState;
     message?: string;
 }
@@ -661,12 +660,6 @@ export interface VolumeSnapshot {
 }
 
 export type SnapshotState = "pending" | "available" | "error";
-
-export interface LayoutData {
-    workspaceId: string;
-    lastUpdatedTime: string;
-    layoutData: string;
-}
 
 export interface Workspace {
     id: string;
@@ -802,6 +795,8 @@ export interface JetBrainsConfig {
     goland?: JetBrainsProductConfig;
     pycharm?: JetBrainsProductConfig;
     phpstorm?: JetBrainsProductConfig;
+    rubymine?: JetBrainsProductConfig;
+    webstorm?: JetBrainsProductConfig;
 }
 export interface JetBrainsProductConfig {
     prebuilds?: JetBrainsPrebuilds;
@@ -1202,6 +1197,16 @@ export namespace AdditionalContentContext {
 
     export function hasDockerConfig(ctx: any, config: WorkspaceConfig): boolean {
         return is(ctx) && ImageConfigFile.is(config.image) && !!ctx.additionalFiles[config.image.file];
+    }
+}
+
+export interface OpenPrebuildContext extends WorkspaceContext {
+    openPrebuildID: string;
+}
+
+export namespace OpenPrebuildContext {
+    export function is(ctx: any): ctx is OpenPrebuildContext {
+        return "openPrebuildID" in ctx;
     }
 }
 

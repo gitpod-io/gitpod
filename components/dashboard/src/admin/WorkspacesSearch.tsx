@@ -15,7 +15,7 @@ import {
     matchesInstanceIdOrLegacyWorkspaceIdExactly,
     matchesNewWorkspaceIdExactly,
 } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
-import moment from "moment";
+import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
@@ -47,9 +47,10 @@ export function WorkspaceSearch(props: Props) {
     const [currentWorkspace, setCurrentWorkspaceState] = useState<WorkspaceAndInstance | undefined>(undefined);
     const pageLength = 50;
     const [currentPage, setCurrentPage] = useState(1);
-    useEffect(() => {
+    const updateCurrentPage = (page: number) => {
+        setCurrentPage(page);
         search();
-    }, [currentPage]);
+    };
 
     useEffect(() => {
         const workspaceId = location.pathname.split("/")[3];
@@ -146,7 +147,7 @@ export function WorkspaceSearch(props: Props) {
                 </div>
             </div>
             <Alert type={"info"} closable={false} showIcon={true} className="flex rounded p-2 mb-2 w-full">
-                <span>Search workspaces using workspace ID.</span>
+                Search workspaces using workspace ID.
             </Alert>
             <div className="flex flex-col space-y-2">
                 <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
@@ -161,7 +162,7 @@ export function WorkspaceSearch(props: Props) {
             </div>
             <Pagination
                 currentPage={currentPage}
-                setPage={setCurrentPage}
+                setPage={updateCurrentPage}
                 totalNumberOfPages={Math.ceil(searchResult.total / pageLength)}
             />
         </>
@@ -195,7 +196,7 @@ function WorkspaceEntry(p: { ws: WorkspaceAndInstance }) {
                 </div>
                 <div className="flex w-2/12 self-center">
                     <div className="text-sm w-full text-gray-400 truncate">
-                        {moment(p.ws.instanceCreationTime || p.ws.workspaceCreationTime).fromNow()}
+                        {dayjs(p.ws.instanceCreationTime || p.ws.workspaceCreationTime).fromNow()}
                     </div>
                 </div>
             </div>

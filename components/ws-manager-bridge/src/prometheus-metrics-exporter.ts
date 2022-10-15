@@ -20,6 +20,7 @@ export class PrometheusMetricsExporter {
     protected readonly staleStatusUpdatesTotal: prom.Counter<string>;
     protected readonly stalePrebuildEventsTotal: prom.Counter<string>;
     protected readonly prebuildsCompletedTotal: prom.Counter<string>;
+    protected readonly instanceMarkedStoppedTotal: prom.Counter<string>;
 
     protected readonly workspaceInstanceUpdateStartedTotal: prom.Counter<string>;
     protected readonly workspaceInstanceUpdateCompletedSeconds: prom.Histogram<string>;
@@ -84,6 +85,12 @@ export class PrometheusMetricsExporter {
             name: "gitpod_prebuilds_completed_total",
             help: "Counter of total prebuilds ended.",
             labelNames: ["state"],
+        });
+
+        this.instanceMarkedStoppedTotal = new prom.Counter({
+            name: "gitpod_ws_instances_marked_stopped_total",
+            help: "Counter of total instances marked stopped by the ws-manager-bridge",
+            labelNames: ["previous_phase"],
         });
     }
 
@@ -161,5 +168,9 @@ export class PrometheusMetricsExporter {
 
     increasePrebuildsCompletedCounter(state: string) {
         this.prebuildsCompletedTotal.inc({ state });
+    }
+
+    increaseInstanceMarkedStoppedCounter(previous_phase: string) {
+        this.instanceMarkedStoppedTotal.inc({ previous_phase });
     }
 }

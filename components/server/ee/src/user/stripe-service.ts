@@ -6,9 +6,15 @@
 
 import { inject, injectable } from "inversify";
 import Stripe from "stripe";
+import * as grpc from "@grpc/grpc-js";
 import { Config } from "../../../src/config";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import {
+    observeStripeClientRequestsCompleted,
+    stripeClientRequestsCompletedDurationSeconds,
+} from "../../../src/prometheus-metrics";
+import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 
 const POLL_CREATED_CUSTOMER_INTERVAL_MS = 1000;
 const POLL_CREATED_CUSTOMER_MAX_ATTEMPTS = 30;
@@ -18,6 +24,9 @@ export class StripeService {
     @inject(Config) protected readonly config: Config;
 
     protected _stripe: Stripe | undefined;
+
+    @inject(BillingServiceDefinition.name)
+    protected readonly billingService: BillingServiceClient;
 
     protected getStripe(): Stripe {
         if (!this._stripe) {
@@ -30,16 +39,23 @@ export class StripeService {
     }
 
     async createSetupIntent(): Promise<Stripe.SetupIntent> {
-        return await this.getStripe().setupIntents.create({ usage: "on_session" });
+        return await reportStripeOutcome("intent_setup", () => {
+            return this.getStripe().setupIntents.create({ usage: "on_session" });
+        });
     }
 
     async findCustomerByAttributionId(attributionId: string): Promise<string | undefined> {
-        const query = `metadata['attributionId']:'${attributionId}'`;
-        const result = await this.getStripe().customers.search({ query });
-        if (result.data.length > 1) {
-            throw new Error(`Found more than one Stripe customer for query '${query}'`);
+        try {
+            const resp = await this.billingService.getStripeCustomer({ attributionId: attributionId });
+            return resp.customer?.id;
+        } catch (e) {
+            if (e.code === grpc.status.NOT_FOUND) {
+                return undefined;
+            }
+
+            log.error("Failed to get stripe customer", e, { attributionId });
+            throw e;
         }
-        return result.data[0]?.id;
     }
 
     async createCustomerForAttributionId(
@@ -52,10 +68,12 @@ export class StripeService {
             throw new Error(`A Stripe customer already exists for '${attributionId}'`);
         }
         // Create the customer in Stripe
-        const customer = await this.getStripe().customers.create({
-            email: billingEmail,
-            name: billingName,
-            metadata: { attributionId, preferredCurrency },
+        const customer = await reportStripeOutcome("customers_create", () => {
+            return this.getStripe().customers.create({
+                email: billingEmail,
+                name: billingName,
+                metadata: { attributionId, preferredCurrency },
+            });
         });
         // Wait for the customer to show up in Stripe search results before proceeding
         let attempts = 0;
@@ -69,20 +87,32 @@ export class StripeService {
     }
 
     async setDefaultPaymentMethodForCustomer(customerId: string, setupIntentId: string): Promise<void> {
-        const setupIntent = await this.getStripe().setupIntents.retrieve(setupIntentId);
+        const setupIntent = await reportStripeOutcome("intent_retrieve", () => {
+            return this.getStripe().setupIntents.retrieve(setupIntentId);
+        });
+
         if (typeof setupIntent.payment_method !== "string") {
             throw new Error("The provided Stripe SetupIntent does not have a valid payment method attached");
         }
+        const intentPaymentMethod = setupIntent.payment_method as string;
         // Attach the provided payment method to the customer
-        await this.getStripe().paymentMethods.attach(setupIntent.payment_method, {
-            customer: customerId,
+        await reportStripeOutcome("payment_methods_attach", () => {
+            return this.getStripe().paymentMethods.attach(intentPaymentMethod, {
+                customer: customerId,
+            });
         });
-        const paymentMethod = await this.getStripe().paymentMethods.retrieve(setupIntent.payment_method);
-        await this.getStripe().customers.update(customerId, {
-            invoice_settings: { default_payment_method: setupIntent.payment_method },
-            ...(paymentMethod.billing_details.address?.country
-                ? { address: { line1: "", country: paymentMethod.billing_details.address?.country } }
-                : {}),
+
+        const paymentMethod = await reportStripeOutcome("payment_methods_get", () => {
+            return this.getStripe().paymentMethods.retrieve(intentPaymentMethod);
+        });
+
+        await reportStripeOutcome("customers_update", () => {
+            return this.getStripe().customers.update(customerId, {
+                invoice_settings: { default_payment_method: intentPaymentMethod },
+                ...(paymentMethod.billing_details.address?.country
+                    ? { address: { line1: "", country: paymentMethod.billing_details.address?.country } }
+                    : {}),
+            });
         });
     }
 
@@ -91,9 +121,11 @@ export class StripeService {
         if (!customerId) {
             throw new Error(`No Stripe Customer ID found for '${attributionId}'`);
         }
-        const session = await this.getStripe().billingPortal.sessions.create({
-            customer: customerId,
-            return_url: returnUrl,
+        const session = await reportStripeOutcome("portal_create_session", () => {
+            return this.getStripe().billingPortal.sessions.create({
+                customer: customerId,
+                return_url: returnUrl,
+            });
         });
         return session.url;
     }
@@ -103,8 +135,10 @@ export class StripeService {
         if (!customerId) {
             return undefined;
         }
-        const result = await this.getStripe().subscriptions.list({
-            customer: customerId,
+        const result = await reportStripeOutcome("subscriptions_list", () => {
+            return this.getStripe().subscriptions.list({
+                customer: customerId,
+            });
         });
         if (result.data.length > 1) {
             throw new Error(`Stripe customer '${customerId}') has more than one subscription!`);
@@ -113,11 +147,15 @@ export class StripeService {
     }
 
     async cancelSubscription(subscriptionId: string): Promise<void> {
-        await this.getStripe().subscriptions.del(subscriptionId);
+        await reportStripeOutcome("subscriptions_cancel", () => {
+            return this.getStripe().subscriptions.del(subscriptionId);
+        });
     }
 
     async createSubscriptionForCustomer(customerId: string, attributionId: string): Promise<void> {
-        const customer = await this.getStripe().customers.retrieve(customerId, { expand: ["tax"] });
+        const customer = await reportStripeOutcome("customers_get", () => {
+            return this.getStripe().customers.retrieve(customerId, { expand: ["tax"] });
+        });
         if (!customer || customer.deleted) {
             throw new Error(`Stripe customer '${customerId}' could not be found`);
         }
@@ -149,11 +187,27 @@ export class StripeService {
         }
         const startOfNextMonth = new Date(new Date().toISOString().slice(0, 7) + "-01"); // First day of this month (YYYY-MM-01)
         startOfNextMonth.setMonth(startOfNextMonth.getMonth() + 1); // Add one month
-        await this.getStripe().subscriptions.create({
-            customer: customer.id,
-            items: [{ price: priceId }],
-            automatic_tax: { enabled: isAutomaticTaxSupported },
-            billing_cycle_anchor: Math.round(startOfNextMonth.getTime() / 1000),
+
+        await reportStripeOutcome("subscriptions_create", () => {
+            return this.getStripe().subscriptions.create({
+                customer: customer.id,
+                items: [{ price: priceId }],
+                automatic_tax: { enabled: isAutomaticTaxSupported },
+                billing_cycle_anchor: Math.round(startOfNextMonth.getTime() / 1000),
+            });
         });
+    }
+}
+
+async function reportStripeOutcome<T>(op: string, f: () => Promise<T>) {
+    const timer = stripeClientRequestsCompletedDurationSeconds.startTimer();
+    let outcome = "ok";
+    try {
+        return await f();
+    } catch (e) {
+        outcome = e.type || "unknown";
+        throw e;
+    } finally {
+        observeStripeClientRequestsCompleted(op, outcome, timer());
     }
 }

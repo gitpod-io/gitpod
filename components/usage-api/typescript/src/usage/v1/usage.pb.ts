@@ -170,6 +170,7 @@ export interface SetCostCenterRequest {
 }
 
 export interface SetCostCenterResponse {
+  costCenter: CostCenter | undefined;
 }
 
 export interface GetBalanceRequest {
@@ -824,11 +825,14 @@ export const SetCostCenterRequest = {
 };
 
 function createBaseSetCostCenterResponse(): SetCostCenterResponse {
-  return {};
+  return { costCenter: undefined };
 }
 
 export const SetCostCenterResponse = {
-  encode(_: SetCostCenterResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(message: SetCostCenterResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.costCenter !== undefined) {
+      CostCenter.encode(message.costCenter, writer.uint32(10).fork()).ldelim();
+    }
     return writer;
   },
 
@@ -839,6 +843,9 @@ export const SetCostCenterResponse = {
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
+        case 1:
+          message.costCenter = CostCenter.decode(reader, reader.uint32());
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -847,17 +854,22 @@ export const SetCostCenterResponse = {
     return message;
   },
 
-  fromJSON(_: any): SetCostCenterResponse {
-    return {};
+  fromJSON(object: any): SetCostCenterResponse {
+    return { costCenter: isSet(object.costCenter) ? CostCenter.fromJSON(object.costCenter) : undefined };
   },
 
-  toJSON(_: SetCostCenterResponse): unknown {
+  toJSON(message: SetCostCenterResponse): unknown {
     const obj: any = {};
+    message.costCenter !== undefined &&
+      (obj.costCenter = message.costCenter ? CostCenter.toJSON(message.costCenter) : undefined);
     return obj;
   },
 
-  fromPartial(_: DeepPartial<SetCostCenterResponse>): SetCostCenterResponse {
+  fromPartial(object: DeepPartial<SetCostCenterResponse>): SetCostCenterResponse {
     const message = createBaseSetCostCenterResponse();
+    message.costCenter = (object.costCenter !== undefined && object.costCenter !== null)
+      ? CostCenter.fromPartial(object.costCenter)
+      : undefined;
     return message;
   },
 };

@@ -205,11 +205,10 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 	}
 
 	var (
-		wsImage               = workspaceContainer.Image
-		ideImage              string
-		desktopIdeImage       string
-		supervisorImage       string
-		desktopIdePluginImage string
+		wsImage         = workspaceContainer.Image
+		ideImage        string
+		supervisorImage string
+		ideImagesLayers []string
 	)
 	if ispec, ok := wso.Pod.Annotations[kubernetes.WorkspaceImageSpecAnnotation]; ok {
 		spec, err := regapi.ImageSpecFromBase64(ispec)
@@ -218,9 +217,8 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 		}
 		wsImage = spec.BaseRef
 		ideImage = spec.IdeRef
-		desktopIdeImage = spec.DesktopIdeRef
 		supervisorImage = spec.SupervisorRef
-		desktopIdePluginImage = spec.DesktopIdePluginRef
+		ideImagesLayers = spec.IdeLayerRef
 	}
 
 	ownerToken, ok := wso.Pod.Annotations[kubernetes.OwnerTokenAnnotation]
@@ -249,15 +247,14 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 			WorkspaceImage:     wsImage,
 			DeprecatedIdeImage: ideImage,
 			IdeImage: &api.IDEImage{
-				WebRef:           ideImage,
-				DesktopRef:       desktopIdeImage,
-				SupervisorRef:    supervisorImage,
-				DesktopPluginRef: desktopIdePluginImage,
+				WebRef:        ideImage,
+				SupervisorRef: supervisorImage,
 			},
-			Url:     wsurl,
-			Type:    tpe,
-			Timeout: timeout,
-			Class:   wso.Pod.Labels[workspaceClassLabel],
+			IdeImageLayers: ideImagesLayers,
+			Url:            wsurl,
+			Type:           tpe,
+			Timeout:        timeout,
+			Class:          wso.Pod.Labels[workspaceClassLabel],
 		},
 		Conditions: &api.WorkspaceConditions{
 			Snapshot: wso.Pod.Annotations[workspaceSnapshotAnnotation],
@@ -618,8 +615,12 @@ func extractFailure(wso workspaceObjects, metrics *metrics) (string, *api.Worksp
 			continue
 		}
 
-		// ideally we do not just use evt.Message as failure reason because it contains internal paths and is not useful for the user
-		if strings.Contains(evt.Message, workspaceVolumeName) {
+		if strings.Contains(evt.Message, "MountVolume.MountDevice failed for volume") {
+			// ref: https://github.com/gitpod-io/gitpod/issues/13353
+			// ref: https://github.com/kubernetes-sigs/gcp-compute-persistent-disk-csi-driver/issues/608
+			return "", nil
+		} else if strings.Contains(evt.Message, workspaceVolumeName) {
+			// ideally we do not just use evt.Message as failure reason because it contains internal paths and is not useful for the user
 			return "cannot mount workspace", nil
 		} else {
 			// if this happens we did not do a good job because that means we've introduced another volume to the pod

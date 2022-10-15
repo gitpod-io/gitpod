@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -180,7 +179,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	spec := specconv.Example()
 
 	// we assemble the root filesystem from the ws-daemon container
-	for _, d := range []string{"app", "bin", "dev", "etc", "lib", "opt", "sbin", "sys", "usr", "var", "lib32", "lib64"} {
+	for _, d := range []string{"app", "bin", "dev", "etc", "lib", "opt", "sbin", "sys", "usr", "var", "lib32", "lib64", "tmp"} {
 		spec.Mounts = append(spec.Mounts, specs.Mount{
 			Destination: "/" + d,
 			Source:      "/" + d,
@@ -390,13 +389,39 @@ func (rs *remoteContentStorage) Download(ctx context.Context, destination string
 	}
 
 	span.SetTag("URL", info.URL)
-	resp, err := http.Get(info.URL)
-	if err != nil {
-		return true, err
-	}
-	defer resp.Body.Close()
 
-	err = archive.ExtractTarbal(ctx, resp.Body, destination, archive.WithUIDMapping(mappings), archive.WithGIDMapping(mappings))
+	// create a temporal file to download the content
+	tempFile, err := os.CreateTemp("", "remote-content-*")
+	if err != nil {
+		return true, xerrors.Errorf("cannot create temporal file: %w", err)
+	}
+	tempFile.Close()
+
+	args := []string{
+		"-s10", "-x16", "-j12",
+		"--retry-wait=5",
+		"--log-level=error",
+		"--allow-overwrite=true", // rewrite temporal empty file
+		info.URL,
+		"-o", tempFile.Name(),
+	}
+
+	cmd := exec.Command("aria2c", args...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.WithError(err).WithField("out", string(out)).Error("unexpected error downloading file")
+		return true, xerrors.Errorf("unexpected error downloading file")
+	}
+
+	tempFile, err = os.Open(tempFile.Name())
+	if err != nil {
+		return true, xerrors.Errorf("unexpected error downloading file")
+	}
+
+	defer os.Remove(tempFile.Name())
+	defer tempFile.Close()
+
+	err = archive.ExtractTarbal(ctx, tempFile, destination, archive.WithUIDMapping(mappings), archive.WithGIDMapping(mappings))
 	if err != nil {
 		return true, xerrors.Errorf("tar %s: %s", destination, err.Error())
 	}

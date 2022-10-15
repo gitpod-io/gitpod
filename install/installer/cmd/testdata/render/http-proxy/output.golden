@@ -3506,7 +3506,7 @@ data:
             "type": "browser",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "label": "Browser",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-97cff52e43760ad3ad96aa82d9fba934c5f53be8",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-02a29e83c566d3ccb4295d050773541b7458c1ad",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
           },
           "code-desktop": {
@@ -4279,7 +4279,8 @@ data:
             "supervisor-frontend",
             "vscode-workbench",
             "vscode-server",
-            "vscode-web"
+            "vscode-web",
+            "gitpod-cli"
           ]
         }
       },
@@ -4349,24 +4350,12 @@ data:
           "docker.io/gitpod/workspace-full:latest"
         ]
       },
-      "service": {
-        "address": "0.0.0.0:8080",
-        "tls": {
-          "ca": "",
-          "crt": "",
-          "key": ""
+      "server": {
+        "services": {
+          "grpc": {
+            "address": "0.0.0.0:8080"
+          }
         }
-      },
-      "prometheus": {
-        "address": "127.0.0.1:9500",
-        "tls": {
-          "ca": "",
-          "crt": "",
-          "key": ""
-        }
-      },
-      "pprof": {
-        "address": "127.0.0.1:6060"
       }
     }
 kind: ConfigMap
@@ -4659,7 +4648,9 @@ data:
       "workspaceDefaults": {
         "workspaceImage": "docker.io/gitpod/workspace-full:latest",
         "previewFeatureFlags": [],
-        "defaultFeatureFlags": []
+        "defaultFeatureFlags": [
+          "protected_secrets"
+        ]
       },
       "session": {
         "maxAgeMs": 259200000,
@@ -4770,7 +4761,7 @@ data:
             "type": "browser",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "label": "Browser",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-97cff52e43760ad3ad96aa82d9fba934c5f53be8",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-02a29e83c566d3ccb4295d050773541b7458c1ad",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
           },
           "code-desktop": {
@@ -9089,7 +9080,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 261a9080da877b0199c3588c8342e2bf262b31768577d9149ad91decc34870d1
+        gitpod.io/checksum_config: fdc9ff8f999c3d8a17c1f429e1cc71a26f19d63026c25396685cab9ff8101fcd
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9612,7 +9603,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 96743936096936609b76bcab7e6b4c5d2ae5b0cd63b73268b03984c82bdf3d3e
+        gitpod.io/checksum_config: 6b82d310231a10f059f0a9efebcf1422f6b2e72eacb55b1ac68f283695b1a167
       creationTimestamp: null
       labels:
         app: gitpod
@@ -10271,7 +10262,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: adc398b5039ad75f724b2585a5da8a95110b918a32c0b854630fc3fa03a91722
+        gitpod.io/checksum_config: a4e77dfdb4f0f6103762722c99d4ba4eaf570a7c3d9fbc3e292a2d48cb17ad24
       creationTimestamp: null
       labels:
         app: gitpod
@@ -11587,6 +11578,62 @@ spec:
             secretKeyRef:
               key: encryptionKeys
               name: mysql
+        - name: GITPOD_DOMAIN
+          value: gitpod.example.com
+        - name: GITPOD_INSTALLATION_SHORTNAME
+          value: default
+        - name: GITPOD_REGION
+          value: local
+        - name: HOST_URL
+          value: https://gitpod.example.com
+        - name: KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBE_DOMAIN
+          value: svc.cluster.local
+        - name: LOG_LEVEL
+          value: info
+        - name: HTTP_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: http_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpProxy
+              name: http-proxy-settings
+              optional: true
+        - name: HTTPS_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: https_proxy
+          valueFrom:
+            secretKeyRef:
+              key: httpsProxy
+              name: http-proxy-settings
+              optional: true
+        - name: CUSTOM_NO_PROXY
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: custom_no_proxy
+          valueFrom:
+            secretKeyRef:
+              key: noProxy
+              name: http-proxy-settings
+              optional: true
+        - name: NO_PROXY
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: no_proxy
+          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         image: eu.gcr.io/gitpod-core-dev/build/db-migrations:test
         imagePullPolicy: IfNotPresent
         name: migrations

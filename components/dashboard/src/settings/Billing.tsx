@@ -13,15 +13,16 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 
 export default function Billing() {
     const { user } = useContext(UserContext);
-    const attributionId: AttributionId = { kind: "user", userId: user?.id || "" };
 
     return (
-        <PageWithSettingsSubMenu title="Billing" subtitle="Usage-Based Billing.">
+        <PageWithSettingsSubMenu title="Billing" subtitle="Configure and manage billing for your personal account.">
             <div>
-                <h3>Billing Account</h3>
+                <h3>Default Billing Account</h3>
                 <BillingAccountSelector />
-                <h3 className="mt-12">Usage-Based Billing</h3>
-                <UsageBasedBillingConfig subject={user} attributionId={AttributionId.render(attributionId)} />
+                <h3 className="mt-12">Personal Plan</h3>
+                <UsageBasedBillingConfig
+                    attributionId={user && AttributionId.render({ kind: "user", userId: user.id })}
+                />
             </div>
         </PageWithSettingsSubMenu>
     );

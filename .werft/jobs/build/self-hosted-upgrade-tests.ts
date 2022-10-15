@@ -56,17 +56,22 @@ export async function triggerUpgradeTests(werft: Werft, config: JobConfig, usern
 
         werft.phase(upgradeConfig.phase, upgradeConfig.description);
 
-        annotation = `${annotation} -a cluster=${phase} -a updateGitHubStatus=gitpod-io/gitpod -a subdomain=${subdomain}-${upgradeConfig.cloud}`
+        annotation = `${annotation} -a updateGitHubStatus=gitpod-io/gitpod -a subdomain=${subdomain}-${upgradeConfig.cloud} -a deps=external`
 
         const testFile: string = `.werft/${phase}-installer-tests.yaml`;
 
         try {
-            exec(
+            const ret = exec(
                 `werft run --remote-job-path ${testFile} ${annotation} github`,
                 {
                     slice: upgradeConfig.phase,
                 },
-            ).trim();
+            )
+
+            const jobID = ret.stdout.trim()
+            exec(
+                `werft log result -d  "Werft preview build for ${phase}" url "https://werft.gitpod-dev.com/job/${jobID}"`,
+            );
 
             werft.done(upgradeConfig.phase);
         } catch (err) {
@@ -80,10 +85,11 @@ export async function triggerUpgradeTests(werft: Werft, config: JobConfig, usern
 
 export async function triggerSelfHostedPreview(werft: Werft, config: JobConfig, username: string) {
     const replicatedChannel =  config.replicatedChannel || config.repository.branch;
+    const version =  config.replicatedVersion || "-"
     const cluster =  config.cluster || "k3s";
-    const formattedBranch = config.repository.branch.replace("/", "-").slice(0,11)
+    const formattedBranch = config.repository.branch.replace("/", "-").slice(0,10)
     const phase = phases[cluster]
-    const subdomain =  `${formattedBranch}-${phase.cloud}`
+    const subdomain =  `${formattedBranch}y-${phase.cloud}`
 
     const replicatedApp = process.env.REPLICATED_APP
 
@@ -114,7 +120,7 @@ export async function triggerSelfHostedPreview(werft: Werft, config: JobConfig, 
 
     exec(`git config --global user.name "${username}"`);
 
-    annotation = `${annotation} -a channel=${replicatedChannel} -a preview=true -a runTests=false -a deps=external`;
+    annotation = `${annotation} -a version=${version} -a channel=${replicatedChannel} -a preview=true -a skipTests=true -a deps=external`;
 
     werft.phase("self-hosted-preview", `Create self-hosted preview in ${cluster}`);
 
@@ -123,12 +129,18 @@ export async function triggerSelfHostedPreview(werft: Werft, config: JobConfig, 
     const testFile: string = `.werft/${cluster}-installer-tests.yaml`;
 
     try {
-        exec(
+        const ret = exec(
             `werft run --remote-job-path ${testFile} ${annotation} github ${licenseFlag}`,
             {
                 slice: "self-hosted-preview"
             },
-        ).trim();
+        )
+
+        const jobID = ret.stdout.trim()
+        exec(
+            `werft log result -d  "Werft preview build for ${cluster} " url "https://werft.gitpod-dev.com/job/${jobID}"`,
+        );
+
 
         werft.done("self-hosted-preview");
     } catch (err) {

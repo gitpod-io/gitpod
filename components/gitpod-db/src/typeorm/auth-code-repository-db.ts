@@ -13,6 +13,7 @@ import {
     OAuthUser,
 } from "@jmondi/oauth2-server";
 import * as crypto from "crypto";
+import { v4 as uuidv4 } from "uuid";
 import { inject, injectable } from "inversify";
 import { EntityManager, Repository } from "typeorm";
 import { DBOAuthAuthCodeEntry } from "./entity/db-oauth-auth-code";
@@ -56,6 +57,7 @@ export class AuthCodeRepositoryDB implements OAuthAuthCodeRepository {
     }
     public async persist(authCode: DBOAuthAuthCodeEntry): Promise<void> {
         const authCodeRepo = await this.getOauthAuthCodeRepo();
+        authCode.id = uuidv4();
         authCodeRepo.save(authCode);
     }
     public async isRevoked(authCodeCode: string): Promise<boolean> {

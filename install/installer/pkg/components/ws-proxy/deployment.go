@@ -118,7 +118,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 				common.DefaultEnv(&ctx.Config),
-				common.WorkspaceTracingEnv(ctx),
+				common.WorkspaceTracingEnv(ctx, Component),
 				common.AnalyticsEnv(&ctx.Config),
 			)),
 			ReadinessProbe: &corev1.Probe{

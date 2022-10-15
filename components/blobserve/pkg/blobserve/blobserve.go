@@ -214,7 +214,7 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 
 	// The blobFor operation's context must be independent of this request. Even if we do not
 	// serve this request in time, we might want to serve another from the same ref in the future.
-	blob, hash, err := reg.refstore.BlobFor(context.Background(), ref, false)
+	blobFS, hash, err := reg.refstore.BlobFor(context.Background(), ref, false)
 	if err == errdefs.ErrNotFound {
 		http.Error(w, fmt.Sprintf("image %s not found: %q", html.EscapeString(ref), err), http.StatusNotFound)
 		return
@@ -245,39 +245,43 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Cache-Control", "no-cache")
 	}
 
+	var fs http.FileSystem = blobFS
+	if workdir != "" {
+		fs = prefixingFilesystem{Prefix: workdir, FS: blobFS}
+	}
+
 	// http.FileServer has a special case where ServeFile redirects any request where r.URL.Path
 	// ends in "/index.html" to the same path, without the final "index.html".
 	// We do not want this behaviour to make the gitpod-ide-index mechanism in ws-proxy work.
-	imagePath := strings.TrimPrefix(req.URL.Path, pathPrefix)
-	if imagePath == "/index.html" || imagePath == "/" {
-		fn := filepath.Join(workdir, "index.html")
-
-		fc, err := blob.Open(fn)
+	resourcePath := strings.TrimPrefix(req.URL.Path, pathPrefix)
+	if resourcePath == "/" {
+		resourcePath = "/index.html"
+	}
+	if strings.HasSuffix(resourcePath, "/index.html") {
+		fc, err := fs.Open(resourcePath)
 		if err != nil {
-			log.WithError(err).WithField("fn", fn).Error("cannot stat index.html")
+			log.WithError(err).WithField("fn", resourcePath).Error("cannot open resource")
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
 		}
 		defer fc.Close()
 
-		var modTime time.Time
-		if s, err := fc.Stat(); err == nil {
-			modTime = s.ModTime()
+		stat, err := fc.Stat()
+		if err != nil {
+			log.WithError(err).WithField("fn", resourcePath).Error("cannot stat resource")
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			return
 		}
 
 		content, err := inlineVars(req, fc, inlineReplacements)
 		if err != nil {
 			log.WithError(err).Error()
 		}
-		http.ServeContent(w, req, "index.html", modTime, content)
+
+		http.ServeContent(w, req, stat.Name(), stat.ModTime(), content)
 		return
 	}
 
-	var fs http.FileSystem
-	fs = blob
-	if workdir != "" {
-		fs = prefixingFilesystem{Prefix: workdir, FS: fs}
-	}
 	http.StripPrefix(pathPrefix, http.FileServer(fs)).ServeHTTP(w, req)
 }
 

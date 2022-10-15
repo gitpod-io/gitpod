@@ -37,9 +37,6 @@ export class DBSnapshot implements Snapshot {
     @Column()
     bucketId: string;
 
-    @Column({ nullable: true })
-    layoutData?: string;
-
     @Column({
         // because we introduced this as an afterthought the default is 'available'
         default: <SnapshotState>"available",

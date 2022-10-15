@@ -8,6 +8,7 @@ import { UserDB } from "@gitpod/gitpod-db/lib";
 import {
     BillingTier,
     User,
+    Workspace,
     WorkspaceInstance,
     WorkspaceTimeoutDuration,
     WORKSPACE_TIMEOUT_DEFAULT_LONG,
@@ -27,6 +28,7 @@ export class EntitlementServiceLicense implements EntitlementService {
 
     async mayStartWorkspace(
         user: User,
+        workspace: Workspace,
         date: Date,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult> {

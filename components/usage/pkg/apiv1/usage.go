@@ -185,13 +185,17 @@ func (s *UsageService) GetCostCenter(ctx context.Context, in *v1.GetCostCenterRe
 		return nil, err
 	}
 	return &v1.GetCostCenterResponse{
-		CostCenter: &v1.CostCenter{
-			AttributionId:   string(result.ID),
-			SpendingLimit:   result.SpendingLimit,
-			BillingStrategy: convertBillingStrategyToAPI(result.BillingStrategy),
-			NextBillingTime: timestamppb.New(result.NextBillingTime.Time()),
-		},
+		CostCenter: dbCostCenterToAPI(result),
 	}, nil
+}
+
+func dbCostCenterToAPI(c db.CostCenter) *v1.CostCenter {
+	return &v1.CostCenter{
+		AttributionId:   string(c.ID),
+		SpendingLimit:   c.SpendingLimit,
+		BillingStrategy: convertBillingStrategyToAPI(c.BillingStrategy),
+		NextBillingTime: timestamppb.New(c.NextBillingTime.Time()),
+	}
 }
 
 func convertBillingStrategyToDB(in v1.CostCenter_BillingStrategy) db.BillingStrategy {
@@ -223,11 +227,13 @@ func (s *UsageService) SetCostCenter(ctx context.Context, in *v1.SetCostCenterRe
 		SpendingLimit:   in.CostCenter.SpendingLimit,
 		BillingStrategy: convertBillingStrategyToDB(in.CostCenter.BillingStrategy),
 	}
-	_, err = s.costCenterManager.UpdateCostCenter(ctx, costCenter)
+	result, err := s.costCenterManager.UpdateCostCenter(ctx, costCenter)
 	if err != nil {
 		return nil, err
 	}
-	return &v1.SetCostCenterResponse{}, nil
+	return &v1.SetCostCenterResponse{
+		CostCenter: dbCostCenterToAPI(result),
+	}, nil
 }
 
 func (s *UsageService) ReconcileUsage(ctx context.Context, req *v1.ReconcileUsageRequest) (*v1.ReconcileUsageResponse, error) {

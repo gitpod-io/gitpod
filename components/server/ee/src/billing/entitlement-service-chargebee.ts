@@ -9,6 +9,7 @@ import { Accounting, SubscriptionService } from "@gitpod/gitpod-payment-endpoint
 import {
     BillingTier,
     User,
+    Workspace,
     WorkspaceInstance,
     WorkspaceTimeoutDuration,
     WORKSPACE_TIMEOUT_DEFAULT_LONG,
@@ -37,6 +38,7 @@ export class EntitlementServiceChargebee implements EntitlementService {
 
     async mayStartWorkspace(
         user: User,
+        workspace: Workspace,
         date: Date,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult> {
@@ -189,7 +191,7 @@ export class EntitlementServiceChargebee implements EntitlementService {
      * @param user
      */
     async limitNetworkConnections(user: User, date: Date = new Date()): Promise<boolean> {
-        const hasPaidPlan = this.hasPaidSubscription(user, date);
+        const hasPaidPlan = await this.hasPaidSubscription(user, date);
         return !hasPaidPlan;
     }
 

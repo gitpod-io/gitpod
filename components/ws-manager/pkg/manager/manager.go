@@ -437,7 +437,7 @@ func buildWorkspaceSecrets(spec *api.StartWorkspaceSpec) (secrets map[string]str
 		if env.Secret != nil {
 			continue
 		}
-		if !isProtectedEnvVar(env.Name) {
+		if !isProtectedEnvVar(env.Name, spec.SysEnvvars) {
 			continue
 		}
 
@@ -671,7 +671,6 @@ func podRunning(clientset client.Client, podName, namespace string) wait.Conditi
 					return true, nil
 				}
 			}
-
 			// if pod is pending, wait for it to get scheduled
 			return false, nil
 		case corev1.PodRunning:

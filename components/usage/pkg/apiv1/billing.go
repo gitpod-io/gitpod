@@ -37,6 +37,47 @@ type BillingService struct {
 	v1.UnimplementedBillingServiceServer
 }
 
+func (s *BillingService) GetStripeCustomer(ctx context.Context, req *v1.GetStripeCustomerRequest) (*v1.GetStripeCustomerResponse, error) {
+	switch identifier := req.GetIdentifier().(type) {
+	case *v1.GetStripeCustomerRequest_AttributionId:
+		attributionID, err := db.ParseAttributionID(identifier.AttributionId)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "Invalid attribution ID %s", attributionID)
+		}
+
+		customer, err := s.stripeClient.GetCustomerByAttributionID(ctx, string(attributionID))
+		if err != nil {
+			return nil, err
+		}
+
+		return &v1.GetStripeCustomerResponse{
+			AttributionId: string(attributionID),
+			Customer: &v1.StripeCustomer{
+				Id: customer.ID,
+			},
+		}, nil
+	case *v1.GetStripeCustomerRequest_StripeCustomerId:
+		customer, err := s.stripeClient.GetCustomer(ctx, identifier.StripeCustomerId)
+		if err != nil {
+			return nil, err
+		}
+
+		attributionID, err := stripe.GetAttributionID(ctx, customer)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "Failed to parse attribution ID from Stripe customer %s", customer.ID)
+		}
+
+		return &v1.GetStripeCustomerResponse{
+			AttributionId: string(attributionID),
+			Customer: &v1.StripeCustomer{
+				Id: customer.ID,
+			},
+		}, nil
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "Unknown identifier")
+	}
+}
+
 func (s *BillingService) ReconcileInvoices(ctx context.Context, in *v1.ReconcileInvoicesRequest) (*v1.ReconcileInvoicesResponse, error) {
 	balances, err := db.ListBalance(ctx, s.conn)
 	if err != nil {
@@ -44,23 +85,17 @@ func (s *BillingService) ReconcileInvoices(ctx context.Context, in *v1.Reconcile
 		return nil, status.Errorf(codes.Internal, "Failed to reconcile invoices.")
 	}
 
-	creditSummaryForTeams := map[db.AttributionID]int64{}
-	for _, balance := range balances {
-		// filter out balances for non-stripe attribution IDs
-		costCenter, err := s.ccManager.GetOrCreateCostCenter(ctx, balance.AttributionID)
-		if err != nil {
-			return nil, err
-		}
-
-		// We only update Stripe usage when the AttributionID is billed against Stripe (determined through CostCenter)
-		if costCenter.BillingStrategy == db.CostCenter_Stripe {
-			continue
-		}
-
-		creditSummaryForTeams[balance.AttributionID] = int64(math.Ceil(balance.CreditCents.ToCredits()))
+	stripeBalances, err := balancesForStripeCostCenters(ctx, s.ccManager, balances)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to identify stripe balances.")
 	}
 
-	err = s.stripeClient.UpdateUsage(ctx, creditSummaryForTeams)
+	creditCentsByAttribution := map[db.AttributionID]int64{}
+	for _, balance := range stripeBalances {
+		creditCentsByAttribution[balance.AttributionID] = int64(math.Ceil(balance.CreditCents.ToCredits()))
+	}
+
+	err = s.stripeClient.UpdateUsage(ctx, creditCentsByAttribution)
 	if err != nil {
 		log.WithError(err).Errorf("Failed to udpate usage in stripe.")
 		return nil, status.Errorf(codes.Internal, "Failed to update usage in stripe")
@@ -156,4 +191,24 @@ func (s *BillingService) CancelSubscription(ctx context.Context, in *v1.CancelSu
 		return nil, err
 	}
 	return &v1.CancelSubscriptionResponse{}, nil
+}
+
+func balancesForStripeCostCenters(ctx context.Context, cm *db.CostCenterManager, balances []db.Balance) ([]db.Balance, error) {
+	var result []db.Balance
+	for _, balance := range balances {
+		// filter out balances for non-stripe attribution IDs
+		costCenter, err := cm.GetOrCreateCostCenter(ctx, balance.AttributionID)
+		if err != nil {
+			return nil, err
+		}
+
+		// We only update Stripe usage when the AttributionID is billed against Stripe (determined through CostCenter)
+		if costCenter.BillingStrategy != db.CostCenter_Stripe {
+			continue
+		}
+
+		result = append(result, balance)
+	}
+
+	return result, nil
 }

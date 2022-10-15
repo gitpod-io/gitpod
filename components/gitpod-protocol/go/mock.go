@@ -344,21 +344,6 @@ func (mr *MockAPIInterfaceMockRecorder) GetGitpodTokens(ctx interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGitpodTokens", reflect.TypeOf((*MockAPIInterface)(nil).GetGitpodTokens), ctx)
 }
 
-// GetLayout mocks base method.
-func (m *MockAPIInterface) GetLayout(ctx context.Context, workspaceID string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetLayout", ctx, workspaceID)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetLayout indicates an expected call of GetLayout.
-func (mr *MockAPIInterfaceMockRecorder) GetLayout(ctx, workspaceID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLayout", reflect.TypeOf((*MockAPIInterface)(nil).GetLayout), ctx, workspaceID)
-}
-
 // GetLoggedInUser mocks base method.
 func (m *MockAPIInterface) GetLoggedInUser(ctx context.Context) (*User, error) {
 	m.ctrl.T.Helper()
@@ -787,20 +772,6 @@ func (m *MockAPIInterface) StopWorkspace(ctx context.Context, id string) error {
 func (mr *MockAPIInterfaceMockRecorder) StopWorkspace(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StopWorkspace", reflect.TypeOf((*MockAPIInterface)(nil).StopWorkspace), ctx, id)
-}
-
-// StoreLayout mocks base method.
-func (m *MockAPIInterface) StoreLayout(ctx context.Context, workspaceID, layoutData string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "StoreLayout", ctx, workspaceID, layoutData)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// StoreLayout indicates an expected call of StoreLayout.
-func (mr *MockAPIInterfaceMockRecorder) StoreLayout(ctx, workspaceID, layoutData interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreLayout", reflect.TypeOf((*MockAPIInterface)(nil).StoreLayout), ctx, workspaceID, layoutData)
 }
 
 // TakeSnapshot mocks base method.

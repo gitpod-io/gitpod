@@ -628,6 +628,7 @@ export class WorkspaceManagerBridge implements Disposable {
         }
         info.latestInstance.stoppedTime = nowISO;
         info.latestInstance.status.message = `Stopped by ws-manager-bridge. Previously in phase ${info.latestInstance.status.phase}`;
+        this.prometheusExporter.increaseInstanceMarkedStoppedCounter(info.latestInstance.status.phase);
         info.latestInstance.status.phase = "stopped";
         await this.workspaceDB.trace(ctx).storeInstance(info.latestInstance);
 

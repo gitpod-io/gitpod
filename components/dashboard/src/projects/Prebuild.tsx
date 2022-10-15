@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import moment from "moment";
+import dayjs from "dayjs";
 import { PrebuildWithStatus } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { useHistory, useLocation, useRouteMatch } from "react-router";
@@ -88,7 +88,7 @@ export default function () {
             <div className="flex">
                 <div className="my-auto">
                     <p>
-                        {startedByAvatar}Triggered {moment(prebuild.info.startedAt).fromNow()}
+                        {startedByAvatar}Triggered {dayjs(prebuild.info.startedAt).fromNow()}
                     </p>
                 </div>
                 <p className="mx-2 my-auto">·</p>
@@ -181,12 +181,14 @@ export default function () {
                     ) : prebuild?.status === "available" ? (
                         <a
                             className="my-auto"
-                            href={gitpodHostUrl.withContext(`${prebuild?.info.changeUrl}`).toString()}
+                            href={gitpodHostUrl
+                                .withContext(`open-prebuild/${prebuild?.info.id}/${prebuild?.info.changeUrl}`)
+                                .toString()}
                         >
-                            <button>New Workspace ({prebuild?.info.branch})</button>
+                            <button>New Workspace (with this prebuild)</button>
                         </a>
                     ) : (
-                        <button disabled={true}>New Workspace ({prebuild?.info.branch})</button>
+                        <button disabled={true}>New Workspace (with this prebuild)</button>
                     )}
                 </PrebuildLogs>
             </div>

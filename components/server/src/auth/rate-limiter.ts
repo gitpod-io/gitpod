@@ -127,8 +127,6 @@ const defaultFunctions: FunctionsConfig = {
     takeSnapshot: { group: "default", points: 1 },
     waitForSnapshot: { group: "default", points: 1 },
     getSnapshots: { group: "default", points: 1 },
-    storeLayout: { group: "default", points: 1 },
-    getLayout: { group: "default", points: 1 },
     guessGitTokenScopes: { group: "default", points: 1 },
 
     adminGetUsers: { group: "default", points: 1 },

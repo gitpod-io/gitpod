@@ -14,7 +14,7 @@ import {
 } from "@gitpod/gitpod-protocol";
 import { AccountStatement, Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
-import moment from "moment";
+import dayjs from "dayjs";
 import { useEffect, useRef, useState } from "react";
 import CheckBox from "../components/CheckBox";
 import Modal from "../components/Modal";
@@ -257,7 +257,7 @@ export default function UserDetail(p: { user: User }) {
                     </div>
                     <div className="flex flex-col w-full">
                         <div className="flex w-full mt-6">
-                            <Property name="Sign Up Date">{moment(user.creationDate).format("MMM D, YYYY")}</Property>
+                            <Property name="Sign Up Date">{dayjs(user.creationDate).format("MMM D, YYYY")}</Property>
                             <Property
                                 name="Feature Flags"
                                 actions={[

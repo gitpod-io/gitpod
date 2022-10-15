@@ -1,0 +1,23 @@
+version: v1
+plugins:
+  - name: go
+    out: go
+    opt:
+     - module=github.com/gitpod-io/gitpod/public-api
+  - name: go-grpc
+    out: go
+    opt:
+      - module=github.com/gitpod-io/gitpod/public-api
+  - name: connect-go
+    out: go
+    opt:
+     - module=github.com/gitpod-io/gitpod/public-api
+
+  - name: es
+    out: typescript/src
+    opt: target=ts
+    path: typescript/node_modules/.bin/protoc-gen-es
+  - name: connect-web
+    out: typescript/src
+    opt: target=ts
+    path: typescript/node_modules/.bin/protoc-gen-connect-web

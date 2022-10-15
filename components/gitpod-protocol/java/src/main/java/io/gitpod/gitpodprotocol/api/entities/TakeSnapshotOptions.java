@@ -6,26 +6,11 @@ package io.gitpod.gitpodprotocol.api.entities;
 
 public class TakeSnapshotOptions {
     private String workspaceId;
-    private String layoutData;
     private boolean dontWait;
-
-    public TakeSnapshotOptions(final String workspaceId, final String layoutData, final Boolean dontWait) {
-        this.workspaceId = workspaceId;
-        this.layoutData = layoutData;
-        this.dontWait = dontWait;
-    }
 
     public TakeSnapshotOptions(final String workspaceId, final Boolean dontWait) {
         this.workspaceId = workspaceId;
         this.dontWait = dontWait;
-    }
-
-    public String getLayoutData() {
-        return layoutData;
-    }
-
-    public void setLayoutData(String layoutData) {
-        this.layoutData = layoutData;
     }
 
     public String getWorkspaceId() {

@@ -28,7 +28,6 @@ import {
     WhitelistedRepository,
     Snapshot,
     VolumeSnapshot,
-    LayoutData,
     PrebuiltWorkspace,
     RunningWorkspaceInfo,
     PrebuiltWorkspaceUpdatable,
@@ -42,7 +41,6 @@ import {
 import { TypeORM } from "./typeorm";
 import { DBWorkspace } from "./entity/db-workspace";
 import { DBWorkspaceInstance } from "./entity/db-workspace-instance";
-import { DBLayoutData } from "./entity/db-layout-data";
 import { DBSnapshot } from "./entity/db-snapshot";
 import { DBVolumeSnapshot } from "./entity/db-volume-snapshot";
 import { DBWorkspaceInstanceUser } from "./entity/db-workspace-instance-user";
@@ -107,10 +105,6 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         return await (
             await this.getManager()
         ).getRepository<DBPrebuiltWorkspaceUpdatable>(DBPrebuiltWorkspaceUpdatable);
-    }
-
-    protected async getLayoutDataRepo(): Promise<Repository<DBLayoutData>> {
-        return await (await this.getManager()).getRepository<DBLayoutData>(DBLayoutData);
     }
 
     public async connect(maxTries: number = 3, timeout: number = 2000): Promise<void> {
@@ -977,17 +971,6 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         return (await query.getMany()) as any;
     }
 
-    public async findLayoutDataByWorkspaceId(workspaceId: string): Promise<LayoutData | undefined> {
-        const layoutDataRepo = await this.getLayoutDataRepo();
-        return layoutDataRepo.findOne(workspaceId);
-    }
-
-    public async storeLayoutData(layoutData: LayoutData): Promise<LayoutData> {
-        const layoutDataRepo = await this.getLayoutDataRepo();
-        const dbLayoutData = layoutData as DBLayoutData;
-        return await layoutDataRepo.save(dbLayoutData);
-    }
-
     /**
      * This *hard deletes* the workspace entry and all corresponding workspace-instances, by triggering a db-sync mechanism that purges it from the DB.
      * Note: when this function returns that doesn't mean that the entries are actually gone yet, that might still take a short while until db-sync comes
@@ -1274,6 +1257,21 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
 
         const res = await query.getMany();
         return res.map((r) => r.info);
+    }
+
+    async findProbeWorkspaceIDs(limit: number): Promise<string[]> {
+        const repo = await this.getWorkspaceRepo();
+        const results = (await repo.query(
+            `
+                SELECT ws.id AS id
+                FROM d_b_workspace ws
+                WHERE ws.type = 'probe'
+                LIMIT ?;
+            `,
+            [limit],
+        )) as { id: string }[];
+
+        return results.map((r) => r.id);
     }
 }
 

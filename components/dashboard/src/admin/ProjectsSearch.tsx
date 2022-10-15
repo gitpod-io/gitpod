@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import moment from "moment";
+import dayjs from "dayjs";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -32,9 +32,10 @@ export function ProjectsSearch() {
     const [currentProjectOwner, setCurrentProjectOwner] = useState<string | undefined>("");
     const pageLength = 50;
     const [currentPage, setCurrentPage] = useState(1);
-    useEffect(() => {
+    const updateCurrentPage = (page: number) => {
+        setCurrentPage(page);
         search();
-    }, [currentPage]);
+    };
 
     useEffect(() => {
         const projectId = location.pathname.split("/")[3];
@@ -139,7 +140,7 @@ export function ProjectsSearch() {
             </div>
             <Pagination
                 currentPage={currentPage}
-                setPage={setCurrentPage}
+                setPage={updateCurrentPage}
                 totalNumberOfPages={Math.ceil(searchResult.total / pageLength)}
             />
         </>
@@ -161,7 +162,7 @@ export function ProjectsSearch() {
                     </div>
                     <div className="flex w-2/12 self-center">
                         <div className="text-sm w-full text-gray-400 truncate">
-                            {moment(p.project.creationTime).fromNow()}
+                            {dayjs(p.project.creationTime).fromNow()}
                         </div>
                     </div>
                 </div>

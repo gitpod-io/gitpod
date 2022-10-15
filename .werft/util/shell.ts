@@ -62,6 +62,75 @@ export function exec(cmd: string, options?: ExecOptions): ChildProcess | shell.S
     }
 }
 
+/**
+ * Execute a command and stream output logs.
+ *
+ * If a slice is given logs are streamed using the werft log syntax; else they're streamed directly
+ * to stderr/stdout.
+ *
+ * @return The process exit code
+ */
+export async function execStream(command: string, options: ExecOptions ): Promise<number> {
+    const werft = getGlobalWerftInstance();
+
+    options = options || {};
+
+    if (options.slice) {
+        options.silent = true;
+    }
+
+    const child = shell.exec(command, {...options, async: true});
+
+    // Collect output from a subprocess file and print newline terminated log messages.
+    //
+    // The event handlers attached to the child process stdout/stderr aren't guaranteed to be newline
+    // terminated; this can have odd interactions with `werft.logOutput` which appends newlines.
+    // to log messages. To ensure faithful reproduction of the underlying command output we
+    // perform our own buffer management to emit newline delimited logs accurately.
+    const bufferedLog = (slice: string, buffer: string, data: string) => {
+        buffer += data;
+        const lastIndex = buffer.lastIndexOf("\n");
+        if (lastIndex >= 0) {
+            // Extract the substring till the last newline in the buffer, and trim off the newline
+            // as werft.logOutput will append a newline to the log message.
+            let msg = buffer.slice(0, lastIndex + 1).trimEnd();
+            werft.logOutput(slice, msg);
+
+            buffer = buffer.slice(lastIndex + 1);
+        }
+
+    };
+
+    let stdoutBuffer: string = '';
+    child.stdout.on('data', (data) => {
+        if (options.slice) bufferedLog(options.slice, stdoutBuffer, data);
+    });
+
+    let stderrBuffer: string = '';
+    child.stderr.on('data', (data) => {
+        if (options.slice) bufferedLog(options.slice, stderrBuffer, data);
+    });
+
+    const code = await new Promise<number>((resolve, reject) => {
+        child.on('close', (code, _signal) => {
+            if (options.slice) {
+                // The child process stdout and stderr buffers may not be fully flushed as the child process
+                // may emit logs that aren't terminated with a newline; flush those buffers now.
+                if (stdoutBuffer.length > 0) werft.logOutput(options.slice, stdoutBuffer.trimEnd());
+                if (stderrBuffer.length > 0) werft.logOutput(options.slice, stderrBuffer.trimEnd());
+            }
+
+            if (code === 0 || options.dontCheckRc) {
+                resolve(code)
+            } else {
+                reject(new Error(`Process exited non-zero exit code ${code}`))
+            }
+        });
+    });
+
+    return code;
+}
+
 // gitTag tags the current state and pushes that tag to the repo origin
 export const gitTag = (tag) => {
     shell.mkdir("/root/.ssh");

@@ -16,44 +16,25 @@ import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 export function BillingAccountSelector(props: { onSelected?: () => void }) {
     const { user, setUser } = useContext(UserContext);
     const { teams } = useContext(TeamsContext);
-    const [teamsWithBillingEnabled, setTeamsWithBillingEnabled] = useState<Team[] | undefined>();
+    const [teamsAvailableForAttribution, setTeamsAvailableForAttribution] = useState<Team[] | undefined>();
     const [membersByTeam, setMembersByTeam] = useState<Record<string, TeamMemberInfo[]>>({});
 
     useEffect(() => {
         if (!teams) {
-            setTeamsWithBillingEnabled(undefined);
+            setTeamsAvailableForAttribution(undefined);
             return;
         }
-        const teamsWithBilling: Team[] = [];
-        Promise.all(
-            teams.map(async (t) => {
-                const attributionId: string = AttributionId.render({ kind: "team", teamId: t.id });
-                const subscriptionId = await getGitpodService().server.findStripeSubscriptionId(attributionId);
-                if (subscriptionId) {
-                    teamsWithBilling.push(t);
-                }
-            }),
-        ).then(() => setTeamsWithBillingEnabled(teamsWithBilling.sort((a, b) => (a.name > b.name ? 1 : -1))));
+        setTeamsAvailableForAttribution(teams.sort((a, b) => (a.name > b.name ? 1 : -1)));
+        const members: Record<string, TeamMemberInfo[]> = {};
+        teams.forEach(async (team) => {
+            try {
+                members[team.id] = await getGitpodService().server.getTeamMembers(team.id);
+            } catch (error) {
+                console.error("Could not get members of team", team, error);
+            }
+        });
+        setMembersByTeam(members);
     }, [teams]);
-
-    useEffect(() => {
-        if (!teamsWithBillingEnabled) {
-            return;
-        }
-        (async () => {
-            const members: Record<string, TeamMemberInfo[]> = {};
-            await Promise.all(
-                teamsWithBillingEnabled.map(async (team) => {
-                    try {
-                        members[team.id] = await getGitpodService().server.getTeamMembers(team.id);
-                    } catch (error) {
-                        console.error("Could not get members of team", team, error);
-                    }
-                }),
-            );
-            setMembersByTeam(members);
-        })();
-    }, [teamsWithBillingEnabled]);
 
     const setUsageAttributionTeam = async (team?: Team) => {
         if (!user) {
@@ -63,25 +44,21 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
             team ? { kind: "team", teamId: team.id } : { kind: "user", userId: user.id },
         );
         await getGitpodService().server.setUsageAttribution(usageAttributionId);
+        // we changed the user, to let's propagate in the frontend
         setUser(await getGitpodService().server.getLoggedInUser());
         if (props.onSelected) {
             props.onSelected();
         }
     };
 
-    let selectedAttributionId = user?.usageAttributionId;
-    if (!selectedAttributionId && teamsWithBillingEnabled?.length === 1) {
-        // When the user hasn't selected a billing account, but there is only one possible billing account,
-        // we auto-select that one.
-        selectedAttributionId = AttributionId.render({ kind: "team", teamId: teamsWithBillingEnabled[0].id });
-    }
+    let selectedAttributionId = user?.usageAttributionId || AttributionId.render({ kind: "user", userId: user?.id! });
 
     return (
         <>
-            {teamsWithBillingEnabled === undefined && <Spinner className="m-2 h-5 w-5 animate-spin" />}
-            {teamsWithBillingEnabled && (
+            {teamsAvailableForAttribution === undefined && <Spinner className="m-2 h-5 w-5 animate-spin" />}
+            {teamsAvailableForAttribution && (
                 <div>
-                    <p>Associate all my usage with the billing account below.</p>
+                    <p>Associate usage without a project to the billing account below.</p>
                     <div className="mt-4 max-w-2xl grid grid-cols-3 gap-3">
                         <SelectableCardSolid
                             className="h-18"
@@ -96,13 +73,7 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
                                 <span className="text-sm text-gray-400">Personal Account</span>
                             </div>
                         </SelectableCardSolid>
-                        {teamsWithBillingEnabled.length === 0 && (
-                            <span className="col-span-3">
-                                Please enable billing for one of your teams, or create a new team and enable billing for
-                                it.
-                            </span>
-                        )}
-                        {teamsWithBillingEnabled.map((t) => (
+                        {teamsAvailableForAttribution.map((t) => (
                             <SelectableCardSolid
                                 className="h-18"
                                 title={t.name}

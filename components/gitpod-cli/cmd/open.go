@@ -5,17 +5,16 @@
 package cmd
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/exec"
-	"sync"
-	"time"
+
+	supervisorClient "github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor-helper"
 
 	"github.com/google/shlex"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
-
-	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
 )
 
 // initCmd represents the init command
@@ -24,13 +23,15 @@ var openCmd = &cobra.Command{
 	Short: "Opens a file in Gitpod",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		wait, _ := cmd.Flags().GetBool("wait")
+		// TODO(ak) use NotificationService.NotifyActive supervisor API instead
 
-		err := tryOpenInTheia(args, wait)
-		if err == nil {
-			// opening in Theia worked - we're good
-			return
+		ctx := context.Background()
+		err := supervisorClient.WaitForIDEReady(ctx)
+		if err != nil {
+			log.Fatal(err)
 		}
+
+		wait, _ := cmd.Flags().GetBool("wait")
 
 		pcmd := os.Getenv("GP_OPEN_EDITOR")
 		if pcmd == "" {
@@ -64,47 +65,4 @@ var openCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(openCmd)
 	openCmd.Flags().BoolP("wait", "w", false, "wait until all opened files are closed again")
-}
-
-func tryOpenInTheia(args []string, wait bool) error {
-	service, err := theialib.NewServiceFromEnv()
-	if err != nil {
-		return err
-	}
-
-	var wg sync.WaitGroup
-	for _, fn := range args {
-		if fn == "--wait" {
-			continue
-		}
-
-		_, err := service.OpenFile(theialib.OpenFileRequest{Path: fn})
-		if err != nil {
-			return err
-		}
-		if !wait {
-			continue
-		}
-
-		wg.Add(1)
-		go func(fn string) {
-			defer wg.Done()
-
-			for {
-				resp, err := service.IsFileOpen(theialib.IsFileOpenRequest{Path: fn})
-				if err != nil {
-					log.Fatal(err)
-					return
-				}
-				if !resp.IsOpen {
-					return
-				}
-
-				time.Sleep(1 * time.Second)
-			}
-		}(fn)
-	}
-
-	wg.Wait()
-	return nil
 }

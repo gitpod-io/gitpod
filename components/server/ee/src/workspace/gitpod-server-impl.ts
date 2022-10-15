@@ -47,6 +47,7 @@ import {
     TeamMemberRole,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
     PrebuildEvent,
+    OpenPrebuildContext,
 } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import {
@@ -114,9 +115,7 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billing/entitlement-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { BillingModes } from "../billing/billing-mode";
-import { BillingService } from "../billing/billing-service";
 import { UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
-import { MessageBusIntegration } from "../../../src/workspace/messagebus-integration";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -162,9 +161,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
 
     @inject(BillingModes) protected readonly billingModes: BillingModes;
-    @inject(BillingService) protected readonly billingService: BillingService;
-
-    @inject(MessageBusIntegration) protected readonly messageBus: MessageBusIntegration;
 
     initialize(
         client: GitpodClient | undefined,
@@ -284,13 +280,14 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     protected async mayStartWorkspace(
         ctx: TraceContext,
         user: User,
+        workspace: Workspace,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<void> {
-        await super.mayStartWorkspace(ctx, user, runningInstances);
+        await super.mayStartWorkspace(ctx, user, workspace, runningInstances);
 
         let result: MayStartWorkspaceResult = {};
         try {
-            result = await this.entitlementService.mayStartWorkspace(user, new Date(), runningInstances);
+            result = await this.entitlementService.mayStartWorkspace(user, workspace, new Date(), runningInstances);
             TraceContext.addNestedTags(ctx, { mayStartWorkspace: { result } });
         } catch (err) {
             log.error({ userId: user.id }, "EntitlementSerivce.mayStartWorkspace error", err);
@@ -967,9 +964,19 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
             const logCtx: LogContext = { userId: user.id };
             const cloneUrl = context.repository.cloneUrl;
-            const prebuiltWorkspace = await this.workspaceDb
-                .trace(ctx)
-                .findPrebuiltWorkspaceByCommit(cloneUrl, commitSHAs);
+            let prebuiltWorkspace: PrebuiltWorkspace | undefined;
+            if (OpenPrebuildContext.is(context)) {
+                prebuiltWorkspace = await this.workspaceDb.trace(ctx).findPrebuildByID(context.openPrebuildID);
+                if (prebuiltWorkspace?.cloneURL !== cloneUrl) {
+                    // prevent users from opening arbitrary prebuilds this way - they must match the clone URL so that the resource guards are correct.
+                    return;
+                }
+            } else {
+                prebuiltWorkspace = await this.workspaceDb
+                    .trace(ctx)
+                    .findPrebuiltWorkspaceByCommit(cloneUrl, commitSHAs);
+            }
+
             const logPayload = { mode, cloneUrl, commit: commitSHAs, prebuiltWorkspace };
             log.debug(logCtx, "Looking for prebuilt workspace: ", logPayload);
             if (!prebuiltWorkspace) {
@@ -998,7 +1005,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 const makeResult = (instanceID: string): WorkspaceCreationResult => {
                     return <WorkspaceCreationResult>{
                         runningWorkspacePrebuild: {
-                            prebuildID: prebuiltWorkspace.id,
+                            prebuildID: prebuiltWorkspace!.id,
                             workspaceID,
                             instanceID,
                             starting: "queued",
@@ -2117,8 +2124,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    protected defaultSpendingLimit = 100;
-    async subscribeToStripe(ctx: TraceContext, attributionId: string, setupIntentId: string): Promise<void> {
+    async subscribeToStripe(
+        ctx: TraceContext,
+        attributionId: string,
+        setupIntentId: string,
+        usageLimit: number,
+    ): Promise<number | undefined> {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
@@ -2143,15 +2154,17 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             await this.stripeService.createSubscriptionForCustomer(customerId, attributionId);
 
             // Creating a cost center for this customer
-            await this.usageService.setCostCenter({
+            const { costCenter } = await this.usageService.setCostCenter({
                 costCenter: {
                     attributionId: attributionId,
-                    spendingLimit: this.defaultSpendingLimit,
+                    spendingLimit: usageLimit,
                     billingStrategy: CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE,
                 },
             });
 
             this.messageBus.notifyOnSubscriptionUpdate(ctx, attrId).catch();
+
+            return costCenter?.spendingLimit;
         } catch (error) {
             log.error(`Failed to subscribe '${attributionId}' to Stripe`, error);
             throw new ResponseError(
@@ -2255,8 +2268,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         try {
             const billingMode = await this.billingModes.getBillingModeForUser(user, new Date());
             if (billingMode.mode === "usage-based") {
-                const limit = await this.billingService.checkUsageLimitReached(user);
-                let teamOrUser;
+                const limit = await this.userService.checkUsageLimitReached(user);
+                await this.guardCostCenterAccess(ctx, user.id, limit.attributionId, "get");
+
                 switch (limit.attributionId.kind) {
                     case "user": {
                         if (limit.reached) {
@@ -2267,7 +2281,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                         break;
                     }
                     case "team": {
-                        teamOrUser = await this.teamDB.findTeamById(limit.attributionId.teamId);
+                        const teamOrUser = await this.teamDB.findTeamById(limit.attributionId.teamId);
                         if (teamOrUser) {
                             if (limit.reached) {
                                 result.push(teamOrUser?.slug);

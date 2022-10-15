@@ -1,6 +1,7 @@
 # Load balancer in the DEV cluster
 resource "kubernetes_service" "dev-svc" {
-  provider = k8s.dev
+  provider               = k8s.dev
+  wait_for_load_balancer = true
   metadata {
     name      = "lb-${var.preview_name}"
     namespace = "loadbalancers"
@@ -56,7 +57,7 @@ resource "kubernetes_service" "harvester-svc" {
       name        = "https"
       protocol    = "TCP"
       port        = 443
-      target_port = 4430
+      target_port = 443
     }
     port {
       name        = "kube-api"

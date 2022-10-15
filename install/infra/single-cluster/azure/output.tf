@@ -23,7 +23,7 @@ output "database" {
 
 output "nameservers" {
   sensitive = false
-  value     = module.aks.domain_nameservers
+  value     = module.aks.name_servers
 }
 
 output "cluster_issuer" {

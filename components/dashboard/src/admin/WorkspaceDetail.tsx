@@ -6,7 +6,7 @@
 
 import { User, WorkspaceAndInstance, ContextURL } from "@gitpod/gitpod-protocol";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
-import moment from "moment";
+import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getGitpodService } from "../service/service";
@@ -90,9 +90,9 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                 <div className="flex flex-col w-full">
                     <div className="flex w-full mt-6">
                         <Property name="Created">
-                            {moment(workspace.workspaceCreationTime).format("MMM D, YYYY")}
+                            {dayjs(workspace.workspaceCreationTime).format("MMM D, YYYY")}
                         </Property>
-                        <Property name="Last Start">{moment(workspace.instanceCreationTime).fromNow()}</Property>
+                        <Property name="Last Start">{dayjs(workspace.instanceCreationTime).fromNow()}</Property>
                         <Property name="Context">
                             <a
                                 className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400"
@@ -131,7 +131,7 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                             }
                         >
                             {workspace.softDeleted
-                                ? `'${workspace.softDeleted}' ${moment(workspace.softDeletedTime).fromNow()}`
+                                ? `'${workspace.softDeleted}' ${dayjs(workspace.softDeletedTime).fromNow()}`
                                 : "No"}
                         </Property>
                     </div>
@@ -141,7 +141,7 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                         </Property>
                         <Property name="Region">{workspace.region}</Property>
                         <Property name="Stopped">
-                            {workspace.stoppedTime ? moment(workspace.stoppedTime).fromNow() : "---"}
+                            {workspace.stoppedTime ? dayjs(workspace.stoppedTime).fromNow() : "---"}
                         </Property>
                     </div>
                     <div className="flex w-full mt-12">

@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import moment from "moment";
+import dayjs from "dayjs";
 import { useState, useEffect } from "react";
 
 import TeamDetail from "./TeamDetail";
@@ -32,9 +32,10 @@ export function TeamsSearch() {
     const [searchResult, setSearchResult] = useState<AdminGetListResult<Team>>({ total: 0, rows: [] });
     const pageLength = 50;
     const [currentPage, setCurrentPage] = useState(1);
-    useEffect(() => {
+    const updateCurrentPage = (page: number) => {
+        setCurrentPage(page);
         search();
-    }, [currentPage]);
+    };
 
     useEffect(() => {
         const teamId = location.pathname.split("/")[3];
@@ -128,7 +129,7 @@ export function TeamsSearch() {
             </div>
             <Pagination
                 currentPage={currentPage}
-                setPage={setCurrentPage}
+                setPage={updateCurrentPage}
                 totalNumberOfPages={Math.ceil(searchResult.total / pageLength)}
             />
         </>
@@ -150,7 +151,7 @@ export function TeamsSearch() {
                     </div>
                     <div className="flex w-5/12 self-center">
                         <div className="text-sm w-full text-gray-400 truncate">
-                            {moment(props.team.creationTime).format("MMM D, YYYY")}
+                            {dayjs(props.team.creationTime).format("MMM D, YYYY")}
                         </div>
                     </div>
                 </div>

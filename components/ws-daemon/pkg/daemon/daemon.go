@@ -200,9 +200,8 @@ func (d *Daemon) Start() error {
 	for _, dsk := range d.diskGuards {
 		go dsk.Start()
 	}
-	if d.hosts != nil {
-		go d.hosts.Start()
-	}
+
+	go d.hosts.Start()
 
 	return nil
 }
@@ -218,9 +217,8 @@ func (d *Daemon) Stop() error {
 	var errs []error
 	errs = append(errs, d.dispatch.Close())
 	errs = append(errs, d.content.Close())
-	if d.hosts != nil {
-		errs = append(errs, d.hosts.Close())
-	}
+
+	errs = append(errs, d.hosts.Close())
 
 	for _, err := range errs {
 		if err != nil {
@@ -233,7 +231,7 @@ func (d *Daemon) Stop() error {
 
 func (d *Daemon) ReadinessProbe() func() error {
 	return func() error {
-		if d.hosts != nil && !d.hosts.DidUpdate() {
+		if !d.hosts.DidUpdate() {
 			err := fmt.Errorf("host controller not ready yet")
 			log.WithError(err).Errorf("readiness probe failure")
 			return err

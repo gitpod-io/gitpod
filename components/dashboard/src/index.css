@@ -69,7 +69,7 @@
     }
 
     button.gp-link {
-        @apply bg-transparent hover:bg-transparent p-0 rounded-none;
+        @apply bg-transparent hover:bg-transparent p-0 font-normal rounded-none;
     }
 
     a.gp-link,
@@ -124,7 +124,7 @@
         @apply h-2 rounded;
     }
     progress::-webkit-progress-bar {
-        @apply rounded-md bg-gray-200;
+        @apply rounded-md bg-gray-200 dark:bg-gray-600;
     }
     progress::-webkit-progress-value {
         @apply rounded-md bg-green-500;

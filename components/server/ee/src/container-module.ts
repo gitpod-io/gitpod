@@ -64,7 +64,6 @@ import { BillingModes, BillingModesImpl } from "./billing/billing-mode";
 import { EntitlementServiceLicense } from "./billing/entitlement-service-license";
 import { EntitlementServiceImpl } from "./billing/entitlement-service";
 import { EntitlementServiceUBP } from "./billing/entitlement-service-ubp";
-import { BillingService } from "./billing/billing-service";
 
 export const productionEEContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     rebind(Server).to(ServerEE).inSingletonScope();
@@ -131,6 +130,4 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(EntitlementServiceImpl).toSelf().inSingletonScope();
     rebind(EntitlementService).to(EntitlementServiceImpl).inSingletonScope();
     bind(BillingModes).to(BillingModesImpl).inSingletonScope();
-
-    bind(BillingService).toSelf().inSingletonScope();
 });

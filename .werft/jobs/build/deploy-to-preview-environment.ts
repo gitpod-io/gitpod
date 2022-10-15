@@ -11,19 +11,16 @@ import {
     waitForApiserver,
 } from "../../util/kubectl";
 import {
-    issueCertificate,
     installCertificate,
-    IssueCertificateParams,
     InstallCertificateParams,
 } from "../../util/certs";
-import { sleep, env } from "../../util/util";
-import { CORE_DEV_KUBECONFIG_PATH, GCLOUD_SERVICE_ACCOUNT_PATH, PREVIEW_K3S_KUBECONFIG_PATH } from "./const";
+import { env } from "../../util/util";
+import { CORE_DEV_KUBECONFIG_PATH, PREVIEW_K3S_KUBECONFIG_PATH } from "./const";
 import { Werft } from "../../util/werft";
 import { JobConfig } from "./job-config";
 import * as VM from "../../vm/vm";
 import { Analytics, Installer } from "./installer/installer";
 import { previewNameFromBranchName } from "../../util/preview";
-import { createDNSRecord } from "../../util/gcloud";
 import { SpanStatusCode } from "@opentelemetry/api";
 
 // used by Installer
@@ -72,7 +69,6 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         version,
         analytics,
         cleanSlateDeployment,
-        withPayment,
         withObservability,
         installEELicense,
         workspaceFeatureFlags,
@@ -102,7 +98,6 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         cleanSlateDeployment,
         installEELicense,
         imagePullAuth,
-        withPayment,
         withObservability,
     };
 
@@ -133,12 +128,8 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
     VM.waitForVMReadiness({ name: destname, timeoutSeconds: 60 * 10, slice: vmSlices.VM_READINESS });
     werft.done(vmSlices.VM_READINESS);
 
-    werft.log(vmSlices.START_KUBECTL_PORT_FORWARDS, "Starting SSH port forwarding");
-    VM.startSSHProxy({ name: destname, slice: vmSlices.START_KUBECTL_PORT_FORWARDS });
-    werft.done(vmSlices.START_KUBECTL_PORT_FORWARDS);
-
     werft.log(vmSlices.KUBECONFIG, "Copying k3s kubeconfig");
-    VM.copyk3sKubeconfig({ name: destname, timeoutMS: 1000 * 60 * 3, slice: vmSlices.KUBECONFIG });
+    VM.copyk3sKubeconfigShell({ name: destname, timeoutMS: 1000 * 60 * 6, slice: vmSlices.KUBECONFIG });
     werft.done(vmSlices.KUBECONFIG);
 
     werft.log(vmSlices.WAIT_K3S, "Wait for k3s");
@@ -246,7 +237,7 @@ async function deployToDevWithInstaller(
 ) {
     // to test this function, change files in your workspace, sideload (-s) changed files into werft or set annotations (-a) like so:
     // werft run github -f -j ./.werft/build.yaml -s ./.werft/build.ts -s ./.werft/jobs/build/installer/post-process.sh -a with-clean-slate-deployment=true
-    const { version, destname, namespace, domain } = deploymentConfig;
+    const { version, namespace } = deploymentConfig;
     const deploymentKubeconfig = PREVIEW_K3S_KUBECONFIG_PATH;
 
     // find free ports
@@ -342,7 +333,6 @@ async function deployToDevWithInstaller(
         workspaceFeatureFlags: workspaceFeatureFlags,
         gitpodDaemonsetPorts: { registryFacade: registryNodePortMeta, wsDaemon: wsdaemonPortMeta },
         smithToken: token,
-        withPayment: deploymentConfig.withPayment,
     });
     try {
         werft.log(phases.DEPLOY, "deploying using installer");
@@ -363,7 +353,6 @@ async function deployToDevWithInstaller(
     });
     werft.done(installerSlices.DEPLOYMENT_WAITING);
 
-    await addVMDNSRecord(werft, destname, domain);
     addAgentSmithToken(werft, deploymentConfig.namespace, installer.options.kubeconfigPath, tokenHash);
 
     werft.done(phases.DEPLOY);
@@ -404,88 +393,7 @@ interface DeploymentConfig {
     cleanSlateDeployment: boolean;
     installEELicense: boolean;
     imagePullAuth: string;
-    withPayment: boolean;
     withObservability: boolean;
-}
-
-async function addVMDNSRecord(werft: Werft, name: string, domain: string) {
-    const ingressIP = getHarvesterIngressIP();
-    let proxyLBIP = null;
-    werft.log(installerSlices.DNS_ADD_RECORD, "Getting loadbalancer IP");
-    for (let i = 0; i < 60; i++) {
-        try {
-            let lb = exec(
-                `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n loadbalancers get service lb-${name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'`,
-                { silent: true },
-            );
-            if (lb.length > 4) {
-                proxyLBIP = lb.toString();
-                break;
-            }
-            await sleep(1000);
-        } catch (err) {
-            await sleep(1000);
-        }
-    }
-    if (proxyLBIP == null) {
-        werft.fail(installerSlices.DNS_ADD_RECORD, new Error("Can't get loadbalancer IP"));
-    }
-    werft.log(installerSlices.DNS_ADD_RECORD, "Get loadbalancer IP: " + proxyLBIP);
-
-    await Promise.all([
-        createDNSRecord({
-            domain: domain,
-            projectId: "gitpod-core-dev",
-            dnsZone: "preview-gitpod-dev-com",
-            IP: ingressIP,
-            slice: installerSlices.DNS_ADD_RECORD,
-        }),
-        createDNSRecord({
-            domain: `*.${domain}`,
-            projectId: "gitpod-core-dev",
-            dnsZone: "preview-gitpod-dev-com",
-            IP: ingressIP,
-            slice: installerSlices.DNS_ADD_RECORD,
-        }),
-        createDNSRecord({
-            domain: `*.ws.${domain}`,
-            projectId: "gitpod-core-dev",
-            dnsZone: "preview-gitpod-dev-com",
-            IP: ingressIP,
-            slice: installerSlices.DNS_ADD_RECORD,
-        }),
-        createDNSRecord({
-            domain: `*.ssh.ws.${domain}`,
-            projectId: "gitpod-core-dev",
-            dnsZone: "preview-gitpod-dev-com",
-            IP: proxyLBIP,
-            slice: installerSlices.DNS_ADD_RECORD,
-        }),
-    ]);
-    werft.done(installerSlices.DNS_ADD_RECORD);
-}
-
-export async function issueMetaCerts(
-    werft: Werft,
-    certName: string,
-    certsNamespace: string,
-    domain: string,
-    branch: string,
-    slice: string,
-): Promise<boolean> {
-    const additionalSubdomains: string[] = ["", "*.", `*.ws.`];
-    var metaClusterCertParams = new IssueCertificateParams();
-    metaClusterCertParams.pathToTemplate = "/workspace/.werft/util/templates";
-    metaClusterCertParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
-    metaClusterCertParams.certName = certName;
-    metaClusterCertParams.certNamespace = certsNamespace;
-    metaClusterCertParams.previewName = previewNameFromBranchName(branch);
-    metaClusterCertParams.dnsZoneDomain = "gitpod-dev.com";
-    metaClusterCertParams.domain = domain;
-    metaClusterCertParams.ip = getCoreDevIngressIP();
-    metaClusterCertParams.bucketPrefixTail = "";
-    metaClusterCertParams.additionalSubdomains = additionalSubdomains;
-    return issueCertificate(werft, metaClusterCertParams, { ...metaEnv(), slice });
 }
 
 async function installMetaCertificates(
@@ -502,16 +410,6 @@ async function installMetaCertificates(
     metaInstallCertParams.destinationNamespace = destNamespace;
     metaInstallCertParams.destinationKubeconfig = destinationKubeconfig;
     await installCertificate(werft, metaInstallCertParams, { ...metaEnv(), slice: slice });
-}
-
-// returns the static IP address
-function getCoreDevIngressIP(): string {
-    return "104.199.27.246";
-}
-
-// returns the static IP address
-function getHarvesterIngressIP(): string {
-    return "159.69.172.117";
 }
 
 function metaEnv(_parent?: ExecOptions): ExecOptions {

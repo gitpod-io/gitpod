@@ -7,8 +7,14 @@ SCRIPT_PATH=$(dirname "${BASH_SOURCE[0]}")
 # shellcheck source=./common.sh
 source "${SCRIPT_PATH}/common.sh"
 
+TF_CLI_ARGS_plan=${TF_CLI_ARGS_plan:-""}
+TF_CLI_ARGS_apply=${TF_CLI_ARGS_apply:-""}
+
+export TF_CLI_ARGS_plan="${TF_CLI_ARGS_plan} -lock-timeout=5m"
+export TF_CLI_ARGS_apply="${TF_CLI_ARGS_apply} -lock-timeout=5m"
+
 if [ -n "${DESTROY-}" ]; then
-  export TF_CLI_ARGS_plan="-destroy"
+    export TF_CLI_ARGS_plan="${TF_CLI_ARGS_plan} -destroy"
 fi
 
 function check_workspace() {
@@ -80,10 +86,6 @@ function terraform_plan() {
   EXIT_CODE=0
   terraform plan -detailed-exitcode -out="${plan_location}" || EXIT_CODE=$?
 
-  if [[ ${EXIT_CODE} = 2 ]]; then
-    terraform show "${plan_location}"
-  fi
-
   popd || exit "${ERROR_CHANGE_DIR}"
 
   return "${EXIT_CODE}"
@@ -117,7 +119,7 @@ function terraform_apply() {
     check_workspace "${WORKSPACE}"
   fi
 
-  terraform apply "${plan_location}"
+  timeout --signal=INT --foreground 10m terraform apply "${plan_location}"
 
   popd || return "${ERROR_CHANGE_DIR}"
 }

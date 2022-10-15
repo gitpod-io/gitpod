@@ -23,7 +23,7 @@ import (
 )
 
 func poolTask(task func() (bool, error)) (bool, error) {
-	timeout := time.After(5 * time.Minute)
+	timeout := time.After(10 * time.Minute)
 	ticker := time.Tick(20 * time.Second)
 	for {
 		select {

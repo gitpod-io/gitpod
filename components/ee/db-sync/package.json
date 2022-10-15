@@ -21,7 +21,6 @@
     "@gitpod/gitpod-db": "0.1.5",
     "@gitpod/gitpod-protocol": "0.1.5",
     "argparse": "^2.0.1",
-    "moment": "^2.21.0",
     "mysql": "^2.15.0",
     "progress": "^2.0.1",
     "reflect-metadata": "^0.1.13"

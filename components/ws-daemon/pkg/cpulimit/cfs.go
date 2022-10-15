@@ -35,7 +35,7 @@ func (basePath CgroupV1CFSController) Usage() (usage CPUTime, err error) {
 func (basePath CgroupV1CFSController) SetLimit(limit Bandwidth) (changed bool, err error) {
 	period, err := basePath.readCfsPeriod()
 	if err != nil {
-		err = xerrors.Errorf("cannot parse CFS period: %w", err)
+		err = xerrors.Errorf("failed to read CFS period: %w", err)
 		return
 	}
 

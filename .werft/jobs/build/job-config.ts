@@ -29,11 +29,11 @@ export interface JobConfig {
     withUpgradeTests: boolean;
     withSelfHostedPreview: boolean;
     withObservability: boolean;
-    withPayment: boolean;
     withLocalPreview: boolean;
     workspaceFeatureFlags: string[];
     previewEnvironment: PreviewEnvironmentConfig;
     repository: Repository;
+    replicatedVersion: string;
     observability: Observability;
     withLargeVM: boolean;
 }
@@ -79,14 +79,13 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     // Main build should only contain the annotations below:
     // ['with-contrib', 'publish-to-npm', 'publish-to-jb-marketplace', 'with-clean-slate-deployment']
     const withContrib = "with-contrib" in buildConfig || mainBuild;
-    const withPreview = "with-preview" in buildConfig && !mainBuild;
     const storage = buildConfig["storage"] || "";
-    const withIntegrationTests = parseWithIntegrationTests(werft, sliceId, buildConfig["with-integration-tests"]);
     const withUpgradeTests = "with-upgrade-tests" in buildConfig && !mainBuild;
     const fromVersion = withUpgradeTests ? buildConfig["from-version"] : "";
     const replicatedChannel = buildConfig["channel"];
     const cluster = buildConfig["cluster"];
     const withSelfHostedPreview = "with-sh-preview" in buildConfig;
+    const replicatedVersion = withSelfHostedPreview ? buildConfig["version"] : "";
     const publishToNpm = "publish-to-npm" in buildConfig || mainBuild;
     const publishToJBMarketplace = "publish-to-jb-marketplace" in buildConfig || mainBuild;
     const publishToKots = "publish-to-kots" in buildConfig || withSelfHostedPreview || mainBuild;
@@ -95,10 +94,13 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const retag = "with-retag" in buildConfig ? "" : "--dont-retag";
     const cleanSlateDeployment = mainBuild || "with-clean-slate-deployment" in buildConfig;
     const installEELicense = !("without-ee-license" in buildConfig) || mainBuild;
-    const withPayment = "with-payment" in buildConfig && !mainBuild;
     const withObservability = "with-observability" in buildConfig && !mainBuild;
     const withLargeVM = "with-large-vm" in buildConfig && !mainBuild;
     const withLocalPreview = "with-local-preview" in buildConfig || mainBuild
+
+    const withIntegrationTests = parseWithIntegrationTests(werft, sliceId, buildConfig["with-integration-tests"]);
+    const withPreview = decideWithPreview({werft, sliceID: sliceId, buildConfig, mainBuild, withIntegrationTests})
+
     const repository: Repository = {
         owner: context.Repository.owner,
         repo: context.Repository.repo,
@@ -140,6 +142,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         publishToNpm,
         publishToKots,
         replicatedChannel,
+        replicatedVersion,
         repository,
         retag,
         storage,
@@ -147,7 +150,6 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         withContrib,
         withIntegrationTests,
         withObservability,
-        withPayment,
         withUpgradeTests,
         withSelfHostedPreview,
         withLocalPreview,
@@ -165,7 +167,6 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     );
     globalAttributes["werft.job.config.branch"] = context.Repository.ref;
     werft.addAttributes(globalAttributes);
-
     werft.done(sliceId);
 
     return jobConfig;
@@ -183,6 +184,24 @@ function parseVersion(context: any) {
         version = version.substr(PREFIX_TO_STRIP.length);
     }
     return version;
+}
+
+function decideWithPreview(options: {werft: Werft, sliceID: string, buildConfig: any, mainBuild: boolean, withIntegrationTests: WithIntegrationTests}) {
+    const {werft, sliceID, buildConfig, mainBuild, withIntegrationTests } = options
+    if (mainBuild) {
+        werft.log(sliceID, "with-preview is disabled for main builds")
+        return false
+    }
+    if ("with-preview" in buildConfig) {
+        werft.log(sliceID, "with-preview is enabled as it was passed as a Werft annotation")
+        return true
+    }
+    if (withIntegrationTests != "skip") {
+        werft.log(sliceID, "with-preview is enabled as the with-integration-tests Werft annotation was used")
+        return true
+    }
+
+    return false
 }
 
 export function parseWithIntegrationTests(werft: Werft, sliceID: string, value?: string): WithIntegrationTests {

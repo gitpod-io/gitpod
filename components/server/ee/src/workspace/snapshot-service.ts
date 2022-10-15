@@ -82,7 +82,6 @@ export class SnapshotService {
             state: "pending",
             bucketId: snapshotUrl,
             originalWorkspaceId: options.workspaceId,
-            layoutData: options.layoutData,
         });
     }
 

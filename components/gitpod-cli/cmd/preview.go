@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/exec"
@@ -12,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 
+	supervisorClient "github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor-helper"
 	"github.com/google/shlex"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
@@ -29,6 +31,13 @@ var previewCmd = &cobra.Command{
 	Short: "Opens a URL in the IDE's preview",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		// TODO(ak) use NotificationService.NotifyActive supervisor API instead
+
+		ctx := context.Background()
+		err := supervisorClient.WaitForIDEReady(ctx)
+		if err != nil {
+			log.Fatal(err)
+		}
 		url := replaceLocalhostInURL(args[0])
 		if previewCmdOpts.External {
 			if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {

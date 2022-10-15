@@ -1,9 +1,9 @@
-import { Werft } from "./util/werft";
+import {Werft} from "./util/werft";
 import * as Tracing from "./observability/tracing";
-import { SpanStatusCode } from "@opentelemetry/api";
-import { exec } from "./util/shell";
-import { CORE_DEV_KUBECONFIG_PATH, HARVESTER_KUBECONFIG_PATH } from "./jobs/build/const";
-import { HarvesterPreviewEnvironment, PreviewEnvironment } from "./util/preview";
+import {SpanStatusCode} from "@opentelemetry/api";
+import {exec} from "./util/shell";
+import {CORE_DEV_KUBECONFIG_PATH, HARVESTER_KUBECONFIG_PATH} from "./jobs/build/const";
+import {HarvesterPreviewEnvironment, PreviewEnvironment} from "./util/preview";
 
 // for testing purposes
 // if set to 'true' it shows only previews that would be deleted
@@ -184,7 +184,7 @@ async function determineStalePreviewEnvironments(options: {
 
     werft.done(SLICES.CHECKING_FOR_DB_ACTIVITY);
 
-    const previewsToDelete = previews.filter((preview: PreviewEnvironment) => {
+    return previews.filter((preview: PreviewEnvironment) => {
         if (!previewNamespaceBasedOnBranches.has(preview.namespace)) {
             werft.log(
                 SLICES.DETERMINING_STALE_PREVIEW_ENVIRONMENTS,
@@ -210,8 +210,6 @@ async function determineStalePreviewEnvironments(options: {
         );
         return false;
     });
-
-    return previewsToDelete;
 }
 
 async function removePreviewEnvironment(previewEnvironment: PreviewEnvironment) {

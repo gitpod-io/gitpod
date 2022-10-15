@@ -1,6 +1,5 @@
 import { createHash } from "crypto";
 import { PREVIEW_K3S_KUBECONFIG_PATH } from "../jobs/build/const";
-import { deleteDNSRecord } from "./gcloud";
 import * as VM from "../vm/vm";
 import { exec } from "./shell";
 import { Werft } from "./werft";
@@ -57,73 +56,14 @@ export class HarvesterPreviewEnvironment {
     constructor(werft: Werft, namespace: string) {
         this.werft = werft;
         this.namespace = namespace;
-        this.name = namespace.replace(HarvesterPreviewEnvironment.namespacePrefix, "");
+        this.name = namespace;
+        if (this.namespace.startsWith(HarvesterPreviewEnvironment.namespacePrefix)){
+            this.name = namespace.slice(HarvesterPreviewEnvironment.namespacePrefix.length);
+        }
     }
 
     async delete(): Promise<void> {
         VM.deleteVM({ name: this.name });
-    }
-
-    async removeDNSRecords(sliceID: string) {
-        this.werft.log(sliceID, "Deleting harvester related DNS records for the preview environment");
-        await Promise.all([
-            deleteDNSRecord(
-                "A",
-                `*.ssh.ws.${this.name}.preview.gitpod-dev.com`,
-                "gitpod-core-dev",
-                "preview-gitpod-dev-com",
-                sliceID,
-            ),
-            deleteDNSRecord(
-                "A",
-                `*.ws.${this.name}.preview.gitpod-dev.com`,
-                "gitpod-core-dev",
-                "preview-gitpod-dev-com",
-                sliceID,
-            ),
-            deleteDNSRecord(
-                "A",
-                `*.${this.name}.preview.gitpod-dev.com`,
-                "gitpod-core-dev",
-                "preview-gitpod-dev-com",
-                sliceID,
-            ),
-            deleteDNSRecord(
-                "A",
-                `${this.name}.preview.gitpod-dev.com`,
-                "gitpod-core-dev",
-                "preview-gitpod-dev-com",
-                sliceID,
-            ),
-            deleteDNSRecord(
-                "A",
-                `prometheus-${this.name}.preview.gitpod-dev.com`,
-                "gitpod-core-dev",
-                "preview-gitpod-dev-com",
-                sliceID,
-            ),
-            deleteDNSRecord(
-                "TXT",
-                `prometheus-${this.name}.preview.gitpod-dev.com`,
-                "gitpod-core-dev",
-                "preview-gitpod-dev-com",
-                sliceID,
-            ),
-            deleteDNSRecord(
-                "A",
-                `grafana-${this.name}.preview.gitpod-dev.com`,
-                "gitpod-core-dev",
-                "preview-gitpod-dev-com",
-                sliceID,
-            ),
-            deleteDNSRecord(
-                "TXT",
-                `grafana-${this.name}.preview.gitpod-dev.com`,
-                "gitpod-core-dev",
-                "preview-gitpod-dev-com",
-                sliceID,
-            ),
-        ]);
     }
 
     /**
@@ -151,11 +91,7 @@ export class HarvesterPreviewEnvironment {
                 return true;
             }
 
-            // The preview env is its own k3s cluster, so we need to get the kubeconfig for it
-            VM.startSSHProxy({ name: this.name, slice: sliceID });
-            exec("sleep 5", { silent: true, slice: sliceID });
-
-            VM.copyk3sKubeconfig({ name: this.name, timeoutMS: 1000 * 60 * 3, slice: sliceID });
+            VM.copyk3sKubeconfigShell({ name: this.name, timeoutMS: 1000 * 60 * 3, slice: sliceID });
             const kubectclCmd = `KUBECONFIG=${PREVIEW_K3S_KUBECONFIG_PATH} kubectl --insecure-skip-tls-verify`;
 
             this.werft.log(sliceID, `${this.name} (${this.k3sNamespace}) - Checking status of the MySQL pod`);

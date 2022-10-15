@@ -17,3 +17,4 @@ source "$ROOT_DIR"/scripts/protoc-generator.sh
 
 install_dependencies
 go_protoc "$COMPONENTS_DIR"
+update_license

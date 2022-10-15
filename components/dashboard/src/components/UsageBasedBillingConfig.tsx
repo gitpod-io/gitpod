@@ -6,10 +6,13 @@
 
 import { useState, useContext, useEffect } from "react";
 import { useLocation } from "react-router";
+import { Link } from "react-router-dom";
 import { Appearance, loadStripe, Stripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { Ordering } from "@gitpod/gitpod-protocol/lib/usage";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
+import { ReactComponent as Check } from "../images/check-circle.svg";
 import { ThemeContext } from "../theme-context";
 import { PaymentContext } from "../payment-context";
 import { getGitpodService } from "../service/service";
@@ -17,65 +20,67 @@ import DropDown from "../components/DropDown";
 import Modal from "../components/Modal";
 import Alert from "./Alert";
 
-interface hasId {
-    id: string;
-}
+const BASE_USAGE_LIMIT_FOR_STRIPE_USERS = 1000;
 
 type PendingStripeSubscription = { pendingSince: number };
 
 interface Props {
-    subject?: hasId;
-    attributionId: string;
+    attributionId?: string;
 }
 
-export default function UsageBasedBillingConfig({ subject, attributionId }: Props) {
+export default function UsageBasedBillingConfig({ attributionId }: Props) {
     const location = useLocation();
+    const { currency } = useContext(PaymentContext);
     const [showUpdateLimitModal, setShowUpdateLimitModal] = useState<boolean>(false);
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
     const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | undefined>();
-    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [isLoadingStripeSubscription, setIsLoadingStripeSubscription] = useState<boolean>(true);
+    const [currentUsage, setCurrentUsage] = useState<number | undefined>();
+    const [usageLimit, setUsageLimit] = useState<number | undefined>();
     const [stripePortalUrl, setStripePortalUrl] = useState<string | undefined>();
     const [pollStripeSubscriptionTimeout, setPollStripeSubscriptionTimeout] = useState<NodeJS.Timeout | undefined>();
-    const [usageLimit, setUsageLimit] = useState<number | undefined>();
     const [pendingStripeSubscription, setPendingStripeSubscription] = useState<PendingStripeSubscription | undefined>();
     const [billingError, setBillingError] = useState<string | undefined>();
 
     const localStorageKey = `pendingStripeSubscriptionFor${attributionId}`;
+    const billingPeriodFrom = new Date(new Date().toISOString().slice(0, 7) + "-01"); // First day of this month: YYYY-MM-01T00:00:00.000Z
+    const billingPeriodTo = new Date(billingPeriodFrom.getUTCFullYear(), billingPeriodFrom.getMonth() + 1); // First day of next month
+    billingPeriodTo.setMilliseconds(billingPeriodTo.getMilliseconds() - 1); // Last millisecond of this month
 
     useEffect(() => {
-        if (!subject) {
+        if (!attributionId) {
             return;
         }
         (async () => {
             setStripeSubscriptionId(undefined);
-            setIsLoading(true);
+            setIsLoadingStripeSubscription(true);
             try {
-                const subscriptionId = await getGitpodService().server.findStripeSubscriptionId(attributionId);
+                const [subscriptionId, limit] = await Promise.all([
+                    getGitpodService().server.findStripeSubscriptionId(attributionId),
+                    getGitpodService().server.getUsageLimit(attributionId),
+                ]);
                 setStripeSubscriptionId(subscriptionId);
+                setUsageLimit(limit);
             } catch (error) {
                 console.error(error);
             } finally {
-                setIsLoading(false);
+                setIsLoadingStripeSubscription(false);
             }
         })();
-    }, [subject]);
+    }, [attributionId]);
 
     useEffect(() => {
-        if (!subject || !stripeSubscriptionId) {
+        if (!attributionId || !stripeSubscriptionId) {
             return;
         }
         (async () => {
-            const [portalUrl, spendingLimit] = await Promise.all([
-                getGitpodService().server.getStripePortalUrl(attributionId),
-                getGitpodService().server.getUsageLimit(attributionId),
-            ]);
+            const portalUrl = await getGitpodService().server.getStripePortalUrl(attributionId);
             setStripePortalUrl(portalUrl);
-            setUsageLimit(spendingLimit);
         })();
-    }, [subject, stripeSubscriptionId]);
+    }, [attributionId, stripeSubscriptionId]);
 
     useEffect(() => {
-        if (!subject) {
+        if (!attributionId) {
             return;
         }
         const params = new URLSearchParams(location.search);
@@ -89,20 +94,31 @@ export default function UsageBasedBillingConfig({ subject, attributionId }: Prop
             setPendingStripeSubscription(pendingSubscription);
             window.localStorage.setItem(localStorageKey, JSON.stringify(pendingSubscription));
             try {
-                await getGitpodService().server.subscribeToStripe(attributionId, setupIntentId);
+                // Pick a good initial value for the Stripe usage limit (base_limit * team_size)
+                // FIXME: Should we ask the customer to confirm or edit this default limit?
+                let limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS;
+                const attrId = AttributionId.parse(attributionId);
+                if (attrId?.kind === "team") {
+                    const members = await getGitpodService().server.getTeamMembers(attrId.teamId);
+                    limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS * members.length;
+                }
+                const newLimit = await getGitpodService().server.subscribeToStripe(attributionId, setupIntentId, limit);
+                if (newLimit) {
+                    setUsageLimit(newLimit);
+                }
             } catch (error) {
-                console.error("Could not subscribe subject to Stripe", error);
+                console.error("Could not subscribe to Stripe", error);
                 window.localStorage.removeItem(localStorageKey);
                 clearTimeout(pollStripeSubscriptionTimeout!);
                 setPendingStripeSubscription(undefined);
-                setBillingError(`Could not subscribe subject to Stripe. ${error?.message || String(error)}`);
+                setBillingError(`Could not subscribe to Stripe. ${error?.message || String(error)}`);
             }
         })();
-    }, [location.search, subject]);
+    }, [attributionId, location.search]);
 
     useEffect(() => {
         setPendingStripeSubscription(undefined);
-        if (!subject) {
+        if (!attributionId) {
             return;
         }
         try {
@@ -113,12 +129,12 @@ export default function UsageBasedBillingConfig({ subject, attributionId }: Prop
             const pending = JSON.parse(pendingStripeSubscription);
             setPendingStripeSubscription(pending);
         } catch (error) {
-            console.error("Could not load pending stripe subscription", subject.id, error);
+            console.error("Could not load pending Stripe subscription", attributionId, error);
         }
-    }, [subject]);
+    }, [attributionId, localStorageKey]);
 
     useEffect(() => {
-        if (!pendingStripeSubscription || !subject) {
+        if (!pendingStripeSubscription || !attributionId) {
             return;
         }
         if (!!stripeSubscriptionId) {
@@ -144,30 +160,49 @@ export default function UsageBasedBillingConfig({ subject, attributionId }: Prop
             }, 5000);
             setPollStripeSubscriptionTimeout(timeout);
         }
-    }, [pendingStripeSubscription, pollStripeSubscriptionTimeout, stripeSubscriptionId, subject]);
+    }, [
+        pendingStripeSubscription,
+        pollStripeSubscriptionTimeout,
+        stripeSubscriptionId,
+        attributionId,
+        localStorageKey,
+    ]);
 
-    const showSpinner = isLoading || !!pendingStripeSubscription;
-    const showUpgradeBilling = !showSpinner && !stripeSubscriptionId;
-    const showManageBilling = !showSpinner && !!stripeSubscriptionId;
-
-    const doUpdateLimit = async (newLimit: number) => {
-        if (!subject) {
+    useEffect(() => {
+        if (!attributionId) {
             return;
         }
-        const oldLimit = usageLimit;
-        setUsageLimit(newLimit);
+        (async () => {
+            const response = await getGitpodService().server.listUsage({
+                attributionId,
+                order: Ordering.ORDERING_DESCENDING,
+                from: billingPeriodFrom.getTime(),
+                to: Date.now(),
+            });
+            setCurrentUsage(response.creditsUsed);
+        })();
+    }, [attributionId]);
+
+    const showSpinner = !attributionId || isLoadingStripeSubscription || !!pendingStripeSubscription;
+    const showBalance = !showSpinner && !(AttributionId.parse(attributionId)?.kind === "team" && !stripeSubscriptionId);
+    const showUpgradeTeam =
+        !showSpinner && AttributionId.parse(attributionId)?.kind === "team" && !stripeSubscriptionId;
+    const showUpgradeUser =
+        !showSpinner && AttributionId.parse(attributionId)?.kind === "user" && !stripeSubscriptionId;
+    const showManageBilling = !showSpinner && !!stripeSubscriptionId;
+
+    const updateUsageLimit = async (newLimit: number) => {
+        if (!attributionId) {
+            return;
+        }
+        setShowUpdateLimitModal(false);
         try {
             await getGitpodService().server.setUsageLimit(attributionId, newLimit);
+            setUsageLimit(newLimit);
         } catch (error) {
-            setUsageLimit(oldLimit);
             console.error(error);
-            alert(error?.message || "Failed to update usage limit. See console for error message.");
+            setBillingError(`Failed to update usage limit. ${error?.message || String(error)}`);
         }
-    };
-
-    const onLimitUpdated = async (newLimit: number) => {
-        await doUpdateLimit(newLimit);
-        setShowUpdateLimitModal(false);
     };
 
     return (
@@ -180,55 +215,211 @@ export default function UsageBasedBillingConfig({ subject, attributionId }: Prop
                     </Alert>
                 )}
                 {showSpinner && (
-                    <div className="flex flex-col mt-4 h-32 p-4 rounded-xl bg-gray-100 dark:bg-gray-800">
-                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Billing</div>
+                    <div className="flex flex-col mt-4 h-52 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
+                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Balance Used</div>
                         <Spinner className="m-2 h-5 w-5 animate-spin" />
                     </div>
                 )}
-                {showUpgradeBilling && (
-                    <div className="flex flex-col mt-4 h-32 p-4 rounded-xl bg-gray-100 dark:bg-gray-800">
-                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Billing</div>
-                        <div className="text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">Inactive</div>
-                        <button className="self-end" onClick={() => setShowBillingSetupModal(true)}>
-                            Upgrade Billing
+                {showBalance && (
+                    <div className="flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
+                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Balance Used</div>
+                        <div className="mt-1 text-xl font-semibold flex-grow">
+                            <span className="text-gray-900 dark:text-gray-100">
+                                {typeof currentUsage === "number" ? Math.round(currentUsage) : "?"}
+                            </span>
+                            <span className="text-gray-400 dark:text-gray-500">
+                                {" "}
+                                / {usageLimit} Credit{usageLimit === 1 ? "" : "s"}
+                            </span>
+                        </div>
+                        <div className="mt-4 text-sm flex">
+                            <span className="flex-grow">
+                                {showManageBilling && (
+                                    <button className="gp-link" onClick={() => setShowUpdateLimitModal(true)}>
+                                        Manage Usage Limit
+                                    </button>
+                                )}
+                            </span>
+                            {typeof currentUsage === "number" && typeof usageLimit === "number" && usageLimit > 0 && (
+                                <span className="text-gray-400 dark:text-gray-500">
+                                    {Math.round((100 * currentUsage) / usageLimit)}% used
+                                </span>
+                            )}
+                        </div>
+                        <div className="mt-2 flex">
+                            <progress className="h-4 flex-grow rounded-xl" value={currentUsage} max={usageLimit} />
+                        </div>
+                        <div className="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 -m-4 p-4 mt-4 rounded-b-xl flex">
+                            <div className="flex-grow">
+                                <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Current Period</div>
+                                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                    <span className="font-semibold">
+                                        {billingPeriodFrom.toLocaleString("default", { month: "long" })}{" "}
+                                        {billingPeriodFrom.getFullYear()}
+                                    </span>{" "}
+                                    ({billingPeriodFrom.toLocaleString("default", { month: "short", day: "numeric" })} -{" "}
+                                    {billingPeriodTo.toLocaleString("default", { month: "short", day: "numeric" })})
+                                </div>
+                            </div>
+                            <div>
+                                <Link to="./usage">
+                                    <button className="secondary">View Usage →</button>
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                {showUpgradeTeam && (
+                    <div className="flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
+                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Upgrade Plan</div>
+                        <div className="mt-1 text-xl font-semibold flex-grow text-gray-500 dark:text-gray-400">
+                            Pay-as-you-go
+                        </div>
+                        <div className="mt-4 flex space-x-1 text-gray-400 dark:text-gray-500">
+                            <Check className="m-0.5 w-5 h-5" />
+                            <div className="flex flex-col">
+                                <span>
+                                    {currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard workspace usage.{" "}
+                                    <a
+                                        className="gp-link"
+                                        href="https://www.gitpod.io/docs/configure/billing/usage-based-billing"
+                                    >
+                                        Learn more about credits
+                                    </a>
+                                </span>
+                            </div>
+                        </div>
+                        <button className="mt-5 self-end" onClick={() => setShowBillingSetupModal(true)}>
+                            Upgrade Plan
                         </button>
+                    </div>
+                )}
+                {showUpgradeUser && (
+                    <div className="flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
+                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Current Plan</div>
+                        <div className="mt-1 text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">
+                            Free
+                        </div>
+                        <div className="mt-4 flex space-x-1 text-gray-400 dark:text-gray-500">
+                            <Check className="m-0.5 w-5 h-5 text-orange-500" />
+                            <div className="flex flex-col">
+                                <span className="font-bold text-gray-500 dark:text-gray-400">500 credits</span>
+                                <span>
+                                    50 hours of Standard workspace usage.{" "}
+                                    <a
+                                        className="gp-link"
+                                        href="https://www.gitpod.io/docs/configure/billing/usage-based-billing"
+                                    >
+                                        Learn more about credits
+                                    </a>
+                                </span>
+                            </div>
+                        </div>
+                        <div className="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 -m-4 p-4 mt-8 rounded-b-xl">
+                            <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Upgrade Plan</div>
+                            <div className="mt-1 text-xl font-semibold flex-grow text-gray-500 dark:text-gray-400">
+                                {currency === "EUR" ? "€" : "$"}9 / month
+                            </div>
+                            <div className="mt-4 flex space-x-1 text-gray-400 dark:text-gray-500">
+                                <Check className="m-0.5 w-5 h-5" />
+                                <div className="flex flex-col">
+                                    <span className="font-bold">1,000 credits</span>
+                                </div>
+                            </div>
+                            <div className="mt-2 flex space-x-1 text-gray-400 dark:text-gray-500">
+                                <Check className="m-0.5 w-5 h-5" />
+                                <div className="flex flex-col">
+                                    <span className="font-bold">Pay-as-you-go after 1,000 credits</span>
+                                    <span>{currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard workspace usage.</span>
+                                </div>
+                            </div>
+                            <div className="mt-5 flex flex-col">
+                                <button className="self-end" onClick={() => setShowBillingSetupModal(true)}>
+                                    Upgrade Plan
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
                 {showManageBilling && (
                     <div className="max-w-xl flex space-x-4">
-                        <div className="flex flex-col w-72 mt-4 h-32 p-4 rounded-xl bg-gray-100 dark:bg-gray-800">
-                            <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Billing</div>
-                            <div className="text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">
-                                Active
-                            </div>
-                            <a className="self-end" href={stripePortalUrl}>
+                        <div className="flex-grow flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
+                            <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Current Plan</div>
+                            {AttributionId.parse(attributionId)?.kind === "user" ? (
+                                <>
+                                    <div className="mt-1 text-xl font-semibold flex-grow text-gray-800 dark:text-gray-100">
+                                        {currency === "EUR" ? "€" : "$"}9 / month
+                                    </div>
+                                    <div className="mt-4 flex space-x-1 text-gray-400 dark:text-gray-500">
+                                        <Check className="m-0.5 w-5 h-5 text-orange-500" />
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-gray-500 dark:text-gray-400">
+                                                1,000 credits
+                                            </span>
+                                            <span>
+                                                100 hours of Standard workspace usage.{" "}
+                                                <a
+                                                    className="gp-link"
+                                                    href="https://www.gitpod.io/docs/configure/billing/usage-based-billing"
+                                                >
+                                                    Learn more about credits
+                                                </a>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="mt-3 flex space-x-1 text-gray-400 dark:text-gray-500">
+                                        <Check className="m-0.5 w-5 h-5 text-orange-500" />
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-gray-500 dark:text-gray-400">
+                                                Pay-as-you-go after 1,000 credits
+                                            </span>
+                                            <span>{currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard workspace usage.</span>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="mt-1 text-xl font-semibold flex-grow text-gray-800 dark:text-gray-100">
+                                        Pay-as-you-go
+                                    </div>
+                                    <div className="mt-4 flex space-x-1 text-gray-400 dark:text-gray-500">
+                                        <Check className="m-0.5 w-5 h-5 text-orange-500" />
+                                        <div className="flex flex-col">
+                                            <span>
+                                                {currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard workspace usage.{" "}
+                                                <a
+                                                    className="gp-link"
+                                                    href="https://www.gitpod.io/docs/configure/billing/usage-based-billing"
+                                                >
+                                                    Learn more about credits
+                                                </a>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                            <a className="mt-5 self-end" href={stripePortalUrl}>
                                 <button className="secondary" disabled={!stripePortalUrl}>
-                                    Manage Billing →
+                                    Manage Plan ↗
                                 </button>
                             </a>
-                        </div>
-                        <div className="flex flex-col w-72 mt-4 h-32 p-4 rounded-xl bg-gray-100 dark:bg-gray-800">
-                            <div className="uppercase text-sm text-gray-400 dark:text-gray-500">
-                                Usage Limit (Credits)
-                            </div>
-                            <div className="text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">
-                                {usageLimit || "–"}
-                            </div>
-                            <button className="self-end" onClick={() => setShowUpdateLimitModal(true)}>
-                                Update Limit
-                            </button>
                         </div>
                     </div>
                 )}
             </div>
-            {showBillingSetupModal && (
+            {!!attributionId && showBillingSetupModal && (
                 <BillingSetupModal attributionId={attributionId} onClose={() => setShowBillingSetupModal(false)} />
             )}
             {showUpdateLimitModal && (
                 <UpdateLimitModal
+                    minValue={
+                        AttributionId.parse(attributionId || "")?.kind === "user"
+                            ? BASE_USAGE_LIMIT_FOR_STRIPE_USERS
+                            : 0
+                    }
                     currentValue={usageLimit}
                     onClose={() => setShowUpdateLimitModal(false)}
-                    onUpdate={(newLimit) => onLimitUpdated(newLimit)}
+                    onUpdate={(newLimit) => updateUsageLimit(newLimit)}
                 />
             )}
         </div>
@@ -250,8 +441,8 @@ function BillingSetupModal(props: { attributionId: string; onClose: () => void }
 
     return (
         <Modal visible={true} onClose={props.onClose}>
-            <h3 className="flex">Upgrade Billing</h3>
-            <div className="border-t border-gray-200 dark:border-gray-800 mt-4 pt-2 -mx-6 px-6 flex flex-col">
+            <h3 className="flex">Upgrade Plan</h3>
+            <div className="border-t border-gray-200 dark:border-gray-700 mt-4 pt-2 -mx-6 px-6 flex flex-col">
                 {(!stripePromise || !stripeSetupIntentClientSecret) && (
                     <div className="h-80 flex items-center justify-center">
                         <Spinner className="h-5 w-5 animate-spin" />
@@ -356,50 +547,64 @@ function CreditCardInputForm(props: { attributionId: string }) {
 }
 
 function UpdateLimitModal(props: {
+    minValue?: number;
     currentValue: number | undefined;
     onClose: () => void;
     onUpdate: (newLimit: number) => {};
 }) {
+    const [error, setError] = useState<string>("");
     const [newLimit, setNewLimit] = useState<string | undefined>(
-        props.currentValue ? String(props.currentValue) : undefined,
+        typeof props.currentValue === "number" ? String(props.currentValue) : undefined,
     );
 
-    return (
-        <Modal visible={true} onClose={props.onClose}>
-            <h3 className="flex">Usage Limit</h3>
-            <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col">
-                <p className="pb-4 text-gray-500 text-base">Set usage limit in total credits per month.</p>
+    function onSubmit(event: React.FormEvent) {
+        event.preventDefault();
+        if (!newLimit) {
+            setError("Please specify a limit");
+            return;
+        }
+        const n = parseInt(newLimit, 10);
+        if (typeof n !== "number") {
+            setError("Please specify a limit that is a valid number");
+            return;
+        }
+        if (typeof props.minValue === "number" && n < props.minValue) {
+            setError(`Please specify a limit that is >= ${props.minValue}`);
+            return;
+        }
+        props.onUpdate(n);
+    }
 
-                <label className="font-medium">
-                    Credits
-                    <div className="w-full">
-                        <input
-                            type="number"
-                            min={0}
-                            value={newLimit}
-                            className="rounded-md w-full truncate overflow-x-scroll pr-8"
-                            onChange={(e) => setNewLimit(e.target.value)}
-                        />
-                    </div>
-                </label>
-            </div>
-            <div className="flex justify-end mt-6 space-x-2">
-                <button
-                    className="secondary"
-                    onClick={() => {
-                        if (!newLimit) {
-                            return;
-                        }
-                        const n = parseInt(newLimit, 10);
-                        if (typeof n !== "number") {
-                            return;
-                        }
-                        props.onUpdate(n);
-                    }}
-                >
-                    Update
-                </button>
-            </div>
+    return (
+        <Modal visible={true} onClose={props.onClose} onEnter={() => false}>
+            <h3 className="mb-4">Usage Limit</h3>
+            <form onSubmit={onSubmit}>
+                <div className="border-t border-b border-gray-200 dark:border-gray-700 -mx-6 px-6 py-4 flex flex-col">
+                    <p className="pb-4 text-gray-500 text-base">Set usage limit in total credits per month.</p>
+                    {error && (
+                        <Alert type="error" className="-mt-2 mb-2">
+                            {error}
+                        </Alert>
+                    )}
+                    <label className="font-medium">
+                        Credits
+                        <div className="w-full">
+                            <input
+                                type="text"
+                                value={newLimit}
+                                className={`rounded-md w-full truncate overflow-x-scroll pr-8 ${error ? "error" : ""}`}
+                                onChange={(e) => {
+                                    setError("");
+                                    setNewLimit(e.target.value);
+                                }}
+                            />
+                        </div>
+                    </label>
+                </div>
+                <div className="flex justify-end mt-6 space-x-2">
+                    <button className="secondary">Update</button>
+                </div>
+            </form>
         </Modal>
     );
 }

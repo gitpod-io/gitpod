@@ -15,7 +15,7 @@ import {
     WORKSPACE_TIMEOUT_DEFAULT_LONG,
     WORKSPACE_TIMEOUT_EXTENDED,
     WORKSPACE_TIMEOUT_EXTENDED_ALT,
-    Team,
+    Workspace,
 } from "@gitpod/gitpod-protocol";
 import { ProjectDB, TeamDB, TermsAcceptanceDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
@@ -32,7 +32,7 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { StripeService } from "../../ee/src/user/stripe-service";
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { VerificationService } from "../auth/verification-service";
+import { UsageService } from "./usage-service";
 
 export interface FindUserByIdentityStrResult {
     user: User;
@@ -61,6 +61,12 @@ export interface CheckIsBlockedParams {
     user?: User;
 }
 
+export interface UsageLimitReachedResult {
+    reached: boolean;
+    almostReached?: boolean;
+    attributionId: AttributionId;
+}
+
 @injectable()
 export class UserService {
     @inject(BlockedUserFilter) protected readonly blockedUserFilter: BlockedUserFilter;
@@ -72,7 +78,7 @@ export class UserService {
     @inject(ProjectDB) protected readonly projectDb: ProjectDB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(StripeService) protected readonly stripeService: StripeService;
-    @inject(VerificationService) protected readonly verificationService: VerificationService;
+    @inject(UsageService) protected readonly usageService: UsageService;
 
     /**
      * Takes strings in the form of <authHost>/<authName> and returns the matching User
@@ -115,18 +121,6 @@ export class UserService {
             return undefined;
         }
         return hostContext.authProvider.authProviderId;
-    }
-
-    protected async getUser(user: User | string): Promise<User> {
-        if (typeof user === "string") {
-            const realUser = await this.userDb.findUserById(user);
-            if (!realUser) {
-                throw new Error(`No User found for id ${user}!`);
-            }
-            return realUser;
-        } else {
-            return user;
-        }
     }
 
     private cachedIsFirstUser: boolean | undefined = undefined;
@@ -195,13 +189,6 @@ export class UserService {
         }
     }
 
-    protected async findTeamUsageBasedSubscriptionId(team: Team): Promise<string | undefined> {
-        const subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(
-            AttributionId.render({ kind: "team", teamId: team.id }),
-        );
-        return subscriptionId;
-    }
-
     protected async validateUsageAttributionId(user: User, usageAttributionId: string): Promise<AttributionId> {
         const attribution = AttributionId.parse(usageAttributionId);
         if (!attribution) {
@@ -222,116 +209,92 @@ export class UserService {
                     "You're no longer a member of the selected billing team.",
                 );
             }
-            const subscriptionId = await this.findTeamUsageBasedSubscriptionId(team);
-            if (!subscriptionId) {
-                throw new ResponseError(
-                    ErrorCodes.INVALID_COST_CENTER,
-                    "The billing team you've selected has no active subscription.",
-                );
-            }
         }
         return attribution;
-    }
-
-    protected async findSingleTeamWithUsageBasedBilling(user: User): Promise<Team | undefined> {
-        // Find all the user's teams with usage-based billing enabled.
-        const teams = await this.teamDB.findTeamsByUser(user.id);
-        const teamsWithBilling: Team[] = [];
-        await Promise.all(
-            teams.map(async (team) => {
-                const subscriptionId = await this.findTeamUsageBasedSubscriptionId(team);
-                if (subscriptionId) {
-                    teamsWithBilling.push(team);
-                }
-            }),
-        );
-        if (teamsWithBilling.length > 1) {
-            // Multiple teams with usage-based billing enabled -- ask the user to make an explicit choice.
-            throw new ResponseError(ErrorCodes.INVALID_COST_CENTER, "Multiple teams have billing enabled.");
-        }
-        if (teamsWithBilling.length === 1) {
-            // Single team with usage-based billing enabled -- attribute all usage to it.
-            return teamsWithBilling[0];
-        }
-        // No team with usage-based billing enabled.
-        return undefined;
     }
 
     /**
      * Identifies the team or user to which a workspace instance's running time should be attributed to
      * (e.g. for usage analytics or billing purposes).
      *
-     * A. Billing-based attribution: If payments are enabled, we attribute all the user's usage to:
-     *   - An explicitly selected billing account (e.g. a team with usage-based billing enabled)
-     *   - Or, we default to the user for all usage (e.g. free tier or individual billing, regardless of project/team)
-     *
-     * B. Project-based attribution: If payments are not enabled (e.g. Self-Hosted), we attribute:
-     *   - To the owner of the project (user or team), if the workspace is linked to a project
-     *   - To the user, iff the workspace is not linked to a project
      *
      * @param user
      * @param projectId
      * @returns The validated AttributionId
      */
     async getWorkspaceUsageAttributionId(user: User, projectId?: string): Promise<AttributionId> {
-        // A. Billing-based attribution
-        if (this.config.enablePayment) {
-            if (user.usageAttributionId) {
-                // Return the user's explicit attribution ID.
-                return await this.validateUsageAttributionId(user, user.usageAttributionId);
+        // if it's a workspace for a project the user has access to and the costcenter has credits use that
+        if (projectId) {
+            let attributionId: AttributionId | undefined;
+            const project = await this.projectDb.findProjectById(projectId);
+            if (project?.teamId) {
+                const teams = await this.teamDB.findTeamsByUser(user.id);
+                const team = teams.find((t) => t.id === project?.teamId);
+                if (team) {
+                    attributionId = AttributionId.create(team);
+                }
+            } else {
+                attributionId = AttributionId.create(user);
             }
-            const billingTeam = await this.findSingleTeamWithUsageBasedBilling(user);
-            if (billingTeam) {
-                // Single team with usage-based billing enabled -- attribute all usage to it.
-                return { kind: "team", teamId: billingTeam.id };
+            if (!!attributionId && (await this.hasCredits(attributionId))) {
+                return attributionId;
             }
-            // Attribute all usage to the user by default (regardless of project/team).
-            return { kind: "user", userId: user.id };
         }
-
-        // B. Project-based attribution
-        if (!projectId) {
-            // No project -- attribute to the user.
-            return { kind: "user", userId: user.id };
+        if (user.usageAttributionId) {
+            // Return the user's explicit attribution ID.
+            return await this.validateUsageAttributionId(user, user.usageAttributionId);
         }
-        const project = await this.projectDb.findProjectById(projectId);
-        if (!project?.teamId) {
-            // The project doesn't exist, or it isn't owned by a team -- attribute to the user.
-            return { kind: "user", userId: user.id };
-        }
-        // Attribute workspace usage to the team that currently owns this project.
-        return { kind: "team", teamId: project.teamId };
+        return AttributionId.create(user);
     }
 
-    async setUsageAttribution(user: User, usageAttributionId: string | undefined): Promise<void> {
-        if (typeof usageAttributionId !== "string") {
-            user.usageAttributionId = undefined;
-            await this.userDb.storeUser(user);
-            return;
+    /**
+     * @param user
+     * @param workspace - optional, in which case the default billing account will be checked
+     * @returns
+     */
+    async checkUsageLimitReached(user: User, workspace?: Workspace): Promise<UsageLimitReachedResult> {
+        const attributionId = await this.getWorkspaceUsageAttributionId(user, workspace?.projectId);
+        const creditBalance = await this.usageService.getCurrentBalance(attributionId);
+        const currentInvoiceCredits = creditBalance.usedCredits;
+        const usageLimit = creditBalance.usageLimit;
+        if (currentInvoiceCredits >= usageLimit) {
+            log.info({ userId: user.id }, "Usage limit reached", {
+                attributionId,
+                currentInvoiceCredits,
+                usageLimit,
+            });
+            return {
+                reached: true,
+                attributionId,
+            };
+        } else if (currentInvoiceCredits > usageLimit * 0.8) {
+            log.info({ userId: user.id }, "Usage limit almost reached", {
+                attributionId,
+                currentInvoiceCredits,
+                usageLimit,
+            });
+            return {
+                reached: false,
+                almostReached: true,
+                attributionId,
+            };
         }
-        const attributionId = AttributionId.parse(usageAttributionId);
-        if (attributionId?.kind === "user") {
-            if (user.id === attributionId.userId) {
-                user.usageAttributionId = usageAttributionId;
-                await this.userDb.storeUser(user);
-                return;
-            }
-            throw new Error("Permission denied: cannot attribute another user.");
-        }
-        if (attributionId?.kind === "team") {
-            const membership = await this.teamDB.findTeamMembership(user.id, attributionId.teamId);
-            if (!membership) {
-                throw new Error("Cannot attribute to an unrelated team.");
-            }
-            const teamCustomerId = await this.stripeService.findCustomerByAttributionId(usageAttributionId);
-            if (!teamCustomerId) {
-                throw new Error("Cannot attribute to team without Stripe customer.");
-            }
-            user.usageAttributionId = usageAttributionId;
-            await this.userDb.storeUser(user);
-            return;
-        }
-        throw new Error("Unexpected call arguments for `setUsageAttribution`");
+
+        return {
+            reached: false,
+            attributionId,
+        };
+    }
+
+    protected async hasCredits(attributionId: AttributionId): Promise<boolean> {
+        const response = await this.usageService.getCurrentBalance(attributionId);
+        return response.usedCredits < response.usageLimit;
+    }
+
+    async setUsageAttribution(user: User, usageAttributionId: string): Promise<void> {
+        await this.validateUsageAttributionId(user, usageAttributionId);
+        user.usageAttributionId = usageAttributionId;
+        await this.userDb.storeUser(user);
     }
 
     /**

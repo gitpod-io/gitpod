@@ -323,13 +323,7 @@ const imagePathSeparator = "/__files__"
 // installBlobserveRoutes  implements long-lived caching with versioned URLs, see https://web.dev/http-cache/#versioned-urls
 func installBlobserveRoutes(r *mux.Router, config *RouteHandlerConfig, infoProvider WorkspaceInfoProvider) {
 	r.Use(logHandler)
-	r.Use(handlers.CompressHandler)
 	r.Use(logRouteHandlerHandler("BlobserveRootHandler"))
-	r.Use(handlers.CORS(
-		// CORS headers are stored in the browser cache, we cannot be specific here to allow reuse between workspaces
-		handlers.AllowedOrigins([]string{"*"}),
-		handlers.AllowedMethods([]string{"GET", "OPTIONS"}),
-	))
 
 	targetResolver := func(cfg *Config, infoProvider WorkspaceInfoProvider, req *http.Request) (tgt *url.URL, err error) {
 		segments := strings.SplitN(req.URL.Path, imagePathSeparator, 2)

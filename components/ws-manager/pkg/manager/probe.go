@@ -7,12 +7,14 @@ package manager
 import (
 	"context"
 	"crypto/tls"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"k8s.io/apimachinery/pkg/util/json"
 )
 
 // WorkspaceProbeResult marks the result of a workspace probe
@@ -38,7 +40,7 @@ type WorkspaceReadyProbe struct {
 
 // NewWorkspaceReadyProbe creates a new workspace probe
 func NewWorkspaceReadyProbe(workspaceID string, workspaceURL url.URL) WorkspaceReadyProbe {
-	workspaceURL.Path += "/_supervisor/v1/status/ide"
+	workspaceURL.Path += "/_supervisor/v1/status/ide/wait/true"
 	readyURL := workspaceURL.String()
 
 	return WorkspaceReadyProbe{
@@ -70,6 +72,9 @@ func (p *WorkspaceReadyProbe) Run(ctx context.Context) WorkspaceProbeResult {
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
 	}
 
 	for {
@@ -89,14 +94,31 @@ func (p *WorkspaceReadyProbe) Run(ctx context.Context) WorkspaceProbeResult {
 			// we've timed out - do not log this as it would spam the logs for no good reason
 			continue
 		}
-		resp.Body.Close()
 
-		if resp.StatusCode == http.StatusOK {
-			break
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			log.WithField("url", p.readyURL).WithField("status", resp.StatusCode).Debug("workspace did not respond to ready probe with OK status")
+			time.Sleep(p.RetryDelay)
+			continue
 		}
 
-		log.WithField("url", p.readyURL).WithField("status", resp.StatusCode).Debug("workspace did not respond to ready probe with OK status")
-		time.Sleep(p.RetryDelay)
+		rawBody, err := ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			log.WithField("url", p.readyURL).WithField("status", resp.StatusCode).WithError(err).Debug("ready probe failed: cannot read body")
+			continue
+		}
+		var probeResult struct {
+			Ok bool `json:"ok"`
+		}
+		err = json.Unmarshal(rawBody, &probeResult)
+		if err != nil {
+			log.WithField("url", p.readyURL).WithField("status", resp.StatusCode).WithError(err).Debug("ready probe failed: unable to unmarshal json")
+			continue
+		}
+		if probeResult.Ok {
+			break
+		}
 	}
 
 	// workspace is actually ready

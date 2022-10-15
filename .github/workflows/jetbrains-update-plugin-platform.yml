@@ -20,6 +20,6 @@ jobs:
             pluginName: JetBrains Gateway Plugin
             pluginId: gateway-plugin
             xpath: "(/html/body/table[preceding::h2/text()='com.jetbrains.gateway'][1]/tbody/tr/td[contains(text(),'-CUSTOM-SNAPSHOT') and starts-with(text(),'MAJOR_VERSION_PLACEHOLDER') and not(contains(text(),'-NIGHTLY'))]/text())[1]"
-            gradlePropertiesPath: components/ide/jetbrains/gateway-plugin/gradle.properties
+            gradlePropertiesPath: components/ide/jetbrains/gateway-plugin/gradle-latest.properties
         secrets:
             slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}

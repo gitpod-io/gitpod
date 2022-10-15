@@ -6,22 +6,24 @@ package server
 
 import (
 	"fmt"
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 
+	"github.com/bufbuild/connect-go"
+	"github.com/gitpod-io/gitpod/common-go/log"
+
 	"github.com/gitpod-io/gitpod/public-api/config"
+	"github.com/gitpod-io/gitpod/public-api/v1/v1connect"
 	"github.com/gorilla/handlers"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/apiv1"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/webhooks"
-	v1 "github.com/gitpod-io/gitpod/public-api/v1"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
 
@@ -33,12 +35,11 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 		return fmt.Errorf("failed to parse Gitpod API URL: %w", err)
 	}
 
-	registry := prometheus.NewRegistry()
+	connPool := &proxy.NoConnectionPool{ServerAPI: gitpodAPI}
 
 	srv, err := baseserver.New("public_api_server",
 		baseserver.WithLogger(logger),
 		baseserver.WithConfig(cfg.Server),
-		baseserver.WithMetricsRegistry(registry),
 		baseserver.WithVersion(version),
 	)
 	if err != nil {
@@ -66,7 +67,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 
 	srv.HTTPMux().Handle("/stripe/invoices/webhook", handlers.ContentTypeHandler(stripeWebhookHandler, "application/json"))
 
-	if registerErr := register(srv, gitpodAPI, registry); registerErr != nil {
+	if registerErr := register(srv, connPool); registerErr != nil {
 		return fmt.Errorf("failed to register services: %w", registerErr)
 	}
 
@@ -77,13 +78,20 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	return nil
 }
 
-func register(srv *baseserver.Server, serverAPIURL *url.URL, registry *prometheus.Registry) error {
-	proxy.RegisterMetrics(registry)
+func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool) error {
+	proxy.RegisterMetrics(srv.MetricsRegistry())
 
-	connPool := &proxy.NoConnectionPool{ServerAPI: serverAPIURL}
+	handlerOptions := []connect.HandlerOption{
+		connect.WithInterceptors(
+			auth.NewServerInterceptor(),
+		),
+	}
 
-	v1.RegisterWorkspacesServiceServer(srv.GRPC(), apiv1.NewWorkspaceService(connPool))
-	v1.RegisterPrebuildsServiceServer(srv.GRPC(), v1.UnimplementedPrebuildsServiceServer{})
+	workspacesRoute, workspacesServiceHandler := v1connect.NewWorkspacesServiceHandler(apiv1.NewWorkspaceService(connPool), handlerOptions...)
+	srv.HTTPMux().Handle(workspacesRoute, workspacesServiceHandler)
+
+	prebuildsRoute, prebuildsServiceHandler := v1connect.NewPrebuildsServiceHandler(apiv1.NewPrebuildService(), handlerOptions...)
+	srv.HTTPMux().Handle(prebuildsRoute, prebuildsServiceHandler)
 
 	return nil
 }

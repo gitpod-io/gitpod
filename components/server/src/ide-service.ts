@@ -55,6 +55,10 @@ export class IDEService {
                     productCode = "PCP";
                 } else if (key === "phpstorm") {
                     productCode = "PS";
+                } else if (key === "rubymine") {
+                    productCode = "RM";
+                } else if (key === "webstorm") {
+                    productCode = "WS";
                 }
                 const prebuilds = productCode && ws.config.jetbrains[key as keyof JetBrainsConfig]?.prebuilds;
                 if (prebuilds) {

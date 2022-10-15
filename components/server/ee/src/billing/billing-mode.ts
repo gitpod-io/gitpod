@@ -11,12 +11,16 @@ import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/
 import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
 import { Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { Config } from "../../../src/config";
-import { StripeService } from "../user/stripe-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { TeamDB, TeamSubscription2DB, TeamSubscriptionDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { TeamSubscription, TeamSubscription2 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
+import {
+    CostCenter_BillingStrategy,
+    UsageServiceClient,
+    UsageServiceDefinition,
+} from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 
 export const BillingModes = Symbol("BillingModes");
 export interface BillingModes {
@@ -41,7 +45,7 @@ export class BillingModesImpl implements BillingModes {
     @inject(Config) protected readonly config: Config;
     @inject(ConfigCatClientFactory) protected readonly configCatClientFactory: ConfigCatClientFactory;
     @inject(SubscriptionService) protected readonly subscriptionSvc: SubscriptionService;
-    @inject(StripeService) protected readonly stripeService: StripeService;
+    @inject(UsageServiceDefinition.name) protected readonly usageService: UsageServiceClient;
     @inject(TeamSubscriptionDB) protected readonly teamSubscriptionDb: TeamSubscriptionDB;
     @inject(TeamSubscription2DB) protected readonly teamSubscription2Db: TeamSubscription2DB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
@@ -72,14 +76,17 @@ export class BillingModesImpl implements BillingModes {
 
         // Is Usage Based Billing enabled for this user or not?
         const teams = await this.teamDB.findTeamsByUser(user.id);
-        const isUsageBasedBillingEnabled = await this.configCatClientFactory().getValueAsync(
-            "isUsageBasedBillingEnabled",
-            false,
-            {
+        let isUsageBasedBillingEnabled = false;
+        for (const team of teams) {
+            const isEnabled = await this.configCatClientFactory().getValueAsync("isUsageBasedBillingEnabled", false, {
                 user,
-                teams,
-            },
-        );
+                teamId: team.id,
+            });
+            if (isEnabled) {
+                isUsageBasedBillingEnabled = true;
+                break;
+            }
+        }
 
         // 1. UBB enabled?
         if (!isUsageBasedBillingEnabled) {
@@ -116,10 +123,10 @@ export class BillingModesImpl implements BillingModes {
 
         // Stripe: Active personal subsciption?
         let hasUbbPersonal = false;
-        const subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(
-            AttributionId.render({ kind: "user", userId: user.id }),
-        );
-        if (subscriptionId) {
+        const constCenterResponse = await this.usageService.getCostCenter({
+            attributionId: AttributionId.render({ kind: "user", userId: user.id }),
+        });
+        if (constCenterResponse.costCenter?.billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
             hasUbbPersonal = true;
         }
 
@@ -191,10 +198,10 @@ export class BillingModesImpl implements BillingModes {
 
         // 3. Now we're usage-based. We only have to figure out whether we have a plan yet or not.
         const result: BillingMode = { mode: "usage-based" };
-        const subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(
-            AttributionId.render({ kind: "team", teamId: team.id }),
-        );
-        if (subscriptionId) {
+        const costCenter = await this.usageService.getCostCenter({
+            attributionId: AttributionId.render(AttributionId.create(team)),
+        });
+        if (costCenter.costCenter?.billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
             result.paid = true;
         }
         return result;
