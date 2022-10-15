@@ -77,15 +77,30 @@ export class BillingModesImpl implements BillingModes {
         // Is Usage Based Billing enabled for this user or not?
         const teams = await this.teamDB.findTeamsByUser(user.id);
         let isUsageBasedBillingEnabled = false;
-        for (const team of teams) {
-            const isEnabled = await this.configCatClientFactory().getValueAsync("isUsageBasedBillingEnabled", false, {
-                user,
-                teamId: team.id,
-            });
-            if (isEnabled) {
-                isUsageBasedBillingEnabled = true;
-                break;
+        if (teams.length > 0) {
+            for (const team of teams) {
+                // Checking here doesn't actually block on every team as the flags are fetched once and catched, subsequent calls are non-blocking.
+                const isEnabled = await this.configCatClientFactory().getValueAsync(
+                    "isUsageBasedBillingEnabled",
+                    false,
+                    {
+                        user,
+                        teamId: team.id,
+                    },
+                );
+                if (isEnabled) {
+                    isUsageBasedBillingEnabled = true;
+                    break;
+                }
             }
+        } else {
+            isUsageBasedBillingEnabled = await this.configCatClientFactory().getValueAsync(
+                "isUsageBasedBillingEnabled",
+                false,
+                {
+                    user,
+                },
+            );
         }
 
         // 1. UBB enabled?
