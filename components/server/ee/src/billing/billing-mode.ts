@@ -188,7 +188,7 @@ export class BillingModesImpl implements BillingModes {
         const now = _now.toISOString();
 
         // Is Usage Based Billing enabled for this team?
-        const isUsageBasedBillingEnabled = await this.configCatClientFactory().getValueAsync(
+        let isUsageBasedBillingEnabled = await this.configCatClientFactory().getValueAsync(
             "isUsageBasedBillingEnabled",
             false,
             {
@@ -196,6 +196,29 @@ export class BillingModesImpl implements BillingModes {
                 teamName: team.name,
             },
         );
+
+        // Is Usage Based Billing enabled for this one of the owners of this team?
+        if (!isUsageBasedBillingEnabled) {
+            let ubpInheritedFromOwner = false;
+            const members = await this.teamDB.findMembersByTeam(team.id);
+            for (const member of members.filter((m) => m.role === "owner")) {
+                ubpInheritedFromOwner = await this.configCatClientFactory().getValueAsync(
+                    "isUsageBasedBillingEnabled",
+                    false,
+                    {
+                        user: {
+                            id: member.userId,
+                        },
+                        teamId: team.id,
+                        teamName: team.name,
+                    },
+                );
+                if (ubpInheritedFromOwner) {
+                    isUsageBasedBillingEnabled = true;
+                    break;
+                }
+            }
+        }
 
         // 1. UBB enabled?
         if (!isUsageBasedBillingEnabled) {
