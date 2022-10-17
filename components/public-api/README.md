@@ -1,6 +1,21 @@
 # Public-API
 
-# Example Flows
-This section gives examples how clients would use this API.
+This component contains the Gitpod (Public) API.
 
-https://github.com/gitpod-io/gitpod/blob/094dde356a04740500175e8797462a48c3153c89/components/public-api/go/v1/examples_test.go#L20-L103
+:warning: This API is currently in development and may change frequently before it reaches General Availability
+
+## API Structure
+The API is structured into two packages:
+* stable
+* experimenetal
+
+For each package, we provide different guarantees on compatiblity and evolution of the APIs.
+
+### Stable
+APIs defined in the **stable** package provide the following guarantees:
+* Services, calls, types and fields are not removed without following a deprecation policy (TBD).
+* Services, calls, types fields are not renamed.
+* Non succesfull responses are described exhaustively.
+
+### Experimental
+APIs in defined in the **experimental** package provide no guarantees. You should not rely on them for any functionality.
