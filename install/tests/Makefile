@@ -397,9 +397,6 @@ license_community_beta := "../licenses/Community (Beta).yaml"
 license_community_stable := "../licenses/Community.yaml"
 license_community_unstable := "../licenses/Community (Unstable).yaml"
 
-install-kots-cli:
-	@curl https://kots.io/install | bash
-
 preflights ?= true
 channel ?= unstable
 app ?= gitpod
@@ -407,7 +404,7 @@ version ?= -
 kots-install: version-flag = $(if $(version:-=),--app-version-label=$(version),)
 kots-install: preflight-flag = $(if $(preflights:true=),--skip-preflights,)
 kots-install: license-file = $(if $(license_community_$(channel)),$(license_community_$(channel)),"../licenses/$(channel).yaml")
-kots-install: install-kots-cli destroy-gitpod create-secrets
+kots-install: destroy-gitpod create-secrets
 	kubectl kots install ${app}/${channel} \
 	--skip-rbac-check ${version-flag} ${preflight-flag} \
 					--wait-duration "10m" \
