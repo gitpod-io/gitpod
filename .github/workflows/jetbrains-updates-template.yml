@@ -90,7 +90,8 @@ jobs:
           commit-message: "[${{ inputs.productId }}] Update IDE image to build version ${{ steps.latest-release.outputs.version }}"
           branch: "jetbrains/${{ inputs.productId }}-${{ steps.latest-release.outputs.version2 }}"
           labels: "team: IDE,editor: jetbrains"
-          team-reviewers: "engineering-ide"
+          # We can't use `team-reviewers` until we resolve https://github.com/gitpod-io/gitpod/issues/12194
+          # team-reviewers: "engineering-ide"
       - name: Get previous job's status
         id: lastrun
         uses: filiptronicek/get-last-job-status@main
