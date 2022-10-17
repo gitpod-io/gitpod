@@ -91,6 +91,7 @@ func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool) error
 	handlerOptions := []connect.HandlerOption{
 		connect.WithInterceptors(
 			NewMetricsInterceptor(connectMetrics),
+			NewLogInterceptor(log.Log),
 			auth.NewServerInterceptor(),
 		),
 	}
