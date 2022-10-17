@@ -62,6 +62,8 @@ jobs:
             - name: Update ${{ inputs.gradlePropertiesPath }}
               if: ${{ steps.latest-version.outputs.result != steps.current-version.outputs.result }}
               run: |
+                  PLUGIN_SINCE_BUILD=$(echo "${{ steps.latest-version.outputs.result }}" | sed 's/-EAP-CANDIDATE-SNAPSHOT//' | sed 's/-CUSTOM-SNAPSHOT//')
+                  sed -i 's/pluginSinceBuild=.*/pluginSinceBuild=${PLUGIN_SINCE_BUILD}/' ${{ inputs.gradlePropertiesPath }}
                   sed -i 's/platformVersion=${{ steps.current-version.outputs.result }}/platformVersion=${{ steps.latest-version.outputs.result }}/' ${{ inputs.gradlePropertiesPath }}
                   git diff
             - name: Create Pull Request for Gateway Plugin
@@ -127,6 +129,6 @@ jobs:
               if: ${{ (success() && steps.lastrun.outputs.status == 'failed') || failure() }}
               uses: rtCamp/action-slack-notify@v2
               env:
-                SLACK_WEBHOOK: ${{ secrets.slackWebhook }}
-                SLACK_COLOR: ${{ job.status }}
-                SLACK_TITLE: ${{ inputs.productName }}
+                  SLACK_WEBHOOK: ${{ secrets.slackWebhook }}
+                  SLACK_COLOR: ${{ job.status }}
+                  SLACK_TITLE: ${{ inputs.productName }}
