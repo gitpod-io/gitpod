@@ -92,6 +92,9 @@ type Client struct {
 
 	// UpstreamCloneURI is the fork upstream of a repository
 	UpstreamRemoteURI string
+
+	// if true will run git command as gitpod user (should be executed as root that has access to sudo in this case)
+	RunAsGitpodUser bool
 }
 
 // Status describes the status of a Git repo/working copy akin to "git status"
@@ -197,7 +200,12 @@ func (c *Client) GitWithOutput(ctx context.Context, ignoreErr *string, subcomman
 
 	span.LogKV("args", fullArgs)
 
-	cmd := exec.Command("git", fullArgs...)
+	cmdName := "git"
+	if c.RunAsGitpodUser {
+		cmdName = "sudo"
+		fullArgs = append([]string{"-u", "gitpod", "git"}, fullArgs...)
+	}
+	cmd := exec.Command(cmdName, fullArgs...)
 	cmd.Dir = c.Location
 	cmd.Env = env
 
