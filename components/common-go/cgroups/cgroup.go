@@ -88,6 +88,10 @@ func ReadFlatKeyedFile(path string) (map[string]uint64, error) {
 	return kv, nil
 }
 
+// Read the total stalled time in microseconds for full and some
+// It is not necessary to read avg10, avg60 and avg300 as these
+// are only for convenience. They are calculated as the rate during
+// the desired time frame.
 func ReadPSIValue(path string) (PSI, error) {
 	file, err := os.Open(path)
 	if err != nil {
