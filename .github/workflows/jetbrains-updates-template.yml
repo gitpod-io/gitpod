@@ -59,7 +59,7 @@ jobs:
           title: "[${{ inputs.productId }}] Update IDE image to build version ${{ steps.latest-release.outputs.version }}"
           body: |
             ## Description
-            This PR updates the ${{ inputs.productName }} IDE image to the latest release version.
+            This PR from @gitpod-io/engineering-ide updates the ${{ inputs.productName }} IDE image to the latest release version.
 
             ## How to test
             1. Open the preview environment generated for this branch
@@ -90,7 +90,8 @@ jobs:
           commit-message: "[${{ inputs.productId }}] Update IDE image to build version ${{ steps.latest-release.outputs.version }}"
           branch: "jetbrains/${{ inputs.productId }}-${{ steps.latest-release.outputs.version2 }}"
           labels: "team: IDE,editor: jetbrains"
-          team-reviewers: "engineering-ide"
+          # We can't use `team-reviewers` until we resolve https://github.com/gitpod-io/gitpod/issues/12194
+          # team-reviewers: "engineering-ide"
       - name: Get previous job's status
         id: lastrun
         uses: filiptronicek/get-last-job-status@main
