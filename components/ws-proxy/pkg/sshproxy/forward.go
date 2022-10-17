@@ -53,17 +53,21 @@ func (s *Server) ChannelForward(ctx context.Context, session *Session, targetCon
 		close(maskedReqs)
 	}()
 
+	wg := sync.WaitGroup{}
+	wg.Add(4)
+
 	go func() {
+		defer wg.Done()
 		io.Copy(targetChan, originChan)
 		targetChan.CloseWrite()
 	}()
 
 	go func() {
+		defer wg.Done()
 		io.Copy(originChan, targetChan)
 		originChan.CloseWrite()
 	}()
 
-	wg := sync.WaitGroup{}
 	forward := func(sourceReqs <-chan *ssh.Request, targetChan ssh.Channel) {
 		defer wg.Done()
 		for ctx.Err() == nil {
@@ -84,7 +88,6 @@ func (s *Server) ChannelForward(ctx context.Context, session *Session, targetCon
 		}
 	}
 
-	wg.Add(2)
 	go forward(maskedReqs, targetChan)
 	go forward(targetReqs, originChan)
 
