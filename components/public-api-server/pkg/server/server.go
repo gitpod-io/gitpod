@@ -81,8 +81,16 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool) error {
 	proxy.RegisterMetrics(srv.MetricsRegistry())
 
+	connectMetrics := NewConnectMetrics()
+
+	err := connectMetrics.Register(srv.MetricsRegistry())
+	if err != nil {
+		return err
+	}
+
 	handlerOptions := []connect.HandlerOption{
 		connect.WithInterceptors(
+			NewMetricsInterceptor(connectMetrics),
 			auth.NewServerInterceptor(),
 		),
 	}
