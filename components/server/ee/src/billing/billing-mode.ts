@@ -86,6 +86,7 @@ export class BillingModesImpl implements BillingModes {
                     {
                         user,
                         teamId: team.id,
+                        teamName: team.name,
                     },
                 );
                 if (isEnabled) {
@@ -93,6 +94,7 @@ export class BillingModesImpl implements BillingModes {
                     break;
                 }
             }
+            // No need to check the user, because ConfigCat rules would have already flagged them with one of the calls above.
         } else {
             isUsageBasedBillingEnabled = await this.configCatClientFactory().getValueAsync(
                 "isUsageBasedBillingEnabled",
