@@ -76,6 +76,23 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 			return err
 		}
 
+		// make sure that folder itself is owned by gitpod user prior to doing git clone
+		// this is needed as otherwise git clone will fail if the folder is owned by root
+		if ws.RunAsGitpodUser {
+			args := []string{"gitpod", ws.Location}
+			cmd := exec.Command("chown", args...)
+			res, cerr := cmd.CombinedOutput()
+			if cerr != nil && !process.IsNotChildProcess(cerr) {
+				err = git.OpFailedError{
+					Args:       args,
+					ExecErr:    cerr,
+					Output:     string(res),
+					Subcommand: "chown",
+				}
+				return err
+			}
+		}
+
 		log.WithField("stage", "init").WithField("location", ws.Location).Debug("Running git clone on workspace")
 		err = ws.Clone(ctx)
 		if err != nil {
