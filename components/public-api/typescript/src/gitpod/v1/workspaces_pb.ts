@@ -98,9 +98,9 @@ export class ListWorkspacesResponse extends Message<ListWorkspacesResponse> {
   nextPageToken = "";
 
   /**
-   * @generated from field: repeated gitpod.v1.ListWorkspacesResponse.WorkspaceAndInstance result = 2;
+   * @generated from field: repeated gitpod.v1.Workspace result = 2;
    */
-  result: ListWorkspacesResponse_WorkspaceAndInstance[] = [];
+  result: Workspace[] = [];
 
   constructor(data?: PartialMessage<ListWorkspacesResponse>) {
     super();
@@ -111,7 +111,7 @@ export class ListWorkspacesResponse extends Message<ListWorkspacesResponse> {
   static readonly typeName = "gitpod.v1.ListWorkspacesResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "next_page_token", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "result", kind: "message", T: ListWorkspacesResponse_WorkspaceAndInstance, repeated: true },
+    { no: 2, name: "result", kind: "message", T: Workspace, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListWorkspacesResponse {
@@ -128,49 +128,6 @@ export class ListWorkspacesResponse extends Message<ListWorkspacesResponse> {
 
   static equals(a: ListWorkspacesResponse | PlainMessage<ListWorkspacesResponse> | undefined, b: ListWorkspacesResponse | PlainMessage<ListWorkspacesResponse> | undefined): boolean {
     return proto3.util.equals(ListWorkspacesResponse, a, b);
-  }
-}
-
-/**
- * @generated from message gitpod.v1.ListWorkspacesResponse.WorkspaceAndInstance
- */
-export class ListWorkspacesResponse_WorkspaceAndInstance extends Message<ListWorkspacesResponse_WorkspaceAndInstance> {
-  /**
-   * @generated from field: gitpod.v1.Workspace result = 1;
-   */
-  result?: Workspace;
-
-  /**
-   * @generated from field: gitpod.v1.WorkspaceInstance last_active_instances = 2;
-   */
-  lastActiveInstances?: WorkspaceInstance;
-
-  constructor(data?: PartialMessage<ListWorkspacesResponse_WorkspaceAndInstance>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime = proto3;
-  static readonly typeName = "gitpod.v1.ListWorkspacesResponse.WorkspaceAndInstance";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "result", kind: "message", T: Workspace },
-    { no: 2, name: "last_active_instances", kind: "message", T: WorkspaceInstance },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListWorkspacesResponse_WorkspaceAndInstance {
-    return new ListWorkspacesResponse_WorkspaceAndInstance().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListWorkspacesResponse_WorkspaceAndInstance {
-    return new ListWorkspacesResponse_WorkspaceAndInstance().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListWorkspacesResponse_WorkspaceAndInstance {
-    return new ListWorkspacesResponse_WorkspaceAndInstance().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: ListWorkspacesResponse_WorkspaceAndInstance | PlainMessage<ListWorkspacesResponse_WorkspaceAndInstance> | undefined, b: ListWorkspacesResponse_WorkspaceAndInstance | PlainMessage<ListWorkspacesResponse_WorkspaceAndInstance> | undefined): boolean {
-    return proto3.util.equals(ListWorkspacesResponse_WorkspaceAndInstance, a, b);
   }
 }
 
@@ -924,6 +881,13 @@ export class Workspace extends Message<Workspace> {
    */
   description = "";
 
+  /**
+   * status is the current status of this Workspace.
+   *
+   * @generated from field: gitpod.v1.WorkspaceStatus status = 6;
+   */
+  status?: WorkspaceStatus;
+
   constructor(data?: PartialMessage<Workspace>) {
     super();
     proto3.util.initPartial(data, this);
@@ -937,6 +901,7 @@ export class Workspace extends Message<Workspace> {
     { no: 3, name: "project_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "context", kind: "message", T: WorkspaceContext },
     { no: 5, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "status", kind: "message", T: WorkspaceStatus },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Workspace {
@@ -953,6 +918,47 @@ export class Workspace extends Message<Workspace> {
 
   static equals(a: Workspace | PlainMessage<Workspace> | undefined, b: Workspace | PlainMessage<Workspace> | undefined): boolean {
     return proto3.util.equals(Workspace, a, b);
+  }
+}
+
+/**
+ * WorkspaceStatus represents the currently observed status of a Workspace, including data about child resources that belong to this Workspace.
+ *
+ * @generated from message gitpod.v1.WorkspaceStatus
+ */
+export class WorkspaceStatus extends Message<WorkspaceStatus> {
+  /**
+   * instance is the currently assigned WorkspaceInstance to this workspace. Empty when there is no WorkspaceInstance assigned.
+   *
+   * @generated from field: gitpod.v1.WorkspaceInstance instance = 1;
+   */
+  instance?: WorkspaceInstance;
+
+  constructor(data?: PartialMessage<WorkspaceStatus>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.v1.WorkspaceStatus";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "instance", kind: "message", T: WorkspaceInstance },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceStatus {
+    return new WorkspaceStatus().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceStatus {
+    return new WorkspaceStatus().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceStatus {
+    return new WorkspaceStatus().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WorkspaceStatus | PlainMessage<WorkspaceStatus> | undefined, b: WorkspaceStatus | PlainMessage<WorkspaceStatus> | undefined): boolean {
+    return proto3.util.equals(WorkspaceStatus, a, b);
   }
 }
 

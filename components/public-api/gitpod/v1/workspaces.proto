@@ -55,14 +55,9 @@ message ListWorkspacesRequest {
     google.protobuf.FieldMask field_mask = 2;
 }
 message ListWorkspacesResponse {
-    message WorkspaceAndInstance {
-        Workspace result = 1;
-        WorkspaceInstance last_active_instances = 2;
-    }
-
     string next_page_token = 1;
 
-    repeated WorkspaceAndInstance result = 2;
+    repeated Workspace result = 2;
 }
 
 message GetWorkspaceRequest {
@@ -159,6 +154,15 @@ message Workspace {
 
     // description is a human readable description of the workspace
     string description = 5;
+
+    // status is the current status of this Workspace.
+    WorkspaceStatus status = 6;
+}
+
+// WorkspaceStatus represents the currently observed status of a Workspace, including data about child resources that belong to this Workspace.
+message WorkspaceStatus {
+    // instance is the currently assigned WorkspaceInstance to this workspace. Empty when there is no WorkspaceInstance assigned.
+    WorkspaceInstance instance = 1;
 }
 
 // WorkspaceContext describes the context a workspace was created from
