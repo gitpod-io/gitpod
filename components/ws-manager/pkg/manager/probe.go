@@ -77,12 +77,42 @@ func (p *WorkspaceReadyProbe) Run(ctx context.Context) WorkspaceProbeResult {
 		},
 	}
 
+	type probeResult struct {
+		Ok bool `json:"ok"`
+	}
+
+	callReadyURL := func(url string) (bool, *probeResult, error) {
+		resp, err := client.Get(p.readyURL)
+		if err != nil {
+			return false, nil, err
+		}
+
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return false, nil, nil
+		}
+
+		rawBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return false, nil, err
+		}
+
+		var result probeResult
+		err = json.Unmarshal(rawBody, &result)
+		if err != nil {
+			return false, nil, err
+		}
+
+		return true, &result, nil
+	}
+
 	for {
 		if ctx.Err() != nil {
 			return WorkspaceProbeStopped
 		}
 
-		resp, err := client.Get(p.readyURL)
+		isOk, result, err := callReadyURL(p.readyURL)
 		if err != nil {
 			urlerr, ok := err.(*url.Error)
 			if !ok || !urlerr.Timeout() {
@@ -95,28 +125,13 @@ func (p *WorkspaceReadyProbe) Run(ctx context.Context) WorkspaceProbeResult {
 			continue
 		}
 
-		if resp.StatusCode != http.StatusOK {
-			resp.Body.Close()
-			log.WithField("url", p.readyURL).WithField("status", resp.StatusCode).Debug("workspace did not respond to ready probe with OK status")
+		if !isOk {
+			log.WithField("url", p.readyURL).Debug("workspace did not respond to ready probe with OK status")
 			time.Sleep(p.RetryDelay)
 			continue
 		}
 
-		rawBody, err := ioutil.ReadAll(resp.Body)
-		resp.Body.Close()
-		if err != nil {
-			log.WithField("url", p.readyURL).WithField("status", resp.StatusCode).WithError(err).Debug("ready probe failed: cannot read body")
-			continue
-		}
-		var probeResult struct {
-			Ok bool `json:"ok"`
-		}
-		err = json.Unmarshal(rawBody, &probeResult)
-		if err != nil {
-			log.WithField("url", p.readyURL).WithField("status", resp.StatusCode).WithError(err).Debug("ready probe failed: unable to unmarshal json")
-			continue
-		}
-		if probeResult.Ok {
+		if result.Ok {
 			break
 		}
 	}
