@@ -34,6 +34,8 @@ var publicApiWorkspacesGetCmd = &cobra.Command{
 		tpl := `ID:	{{ .Result.WorkspaceId }}
 Owner:	{{ .Result.OwnerId }}
 ContextURL:	{{ .Result.Context.ContextUrl }}
+InstanceID:	{{ .Result.Status.Instance.InstanceId }}
+InstanceStatus:	{{ .Result.Status.Instance.Status.Phase }}
 `
 		err = getOutputFormat(tpl, "{..result.workspace_id}").Print(resp)
 		if err != nil {
