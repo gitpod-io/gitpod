@@ -86,7 +86,7 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.`
 */
 
 const tmplMIT = `Copyright (c) {{.Year}} {{.Holder}}. All rights reserved.
-Licensed under the MIT License. See License-MIT.txt in the project root for license information.`
+Licensed under the MIT License. See License.MIT.txt in the project root for license information.`
 
 const tmplAGPL = `Copyright (c) {{.Year}} {{.Holder}}. All rights reserved.
 Licensed under the GNU Affero General Public License (AGPL).
