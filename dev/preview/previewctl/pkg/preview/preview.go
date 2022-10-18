@@ -15,12 +15,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gitpod-io/gitpod/previewctl/pkg/k8s"
-
+	"github.com/cockroachdb/errors"
+	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
+	"github.com/gitpod-io/gitpod/previewctl/pkg/k8s"
 )
 
 const harvesterContextName = "harvester"
@@ -54,7 +53,7 @@ func New(branch string, logger *logrus.Logger) (*Preview, error) {
 	branch = strings.TrimRight(branch, "\n")
 	logEntry := logger.WithFields(logrus.Fields{"branch": branch})
 
-	harvesterConfig, err := k8s.New(logEntry.Logger, harvesterContextName)
+	harvesterConfig, err := k8s.NewFromDefaultConfigWithContext(logEntry.Logger, harvesterContextName)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't instantiate a k8s config")
 	}

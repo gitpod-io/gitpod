@@ -5,8 +5,9 @@
 package main
 
 import (
-	"github.com/gitpod-io/gitpod/previewctl/cmd"
 	"github.com/sirupsen/logrus"
+
+	"github.com/gitpod-io/gitpod/previewctl/cmd"
 )
 
 func main() {

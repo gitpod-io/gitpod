@@ -27,6 +27,8 @@ func RootCmd(logger *logrus.Logger) *cobra.Command {
 		getNameCmd(),
 		listPreviewsCmd(logger),
 		SSHPreviewCmd(logger),
+		newGetCredentialsCommand(logger),
 	)
+
 	return cmd
 }
