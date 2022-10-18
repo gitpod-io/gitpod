@@ -20,6 +20,8 @@ service BillingService {
   // GetStripeCustomer retrieves a Stripe Customer
   rpc GetStripeCustomer(GetStripeCustomerRequest) returns (GetStripeCustomerResponse) {};
 
+  rpc CreateStripeCustomer(CreateStripeCustomerRequest) returns (CreateStripeCustomerResponse) {};
+
 }
 
 message ReconcileInvoicesRequest {}
@@ -54,4 +56,17 @@ message GetStripeCustomerResponse {
 
 message StripeCustomer {
   string id = 1;
+}
+
+message CreateStripeCustomerRequest {
+  string attribution_id = 1;
+
+  // name is the customer name
+  string name = 2;
+  string email = 3;
+  string currency = 4;
+}
+
+message CreateStripeCustomerResponse {
+  StripeCustomer customer = 1;
 }

@@ -44,6 +44,18 @@ export interface StripeCustomer {
   id: string;
 }
 
+export interface CreateStripeCustomerRequest {
+  attributionId: string;
+  /** name is the customer name */
+  name: string;
+  email: string;
+  currency: string;
+}
+
+export interface CreateStripeCustomerResponse {
+  customer: StripeCustomer | undefined;
+}
+
 function createBaseReconcileInvoicesRequest(): ReconcileInvoicesRequest {
   return {};
 }
@@ -460,6 +472,132 @@ export const StripeCustomer = {
   },
 };
 
+function createBaseCreateStripeCustomerRequest(): CreateStripeCustomerRequest {
+  return { attributionId: "", name: "", email: "", currency: "" };
+}
+
+export const CreateStripeCustomerRequest = {
+  encode(message: CreateStripeCustomerRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.attributionId !== "") {
+      writer.uint32(10).string(message.attributionId);
+    }
+    if (message.name !== "") {
+      writer.uint32(18).string(message.name);
+    }
+    if (message.email !== "") {
+      writer.uint32(26).string(message.email);
+    }
+    if (message.currency !== "") {
+      writer.uint32(34).string(message.currency);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CreateStripeCustomerRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateStripeCustomerRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.attributionId = reader.string();
+          break;
+        case 2:
+          message.name = reader.string();
+          break;
+        case 3:
+          message.email = reader.string();
+          break;
+        case 4:
+          message.currency = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateStripeCustomerRequest {
+    return {
+      attributionId: isSet(object.attributionId) ? String(object.attributionId) : "",
+      name: isSet(object.name) ? String(object.name) : "",
+      email: isSet(object.email) ? String(object.email) : "",
+      currency: isSet(object.currency) ? String(object.currency) : "",
+    };
+  },
+
+  toJSON(message: CreateStripeCustomerRequest): unknown {
+    const obj: any = {};
+    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
+    message.name !== undefined && (obj.name = message.name);
+    message.email !== undefined && (obj.email = message.email);
+    message.currency !== undefined && (obj.currency = message.currency);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<CreateStripeCustomerRequest>): CreateStripeCustomerRequest {
+    const message = createBaseCreateStripeCustomerRequest();
+    message.attributionId = object.attributionId ?? "";
+    message.name = object.name ?? "";
+    message.email = object.email ?? "";
+    message.currency = object.currency ?? "";
+    return message;
+  },
+};
+
+function createBaseCreateStripeCustomerResponse(): CreateStripeCustomerResponse {
+  return { customer: undefined };
+}
+
+export const CreateStripeCustomerResponse = {
+  encode(message: CreateStripeCustomerResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.customer !== undefined) {
+      StripeCustomer.encode(message.customer, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CreateStripeCustomerResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateStripeCustomerResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.customer = StripeCustomer.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateStripeCustomerResponse {
+    return { customer: isSet(object.customer) ? StripeCustomer.fromJSON(object.customer) : undefined };
+  },
+
+  toJSON(message: CreateStripeCustomerResponse): unknown {
+    const obj: any = {};
+    message.customer !== undefined &&
+      (obj.customer = message.customer ? StripeCustomer.toJSON(message.customer) : undefined);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<CreateStripeCustomerResponse>): CreateStripeCustomerResponse {
+    const message = createBaseCreateStripeCustomerResponse();
+    message.customer = (object.customer !== undefined && object.customer !== null)
+      ? StripeCustomer.fromPartial(object.customer)
+      : undefined;
+    return message;
+  },
+};
+
 export type BillingServiceDefinition = typeof BillingServiceDefinition;
 export const BillingServiceDefinition = {
   name: "BillingService",
@@ -510,6 +648,14 @@ export const BillingServiceDefinition = {
       responseStream: false,
       options: {},
     },
+    createStripeCustomer: {
+      name: "CreateStripeCustomer",
+      requestType: CreateStripeCustomerRequest,
+      requestStream: false,
+      responseType: CreateStripeCustomerResponse,
+      responseStream: false,
+      options: {},
+    },
   },
 } as const;
 
@@ -543,6 +689,10 @@ export interface BillingServiceServiceImplementation<CallContextExt = {}> {
     request: GetStripeCustomerRequest,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<GetStripeCustomerResponse>>;
+  createStripeCustomer(
+    request: CreateStripeCustomerRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<CreateStripeCustomerResponse>>;
 }
 
 export interface BillingServiceClient<CallOptionsExt = {}> {
@@ -575,6 +725,10 @@ export interface BillingServiceClient<CallOptionsExt = {}> {
     request: DeepPartial<GetStripeCustomerRequest>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<GetStripeCustomerResponse>;
+  createStripeCustomer(
+    request: DeepPartial<CreateStripeCustomerRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<CreateStripeCustomerResponse>;
 }
 
 export interface DataLoaderOptions {
