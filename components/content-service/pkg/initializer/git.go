@@ -166,9 +166,8 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 	span.SetTag("targetMode", ws.TargetMode)
 	defer tracing.FinishSpan(span, &err)
 
-	defer func() error {
+	defer func() {
 		err = checkGitStatus(err)
-		return err
 	}()
 
 	// checkout branch
