@@ -1,7 +1,7 @@
 #!/bin/bash
 # Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
-# See License-AGPL.txt in the project root for license information.
+# See License.AGPL.txt in the project root for license information.
 
 # This script configure remote debugging in a workspace running in a preview environment.
 # It updates VM options with remote debug agent, restart the JB backend to apply them,

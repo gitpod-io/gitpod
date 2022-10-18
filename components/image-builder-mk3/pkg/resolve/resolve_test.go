@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 //go:generate sh -c "mockgen -package resolve_test github.com/containerd/containerd/remotes Resolver,Fetcher > resolve_mock_test.go"
 //go:generate leeway run components:update-license-header

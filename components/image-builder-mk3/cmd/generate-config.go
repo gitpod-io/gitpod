@@ -1,6 +1,6 @@
 // Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 //go:generate sh -c "cd .. && CGO_ENABLED=0 go run main.go generate config > config-schema.json"
 
