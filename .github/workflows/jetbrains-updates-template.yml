@@ -1,21 +1,21 @@
 on:
   workflow_call:
-    inputs:
-      productName:
-        type: string
-        required: true
-      productId:
-        type: string
-        required: true
-      productCode:
-        type: string
-        required: true
-      productType:
-        type: string
-        required: true
-      exampleRepo:
-        type: string
-        required: true
+    # inputs:
+    #   productName:
+    #     type: string
+    #     required: true
+    #   productId:
+    #     type: string
+    #     required: true
+    #   productCode:
+    #     type: string
+    #     required: true
+    #   productType:
+    #     type: string
+    #     required: true
+    #   exampleRepo:
+    #     type: string
+    #     required: true
     secrets:
       slackWebhook:
         required: true
@@ -24,50 +24,32 @@ jobs:
   update-jetbrains:
     runs-on: ubuntu-latest
     steps:
-      - name: Latest Release
-        id: latest-release
-        run: |
-          data=$(curl -sSL "https://data.services.jetbrains.com/products?code=${{ inputs.productCode }}&release.type=${{ inputs.productType }}&fields=distributions%2Clink%2Cname%2Creleases&_=$(date +%s)000")
-          link=$(echo "$data" | jq -r '.[0].releases[0].downloads.linux.link')
-          build=$(echo "$data" | jq -r '.[0].releases[0].build')
-          build2=$(echo "$build" | sed 's/\./-/g')
-          echo "::set-output name=result::$link"
-          echo "::set-output name=version::$build"
-          echo "::set-output name=version2::$build2"
       - uses: actions/checkout@v2
-      - name: Used Release
-        id: used-release
-        run: echo "::set-output name=result::$(yq e '.defaultArgs.${{ inputs.productId }}DownloadUrl' WORKSPACE.yaml)"
-      - name: No Update Available
-        if: steps.latest-release.outputs.result == steps.used-release.outputs.result
+      - name: Update
         run: |
-          echo "Nothing to do."
-          echo "Latest release: ${{ steps.latest-release.outputs.result }}"
-          echo "Used release:   ${{ steps.used-release.outputs.result }}"
-      - name: Update Available
-        if: steps.latest-release.outputs.result != steps.used-release.outputs.result
-        run: |
-          echo "There is an update available!"
-          echo "Latest release: ${{ steps.latest-release.outputs.result }}"
-          echo "Used release:   ${{ steps.used-release.outputs.result }}"
-          yq -i e '.defaultArgs.${{ inputs.productId }}DownloadUrl = "${{ steps.latest-release.outputs.result }}"' WORKSPACE.yaml
-          git diff
+          cd ./components/ide/jetbrains/image/gha-update-image
+          yarn install
+          node index.js
+      - uses: technote-space/get-diff-action@v6
+        with:
+          FILES: WORKSPACE.yaml
       - name: Create Pull Request
-        if: steps.latest-release.outputs.result != steps.used-release.outputs.result
+        if: env.GIT_DIFF
         uses: peter-evans/create-pull-request@v4
         with:
-          title: "[${{ inputs.productId }}] Update IDE image to build version ${{ steps.latest-release.outputs.version }}"
+          title: "[JetBrains] Update IDE images to new build version"
           body: |
             ## Description
-            This PR updates the ${{ inputs.productName }} IDE image to the latest release version.
+            This PR updates the JetBrains IDE images to the latest release version.
 
             ## How to test
+            1. For each IDE changed on this PR, follow these steps:
             1. Open the preview environment generated for this branch
-            2. Choose the stable version of ${{ inputs.productName }} as your preferred editor
-            3. Start a workspace using this repository: `${{ inputs.exampleRepo }}`
-            4. Verify that the workspace starts successfully
-            5. Verify that the IDE opens successfully
-            6. Verify that the version of the IDE corresponds to the one being updated in this PR
+            1. Choose the stable version of the IDE that you're testing as your default editor
+            1. Start a workspace using any repository (e.g: `https://github.com/gitpod-io/empty`)
+            1. Verify that the workspace starts successfully
+            1. Verify that the IDE opens successfully
+            1. Verify that the version of the IDE corresponds to the one being updated in this PR
 
             The following resources should help, in case something goes wrong (e.g. workspaces don't start):
 
@@ -76,7 +58,7 @@ jobs:
 
             ## Release Notes
             ```release-note
-            Update ${{ inputs.productName }} IDE image to version ${{ steps.latest-release.outputs.version }}.
+            Update JetBrains IDE images to latest version.
             ```
 
             ## Werft options:
@@ -87,7 +69,7 @@ jobs:
             - [x] /werft with-preview
 
             _This PR was created automatically with GitHub Actions using [this](https://github.com/gitpod-io/gitpod/blob/main/.github/workflows/jetbrains-updates-template.yml) template_
-          commit-message: "[${{ inputs.productId }}] Update IDE image to build version ${{ steps.latest-release.outputs.version }}"
+          commit-message: "[JetBrains] Update IDE images to new build version"
           branch: "jetbrains/${{ inputs.productId }}-${{ steps.latest-release.outputs.version2 }}"
           labels: "team: IDE,editor: jetbrains"
           team-reviewers: "engineering-ide"

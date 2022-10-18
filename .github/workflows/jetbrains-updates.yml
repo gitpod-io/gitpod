@@ -6,63 +6,63 @@ on:
     - cron: "0 11 * * 1-5"
 
 jobs:
-  intellij:
-    uses: ./.github/workflows/jetbrains-updates-template.yml
-    with:
-      productName: IntelliJ IDEA
-      productId: intellij
-      productCode: IIU
-      productType: release
-      exampleRepo: https://github.com/gitpod-io/spring-petclinic
-    secrets:
-      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
-  goland:
-    uses: ./.github/workflows/jetbrains-updates-template.yml
-    with:
-      productName: GoLand
-      productId: goland
-      productCode: GO
-      productType: release
-      exampleRepo: https://github.com/gitpod-io/template-golang-cli
-    secrets:
-      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
-  pycharm:
-    uses: ./.github/workflows/jetbrains-updates-template.yml
-    with:
-      productName: PyCharm
-      productId: pycharm
-      productCode: PCP
-      productType: release
-      exampleRepo: https://github.com/gitpod-io/template-python-django
-    secrets:
-      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
-  phpstorm:
-    uses: ./.github/workflows/jetbrains-updates-template.yml
-    with:
-      productName: PhpStorm
-      productId: phpstorm
-      productCode: PS
-      productType: release
-      exampleRepo: https://github.com/gitpod-io/template-php-laravel-mysql
-    secrets:
-      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
-  rubymine:
-    uses: ./.github/workflows/jetbrains-updates-template.yml
-    with:
-      productName: RubyMine
-      productId: rubymine
-      productCode: RM
-      productType: release
-      exampleRepo: https://github.com/gitpod-io/template-jetbrains-rubymine
-    secrets:
-      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
-  webstorm:
-    uses: ./.github/workflows/jetbrains-updates-template.yml
-    with:
-      productName: WebStorm
-      productId: webstorm
-      productCode: WS
-      productType: release
-      exampleRepo: https://github.com/gitpod-io/template-jetbrains-webstorm
-    secrets:
-      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+  # intellij:
+  #   uses: ./.github/workflows/jetbrains-updates-template.yml
+  #   with:
+  #     productName: IntelliJ IDEA
+  #     productId: intellij
+  #     productCode: IIU
+  #     productType: release
+  #     exampleRepo: https://github.com/gitpod-io/spring-petclinic
+  #   secrets:
+  #     slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+  # goland:
+  #   uses: ./.github/workflows/jetbrains-updates-template.yml
+  #   with:
+  #     productName: GoLand
+  #     productId: goland
+  #     productCode: GO
+  #     productType: release
+  #     exampleRepo: https://github.com/gitpod-io/template-golang-cli
+  #   secrets:
+  #     slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+  # pycharm:
+  #   uses: ./.github/workflows/jetbrains-updates-template.yml
+  #   with:
+  #     productName: PyCharm
+  #     productId: pycharm
+  #     productCode: PCP
+  #     productType: release
+  #     exampleRepo: https://github.com/gitpod-io/template-python-django
+  #   secrets:
+  #     slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+  # phpstorm:
+  #   uses: ./.github/workflows/jetbrains-updates-template.yml
+  #   with:
+  #     productName: PhpStorm
+  #     productId: phpstorm
+  #     productCode: PS
+  #     productType: release
+  #     exampleRepo: https://github.com/gitpod-io/template-php-laravel-mysql
+  #   secrets:
+  #     slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+  # rubymine:
+  #   uses: ./.github/workflows/jetbrains-updates-template.yml
+  #   with:
+  #     productName: RubyMine
+  #     productId: rubymine
+  #     productCode: RM
+  #     productType: release
+  #     exampleRepo: https://github.com/gitpod-io/template-jetbrains-rubymine
+  #   secrets:
+  #     slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+  # webstorm:
+  #   uses: ./.github/workflows/jetbrains-updates-template.yml
+  #   with:
+  #     productName: WebStorm
+  #     productId: webstorm
+  #     productCode: WS
+  #     productType: release
+  #     exampleRepo: https://github.com/gitpod-io/template-jetbrains-webstorm
+  #   secrets:
+  #     slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
