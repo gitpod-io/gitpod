@@ -18,36 +18,6 @@ service WorkspacesService {
 
     // GetOwnerToken returns an owner token.
     rpc GetOwnerToken(GetOwnerTokenRequest) returns (GetOwnerTokenResponse) {}
-
-    // CreateAndStartWorkspace creates a new workspace and starts it.
-    rpc CreateAndStartWorkspace(CreateAndStartWorkspaceRequest) returns (CreateAndStartWorkspaceResponse) {}
-
-    // StartWorkspace starts an existing workspace.
-    rpc StartWorkspace(StartWorkspaceRequest) returns (StartWorkspaceResponse) {}
-
-    // GetRunningWorkspaceInstance returns the currently active instance of a workspace.
-    // Errors:
-    //   FAILED_PRECONDITION: if a workspace does not a currently active instance
-    //
-    rpc GetActiveWorkspaceInstance(GetActiveWorkspaceInstanceRequest) returns (GetActiveWorkspaceInstanceResponse) {}
-
-    // GetWorkspaceInstanceOwnerToken returns the owner token of a workspace instance.
-    // Note: the owner token is not part of the workspace instance status so that we can scope its access on the
-    //       API function level.
-    rpc GetWorkspaceInstanceOwnerToken(GetWorkspaceInstanceOwnerTokenRequest) returns (GetWorkspaceInstanceOwnerTokenResponse) {}
-
-    // ListenToWorkspaceInstance listens to workspace instance updates.
-    rpc ListenToWorkspaceInstance(ListenToWorkspaceInstanceRequest) returns (stream ListenToWorkspaceInstanceResponse) {}
-
-    // ListenToImageBuildLogs streams (currently or previously) running workspace image build logs
-    rpc ListenToImageBuildLogs(ListenToImageBuildLogsRequest) returns (stream ListenToImageBuildLogsResponse) {}
-
-    // StopWorkspace stops a running workspace (instance).
-    // Errors:
-    //   NOT_FOUND:           the workspace_id is unkown
-    //   FAILED_PRECONDITION: if there's no running instance
-    rpc StopWorkspace(StopWorkspaceRequest) returns (stream StopWorkspaceResponse) {}
-
 }
 
 message ListWorkspacesRequest {
@@ -79,65 +49,12 @@ message GetOwnerTokenResponse {
     string token = 1;
 }
 
-message CreateAndStartWorkspaceRequest {
-    string idempotency_token = 1;
-
-    oneof source {
-        string context_url = 2;
-        string prebuild_id = 3;
-    }
-
-    StartWorkspaceSpec start_spec = 5;
-}
-message CreateAndStartWorkspaceResponse {
-    string workspace_id = 1;
-}
-
-message StartWorkspaceRequest {
-    string idempotency_token = 1;
-
-    string workspace_id = 2;
-    StartWorkspaceSpec spec = 3;
-}
-message StartWorkspaceResponse {
-    string instance_id = 1;
-    string workspace_url = 2;
-}
-
-message GetActiveWorkspaceInstanceRequest {
-    string workspace_id = 1;
-}
-message GetActiveWorkspaceInstanceResponse {
-    WorkspaceInstance instance = 1;
-}
-
 message GetWorkspaceInstanceOwnerTokenRequest {
     string instance_id = 1;
 }
 message GetWorkspaceInstanceOwnerTokenResponse {
     string owner_token = 1;
 }
-
-message ListenToWorkspaceInstanceRequest {
-    string instance_id = 1;
-}
-message ListenToWorkspaceInstanceResponse {
-    WorkspaceInstanceStatus instance_status = 1;
-}
-
-message ListenToImageBuildLogsRequest {
-    string instance_id = 1;
-}
-message ListenToImageBuildLogsResponse {
-    string line = 1;
-}
-
-message StopWorkspaceRequest {
-    string idempotency_token = 1;
-
-    string workspace_id = 2;
-}
-message StopWorkspaceResponse {}
 
 ////////////////////////////////
 // Shared messages come here
@@ -293,11 +210,6 @@ message WorkspaceInstanceStatus {
 
     // Admission describes who can access a workspace instance and its ports.
     AdmissionLevel admission = 6;
-
-    // repo details the Git working copy status of the workspace.
-    // Note: this is a best-effort field and more often than not will not be present. Its absence does not
-    // indicate the absence of a working copy.
-    // contentservice.GitStatus repo = 7;
 }
 
 // Admission level describes who can access a workspace instance and its ports.
@@ -309,9 +221,4 @@ enum AdmissionLevel {
 
     // ADMISSION_LEVEL_EVERYONE means the workspace (including ports) can be accessed by everyone.
     ADMISSION_LEVEL_EVERYONE = 2;
-}
-
-// StartWorkspaceSpec influences the workspace start
-message StartWorkspaceSpec {
-    // future per-workspace-start fields, e.g. region
 }

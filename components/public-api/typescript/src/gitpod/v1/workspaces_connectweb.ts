@@ -9,7 +9,7 @@
 /* eslint-disable */
 /* @ts-nocheck */
 
-import {CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, GetActiveWorkspaceInstanceRequest, GetActiveWorkspaceInstanceResponse, GetOwnerTokenRequest, GetOwnerTokenResponse, GetWorkspaceInstanceOwnerTokenRequest, GetWorkspaceInstanceOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListenToImageBuildLogsRequest, ListenToImageBuildLogsResponse, ListenToWorkspaceInstanceRequest, ListenToWorkspaceInstanceResponse, ListWorkspacesRequest, ListWorkspacesResponse, StartWorkspaceRequest, StartWorkspaceResponse, StopWorkspaceRequest, StopWorkspaceResponse} from "./workspaces_pb.js";
+import {GetOwnerTokenRequest, GetOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspacesRequest, ListWorkspacesResponse} from "./workspaces_pb.js";
 import {MethodKind} from "@bufbuild/protobuf";
 
 /**
@@ -50,91 +50,6 @@ export const WorkspacesService = {
       I: GetOwnerTokenRequest,
       O: GetOwnerTokenResponse,
       kind: MethodKind.Unary,
-    },
-    /**
-     * CreateAndStartWorkspace creates a new workspace and starts it.
-     *
-     * @generated from rpc gitpod.v1.WorkspacesService.CreateAndStartWorkspace
-     */
-    createAndStartWorkspace: {
-      name: "CreateAndStartWorkspace",
-      I: CreateAndStartWorkspaceRequest,
-      O: CreateAndStartWorkspaceResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * StartWorkspace starts an existing workspace.
-     *
-     * @generated from rpc gitpod.v1.WorkspacesService.StartWorkspace
-     */
-    startWorkspace: {
-      name: "StartWorkspace",
-      I: StartWorkspaceRequest,
-      O: StartWorkspaceResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * GetRunningWorkspaceInstance returns the currently active instance of a workspace.
-     * Errors:
-     *   FAILED_PRECONDITION: if a workspace does not a currently active instance
-     *
-     *
-     * @generated from rpc gitpod.v1.WorkspacesService.GetActiveWorkspaceInstance
-     */
-    getActiveWorkspaceInstance: {
-      name: "GetActiveWorkspaceInstance",
-      I: GetActiveWorkspaceInstanceRequest,
-      O: GetActiveWorkspaceInstanceResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * GetWorkspaceInstanceOwnerToken returns the owner token of a workspace instance.
-     * Note: the owner token is not part of the workspace instance status so that we can scope its access on the
-     *       API function level.
-     *
-     * @generated from rpc gitpod.v1.WorkspacesService.GetWorkspaceInstanceOwnerToken
-     */
-    getWorkspaceInstanceOwnerToken: {
-      name: "GetWorkspaceInstanceOwnerToken",
-      I: GetWorkspaceInstanceOwnerTokenRequest,
-      O: GetWorkspaceInstanceOwnerTokenResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * ListenToWorkspaceInstance listens to workspace instance updates.
-     *
-     * @generated from rpc gitpod.v1.WorkspacesService.ListenToWorkspaceInstance
-     */
-    listenToWorkspaceInstance: {
-      name: "ListenToWorkspaceInstance",
-      I: ListenToWorkspaceInstanceRequest,
-      O: ListenToWorkspaceInstanceResponse,
-      kind: MethodKind.ServerStreaming,
-    },
-    /**
-     * ListenToImageBuildLogs streams (currently or previously) running workspace image build logs
-     *
-     * @generated from rpc gitpod.v1.WorkspacesService.ListenToImageBuildLogs
-     */
-    listenToImageBuildLogs: {
-      name: "ListenToImageBuildLogs",
-      I: ListenToImageBuildLogsRequest,
-      O: ListenToImageBuildLogsResponse,
-      kind: MethodKind.ServerStreaming,
-    },
-    /**
-     * StopWorkspace stops a running workspace (instance).
-     * Errors:
-     *   NOT_FOUND:           the workspace_id is unkown
-     *   FAILED_PRECONDITION: if there's no running instance
-     *
-     * @generated from rpc gitpod.v1.WorkspacesService.StopWorkspace
-     */
-    stopWorkspace: {
-      name: "StopWorkspace",
-      I: StopWorkspaceRequest,
-      O: StopWorkspaceResponse,
-      kind: MethodKind.ServerStreaming,
     },
   }
 } as const;
