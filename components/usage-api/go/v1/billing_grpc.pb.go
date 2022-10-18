@@ -37,6 +37,7 @@ type BillingServiceClient interface {
 	CancelSubscription(ctx context.Context, in *CancelSubscriptionRequest, opts ...grpc.CallOption) (*CancelSubscriptionResponse, error)
 	// GetStripeCustomer retrieves a Stripe Customer
 	GetStripeCustomer(ctx context.Context, in *GetStripeCustomerRequest, opts ...grpc.CallOption) (*GetStripeCustomerResponse, error)
+	CreateStripeCustomer(ctx context.Context, in *CreateStripeCustomerRequest, opts ...grpc.CallOption) (*CreateStripeCustomerResponse, error)
 }
 
 type billingServiceClient struct {
@@ -83,6 +84,15 @@ func (c *billingServiceClient) GetStripeCustomer(ctx context.Context, in *GetStr
 	return out, nil
 }
 
+func (c *billingServiceClient) CreateStripeCustomer(ctx context.Context, in *CreateStripeCustomerRequest, opts ...grpc.CallOption) (*CreateStripeCustomerResponse, error) {
+	out := new(CreateStripeCustomerResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.BillingService/CreateStripeCustomer", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BillingServiceServer is the server API for BillingService service.
 // All implementations must embed UnimplementedBillingServiceServer
 // for forward compatibility
@@ -98,6 +108,7 @@ type BillingServiceServer interface {
 	CancelSubscription(context.Context, *CancelSubscriptionRequest) (*CancelSubscriptionResponse, error)
 	// GetStripeCustomer retrieves a Stripe Customer
 	GetStripeCustomer(context.Context, *GetStripeCustomerRequest) (*GetStripeCustomerResponse, error)
+	CreateStripeCustomer(context.Context, *CreateStripeCustomerRequest) (*CreateStripeCustomerResponse, error)
 	mustEmbedUnimplementedBillingServiceServer()
 }
 
@@ -116,6 +127,9 @@ func (UnimplementedBillingServiceServer) CancelSubscription(context.Context, *Ca
 }
 func (UnimplementedBillingServiceServer) GetStripeCustomer(context.Context, *GetStripeCustomerRequest) (*GetStripeCustomerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetStripeCustomer not implemented")
+}
+func (UnimplementedBillingServiceServer) CreateStripeCustomer(context.Context, *CreateStripeCustomerRequest) (*CreateStripeCustomerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateStripeCustomer not implemented")
 }
 func (UnimplementedBillingServiceServer) mustEmbedUnimplementedBillingServiceServer() {}
 
@@ -202,6 +216,24 @@ func _BillingService_GetStripeCustomer_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BillingService_CreateStripeCustomer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateStripeCustomerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).CreateStripeCustomer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.BillingService/CreateStripeCustomer",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).CreateStripeCustomer(ctx, req.(*CreateStripeCustomerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BillingService_ServiceDesc is the grpc.ServiceDesc for BillingService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -224,6 +256,10 @@ var BillingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetStripeCustomer",
 			Handler:    _BillingService_GetStripeCustomer_Handler,
+		},
+		{
+			MethodName: "CreateStripeCustomer",
+			Handler:    _BillingService_CreateStripeCustomer_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
