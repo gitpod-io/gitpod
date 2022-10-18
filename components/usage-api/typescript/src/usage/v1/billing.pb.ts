@@ -7,6 +7,7 @@
 /* eslint-disable */
 import { CallContext, CallOptions } from "nice-grpc-common";
 import * as _m0 from "protobufjs/minimal";
+import { CostCenter } from "./usage.pb";
 
 export const protobufPackage = "usage.v1";
 
@@ -21,6 +22,17 @@ export interface FinalizeInvoiceRequest {
 }
 
 export interface FinalizeInvoiceResponse {
+}
+
+export interface CreateStripeSubscriptionRequest {
+  attributionId: string;
+  stripeIntentId: string;
+  usageLimit: number;
+}
+
+export interface CreateStripeSubscriptionResponse {
+  customer: StripeCustomer | undefined;
+  costCenter: CostCenter | undefined;
 }
 
 export interface CancelSubscriptionRequest {
@@ -42,6 +54,22 @@ export interface GetStripeCustomerResponse {
 
 export interface StripeCustomer {
   id: string;
+}
+
+export interface SetDefaultPaymentMethodForCustomerRequest {
+  customerId: StripeCustomer | undefined;
+  setupIntentId: string;
+}
+
+export interface SetDefaultPaymentMethodForCustomerResponse {
+}
+
+export interface FindUncancelledSubscriptionByAttributionIdRequest {
+  attributionId: string;
+}
+
+export interface FindUncancelledSubscriptionByAttributionIdResponse {
+  subscriptionId: string;
 }
 
 function createBaseReconcileInvoicesRequest(): ReconcileInvoicesRequest {
@@ -204,6 +232,137 @@ export const FinalizeInvoiceResponse = {
 
   fromPartial(_: DeepPartial<FinalizeInvoiceResponse>): FinalizeInvoiceResponse {
     const message = createBaseFinalizeInvoiceResponse();
+    return message;
+  },
+};
+
+function createBaseCreateStripeSubscriptionRequest(): CreateStripeSubscriptionRequest {
+  return { attributionId: "", stripeIntentId: "", usageLimit: 0 };
+}
+
+export const CreateStripeSubscriptionRequest = {
+  encode(message: CreateStripeSubscriptionRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.attributionId !== "") {
+      writer.uint32(10).string(message.attributionId);
+    }
+    if (message.stripeIntentId !== "") {
+      writer.uint32(18).string(message.stripeIntentId);
+    }
+    if (message.usageLimit !== 0) {
+      writer.uint32(24).int32(message.usageLimit);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CreateStripeSubscriptionRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateStripeSubscriptionRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.attributionId = reader.string();
+          break;
+        case 2:
+          message.stripeIntentId = reader.string();
+          break;
+        case 3:
+          message.usageLimit = reader.int32();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateStripeSubscriptionRequest {
+    return {
+      attributionId: isSet(object.attributionId) ? String(object.attributionId) : "",
+      stripeIntentId: isSet(object.stripeIntentId) ? String(object.stripeIntentId) : "",
+      usageLimit: isSet(object.usageLimit) ? Number(object.usageLimit) : 0,
+    };
+  },
+
+  toJSON(message: CreateStripeSubscriptionRequest): unknown {
+    const obj: any = {};
+    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
+    message.stripeIntentId !== undefined && (obj.stripeIntentId = message.stripeIntentId);
+    message.usageLimit !== undefined && (obj.usageLimit = Math.round(message.usageLimit));
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<CreateStripeSubscriptionRequest>): CreateStripeSubscriptionRequest {
+    const message = createBaseCreateStripeSubscriptionRequest();
+    message.attributionId = object.attributionId ?? "";
+    message.stripeIntentId = object.stripeIntentId ?? "";
+    message.usageLimit = object.usageLimit ?? 0;
+    return message;
+  },
+};
+
+function createBaseCreateStripeSubscriptionResponse(): CreateStripeSubscriptionResponse {
+  return { customer: undefined, costCenter: undefined };
+}
+
+export const CreateStripeSubscriptionResponse = {
+  encode(message: CreateStripeSubscriptionResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.customer !== undefined) {
+      StripeCustomer.encode(message.customer, writer.uint32(10).fork()).ldelim();
+    }
+    if (message.costCenter !== undefined) {
+      CostCenter.encode(message.costCenter, writer.uint32(18).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CreateStripeSubscriptionResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateStripeSubscriptionResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.customer = StripeCustomer.decode(reader, reader.uint32());
+          break;
+        case 2:
+          message.costCenter = CostCenter.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateStripeSubscriptionResponse {
+    return {
+      customer: isSet(object.customer) ? StripeCustomer.fromJSON(object.customer) : undefined,
+      costCenter: isSet(object.costCenter) ? CostCenter.fromJSON(object.costCenter) : undefined,
+    };
+  },
+
+  toJSON(message: CreateStripeSubscriptionResponse): unknown {
+    const obj: any = {};
+    message.customer !== undefined &&
+      (obj.customer = message.customer ? StripeCustomer.toJSON(message.customer) : undefined);
+    message.costCenter !== undefined &&
+      (obj.costCenter = message.costCenter ? CostCenter.toJSON(message.costCenter) : undefined);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<CreateStripeSubscriptionResponse>): CreateStripeSubscriptionResponse {
+    const message = createBaseCreateStripeSubscriptionResponse();
+    message.customer = (object.customer !== undefined && object.customer !== null)
+      ? StripeCustomer.fromPartial(object.customer)
+      : undefined;
+    message.costCenter = (object.costCenter !== undefined && object.costCenter !== null)
+      ? CostCenter.fromPartial(object.costCenter)
+      : undefined;
     return message;
   },
 };
@@ -460,6 +619,212 @@ export const StripeCustomer = {
   },
 };
 
+function createBaseSetDefaultPaymentMethodForCustomerRequest(): SetDefaultPaymentMethodForCustomerRequest {
+  return { customerId: undefined, setupIntentId: "" };
+}
+
+export const SetDefaultPaymentMethodForCustomerRequest = {
+  encode(message: SetDefaultPaymentMethodForCustomerRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.customerId !== undefined) {
+      StripeCustomer.encode(message.customerId, writer.uint32(10).fork()).ldelim();
+    }
+    if (message.setupIntentId !== "") {
+      writer.uint32(18).string(message.setupIntentId);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SetDefaultPaymentMethodForCustomerRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSetDefaultPaymentMethodForCustomerRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.customerId = StripeCustomer.decode(reader, reader.uint32());
+          break;
+        case 2:
+          message.setupIntentId = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SetDefaultPaymentMethodForCustomerRequest {
+    return {
+      customerId: isSet(object.customerId) ? StripeCustomer.fromJSON(object.customerId) : undefined,
+      setupIntentId: isSet(object.setupIntentId) ? String(object.setupIntentId) : "",
+    };
+  },
+
+  toJSON(message: SetDefaultPaymentMethodForCustomerRequest): unknown {
+    const obj: any = {};
+    message.customerId !== undefined &&
+      (obj.customerId = message.customerId ? StripeCustomer.toJSON(message.customerId) : undefined);
+    message.setupIntentId !== undefined && (obj.setupIntentId = message.setupIntentId);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<SetDefaultPaymentMethodForCustomerRequest>,
+  ): SetDefaultPaymentMethodForCustomerRequest {
+    const message = createBaseSetDefaultPaymentMethodForCustomerRequest();
+    message.customerId = (object.customerId !== undefined && object.customerId !== null)
+      ? StripeCustomer.fromPartial(object.customerId)
+      : undefined;
+    message.setupIntentId = object.setupIntentId ?? "";
+    return message;
+  },
+};
+
+function createBaseSetDefaultPaymentMethodForCustomerResponse(): SetDefaultPaymentMethodForCustomerResponse {
+  return {};
+}
+
+export const SetDefaultPaymentMethodForCustomerResponse = {
+  encode(_: SetDefaultPaymentMethodForCustomerResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SetDefaultPaymentMethodForCustomerResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSetDefaultPaymentMethodForCustomerResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): SetDefaultPaymentMethodForCustomerResponse {
+    return {};
+  },
+
+  toJSON(_: SetDefaultPaymentMethodForCustomerResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial(_: DeepPartial<SetDefaultPaymentMethodForCustomerResponse>): SetDefaultPaymentMethodForCustomerResponse {
+    const message = createBaseSetDefaultPaymentMethodForCustomerResponse();
+    return message;
+  },
+};
+
+function createBaseFindUncancelledSubscriptionByAttributionIdRequest(): FindUncancelledSubscriptionByAttributionIdRequest {
+  return { attributionId: "" };
+}
+
+export const FindUncancelledSubscriptionByAttributionIdRequest = {
+  encode(
+    message: FindUncancelledSubscriptionByAttributionIdRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.attributionId !== "") {
+      writer.uint32(10).string(message.attributionId);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): FindUncancelledSubscriptionByAttributionIdRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseFindUncancelledSubscriptionByAttributionIdRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.attributionId = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): FindUncancelledSubscriptionByAttributionIdRequest {
+    return { attributionId: isSet(object.attributionId) ? String(object.attributionId) : "" };
+  },
+
+  toJSON(message: FindUncancelledSubscriptionByAttributionIdRequest): unknown {
+    const obj: any = {};
+    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<FindUncancelledSubscriptionByAttributionIdRequest>,
+  ): FindUncancelledSubscriptionByAttributionIdRequest {
+    const message = createBaseFindUncancelledSubscriptionByAttributionIdRequest();
+    message.attributionId = object.attributionId ?? "";
+    return message;
+  },
+};
+
+function createBaseFindUncancelledSubscriptionByAttributionIdResponse(): FindUncancelledSubscriptionByAttributionIdResponse {
+  return { subscriptionId: "" };
+}
+
+export const FindUncancelledSubscriptionByAttributionIdResponse = {
+  encode(
+    message: FindUncancelledSubscriptionByAttributionIdResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.subscriptionId !== "") {
+      writer.uint32(10).string(message.subscriptionId);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): FindUncancelledSubscriptionByAttributionIdResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseFindUncancelledSubscriptionByAttributionIdResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.subscriptionId = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): FindUncancelledSubscriptionByAttributionIdResponse {
+    return { subscriptionId: isSet(object.subscriptionId) ? String(object.subscriptionId) : "" };
+  },
+
+  toJSON(message: FindUncancelledSubscriptionByAttributionIdResponse): unknown {
+    const obj: any = {};
+    message.subscriptionId !== undefined && (obj.subscriptionId = message.subscriptionId);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<FindUncancelledSubscriptionByAttributionIdResponse>,
+  ): FindUncancelledSubscriptionByAttributionIdResponse {
+    const message = createBaseFindUncancelledSubscriptionByAttributionIdResponse();
+    message.subscriptionId = object.subscriptionId ?? "";
+    return message;
+  },
+};
+
 export type BillingServiceDefinition = typeof BillingServiceDefinition;
 export const BillingServiceDefinition = {
   name: "BillingService",
@@ -489,6 +854,14 @@ export const BillingServiceDefinition = {
       responseStream: false,
       options: {},
     },
+    createStripeSubscription: {
+      name: "CreateStripeSubscription",
+      requestType: CreateStripeSubscriptionRequest,
+      requestStream: false,
+      responseType: CreateStripeSubscriptionResponse,
+      responseStream: false,
+      options: {},
+    },
     /**
      * CancelSubscription cancels a stripe subscription in our system
      * Called by a stripe webhook
@@ -507,6 +880,22 @@ export const BillingServiceDefinition = {
       requestType: GetStripeCustomerRequest,
       requestStream: false,
       responseType: GetStripeCustomerResponse,
+      responseStream: false,
+      options: {},
+    },
+    setDefaultPaymentMethodForCustomer: {
+      name: "SetDefaultPaymentMethodForCustomer",
+      requestType: SetDefaultPaymentMethodForCustomerRequest,
+      requestStream: false,
+      responseType: SetDefaultPaymentMethodForCustomerResponse,
+      responseStream: false,
+      options: {},
+    },
+    findUncancelledSubscriptionByAttributionId: {
+      name: "FindUncancelledSubscriptionByAttributionId",
+      requestType: FindUncancelledSubscriptionByAttributionIdRequest,
+      requestStream: false,
+      responseType: FindUncancelledSubscriptionByAttributionIdResponse,
       responseStream: false,
       options: {},
     },
@@ -530,6 +919,10 @@ export interface BillingServiceServiceImplementation<CallContextExt = {}> {
     request: FinalizeInvoiceRequest,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<FinalizeInvoiceResponse>>;
+  createStripeSubscription(
+    request: CreateStripeSubscriptionRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<CreateStripeSubscriptionResponse>>;
   /**
    * CancelSubscription cancels a stripe subscription in our system
    * Called by a stripe webhook
@@ -543,6 +936,14 @@ export interface BillingServiceServiceImplementation<CallContextExt = {}> {
     request: GetStripeCustomerRequest,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<GetStripeCustomerResponse>>;
+  setDefaultPaymentMethodForCustomer(
+    request: SetDefaultPaymentMethodForCustomerRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<SetDefaultPaymentMethodForCustomerResponse>>;
+  findUncancelledSubscriptionByAttributionId(
+    request: FindUncancelledSubscriptionByAttributionIdRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<FindUncancelledSubscriptionByAttributionIdResponse>>;
 }
 
 export interface BillingServiceClient<CallOptionsExt = {}> {
@@ -562,6 +963,10 @@ export interface BillingServiceClient<CallOptionsExt = {}> {
     request: DeepPartial<FinalizeInvoiceRequest>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<FinalizeInvoiceResponse>;
+  createStripeSubscription(
+    request: DeepPartial<CreateStripeSubscriptionRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<CreateStripeSubscriptionResponse>;
   /**
    * CancelSubscription cancels a stripe subscription in our system
    * Called by a stripe webhook
@@ -575,6 +980,14 @@ export interface BillingServiceClient<CallOptionsExt = {}> {
     request: DeepPartial<GetStripeCustomerRequest>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<GetStripeCustomerResponse>;
+  setDefaultPaymentMethodForCustomer(
+    request: DeepPartial<SetDefaultPaymentMethodForCustomerRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<SetDefaultPaymentMethodForCustomerResponse>;
+  findUncancelledSubscriptionByAttributionId(
+    request: DeepPartial<FindUncancelledSubscriptionByAttributionIdRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<FindUncancelledSubscriptionByAttributionIdResponse>;
 }
 
 export interface DataLoaderOptions {

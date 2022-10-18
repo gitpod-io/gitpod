@@ -32,11 +32,14 @@ type BillingServiceClient interface {
 	// FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
 	// having been invoiced.
 	FinalizeInvoice(ctx context.Context, in *FinalizeInvoiceRequest, opts ...grpc.CallOption) (*FinalizeInvoiceResponse, error)
+	CreateStripeSubscription(ctx context.Context, in *CreateStripeSubscriptionRequest, opts ...grpc.CallOption) (*CreateStripeSubscriptionResponse, error)
 	// CancelSubscription cancels a stripe subscription in our system
 	// Called by a stripe webhook
 	CancelSubscription(ctx context.Context, in *CancelSubscriptionRequest, opts ...grpc.CallOption) (*CancelSubscriptionResponse, error)
 	// GetStripeCustomer retrieves a Stripe Customer
 	GetStripeCustomer(ctx context.Context, in *GetStripeCustomerRequest, opts ...grpc.CallOption) (*GetStripeCustomerResponse, error)
+	SetDefaultPaymentMethodForCustomer(ctx context.Context, in *SetDefaultPaymentMethodForCustomerRequest, opts ...grpc.CallOption) (*SetDefaultPaymentMethodForCustomerResponse, error)
+	FindUncancelledSubscriptionByAttributionId(ctx context.Context, in *FindUncancelledSubscriptionByAttributionIdRequest, opts ...grpc.CallOption) (*FindUncancelledSubscriptionByAttributionIdResponse, error)
 }
 
 type billingServiceClient struct {
@@ -65,6 +68,15 @@ func (c *billingServiceClient) FinalizeInvoice(ctx context.Context, in *Finalize
 	return out, nil
 }
 
+func (c *billingServiceClient) CreateStripeSubscription(ctx context.Context, in *CreateStripeSubscriptionRequest, opts ...grpc.CallOption) (*CreateStripeSubscriptionResponse, error) {
+	out := new(CreateStripeSubscriptionResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.BillingService/CreateStripeSubscription", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *billingServiceClient) CancelSubscription(ctx context.Context, in *CancelSubscriptionRequest, opts ...grpc.CallOption) (*CancelSubscriptionResponse, error) {
 	out := new(CancelSubscriptionResponse)
 	err := c.cc.Invoke(ctx, "/usage.v1.BillingService/CancelSubscription", in, out, opts...)
@@ -83,6 +95,24 @@ func (c *billingServiceClient) GetStripeCustomer(ctx context.Context, in *GetStr
 	return out, nil
 }
 
+func (c *billingServiceClient) SetDefaultPaymentMethodForCustomer(ctx context.Context, in *SetDefaultPaymentMethodForCustomerRequest, opts ...grpc.CallOption) (*SetDefaultPaymentMethodForCustomerResponse, error) {
+	out := new(SetDefaultPaymentMethodForCustomerResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.BillingService/SetDefaultPaymentMethodForCustomer", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *billingServiceClient) FindUncancelledSubscriptionByAttributionId(ctx context.Context, in *FindUncancelledSubscriptionByAttributionIdRequest, opts ...grpc.CallOption) (*FindUncancelledSubscriptionByAttributionIdResponse, error) {
+	out := new(FindUncancelledSubscriptionByAttributionIdResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.BillingService/FindUncancelledSubscriptionByAttributionId", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BillingServiceServer is the server API for BillingService service.
 // All implementations must embed UnimplementedBillingServiceServer
 // for forward compatibility
@@ -93,11 +123,14 @@ type BillingServiceServer interface {
 	// FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
 	// having been invoiced.
 	FinalizeInvoice(context.Context, *FinalizeInvoiceRequest) (*FinalizeInvoiceResponse, error)
+	CreateStripeSubscription(context.Context, *CreateStripeSubscriptionRequest) (*CreateStripeSubscriptionResponse, error)
 	// CancelSubscription cancels a stripe subscription in our system
 	// Called by a stripe webhook
 	CancelSubscription(context.Context, *CancelSubscriptionRequest) (*CancelSubscriptionResponse, error)
 	// GetStripeCustomer retrieves a Stripe Customer
 	GetStripeCustomer(context.Context, *GetStripeCustomerRequest) (*GetStripeCustomerResponse, error)
+	SetDefaultPaymentMethodForCustomer(context.Context, *SetDefaultPaymentMethodForCustomerRequest) (*SetDefaultPaymentMethodForCustomerResponse, error)
+	FindUncancelledSubscriptionByAttributionId(context.Context, *FindUncancelledSubscriptionByAttributionIdRequest) (*FindUncancelledSubscriptionByAttributionIdResponse, error)
 	mustEmbedUnimplementedBillingServiceServer()
 }
 
@@ -111,11 +144,20 @@ func (UnimplementedBillingServiceServer) ReconcileInvoices(context.Context, *Rec
 func (UnimplementedBillingServiceServer) FinalizeInvoice(context.Context, *FinalizeInvoiceRequest) (*FinalizeInvoiceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FinalizeInvoice not implemented")
 }
+func (UnimplementedBillingServiceServer) CreateStripeSubscription(context.Context, *CreateStripeSubscriptionRequest) (*CreateStripeSubscriptionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateStripeSubscription not implemented")
+}
 func (UnimplementedBillingServiceServer) CancelSubscription(context.Context, *CancelSubscriptionRequest) (*CancelSubscriptionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelSubscription not implemented")
 }
 func (UnimplementedBillingServiceServer) GetStripeCustomer(context.Context, *GetStripeCustomerRequest) (*GetStripeCustomerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetStripeCustomer not implemented")
+}
+func (UnimplementedBillingServiceServer) SetDefaultPaymentMethodForCustomer(context.Context, *SetDefaultPaymentMethodForCustomerRequest) (*SetDefaultPaymentMethodForCustomerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetDefaultPaymentMethodForCustomer not implemented")
+}
+func (UnimplementedBillingServiceServer) FindUncancelledSubscriptionByAttributionId(context.Context, *FindUncancelledSubscriptionByAttributionIdRequest) (*FindUncancelledSubscriptionByAttributionIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindUncancelledSubscriptionByAttributionId not implemented")
 }
 func (UnimplementedBillingServiceServer) mustEmbedUnimplementedBillingServiceServer() {}
 
@@ -166,6 +208,24 @@ func _BillingService_FinalizeInvoice_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BillingService_CreateStripeSubscription_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateStripeSubscriptionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).CreateStripeSubscription(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.BillingService/CreateStripeSubscription",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).CreateStripeSubscription(ctx, req.(*CreateStripeSubscriptionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _BillingService_CancelSubscription_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CancelSubscriptionRequest)
 	if err := dec(in); err != nil {
@@ -202,6 +262,42 @@ func _BillingService_GetStripeCustomer_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BillingService_SetDefaultPaymentMethodForCustomer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetDefaultPaymentMethodForCustomerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).SetDefaultPaymentMethodForCustomer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.BillingService/SetDefaultPaymentMethodForCustomer",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).SetDefaultPaymentMethodForCustomer(ctx, req.(*SetDefaultPaymentMethodForCustomerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BillingService_FindUncancelledSubscriptionByAttributionId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindUncancelledSubscriptionByAttributionIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).FindUncancelledSubscriptionByAttributionId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.BillingService/FindUncancelledSubscriptionByAttributionId",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).FindUncancelledSubscriptionByAttributionId(ctx, req.(*FindUncancelledSubscriptionByAttributionIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BillingService_ServiceDesc is the grpc.ServiceDesc for BillingService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -218,12 +314,24 @@ var BillingService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _BillingService_FinalizeInvoice_Handler,
 		},
 		{
+			MethodName: "CreateStripeSubscription",
+			Handler:    _BillingService_CreateStripeSubscription_Handler,
+		},
+		{
 			MethodName: "CancelSubscription",
 			Handler:    _BillingService_CancelSubscription_Handler,
 		},
 		{
 			MethodName: "GetStripeCustomer",
 			Handler:    _BillingService_GetStripeCustomer_Handler,
+		},
+		{
+			MethodName: "SetDefaultPaymentMethodForCustomer",
+			Handler:    _BillingService_SetDefaultPaymentMethodForCustomer_Handler,
+		},
+		{
+			MethodName: "FindUncancelledSubscriptionByAttributionId",
+			Handler:    _BillingService_FindUncancelledSubscriptionByAttributionId_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
