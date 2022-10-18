@@ -116,6 +116,8 @@ import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billin
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { BillingModes } from "../billing/billing-mode";
 import { UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 import { IncrementalPrebuildsService } from "../prebuilds/incremental-prebuilds-service";
 
 @injectable()
@@ -163,6 +165,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
 
     @inject(BillingModes) protected readonly billingModes: BillingModes;
+
+    @inject(BillingServiceDefinition.name)
+    protected readonly billingService: BillingServiceClient;
 
     initialize(
         client: GitpodClient | undefined,
@@ -2114,10 +2119,44 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             }
             await this.ensureStripeApiIsAllowed({ user });
         }
+
+        const billingEmail = User.getPrimaryEmail(user);
+        const billingName = attrId.kind === "team" ? team!.name : User.getName(user);
+
+        const isCreateStripeCustomerOnUsageEnabled = await getExperimentsClientForBackend().getValueAsync(
+            "createStripeCustomersOnUsage",
+            false,
+            {
+                user: user,
+                teamId: team ? team.id : undefined,
+            },
+        );
+        if (isCreateStripeCustomerOnUsageEnabled) {
+            try {
+                try {
+                    // customer already exists, we don't need to create a new one.
+                    await this.billingService.getStripeCustomer({ attributionId });
+                    return;
+                } catch (e) {}
+
+                await this.billingService.createStripeCustomer({
+                    attributionId,
+                    currency,
+                    email: billingEmail,
+                    name: billingName,
+                });
+                return;
+            } catch (error) {
+                log.error(`Failed to create Stripe customer profile for '${attributionId}'`, error);
+                throw new ResponseError(
+                    ErrorCodes.INTERNAL_SERVER_ERROR,
+                    `Failed to create Stripe customer profile for '${attributionId}'`,
+                );
+            }
+        }
+
         try {
             if (!(await this.stripeService.findCustomerByAttributionId(attributionId))) {
-                const billingEmail = User.getPrimaryEmail(user);
-                const billingName = attrId.kind === "team" ? team!.name : User.getName(user);
                 await this.stripeService.createCustomerForAttributionId(
                     attributionId,
                     currency,
