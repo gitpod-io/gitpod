@@ -429,3 +429,14 @@ spec:
               title: Cluster IP
             - name: NodePort
               title: Node port
+
+    - name: experimental
+      title: Experimental options
+      description: Experimental options without any support
+      when: 'false'
+      items:
+        - name: enable_proxy_settings
+          title: Enable proxy settings
+          type: bool
+          default: "0"
+          help_text: Enable HTTP_PROXY support for the Gitpod application. This is currently an experimental feature.
