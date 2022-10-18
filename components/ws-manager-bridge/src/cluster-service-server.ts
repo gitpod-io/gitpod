@@ -340,6 +340,7 @@ function convertToGRPC(ws: WorkspaceClusterWoTLS): ClusterStatus {
     clusterStatus.setScore(ws.score);
     clusterStatus.setMaxScore(ws.maxScore);
     clusterStatus.setGoverned(ws.govern);
+    clusterStatus.setApplicationCluster(ws.applicationCluster);
     ws.admissionConstraints?.forEach((c) => {
         const constraint = new GRPCAdmissionConstraint();
         switch (c.type) {
