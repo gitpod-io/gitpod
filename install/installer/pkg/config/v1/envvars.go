@@ -150,8 +150,6 @@ func (v version) BuildFromEnvvars(in interface{}) error {
 	envvars := ConfigEnvvars{}
 	envvars.load()
 
-	log.Infof("Detected envvars: %+v", envvars)
-
 	cfg.Domain = envvars.Domain
 
 	if licenseName := envvars.LicenseName; licenseName != "" {
