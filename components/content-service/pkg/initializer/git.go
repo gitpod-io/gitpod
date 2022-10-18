@@ -188,7 +188,13 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 			ws.CloneTarget = defaultBranch
 		}
 
-		if err := ws.Git(ctx, "fetch", "--depth=1", "origin", ws.CloneTarget); err != nil {
+		// No need to prune here because we fetch the specific branch only. If we were to try and fetch everything,
+		// we might end up trying to fetch at tag/branch which has since been recreated. It's exactly the specific
+		// fetch wich prevents this situation.
+		//
+		// We don't recurse submodules because callers realizeCloneTarget() are expected to update submodules explicitly,
+		// and deal with any error appropriately (i.e. emit a warning rather than fail).
+		if err := ws.Git(ctx, "fetch", "--depth=1", "origin", "--recurse-submodules=no", ws.CloneTarget); err != nil {
 			log.WithError(err).WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Error("Cannot fetch remote branch")
 			return err
 		}
