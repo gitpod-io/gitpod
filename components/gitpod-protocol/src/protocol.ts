@@ -1111,16 +1111,13 @@ export namespace SnapshotContext {
     }
 }
 
-export interface WithCommitHistory {
+export interface StartPrebuildContext extends WorkspaceContext {
+    actual: WorkspaceContext;
     commitHistory?: string[];
     additionalRepositoryCommitHistories?: {
         cloneUrl: string;
         commitHistory: string[];
     }[];
-}
-
-export interface StartPrebuildContext extends WorkspaceContext, WithCommitHistory {
-    actual: WorkspaceContext;
     project?: Project;
     branch?: string;
 }
@@ -1385,8 +1382,6 @@ export enum CreateWorkspaceMode {
     UsePrebuild = "use-prebuild",
     // SelectIfRunning returns a list of currently running workspaces for the context URL if there are any, otherwise falls back to Default mode
     SelectIfRunning = "select-if-running",
-    // UseLastSuccessfulPrebuild returns ...
-    UseLastSuccessfulPrebuild = "use-last-successful-prebuild",
 }
 
 export namespace WorkspaceCreationResult {
