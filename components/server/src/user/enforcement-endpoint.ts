@@ -75,7 +75,9 @@ export class EnforcementController {
         router.get("/block-user/:userid", async (req, res, next) => {
             const auth = this.getAuthorizedUser(req);
             if (!auth) {
-                log.warn("Unauthorized user attempted to access enforcement endpoint", req);
+                log.warn("Unauthorized user attempted to access enforcement endpoint", {
+                    targetUserId: req.params.userid,
+                });
                 // don't tell the world we exist
                 res.sendStatus(404);
                 return;
@@ -96,7 +98,9 @@ export class EnforcementController {
         router.post("/block-user/:userid", async (req, res, next) => {
             const auth = this.getAuthorizedUser(req);
             if (!auth) {
-                log.warn("Unauthorized user attempted to access enforcement endpoint", req);
+                log.warn("Unauthorized user attempted to access enforcement endpoint", {
+                    targetUserId: req.params.userid,
+                });
                 // don't tell the world we exist
                 res.sendStatus(404);
                 return;
@@ -128,7 +132,9 @@ export class EnforcementController {
         router.get("/kill-workspace/:wsid", async (req, res, next) => {
             const auth = this.getAuthorizedUser(req);
             if (!auth) {
-                log.warn("Unauthorized user attempted to access enforcement endpoint", req);
+                log.warn("Unauthorized user attempted to access enforcement endpoint", {
+                    taretWorkspaceId: req.params.wsid,
+                });
                 // don't tell the world we exist
                 res.sendStatus(404);
                 return;
@@ -144,7 +150,9 @@ export class EnforcementController {
         router.post("/kill-workspace/:wsid", async (req, res, next) => {
             const auth = this.getAuthorizedUser(req);
             if (!auth) {
-                log.warn("Unauthorized user attempted to access enforcement endpoint", req);
+                log.warn("Unauthorized user attempted to access enforcement endpoint", {
+                    taretWorkspaceId: req.params.wsid,
+                });
                 // don't tell the world we exist
                 res.sendStatus(404);
                 return;
@@ -194,7 +202,9 @@ export class EnforcementController {
         router.get("/delete-user/:userid", async (req, res, next) => {
             const auth = this.getAuthorizedUser(req);
             if (!auth) {
-                log.warn("Unauthorized user attempted to access enforcement endpoint", req);
+                log.warn("Unauthorized user attempted to access enforcement endpoint", {
+                    targetUserId: req.params.userid,
+                });
                 // don't tell the world we exist
                 res.sendStatus(404);
                 return;
@@ -210,7 +220,9 @@ export class EnforcementController {
         router.post("/delete-user/:userid", async (req, res, next) => {
             const auth = this.getAuthorizedUser(req);
             if (!auth) {
-                log.warn("Unauthorized user attempted to access enforcement endpoint", req);
+                log.warn("Unauthorized user attempted to access enforcement endpoint", {
+                    targetUserId: req.params.userid,
+                });
                 // don't tell the world we exist
                 res.sendStatus(404);
                 return;
