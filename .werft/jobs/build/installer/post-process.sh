@@ -103,6 +103,7 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       yq m --arrays=overwrite -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"pool.yaml
    fi
 
+   SHORT_NAME="dev"
    # overrides for server-config
    if [[ "server-config" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
       WORK="overrides for $NAME $KIND"
@@ -113,12 +114,6 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       DEV_BRANCH_EXPR="s/\"devBranch\": \"\"/\"devBranch\": \"$DEV_BRANCH\"/"
       sed -i "$DEV_BRANCH_EXPR" /tmp/"$NAME"overrides.yaml
 
-      # InstallationShortname
-      # is expected to look like ws-dev.<branch-name-with-dashes>.staging.gitpod-dev.com
-      SHORT_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml installation.shortname)
-      NAMESPACE=$(kubens -c)
-      INSTALL_SHORT_NAME_EXPR="s/\"installationShortname\": \"$NAMESPACE\"/\"installationShortname\": \"$SHORT_NAME\"/"
-      sed -i "$INSTALL_SHORT_NAME_EXPR" /tmp/"$NAME"overrides.yaml
       # Stage
       STAGE=$(yq r ./.werft/jobs/build/helm/values.dev.yaml installation.stage)
       STAGE_EXPR="s/\"stage\": \"production\"/\"stage\": \"$STAGE\"/"
@@ -154,10 +149,6 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       touch /tmp/"$NAME"overrides.yaml
       yq r k8s.yaml -d "$documentIndex" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
 
-      # simliar to server, except the ConfigMap hierarchy, key, and value are different
-      SHORT_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml installation.shortname)
-      INSTALL_SHORT_NAME_EXPR="s/\"installation\": \"\"/\"installation\": \"$SHORT_NAME\"/"
-      sed -i "$INSTALL_SHORT_NAME_EXPR" /tmp/"$NAME"overrides.yaml
       yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"overrides.yaml
    fi
 
@@ -175,7 +166,6 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       touch /tmp/"$NAME"overrides.yaml
       yq r k8s.yaml -d "$documentIndex" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
 
-      SHORT_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml installation.shortname)
       STAGING_HOST_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml hostname)
       CURRENT_WS_HOST_NAME="ws.$DEV_BRANCH.$STAGING_HOST_NAME"
       NEW_WS_HOST_NAME="ws-$SHORT_NAME.$DEV_BRANCH.$STAGING_HOST_NAME"
@@ -222,7 +212,6 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       yq r k8s.yaml -d "$documentIndex" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
 
       # simliar to server, except the ConfigMap hierarchy, key, and value are different
-      SHORT_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml installation.shortname)
       STAGING_HOST_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml hostname)
       CURRENT_WS_HOST_NAME="ws.$DEV_BRANCH.$STAGING_HOST_NAME"
       NEW_WS_HOST_NAME="ws-$SHORT_NAME.$DEV_BRANCH.$STAGING_HOST_NAME"
