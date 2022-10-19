@@ -184,10 +184,19 @@ func main() {
 						Name:     "target",
 						Required: true,
 					},
+					&cli.IntFlag{
+						Name:     "pid",
+						Required: false,
+					},
 				},
 				Action: func(c *cli.Context) error {
-					target := filepath.Clean(c.String("target"))
-					return mapMount(target)
+					target := filepath.Clean(c.String("pid"))
+					pid := c.Int("pid")
+					if err := mountIDMapped(target, pid); err != nil {
+						return xerrors.Errorf("Failed to create idmapped mount for target - %s, %w", target, err)
+					}
+
+					return nil
 				},
 			},
 			{

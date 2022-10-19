@@ -24,13 +24,9 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"os"
-	"os/exec"
-	"syscall"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"golang.org/x/sys/unix"
 )
 
@@ -59,49 +55,4 @@ func mountIDMapped(target string, pid int) (err error) {
 
 	defer targetDir.Close()
 	return unix.MountSetattr(int(targetDir.Fd()), "", unix.AT_EMPTY_PATH|unix.AT_RECURSIVE, &attr)
-}
-
-// mapMount applies GID/UID shift according to gidmap/uidmap for target path
-func mapMount(target string) (err error) {
-	const (
-		userNsHelperBinary = "/bin/true"
-	)
-
-	cmd := exec.Command(userNsHelperBinary)
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		//Cloneflags: syscall.CLONE_NEWUSER,
-	}
-
-	var (
-		stdout bytes.Buffer
-		stderr bytes.Buffer
-	)
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	cmd.SysProcAttr.UidMappings = []syscall.SysProcIDMap{
-		{ContainerID: 0, HostID: 33333, Size: 1},
-		{ContainerID: 1, HostID: 100000, Size: 65534},
-	}
-
-	cmd.SysProcAttr.GidMappings = []syscall.SysProcIDMap{
-		{ContainerID: 0, HostID: 33333, Size: 1},
-		{ContainerID: 1, HostID: 100000, Size: 65534},
-	}
-
-	if err = cmd.Start(); err != nil {
-		return fmt.Errorf("Failed to run the %s helper binary, %w", userNsHelperBinary, err)
-	}
-
-	defer func() {
-		if err = cmd.Wait(); err != nil {
-			log.WithField("out", stdout.String()).WithField("err", stderr.String()).WithError(err).Errorf("Failed to run the %s helper binary", userNsHelperBinary)
-			err = fmt.Errorf("Failed to run the %s helper binary, %w", userNsHelperBinary, err)
-		}
-	}()
-	if err = mountIDMapped(target, cmd.Process.Pid); err != nil {
-		return fmt.Errorf("Failed to create idmapped mount for target - %s, %w", target, err)
-	}
-
-	return nil
 }
