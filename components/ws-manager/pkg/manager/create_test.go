@@ -190,9 +190,10 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 
 func TestCreatePVCForWorkspacePod(t *testing.T) {
 	type WorkspaceClass struct {
-		PVCConfig        *config.PVCConfiguration             `json:"pvcConfig,omitempty"`
-		ResourceRequests *config.ResourceRequestConfiguration `json:"resourceRequests,omitempty"`
-		ResourceLimits   *config.ResourceLimitConfiguration   `json:"resourceLimits,omitempty"`
+		PrebuildPVCConfig *config.PVCConfiguration             `json:"prebuildPVCConfig,omitempty"`
+		PVCConfig         *config.PVCConfiguration             `json:"pvcConfig,omitempty"`
+		ResourceRequests  *config.ResourceRequestConfiguration `json:"resourceRequests,omitempty"`
+		ResourceLimits    *config.ResourceLimitConfiguration   `json:"resourceLimits,omitempty"`
 	}
 	type fixture struct {
 		WorkspaceClass
@@ -234,6 +235,9 @@ func TestCreatePVCForWorkspacePod(t *testing.T) {
 				var cfgCls config.WorkspaceClass
 				cfgCls.Container.Requests = cls.ResourceRequests
 				cfgCls.Container.Limits = cls.ResourceLimits
+				if cls.PrebuildPVCConfig != nil {
+					cfgCls.PrebuildPVC = *cls.PrebuildPVCConfig
+				}
 				if cls.PVCConfig != nil {
 					cfgCls.PVC = *cls.PVCConfig
 				}
