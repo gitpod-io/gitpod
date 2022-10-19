@@ -41,7 +41,7 @@ jobs:
       id: create_release
       uses: actions/create-release@latest
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.ROBOQUAT_AUTOMATIC_CHANGELOG }}
       with:
         tag_name: <tofill>
         release_name: <tofill>
