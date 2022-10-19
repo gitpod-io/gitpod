@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"sort"
 	"time"
 
 	supervisor_helper "github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor-helper"
@@ -37,10 +36,6 @@ var listPortsCmd = &cobra.Command{
 			fmt.Println("No ports detected.")
 			return
 		}
-
-		sort.Slice(ports, func(i, j int) bool {
-			return int(ports[i].LocalPort) < int(ports[j].LocalPort)
-		})
 
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetHeader([]string{"Port", "Status", "URL", "Name & Description"})
