@@ -5,9 +5,9 @@
  */
 
 /* eslint-disable */
+import * as Long from "long";
 import { CallContext, CallOptions } from "nice-grpc-common";
 import * as _m0 from "protobufjs/minimal";
-import { CostCenter } from "./usage.pb";
 
 export const protobufPackage = "usage.v1";
 
@@ -59,13 +59,16 @@ export interface CreateStripeCustomerResponse {
 
 export interface CreateStripeSubscriptionRequest {
   attributionId: string;
-  stripeIntentId: string;
+  setupIntentId: string;
   usageLimit: number;
 }
 
 export interface CreateStripeSubscriptionResponse {
-  customer: StripeCustomer | undefined;
-  costCenter: CostCenter | undefined;
+  subscription: StripeSubscription | undefined;
+}
+
+export interface StripeSubscription {
+  id: string;
 }
 
 export interface GetStripeSubscriptionRequest {
@@ -620,7 +623,7 @@ export const CreateStripeCustomerResponse = {
 };
 
 function createBaseCreateStripeSubscriptionRequest(): CreateStripeSubscriptionRequest {
-  return { attributionId: "", stripeIntentId: "", usageLimit: 0 };
+  return { attributionId: "", setupIntentId: "", usageLimit: 0 };
 }
 
 export const CreateStripeSubscriptionRequest = {
@@ -628,11 +631,11 @@ export const CreateStripeSubscriptionRequest = {
     if (message.attributionId !== "") {
       writer.uint32(10).string(message.attributionId);
     }
-    if (message.stripeIntentId !== "") {
-      writer.uint32(18).string(message.stripeIntentId);
+    if (message.setupIntentId !== "") {
+      writer.uint32(18).string(message.setupIntentId);
     }
     if (message.usageLimit !== 0) {
-      writer.uint32(24).int32(message.usageLimit);
+      writer.uint32(24).int64(message.usageLimit);
     }
     return writer;
   },
@@ -648,10 +651,10 @@ export const CreateStripeSubscriptionRequest = {
           message.attributionId = reader.string();
           break;
         case 2:
-          message.stripeIntentId = reader.string();
+          message.setupIntentId = reader.string();
           break;
         case 3:
-          message.usageLimit = reader.int32();
+          message.usageLimit = longToNumber(reader.int64() as Long);
           break;
         default:
           reader.skipType(tag & 7);
@@ -664,7 +667,7 @@ export const CreateStripeSubscriptionRequest = {
   fromJSON(object: any): CreateStripeSubscriptionRequest {
     return {
       attributionId: isSet(object.attributionId) ? String(object.attributionId) : "",
-      stripeIntentId: isSet(object.stripeIntentId) ? String(object.stripeIntentId) : "",
+      setupIntentId: isSet(object.setupIntentId) ? String(object.setupIntentId) : "",
       usageLimit: isSet(object.usageLimit) ? Number(object.usageLimit) : 0,
     };
   },
@@ -672,7 +675,7 @@ export const CreateStripeSubscriptionRequest = {
   toJSON(message: CreateStripeSubscriptionRequest): unknown {
     const obj: any = {};
     message.attributionId !== undefined && (obj.attributionId = message.attributionId);
-    message.stripeIntentId !== undefined && (obj.stripeIntentId = message.stripeIntentId);
+    message.setupIntentId !== undefined && (obj.setupIntentId = message.setupIntentId);
     message.usageLimit !== undefined && (obj.usageLimit = Math.round(message.usageLimit));
     return obj;
   },
@@ -680,23 +683,20 @@ export const CreateStripeSubscriptionRequest = {
   fromPartial(object: DeepPartial<CreateStripeSubscriptionRequest>): CreateStripeSubscriptionRequest {
     const message = createBaseCreateStripeSubscriptionRequest();
     message.attributionId = object.attributionId ?? "";
-    message.stripeIntentId = object.stripeIntentId ?? "";
+    message.setupIntentId = object.setupIntentId ?? "";
     message.usageLimit = object.usageLimit ?? 0;
     return message;
   },
 };
 
 function createBaseCreateStripeSubscriptionResponse(): CreateStripeSubscriptionResponse {
-  return { customer: undefined, costCenter: undefined };
+  return { subscription: undefined };
 }
 
 export const CreateStripeSubscriptionResponse = {
   encode(message: CreateStripeSubscriptionResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.customer !== undefined) {
-      StripeCustomer.encode(message.customer, writer.uint32(10).fork()).ldelim();
-    }
-    if (message.costCenter !== undefined) {
-      CostCenter.encode(message.costCenter, writer.uint32(18).fork()).ldelim();
+    if (message.subscription !== undefined) {
+      StripeSubscription.encode(message.subscription, writer.uint32(10).fork()).ldelim();
     }
     return writer;
   },
@@ -709,10 +709,7 @@ export const CreateStripeSubscriptionResponse = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.customer = StripeCustomer.decode(reader, reader.uint32());
-          break;
-        case 2:
-          message.costCenter = CostCenter.decode(reader, reader.uint32());
+          message.subscription = StripeSubscription.decode(reader, reader.uint32());
           break;
         default:
           reader.skipType(tag & 7);
@@ -723,29 +720,68 @@ export const CreateStripeSubscriptionResponse = {
   },
 
   fromJSON(object: any): CreateStripeSubscriptionResponse {
-    return {
-      customer: isSet(object.customer) ? StripeCustomer.fromJSON(object.customer) : undefined,
-      costCenter: isSet(object.costCenter) ? CostCenter.fromJSON(object.costCenter) : undefined,
-    };
+    return { subscription: isSet(object.subscription) ? StripeSubscription.fromJSON(object.subscription) : undefined };
   },
 
   toJSON(message: CreateStripeSubscriptionResponse): unknown {
     const obj: any = {};
-    message.customer !== undefined &&
-      (obj.customer = message.customer ? StripeCustomer.toJSON(message.customer) : undefined);
-    message.costCenter !== undefined &&
-      (obj.costCenter = message.costCenter ? CostCenter.toJSON(message.costCenter) : undefined);
+    message.subscription !== undefined &&
+      (obj.subscription = message.subscription ? StripeSubscription.toJSON(message.subscription) : undefined);
     return obj;
   },
 
   fromPartial(object: DeepPartial<CreateStripeSubscriptionResponse>): CreateStripeSubscriptionResponse {
     const message = createBaseCreateStripeSubscriptionResponse();
-    message.customer = (object.customer !== undefined && object.customer !== null)
-      ? StripeCustomer.fromPartial(object.customer)
+    message.subscription = (object.subscription !== undefined && object.subscription !== null)
+      ? StripeSubscription.fromPartial(object.subscription)
       : undefined;
-    message.costCenter = (object.costCenter !== undefined && object.costCenter !== null)
-      ? CostCenter.fromPartial(object.costCenter)
-      : undefined;
+    return message;
+  },
+};
+
+function createBaseStripeSubscription(): StripeSubscription {
+  return { id: "" };
+}
+
+export const StripeSubscription = {
+  encode(message: StripeSubscription, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): StripeSubscription {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStripeSubscription();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.id = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): StripeSubscription {
+    return { id: isSet(object.id) ? String(object.id) : "" };
+  },
+
+  toJSON(message: StripeSubscription): unknown {
+    const obj: any = {};
+    message.id !== undefined && (obj.id = message.id);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<StripeSubscription>): StripeSubscription {
+    const message = createBaseStripeSubscription();
+    message.id = object.id ?? "";
     return message;
   },
 };
@@ -1041,12 +1077,45 @@ export interface DataLoaders {
   getDataLoader<T>(identifier: string, constructorFn: () => T): T;
 }
 
+declare var self: any | undefined;
+declare var window: any | undefined;
+declare var global: any | undefined;
+var globalThis: any = (() => {
+  if (typeof globalThis !== "undefined") {
+    return globalThis;
+  }
+  if (typeof self !== "undefined") {
+    return self;
+  }
+  if (typeof window !== "undefined") {
+    return window;
+  }
+  if (typeof global !== "undefined") {
+    return global;
+  }
+  throw "Unable to locate global object";
+})();
+
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
 export type DeepPartial<T> = T extends Builtin ? T
   : T extends Array<infer U> ? Array<DeepPartial<U>> : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
   : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
+
+function longToNumber(long: Long): number {
+  if (long.gt(Number.MAX_SAFE_INTEGER)) {
+    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+  }
+  return long.toNumber();
+}
+
+// If you get a compile-error about 'Constructor<Long> and ... have no overlap',
+// add '--ts_proto_opt=esModuleInterop=true' as a flag when calling 'protoc'.
+if (_m0.util.Long !== Long) {
+  _m0.util.Long = Long as any;
+  _m0.configure();
+}
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;
