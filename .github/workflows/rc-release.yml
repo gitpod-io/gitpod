@@ -75,4 +75,4 @@ jobs:
         draft: true
         prerelease: false
         body: |
-          ${{ steps.note.outputs.releasenote }}
+          ${{ steps.build_changelog.outputs.changelog }}
