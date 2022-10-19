@@ -101,6 +101,17 @@ func (s *BillingService) CreateStripeCustomer(ctx context.Context, req *v1.Creat
 		return nil, status.Errorf(codes.Internal, "Failed to create stripe customer")
 	}
 
+	err = db.CreateStripeCustomer(ctx, s.conn, db.StripeCustomer{
+		StripeCustomerID: customer.ID,
+		AttributionID:    attributionID,
+		CreationTime:     db.NewVarcharTime(time.Unix(customer.Created, 0)),
+	})
+	if err != nil {
+		log.WithField("attribution_id", attributionID).WithField("stripe_customer_id", customer.ID).WithError(err).Error("Failed to store Stripe Customer in the database.")
+		// We do not return an error to the caller here, as we did manage to create the stripe customer in Stripe and we can proceed with other flows
+		// The StripeCustomer will be backfilled in the DB on the next GetStripeCustomer call by doing a search.
+	}
+
 	return &v1.CreateStripeCustomerResponse{
 		Customer: convertStripeCustomer(customer),
 	}, nil
