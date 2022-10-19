@@ -73,6 +73,9 @@ func (v version) Defaults(in interface{}) error {
 	cfg.Workspace.Runtime.ContainerDSocket = containerd.ContainerdSocketLocationDefault.String()
 	cfg.Workspace.Runtime.ContainerDRuntimeDir = containerd.ContainerdLocationDefault.String()
 	cfg.Workspace.MaxLifetime = util.Duration(36 * time.Hour)
+	cfg.Workspace.PrebuildPVC.Size = resource.MustParse("30Gi")
+	cfg.Workspace.PrebuildPVC.StorageClass = ""
+	cfg.Workspace.PrebuildPVC.SnapshotClass = ""
 	cfg.Workspace.PVC.Size = resource.MustParse("30Gi")
 	cfg.Workspace.PVC.StorageClass = ""
 	cfg.Workspace.PVC.SnapshotClass = ""
@@ -378,7 +381,10 @@ type Workspace struct {
 	Resources Resources           `json:"resources" validate:"required"`
 	Templates *WorkspaceTemplates `json:"templates,omitempty"`
 
-	// PVC is the struct that describes how to setup persistent volume claim for workspace
+	// PrebuildPVC is the struct that describes how to setup persistent volume claim for prebuild workspace
+	PrebuildPVC PersistentVolumeClaim `json:"prebuildPVC" validate:"required"`
+
+	// PVC is the struct that describes how to setup persistent volume claim for regular workspace
 	PVC PersistentVolumeClaim `json:"pvc" validate:"required"`
 
 	// MaxLifetime is the maximum time a workspace is allowed to run. After that, the workspace times out despite activity
