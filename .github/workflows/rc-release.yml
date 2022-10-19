@@ -54,7 +54,7 @@ jobs:
     steps:
     - name: "Build Changelog"
       id: build_changelog
-      uses: mikepenz/release-changelog-builder-action@{latest-release}
+      uses: mikepenz/release-changelog-builder-action@latest
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Checkout
