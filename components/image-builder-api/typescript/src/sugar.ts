@@ -270,7 +270,12 @@ export class PromisifiedImageBuilderClient {
             TraceContext.setError({ span }, err);
             span.finish();
 
-            log.error("failed to start image build", request);
+            log.debug("failed to start image build", request);
+            log.error("failed to start image build", {
+                source: request.getSource(),
+                forceRebuild: request.getForceRebuild(),
+                triggeredBy: request.getTriggeredBy(),
+            });
             result.reject(err);
         }
 
