@@ -60,9 +60,12 @@ Config defines the v1 version structure of the gitpod config file
 |`workspace.templates.prebuild`||N|  ||
 |`workspace.templates.imagebuild`||N|  ||
 |`workspace.templates.regular`||N|  ||
-|`workspace.pvc.size`||Y|  |  Size is a size of persistent volume claim to use|
-|`workspace.pvc.storageClass`|string|N|  |  StorageClass is a storage class of persistent volume claim to use|
-|`workspace.pvc.snapshotClass`|string|N|  |  SnapshotClass is a snapshot class name that is used to create volume snapshot|
+|`workspace.prebuildPVC.size`||Y|  |  Size is a size of prebuild workspace persistent volume claim to use|
+|`workspace.prebuildPVC.storageClass`|string|N|  |  StorageClass is a storage class of prebuild workspace persistent volume claim to use|
+|`workspace.prebuildPVC.snapshotClass`|string|N|  |  SnapshotClass is a snapshot class name that is used to create volume snapshot for prebuild workspace|
+|`workspace.pvc.size`||Y|  |  Size is a size of regular workspace persistent volume claim to use|
+|`workspace.pvc.storageClass`|string|N|  |  StorageClass is a storage class of regular workspace persistent volume claim to use|
+|`workspace.pvc.snapshotClass`|string|N|  |  SnapshotClass is a snapshot class name that is used to create volume snapshot for regular workspace|
 |`workspace.maxLifetime`||Y|  |  MaxLifetime is the maximum time a workspace is allowed to run. After that, the workspace times out despite activity|
 |`workspace.timeoutDefault`||N|  |  TimeoutDefault is the default timeout of a regular workspace|
 |`workspace.timeoutExtended`||N|  |  TimeoutExtended is the workspace timeout that a user can extend to for one workspace|
