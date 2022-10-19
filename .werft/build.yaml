@@ -167,6 +167,11 @@ pod:
         secretKeyRef:
           name: slack-path
           key: slackPath
+    - name: DEVX_SLACK_NOTIFICATION_PATH
+      valueFrom:
+        secretKeyRef:
+          name: devx-slack-path
+          key: token
     # used for GitHub releases (NOTE: for some reasons the token contains a trailing \n, is trimmed below)
     - name: GITHUB_TOKEN
       valueFrom:
