@@ -197,19 +197,19 @@ export class BillingModesImpl implements BillingModes {
             },
         );
 
-        // 1. UBB enabled?
-        if (!isUsageBasedBillingEnabled) {
-            return { mode: "chargebee" };
-        }
-
-        // 2. Any Chargbee TeamSubscription2 (old Team Subscriptions are not relevant here, as they are not associated with a team)
+        // 1. Check Chargebee: Any TeamSubscription2 (old Team Subscriptions are not relevant here, as they are not associated with a team)
         const teamSubscription = await this.teamSubscription2Db.findForTeam(team.id, now);
         if (teamSubscription && TeamSubscription2.isActive(teamSubscription, now)) {
             if (TeamSubscription2.isCancelled(teamSubscription, now)) {
                 // The team has a paid subscription, but it's already cancelled, and UBB enabled
-                return { mode: "chargebee", canUpgradeToUBB: true };
+                return { mode: "chargebee", canUpgradeToUBB: isUsageBasedBillingEnabled };
             }
 
+            return { mode: "chargebee", paid: true };
+        }
+
+        // 2. UBB enabled at all?
+        if (!isUsageBasedBillingEnabled) {
             return { mode: "chargebee" };
         }
 
