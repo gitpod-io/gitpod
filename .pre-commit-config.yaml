@@ -58,4 +58,9 @@ repos:
         args:
           - --args=-diff
 
+  - repo: https://github.com/zricethezav/gitleaks
+    rev: v8.15.0
+    hooks:
+      - id: gitleaks
+
 exclude: ^install/installer/.*/.*\.golden$
