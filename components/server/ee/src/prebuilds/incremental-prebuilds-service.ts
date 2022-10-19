@@ -66,7 +66,6 @@ export class IncrementalPrebuildsService {
 
     public async findGoodBaseForIncrementalBuild(
         context: CommitContext,
-        config: WorkspaceConfig,
         history: WithCommitHistory,
         user: User,
     ): Promise<PrebuiltWorkspace | undefined> {
@@ -74,6 +73,7 @@ export class IncrementalPrebuildsService {
             return;
         }
 
+        const { config } = await this.configProvider.fetchConfig({}, user, context);
         const imageSource = await this.imageSourceProvider.getImageSource({}, user, context, config);
 
         // Note: This query returns only not-garbage-collected prebuilds in order to reduce cardinality
