@@ -441,6 +441,7 @@ class BillingModeSpec {
                 },
                 expectation: {
                     mode: "chargebee",
+                    paid: true,
                 },
             },
             {
@@ -453,6 +454,7 @@ class BillingModeSpec {
                 },
                 expectation: {
                     mode: "chargebee",
+                    paid: true,
                 },
             },
             // team: transition chargebee -> UBB
