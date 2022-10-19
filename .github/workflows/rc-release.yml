@@ -7,22 +7,40 @@ on:
       - "*-rc*"
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      branch: ${{ steps.check_step.outputs.branch }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Get current branch
+        id: check_step
+        run: |
+          raw=$(git branch -r --contains ${{ github.ref }})
+          branch=${raw##*/}
+          echo "::set-output name=branch::$branch"
+          echo "Branch is $branch."
+
   generate-release-note:
+    needs: [check]
     runs-on: ubuntu-latest
     container: eu.gcr.io/gitpod-core-dev/dev/changelog:0.0.36
     steps:
       - uses: actions/checkout@v2
       - run: |
-          raw=$(git branch -r --contains ${{ github.ref }})
-          export PR_BRANCH=${raw/origin\/}
-          git checkout -b $PR_BRANCH
+          echo "${{ github.event.base_ref }}"
+          git checkout -b ${{ needs.check.outputs.branch }}
           echo "testing" > install/installer/docs/release-note.md
           if [[ $(git status --porcelain) ]]; then
             git config --global user.name $GITHUB_USER
             git config --global user.email $GITHUB_EMAIL
             git add install/installer/docs/release-note.md
             git commit -m "[release-note] upload release note"
-            git push origin $PR_BRANCH
+            git push origin ${{ needs.check.outputs.branch }}
           fi
         env:
           GITHUB_USER: roboquat
