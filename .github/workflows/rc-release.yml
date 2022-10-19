@@ -53,7 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Get release note
-      id: vars
+      id: note
       run: echo ::set-output name=releasenote::$(cat install/installer/docs/release-note.md)
     - name: Create Draft Release
       id: create_release
@@ -61,8 +61,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.ROBOQUAT_AUTOMATIC_CHANGELOG }}
       with:
-        tag_name: <tofill>
-        release_name: <tofill>
+        tag_name: ${{ github.ref }}
+        release_name: ${{ github.ref }}
         draft: true
         prerelease: false
         body: |
