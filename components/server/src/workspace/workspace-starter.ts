@@ -59,6 +59,7 @@ import {
     IDESettings,
     WithReferrerContext,
     EnvVarWithValue,
+    BillingTier,
 } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -849,37 +850,12 @@ export class WorkspaceStarter {
                 );
             }
 
-            if (
-                await getExperimentsClientForBackend().getValueAsync("protected_secrets", false, {
-                    user,
-                    billingTier,
-                })
-            ) {
-                // We roll out the protected secrets feature using a ConfigCat feature flag, to ensure
-                // a smooth, gradual roll out without breaking users.
-                featureFlags = featureFlags.concat(["protected_secrets"]);
-            }
+            await this.tryEnableProtectedSecrets(featureFlags, user, billingTier);
 
             featureFlags = featureFlags.filter((f) => !excludeFeatureFlags.includes(f));
 
-            const wsConnectionLimitingEnabled = await getExperimentsClientForBackend().getValueAsync(
-                "workspace_connection_limiting",
-                false,
-                {
-                    user,
-                    billingTier,
-                },
-            );
-
-            if (wsConnectionLimitingEnabled) {
-                const shouldLimitNetworkConnections = await this.entitlementService.limitNetworkConnections(
-                    user,
-                    new Date(),
-                );
-                if (shouldLimitNetworkConnections) {
-                    featureFlags = featureFlags.concat(["workspace_connection_limiting"]);
-                }
-            }
+            await this.tryEnableConnectionLimiting(featureFlags, user, billingTier);
+            await this.tryEnablePSI(featureFlags, user, billingTier);
 
             const usageAttributionId = await this.userService.getWorkspaceUsageAttributionId(user, workspace.projectId);
             const billingMode = await this.billingModes.getBillingMode(usageAttributionId, new Date());
@@ -962,6 +938,59 @@ export class WorkspaceStarter {
             return instance;
         } finally {
             span.finish();
+        }
+    }
+
+    private async tryEnableProtectedSecrets(
+        featureFlags: NamedWorkspaceFeatureFlag[],
+        user: User,
+        billingTier: BillingTier,
+    ) {
+        if (
+            await getExperimentsClientForBackend().getValueAsync("protected_secrets", false, {
+                user,
+                billingTier,
+            })
+        ) {
+            // We roll out the protected secrets feature using a ConfigCat feature flag, to ensure
+            // a smooth, gradual roll out without breaking users.
+            featureFlags.push("protected_secrets");
+        }
+    }
+
+    private async tryEnableConnectionLimiting(
+        featureFlags: NamedWorkspaceFeatureFlag[],
+        user: User,
+        billingTier: BillingTier,
+    ) {
+        const wsConnectionLimitingEnabled = await getExperimentsClientForBackend().getValueAsync(
+            "workspace_connection_limiting",
+            false,
+            {
+                user,
+                billingTier,
+            },
+        );
+
+        if (wsConnectionLimitingEnabled) {
+            const shouldLimitNetworkConnections = await this.entitlementService.limitNetworkConnections(
+                user,
+                new Date(),
+            );
+            if (shouldLimitNetworkConnections) {
+                featureFlags.push("workspace_connection_limiting");
+            }
+        }
+    }
+
+    private async tryEnablePSI(featureFlags: NamedWorkspaceFeatureFlag[], user: User, billingTier: BillingTier) {
+        const psiEnabled = await getExperimentsClientForBackend().getValueAsync("pressure_stall_info", false, {
+            user,
+            billingTier,
+        });
+
+        if (psiEnabled && billingTier === "paid") {
+            featureFlags.push("workspace_psi");
         }
     }
 

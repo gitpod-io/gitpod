@@ -298,6 +298,7 @@ export const WorkspaceFeatureFlags = {
     protected_secrets: undefined,
     workspace_class_limiting: undefined,
     workspace_connection_limiting: undefined,
+    workspace_psi: undefined,
 };
 export type NamedWorkspaceFeatureFlag = keyof typeof WorkspaceFeatureFlags;
 export namespace NamedWorkspaceFeatureFlag {
