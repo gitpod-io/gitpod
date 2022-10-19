@@ -98,9 +98,6 @@ func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool) error
 	workspacesRoute, workspacesServiceHandler := v1connect.NewWorkspacesServiceHandler(apiv1.NewWorkspaceService(connPool), handlerOptions...)
 	srv.HTTPMux().Handle(workspacesRoute, workspacesServiceHandler)
 
-	prebuildsRoute, prebuildsServiceHandler := v1connect.NewPrebuildsServiceHandler(apiv1.NewPrebuildService(), handlerOptions...)
-	srv.HTTPMux().Handle(prebuildsRoute, prebuildsServiceHandler)
-
 	return nil
 }
 

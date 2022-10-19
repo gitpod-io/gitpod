@@ -25,14 +25,14 @@ func TestMetricsInterceptor(t *testing.T) {
 
 	interceptor := NewMetricsInterceptor(metrics)
 
-	_, handler := v1connect.NewPrebuildsServiceHandler(&v1connect.UnimplementedPrebuildsServiceHandler{}, connect.WithInterceptors(interceptor))
+	_, handler := v1connect.NewWorkspacesServiceHandler(&v1connect.UnimplementedWorkspacesServiceHandler{}, connect.WithInterceptors(interceptor))
 
 	srv := httptest.NewServer(handler)
 
-	client := v1connect.NewPrebuildsServiceClient(http.DefaultClient, srv.URL, connect.WithInterceptors(interceptor))
+	client := v1connect.NewWorkspacesServiceClient(http.DefaultClient, srv.URL, connect.WithInterceptors(interceptor))
 
-	_, _ = client.GetPrebuild(context.Background(), connect.NewRequest(&v1.GetPrebuildRequest{
-		PrebuildId: "123",
+	_, _ = client.GetWorkspace(context.Background(), connect.NewRequest(&v1.GetWorkspaceRequest{
+		WorkspaceId: "123",
 	}))
 
 	expectedMetrics := []string{"connect_server_started_total", "connect_server_handled_seconds", "connect_client_started_total", "connect_client_handled_seconds"}
