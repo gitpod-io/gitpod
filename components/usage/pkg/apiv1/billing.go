@@ -106,6 +106,19 @@ func (s *BillingService) CreateStripeCustomer(ctx context.Context, req *v1.Creat
 	}, nil
 }
 
+func (s *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.CreateStripeSubscriptionRequest) (err error) {
+	attributionID, err := db.ParseAttributionID(req.GetAttributionId())
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "Invalid attribution ID %s", attributionID)
+	}
+	customer, err := s.GetStripeCustomer(ctx, attributionID)
+	if err != nil {
+		return status.Errorf(codes.NotFound, "Customer with attribution ID %s not found", attributionID)
+	}
+
+	return s.stripeClient.CreateSubscription(ctx, customer.AttributionId, "")
+}
+
 func (s *BillingService) ReconcileInvoices(ctx context.Context, in *v1.ReconcileInvoicesRequest) (*v1.ReconcileInvoicesResponse, error) {
 	balances, err := db.ListBalance(ctx, s.conn)
 	if err != nil {

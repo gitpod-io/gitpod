@@ -320,6 +320,28 @@ func (c *Client) GetSubscriptionWithCustomer(ctx context.Context, subscriptionID
 	return subscription, nil
 }
 
+func (c *Client) CreateSubscription(ctx context.Context, customerID string, priceID string) (err error) {
+	if customerID == "" {
+		return fmt.Errorf("no subscriptionID specified")
+	}
+	if priceID == "" {
+		return fmt.Errorf("no priceID specified")
+	}
+
+	params := &stripe.SubscriptionParams{
+		Customer: &customerID,
+		Items: []*stripe.SubscriptionItemsParams{
+			{
+				Price: &priceID,
+			},
+		},
+	}
+
+	c.sc.Subscriptions.New(params)
+
+	return nil
+}
+
 func GetAttributionID(ctx context.Context, customer *stripe.Customer) (db.AttributionID, error) {
 	if customer == nil {
 		log.Error("No customer information available for invoice.")
