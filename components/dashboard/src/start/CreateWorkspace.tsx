@@ -29,7 +29,6 @@ import { BillingAccountSelector } from "../components/BillingAccountSelector";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { TeamsContext } from "../teams/teams-context";
 import Alert from "../components/Alert";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 
 export interface CreateWorkspaceProps {
     contextUrl: string;
@@ -542,7 +541,6 @@ interface RunningPrebuildViewProps {
 
 function RunningPrebuildView(props: RunningPrebuildViewProps) {
     const workspaceId = props.runningPrebuild.workspaceID;
-    const { showUseLastSuccessfulPrebuild } = useContext(FeatureFlagContext);
 
     useEffect(() => {
         const disposables = new DisposableCollection();
@@ -571,14 +569,12 @@ function RunningPrebuildView(props: RunningPrebuildViewProps) {
             {/* TODO(gpl) Copied around in Start-/CreateWorkspace. This should properly go somewhere central. */}
             <div className="h-full mt-6 w-11/12 lg:w-3/5">
                 <PrebuildLogs workspaceId={workspaceId} onIgnorePrebuild={props.onIgnorePrebuild}>
-                    {showUseLastSuccessfulPrebuild && (
-                        <button
-                            className="secondary"
-                            onClick={() => props.onUseLastSuccessfulPrebuild && props.onUseLastSuccessfulPrebuild()}
-                        >
-                            Use Last Successful Prebuild
-                        </button>
-                    )}
+                    <button
+                        className="secondary"
+                        onClick={() => props.onUseLastSuccessfulPrebuild && props.onUseLastSuccessfulPrebuild()}
+                    >
+                        Use Last Successful Prebuild
+                    </button>
                     <button className="secondary" onClick={() => props.onIgnorePrebuild && props.onIgnorePrebuild()}>
                         Skip Prebuild
                     </button>
