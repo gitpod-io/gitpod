@@ -247,6 +247,11 @@ RUN curl https://raw.githubusercontent.com/replicatedhq/replicated/$(curl -s htt
     curl https://kots.io/install | sudo bash && \
     bash -c "echo . \<\(kubectl kots completion bash\) >> ~/.bashrc"
 
+# Install fish shell
+RUN sudo apt-add-repository -y ppa:fish-shell/release-3 && \
+    sudo apt update && \
+    sudo apt install -y fish
+
 # Copy our own tools
 ENV NEW_KUBECDL=1
 COPY dev-kubecdl--app/kubecdl dev-gpctl--app/gpctl dev-preview-previewctl--cli/previewctl /usr/bin/
