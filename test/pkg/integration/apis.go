@@ -497,7 +497,7 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 			Scopes []string `json:"scopes"`
 		}{
 			Value:  token,
-			Scopes: []string{},
+			Scopes: []string{"user:email", "read:user", "public_repo"},
 		}
 		valueBytes, err := json.Marshal(value)
 		if err != nil {
