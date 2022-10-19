@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package gitpod.v1;
+package gitpod.experimental.v1;
 
-option go_package = "github.com/gitpod-io/gitpod/public-api/v1";
+option go_package = "github.com/gitpod-io/gitpod/public-api/experimental/v1";
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/field_mask.proto";
-import "gitpod/v1/pagination.proto";
+import "gitpod/experimental/v1/pagination.proto";
 
 service WorkspacesService {
 
