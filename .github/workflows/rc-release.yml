@@ -52,6 +52,10 @@ jobs:
     needs: [generate-release-note]
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
     - name: Get release note
       id: note
       run: echo ::set-output name=releasenote::$(cat install/installer/docs/release-note.md)
