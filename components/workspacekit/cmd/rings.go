@@ -274,7 +274,7 @@ var ring1Cmd = &cobra.Command{
 
 		var mnts []mnte
 		switch fsshift {
-		case api.FSShiftMethod_FUSE:
+		case api.FSShiftMethod_FUSE, api.FSShiftMethod_IDMAPPED:
 			mnts = append(mnts,
 				mnte{Target: "/", Source: "/.workspace/mark", Flags: unix.MS_BIND | unix.MS_REC},
 			)

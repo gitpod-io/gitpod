@@ -15,16 +15,16 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/google/nftables"
+	"github.com/google/nftables/binaryutil"
+	"github.com/google/nftables/expr"
 	cli "github.com/urfave/cli/v2"
+	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	_ "github.com/gitpod-io/gitpod/common-go/nsenter"
-	"github.com/google/nftables"
-	"github.com/google/nftables/binaryutil"
-	"github.com/google/nftables/expr"
-	"github.com/vishvananda/netlink"
 )
 
 func main() {
@@ -170,6 +170,24 @@ func main() {
 				},
 				Action: func(c *cli.Context) error {
 					return unix.Mount(c.String("source"), c.String("target"), "shiftfs", 0, "mark")
+				},
+			},
+			{
+				Name:  "mount-idmapped-mark",
+				Usage: "mounts a idmapped mark",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "source",
+						Required: false,
+					},
+					&cli.StringFlag{
+						Name:     "target",
+						Required: true,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					target := filepath.Clean(c.String("target"))
+					return mapMount(target)
 				},
 			},
 			{

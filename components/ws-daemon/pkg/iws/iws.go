@@ -254,7 +254,29 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 
 	mountpoint := filepath.Join(wbs.Session.ServiceLocNode, "mark")
 
-	if wbs.FSShift == api.FSShiftMethod_FUSE || wbs.Session.FullWorkspaceBackup {
+	if wbs.FSShift == api.FSShiftMethod_IDMAPPED {
+		err = nsi.Nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
+			c.Args = append(c.Args, "mount-idmapped-mark",
+				"--target", filepath.Join(wbs.Session.ServiceLocNode, "mark"),
+			)
+		})
+		if err != nil {
+			log.WithField("rootfs", rootfs).WithError(err).Error("cannot mount idmapped mark")
+			return nil, status.Errorf(codes.Internal, "cannot mount idmapped mark")
+		}
+
+		log.WithFields(wbs.Session.OWI()).WithField("configuredShift", wbs.FSShift).WithField("fwb", wbs.Session.FullWorkspaceBackup).Debug("fs-shift using idmapped")
+
+		if err := wbs.createWorkspaceCgroup(ctx, wscontainerID); err != nil {
+			return nil, err
+		}
+
+		return &api.PrepareForUserNSResponse{
+			FsShift:               api.FSShiftMethod_IDMAPPED,
+			FullWorkspaceBackup:   wbs.Session.FullWorkspaceBackup,
+			PersistentVolumeClaim: wbs.Session.PersistentVolumeClaim,
+		}, nil
+	} else if wbs.FSShift == api.FSShiftMethod_FUSE || wbs.Session.FullWorkspaceBackup {
 		err = nsi.Nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
 			// In case of any change in the user mapping, the next line must be updated.
 			mappings := fmt.Sprintf("0:%v:1:1:100000:65534", wsinit.GitpodUID)
@@ -271,7 +293,7 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 			return nil, status.Errorf(codes.Internal, "cannot mount fusefs mark")
 		}
 
-		log.WithFields(wbs.Session.OWI()).WithField("configuredShift", wbs.FSShift).WithField("fwb", wbs.Session.FullWorkspaceBackup).Info("fs-shift using fuse")
+		log.WithFields(wbs.Session.OWI()).WithField("configuredShift", wbs.FSShift).WithField("fwb", wbs.Session.FullWorkspaceBackup).Debug("fs-shift using fuse")
 
 		if err := wbs.createWorkspaceCgroup(ctx, wscontainerID); err != nil {
 			return nil, err
