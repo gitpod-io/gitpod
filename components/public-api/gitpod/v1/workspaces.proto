@@ -22,26 +22,6 @@ service WorkspacesService {
     // CreateAndStartWorkspace creates a new workspace and starts it.
     rpc CreateAndStartWorkspace(CreateAndStartWorkspaceRequest) returns (CreateAndStartWorkspaceResponse) {}
 
-    // StartWorkspace starts an existing workspace.
-    rpc StartWorkspace(StartWorkspaceRequest) returns (StartWorkspaceResponse) {}
-
-    // GetRunningWorkspaceInstance returns the currently active instance of a workspace.
-    // Errors:
-    //   FAILED_PRECONDITION: if a workspace does not a currently active instance
-    //
-    rpc GetActiveWorkspaceInstance(GetActiveWorkspaceInstanceRequest) returns (GetActiveWorkspaceInstanceResponse) {}
-
-    // GetWorkspaceInstanceOwnerToken returns the owner token of a workspace instance.
-    // Note: the owner token is not part of the workspace instance status so that we can scope its access on the
-    //       API function level.
-    rpc GetWorkspaceInstanceOwnerToken(GetWorkspaceInstanceOwnerTokenRequest) returns (GetWorkspaceInstanceOwnerTokenResponse) {}
-
-    // ListenToWorkspaceInstance listens to workspace instance updates.
-    rpc ListenToWorkspaceInstance(ListenToWorkspaceInstanceRequest) returns (stream ListenToWorkspaceInstanceResponse) {}
-
-    // ListenToImageBuildLogs streams (currently or previously) running workspace image build logs
-    rpc ListenToImageBuildLogs(ListenToImageBuildLogsRequest) returns (stream ListenToImageBuildLogsResponse) {}
-
     // StopWorkspace stops a running workspace (instance).
     // Errors:
     //   NOT_FOUND:           the workspace_id is unkown
@@ -97,34 +77,6 @@ message StartWorkspaceRequest {
 message StartWorkspaceResponse {
     string instance_id = 1;
     string workspace_url = 2;
-}
-
-message GetActiveWorkspaceInstanceRequest {
-    string workspace_id = 1;
-}
-message GetActiveWorkspaceInstanceResponse {
-    WorkspaceInstance instance = 1;
-}
-
-message GetWorkspaceInstanceOwnerTokenRequest {
-    string instance_id = 1;
-}
-message GetWorkspaceInstanceOwnerTokenResponse {
-    string owner_token = 1;
-}
-
-message ListenToWorkspaceInstanceRequest {
-    string instance_id = 1;
-}
-message ListenToWorkspaceInstanceResponse {
-    WorkspaceInstanceStatus instance_status = 1;
-}
-
-message ListenToImageBuildLogsRequest {
-    string instance_id = 1;
-}
-message ListenToImageBuildLogsResponse {
-    string line = 1;
 }
 
 message StopWorkspaceRequest {
