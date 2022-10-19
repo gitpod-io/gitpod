@@ -34,6 +34,7 @@ jobs:
       - run: |
           echo "${{ github.event.base_ref }}"
           echo "${{ github.event.issue.number }}"
+          echo "${{ github.event.pull_request.number }}"
           echo "${{ github.event }}"
           git checkout -b ${{ needs.check.outputs.branch }}
           echo "testing" > install/installer/docs/release-note.md
