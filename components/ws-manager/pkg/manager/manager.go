@@ -273,7 +273,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 			err = m.Clientset.Get(ctx, types.NamespacedName{Namespace: m.Config.Namespace, Name: startContext.VolumeSnapshot.VolumeSnapshotName}, &volumeSnapshot)
 			if k8serr.IsNotFound(err) {
 				// restore volume snapshot from handle
-				err = m.restoreVolumeSnapshotFromHandle(ctx, startContext.VolumeSnapshot.VolumeSnapshotName, startContext.VolumeSnapshot.VolumeSnapshotHandle)
+				err = m.restoreVolumeSnapshotFromHandle(ctx, req.Type, startContext.VolumeSnapshot.VolumeSnapshotName, startContext.VolumeSnapshot.VolumeSnapshotHandle)
 				if err != nil {
 					clog.WithError(err).Error("was unable to restore volume snapshot")
 					return nil, err
@@ -456,7 +456,7 @@ func buildWorkspaceSecrets(spec *api.StartWorkspaceSpec) (secrets map[string]str
 	return secrets, secretsLen
 }
 
-func (m *Manager) restoreVolumeSnapshotFromHandle(ctx context.Context, id, handle string) (err error) {
+func (m *Manager) restoreVolumeSnapshotFromHandle(ctx context.Context, wsType api.WorkspaceType, id, handle string) (err error) {
 	span, ctx := tracing.FromContext(ctx, "restoreVolumeSnapshotFromHandle")
 	defer tracing.FinishSpan(span, &err)
 
@@ -467,8 +467,15 @@ func (m *Manager) restoreVolumeSnapshotFromHandle(ctx context.Context, id, handl
 
 	// todo(pavel): figure out if there is a way to find out which snapshot class we need to use here. For now use default class info.
 	var volumeSnapshotClassName string
-	if m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PVC.SnapshotClass != "" {
-		volumeSnapshotClassName = m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PVC.SnapshotClass
+	switch wsType {
+	case api.WorkspaceType_PREBUILD:
+		if m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PrebuildPVC.SnapshotClass != "" {
+			volumeSnapshotClassName = m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PrebuildPVC.SnapshotClass
+		}
+	case api.WorkspaceType_REGULAR:
+		if m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PVC.SnapshotClass != "" {
+			volumeSnapshotClassName = m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PVC.SnapshotClass
+		}
 	}
 
 	var volumeSnapshotClass volumesnapshotv1.VolumeSnapshotClass

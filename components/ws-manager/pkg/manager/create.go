@@ -244,18 +244,24 @@ func mergeProbe(dst, src reflect.Value) (err error) {
 func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) (*corev1.PersistentVolumeClaim, error) {
 	req := startContext.Request
 	var prefix string
+	var pvcConfig config.PVCConfiguration
 	switch req.Type {
 	case api.WorkspaceType_PREBUILD:
 		prefix = "prebuild"
+
+		pvcConfig = m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PrebuildPVC
+		if startContext.Class != nil {
+			pvcConfig = startContext.Class.PrebuildPVC
+		}
 	case api.WorkspaceType_IMAGEBUILD:
 		prefix = "imagebuild"
 	default:
 		prefix = "ws"
-	}
 
-	PVCConfig := m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PVC
-	if startContext.Class != nil {
-		PVCConfig = startContext.Class.PVC
+		pvcConfig = m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PVC
+		if startContext.Class != nil {
+			pvcConfig = startContext.Class.PVC
+		}
 	}
 
 	PVC := &corev1.PersistentVolumeClaim{
@@ -268,16 +274,17 @@ func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) 
 			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
-					corev1.ResourceName(corev1.ResourceStorage): PVCConfig.Size,
+					corev1.ResourceName(corev1.ResourceStorage): pvcConfig.Size,
 				},
 			},
 		},
 	}
-	if PVCConfig.StorageClass != "" {
+
+	if pvcConfig.StorageClass != "" {
 		// Specify the storageClassName when the storage class is non-empty.
 		// This way, the Kubernetes uses the default StorageClass within the cluster.
 		// Otherwise, the Kubernetes would try to request the PVC with no class.
-		PVC.Spec.StorageClassName = &PVCConfig.StorageClass
+		PVC.Spec.StorageClassName = &pvcConfig.StorageClass
 	}
 
 	if startContext.VolumeSnapshot != nil && startContext.VolumeSnapshot.VolumeSnapshotName != "" {
