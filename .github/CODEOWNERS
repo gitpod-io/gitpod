@@ -63,7 +63,9 @@
 /components/local-app @gitpod-io/engineering-ide
 /components/openvsx-proxy @gitpod-io/engineering-ide
 /components/proxy @gitpod-io/engineering-webapp
-/components/public-api @csweichel @akosyakov @gitpod-io/engineering-webapp
+/components/public-api @csweichel @akosyakov @easyCZ @gitpod-io/engineering-webapp
+# Any team can make changes to the experimental package
+/components/public-api/gitpod/experimental @gitpod-io/engineering-workspace @gitpod-io/engineering-webapp @gitpod-io/engineering-delivery-operations-experience @gitpod-io/engineering-ide
 /components/public-api-server @gitpod-io/engineering-webapp
 /components/registry-facade-api @csweichel @aledbf
 /components/registry-facade @gitpod-io/engineering-workspace
