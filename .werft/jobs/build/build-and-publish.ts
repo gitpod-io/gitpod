@@ -1,3 +1,5 @@
+import { channel } from "diagnostics_channel";
+import { readFileSync } from "fs";
 import * as semver from "semver";
 import { exec } from "../../util/shell";
 import { Werft } from "../../util/werft";
@@ -164,15 +166,19 @@ function publishKots(werft: Werft, jobConfig: JobConfig) {
     // Update the additionalImages in the kots-app.yaml
     exec(`/tmp/installer mirror kots --file ${REPLICATED_YAML_DIR}/kots-app.yaml`, { slice: phases.PUBLISH_KOTS });
 
-    const replicatedChannel = jobConfig.mainBuild ? "Unstable" : jobConfig.repository.branch;
+    const channel = jobConfig.rcRelease ? "Beta" : jobConfig.repository.branch;
+    const releaseVersion = jobConfig.rcRelease ? jobConfig.rcTag: jobConfig.version
+    const releaseNote = jobConfig.rcRelease ? readFileSync(jobConfig.releaseNote, "utf8") : "# ${jobConfig.version}\n\nSee [Werft job](https://werft.gitpod-dev.com/job/gitpod-build-${jobConfig.version}/logs) for notes"
+
+    const replicatedChannel = jobConfig.mainBuild ? "Unstable" : channel;
 
     exec(
         `replicated release create \
         --lint \
         --ensure-channel \
         --yaml-dir ${REPLICATED_YAML_DIR} \
-        --version ${jobConfig.version} \
-        --release-notes "# ${jobConfig.version}\n\nSee [Werft job](https://werft.gitpod-dev.com/job/gitpod-build-${jobConfig.version}/logs) for notes" \
+        --version ${releaseVersion} \
+        --release-notes ${releaseNote} \
         --promote ${replicatedChannel}`,
         { slice: phases.PUBLISH_KOTS },
     );
