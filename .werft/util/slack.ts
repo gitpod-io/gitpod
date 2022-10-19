@@ -81,8 +81,10 @@ export function reportCertificateError(options: { certificateName: string; certi
     return new Promise((resolve, reject) => {
         const req = https.request(
             {
-                hostname: "https://slack.com/api/chat.postMessage",
+                hostname: "slack.com",
+                path: "api/chat.postMessage",
                 method: "POST",
+                port: 443,
                 headers: {
                     "Content-Type": "application/json",
                     "Content-Length": data.length,
