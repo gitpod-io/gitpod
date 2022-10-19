@@ -12,7 +12,7 @@
 
 import * as jspb from "google-protobuf";
 
-export class LogDownloadURLRequest extends jspb.Message {
+export class LogDownloadURLRequest extends jspb.Message { 
     getOwnerId(): string;
     setOwnerId(value: string): LogDownloadURLRequest;
     getWorkspaceId(): string;
@@ -41,7 +41,7 @@ export namespace LogDownloadURLRequest {
     }
 }
 
-export class LogDownloadURLResponse extends jspb.Message {
+export class LogDownloadURLResponse extends jspb.Message { 
     getUrl(): string;
     setUrl(value: string): LogDownloadURLResponse;
 
@@ -61,7 +61,7 @@ export namespace LogDownloadURLResponse {
     }
 }
 
-export class ListLogsRequest extends jspb.Message {
+export class ListLogsRequest extends jspb.Message { 
     getOwnerId(): string;
     setOwnerId(value: string): ListLogsRequest;
     getWorkspaceId(): string;
@@ -87,7 +87,7 @@ export namespace ListLogsRequest {
     }
 }
 
-export class ListLogsResponse extends jspb.Message {
+export class ListLogsResponse extends jspb.Message { 
     clearTaskIdList(): void;
     getTaskIdList(): Array<string>;
     setTaskIdList(value: Array<string>): ListLogsResponse;

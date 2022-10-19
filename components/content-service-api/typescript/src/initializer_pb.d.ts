@@ -12,7 +12,7 @@
 
 import * as jspb from "google-protobuf";
 
-export class WorkspaceInitializer extends jspb.Message {
+export class WorkspaceInitializer extends jspb.Message { 
 
     hasEmpty(): boolean;
     clearEmpty(): void;
@@ -85,7 +85,7 @@ export namespace WorkspaceInitializer {
 
 }
 
-export class CompositeInitializer extends jspb.Message {
+export class CompositeInitializer extends jspb.Message { 
     clearInitializerList(): void;
     getInitializerList(): Array<WorkspaceInitializer>;
     setInitializerList(value: Array<WorkspaceInitializer>): CompositeInitializer;
@@ -107,7 +107,7 @@ export namespace CompositeInitializer {
     }
 }
 
-export class FileDownloadInitializer extends jspb.Message {
+export class FileDownloadInitializer extends jspb.Message { 
     clearFilesList(): void;
     getFilesList(): Array<FileDownloadInitializer.FileInfo>;
     setFilesList(value: Array<FileDownloadInitializer.FileInfo>): FileDownloadInitializer;
@@ -132,7 +132,7 @@ export namespace FileDownloadInitializer {
     }
 
 
-    export class FileInfo extends jspb.Message {
+    export class FileInfo extends jspb.Message { 
         getUrl(): string;
         setUrl(value: string): FileInfo;
         getFilePath(): string;
@@ -160,7 +160,7 @@ export namespace FileDownloadInitializer {
 
 }
 
-export class EmptyInitializer extends jspb.Message {
+export class EmptyInitializer extends jspb.Message { 
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): EmptyInitializer.AsObject;
@@ -177,7 +177,7 @@ export namespace EmptyInitializer {
     }
 }
 
-export class GitInitializer extends jspb.Message {
+export class GitInitializer extends jspb.Message { 
     getRemoteUri(): string;
     setRemoteUri(value: string): GitInitializer;
     getUpstreamRemoteUri(): string;
@@ -215,7 +215,7 @@ export namespace GitInitializer {
     }
 }
 
-export class GitConfig extends jspb.Message {
+export class GitConfig extends jspb.Message { 
 
     getCustomConfigMap(): jspb.Map<string, string>;
     clearCustomConfigMap(): void;
@@ -249,7 +249,7 @@ export namespace GitConfig {
     }
 }
 
-export class SnapshotInitializer extends jspb.Message {
+export class SnapshotInitializer extends jspb.Message { 
     getSnapshot(): string;
     setSnapshot(value: string): SnapshotInitializer;
     getFromVolumeSnapshot(): boolean;
@@ -272,7 +272,7 @@ export namespace SnapshotInitializer {
     }
 }
 
-export class PrebuildInitializer extends jspb.Message {
+export class PrebuildInitializer extends jspb.Message { 
 
     hasPrebuild(): boolean;
     clearPrebuild(): void;
@@ -300,7 +300,7 @@ export namespace PrebuildInitializer {
     }
 }
 
-export class FromBackupInitializer extends jspb.Message {
+export class FromBackupInitializer extends jspb.Message { 
     getCheckoutLocation(): string;
     setCheckoutLocation(value: string): FromBackupInitializer;
     getFromVolumeSnapshot(): boolean;
@@ -323,7 +323,7 @@ export namespace FromBackupInitializer {
     }
 }
 
-export class GitStatus extends jspb.Message {
+export class GitStatus extends jspb.Message { 
     getBranch(): string;
     setBranch(value: string): GitStatus;
     getLatestCommit(): string;

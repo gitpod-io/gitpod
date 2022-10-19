@@ -12,7 +12,7 @@
 
 import * as jspb from "google-protobuf";
 
-export class WorkspaceDownloadURLRequest extends jspb.Message {
+export class WorkspaceDownloadURLRequest extends jspb.Message { 
     getOwnerId(): string;
     setOwnerId(value: string): WorkspaceDownloadURLRequest;
     getWorkspaceId(): string;
@@ -35,7 +35,7 @@ export namespace WorkspaceDownloadURLRequest {
     }
 }
 
-export class WorkspaceDownloadURLResponse extends jspb.Message {
+export class WorkspaceDownloadURLResponse extends jspb.Message { 
     getUrl(): string;
     setUrl(value: string): WorkspaceDownloadURLResponse;
 
@@ -55,7 +55,7 @@ export namespace WorkspaceDownloadURLResponse {
     }
 }
 
-export class DeleteWorkspaceRequest extends jspb.Message {
+export class DeleteWorkspaceRequest extends jspb.Message { 
     getOwnerId(): string;
     setOwnerId(value: string): DeleteWorkspaceRequest;
     getWorkspaceId(): string;
@@ -81,7 +81,7 @@ export namespace DeleteWorkspaceRequest {
     }
 }
 
-export class DeleteWorkspaceResponse extends jspb.Message {
+export class DeleteWorkspaceResponse extends jspb.Message { 
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): DeleteWorkspaceResponse.AsObject;
@@ -98,7 +98,7 @@ export namespace DeleteWorkspaceResponse {
     }
 }
 
-export class WorkspaceSnapshotExistsRequest extends jspb.Message {
+export class WorkspaceSnapshotExistsRequest extends jspb.Message { 
     getOwnerId(): string;
     setOwnerId(value: string): WorkspaceSnapshotExistsRequest;
     getWorkspaceId(): string;
@@ -124,7 +124,7 @@ export namespace WorkspaceSnapshotExistsRequest {
     }
 }
 
-export class WorkspaceSnapshotExistsResponse extends jspb.Message {
+export class WorkspaceSnapshotExistsResponse extends jspb.Message { 
     getExists(): boolean;
     setExists(value: boolean): WorkspaceSnapshotExistsResponse;
 

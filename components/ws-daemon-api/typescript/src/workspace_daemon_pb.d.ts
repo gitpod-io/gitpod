@@ -440,4 +440,5 @@ export namespace Memory {
 export enum FSShiftMethod {
     SHIFTFS = 0,
     FUSE = 1,
+    IDMAPPED = 2,
 }

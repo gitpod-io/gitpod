@@ -12,7 +12,7 @@
 
 import * as jspb from "google-protobuf";
 
-export class DeleteUserContentRequest extends jspb.Message {
+export class DeleteUserContentRequest extends jspb.Message { 
     getOwnerId(): string;
     setOwnerId(value: string): DeleteUserContentRequest;
 
@@ -32,7 +32,7 @@ export namespace DeleteUserContentRequest {
     }
 }
 
-export class DeleteUserContentResponse extends jspb.Message {
+export class DeleteUserContentResponse extends jspb.Message { 
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): DeleteUserContentResponse.AsObject;
