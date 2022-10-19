@@ -69,7 +69,7 @@ func mapMount(target string) (err error) {
 
 	cmd := exec.Command(userNsHelperBinary)
 	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Cloneflags: syscall.CLONE_NEWUSER,
+		//Cloneflags: syscall.CLONE_NEWUSER,
 	}
 
 	var (
