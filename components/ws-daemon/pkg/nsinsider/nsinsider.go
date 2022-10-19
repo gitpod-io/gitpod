@@ -120,7 +120,7 @@ func Nsinsider(instanceID string, targetPid int, mod func(*exec.Cmd), opts ...ns
 	}
 
 	if cfg.SetTargetPIDArg {
-		cmd.Args = append(cmd.Args, "--pid", string(targetPid))
+		cmd.Args = append(cmd.Args, "--pid", fmt.Sprintf("%v", targetPid))
 	}
 
 	var cmdOut bytes.Buffer
