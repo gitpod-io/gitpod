@@ -38,6 +38,7 @@ import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
 import { Client } from "@gitpod/gitpod-protocol/lib/experiments/types";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { ClusterSyncService } from "./cluster-sync-service";
+import { WorkspaceInstanceController, WorkspaceInstanceControllerImpl } from "./workspace-instance-controller";
 
 export const containerModule = new ContainerModule((bind) => {
     bind(MessagebusConfiguration).toSelf().inSingletonScope();
@@ -91,4 +92,7 @@ export const containerModule = new ContainerModule((bind) => {
     bind(DebugApp).toSelf().inSingletonScope();
 
     bind(Client).toDynamicValue(getExperimentsClientForBackend).inSingletonScope();
+
+    // transient to make sure we're creating a separate instance every time we ask for it
+    bind(WorkspaceInstanceController).to(WorkspaceInstanceControllerImpl).inTransientScope();
 });
