@@ -137,10 +137,11 @@ type PersistentVolumeClaim struct {
 }
 
 type WorkspaceClass struct {
-	Name      string                `json:"name" validate:"required"`
-	Resources WorkspaceResources    `json:"resources" validate:"required"`
-	Templates WorkspaceTemplates    `json:"templates,omitempty"`
-	PVC       PersistentVolumeClaim `json:"pvc" validate:"required"`
+	Name        string                `json:"name" validate:"required"`
+	Resources   WorkspaceResources    `json:"resources" validate:"required"`
+	Templates   WorkspaceTemplates    `json:"templates,omitempty"`
+	PrebuildPVC PersistentVolumeClaim `json:"prebuildPVC" validate:"required"`
+	PVC         PersistentVolumeClaim `json:"pvc" validate:"required"`
 }
 
 type WorkspaceResources struct {

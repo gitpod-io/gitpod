@@ -73,6 +73,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 			Templates: templatesCfg,
+			PrebuildPVC: config.PVCConfiguration{
+				Size:          ctx.Config.Workspace.PrebuildPVC.Size,
+				StorageClass:  ctx.Config.Workspace.PrebuildPVC.StorageClass,
+				SnapshotClass: ctx.Config.Workspace.PrebuildPVC.SnapshotClass,
+			},
 			PVC: config.PVCConfiguration{
 				Size:          ctx.Config.Workspace.PVC.Size,
 				StorageClass:  ctx.Config.Workspace.PVC.StorageClass,
@@ -126,8 +131,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Storage:          c.Resources.Limits.Storage,
 					},
 				},
-				Templates: tplsCfg,
-				PVC:       config.PVCConfiguration(c.PVC),
+				Templates:   tplsCfg,
+				PrebuildPVC: config.PVCConfiguration(c.PrebuildPVC),
+				PVC:         config.PVCConfiguration(c.PVC),
 			}
 			for tmpl_n, tmpl_v := range ctpls {
 				if _, ok := tpls[tmpl_n]; ok {

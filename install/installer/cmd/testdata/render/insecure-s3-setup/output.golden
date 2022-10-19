@@ -1419,6 +1419,10 @@ data:
     repository: eu.gcr.io/gitpod-core-dev/build
     workspace:
       maxLifetime: 36h0m0s
+      prebuildPVC:
+        size: 30Gi
+        snapshotClass: ""
+        storageClass: ""
       pvc:
         size: 30Gi
         snapshotClass: ""
@@ -5186,6 +5190,11 @@ data:
               }
             },
             "templates": {},
+            "prebuildPVC": {
+              "size": "30Gi",
+              "storageClass": "",
+              "snapshotClass": ""
+            },
             "pvc": {
               "size": "30Gi",
               "storageClass": "",
@@ -9456,7 +9465,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 059ee7fb00faa64f55167fa6467dc78d13af0d03219878e93c2e67e3606c00c0
+        gitpod.io/checksum_config: 7aa5b741d1192fb626ba05a2e819c40f92db4b21176f9d60badf08be2dc0e2b8
       creationTimestamp: null
       labels:
         app: gitpod
