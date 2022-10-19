@@ -255,12 +255,11 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 	mountpoint := filepath.Join(wbs.Session.ServiceLocNode, "mark")
 
 	if wbs.FSShift == api.FSShiftMethod_IDMAPPED {
-		err = nsi.Nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
+		err = nsi.Nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
 			c.Args = append(c.Args, "mount-idmapped-mark",
 				"--target", filepath.Join(wbs.Session.ServiceLocNode, "mark"),
-				"--pid", "1",
 			)
-		}, nsi.EnterMountNS(true), nsi.EnterPidNS(true))
+		}, nsi.SetTargetPIDArg(true), nsi.EnterUserNS(true))
 		if err != nil {
 			log.WithField("rootfs", rootfs).WithError(err).Error("cannot mount idmapped mark")
 			return nil, status.Errorf(codes.Internal, "cannot mount idmapped mark")

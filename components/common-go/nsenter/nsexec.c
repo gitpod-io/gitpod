@@ -172,6 +172,13 @@ void nsexec(void)
 		join_ns(pidnsfd, CLONE_NEWPID);
 	}
 
+	char *pidnsfd = getenv("_LIBNSENTER_USERNSFD");
+	if (pidnsfd != NULL)
+	{
+		write_log(DEBUG, "join user namespace: %s", pidnsfd);
+		join_ns(pidnsfd, CLONE_NEWUSER);
+	}
+
 	pid_t pid = fork();
 	if (pid == -1)
 	{

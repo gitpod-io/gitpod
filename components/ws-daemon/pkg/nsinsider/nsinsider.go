@@ -20,6 +20,9 @@ type NsinsiderOpts struct {
 	PidNS      bool
 	NetNS      bool
 	MountNSPid int
+
+	UserNS          bool
+	SetTargetPIDArg bool
 }
 
 func EnterMountNS(enter bool) nsinsiderOpt {
@@ -44,6 +47,18 @@ func EnterMountNSPid(pid int) nsinsiderOpt {
 	return func(o *NsinsiderOpts) {
 		o.MountNS = true
 		o.MountNSPid = pid
+	}
+}
+
+func EnterUserNS(enter bool) nsinsiderOpt {
+	return func(o *NsinsiderOpts) {
+		o.UserNS = enter
+	}
+}
+
+func SetTargetPIDArg(passTarget bool) nsinsiderOpt {
+	return func(o *NsinsiderOpts) {
+		o.SetTargetPIDArg = passTarget
 	}
 }
 
@@ -86,6 +101,10 @@ func Nsinsider(instanceID string, targetPid int, mod func(*exec.Cmd), opts ...ns
 		nss = append(nss, mnt{"_LIBNSENTER_NETNSFD", fmt.Sprintf("/proc/%d/ns/net", targetPid), os.O_RDONLY})
 	}
 
+	if cfg.UserNS {
+		nss = append(nss, mnt{"_LIBNSENTER_USERNSFD", fmt.Sprintf("/proc/%d/ns/user", targetPid), os.O_RDONLY})
+	}
+
 	stdioFdCount := 3
 	cmd := exec.Command(filepath.Join(filepath.Dir(base), "nsinsider"))
 	mod(cmd)
@@ -98,6 +117,10 @@ func Nsinsider(instanceID string, targetPid int, mod func(*exec.Cmd), opts ...ns
 		defer f.Close()
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%d", ns.Env, stdioFdCount+len(cmd.ExtraFiles)))
 		cmd.ExtraFiles = append(cmd.ExtraFiles, f)
+	}
+
+	if cfg.SetTargetPIDArg {
+		cmd.Args = append(cmd.Args, "--pid", string(targetPid))
 	}
 
 	var cmdOut bytes.Buffer
