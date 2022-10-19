@@ -11,6 +11,7 @@ import (
 	"time"
 
 	cgroups "github.com/gitpod-io/gitpod/common-go/cgroups/v2"
+	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -55,6 +56,10 @@ func (p *PSIMetrics) Name() string  { return "psi-metrics" }
 func (p *PSIMetrics) Type() Version { return Version2 }
 
 func (p *PSIMetrics) Apply(ctx context.Context, opts *PluginOptions) error {
+	if _, v := opts.Annotations[kubernetes.WorkspacePressureStallInfoAnnotation]; !v {
+		return nil
+	}
+
 	fullPath := filepath.Join(opts.BasePath, opts.CgroupPath)
 	if _, err := os.Stat(fullPath); err != nil {
 		return err
