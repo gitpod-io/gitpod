@@ -7,31 +7,20 @@ on:
       - "*-rc*"
 
 jobs:
-  get-branch:
-    runs-on: ubuntu-latest
-    steps:
-    - name: checkout source code
-      uses: actions/checkout@v1
-    - name: Get Branch
-      run: |
-        raw=$(git branch -r --contains ${{ github.ref }})
-        branch=${raw/origin\/}
-        echo ::set-env name=BRANCH::$branch
-
   generate-release-note:
-    needs: [get-branch]
     runs-on: ubuntu-latest
     container: eu.gcr.io/gitpod-core-dev/dev/changelog:0.0.36
     steps:
       - uses: actions/checkout@v2
       - run: |
-          export PR_BRANCH=${{ env.BRANCH }}
+          raw=$(git branch -r --contains ${{ github.ref }})
+          export PR_BRANCH=${raw/origin\/}
           git checkout -b $PR_BRANCH
-          /app/changelog release-note -t $TOKEN -o gitpod-io -r gitpod -b $GITHUB_REF
+          echo "testing" > install/installer/docs/release-note.md
           if [[ $(git status --porcelain) ]]; then
             git config --global user.name $GITHUB_USER
             git config --global user.email $GITHUB_EMAIL
-            git add CHANGELOG.md
+            git add install/installer/docs/release-note.md
             git commit -m "[release-note] upload release note"
             git push origin $PR_BRANCH
           fi
@@ -41,14 +30,22 @@ jobs:
           TOKEN: ${{ secrets.ROBOQUAT_AUTOMATIC_CHANGELOG }}
         shell: bash
 
-  tagged-release:
-    name: "Tagged Release"
-    runs-on: "ubuntu-latest"
-    needs: [get-branch, generate-release-note]
-
+  release:
+    needs: [generate-release-note]
+    runs-on: ubuntu-latest
     steps:
-      - uses: "marvinpinto/action-automatic-releases@latest"
-        with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          prerelease: true
-          draft: true
+    - name: Get release note
+      id: vars
+      run: echo ::set-output name=releasenote::$(cat install/installer/docs/release-note.md)
+    - name: Create Draft Release
+      id: create_release
+      uses: actions/create-release@latest
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: <tofill>
+        release_name: <tofill>
+        draft: true
+        prerelease: false
+        body: |
+          ${{ steps.note.outputs.releasenote }}
