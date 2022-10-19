@@ -14,8 +14,4 @@ jobs:
           input: "components/public-api"
           # We compare against the target branch of the Pull Request, normally main
           # Note that we only apply breaking detection to the public-api component.
-<<<<<<< HEAD
           against: "https://github.com/${GITHUB_REPOSITORY}.git#branch=${GITHUB_BASE_REF},subdir=components/public-api"
-=======
-          against: "https://github.com/${GITHUB_REPOSITORY}.git#branch=${GITHUB_BASE_REF},ref=HEAD~1,subdir=components/public-api"
->>>>>>> 7db44b933 ([actions] Buf breaking)
