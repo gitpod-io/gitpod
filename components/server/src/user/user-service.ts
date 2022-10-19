@@ -210,6 +210,14 @@ export class UserService {
                 );
             }
         }
+        if (attribution.kind === "user") {
+            if (user.id !== attribution.userId) {
+                throw new ResponseError(
+                    ErrorCodes.INVALID_COST_CENTER,
+                    "You can select either yourself or a team you are a member of",
+                );
+            }
+        }
         return attribution;
     }
 
