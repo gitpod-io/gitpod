@@ -490,6 +490,10 @@ func main() {
 						Name:     "bucketsize",
 						Required: false,
 					},
+					&cli.BoolFlag{
+						Name:     "enforce",
+						Required: false,
+					},
 				},
 				Action: func(c *cli.Context) error {
 					const drop_stats = "ws-connection-drop-stats"
@@ -500,6 +504,7 @@ func main() {
 					if bucketSize == 0 {
 						bucketSize = 1000
 					}
+					enforce := c.Bool("enforce")
 
 					// nft add table ip gitpod
 					gitpodTable := nftcon.AddTable(&nftables.Table{
@@ -532,6 +537,11 @@ func main() {
 					}
 					if err := nftcon.AddSet(set, nil); err != nil {
 						return err
+					}
+
+					verdict := expr.VerdictAccept
+					if enforce {
+						verdict = expr.VerdictDrop
 					}
 
 					// nft add rule ip gitpod ratelimit ip protocol tcp ct state new meter ws-connections
@@ -613,7 +623,7 @@ func main() {
 							},
 							// drop
 							&expr.Verdict{
-								Kind: expr.VerdictAccept,
+								Kind: verdict,
 							},
 						},
 					})

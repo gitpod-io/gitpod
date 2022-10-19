@@ -13,7 +13,6 @@ export const USER_ID_ATTRIBUTE = "user_id";
 export const PROJECT_ID_ATTRIBUTE = "project_id";
 export const TEAM_ID_ATTRIBUTE = "team_id";
 export const TEAM_NAME_ATTRIBUTE = "team_name";
-export const TEAM_NAMES_ATTRIBUTE = "team_names";
 export const BILLING_TIER_ATTRIBUTE = "billing_tier";
 
 export class ConfigCatClient implements Client {

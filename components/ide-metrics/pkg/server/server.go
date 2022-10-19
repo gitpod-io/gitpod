@@ -16,6 +16,7 @@ import (
 	api "github.com/gitpod-io/gitpod/ide-metrics-api"
 	"github.com/gitpod-io/gitpod/ide-metrics-api/config"
 	"github.com/gitpod-io/gitpod/ide-metrics/pkg/errorreporter"
+	"github.com/gitpod-io/gitpod/ide-metrics/pkg/metrics"
 	"github.com/gorilla/websocket"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -24,15 +25,20 @@ import (
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 )
 
 type IDEMetricsServer struct {
 	config *config.ServiceConfiguration
 
-	registry      prometheus.Registerer
-	counterMap    map[string]*allowListCollector
-	histogramMap  map[string]*allowListCollector
+	registry                 prometheus.Registerer
+	counterMap               map[string]*allowListCollector
+	histogramMap             map[string]*allowListCollector
+	aggregatedHistogramMap   map[string]*allowListCollector
+	reportedUnexpectedMetric map[string]struct{}
+
 	errorReporter errorreporter.ErrorReporter
 
 	api.UnimplementedMetricsServiceServer
@@ -43,32 +49,52 @@ type allowListCollector struct {
 	Labels                  []string
 	AllowLabelValues        map[string][]string
 	AllowLabelDefaultValues map[string]string
+
+	reportedUnexpected map[string]struct{}
 }
 
 const UnknownValue = "unknown"
 
-func (c *allowListCollector) Reconcile(labels map[string]string) map[string]string {
+func (c *allowListCollector) Reconcile(metricName string, labels map[string]string) map[string]string {
 	reconcile := make(map[string]string)
 
 	for label, value := range labels {
 		allowValues, ok := c.AllowLabelValues[label]
 		if !ok {
+			key := metricName + ":" + label
+			_, reported := c.reportedUnexpected[key]
+			if !reported {
+				c.reportedUnexpected[key] = struct{}{}
+				log.WithField("metricName", metricName).
+					WithField("label", label).
+					Error("metrics: unexpected label name")
+			}
 			continue
 		}
 		found := false
 		for _, v := range allowValues {
-			if v == value {
+			if v == value || v == "*" {
 				found = true
-				reconcile[label] = v
+				reconcile[label] = value
 				break
 			}
 		}
-		if !found {
-			if defaultValue, ok := c.AllowLabelDefaultValues[label]; ok {
-				reconcile[label] = defaultValue
-			} else {
-				reconcile[label] = UnknownValue
-			}
+		if found {
+			continue
+		}
+		key := metricName + ":" + label + ":" + value
+		_, reported := c.reportedUnexpected[key]
+		if !reported {
+			c.reportedUnexpected[key] = struct{}{}
+			log.WithField("metricName", metricName).
+				WithField("label", label).
+				WithField("value", value).
+				Error("metrics: unexpected label value")
+		}
+		if defaultValue, ok := c.AllowLabelDefaultValues[label]; ok {
+			reconcile[label] = defaultValue
+		} else {
+			reconcile[label] = UnknownValue
 		}
 	}
 	if len(reconcile) == len(c.Labels) {
@@ -100,15 +126,30 @@ func newAllowListCollector(allowList []config.LabelAllowList) *allowListCollecto
 		Labels:                  labels,
 		AllowLabelValues:        allowLabelValues,
 		AllowLabelDefaultValues: allowLabelDefaultValues,
+		reportedUnexpected:      make(map[string]struct{}),
 	}
 }
 
-func (s *IDEMetricsServer) AddCounter(ctx context.Context, req *api.AddCounterRequest) (*api.AddCounterResponse, error) {
-	c, ok := s.counterMap[req.Name]
-	if !ok {
-		return nil, errors.New("metric not found")
+func (s *IDEMetricsServer) findMetric(lookup map[string]*allowListCollector, metricName string) (*allowListCollector, error) {
+	c, ok := lookup[metricName]
+	if ok {
+		return c, nil
 	}
-	newLabels := c.Reconcile(req.Labels)
+
+	_, reported := s.reportedUnexpectedMetric[metricName]
+	if !reported {
+		s.reportedUnexpectedMetric[metricName] = struct{}{}
+		log.WithField("metricName", metricName).Error("metrics: unexpected metric name")
+	}
+	return nil, status.Error(codes.NotFound, "metric not found")
+}
+
+func (s *IDEMetricsServer) AddCounter(ctx context.Context, req *api.AddCounterRequest) (*api.AddCounterResponse, error) {
+	c, err := s.findMetric(s.counterMap, req.Name)
+	if err != nil {
+		return nil, err
+	}
+	newLabels := c.Reconcile(req.Name, req.Labels)
 	counterVec := c.Collector.(*prometheus.CounterVec)
 	counter, err := counterVec.GetMetricWith(newLabels)
 	if err != nil {
@@ -121,12 +162,13 @@ func (s *IDEMetricsServer) AddCounter(ctx context.Context, req *api.AddCounterRe
 	}
 	return &api.AddCounterResponse{}, nil
 }
+
 func (s *IDEMetricsServer) ObserveHistogram(ctx context.Context, req *api.ObserveHistogramRequest) (*api.ObserveHistogramResponse, error) {
-	c, ok := s.histogramMap[req.Name]
-	if !ok {
-		return nil, errors.New("metric not found")
+	c, err := s.findMetric(s.histogramMap, req.Name)
+	if err != nil {
+		return nil, err
 	}
-	newLabels := c.Reconcile(req.Labels)
+	newLabels := c.Reconcile(req.Name, req.Labels)
 	histogramVec := c.Collector.(*prometheus.HistogramVec)
 	histogram, err := histogramVec.GetMetricWith(newLabels)
 	if err != nil {
@@ -135,6 +177,29 @@ func (s *IDEMetricsServer) ObserveHistogram(ctx context.Context, req *api.Observ
 	histogram.Observe(req.Value)
 	return &api.ObserveHistogramResponse{}, nil
 }
+
+func (s *IDEMetricsServer) AddHistogram(ctx context.Context, req *api.AddHistogramRequest) (*api.AddHistogramResponse, error) {
+	c, err := s.findMetric(s.aggregatedHistogramMap, req.Name)
+	if err != nil {
+		return nil, err
+	}
+	count := req.GetCount()
+	if count <= 0 {
+		return &api.AddHistogramResponse{}, nil
+	}
+	aggregatedHistograms := c.Collector.(*metrics.AggregatedHistograms)
+	newLabels := c.Reconcile(req.Name, req.Labels)
+	var labelValues []string
+	for _, label := range aggregatedHistograms.Labels {
+		labelValues = append(labelValues, newLabels[label])
+	}
+	err = aggregatedHistograms.Add(labelValues, count, req.GetSum(), req.GetBuckets())
+	if err != nil {
+		return nil, err
+	}
+	return &api.AddHistogramResponse{}, nil
+}
+
 func (s *IDEMetricsServer) ReportError(ctx context.Context, req *api.ReportErrorRequest) (*api.ReportErrorResponse, error) {
 	if req.Component == "" || req.ErrorStack == "" {
 		return nil, errors.New("request invalid")
@@ -165,7 +230,7 @@ func (s *IDEMetricsServer) ReportError(ctx context.Context, req *api.ReportError
 	return &api.ReportErrorResponse{}, nil
 }
 
-func (s *IDEMetricsServer) registryCounterMetrics() {
+func (s *IDEMetricsServer) registerCounterMetrics() {
 	for _, m := range s.config.Server.CounterMetrics {
 		if _, ok := s.counterMap[m.Name]; ok {
 			continue
@@ -179,12 +244,12 @@ func (s *IDEMetricsServer) registryCounterMetrics() {
 		s.counterMap[m.Name] = c
 		err := s.registry.Register(counterVec)
 		if err != nil {
-			log.WithError(err).WithField("name", m.Name).Warn("registry metrics failed")
+			log.WithError(err).WithField("name", m.Name).Warn("counter: failed to register metric")
 		}
 	}
 }
 
-func (s *IDEMetricsServer) registryHistogramMetrics() {
+func (s *IDEMetricsServer) registerHistogramMetrics() {
 	for _, m := range s.config.Server.HistogramMetrics {
 		if _, ok := s.histogramMap[m.Name]; ok {
 			continue
@@ -199,14 +264,31 @@ func (s *IDEMetricsServer) registryHistogramMetrics() {
 		s.histogramMap[m.Name] = c
 		err := s.registry.Register(histogramVec)
 		if err != nil {
-			log.WithError(err).WithField("name", m.Name).Warn("registry metrics failed")
+			log.WithError(err).WithField("name", m.Name).Warn("histogram: failed to register metric")
+		}
+	}
+}
+
+func (s *IDEMetricsServer) registerAggregatedHistogramMetrics() {
+	for _, m := range s.config.Server.AggregatedHistogramMetrics {
+		if _, ok := s.aggregatedHistogramMap[m.Name]; ok {
+			continue
+		}
+		c := newAllowListCollector(m.Labels)
+		aggregatedHistograms := metrics.NewAggregatedHistograms(m.Name, m.Help, c.Labels, m.Buckets)
+		c.Collector = aggregatedHistograms
+		s.aggregatedHistogramMap[m.Name] = c
+		err := s.registry.Register(aggregatedHistograms)
+		if err != nil {
+			log.WithError(err).WithField("name", m.Name).Warn("aggregated histogram: failed to register metric")
 		}
 	}
 }
 
 func (s *IDEMetricsServer) prepareMetrics() {
-	s.registryCounterMetrics()
-	s.registryHistogramMetrics()
+	s.registerCounterMetrics()
+	s.registerHistogramMetrics()
+	s.registerAggregatedHistogramMetrics()
 }
 
 func (s *IDEMetricsServer) register(grpcServer *grpc.Server) {
@@ -222,11 +304,13 @@ func (s *IDEMetricsServer) ReloadConfig(cfg *config.ServiceConfiguration) {
 func NewMetricsServer(cfg *config.ServiceConfiguration, reg prometheus.Registerer) *IDEMetricsServer {
 	r := errorreporter.NewFromEnvironment()
 	s := &IDEMetricsServer{
-		registry:      reg,
-		config:        cfg,
-		counterMap:    make(map[string]*allowListCollector),
-		histogramMap:  make(map[string]*allowListCollector),
-		errorReporter: r,
+		registry:                 reg,
+		config:                   cfg,
+		counterMap:               make(map[string]*allowListCollector),
+		histogramMap:             make(map[string]*allowListCollector),
+		aggregatedHistogramMap:   make(map[string]*allowListCollector),
+		reportedUnexpectedMetric: make(map[string]struct{}),
+		errorReporter:            r,
 	}
 	s.prepareMetrics()
 	return s

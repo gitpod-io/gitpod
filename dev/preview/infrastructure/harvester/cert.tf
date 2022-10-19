@@ -20,7 +20,7 @@ resource "kubernetes_manifest" "cert" {
       ]
       issuerRef = {
         kind = "ClusterIssuer"
-        name = "letsencrypt-issuer-gitpod-core-dev"
+        name = "zerossl-issuer-gitpod-core-dev"
       }
       renewBefore = "24h0m0s"
       secretName  = "harvester-${var.preview_name}"

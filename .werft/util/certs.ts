@@ -1,4 +1,4 @@
-import { exec, ExecOptions } from "./shell";
+import {exec, ExecOptions, execStream} from "./shell";
 import {CORE_DEV_KUBECONFIG_PATH, GCLOUD_SERVICE_ACCOUNT_PATH, HARVESTER_KUBECONFIG_PATH} from "../jobs/build/const";
 import { Werft } from "./werft";
 import { reportCertificateError } from "../util/slack";
@@ -43,7 +43,7 @@ export async function certReady(werft: Werft, config: JobConfig, slice: string):
         }
 
         werft.log(slice, `Creating cert: Attempt ${i}`);
-        exec(`${commonVars} \
+        await execStream(`${commonVars} \
                         TF_CLI_ARGS_plan="-replace=kubernetes_manifest.cert" \
                         ./dev/preview/workflow/preview/deploy-harvester.sh`,
             {slice: slice})
@@ -58,7 +58,7 @@ export async function certReady(werft: Werft, config: JobConfig, slice: string):
 }
 
 function waitCertReady(certName: string): boolean {
-    const timeout = "180s"
+    const timeout = "240s"
     const rc = exec(
         `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} wait --for=condition=Ready --timeout=${timeout} -n certs certificate ${certName}`,
         { dontCheckRc: true },
@@ -81,9 +81,7 @@ function retrieveFailedCertDebug(certName: string, slice: string) {
         { silent: true },
     ).stdout.trim();
     const certificateDebug = exec(`KUBECONFIG=${CORE_DEV_KUBECONFIG_PATH} cmctl status certificate ${certName} -n certs`);
-    exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n certs delete certificate ${certName}`, {
-        slice: slice,
-    });
+
     reportCertificateError({ certificateName: certName, certifiateYAML: certificateYAML, certificateDebug: certificateDebug }).catch((error: Error) =>
         console.error("Failed to send message to Slack", error),
     );

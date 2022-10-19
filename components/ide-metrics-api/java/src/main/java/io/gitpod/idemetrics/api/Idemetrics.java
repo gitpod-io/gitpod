@@ -2790,6 +2790,1658 @@ java.lang.String defaultValue);
 
   }
 
+  public interface AddHistogramRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:ide_metrics_api.AddHistogramRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string name = 1;</code>
+     * @return The name.
+     */
+    java.lang.String getName();
+    /**
+     * <code>string name = 1;</code>
+     * @return The bytes for name.
+     */
+    com.google.protobuf.ByteString
+        getNameBytes();
+
+    /**
+     * <code>map&lt;string, string&gt; labels = 2;</code>
+     */
+    int getLabelsCount();
+    /**
+     * <code>map&lt;string, string&gt; labels = 2;</code>
+     */
+    boolean containsLabels(
+        java.lang.String key);
+    /**
+     * Use {@link #getLabelsMap()} instead.
+     */
+    @java.lang.Deprecated
+    java.util.Map<java.lang.String, java.lang.String>
+    getLabels();
+    /**
+     * <code>map&lt;string, string&gt; labels = 2;</code>
+     */
+    java.util.Map<java.lang.String, java.lang.String>
+    getLabelsMap();
+    /**
+     * <code>map&lt;string, string&gt; labels = 2;</code>
+     */
+
+    /* nullable */
+java.lang.String getLabelsOrDefault(
+        java.lang.String key,
+        /* nullable */
+java.lang.String defaultValue);
+    /**
+     * <code>map&lt;string, string&gt; labels = 2;</code>
+     */
+
+    java.lang.String getLabelsOrThrow(
+        java.lang.String key);
+
+    /**
+     * <code>uint64 count = 3;</code>
+     * @return The count.
+     */
+    long getCount();
+
+    /**
+     * <code>double sum = 4;</code>
+     * @return The sum.
+     */
+    double getSum();
+
+    /**
+     * <code>repeated uint64 buckets = 5;</code>
+     * @return A list containing the buckets.
+     */
+    java.util.List<java.lang.Long> getBucketsList();
+    /**
+     * <code>repeated uint64 buckets = 5;</code>
+     * @return The count of buckets.
+     */
+    int getBucketsCount();
+    /**
+     * <code>repeated uint64 buckets = 5;</code>
+     * @param index The index of the element to return.
+     * @return The buckets at the given index.
+     */
+    long getBuckets(int index);
+  }
+  /**
+   * Protobuf type {@code ide_metrics_api.AddHistogramRequest}
+   */
+  public static final class AddHistogramRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:ide_metrics_api.AddHistogramRequest)
+      AddHistogramRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use AddHistogramRequest.newBuilder() to construct.
+    private AddHistogramRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private AddHistogramRequest() {
+      name_ = "";
+      buckets_ = emptyLongList();
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new AddHistogramRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private AddHistogramRequest(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              name_ = s;
+              break;
+            }
+            case 18: {
+              if (!((mutable_bitField0_ & 0x00000001) != 0)) {
+                labels_ = com.google.protobuf.MapField.newMapField(
+                    LabelsDefaultEntryHolder.defaultEntry);
+                mutable_bitField0_ |= 0x00000001;
+              }
+              com.google.protobuf.MapEntry<java.lang.String, java.lang.String>
+              labels__ = input.readMessage(
+                  LabelsDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
+              labels_.getMutableMap().put(
+                  labels__.getKey(), labels__.getValue());
+              break;
+            }
+            case 24: {
+
+              count_ = input.readUInt64();
+              break;
+            }
+            case 33: {
+
+              sum_ = input.readDouble();
+              break;
+            }
+            case 40: {
+              if (!((mutable_bitField0_ & 0x00000002) != 0)) {
+                buckets_ = newLongList();
+                mutable_bitField0_ |= 0x00000002;
+              }
+              buckets_.addLong(input.readUInt64());
+              break;
+            }
+            case 42: {
+              int length = input.readRawVarint32();
+              int limit = input.pushLimit(length);
+              if (!((mutable_bitField0_ & 0x00000002) != 0) && input.getBytesUntilLimit() > 0) {
+                buckets_ = newLongList();
+                mutable_bitField0_ |= 0x00000002;
+              }
+              while (input.getBytesUntilLimit() > 0) {
+                buckets_.addLong(input.readUInt64());
+              }
+              input.popLimit(limit);
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (com.google.protobuf.UninitializedMessageException e) {
+        throw e.asInvalidProtocolBufferException().setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        if (((mutable_bitField0_ & 0x00000002) != 0)) {
+          buckets_.makeImmutable(); // C
+        }
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.idemetrics.api.Idemetrics.internal_static_ide_metrics_api_AddHistogramRequest_descriptor;
+    }
+
+    @SuppressWarnings({"rawtypes"})
+    @java.lang.Override
+    protected com.google.protobuf.MapField internalGetMapField(
+        int number) {
+      switch (number) {
+        case 2:
+          return internalGetLabels();
+        default:
+          throw new RuntimeException(
+              "Invalid map field number: " + number);
+      }
+    }
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.idemetrics.api.Idemetrics.internal_static_ide_metrics_api_AddHistogramRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest.class, io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest.Builder.class);
+    }
+
+    public static final int NAME_FIELD_NUMBER = 1;
+    private volatile java.lang.Object name_;
+    /**
+     * <code>string name = 1;</code>
+     * @return The name.
+     */
+    @java.lang.Override
+    public java.lang.String getName() {
+      java.lang.Object ref = name_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        name_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string name = 1;</code>
+     * @return The bytes for name.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getNameBytes() {
+      java.lang.Object ref = name_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        name_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int LABELS_FIELD_NUMBER = 2;
+    private static final class LabelsDefaultEntryHolder {
+      static final com.google.protobuf.MapEntry<
+          java.lang.String, java.lang.String> defaultEntry =
+              com.google.protobuf.MapEntry
+              .<java.lang.String, java.lang.String>newDefaultInstance(
+                  io.gitpod.idemetrics.api.Idemetrics.internal_static_ide_metrics_api_AddHistogramRequest_LabelsEntry_descriptor,
+                  com.google.protobuf.WireFormat.FieldType.STRING,
+                  "",
+                  com.google.protobuf.WireFormat.FieldType.STRING,
+                  "");
+    }
+    private com.google.protobuf.MapField<
+        java.lang.String, java.lang.String> labels_;
+    private com.google.protobuf.MapField<java.lang.String, java.lang.String>
+    internalGetLabels() {
+      if (labels_ == null) {
+        return com.google.protobuf.MapField.emptyMapField(
+            LabelsDefaultEntryHolder.defaultEntry);
+      }
+      return labels_;
+    }
+
+    public int getLabelsCount() {
+      return internalGetLabels().getMap().size();
+    }
+    /**
+     * <code>map&lt;string, string&gt; labels = 2;</code>
+     */
+
+    @java.lang.Override
+    public boolean containsLabels(
+        java.lang.String key) {
+      if (key == null) { throw new NullPointerException("map key"); }
+      return internalGetLabels().getMap().containsKey(key);
+    }
+    /**
+     * Use {@link #getLabelsMap()} instead.
+     */
+    @java.lang.Override
+    @java.lang.Deprecated
+    public java.util.Map<java.lang.String, java.lang.String> getLabels() {
+      return getLabelsMap();
+    }
+    /**
+     * <code>map&lt;string, string&gt; labels = 2;</code>
+     */
+    @java.lang.Override
+
+    public java.util.Map<java.lang.String, java.lang.String> getLabelsMap() {
+      return internalGetLabels().getMap();
+    }
+    /**
+     * <code>map&lt;string, string&gt; labels = 2;</code>
+     */
+    @java.lang.Override
+
+    public java.lang.String getLabelsOrDefault(
+        java.lang.String key,
+        java.lang.String defaultValue) {
+      if (key == null) { throw new NullPointerException("map key"); }
+      java.util.Map<java.lang.String, java.lang.String> map =
+          internalGetLabels().getMap();
+      return map.containsKey(key) ? map.get(key) : defaultValue;
+    }
+    /**
+     * <code>map&lt;string, string&gt; labels = 2;</code>
+     */
+    @java.lang.Override
+
+    public java.lang.String getLabelsOrThrow(
+        java.lang.String key) {
+      if (key == null) { throw new NullPointerException("map key"); }
+      java.util.Map<java.lang.String, java.lang.String> map =
+          internalGetLabels().getMap();
+      if (!map.containsKey(key)) {
+        throw new java.lang.IllegalArgumentException();
+      }
+      return map.get(key);
+    }
+
+    public static final int COUNT_FIELD_NUMBER = 3;
+    private long count_;
+    /**
+     * <code>uint64 count = 3;</code>
+     * @return The count.
+     */
+    @java.lang.Override
+    public long getCount() {
+      return count_;
+    }
+
+    public static final int SUM_FIELD_NUMBER = 4;
+    private double sum_;
+    /**
+     * <code>double sum = 4;</code>
+     * @return The sum.
+     */
+    @java.lang.Override
+    public double getSum() {
+      return sum_;
+    }
+
+    public static final int BUCKETS_FIELD_NUMBER = 5;
+    private com.google.protobuf.Internal.LongList buckets_;
+    /**
+     * <code>repeated uint64 buckets = 5;</code>
+     * @return A list containing the buckets.
+     */
+    @java.lang.Override
+    public java.util.List<java.lang.Long>
+        getBucketsList() {
+      return buckets_;
+    }
+    /**
+     * <code>repeated uint64 buckets = 5;</code>
+     * @return The count of buckets.
+     */
+    public int getBucketsCount() {
+      return buckets_.size();
+    }
+    /**
+     * <code>repeated uint64 buckets = 5;</code>
+     * @param index The index of the element to return.
+     * @return The buckets at the given index.
+     */
+    public long getBuckets(int index) {
+      return buckets_.getLong(index);
+    }
+    private int bucketsMemoizedSerializedSize = -1;
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(name_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, name_);
+      }
+      com.google.protobuf.GeneratedMessageV3
+        .serializeStringMapTo(
+          output,
+          internalGetLabels(),
+          LabelsDefaultEntryHolder.defaultEntry,
+          2);
+      if (count_ != 0L) {
+        output.writeUInt64(3, count_);
+      }
+      if (java.lang.Double.doubleToRawLongBits(sum_) != 0) {
+        output.writeDouble(4, sum_);
+      }
+      if (getBucketsList().size() > 0) {
+        output.writeUInt32NoTag(42);
+        output.writeUInt32NoTag(bucketsMemoizedSerializedSize);
+      }
+      for (int i = 0; i < buckets_.size(); i++) {
+        output.writeUInt64NoTag(buckets_.getLong(i));
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(name_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, name_);
+      }
+      for (java.util.Map.Entry<java.lang.String, java.lang.String> entry
+           : internalGetLabels().getMap().entrySet()) {
+        com.google.protobuf.MapEntry<java.lang.String, java.lang.String>
+        labels__ = LabelsDefaultEntryHolder.defaultEntry.newBuilderForType()
+            .setKey(entry.getKey())
+            .setValue(entry.getValue())
+            .build();
+        size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(2, labels__);
+      }
+      if (count_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(3, count_);
+      }
+      if (java.lang.Double.doubleToRawLongBits(sum_) != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeDoubleSize(4, sum_);
+      }
+      {
+        int dataSize = 0;
+        for (int i = 0; i < buckets_.size(); i++) {
+          dataSize += com.google.protobuf.CodedOutputStream
+            .computeUInt64SizeNoTag(buckets_.getLong(i));
+        }
+        size += dataSize;
+        if (!getBucketsList().isEmpty()) {
+          size += 1;
+          size += com.google.protobuf.CodedOutputStream
+              .computeInt32SizeNoTag(dataSize);
+        }
+        bucketsMemoizedSerializedSize = dataSize;
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest)) {
+        return super.equals(obj);
+      }
+      io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest other = (io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest) obj;
+
+      if (!getName()
+          .equals(other.getName())) return false;
+      if (!internalGetLabels().equals(
+          other.internalGetLabels())) return false;
+      if (getCount()
+          != other.getCount()) return false;
+      if (java.lang.Double.doubleToLongBits(getSum())
+          != java.lang.Double.doubleToLongBits(
+              other.getSum())) return false;
+      if (!getBucketsList()
+          .equals(other.getBucketsList())) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + NAME_FIELD_NUMBER;
+      hash = (53 * hash) + getName().hashCode();
+      if (!internalGetLabels().getMap().isEmpty()) {
+        hash = (37 * hash) + LABELS_FIELD_NUMBER;
+        hash = (53 * hash) + internalGetLabels().hashCode();
+      }
+      hash = (37 * hash) + COUNT_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getCount());
+      hash = (37 * hash) + SUM_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          java.lang.Double.doubleToLongBits(getSum()));
+      if (getBucketsCount() > 0) {
+        hash = (37 * hash) + BUCKETS_FIELD_NUMBER;
+        hash = (53 * hash) + getBucketsList().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code ide_metrics_api.AddHistogramRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:ide_metrics_api.AddHistogramRequest)
+        io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.idemetrics.api.Idemetrics.internal_static_ide_metrics_api_AddHistogramRequest_descriptor;
+      }
+
+      @SuppressWarnings({"rawtypes"})
+      protected com.google.protobuf.MapField internalGetMapField(
+          int number) {
+        switch (number) {
+          case 2:
+            return internalGetLabels();
+          default:
+            throw new RuntimeException(
+                "Invalid map field number: " + number);
+        }
+      }
+      @SuppressWarnings({"rawtypes"})
+      protected com.google.protobuf.MapField internalGetMutableMapField(
+          int number) {
+        switch (number) {
+          case 2:
+            return internalGetMutableLabels();
+          default:
+            throw new RuntimeException(
+                "Invalid map field number: " + number);
+        }
+      }
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.idemetrics.api.Idemetrics.internal_static_ide_metrics_api_AddHistogramRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest.class, io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest.Builder.class);
+      }
+
+      // Construct using io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        name_ = "";
+
+        internalGetMutableLabels().clear();
+        count_ = 0L;
+
+        sum_ = 0D;
+
+        buckets_ = emptyLongList();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.idemetrics.api.Idemetrics.internal_static_ide_metrics_api_AddHistogramRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest getDefaultInstanceForType() {
+        return io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest build() {
+        io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest buildPartial() {
+        io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest result = new io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest(this);
+        int from_bitField0_ = bitField0_;
+        result.name_ = name_;
+        result.labels_ = internalGetLabels();
+        result.labels_.makeImmutable();
+        result.count_ = count_;
+        result.sum_ = sum_;
+        if (((bitField0_ & 0x00000002) != 0)) {
+          buckets_.makeImmutable();
+          bitField0_ = (bitField0_ & ~0x00000002);
+        }
+        result.buckets_ = buckets_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest) {
+          return mergeFrom((io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest other) {
+        if (other == io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest.getDefaultInstance()) return this;
+        if (!other.getName().isEmpty()) {
+          name_ = other.name_;
+          onChanged();
+        }
+        internalGetMutableLabels().mergeFrom(
+            other.internalGetLabels());
+        if (other.getCount() != 0L) {
+          setCount(other.getCount());
+        }
+        if (other.getSum() != 0D) {
+          setSum(other.getSum());
+        }
+        if (!other.buckets_.isEmpty()) {
+          if (buckets_.isEmpty()) {
+            buckets_ = other.buckets_;
+            bitField0_ = (bitField0_ & ~0x00000002);
+          } else {
+            ensureBucketsIsMutable();
+            buckets_.addAll(other.buckets_);
+          }
+          onChanged();
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object name_ = "";
+      /**
+       * <code>string name = 1;</code>
+       * @return The name.
+       */
+      public java.lang.String getName() {
+        java.lang.Object ref = name_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          name_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string name = 1;</code>
+       * @return The bytes for name.
+       */
+      public com.google.protobuf.ByteString
+          getNameBytes() {
+        java.lang.Object ref = name_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          name_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string name = 1;</code>
+       * @param value The name to set.
+       * @return This builder for chaining.
+       */
+      public Builder setName(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+
+        name_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string name = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearName() {
+
+        name_ = getDefaultInstance().getName();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string name = 1;</code>
+       * @param value The bytes for name to set.
+       * @return This builder for chaining.
+       */
+      public Builder setNameBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+
+        name_ = value;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.MapField<
+          java.lang.String, java.lang.String> labels_;
+      private com.google.protobuf.MapField<java.lang.String, java.lang.String>
+      internalGetLabels() {
+        if (labels_ == null) {
+          return com.google.protobuf.MapField.emptyMapField(
+              LabelsDefaultEntryHolder.defaultEntry);
+        }
+        return labels_;
+      }
+      private com.google.protobuf.MapField<java.lang.String, java.lang.String>
+      internalGetMutableLabels() {
+        onChanged();;
+        if (labels_ == null) {
+          labels_ = com.google.protobuf.MapField.newMapField(
+              LabelsDefaultEntryHolder.defaultEntry);
+        }
+        if (!labels_.isMutable()) {
+          labels_ = labels_.copy();
+        }
+        return labels_;
+      }
+
+      public int getLabelsCount() {
+        return internalGetLabels().getMap().size();
+      }
+      /**
+       * <code>map&lt;string, string&gt; labels = 2;</code>
+       */
+
+      @java.lang.Override
+      public boolean containsLabels(
+          java.lang.String key) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        return internalGetLabels().getMap().containsKey(key);
+      }
+      /**
+       * Use {@link #getLabelsMap()} instead.
+       */
+      @java.lang.Override
+      @java.lang.Deprecated
+      public java.util.Map<java.lang.String, java.lang.String> getLabels() {
+        return getLabelsMap();
+      }
+      /**
+       * <code>map&lt;string, string&gt; labels = 2;</code>
+       */
+      @java.lang.Override
+
+      public java.util.Map<java.lang.String, java.lang.String> getLabelsMap() {
+        return internalGetLabels().getMap();
+      }
+      /**
+       * <code>map&lt;string, string&gt; labels = 2;</code>
+       */
+      @java.lang.Override
+
+      public java.lang.String getLabelsOrDefault(
+          java.lang.String key,
+          java.lang.String defaultValue) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        java.util.Map<java.lang.String, java.lang.String> map =
+            internalGetLabels().getMap();
+        return map.containsKey(key) ? map.get(key) : defaultValue;
+      }
+      /**
+       * <code>map&lt;string, string&gt; labels = 2;</code>
+       */
+      @java.lang.Override
+
+      public java.lang.String getLabelsOrThrow(
+          java.lang.String key) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        java.util.Map<java.lang.String, java.lang.String> map =
+            internalGetLabels().getMap();
+        if (!map.containsKey(key)) {
+          throw new java.lang.IllegalArgumentException();
+        }
+        return map.get(key);
+      }
+
+      public Builder clearLabels() {
+        internalGetMutableLabels().getMutableMap()
+            .clear();
+        return this;
+      }
+      /**
+       * <code>map&lt;string, string&gt; labels = 2;</code>
+       */
+
+      public Builder removeLabels(
+          java.lang.String key) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        internalGetMutableLabels().getMutableMap()
+            .remove(key);
+        return this;
+      }
+      /**
+       * Use alternate mutation accessors instead.
+       */
+      @java.lang.Deprecated
+      public java.util.Map<java.lang.String, java.lang.String>
+      getMutableLabels() {
+        return internalGetMutableLabels().getMutableMap();
+      }
+      /**
+       * <code>map&lt;string, string&gt; labels = 2;</code>
+       */
+      public Builder putLabels(
+          java.lang.String key,
+          java.lang.String value) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        if (value == null) {
+  throw new NullPointerException("map value");
+}
+
+        internalGetMutableLabels().getMutableMap()
+            .put(key, value);
+        return this;
+      }
+      /**
+       * <code>map&lt;string, string&gt; labels = 2;</code>
+       */
+
+      public Builder putAllLabels(
+          java.util.Map<java.lang.String, java.lang.String> values) {
+        internalGetMutableLabels().getMutableMap()
+            .putAll(values);
+        return this;
+      }
+
+      private long count_ ;
+      /**
+       * <code>uint64 count = 3;</code>
+       * @return The count.
+       */
+      @java.lang.Override
+      public long getCount() {
+        return count_;
+      }
+      /**
+       * <code>uint64 count = 3;</code>
+       * @param value The count to set.
+       * @return This builder for chaining.
+       */
+      public Builder setCount(long value) {
+
+        count_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint64 count = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearCount() {
+
+        count_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private double sum_ ;
+      /**
+       * <code>double sum = 4;</code>
+       * @return The sum.
+       */
+      @java.lang.Override
+      public double getSum() {
+        return sum_;
+      }
+      /**
+       * <code>double sum = 4;</code>
+       * @param value The sum to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSum(double value) {
+
+        sum_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>double sum = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSum() {
+
+        sum_ = 0D;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.Internal.LongList buckets_ = emptyLongList();
+      private void ensureBucketsIsMutable() {
+        if (!((bitField0_ & 0x00000002) != 0)) {
+          buckets_ = mutableCopy(buckets_);
+          bitField0_ |= 0x00000002;
+         }
+      }
+      /**
+       * <code>repeated uint64 buckets = 5;</code>
+       * @return A list containing the buckets.
+       */
+      public java.util.List<java.lang.Long>
+          getBucketsList() {
+        return ((bitField0_ & 0x00000002) != 0) ?
+                 java.util.Collections.unmodifiableList(buckets_) : buckets_;
+      }
+      /**
+       * <code>repeated uint64 buckets = 5;</code>
+       * @return The count of buckets.
+       */
+      public int getBucketsCount() {
+        return buckets_.size();
+      }
+      /**
+       * <code>repeated uint64 buckets = 5;</code>
+       * @param index The index of the element to return.
+       * @return The buckets at the given index.
+       */
+      public long getBuckets(int index) {
+        return buckets_.getLong(index);
+      }
+      /**
+       * <code>repeated uint64 buckets = 5;</code>
+       * @param index The index to set the value at.
+       * @param value The buckets to set.
+       * @return This builder for chaining.
+       */
+      public Builder setBuckets(
+          int index, long value) {
+        ensureBucketsIsMutable();
+        buckets_.setLong(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated uint64 buckets = 5;</code>
+       * @param value The buckets to add.
+       * @return This builder for chaining.
+       */
+      public Builder addBuckets(long value) {
+        ensureBucketsIsMutable();
+        buckets_.addLong(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated uint64 buckets = 5;</code>
+       * @param values The buckets to add.
+       * @return This builder for chaining.
+       */
+      public Builder addAllBuckets(
+          java.lang.Iterable<? extends java.lang.Long> values) {
+        ensureBucketsIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, buckets_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated uint64 buckets = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearBuckets() {
+        buckets_ = emptyLongList();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:ide_metrics_api.AddHistogramRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:ide_metrics_api.AddHistogramRequest)
+    private static final io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest();
+    }
+
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<AddHistogramRequest>
+        PARSER = new com.google.protobuf.AbstractParser<AddHistogramRequest>() {
+      @java.lang.Override
+      public AddHistogramRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new AddHistogramRequest(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<AddHistogramRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<AddHistogramRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.idemetrics.api.Idemetrics.AddHistogramRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface AddHistogramResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:ide_metrics_api.AddHistogramResponse)
+      com.google.protobuf.MessageOrBuilder {
+  }
+  /**
+   * Protobuf type {@code ide_metrics_api.AddHistogramResponse}
+   */
+  public static final class AddHistogramResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:ide_metrics_api.AddHistogramResponse)
+      AddHistogramResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use AddHistogramResponse.newBuilder() to construct.
+    private AddHistogramResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private AddHistogramResponse() {
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new AddHistogramResponse();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private AddHistogramResponse(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (com.google.protobuf.UninitializedMessageException e) {
+        throw e.asInvalidProtocolBufferException().setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.idemetrics.api.Idemetrics.internal_static_ide_metrics_api_AddHistogramResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.idemetrics.api.Idemetrics.internal_static_ide_metrics_api_AddHistogramResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse.class, io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse.Builder.class);
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse)) {
+        return super.equals(obj);
+      }
+      io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse other = (io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse) obj;
+
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code ide_metrics_api.AddHistogramResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:ide_metrics_api.AddHistogramResponse)
+        io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.idemetrics.api.Idemetrics.internal_static_ide_metrics_api_AddHistogramResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.idemetrics.api.Idemetrics.internal_static_ide_metrics_api_AddHistogramResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse.class, io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse.Builder.class);
+      }
+
+      // Construct using io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.idemetrics.api.Idemetrics.internal_static_ide_metrics_api_AddHistogramResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse getDefaultInstanceForType() {
+        return io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse build() {
+        io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse buildPartial() {
+        io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse result = new io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse(this);
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse) {
+          return mergeFrom((io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse other) {
+        if (other == io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse.getDefaultInstance()) return this;
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:ide_metrics_api.AddHistogramResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:ide_metrics_api.AddHistogramResponse)
+    private static final io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse();
+    }
+
+    public static io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<AddHistogramResponse>
+        PARSER = new com.google.protobuf.AbstractParser<AddHistogramResponse>() {
+      @java.lang.Override
+      public AddHistogramResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new AddHistogramResponse(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<AddHistogramResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<AddHistogramResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.idemetrics.api.Idemetrics.AddHistogramResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   public interface ReportErrorRequestOrBuilder extends
       // @@protoc_insertion_point(interface_extends:ide_metrics_api.ReportErrorRequest)
       com.google.protobuf.MessageOrBuilder {
@@ -4886,6 +6538,21 @@ java.lang.String defaultValue);
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_ide_metrics_api_ObserveHistogramResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_ide_metrics_api_AddHistogramRequest_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_ide_metrics_api_AddHistogramRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_ide_metrics_api_AddHistogramRequest_LabelsEntry_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_ide_metrics_api_AddHistogramRequest_LabelsEntry_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_ide_metrics_api_AddHistogramResponse_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_ide_metrics_api_AddHistogramResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_ide_metrics_api_ReportErrorRequest_descriptor;
   private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -4920,26 +6587,35 @@ java.lang.String defaultValue);
       "s_api.ObserveHistogramRequest.LabelsEntr" +
       "y\022\r\n\005value\030\003 \001(\001\032-\n\013LabelsEntry\022\013\n\003key\030\001" +
       " \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"\032\n\030ObserveHistog" +
-      "ramResponse\"\205\002\n\022ReportErrorRequest\022\023\n\013er" +
-      "ror_stack\030\001 \001(\t\022\021\n\tcomponent\030\002 \001(\t\022\017\n\007ve" +
-      "rsion\030\003 \001(\t\022\017\n\007user_id\030\004 \001(\t\022\024\n\014workspac" +
-      "e_id\030\005 \001(\t\022\023\n\013instance_id\030\006 \001(\t\022G\n\nprope" +
-      "rties\030\007 \003(\01323.ide_metrics_api.ReportErro" +
-      "rRequest.PropertiesEntry\0321\n\017PropertiesEn" +
-      "try\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"\025\n\023R" +
-      "eportErrorResponse2\232\003\n\016MetricsService\022}\n" +
-      "\nAddCounter\022\".ide_metrics_api.AddCounter" +
-      "Request\032#.ide_metrics_api.AddCounterResp" +
-      "onse\"&\202\323\344\223\002 \"\033/metrics/counter/add/{name" +
-      "}:\001*\022\225\001\n\020ObserveHistogram\022(.ide_metrics_" +
-      "api.ObserveHistogramRequest\032).ide_metric" +
-      "s_api.ObserveHistogramResponse\",\202\323\344\223\002&\"!" +
-      "/metrics/histogram/observe/{name}:\001*\022q\n\013" +
-      "reportError\022#.ide_metrics_api.ReportErro" +
-      "rRequest\032$.ide_metrics_api.ReportErrorRe" +
-      "sponse\"\027\202\323\344\223\002\021\"\014/reportError:\001*BG\n\030io.gi" +
-      "tpod.idemetrics.apiZ+github.com/gitpod-i" +
-      "o/gitpod/ide-metrics/apib\006proto3"
+      "ramResponse\"\301\001\n\023AddHistogramRequest\022\014\n\004n" +
+      "ame\030\001 \001(\t\022@\n\006labels\030\002 \003(\01320.ide_metrics_" +
+      "api.AddHistogramRequest.LabelsEntry\022\r\n\005c" +
+      "ount\030\003 \001(\004\022\013\n\003sum\030\004 \001(\001\022\017\n\007buckets\030\005 \003(\004" +
+      "\032-\n\013LabelsEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 " +
+      "\001(\t:\0028\001\"\026\n\024AddHistogramResponse\"\205\002\n\022Repo" +
+      "rtErrorRequest\022\023\n\013error_stack\030\001 \001(\t\022\021\n\tc" +
+      "omponent\030\002 \001(\t\022\017\n\007version\030\003 \001(\t\022\017\n\007user_" +
+      "id\030\004 \001(\t\022\024\n\014workspace_id\030\005 \001(\t\022\023\n\013instan" +
+      "ce_id\030\006 \001(\t\022G\n\nproperties\030\007 \003(\01323.ide_me" +
+      "trics_api.ReportErrorRequest.PropertiesE" +
+      "ntry\0321\n\017PropertiesEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005" +
+      "value\030\002 \001(\t:\0028\001\"\025\n\023ReportErrorResponse2\242" +
+      "\004\n\016MetricsService\022}\n\nAddCounter\022\".ide_me" +
+      "trics_api.AddCounterRequest\032#.ide_metric" +
+      "s_api.AddCounterResponse\"&\202\323\344\223\002 \"\033/metri" +
+      "cs/counter/add/{name}:\001*\022\225\001\n\020ObserveHist" +
+      "ogram\022(.ide_metrics_api.ObserveHistogram" +
+      "Request\032).ide_metrics_api.ObserveHistogr" +
+      "amResponse\",\202\323\344\223\002&\"!/metrics/histogram/o" +
+      "bserve/{name}:\001*\022\205\001\n\014AddHistogram\022$.ide_" +
+      "metrics_api.AddHistogramRequest\032%.ide_me" +
+      "trics_api.AddHistogramResponse\"(\202\323\344\223\002\"\"\035" +
+      "/metrics/histogram/add/{name}:\001*\022q\n\013repo" +
+      "rtError\022#.ide_metrics_api.ReportErrorReq" +
+      "uest\032$.ide_metrics_api.ReportErrorRespon" +
+      "se\"\027\202\323\344\223\002\021\"\014/reportError:\001*BG\n\030io.gitpod" +
+      ".idemetrics.apiZ+github.com/gitpod-io/gi" +
+      "tpod/ide-metrics/apib\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -4982,8 +6658,26 @@ java.lang.String defaultValue);
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ide_metrics_api_ObserveHistogramResponse_descriptor,
         new java.lang.String[] { });
-    internal_static_ide_metrics_api_ReportErrorRequest_descriptor =
+    internal_static_ide_metrics_api_AddHistogramRequest_descriptor =
       getDescriptor().getMessageTypes().get(4);
+    internal_static_ide_metrics_api_AddHistogramRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_ide_metrics_api_AddHistogramRequest_descriptor,
+        new java.lang.String[] { "Name", "Labels", "Count", "Sum", "Buckets", });
+    internal_static_ide_metrics_api_AddHistogramRequest_LabelsEntry_descriptor =
+      internal_static_ide_metrics_api_AddHistogramRequest_descriptor.getNestedTypes().get(0);
+    internal_static_ide_metrics_api_AddHistogramRequest_LabelsEntry_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_ide_metrics_api_AddHistogramRequest_LabelsEntry_descriptor,
+        new java.lang.String[] { "Key", "Value", });
+    internal_static_ide_metrics_api_AddHistogramResponse_descriptor =
+      getDescriptor().getMessageTypes().get(5);
+    internal_static_ide_metrics_api_AddHistogramResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_ide_metrics_api_AddHistogramResponse_descriptor,
+        new java.lang.String[] { });
+    internal_static_ide_metrics_api_ReportErrorRequest_descriptor =
+      getDescriptor().getMessageTypes().get(6);
     internal_static_ide_metrics_api_ReportErrorRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ide_metrics_api_ReportErrorRequest_descriptor,
@@ -4995,7 +6689,7 @@ java.lang.String defaultValue);
         internal_static_ide_metrics_api_ReportErrorRequest_PropertiesEntry_descriptor,
         new java.lang.String[] { "Key", "Value", });
     internal_static_ide_metrics_api_ReportErrorResponse_descriptor =
-      getDescriptor().getMessageTypes().get(5);
+      getDescriptor().getMessageTypes().get(7);
     internal_static_ide_metrics_api_ReportErrorResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ide_metrics_api_ReportErrorResponse_descriptor,

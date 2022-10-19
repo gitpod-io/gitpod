@@ -24,7 +24,19 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
             setTeamsAvailableForAttribution(undefined);
             return;
         }
-        setTeamsAvailableForAttribution(teams.sort((a, b) => (a.name > b.name ? 1 : -1)));
+
+        // Filter teams based on whether they can actually "resolve" any credits thrown at them
+        const teamsWithBilling: Team[] = [];
+        Promise.all(
+            teams.map(async (t) => {
+                const attributionId: string = AttributionId.render({ kind: "team", teamId: t.id });
+                const subscriptionId = await getGitpodService().server.findStripeSubscriptionId(attributionId);
+                if (subscriptionId) {
+                    teamsWithBilling.push(t);
+                }
+            }),
+        ).then(() => setTeamsAvailableForAttribution(teamsWithBilling.sort((a, b) => (a.name > b.name ? 1 : -1))));
+
         const members: Record<string, TeamMemberInfo[]> = {};
         teams.forEach(async (team) => {
             try {

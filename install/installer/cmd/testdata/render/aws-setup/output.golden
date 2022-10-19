@@ -3408,6 +3408,121 @@ data:
         "ratelimits": null,
         "counterMetrics": [
           {
+            "name": "grpc_server_handled_total",
+            "help": "Total number of RPCs completed on the server, regardless of success or failure.",
+            "labels": [
+              {
+                "name": "grpc_method",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "grpc_service",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "grpc_type",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "grpc_code",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              }
+            ]
+          },
+          {
+            "name": "grpc_server_msg_received_total",
+            "help": "Total number of RPC stream messages received on the server.",
+            "labels": [
+              {
+                "name": "grpc_method",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "grpc_service",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "grpc_type",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              }
+            ]
+          },
+          {
+            "name": "grpc_server_msg_sent_total",
+            "help": "Total number of gRPC stream messages sent by the server.",
+            "labels": [
+              {
+                "name": "grpc_method",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "grpc_service",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "grpc_type",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              }
+            ]
+          },
+          {
+            "name": "grpc_server_started_total",
+            "help": "Total number of RPCs started on the server",
+            "labels": [
+              {
+                "name": "grpc_method",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "grpc_service",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "grpc_type",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              }
+            ]
+          },
+          {
             "name": "gitpod_supervisor_frontend_error_total",
             "help": "Total count of supervisor frontend client errors",
             "labels": [
@@ -4044,6 +4159,50 @@ data:
               10,
               15,
               30
+            ]
+          }
+        ],
+        "aggregatedHistogramMetrics": [
+          {
+            "name": "grpc_server_handling_seconds",
+            "help": "Histogram of response latency (seconds) of gRPC that had been application-level handled by the server.",
+            "labels": [
+              {
+                "name": "grpc_method",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "grpc_service",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "grpc_type",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              }
+            ],
+            "buckets": [
+              0.005,
+              0.025,
+              0.05,
+              0.1,
+              0.5,
+              1,
+              2.5,
+              5,
+              30,
+              60,
+              120,
+              240,
+              600
             ]
           }
         ],
@@ -4708,6 +4867,7 @@ data:
         "procLimit": 0,
         "netlimit": {
           "enabled": false,
+          "enforce": false,
           "connectionsPerMinute": 3000,
           "bucketSize": 1000
         },
@@ -4888,7 +5048,8 @@ data:
           "maxScore": 100,
           "score": 50,
           "govern": true,
-          "admissionConstraints": null
+          "admissionConstraints": null,
+          "applicationCluster": "default"
         }
       ],
       "clusterService": {
@@ -6868,7 +7029,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: de8ed99a057f28c772db0287eeb93b12fe89401a2645f94d0b533eb0e5640654
+        gitpod.io/checksum_config: b16f1014837e91b50bf4b9d18e29a1c41adf08d502dee1bcc035987eb0810c5a
         seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
       creationTimestamp: null
       labels:
@@ -7841,7 +8002,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: fdc9ff8f999c3d8a17c1f429e1cc71a26f19d63026c25396685cab9ff8101fcd
+        gitpod.io/checksum_config: 3b484bff26b16b51cc8e2df68b21ecb4a69ce4cd7a98de9fc2b568210918e948
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8660,7 +8821,7 @@ spec:
         - name: SHLVL
           value: "1"
         - name: WSMAN_CFG_MANAGERS
-          value: WwogIHsKICAgICJuYW1lIjogImRlZmF1bHQiLAogICAgInVybCI6ICJkbnM6Ly8vd3MtbWFuYWdlcjo4MDgwIiwKICAgICJ0bHMiOiB7CiAgICAgICJjYSI6ICIvd3MtbWFuYWdlci1jbGllbnQtdGxzLWNlcnRzL2NhLmNydCIsCiAgICAgICJjcnQiOiAiL3dzLW1hbmFnZXItY2xpZW50LXRscy1jZXJ0cy90bHMuY3J0IiwKICAgICAgImtleSI6ICIvd3MtbWFuYWdlci1jbGllbnQtdGxzLWNlcnRzL3Rscy5rZXkiCiAgICB9LAogICAgInN0YXRlIjogImF2YWlsYWJsZSIsCiAgICAibWF4U2NvcmUiOiAxMDAsCiAgICAic2NvcmUiOiA1MCwKICAgICJnb3Zlcm4iOiB0cnVlLAogICAgImFkbWlzc2lvbkNvbnN0cmFpbnRzIjogbnVsbAogIH0KXQ==
+          value: WwogIHsKICAgICJuYW1lIjogImRlZmF1bHQiLAogICAgInVybCI6ICJkbnM6Ly8vd3MtbWFuYWdlcjo4MDgwIiwKICAgICJ0bHMiOiB7CiAgICAgICJjYSI6ICIvd3MtbWFuYWdlci1jbGllbnQtdGxzLWNlcnRzL2NhLmNydCIsCiAgICAgICJjcnQiOiAiL3dzLW1hbmFnZXItY2xpZW50LXRscy1jZXJ0cy90bHMuY3J0IiwKICAgICAgImtleSI6ICIvd3MtbWFuYWdlci1jbGllbnQtdGxzLWNlcnRzL3Rscy5rZXkiCiAgICB9LAogICAgInN0YXRlIjogImF2YWlsYWJsZSIsCiAgICAibWF4U2NvcmUiOiAxMDAsCiAgICAic2NvcmUiOiA1MCwKICAgICJnb3Zlcm4iOiB0cnVlLAogICAgImFkbWlzc2lvbkNvbnN0cmFpbnRzIjogbnVsbCwKICAgICJhcHBsaWNhdGlvbkNsdXN0ZXIiOiAiZGVmYXVsdCIKICB9Cl0=
         image: eu.gcr.io/gitpod-core-dev/build/server:test
         imagePullPolicy: IfNotPresent
         livenessProbe:
@@ -8978,7 +9139,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: eb3706cacfc9d2ff32216e0f3564bf211676885e1511d13147c812cb94000ee0
+        gitpod.io/checksum_config: 1204c7850d31ddc8a1df95ea51055aca1e3df0c7588213e4130b337d5487b5c9
       creationTimestamp: null
       labels:
         app: gitpod

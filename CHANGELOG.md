@@ -1,6 +1,12 @@
 # Change Log
 
 ## October 2022
+- Revert "[preview] Fix broken shortname assignment in preview envs" ([#13964](https://github.com/gitpod-io/gitpod/pull/13964)) - [@jankeromnes](https://github.com/jankeromnes)
+- Provide option to enforce network connection rate limiting ([#13891](https://github.com/gitpod-io/gitpod/pull/13891)) - [@Furisto](https://github.com/Furisto)
+- Implement a 'Use Last Successful Prebuild' workspace creation mode ([#13801](https://github.com/gitpod-io/gitpod/pull/13801)) - [@jankeromnes](https://github.com/jankeromnes)
+- [installer]: remove logging of envvar obj ([#13934](https://github.com/gitpod-io/gitpod/pull/13934)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [prebuild] Add support for opening specific prebuilds ([#13768](https://github.com/gitpod-io/gitpod/pull/13768)) - [@csweichel](https://github.com/csweichel)
+- remove `/#additionalContent/...` ContextParser ([#13841](https://github.com/gitpod-io/gitpod/pull/13841)) - [@geropl](https://github.com/geropl)
 - Fix an issue with a workspace not starting with a self-signed cluster ([#13821](https://github.com/gitpod-io/gitpod/pull/13821)) - [@utam0k](https://github.com/utam0k)
 - VSCode Browser: Fix portsView address open twice in some browsers ([#13844](https://github.com/gitpod-io/gitpod/pull/13844)) - [@mustard-mh](https://github.com/mustard-mh)
 - Fixed the auto-port-forwarding on JetBrains EAP IDEs ([#13747](https://github.com/gitpod-io/gitpod/pull/13747)) - [@felladrin](https://github.com/felladrin)

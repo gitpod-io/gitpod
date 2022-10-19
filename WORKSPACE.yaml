@@ -5,7 +5,6 @@ defaultArgs:
   coreYarnLockBase: ../..
   npmPublishTrigger: "false"
   publishToNPM: true
-  jbMarketplacePublishTrigger: "false"
   publishToJBMarketplace: true
   localAppVersion: unknown
   codeCommit: 239fa626a44652cebf293a994a3330e90e873daa

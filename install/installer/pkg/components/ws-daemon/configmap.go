@@ -50,6 +50,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	var procLimit int64
 	networkLimitConfig := netlimit.Config{
 		Enabled:              false,
+		Enforce:              false,
 		ConnectionsPerMinute: 3000,
 		BucketSize:           1000,
 	}
@@ -74,6 +75,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ioLimitConfig.ReadIOPS = ucfg.Workspace.IOLimits.ReadIOPS
 
 		networkLimitConfig.Enabled = ucfg.Workspace.NetworkLimits.Enabled
+		networkLimitConfig.Enforce = ucfg.Workspace.NetworkLimits.Enforce
 		networkLimitConfig.ConnectionsPerMinute = ucfg.Workspace.NetworkLimits.ConnectionsPerMinute
 		networkLimitConfig.BucketSize = ucfg.Workspace.NetworkLimits.BucketSize
 

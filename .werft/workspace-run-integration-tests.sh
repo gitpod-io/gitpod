@@ -12,6 +12,7 @@ BRANCH="wk-inte-test/"$(date +%Y%m%d%H%M%S)
 FAILURE_COUNT=0
 RUN_COUNT=0 # Prevent multiple cleanup runs
 DO_CLEANUP=0
+REVISION=""
 declare -A FAILURE_TESTS
 declare SIGNAL # used to record signal caught by trap
 
@@ -35,13 +36,13 @@ function cleanup ()
 
     if [ "${RUN_COUNT}" -eq "0" ]; then
         title=":x: *Workspace integration test fail*"
-        title=$title"\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}"
+        title=$title"\n_Repo:_ ${context_repo}\n_Revision:_ ${REVISION}\n_Build:_ ${context_name}"
 
         errs="Failed at preparing the preview environment"
         BODY="{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\":werft: Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"\`\`\`\\n${errs}\\n\`\`\`\"}}]}"
     elif [ "${FAILURE_COUNT}" -ne "0" ]; then
         title=":x: *Workspace integration test fail*"
-        title=$title"\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}"
+        title=$title"\n_Repo:_ ${context_repo}\n_Revision:_ ${REVISION}\n_Build:_ ${context_name}"
 
         errs=""
         for TEST_NAME in ${!FAILURE_TESTS[*]}; do
@@ -53,7 +54,7 @@ function cleanup ()
     else
         title=":white_check_mark: *Workspace integration test pass*"
 
-        title=$title"\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}"
+        title=$title"\n_Repo:_ ${context_repo}\n_Revision:_ ${REVISION}\n_Build:_ ${context_name}"
         BODY="{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\":werft: Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}}]}"
     fi
 
@@ -102,6 +103,8 @@ git remote set-url origin https://oauth2:"${ROBOQUAT_TOKEN}"@github.com/gitpod-i
 gc_integration_branches
 
 werft log phase "build preview environment" "build preview environment"
+
+REVISION=$(git show -s --format="%h" HEAD)
 
 # Create a new branch and asks Werft to create a preview environment for it
 ( \

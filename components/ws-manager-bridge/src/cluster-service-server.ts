@@ -107,6 +107,14 @@ export class ClusterService implements IClusterServiceServer {
                     }
                 }
 
+                const applicationCluster = process.env.GITPOD_INSTALLATION_SHORTNAME;
+                if (applicationCluster === undefined) {
+                    throw new GRPCError(
+                        grpc.status.INTERNAL,
+                        "no GITPOD_INSTALLATION_SHORTNAME environment variable is set on the server",
+                    );
+                }
+
                 // store the ws-manager into the database
                 let perfereability = Preferability.NONE;
                 let govern = false;
@@ -141,6 +149,7 @@ export class ClusterService implements IClusterServiceServer {
                 const newCluster: WorkspaceCluster = {
                     name: req.name,
                     url: req.url,
+                    applicationCluster,
                     state,
                     score,
                     maxScore: 100,
@@ -331,6 +340,7 @@ function convertToGRPC(ws: WorkspaceClusterWoTLS): ClusterStatus {
     clusterStatus.setScore(ws.score);
     clusterStatus.setMaxScore(ws.maxScore);
     clusterStatus.setGoverned(ws.govern);
+    clusterStatus.setApplicationCluster(ws.applicationCluster);
     ws.admissionConstraints?.forEach((c) => {
         const constraint = new GRPCAdmissionConstraint();
         switch (c.type) {

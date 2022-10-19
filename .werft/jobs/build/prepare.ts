@@ -1,4 +1,4 @@
-import { exec } from "../../util/shell";
+import {exec, execStream} from "../../util/shell";
 import { Werft } from "../../util/werft";
 import { CORE_DEV_KUBECONFIG_PATH, GCLOUD_SERVICE_ACCOUNT_PATH, HARVESTER_KUBECONFIG_PATH } from "./const";
 import { JobConfig } from "./job-config";
@@ -82,7 +82,7 @@ async function decideHarvesterVMCreation(werft: Werft, config: JobConfig) {
 
 // createVM only triggers the VM creation.
 // Readiness is not guaranted.
-function createVM(werft: Werft, config: JobConfig) {
+async function createVM(werft: Werft, config: JobConfig) {
     const cpu = config.withLargeVM ? 12 : 6;
     const memory = config.withLargeVM ? 24 : 12;
 
@@ -100,7 +100,7 @@ function createVM(werft: Werft, config: JobConfig) {
     if (config.cleanSlateDeployment) {
         werft.log(prepareSlices.BOOT_VM, "Cleaning previously created VM");
         // -replace=... forces recreation of the resource
-        exec(`${commonVars} \
+        await execStream(`${commonVars} \
                         TF_CLI_ARGS_plan="-replace=harvester_virtualmachine.harvester" \
                         ./dev/preview/workflow/preview/deploy-harvester.sh`,
             {slice: prepareSlices.BOOT_VM}
@@ -110,7 +110,7 @@ function createVM(werft: Werft, config: JobConfig) {
     werft.log(prepareSlices.BOOT_VM, "Creating  VM");
 
     try {
-        exec(`${commonVars} \
+        await execStream(`${commonVars} \
                         ./dev/preview/workflow/preview/deploy-harvester.sh`,
             {slice: prepareSlices.BOOT_VM}
         );

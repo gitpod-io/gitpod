@@ -17,7 +17,7 @@ export interface JobConfig {
     mainBuild: boolean;
     withPreview: boolean;
     publishRelease: boolean;
-    publishToJBMarketplace: string;
+    publishToJBMarketplace: boolean;
     publishToNpm: string;
     publishToKots: boolean;
     retag: string;

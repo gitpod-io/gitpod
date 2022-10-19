@@ -20,11 +20,12 @@ type LabelAllowList struct {
 }
 
 type MetricsServerConfiguration struct {
-	Port             int                             `json:"port"`
-	RateLimits       map[string]grpc.RateLimit       `json:"ratelimits"`
-	CounterMetrics   []CounterMetricsConfiguration   `json:"counterMetrics"`
-	HistogramMetrics []HistogramMetricsConfiguration `json:"histogramMetrics"`
-	ErrorReporting   ErrorReportingConfiguration     `json:"errorReporting"`
+	Port                       int                             `json:"port"`
+	RateLimits                 map[string]grpc.RateLimit       `json:"ratelimits"`
+	CounterMetrics             []CounterMetricsConfiguration   `json:"counterMetrics"`
+	HistogramMetrics           []HistogramMetricsConfiguration `json:"histogramMetrics"`
+	AggregatedHistogramMetrics []HistogramMetricsConfiguration `json:"aggregatedHistogramMetrics"`
+	ErrorReporting             ErrorReportingConfiguration     `json:"errorReporting"`
 }
 
 type CounterMetricsConfiguration struct {

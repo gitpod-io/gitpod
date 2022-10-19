@@ -53,12 +53,13 @@ export function reportBuildFailureInSlack(context, err: Error): Promise<void> {
 
 export function reportCertificateError(options: { certificateName: string; certifiateYAML: string, certificateDebug: string }): Promise<void> {
     const data = JSON.stringify({
+        channel: "C03MWBB5MP1",
         blocks: [
             {
                 type: "section",
                 text: {
                     type: "mrkdwn",
-                    text: `A build failed because the certificate ${options.certificateName} never reached the Ready state. @ask-platform please investigate using our [Debugging certificate issues guide](https://www.notion.so/gitpod/Debugging-certificate-issues-9453d1c8ac914ce7962557b67f7b49b3) :hug:`,
+                    text: `A preview environment's certificate ${options.certificateName} never reached the Ready state. @ask-devx please investigate using our [Debugging certificate issues guide](https://www.notion.so/gitpod/Debugging-certificate-issues-9453d1c8ac914ce7962557b67f7b49b3) :hug:`,
                 },
             },
             {
@@ -80,13 +81,14 @@ export function reportCertificateError(options: { certificateName: string; certi
     return new Promise((resolve, reject) => {
         const req = https.request(
             {
-                hostname: "hooks.slack.com",
-                port: 443,
-                path: process.env.SLACK_NOTIFICATION_PATH.trim(),
+                hostname: "slack.com",
+                path: "api/chat.postMessage",
                 method: "POST",
+                port: 443,
                 headers: {
                     "Content-Type": "application/json",
                     "Content-Length": data.length,
+                    "Authorization": "Bearer " + process.env.DEVX_SLACK_NOTIFICATION_PATH.trim(),
                 },
             },
             () => resolve(),

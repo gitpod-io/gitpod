@@ -22,7 +22,7 @@ pod:
         secretName: gcp-sa-gitpod-dev-deployer
   containers:
     - name: build
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aa-update-img-tf-version.0
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-dev-update-image.8
       workingDir: /workspace
       imagePullPolicy: IfNotPresent
       volumeMounts:

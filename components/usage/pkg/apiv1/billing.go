@@ -16,6 +16,7 @@ import (
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"github.com/google/uuid"
+	stripe_api "github.com/stripe/stripe-go/v72"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
@@ -52,9 +53,7 @@ func (s *BillingService) GetStripeCustomer(ctx context.Context, req *v1.GetStrip
 
 		return &v1.GetStripeCustomerResponse{
 			AttributionId: string(attributionID),
-			Customer: &v1.StripeCustomer{
-				Id: customer.ID,
-			},
+			Customer:      convertStripeCustomer(customer),
 		}, nil
 	case *v1.GetStripeCustomerRequest_StripeCustomerId:
 		customer, err := s.stripeClient.GetCustomer(ctx, identifier.StripeCustomerId)
@@ -69,13 +68,42 @@ func (s *BillingService) GetStripeCustomer(ctx context.Context, req *v1.GetStrip
 
 		return &v1.GetStripeCustomerResponse{
 			AttributionId: string(attributionID),
-			Customer: &v1.StripeCustomer{
-				Id: customer.ID,
-			},
+			Customer:      convertStripeCustomer(customer),
 		}, nil
 	default:
 		return nil, status.Errorf(codes.InvalidArgument, "Unknown identifier")
 	}
+}
+
+func (s *BillingService) CreateStripeCustomer(ctx context.Context, req *v1.CreateStripeCustomerRequest) (*v1.CreateStripeCustomerResponse, error) {
+	attributionID, err := db.ParseAttributionID(req.GetAttributionId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid attribution ID %s", attributionID)
+	}
+	if req.GetCurrency() == "" {
+		return nil, status.Error(codes.InvalidArgument, "Invalid currency specified")
+	}
+	if req.GetEmail() == "" {
+		return nil, status.Error(codes.InvalidArgument, "Invalid email specified")
+	}
+	if req.GetName() == "" {
+		return nil, status.Error(codes.InvalidArgument, "Invalid name specified")
+	}
+
+	customer, err := s.stripeClient.CreateCustomer(ctx, stripe.CreateCustomerParams{
+		AttributuonID: string(attributionID),
+		Currency:      req.GetCurrency(),
+		Email:         req.GetEmail(),
+		Name:          req.GetName(),
+	})
+	if err != nil {
+		log.WithError(err).Errorf("Failed to create stripe customer.")
+		return nil, status.Errorf(codes.Internal, "Failed to create stripe customer")
+	}
+
+	return &v1.CreateStripeCustomerResponse{
+		Customer: convertStripeCustomer(customer),
+	}, nil
 }
 
 func (s *BillingService) ReconcileInvoices(ctx context.Context, in *v1.ReconcileInvoicesRequest) (*v1.ReconcileInvoicesResponse, error) {
@@ -211,4 +239,10 @@ func balancesForStripeCostCenters(ctx context.Context, cm *db.CostCenterManager,
 	}
 
 	return result, nil
+}
+
+func convertStripeCustomer(customer *stripe_api.Customer) *v1.StripeCustomer {
+	return &v1.StripeCustomer{
+		Id: customer.ID,
+	}
 }

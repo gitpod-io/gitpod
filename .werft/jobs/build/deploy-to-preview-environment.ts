@@ -57,7 +57,7 @@ const vmSlices = {
     VM_READINESS: "Waiting for VM readiness",
     START_KUBECTL_PORT_FORWARDS: "Start kubectl port forwards",
     COPY_CERT_MANAGER_RESOURCES: "Copy CertManager resources from core-dev",
-    INSTALL_LETS_ENCRYPT_ISSUER: "Install Lets Encrypt issuer",
+    INSTALL_CERT_ISSUER: "Install Certificate Issuer",
     KUBECONFIG: "Getting kubeconfig",
     WAIT_K3S: "Waiting for k3s",
     WAIT_CERTMANAGER: "Waiting for Cert-Manager",
@@ -145,18 +145,18 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
 
     exec(
         `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} get secret clouddns-dns01-solver-svc-acct -n certmanager -o yaml | sed 's/namespace: certmanager/namespace: cert-manager/g' > clouddns-dns01-solver-svc-acct.yaml`,
-        { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER },
+        { slice: vmSlices.INSTALL_CERT_ISSUER },
     );
     exec(
         `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} get clusterissuer letsencrypt-issuer-gitpod-core-dev -o yaml | sed 's/letsencrypt-issuer-gitpod-core-dev/letsencrypt-issuer/g' > letsencrypt-issuer.yaml`,
-        { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER },
+        { slice: vmSlices.INSTALL_CERT_ISSUER },
     );
     exec(
         `kubectl --kubeconfig ${PREVIEW_K3S_KUBECONFIG_PATH} apply -f clouddns-dns01-solver-svc-acct.yaml -f letsencrypt-issuer.yaml`,
-        { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER, dontCheckRc: true },
+        { slice: vmSlices.INSTALL_CERT_ISSUER, dontCheckRc: true },
     );
     werft.rootSpan.setAttributes({ "preview.issuer_installed_successfully": true });
-    werft.done(vmSlices.INSTALL_LETS_ENCRYPT_ISSUER);
+    werft.done(vmSlices.INSTALL_CERT_ISSUER);
 
     VM.installRookCeph({ kubeconfig: PREVIEW_K3S_KUBECONFIG_PATH });
     werft.rootSpan.setAttributes({ "preview.rook_installed_successfully": true });
