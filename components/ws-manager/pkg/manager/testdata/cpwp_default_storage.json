@@ -2,6 +2,11 @@
     "classes": {
         "gitpodio-pvc": {
             "resourceRequests": {"cpu": "900m"},
+            "prebuildPVCConfig": {
+                "size": "3Gi",
+                "storageClass": "",
+                "snapshotClass": ""
+            },
             "pvcConfig": {
                 "size": "30Gi",
                 "storageClass": "",

@@ -1044,7 +1044,11 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 
 			workspaceClass := m.manager.Config.WorkspaceClasses[wsClassName]
 			if workspaceClass != nil {
-				pvcVolumeSnapshotClassName = workspaceClass.PVC.SnapshotClass
+				if wso.IsWorkspaceHeadless() {
+					pvcVolumeSnapshotClassName = workspaceClass.PrebuildPVC.SnapshotClass
+				} else {
+					pvcVolumeSnapshotClassName = workspaceClass.PVC.SnapshotClass
+				}
 			}
 		}
 	}

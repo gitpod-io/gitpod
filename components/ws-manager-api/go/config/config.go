@@ -120,10 +120,11 @@ type Configuration struct {
 }
 
 type WorkspaceClass struct {
-	Name      string                            `json:"name"`
-	Container ContainerConfiguration            `json:"container"`
-	Templates WorkspacePodTemplateConfiguration `json:"templates"`
-	PVC       PVCConfiguration                  `json:"pvc"`
+	Name        string                            `json:"name"`
+	Container   ContainerConfiguration            `json:"container"`
+	Templates   WorkspacePodTemplateConfiguration `json:"templates"`
+	PrebuildPVC PVCConfiguration                  `json:"prebuildPVC"`
+	PVC         PVCConfiguration                  `json:"pvc"`
 }
 
 // WorkspaceTimeoutConfiguration configures the timeout behaviour of workspaces
