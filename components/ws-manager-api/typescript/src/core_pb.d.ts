@@ -1285,6 +1285,7 @@ export enum WorkspaceFeatureFlag {
     PROTECTED_SECRETS = 8,
     WORKSPACE_CLASS_LIMITING = 9,
     WORKSPACE_CONNECTION_LIMITING = 10,
+    WORKSPACE_PSI = 11,
 }
 
 export enum WorkspaceType {
