@@ -14,7 +14,7 @@ message DoSomethingRequest {
 }
 
 message DoSomethingResponse {
-    Yolo yolo = 1;
+    Yolo yolo2 = 1;
 }
 
 message Yolo {
