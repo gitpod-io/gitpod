@@ -102,6 +102,10 @@ func TestJetBrainsGatewayWorkspace(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
+				err = api.MakeUserUnleashedPlan(username)
+				if err != nil {
+					t.Fatal(err)
+				}
 
 				t.Logf("connecting to server...")
 				server, err := api.GitpodServer(integration.WithGitpodUser(username))
