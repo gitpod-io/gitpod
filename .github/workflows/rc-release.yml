@@ -52,6 +52,11 @@ jobs:
     needs: [generate-release-note]
     runs-on: ubuntu-latest
     steps:
+    - name: "Build Changelog"
+      id: build_changelog
+      uses: mikepenz/release-changelog-builder-action@{latest-release}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Checkout
       uses: actions/checkout@v2
       with:
