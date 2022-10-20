@@ -946,6 +946,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 // This is an old tab with open workspace: drop silently
                 return;
             } else {
+                if (!(e instanceof ResponseError)) {
+                    log.error({ instanceId, userId: user.id }, "Failed to send heartbeat", e);
+                }
+
                 throw e;
             }
         }
