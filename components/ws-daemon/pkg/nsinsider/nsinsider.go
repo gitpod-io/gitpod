@@ -11,7 +11,6 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"golang.org/x/sys/unix"
 )
 
@@ -105,21 +104,8 @@ func Nsinsider(instanceID string, targetPid int, mod func(*exec.Cmd), opts ...ns
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
 	err = cmd.Run()
-	log.FromBuffer(&cmdOut, log.WithFields(log.OWI("", "", instanceID)))
 	if err != nil {
-		out, oErr := cmd.CombinedOutput()
-		if oErr != nil {
-			return fmt.Errorf("run nsinsider (%v) \n%v\n output error: %v",
-				cmd.Args,
-				err,
-				oErr,
-			)
-		}
-		return fmt.Errorf("run nsinsider (%v) failed: %q\n%v",
-			cmd.Args,
-			string(out),
-			err,
-		)
+		return fmt.Errorf("run nsinsider (%v): %w: %s", cmd.Args, err, cmdOut.String())
 	}
 	return nil
 }
