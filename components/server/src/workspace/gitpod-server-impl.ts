@@ -3134,9 +3134,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 this.messageBus.notifyOnSubscriptionUpdate(ctx, attrId).catch();
             }
         } catch (error) {
-            log.error("cannot set usage attribution", error, { userId: user.id, usageAttributionId });
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `cannot set usage attribution`);
+            log.error({ userId: user.id }, "Cannot set usage attribution", error, { usageAttributionId });
+            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `Cannot set usage attribution`);
         }
+    }
+
+    async listAvailableUsageAttributionIds(ctx: TraceContext): Promise<string[]> {
+        const user = this.checkAndBlockUser("listAvailableUsageAttributionIds");
+
+        const attributionIds = await this.userService.listAvailableUsageAttributionIds(user);
+        return attributionIds.map(AttributionId.render);
     }
 
     async getBillingModeForUser(ctx: TraceContextWithSpan): Promise<BillingMode> {
