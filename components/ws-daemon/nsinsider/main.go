@@ -215,7 +215,9 @@ func main() {
 						Userns_fd:   uint64(usernsFD.Fd()),
 					})
 					if err != nil {
-						return xerrors.Errorf("mountsetattr: %w", err)
+						mp, _ := os.ReadFile(filepath.Join(filepath.Dir(userns), "uid_map"))
+						time.Sleep(2 * time.Minute)
+						return xerrors.Errorf("mountsetattr: %w (map: %s)", err, string(mp))
 					}
 
 					err = unix.MoveMount(mappedFD, "", unix.AT_FDCWD, mappedLower, flagMoveMountFEmptyPath)
