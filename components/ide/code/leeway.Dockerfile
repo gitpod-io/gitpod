@@ -20,6 +20,7 @@ FROM gitpod/openvscode-server-linux-build-agent:bionic-x64 as code_builder
 
 ARG CODE_COMMIT
 ARG CODE_QUALITY
+ARG CODE_VERSION
 
 ARG NODE_VERSION=16.16.0
 ARG NVM_DIR="/root/.nvm"
@@ -45,6 +46,10 @@ RUN yarn --frozen-lockfile --network-timeout 180000
 # copy remote dependencies build in dependencies_builder image
 RUN rm -rf remote/node_modules/
 COPY --from=dependencies_builder /gp-code/remote/node_modules/ /gp-code/remote/node_modules/
+
+# check that the provided codeVersion is the correct one for the given codeCommit
+RUN commitVersion=$(cat package.json | jq -r .version) \
+    && if [ "$commitVersion" != "$CODE_VERSION" ]; then echo "Code version mismatch: $commitVersion != $CODE_VERSION"; exit 1; fi
 
 # update product.json
 RUN nameShort=$(jq --raw-output '.nameShort' product.json) && \
@@ -98,3 +103,8 @@ ENV GITPOD_ENV_SET_GP_OPEN_EDITOR="$GITPOD_ENV_SET_EDITOR"
 ENV GITPOD_ENV_SET_GIT_EDITOR="$GITPOD_ENV_SET_EDITOR --wait"
 ENV GITPOD_ENV_SET_GP_PREVIEW_BROWSER="/ide/bin/remote-cli/gitpod-code --preview"
 ENV GITPOD_ENV_SET_GP_EXTERNAL_BROWSER="/ide/bin/remote-cli/gitpod-code --openExternal"
+
+ARG CODE_VERSION
+ARG CODE_COMMIT
+LABEL "io.gitpod.ide.version"=$CODE_VERSION
+LABEL "io.gitpod.ide.commit"=$CODE_COMMIT
