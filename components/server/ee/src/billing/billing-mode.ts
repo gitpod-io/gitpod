@@ -150,28 +150,28 @@ export class BillingModesImpl implements BillingModes {
         // 3. Check team memberships/plans
         // UBB overrides wins if there is _any_. But if there is none, use the existing Chargebee subscription.
         const teamsModes = await Promise.all(teams.map((t) => this.getBillingModeForTeam(t, now)));
-        const hasUbbPaidTeam = teamsModes.some((tm) => tm.mode === "usage-based" && !!tm.paid);
-        const hasCbTeam = teamsModes.some((tm) => tm.mode === "chargebee");
-        const hasCbTeamSeat = cbTeamSubscriptions.length > 0;
-        const hasCbTeamSubscription = cbOwnedTeamSubscriptions.length > 0;
+        const hasUbbPaidTeamMembership = teamsModes.some((tm) => tm.mode === "usage-based" && !!tm.paid);
+        const hasCbPaidTeamMembership = teamsModes.some((tm) => tm.mode === "chargebee" && !!tm.paid);
+        const hasCbPaidTeamSeat = cbTeamSubscriptions.length > 0;
+        const hasCbPaidTeamSubscription = cbOwnedTeamSubscriptions.length > 0;
 
         function usageBased() {
             const result: BillingMode = { mode: "usage-based" };
-            if (hasCbTeam) {
+            if (hasCbPaidTeamMembership) {
                 result.hasChargebeeTeamPlan = true;
             }
-            if (hasCbTeamSeat || hasCbTeamSubscription) {
+            if (hasCbPaidTeamSeat || hasCbPaidTeamSubscription) {
                 result.hasChargebeeTeamSubscription = true;
             }
             return result;
         }
 
-        if (hasUbbPaidTeam || hasUbbPersonal) {
+        if (hasUbbPaidTeamMembership || hasUbbPersonal) {
             // UBB is greedy: once a user has at least a paid team membership, they should benefit from it!
             return usageBased();
         }
-        if (hasCbTeam || hasCbTeamSeat || canUpgradeToUBB) {
-            // TODO(gpl): Q: How to test the free-tier, then? A: Make sure you have no CB seats anymore
+        if (hasCbPaidTeamMembership || hasCbPaidTeamSeat || canUpgradeToUBB) {
+            // TODO(gpl): Q: How to test the free-tier, then? A: Make sure you have no CB paid seats anymore
             // For that we could add a new field here, which lists all seats that are "blocking" you, and display them in the UI somewhere.
             return { mode: "chargebee", canUpgradeToUBB: true }; // UBB is enabled, but no seat nor subscription yet.
         }
