@@ -33,7 +33,8 @@ jobs:
           export LEEWAY_WORKSPACE_ROOT=$(pwd)
           headCommit=$(curl -H 'Accept: application/vnd.github.VERSION.sha' https://api.github.com/repos/gitpod-io/openvscode-server/commits/gp-code/main)
           cd components/ide/code
-          leeway build -Dversion=nightly -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -DcodeCommit=$headCommit -DcodeQuality=insider .:docker
+          codeVersion=$(curl https://raw.githubusercontent.com/gitpod-io/openvscode-server/$headCommit/package.json | jq .version)
+          leeway build -Dversion=nightly -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -DcodeCommit=$headCommit -DcodeVersion=$codeVersion -DcodeQuality=insider .:docker
       - name: Get previous job's status
         id: lastrun
         uses: filiptronicek/get-last-job-status@main
