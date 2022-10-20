@@ -77,16 +77,12 @@ func main() {
 		return
 	}
 
-	time.Sleep(1 * time.Second)
 	start := time.Now()
 
 	err = waitForURLToBeReachable(opts.ProbeURL, opts.Timeout)
 	if err != nil {
 		log.Fatalf("Unexpected error waiting for probe URL: %v", err)
 	}
-
-	// do not set the label immediately
-	time.Sleep(10 * time.Second)
 
 	err = updateLabel(opts.Label, true, nodeName, client)
 	if err != nil {
