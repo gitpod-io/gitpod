@@ -39,7 +39,6 @@ import io.gitpod.gitpodprotocol.api.entities.WorkspaceInstance
 import io.gitpod.jetbrains.icons.GitpodIcons
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
-import org.bouncycastle.pqc.math.linearalgebra.ByteUtils
 import java.net.URL
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -370,6 +369,29 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         }
     }
 
+    /**
+     * Convert a byte array to the corresponding hex string.
+     * Extracted from https://github.com/bcgit/bc-java/blob/bc3b92f1f0e78b82e2584c5fb4b226a13e7f8b3b/core/src/main/java/org/bouncycastle/pqc/math/linearalgebra/ByteUtils.java#L236-L258
+     *
+     * @param input     the byte array to be converted
+     * @param prefix    the prefix to put at the beginning of the hex string
+     * @param separator a separator string
+     * @return the corresponding hex string
+     */
+    @Suppress("SameParameterValue")
+    private fun toHexString(input: ByteArray, prefix: String?, separator: String?): String? {
+        val hexChars = charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f')
+        var result = prefix
+        for (i in input.indices) {
+            result += hexChars[input[i].toInt() ushr 4 and 0x0f]
+            result += hexChars[input[i].toInt() and 0x0f]
+            if (i < input.size - 1) {
+                result += separator
+            }
+        }
+        return result
+    }
+
     private fun acceptHostKey(
         ideUrl: URL,
         hostKeys: List<SSHHostKey>
@@ -392,7 +414,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                 )) {
                     val bytes =
                         digest.digest(Base64.getDecoder().decode(hostKey))
-                    val hostKeyFingerprint = ByteUtils.toHexString(bytes, "", ":")
+                    val hostKeyFingerprint = toHexString(bytes, "", ":")
                     if (hostKeyFingerprint == fingerprint) {
                         matchedFingerprint = true
                         break
