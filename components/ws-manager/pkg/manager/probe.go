@@ -7,12 +7,14 @@ package manager
 import (
 	"context"
 	"crypto/tls"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"k8s.io/apimachinery/pkg/util/json"
 )
 
 // WorkspaceProbeResult marks the result of a workspace probe
@@ -38,7 +40,7 @@ type WorkspaceReadyProbe struct {
 
 // NewWorkspaceReadyProbe creates a new workspace probe
 func NewWorkspaceReadyProbe(workspaceID string, workspaceURL url.URL) WorkspaceReadyProbe {
-	workspaceURL.Path += "/_supervisor/v1/status/ide"
+	workspaceURL.Path += "/_supervisor/v1/status/ide/wait/true"
 	readyURL := workspaceURL.String()
 
 	return WorkspaceReadyProbe{
@@ -70,6 +72,39 @@ func (p *WorkspaceReadyProbe) Run(ctx context.Context) WorkspaceProbeResult {
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	type probeResult struct {
+		Ok bool `json:"ok"`
+	}
+
+	callReadyURL := func(url string) (bool, *probeResult, error) {
+		resp, err := client.Get(p.readyURL)
+		if err != nil {
+			return false, nil, err
+		}
+
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return false, nil, nil
+		}
+
+		rawBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return false, nil, err
+		}
+
+		var result probeResult
+		err = json.Unmarshal(rawBody, &result)
+		if err != nil {
+			return false, nil, err
+		}
+
+		return true, &result, nil
 	}
 
 	for {
@@ -77,7 +112,7 @@ func (p *WorkspaceReadyProbe) Run(ctx context.Context) WorkspaceProbeResult {
 			return WorkspaceProbeStopped
 		}
 
-		resp, err := client.Get(p.readyURL)
+		isOk, result, err := callReadyURL(p.readyURL)
 		if err != nil {
 			urlerr, ok := err.(*url.Error)
 			if !ok || !urlerr.Timeout() {
@@ -89,14 +124,16 @@ func (p *WorkspaceReadyProbe) Run(ctx context.Context) WorkspaceProbeResult {
 			// we've timed out - do not log this as it would spam the logs for no good reason
 			continue
 		}
-		resp.Body.Close()
 
-		if resp.StatusCode == http.StatusOK {
-			break
+		if !isOk {
+			log.WithField("url", p.readyURL).Debug("workspace did not respond to ready probe with OK status")
+			time.Sleep(p.RetryDelay)
+			continue
 		}
 
-		log.WithField("url", p.readyURL).WithField("status", resp.StatusCode).Debug("workspace did not respond to ready probe with OK status")
-		time.Sleep(p.RetryDelay)
+		if result.Ok {
+			break
+		}
 	}
 
 	// workspace is actually ready

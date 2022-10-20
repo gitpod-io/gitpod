@@ -12,9 +12,7 @@ import { User } from "../protocol";
 export const USER_ID_ATTRIBUTE = "user_id";
 export const PROJECT_ID_ATTRIBUTE = "project_id";
 export const TEAM_ID_ATTRIBUTE = "team_id";
-export const TEAM_IDS_ATTRIBUTE = "team_ids";
 export const TEAM_NAME_ATTRIBUTE = "team_name";
-export const TEAM_NAMES_ATTRIBUTE = "team_names";
 export const BILLING_TIER_ATTRIBUTE = "billing_tier";
 
 export class ConfigCatClient implements Client {
@@ -49,10 +47,6 @@ export function attributesToUser(attributes: Attributes): ConfigCatUser {
     }
     if (attributes.teamName) {
         custom[TEAM_NAME_ATTRIBUTE] = attributes.teamName;
-    }
-    if (attributes.teams) {
-        custom[TEAM_NAMES_ATTRIBUTE] = attributes.teams.map((t) => t.name).join(",");
-        custom[TEAM_IDS_ATTRIBUTE] = attributes.teams.map((t) => t.id).join(",");
     }
     if (attributes.billingTier) {
         custom[BILLING_TIER_ATTRIBUTE] = attributes.billingTier;

@@ -5,9 +5,10 @@
 package cmd
 
 import (
-	"github.com/gitpod-io/gitpod/previewctl/pkg/preview"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/gitpod/previewctl/pkg/preview"
 )
 
 func listPreviewsCmd(logger *logrus.Logger) *cobra.Command {

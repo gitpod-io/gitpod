@@ -47,6 +47,7 @@ import {
     TeamMemberRole,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
     PrebuildEvent,
+    OpenPrebuildContext,
 } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import {
@@ -115,6 +116,8 @@ import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billin
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { BillingModes } from "../billing/billing-mode";
 import { UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -160,6 +163,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
 
     @inject(BillingModes) protected readonly billingModes: BillingModes;
+
+    @inject(BillingServiceDefinition.name)
+    protected readonly billingService: BillingServiceClient;
 
     initialize(
         client: GitpodClient | undefined,
@@ -963,9 +969,19 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
             const logCtx: LogContext = { userId: user.id };
             const cloneUrl = context.repository.cloneUrl;
-            const prebuiltWorkspace = await this.workspaceDb
-                .trace(ctx)
-                .findPrebuiltWorkspaceByCommit(cloneUrl, commitSHAs);
+            let prebuiltWorkspace: PrebuiltWorkspace | undefined;
+            if (OpenPrebuildContext.is(context)) {
+                prebuiltWorkspace = await this.workspaceDb.trace(ctx).findPrebuildByID(context.openPrebuildID);
+                if (prebuiltWorkspace?.cloneURL !== cloneUrl) {
+                    // prevent users from opening arbitrary prebuilds this way - they must match the clone URL so that the resource guards are correct.
+                    return;
+                }
+            } else {
+                prebuiltWorkspace = await this.workspaceDb
+                    .trace(ctx)
+                    .findPrebuiltWorkspaceByCommit(cloneUrl, commitSHAs);
+            }
+
             const logPayload = { mode, cloneUrl, commit: commitSHAs, prebuiltWorkspace };
             log.debug(logCtx, "Looking for prebuilt workspace: ", logPayload);
             if (!prebuiltWorkspace) {
@@ -994,7 +1010,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 const makeResult = (instanceID: string): WorkspaceCreationResult => {
                     return <WorkspaceCreationResult>{
                         runningWorkspacePrebuild: {
-                            prebuildID: prebuiltWorkspace.id,
+                            prebuildID: prebuiltWorkspace!.id,
                             workspaceID,
                             instanceID,
                             starting: "queued",
@@ -2093,10 +2109,44 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             }
             await this.ensureStripeApiIsAllowed({ user });
         }
+
+        const billingEmail = User.getPrimaryEmail(user);
+        const billingName = attrId.kind === "team" ? team!.name : User.getName(user);
+
+        const isCreateStripeCustomerOnUsageEnabled = await getExperimentsClientForBackend().getValueAsync(
+            "createStripeCustomersOnUsage",
+            false,
+            {
+                user: user,
+                teamId: team ? team.id : undefined,
+            },
+        );
+        if (isCreateStripeCustomerOnUsageEnabled) {
+            try {
+                try {
+                    // customer already exists, we don't need to create a new one.
+                    await this.billingService.getStripeCustomer({ attributionId });
+                    return;
+                } catch (e) {}
+
+                await this.billingService.createStripeCustomer({
+                    attributionId,
+                    currency,
+                    email: billingEmail,
+                    name: billingName,
+                });
+                return;
+            } catch (error) {
+                log.error(`Failed to create Stripe customer profile for '${attributionId}'`, error);
+                throw new ResponseError(
+                    ErrorCodes.INTERNAL_SERVER_ERROR,
+                    `Failed to create Stripe customer profile for '${attributionId}'`,
+                );
+            }
+        }
+
         try {
             if (!(await this.stripeService.findCustomerByAttributionId(attributionId))) {
-                const billingEmail = User.getPrimaryEmail(user);
-                const billingName = attrId.kind === "team" ? team!.name : User.getName(user);
                 await this.stripeService.createCustomerForAttributionId(
                     attributionId,
                     currency,
@@ -2113,8 +2163,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    protected defaultSpendingLimit = 100;
-    async subscribeToStripe(ctx: TraceContext, attributionId: string, setupIntentId: string): Promise<void> {
+    async subscribeToStripe(
+        ctx: TraceContext,
+        attributionId: string,
+        setupIntentId: string,
+        usageLimit: number,
+    ): Promise<number | undefined> {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
@@ -2139,15 +2193,17 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             await this.stripeService.createSubscriptionForCustomer(customerId, attributionId);
 
             // Creating a cost center for this customer
-            await this.usageService.setCostCenter({
+            const { costCenter } = await this.usageService.setCostCenter({
                 costCenter: {
                     attributionId: attributionId,
-                    spendingLimit: this.defaultSpendingLimit,
+                    spendingLimit: usageLimit,
                     billingStrategy: CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE,
                 },
             });
 
             this.messageBus.notifyOnSubscriptionUpdate(ctx, attrId).catch();
+
+            return costCenter?.spendingLimit;
         } catch (error) {
             log.error(`Failed to subscribe '${attributionId}' to Stripe`, error);
             throw new ResponseError(

@@ -44,11 +44,14 @@ function cordon-node-if-almost-full {
         if [[ "${node}" =~ "builds-static" ]]; then
           echo "Cleaning up static node [${node}]"
           while ! is_node_empty "${node}";do
-            echo "Node is not empty yet. Sleeping for 15 seconds."
+            echo "Node is not empty yet. Sleeping for 15 seconds." | werft log slice "$slice_id"
             sleep 15
           done
 
-          gcloud compute instances delete "${node}" --zone="${zone}" -q
+          kubectl drain "${node}" --delete-emptydir-data --force --ignore-daemonsets=true --grace-period=120 | werft log slice "$slice_id"
+
+          gcloud compute instances delete "${node}" --zone="${zone}" -q | werft log slice "$slice_id"
+          kubectl uncordon "${node}" | werft log slice "$slice_id"
         fi
     else
         echo "${disk_used_pct} is less than the trehold of ${DISK_USED_THRESHOLD}. Skipping node" | werft log slice "$slice_id"

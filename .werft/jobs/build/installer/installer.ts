@@ -274,6 +274,7 @@ EOF`);
         exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.billInstancesAfter "2022-08-11T08:05:32.499Z"`, { slice: slice })
         exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.defaultSpendingLimit.forUsers 500`, { slice: slice })
         exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.defaultSpendingLimit.forTeams 0`, { slice: slice })
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.defaultSpendingLimit.minForUsersOnStripe 1000`, { slice: slice })
         exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.creditsPerMinuteByWorkspaceClass['default'] 0.1666666667`, { slice: slice })
         exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.creditsPerMinuteByWorkspaceClass['gitpodio-internal-xl'] 0.3333333333`, { slice: slice })
     }

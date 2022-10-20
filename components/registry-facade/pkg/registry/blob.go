@@ -171,7 +171,9 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 
-		bh.Metrics.BlobDownloadSpeedHist.Observe(float64(n) / time.Since(t0).Seconds())
+		bh.Metrics.BlobDownloadSpeedHist.WithLabelValues(src.Name()).Observe(float64(n) / time.Since(t0).Seconds())
+		bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name()).Inc()
+		bh.Metrics.BlobDownloadSizeCounter.WithLabelValues(src.Name()).Add(float64(n))
 
 		if dontCache {
 			return nil
@@ -240,10 +242,17 @@ type BlobSource interface {
 	// GetBlob provides access to a blob. If a ReadCloser is returned the receiver is expected to
 	// call close on it eventually.
 	GetBlob(ctx context.Context, details *api.ImageSpec, dgst digest.Digest) (dontCache bool, mediaType string, url string, data io.ReadCloser, err error)
+
+	// Name identifies the blob source in metrics
+	Name() string
 }
 
 type storeBlobSource struct {
 	Store BlobStore
+}
+
+func (sbs storeBlobSource) Name() string {
+	return "blobstore"
 }
 
 func (sbs storeBlobSource) HasBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) bool {
@@ -268,6 +277,10 @@ func (sbs storeBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgs
 type proxyingBlobSource struct {
 	Fetcher remotes.Fetcher
 	Blobs   []ociv1.Descriptor
+}
+
+func (sbs proxyingBlobSource) Name() string {
+	return "proxy"
 }
 
 func (pbs proxyingBlobSource) HasBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) bool {
@@ -304,6 +317,10 @@ type configBlobSource struct {
 	Spec           *api.ImageSpec
 	Manifest       *ociv1.Manifest
 	ConfigModifier ConfigModifier
+}
+
+func (sbs configBlobSource) Name() string {
+	return "config"
 }
 
 func (pbs *configBlobSource) HasBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) bool {
@@ -350,6 +367,10 @@ func (pbs *configBlobSource) getConfig(ctx context.Context) (rawCfg []byte, err 
 
 type ipfsBlobSource struct {
 	source *IPFSBlobCache
+}
+
+func (sbs ipfsBlobSource) Name() string {
+	return "ipfs"
 }
 
 func (sbs ipfsBlobSource) HasBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) bool {

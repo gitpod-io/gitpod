@@ -77,6 +77,7 @@ type WorkspaceConfig struct {
 	} `json:"ioLimits"`
 	NetworkLimits struct {
 		Enabled              bool  `json:"enabled"`
+		Enforce              bool  `json:"enforce"`
 		ConnectionsPerMinute int64 `json:"connectionsPerMinute"`
 		BucketSize           int64 `json:"bucketSize"`
 	} `json:"networkLimits"`

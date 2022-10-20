@@ -1258,21 +1258,6 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         const res = await query.getMany();
         return res.map((r) => r.info);
     }
-
-    async findProbeWorkspaceIDs(limit: number): Promise<string[]> {
-        const repo = await this.getWorkspaceRepo();
-        const results = (await repo.query(
-            `
-                SELECT ws.id AS id
-                FROM d_b_workspace ws
-                WHERE ws.type = 'probe'
-                LIMIT ?;
-            `,
-            [limit],
-        )) as { id: string }[];
-
-        return results.map((r) => r.id);
-    }
 }
 
 @injectable()

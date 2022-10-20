@@ -63,14 +63,23 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	configHash, err := common.ObjectHash(configmap(ctx))
+	if err != nil {
+		return nil, err
+	}
+
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:        Component,
-				Namespace:   ctx.Namespace,
-				Labels:      labels,
-				Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment),
+				Name:      Component,
+				Namespace: ctx.Namespace,
+				Labels:    labels,
+				Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment, func() map[string]string {
+					return map[string]string{
+						common.AnnotationConfigChecksum: configHash,
+					}
+				}),
 			},
 			Spec: appsv1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(Component)},

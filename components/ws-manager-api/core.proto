@@ -314,11 +314,11 @@ message WorkspaceStatus {
 message IDEImage {
     // web_ref is a reference to an OCI image used for serving the web-based IDE
     string web_ref = 1;
-    // desktop_ref is an optional reference to an OCI image used for serving desktop IDEs
+    // DEPRECATED desktop_ref is an optional reference to an OCI image used for serving desktop IDEs
     string desktop_ref = 2;
     // supervisor_ref is a reference to an OCI image used as supervisor
     string supervisor_ref = 3;
-    // desktop_plugin_ref is an optional reference to an OCI image used for serving desktop IDE plugin
+    // DEPRECATED desktop_plugin_ref is an optional reference to an OCI image used for serving desktop IDE plugin
     string desktop_plugin_ref = 4;
 }
 
@@ -351,6 +351,10 @@ message WorkspaceSpec {
 
     // class names the class of this workspace
     string class = 9;
+
+    // ide_image_layers are contains the images needed for the ide to run,
+    // including ide-desktop, desktop-plugin and so on
+    repeated string ide_image_layers = 10;
 }
 
 // PortSpec describes a networking port exposed on a workspace
@@ -567,6 +571,13 @@ message StartWorkspaceSpec {
 
     // ssh_public_keys is user's uploaded ssh public keys
     repeated string ssh_public_keys = 15;
+
+    // sys_envvars are system level environment variables which ought to be available in the workspace
+    repeated EnvironmentVariable sys_envvars = 16;
+
+    // ide_image_layers are contains the images needed for the ide to run,
+    // including ide-desktop, desktop-plugin and so on
+    repeated string ide_image_layers = 17;
 }
 
 // WorkspaceFeatureFlag enable non-standard behaviour in workspaces

@@ -497,7 +497,7 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 			Scopes []string `json:"scopes"`
 		}{
 			Value:  token,
-			Scopes: []string{},
+			Scopes: []string{"user:email", "read:user", "public_repo"},
 		}
 		valueBytes, err := json.Marshal(value)
 		if err != nil {
@@ -531,6 +531,53 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 	}
 
 	return userId, nil
+}
+
+func (c *ComponentAPI) MakeUserUnleashedPlan(username string) error {
+	db, err := c.DB()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	var userId string
+	err = db.QueryRow(`SELECT id FROM d_b_user WHERE name = ?`, username).Scan(&userId)
+	if err != nil {
+		return err
+	}
+
+	var subId string
+	err = db.QueryRow(`SELECT uid FROM d_b_subscription WHERE userId = ? and planId = ?`, username, "professional-eur").Scan(&subId)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return err
+	}
+	if subId != "" {
+		return nil
+	}
+
+	// reset all of this user subscription
+	_, err = db.Exec(`DELETE from d_b_subscription WHERE userId = ?`, userId)
+	if err != nil {
+		return err
+	}
+
+	uid, err := uuid.NewRandom()
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`INSERT INTO d_b_subscription (uid, userId, startDate, amount, planId) VALUES (?, ?, ?, ?, ?)`,
+		uid,
+		userId,
+		"2022-10-19T00:00:00.000Z",
+		11904,
+		"professional-eur",
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *ComponentAPI) createGitpodToken(user string, scopes []string) (tkn string, err error) {

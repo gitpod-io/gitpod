@@ -20,6 +20,13 @@ service BillingService {
   // GetStripeCustomer retrieves a Stripe Customer
   rpc GetStripeCustomer(GetStripeCustomerRequest) returns (GetStripeCustomerResponse) {};
 
+  rpc CreateStripeCustomer(CreateStripeCustomerRequest) returns (CreateStripeCustomerResponse) {};
+
+  rpc CreateStripeSubscription(CreateStripeSubscriptionRequest) returns (CreateStripeSubscriptionResponse) {};
+
+  // GetStripeSubscription without passing in the `status` will return uncancelled subscriptions
+  // Stripe returns a list which may include more than one, but we will throw an error in that case
+  rpc GetStripeSubscription(GetStripeSubscriptionRequest) returns (GetStripeSubscriptionResponse) {};
 }
 
 message ReconcileInvoicesRequest {}
@@ -54,4 +61,40 @@ message GetStripeCustomerResponse {
 
 message StripeCustomer {
   string id = 1;
+}
+
+message CreateStripeCustomerRequest {
+  string attribution_id = 1;
+
+  // name is the customer name
+  string name = 2;
+  string email = 3;
+  string currency = 4;
+}
+
+message CreateStripeCustomerResponse {
+  StripeCustomer customer = 1;
+}
+
+message CreateStripeSubscriptionRequest {
+  string attribution_id = 1;
+  string setup_intent_id = 2;
+  int64 usage_limit = 3;
+}
+
+message CreateStripeSubscriptionResponse {
+  StripeSubscription subscription = 1;
+}
+
+message StripeSubscription {
+  string id = 1;
+}
+
+message GetStripeSubscriptionRequest {
+  string attribution_id = 1;
+  string status = 2;
+}
+
+message GetStripeSubscriptionResponse {
+  string subscription_id = 1;
 }

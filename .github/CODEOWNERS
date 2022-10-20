@@ -63,7 +63,9 @@
 /components/local-app @gitpod-io/engineering-ide
 /components/openvsx-proxy @gitpod-io/engineering-ide
 /components/proxy @gitpod-io/engineering-webapp
-/components/public-api @csweichel @akosyakov @gitpod-io/engineering-webapp
+/components/public-api @csweichel @akosyakov @easyCZ @gitpod-io/engineering-webapp
+# Any team can make changes to the experimental package
+/components/public-api/gitpod/experimental @gitpod-io/engineering-workspace @gitpod-io/engineering-webapp @gitpod-io/engineering-delivery-operations-experience @gitpod-io/engineering-ide
 /components/public-api-server @gitpod-io/engineering-webapp
 /components/registry-facade-api @csweichel @aledbf
 /components/registry-facade @gitpod-io/engineering-workspace
@@ -84,25 +86,25 @@
 /dev/gpctl @gitpod-io/engineering-workspace
 /dev/gpctl/api/ @gitpod-io/engineering-webapp
 /dev/loadgen @gitpod-io/engineering-workspace
-/dev/preview @gitpod-io/platform
+/dev/preview @gitpod-io/devx
 /operations/observability/mixins @gitpod-io/engineering-delivery-operations-experience
 /operations/observability/mixins/IDE @gitpod-io/engineering-ide
 /operations/observability/mixins/meta @gitpod-io/engineering-webapp
 /operations/observability/mixins/workspace @gitpod-io/engineering-workspace
-/operations/observability/mixins/cross-teams @gitpod-io/engineering-workspace @gitpod-io/engineering-webapp @gitpod-io/engineering-ide @gitpod-io/platform @gitpod-io/engineering-delivery-operations-experience
+/operations/observability/mixins/cross-teams @gitpod-io/engineering-workspace @gitpod-io/engineering-webapp @gitpod-io/engineering-ide @gitpod-io/devx @gitpod-io/engineering-delivery-operations-experience
 
 /.werft/observability @gitpod-io/engineering-delivery-operations-experience
 
 /.werft/ide-* @gitpod-io/engineering-ide
-/.werft/platform-* @gitpod-io/platform
+/.werft/platform-* @gitpod-io/devx
 /.werft/webapp-* @gitpod-io/engineering-webapp
 /.werft/workspace-* @gitpod-io/engineering-workspace
 /.werft/self-hosted-* @gitpod-io/engineering-delivery-operations-experience
 /.werft/*installer-tests* @gitpod-io/engineering-delivery-operations-experience
 /.werft/jobs/build/self-hosted-* @gitpod-io/engineering-delivery-operations-experience
 
-/dev/preview/infrastructure/harvester @gitpod-io/platform
-/dev/preview/workflow @gitpod-io/platform
+/dev/preview/infrastructure/harvester @gitpod-io/devx
+/dev/preview/workflow @gitpod-io/devx
 
 #
 # Automation

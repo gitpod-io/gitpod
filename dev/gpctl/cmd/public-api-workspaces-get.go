@@ -6,7 +6,7 @@ package cmd
 
 import (
 	"github.com/gitpod-io/gitpod/common-go/log"
-	v1 "github.com/gitpod-io/gitpod/public-api/v1"
+	v1 "github.com/gitpod-io/gitpod/public-api/experimental/v1"
 	"github.com/spf13/cobra"
 )
 
@@ -34,6 +34,8 @@ var publicApiWorkspacesGetCmd = &cobra.Command{
 		tpl := `ID:	{{ .Result.WorkspaceId }}
 Owner:	{{ .Result.OwnerId }}
 ContextURL:	{{ .Result.Context.ContextUrl }}
+InstanceID:	{{ .Result.Status.Instance.InstanceId }}
+InstanceStatus:	{{ .Result.Status.Instance.Status.Phase }}
 `
 		err = getOutputFormat(tpl, "{..result.workspace_id}").Print(resp)
 		if err != nil {

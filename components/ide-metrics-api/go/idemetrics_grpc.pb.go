@@ -28,6 +28,7 @@ const _ = grpc.SupportPackageIsVersion7
 type MetricsServiceClient interface {
 	AddCounter(ctx context.Context, in *AddCounterRequest, opts ...grpc.CallOption) (*AddCounterResponse, error)
 	ObserveHistogram(ctx context.Context, in *ObserveHistogramRequest, opts ...grpc.CallOption) (*ObserveHistogramResponse, error)
+	AddHistogram(ctx context.Context, in *AddHistogramRequest, opts ...grpc.CallOption) (*AddHistogramResponse, error)
 	ReportError(ctx context.Context, in *ReportErrorRequest, opts ...grpc.CallOption) (*ReportErrorResponse, error)
 }
 
@@ -57,6 +58,15 @@ func (c *metricsServiceClient) ObserveHistogram(ctx context.Context, in *Observe
 	return out, nil
 }
 
+func (c *metricsServiceClient) AddHistogram(ctx context.Context, in *AddHistogramRequest, opts ...grpc.CallOption) (*AddHistogramResponse, error) {
+	out := new(AddHistogramResponse)
+	err := c.cc.Invoke(ctx, "/ide_metrics_api.MetricsService/AddHistogram", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *metricsServiceClient) ReportError(ctx context.Context, in *ReportErrorRequest, opts ...grpc.CallOption) (*ReportErrorResponse, error) {
 	out := new(ReportErrorResponse)
 	err := c.cc.Invoke(ctx, "/ide_metrics_api.MetricsService/reportError", in, out, opts...)
@@ -72,6 +82,7 @@ func (c *metricsServiceClient) ReportError(ctx context.Context, in *ReportErrorR
 type MetricsServiceServer interface {
 	AddCounter(context.Context, *AddCounterRequest) (*AddCounterResponse, error)
 	ObserveHistogram(context.Context, *ObserveHistogramRequest) (*ObserveHistogramResponse, error)
+	AddHistogram(context.Context, *AddHistogramRequest) (*AddHistogramResponse, error)
 	ReportError(context.Context, *ReportErrorRequest) (*ReportErrorResponse, error)
 	mustEmbedUnimplementedMetricsServiceServer()
 }
@@ -85,6 +96,9 @@ func (UnimplementedMetricsServiceServer) AddCounter(context.Context, *AddCounter
 }
 func (UnimplementedMetricsServiceServer) ObserveHistogram(context.Context, *ObserveHistogramRequest) (*ObserveHistogramResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ObserveHistogram not implemented")
+}
+func (UnimplementedMetricsServiceServer) AddHistogram(context.Context, *AddHistogramRequest) (*AddHistogramResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddHistogram not implemented")
 }
 func (UnimplementedMetricsServiceServer) ReportError(context.Context, *ReportErrorRequest) (*ReportErrorResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReportError not implemented")
@@ -138,6 +152,24 @@ func _MetricsService_ObserveHistogram_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MetricsService_AddHistogram_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddHistogramRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetricsServiceServer).AddHistogram(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ide_metrics_api.MetricsService/AddHistogram",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetricsServiceServer).AddHistogram(ctx, req.(*AddHistogramRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _MetricsService_ReportError_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ReportErrorRequest)
 	if err := dec(in); err != nil {
@@ -170,6 +202,10 @@ var MetricsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ObserveHistogram",
 			Handler:    _MetricsService_ObserveHistogram_Handler,
+		},
+		{
+			MethodName: "AddHistogram",
+			Handler:    _MetricsService_AddHistogram_Handler,
 		},
 		{
 			MethodName: "reportError",

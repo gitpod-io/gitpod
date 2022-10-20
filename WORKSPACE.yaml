@@ -5,14 +5,13 @@ defaultArgs:
   coreYarnLockBase: ../..
   npmPublishTrigger: "false"
   publishToNPM: true
-  jbMarketplacePublishTrigger: "false"
   publishToJBMarketplace: true
   localAppVersion: unknown
   codeCommit: 5ec753c054e55c84c730062df06d43b5ba9e70e8
   codeQuality: stable
   noVerifyJBPlugin: false
   intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2022.2.3.tar.gz"
-  golandDownloadUrl: "https://download.jetbrains.com/go/goland-2022.2.3.tar.gz"
+  golandDownloadUrl: "https://download.jetbrains.com/go/goland-2022.2.4.tar.gz"
   pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2022.2.3.tar.gz"
   phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2022.2.3.tar.gz"
   rubymineDownloadUrl: "https://download.jetbrains.com/ruby/RubyMine-2022.2.3.tar.gz"

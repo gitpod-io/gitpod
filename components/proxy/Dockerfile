@@ -2,17 +2,14 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM golang:1.18 as builder
-
-RUN curl -fsSL https://github.com/caddyserver/xcaddy/releases/download/v0.3.0/xcaddy_0.3.0_linux_amd64.tar.gz \
-  | tar -xzv -C /usr/local/bin/ xcaddy
+FROM caddy:2.6.2-builder AS builder
 
 WORKDIR /plugins
 
 COPY plugins /plugins
 
 # build caddy
-RUN xcaddy build v2.5.2 \
+RUN xcaddy build v2.6.2 \
   --output /caddy \
   --with github.com/gitpod-io/gitpod/proxy/plugins/corsorigin=/plugins/corsorigin \
   --with github.com/gitpod-io/gitpod/proxy/plugins/secwebsocketkey=/plugins/secwebsocketkey \
@@ -44,4 +41,4 @@ ARG VERSION
 ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
 ENV GITPOD_BUILD_VERSION=${VERSION}
 
-CMD [ "caddy", "run", "-adapter", "inject-ssh-tunnel" , "-watch", "-config", "/etc/caddy/Caddyfile" ]
+CMD [ "caddy", "run", "--adapter", "inject-ssh-tunnel" , "--watch", "--config", "/etc/caddy/Caddyfile" ]

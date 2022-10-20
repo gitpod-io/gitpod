@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM gitpod/workspace-full:2022-09-25-16-16-41
+FROM gitpod/workspace-full:2022-10-15-02-50-27
 
 ENV TRIGGER_REBUILD 22
 
@@ -244,7 +244,7 @@ RUN curl -fsSLO https://github.com/brancz/gojsontoyaml/releases/download/v${GOJS
 
 # Install Replicated and KOTS
 RUN curl https://raw.githubusercontent.com/replicatedhq/replicated/$(curl -s https://api.github.com/repos/replicatedhq/replicated/releases/latest | jq -r '.name')/install.sh | sudo bash && \
-    curl https://kots.io/install | bash && \
+    curl https://kots.io/install | sudo bash && \
     bash -c "echo . \<\(kubectl kots completion bash\) >> ~/.bashrc"
 
 # Copy our own tools

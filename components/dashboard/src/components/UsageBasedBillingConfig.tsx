@@ -20,6 +20,8 @@ import DropDown from "../components/DropDown";
 import Modal from "../components/Modal";
 import Alert from "./Alert";
 
+const BASE_USAGE_LIMIT_FOR_STRIPE_USERS = 1000;
+
 type PendingStripeSubscription = { pendingSince: number };
 
 interface Props {
@@ -92,7 +94,18 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
             setPendingStripeSubscription(pendingSubscription);
             window.localStorage.setItem(localStorageKey, JSON.stringify(pendingSubscription));
             try {
-                await getGitpodService().server.subscribeToStripe(attributionId, setupIntentId);
+                // Pick a good initial value for the Stripe usage limit (base_limit * team_size)
+                // FIXME: Should we ask the customer to confirm or edit this default limit?
+                let limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS;
+                const attrId = AttributionId.parse(attributionId);
+                if (attrId?.kind === "team") {
+                    const members = await getGitpodService().server.getTeamMembers(attrId.teamId);
+                    limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS * members.length;
+                }
+                const newLimit = await getGitpodService().server.subscribeToStripe(attributionId, setupIntentId, limit);
+                if (newLimit) {
+                    setUsageLimit(newLimit);
+                }
             } catch (error) {
                 console.error("Could not subscribe to Stripe", error);
                 window.localStorage.removeItem(localStorageKey);
@@ -203,13 +216,13 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                 )}
                 {showSpinner && (
                     <div className="flex flex-col mt-4 h-52 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
-                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Balance</div>
+                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Balance Used</div>
                         <Spinner className="m-2 h-5 w-5 animate-spin" />
                     </div>
                 )}
                 {showBalance && (
                     <div className="flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
-                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Balance</div>
+                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Balance Used</div>
                         <div className="mt-1 text-xl font-semibold flex-grow">
                             <span className="text-gray-900 dark:text-gray-100">
                                 {typeof currentUsage === "number" ? Math.round(currentUsage) : "?"}
@@ -234,7 +247,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                             )}
                         </div>
                         <div className="mt-2 flex">
-                            <progress className="h-4 flex-grow rounded-xl" value={currentUsage} max={usageLimit} />
+                            <progress className="h-2 flex-grow rounded-xl" value={currentUsage} max={usageLimit} />
                         </div>
                         <div className="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 -m-4 p-4 mt-4 rounded-b-xl flex">
                             <div className="flex-grow">
@@ -266,7 +279,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                             <Check className="m-0.5 w-5 h-5" />
                             <div className="flex flex-col">
                                 <span>
-                                    36¢ for 10 credits or 1 hour of Standard workspace usage.{" "}
+                                    {currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard workspace usage.{" "}
                                     <a
                                         className="gp-link"
                                         href="https://www.gitpod.io/docs/configure/billing/usage-based-billing"
@@ -317,7 +330,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                 <Check className="m-0.5 w-5 h-5" />
                                 <div className="flex flex-col">
                                     <span className="font-bold">Pay-as-you-go after 1,000 credits</span>
-                                    <span>36¢ for 10 credits or 1 hour of Standard workspace usage.</span>
+                                    <span>{currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard workspace usage.</span>
                                 </div>
                             </div>
                             <div className="mt-5 flex flex-col">
@@ -360,7 +373,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                             <span className="font-bold text-gray-500 dark:text-gray-400">
                                                 Pay-as-you-go after 1,000 credits
                                             </span>
-                                            <span>36¢ for 10 credits or 1 hour of Standard workspace usage.</span>
+                                            <span>{currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard workspace usage.</span>
                                         </div>
                                     </div>
                                 </>
@@ -373,7 +386,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                         <Check className="m-0.5 w-5 h-5 text-orange-500" />
                                         <div className="flex flex-col">
                                             <span>
-                                                36¢ for 10 credits or 1 hour of Standard workspace usage.{" "}
+                                                {currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard workspace usage.{" "}
                                                 <a
                                                     className="gp-link"
                                                     href="https://www.gitpod.io/docs/configure/billing/usage-based-billing"
@@ -399,6 +412,11 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
             )}
             {showUpdateLimitModal && (
                 <UpdateLimitModal
+                    minValue={
+                        AttributionId.parse(attributionId || "")?.kind === "user"
+                            ? BASE_USAGE_LIMIT_FOR_STRIPE_USERS
+                            : 0
+                    }
                     currentValue={usageLimit}
                     onClose={() => setShowUpdateLimitModal(false)}
                     onUpdate={(newLimit) => updateUsageLimit(newLimit)}
@@ -529,50 +547,64 @@ function CreditCardInputForm(props: { attributionId: string }) {
 }
 
 function UpdateLimitModal(props: {
+    minValue?: number;
     currentValue: number | undefined;
     onClose: () => void;
     onUpdate: (newLimit: number) => {};
 }) {
+    const [error, setError] = useState<string>("");
     const [newLimit, setNewLimit] = useState<string | undefined>(
-        props.currentValue ? String(props.currentValue) : undefined,
+        typeof props.currentValue === "number" ? String(props.currentValue) : undefined,
     );
 
-    return (
-        <Modal visible={true} onClose={props.onClose}>
-            <h3 className="flex">Usage Limit</h3>
-            <div className="border-t border-b border-gray-200 dark:border-gray-700 -mx-6 px-6 py-4 flex flex-col">
-                <p className="pb-4 text-gray-500 text-base">Set usage limit in total credits per month.</p>
+    function onSubmit(event: React.FormEvent) {
+        event.preventDefault();
+        if (!newLimit) {
+            setError("Please specify a limit");
+            return;
+        }
+        const n = parseInt(newLimit, 10);
+        if (typeof n !== "number") {
+            setError("Please specify a limit that is a valid number");
+            return;
+        }
+        if (typeof props.minValue === "number" && n < props.minValue) {
+            setError(`Please specify a limit that is >= ${props.minValue}`);
+            return;
+        }
+        props.onUpdate(n);
+    }
 
-                <label className="font-medium">
-                    Credits
-                    <div className="w-full">
-                        <input
-                            type="number"
-                            min={0}
-                            value={newLimit}
-                            className="rounded-md w-full truncate overflow-x-scroll pr-8"
-                            onChange={(e) => setNewLimit(e.target.value)}
-                        />
-                    </div>
-                </label>
-            </div>
-            <div className="flex justify-end mt-6 space-x-2">
-                <button
-                    className="secondary"
-                    onClick={() => {
-                        if (!newLimit) {
-                            return;
-                        }
-                        const n = parseInt(newLimit, 10);
-                        if (typeof n !== "number") {
-                            return;
-                        }
-                        props.onUpdate(n);
-                    }}
-                >
-                    Update
-                </button>
-            </div>
+    return (
+        <Modal visible={true} onClose={props.onClose} onEnter={() => false}>
+            <h3 className="mb-4">Usage Limit</h3>
+            <form onSubmit={onSubmit}>
+                <div className="border-t border-b border-gray-200 dark:border-gray-700 -mx-6 px-6 py-4 flex flex-col">
+                    <p className="pb-4 text-gray-500 text-base">Set usage limit in total credits per month.</p>
+                    {error && (
+                        <Alert type="error" className="-mt-2 mb-2">
+                            {error}
+                        </Alert>
+                    )}
+                    <label className="font-medium">
+                        Credits
+                        <div className="w-full">
+                            <input
+                                type="text"
+                                value={newLimit}
+                                className={`rounded-md w-full truncate overflow-x-scroll pr-8 ${error ? "error" : ""}`}
+                                onChange={(e) => {
+                                    setError("");
+                                    setNewLimit(e.target.value);
+                                }}
+                            />
+                        </div>
+                    </label>
+                </div>
+                <div className="flex justify-end mt-6 space-x-2">
+                    <button className="secondary">Update</button>
+                </div>
+            </form>
         </Modal>
     );
 }

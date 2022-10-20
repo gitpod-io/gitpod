@@ -6,6 +6,7 @@ package apiv1
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"math"
@@ -16,6 +17,7 @@ import (
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"github.com/google/uuid"
+	stripe_api "github.com/stripe/stripe-go/v72"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
@@ -38,6 +40,25 @@ type BillingService struct {
 }
 
 func (s *BillingService) GetStripeCustomer(ctx context.Context, req *v1.GetStripeCustomerRequest) (*v1.GetStripeCustomerResponse, error) {
+
+	storeStripeCustomerAndRespond := func(ctx context.Context, cus *stripe_api.Customer, attributionID db.AttributionID) (*v1.GetStripeCustomerResponse, error) {
+		logger := log.WithField("stripe_customer_id", cus.ID).WithField("attribution_id", attributionID)
+		// Store it in the DB such that subsequent lookups don't need to go to Stripe
+		result, err := s.storeStripeCustomer(ctx, cus, attributionID)
+		if err != nil {
+			logger.WithError(err).Error("Failed to store stripe customer in the database.")
+
+			// Storing failed, but we don't want to block the caller since we do have the data, return it as a success
+			return &v1.GetStripeCustomerResponse{
+				Customer: convertStripeCustomer(cus),
+			}, nil
+		}
+
+		return &v1.GetStripeCustomerResponse{
+			Customer: result,
+		}, nil
+	}
+
 	switch identifier := req.GetIdentifier().(type) {
 	case *v1.GetStripeCustomerRequest_AttributionId:
 		attributionID, err := db.ParseAttributionID(identifier.AttributionId)
@@ -45,37 +66,103 @@ func (s *BillingService) GetStripeCustomer(ctx context.Context, req *v1.GetStrip
 			return nil, status.Errorf(codes.InvalidArgument, "Invalid attribution ID %s", attributionID)
 		}
 
-		customer, err := s.stripeClient.GetCustomerByAttributionID(ctx, string(attributionID))
+		logger := log.WithField("attribution_id", attributionID)
+
+		customer, err := db.GetStripeCustomerByAttributionID(ctx, s.conn, attributionID)
 		if err != nil {
-			return nil, err
+			// We don't yet have it in the DB
+			if errors.Is(err, db.ErrorNotFound) {
+				stripeCustomer, err := s.stripeClient.GetCustomerByAttributionID(ctx, string(attributionID))
+				if err != nil {
+					return nil, err
+				}
+
+				return storeStripeCustomerAndRespond(ctx, stripeCustomer, attributionID)
+			}
+
+			logger.WithError(err).Error("Failed to lookup stripe customer from DB")
 		}
 
 		return &v1.GetStripeCustomerResponse{
-			AttributionId: string(attributionID),
-			Customer: &v1.StripeCustomer{
-				Id: customer.ID,
-			},
+			Customer: convertDBStripeCustomerToResponse(customer),
 		}, nil
+
 	case *v1.GetStripeCustomerRequest_StripeCustomerId:
-		customer, err := s.stripeClient.GetCustomer(ctx, identifier.StripeCustomerId)
-		if err != nil {
-			return nil, err
+		if identifier.StripeCustomerId == "" {
+			return nil, status.Errorf(codes.InvalidArgument, "empty stripe customer ID supplied")
 		}
 
-		attributionID, err := stripe.GetAttributionID(ctx, customer)
+		logger := log.WithField("stripe_customer_id", identifier.StripeCustomerId)
+
+		customer, err := db.GetStripeCustomer(ctx, s.conn, identifier.StripeCustomerId)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "Failed to parse attribution ID from Stripe customer %s", customer.ID)
+			// We don't yet have it in the DB
+			if errors.Is(err, db.ErrorNotFound) {
+				stripeCustomer, err := s.stripeClient.GetCustomer(ctx, identifier.StripeCustomerId)
+				if err != nil {
+					return nil, err
+				}
+
+				attributionID, err := stripe.GetAttributionID(ctx, stripeCustomer)
+				if err != nil {
+					return nil, status.Errorf(codes.Internal, "Failed to parse attribution ID from Stripe customer %s", stripeCustomer.ID)
+				}
+
+				return storeStripeCustomerAndRespond(ctx, stripeCustomer, attributionID)
+			}
+
+			logger.WithError(err).Error("Failed to lookup stripe customer from DB")
 		}
 
 		return &v1.GetStripeCustomerResponse{
-			AttributionId: string(attributionID),
-			Customer: &v1.StripeCustomer{
-				Id: customer.ID,
-			},
+			Customer: convertDBStripeCustomerToResponse(customer),
 		}, nil
+
 	default:
 		return nil, status.Errorf(codes.InvalidArgument, "Unknown identifier")
 	}
+}
+
+func (s *BillingService) CreateStripeCustomer(ctx context.Context, req *v1.CreateStripeCustomerRequest) (*v1.CreateStripeCustomerResponse, error) {
+	attributionID, err := db.ParseAttributionID(req.GetAttributionId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid attribution ID %s", attributionID)
+	}
+	if req.GetCurrency() == "" {
+		return nil, status.Error(codes.InvalidArgument, "Invalid currency specified")
+	}
+	if req.GetEmail() == "" {
+		return nil, status.Error(codes.InvalidArgument, "Invalid email specified")
+	}
+	if req.GetName() == "" {
+		return nil, status.Error(codes.InvalidArgument, "Invalid name specified")
+	}
+
+	customer, err := s.stripeClient.CreateCustomer(ctx, stripe.CreateCustomerParams{
+		AttributuonID: string(attributionID),
+		Currency:      req.GetCurrency(),
+		Email:         req.GetEmail(),
+		Name:          req.GetName(),
+	})
+	if err != nil {
+		log.WithError(err).Errorf("Failed to create stripe customer.")
+		return nil, status.Errorf(codes.Internal, "Failed to create stripe customer")
+	}
+
+	err = db.CreateStripeCustomer(ctx, s.conn, db.StripeCustomer{
+		StripeCustomerID: customer.ID,
+		AttributionID:    attributionID,
+		CreationTime:     db.NewVarcharTime(time.Unix(customer.Created, 0)),
+	})
+	if err != nil {
+		log.WithField("attribution_id", attributionID).WithField("stripe_customer_id", customer.ID).WithError(err).Error("Failed to store Stripe Customer in the database.")
+		// We do not return an error to the caller here, as we did manage to create the stripe customer in Stripe and we can proceed with other flows
+		// The StripeCustomer will be backfilled in the DB on the next GetStripeCustomer call by doing a search.
+	}
+
+	return &v1.CreateStripeCustomerResponse{
+		Customer: convertStripeCustomer(customer),
+	}, nil
 }
 
 func (s *BillingService) ReconcileInvoices(ctx context.Context, in *v1.ReconcileInvoicesRequest) (*v1.ReconcileInvoicesResponse, error) {
@@ -193,6 +280,22 @@ func (s *BillingService) CancelSubscription(ctx context.Context, in *v1.CancelSu
 	return &v1.CancelSubscriptionResponse{}, nil
 }
 
+func (s *BillingService) storeStripeCustomer(ctx context.Context, cus *stripe_api.Customer, attributionID db.AttributionID) (*v1.StripeCustomer, error) {
+	err := db.CreateStripeCustomer(ctx, s.conn, db.StripeCustomer{
+		StripeCustomerID: cus.ID,
+		AttributionID:    attributionID,
+		// We use the original Stripe supplied creation timestamp, this ensures that we stay true to our ordering of customer creation records.
+		CreationTime: db.NewVarcharTime(time.Unix(cus.Created, 0)),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &v1.StripeCustomer{
+		Id: cus.ID,
+	}, nil
+}
+
 func balancesForStripeCostCenters(ctx context.Context, cm *db.CostCenterManager, balances []db.Balance) ([]db.Balance, error) {
 	var result []db.Balance
 	for _, balance := range balances {
@@ -211,4 +314,16 @@ func balancesForStripeCostCenters(ctx context.Context, cm *db.CostCenterManager,
 	}
 
 	return result, nil
+}
+
+func convertStripeCustomer(customer *stripe_api.Customer) *v1.StripeCustomer {
+	return &v1.StripeCustomer{
+		Id: customer.ID,
+	}
+}
+
+func convertDBStripeCustomerToResponse(cus db.StripeCustomer) *v1.StripeCustomer {
+	return &v1.StripeCustomer{
+		Id: cus.StripeCustomerID,
+	}
 }

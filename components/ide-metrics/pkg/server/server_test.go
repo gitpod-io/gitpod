@@ -17,12 +17,14 @@ func Test_allowListCollector_Reconcile(t *testing.T) {
 		Collector: nil,
 		Labels:    []string{"hello", "world"},
 		AllowLabelValues: map[string][]string{
-			"hello": {"awesome", "gitpod"},
-			"world": {"io"},
+			"hello":    {"awesome", "gitpod"},
+			"world":    {"io"},
+			"wildcard": {"*"},
 		},
 		AllowLabelDefaultValues: map[string]string{
 			"hello": "defaultValue",
 		},
+		reportedUnexpected: make(map[string]struct{}),
 	}
 	tests := []struct {
 		name string
@@ -115,10 +117,23 @@ func Test_allowListCollector_Reconcile(t *testing.T) {
 				"world": UnknownValue,
 			},
 		},
+		{
+			name: "Wildcard",
+			args: args{
+				labels: map[string]string{
+					"wildcard": "gitpod",
+				},
+			},
+			want: map[string]string{
+				"hello":    "defaultValue",
+				"world":    UnknownValue,
+				"wildcard": "gitpod",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := c.Reconcile(tt.args.labels); !reflect.DeepEqual(got, tt.want) {
+			if got := c.Reconcile("foo", tt.args.labels); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("allowListCollector.Reconcile() = %v, want %v", got, tt.want)
 			}
 		})

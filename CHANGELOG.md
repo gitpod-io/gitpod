@@ -1,6 +1,23 @@
 # Change Log
 
 ## October 2022
+- [kots]: put the HTTP Proxy settings behind a KOTS config bool ([#13959](https://github.com/gitpod-io/gitpod/pull/13959)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Fixed the "Lean More" button behavior from JetBrains Gateway home screen. ([#13966](https://github.com/gitpod-io/gitpod/pull/13966)) - [@felladrin](https://github.com/felladrin)
+- Revert "Use Last Successful Prebuild" for now ([#13997](https://github.com/gitpod-io/gitpod/pull/13997)) - [@jankeromnes](https://github.com/jankeromnes)
+- Revert "[preview] Fix broken shortname assignment in preview envs" ([#13964](https://github.com/gitpod-io/gitpod/pull/13964)) - [@jankeromnes](https://github.com/jankeromnes)
+- Provide option to enforce network connection rate limiting ([#13891](https://github.com/gitpod-io/gitpod/pull/13891)) - [@Furisto](https://github.com/Furisto)
+- Implement a 'Use Last Successful Prebuild' workspace creation mode ([#13801](https://github.com/gitpod-io/gitpod/pull/13801)) - [@jankeromnes](https://github.com/jankeromnes)
+- [installer]: remove logging of envvar obj ([#13934](https://github.com/gitpod-io/gitpod/pull/13934)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [prebuild] Add support for opening specific prebuilds ([#13768](https://github.com/gitpod-io/gitpod/pull/13768)) - [@csweichel](https://github.com/csweichel)
+- remove `/#additionalContent/...` ContextParser ([#13841](https://github.com/gitpod-io/gitpod/pull/13841)) - [@geropl](https://github.com/geropl)
+- Fix an issue with a workspace not starting with a self-signed cluster ([#13821](https://github.com/gitpod-io/gitpod/pull/13821)) - [@utam0k](https://github.com/utam0k)
+- VSCode Browser: Fix portsView address open twice in some browsers ([#13844](https://github.com/gitpod-io/gitpod/pull/13844)) - [@mustard-mh](https://github.com/mustard-mh)
+- Fixed the auto-port-forwarding on JetBrains EAP IDEs ([#13747](https://github.com/gitpod-io/gitpod/pull/13747)) - [@felladrin](https://github.com/felladrin)
+- Support multi-line environment variables in SSH ([#13822](https://github.com/gitpod-io/gitpod/pull/13822)) - [@iQQBot](https://github.com/iQQBot)
+- VSCode Browser/Desktop: Responsive portsView ([#13838](https://github.com/gitpod-io/gitpod/pull/13838)) - [@mustard-mh](https://github.com/mustard-mh)
+- Update GoLand IDE image to version 222.4345.24. ([#13836](https://github.com/gitpod-io/gitpod/pull/13836)) - [@roboquat](https://github.com/roboquat)
+- [terraform/aks] Separate workloads into different pools, expose terraform variables for max node pool counts ([#13143](https://github.com/gitpod-io/gitpod/pull/13143)) - [@adrienthebo](https://github.com/adrienthebo)
+- Update PyCharm IDE image to version 222.4345.23. ([#13797](https://github.com/gitpod-io/gitpod/pull/13797)) - [@roboquat](https://github.com/roboquat)
 - Update PhpStorm IDE image to version 222.4345.15. ([#13759](https://github.com/gitpod-io/gitpod/pull/13759)) - [@roboquat](https://github.com/roboquat)
 - Update WebStorm IDE image to version 222.4345.14. ([#13757](https://github.com/gitpod-io/gitpod/pull/13757)) - [@roboquat](https://github.com/roboquat)
 - Update RubyMine IDE image to version 222.4345.14. ([#13758](https://github.com/gitpod-io/gitpod/pull/13758)) - [@roboquat](https://github.com/roboquat)

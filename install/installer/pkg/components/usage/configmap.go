@@ -29,8 +29,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		DefaultSpendingLimit: db.DefaultSpendingLimit{
 			// because we only want spending limits in SaaS, if not configured we go with a very high (i.e. no) spending limit
-			ForTeams: 1_000_000_000,
-			ForUsers: 1_000_000_000,
+			ForTeams:            1_000_000_000,
+			ForUsers:            1_000_000_000,
+			MinForUsersOnStripe: 0,
 		},
 	}
 	expConfig := getExperimentalConfig(ctx)

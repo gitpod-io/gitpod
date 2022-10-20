@@ -6,7 +6,7 @@ package cmd
 
 import (
 	"github.com/gitpod-io/gitpod/common-go/log"
-	v1 "github.com/gitpod-io/gitpod/public-api/v1"
+	v1 "github.com/gitpod-io/gitpod/public-api/experimental/v1"
 	"github.com/spf13/cobra"
 )
 
@@ -27,9 +27,9 @@ var publicApiWorkspacesListCmd = &cobra.Command{
 			return
 		}
 
-		tpl := `ID	Owner	ContextURL
+		tpl := `ID	Owner	ContextURL	InstanceID	InstanceStatus
 {{- range .Result }}
-{{ .Result.WorkspaceId }}	{{ .Result.OwnerId }}	{{ .Result.Context.ContextUrl }}
+{{ .WorkspaceId }}	{{ .OwnerId }}	{{ .Context.ContextUrl }}	{{ .Status.Instance.InstanceId}}	{{ .Status.Instance.Status.Phase}}
 {{ end }}
 `
 		err = getOutputFormat(tpl, "{..id}").Print(resp)

@@ -6,9 +6,10 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/gitpod-io/gitpod/previewctl/pkg/preview"
 
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/gitpod/previewctl/pkg/preview"
 )
 
 func getNameCmd() *cobra.Command {

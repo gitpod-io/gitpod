@@ -437,7 +437,7 @@ func buildWorkspaceSecrets(spec *api.StartWorkspaceSpec) (secrets map[string]str
 		if env.Secret != nil {
 			continue
 		}
-		if !isProtectedEnvVar(env.Name) {
+		if !isProtectedEnvVar(env.Name, spec.SysEnvvars) {
 			continue
 		}
 

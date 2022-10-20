@@ -65,6 +65,14 @@ function renderBillingMenuEntries(billingMode?: BillingMode) {
                     title: "Team Plans",
                     link: [settingsPathTeams],
                 },
+                ...(BillingMode.showUsageBasedBilling(billingMode)
+                    ? [
+                          {
+                              title: "Billing",
+                              link: [settingsPathBilling],
+                          },
+                      ]
+                    : []),
             ];
         case "usage-based":
             return [

@@ -77,7 +77,9 @@ func TestJetBrainsGatewayWorkspace(t *testing.T) {
 
 	var featureList []features.Feature
 
-	for ideName, repo := range ideProjectMap {
+	for n, r := range ideProjectMap {
+		ideName := n
+		repo := r
 		f := features.New("Start a workspace using "+ideName).
 			WithLabel("component", "IDE").
 			WithLabel("ide", ideName).
@@ -97,6 +99,10 @@ func TestJetBrainsGatewayWorkspace(t *testing.T) {
 
 				t.Logf("get or create user")
 				_, err = api.CreateUser(username, userToken)
+				if err != nil {
+					t.Fatal(err)
+				}
+				err = api.MakeUserUnleashedPlan(username)
 				if err != nil {
 					t.Fatal(err)
 				}
