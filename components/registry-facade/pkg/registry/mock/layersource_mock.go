@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -62,10 +62,10 @@ func (m *MockLayerSource) GetBlob(arg0 context.Context, arg1 *api.ImageSpec, arg
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBlob", arg0, arg1, arg2)
 	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[0].(string)
-	ret2, _ := ret[1].(string)
-	ret3, _ := ret[2].(io.ReadCloser)
-	ret4, _ := ret[3].(error)
+	ret1, _ := ret[1].(string)
+	ret2, _ := ret[2].(string)
+	ret3, _ := ret[3].(io.ReadCloser)
+	ret4, _ := ret[4].(error)
 	return ret0, ret1, ret2, ret3, ret4
 }
 
@@ -102,4 +102,18 @@ func (m *MockLayerSource) HasBlob(arg0 context.Context, arg1 *api.ImageSpec, arg
 func (mr *MockLayerSourceMockRecorder) HasBlob(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasBlob", reflect.TypeOf((*MockLayerSource)(nil).HasBlob), arg0, arg1, arg2)
+}
+
+// Name mocks base method.
+func (m *MockLayerSource) Name() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Name")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Name indicates an expected call of Name.
+func (mr *MockLayerSourceMockRecorder) Name() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockLayerSource)(nil).Name))
 }

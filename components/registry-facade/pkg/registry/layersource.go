@@ -56,6 +56,10 @@ type filebackedLayer struct {
 // FileLayerSource provides the same layers independent of the workspace spec
 type FileLayerSource []filebackedLayer
 
+func (s FileLayerSource) Name() string {
+	return "filelayer"
+}
+
 // Envs returns the list of env modifiers
 func (s FileLayerSource) Envs(ctx context.Context, spec *api.ImageSpec) ([]EnvModifier, error) {
 	return nil, nil
@@ -170,6 +174,10 @@ type imagebackedLayer struct {
 type ImageLayerSource struct {
 	envs   []EnvModifier
 	layers []imagebackedLayer
+}
+
+func (s ImageLayerSource) Name() string {
+	return "imagelayer"
 }
 
 // Envs returns the list of env modifiers
@@ -316,6 +324,10 @@ func getSkipNLabelValue(cfg *ociv1.ImageConfig) (skipN int, err error) {
 // CompositeLayerSource appends layers from different sources
 type CompositeLayerSource []LayerSource
 
+func (cs CompositeLayerSource) Name() string {
+	return "composite"
+}
+
 // Envs returns the list of env modifiers
 func (cs CompositeLayerSource) Envs(ctx context.Context, spec *api.ImageSpec) ([]EnvModifier, error) {
 	var res []EnvModifier
@@ -388,6 +400,10 @@ type SpecMappedImagedSource struct {
 
 	// TODO: add ttl
 	cache *lru.Cache
+}
+
+func (src *SpecMappedImagedSource) Name() string {
+	return "specmapped"
 }
 
 // Envs returns the list of env modifiers
@@ -506,6 +522,10 @@ func NewContentLayerSource() (*ContentLayerSource, error) {
 // ContentLayerSource provides layers from other images based on the image spec
 type ContentLayerSource struct {
 	blobCache *lru.Cache
+}
+
+func (src *ContentLayerSource) Name() string {
+	return "contentlayer"
 }
 
 // Envs returns the list of env modifiers
@@ -709,6 +729,13 @@ type RevisioningLayerSource struct {
 	mu     sync.RWMutex
 	active LayerSource
 	past   []LayerSource
+}
+
+func (src *RevisioningLayerSource) Name() string {
+	src.mu.RLock()
+	defer src.mu.RUnlock()
+
+	return src.active.Name()
 }
 
 func (src *RevisioningLayerSource) Update(s LayerSource) {
