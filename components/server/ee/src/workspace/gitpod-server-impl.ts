@@ -2205,7 +2205,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
             return costCenter?.spendingLimit;
         } catch (error) {
-            log.error(`Failed to subscribe '${attributionId}' to Stripe`, error);
+            log.error(`Failed to subscribe '${attributionId}' to Stripe`, error, { error });
             throw new ResponseError(
                 ErrorCodes.INTERNAL_SERVER_ERROR,
                 `Failed to subscribe '${attributionId}' to Stripe`,
