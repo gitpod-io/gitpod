@@ -247,7 +247,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                             )}
                         </div>
                         <div className="mt-2 flex">
-                            <progress className="h-4 flex-grow rounded-xl" value={currentUsage} max={usageLimit} />
+                            <progress className="h-2 flex-grow rounded-xl" value={currentUsage} max={usageLimit} />
                         </div>
                         <div className="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 -m-4 p-4 mt-4 rounded-b-xl flex">
                             <div className="flex-grow">
