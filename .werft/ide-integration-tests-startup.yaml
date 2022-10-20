@@ -17,7 +17,7 @@ pod:
         secretName: github-token-gitpod-bot
   containers:
     - name: gcloud
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-dev-update-image.8
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-add-fish-to-dev-image.0
       workingDir: /workspace
       imagePullPolicy: IfNotPresent
       env:
