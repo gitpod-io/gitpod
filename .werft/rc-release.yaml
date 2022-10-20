@@ -1,0 +1,75 @@
+# debug using `werft run github -f -s .werft/installer-tests.ts -j .werft/k3s-installer-tests.yaml -a debug=true`
+args:
+- name: image
+  desc: "Docker image to build the release from."
+  required: true
+- name: tag
+  desc: "tag to create."
+  required: true
+pod:
+  serviceAccount: werft
+  restartPolicy: Never
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: dev/workload
+                operator: In
+                values:
+                  - "builds"
+  securityContext:
+    runAsUser: 0
+  containers:
+  - name: nightly-test
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-dev-update-image.8
+    workingDir: /workspace
+    imagePullPolicy: Always
+    env:
+      - name: NODENAME
+        valueFrom:
+          fieldRef:
+            fieldPath: spec.nodeName
+      - name: ROBOQUAT_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: github-roboquat-automatic-changelog
+            key: token
+    command:
+      - bash
+      - -c
+      - |
+        sleep 1
+        set -Eeuo pipefail
+
+        sudo chown -R gitpod:gitpod /workspace
+
+        export tag="{{ .Annotations.tag }}"
+
+        if [[ "$tag" == "<no value>" ]]; then
+          echo "No tag provided, cannot continue";
+          exit 1;
+        fi
+
+        REF_NAME="{{ .Repository.ref }}"
+
+        BRANCH=${REF_NAME#refs/heads/}
+
+        git branch
+        echo $BRANCH
+
+        # git tag $tag
+
+        # git push origin $tag
+
+        # install mkcert
+        # curl -JLO "https://dl.filippo.io/mkcert/latest?for=linux/amd64"
+        # chmod +x mkcert-v*-linux-amd64
+        # sudo cp mkcert-v*-linux-amd64 /usr/local/bin/mkcert
+
+
+        # (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
+        # printf '{{ toJson . }}' > context.json
+
+        # npm config set update-notifier false
+        # npx ts-node .werft/installer-tests.ts "STANDARD_K3S_TEST"
