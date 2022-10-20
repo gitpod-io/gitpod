@@ -30,6 +30,46 @@ service WorkspacesService {
 
 }
 
+message CreateWorkspaceRequest {
+    string project_id = 1;
+
+    WorkspaceSpec spec = 2;
+    Context context = 3;
+}
+
+message CreateWorkspaceResponse {
+    Workspace workspace = 1;
+}
+
+message Workspace2 {
+    string id = 1;
+    string project_id = 2;
+    string owner_id = 3;
+
+    // Signal whether this Workspace should be deleted
+    bool delete = 4;
+
+    WorkspaceSpec spec = 4;
+    WorkspaceStatus status = 5;
+}
+
+message WorkspaceSpec {
+    string region = 1;
+    string class = 2;
+    string
+}
+
+message WorkspaceStatus {
+    ContextStatus context_status = 1;
+
+    Phase phase = 2;
+
+}
+
+message ContextStatus {
+
+}
+
 message ListWorkspacesRequest {
     Pagination pagination = 1;
     google.protobuf.FieldMask field_mask = 2;
