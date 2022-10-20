@@ -337,14 +337,14 @@ export class WorkspaceStarter {
 
             // check if there has been an instance before, i.e. if this is a restart
             const pastInstances = await this.workspaceDb.trace({ span }).findInstances(workspace.id);
-            const hasValidBackup = pastInstances.some(
-                (i) => !!i.status && !!i.status.conditions && !i.status.conditions.failed,
-            );
             let lastValidWorkspaceInstance: WorkspaceInstance | undefined;
-            if (hasValidBackup) {
-                lastValidWorkspaceInstance = pastInstances.reduce((previousValue, currentValue) =>
-                    currentValue.creationTime > previousValue.creationTime ? currentValue : previousValue,
-                );
+            // Sorted from latest to oldest
+            for (const i of pastInstances.sort((a, b) => (a.creationTime > b.creationTime ? -1 : 1))) {
+                // We're trying to figure out whether there was a successful backup or not, and if yes for which instance
+                if (!!i.status.conditions && !i.status.conditions.failed) {
+                    lastValidWorkspaceInstance = i;
+                    break;
+                }
             }
 
             const ideConfig = await this.ideService.getIDEConfig();
