@@ -121,6 +121,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
             let ws;
             const recentPrebuild = await this.incrementalPrebuildsService.findGoodBaseForIncrementalBuild(
                 commitContext,
+                config,
                 context,
                 user,
             );

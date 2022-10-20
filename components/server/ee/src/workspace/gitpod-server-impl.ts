@@ -119,11 +119,13 @@ import { UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb"
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 import { IncrementalPrebuildsService } from "../prebuilds/incremental-prebuilds-service";
+import { ConfigProvider } from "../../../src/workspace/config-provider";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
     @inject(IncrementalPrebuildsService) protected readonly incrementalPrebuildsService: IncrementalPrebuildsService;
+    @inject(ConfigProvider) protected readonly configProvider: ConfigProvider;
     @inject(LicenseDB) protected readonly licenseDB: LicenseDB;
     @inject(LicenseKeySource) protected readonly licenseKeySource: LicenseKeySource;
 
@@ -987,9 +989,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             const logPayload = { mode, cloneUrl, commit: commitSHAs, prebuiltWorkspace };
             log.debug(logCtx, "Looking for prebuilt workspace: ", logPayload);
             if (prebuiltWorkspace?.state !== "available" && mode === CreateWorkspaceMode.UseLastSuccessfulPrebuild) {
+                const { config } = await this.configProvider.fetchConfig({}, user, context);
                 const history = await this.incrementalPrebuildsService.getCommitHistoryForContext(context, user);
                 prebuiltWorkspace = await this.incrementalPrebuildsService.findGoodBaseForIncrementalBuild(
                     context,
+                    config,
                     history,
                     user,
                 );
