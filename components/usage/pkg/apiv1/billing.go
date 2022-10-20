@@ -23,11 +23,12 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewBillingService(stripeClient *stripe.Client, conn *gorm.DB, ccManager *db.CostCenterManager) *BillingService {
+func NewBillingService(stripeClient *stripe.Client, conn *gorm.DB, ccManager *db.CostCenterManager, stripePrices stripe.StripePrices) *BillingService {
 	return &BillingService{
 		stripeClient: stripeClient,
 		conn:         conn,
 		ccManager:    ccManager,
+		stripePrices: stripePrices,
 	}
 }
 
@@ -35,6 +36,7 @@ type BillingService struct {
 	conn         *gorm.DB
 	stripeClient *stripe.Client
 	ccManager    *db.CostCenterManager
+	stripePrices stripe.StripePrices
 
 	v1.UnimplementedBillingServiceServer
 }
@@ -163,6 +165,88 @@ func (s *BillingService) CreateStripeCustomer(ctx context.Context, req *v1.Creat
 	return &v1.CreateStripeCustomerResponse{
 		Customer: convertStripeCustomer(customer),
 	}, nil
+}
+
+func (s *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.CreateStripeSubscriptionRequest) (*v1.CreateStripeSubscriptionResponse, error) {
+	attributionID, err := db.ParseAttributionID(req.GetAttributionId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid attribution ID %s", attributionID)
+	}
+
+	customer, err := s.GetStripeCustomer(ctx, &v1.GetStripeCustomerRequest{
+		Identifier: &v1.GetStripeCustomerRequest_AttributionId{
+			AttributionId: string(attributionID),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = s.stripeClient.SetDefaultPaymentForCustomer(ctx, customer.Customer.Id, req.SetupIntentId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Failed to set default payment for customer ID %s", customer.Customer.Id)
+	}
+
+	stripeCustomer, err := s.stripeClient.GetCustomer(ctx, customer.Customer.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	priceID, err := getPriceIdentifier(attributionID, stripeCustomer, s)
+	if err != nil {
+		return nil, err
+	}
+
+	var isAutomaticTaxSupported bool
+	if stripeCustomer.Tax != nil {
+		isAutomaticTaxSupported = stripeCustomer.Tax.AutomaticTax == "supported"
+	}
+	if !isAutomaticTaxSupported {
+		log.Warnf("Automatic Stripe tax is not supported for customer %s", stripeCustomer.ID)
+	}
+
+	subscription, err := s.stripeClient.CreateSubscription(ctx, stripeCustomer.ID, priceID, isAutomaticTaxSupported)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to create subscription with customer ID %s", customer.Customer.Id)
+	}
+
+	return &v1.CreateStripeSubscriptionResponse{
+		Subscription: &v1.StripeSubscription{
+			Id: subscription.ID,
+		},
+	}, nil
+}
+
+func getPriceIdentifier(attributionID db.AttributionID, stripeCustomer *stripe_api.Customer, s *BillingService) (string, error) {
+	preferredCurrency := stripeCustomer.Metadata["preferredCurrency"]
+	if stripeCustomer.Metadata["preferredCurrency"] == "" {
+		log.
+			WithField("stripe_customer_id", stripeCustomer.ID).
+			Warn("No preferred currency set. Defaulting to USD")
+	}
+
+	entity, _ := attributionID.Values()
+
+	switch entity {
+	case db.AttributionEntity_User:
+		switch preferredCurrency {
+		case "EUR":
+			return s.stripePrices.IndividualUsagePriceIDs.EUR, nil
+		default:
+			return s.stripePrices.IndividualUsagePriceIDs.USD, nil
+		}
+
+	case db.AttributionEntity_Team:
+		switch preferredCurrency {
+		case "EUR":
+			return s.stripePrices.TeamUsagePriceIDs.EUR, nil
+		default:
+			return s.stripePrices.TeamUsagePriceIDs.USD, nil
+		}
+
+	default:
+		return "", status.Errorf(codes.InvalidArgument, "Invalid currency %s for customer ID %s", stripeCustomer.Metadata["preferredCurrency"], stripeCustomer.ID)
+	}
 }
 
 func (s *BillingService) ReconcileInvoices(ctx context.Context, in *v1.ReconcileInvoicesRequest) (*v1.ReconcileInvoicesResponse, error) {
