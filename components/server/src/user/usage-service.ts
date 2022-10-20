@@ -5,7 +5,11 @@
  */
 
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { UsageServiceClient, UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
+import {
+    CostCenter_BillingStrategy,
+    UsageServiceClient,
+    UsageServiceDefinition,
+} from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import { inject, injectable } from "inversify";
 
 @injectable()
@@ -27,5 +31,12 @@ export class UsageService {
             usedCredits: currentInvoiceCredits,
             usageLimit: costCenter?.spendingLimit || 0,
         };
+    }
+
+    async getCurrentBillingStategy(attributionId: AttributionId): Promise<CostCenter_BillingStrategy | undefined> {
+        const response = await this.usageService.getCostCenter({
+            attributionId: AttributionId.render(attributionId),
+        });
+        return response.costCenter?.billingStrategy;
     }
 }

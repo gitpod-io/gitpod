@@ -33,6 +33,7 @@ import { StripeService } from "../../ee/src/user/stripe-service";
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UsageService } from "./usage-service";
+import { CostCenter_BillingStrategy } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 
 export interface FindUserByIdentityStrResult {
     user: User;
@@ -303,6 +304,31 @@ export class UserService {
         await this.validateUsageAttributionId(user, usageAttributionId);
         user.usageAttributionId = usageAttributionId;
         await this.userDb.storeUser(user);
+    }
+
+    /**
+     * Lists all valid AttributionIds a user can attributed (billed) usage to.
+     * @param user
+     * @returns
+     */
+    async listAvailableUsageAttributionIds(user: User): Promise<AttributionId[]> {
+        // List all teams available for attribution
+        const teams = await this.teamDB.findTeamsByUser(user.id);
+        const billedStripeTeams = (
+            await Promise.all(
+                teams.map(async (team) => {
+                    const attributionId = AttributionId.create(team);
+                    const billingStrategy = await this.usageService.getCurrentBillingStategy(attributionId);
+                    if (billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
+                        return attributionId;
+                    }
+                    return undefined;
+                }),
+            )
+        ).filter((t) => !!t) as AttributionId[];
+
+        // Attributing to oneself is always an option
+        return [AttributionId.create(user)].concat(billedStripeTeams);
     }
 
     /**
