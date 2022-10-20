@@ -1,6 +1,9 @@
 # Change Log
 
 ## October 2022
+- [kots]: put the HTTP Proxy settings behind a KOTS config bool ([#13959](https://github.com/gitpod-io/gitpod/pull/13959)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Fixed the "Lean More" button behavior from JetBrains Gateway home screen. ([#13966](https://github.com/gitpod-io/gitpod/pull/13966)) - [@felladrin](https://github.com/felladrin)
+- Revert "Use Last Successful Prebuild" for now ([#13997](https://github.com/gitpod-io/gitpod/pull/13997)) - [@jankeromnes](https://github.com/jankeromnes)
 - Revert "[preview] Fix broken shortname assignment in preview envs" ([#13964](https://github.com/gitpod-io/gitpod/pull/13964)) - [@jankeromnes](https://github.com/jankeromnes)
 - Provide option to enforce network connection rate limiting ([#13891](https://github.com/gitpod-io/gitpod/pull/13891)) - [@Furisto](https://github.com/Furisto)
 - Implement a 'Use Last Successful Prebuild' workspace creation mode ([#13801](https://github.com/gitpod-io/gitpod/pull/13801)) - [@jankeromnes](https://github.com/jankeromnes)
