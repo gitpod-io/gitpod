@@ -14,17 +14,17 @@ export interface WorkspaceManagerClientProviderSource {
     getAllWorkspaceClusters(): Promise<WorkspaceClusterWoTLS[]>;
 }
 
+
 @injectable()
 export class WorkspaceManagerClientProviderEnvSource implements WorkspaceManagerClientProviderSource {
     protected _clusters: WorkspaceCluster[] | undefined = undefined;
-    readonly applicationCluster = process.env.GITPOD_INSTALLATION_SHORTNAME ?? "";
 
     public async getWorkspaceCluster(name: string): Promise<WorkspaceCluster | undefined> {
-        return this.clusters.find((m) => m.name === name && m.applicationCluster === this.applicationCluster);
+        return this.clusters.find(m => m.name === name);
     }
 
     public async getAllWorkspaceClusters(): Promise<WorkspaceClusterWoTLS[]> {
-        return this.clusters.filter((m) => m.applicationCluster === this.applicationCluster) ?? [];
+        return this.clusters;
     }
 
     protected get clusters(): WorkspaceCluster[] {
@@ -63,14 +63,13 @@ export class WorkspaceManagerClientProviderEnvSource implements WorkspaceManager
 export class WorkspaceManagerClientProviderDBSource implements WorkspaceManagerClientProviderSource {
     @inject(WorkspaceClusterDB)
     protected readonly db: WorkspaceClusterDB;
-    readonly applicationCluster = process.env.GITPOD_INSTALLATION_SHORTNAME ?? "";
 
     public async getWorkspaceCluster(name: string): Promise<WorkspaceCluster | undefined> {
-        return (await this.db.findFiltered({ name, applicationCluster: this.applicationCluster }))[0];
+        return await this.db.findByName(name);
     }
 
     public async getAllWorkspaceClusters(): Promise<WorkspaceClusterWoTLS[]> {
-        return await this.db.findFiltered({ applicationCluster: this.applicationCluster });
+        return await this.db.findFiltered({});
     }
 }
 
