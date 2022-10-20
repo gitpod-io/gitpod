@@ -58,7 +58,9 @@ service WorkspaceInfoService {
     rpc WorkspaceInfo(WorkspaceInfoRequest) returns (WorkspaceInfoResponse) {}
 }
 
-message PrepareForUserNSRequest {}
+message PrepareForUserNSRequest {
+    int64 userns_pid = 1;
+}
 message PrepareForUserNSResponse {
     FSShiftMethod fs_shift = 1;
     bool full_workspace_backup = 2;
@@ -70,6 +72,7 @@ message PrepareForUserNSResponse {
 enum FSShiftMethod {
     SHIFTFS = 0;
     FUSE = 1;
+    IDMAPPED = 2;
 }
 
 message WriteIDMappingResponse {
