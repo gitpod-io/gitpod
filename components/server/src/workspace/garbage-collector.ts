@@ -54,9 +54,6 @@ export class WorkspaceGarbageCollector {
             this.deleteOutdatedVolumeSnapshots().catch((err) =>
                 log.error("wsgc: error during volume snapshot gc deletion", err),
             );
-            this.deleteProbeWorkspaces().catch((err) =>
-                log.error("wsgc: error during probe workspace gc deletion", err),
-            );
         }
     }
 
@@ -186,24 +183,6 @@ export class WorkspaceGarbageCollector {
                     vss.slice(1).map((vs) => this.deletionService.garbageCollectVolumeSnapshot({ span }, vs)),
                 ),
             );
-        } catch (err) {
-            TraceContext.setError({ span }, err);
-            throw err;
-        } finally {
-            span.finish();
-        }
-    }
-
-    protected async deleteProbeWorkspaces() {
-        const span = opentracing.globalTracer().startSpan("deleteProbeWorkspaces");
-        try {
-            const workspaceIDs = await this.workspaceDB.trace({ span }).findProbeWorkspaceIDs(100);
-
-            const deletes = await Promise.all(
-                workspaceIDs.map((workspaceID) => this.workspaceDB.trace({ span }).hardDeleteWorkspace(workspaceID)),
-            );
-
-            log.info(`wsgc: successfully deleted ${deletes.length} Probe workspaces`);
         } catch (err) {
             TraceContext.setError({ span }, err);
             throw err;
