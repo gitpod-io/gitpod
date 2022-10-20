@@ -59,6 +59,7 @@ export interface CreateStripeCustomerResponse {
 
 export interface CreateStripeSubscriptionRequest {
   attributionId: string;
+  customerId: string;
   setupIntentId: string;
   usageLimit: number;
 }
@@ -623,7 +624,7 @@ export const CreateStripeCustomerResponse = {
 };
 
 function createBaseCreateStripeSubscriptionRequest(): CreateStripeSubscriptionRequest {
-  return { attributionId: "", setupIntentId: "", usageLimit: 0 };
+  return { attributionId: "", customerId: "", setupIntentId: "", usageLimit: 0 };
 }
 
 export const CreateStripeSubscriptionRequest = {
@@ -631,11 +632,14 @@ export const CreateStripeSubscriptionRequest = {
     if (message.attributionId !== "") {
       writer.uint32(10).string(message.attributionId);
     }
+    if (message.customerId !== "") {
+      writer.uint32(18).string(message.customerId);
+    }
     if (message.setupIntentId !== "") {
-      writer.uint32(18).string(message.setupIntentId);
+      writer.uint32(26).string(message.setupIntentId);
     }
     if (message.usageLimit !== 0) {
-      writer.uint32(24).int64(message.usageLimit);
+      writer.uint32(32).int64(message.usageLimit);
     }
     return writer;
   },
@@ -651,9 +655,12 @@ export const CreateStripeSubscriptionRequest = {
           message.attributionId = reader.string();
           break;
         case 2:
-          message.setupIntentId = reader.string();
+          message.customerId = reader.string();
           break;
         case 3:
+          message.setupIntentId = reader.string();
+          break;
+        case 4:
           message.usageLimit = longToNumber(reader.int64() as Long);
           break;
         default:
@@ -667,6 +674,7 @@ export const CreateStripeSubscriptionRequest = {
   fromJSON(object: any): CreateStripeSubscriptionRequest {
     return {
       attributionId: isSet(object.attributionId) ? String(object.attributionId) : "",
+      customerId: isSet(object.customerId) ? String(object.customerId) : "",
       setupIntentId: isSet(object.setupIntentId) ? String(object.setupIntentId) : "",
       usageLimit: isSet(object.usageLimit) ? Number(object.usageLimit) : 0,
     };
@@ -675,6 +683,7 @@ export const CreateStripeSubscriptionRequest = {
   toJSON(message: CreateStripeSubscriptionRequest): unknown {
     const obj: any = {};
     message.attributionId !== undefined && (obj.attributionId = message.attributionId);
+    message.customerId !== undefined && (obj.customerId = message.customerId);
     message.setupIntentId !== undefined && (obj.setupIntentId = message.setupIntentId);
     message.usageLimit !== undefined && (obj.usageLimit = Math.round(message.usageLimit));
     return obj;
@@ -683,6 +692,7 @@ export const CreateStripeSubscriptionRequest = {
   fromPartial(object: DeepPartial<CreateStripeSubscriptionRequest>): CreateStripeSubscriptionRequest {
     const message = createBaseCreateStripeSubscriptionRequest();
     message.attributionId = object.attributionId ?? "";
+    message.customerId = object.customerId ?? "";
     message.setupIntentId = object.setupIntentId ?? "";
     message.usageLimit = object.usageLimit ?? 0;
     return message;

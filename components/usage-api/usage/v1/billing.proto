@@ -78,8 +78,9 @@ message CreateStripeCustomerResponse {
 
 message CreateStripeSubscriptionRequest {
   string attribution_id = 1;
-  string setup_intent_id = 2;
-  int64 usage_limit = 3;
+  string customer_id = 2;
+  string setup_intent_id = 3;
+  int64 usage_limit = 4;
 }
 
 message CreateStripeSubscriptionResponse {

@@ -44,17 +44,7 @@ type Config struct {
 	DefaultSpendingLimit db.DefaultSpendingLimit `json:"defaultSpendingLimit"`
 
 	// StripePrices configure which Stripe Price IDs should be used
-	StripePrices StripePrices `json:"stripePrices"`
-}
-
-type PriceConfig struct {
-	EUR string `json:"eur"`
-	USD string `json:"usd"`
-}
-
-type StripePrices struct {
-	IndividualUsagePriceIDs PriceConfig `json:"individualUsagePriceIds"`
-	TeamUsagePriceIDs       PriceConfig `json:"teamUsagePriceIds"`
+	StripePrices stripe.StripePrices `json:"stripePrices"`
 }
 
 func Start(cfg Config, version string) error {
@@ -188,7 +178,7 @@ func registerGRPCServices(srv *baseserver.Server, conn *gorm.DB, stripeClient *s
 	if stripeClient == nil {
 		v1.RegisterBillingServiceServer(srv.GRPC(), &apiv1.BillingServiceNoop{})
 	} else {
-		v1.RegisterBillingServiceServer(srv.GRPC(), apiv1.NewBillingService(stripeClient, conn, ccManager))
+		v1.RegisterBillingServiceServer(srv.GRPC(), apiv1.NewBillingService(stripeClient, conn, ccManager, cfg.StripePrices))
 	}
 	return nil
 }

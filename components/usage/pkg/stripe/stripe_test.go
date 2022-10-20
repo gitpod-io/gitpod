@@ -6,8 +6,10 @@ package stripe
 
 import (
 	"fmt"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"testing"
+	"time"
+
+	"github.com/gitpod-io/gitpod/usage/pkg/db"
 
 	"github.com/stretchr/testify/require"
 )
@@ -88,4 +90,16 @@ func TestCustomerQueriesForTeamIds_MultipleQueries(t *testing.T) {
 			require.Equal(t, tc.ExpectedNumberOfQueries, len(actualQueries))
 		})
 	}
+}
+
+func TestStartOfNextMonth(t *testing.T) {
+	now := time.Now()
+	currentYear, currentMonth, _ := now.Date()
+	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, time.UTC)
+	nextMonth := firstOfMonth.AddDate(0, 1, 0).Month()
+
+	expectedStartOfNextMonth := time.Time(time.Date(currentYear, nextMonth, 1, 0, 0, 0, 0, time.UTC))
+	actualStartOfNextMonth := getStartOfNextMonth(now)
+
+	require.Equal(t, actualStartOfNextMonth, expectedStartOfNextMonth)
 }
