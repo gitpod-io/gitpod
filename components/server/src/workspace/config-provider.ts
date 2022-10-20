@@ -251,11 +251,7 @@ export class ConfigProvider {
 
     public defaultConfig(): WorkspaceConfig {
         return {
-            ports: [
-                {
-                    port: 3000,
-                },
-            ],
+            ports: [],
             tasks: [],
             image: this.config.workspaceDefaults.workspaceImage,
         };
