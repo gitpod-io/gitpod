@@ -59,6 +59,12 @@ export class WorkspaceClusterDBImpl implements WorkspaceClusterDB {
             .createQueryBuilder("wsc")
             .select(Object.keys(prototype).map((k) => `wsc.${k}`))
             .where("TRUE = TRUE"); // make sure andWhere works
+        if (predicate.name !== undefined) {
+            qb = qb.andWhere("wsc.name = :name", predicate);
+        }
+        if (predicate.applicationCluster !== undefined) {
+            qb = qb.andWhere("wsc.applicationCluster = :applicationCluster", predicate);
+        }
         if (predicate.state !== undefined) {
             qb = qb.andWhere("wsc.state = :state", predicate);
         }
