@@ -18,9 +18,11 @@ interface FeatureFlagConfig {
 const FeatureFlagContext = createContext<{
     showPersistentVolumeClaimUI: boolean;
     showUsageView: boolean;
+    showUseLastSuccessfulPrebuild: boolean;
 }>({
     showPersistentVolumeClaimUI: false,
     showUsageView: false,
+    showUseLastSuccessfulPrebuild: false,
 });
 
 const FeatureFlagContextProvider: React.FC = ({ children }) => {
@@ -31,6 +33,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const team = getCurrentTeam(location, teams);
     const [showPersistentVolumeClaimUI, setShowPersistentVolumeClaimUI] = useState<boolean>(false);
     const [showUsageView, setShowUsageView] = useState<boolean>(false);
+    const [showUseLastSuccessfulPrebuild, setShowUseLastSuccessfulPrebuild] = useState<boolean>(false);
 
     useEffect(() => {
         if (!user) return;
@@ -38,6 +41,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
             const featureFlags: FeatureFlagConfig = {
                 persistent_volume_claim: { defaultValue: true, setter: setShowPersistentVolumeClaimUI },
                 usage_view: { defaultValue: false, setter: setShowUsageView },
+                showUseLastSuccessfulPrebuild: { defaultValue: false, setter: setShowUseLastSuccessfulPrebuild },
             };
             for (const [flagName, config] of Object.entries(featureFlags)) {
                 if (teams) {
@@ -69,7 +73,9 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     }, [user, teams, team, project]);
 
     return (
-        <FeatureFlagContext.Provider value={{ showPersistentVolumeClaimUI, showUsageView }}>
+        <FeatureFlagContext.Provider
+            value={{ showPersistentVolumeClaimUI, showUsageView, showUseLastSuccessfulPrebuild }}
+        >
             {children}
         </FeatureFlagContext.Provider>
     );
