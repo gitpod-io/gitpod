@@ -45,31 +45,28 @@ pod:
         sudo chown -R gitpod:gitpod /workspace
 
         export tag="{{ .Annotations.tag }}"
+        export image="{{ .Annotations.image }}"
 
-        if [[ "$tag" == "<no value>" ]]; then
-          echo "No tag provided, cannot continue";
+        if [[ "$tag" == "<no value>" ]] || [[ "$image" == "<no value>" ]]; then
+          echo "No tag or image provided, cannot continue";
           exit 1;
         fi
 
-        REF_NAME="{{ .Repository.ref }}"
+        export REF_NAME="{{ .Repository.Ref }}"
 
         BRANCH=${REF_NAME#refs/heads/}
 
-        git branch
-        echo $BRANCH
+        git checkout $BRANCH
 
         # git tag $tag
-
         # git push origin $tag
 
-        # install mkcert
-        # curl -JLO "https://dl.filippo.io/mkcert/latest?for=linux/amd64"
-        # chmod +x mkcert-v*-linux-amd64
-        # sudo cp mkcert-v*-linux-amd64 /usr/local/bin/mkcert
+        sh install/installer/scripts/create-release-note.sh $image
 
+        cat release-note-$tag.md
 
-        # (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
-        # printf '{{ toJson . }}' > context.json
+        # cd install/installer
+        # VERSION=$image make
+        # cd ../..
 
-        # npm config set update-notifier false
-        # npx ts-node .werft/installer-tests.ts "STANDARD_K3S_TEST"
+        # gh release create $tag --notes-file release-note-$tag.md --draft --prerelease install/installer/dist

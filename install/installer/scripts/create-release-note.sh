@@ -1,4 +1,7 @@
 #!/bin/bash
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
 shopt -s nocasematch
 
 name_with_owner="gitpod-io/gitpod"
@@ -11,7 +14,7 @@ current_tag=2022.09.0-rc0
 previous_tag=2022.08.0
 
 DOCKER_TAG=$1
-RELEASENOTE_FILE="install/installer/docs/release-note-$current_tag.md"
+RELEASENOTE_FILE="release-note-$current_tag.md"
 
 echo "compare between $previous_tag & $current_tag"
 
