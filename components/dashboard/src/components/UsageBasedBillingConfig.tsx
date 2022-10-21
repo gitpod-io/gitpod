@@ -21,6 +21,20 @@ import Modal from "../components/Modal";
 import Alert from "./Alert";
 
 const BASE_USAGE_LIMIT_FOR_STRIPE_USERS = 1000;
+const MONTH_NAMES = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+];
 
 type PendingStripeSubscription = { pendingSince: number };
 
@@ -44,8 +58,11 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
 
     const localStorageKey = `pendingStripeSubscriptionFor${attributionId}`;
     const billingPeriodFrom = new Date(new Date().toISOString().slice(0, 7) + "-01"); // First day of this month: YYYY-MM-01T00:00:00.000Z
-    const billingPeriodTo = new Date(billingPeriodFrom.getUTCFullYear(), billingPeriodFrom.getMonth() + 1); // First day of next month
-    billingPeriodTo.setMilliseconds(billingPeriodTo.getMilliseconds() - 1); // Last millisecond of this month
+    const billingPeriodTo = new Date(billingPeriodFrom.getTime());
+    billingPeriodTo.setUTCMonth(billingPeriodTo.getUTCMonth() + 1); // First day of next month
+    billingPeriodTo.setUTCMilliseconds(billingPeriodTo.getUTCMilliseconds() - 1); // Last millisecond of this month
+    const billingPeriodMonthName = MONTH_NAMES[billingPeriodFrom.getUTCMonth()];
+    const billingPeriodMonthShortname = billingPeriodMonthName.slice(0, 3);
 
     useEffect(() => {
         if (!attributionId) {
@@ -254,11 +271,10 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                 <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Current Period</div>
                                 <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                                     <span className="font-semibold">
-                                        {billingPeriodFrom.toLocaleString("default", { month: "long" })}{" "}
-                                        {billingPeriodFrom.getFullYear()}
+                                        {`${billingPeriodMonthName} ${billingPeriodFrom.getUTCFullYear()}`}
                                     </span>{" "}
-                                    ({billingPeriodFrom.toLocaleString("default", { month: "short", day: "numeric" })} -{" "}
-                                    {billingPeriodTo.toLocaleString("default", { month: "short", day: "numeric" })})
+                                    {`(${billingPeriodMonthShortname} ${billingPeriodFrom.getUTCDate()}` +
+                                        ` - ${billingPeriodMonthShortname} ${billingPeriodTo.getUTCDate()})`}
                                 </div>
                             </div>
                             <div>
@@ -279,7 +295,8 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                             <Check className="m-0.5 w-5 h-5" />
                             <div className="flex flex-col">
                                 <span>
-                                    {currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard workspace usage.{" "}
+                                    {currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard workspace
+                                    usage.{" "}
                                     <a
                                         className="gp-link"
                                         href="https://www.gitpod.io/docs/configure/billing/usage-based-billing"
@@ -330,7 +347,10 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                 <Check className="m-0.5 w-5 h-5" />
                                 <div className="flex flex-col">
                                     <span className="font-bold">Pay-as-you-go after 1,000 credits</span>
-                                    <span>{currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard workspace usage.</span>
+                                    <span>
+                                        {currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard
+                                        workspace usage.
+                                    </span>
                                 </div>
                             </div>
                             <div className="mt-5 flex flex-col">
@@ -373,7 +393,10 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                             <span className="font-bold text-gray-500 dark:text-gray-400">
                                                 Pay-as-you-go after 1,000 credits
                                             </span>
-                                            <span>{currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard workspace usage.</span>
+                                            <span>
+                                                {currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of
+                                                Standard workspace usage.
+                                            </span>
                                         </div>
                                     </div>
                                 </>
@@ -386,7 +409,8 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                         <Check className="m-0.5 w-5 h-5 text-orange-500" />
                                         <div className="flex flex-col">
                                             <span>
-                                                {currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard workspace usage.{" "}
+                                                {currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of
+                                                Standard workspace usage.{" "}
                                                 <a
                                                     className="gp-link"
                                                     href="https://www.gitpod.io/docs/configure/billing/usage-based-billing"
