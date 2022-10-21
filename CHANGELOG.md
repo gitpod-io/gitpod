@@ -1,6 +1,9 @@
 # Change Log
 
 ## October 2022
+- Fixes port 3000 becomes the default config of ports if there is no `.gitpod.yml` file ([#14056](https://github.com/gitpod-io/gitpod/pull/14056)) - [@mustard-mh](https://github.com/mustard-mh)
+- Display sorted ports with both `gp-cli` and VSCode Browser `PortsView` ([#13788](https://github.com/gitpod-io/gitpod/pull/13788)) - [@mustard-mh](https://github.com/mustard-mh)
+- Update balance used progress indicator height ([#14054](https://github.com/gitpod-io/gitpod/pull/14054)) - [@gtsiolis](https://github.com/gtsiolis)
 - [kots]: put the HTTP Proxy settings behind a KOTS config bool ([#13959](https://github.com/gitpod-io/gitpod/pull/13959)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Fixed the "Lean More" button behavior from JetBrains Gateway home screen. ([#13966](https://github.com/gitpod-io/gitpod/pull/13966)) - [@felladrin](https://github.com/felladrin)
 - Revert "Use Last Successful Prebuild" for now ([#13997](https://github.com/gitpod-io/gitpod/pull/13997)) - [@jankeromnes](https://github.com/jankeromnes)
