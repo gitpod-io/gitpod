@@ -311,34 +311,25 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		}
 	}
 
-	var createSecret bool
-	for _, feature := range startContext.Request.Spec.FeatureFlags {
-		if feature == api.WorkspaceFeatureFlag_PROTECTED_SECRETS {
-			createSecret = true
-			break
-		}
+	secrets, _ := buildWorkspaceSecrets(startContext.Request.Spec)
+
+	// This call actually modifies the initializer and removes the secrets.
+	// Prior to the `InitWorkspace` call, we inject the secrets back into the initializer.
+	// We do this so that no Git token is stored as annotation on the pod, but solely
+	// remains within the Kubernetes secret.
+	_ = csapi.ExtractAndReplaceSecretsFromInitializer(startContext.Request.Spec.Initializer)
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podName(startContext.Request),
+			Namespace: m.Config.Namespace,
+			Labels:    startContext.Labels,
+		},
+		StringData: secrets,
 	}
-	if createSecret {
-		secrets, _ := buildWorkspaceSecrets(startContext.Request.Spec)
-
-		// This call actually modifies the initializer and removes the secrets.
-		// Prior to the `InitWorkspace` call, we inject the secrets back into the initializer.
-		// We do this so that no Git token is stored as annotation on the pod, but solely
-		// remains within the Kubernetes secret.
-		_ = csapi.ExtractAndReplaceSecretsFromInitializer(startContext.Request.Spec.Initializer)
-
-		secret := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      podName(startContext.Request),
-				Namespace: m.Config.Namespace,
-				Labels:    startContext.Labels,
-			},
-			StringData: secrets,
-		}
-		err = m.Clientset.Create(ctx, secret)
-		if err != nil && !k8serr.IsAlreadyExists(err) {
-			return nil, xerrors.Errorf("cannot create secret for workspace pod: %w", err)
-		}
+	err = m.Clientset.Create(ctx, secret)
+	if err != nil && !k8serr.IsAlreadyExists(err) {
+		return nil, xerrors.Errorf("cannot create secret for workspace pod: %w", err)
 	}
 
 	err = m.Clientset.Create(ctx, pod)
