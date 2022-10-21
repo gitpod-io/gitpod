@@ -555,6 +555,8 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		pod.Finalizers = append(pod.Finalizers, "gitpod.io/debugfinalizer")
 	}
 
+	setProtectedSecrets(&pod, req)
+
 	ffidx := make(map[api.WorkspaceFeatureFlag]struct{})
 	for _, feature := range startContext.Request.Spec.FeatureFlags {
 		if _, seen := ffidx[feature]; seen {
@@ -590,27 +592,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			gitpodGUID := int64(133332)
 			pod.Spec.SecurityContext.FSGroup = &gitpodGUID
 
-		case api.WorkspaceFeatureFlag_PROTECTED_SECRETS:
-			for _, c := range pod.Spec.Containers {
-				if c.Name != "workspace" {
-					continue
-				}
-
-				for i, env := range c.Env {
-					if !isProtectedEnvVar(env.Name, req.Spec.SysEnvvars) {
-						continue
-					}
-
-					env.Value = ""
-					env.ValueFrom = &corev1.EnvVarSource{
-						SecretKeyRef: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{Name: pod.Name},
-							Key:                  fmt.Sprintf("%x", sha256.Sum256([]byte(env.Name))),
-						},
-					}
-					c.Env[i] = env
-				}
-			}
 		case api.WorkspaceFeatureFlag_WORKSPACE_CLASS_LIMITING:
 			limits := startContext.Class.Container.Limits
 			if limits != nil && limits.CPU != nil {
@@ -649,6 +630,29 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	}
 
 	return &pod, nil
+}
+
+func setProtectedSecrets(pod *corev1.Pod, req *api.StartWorkspaceRequest) {
+	for _, c := range pod.Spec.Containers {
+		if c.Name != "workspace" {
+			continue
+		}
+
+		for i, env := range c.Env {
+			if !isProtectedEnvVar(env.Name, req.Spec.SysEnvvars) {
+				continue
+			}
+
+			env.Value = ""
+			env.ValueFrom = &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{Name: pod.Name},
+					Key:                  fmt.Sprintf("%x", sha256.Sum256([]byte(env.Name))),
+				},
+			}
+			c.Env[i] = env
+		}
+	}
 }
 
 func removeVolume(pod *corev1.Pod, name string) {
