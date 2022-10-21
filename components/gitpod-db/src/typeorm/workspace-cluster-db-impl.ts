@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Repository, EntityManager, DeepPartial } from "typeorm";
+import { Repository, EntityManager } from "typeorm";
 import { injectable, inject } from "inversify";
 import { TypeORM } from "./typeorm";
 import { WorkspaceClusterDB } from "../workspace-cluster-db";
@@ -42,7 +42,7 @@ export class WorkspaceClusterDBImpl implements WorkspaceClusterDB {
         return repo.findOne(name);
     }
 
-    async findFiltered(predicate: DeepPartial<WorkspaceClusterFilter>): Promise<WorkspaceClusterWoTLS[]> {
+    async findFiltered(predicate: WorkspaceClusterFilter): Promise<WorkspaceClusterWoTLS[]> {
         const prototype: WorkspaceClusterWoTLS = {
             name: "",
             url: "",

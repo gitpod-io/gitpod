@@ -55,7 +55,7 @@ export class WorkspaceClusterDBSpec {
         await this.db.save(wsc1);
         await this.db.save(wsc2);
 
-        const wscs = await this.db.findFiltered({ name: "eu71" });
+        const wscs = await this.db.findFiltered({ name: "eu71", applicationCluster: "eu02" });
         expect(wscs.length).to.equal(1);
         expect(wscs[0].name).to.equal("eu71");
     }

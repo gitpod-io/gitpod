@@ -102,9 +102,9 @@ export interface WorkspaceClusterDB {
      * Lists all WorkspaceClusterWoTls for which the given predicate is true (does not return TLS for size/speed concerns)
      * @param predicate
      */
-    findFiltered(predicate: DeepPartial<WorkspaceClusterFilter>): Promise<WorkspaceClusterWoTLS[]>;
+    findFiltered(predicate: WorkspaceClusterFilter): Promise<WorkspaceClusterWoTLS[]>;
 }
-export interface WorkspaceClusterFilter
-    extends Pick<WorkspaceCluster, "name" | "state" | "govern" | "url" | "applicationCluster"> {
-    minScore: number;
-}
+
+export type WorkspaceClusterFilter = Pick<WorkspaceCluster, "applicationCluster"> &
+    DeepPartial<Pick<WorkspaceCluster, "name" | "state" | "govern" | "url">> &
+    Partial<{ minScore: number }>;
