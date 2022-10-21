@@ -12,7 +12,7 @@ import {
     ImageBuilderClientProvider,
     PromisifiedImageBuilderClient,
 } from "@gitpod/image-builder/lib";
-import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
+import { IApplicationClusterProvider, WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import {
     WorkspaceManagerClientProviderCompositeSource,
     WorkspaceManagerClientProviderSource,
@@ -26,6 +26,9 @@ export class WorkspaceClusterImagebuilderClientProvider implements ImageBuilderC
     protected readonly source: WorkspaceManagerClientProviderSource;
     @inject(WorkspaceManagerClientProvider) protected readonly clientProvider: WorkspaceManagerClientProvider;
     @inject(ImageBuilderClientCallMetrics) @optional() protected readonly clientCallMetrics: IClientCallMetrics;
+
+    @inject(IApplicationClusterProvider)
+    protected readonly _applicationClusterProvider: IApplicationClusterProvider;
 
     // gRPC connections can be used concurrently, even across services.
     // Thus it makes sense to cache them rather than create a new connection for each request.

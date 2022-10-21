@@ -21,6 +21,11 @@ import { linearBackoffStrategy, PromisifiedWorkspaceManagerClient } from "./prom
 
 export const IWorkspaceManagerClientCallMetrics = Symbol("IWorkspaceManagerClientCallMetrics");
 
+export const IApplicationClusterProvider = Symbol("IApplicationClusterProvider");
+export interface IApplicationClusterProvider {
+    getApplicationCluster: () => string;
+}
+
 @injectable()
 export class WorkspaceManagerClientProvider implements Disposable {
     @inject(WorkspaceManagerClientProviderCompositeSource)
@@ -29,6 +34,9 @@ export class WorkspaceManagerClientProvider implements Disposable {
     @inject(IWorkspaceManagerClientCallMetrics)
     @optional()
     protected readonly clientCallMetrics: IClientCallMetrics;
+
+    @inject(IApplicationClusterProvider)
+    protected readonly _applicationClusterProvider: IApplicationClusterProvider;
 
     // gRPC connections maintain their connectivity themselves, i.e. they reconnect when neccesary.
     // They can also be used concurrently, even across services.

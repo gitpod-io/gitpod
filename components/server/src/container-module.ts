@@ -37,6 +37,7 @@ import { EnvvarPrefixParser } from "./workspace/envvar-prefix-context-parser";
 import {
     IWorkspaceManagerClientCallMetrics,
     WorkspaceManagerClientProvider,
+    IApplicationClusterProvider,
 } from "@gitpod/ws-manager/lib/client-provider";
 import {
     WorkspaceManagerClientProviderCompositeSource,
@@ -208,6 +209,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(TracingManager).toSelf().inSingletonScope();
 
+    bind(IApplicationClusterProvider).toDynamicValue(newApplicationClusterProvider).inSingletonScope();
     bind(WorkspaceManagerClientProvider).toSelf().inSingletonScope();
     bind(WorkspaceManagerClientProviderCompositeSource).toSelf().inSingletonScope();
     bind(WorkspaceManagerClientProviderSource).to(WorkspaceManagerClientProviderEnvSource).inSingletonScope();
@@ -299,3 +301,9 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(UsageService).toSelf().inSingletonScope();
 });
+
+function newApplicationClusterProvider(): IApplicationClusterProvider {
+    return {
+        getApplicationCluster: () => process.env.GITPOD_INSTALLATION_SHORTNAME ?? "",
+    };
+}

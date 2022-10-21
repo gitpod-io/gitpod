@@ -9,7 +9,11 @@ import "reflect-metadata";
 import { Container } from "inversify";
 import { suite, test } from "@testdeck/mocha";
 import * as chai from "chai";
-import { IWorkspaceClusterStartSet, WorkspaceManagerClientProvider } from "./client-provider";
+import {
+    IApplicationClusterProvider,
+    IWorkspaceClusterStartSet,
+    WorkspaceManagerClientProvider,
+} from "./client-provider";
 import {
     WorkspaceManagerClientProviderCompositeSource,
     WorkspaceManagerClientProviderSource,
@@ -26,6 +30,10 @@ class TestClientProvider {
 
     public before() {
         const c = new Container();
+        c
+            .bind(IApplicationClusterProvider)
+            .toDynamicValue((): IApplicationClusterProvider => ({ getApplicationCluster: () => "xx01" }))
+            .inSingletonScope;
         c.bind(WorkspaceManagerClientProvider).toSelf().inSingletonScope();
         c.bind(WorkspaceManagerClientProviderCompositeSource).toSelf().inSingletonScope();
         c.bind(WorkspaceManagerClientProviderSource)

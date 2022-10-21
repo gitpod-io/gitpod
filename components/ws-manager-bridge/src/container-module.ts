@@ -20,6 +20,7 @@ import { filePathTelepresenceAware } from "@gitpod/gitpod-protocol/lib/env";
 import {
     WorkspaceManagerClientProvider,
     IWorkspaceManagerClientCallMetrics,
+    IApplicationClusterProvider,
 } from "@gitpod/ws-manager/lib/client-provider";
 import {
     WorkspaceManagerClientProviderCompositeSource,
@@ -51,6 +52,7 @@ export const containerModule = new ContainerModule((bind) => {
     bind(IClientCallMetrics).to(PrometheusClientCallMetrics).inSingletonScope();
     bind(IWorkspaceManagerClientCallMetrics).toService(IClientCallMetrics);
 
+    bind(IApplicationClusterProvider).toDynamicValue(newApplicationClusterProvider).inSingletonScope();
     bind(WorkspaceManagerClientProvider).toSelf().inSingletonScope();
     bind(WorkspaceManagerClientProviderCompositeSource).toSelf().inSingletonScope();
     bind(WorkspaceManagerClientProviderSource).to(WorkspaceManagerClientProviderConfigSource).inSingletonScope();
@@ -96,3 +98,9 @@ export const containerModule = new ContainerModule((bind) => {
     // transient to make sure we're creating a separate instance every time we ask for it
     bind(WorkspaceInstanceController).to(WorkspaceInstanceControllerImpl).inTransientScope();
 });
+
+function newApplicationClusterProvider(): IApplicationClusterProvider {
+    return {
+        getApplicationCluster: () => process.env.GITPOD_INSTALLATION_SHORTNAME ?? "",
+    };
+}
