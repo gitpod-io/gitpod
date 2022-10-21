@@ -1333,7 +1333,7 @@ func (m *Manager) dropSubscriber(dropouts []string) {
 
 // onChange is the default OnChange implementation which publishes workspace status updates to subscribers
 func (m *Manager) onChange(ctx context.Context, status *api.WorkspaceStatus) {
-	log := log.WithFields(log.OWI(status.Metadata.Owner, status.Metadata.MetaId, status.Id))
+	clog := log.WithFields(log.OWI(status.Metadata.Owner, status.Metadata.MetaId, status.Id))
 
 	header := make(map[string]string)
 	span := opentracing.SpanFromContext(ctx)
@@ -1344,7 +1344,7 @@ func (m *Manager) onChange(ctx context.Context, status *api.WorkspaceStatus) {
 			// if the error was caused by the span coming from the Noop tracer - ignore it.
 			// This can happen if the workspace doesn't have a span associated with it, then we resort to creating Noop spans.
 			if _, isNoopTracer := span.Tracer().(opentracing.NoopTracer); !isNoopTracer {
-				log.WithError(err).Debug("unable to extract tracing information - trace will be broken")
+				clog.WithError(err).Debug("unable to extract tracing information - trace will be broken")
 			}
 		} else {
 			for k, v := range tracingHeader {
@@ -1367,10 +1367,14 @@ func (m *Manager) onChange(ctx context.Context, status *api.WorkspaceStatus) {
 	// they represent out-of-the-ordinary situations.
 	// We attempt to use the GCP Error Reporting for this, hence log these situations as errors.
 	if status.Conditions.Failed != "" {
-		log.WithField("status", status).Error("workspace failed")
+		status, _ := protojson.Marshal(status)
+		safeStatus, _ := log.RedactJSON(status)
+		clog.WithField("status", safeStatus).Error("workspace failed")
 	}
 	if status.Phase == 0 {
-		log.WithField("status", status).Error("workspace in UNKNOWN phase")
+		status, _ := protojson.Marshal(status)
+		safeStatus, _ := log.RedactJSON(status)
+		clog.WithField("status", safeStatus).Error("workspace in UNKNOWN phase")
 	}
 }
 
