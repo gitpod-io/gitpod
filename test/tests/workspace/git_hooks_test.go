@@ -13,27 +13,32 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
+	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
 )
 
-type GitHooksTest struct {
+const (
+	FILE_CREATED_HOOKS = "output.txt"
+)
+
+type GitHooksTestCase struct {
 	Name          string
 	ContextURL    string
 	WorkspaceRoot string
 }
 
-func GithuHooksTest(t *testing.T) {
+func TestGitHooks(t *testing.T) {
 	userToken, _ := os.LookupEnv("USER_TOKEN")
 	integration.SkipWithoutUsername(t, username)
 	integration.SkipWithoutUserToken(t, userToken)
 
 	parallelLimiter := make(chan struct{}, 2)
 
-	tests := []GitHooksTest{
+	tests := []GitHooksTestCase{
 		{
 			Name:          "husky",
 			ContextURL:    "https://github.com/gitpod-io/gitpod-test-repo/tree/husky",
-			WorkspaceRoot: "/workspace/template-golang-cli",
+			WorkspaceRoot: "/workspace/gitpod-test-repo",
 		},
 	}
 
@@ -90,7 +95,7 @@ func GithuHooksTest(t *testing.T) {
 						api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 						defer api.Done(t)
 
-						_, stopWs, err := integration.LaunchWorkspaceFromContextURL(t, ctx, test.ContextURL, username, api)
+						wsInfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(t, ctx, test.ContextURL, username, api)
 						if err != nil {
 							t.Fatal(err)
 						}
@@ -106,6 +111,25 @@ func GithuHooksTest(t *testing.T) {
 								t.Fatal(err)
 							}
 						}()
+						rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(wsInfo.LatestInstance.ID))
+						if err != nil {
+							t.Fatal(err)
+						}
+						defer rsa.Close()
+						integration.DeferCloser(t, closer)
+
+						var ls agent.ListDirResponse
+						err = rsa.Call("WorkspaceAgent.ListDir", &agent.ListDirRequest{
+							Dir: test.WorkspaceRoot,
+						}, &ls)
+						if err != nil {
+							t.Fatal(err)
+						}
+						for _, f := range ls.Files {
+							if f == FILE_CREATED_HOOKS {
+								t.Fatal("Checkout hooks are executed")
+							}
+						}
 					})
 				}
 			}
