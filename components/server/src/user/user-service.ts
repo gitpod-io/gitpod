@@ -219,6 +219,13 @@ export class UserService {
                 );
             }
         }
+        const billedAttributionIds = await this.listAvailableUsageAttributionIds(user);
+        if (billedAttributionIds.find((id) => AttributionId.equals(id, attribution)) === undefined) {
+            throw new ResponseError(
+                ErrorCodes.INVALID_COST_CENTER,
+                "You can select either yourself or a billed team you are a member of",
+            );
+        }
         return attribution;
     }
 
