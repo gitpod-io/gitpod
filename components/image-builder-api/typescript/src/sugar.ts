@@ -31,7 +31,12 @@ export const ImageBuilderClientProvider = Symbol("ImageBuilderClientProvider");
 
 // ImageBuilderClientProvider caches image builder connections
 export interface ImageBuilderClientProvider {
-    getClient(user: User, workspace: Workspace, instance?: WorkspaceInstance): Promise<PromisifiedImageBuilderClient>;
+    getClient(
+        applicationCluster: string,
+        user: User,
+        workspace: Workspace,
+        instance?: WorkspaceInstance,
+    ): Promise<PromisifiedImageBuilderClient>;
 }
 
 function withTracing(ctx: TraceContext) {
@@ -91,7 +96,7 @@ export class CachingImageBuilderClientProvider implements ImageBuilderClientProv
         return connection;
     }
 
-    async getClient(user: User, workspace: Workspace, instance?: WorkspaceInstance) {
+    async getClient(applicationCluster: string, user: User, workspace: Workspace, instance?: WorkspaceInstance) {
         return this.getDefault();
     }
 

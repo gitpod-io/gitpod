@@ -51,7 +51,12 @@ export class ClusterSyncService {
         let allClusters = await this.clusterDB.findFiltered({});
         for (const cluster of allClusters) {
             try {
-                let supportedClasses = await getSupportedWorkspaceClasses(this.clientProvider, cluster, true);
+                let supportedClasses = await getSupportedWorkspaceClasses(
+                    this.clientProvider,
+                    cluster,
+                    this.config.installation,
+                    true,
+                );
                 let existingOtherConstraints = cluster.admissionConstraints?.filter((c) => c.type !== "has-class");
                 cluster.admissionConstraints = existingOtherConstraints?.concat(supportedClasses);
                 await this.clusterDB.save(cluster);
@@ -70,6 +75,7 @@ export class ClusterSyncService {
 export async function getSupportedWorkspaceClasses(
     clientProvider: WorkspaceManagerClientProvider,
     cluster: WorkspaceCluster,
+    applicationCluster: string,
     useCache: boolean,
 ) {
     let constraints = await new Promise<AdmissionConstraintHasClass[]>(async (resolve, reject) => {
@@ -78,7 +84,7 @@ export async function getSupportedWorkspaceClasses(
         };
         let client = useCache
             ? await (
-                  await clientProvider.get(cluster.name, grpcOptions)
+                  await clientProvider.get(cluster.name, applicationCluster, grpcOptions)
               ).client
             : clientProvider.createConnection(WorkspaceManagerClient, cluster, grpcOptions);
 

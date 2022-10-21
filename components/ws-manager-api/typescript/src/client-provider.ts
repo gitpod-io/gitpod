@@ -46,11 +46,12 @@ export class WorkspaceManagerClientProvider implements Disposable {
      * @returns a set of workspace clusters we can start the workspace in
      */
     public async getStartClusterSets(
+        applicationCluster: string,
         user: ExtendedUser,
         workspace: Workspace,
         instance: WorkspaceInstance,
     ): Promise<IWorkspaceClusterStartSet> {
-        const allClusters = await this.source.getAllWorkspaceClusters();
+        const allClusters = await this.source.getAllWorkspaceClusters(applicationCluster);
         const availableClusters = allClusters.filter((c) => c.score > 0 && c.state === "available");
 
         const sets = workspaceClusterSetsAuthorized
@@ -59,7 +60,7 @@ export class WorkspaceManagerClientProvider implements Disposable {
                 if (!r) {
                     return;
                 }
-                return new ClusterSet(this, r);
+                return new ClusterSet(this, r, applicationCluster);
             })
             .filter((s) => s !== undefined) as ClusterSet[];
 
@@ -90,9 +91,13 @@ export class WorkspaceManagerClientProvider implements Disposable {
      * @param name
      * @returns The WorkspaceManagerClient identified by the name. Throws an error if there is none.
      */
-    public async get(name: string, grpcOptions?: object): Promise<PromisifiedWorkspaceManagerClient> {
+    public async get(
+        name: string,
+        applicationCluster: string,
+        grpcOptions?: object,
+    ): Promise<PromisifiedWorkspaceManagerClient> {
         const getConnectionInfo = async () => {
-            const cluster = await this.source.getWorkspaceCluster(name);
+            const cluster = await this.source.getWorkspaceCluster(name, applicationCluster);
             if (!cluster) {
                 throw new Error(`Unknown workspace manager \"${name}\"`);
             }
@@ -130,8 +135,8 @@ export class WorkspaceManagerClientProvider implements Disposable {
     /**
      * @returns All WorkspaceClusters (without TLS config)
      */
-    public async getAllWorkspaceClusters(): Promise<WorkspaceClusterWoTLS[]> {
-        return this.source.getAllWorkspaceClusters();
+    public async getAllWorkspaceClusters(applicationCluster: string): Promise<WorkspaceClusterWoTLS[]> {
+        return this.source.getAllWorkspaceClusters(applicationCluster);
     }
 
     public createConnection<T extends grpc.Client>(
@@ -178,6 +183,7 @@ class ClusterSet implements AsyncIterator<ClusterClientEntry> {
     constructor(
         protected readonly provider: WorkspaceManagerClientProvider,
         protected readonly cluster: WorkspaceClusterWoTLS[],
+        protected readonly applicationCluster: string,
     ) {}
 
     public async next(): Promise<IteratorResult<ClusterClientEntry>> {
@@ -192,7 +198,7 @@ class ClusterSet implements AsyncIterator<ClusterClientEntry> {
         const grpcOptions: grpc.ClientOptions = {
             ...defaultGRPCOptions,
         };
-        const client = await this.provider.get(chosenCluster.name, grpcOptions);
+        const client = await this.provider.get(chosenCluster.name, this.applicationCluster, grpcOptions);
         return {
             done: false,
             value: {
