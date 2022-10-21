@@ -577,6 +577,105 @@ func TestPortsUpdateState(t *testing.T) {
 				},
 			},
 		},
+		{
+			Desc: "change configed ports order with ranged covered not ranged",
+			Changes: []Change{
+				{
+					Config: &ConfigChange{
+						workspace: []*gitpod.PortConfig{
+							{Port: 3000, Visibility: "private", Name: "react"},
+						},
+						instance: []*gitpod.PortsItems{
+							{Port: 3001, Visibility: "private", Name: "react"},
+							{Port: 3000, Visibility: "private", Name: "react"},
+						},
+					},
+				},
+				{
+					Config: &ConfigChange{
+						workspace: []*gitpod.PortConfig{
+							{Port: 3000, Visibility: "private", Name: "react"},
+						},
+						instance: []*gitpod.PortsItems{
+							{Port: 3003, Visibility: "private", Name: "react"},
+							{Port: 3001, Visibility: "private", Name: "react"},
+							{Port: "3001-3005", Visibility: "private", Name: "react"},
+							{Port: 3000, Visibility: "private", Name: "react"},
+						},
+					},
+				},
+				{
+					Served: []ServedPort{{net.IPv4zero, 3000, false}},
+				},
+				{
+					Served: []ServedPort{{net.IPv4zero, 3000, false}, {net.IPv4zero, 3001, false}, {net.IPv4zero, 3002, false}},
+				},
+				{
+					Config: &ConfigChange{
+						workspace: []*gitpod.PortConfig{
+							{Port: 3000, Visibility: "private", Name: "react"},
+						},
+						instance: []*gitpod.PortsItems{
+							{Port: 3003, Visibility: "private", Name: "react"},
+							{Port: 3000, Visibility: "private", Name: "react"},
+						},
+					},
+				},
+				{
+					Config: &ConfigChange{
+						workspace: []*gitpod.PortConfig{
+							{Port: 3000, Visibility: "private", Name: "react"},
+						},
+						instance: []*gitpod.PortsItems{
+							{Port: "3001-3005", Visibility: "private", Name: "react"},
+							{Port: 3003, Visibility: "private", Name: "react"},
+							{Port: 3000, Visibility: "private", Name: "react"},
+						},
+					},
+				},
+			},
+			ExpectedExposure: []ExposedPort{
+				{LocalPort: 3000},
+				{LocalPort: 3001},
+				{LocalPort: 3002},
+				{LocalPort: 3003},
+			},
+			ExpectedUpdates: UpdateExpectation{
+				{},
+				{
+					{LocalPort: 3001, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3000, Name: "react", OnOpen: api.PortsStatus_notify},
+				},
+				{
+					{LocalPort: 3003, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3001, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3000, Name: "react", OnOpen: api.PortsStatus_notify},
+				},
+				{
+					{LocalPort: 3003, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3001, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3000, Served: true, Name: "react", OnOpen: api.PortsStatus_notify},
+				},
+				{
+					{LocalPort: 3003, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3001, Served: true, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3002, Served: true, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3000, Served: true, Name: "react", OnOpen: api.PortsStatus_notify},
+				},
+				{
+					{LocalPort: 3003, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3000, Served: true, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3001, Served: true, OnOpen: api.PortsStatus_notify_private},
+					{LocalPort: 3002, Served: true, OnOpen: api.PortsStatus_notify_private},
+				},
+				{
+					{LocalPort: 3001, Name: "react", Served: true, OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3002, Name: "react", Served: true, OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3003, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3000, Served: true, Name: "react", OnOpen: api.PortsStatus_notify},
+				},
+			},
+		},
 	}
 
 	log.Log.Logger.SetLevel(logrus.FatalLevel)

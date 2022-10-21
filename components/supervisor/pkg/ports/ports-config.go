@@ -16,6 +16,8 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/pkg/config"
 )
 
+const NON_CONFIGED_BASIC_SCORE = 100000
+
 // RangeConfig is a port range config.
 type RangeConfig struct {
 	gitpod.PortsItems
@@ -190,7 +192,7 @@ func parseWorkspaceConfigs(ports []*gitpod.PortConfig) (portConfigs map[uint32]*
 			portConfigs[port] = &SortConfig{
 				PortConfig: *config,
 				// We don't care about workspace configs but instance config
-				Sort: 0,
+				Sort: NON_CONFIGED_BASIC_SCORE - 1,
 			}
 		}
 	}
