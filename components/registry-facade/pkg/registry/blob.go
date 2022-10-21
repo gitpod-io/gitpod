@@ -123,13 +123,18 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 
 		var srcs []BlobSource
 
-		ipfsSrc := ipfsBlobSource{source: bh.IPFS}
+		// 1. local store (faster)
+		srcs = append(srcs, storeBlobSource{Store: bh.Store})
+
+		// 2. IPFS (if configured)
 		if bh.IPFS != nil {
+			ipfsSrc := ipfsBlobSource{source: bh.IPFS}
 			srcs = append(srcs, ipfsSrc)
 		}
 
-		srcs = append(srcs, storeBlobSource{Store: bh.Store})
+		// 3. upstream registry
 		srcs = append(srcs, proxyingBlobSource{Fetcher: fetcher, Blobs: manifest.Layers})
+
 		srcs = append(srcs, &configBlobSource{Fetcher: fetcher, Spec: bh.Spec, Manifest: manifest, ConfigModifier: bh.ConfigModifier})
 		srcs = append(srcs, bh.AdditionalSources...)
 
@@ -143,6 +148,8 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 		if src == nil {
 			return distv2.ErrorCodeBlobUnknown
 		}
+
+		t0 := time.Now()
 
 		dontCache, mediaType, url, rc, err := src.GetBlob(ctx, bh.Spec, bh.Digest)
 		if err != nil {
@@ -159,8 +166,6 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Type", mediaType)
 		w.Header().Set("Etag", bh.Digest.String())
-
-		t0 := time.Now()
 
 		bp := bufPool.Get().(*[]byte)
 		defer bufPool.Put(bp)
