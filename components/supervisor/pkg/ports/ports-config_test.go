@@ -16,37 +16,13 @@ import (
 
 func TestPortsConfig(t *testing.T) {
 	tests := []struct {
-		Desc           string
-		WorkspacePorts []*gitpod.PortConfig
-		GitpodConfig   *gitpod.GitpodConfig
-		Expectation    *PortConfigTestExpectations
+		Desc         string
+		GitpodConfig *gitpod.GitpodConfig
+		Expectation  *PortConfigTestExpectations
 	}{
 		{
 			Desc:        "no configs",
 			Expectation: &PortConfigTestExpectations{},
-		},
-		{
-			Desc: "workspace port config",
-			WorkspacePorts: []*gitpod.PortConfig{
-				{
-					Port:        9229,
-					OnOpen:      "ignore",
-					Visibility:  "public",
-					Name:        "Nice Port Name",
-					Description: "Nice Port Description",
-				},
-			},
-			Expectation: &PortConfigTestExpectations{
-				WorkspaceConfigs: []*gitpod.PortConfig{
-					{
-						Port:        9229,
-						OnOpen:      "ignore",
-						Visibility:  "public",
-						Name:        "Nice Port Name",
-						Description: "Nice Port Description",
-					},
-				},
-			},
 		},
 		{
 			Desc: "instance port config",
@@ -119,26 +95,11 @@ func TestPortsConfig(t *testing.T) {
 			defer ctrl.Finish()
 
 			gitpodAPI := gitpod.NewMockAPIInterface(ctrl)
-			gitpodAPI.EXPECT().GetWorkspace(context, workspaceID).Times(1).Return(&gitpod.WorkspaceInfo{
-				Workspace: &gitpod.Workspace{
-					Config: &gitpod.WorkspaceConfig{
-						Ports: test.WorkspacePorts,
-					},
-				},
-			}, nil)
 
 			service := NewConfigService(workspaceID, configService, gitpodAPI)
 			updates, errors := service.Observe(context)
 
 			actual := &PortConfigTestExpectations{}
-			select {
-			case err := <-errors:
-				t.Fatal(err)
-			case change := <-updates:
-				for _, config := range change.workspaceConfigs {
-					actual.WorkspaceConfigs = append(actual.WorkspaceConfigs, &config.PortConfig)
-				}
-			}
 
 			if test.GitpodConfig != nil {
 				go func() {
@@ -163,7 +124,6 @@ func TestPortsConfig(t *testing.T) {
 }
 
 type PortConfigTestExpectations struct {
-	WorkspaceConfigs     []*gitpod.PortConfig
 	InstancePortConfigs  []*gitpod.PortConfig
 	InstanceRangeConfigs []*RangeConfig
 }

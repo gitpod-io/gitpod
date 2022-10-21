@@ -6,7 +6,6 @@ package ports
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -34,7 +33,6 @@ type SortConfig struct {
 
 // Configs provides access to port configurations.
 type Configs struct {
-	workspaceConfigs     map[uint32]*SortConfig
 	instancePortConfigs  map[uint32]*SortConfig
 	instanceRangeConfigs []*RangeConfig
 }
@@ -45,15 +43,13 @@ func (configs *Configs) ForEach(callback func(port uint32, config *SortConfig)) 
 		return
 	}
 	visited := make(map[uint32]struct{})
-	for _, configs := range []map[uint32]*SortConfig{configs.instancePortConfigs, configs.workspaceConfigs} {
-		for port, config := range configs {
-			_, exists := visited[port]
-			if exists {
-				continue
-			}
-			visited[port] = struct{}{}
-			callback(port, config)
+	for port, config := range configs.instancePortConfigs {
+		_, exists := visited[port]
+		if exists {
+			continue
 		}
+		visited[port] = struct{}{}
+		callback(port, config)
 	}
 }
 
@@ -73,10 +69,6 @@ func (configs *Configs) Get(port uint32) (*SortConfig, ConfigKind, bool) {
 		return nil, PortConfigKind, false
 	}
 	config, exists := configs.instancePortConfigs[port]
-	if exists {
-		return config, PortConfigKind, true
-	}
-	config, exists = configs.workspaceConfigs[port]
 	if exists {
 		return config, PortConfigKind, true
 	}
@@ -131,17 +123,6 @@ func (service *ConfigService) Observe(ctx context.Context) (<-chan *Configs, <-c
 		configs := service.configService.Observe(ctx)
 
 		current := &Configs{}
-		if service.gitpodAPI != nil {
-			info, err := service.gitpodAPI.GetWorkspace(ctx, service.workspaceID)
-			if err != nil {
-				errorsChan <- err
-			} else {
-				current.workspaceConfigs = parseWorkspaceConfigs(info.Workspace.Config.Ports)
-				updatesChan <- &Configs{workspaceConfigs: current.workspaceConfigs}
-			}
-		} else {
-			errorsChan <- errors.New("could not connect to Gitpod API to fetch workspace port configs")
-		}
 
 		for {
 			select {
@@ -156,7 +137,6 @@ func (service *ConfigService) Observe(ctx context.Context) (<-chan *Configs, <-c
 					continue
 				}
 				updatesChan <- &Configs{
-					workspaceConfigs:     current.workspaceConfigs,
 					instancePortConfigs:  current.instancePortConfigs,
 					instanceRangeConfigs: current.instanceRangeConfigs,
 				}
@@ -179,25 +159,6 @@ func (service *ConfigService) update(config *gitpod.GitpodConfig, current *Confi
 }
 
 var portRangeRegexp = regexp.MustCompile(`^(\d+)[-:](\d+)$`)
-
-func parseWorkspaceConfigs(ports []*gitpod.PortConfig) (portConfigs map[uint32]*SortConfig) {
-	if len(ports) == 0 {
-		return nil
-	}
-	portConfigs = make(map[uint32]*SortConfig)
-	for _, config := range ports {
-		port := uint32(config.Port)
-		_, exists := portConfigs[port]
-		if !exists {
-			portConfigs[port] = &SortConfig{
-				PortConfig: *config,
-				// We don't care about workspace configs but instance config
-				Sort: NON_CONFIGED_BASIC_SCORE - 1,
-			}
-		}
-	}
-	return portConfigs
-}
 
 func parseInstanceConfigs(ports []*gitpod.PortsItems) (portConfigs map[uint32]*SortConfig, rangeConfigs []*RangeConfig) {
 	for index, config := range ports {

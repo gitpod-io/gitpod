@@ -25,8 +25,7 @@ func TestPortsUpdateState(t *testing.T) {
 	type ExposureExpectation []ExposedPort
 	type UpdateExpectation [][]*api.PortsStatus
 	type ConfigChange struct {
-		workspace []*gitpod.PortConfig
-		instance  []*gitpod.PortsItems
+		instance []*gitpod.PortsItems
 	}
 	type Change struct {
 		Config      *ConfigChange
@@ -110,47 +109,6 @@ func TestPortsUpdateState(t *testing.T) {
 			ExpectedUpdates:  UpdateExpectation{{}},
 		},
 		{
-			Desc: "serving configured workspace port",
-			Changes: []Change{
-				{Config: &ConfigChange{
-					workspace: []*gitpod.PortConfig{
-						{Port: 8080, OnOpen: "open-browser"},
-						{Port: 9229, OnOpen: "ignore", Visibility: "private"},
-					},
-				}},
-				{
-					Exposed: []ExposedPort{
-						{LocalPort: 8080, Public: true, URL: "8080-foobar"},
-						{LocalPort: 9229, Public: false, URL: "9229-foobar"},
-					},
-				},
-				{
-					Served: []ServedPort{
-						{net.IPv4zero, 8080, false},
-						{net.IPv4(127, 0, 0, 1), 9229, true},
-					},
-				},
-			},
-			ExpectedExposure: []ExposedPort{
-				{LocalPort: 8080},
-				{LocalPort: 9229},
-			},
-			ExpectedUpdates: UpdateExpectation{
-				{},
-				[]*api.PortsStatus{
-					{LocalPort: 8080, OnOpen: api.PortsStatus_open_browser},
-					{LocalPort: 9229, OnOpen: api.PortsStatus_ignore}},
-				[]*api.PortsStatus{
-					{LocalPort: 8080, OnOpen: api.PortsStatus_open_browser, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "8080-foobar", OnExposed: api.OnPortExposedAction_open_browser}},
-					{LocalPort: 9229, OnOpen: api.PortsStatus_ignore, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, Url: "9229-foobar", OnExposed: api.OnPortExposedAction_ignore}},
-				},
-				[]*api.PortsStatus{
-					{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_open_browser, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "8080-foobar", OnExposed: api.OnPortExposedAction_open_browser}},
-					{LocalPort: 9229, Served: true, OnOpen: api.PortsStatus_ignore, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, Url: "9229-foobar", OnExposed: api.OnPortExposedAction_ignore}},
-				},
-			},
-		},
-		{
 			Desc: "serving port from the configured port range",
 			Changes: []Change{
 				{Config: &ConfigChange{
@@ -182,7 +140,7 @@ func TestPortsUpdateState(t *testing.T) {
 			Desc: "auto expose configured ports",
 			Changes: []Change{
 				{
-					Config: &ConfigChange{workspace: []*gitpod.PortConfig{
+					Config: &ConfigChange{instance: []*gitpod.PortsItems{
 						{Port: 8080, Visibility: "private"},
 					}},
 				},
@@ -244,7 +202,7 @@ func TestPortsUpdateState(t *testing.T) {
 			Desc: "served between auto exposing configured and exposed update",
 			Changes: []Change{
 				{
-					Config: &ConfigChange{workspace: []*gitpod.PortConfig{
+					Config: &ConfigChange{instance: []*gitpod.PortsItems{
 						{Port: 8080, Visibility: "private"},
 					}},
 				},
@@ -451,7 +409,7 @@ func TestPortsUpdateState(t *testing.T) {
 			Desc: "port status has description set as soon as the port gets exposed, if there was a description configured",
 			Changes: []Change{
 				{
-					Config: &ConfigChange{workspace: []*gitpod.PortConfig{
+					Config: &ConfigChange{instance: []*gitpod.PortsItems{
 						{Port: 8080, Visibility: "private", Description: "Development server"},
 					}},
 				},
@@ -476,7 +434,7 @@ func TestPortsUpdateState(t *testing.T) {
 			Desc: "port status has the name attribute set as soon as the port gets exposed, if there was a name configured in Gitpod's Workspace",
 			Changes: []Change{
 				{
-					Config: &ConfigChange{workspace: []*gitpod.PortConfig{
+					Config: &ConfigChange{instance: []*gitpod.PortsItems{
 						{Port: 3000, Visibility: "private", Name: "react"},
 					}},
 				},
@@ -582,9 +540,6 @@ func TestPortsUpdateState(t *testing.T) {
 			Changes: []Change{
 				{
 					Config: &ConfigChange{
-						workspace: []*gitpod.PortConfig{
-							{Port: 3000, Visibility: "private", Name: "react"},
-						},
 						instance: []*gitpod.PortsItems{
 							{Port: 3001, Visibility: "private", Name: "react"},
 							{Port: 3000, Visibility: "private", Name: "react"},
@@ -593,9 +548,6 @@ func TestPortsUpdateState(t *testing.T) {
 				},
 				{
 					Config: &ConfigChange{
-						workspace: []*gitpod.PortConfig{
-							{Port: 3000, Visibility: "private", Name: "react"},
-						},
 						instance: []*gitpod.PortsItems{
 							{Port: 3003, Visibility: "private", Name: "react"},
 							{Port: 3001, Visibility: "private", Name: "react"},
@@ -612,9 +564,6 @@ func TestPortsUpdateState(t *testing.T) {
 				},
 				{
 					Config: &ConfigChange{
-						workspace: []*gitpod.PortConfig{
-							{Port: 3000, Visibility: "private", Name: "react"},
-						},
 						instance: []*gitpod.PortsItems{
 							{Port: 3003, Visibility: "private", Name: "react"},
 							{Port: 3000, Visibility: "private", Name: "react"},
@@ -623,9 +572,6 @@ func TestPortsUpdateState(t *testing.T) {
 				},
 				{
 					Config: &ConfigChange{
-						workspace: []*gitpod.PortConfig{
-							{Port: 3000, Visibility: "private", Name: "react"},
-						},
 						instance: []*gitpod.PortsItems{
 							{Port: "3001-3005", Visibility: "private", Name: "react"},
 							{Port: 3003, Visibility: "private", Name: "react"},
@@ -738,7 +684,6 @@ func TestPortsUpdateState(t *testing.T) {
 				for _, c := range test.Changes {
 					if c.Config != nil {
 						change := &Configs{}
-						change.workspaceConfigs = parseWorkspaceConfigs(c.Config.workspace)
 						portConfigs, rangeConfigs := parseInstanceConfigs(c.Config.instance)
 						change.instancePortConfigs = portConfigs
 						change.instanceRangeConfigs = rangeConfigs
