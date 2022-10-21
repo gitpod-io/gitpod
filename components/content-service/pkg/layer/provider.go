@@ -522,7 +522,7 @@ git config --global --add safe.directory ${GITPOD_REPO_ROOT}
 git status --porcelain=v2 --branch -uall > /.workspace/prestophookdata/git_status.txt
 git log --pretty='%h: %s' --branches --not --remotes > /.workspace/prestophookdata/git_log_1.txt
 git log --pretty=%H -n 1 > /.workspace/prestophookdata/git_log_2.txt
-cp /workspace/.gitpod/prebuild-log* /.workspace/prestophookdata/
+cp /workspace/.gitpod/prebuild-log* /.workspace/prestophookdata/ | true
 `
 
 var pvcEnabledFile = `PVC`
