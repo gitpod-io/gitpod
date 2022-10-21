@@ -111,7 +111,7 @@ func newMetrics(reg prometheus.Registerer, upstream bool) (*metrics, error) {
 	blobDownloadSpeedHist := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "blob_req_bytes_second",
 		Help:    "blob download speed in bytes per second",
-		Buckets: prometheus.ExponentialBuckets(1024*1024, 2, 10),
+		Buckets: prometheus.ExponentialBuckets(1024*1024, 2, 15),
 	}, []string{"blobSource"})
 	if upstream {
 		err = reg.Register(blobDownloadSpeedHist)
