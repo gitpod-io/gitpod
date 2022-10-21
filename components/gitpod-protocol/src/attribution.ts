@@ -56,4 +56,8 @@ export namespace AttributionId {
                 return `team${SEPARATOR}${id.teamId}`;
         }
     }
+
+    export function equals(a: AttributionId, b: AttributionId): boolean {
+        return render(a) === render(b);
+    }
 }
