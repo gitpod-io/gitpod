@@ -1756,7 +1756,6 @@ type PortConfig struct {
 	Visibility  string  `json:"visibility,omitempty"`
 	Description string  `json:"description,omitempty"`
 	Name        string  `json:"name,omitempty"`
-	Sort        uint32  `json:"sort,omitempty"`
 }
 
 // TaskConfig is the TaskConfig message type

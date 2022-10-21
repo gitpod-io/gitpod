@@ -89,7 +89,7 @@ func TestPortsConfig(t *testing.T) {
 			Expectation: &PortConfigTestExpectations{
 				InstanceRangeConfigs: []*RangeConfig{
 					{
-						PortsItems: &gitpod.PortsItems{
+						PortsItems: gitpod.PortsItems{
 							Port:        "9229-9339",
 							OnOpen:      "ignore",
 							Visibility:  "public",
@@ -136,7 +136,7 @@ func TestPortsConfig(t *testing.T) {
 				t.Fatal(err)
 			case change := <-updates:
 				for _, config := range change.workspaceConfigs {
-					actual.WorkspaceConfigs = append(actual.WorkspaceConfigs, config)
+					actual.WorkspaceConfigs = append(actual.WorkspaceConfigs, &config.PortConfig)
 				}
 			}
 
@@ -150,7 +150,7 @@ func TestPortsConfig(t *testing.T) {
 				case change := <-updates:
 					actual.InstanceRangeConfigs = change.instanceRangeConfigs
 					for _, config := range change.instancePortConfigs {
-						actual.InstancePortConfigs = append(actual.InstancePortConfigs, config)
+						actual.InstancePortConfigs = append(actual.InstancePortConfigs, &config.PortConfig)
 					}
 				}
 			}
