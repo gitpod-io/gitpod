@@ -45,6 +45,7 @@ import { getSupportedWorkspaceClasses } from "./cluster-sync-service";
 import { Configuration } from "./config";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { GRPCError } from "./rpc";
+import { WorkspaceInstanceController } from "./workspace-instance-controller";
 
 export interface ClusterServiceServerOptions {
     port: number;
@@ -73,6 +74,9 @@ export class ClusterService implements IClusterServiceServer {
 
     @inject(WorkspaceManagerClientProviderCompositeSource)
     protected readonly allClientProvider: WorkspaceManagerClientProviderSource;
+
+    @inject(WorkspaceInstanceController)
+    protected readonly workspaceInstanceController: WorkspaceInstanceController;
 
     // using a queue to make sure we do concurrency right
     protected readonly queue: Queue = new Queue();
@@ -266,23 +270,40 @@ export class ClusterService implements IClusterServiceServer {
             try {
                 const req = call.request.toObject();
 
-                const instances = await this.workspaceDB.findRegularRunningInstances();
-                const relevantInstances = instances.filter((i) => i.region === req.name);
-                if (!req.force && relevantInstances.length > 0) {
+                const cluster = req.name;
+                const relevantInstances = await this.workspaceDB.findRunningInstancesWithWorkspaces(
+                    cluster,
+                    undefined,
+                    true,
+                );
+                if (relevantInstances.length > 0) {
+                    const relevantInstancesIdsStr = relevantInstances.map((i) => i.latestInstance.id).join(",");
+                    if (!req.force) {
+                        log.info({}, "cluster deregistration cancelled because cluster is not empty", {
+                            cluster,
+                            force: req.force,
+                            instanceCount: relevantInstances.length,
+                            instanceIds: relevantInstances.map((i) => i.latestInstance.id),
+                        });
+                        throw new GRPCError(
+                            grpc.status.FAILED_PRECONDITION,
+                            `cluster (${cluster}) is not empty (${relevantInstancesIdsStr.length} instances remaining) [${relevantInstancesIdsStr}]`,
+                        );
+                    }
+
                     log.info({}, "forced cluster deregistration even though there are still instances running", {
-                        cluster: req.name,
+                        cluster,
+                        force: req.force,
+                        instanceCount: relevantInstances.length,
+                        instanceIds: relevantInstances.map((i) => i.latestInstance.id),
                     });
-                    throw new GRPCError(
-                        grpc.status.FAILED_PRECONDITION,
-                        `cluster is not empty (${relevantInstances.length} instances remaining)[${relevantInstances
-                            .map((i) => i.id)
-                            .join(",")}]`,
-                    );
+
+                    await this.workspaceInstanceController.markAllRunningWorkspaceInstancesAsStopped(cluster);
                 }
 
                 await this.clusterDB.deleteByName(req.name);
-                log.info({}, "cluster deregistered", { cluster: req.name });
-                this.triggerReconcile("deregister", req.name);
+                log.info({}, "cluster deregistered", { cluster });
+                this.triggerReconcile("deregister", cluster);
 
                 callback(null, new DeregisterResponse());
             } catch (err) {

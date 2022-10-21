@@ -37,6 +37,8 @@ export interface WorkspaceInstanceController {
     ): Promise<void>;
 
     onStopped(ctx: TraceContext, ownerUserID: string, instance: WorkspaceInstance): Promise<void>;
+
+    markAllRunningWorkspaceInstancesAsStopped(installation: string): Promise<void>;
 }
 
 /**
@@ -297,6 +299,46 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
                 properties: { instanceId: instance.id, workspaceId: instance.workspaceId },
             });
         } catch (err) {
+            TraceContext.setError({ span }, err);
+            throw err;
+        } finally {
+            span.finish();
+        }
+    }
+
+    /**
+     * Marks all workspace instances of an entire cluster as "stopped"
+     * @param installation
+     */
+    async markAllRunningWorkspaceInstancesAsStopped(installation: string): Promise<void> {
+        const span = TraceContext.startSpan("markAllRunningWorkspaceInstancesAsStopped");
+        span.setTag("installation", installation);
+
+        try {
+            log.info("Start marking all instances as stopped...", { installation });
+
+            const now = new Date();
+            const runningInstances = await this.workspaceDB
+                .trace({ span })
+                .findRunningInstancesWithWorkspaces(installation, undefined, true);
+            await Promise.all(
+                runningInstances.map(async (info) => {
+                    const logContext: LogContext = {
+                        userId: info.workspace.ownerId,
+                        workspaceId: info.workspace.id,
+                        instanceId: info.latestInstance.id,
+                    };
+                    log.info(logContext, "Marking instance as stopped in database.", {
+                        installation,
+                        creationTime: info.workspace.creationTime,
+                        currentPhase: info.latestInstance.status.phase,
+                    });
+                    await this.markWorkspaceInstanceAsStopped({ span }, info, now);
+                }),
+            );
+            log.info("Done marking all instances as stopped.", { installation });
+        } catch (err) {
+            log.error("Error marking all instances as stopped.", err, { installation });
             TraceContext.setError({ span }, err);
             throw err;
         } finally {
