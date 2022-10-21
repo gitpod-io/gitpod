@@ -61,6 +61,7 @@ message GetStripeCustomerResponse {
 
 message StripeCustomer {
   string id = 1;
+  string currency = 2;
 }
 
 message CreateStripeCustomerRequest {

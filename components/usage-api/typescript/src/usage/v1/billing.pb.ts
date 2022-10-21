@@ -43,6 +43,7 @@ export interface GetStripeCustomerResponse {
 
 export interface StripeCustomer {
   id: string;
+  currency: string;
 }
 
 export interface CreateStripeCustomerRequest {
@@ -450,13 +451,16 @@ export const GetStripeCustomerResponse = {
 };
 
 function createBaseStripeCustomer(): StripeCustomer {
-  return { id: "" };
+  return { id: "", currency: "" };
 }
 
 export const StripeCustomer = {
   encode(message: StripeCustomer, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.id !== "") {
       writer.uint32(10).string(message.id);
+    }
+    if (message.currency !== "") {
+      writer.uint32(18).string(message.currency);
     }
     return writer;
   },
@@ -471,6 +475,9 @@ export const StripeCustomer = {
         case 1:
           message.id = reader.string();
           break;
+        case 2:
+          message.currency = reader.string();
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -480,18 +487,23 @@ export const StripeCustomer = {
   },
 
   fromJSON(object: any): StripeCustomer {
-    return { id: isSet(object.id) ? String(object.id) : "" };
+    return {
+      id: isSet(object.id) ? String(object.id) : "",
+      currency: isSet(object.currency) ? String(object.currency) : "",
+    };
   },
 
   toJSON(message: StripeCustomer): unknown {
     const obj: any = {};
     message.id !== undefined && (obj.id = message.id);
+    message.currency !== undefined && (obj.currency = message.currency);
     return obj;
   },
 
   fromPartial(object: DeepPartial<StripeCustomer>): StripeCustomer {
     const message = createBaseStripeCustomer();
     message.id = object.id ?? "";
+    message.currency = object.currency ?? "";
     return message;
   },
 };

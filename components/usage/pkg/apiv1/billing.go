@@ -377,7 +377,8 @@ func (s *BillingService) storeStripeCustomer(ctx context.Context, cus *stripe_ap
 	}
 
 	return &v1.StripeCustomer{
-		Id: cus.ID,
+		Id:       cus.ID,
+		Currency: cus.Metadata[stripe.PreferredCurrencyMetadataKey],
 	}, nil
 }
 
@@ -403,7 +404,8 @@ func balancesForStripeCostCenters(ctx context.Context, cm *db.CostCenterManager,
 
 func convertStripeCustomer(customer *stripe_api.Customer) *v1.StripeCustomer {
 	return &v1.StripeCustomer{
-		Id: customer.ID,
+		Id:       customer.ID,
+		Currency: customer.Metadata[stripe.PreferredCurrencyMetadataKey],
 	}
 }
 

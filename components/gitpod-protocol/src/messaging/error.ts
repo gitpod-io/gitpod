@@ -41,6 +41,9 @@ export namespace ErrorCodes {
     // 451 Out of credits
     export const PAYMENT_SPENDING_LIMIT_REACHED = 451;
 
+    // 451 Error creating a subscription
+    export const SUBSCRIPTION_ERROR = 452;
+
     // 455 Invalid cost center (custom status code)
     export const INVALID_COST_CENTER = 455;
 
