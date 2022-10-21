@@ -160,14 +160,19 @@
                         },
                         {
                             "name": "something_without_gitpod",
-                            "value": "will make it"
+                            "valueFrom": {
+                                "secretKeyRef": {
+                                    "name": "ws-test",
+                                    "key": "c1cf1305c2eb1eb4b0ce3f327b383751e785615720db2bcafc5227788067761c"
+                                }
+                            }
                         },
                         {
                             "name": "one_from_a_secret",
                             "valueFrom": {
                                 "secretKeyRef": {
-                                    "name": "some-secret",
-                                    "key": "some-key"
+                                    "name": "ws-test",
+                                    "key": "31ba5230e08a8d69893703c936aaf570c76246cac7a2f7d4cfd28b8ab180631b"
                                 }
                             }
                         },
