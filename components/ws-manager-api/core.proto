@@ -163,6 +163,9 @@ message MarkActiveRequest {
 
     // closed marks a workspace as closed which will shorten its timeout
     bool closed = 2;
+
+    // ignore_if_active only marks active when user never mark active, otherwise it will ignore
+    bool ignore_if_active = 3;
 }
 
 // MarkActiveResponse is the answer to a mark workspace active request

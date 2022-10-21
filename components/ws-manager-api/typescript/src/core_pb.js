@@ -2918,7 +2918,8 @@ proto.wsman.MarkActiveRequest.prototype.toObject = function(opt_includeInstance)
 proto.wsman.MarkActiveRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
     id: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    closed: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
+    closed: jspb.Message.getBooleanFieldWithDefault(msg, 2, false),
+    ignoreIfActive: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
   };
 
   if (includeInstance) {
@@ -2963,6 +2964,10 @@ proto.wsman.MarkActiveRequest.deserializeBinaryFromReader = function(msg, reader
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setClosed(value);
       break;
+    case 3:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setIgnoreIfActive(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -3006,6 +3011,13 @@ proto.wsman.MarkActiveRequest.serializeBinaryToWriter = function(message, writer
       f
     );
   }
+  f = message.getIgnoreIfActive();
+  if (f) {
+    writer.writeBool(
+      3,
+      f
+    );
+  }
 };
 
 
@@ -3042,6 +3054,24 @@ proto.wsman.MarkActiveRequest.prototype.getClosed = function() {
  */
 proto.wsman.MarkActiveRequest.prototype.setClosed = function(value) {
   return jspb.Message.setProto3BooleanField(this, 2, value);
+};
+
+
+/**
+ * optional bool ignore_if_active = 3;
+ * @return {boolean}
+ */
+proto.wsman.MarkActiveRequest.prototype.getIgnoreIfActive = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 3, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.wsman.MarkActiveRequest} returns this
+ */
+proto.wsman.MarkActiveRequest.prototype.setIgnoreIfActive = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 3, value);
 };
 
 

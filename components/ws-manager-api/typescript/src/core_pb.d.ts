@@ -290,6 +290,8 @@ export class MarkActiveRequest extends jspb.Message {
     setId(value: string): MarkActiveRequest;
     getClosed(): boolean;
     setClosed(value: boolean): MarkActiveRequest;
+    getIgnoreIfActive(): boolean;
+    setIgnoreIfActive(value: boolean): MarkActiveRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): MarkActiveRequest.AsObject;
@@ -305,6 +307,7 @@ export namespace MarkActiveRequest {
     export type AsObject = {
         id: string,
         closed: boolean,
+        ignoreIfActive: boolean,
     }
 }
 

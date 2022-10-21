@@ -122,10 +122,10 @@ func startHeartbeatingChannel(c ssh.Channel, heartbeat Heartbeat, session *Sessi
 				}
 				res.sawActivity = false
 				res.mux.Unlock()
-				heartbeat.SendHeartbeat(session.InstanceID, false)
+				heartbeat.SendHeartbeat(session.InstanceID, false, false)
 			case <-ctx.Done():
 				if res.requestedPty {
-					heartbeat.SendHeartbeat(session.InstanceID, true)
+					heartbeat.SendHeartbeat(session.InstanceID, true, false)
 					TrackIDECloseSignal(session)
 					log.WithField("instanceId", session.InstanceID).Info("send closed heartbeat")
 				}
