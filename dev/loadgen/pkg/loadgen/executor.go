@@ -11,6 +11,7 @@ import (
 	"io"
 	"math/rand"
 	"os"
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -113,6 +114,7 @@ type WsmanExecutor struct {
 	C          api.WorkspaceManagerClient
 	Sub        []context.CancelFunc
 	workspaces []string
+	mu         sync.Mutex
 }
 
 // StartWorkspace starts a new workspace
@@ -132,7 +134,10 @@ func (w *WsmanExecutor) StartWorkspace(spec *StartWorkspaceSpec) (callDuration t
 		return 0, err
 	}
 
+	// Must lock as StartWorkspace is called from multiple goroutines.
+	w.mu.Lock()
 	w.workspaces = append(w.workspaces, ss.Id)
+	w.mu.Unlock()
 	return time.Since(t0), nil
 }
 
@@ -188,7 +193,7 @@ func (w *WsmanExecutor) StopAll(ctx context.Context) error {
 		},
 	}
 
-	log.Info("stopping workspaces")
+	log.Infof("stopping %d workspaces", len(w.workspaces))
 	start := time.Now()
 	for _, id := range w.workspaces {
 		stopReq := api.StopWorkspaceRequest{
