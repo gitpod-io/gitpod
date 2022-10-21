@@ -63,8 +63,8 @@ func TestPortsUpdateState(t *testing.T) {
 				[]*api.PortsStatus{{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify_private}},
 				[]*api.PortsStatus{{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}},
 				[]*api.PortsStatus{{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}, {LocalPort: 60000, Served: true}},
-				[]*api.PortsStatus{{LocalPort: 60000, Served: true}},
-				{},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: false, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}, {LocalPort: 60000, Served: true}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: false, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}},
 			},
 		},
 		{
