@@ -470,6 +470,9 @@ run-vscode-ide-tests:
 run-jb-ide-tests:
 	$(call runtests,"test/tests/ide/jetbrains/")
 
+run-ssh-tests:
+	$(call runtests,"test/tests/ide/ssh/")
+
 run-cs-component-tests:
 	$(call runtests,"test/tests/components/content-service/")
 
