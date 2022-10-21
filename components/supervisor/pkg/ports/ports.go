@@ -748,8 +748,8 @@ func (pm *Manager) getStatus() []*api.PortsStatus {
 	}
 	sort.SliceStable(res, func(i, j int) bool {
 		// Max number of port 65536
-		score1 := 100000 + res[i].LocalPort
-		score2 := 100000 + res[j].LocalPort
+		score1 := NON_CONFIGED_BASIC_SCORE + res[i].LocalPort
+		score2 := NON_CONFIGED_BASIC_SCORE + res[j].LocalPort
 		if c, _, ok := pm.configs.Get(res[i].LocalPort); ok {
 			score1 = c.Sort
 		}
