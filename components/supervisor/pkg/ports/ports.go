@@ -291,7 +291,7 @@ func (pm *Manager) updateState(ctx context.Context, exposed []ExposedPort, serve
 	stateChanged := !reflect.DeepEqual(newState, pm.state)
 	pm.state = newState
 
-	if !stateChanged {
+	if !stateChanged && configured == nil {
 		return
 	}
 

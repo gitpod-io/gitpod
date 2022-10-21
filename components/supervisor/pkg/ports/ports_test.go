@@ -169,6 +169,7 @@ func TestPortsUpdateState(t *testing.T) {
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
+				{},
 				[]*api.PortsStatus{{LocalPort: 4040, Served: true, OnOpen: api.PortsStatus_open_browser}},
 				[]*api.PortsStatus{{LocalPort: 4040, Served: true, OnOpen: api.PortsStatus_open_browser, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "4040-foobar", OnExposed: api.OnPortExposedAction_open_browser}}},
 				[]*api.PortsStatus{
@@ -234,8 +235,8 @@ func TestPortsUpdateState(t *testing.T) {
 			ExpectedUpdates: UpdateExpectation{
 				{},
 				{
-					{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify_private},
 					{LocalPort: 3000, Served: true, OnOpen: api.PortsStatus_notify_private},
+					{LocalPort: 8080, Served: true, OnOpen: api.PortsStatus_notify_private},
 				},
 			},
 		},
@@ -496,6 +497,86 @@ func TestPortsUpdateState(t *testing.T) {
 				{{LocalPort: 3000, Name: "react", Served: true, OnOpen: api.PortsStatus_notify, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
 			},
 		},
+		{
+			Desc: "change configed ports order",
+			Changes: []Change{
+				{
+					Config: &ConfigChange{instance: []*gitpod.PortsItems{
+						{Port: 3001, Visibility: "private", Name: "react"},
+						{Port: 3000, Visibility: "private", Name: "react"},
+					}},
+				},
+				{
+					Config: &ConfigChange{instance: []*gitpod.PortsItems{
+						{Port: "5000-5999", Visibility: "private", Name: "react"},
+						{Port: 3001, Visibility: "private", Name: "react"},
+						{Port: 3000, Visibility: "private", Name: "react"},
+					}},
+				},
+				{
+					Served: []ServedPort{{net.IPv4zero, 5002, false}},
+				},
+				{
+					Served: []ServedPort{{net.IPv4zero, 5002, false}, {net.IPv4zero, 5001, false}},
+				},
+				{
+					Config: &ConfigChange{instance: []*gitpod.PortsItems{
+						{Port: 3000, Visibility: "private", Name: "react"},
+						{Port: 3001, Visibility: "private", Name: "react"},
+					}},
+				},
+				{
+					Served: []ServedPort{{net.IPv4zero, 5001, false}, {net.IPv4zero, 3000, false}},
+				},
+				{
+					Exposed: []ExposedPort{{LocalPort: 3000, Public: false, URL: "foobar"}},
+				},
+			},
+			ExpectedExposure: []ExposedPort{
+				{LocalPort: 5002},
+				{LocalPort: 5001},
+				{LocalPort: 3000},
+				{LocalPort: 3001},
+			},
+			ExpectedUpdates: UpdateExpectation{
+				{},
+				{
+					{LocalPort: 3001, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3000, Name: "react", OnOpen: api.PortsStatus_notify},
+				},
+				{
+					{LocalPort: 3001, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3000, Name: "react", OnOpen: api.PortsStatus_notify},
+				},
+				{
+					{LocalPort: 5002, Name: "react", Served: true, OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3001, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3000, Name: "react", OnOpen: api.PortsStatus_notify},
+				},
+				{
+					{LocalPort: 5001, Name: "react", Served: true, OnOpen: api.PortsStatus_notify},
+					{LocalPort: 5002, Name: "react", Served: true, OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3001, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3000, Name: "react", OnOpen: api.PortsStatus_notify},
+				},
+				{
+					{LocalPort: 3000, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3001, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 5001, Served: true, OnOpen: api.PortsStatus_notify_private},
+					{LocalPort: 5002, Served: true, OnOpen: api.PortsStatus_notify_private},
+				},
+				{
+					{LocalPort: 3000, Name: "react", Served: true, OnOpen: api.PortsStatus_notify},
+					{LocalPort: 3001, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 5001, Served: true, OnOpen: api.PortsStatus_notify_private},
+				},
+				{
+					{LocalPort: 3000, Name: "react", Served: true, OnOpen: api.PortsStatus_notify, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}},
+					{LocalPort: 3001, Name: "react", OnOpen: api.PortsStatus_notify},
+					{LocalPort: 5001, Served: true, OnOpen: api.PortsStatus_notify_private},
+				},
+			},
+		},
 	}
 
 	log.Log.Logger.SetLevel(logrus.FatalLevel)
@@ -584,8 +665,6 @@ func TestPortsUpdateState(t *testing.T) {
 			wg.Wait()
 
 			var (
-				sorPorts         = cmpopts.SortSlices(func(x, y uint32) bool { return x < y })
-				sortPortStatus   = cmpopts.SortSlices(func(x, y *api.PortsStatus) bool { return x.LocalPort < y.LocalPort })
 				sortExposed      = cmpopts.SortSlices(func(x, y ExposedPort) bool { return x.LocalPort < y.LocalPort })
 				ignoreUnexported = cmpopts.IgnoreUnexported(
 					api.PortsStatus{},
@@ -596,7 +675,7 @@ func TestPortsUpdateState(t *testing.T) {
 				t.Errorf("unexpected exposures (-want +got):\n%s", diff)
 			}
 
-			if diff := cmp.Diff(test.ExpectedUpdates, UpdateExpectation(updts), sorPorts, sortPortStatus, ignoreUnexported); diff != "" {
+			if diff := cmp.Diff(test.ExpectedUpdates, UpdateExpectation(updts), ignoreUnexported); diff != "" {
 				t.Errorf("unexpected updates (-want +got):\n%s", diff)
 			}
 		})
