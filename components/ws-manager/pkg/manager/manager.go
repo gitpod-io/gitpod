@@ -921,6 +921,12 @@ func (m *Manager) MarkActive(ctx context.Context, req *api.MarkActiveRequest) (r
 	if err != nil {
 		return nil, xerrors.Errorf("cannot mark workspace: %w", err)
 	}
+	_, hasFirstUserActivityAnnotation := pod.Annotations[firstUserActivityAnnotation]
+
+	// if user already mark workspace as active and this request has IgnoreIfActive flag, just simple ignore it
+	if hasFirstUserActivityAnnotation && req.IgnoreIfActive {
+		return &api.MarkActiveResponse{}, nil
+	}
 
 	// We do not keep the last activity as annotation on the workspace to limit the load we're placing
 	// on the K8S master in check. Thus, this state lives locally in a map.
@@ -940,7 +946,7 @@ func (m *Manager) MarkActive(ctx context.Context, req *api.MarkActiveRequest) (r
 	}
 
 	// If it's the first call: Mark the pod with firstUserActivityAnnotation
-	if _, hasFirstUserAcitviyAnnotation := pod.Annotations[firstUserActivityAnnotation]; !hasFirstUserAcitviyAnnotation {
+	if !hasFirstUserActivityAnnotation {
 		err = m.markWorkspace(ctx, workspaceID, addMark(firstUserActivityAnnotation, now.Format(time.RFC3339Nano)))
 		if err != nil {
 			log.WithError(err).WithFields(log.OWI("", "", workspaceID)).Warn("was unable to mark workspace with firstUserAcitviy")

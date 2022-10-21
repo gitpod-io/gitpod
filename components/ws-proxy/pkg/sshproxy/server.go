@@ -274,7 +274,7 @@ func (s *Server) HandleConn(c net.Conn) {
 		log.WithField("instanceId", wsInfo.InstanceID).WithField("workspaceIP", wsInfo.IPAddress).WithError(err).Error("connect failed")
 		return
 	}
-	s.Heartbeater.SendHeartbeat(wsInfo.InstanceID, false)
+	s.Heartbeater.SendHeartbeat(wsInfo.InstanceID, false, true)
 	ctx, cancel = context.WithCancel(context.Background())
 
 	s.TrackSSHConnection(wsInfo, "connect", nil)
