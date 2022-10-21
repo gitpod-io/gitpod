@@ -18,26 +18,32 @@ import (
 
 // RangeConfig is a port range config.
 type RangeConfig struct {
-	*gitpod.PortsItems
+	gitpod.PortsItems
 	Start uint32
 	End   uint32
 	Sort  uint32
 }
 
+// SortConfig is a port with a sort field
+type SortConfig struct {
+	gitpod.PortConfig
+	Sort uint32
+}
+
 // Configs provides access to port configurations.
 type Configs struct {
-	workspaceConfigs     map[uint32]*gitpod.PortConfig
-	instancePortConfigs  map[uint32]*gitpod.PortConfig
+	workspaceConfigs     map[uint32]*SortConfig
+	instancePortConfigs  map[uint32]*SortConfig
 	instanceRangeConfigs []*RangeConfig
 }
 
 // ForEach iterates over all configured ports.
-func (configs *Configs) ForEach(callback func(port uint32, config *gitpod.PortConfig)) {
+func (configs *Configs) ForEach(callback func(port uint32, config *SortConfig)) {
 	if configs == nil {
 		return
 	}
 	visited := make(map[uint32]struct{})
-	for _, configs := range []map[uint32]*gitpod.PortConfig{configs.instancePortConfigs, configs.workspaceConfigs} {
+	for _, configs := range []map[uint32]*SortConfig{configs.instancePortConfigs, configs.workspaceConfigs} {
 		for port, config := range configs {
 			_, exists := visited[port]
 			if exists {
@@ -60,7 +66,7 @@ var (
 )
 
 // Get returns the config for the give port.
-func (configs *Configs) Get(port uint32) (*gitpod.PortConfig, ConfigKind, bool) {
+func (configs *Configs) Get(port uint32) (*SortConfig, ConfigKind, bool) {
 	if configs == nil {
 		return nil, PortConfigKind, false
 	}
@@ -74,13 +80,15 @@ func (configs *Configs) Get(port uint32) (*gitpod.PortConfig, ConfigKind, bool) 
 	}
 	for _, rangeConfig := range configs.instanceRangeConfigs {
 		if rangeConfig.Start <= port && port <= rangeConfig.End {
-			return &gitpod.PortConfig{
-				Port:        float64(port),
-				OnOpen:      rangeConfig.OnOpen,
-				Visibility:  rangeConfig.Visibility,
-				Description: rangeConfig.Description,
-				Name:        rangeConfig.Name,
-				Sort:        rangeConfig.Sort,
+			return &SortConfig{
+				PortConfig: gitpod.PortConfig{
+					Port:        float64(port),
+					OnOpen:      rangeConfig.OnOpen,
+					Visibility:  rangeConfig.Visibility,
+					Description: rangeConfig.Description,
+					Name:        rangeConfig.Name,
+				},
+				Sort: rangeConfig.Sort,
 			}, RangeConfigKind, true
 		}
 	}
@@ -170,22 +178,26 @@ func (service *ConfigService) update(config *gitpod.GitpodConfig, current *Confi
 
 var portRangeRegexp = regexp.MustCompile(`^(\d+)[-:](\d+)$`)
 
-func parseWorkspaceConfigs(ports []*gitpod.PortConfig) (portConfigs map[uint32]*gitpod.PortConfig) {
+func parseWorkspaceConfigs(ports []*gitpod.PortConfig) (portConfigs map[uint32]*SortConfig) {
 	if len(ports) == 0 {
 		return nil
 	}
-	portConfigs = make(map[uint32]*gitpod.PortConfig)
+	portConfigs = make(map[uint32]*SortConfig)
 	for _, config := range ports {
 		port := uint32(config.Port)
 		_, exists := portConfigs[port]
 		if !exists {
-			portConfigs[port] = config
+			portConfigs[port] = &SortConfig{
+				PortConfig: *config,
+				// We don't care about workspace configs but instance config
+				Sort: 0,
+			}
 		}
 	}
 	return portConfigs
 }
 
-func parseInstanceConfigs(ports []*gitpod.PortsItems) (portConfigs map[uint32]*gitpod.PortConfig, rangeConfigs []*RangeConfig) {
+func parseInstanceConfigs(ports []*gitpod.PortsItems) (portConfigs map[uint32]*SortConfig, rangeConfigs []*RangeConfig) {
 	for index, config := range ports {
 		if config == nil {
 			continue
@@ -195,18 +207,20 @@ func parseInstanceConfigs(ports []*gitpod.PortsItems) (portConfigs map[uint32]*g
 		Port, err := strconv.ParseUint(rawPort, 10, 16)
 		if err == nil {
 			if portConfigs == nil {
-				portConfigs = make(map[uint32]*gitpod.PortConfig)
+				portConfigs = make(map[uint32]*SortConfig)
 			}
 			port := uint32(Port)
 			_, exists := portConfigs[port]
 			if !exists {
-				portConfigs[port] = &gitpod.PortConfig{
-					OnOpen:      config.OnOpen,
-					Port:        float64(Port),
-					Visibility:  config.Visibility,
-					Description: config.Description,
-					Name:        config.Name,
-					Sort:        uint32(index),
+				portConfigs[port] = &SortConfig{
+					PortConfig: gitpod.PortConfig{
+						OnOpen:      config.OnOpen,
+						Port:        float64(Port),
+						Visibility:  config.Visibility,
+						Description: config.Description,
+						Name:        config.Name,
+					},
+					Sort: uint32(index),
 				}
 			}
 			continue
@@ -224,7 +238,7 @@ func parseInstanceConfigs(ports []*gitpod.PortsItems) (portConfigs map[uint32]*g
 			continue
 		}
 		rangeConfigs = append(rangeConfigs, &RangeConfig{
-			PortsItems: config,
+			PortsItems: *config,
 			Start:      uint32(start),
 			End:        uint32(end),
 			Sort:       uint32(index),

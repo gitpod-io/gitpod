@@ -315,10 +315,14 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 			return mp
 		}
 		config, _, exists := pm.configs.Get(port)
+		var portConfig *gitpod.PortConfig
+		if exists && config != nil {
+			portConfig = &config.PortConfig
+		}
 		mp := &managedPort{
 			LocalhostPort: port,
-			OnExposed:     getOnExposedAction(config, port),
-			OnOpen:        getOnOpenAction(config, port),
+			OnExposed:     getOnExposedAction(portConfig, port),
+			OnOpen:        getOnOpenAction(portConfig, port),
 		}
 		if exists {
 			mp.Name = config.Name
@@ -358,7 +362,7 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 
 	// 2. second capture configured since we don't want to auto expose already exposed ports
 	if pm.configs != nil {
-		pm.configs.ForEach(func(port uint32, config *gitpod.PortConfig) {
+		pm.configs.ForEach(func(port uint32, config *SortConfig) {
 			if pm.boundInternally(port) {
 				return
 			}
@@ -740,12 +744,7 @@ func (pm *Manager) Subscribe() (*Subscription, error) {
 func (pm *Manager) getStatus() []*api.PortsStatus {
 	res := make([]*api.PortsStatus, 0, len(pm.state))
 	for port := range pm.state {
-		portStatus := pm.getPortStatus(port)
-		// Filter out ports that not served and not inside `.gitpod.yml`
-		if _, _, ok := pm.configs.Get(port); !ok && !portStatus.Served {
-			continue
-		}
-		res = append(res, portStatus)
+		res = append(res, pm.getPortStatus(port))
 	}
 	sort.SliceStable(res, func(i, j int) bool {
 		// Max number of port 65536
