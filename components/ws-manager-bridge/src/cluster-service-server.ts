@@ -88,7 +88,10 @@ export class ClusterService implements IClusterServiceServer {
                 const req = call.request.toObject();
 
                 const clusterByNamePromise = this.clusterDB.findByName(req.name);
-                const clusterByUrlPromise = this.clusterDB.findFiltered({ url: req.url });
+                const clusterByUrlPromise = this.clusterDB.findFiltered({
+                    url: req.url,
+                    applicationCluster: this.config.installation,
+                });
 
                 const [clusterByName, clusterByUrl] = await Promise.all([clusterByNamePromise, clusterByUrlPromise]);
 
@@ -303,7 +306,9 @@ export class ClusterService implements IClusterServiceServer {
                 const response = new ListResponse();
 
                 const dbClusterIdx = new Map<string, boolean>();
-                const allDBClusters = await this.clusterDB.findFiltered({});
+                const allDBClusters = await this.clusterDB.findFiltered({
+                    applicationCluster: this.config.installation,
+                });
                 for (const cluster of allDBClusters) {
                     const clusterStatus = convertToGRPC(cluster);
                     response.addStatus(clusterStatus);
