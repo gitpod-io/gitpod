@@ -9,7 +9,7 @@ import { validateChanges } from "./jobs/build/validate-changes";
 import { prepare } from "./jobs/build/prepare";
 import { deployToPreviewEnvironment } from "./jobs/build/deploy-to-preview-environment";
 import { runIntegrationTests } from "./jobs/build/trigger-integration-tests";
-import { triggerSelfHostedPreview, triggerUpgradeTests } from "./jobs/build/self-hosted-upgrade-tests";
+import { rcRelease, triggerSelfHostedPreview, triggerUpgradeTests } from "./jobs/build/self-hosted-upgrade-tests";
 import { jobConfig } from "./jobs/build/job-config";
 
 // Will be set once tracing has been initialized
@@ -66,6 +66,11 @@ async function run(context: any) {
 
     if (config.withSelfHostedPreview) {
         await triggerSelfHostedPreview(werft, config, context.Owner);
+        return;
+    }
+
+    if (config.rcRelease) {
+        await rcRelease(werft, config);
         return;
     }
 

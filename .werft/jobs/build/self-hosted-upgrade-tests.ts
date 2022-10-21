@@ -196,3 +196,34 @@ function getCustomerID(licenseName: string): string {
 
     return customerID
 }
+
+
+export async function rcRelease(werft: Werft, config: JobConfig) {
+    if(!config.rcTag) {
+        werft.log("trigger-rc-release", "Tag not provided")
+        werft.done("trigger RC release");
+        return;
+    }
+
+    werft.phase("trigger-rc-release", "Trigger RC release job");
+
+    const annotation = `-a image=${config.version} -a tag=${config.rcTag}`
+
+    const releaseJobFile: string = `.werft/rc-release.yaml`;
+
+    const ret = exec(
+        `werft run --remote-job-path ${releaseJobFile} ${annotation} github`,
+        {
+            slice: "run-werft-job"
+        },
+    )
+
+    const jobID = ret.stdout.trim()
+    exec(
+        `werft log result -d  "Werft preview build for RC release for tag ${config.rcTag}" url "https://werft.gitpod-dev.com/job/${jobID}"`,
+    );
+
+    werft.done("trigger-rc-release");
+
+    return;
+}

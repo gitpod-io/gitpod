@@ -20,6 +20,8 @@ export interface JobConfig {
     publishToJBMarketplace: boolean;
     publishToNpm: string;
     publishToKots: boolean;
+    rcRelease: boolean;
+    rcTag: string;
     retag: string;
     replicatedChannel: string;
     storage: string;
@@ -86,9 +88,11 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const cluster = buildConfig["cluster"];
     const withSelfHostedPreview = "with-sh-preview" in buildConfig;
     const replicatedVersion = withSelfHostedPreview ? buildConfig["version"] : "";
+    const rcRelease = buildConfig["rc-release"] || false;
+    const rcTag = buildConfig["tag"];
     const publishToNpm = "publish-to-npm" in buildConfig || mainBuild;
     const publishToJBMarketplace = "publish-to-jb-marketplace" in buildConfig || mainBuild;
-    const publishToKots = "publish-to-kots" in buildConfig || withSelfHostedPreview || mainBuild;
+    const publishToKots = "publish-to-kots" in buildConfig || withSelfHostedPreview || mainBuild || rcRelease;
     const analytics = buildConfig["analytics"];
     const localAppVersion = mainBuild || "with-localapp-version" in buildConfig ? version : "unknown";
     const retag = "with-retag" in buildConfig ? "" : "--dont-retag";
@@ -141,6 +145,8 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         publishToJBMarketplace,
         publishToNpm,
         publishToKots,
+        rcRelease,
+        rcTag,
         replicatedChannel,
         replicatedVersion,
         repository,

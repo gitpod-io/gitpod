@@ -58,15 +58,20 @@ pod:
 
         git checkout $BRANCH
 
+        git config --global user.name roboquat
+        git config --global user.email roboquat@gitpod.io
+        git remote set-url origin https://oauth2:$ROBOQUAT_TOKEN@github.com/gitpod-io/gitpod.git
+
         # git tag $tag
         # git push origin $tag
 
-        sh install/installer/scripts/create-release-note.sh $image
+        bash install/installer/scripts/create-release-note.sh $image $tag
 
         cat release-note-$tag.md
 
-        # cd install/installer
-        # VERSION=$image make
-        # cd ../..
+        cd install/installer
+        VERSION=$image make
+        cd ../..
 
         # gh release create $tag --notes-file release-note-$tag.md --draft --prerelease install/installer/dist
+        # replicated promote
