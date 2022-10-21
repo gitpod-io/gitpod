@@ -387,7 +387,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "update");
 
         // if any other running instance has a custom timeout other than the user's default, we'll reset that timeout
-        const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
+        const client = await this.workspaceManagerClientProvider.get(
+            runningInstance.region,
+            this.config.installationShortname,
+        );
         const defaultTimeout = await this.entitlementService.getDefaultWorkspaceTimeout(user, new Date());
         const instancesWithReset = runningInstances.filter(
             (i) => i.workspaceId !== workspaceId && i.status.timeout !== defaultTimeout && i.status.phase === "running",
@@ -398,7 +401,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 req.setId(i.id);
                 req.setDuration(this.userService.workspaceTimeoutToDuration(defaultTimeout));
 
-                const client = await this.workspaceManagerClientProvider.get(i.region);
+                const client = await this.workspaceManagerClientProvider.get(
+                    i.region,
+                    this.config.installationShortname,
+                );
                 return client.setTimeout(ctx, req);
             }),
         );
@@ -436,7 +442,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const req = new DescribeWorkspaceRequest();
         req.setId(runningInstance.id);
 
-        const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
+        const client = await this.workspaceManagerClientProvider.get(
+            runningInstance.region,
+            this.config.installationShortname,
+        );
         const desc = await client.describeWorkspace(ctx, req);
         const duration = this.userService.durationToWorkspaceTimeout(desc.getStatus()!.getSpec()!.getTimeout());
         const durationRaw = this.userService.workspaceTimeoutToDuration(duration);
@@ -491,7 +500,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             req.setId(instance.id);
             req.setLevel(lvlmap.get(level)!);
 
-            const client = await this.workspaceManagerClientProvider.get(instance.region);
+            const client = await this.workspaceManagerClientProvider.get(
+                instance.region,
+                this.config.installationShortname,
+            );
             await client.controlAdmission(ctx, req);
         }
 
@@ -517,7 +529,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
         await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "get");
 
-        const client = await this.workspaceManagerClientProvider.get(instance.region);
+        const client = await this.workspaceManagerClientProvider.get(
+            instance.region,
+            this.config.installationShortname,
+        );
         const request = new TakeSnapshotRequest();
         request.setId(instance.id);
         request.setReturnImmediately(true);

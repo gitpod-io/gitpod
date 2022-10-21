@@ -100,14 +100,14 @@ export class BridgeController {
             ...defaultGRPCOptions,
         };
         const clientProvider = async () => {
-            return this.clientProvider.get(cluster.name, grpcOptions);
+            return this.clientProvider.get(cluster.name, this.config.installation, grpcOptions);
         };
         bridge.start(cluster, clientProvider);
         return bridge;
     }
 
     protected async getAllWorkspaceClusters(): Promise<Map<string, WorkspaceClusterWoTLS>> {
-        const allInfos = await this.clientProvider.getAllWorkspaceClusters();
+        const allInfos = await this.clientProvider.getAllWorkspaceClusters(this.config.installation);
         const result: Map<string, WorkspaceClusterWoTLS> = new Map();
         for (const cluster of allInfos) {
             result.set(cluster.name, cluster);

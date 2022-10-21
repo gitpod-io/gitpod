@@ -163,7 +163,12 @@ export class ClusterService implements IClusterServiceServer {
                     {},
                 );
                 if (enabled) {
-                    let classConstraints = await getSupportedWorkspaceClasses(this.clientProvider, newCluster, false);
+                    let classConstraints = await getSupportedWorkspaceClasses(
+                        this.clientProvider,
+                        newCluster,
+                        this.config.installation,
+                        false,
+                    );
                     newCluster.admissionConstraints = admissionConstraints.concat(classConstraints);
                 } else {
                     // try to connect to validate the config. Throws an exception if it fails.
@@ -305,7 +310,7 @@ export class ClusterService implements IClusterServiceServer {
                     dbClusterIdx.set(cluster.name, true);
                 }
 
-                const allCluster = await this.allClientProvider.getAllWorkspaceClusters();
+                const allCluster = await this.allClientProvider.getAllWorkspaceClusters(this.config.installation);
                 for (const cluster of allCluster) {
                     if (dbClusterIdx.get(cluster.name)) {
                         continue;
