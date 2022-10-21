@@ -592,6 +592,21 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			gitpodGUID := int64(133332)
 			pod.Spec.SecurityContext.FSGroup = &gitpodGUID
 
+			// add init container to chown workspace subpath, so that it is owned by gitpod user (there is no k8s native way of doing this as of right now)
+			pod.Spec.InitContainers = append(pod.Spec.InitContainers, corev1.Container{
+				Name:            "chown-workspace",
+				Image:           "busybox",
+				ImagePullPolicy: corev1.PullIfNotPresent,
+				Command:         []string{"chown", "133332:133332", "/workspace"},
+				VolumeMounts: []corev1.VolumeMount{
+					{
+						Name:      workspaceVolumeName,
+						SubPath:   "workspace",
+						MountPath: "/workspace",
+					},
+				},
+			})
+
 		case api.WorkspaceFeatureFlag_WORKSPACE_CLASS_LIMITING:
 			limits := startContext.Class.Container.Limits
 			if limits != nil && limits.CPU != nil {
