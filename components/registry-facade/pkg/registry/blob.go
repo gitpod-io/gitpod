@@ -196,6 +196,9 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 				log.WithField("digest", bh.Digest).Warn("cannot push to IPFS - blob is nil")
 				return
 			}
+
+			defer rc.Close()
+
 			err = bh.IPFS.Store(context.Background(), bh.Digest, rc, mediaType)
 			if err != nil {
 				log.WithError(err).WithField("digest", bh.Digest).Warn("cannot push to IPFS")
