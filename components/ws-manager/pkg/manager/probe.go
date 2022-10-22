@@ -14,6 +14,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"golang.org/x/xerrors"
 	"k8s.io/apimachinery/pkg/util/json"
 )
 
@@ -77,42 +78,12 @@ func (p *WorkspaceReadyProbe) Run(ctx context.Context) WorkspaceProbeResult {
 		},
 	}
 
-	type probeResult struct {
-		Ok bool `json:"ok"`
-	}
-
-	callReadyURL := func(url string) (bool, *probeResult, error) {
-		resp, err := client.Get(p.readyURL)
-		if err != nil {
-			return false, nil, err
-		}
-
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			return false, nil, nil
-		}
-
-		rawBody, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return false, nil, err
-		}
-
-		var result probeResult
-		err = json.Unmarshal(rawBody, &result)
-		if err != nil {
-			return false, nil, err
-		}
-
-		return true, &result, nil
-	}
-
 	for {
 		if ctx.Err() != nil {
 			return WorkspaceProbeStopped
 		}
 
-		isOk, result, err := callReadyURL(p.readyURL)
+		result, err := callWorkspaceProbe(p.readyURL, client)
 		if err != nil {
 			urlerr, ok := err.(*url.Error)
 			if !ok || !urlerr.Timeout() {
@@ -125,17 +96,45 @@ func (p *WorkspaceReadyProbe) Run(ctx context.Context) WorkspaceProbeResult {
 			continue
 		}
 
-		if !isOk {
+		if !result.Ok {
 			log.WithField("url", p.readyURL).Debug("workspace did not respond to ready probe with OK status")
 			time.Sleep(p.RetryDelay)
 			continue
 		}
 
-		if result.Ok {
-			break
-		}
+		break
 	}
 
 	// workspace is actually ready
 	return WorkspaceProbeReady
+}
+
+type probeResult struct {
+	Ok bool `json:"ok"`
+}
+
+func callWorkspaceProbe(url string, client *http.Client) (*probeResult, error) {
+	resp, err := client.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, xerrors.Errorf("workspace probe request returned %v as status code", resp.StatusCode)
+	}
+
+	rawBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var result probeResult
+	err = json.Unmarshal(rawBody, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
 }
