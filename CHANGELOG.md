@@ -1,6 +1,12 @@
 # Change Log
 
 ## October 2022
+- Fixes default location of PortsView incorrect ([#14102](https://github.com/gitpod-io/gitpod/pull/14102)) - [@mustard-mh](https://github.com/mustard-mh)
+- Bugfix for gitpod CLI: avoid failure on `ports list` when port is not exposed ([#14040](https://github.com/gitpod-io/gitpod/pull/14040)) - [@andreafalzetti](https://github.com/andreafalzetti)
+- Provide pressure stall information for workspaces ([#13703](https://github.com/gitpod-io/gitpod/pull/13703)) - [@Furisto](https://github.com/Furisto)
+- [kots]: add db migration job to fluent bit logger ([#14051](https://github.com/gitpod-io/gitpod/pull/14051)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Fix a bug that a workspace is not started when there was a checkout hook ([#14067](https://github.com/gitpod-io/gitpod/pull/14067)) - [@utam0k](https://github.com/utam0k)
+- ws-manager: Redact logs of a workspace status. ([#14064](https://github.com/gitpod-io/gitpod/pull/14064)) - [@utam0k](https://github.com/utam0k)
 - Fixes port 3000 becomes the default config of ports if there is no `.gitpod.yml` file ([#14056](https://github.com/gitpod-io/gitpod/pull/14056)) - [@mustard-mh](https://github.com/mustard-mh)
 - Display sorted ports with both `gp-cli` and VSCode Browser `PortsView` ([#13788](https://github.com/gitpod-io/gitpod/pull/13788)) - [@mustard-mh](https://github.com/mustard-mh)
 - Update balance used progress indicator height ([#14054](https://github.com/gitpod-io/gitpod/pull/14054)) - [@gtsiolis](https://github.com/gtsiolis)
