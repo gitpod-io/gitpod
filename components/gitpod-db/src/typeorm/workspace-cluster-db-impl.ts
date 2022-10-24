@@ -32,9 +32,9 @@ export class WorkspaceClusterDBImpl implements WorkspaceClusterDB {
         await repo.save(cluster);
     }
 
-    async deleteByName(name: string): Promise<void> {
+    async deleteByName(name: string, applicationCluster: string): Promise<void> {
         const repo = await this.getRepo();
-        await repo.delete(name);
+        await repo.delete({ name, applicationCluster });
     }
 
     async findByName(name: string, applicationCluster: string): Promise<WorkspaceCluster | undefined> {

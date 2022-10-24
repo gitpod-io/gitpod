@@ -90,7 +90,7 @@ export interface WorkspaceClusterDB {
      * Deletes the cluster identified by this name, if any.
      * @param name
      */
-    deleteByName(name: string): Promise<void>;
+    deleteByName(name: string, applicationCluster: string): Promise<void>;
 
     /**
      * Finds a WorkspaceCluster with the given name. If there is none, `undefined` is returned.
