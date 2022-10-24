@@ -37,9 +37,9 @@ export class WorkspaceClusterDBImpl implements WorkspaceClusterDB {
         await repo.delete(name);
     }
 
-    async findByName(name: string): Promise<WorkspaceCluster | undefined> {
+    async findByName(name: string, applicationCluster: string): Promise<WorkspaceCluster | undefined> {
         const repo = await this.getRepo();
-        return repo.findOne(name);
+        return repo.findOne({ name, applicationCluster });
     }
 
     async findFiltered(predicate: WorkspaceClusterFilter): Promise<WorkspaceClusterWoTLS[]> {
