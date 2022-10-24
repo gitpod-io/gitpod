@@ -19,22 +19,9 @@ import { getGitpodService } from "../service/service";
 import DropDown from "../components/DropDown";
 import Modal from "../components/Modal";
 import Alert from "./Alert";
+import dayjs from "dayjs";
 
 const BASE_USAGE_LIMIT_FOR_STRIPE_USERS = 1000;
-const MONTH_NAMES = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-];
 
 type PendingStripeSubscription = { pendingSince: number };
 
@@ -57,12 +44,9 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
     const [billingError, setBillingError] = useState<string | undefined>();
 
     const localStorageKey = `pendingStripeSubscriptionFor${attributionId}`;
-    const billingPeriodFrom = new Date(new Date().toISOString().slice(0, 7) + "-01"); // First day of this month: YYYY-MM-01T00:00:00.000Z
-    const billingPeriodTo = new Date(billingPeriodFrom.getTime());
-    billingPeriodTo.setUTCMonth(billingPeriodTo.getUTCMonth() + 1); // First day of next month
-    billingPeriodTo.setUTCMilliseconds(billingPeriodTo.getUTCMilliseconds() - 1); // Last millisecond of this month
-    const billingPeriodMonthName = MONTH_NAMES[billingPeriodFrom.getUTCMonth()];
-    const billingPeriodMonthShortname = billingPeriodMonthName.slice(0, 3);
+    const now = dayjs().utc(true);
+    const billingPeriodFrom = now.startOf("month");
+    const billingPeriodTo = now.endOf("month");
 
     useEffect(() => {
         if (!attributionId) {
@@ -193,7 +177,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
             const response = await getGitpodService().server.listUsage({
                 attributionId,
                 order: Ordering.ORDERING_DESCENDING,
-                from: billingPeriodFrom.getTime(),
+                from: billingPeriodFrom.toDate().getTime(),
                 to: Date.now(),
             });
             setCurrentUsage(response.creditsUsed);
@@ -270,11 +254,8 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                             <div className="flex-grow">
                                 <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Current Period</div>
                                 <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                    <span className="font-semibold">
-                                        {`${billingPeriodMonthName} ${billingPeriodFrom.getUTCFullYear()}`}
-                                    </span>{" "}
-                                    {`(${billingPeriodMonthShortname} ${billingPeriodFrom.getUTCDate()}` +
-                                        ` - ${billingPeriodMonthShortname} ${billingPeriodTo.getUTCDate()})`}
+                                    <span className="font-semibold">{`${billingPeriodFrom.format("MMMM YYYY")}`}</span>{" "}
+                                    {`(${billingPeriodFrom.format("MMM D")}` + ` - ${billingPeriodTo.format("MMM D")})`}
                                 </div>
                             </div>
                             <div>
