@@ -1,12 +1,18 @@
 import {exec, execStream} from "../../util/shell";
 import { Werft } from "../../util/werft";
-import { CORE_DEV_KUBECONFIG_PATH, GCLOUD_SERVICE_ACCOUNT_PATH, HARVESTER_KUBECONFIG_PATH } from "./const";
+import {
+    CORE_DEV_KUBECONFIG_PATH,
+    GCLOUD_SERVICE_ACCOUNT_PATH,
+    GLOBAL_KUBECONFIG_PATH,
+    HARVESTER_KUBECONFIG_PATH
+} from "./const";
 import { JobConfig } from "./job-config";
 import {certReady} from "../../util/certs";
 import {vmExists} from "../../vm/vm";
 
 const phaseName = "prepare";
 const prepareSlices = {
+    CONFIGURE_K8S: "Configuring k8s access.",
     CONFIGURE_CORE_DEV: "Configuring core-dev access.",
     BOOT_VM: "Booting VM.",
     WAIT_CERTIFICATES: "Waiting for certificates to be ready for the preview.",
@@ -19,6 +25,7 @@ export async function prepare(werft: Werft, config: JobConfig) {
         activateCoreDevServiceAccount();
         configureDocker();
         configureStaticClustersAccess();
+        configureGlobalKubernetesContext();
         werft.done(prepareSlices.CONFIGURE_CORE_DEV);
         if (!config.withPreview)
         {
@@ -50,6 +57,14 @@ function configureDocker() {
 
     if (rcDocker != 0 || rcDockerRegistry != 0) {
         throw new Error("Failed to configure docker with gcloud.");
+    }
+}
+
+function configureGlobalKubernetesContext() {
+    const rc = exec(`previewctl get-credentials --gcp-service-account=${GCLOUD_SERVICE_ACCOUNT_PATH} --kube-save-path=${GLOBAL_KUBECONFIG_PATH}`, { slice: prepareSlices.CONFIGURE_K8S }).code;
+
+    if (rc != 0) {
+        throw new Error("Failed to configure global kubernetes context.");
     }
 }
 
@@ -90,8 +105,7 @@ async function createVM(werft: Werft, config: JobConfig) {
     // We pass the GCP credentials explicitly, otherwise for some reason TF doesn't pick them up
     const commonVars = `GOOGLE_BACKEND_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
                         GOOGLE_APPLICATION_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
-                        TF_VAR_dev_kube_path=${CORE_DEV_KUBECONFIG_PATH} \
-                        TF_VAR_harvester_kube_path=${HARVESTER_KUBECONFIG_PATH} \
+                        TF_VAR_kubeconfig_path=${GLOBAL_KUBECONFIG_PATH} \
                         TF_VAR_preview_name=${config.previewEnvironment.destname} \
                         TF_VAR_vm_cpu=${cpu} \
                         TF_VAR_vm_memory=${memory}Gi \

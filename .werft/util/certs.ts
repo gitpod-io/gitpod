@@ -1,5 +1,9 @@
 import {exec, ExecOptions, execStream} from "./shell";
-import {CORE_DEV_KUBECONFIG_PATH, GCLOUD_SERVICE_ACCOUNT_PATH, HARVESTER_KUBECONFIG_PATH} from "../jobs/build/const";
+import {
+    CORE_DEV_KUBECONFIG_PATH,
+    GCLOUD_SERVICE_ACCOUNT_PATH,
+    GLOBAL_KUBECONFIG_PATH,
+} from "../jobs/build/const";
 import { Werft } from "./werft";
 import { reportCertificateError } from "../util/slack";
 import {JobConfig} from "../jobs/build/job-config";
@@ -21,8 +25,7 @@ export async function certReady(werft: Werft, config: JobConfig, slice: string):
     // We pass the GCP credentials explicitly, otherwise for some reason TF doesn't pick them up
     const commonVars = `GOOGLE_BACKEND_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
                         GOOGLE_APPLICATION_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
-                        TF_VAR_dev_kube_path=${CORE_DEV_KUBECONFIG_PATH} \
-                        TF_VAR_harvester_kube_path=${HARVESTER_KUBECONFIG_PATH} \
+                        TF_VAR_kubeconfig_path=${GLOBAL_KUBECONFIG_PATH} \
                         TF_VAR_preview_name=${config.previewEnvironment.destname} \
                         TF_VAR_vm_cpu=${cpu} \
                         TF_VAR_vm_memory=${memory}Gi \

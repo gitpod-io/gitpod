@@ -1,6 +1,6 @@
 import {
-    CORE_DEV_KUBECONFIG_PATH,
     GCLOUD_SERVICE_ACCOUNT_PATH,
+    GLOBAL_KUBECONFIG_PATH,
     HARVESTER_KUBECONFIG_PATH,
     PREVIEW_K3S_KUBECONFIG_PATH
 } from "../jobs/build/const";
@@ -19,8 +19,7 @@ export async function deleteVM(options: { name: string }) {
         await execStream(`DESTROY=true \
                                     GOOGLE_APPLICATION_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
                                     GOOGLE_BACKEND_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
-                                    TF_VAR_dev_kube_path=${CORE_DEV_KUBECONFIG_PATH} \
-                                    TF_VAR_harvester_kube_path=${HARVESTER_KUBECONFIG_PATH} \
+                                    TF_VAR_kubeconfig_path=${GLOBAL_KUBECONFIG_PATH} \
                                     TF_VAR_preview_name=${options.name} \
                                     ./dev/preview/workflow/preview/deploy-harvester.sh`,
             {slice: "Deleting VM."})
