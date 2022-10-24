@@ -9,7 +9,7 @@ terraform {
   required_providers {
     harvester = {
       source  = "harvester/harvester"
-      version = ">=0.5.1"
+      version = ">=0.5.3"
     }
     k8s = {
       source  = "hashicorp/kubernetes"
@@ -23,18 +23,21 @@ terraform {
 }
 
 provider "harvester" {
-  alias      = "harvester"
-  kubeconfig = var.harvester_kube_path
-}
-
-provider "k8s" {
-  alias       = "dev"
-  config_path = var.dev_kube_path
-}
-
-provider "k8s" {
   alias       = "harvester"
-  config_path = var.harvester_kube_path
+  kubeconfig  = var.kubeconfig_path
+  kubecontext = "harvester"
+}
+
+provider "k8s" {
+  alias          = "dev"
+  config_path    = var.kubeconfig_path
+  config_context = var.dev_kube_context
+}
+
+provider "k8s" {
+  alias          = "harvester"
+  config_path    = var.kubeconfig_path
+  config_context = var.harvester_kube_context
 }
 
 provider "google" {
