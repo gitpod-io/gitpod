@@ -8,7 +8,7 @@ import * as chai from "chai";
 import { suite, test, timeout } from "mocha-typescript";
 import { testContainer } from "./test-container";
 import { TypeORM } from "./typeorm/typeorm";
-import { WorkspaceClusterDB } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import { WorkspaceCluster, WorkspaceClusterDB } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { DBWorkspaceCluster } from "./typeorm/entity/db-workspace-cluster";
 const expect = chai.expect;
 
@@ -30,6 +30,34 @@ export class WorkspaceClusterDBSpec {
         const connection = await this.typeORM.getConnection();
         const manager = connection.manager;
         await manager.clear(DBWorkspaceCluster);
+    }
+
+    @test public async findByName() {
+        const wsc1: DBWorkspaceCluster = {
+            name: "eu71",
+            applicationCluster: "eu02",
+            url: "some-url",
+            state: "available",
+            score: 100,
+            maxScore: 100,
+            govern: true,
+        };
+        const wsc2: DBWorkspaceCluster = {
+            name: "us71",
+            applicationCluster: "eu02",
+            url: "some-url",
+            state: "cordoned",
+            score: 0,
+            maxScore: 0,
+            govern: false,
+        };
+
+        await this.db.save(wsc1);
+        await this.db.save(wsc2);
+
+        const wsc = await this.db.findByName("eu71", "eu02");
+        expect(wsc).not.to.be.undefined;
+        expect((wsc as WorkspaceCluster).name).to.equal("eu71");
     }
 
     @test public async testFindFilteredByName() {

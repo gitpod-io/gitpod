@@ -96,7 +96,7 @@ export interface WorkspaceClusterDB {
      * Finds a WorkspaceCluster with the given name. If there is none, `undefined` is returned.
      * @param name
      */
-    findByName(name: string): Promise<WorkspaceCluster | undefined>;
+    findByName(name: string, applicationCluster: string): Promise<WorkspaceCluster | undefined>;
 
     /**
      * Lists all WorkspaceClusterWoTls for which the given predicate is true (does not return TLS for size/speed concerns)

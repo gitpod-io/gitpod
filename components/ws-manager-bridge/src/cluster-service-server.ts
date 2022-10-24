@@ -87,7 +87,7 @@ export class ClusterService implements IClusterServiceServer {
                 // check if the name or URL are already registered/in use
                 const req = call.request.toObject();
 
-                const clusterByNamePromise = this.clusterDB.findByName(req.name);
+                const clusterByNamePromise = this.clusterDB.findByName(req.name, this.config.installation);
                 const clusterByUrlPromise = this.clusterDB.findFiltered({
                     url: req.url,
                     applicationCluster: this.config.installation,
@@ -211,7 +211,7 @@ export class ClusterService implements IClusterServiceServer {
         this.queue.enqueue(async () => {
             try {
                 const req = call.request.toObject();
-                const cluster = await this.clusterDB.findByName(req.name);
+                const cluster = await this.clusterDB.findByName(req.name, this.config.installation);
                 if (!cluster) {
                     throw new GRPCError(
                         grpc.status.NOT_FOUND,
