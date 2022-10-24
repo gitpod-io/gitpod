@@ -277,6 +277,12 @@ EOF`);
         exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.defaultSpendingLimit.minForUsersOnStripe 1000`, { slice: slice })
         exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.creditsPerMinuteByWorkspaceClass['default'] 0.1666666667`, { slice: slice })
         exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.usage.creditsPerMinuteByWorkspaceClass['gitpodio-internal-xl'] 0.3333333333`, { slice: slice })
+
+        // Configure Price IDs
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.stripe.individualUsagePriceIds['EUR'] price_1LmYVxGadRXm50o3AiLq0Qmo`, { slice: slice })
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.stripe.individualUsagePriceIds['USD'] price_1LmYWRGadRXm50o3Ym8PLqnG`, { slice: slice })
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.stripe.teamUsagePriceIds['EUR'] price_1LiId7GadRXm50o3OayAS2y4`, { slice: slice })
+        exec(`yq w -i ${this.options.installerConfigPath} experimental.webapp.stripe.teamUsagePriceIds['USD'] price_1LiIdbGadRXm50o3ylg5S44r`, { slice: slice })
     }
 
     private configureConfigCat(slice: string) {
