@@ -288,7 +288,7 @@ export class ClusterService implements IClusterServiceServer {
                     );
                 }
 
-                await this.clusterDB.deleteByName(req.name);
+                await this.clusterDB.deleteByName(req.name, this.config.installation);
                 log.info({}, "cluster deregistered", { cluster: req.name });
                 this.triggerReconcile("deregister", req.name);
 
