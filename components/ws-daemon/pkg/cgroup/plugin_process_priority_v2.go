@@ -39,7 +39,7 @@ const (
 	ProcessDefault ProcessType = "default"
 
 	// Repeat applying until this number of processes is reached
-	NumberOfProcessesToStopApllying = 5
+	NumberOfProcessesToStopApplying = 5
 )
 
 type ProcessPriorityV2 struct {
@@ -112,7 +112,7 @@ func (c *ProcessPriorityV2) Apply(ctx context.Context, opts *PluginOptions) erro
 			}
 		}
 
-		if countRunningProcess >= NumberOfProcessesToStopApllying {
+		if countRunningProcess >= NumberOfProcessesToStopApplying {
 			return nil
 		}
 	}
