@@ -51,16 +51,14 @@ func (c *ProcessPriorityV2) Type() Version { return Version2 }
 func (c *ProcessPriorityV2) Apply(ctx context.Context, opts *PluginOptions) error {
 	fullCgroupPath := filepath.Join(opts.BasePath, opts.CgroupPath)
 
-	_, err := os.Stat(fullCgroupPath)
-	if errors.Is(err, fs.ErrNotExist) {
-		return xerrors.Errorf("cannot read cgroup directory %s: %w", fullCgroupPath, err)
-	}
-
 	go func() {
 		time.Sleep(10 * time.Second)
 
 		data, err := ioutil.ReadFile(filepath.Join(fullCgroupPath, "workspace", "user", "cgroup.procs"))
-		if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			log.WithField("path", fullCgroupPath).WithError(err).Warn("the target cgroup has gone")
+			return
+		} else if err != nil {
 			log.WithField("path", fullCgroupPath).WithError(err).Errorf("cannot read cgroup.procs file")
 			return
 		}
