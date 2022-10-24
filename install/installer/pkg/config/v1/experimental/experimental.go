@@ -167,6 +167,16 @@ type WorkspaceTemplates struct {
 	Regular    *corev1.Pod `json:"regular"`
 }
 
+type StripePriceIDs struct {
+	EUR string `json:"eur"`
+	USD string `json:"usd"`
+}
+
+type StripeConfig struct {
+	IndividualUsagePriceIDs StripePriceIDs `json:"individualUsagePriceIds"`
+	TeamUsagePriceIDs       StripePriceIDs `json:"teamUsagePriceIds"`
+}
+
 type WebAppConfig struct {
 	PublicAPI              *PublicAPIConfig       `json:"publicApi,omitempty"`
 	Server                 *ServerConfig          `json:"server,omitempty"`
@@ -178,6 +188,7 @@ type WebAppConfig struct {
 	Usage                  *UsageConfig           `json:"usage,omitempty"`
 	ConfigcatKey           string                 `json:"configcatKey"`
 	WorkspaceClasses       []WebAppWorkspaceClass `json:"workspaceClasses"`
+	Stripe                 *StripeConfig          `json:"stripe,omitempty"`
 }
 
 type WorkspaceDefaults struct {

@@ -29,6 +29,16 @@ func TestConfigMap_ContainsSchedule(t *testing.T) {
 		"forTeams": 1000000000,
 		"minForUsersOnStripe": 0
 	   },
+	   "stripePrices": {
+		"individualUsagePriceIds": {
+		  "eur": "",
+		  "usd": ""
+		},
+		"teamUsagePriceIds": {
+		  "eur": "",
+		  "usd": ""
+		}
+	   },
        "server": {
          "services": {
            "grpc": {

@@ -38,6 +38,19 @@ type Config struct {
 	Server *baseserver.Configuration `json:"server,omitempty"`
 
 	DefaultSpendingLimit db.DefaultSpendingLimit `json:"defaultSpendingLimit"`
+
+	// StripePrices configure which Stripe Price IDs should be used
+	StripePrices StripePrices `json:"stripePrices"`
+}
+
+type PriceConfig struct {
+	EUR string `json:"eur"`
+	USD string `json:"usd"`
+}
+
+type StripePrices struct {
+	IndividualUsagePriceIDs PriceConfig `json:"individualUsagePriceIds"`
+	TeamUsagePriceIDs       PriceConfig `json:"teamUsagePriceIds"`
 }
 
 func Start(cfg Config, version string) error {
