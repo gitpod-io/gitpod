@@ -643,6 +643,11 @@ func setProtectedSecrets(pod *corev1.Pod, req *api.StartWorkspaceRequest) {
 				continue
 			}
 
+			// already sourced from somewhere else
+			if env.ValueFrom != nil {
+				continue
+			}
+
 			env.Value = ""
 			env.ValueFrom = &corev1.EnvVarSource{
 				SecretKeyRef: &corev1.SecretKeySelector{

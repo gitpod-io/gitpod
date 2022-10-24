@@ -175,8 +175,8 @@
                             "name": "one_from_a_secret",
                             "valueFrom": {
                                 "secretKeyRef": {
-                                    "name": "ws-test",
-                                    "key": "31ba5230e08a8d69893703c936aaf570c76246cac7a2f7d4cfd28b8ab180631b"
+                                    "name": "some-secret",
+                                    "key": "some-key"
                                 }
                             }
                         },
