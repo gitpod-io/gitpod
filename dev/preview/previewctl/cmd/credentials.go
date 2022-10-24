@@ -34,9 +34,6 @@ type getCredentialsOpts struct {
 	gcpClient *gcloud.Config
 	logger    *logrus.Logger
 
-	serviceAccountPath string
-	kubeConfigSavePath string
-
 	getCredentialsMap map[string]func(ctx context.Context) (*api.Config, error)
 	configMap         map[string]*api.Config
 }
@@ -46,10 +43,8 @@ func newGetCredentialsCommand(logger *logrus.Logger) *cobra.Command {
 	var client *gcloud.Config
 	ctx := context.Background()
 	opts := &getCredentialsOpts{
-		logger:             logger,
-		kubeConfigSavePath: kubeConfigSavePath,
-		serviceAccountPath: serviceAccountPath,
-		configMap:          map[string]*api.Config{},
+		logger:    logger,
+		configMap: map[string]*api.Config{},
 	}
 
 	cmd := &cobra.Command{
@@ -57,7 +52,7 @@ func newGetCredentialsCommand(logger *logrus.Logger) *cobra.Command {
 		Long: `previewctl get-credentials retrieves the kubernetes configs for core-dev and harvester clusters,
 merges them with the default config, and outputs them either to stdout or to a file.`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			client, err = gcloud.New(ctx, opts.serviceAccountPath)
+			client, err = gcloud.New(ctx, serviceAccountPath)
 			if err != nil {
 				return err
 			}
@@ -118,7 +113,7 @@ func (o *getCredentialsOpts) mergeContexts() error {
 		return err
 	}
 
-	if o.kubeConfigSavePath != "" {
+	if kubeConfigSavePath != "" {
 		return clientcmd.WriteToFile(*finalConfig, kubeConfigSavePath)
 	}
 

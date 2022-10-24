@@ -54,7 +54,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-add-fish-to-dev-image.0
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aa-previewctl-fix-rebuild.6
     workingDir: /workspace
     imagePullPolicy: IfNotPresent
     volumeMounts:

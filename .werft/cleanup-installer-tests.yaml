@@ -25,7 +25,7 @@ pod:
       secretName: aks-credentials
   containers:
   - name: nightly-test
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-add-fish-to-dev-image.0
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aa-previewctl-fix-rebuild.6
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
