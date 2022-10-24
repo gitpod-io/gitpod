@@ -249,7 +249,7 @@ export default function Menu() {
     };
     const isTeamLevelActive = !projectSlug && !isWorkspacesUI && !isPersonalSettingsUI && !isAdminUI && teamOrUserSlug;
     const renderTeamMenu = () => {
-        if (!teams || teams.length === 0) {
+        if (!hasIndividualProjects && (!teams || teams.length === 0)) {
             return (
                 <div className="p-1 text-base text-gray-500 dark:text-gray-400 border-gray-800">
                     <PillMenuItem
