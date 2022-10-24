@@ -49,7 +49,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	jbPluginImage := ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginImage.Version)
-	jbPluginLatestImage := ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginLatestImage.Version)
+	jbPluginLatestImage := resolveLatestImage(ide.JetBrainsBackendPluginImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginLatestImage)
 	idecfg := ide_config.IDEConfig{
 		SupervisorImage: ctx.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
 		IdeOptions: ide_config.IDEOptions{
@@ -100,7 +100,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Type:              ide_config.IDETypeDesktop,
 					Logo:              getIdeLogoPath("intellijIdeaLogo"),
 					Image:             ctx.ImageName(ctx.Config.Repository, ide.IntelliJDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.IntelliJImage.Version),
-					LatestImage:       resolveLatestImage(ide.IntelliJDesktopIDEImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.IntelliJLatestImage),
+					LatestImage:       ctx.ImageName(ctx.Config.Repository, ide.IntelliJDesktopIDEImage, "latest"),
 					PluginImage:       jbPluginImage,
 					PluginLatestImage: jbPluginLatestImage,
 				},
@@ -110,7 +110,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Type:              ide_config.IDETypeDesktop,
 					Logo:              getIdeLogoPath("golandLogo"),
 					Image:             ctx.ImageName(ctx.Config.Repository, ide.GoLandDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.GoLandImage.Version),
-					LatestImage:       resolveLatestImage(ide.GoLandDesktopIdeImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.GoLandLatestImage),
+					LatestImage:       ctx.ImageName(ctx.Config.Repository, ide.GoLandDesktopIdeImage, "latest"),
 					PluginImage:       jbPluginImage,
 					PluginLatestImage: jbPluginLatestImage,
 				},
@@ -120,7 +120,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Type:              ide_config.IDETypeDesktop,
 					Logo:              getIdeLogoPath("pycharmLogo"),
 					Image:             ctx.ImageName(ctx.Config.Repository, ide.PyCharmDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PyCharmImage.Version),
-					LatestImage:       resolveLatestImage(ide.PyCharmDesktopIdeImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PyCharmLatestImage),
+					LatestImage:       ctx.ImageName(ctx.Config.Repository, ide.PyCharmDesktopIdeImage, "latest"),
 					PluginImage:       jbPluginImage,
 					PluginLatestImage: jbPluginLatestImage,
 				},
@@ -130,7 +130,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Type:              ide_config.IDETypeDesktop,
 					Logo:              getIdeLogoPath("phpstormLogo"),
 					Image:             ctx.ImageName(ctx.Config.Repository, ide.PhpStormDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PhpStormImage.Version),
-					LatestImage:       resolveLatestImage(ide.PhpStormDesktopIdeImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PhpStormLatestImage),
+					LatestImage:       ctx.ImageName(ctx.Config.Repository, ide.PhpStormDesktopIdeImage, "latest"),
 					PluginImage:       jbPluginImage,
 					PluginLatestImage: jbPluginLatestImage,
 				},
@@ -140,7 +140,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Type:              ide_config.IDETypeDesktop,
 					Logo:              getIdeLogoPath("rubymineLogo"),
 					Image:             ctx.ImageName(ctx.Config.Repository, ide.RubyMineDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.RubyMineImage.Version),
-					LatestImage:       resolveLatestImage(ide.RubyMineDesktopIdeImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.RubyMineLatestImage),
+					LatestImage:       ctx.ImageName(ctx.Config.Repository, ide.RubyMineDesktopIdeImage, "latest"),
 					PluginImage:       jbPluginImage,
 					PluginLatestImage: jbPluginLatestImage,
 				},
@@ -150,7 +150,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Type:              ide_config.IDETypeDesktop,
 					Logo:              getIdeLogoPath("webstormLogo"),
 					Image:             ctx.ImageName(ctx.Config.Repository, ide.WebStormDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.WebStormImage.Version),
-					LatestImage:       resolveLatestImage(ide.WebStormDesktopIdeImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.WebStormLatestImage),
+					LatestImage:       ctx.ImageName(ctx.Config.Repository, ide.WebStormDesktopIdeImage, "latest"),
 					PluginImage:       jbPluginImage,
 					PluginLatestImage: jbPluginLatestImage,
 				},
