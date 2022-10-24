@@ -86,6 +86,8 @@ version: "1.0.0"
 appVersion: "$(/app/installer version | yq e '.version' -)"
 EOF
 
+    echo "Gitpod: Installer version - $(/app/installer version | yq e '.version' -)"
+
     echo "Gitpod: Generate the base Installer config"
     /app/installer config init
 
