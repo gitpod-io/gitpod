@@ -3,15 +3,19 @@ scripts:
     description: Build all packages needed to deploy Gitpod to preview environments
     script: ./workflow/preview/build.sh
 
+  - name: get-credentials
+    description: Provisions a new preview environment
+    script: |
+      previewctl get-credentials --kube-save-path $HOME/.kube/config
+
   - name: create-preview
     description: Provisions a new preview environment
     script: |
-      source "./util/preview-name-from-branch.sh"
       export TF_VAR_dev_kube_path="/home/gitpod/.kube/config"
       export TF_VAR_dev_kube_context="dev"
       export TF_VAR_harvester_kube_path="/home/gitpod/.kube/config"
       export TF_VAR_harvester_kube_context="harvester"
-      export TF_VAR_preview_name="$(preview-name-from-branch)"
+      export TF_VAR_preview_name="$(previewctl get-name)"
       export TF_VAR_vm_cpu=6
       export TF_VAR_vm_memory=12Gi
       export TF_VAR_vm_storage_class="longhorn-gitpod-k3s-202209251218-onereplica"
@@ -20,16 +24,9 @@ scripts:
   - name: delete-preview
     description: Delete an existing preview environment
     script: |
-      source "./util/preview-name-from-branch.sh"
       export DESTROY=true
-      export TF_VAR_dev_kube_path="/home/gitpod/.kube/config"
-      export TF_VAR_dev_kube_context="dev"
-      export TF_VAR_harvester_kube_path="/home/gitpod/.kube/config"
-      export TF_VAR_harvester_kube_context="harvester"
-      export TF_VAR_preview_name="$(preview-name-from-branch)"
-      export TF_VAR_vm_cpu=6
-      export TF_VAR_vm_memory=12Gi
-      export TF_VAR_vm_storage_class="longhorn-gitpod-k3s-202209251218-onereplica"
+      export TF_VAR_kubeconfig_path="/home/gitpod/.kube/config"
+      export TF_VAR_preview_name="$(previewctl get-name)"
       ./workflow/preview/deploy-harvester.sh
 
   - name: deploy-gitpod
