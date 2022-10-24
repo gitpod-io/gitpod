@@ -31,8 +31,11 @@ type Config struct {
 	// When ControllerSchedule is empty, the background controller is disabled.
 	ControllerSchedule string `json:"controllerSchedule,omitempty"`
 
+	// CreditsPerMinuteByWorkspaceClass define the credit cost of each Workspace Class per minute.
 	CreditsPerMinuteByWorkspaceClass map[string]float64 `json:"creditsPerMinuteByWorkspaceClass,omitempty"`
 
+	// StripeCredentialsFile defines where to find a file with Secrets for stripe
+	// StripeCredentialsFile is optional, when not specified, the BillingService runs in No-op mode.
 	StripeCredentialsFile string `json:"stripeCredentialsFile,omitempty"`
 
 	Server *baseserver.Configuration `json:"server,omitempty"`
