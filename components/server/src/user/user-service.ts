@@ -29,15 +29,8 @@ import { TokenService } from "./token-service";
 import { EmailAddressAlreadyTakenException, SelectAccountException } from "../auth/errors";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { StripeService } from "../../ee/src/user/stripe-service";
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { UsageService } from "./usage-service";
-import {
-    CostCenter_BillingStrategy,
-    UsageServiceClient,
-    UsageServiceDefinition,
-} from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 
 export interface FindUserByIdentityStrResult {
     user: User;
@@ -82,10 +75,6 @@ export class UserService {
     @inject(TermsProvider) protected readonly termsProvider: TermsProvider;
     @inject(ProjectDB) protected readonly projectDb: ProjectDB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
-    @inject(StripeService) protected readonly stripeService: StripeService;
-    @inject(UsageService) protected readonly usageService: UsageService;
-    @inject(UsageServiceDefinition.name)
-    protected readonly usageServiceClient: UsageServiceClient;
 
     /**
      * Takes strings in the form of <authHost>/<authName> and returns the matching User
@@ -264,11 +253,7 @@ export class UserService {
             } else {
                 attributionId = AttributionId.create(user);
             }
-            if (
-                !!attributionId &&
-                (await this.hasCredits(attributionId)) &&
-                !(await this.isUnbilledTeam(attributionId))
-            ) {
+            if (!!attributionId) {
                 return attributionId;
             }
         }
@@ -286,51 +271,19 @@ export class UserService {
      */
     async checkUsageLimitReached(user: User, workspace?: Workspace): Promise<UsageLimitReachedResult> {
         const attributionId = await this.getWorkspaceUsageAttributionId(user, workspace?.projectId);
-        const creditBalance = await this.usageService.getCurrentBalance(attributionId);
-        const currentInvoiceCredits = creditBalance.usedCredits;
-        const usageLimit = creditBalance.usageLimit;
-        if (currentInvoiceCredits >= usageLimit) {
-            log.info({ userId: user.id }, "Usage limit reached", {
-                attributionId,
-                currentInvoiceCredits,
-                usageLimit,
-            });
-            return {
-                reached: true,
-                attributionId,
-            };
-        } else if (currentInvoiceCredits > usageLimit * 0.8) {
-            log.info({ userId: user.id }, "Usage limit almost reached", {
-                attributionId,
-                currentInvoiceCredits,
-                usageLimit,
-            });
-            return {
-                reached: false,
-                almostReached: true,
-                attributionId,
-            };
-        }
-
         return {
-            reached: false,
             attributionId,
+            reached: false,
         };
     }
 
     protected async hasCredits(attributionId: AttributionId): Promise<boolean> {
-        const response = await this.usageService.getCurrentBalance(attributionId);
-        return response.usedCredits < response.usageLimit;
+        return true;
     }
 
     protected async isUnbilledTeam(attributionId: AttributionId): Promise<boolean> {
-        if (attributionId.kind !== "team") {
-            return false;
-        }
-        const { costCenter } = await this.usageServiceClient.getCostCenter({
-            attributionId: AttributionId.render(attributionId),
-        });
-        return costCenter?.billingStrategy !== CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
+        // In self-hosted, it's never a billed team
+        return true;
     }
 
     async setUsageAttribution(user: User, usageAttributionId: string): Promise<void> {
@@ -347,21 +300,9 @@ export class UserService {
     async listAvailableUsageAttributionIds(user: User): Promise<AttributionId[]> {
         // List all teams available for attribution
         const teams = await this.teamDB.findTeamsByUser(user.id);
-        const billedStripeTeams = (
-            await Promise.all(
-                teams.map(async (team) => {
-                    const attributionId = AttributionId.create(team);
-                    const billingStrategy = await this.usageService.getCurrentBillingStategy(attributionId);
-                    if (billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
-                        return attributionId;
-                    }
-                    return undefined;
-                }),
-            )
-        ).filter((t) => !!t) as AttributionId[];
 
         // Attributing to oneself is always an option
-        return [AttributionId.create(user)].concat(billedStripeTeams);
+        return [AttributionId.create(user)].concat(teams.map(AttributionId.create));
     }
 
     /**
