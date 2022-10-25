@@ -117,7 +117,7 @@ export class StripeService {
 
     async cancelSubscription(subscriptionId: string): Promise<void> {
         await reportStripeOutcome("subscriptions_cancel", () => {
-            return this.getStripe().subscriptions.del(subscriptionId);
+            return this.getStripe().subscriptions.del(subscriptionId, { invoice_now: true });
         });
     }
 
