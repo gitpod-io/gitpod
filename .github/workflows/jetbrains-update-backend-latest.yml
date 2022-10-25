@@ -34,6 +34,10 @@ jobs:
           key: ${{ runner.os }}-leeway-cache-${{ hashFiles('backend-plugin.version') }}
           restore-keys: |
             ${{ runner.os }}-leeway-cache-
+      - name: Auth Google Cloud SDK
+        uses: google-github-actions/auth@v0
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v0
         with:
@@ -41,4 +45,4 @@ jobs:
       - run: |
           gcloud auth configure-docker --quiet
           export LEEWAY_WORKSPACE_ROOT=$(pwd)
-          leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build components/ide/jetbrains/backend-plugin:latest
+          leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build components/ide/jetbrains/backend-plugin:latest --dont-retag
