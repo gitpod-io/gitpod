@@ -1,0 +1,44 @@
+name: JB Backend Latest
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.19'
+      - uses: actions/setup-java@v2
+        with:
+          distribution: zulu
+          java-version: "11"
+      - name: Download leeway
+        run: cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.3.1/leeway_0.3.1_Linux_x86_64.tar.gz | sudo tar xz
+      - name: Download golangci-lint
+        run: cd /usr/local && curl -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.49.0
+      - name: Download GoKart
+        run: cd /usr/local/bin && curl -L https://github.com/praetorian-inc/gokart/releases/download/v0.4.0/gokart_0.4.0_linux_x86_64.tar.gz | tar xzv gokart
+      - name: Get leeway cache version
+        run: |
+          leeway collect | grep components/ide/jetbrains/backend-plugin:latest > backend-plugin.version
+      - name: Cache leeway build
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: /tmp/cache/
+          key: ${{ runner.os }}-leeway-cache-${{ hashFiles('backend-plugin.version') }}
+          restore-keys: |
+            ${{ runner.os }}-leeway-cache-
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+      - run: |
+          gcloud auth configure-docker --quiet
+          export LEEWAY_WORKSPACE_ROOT=$(pwd)
+          leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build components/ide/jetbrains/backend-plugin:latest
