@@ -33,11 +33,7 @@ import { StripeService } from "../../ee/src/user/stripe-service";
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UsageService } from "./usage-service";
-import {
-    CostCenter_BillingStrategy,
-    UsageServiceClient,
-    UsageServiceDefinition,
-} from "@gitpod/usage-api/lib/usage/v1/usage.pb";
+import { CostCenter_BillingStrategy } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 
 export interface FindUserByIdentityStrResult {
     user: User;
@@ -84,8 +80,6 @@ export class UserService {
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(StripeService) protected readonly stripeService: StripeService;
     @inject(UsageService) protected readonly usageService: UsageService;
-    @inject(UsageServiceDefinition.name)
-    protected readonly usageServiceClient: UsageServiceClient;
 
     /**
      * Takes strings in the form of <authHost>/<authName> and returns the matching User
@@ -327,10 +321,8 @@ export class UserService {
         if (attributionId.kind !== "team") {
             return false;
         }
-        const { costCenter } = await this.usageServiceClient.getCostCenter({
-            attributionId: AttributionId.render(attributionId),
-        });
-        return costCenter?.billingStrategy !== CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
+        const billingStrategy = await this.usageService.getCurrentBillingStategy(attributionId);
+        return billingStrategy !== CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
     }
 
     async setUsageAttribution(user: User, usageAttributionId: string): Promise<void> {
