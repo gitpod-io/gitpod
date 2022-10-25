@@ -6,7 +6,6 @@ package io.gitpod.jetbrains.remote
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.BrowserUtil
-import com.intellij.ide.CommandLineProcessor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.client.ClientSession
 import com.intellij.openapi.client.ClientSessionsManager
@@ -40,6 +39,7 @@ class GitpodCLIService : RestService() {
 
     private val manager = service<GitpodManager>()
     private val portsService = service<GitpodPortsService>()
+    private val cliHelperService = service<GitpodCLIHelper>()
 
     override fun getServiceName() = SERVICE_NAME
 
@@ -71,7 +71,7 @@ class GitpodCLIService : RestService() {
             return withClient(request, context) {
                 GlobalScope.launch {
                     withContext(Dispatchers.IO) {
-                        CommandLineProcessor.doOpenFileOrProject(file, shouldWait).future.get()
+                        cliHelperService.open(file, shouldWait)
                     }
                 }
             }
