@@ -141,10 +141,12 @@ function UsageView({ attributionId }: UsageViewProps) {
 
     const currentPaginatedResults = usagePage?.usageEntriesList.filter((u) => u.kind === "workspaceinstance") ?? [];
 
+    const headerTitle = attributionId.kind === "team" ? "Team Usage" : "Personal Usage";
+
     return (
         <>
             <Header
-                title="Usage"
+                title={headerTitle}
                 subtitle={`${new Date(startDateOfBillMonth).toLocaleDateString()} - ${new Date(
                     endDateOfBillMonth,
                 ).toLocaleDateString()} (updated every 15 minutes).`}
