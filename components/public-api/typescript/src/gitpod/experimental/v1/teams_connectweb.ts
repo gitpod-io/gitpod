@@ -9,7 +9,7 @@
 /* eslint-disable */
 /* @ts-nocheck */
 
-import {CreateTeamRequest, CreateTeamResponse} from "./teams_pb.js";
+import {CreateTeamRequest, CreateTeamResponse, DeleteTeamMemberRequest, DeleteTeamMemberResponse, JoinTeamRequest, JoinTeamResponse, ListTeamsRequest, ListTeamsResponse, ResetTeamInvitationRequest, ResetTeamInvitationResponse, UpdateTeamMemberRequest, UpdateTeamMemberResponse} from "./teams_pb.js";
 import {MethodKind} from "@bufbuild/protobuf";
 
 /**
@@ -27,6 +27,61 @@ export const TeamsService = {
       name: "CreateTeam",
       I: CreateTeamRequest,
       O: CreateTeamResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListTeams lists the caller has access to.
+     *
+     * @generated from rpc gitpod.experimental.v1.TeamsService.ListTeams
+     */
+    listTeams: {
+      name: "ListTeams",
+      I: ListTeamsRequest,
+      O: ListTeamsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * JoinTeam makes the caller a TeamMember of the Team.
+     *
+     * @generated from rpc gitpod.experimental.v1.TeamsService.JoinTeam
+     */
+    joinTeam: {
+      name: "JoinTeam",
+      I: JoinTeamRequest,
+      O: JoinTeamResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ResetTeamInvitation resets the invitation_id for a Team.
+     *
+     * @generated from rpc gitpod.experimental.v1.TeamsService.ResetTeamInvitation
+     */
+    resetTeamInvitation: {
+      name: "ResetTeamInvitation",
+      I: ResetTeamInvitationRequest,
+      O: ResetTeamInvitationResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * UpdateTeamMember updates team membership properties.
+     *
+     * @generated from rpc gitpod.experimental.v1.TeamsService.UpdateTeamMember
+     */
+    updateTeamMember: {
+      name: "UpdateTeamMember",
+      I: UpdateTeamMemberRequest,
+      O: UpdateTeamMemberResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * DeleteTeamMember removes a TeamMember from the Team.
+     *
+     * @generated from rpc gitpod.experimental.v1.TeamsService.DeleteTeamMember
+     */
+    deleteTeamMember: {
+      name: "DeleteTeamMember",
+      I: DeleteTeamMemberRequest,
+      O: DeleteTeamMemberResponse,
       kind: MethodKind.Unary,
     },
   }
