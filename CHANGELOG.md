@@ -1,6 +1,9 @@
 # Change Log
 
 ## October 2022
+- A bit faster IDE startup ([#14111](https://github.com/gitpod-io/gitpod/pull/14111)) - [@sagor999](https://github.com/sagor999), [@utam0k](https://github.com/utam0k)
+- [installer]: print the installer version to the kots-install script ([#14120](https://github.com/gitpod-io/gitpod/pull/14120)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- reliably close Workspaces which fail to start for whatever reason ([#13831](https://github.com/gitpod-io/gitpod/pull/13831)) - [@geropl](https://github.com/geropl)
 - Fixes default location of PortsView incorrect ([#14102](https://github.com/gitpod-io/gitpod/pull/14102)) - [@mustard-mh](https://github.com/mustard-mh)
 - Bugfix for gitpod CLI: avoid failure on `ports list` when port is not exposed ([#14040](https://github.com/gitpod-io/gitpod/pull/14040)) - [@andreafalzetti](https://github.com/andreafalzetti)
 - Provide pressure stall information for workspaces ([#13703](https://github.com/gitpod-io/gitpod/pull/13703)) - [@Furisto](https://github.com/Furisto)
