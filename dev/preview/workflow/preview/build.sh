@@ -23,7 +23,44 @@ VERSION="$(preview-name-from-branch)-dev"
 # We should fix the package definitions so that they don't include these files in the hash.
 #
 # For now we're simply cleaning the repository by deleting all files that are in .gitignore.
-git clean -dfX
+# The files were produced using "git clean -ndfX"
+components_dir="$SCRIPT_PATH/../../../../components"
+install_dir="$SCRIPT_PATH/../../../../install"
+rm -rf \
+    "$components_dir/content-service-api/typescript/lib/" \
+    "$components_dir/dashboard/build/" \
+    "$components_dir/ee/db-sync/lib/" \
+    "$components_dir/ee/payment-endpoint/lib/" \
+    "$components_dir/gitpod-db/lib/" \
+    "$components_dir/gitpod-messagebus/lib/" \
+    "$components_dir/gitpod-protocol/lib/" \
+    "$components_dir/ide-metrics-api/typescript-grpc/lib/" \
+    "$components_dir/ide-metrics-api/typescript-grpcweb/lib/" \
+    "$components_dir/ide-service-api/typescript/lib/" \
+    "$components_dir/image-builder-api/typescript/lib/" \
+    "$components_dir/licensor/typescript/build/" \
+    "$components_dir/licensor/typescript/ee/lib/" \
+    "$components_dir/licensor/typescript/lib/" \
+    "$components_dir/local-app-api/typescript-grpcweb/lib/" \
+    "$components_dir/public-api/typescript/lib/" \
+    "$components_dir/server/dist/" \
+    "$components_dir/supervisor-api/typescript-grpc/lib/" \
+    "$components_dir/supervisor-api/typescript-grpcweb/lib/" \
+    "$components_dir/supervisor/frontend/dist/" \
+    "$components_dir/supervisor/frontend/lib/" \
+    "$components_dir/usage-api/typescript/lib/" \
+    "$components_dir/ws-daemon-api/typescript/lib/" \
+    "$components_dir/ws-manager-api/typescript/lib/" \
+    "$components_dir/ws-manager-bridge-api/typescript/lib/" \
+    "$components_dir/ws-manager-bridge/dist/" \
+    "$install_dir/installer/third_party/charts/docker-registry/Chart.lock" \
+    "$install_dir/installer/third_party/charts/docker-registry/charts/" \
+    "$install_dir/installer/third_party/charts/minio/Chart.lock" \
+    "$install_dir/installer/third_party/charts/minio/charts/" \
+    "$install_dir/installer/third_party/charts/mysql/Chart.lock" \
+    "$install_dir/installer/third_party/charts/mysql/charts/" \
+    "$install_dir/installer/third_party/charts/rabbitmq/Chart.lock" \
+    "$install_dir/installer/third_party/charts/rabbitmq/charts/"
 
 leeway build \
     -DSEGMENT_IO_TOKEN="$(kubectl --context=dev -n werft get secret self-hosted -o jsonpath='{.data.segmentIOToken}' | base64 -d)" \
