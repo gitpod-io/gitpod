@@ -29,7 +29,7 @@ pod:
         secretName: github-token-gitpod-bot
   containers:
     - name: build
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aa-previewctl-fix-rebuild.6
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aa-fix-previewctl-get-name.0
       workingDir: /workspace
       imagePullPolicy: IfNotPresent
       volumeMounts:

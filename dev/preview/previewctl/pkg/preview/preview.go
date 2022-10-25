@@ -46,8 +46,6 @@ func New(branch string, logger *logrus.Logger) (*Preview, error) {
 		return nil, err
 	}
 
-	branch = strings.TrimRight(branch, "\n")
-
 	logEntry := logger.WithFields(logrus.Fields{"branch": branch})
 
 	harvesterConfig, err := k8s.NewFromDefaultConfigWithContext(logEntry.Logger, harvesterContextName)
@@ -191,6 +189,7 @@ func GetName(branch string) (string, error) {
 		}
 	}
 
+	branch = strings.TrimSpace(branch)
 	withoutRefsHead := strings.Replace(branch, "/refs/heads/", "", 1)
 	lowerCased := strings.ToLower(withoutRefsHead)
 
