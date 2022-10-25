@@ -16,11 +16,8 @@ import { TeamDB, TeamSubscription2DB, TeamSubscriptionDB, UserDB } from "@gitpod
 import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { TeamSubscription, TeamSubscription2 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
-import {
-    CostCenter_BillingStrategy,
-    UsageServiceClient,
-    UsageServiceDefinition,
-} from "@gitpod/usage-api/lib/usage/v1/usage.pb";
+import { CostCenter_BillingStrategy } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
+import { UsageService } from "../../../src/user/usage-service";
 
 export const BillingModes = Symbol("BillingModes");
 export interface BillingModes {
@@ -45,7 +42,7 @@ export class BillingModesImpl implements BillingModes {
     @inject(Config) protected readonly config: Config;
     @inject(ConfigCatClientFactory) protected readonly configCatClientFactory: ConfigCatClientFactory;
     @inject(SubscriptionService) protected readonly subscriptionSvc: SubscriptionService;
-    @inject(UsageServiceDefinition.name) protected readonly usageService: UsageServiceClient;
+    @inject(UsageService) protected readonly usageService: UsageService;
     @inject(TeamSubscriptionDB) protected readonly teamSubscriptionDb: TeamSubscriptionDB;
     @inject(TeamSubscription2DB) protected readonly teamSubscription2Db: TeamSubscription2DB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
@@ -140,10 +137,8 @@ export class BillingModesImpl implements BillingModes {
 
         // Stripe: Active personal subsciption?
         let hasUbbPersonal = false;
-        const constCenterResponse = await this.usageService.getCostCenter({
-            attributionId: AttributionId.render({ kind: "user", userId: user.id }),
-        });
-        if (constCenterResponse.costCenter?.billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
+        const billingStrategy = await this.usageService.getCurrentBillingStategy({ kind: "user", userId: user.id });
+        if (billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
             hasUbbPersonal = true;
         }
 
@@ -215,10 +210,8 @@ export class BillingModesImpl implements BillingModes {
 
         // 3. Now we're usage-based. We only have to figure out whether we have a plan yet or not.
         const result: BillingMode = { mode: "usage-based" };
-        const costCenter = await this.usageService.getCostCenter({
-            attributionId: AttributionId.render(AttributionId.create(team)),
-        });
-        if (costCenter.costCenter?.billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
+        const billingStrategy = await this.usageService.getCurrentBillingStategy(AttributionId.create(team));
+        if (billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
             result.paid = true;
         }
         return result;
