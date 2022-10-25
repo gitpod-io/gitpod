@@ -28,8 +28,8 @@ TEST_BACKEND_DIR="/workspace/ide-backend-$JB_QUALIFIER"
 if [ ! -d "$TEST_BACKEND_DIR" ]; then
   mkdir -p $TEST_BACKEND_DIR
   if [[ $RUN_FROM == "snapshot" ]]; then
+    SNAPSHOT_VERSION=$(grep "platformVersion=" "gradle-$JB_QUALIFIER.properties" | sed 's/platformVersion=//')
     (cd $TEST_BACKEND_DIR &&
-    SNAPSHOT_VERSION=$(grep "platformVersion=" "gradle-$JB_QUALIFIER.properties" | sed 's/platformVersion=//') &&
     echo "Downloading the $JB_QUALIFIER version of IntelliJ IDEA ($SNAPSHOT_VERSION)..." &&
     curl -sSLo backend.zip "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/$SNAPSHOT_VERSION/ideaIU-$SNAPSHOT_VERSION.zip" &&
     unzip backend.zip &&
@@ -37,8 +37,8 @@ if [ ! -d "$TEST_BACKEND_DIR" ]; then
     ln -s "ideaIU-$SNAPSHOT_VERSION" . &&
     rm -r "ideaIU-$SNAPSHOT_VERSION" &&
     cp -r /ide-desktop/backend/jbr . &&
-    cp /ide-desktop/backend/bin/idea.properties ./bin &&
-    cp /ide-desktop/backend/bin/idea64.vmoptions ./bin)
+    cp ./bin/linux/idea.properties ./bin &&
+    cp ./bin/linux/idea64.vmoptions ./bin)
   else
     if [[ $JB_QUALIFIER == "stable" ]]; then
       PRODUCT_TYPE="release"
