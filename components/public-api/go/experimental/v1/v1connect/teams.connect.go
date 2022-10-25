@@ -33,6 +33,16 @@ const (
 type TeamsServiceClient interface {
 	// CreateTeam creates a new Team.
 	CreateTeam(context.Context, *connect_go.Request[v1.CreateTeamRequest]) (*connect_go.Response[v1.CreateTeamResponse], error)
+	// ListTeams lists the caller has access to.
+	ListTeams(context.Context, *connect_go.Request[v1.ListTeamsRequest]) (*connect_go.Response[v1.ListTeamsResponse], error)
+	// JoinTeam makes the caller a TeamMember of the Team.
+	JoinTeam(context.Context, *connect_go.Request[v1.JoinTeamRequest]) (*connect_go.Response[v1.JoinTeamResponse], error)
+	// ResetTeamInvitation resets the invitation_id for a Team.
+	ResetTeamInvitation(context.Context, *connect_go.Request[v1.ResetTeamInvitationRequest]) (*connect_go.Response[v1.ResetTeamInvitationResponse], error)
+	// UpdateTeamMember updates team membership properties.
+	UpdateTeamMember(context.Context, *connect_go.Request[v1.UpdateTeamMemberRequest]) (*connect_go.Response[v1.UpdateTeamMemberResponse], error)
+	// DeleteTeamMember removes a TeamMember from the Team.
+	DeleteTeamMember(context.Context, *connect_go.Request[v1.DeleteTeamMemberRequest]) (*connect_go.Response[v1.DeleteTeamMemberResponse], error)
 }
 
 // NewTeamsServiceClient constructs a client for the gitpod.experimental.v1.TeamsService service. By
@@ -50,12 +60,42 @@ func NewTeamsServiceClient(httpClient connect_go.HTTPClient, baseURL string, opt
 			baseURL+"/gitpod.experimental.v1.TeamsService/CreateTeam",
 			opts...,
 		),
+		listTeams: connect_go.NewClient[v1.ListTeamsRequest, v1.ListTeamsResponse](
+			httpClient,
+			baseURL+"/gitpod.experimental.v1.TeamsService/ListTeams",
+			opts...,
+		),
+		joinTeam: connect_go.NewClient[v1.JoinTeamRequest, v1.JoinTeamResponse](
+			httpClient,
+			baseURL+"/gitpod.experimental.v1.TeamsService/JoinTeam",
+			opts...,
+		),
+		resetTeamInvitation: connect_go.NewClient[v1.ResetTeamInvitationRequest, v1.ResetTeamInvitationResponse](
+			httpClient,
+			baseURL+"/gitpod.experimental.v1.TeamsService/ResetTeamInvitation",
+			opts...,
+		),
+		updateTeamMember: connect_go.NewClient[v1.UpdateTeamMemberRequest, v1.UpdateTeamMemberResponse](
+			httpClient,
+			baseURL+"/gitpod.experimental.v1.TeamsService/UpdateTeamMember",
+			opts...,
+		),
+		deleteTeamMember: connect_go.NewClient[v1.DeleteTeamMemberRequest, v1.DeleteTeamMemberResponse](
+			httpClient,
+			baseURL+"/gitpod.experimental.v1.TeamsService/DeleteTeamMember",
+			opts...,
+		),
 	}
 }
 
 // teamsServiceClient implements TeamsServiceClient.
 type teamsServiceClient struct {
-	createTeam *connect_go.Client[v1.CreateTeamRequest, v1.CreateTeamResponse]
+	createTeam          *connect_go.Client[v1.CreateTeamRequest, v1.CreateTeamResponse]
+	listTeams           *connect_go.Client[v1.ListTeamsRequest, v1.ListTeamsResponse]
+	joinTeam            *connect_go.Client[v1.JoinTeamRequest, v1.JoinTeamResponse]
+	resetTeamInvitation *connect_go.Client[v1.ResetTeamInvitationRequest, v1.ResetTeamInvitationResponse]
+	updateTeamMember    *connect_go.Client[v1.UpdateTeamMemberRequest, v1.UpdateTeamMemberResponse]
+	deleteTeamMember    *connect_go.Client[v1.DeleteTeamMemberRequest, v1.DeleteTeamMemberResponse]
 }
 
 // CreateTeam calls gitpod.experimental.v1.TeamsService.CreateTeam.
@@ -63,10 +103,45 @@ func (c *teamsServiceClient) CreateTeam(ctx context.Context, req *connect_go.Req
 	return c.createTeam.CallUnary(ctx, req)
 }
 
+// ListTeams calls gitpod.experimental.v1.TeamsService.ListTeams.
+func (c *teamsServiceClient) ListTeams(ctx context.Context, req *connect_go.Request[v1.ListTeamsRequest]) (*connect_go.Response[v1.ListTeamsResponse], error) {
+	return c.listTeams.CallUnary(ctx, req)
+}
+
+// JoinTeam calls gitpod.experimental.v1.TeamsService.JoinTeam.
+func (c *teamsServiceClient) JoinTeam(ctx context.Context, req *connect_go.Request[v1.JoinTeamRequest]) (*connect_go.Response[v1.JoinTeamResponse], error) {
+	return c.joinTeam.CallUnary(ctx, req)
+}
+
+// ResetTeamInvitation calls gitpod.experimental.v1.TeamsService.ResetTeamInvitation.
+func (c *teamsServiceClient) ResetTeamInvitation(ctx context.Context, req *connect_go.Request[v1.ResetTeamInvitationRequest]) (*connect_go.Response[v1.ResetTeamInvitationResponse], error) {
+	return c.resetTeamInvitation.CallUnary(ctx, req)
+}
+
+// UpdateTeamMember calls gitpod.experimental.v1.TeamsService.UpdateTeamMember.
+func (c *teamsServiceClient) UpdateTeamMember(ctx context.Context, req *connect_go.Request[v1.UpdateTeamMemberRequest]) (*connect_go.Response[v1.UpdateTeamMemberResponse], error) {
+	return c.updateTeamMember.CallUnary(ctx, req)
+}
+
+// DeleteTeamMember calls gitpod.experimental.v1.TeamsService.DeleteTeamMember.
+func (c *teamsServiceClient) DeleteTeamMember(ctx context.Context, req *connect_go.Request[v1.DeleteTeamMemberRequest]) (*connect_go.Response[v1.DeleteTeamMemberResponse], error) {
+	return c.deleteTeamMember.CallUnary(ctx, req)
+}
+
 // TeamsServiceHandler is an implementation of the gitpod.experimental.v1.TeamsService service.
 type TeamsServiceHandler interface {
 	// CreateTeam creates a new Team.
 	CreateTeam(context.Context, *connect_go.Request[v1.CreateTeamRequest]) (*connect_go.Response[v1.CreateTeamResponse], error)
+	// ListTeams lists the caller has access to.
+	ListTeams(context.Context, *connect_go.Request[v1.ListTeamsRequest]) (*connect_go.Response[v1.ListTeamsResponse], error)
+	// JoinTeam makes the caller a TeamMember of the Team.
+	JoinTeam(context.Context, *connect_go.Request[v1.JoinTeamRequest]) (*connect_go.Response[v1.JoinTeamResponse], error)
+	// ResetTeamInvitation resets the invitation_id for a Team.
+	ResetTeamInvitation(context.Context, *connect_go.Request[v1.ResetTeamInvitationRequest]) (*connect_go.Response[v1.ResetTeamInvitationResponse], error)
+	// UpdateTeamMember updates team membership properties.
+	UpdateTeamMember(context.Context, *connect_go.Request[v1.UpdateTeamMemberRequest]) (*connect_go.Response[v1.UpdateTeamMemberResponse], error)
+	// DeleteTeamMember removes a TeamMember from the Team.
+	DeleteTeamMember(context.Context, *connect_go.Request[v1.DeleteTeamMemberRequest]) (*connect_go.Response[v1.DeleteTeamMemberResponse], error)
 }
 
 // NewTeamsServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -81,6 +156,31 @@ func NewTeamsServiceHandler(svc TeamsServiceHandler, opts ...connect_go.HandlerO
 		svc.CreateTeam,
 		opts...,
 	))
+	mux.Handle("/gitpod.experimental.v1.TeamsService/ListTeams", connect_go.NewUnaryHandler(
+		"/gitpod.experimental.v1.TeamsService/ListTeams",
+		svc.ListTeams,
+		opts...,
+	))
+	mux.Handle("/gitpod.experimental.v1.TeamsService/JoinTeam", connect_go.NewUnaryHandler(
+		"/gitpod.experimental.v1.TeamsService/JoinTeam",
+		svc.JoinTeam,
+		opts...,
+	))
+	mux.Handle("/gitpod.experimental.v1.TeamsService/ResetTeamInvitation", connect_go.NewUnaryHandler(
+		"/gitpod.experimental.v1.TeamsService/ResetTeamInvitation",
+		svc.ResetTeamInvitation,
+		opts...,
+	))
+	mux.Handle("/gitpod.experimental.v1.TeamsService/UpdateTeamMember", connect_go.NewUnaryHandler(
+		"/gitpod.experimental.v1.TeamsService/UpdateTeamMember",
+		svc.UpdateTeamMember,
+		opts...,
+	))
+	mux.Handle("/gitpod.experimental.v1.TeamsService/DeleteTeamMember", connect_go.NewUnaryHandler(
+		"/gitpod.experimental.v1.TeamsService/DeleteTeamMember",
+		svc.DeleteTeamMember,
+		opts...,
+	))
 	return "/gitpod.experimental.v1.TeamsService/", mux
 }
 
@@ -89,4 +189,24 @@ type UnimplementedTeamsServiceHandler struct{}
 
 func (UnimplementedTeamsServiceHandler) CreateTeam(context.Context, *connect_go.Request[v1.CreateTeamRequest]) (*connect_go.Response[v1.CreateTeamResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.TeamsService.CreateTeam is not implemented"))
+}
+
+func (UnimplementedTeamsServiceHandler) ListTeams(context.Context, *connect_go.Request[v1.ListTeamsRequest]) (*connect_go.Response[v1.ListTeamsResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.TeamsService.ListTeams is not implemented"))
+}
+
+func (UnimplementedTeamsServiceHandler) JoinTeam(context.Context, *connect_go.Request[v1.JoinTeamRequest]) (*connect_go.Response[v1.JoinTeamResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.TeamsService.JoinTeam is not implemented"))
+}
+
+func (UnimplementedTeamsServiceHandler) ResetTeamInvitation(context.Context, *connect_go.Request[v1.ResetTeamInvitationRequest]) (*connect_go.Response[v1.ResetTeamInvitationResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.TeamsService.ResetTeamInvitation is not implemented"))
+}
+
+func (UnimplementedTeamsServiceHandler) UpdateTeamMember(context.Context, *connect_go.Request[v1.UpdateTeamMemberRequest]) (*connect_go.Response[v1.UpdateTeamMemberResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.TeamsService.UpdateTeamMember is not implemented"))
+}
+
+func (UnimplementedTeamsServiceHandler) DeleteTeamMember(context.Context, *connect_go.Request[v1.DeleteTeamMemberRequest]) (*connect_go.Response[v1.DeleteTeamMemberResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.TeamsService.DeleteTeamMember is not implemented"))
 }
