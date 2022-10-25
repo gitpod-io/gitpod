@@ -7,5 +7,6 @@
   grafanaDashboards+:: {
     'gitpod-sh-example-overview.json': (import 'dashboards/examples/overview.json'),
     'argocd.json': (import 'dashboards/argocd/argocd.json'),
+    'observability.json': (import 'dashboards/observability/observability.json'),
   },
 }
