@@ -19,10 +19,12 @@ const FeatureFlagContext = createContext<{
     showPersistentVolumeClaimUI: boolean;
     showUsageView: boolean;
     showUseLastSuccessfulPrebuild: boolean;
+    usePublicApiTeamsService: boolean;
 }>({
     showPersistentVolumeClaimUI: false,
     showUsageView: false,
     showUseLastSuccessfulPrebuild: false,
+    usePublicApiTeamsService: false,
 });
 
 const FeatureFlagContextProvider: React.FC = ({ children }) => {
@@ -34,6 +36,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const [showPersistentVolumeClaimUI, setShowPersistentVolumeClaimUI] = useState<boolean>(false);
     const [showUsageView, setShowUsageView] = useState<boolean>(false);
     const [showUseLastSuccessfulPrebuild, setShowUseLastSuccessfulPrebuild] = useState<boolean>(false);
+    const [usePublicApiTeamsService, setUsePublicApiTeamsService] = useState<boolean>(false);
 
     useEffect(() => {
         if (!user) return;
@@ -42,6 +45,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 persistent_volume_claim: { defaultValue: true, setter: setShowPersistentVolumeClaimUI },
                 usage_view: { defaultValue: false, setter: setShowUsageView },
                 showUseLastSuccessfulPrebuild: { defaultValue: false, setter: setShowUseLastSuccessfulPrebuild },
+                usePublicApiTeamsService: { defaultValue: false, setter: setUsePublicApiTeamsService },
             };
             for (const [flagName, config] of Object.entries(featureFlags)) {
                 if (teams) {
@@ -74,7 +78,12 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
 
     return (
         <FeatureFlagContext.Provider
-            value={{ showPersistentVolumeClaimUI, showUsageView, showUseLastSuccessfulPrebuild }}
+            value={{
+                showPersistentVolumeClaimUI,
+                showUsageView,
+                showUseLastSuccessfulPrebuild,
+                usePublicApiTeamsService,
+            }}
         >
             {children}
         </FeatureFlagContext.Provider>
