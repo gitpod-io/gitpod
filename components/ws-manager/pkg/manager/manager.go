@@ -533,50 +533,6 @@ func (m *Manager) restoreVolumeSnapshotFromHandle(ctx context.Context, wsType ap
 	return nil
 }
 
-func (m *Manager) DeleteVolumeSnapshot(ctx context.Context, req *api.DeleteVolumeSnapshotRequest) (res *api.DeleteVolumeSnapshotResponse, err error) {
-	span, ctx := tracing.FromContext(ctx, "DeleteVolumeSnapshot")
-	tracing.LogRequestSafe(span, req)
-	defer tracing.FinishSpan(span, &err)
-	log := log.WithField("func", "DeleteVolumeSnapshot")
-
-	okResponse := &api.DeleteVolumeSnapshotResponse{}
-
-	var volumeSnapshot volumesnapshotv1.VolumeSnapshot
-	err = m.Clientset.Get(ctx, types.NamespacedName{Namespace: m.Config.Namespace, Name: req.Id}, &volumeSnapshot)
-	if k8serr.IsNotFound(err) {
-		if !req.SoftDelete {
-			err = m.restoreVolumeSnapshotFromHandle(ctx, req.Id, req.VolumeHandle)
-			if err != nil {
-				log.WithError(err).Error("was unable to restore volume snapshot")
-				return nil, err
-			}
-		} else {
-			return okResponse, nil
-		}
-	} else if err != nil {
-		log.WithError(err).Error("was unable to get volume snapshot")
-		return nil, err
-	}
-
-	err = m.Clientset.Delete(ctx,
-		&volumesnapshotv1.VolumeSnapshot{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      req.Id,
-				Namespace: m.Config.Namespace,
-			},
-		},
-	)
-	if err != nil && !k8serr.IsNotFound(err) {
-		log.WithError(err).Errorf("failed to delete volume snapshot `%s`", req.Id)
-		return nil, err
-	}
-	if !k8serr.IsNotFound(err) {
-		okResponse.WasDeleted = true
-	}
-
-	return okResponse, nil
-}
-
 func pvcRunning(clientset client.Client, pvcName, namespace string) wait.ConditionWithContextFunc {
 	return func(ctx context.Context) (bool, error) {
 		var pvc corev1.PersistentVolumeClaim
