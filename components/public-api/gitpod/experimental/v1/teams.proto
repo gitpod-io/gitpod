@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package gitpod.experimental.v1;
+
+option go_package = "github.com/gitpod-io/gitpod/public-api/experimental/v1";
+
+message Team {
+    // id is a UUID of the Team
+    string id = 1;
+
+    // name is the name of the Team
+    string name = 2;
+
+    // slug is the short version of the Team name
+    string slug = 3;
+
+    // members are the team members of this Team
+    repeated TeamMember members = 4;
+
+    // team_invitation is the team invitation.
+    TeamInvitation team_invitation = 5;
+}
+
+message TeamMember {
+    // user_id is the identifier of the user
+    string user_id = 1;
+
+    // role is the role this member is assigned
+    TeamRole role = 2;
+}
+
+enum TeamRole {
+    // TEAM_ROLE_UNKNOWN is the unkwnon state.
+    TEAM_ROLE_UNSPECIFIED = 0;
+
+    // TEAM_ROLE_OWNER is the owner of the team.
+    // A team can have multiple owners, but there must always be at least one owner.
+    TEAM_ROLE_OWNER = 1;
+
+    // TEAM_ROLE_MEMBER is a regular member of a team.
+    TEAM_ROLE_MEMBER = 2;
+}
+
+message TeamInvitation {
+    // id is the invitation ID.
+    string id = 1;
+}
+
+service TeamsService {
+    // CreateTeam creates a new Team.
+    rpc CreateTeam(CreateTeamRequest) returns (CreateTeamResponse) {};
+}
+
+message CreateTeamRequest {
+    // name is the team name
+    string name = 1;
+}
+
+message CreateTeamResponse {
+    Team team = 1;
+}
