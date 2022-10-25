@@ -9,12 +9,13 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.client.ClientProjectSession
+import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.openapi.project.Project
 import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.util.application
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -32,12 +33,11 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 
 @Suppress("UnstableApiUsage", "OPT_IN_USAGE")
-class GitpodClientProjectSessionTracker(
-        private val session: ClientProjectSession
-) : Disposable {
+class GitpodClientProjectSessionTracker(private val project: Project) : Disposable {
 
     private val manager = service<GitpodManager>()
     private val portsService = service<GitpodPortsService>()
+    private val session = ClientSessionsManager.getProjectSession(project)
 
     private lateinit var info: Info.WorkspaceInfoResponse
     private val lifetime = Lifetime.Eternal.createNested()
@@ -89,7 +89,7 @@ class GitpodClientProjectSessionTracker(
             notification.addAction(makePublicAction)
         }
 
-        ClientId.withClientId(session.clientId) {
+        ClientId.withClientId(session?.clientId) {
             notification.notify(null)
         }
     }
@@ -108,7 +108,7 @@ class GitpodClientProjectSessionTracker(
     }
 
     private fun openBrowser(url: String) {
-        ClientId.withClientId(session.clientId) {
+        ClientId.withClientId(session?.clientId) {
             BrowserUtil.browse(url)
         }
     }
@@ -196,7 +196,7 @@ class GitpodClientProjectSessionTracker(
 
     private fun registerActiveLanguageAnalytics() {
         val activeLanguages = mutableSetOf<String>()
-        session.project.messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+        project.messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
             override fun selectionChanged(event: FileEditorManagerEvent) {
                 super.selectionChanged(event)
                 if (event.manager.selectedEditor == null) {
@@ -219,6 +219,7 @@ class GitpodClientProjectSessionTracker(
     }
 
     private fun trackEvent(eventName: String, props: Map<String, Any?>) {
+        if (session == null) return
         manager.trackEvent(eventName, mapOf(
                 "sessionId" to session.clientId.value
         ).plus(props))

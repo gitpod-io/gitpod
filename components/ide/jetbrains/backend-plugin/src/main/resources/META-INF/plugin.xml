@@ -3,6 +3,7 @@
  Licensed under the GNU Affero General Public License (AGPL).
  See License-AGPL.txt in the project root for license information.
 -->
+<!--suppress PluginXmlValidity -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
     <xi:include href="/META-INF/extensions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
@@ -28,11 +29,7 @@
         <applicationService serviceImplementation="io.gitpod.jetbrains.remote.GitpodPortsService" preload="true"/>
         <notificationGroup id="Gitpod Notifications" displayType="BALLOON" isLogByDefault="false"/>
         <httpRequestHandler implementation="io.gitpod.jetbrains.remote.GitpodCLIService"/>
-        <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodClientProjectSessionTracker"
-                        client="guest" preload="true"/>
         <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodProjectManager" preload="true"/>
-        <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodTerminalService" client="guest"
-                        preload="true"/>
         <gateway.customization.name
                 implementation="io.gitpod.jetbrains.remote.GitpodGatewayClientCustomizationProvider"/>
         <gateway.customization.performance id="gitpodMetricsControl" order="before cpuControl"
