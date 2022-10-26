@@ -1567,6 +1567,8 @@ type DeleteVolumeSnapshotRequest struct {
 	VolumeHandle string `protobuf:"bytes,2,opt,name=volume_handle,json=volumeHandle,proto3" json:"volume_handle,omitempty"`
 	// soft_delete controls whether manager should attempt to restore volume snapshot from handle if it doesn't exist in the cluster yet
 	SoftDelete bool `protobuf:"varint,3,opt,name=soft_delete,json=softDelete,proto3" json:"soft_delete,omitempty"`
+	// ws_type is the type of workspace (prebuild or regular) to which this volume snapshot belongs
+	WsType WorkspaceType `protobuf:"varint,4,opt,name=ws_type,json=wsType,proto3,enum=wsman.WorkspaceType" json:"ws_type,omitempty"`
 }
 
 func (x *DeleteVolumeSnapshotRequest) Reset() {
@@ -1620,6 +1622,13 @@ func (x *DeleteVolumeSnapshotRequest) GetSoftDelete() bool {
 		return x.SoftDelete
 	}
 	return false
+}
+
+func (x *DeleteVolumeSnapshotRequest) GetWsType() WorkspaceType {
+	if x != nil {
+		return x.WsType
+	}
+	return WorkspaceType_REGULAR
 }
 
 type DeleteVolumeSnapshotResponse struct {
@@ -3432,14 +3441,17 @@ var file_core_proto_rawDesc = []byte{
 	0x32, 0x15, 0x2e, 0x77, 0x73, 0x6d, 0x61, 0x6e, 0x2e, 0x41, 0x64, 0x6d, 0x69, 0x73, 0x73, 0x69,
 	0x6f, 0x6e, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x52, 0x05, 0x6c, 0x65, 0x76, 0x65, 0x6c, 0x22, 0x1a,
 	0x0a, 0x18, 0x43, 0x6f, 0x6e, 0x74, 0x72, 0x6f, 0x6c, 0x41, 0x64, 0x6d, 0x69, 0x73, 0x73, 0x69,
-	0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x73, 0x0a, 0x1b, 0x44, 0x65,
-	0x6c, 0x65, 0x74, 0x65, 0x56, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x53, 0x6e, 0x61, 0x70, 0x73, 0x68,
-	0x6f, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x23, 0x0a, 0x0d, 0x76, 0x6f, 0x6c,
-	0x75, 0x6d, 0x65, 0x5f, 0x68, 0x61, 0x6e, 0x64, 0x6c, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x0c, 0x76, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x48, 0x61, 0x6e, 0x64, 0x6c, 0x65, 0x12, 0x1f,
-	0x0a, 0x0b, 0x73, 0x6f, 0x66, 0x74, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x18, 0x03, 0x20,
-	0x01, 0x28, 0x08, 0x52, 0x0a, 0x73, 0x6f, 0x66, 0x74, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x22,
+	0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xa2, 0x01, 0x0a, 0x1b, 0x44,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x56, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x53, 0x6e, 0x61, 0x70, 0x73,
+	0x68, 0x6f, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x23, 0x0a, 0x0d, 0x76, 0x6f,
+	0x6c, 0x75, 0x6d, 0x65, 0x5f, 0x68, 0x61, 0x6e, 0x64, 0x6c, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x0c, 0x76, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x48, 0x61, 0x6e, 0x64, 0x6c, 0x65, 0x12,
+	0x1f, 0x0a, 0x0b, 0x73, 0x6f, 0x66, 0x74, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x08, 0x52, 0x0a, 0x73, 0x6f, 0x66, 0x74, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65,
+	0x12, 0x2d, 0x0a, 0x07, 0x77, 0x73, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28,
+	0x0e, 0x32, 0x14, 0x2e, 0x77, 0x73, 0x6d, 0x61, 0x6e, 0x2e, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70,
+	0x61, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x52, 0x06, 0x77, 0x73, 0x54, 0x79, 0x70, 0x65, 0x22,
 	0x3f, 0x0a, 0x1c, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x56, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x53,
 	0x6e, 0x61, 0x70, 0x73, 0x68, 0x6f, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
 	0x1f, 0x0a, 0x0b, 0x77, 0x61, 0x73, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x18, 0x01,
@@ -3903,73 +3915,74 @@ var file_core_proto_depIdxs = []int32{
 	52, // 10: wsman.SubscribeResponse.header:type_name -> wsman.SubscribeResponse.HeaderEntry
 	37, // 11: wsman.ControlPortRequest.spec:type_name -> wsman.PortSpec
 	1,  // 12: wsman.ControlAdmissionRequest.level:type_name -> wsman.AdmissionLevel
-	40, // 13: wsman.WorkspaceStatus.metadata:type_name -> wsman.WorkspaceMetadata
-	36, // 14: wsman.WorkspaceStatus.spec:type_name -> wsman.WorkspaceSpec
-	4,  // 15: wsman.WorkspaceStatus.phase:type_name -> wsman.WorkspacePhase
-	39, // 16: wsman.WorkspaceStatus.conditions:type_name -> wsman.WorkspaceConditions
-	55, // 17: wsman.WorkspaceStatus.repo:type_name -> contentservice.GitStatus
-	41, // 18: wsman.WorkspaceStatus.runtime:type_name -> wsman.WorkspaceRuntimeInfo
-	42, // 19: wsman.WorkspaceStatus.auth:type_name -> wsman.WorkspaceAuthentication
-	37, // 20: wsman.WorkspaceSpec.exposed_ports:type_name -> wsman.PortSpec
-	6,  // 21: wsman.WorkspaceSpec.type:type_name -> wsman.WorkspaceType
-	35, // 22: wsman.WorkspaceSpec.ide_image:type_name -> wsman.IDEImage
-	2,  // 23: wsman.PortSpec.visibility:type_name -> wsman.PortVisibility
-	3,  // 24: wsman.WorkspaceConditions.pulling_images:type_name -> wsman.WorkspaceConditionBool
-	3,  // 25: wsman.WorkspaceConditions.final_backup_complete:type_name -> wsman.WorkspaceConditionBool
-	3,  // 26: wsman.WorkspaceConditions.deployed:type_name -> wsman.WorkspaceConditionBool
-	3,  // 27: wsman.WorkspaceConditions.network_not_ready:type_name -> wsman.WorkspaceConditionBool
-	56, // 28: wsman.WorkspaceConditions.first_user_activity:type_name -> google.protobuf.Timestamp
-	3,  // 29: wsman.WorkspaceConditions.stopped_by_request:type_name -> wsman.WorkspaceConditionBool
-	38, // 30: wsman.WorkspaceConditions.volume_snapshot:type_name -> wsman.VolumeSnapshotInfo
-	3,  // 31: wsman.WorkspaceConditions.aborted:type_name -> wsman.WorkspaceConditionBool
-	56, // 32: wsman.WorkspaceMetadata.started_at:type_name -> google.protobuf.Timestamp
-	53, // 33: wsman.WorkspaceMetadata.annotations:type_name -> wsman.WorkspaceMetadata.AnnotationsEntry
-	1,  // 34: wsman.WorkspaceAuthentication.admission:type_name -> wsman.AdmissionLevel
-	5,  // 35: wsman.StartWorkspaceSpec.feature_flags:type_name -> wsman.WorkspaceFeatureFlag
-	57, // 36: wsman.StartWorkspaceSpec.initializer:type_name -> contentservice.WorkspaceInitializer
-	37, // 37: wsman.StartWorkspaceSpec.ports:type_name -> wsman.PortSpec
-	45, // 38: wsman.StartWorkspaceSpec.envvars:type_name -> wsman.EnvironmentVariable
-	44, // 39: wsman.StartWorkspaceSpec.git:type_name -> wsman.GitSpec
-	1,  // 40: wsman.StartWorkspaceSpec.admission:type_name -> wsman.AdmissionLevel
-	35, // 41: wsman.StartWorkspaceSpec.ide_image:type_name -> wsman.IDEImage
-	38, // 42: wsman.StartWorkspaceSpec.volume_snapshot:type_name -> wsman.VolumeSnapshotInfo
-	45, // 43: wsman.StartWorkspaceSpec.sys_envvars:type_name -> wsman.EnvironmentVariable
-	54, // 44: wsman.EnvironmentVariable.secret:type_name -> wsman.EnvironmentVariable.SecretKeyRef
-	37, // 45: wsman.ExposedPorts.ports:type_name -> wsman.PortSpec
-	50, // 46: wsman.DescribeClusterResponse.WorkspaceClasses:type_name -> wsman.WorkspaceClass
-	8,  // 47: wsman.WorkspaceManager.GetWorkspaces:input_type -> wsman.GetWorkspacesRequest
-	10, // 48: wsman.WorkspaceManager.StartWorkspace:input_type -> wsman.StartWorkspaceRequest
-	12, // 49: wsman.WorkspaceManager.StopWorkspace:input_type -> wsman.StopWorkspaceRequest
-	14, // 50: wsman.WorkspaceManager.DescribeWorkspace:input_type -> wsman.DescribeWorkspaceRequest
-	30, // 51: wsman.WorkspaceManager.BackupWorkspace:input_type -> wsman.BackupWorkspaceRequest
-	16, // 52: wsman.WorkspaceManager.Subscribe:input_type -> wsman.SubscribeRequest
-	18, // 53: wsman.WorkspaceManager.MarkActive:input_type -> wsman.MarkActiveRequest
-	20, // 54: wsman.WorkspaceManager.SetTimeout:input_type -> wsman.SetTimeoutRequest
-	22, // 55: wsman.WorkspaceManager.ControlPort:input_type -> wsman.ControlPortRequest
-	24, // 56: wsman.WorkspaceManager.TakeSnapshot:input_type -> wsman.TakeSnapshotRequest
-	26, // 57: wsman.WorkspaceManager.ControlAdmission:input_type -> wsman.ControlAdmissionRequest
-	28, // 58: wsman.WorkspaceManager.DeleteVolumeSnapshot:input_type -> wsman.DeleteVolumeSnapshotRequest
-	32, // 59: wsman.WorkspaceManager.UpdateSSHKey:input_type -> wsman.UpdateSSHKeyRequest
-	48, // 60: wsman.WorkspaceManager.DescribeCluster:input_type -> wsman.DescribeClusterRequest
-	9,  // 61: wsman.WorkspaceManager.GetWorkspaces:output_type -> wsman.GetWorkspacesResponse
-	11, // 62: wsman.WorkspaceManager.StartWorkspace:output_type -> wsman.StartWorkspaceResponse
-	13, // 63: wsman.WorkspaceManager.StopWorkspace:output_type -> wsman.StopWorkspaceResponse
-	15, // 64: wsman.WorkspaceManager.DescribeWorkspace:output_type -> wsman.DescribeWorkspaceResponse
-	31, // 65: wsman.WorkspaceManager.BackupWorkspace:output_type -> wsman.BackupWorkspaceResponse
-	17, // 66: wsman.WorkspaceManager.Subscribe:output_type -> wsman.SubscribeResponse
-	19, // 67: wsman.WorkspaceManager.MarkActive:output_type -> wsman.MarkActiveResponse
-	21, // 68: wsman.WorkspaceManager.SetTimeout:output_type -> wsman.SetTimeoutResponse
-	23, // 69: wsman.WorkspaceManager.ControlPort:output_type -> wsman.ControlPortResponse
-	25, // 70: wsman.WorkspaceManager.TakeSnapshot:output_type -> wsman.TakeSnapshotResponse
-	27, // 71: wsman.WorkspaceManager.ControlAdmission:output_type -> wsman.ControlAdmissionResponse
-	29, // 72: wsman.WorkspaceManager.DeleteVolumeSnapshot:output_type -> wsman.DeleteVolumeSnapshotResponse
-	33, // 73: wsman.WorkspaceManager.UpdateSSHKey:output_type -> wsman.UpdateSSHKeyResponse
-	49, // 74: wsman.WorkspaceManager.DescribeCluster:output_type -> wsman.DescribeClusterResponse
-	61, // [61:75] is the sub-list for method output_type
-	47, // [47:61] is the sub-list for method input_type
-	47, // [47:47] is the sub-list for extension type_name
-	47, // [47:47] is the sub-list for extension extendee
-	0,  // [0:47] is the sub-list for field type_name
+	6,  // 13: wsman.DeleteVolumeSnapshotRequest.ws_type:type_name -> wsman.WorkspaceType
+	40, // 14: wsman.WorkspaceStatus.metadata:type_name -> wsman.WorkspaceMetadata
+	36, // 15: wsman.WorkspaceStatus.spec:type_name -> wsman.WorkspaceSpec
+	4,  // 16: wsman.WorkspaceStatus.phase:type_name -> wsman.WorkspacePhase
+	39, // 17: wsman.WorkspaceStatus.conditions:type_name -> wsman.WorkspaceConditions
+	55, // 18: wsman.WorkspaceStatus.repo:type_name -> contentservice.GitStatus
+	41, // 19: wsman.WorkspaceStatus.runtime:type_name -> wsman.WorkspaceRuntimeInfo
+	42, // 20: wsman.WorkspaceStatus.auth:type_name -> wsman.WorkspaceAuthentication
+	37, // 21: wsman.WorkspaceSpec.exposed_ports:type_name -> wsman.PortSpec
+	6,  // 22: wsman.WorkspaceSpec.type:type_name -> wsman.WorkspaceType
+	35, // 23: wsman.WorkspaceSpec.ide_image:type_name -> wsman.IDEImage
+	2,  // 24: wsman.PortSpec.visibility:type_name -> wsman.PortVisibility
+	3,  // 25: wsman.WorkspaceConditions.pulling_images:type_name -> wsman.WorkspaceConditionBool
+	3,  // 26: wsman.WorkspaceConditions.final_backup_complete:type_name -> wsman.WorkspaceConditionBool
+	3,  // 27: wsman.WorkspaceConditions.deployed:type_name -> wsman.WorkspaceConditionBool
+	3,  // 28: wsman.WorkspaceConditions.network_not_ready:type_name -> wsman.WorkspaceConditionBool
+	56, // 29: wsman.WorkspaceConditions.first_user_activity:type_name -> google.protobuf.Timestamp
+	3,  // 30: wsman.WorkspaceConditions.stopped_by_request:type_name -> wsman.WorkspaceConditionBool
+	38, // 31: wsman.WorkspaceConditions.volume_snapshot:type_name -> wsman.VolumeSnapshotInfo
+	3,  // 32: wsman.WorkspaceConditions.aborted:type_name -> wsman.WorkspaceConditionBool
+	56, // 33: wsman.WorkspaceMetadata.started_at:type_name -> google.protobuf.Timestamp
+	53, // 34: wsman.WorkspaceMetadata.annotations:type_name -> wsman.WorkspaceMetadata.AnnotationsEntry
+	1,  // 35: wsman.WorkspaceAuthentication.admission:type_name -> wsman.AdmissionLevel
+	5,  // 36: wsman.StartWorkspaceSpec.feature_flags:type_name -> wsman.WorkspaceFeatureFlag
+	57, // 37: wsman.StartWorkspaceSpec.initializer:type_name -> contentservice.WorkspaceInitializer
+	37, // 38: wsman.StartWorkspaceSpec.ports:type_name -> wsman.PortSpec
+	45, // 39: wsman.StartWorkspaceSpec.envvars:type_name -> wsman.EnvironmentVariable
+	44, // 40: wsman.StartWorkspaceSpec.git:type_name -> wsman.GitSpec
+	1,  // 41: wsman.StartWorkspaceSpec.admission:type_name -> wsman.AdmissionLevel
+	35, // 42: wsman.StartWorkspaceSpec.ide_image:type_name -> wsman.IDEImage
+	38, // 43: wsman.StartWorkspaceSpec.volume_snapshot:type_name -> wsman.VolumeSnapshotInfo
+	45, // 44: wsman.StartWorkspaceSpec.sys_envvars:type_name -> wsman.EnvironmentVariable
+	54, // 45: wsman.EnvironmentVariable.secret:type_name -> wsman.EnvironmentVariable.SecretKeyRef
+	37, // 46: wsman.ExposedPorts.ports:type_name -> wsman.PortSpec
+	50, // 47: wsman.DescribeClusterResponse.WorkspaceClasses:type_name -> wsman.WorkspaceClass
+	8,  // 48: wsman.WorkspaceManager.GetWorkspaces:input_type -> wsman.GetWorkspacesRequest
+	10, // 49: wsman.WorkspaceManager.StartWorkspace:input_type -> wsman.StartWorkspaceRequest
+	12, // 50: wsman.WorkspaceManager.StopWorkspace:input_type -> wsman.StopWorkspaceRequest
+	14, // 51: wsman.WorkspaceManager.DescribeWorkspace:input_type -> wsman.DescribeWorkspaceRequest
+	30, // 52: wsman.WorkspaceManager.BackupWorkspace:input_type -> wsman.BackupWorkspaceRequest
+	16, // 53: wsman.WorkspaceManager.Subscribe:input_type -> wsman.SubscribeRequest
+	18, // 54: wsman.WorkspaceManager.MarkActive:input_type -> wsman.MarkActiveRequest
+	20, // 55: wsman.WorkspaceManager.SetTimeout:input_type -> wsman.SetTimeoutRequest
+	22, // 56: wsman.WorkspaceManager.ControlPort:input_type -> wsman.ControlPortRequest
+	24, // 57: wsman.WorkspaceManager.TakeSnapshot:input_type -> wsman.TakeSnapshotRequest
+	26, // 58: wsman.WorkspaceManager.ControlAdmission:input_type -> wsman.ControlAdmissionRequest
+	28, // 59: wsman.WorkspaceManager.DeleteVolumeSnapshot:input_type -> wsman.DeleteVolumeSnapshotRequest
+	32, // 60: wsman.WorkspaceManager.UpdateSSHKey:input_type -> wsman.UpdateSSHKeyRequest
+	48, // 61: wsman.WorkspaceManager.DescribeCluster:input_type -> wsman.DescribeClusterRequest
+	9,  // 62: wsman.WorkspaceManager.GetWorkspaces:output_type -> wsman.GetWorkspacesResponse
+	11, // 63: wsman.WorkspaceManager.StartWorkspace:output_type -> wsman.StartWorkspaceResponse
+	13, // 64: wsman.WorkspaceManager.StopWorkspace:output_type -> wsman.StopWorkspaceResponse
+	15, // 65: wsman.WorkspaceManager.DescribeWorkspace:output_type -> wsman.DescribeWorkspaceResponse
+	31, // 66: wsman.WorkspaceManager.BackupWorkspace:output_type -> wsman.BackupWorkspaceResponse
+	17, // 67: wsman.WorkspaceManager.Subscribe:output_type -> wsman.SubscribeResponse
+	19, // 68: wsman.WorkspaceManager.MarkActive:output_type -> wsman.MarkActiveResponse
+	21, // 69: wsman.WorkspaceManager.SetTimeout:output_type -> wsman.SetTimeoutResponse
+	23, // 70: wsman.WorkspaceManager.ControlPort:output_type -> wsman.ControlPortResponse
+	25, // 71: wsman.WorkspaceManager.TakeSnapshot:output_type -> wsman.TakeSnapshotResponse
+	27, // 72: wsman.WorkspaceManager.ControlAdmission:output_type -> wsman.ControlAdmissionResponse
+	29, // 73: wsman.WorkspaceManager.DeleteVolumeSnapshot:output_type -> wsman.DeleteVolumeSnapshotResponse
+	33, // 74: wsman.WorkspaceManager.UpdateSSHKey:output_type -> wsman.UpdateSSHKeyResponse
+	49, // 75: wsman.WorkspaceManager.DescribeCluster:output_type -> wsman.DescribeClusterResponse
+	62, // [62:76] is the sub-list for method output_type
+	48, // [48:62] is the sub-list for method input_type
+	48, // [48:48] is the sub-list for extension type_name
+	48, // [48:48] is the sub-list for extension extendee
+	0,  // [0:48] is the sub-list for field type_name
 }
 
 func init() { file_core_proto_init() }

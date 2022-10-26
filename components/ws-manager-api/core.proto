@@ -232,6 +232,9 @@ message DeleteVolumeSnapshotRequest{
 
     // soft_delete controls whether manager should attempt to restore volume snapshot from handle if it doesn't exist in the cluster yet
     bool soft_delete = 3;
+
+    // ws_type is the type of workspace (prebuild or regular) to which this volume snapshot belongs
+    WorkspaceType ws_type = 4;
 }
 
 message DeleteVolumeSnapshotResponse {

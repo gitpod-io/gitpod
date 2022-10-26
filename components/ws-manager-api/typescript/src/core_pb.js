@@ -4304,7 +4304,8 @@ proto.wsman.DeleteVolumeSnapshotRequest.toObject = function(includeInstance, msg
   var f, obj = {
     id: jspb.Message.getFieldWithDefault(msg, 1, ""),
     volumeHandle: jspb.Message.getFieldWithDefault(msg, 2, ""),
-    softDelete: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
+    softDelete: jspb.Message.getBooleanFieldWithDefault(msg, 3, false),
+    wsType: jspb.Message.getFieldWithDefault(msg, 4, 0)
   };
 
   if (includeInstance) {
@@ -4353,6 +4354,10 @@ proto.wsman.DeleteVolumeSnapshotRequest.deserializeBinaryFromReader = function(m
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setSoftDelete(value);
       break;
+    case 4:
+      var value = /** @type {!proto.wsman.WorkspaceType} */ (reader.readEnum());
+      msg.setWsType(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -4400,6 +4405,13 @@ proto.wsman.DeleteVolumeSnapshotRequest.serializeBinaryToWriter = function(messa
   if (f) {
     writer.writeBool(
       3,
+      f
+    );
+  }
+  f = message.getWsType();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      4,
       f
     );
   }
@@ -4457,6 +4469,24 @@ proto.wsman.DeleteVolumeSnapshotRequest.prototype.getSoftDelete = function() {
  */
 proto.wsman.DeleteVolumeSnapshotRequest.prototype.setSoftDelete = function(value) {
   return jspb.Message.setProto3BooleanField(this, 3, value);
+};
+
+
+/**
+ * optional WorkspaceType ws_type = 4;
+ * @return {!proto.wsman.WorkspaceType}
+ */
+proto.wsman.DeleteVolumeSnapshotRequest.prototype.getWsType = function() {
+  return /** @type {!proto.wsman.WorkspaceType} */ (jspb.Message.getFieldWithDefault(this, 4, 0));
+};
+
+
+/**
+ * @param {!proto.wsman.WorkspaceType} value
+ * @return {!proto.wsman.DeleteVolumeSnapshotRequest} returns this
+ */
+proto.wsman.DeleteVolumeSnapshotRequest.prototype.setWsType = function(value) {
+  return jspb.Message.setProto3EnumField(this, 4, value);
 };
 
 

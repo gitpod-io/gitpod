@@ -501,6 +501,8 @@ export class DeleteVolumeSnapshotRequest extends jspb.Message {
     setVolumeHandle(value: string): DeleteVolumeSnapshotRequest;
     getSoftDelete(): boolean;
     setSoftDelete(value: boolean): DeleteVolumeSnapshotRequest;
+    getWsType(): WorkspaceType;
+    setWsType(value: WorkspaceType): DeleteVolumeSnapshotRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): DeleteVolumeSnapshotRequest.AsObject;
@@ -517,6 +519,7 @@ export namespace DeleteVolumeSnapshotRequest {
         id: string,
         volumeHandle: string,
         softDelete: boolean,
+        wsType: WorkspaceType,
     }
 }
 
