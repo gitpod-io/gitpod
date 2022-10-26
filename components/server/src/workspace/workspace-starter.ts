@@ -114,6 +114,7 @@ import { ExtendedUser } from "@gitpod/ws-manager/lib/constraints";
 import {
     FailedInstanceStartReason,
     increaseFailedInstanceStartCounter,
+    increaseImageBuildsStartedTotal,
     increaseSuccessfulInstanceStartCounter,
 } from "../prometheus-metrics";
 import { ContextParser } from "./context-parser-service";
@@ -1254,6 +1255,10 @@ export class WorkspaceStarter {
                 );
 
             const result = await client.build({ span }, req, imageBuildLogInfo);
+
+            if (result.actuallyNeedsBuild) {
+                increaseImageBuildsStartedTotal();
+            }
 
             // Update the workspace now that we know what the name of the workspace image will be (which doubles as buildID)
             workspace.imageNameResolved = result.ref;
