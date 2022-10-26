@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"sync"
@@ -23,6 +24,8 @@ import (
 
 // APIInterface wraps the
 type APIInterface interface {
+	io.Closer
+
 	GetOwnerToken(ctx context.Context, workspaceID string) (res string, err error)
 	AdminBlockUser(ctx context.Context, req *AdminBlockUserRequest) (err error)
 	GetLoggedInUser(ctx context.Context) (res *User, err error)
