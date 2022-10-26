@@ -101,33 +101,36 @@ async function createVM(werft: Werft, config: JobConfig) {
     const cpu = config.withLargeVM ? 12 : 6;
     const memory = config.withLargeVM ? 24 : 12;
 
-    // set some common vars for TF
-    // We pass the GCP credentials explicitly, otherwise for some reason TF doesn't pick them up
-    const commonVars = `GOOGLE_BACKEND_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
-                        GOOGLE_APPLICATION_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
-                        TF_VAR_kubeconfig_path=${GLOBAL_KUBECONFIG_PATH} \
-                        TF_VAR_preview_name=${config.previewEnvironment.destname} \
-                        TF_VAR_vm_cpu=${cpu} \
-                        TF_VAR_vm_memory=${memory}Gi \
-                        TF_VAR_vm_storage_class="longhorn-gitpod-k3s-202209251218-onereplica"`
+    // -replace=... forces recreation of the resource
+    const planArgs = config.cleanSlateDeployment ? "-replace=harvester_virtualmachine.harvester" : ""
+
+    const environment = {
+        // We pass the GCP credentials explicitly, otherwise for some reason TF doesn't pick them up
+        "GOOGLE_BACKEND_CREDENTIALS": GCLOUD_SERVICE_ACCOUNT_PATH,
+        "GOOGLE_APPLICATION_CREDENTIALS": GCLOUD_SERVICE_ACCOUNT_PATH,
+        "TF_VAR_kubeconfig_path": GLOBAL_KUBECONFIG_PATH,
+        "TF_VAR_preview_name": config.previewEnvironment.destname,
+        "TF_VAR_vm_cpu": `${cpu}`,
+        "TF_VAR_vm_memory": `${memory}Gi`,
+        "TF_VAR_vm_storage_class": "longhorn-gitpod-k3s-202209251218-onereplica",
+        "TF_CLI_ARGS_plan": planArgs
+    }
+
+    const variables = Object
+        .entries(environment)
+        .filter(([_, value]) => value.length > 0)
+        .map(([key, value]) => `${key}="${value}"`)
+        .join(" ")
 
     if (config.cleanSlateDeployment) {
         werft.log(prepareSlices.BOOT_VM, "Cleaning previously created VM");
-        // -replace=... forces recreation of the resource
-        await execStream(`${commonVars} \
-                        TF_CLI_ARGS_plan="-replace=harvester_virtualmachine.harvester" \
-                        ./dev/preview/workflow/preview/deploy-harvester.sh`,
-            {slice: prepareSlices.BOOT_VM}
-        );
+        await execStream(`${variables} leeway run dev/preview:create-preview`, {slice: prepareSlices.BOOT_VM});
     }
 
     werft.log(prepareSlices.BOOT_VM, "Creating  VM");
 
     try {
-        await execStream(`${commonVars} \
-                        ./dev/preview/workflow/preview/deploy-harvester.sh`,
-            {slice: prepareSlices.BOOT_VM}
-        );
+        await execStream(`${variables} leeway run dev/preview:create-preview`, {slice: prepareSlices.BOOT_VM});
     } catch (err) {
         werft.currentPhaseSpan.setAttribute("preview.created_vm", false);
         werft.fail(prepareSlices.BOOT_VM, new Error(`Failed creating VM: ${err}`))
