@@ -18,7 +18,6 @@ import (
 	"github.com/containerd/containerd/remotes"
 	distv2 "github.com/docker/distribution/registry/api/v2"
 	"github.com/gorilla/handlers"
-	files "github.com/ipfs/go-ipfs-files"
 	icorepath "github.com/ipfs/interface-go-ipfs-core/path"
 	"github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
@@ -396,19 +395,9 @@ func (sbs ipfsBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst
 		return
 	}
 
-	ipfsFile, err := sbs.source.IPFS.Unixfs().Get(ctx, icorepath.New(ipfsCID))
+	ipfsFile, err := sbs.source.IPFS.Block().Get(ctx, icorepath.New(ipfsCID))
 	if err != nil {
 		log.WithError(err).Error("unable to get blob from IPFS")
-		err = distv2.ErrorCodeBlobUnknown
-		return
-	}
-
-	f, ok := ipfsFile.(interface {
-		files.File
-		io.ReaderAt
-	})
-	if !ok {
-		log.WithError(err).Error("IPFS file does not support io.ReaderAt")
 		err = distv2.ErrorCodeBlobUnknown
 		return
 	}
@@ -421,7 +410,7 @@ func (sbs ipfsBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst
 	}
 
 	log.Debug("returning blob from IPFS")
-	return true, mediaType, "", f, nil
+	return true, mediaType, "", ipfsFile, nil
 }
 
 func mediaTypeKeyFromDigest(dgst digest.Digest) string {

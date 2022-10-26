@@ -12,11 +12,11 @@ import (
 	"io"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
+
 	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/errdefs"
-	"github.com/gitpod-io/gitpod/common-go/log"
 	redis "github.com/go-redis/redis/v8"
-	files "github.com/ipfs/go-ipfs-files"
 	ipfs "github.com/ipfs/interface-go-ipfs-core"
 	"github.com/ipfs/interface-go-ipfs-core/options"
 	"github.com/opencontainers/go-digest"
@@ -51,27 +51,24 @@ func (store *IPFSBlobCache) Store(ctx context.Context, dgst digest.Digest, conte
 		return nil
 	}
 
-	opts := []options.UnixfsAddOption{
-		options.Unixfs.Pin(true),
-		options.Unixfs.CidVersion(1),
-		options.Unixfs.RawLeaves(true),
-		options.Unixfs.FsCache(true),
+	opts := []options.BlockPutOption{
+		options.Block.Pin(true),
 	}
 
-	p, err := store.IPFS.Unixfs().Add(ctx, files.NewReaderFile(content), opts...)
+	p, err := store.IPFS.Block().Put(ctx, content, opts...)
 	if err != nil {
 		return err
 	}
 
 	res := store.Redis.MSet(ctx,
-		dgst.String(), p.Cid().String(),
+		dgst.String(), p.Path().Cid().String(),
 		mediaTypeKeyFromDigest(dgst), mediaType,
 	)
 	if err := res.Err(); err != nil {
 		return err
 	}
 
-	log.WithField("digest", dgst.String()).WithField("cid", p.Cid().String()).Debug("pushed to IPFS")
+	log.WithField("digest", dgst.String()).WithField("cid", p.Path().Cid().String()).Debug("pushed to IPFS")
 
 	return nil
 }
