@@ -3,7 +3,12 @@ import * as Tracing from "./observability/tracing";
 import { HarvesterPreviewEnvironment, PreviewEnvironment } from "./util/preview";
 import { SpanStatusCode } from "@opentelemetry/api";
 import { exec } from "./util/shell";
-import { CORE_DEV_KUBECONFIG_PATH, HARVESTER_KUBECONFIG_PATH } from "./jobs/build/const";
+import {
+    CORE_DEV_KUBECONFIG_PATH,
+    GCLOUD_SERVICE_ACCOUNT_PATH,
+    GLOBAL_KUBECONFIG_PATH,
+    HARVESTER_KUBECONFIG_PATH
+} from "./jobs/build/const";
 import * as fs from "fs";
 
 // Will be set once tracing has been initialized
@@ -18,6 +23,7 @@ const DRY_RUN = annotations["dry-run"] in annotations || false;
 
 const SLICES = {
     VALIDATE_CONFIGURATION: "Validating configuration",
+    CONFIGURE_K8S: "Configuring k8s access.",
     CONFIGURE_ACCESS: "Configuring access to relevant resources",
     INSTALL_HARVESTER_KUBECONFIG: "Install Harvester kubeconfig",
     DELETING_PREVIEW: `Deleting preview environment: ${previewName}`,
@@ -55,7 +61,6 @@ async function deletePreviewEnvironment() {
 
     werft.phase("Configure access");
     try {
-        const GCLOUD_SERVICE_ACCOUNT_PATH = "/mnt/secrets/gcp-sa/service-account.json";
         exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`, {
             slice: SLICES.CONFIGURE_ACCESS,
         });
@@ -78,11 +83,21 @@ async function deletePreviewEnvironment() {
         werft.fail(SLICES.INSTALL_HARVESTER_KUBECONFIG, err);
     }
 
+    configureGlobalKubernetesContext()
+
     const preview = new HarvesterPreviewEnvironment(werft, previewName);
     if (DRY_RUN) {
         werft.log(SLICES.DELETING_PREVIEW, `Would have deleted preview ${preview.name}`);
     } else {
         removePreviewEnvironment(preview);
+    }
+}
+
+function configureGlobalKubernetesContext() {
+    const rc = exec(`previewctl get-credentials --gcp-service-account=${GCLOUD_SERVICE_ACCOUNT_PATH} --kube-save-path=${GLOBAL_KUBECONFIG_PATH}`, { slice: SLICES.CONFIGURE_K8S }).code;
+
+    if (rc != 0) {
+        throw new Error("Failed to configure global kubernetes context.");
     }
 }
 
