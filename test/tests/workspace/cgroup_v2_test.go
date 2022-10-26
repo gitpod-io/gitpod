@@ -26,6 +26,8 @@ func TestCgroupV2(t *testing.T) {
 	f := features.New("cgroup v2").
 		WithLabel("component", "workspace").
 		Assess("it should create a new cgroup when cgroup v2 is enabled", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			t.Parallel()
+
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
