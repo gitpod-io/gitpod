@@ -41,7 +41,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
     const [stripePortalUrl, setStripePortalUrl] = useState<string | undefined>();
     const [pollStripeSubscriptionTimeout, setPollStripeSubscriptionTimeout] = useState<NodeJS.Timeout | undefined>();
     const [pendingStripeSubscription, setPendingStripeSubscription] = useState<PendingStripeSubscription | undefined>();
-    const [billingError, setBillingError] = useState<string | undefined>();
+    const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
     const localStorageKey = `pendingStripeSubscriptionFor${attributionId}`;
     const now = dayjs().utc(true);
@@ -63,7 +63,8 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                 setStripeSubscriptionId(subscriptionId);
                 setUsageLimit(limit);
             } catch (error) {
-                console.error(error);
+                console.error("Could not get Stripe subscription details.", error);
+                setErrorMessage(`Could not get Stripe subscription details. ${error?.message || String(error)}`);
             } finally {
                 setIsLoadingStripeSubscription(false);
             }
@@ -112,7 +113,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                 window.localStorage.removeItem(localStorageKey);
                 clearTimeout(pollStripeSubscriptionTimeout!);
                 setPendingStripeSubscription(undefined);
-                setBillingError(`Could not subscribe to Stripe. ${error?.message || String(error)}`);
+                setErrorMessage(`Could not subscribe to Stripe. ${error?.message || String(error)}`);
             }
         })();
     }, [attributionId, location.search]);
@@ -130,7 +131,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
             const pending = JSON.parse(pendingStripeSubscription);
             setPendingStripeSubscription(pending);
         } catch (error) {
-            console.error("Could not load pending Stripe subscription", attributionId, error);
+            console.warn("Could not load pending Stripe subscription", attributionId, error);
         }
     }, [attributionId, localStorageKey]);
 
@@ -201,8 +202,8 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
             await getGitpodService().server.setUsageLimit(attributionId, newLimit);
             setUsageLimit(newLimit);
         } catch (error) {
-            console.error(error);
-            setBillingError(`Failed to update usage limit. ${error?.message || String(error)}`);
+            console.error("Failed to update usage limit", error);
+            setErrorMessage(`Failed to update usage limit. ${error?.message || String(error)}`);
         }
     };
 
@@ -210,9 +211,9 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
         <div className="mb-16">
             <h2 className="text-gray-500">Manage usage-based billing, usage limit, and payment method.</h2>
             <div className="max-w-xl flex flex-col">
-                {billingError && (
+                {errorMessage && (
                     <Alert className="max-w-xl mt-2" closable={false} showIcon={true} type="error">
-                        {billingError}
+                        {errorMessage}
                     </Alert>
                 )}
                 {showSpinner && (
@@ -480,7 +481,7 @@ function CreditCardInputForm(props: { attributionId: string }) {
     const elements = useElements();
     const { currency, setCurrency } = useContext(PaymentContext);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [billingError, setBillingError] = useState<string | undefined>();
+    const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -488,7 +489,7 @@ function CreditCardInputForm(props: { attributionId: string }) {
         if (!stripe || !elements || !attrId) {
             return;
         }
-        setBillingError(undefined);
+        setErrorMessage(undefined);
         setIsLoading(true);
         try {
             // Create Stripe customer with currency
@@ -508,8 +509,8 @@ function CreditCardInputForm(props: { attributionId: string }) {
                 // site first to authorize the payment, then redirected to the `return_url`.
             }
         } catch (error) {
-            console.error(error);
-            setBillingError(`Failed to submit form. ${error?.message || String(error)}`);
+            console.error("Failed to submit form.", error);
+            setErrorMessage(`Failed to submit form. ${error?.message || String(error)}`);
         } finally {
             setIsLoading(false);
         }
@@ -517,9 +518,9 @@ function CreditCardInputForm(props: { attributionId: string }) {
 
     return (
         <form className="mt-4 flex-grow flex flex-col" onSubmit={handleSubmit}>
-            {billingError && (
+            {errorMessage && (
                 <Alert className="mb-4" closable={false} showIcon={true} type="error">
-                    {billingError}
+                    {errorMessage}
                 </Alert>
             )}
             <PaymentElement />
@@ -557,7 +558,7 @@ function UpdateLimitModal(props: {
     onClose: () => void;
     onUpdate: (newLimit: number) => {};
 }) {
-    const [error, setError] = useState<string>("");
+    const [errorMessage, setErrorMessage] = useState<string>("");
     const [newLimit, setNewLimit] = useState<string | undefined>(
         typeof props.currentValue === "number" ? String(props.currentValue) : undefined,
     );
@@ -565,16 +566,16 @@ function UpdateLimitModal(props: {
     function onSubmit(event: React.FormEvent) {
         event.preventDefault();
         if (!newLimit) {
-            setError("Please specify a limit");
+            setErrorMessage("Please specify a limit");
             return;
         }
         const n = parseInt(newLimit, 10);
         if (typeof n !== "number") {
-            setError("Please specify a limit that is a valid number");
+            setErrorMessage("Please specify a limit that is a valid number");
             return;
         }
         if (typeof props.minValue === "number" && n < props.minValue) {
-            setError(`Please specify a limit that is >= ${props.minValue}`);
+            setErrorMessage(`Please specify a limit that is >= ${props.minValue}`);
             return;
         }
         props.onUpdate(n);
@@ -586,9 +587,9 @@ function UpdateLimitModal(props: {
             <form onSubmit={onSubmit}>
                 <div className="border-t border-b border-gray-200 dark:border-gray-700 -mx-6 px-6 py-4 flex flex-col">
                     <p className="pb-4 text-gray-500 text-base">Set usage limit in total credits per month.</p>
-                    {error && (
+                    {errorMessage && (
                         <Alert type="error" className="-mt-2 mb-2">
-                            {error}
+                            {errorMessage}
                         </Alert>
                     )}
                     <label className="font-medium">
@@ -597,9 +598,11 @@ function UpdateLimitModal(props: {
                             <input
                                 type="text"
                                 value={newLimit}
-                                className={`rounded-md w-full truncate overflow-x-scroll pr-8 ${error ? "error" : ""}`}
+                                className={`rounded-md w-full truncate overflow-x-scroll pr-8 ${
+                                    errorMessage ? "error" : ""
+                                }`}
                                 onChange={(e) => {
-                                    setError("");
+                                    setErrorMessage("");
                                     setNewLimit(e.target.value);
                                 }}
                             />
