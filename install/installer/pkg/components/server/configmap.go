@@ -176,6 +176,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	inactivityPeriodForRepos := 0
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.InactivityPeriodForRepos != nil {
+			inactivityPeriodForRepos = *cfg.WebApp.Server.InactivityPeriodForRepos
+		}
+		return nil
+	})
+
 	// todo(sje): all these values are configurable
 	scfg := ConfigSerialized{
 		Version:               ctx.VersionManifest.Version,
@@ -263,7 +271,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			// default limit for all cloneURLs
 			"*": 50,
 		},
-		WorkspaceClasses: workspaceClasses,
+		WorkspaceClasses:         workspaceClasses,
+		InactivityPeriodForRepos: inactivityPeriodForRepos,
 	}
 
 	fc, err := common.ToJSONString(scfg)
