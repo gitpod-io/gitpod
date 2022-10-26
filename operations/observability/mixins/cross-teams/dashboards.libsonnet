@@ -13,6 +13,7 @@
     'gitpod-node-resource-metrics.json': (import 'dashboards/gitpod-node-resource-metrics.json'),
     'gitpod-grpc-server.json': (import 'dashboards/gitpod-grpc-server.json'),
     'gitpod-grpc-client.json': (import 'dashboards/gitpod-grpc-client.json'),
+    'gitpod-connect-server.json': (import 'dashboards/gitpod-connect-server.json'),
     'gitpod-overview.json': (import 'dashboards/gitpod-overview.json'),
     'gitpod-nodes-overview.json': (import 'dashboards/gitpod-nodes-overview.json'),
     'gitpod-admin-node.json': (import 'dashboards/gitpod-admin-node.json'),
