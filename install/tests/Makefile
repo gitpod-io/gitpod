@@ -34,7 +34,12 @@ tf-ws: check-var-cloud
 tf-plan: check-var-cloud tf-ws
 	$(MAKE) -C ${TF_MOD} plan
 
-tf-apply: check-var-cloud tf-ws
+tf-aws-autoscaler-apply:
+ifeq ($(cloud), aws)
+	$(MAKE) -C ${TF_MOD} install-cluster-autoscaler
+endif
+
+tf-apply: check-var-cloud tf-ws tf-aws-autoscaler-apply
 	@echo "Get kubeconfig of existing cluster(if any)..."
 	$(MAKE) get-kubeconfig || echo "No pre-existing cluster"
 	@echo "Run terraform apply"
@@ -453,6 +458,7 @@ self_signed ?= false
 check-gitpod-installation: delete-cm-setup check-kots-app check-var-TF_VAR_TEST_ID
 	@echo "Curling https://${TF_VAR_TEST_ID}.${DOMAIN}/api/version"
 ifeq (true,$(self_signed))
+	@gsutil cp gs://nightly-tests/tf-state/${TF_VAR_TEST_ID}-ca.pem ca.pem || echo "No ca file found"
 	export SSL_CERT_FILE=./ca.pem
 endif
 	@curl -i -X GET https://${TF_VAR_TEST_ID}.${DOMAIN}/api/version || { echo "**Error**: Curling Gitpod endpoint failed"; exit 1; }
