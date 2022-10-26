@@ -4486,7 +4486,7 @@ data:
           "deprecated": false
         }
       ],
-      "inactivityPeriodForRepos": 0
+      "inactivityPeriodForReposInDays": 0
     }
 kind: ConfigMap
 metadata:
@@ -8577,7 +8577,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 298e3ce510237650c971c6334d65f392b9e8f5d77de19725d18a47f557166260
+        gitpod.io/checksum_config: fd86888d2f9c7f51bb9750b65b15cd977c82ac9b65da17c233d69e77ff81f7b6
       creationTimestamp: null
       labels:
         app: gitpod
