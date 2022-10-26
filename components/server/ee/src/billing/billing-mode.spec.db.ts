@@ -50,6 +50,8 @@ import {
     ReconcileUsageResponse,
     ListUsageRequest_Ordering,
     ListUsageResponse,
+    ResetUsageResponse,
+    ResetUsageRequest,
 } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import { CallOptions } from "nice-grpc-common";
 chai.use(deepEqualInAnyOrder);
@@ -122,6 +124,10 @@ class UsageServiceClientMock implements UsageServiceClient {
         },
         options?: CallOptions | undefined,
     ): Promise<ListUsageResponse> {
+        throw new Error("Mock: not implemented");
+    }
+
+    async resetUsage(request: ResetUsageRequest, options?: CallOptions | undefined): Promise<ResetUsageResponse> {
         throw new Error("Mock: not implemented");
     }
 }
