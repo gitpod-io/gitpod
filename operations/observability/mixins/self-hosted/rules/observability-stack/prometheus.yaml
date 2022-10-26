@@ -27,7 +27,7 @@ spec:
       for: 10m
       labels:
         severity: critical
-        team: platform
+        team: delivery-operations-experience
     - alert: PrometheusRemoteStorageFailures
       annotations:
         description: Prometheus {{$labels.namespace}}/{{$labels.pod}} failed to send {{ printf "%.1f" $value }}% of the samples to {{ $labels.remote_name}}:{{ $labels.url }}
@@ -47,7 +47,7 @@ spec:
       for: 15m
       labels:
         severity: critical
-        team: platform
+        team: delivery-operations-experience
     - alert: PrometheusRuleFailures
       annotations:
         description: Prometheus {{$labels.namespace}}/{{$labels.pod}} has failed to evaluate {{ printf "%.0f" $value }} rules in the last 5m.
@@ -57,4 +57,4 @@ spec:
       for: 15m
       labels:
         severity: warning
-        team: platform
+        team: delivery-operations-experience

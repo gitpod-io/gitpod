@@ -28,4 +28,4 @@ spec:
       for: 15m
       labels:
         severity: critical
-        team: platform
+        team: delivery-operations-experience
