@@ -24,6 +24,8 @@ import Property from "./Property";
 import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import CaretDown from "../icons/CaretDown.svg";
+import ContextMenu from "../components/ContextMenu";
 
 export default function UserDetail(p: { user: User }) {
     const [activity, setActivity] = useState(false);
@@ -147,7 +149,7 @@ export default function UserDetail(p: { user: User }) {
             >
                 {isStudent === undefined ? "---" : isStudent ? "Enabled" : "Disabled"}
             </Property>,
-            <Property name="BillingMode">{billingMode?.mode || "---"}</Property>,
+            renderBillingModeProperty(billingMode),
         ];
 
         switch (billingMode?.mode) {
@@ -325,6 +327,36 @@ export default function UserDetail(p: { user: User }) {
                 </div>
             </Modal>
         </>
+    );
+}
+
+function renderBillingModeProperty(billingMode?: BillingMode): JSX.Element {
+    const text = billingMode?.mode || "---";
+
+    let blockingTeamNames = [];
+    if (billingMode?.mode === "chargebee" && !!billingMode.teamNames && !billingMode.canUpgradeToUBB) {
+        const itemStyle = "text-gray-400 dark:text-gray-500 text-left font-normal";
+        for (const teamName of billingMode.teamNames) {
+            blockingTeamNames.push({ title: teamName, customFontStyle: itemStyle });
+        }
+    }
+    return (
+        <Property name="BillingMode">
+            <>
+                {text}
+                {blockingTeamNames.length > 0 && (
+                    <ContextMenu
+                        menuEntries={blockingTeamNames}
+                        customClasses="w-64 max-h-48 overflow-scroll mx-auto left-0 right-0"
+                    >
+                        <p className="flex justify-left text-gitpod-red">
+                            <span>UBP blocked by:</span>
+                            <img className="m-2" src={CaretDown} />
+                        </p>
+                    </ContextMenu>
+                )}
+            </>
+        </Property>
     );
 }
 
