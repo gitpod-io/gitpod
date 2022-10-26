@@ -176,10 +176,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
-	inactivityPeriodForRepos := 0
+	inactivityPeriodForReposInDays := 0
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.InactivityPeriodForRepos != nil {
-			inactivityPeriodForRepos = *cfg.WebApp.Server.InactivityPeriodForRepos
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.InactivityPeriodForReposInDays != nil {
+			inactivityPeriodForReposInDays = *cfg.WebApp.Server.InactivityPeriodForReposInDays
 		}
 		return nil
 	})
@@ -271,8 +271,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			// default limit for all cloneURLs
 			"*": 50,
 		},
-		WorkspaceClasses:         workspaceClasses,
-		InactivityPeriodForRepos: inactivityPeriodForRepos,
+		WorkspaceClasses:               workspaceClasses,
+		InactivityPeriodForReposInDays: inactivityPeriodForReposInDays,
 	}
 
 	fc, err := common.ToJSONString(scfg)
