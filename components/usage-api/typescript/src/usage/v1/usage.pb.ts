@@ -242,6 +242,12 @@ export function costCenter_BillingStrategyToNumber(object: CostCenter_BillingStr
   }
 }
 
+export interface ResetUsageRequest {
+}
+
+export interface ResetUsageResponse {
+}
+
 function createBaseReconcileUsageRequest(): ReconcileUsageRequest {
   return { from: undefined, to: undefined };
 }
@@ -1149,6 +1155,84 @@ export const CostCenter = {
   },
 };
 
+function createBaseResetUsageRequest(): ResetUsageRequest {
+  return {};
+}
+
+export const ResetUsageRequest = {
+  encode(_: ResetUsageRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): ResetUsageRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseResetUsageRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): ResetUsageRequest {
+    return {};
+  },
+
+  toJSON(_: ResetUsageRequest): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial(_: DeepPartial<ResetUsageRequest>): ResetUsageRequest {
+    const message = createBaseResetUsageRequest();
+    return message;
+  },
+};
+
+function createBaseResetUsageResponse(): ResetUsageResponse {
+  return {};
+}
+
+export const ResetUsageResponse = {
+  encode(_: ResetUsageResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): ResetUsageResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseResetUsageResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): ResetUsageResponse {
+    return {};
+  },
+
+  toJSON(_: ResetUsageResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial(_: DeepPartial<ResetUsageResponse>): ResetUsageResponse {
+    const message = createBaseResetUsageResponse();
+    return message;
+  },
+};
+
 export type UsageServiceDefinition = typeof UsageServiceDefinition;
 export const UsageServiceDefinition = {
   name: "UsageService",
@@ -1178,6 +1262,15 @@ export const UsageServiceDefinition = {
       requestType: ReconcileUsageRequest,
       requestStream: false,
       responseType: ReconcileUsageResponse,
+      responseStream: false,
+      options: {},
+    },
+    /** ResetUsage resets Usage for CostCenters which have expired or will explire shortly */
+    resetUsage: {
+      name: "ResetUsage",
+      requestType: ResetUsageRequest,
+      requestStream: false,
+      responseType: ResetUsageResponse,
       responseStream: false,
       options: {},
     },
@@ -1218,6 +1311,11 @@ export interface UsageServiceServiceImplementation<CallContextExt = {}> {
     request: ReconcileUsageRequest,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<ReconcileUsageResponse>>;
+  /** ResetUsage resets Usage for CostCenters which have expired or will explire shortly */
+  resetUsage(
+    request: ResetUsageRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<ResetUsageResponse>>;
   /** ListUsage retrieves all usage for the specified attributionId and theb given time range */
   listUsage(request: ListUsageRequest, context: CallContext & CallContextExt): Promise<DeepPartial<ListUsageResponse>>;
   /** GetBalance returns the current credits balance for the given attributionId */
@@ -1243,6 +1341,11 @@ export interface UsageServiceClient<CallOptionsExt = {}> {
     request: DeepPartial<ReconcileUsageRequest>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<ReconcileUsageResponse>;
+  /** ResetUsage resets Usage for CostCenters which have expired or will explire shortly */
+  resetUsage(
+    request: DeepPartial<ResetUsageRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<ResetUsageResponse>;
   /** ListUsage retrieves all usage for the specified attributionId and theb given time range */
   listUsage(request: DeepPartial<ListUsageRequest>, options?: CallOptions & CallOptionsExt): Promise<ListUsageResponse>;
   /** GetBalance returns the current credits balance for the given attributionId */
