@@ -23,6 +23,7 @@ func TestConfigMap_ContainsSchedule(t *testing.T) {
 	require.JSONEq(t,
 		`{
        "controllerSchedule": "2m",
+	   "resetUsageSchedule": "5m0s",
        "stripeCredentialsFile": "stripe-secret/apikeys",
 	   "defaultSpendingLimit": {
 		"forUsers": 1000000000,

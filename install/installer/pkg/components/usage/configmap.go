@@ -5,6 +5,7 @@ package usage
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
@@ -19,7 +20,8 @@ import (
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	cfg := server.Config{
-		ControllerSchedule: "", // By default controller is disabled
+		LedgerSchedule:     "", // By default controller is disabled
+		ResetUsageSchedule: time.Duration(5 * time.Minute).String(),
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{
@@ -53,7 +55,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	if expUsageConfig != nil {
 		if expUsageConfig.Schedule != "" {
-			cfg.ControllerSchedule = expUsageConfig.Schedule
+			cfg.LedgerSchedule = expUsageConfig.Schedule
 		}
 		if expUsageConfig.DefaultSpendingLimit != nil {
 			cfg.DefaultSpendingLimit = *expUsageConfig.DefaultSpendingLimit
