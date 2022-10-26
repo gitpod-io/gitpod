@@ -27,7 +27,7 @@ spec:
       for: 10m
       labels:
         severity: critical
-        team: platform
+        team: delivery-operations-experience
     - alert: AlertmanagerFailedToSendAlerts
       annotations:
         description: Alertmanager {{ $labels.namespace }}/{{ $labels.pod}} failed to send {{ $value | humanizePercentage }} of notifications to {{ $labels.integration }}.
@@ -42,4 +42,4 @@ spec:
       for: 5m
       labels:
         severity: warning
-        team: platform
+        team: delivery-operations-experience
