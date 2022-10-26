@@ -64,6 +64,9 @@ interface Chargebee {
     paid?: boolean;
 
     canUpgradeToUBB?: boolean;
+
+    /** Name of team(s) that block switching to usage-based */
+    teamNames?: string[];
 }
 
 /** Session is handld with new usage-based logic */

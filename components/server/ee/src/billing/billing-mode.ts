@@ -110,13 +110,16 @@ export class BillingModesImpl implements BillingModes {
 
         // 2. Any personal subscriptions?
         // Chargebee takes precedence
-        function isTeamSubscription(s: Subscription): boolean {
-            return !!Plans.getById(s.planId)?.team;
+        function isPersonalSubscription(s: Subscription): boolean {
+            return !Plans.getById(s.planId)?.team;
+        }
+        function isOldTeamSubscription(s: Subscription): boolean {
+            return !!Plans.getById(s.planId)?.team && !s.teamMembershipId;
         }
         const cbSubscriptions = await this.subscriptionSvc.getActivePaidSubscription(user.id, now);
-        const cbTeamSubscriptions = cbSubscriptions.filter((s) => isTeamSubscription(s));
+        const cbTeamSubscriptions = cbSubscriptions.filter((s) => isOldTeamSubscription(s));
         const cbPersonalSubscriptions = cbSubscriptions.filter(
-            (s) => !isTeamSubscription(s) && s.planId !== Plans.FREE_OPEN_SOURCE.chargebeeId,
+            (s) => isPersonalSubscription(s) && s.planId !== Plans.FREE_OPEN_SOURCE.chargebeeId,
         );
         const cbOwnedTeamSubscriptions = (
             await this.teamSubscriptionDb.findTeamSubscriptions({ userId: user.id })
@@ -166,13 +169,48 @@ export class BillingModesImpl implements BillingModes {
             return usageBased();
         }
         if (hasCbPaidTeamMembership || hasCbPaidTeamSeat || canUpgradeToUBB) {
-            // TODO(gpl): Q: How to test the free-tier, then? A: Make sure you have no CB paid seats anymore
-            // For that we could add a new field here, which lists all seats that are "blocking" you, and display them in the UI somewhere.
-            return { mode: "chargebee", canUpgradeToUBB: true }; // UBB is enabled, but no seat nor subscription yet.
+            // Q: How to test the free-tier, then? A: Make sure you have no CB paid seats anymore
+            // For that we lists all Team Subscriptions/Team Memberships that are "blocking" you, and display them in the UI somewhere.
+            const result: BillingMode = { mode: "chargebee", canUpgradeToUBB }; // UBB is enabled, but no seat nor subscription yet.
+
+            const teamNames = [];
+            for (const tm of teamsModes) {
+                if (tm.mode === "chargebee" && tm.teamNames) {
+                    teamNames.push(`Team Membership: ${tm.teamNames}`);
+                }
+            }
+            const tsOwners = await Promise.all(cbTeamSubscriptions.map((s) => this.mapTeamSubscriptionToOwnerName(s)));
+            for (const owner of tsOwners) {
+                if (!owner) {
+                    continue;
+                }
+                const [ts, ownerName] = owner;
+                teamNames.push(`Team Subscription '${Plans.getById(ts.planId)?.name}' (owner: ${ownerName})`);
+            }
+            if (teamNames.length > 0) {
+                result.teamNames = teamNames;
+            }
+
+            return result;
         }
 
         // UBB free tier
         return usageBased();
+    }
+
+    protected async mapTeamSubscriptionToOwnerName(s: Subscription): Promise<[TeamSubscription, string] | undefined> {
+        if (!s || !s.teamSubscriptionSlotId) {
+            return undefined;
+        }
+        const ts = await this.teamSubscriptionDb.findTeamSubscriptionBySlotId(s.teamSubscriptionSlotId!);
+        if (!ts) {
+            return undefined;
+        }
+        const user = await this.userDB.findUserById(ts.userId);
+        if (!user) {
+            return undefined;
+        }
+        return [ts, user.name || user.fullName || "---"];
     }
 
     async getBillingModeForTeam(team: Team, _now: Date): Promise<BillingMode> {
@@ -200,7 +238,7 @@ export class BillingModesImpl implements BillingModes {
                 return { mode: "chargebee", canUpgradeToUBB: isUsageBasedBillingEnabled };
             }
 
-            return { mode: "chargebee", paid: true };
+            return { mode: "chargebee", teamNames: [team.name], paid: true };
         }
 
         // 2. UBB enabled at all?
