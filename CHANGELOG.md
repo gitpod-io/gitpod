@@ -1,6 +1,8 @@
 # Change Log
 
 ## October 2022
+-  ([#14019](https://github.com/gitpod-io/gitpod/pull/14019)) - [@nVitius](https://github.com/nVitius)
+- Update JetBrains Backend Plugin to work with EAP IDEs v223.7126 ([#13990](https://github.com/gitpod-io/gitpod/pull/13990)) - [@felladrin](https://github.com/felladrin)
 - A bit faster IDE startup ([#14111](https://github.com/gitpod-io/gitpod/pull/14111)) - [@sagor999](https://github.com/sagor999), [@utam0k](https://github.com/utam0k)
 - [installer]: print the installer version to the kots-install script ([#14120](https://github.com/gitpod-io/gitpod/pull/14120)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - reliably close Workspaces which fail to start for whatever reason ([#13831](https://github.com/gitpod-io/gitpod/pull/13831)) - [@geropl](https://github.com/geropl)
