@@ -1369,12 +1369,12 @@ func (m *Manager) onChange(ctx context.Context, status *api.WorkspaceStatus) {
 	if status.Conditions.Failed != "" {
 		status, _ := protojson.Marshal(status)
 		safeStatus, _ := log.RedactJSON(status)
-		clog.WithField("status", safeStatus).Error("workspace failed")
+		clog.WithField("status", string(safeStatus)).Error("workspace failed")
 	}
 	if status.Phase == 0 {
 		status, _ := protojson.Marshal(status)
 		safeStatus, _ := log.RedactJSON(status)
-		clog.WithField("status", safeStatus).Error("workspace in UNKNOWN phase")
+		clog.WithField("status", string(safeStatus)).Error("workspace in UNKNOWN phase")
 	}
 }
 
