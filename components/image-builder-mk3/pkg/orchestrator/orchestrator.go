@@ -268,6 +268,8 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		return nil
 	}
 
+	o.metrics.BuildStarted()
+
 	// Once a build is running we don't want it cancelled becuase the server disconnected i.e. during deployment.
 	// Instead we want to impose our own timeout/lifecycle on the build. Using context.WithTimeout does not shadow its parent's
 	// cancelation (see https://play.golang.org/p/N3QBIGlp8Iw for an example/experiment).
