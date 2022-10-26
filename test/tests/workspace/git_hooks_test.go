@@ -32,8 +32,6 @@ func TestGitHooks(t *testing.T) {
 	integration.SkipWithoutUsername(t, username)
 	integration.SkipWithoutUserToken(t, userToken)
 
-	parallelLimiter := make(chan struct{}, 2)
-
 	tests := []GitHooksTestCase{
 		{
 			Name:          "husky",
@@ -78,19 +76,10 @@ func TestGitHooks(t *testing.T) {
 					t.Run(test.ContextURL+"_"+ff.Name, func(t *testing.T) {
 						t.Parallel()
 
-						t.Logf("Waiting %s", test.ContextURL+"_"+ff.Name)
-
-						parallelLimiter <- struct{}{}
-						defer func() {
-							<-parallelLimiter
-						}()
-
-						t.Logf("Running %s", test.ContextURL+"_"+ff.Name)
+						ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*len(tests)*len(ffs))*time.Minute)
+						defer cancel()
 
 						username := username + ff.Name
-
-						ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-						defer cancel()
 
 						api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 						defer api.Done(t)

@@ -25,7 +25,7 @@ import (
 func TestBackup(t *testing.T) {
 	f := features.New("backup").
 		WithLabel("component", "ws-manager").
-		Assess("it should start a workspace, create a file and successfully create a backup", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it should start a workspace, create a file and successfully create a backup", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			tests := []struct {
 				Name             string
 				ContextURL       string
@@ -54,11 +54,13 @@ func TestBackup(t *testing.T) {
 					FF:               []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM},
 				},
 			}
-			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
-			defer cancel()
-
 			for _, test := range tests {
 				t.Run(test.Name, func(t *testing.T) {
+					t.Parallel()
+
+					ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*len(tests))*time.Minute)
+					defer cancel()
+
 					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 					t.Cleanup(func() {
 						api.Done(t)

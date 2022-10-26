@@ -59,7 +59,7 @@ args=()
 args+=( "-kubeconfig=${KUBECONFIG:-/home/gitpod/.kube/config}" )
 args+=( "-namespace=default" )
 args+=( "-timeout=60m" )
-args+=( "-p=1" )
+# args+=( "-p=2" )
 
 if [[ "${GITPOD_REPO_ROOT:-}" != "" ]]; then
   echo "Running in Gitpod workspace. Fetching USERNAME and USER_TOKEN" | werft log slice "test-setup"
