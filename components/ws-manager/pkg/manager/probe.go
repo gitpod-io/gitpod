@@ -8,6 +8,7 @@ import (
 	"context"
 	"crypto/tls"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"time"
@@ -72,6 +73,17 @@ func (p *WorkspaceReadyProbe) Run(ctx context.Context) WorkspaceProbeResult {
 		Timeout: p.Timeout,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+				DualStack: false,
+			}).DialContext,
+			MaxIdleConns:          0,
+			MaxIdleConnsPerHost:   32,
+			IdleConnTimeout:       30 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 5 * time.Second,
+			DisableKeepAlives:     true,
 		},
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
