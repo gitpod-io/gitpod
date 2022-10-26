@@ -6,7 +6,6 @@ package io.gitpod.jetbrains.remote
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.BrowserUtil
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.client.ClientSession
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.service
@@ -24,10 +23,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.QueryStringDecoder
 import io.prometheus.client.exporter.common.TextFormat
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.ide.RestService
 import org.jetbrains.io.response
 import java.io.OutputStreamWriter
@@ -69,11 +65,7 @@ class GitpodCLIService : RestService() {
             val file = parseFilePath(fileStr) ?: return "invalid file"
             val shouldWait = getBooleanParameter("wait", urlDecoder)
             return withClient(request, context) {
-                GlobalScope.launch {
-                    withContext(Dispatchers.IO) {
-                        cliHelperService.open(file, shouldWait)
-                    }
-                }
+                cliHelperService.open(file, shouldWait)
             }
         }
         if (operation == "preview") {
@@ -105,8 +97,8 @@ class GitpodCLIService : RestService() {
         }
     }
 
-    private fun withClient(request: FullHttpRequest, context: ChannelHandlerContext, action: (project: Project?) -> Unit): String? {
-        ApplicationManager.getApplication().executeOnPooledThread {
+    private fun withClient(request: FullHttpRequest, context: ChannelHandlerContext, action: suspend (project: Project?) -> Unit): String? {
+        GlobalScope.launch {
             getClientSessionAndProjectAsync().let { (session, project) ->
                 ClientId.withClientId(session.clientId) {
                     action(project)
@@ -119,21 +111,21 @@ class GitpodCLIService : RestService() {
 
     private data class ClientSessionAndProject(val session: ClientSession, val project: Project?)
 
-    private tailrec fun getClientSessionAndProjectAsync(): ClientSessionAndProject {
+    private suspend fun getClientSessionAndProjectAsync(): ClientSessionAndProject {
         val project = getLastFocusedOrOpenedProject()
         var session: ClientSession? = null
-        if (project != null) {
-            session = ClientSessionsManager.getProjectSessions(project, false).firstOrNull()
+        while (session == null) {
+            if (project != null) {
+                session = ClientSessionsManager.getProjectSessions(project, false).firstOrNull()
+            }
+            if (session == null) {
+                session = ClientSessionsManager.getAppSessions(false).firstOrNull()
+            }
+            if (session == null) {
+                delay(1000L)
+            }
         }
-        if (session == null) {
-            session = ClientSessionsManager.getAppSessions(false).firstOrNull()
-        }
-        return if (session != null) {
-            ClientSessionAndProject (session, project)
-        } else {
-            Thread.sleep(1000L)
-            getClientSessionAndProjectAsync()
-        }
+        return ClientSessionAndProject(session, project)
     }
 
     private fun parseFilePath(path: String): Path? {
