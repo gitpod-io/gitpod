@@ -81,7 +81,8 @@ export IJ_HOST_SYSTEM_BASE_DIR=/workspace/.cache/JetBrains
 export CWM_HOST_STATUS_OVER_HTTP_TOKEN=gitpod
 
 # Build and move idea-cli, then overwrite environment variables initially defined by `components/ide/jetbrains/image/leeway.Dockerfile`
-IDEA_CLI_DEV_PATH=$TEST_BACKEND_DIR/bin/idea-cli-dev
+# Note: IDEA_CLI_DEV_PATH path needs to be the same string used in components/ide/jetbrains/cli/cmd/root.go
+IDEA_CLI_DEV_PATH=/ide-desktop/bin/idea-cli-dev
 (cd ../cli && go build -o $IDEA_CLI_DEV_PATH)
 export EDITOR="$IDEA_CLI_DEV_PATH open"
 export VISUAL="$EDITOR"
