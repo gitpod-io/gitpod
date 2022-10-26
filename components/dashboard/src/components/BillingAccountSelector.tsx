@@ -51,14 +51,15 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
             });
 
         const members: Record<string, TeamMemberInfo[]> = {};
-        teams.forEach(async (team) => {
-            try {
-                members[team.id] = await getGitpodService().server.getTeamMembers(team.id);
-            } catch (error) {
-                console.error("Could not get members of team", team, error);
-            }
-        });
-        setMembersByTeam(members);
+        Promise.all(
+            teams.map(async (team) => {
+                try {
+                    members[team.id] = await getGitpodService().server.getTeamMembers(team.id);
+                } catch (error) {
+                    console.warn("Could not get members of team", team, error);
+                }
+            }),
+        ).then(() => setMembersByTeam(members));
     }, [teams]);
 
     const setUsageAttributionTeam = async (team?: Team) => {
