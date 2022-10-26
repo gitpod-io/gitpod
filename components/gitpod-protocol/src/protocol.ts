@@ -659,6 +659,11 @@ export interface VolumeSnapshot {
     volumeHandle: string;
 }
 
+export interface VolumeSnapshotWithWSType {
+    vs: VolumeSnapshot;
+    wsType: WorkspaceType;
+}
+
 export type SnapshotState = "pending" | "available" | "error";
 
 export interface Workspace {

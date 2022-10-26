@@ -5,7 +5,7 @@
  */
 
 import { inject, injectable } from "inversify";
-import { WorkspaceSoftDeletion, VolumeSnapshot } from "@gitpod/gitpod-protocol";
+import { WorkspaceSoftDeletion, VolumeSnapshotWithWSType } from "@gitpod/gitpod-protocol";
 import {
     WorkspaceDB,
     WorkspaceAndOwner,
@@ -19,6 +19,7 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import { DeleteVolumeSnapshotRequest } from "@gitpod/ws-manager/lib";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { WorkspaceType } from "@gitpod/ws-manager/lib/core_pb";
 
 @injectable()
 export class WorkspaceDeletionService {
@@ -121,7 +122,20 @@ export class WorkspaceDeletionService {
             let vss = await this.db
                 .trace({ span })
                 .findVolumeSnapshotForGCByWorkspaceId(ws.id, this.config.workspaceGarbageCollection.chunkLimit);
-            await Promise.all(vss.map((vs) => this.garbageCollectVolumeSnapshot({ span }, vs)));
+            // we need full workspace info here to find its type
+            let fullWS = await this.db.trace({ span }).findById(ws.id);
+            if (!fullWS) {
+                throw new Error(`Workspace ${ws.id} not found while deleting its storage`);
+            }
+            let wsType = fullWS.type;
+            let vssType = vss.map((vs) => {
+                let vswst: VolumeSnapshotWithWSType = {
+                    vs,
+                    wsType: wsType,
+                };
+                return vswst;
+            });
+            await Promise.all(vssType.map((vs) => this.garbageCollectVolumeSnapshot({ span }, vs)));
         } catch (err) {
             TraceContext.setError({ span }, err);
             throw err;
@@ -141,7 +155,7 @@ export class WorkspaceDeletionService {
      * @param ctx
      * @param vs
      */
-    public async garbageCollectVolumeSnapshot(ctx: TraceContext, vs: VolumeSnapshot): Promise<boolean> {
+    public async garbageCollectVolumeSnapshot(ctx: TraceContext, vs: VolumeSnapshotWithWSType): Promise<boolean> {
         const span = TraceContext.startSpan("garbageCollectVolumeSnapshot", ctx);
 
         try {
@@ -161,8 +175,24 @@ export class WorkspaceDeletionService {
                     this.config.installationShortname,
                 );
                 const req = new DeleteVolumeSnapshotRequest();
-                req.setId(vs.id);
-                req.setVolumeHandle(vs.volumeHandle);
+                req.setId(vs.vs.id);
+                req.setVolumeHandle(vs.vs.volumeHandle);
+                let type: WorkspaceType = WorkspaceType.REGULAR;
+                switch (vs.wsType) {
+                    case "regular": {
+                        type = WorkspaceType.REGULAR;
+                        break;
+                    }
+                    case "prebuild": {
+                        type = WorkspaceType.PREBUILD;
+                        break;
+                    }
+                    default: {
+                        throw new Error(`wds: deleteVolumeSnapshot unknown workspace type '${vs.wsType}' detected`);
+                        break;
+                    }
+                }
+                req.setWsType(type);
 
                 let softDelete = true;
                 // if we did not delete volume snapshot yet and this is our last cluster, make sure we perform hard delete
@@ -184,7 +214,7 @@ export class WorkspaceDeletionService {
                 }
             }
             if (wasDeleted) {
-                await this.db.trace({ span }).deleteVolumeSnapshot(vs.id);
+                await this.db.trace({ span }).deleteVolumeSnapshot(vs.vs.id);
             }
 
             return wasDeleted;
