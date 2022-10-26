@@ -8,17 +8,22 @@
 
 set -euo pipefail
 
+# Node pool index was only relevant with core-dev
+NODE_POOL_INDEX=0
+
+# These were previously using "findLastPort" etc. but in harvester-based preview environments they can be stable
+REG_DAEMON_PORT="30000"
+WS_DAEMON_PORT="10000"
+
 # Required params
-REG_DAEMON_PORT=$1
-WS_DAEMON_PORT=$2
-NODE_POOL_INDEX=$3
-DEV_BRANCH=$4
-SMITH_TOKEN=$5
-if [[ -z ${REG_DAEMON_PORT} ]] || [[ -z ${WS_DAEMON_PORT} ]] || [[ -z ${NODE_POOL_INDEX} ]] || [[ -z ${DEV_BRANCH} ]] || [[ -z ${SMITH_TOKEN} ]]; then
-   echo "One or more input params were invalid: ${REG_DAEMON_PORT} ${WS_DAEMON_PORT} ${NODE_POOL_INDEX} ${DEV_BRANCH} ${SMITH_TOKEN}"
+DEV_BRANCH=$1
+SMITH_TOKEN=$2
+
+if [[ -z ${REG_DAEMON_PORT} ]] || [[ -z ${WS_DAEMON_PORT} ]] || [[ -z ${DEV_BRANCH} ]] || [[ -z ${SMITH_TOKEN} ]]; then
+   echo "One or more input params were invalid: ${REG_DAEMON_PORT} ${WS_DAEMON_PORT} ${DEV_BRANCH} ${SMITH_TOKEN}"
    exit 1
 else
-   echo "Running with the following params: ${REG_DAEMON_PORT} ${WS_DAEMON_PORT} ${NODE_POOL_INDEX} ${DEV_BRANCH}"
+   echo "Running with the following params: ${REG_DAEMON_PORT} ${WS_DAEMON_PORT} ${DEV_BRANCH}"
 fi
 
 echo "Use node pool index $NODE_POOL_INDEX"
@@ -115,7 +120,7 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       sed -i "$DEV_BRANCH_EXPR" /tmp/"$NAME"overrides.yaml
 
       # Stage
-      STAGE=$(yq r ./.werft/jobs/build/helm/values.dev.yaml installation.stage)
+      STAGE="devstaging"
       STAGE_EXPR="s/\"stage\": \"production\"/\"stage\": \"$STAGE\"/"
       sed -i "$STAGE_EXPR" /tmp/"$NAME"overrides.yaml
       # Install EE license, if it exists
@@ -166,7 +171,7 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       touch /tmp/"$NAME"overrides.yaml
       yq r k8s.yaml -d "$documentIndex" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
 
-      STAGING_HOST_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml hostname)
+      STAGING_HOST_NAME="staging.gitpod-dev.com"
       CURRENT_WS_HOST_NAME="ws.$DEV_BRANCH.$STAGING_HOST_NAME"
       NEW_WS_HOST_NAME="ws-$SHORT_NAME.$DEV_BRANCH.$STAGING_HOST_NAME"
 
@@ -212,7 +217,7 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       yq r k8s.yaml -d "$documentIndex" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
 
       # simliar to server, except the ConfigMap hierarchy, key, and value are different
-      STAGING_HOST_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml hostname)
+      STAGING_HOST_NAME="staging.gitpod-dev.com"
       CURRENT_WS_HOST_NAME="ws.$DEV_BRANCH.$STAGING_HOST_NAME"
       NEW_WS_HOST_NAME="ws-$SHORT_NAME.$DEV_BRANCH.$STAGING_HOST_NAME"
 

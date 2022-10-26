@@ -27,9 +27,6 @@ pod:
   - name: prometheus-remote-write-auth
     secret:
       secretName: prometheus-remote-write-auth
-  - name: gpsh-harvester-license
-    secret:
-      secretName: gpsh-harvester-license
   - name: payment-provider-secret
     secret:
       secretName: payment-provider-secret
@@ -49,9 +46,6 @@ pod:
   - name: harvester-k3s-dockerhub-pull-account
     secret:
       secretName: harvester-k3s-dockerhub-pull-account
-  - name: fluent-bit-external
-    secret:
-      secretName: fluent-bit-external
   - name: github-token-gitpod-bot
     secret:
       defaultMode: 420
@@ -97,9 +91,6 @@ pod:
     - name: gcp-sa-release
       mountPath: /mnt/secrets/gcp-sa-release
       readOnly: true
-    - name: gpsh-harvester-license
-      mountPath: /mnt/secrets/gpsh-harvester
-      readOnly: true
     - name: payment-webhook-secret
       mountPath: /mnt/secrets/payment-webhook-config
       readOnly: true
@@ -115,8 +106,6 @@ pod:
       mountPath: /mnt/secrets/harvester-vm-ssh-keys
     - name: harvester-k3s-dockerhub-pull-account
       mountPath: /mnt/secrets/harvester-k3s-dockerhub-pull-account
-    - name: fluent-bit-external
-      mountPath: /mnt/fluent-bit-external
     - mountPath: /mnt/secrets/github-token-gitpod-bot
       name: github-token-gitpod-bot
     # - name: deploy-key

@@ -1,4 +1,0 @@
-tracing:
-  endpoint: http://otel-collector.monitoring-satellite.svc.cluster.local:14268/api/traces
-  samplerType: const
-  samplerParam: "1"
