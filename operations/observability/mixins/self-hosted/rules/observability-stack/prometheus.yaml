@@ -58,3 +58,13 @@ spec:
       labels:
         severity: warning
         team: delivery-operations-experience
+    - alert: PrometheusCrashlooped
+      annotations:
+        description: Prometheus' container restarted in the last 5m. While this alert will resolve itself if prometheus stopped crashing, it is important to understand why it crashed in the first place.
+        summary: Prometheus has just crashlooped.
+      expr: |
+        increase(kube_pod_container_status_restarts_total{cluster=~"$cluster", pod="prometheus-k8s-0", container="prometheus"}[5m]) > 0
+      for: 15m
+      labels:
+        severity: info
+        team: delivery-operations-experience
