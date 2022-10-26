@@ -114,6 +114,7 @@ import { ExtendedUser } from "@gitpod/ws-manager/lib/constraints";
 import {
     FailedInstanceStartReason,
     increaseFailedInstanceStartCounter,
+    increaseImageBuildsStartedTotal,
     increaseSuccessfulInstanceStartCounter,
 } from "../prometheus-metrics";
 import { ContextParser } from "./context-parser-service";
@@ -1205,6 +1206,7 @@ export class WorkspaceStarter {
         const span = TraceContext.startSpan("buildWorkspaceImage", ctx);
 
         try {
+            increaseImageBuildsStartedTotal();
             // Start build...
             const client = await this.getImageBuilderClient(user, workspace, instance);
             const { src, auth, disposable } = await this.prepareBuildRequest(
