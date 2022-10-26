@@ -269,9 +269,27 @@ scripts:
       - components/service-waiter:app
     script: |
       echo "$"
-      export DB_USERNAME=$(kubectl get secrets mysql -o jsonpath="{.data.username}" | base64 -d)
-      export DB_PASSWORD=$(kubectl get secrets mysql -o jsonpath="{.data.password}" | base64 -d)
-      kubectl port-forward statefulset/mysql 3306 &
+      export DB_USERNAME=$(\
+        kubectl \
+          --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+          --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+          --namespace "${PREVIEW_NAMESPACE}" \
+          get secrets mysql -o jsonpath="{.data.username}" \
+        | base64 -d \
+      )
+      export DB_PASSWORD=$(\
+        kubectl \
+          --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+          --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+          --namespace "${PREVIEW_NAMESPACE}" \
+          get secrets mysql -o jsonpath="{.data.password}" \
+        | base64 -d \
+      )
+      kubectl \
+        --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+        --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+        --namespace "${PREVIEW_NAMESPACE}" \
+        port-forward statefulset/mysql 3306 &
       PID=$!
       service-waiter database -t 20s
       if [ $? -ne 0 ]; then

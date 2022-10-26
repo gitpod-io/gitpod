@@ -145,37 +145,3 @@ export function copyk3sKubeconfigShell(options: { name: string; timeoutMS: numbe
 export function stopKubectlPortForwards() {
     exec(`sudo killall kubectl || true`);
 }
-
-/**
- * Install Rook/Ceph storage that supports CSI snapshot
- */
-export function installRookCeph(options: { kubeconfig: string }) {
-    exec(`kubectl --kubeconfig ${options.kubeconfig} apply -f .werft/vm/manifests/rook-ceph/crds.yaml --server-side --force-conflicts`
-    );
-    exec(`kubectl --kubeconfig ${options.kubeconfig} wait --for condition=established --timeout=120s crd/cephclusters.ceph.rook.io`
-    );
-    exec(`kubectl --kubeconfig ${options.kubeconfig} apply -f .werft/vm/manifests/rook-ceph/common.yaml -f .werft/vm/manifests/rook-ceph/operator.yaml`
-    );
-    exec(`kubectl --kubeconfig ${options.kubeconfig} apply -f .werft/vm/manifests/rook-ceph/cluster-test.yaml`);
-    exec(`kubectl --kubeconfig ${options.kubeconfig} apply -f .werft/vm/manifests/rook-ceph/storageclass-test.yaml`);
-    exec(`kubectl --kubeconfig ${options.kubeconfig} apply -f .werft/vm/manifests/rook-ceph/snapshotclass.yaml`);
-}
-
-/**
- * Install Fluent-Bit sending logs to GCP
- */
-export function installFluentBit(options: { namespace: string; kubeconfig: string; slice: string }) {
-    exec(
-        `kubectl --kubeconfig ${options.kubeconfig} create secret generic fluent-bit-external --save-config --dry-run=client --from-file=credentials.json=/mnt/fluent-bit-external/credentials.json -o yaml | kubectl --kubeconfig ${options.kubeconfig} apply -n ${options.namespace} -f -`,
-        { slice: options.slice, dontCheckRc: true },
-    );
-    exec(`helm3 --kubeconfig ${options.kubeconfig} repo add fluent https://fluent.github.io/helm-charts`, {
-        slice: options.slice,
-        dontCheckRc: true,
-    });
-    exec(`helm3 --kubeconfig ${options.kubeconfig} repo update`, { slice: options.slice, dontCheckRc: true });
-    exec(
-        `helm3 --kubeconfig ${options.kubeconfig} upgrade --install fluent-bit fluent/fluent-bit -n ${options.namespace} -f .werft/vm/charts/fluentbit/values.yaml`,
-        { slice: options.slice, dontCheckRc: true },
-    );
-}
