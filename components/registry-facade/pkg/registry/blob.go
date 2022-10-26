@@ -395,13 +395,6 @@ func (sbs ipfsBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst
 		return
 	}
 
-	ipfsFile, err := sbs.source.IPFS.Block().Get(ctx, icorepath.New(ipfsCID))
-	if err != nil {
-		log.WithError(err).Error("unable to get blob from IPFS")
-		err = distv2.ErrorCodeBlobUnknown
-		return
-	}
-
 	mediaType, err = sbs.source.Redis.Get(ctx, mediaTypeKeyFromDigest(dgst)).Result()
 	if err != nil {
 		log.WithError(err).Error("cannot get media type from Redis")
@@ -409,8 +402,21 @@ func (sbs ipfsBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst
 		return
 	}
 
+	resp, err := sbs.source.IPFS.Request("block/get", icorepath.New(ipfsCID).String()).Send(ctx)
+	if err != nil {
+		log.WithError(err).Error("unable to get blob details from IPFS")
+		err = distv2.ErrorCodeBlobUnknown
+		return
+	}
+
+	if resp.Error != nil {
+		log.WithError(resp.Error).Error("unable to get blob details from IPFS")
+		err = distv2.ErrorCodeBlobUnknown
+		return
+	}
+
 	log.Debug("returning blob from IPFS")
-	return true, mediaType, "", ipfsFile, nil
+	return true, mediaType, "", resp.Output, nil
 }
 
 func mediaTypeKeyFromDigest(dgst digest.Digest) string {

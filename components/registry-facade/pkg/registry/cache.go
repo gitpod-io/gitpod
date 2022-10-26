@@ -17,7 +17,7 @@ import (
 	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/errdefs"
 	redis "github.com/go-redis/redis/v8"
-	ipfs "github.com/ipfs/interface-go-ipfs-core"
+	httpapi "github.com/ipfs/go-ipfs-http-client"
 	"github.com/ipfs/interface-go-ipfs-core/options"
 	"github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
@@ -27,7 +27,7 @@ import (
 // IPFSBlobCache can cache blobs in IPFS
 type IPFSBlobCache struct {
 	Redis *redis.Client
-	IPFS  ipfs.CoreAPI
+	IPFS  *httpapi.HttpApi
 }
 
 // Get retrieves the IPFS URL for a previously stored blob.
