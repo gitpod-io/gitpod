@@ -67,6 +67,20 @@ func (mr *MockAPIInterfaceMockRecorder) AdminBlockUser(ctx, req interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminBlockUser", reflect.TypeOf((*MockAPIInterface)(nil).AdminBlockUser), ctx, req)
 }
 
+// Close mocks base method.
+func (m *MockAPIInterface) Close() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Close")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Close indicates an expected call of Close.
+func (mr *MockAPIInterfaceMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockAPIInterface)(nil).Close))
+}
+
 // ClosePort mocks base method.
 func (m *MockAPIInterface) ClosePort(ctx context.Context, workspaceID string, port float32) error {
 	m.ctrl.T.Helper()
