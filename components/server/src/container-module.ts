@@ -111,7 +111,7 @@ import { WebhookEventGarbageCollector } from "./projects/webhook-event-garbage-c
 import { LivenessController } from "./liveness/liveness-controller";
 import { IDEServiceClient, IDEServiceDefinition } from "@gitpod/ide-service-api/lib/ide.pb";
 import { prometheusClientMiddleware } from "@gitpod/gitpod-protocol/lib/util/nice-grpc";
-import { UsageService } from "./user/usage-service";
+import { UsageService, UsageServiceImpl } from "./user/usage-service";
 import { OpenPrebuildPrefixContextParser } from "./workspace/open-prebuild-prefix-context-parser";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
@@ -297,5 +297,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(WebhookEventGarbageCollector).toSelf().inSingletonScope();
 
-    bind(UsageService).toSelf().inSingletonScope();
+    bind(UsageServiceImpl).toSelf().inSingletonScope();
+    bind(UsageService).toService(UsageServiceImpl);
 });
