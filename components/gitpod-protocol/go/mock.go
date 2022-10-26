@@ -109,6 +109,21 @@ func (mr *MockAPIInterfaceMockRecorder) ControlAdmission(ctx, id, level interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ControlAdmission", reflect.TypeOf((*MockAPIInterface)(nil).ControlAdmission), ctx, id, level)
 }
 
+// CreateTeam mocks base method.
+func (m *MockAPIInterface) CreateTeam(ctx context.Context, params string) (*Team, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateTeam", ctx, params)
+	ret0, _ := ret[0].(*Team)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateTeam indicates an expected call of CreateTeam.
+func (mr *MockAPIInterfaceMockRecorder) CreateTeam(ctx, params interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTeam", reflect.TypeOf((*MockAPIInterface)(nil).CreateTeam), ctx, params)
+}
+
 // CreateWorkspace mocks base method.
 func (m *MockAPIInterface) CreateWorkspace(ctx context.Context, options *CreateWorkspaceOptions) (*WorkspaceCreationResult, error) {
 	m.ctrl.T.Helper()
@@ -478,6 +493,21 @@ func (mr *MockAPIInterfaceMockRecorder) GetSupportedWorkspaceClasses(ctx interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSupportedWorkspaceClasses", reflect.TypeOf((*MockAPIInterface)(nil).GetSupportedWorkspaceClasses), ctx)
 }
 
+// GetTeamMembers mocks base method.
+func (m *MockAPIInterface) GetTeamMembers(ctx context.Context, params string) ([]*TeamMemberInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTeamMembers", ctx, params)
+	ret0, _ := ret[0].([]*TeamMemberInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTeamMembers indicates an expected call of GetTeamMembers.
+func (mr *MockAPIInterfaceMockRecorder) GetTeamMembers(ctx, params interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTeamMembers", reflect.TypeOf((*MockAPIInterface)(nil).GetTeamMembers), ctx, params)
+}
+
 // GetToken mocks base method.
 func (m *MockAPIInterface) GetToken(ctx context.Context, query *GetTokenSearchOptions) (*Token, error) {
 	m.ctrl.T.Helper()
@@ -671,6 +701,21 @@ func (m *MockAPIInterface) IsWorkspaceOwner(ctx context.Context, workspaceID str
 func (mr *MockAPIInterfaceMockRecorder) IsWorkspaceOwner(ctx, workspaceID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsWorkspaceOwner", reflect.TypeOf((*MockAPIInterface)(nil).IsWorkspaceOwner), ctx, workspaceID)
+}
+
+// JoinTeam mocks base method.
+func (m *MockAPIInterface) JoinTeam(ctx context.Context, params string) (*Team, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "JoinTeam", ctx, params)
+	ret0, _ := ret[0].(*Team)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// JoinTeam indicates an expected call of JoinTeam.
+func (mr *MockAPIInterfaceMockRecorder) JoinTeam(ctx, params interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "JoinTeam", reflect.TypeOf((*MockAPIInterface)(nil).JoinTeam), ctx, params)
 }
 
 // OpenPort mocks base method.
