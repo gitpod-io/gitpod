@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 84,
+  "id": null,
   "links": [
     {
       "asDropdown": false,
@@ -1291,14 +1291,23 @@
     "list": [
       {
         "current": {
-          "selected": true,
-          "text": [
-            "All"
-          ],
-          "value": [
-            "$__all"
-          ]
+          "selected": false,
+          "text": "VictoriaMetrics",
+          "value": "VictoriaMetrics"
         },
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {},
         "datasource": {
           "type": "prometheus",
           "uid": "$datasource"
@@ -1330,6 +1339,6 @@
   "timezone": "",
   "title": "Observability",
   "uid": "1hcljDH4k",
-  "version": 42,
+  "version": 1,
   "weekStart": ""
 }
