@@ -506,9 +506,7 @@ const (
 	ComponentContentService ComponentType = "content-service"
 	// ComponentWorkspace points to a workspace
 	ComponentWorkspace ComponentType = "workspace"
-	// ComponentImageBuilder points to the image-builder
-	ComponentImageBuilder ComponentType = "image-builder"
-	// ComponentImageBuilder points to the image-builder-mk3
+	// ComponentImageBuilderMK3 points to the image-builder-mk3
 	ComponentImageBuilderMK3 ComponentType = "image-builder-mk3"
 )
 
