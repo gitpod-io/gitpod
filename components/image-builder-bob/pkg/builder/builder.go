@@ -24,8 +24,10 @@ import (
 )
 
 const (
-	buildkitdSocketPath      = "unix:///run/buildkit/buildkitd.sock"
-	maxConnectionAttempts    = 10
+	buildkitdSocketPath = "unix:///run/buildkit/buildkitd.sock"
+	// maxConnectionAttempts is the number of attempts to try to connect to the buildkit daemon.
+	// Uses exponential backoff to retry. 8 attempts is a bit over 4 minutes.
+	maxConnectionAttempts    = 8
 	initialConnectionTimeout = 2 * time.Second
 )
 
@@ -258,11 +260,12 @@ func connectToBuildkitd(socketPath string) (cl *client.Client, err error) {
 		log.WithField("attempt", i).Debug("attempting to connect to buildkitd")
 		cl, err = client.New(ctx, socketPath, client.WithFailFast())
 		if err != nil {
+			cancel()
 			if i == maxConnectionAttempts-1 {
 				log.WithField("attempt", i).WithError(err).Warn("cannot connect to buildkitd")
+				break
 			}
 
-			cancel()
 			time.Sleep(backoff)
 			backoff = 2 * backoff
 			continue
@@ -270,11 +273,12 @@ func connectToBuildkitd(socketPath string) (cl *client.Client, err error) {
 
 		_, err = cl.ListWorkers(ctx)
 		if err != nil {
+			cancel()
 			if i == maxConnectionAttempts-1 {
 				log.WithField("attempt", i).WithError(err).Error("cannot connect to buildkitd")
+				break
 			}
 
-			cancel()
 			time.Sleep(backoff)
 			backoff = 2 * backoff
 			continue
