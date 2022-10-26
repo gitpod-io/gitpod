@@ -301,7 +301,7 @@ export default function Menu() {
                 }))
                 .sort((a, b) => (a.title.toLowerCase() > b.title.toLowerCase() ? 1 : -1)),
             {
-                slug: "teams/new",
+                slug: "new",
                 title: "Create a new team",
                 customContent: (
                     <div className="w-full text-gray-400 flex items-center">
