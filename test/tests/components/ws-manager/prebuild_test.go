@@ -34,7 +34,7 @@ import (
 func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 	f := features.New("prebuild").
 		WithLabel("component", "ws-manager").
-		Assess("it should create a prebuild and succeed the defined tasks", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it should create a prebuild and succeed the defined tasks", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			tests := []struct {
 				Name             string
 				ContextURL       string
@@ -63,11 +63,13 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 					FF: []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM},
 				},
 			}
-			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*len(tests))*time.Minute)
-			defer cancel()
-
 			for _, test := range tests {
 				t.Run(test.Name, func(t *testing.T) {
+					t.Parallel()
+
+					ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*len(tests))*time.Minute)
+					defer cancel()
+
 					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 					t.Cleanup(func() {
 						api.Done(t)
@@ -135,6 +137,8 @@ func TestPrebuildWorkspaceTaskFail(t *testing.T) {
 	f := features.New("prebuild").
 		WithLabel("component", "server").
 		Assess("it should create a prebuild and fail after running the defined tasks", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			t.Parallel()
+
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
@@ -218,7 +222,7 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 
 	f := features.New("prebuild").
 		WithLabel("component", "ws-manager").
-		Assess("it should open workspace from prebuild successfully", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it should open workspace from prebuild successfully", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			tests := []struct {
 				Name             string
 				ContextURL       string
@@ -241,11 +245,13 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 				},
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10*len(tests))*time.Minute)
-			defer cancel()
-
 			for _, test := range tests {
 				t.Run(test.Name, func(t *testing.T) {
+					t.Parallel()
+
+					ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10*len(tests))*time.Minute)
+					defer cancel()
+
 					isPVCEnable := reflect.DeepEqual(test.FF, []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM})
 
 					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -507,7 +513,7 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 func TestPrebuildAndRegularWorkspaceDifferentWorkspaceClass(t *testing.T) {
 	f := features.New("prebuild").
 		WithLabel("component", "ws-manager").
-		Assess("it should open workspace with different workspace class", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it should open workspace with different workspace class", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			tests := []struct {
 				Name                             string
 				PrebuildWorkspaceClass           string
@@ -543,11 +549,13 @@ func TestPrebuildAndRegularWorkspaceDifferentWorkspaceClass(t *testing.T) {
 				},
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10*len(tests))*time.Minute)
-			defer cancel()
-
 			for _, test := range tests {
 				t.Run(test.Name, func(t *testing.T) {
+					t.Parallel()
+
+					ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10*len(tests))*time.Minute)
+					defer cancel()
+
 					isPVCEnable := reflect.DeepEqual(test.FF, []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM})
 
 					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())

@@ -56,7 +56,9 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 		WithLabel("component", "ws-manager").
 		WithLabel("type", "tasks").
 		Assess("it can run workspace tasks", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+			t.Parallel()
+
+			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*len(tests))*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())

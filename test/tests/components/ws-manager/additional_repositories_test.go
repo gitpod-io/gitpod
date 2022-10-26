@@ -23,7 +23,7 @@ import (
 func TestAdditionalRepositories(t *testing.T) {
 	f := features.New("additional-repositories").
 		WithLabel("component", "ws-manager").
-		Assess("can open a workspace using the additionalRepositories property", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("can open a workspace using the additionalRepositories property", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			tests := []struct {
 				Name       string
 				ContextURL string
@@ -41,11 +41,13 @@ func TestAdditionalRepositories(t *testing.T) {
 				},
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*len(tests))*time.Minute)
-			defer cancel()
-
 			for _, test := range tests {
 				t.Run(test.Name, func(t *testing.T) {
+					t.Parallel()
+
+					ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*len(tests))*time.Minute)
+					defer cancel()
+
 					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 					t.Cleanup(func() {
 						api.Done(t)

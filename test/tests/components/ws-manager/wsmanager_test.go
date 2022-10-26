@@ -20,6 +20,8 @@ func TestGetWorkspaces(t *testing.T) {
 	f := features.New("workspaces").
 		WithLabel("component", "ws-manager").
 		Assess("it should get workspaces", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			t.Parallel()
+
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 

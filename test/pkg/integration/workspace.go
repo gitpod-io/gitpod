@@ -25,13 +25,15 @@ import (
 )
 
 const (
-	gitpodBuiltinUserID = "builtin-user-workspace-probe-0000000"
-	perCallTimeout      = 5 * time.Minute
+	gitpodBuiltinUserID             = "builtin-user-workspace-probe-0000000"
+	perCallTimeout                  = 5 * time.Minute
+	ParallelLunchableWorkspaceLimit = 2
 )
 
 var (
 	ErrWorkspaceInstanceStopping = fmt.Errorf("workspace instance is stopping")
 	ErrWorkspaceInstanceStopped  = fmt.Errorf("workspace instance has stopped")
+	parallelLimiter              = make(chan struct{}, ParallelLunchableWorkspaceLimit)
 )
 
 type launchWorkspaceDirectlyOptions struct {
@@ -103,6 +105,7 @@ type StopWorkspaceFunc = func(waitForStop bool, api *ComponentAPI) (*wsmanapi.Wo
 // Whenever possible prefer this function over LaunchWorkspaceFromContextURL, because
 // it has fewer prerequisites.
 func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAPI, opts ...LaunchWorkspaceDirectlyOpt) (*LaunchWorkspaceDirectlyResult, StopWorkspaceFunc, error) {
+	var stopWs StopWorkspaceFunc
 	options := launchWorkspaceDirectlyOptions{
 		BaseImage: "docker.io/gitpod/workspace-full:latest",
 	}
@@ -123,6 +126,11 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 		return nil, nil, err
 	}
 
+	parallelLimiter <- struct{}{}
+	defer func() {
+		<-parallelLimiter
+	}()
+
 	var workspaceImage string
 	if options.BaseImage != "" {
 		for {
@@ -138,7 +146,8 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 		}
 	}
 	if workspaceImage == "" {
-		return nil, nil, xerrors.Errorf("cannot start workspaces without a workspace image (required by registry-facade resolver)")
+		err = xerrors.Errorf("cannot start workspaces without a workspace image (required by registry-facade resolver)")
+		return nil, nil, err
 	}
 
 	ideImage := options.IdeImage
@@ -149,7 +158,8 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 		}
 		ideImage = cfg.IDEOptions.Options.Code.Image
 		if ideImage == "" {
-			return nil, nil, xerrors.Errorf("cannot start workspaces without an IDE image (required by registry-facade resolver)")
+			err = xerrors.Errorf("cannot start workspaces without an IDE image (required by registry-facade resolver)")
+			return nil, nil, err
 		}
 	}
 
@@ -205,10 +215,10 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 	}
 	t.Log("successfully sent workspace start request")
 
-	stopWs := stopWsF(t, req.Id, api)
+	stopWs = stopWsF(t, req.Id, api)
 	defer func() {
 		if err != nil {
-			stopWs(false, api)
+			_, _ = stopWs(false, api)
 		}
 	}()
 
@@ -232,15 +242,25 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 //
 // When possible, prefer the less complex LaunchWorkspaceDirectly.
 func LaunchWorkspaceFromContextURL(t *testing.T, ctx context.Context, contextURL string, username string, api *ComponentAPI, serverOpts ...GitpodServerOpt) (*protocol.WorkspaceInfo, StopWorkspaceFunc, error) {
-	var defaultServerOpts []GitpodServerOpt
+	var (
+		defaultServerOpts []GitpodServerOpt
+		stopWs            StopWorkspaceFunc
+		err               error
+	)
+
 	if username != "" {
 		defaultServerOpts = []GitpodServerOpt{WithGitpodUser(username)}
 	}
 
+	parallelLimiter <- struct{}{}
+	defer func() {
+		<-parallelLimiter
+	}()
+
 	t.Log("prepare for a connection with gitpod server")
 	server, err := api.GitpodServer(append(defaultServerOpts, serverOpts...)...)
 	if err != nil {
-		return nil, nil, xerrors.Errorf("cannot start server: %q", err)
+		return nil, nil, xerrors.Errorf("cannot start server: %w", err)
 	}
 	t.Log("established a connection with gitpod server")
 
@@ -253,13 +273,13 @@ func LaunchWorkspaceFromContextURL(t *testing.T, ctx context.Context, contextURL
 		Mode:       "force-new",
 	})
 	if err != nil {
-		return nil, nil, xerrors.Errorf("cannot start workspace: %q", err)
+		return nil, nil, xerrors.Errorf("cannot start workspace: %w", err)
 	}
 
 	t.Logf("attemp to get the workspace information: %s", resp.CreatedWorkspaceID)
 	wi, err := server.GetWorkspace(ctx, resp.CreatedWorkspaceID)
 	if err != nil {
-		return nil, nil, xerrors.Errorf("cannot get workspace: %q", err)
+		return nil, nil, xerrors.Errorf("cannot get workspace: %w", err)
 	}
 	if wi.LatestInstance == nil {
 		return nil, nil, xerrors.Errorf("CreateWorkspace did not start the workspace")
@@ -270,7 +290,7 @@ func LaunchWorkspaceFromContextURL(t *testing.T, ctx context.Context, contextURL
 	// from ws-manager, in which case IdeURL is not set
 	wi.LatestInstance.IdeURL = resp.WorkspaceURL
 
-	stopWs := stopWsF(t, wi.LatestInstance.ID, api)
+	stopWs = stopWsF(t, wi.LatestInstance.ID, api)
 	defer func() {
 		if err != nil {
 			_, _ = stopWs(false, api)

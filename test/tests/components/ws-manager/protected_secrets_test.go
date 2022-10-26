@@ -29,6 +29,8 @@ const (
 
 func TestProtectedSecrets(t *testing.T) {
 	f := features.New("protected_secrets").WithLabel("component", "ws-manager").Assess("can use protected secrets", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		t.Parallel()
+
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 		defer cancel()
 
