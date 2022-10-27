@@ -90,20 +90,21 @@ export interface WorkspaceClusterDB {
      * Deletes the cluster identified by this name, if any.
      * @param name
      */
-    deleteByName(name: string): Promise<void>;
+    deleteByName(name: string, applicationCluster: string): Promise<void>;
 
     /**
      * Finds a WorkspaceCluster with the given name. If there is none, `undefined` is returned.
      * @param name
      */
-    findByName(name: string): Promise<WorkspaceCluster | undefined>;
+    findByName(name: string, applicationCluster: string): Promise<WorkspaceCluster | undefined>;
 
     /**
      * Lists all WorkspaceClusterWoTls for which the given predicate is true (does not return TLS for size/speed concerns)
      * @param predicate
      */
-    findFiltered(predicate: DeepPartial<WorkspaceClusterFilter>): Promise<WorkspaceClusterWoTLS[]>;
+    findFiltered(predicate: WorkspaceClusterFilter): Promise<WorkspaceClusterWoTLS[]>;
 }
-export interface WorkspaceClusterFilter extends Pick<WorkspaceCluster, "state" | "govern" | "url"> {
-    minScore: number;
-}
+
+export type WorkspaceClusterFilter = Pick<WorkspaceCluster, "applicationCluster"> &
+    DeepPartial<Pick<WorkspaceCluster, "name" | "state" | "govern" | "url">> &
+    Partial<{ minScore: number }>;

@@ -11,6 +11,7 @@ export const settingsPathAccount = "/account";
 export const settingsPathIntegrations = "/integrations";
 export const settingsPathNotifications = "/notifications";
 export const settingsPathBilling = "/billing";
+export const settingsPathUsage = "/usage";
 export const settingsPathPlans = "/plans";
 export const settingsPathPreferences = "/preferences";
 

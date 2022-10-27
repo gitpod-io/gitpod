@@ -5,6 +5,8 @@
 package cgroups
 
 import (
+	"bufio"
+	"fmt"
 	"math"
 	"os"
 	"strconv"
@@ -84,4 +86,50 @@ func ReadFlatKeyedFile(path string) (map[string]uint64, error) {
 	}
 
 	return kv, nil
+}
+
+// Read the total stalled time in microseconds for full and some
+// It is not necessary to read avg10, avg60 and avg300 as these
+// are only for convenience. They are calculated as the rate during
+// the desired time frame.
+func ReadPSIValue(path string) (PSI, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return PSI{}, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	var psi PSI
+	for scanner.Scan() {
+		line := scanner.Text()
+		if err = scanner.Err(); err != nil {
+			return PSI{}, fmt.Errorf("could not read psi file: %w", err)
+		}
+
+		i := strings.LastIndex(line, "total=")
+		if i == -1 {
+			return PSI{}, fmt.Errorf("could not find total stalled time")
+		}
+
+		total, err := strconv.ParseUint(line[i+6:], 10, 64)
+		if err != nil {
+			return PSI{}, fmt.Errorf("could not parse total stalled time: %w", err)
+		}
+
+		if strings.HasPrefix(line, "some") {
+			psi.Some = total
+		}
+
+		if strings.HasPrefix(line, "full") {
+			psi.Full = total
+		}
+	}
+
+	return psi, nil
+}
+
+type PSI struct {
+	Some uint64
+	Full uint64
 }

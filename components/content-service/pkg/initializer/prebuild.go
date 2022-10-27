@@ -130,15 +130,14 @@ func runGitInit(ctx context.Context, gInit *GitInitializer) (err error) {
 		}
 		didStash := !strings.Contains(string(out), "No local changes to save")
 
-		err = gInit.Fetch(ctx)
-		err = checkGitStatus(err)
+		err = checkGitStatus(gInit.realizeCloneTarget(ctx))
 		if err != nil {
 			return xerrors.Errorf("prebuild initializer: %w", err)
 		}
 
-		err = gInit.realizeCloneTarget(ctx)
+		err = gInit.UpdateSubmodules(ctx)
 		if err != nil {
-			return xerrors.Errorf("prebuild initializer: %w", err)
+			log.WithError(err).Warn("error while updating submodules from prebuild initializer - continuing")
 		}
 
 		// If any of these cleanup operations fail that's no reason to fail ws initialization.

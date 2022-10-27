@@ -24,7 +24,8 @@ import (
 )
 
 const (
-	AttributionIDMetadataKey = "attributionId"
+	AttributionIDMetadataKey     = "attributionId"
+	PreferredCurrencyMetadataKey = "preferredCurrency"
 )
 
 type Client struct {
@@ -237,6 +238,40 @@ func (c *Client) GetCustomer(ctx context.Context, customerID string) (customer *
 		return nil, fmt.Errorf("failed to get customer by customer ID %s", customerID)
 	}
 
+	return customer, nil
+}
+
+type CreateCustomerParams struct {
+	AttributuonID string
+	Currency      string
+	Email         string
+	Name          string
+}
+
+func (c *Client) CreateCustomer(ctx context.Context, params CreateCustomerParams) (customer *stripe.Customer, err error) {
+	now := time.Now()
+	reportStripeRequestStarted("customers_create")
+	defer func() {
+		reportStripeRequestCompleted("customers_create", err, time.Since(now))
+	}()
+
+	customer, err = c.sc.Customers.New(&stripe.CustomerParams{
+		Params: stripe.Params{
+			Context: ctx,
+			Metadata: map[string]string{
+				// We set the preferred currency on the metadata such that we can later retreive it when we're creating a Subscription
+				// This is also done to propagate the preference into the Customer such that we can inform them when their
+				// new subscription would use a different currency to the previous one
+				PreferredCurrencyMetadataKey: params.Currency,
+				AttributionIDMetadataKey:     params.AttributuonID,
+			},
+		},
+		Email: stripe.String(params.Email),
+		Name:  stripe.String(params.Name),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Stripe customer: %w", err)
+	}
 	return customer, nil
 }
 

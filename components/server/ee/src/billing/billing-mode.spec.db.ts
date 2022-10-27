@@ -38,32 +38,97 @@ import { Container, ContainerModule } from "inversify";
 import { suite, test, timeout } from "mocha-typescript";
 import Stripe from "stripe";
 import { Config } from "../../../src/config";
-import { StripeService } from "../user/stripe-service";
 import { BillingModes, BillingModesImpl } from "./billing-mode";
 import * as deepEqualInAnyOrder from "deep-equal-in-any-order";
+import {
+    UsageServiceDefinition,
+    UsageServiceClient,
+    GetCostCenterResponse,
+    CostCenter_BillingStrategy,
+    GetBalanceResponse,
+    SetCostCenterResponse,
+    ReconcileUsageResponse,
+    ListUsageRequest_Ordering,
+    ListUsageResponse,
+    ResetUsageResponse,
+    ResetUsageRequest,
+} from "@gitpod/usage-api/lib/usage/v1/usage.pb";
+import { CallOptions } from "nice-grpc-common";
 chai.use(deepEqualInAnyOrder);
 const expect = chai.expect;
 
 type StripeSubscription = Pick<Stripe.Subscription, "id"> & { customer: string };
-class StripeServiceMock extends StripeService {
-    constructor(protected readonly subscription?: StripeSubscription) {
-        super();
+class UsageServiceClientMock implements UsageServiceClient {
+    constructor(protected readonly subscription?: StripeSubscription) {}
+
+    async getCostCenter(
+        request: { attributionId?: string | undefined },
+        options?: CallOptions | undefined,
+    ): Promise<GetCostCenterResponse> {
+        if (!request.attributionId) {
+            return { costCenter: undefined };
+        }
+
+        let billingStrategy = CostCenter_BillingStrategy.BILLING_STRATEGY_OTHER;
+        if (this.subscription !== undefined) {
+            billingStrategy = CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
+        }
+
+        return {
+            costCenter: {
+                attributionId: request.attributionId,
+                billingStrategy,
+                nextBillingTime: new Date(), // does not matter here.
+                spendingLimit: 1234,
+            },
+        };
     }
 
-    async findUncancelledSubscriptionByAttributionId(attributionId: string): Promise<string | undefined> {
-        const customerId = await this.findCustomerByAttributionId(attributionId);
-        if (!!customerId && this.subscription?.customer === customerId) {
-            return this.subscription.id;
-        }
-        return undefined;
+    async getBalance(
+        request: { attributionId?: string | undefined },
+        options?: CallOptions | undefined,
+    ): Promise<GetBalanceResponse> {
+        throw new Error("Mock: not implemented");
     }
 
-    async findCustomerByAttributionId(attributionId: string): Promise<string | undefined> {
-        const customerId = this.subscription?.customer;
-        if (!customerId) {
-            return undefined;
-        }
-        return customerId;
+    async setCostCenter(
+        request: {
+            costCenter?:
+                | {
+                      attributionId?: string | undefined;
+                      spendingLimit?: number | undefined;
+                      billingStrategy?: CostCenter_BillingStrategy | undefined;
+                      nextBillingTime?: Date | undefined;
+                  }
+                | undefined;
+        },
+        options?: CallOptions | undefined,
+    ): Promise<SetCostCenterResponse> {
+        throw new Error("Mock: not implemented");
+    }
+
+    async reconcileUsage(
+        request: { from?: Date | undefined; to?: Date | undefined },
+        options?: CallOptions | undefined,
+    ): Promise<ReconcileUsageResponse> {
+        throw new Error("Mock: not implemented");
+    }
+
+    async listUsage(
+        request: {
+            attributionId?: string | undefined;
+            from?: Date | undefined;
+            to?: Date | undefined;
+            order?: ListUsageRequest_Ordering | undefined;
+            pagination?: { perPage?: number | undefined; page?: number | undefined } | undefined;
+        },
+        options?: CallOptions | undefined,
+    ): Promise<ListUsageResponse> {
+        throw new Error("Mock: not implemented");
+    }
+
+    async resetUsage(request: ResetUsageRequest, options?: CallOptions | undefined): Promise<ResetUsageResponse> {
+        throw new Error("Mock: not implemented");
     }
 }
 
@@ -382,6 +447,7 @@ class BillingModeSpec {
                 },
                 expectation: {
                     mode: "chargebee",
+                    paid: true,
                 },
             },
             {
@@ -394,6 +460,7 @@ class BillingModeSpec {
                 },
                 expectation: {
                     mode: "chargebee",
+                    paid: true,
                 },
             },
             // team: transition chargebee -> UBB
@@ -486,7 +553,9 @@ class BillingModeSpec {
                     bind(SubscriptionService).toSelf().inSingletonScope();
                     bind(BillingModes).to(BillingModesImpl).inSingletonScope();
 
-                    bind(StripeService).toConstantValue(new StripeServiceMock(test.config.stripeSubscription));
+                    bind(UsageServiceDefinition.name).toConstantValue(
+                        new UsageServiceClientMock(test.config.stripeSubscription),
+                    );
                     bind(ConfigCatClientFactory).toConstantValue(
                         () =>
                             new ConfigCatClientMock({

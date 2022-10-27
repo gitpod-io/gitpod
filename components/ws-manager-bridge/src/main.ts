@@ -15,6 +15,7 @@ import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { ClusterServiceServer } from "./cluster-service-server";
 import { BridgeController } from "./bridge-controller";
 import { ClusterSyncService } from "./cluster-sync-service";
+import { AppClusterWorkspaceInstancesController } from "./app-cluster-instance-controller";
 
 log.enableJSONLogging("ws-manager-bridge", undefined, LogrusLogLevel.getFromEnv());
 
@@ -52,6 +53,11 @@ export const start = async (container: Container) => {
         const clusterSyncService = container.get<ClusterSyncService>(ClusterSyncService);
         clusterSyncService.start();
 
+        const appClusterInstanceController = container.get<AppClusterWorkspaceInstancesController>(
+            AppClusterWorkspaceInstancesController,
+        );
+        appClusterInstanceController.start();
+
         process.on("SIGTERM", async () => {
             log.info("SIGTERM received, stopping");
             bridgeController.dispose();
@@ -64,6 +70,7 @@ export const start = async (container: Container) => {
                 });
             }
             clusterServiceServer.stop().then(() => log.info("gRPC shutdown completed"));
+            appClusterInstanceController.dispose();
         });
         log.info("ws-manager-bridge is up and running");
         await new Promise((rs, rj) => {});

@@ -16,11 +16,8 @@ import { TeamDB, TeamSubscription2DB, TeamSubscriptionDB, UserDB } from "@gitpod
 import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { TeamSubscription, TeamSubscription2 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
-import {
-    CostCenter_BillingStrategy,
-    UsageServiceClient,
-    UsageServiceDefinition,
-} from "@gitpod/usage-api/lib/usage/v1/usage.pb";
+import { CostCenter_BillingStrategy } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
+import { UsageService } from "../../../src/user/usage-service";
 
 export const BillingModes = Symbol("BillingModes");
 export interface BillingModes {
@@ -45,7 +42,7 @@ export class BillingModesImpl implements BillingModes {
     @inject(Config) protected readonly config: Config;
     @inject(ConfigCatClientFactory) protected readonly configCatClientFactory: ConfigCatClientFactory;
     @inject(SubscriptionService) protected readonly subscriptionSvc: SubscriptionService;
-    @inject(UsageServiceDefinition.name) protected readonly usageService: UsageServiceClient;
+    @inject(UsageService) protected readonly usageService: UsageService;
     @inject(TeamSubscriptionDB) protected readonly teamSubscriptionDb: TeamSubscriptionDB;
     @inject(TeamSubscription2DB) protected readonly teamSubscription2Db: TeamSubscription2DB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
@@ -140,38 +137,36 @@ export class BillingModesImpl implements BillingModes {
 
         // Stripe: Active personal subsciption?
         let hasUbbPersonal = false;
-        const constCenterResponse = await this.usageService.getCostCenter({
-            attributionId: AttributionId.render({ kind: "user", userId: user.id }),
-        });
-        if (constCenterResponse.costCenter?.billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
+        const billingStrategy = await this.usageService.getCurrentBillingStategy({ kind: "user", userId: user.id });
+        if (billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
             hasUbbPersonal = true;
         }
 
         // 3. Check team memberships/plans
         // UBB overrides wins if there is _any_. But if there is none, use the existing Chargebee subscription.
         const teamsModes = await Promise.all(teams.map((t) => this.getBillingModeForTeam(t, now)));
-        const hasUbbPaidTeam = teamsModes.some((tm) => tm.mode === "usage-based" && !!tm.paid);
-        const hasCbTeam = teamsModes.some((tm) => tm.mode === "chargebee");
-        const hasCbTeamSeat = cbTeamSubscriptions.length > 0;
-        const hasCbTeamSubscription = cbOwnedTeamSubscriptions.length > 0;
+        const hasUbbPaidTeamMembership = teamsModes.some((tm) => tm.mode === "usage-based" && !!tm.paid);
+        const hasCbPaidTeamMembership = teamsModes.some((tm) => tm.mode === "chargebee" && !!tm.paid);
+        const hasCbPaidTeamSeat = cbTeamSubscriptions.length > 0;
+        const hasCbPaidTeamSubscription = cbOwnedTeamSubscriptions.length > 0;
 
         function usageBased() {
             const result: BillingMode = { mode: "usage-based" };
-            if (hasCbTeam) {
+            if (hasCbPaidTeamMembership) {
                 result.hasChargebeeTeamPlan = true;
             }
-            if (hasCbTeamSeat || hasCbTeamSubscription) {
+            if (hasCbPaidTeamSeat || hasCbPaidTeamSubscription) {
                 result.hasChargebeeTeamSubscription = true;
             }
             return result;
         }
 
-        if (hasUbbPaidTeam || hasUbbPersonal) {
+        if (hasUbbPaidTeamMembership || hasUbbPersonal) {
             // UBB is greedy: once a user has at least a paid team membership, they should benefit from it!
             return usageBased();
         }
-        if (hasCbTeam || hasCbTeamSeat || canUpgradeToUBB) {
-            // TODO(gpl): Q: How to test the free-tier, then? A: Make sure you have no CB seats anymore
+        if (hasCbPaidTeamMembership || hasCbPaidTeamSeat || canUpgradeToUBB) {
+            // TODO(gpl): Q: How to test the free-tier, then? A: Make sure you have no CB paid seats anymore
             // For that we could add a new field here, which lists all seats that are "blocking" you, and display them in the UI somewhere.
             return { mode: "chargebee", canUpgradeToUBB: true }; // UBB is enabled, but no seat nor subscription yet.
         }
@@ -197,28 +192,26 @@ export class BillingModesImpl implements BillingModes {
             },
         );
 
-        // 1. UBB enabled?
-        if (!isUsageBasedBillingEnabled) {
-            return { mode: "chargebee" };
-        }
-
-        // 2. Any Chargbee TeamSubscription2 (old Team Subscriptions are not relevant here, as they are not associated with a team)
+        // 1. Check Chargebee: Any TeamSubscription2 (old Team Subscriptions are not relevant here, as they are not associated with a team)
         const teamSubscription = await this.teamSubscription2Db.findForTeam(team.id, now);
         if (teamSubscription && TeamSubscription2.isActive(teamSubscription, now)) {
             if (TeamSubscription2.isCancelled(teamSubscription, now)) {
                 // The team has a paid subscription, but it's already cancelled, and UBB enabled
-                return { mode: "chargebee", canUpgradeToUBB: true };
+                return { mode: "chargebee", canUpgradeToUBB: isUsageBasedBillingEnabled };
             }
 
+            return { mode: "chargebee", paid: true };
+        }
+
+        // 2. UBB enabled at all?
+        if (!isUsageBasedBillingEnabled) {
             return { mode: "chargebee" };
         }
 
         // 3. Now we're usage-based. We only have to figure out whether we have a plan yet or not.
         const result: BillingMode = { mode: "usage-based" };
-        const costCenter = await this.usageService.getCostCenter({
-            attributionId: AttributionId.render(AttributionId.create(team)),
-        });
-        if (costCenter.costCenter?.billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
+        const billingStrategy = await this.usageService.getCurrentBillingStategy(AttributionId.create(team));
+        if (billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
             result.paid = true;
         }
         return result;

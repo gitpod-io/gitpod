@@ -62,6 +62,8 @@ jobs:
             - name: Update ${{ inputs.gradlePropertiesPath }}
               if: ${{ steps.latest-version.outputs.result != steps.current-version.outputs.result }}
               run: |
+                  PLUGIN_SINCE_BUILD=$(echo "${{ steps.latest-version.outputs.result }}" | sed 's/-EAP-CANDIDATE-SNAPSHOT//' | sed 's/-CUSTOM-SNAPSHOT//')
+                  sed -i "s/pluginSinceBuild=.*/pluginSinceBuild=$PLUGIN_SINCE_BUILD/" ${{ inputs.gradlePropertiesPath }}
                   sed -i 's/platformVersion=${{ steps.current-version.outputs.result }}/platformVersion=${{ steps.latest-version.outputs.result }}/' ${{ inputs.gradlePropertiesPath }}
                   git diff
             - name: Create Pull Request for Gateway Plugin
@@ -90,7 +92,8 @@ jobs:
                   commit-message: "Update Platform Version of ${{ inputs.pluginName }} to ${{ steps.latest-version.outputs.result }}"
                   branch: "jetbrains/${{ inputs.pluginId }}-platform"
                   labels: "team: IDE,editor: jetbrains"
-                  team-reviewers: "engineering-ide"
+                  # We can't use `team-reviewers` until we resolve https://github.com/gitpod-io/gitpod/issues/12194
+                  # team-reviewers: "engineering-ide"
             - name: Create Pull Request for Backend Plugin
               if: ${{ inputs.pluginId == 'backend-plugin' && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
               uses: peter-evans/create-pull-request@v4
@@ -119,7 +122,8 @@ jobs:
                   commit-message: "Update Platform Version of ${{ inputs.pluginName }} to ${{ steps.latest-version.outputs.result }}"
                   branch: "jetbrains/${{ inputs.pluginId }}-platform"
                   labels: "team: IDE"
-                  team-reviewers: "engineering-ide"
+                  # We can't use `team-reviewers` until we resolve https://github.com/gitpod-io/gitpod/issues/12194
+                  # team-reviewers: "engineering-ide"
             - name: Get previous job's status
               id: lastrun
               uses: filiptronicek/get-last-job-status@main
@@ -127,6 +131,6 @@ jobs:
               if: ${{ (success() && steps.lastrun.outputs.status == 'failed') || failure() }}
               uses: rtCamp/action-slack-notify@v2
               env:
-                SLACK_WEBHOOK: ${{ secrets.slackWebhook }}
-                SLACK_COLOR: ${{ job.status }}
-                SLACK_TITLE: ${{ inputs.productName }}
+                  SLACK_WEBHOOK: ${{ secrets.slackWebhook }}
+                  SLACK_COLOR: ${{ job.status }}
+                  SLACK_TITLE: ${{ inputs.productName }}

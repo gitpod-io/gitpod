@@ -88,7 +88,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	var schedulerName string
 	gitpodHostURL := "https://" + ctx.Config.Domain
-	workspaceClusterHost := fmt.Sprintf("ws.%s", ctx.Config.Domain)
+	workspaceClusterHost := fmt.Sprintf("ws%s.%s", installationShortNameSuffix, ctx.Config.Domain)
 	workspaceURLTemplate := fmt.Sprintf("https://{{ .Prefix }}.ws%s.%s", installationShortNameSuffix, ctx.Config.Domain)
 	workspacePortURLTemplate := fmt.Sprintf("https://{{ .WorkspacePort }}-{{ .Prefix }}.ws%s.%s", installationShortNameSuffix, ctx.Config.Domain)
 

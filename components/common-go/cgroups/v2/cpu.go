@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package v2
+package cgroups_v2
 
 import (
 	"math"
@@ -83,4 +83,9 @@ func (c *Cpu) Stat() (*cgroups.CpuStats, error) {
 	}
 
 	return &stats, nil
+}
+
+func (c *Cpu) PSI() (cgroups.PSI, error) {
+	path := filepath.Join(c.path, "cpu.pressure")
+	return cgroups.ReadPSIValue(path)
 }

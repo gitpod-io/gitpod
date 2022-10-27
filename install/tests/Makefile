@@ -200,11 +200,11 @@ aws-kubeconfig:
 	aws eks update-kubeconfig --name gp-${TF_VAR_TEST_ID} --region eu-west-1 --kubeconfig ${KUBECONFIG} || echo "No cluster present"
 	@echo -e "\033[0;33mAWS service account credentials fetched, run 'source $$(pwd)/$${TF_VAR_TEST_ID}-creds' to load them into your environment\033[0;m"
 
-get-github-config:
+get-github-config: check-var-DOMAIN check-var-TF_VAR_TEST_ID
 ifneq ($(GITHUB_SCM_OAUTH),)
 	@export SCM_OAUTH=./manifests/github-oauth.yaml && \
 	cat $$GITHUB_SCM_OAUTH > $$SCM_OAUTH && \
-	yq w -i $$SCM_OAUTH 'oauth.callBackUrl' https://scm.${TF_VAR_domain}/auth/github.com/callback?state=${TF_VAR_TEST_ID} && \
+	yq w -i $$SCM_OAUTH 'oauth.callBackUrl' https://scm.${DOMAIN}/auth/github.com/callback?state=${TF_VAR_TEST_ID} && \
 	kubectl --kubeconfig=${KUBECONFIG} create secret generic "github-oauth" \
 		--from-literal=provider="$$(cat $$SCM_OAUTH)" \
 		-o yaml --dry-run=client > ${github_oauth_secret}
@@ -469,6 +469,9 @@ run-vscode-ide-tests:
 
 run-jb-ide-tests:
 	$(call runtests,"test/tests/ide/jetbrains/")
+
+run-ssh-tests:
+	$(call runtests,"test/tests/ide/ssh/")
 
 run-cs-component-tests:
 	$(call runtests,"test/tests/components/content-service/")

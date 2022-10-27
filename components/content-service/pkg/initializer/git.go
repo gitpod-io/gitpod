@@ -76,6 +76,23 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 			return err
 		}
 
+		// make sure that folder itself is owned by gitpod user prior to doing git clone
+		// this is needed as otherwise git clone will fail if the folder is owned by root
+		if ws.RunAsGitpodUser {
+			args := []string{"gitpod", ws.Location}
+			cmd := exec.Command("chown", args...)
+			res, cerr := cmd.CombinedOutput()
+			if cerr != nil && !process.IsNotChildProcess(cerr) {
+				err = git.OpFailedError{
+					Args:       args,
+					ExecErr:    cerr,
+					Output:     string(res),
+					Subcommand: "chown",
+				}
+				return err
+			}
+		}
+
 		log.WithField("stage", "init").WithField("location", ws.Location).Debug("Running git clone on workspace")
 		err = ws.Clone(ctx)
 		if err != nil {
@@ -166,9 +183,8 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 	span.SetTag("targetMode", ws.TargetMode)
 	defer tracing.FinishSpan(span, &err)
 
-	defer func() error {
+	defer func() {
 		err = checkGitStatus(err)
-		return err
 	}()
 
 	// checkout branch
@@ -188,18 +204,24 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 			ws.CloneTarget = defaultBranch
 		}
 
-		if err := ws.Git(ctx, "fetch", "--depth=1", "origin", ws.CloneTarget); err != nil {
+		// No need to prune here because we fetch the specific branch only. If we were to try and fetch everything,
+		// we might end up trying to fetch at tag/branch which has since been recreated. It's exactly the specific
+		// fetch wich prevents this situation.
+		//
+		// We don't recurse submodules because callers realizeCloneTarget() are expected to update submodules explicitly,
+		// and deal with any error appropriately (i.e. emit a warning rather than fail).
+		if err := ws.Git(ctx, "fetch", "--depth=1", "origin", "--recurse-submodules=no", ws.CloneTarget); err != nil {
 			log.WithError(err).WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Error("Cannot fetch remote branch")
 			return err
 		}
 
-		if err := ws.Git(ctx, "checkout", "-B", branchName, "origin/"+ws.CloneTarget); err != nil {
+		if err := ws.Git(ctx, "-c", "core.hooksPath=/dev/null", "checkout", "-B", branchName, "origin/"+ws.CloneTarget); err != nil {
 			log.WithError(err).WithField("remoteURI", ws.RemoteURI).WithField("branch", branchName).Error("Cannot fetch remote branch")
 			return err
 		}
 	case LocalBranch:
 		// checkout local branch based on remote HEAD
-		if err := ws.Git(ctx, "checkout", "-B", ws.CloneTarget, "origin/HEAD", "--no-track"); err != nil {
+		if err := ws.Git(ctx, "-c", "core.hooksPath=/dev/null", "checkout", "-B", ws.CloneTarget, "origin/HEAD", "--no-track"); err != nil {
 			return err
 		}
 	case RemoteCommit:
@@ -211,7 +233,7 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 		}
 
 		// checkout specific commit
-		if err := ws.Git(ctx, "checkout", ws.CloneTarget); err != nil {
+		if err := ws.Git(ctx, "-c", "core.hooksPath=/dev/null", "checkout", ws.CloneTarget); err != nil {
 			return err
 		}
 	default:

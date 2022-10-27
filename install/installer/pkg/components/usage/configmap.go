@@ -5,6 +5,7 @@ package usage
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
@@ -19,7 +20,8 @@ import (
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	cfg := server.Config{
-		ControllerSchedule: "", // By default controller is disabled
+		LedgerSchedule:     "", // By default controller is disabled
+		ResetUsageSchedule: time.Duration(5 * time.Minute).String(),
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{
@@ -34,16 +36,31 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			MinForUsersOnStripe: 0,
 		},
 	}
-	expConfig := getExperimentalConfig(ctx)
 
-	if expConfig != nil {
-		if expConfig.Schedule != "" {
-			cfg.ControllerSchedule = expConfig.Schedule
+	expWebAppConfig := getExperimentalWebAppConfig(ctx)
+	if expWebAppConfig != nil && expWebAppConfig.Stripe != nil {
+		cfg.StripePrices = server.StripePrices{
+			IndividualUsagePriceIDs: server.PriceConfig{
+				EUR: expWebAppConfig.Stripe.IndividualUsagePriceIDs.EUR,
+				USD: expWebAppConfig.Stripe.IndividualUsagePriceIDs.USD,
+			},
+			TeamUsagePriceIDs: server.PriceConfig{
+				EUR: expWebAppConfig.Stripe.TeamUsagePriceIDs.EUR,
+				USD: expWebAppConfig.Stripe.TeamUsagePriceIDs.USD,
+			},
 		}
-		if expConfig.DefaultSpendingLimit != nil {
-			cfg.DefaultSpendingLimit = *expConfig.DefaultSpendingLimit
+	}
+
+	expUsageConfig := getExperimentalUsageConfig(ctx)
+
+	if expUsageConfig != nil {
+		if expUsageConfig.Schedule != "" {
+			cfg.LedgerSchedule = expUsageConfig.Schedule
 		}
-		cfg.CreditsPerMinuteByWorkspaceClass = expConfig.CreditsPerMinuteByWorkspaceClass
+		if expUsageConfig.DefaultSpendingLimit != nil {
+			cfg.DefaultSpendingLimit = *expUsageConfig.DefaultSpendingLimit
+		}
+		cfg.CreditsPerMinuteByWorkspaceClass = expUsageConfig.CreditsPerMinuteByWorkspaceClass
 	}
 
 	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {

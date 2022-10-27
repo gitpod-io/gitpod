@@ -16,6 +16,7 @@ import {
     settingsPathTeams,
     settingsPathVariables,
     settingsPathSSHKeys,
+    settingsPathUsage,
 } from "./settings.routes";
 
 export default function getSettingsMenu(params: { userBillingMode?: BillingMode }) {
@@ -80,6 +81,14 @@ function renderBillingMenuEntries(billingMode?: BillingMode) {
                     title: "Billing",
                     link: [settingsPathBilling],
                 },
+                ...(BillingMode.showUsageBasedBilling(billingMode)
+                    ? [
+                          {
+                              title: "Usage",
+                              link: [settingsPathUsage],
+                          },
+                      ]
+                    : []),
                 // We need to allow access to "Team Plans" here, at least for owners.
                 ...(BillingMode.showTeamSubscriptionUI(billingMode)
                     ? [

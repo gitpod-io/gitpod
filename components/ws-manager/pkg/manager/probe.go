@@ -8,12 +8,14 @@ import (
 	"context"
 	"crypto/tls"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"golang.org/x/xerrors"
 	"k8s.io/apimachinery/pkg/util/json"
 )
 
@@ -71,6 +73,17 @@ func (p *WorkspaceReadyProbe) Run(ctx context.Context) WorkspaceProbeResult {
 		Timeout: p.Timeout,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+				DualStack: false,
+			}).DialContext,
+			MaxIdleConns:          0,
+			MaxIdleConnsPerHost:   32,
+			IdleConnTimeout:       30 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 5 * time.Second,
+			DisableKeepAlives:     true,
 		},
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
@@ -82,7 +95,7 @@ func (p *WorkspaceReadyProbe) Run(ctx context.Context) WorkspaceProbeResult {
 			return WorkspaceProbeStopped
 		}
 
-		resp, err := client.Get(p.readyURL)
+		result, err := callWorkspaceProbe(p.readyURL, client)
 		if err != nil {
 			urlerr, ok := err.(*url.Error)
 			if !ok || !urlerr.Timeout() {
@@ -95,32 +108,45 @@ func (p *WorkspaceReadyProbe) Run(ctx context.Context) WorkspaceProbeResult {
 			continue
 		}
 
-		if resp.StatusCode != http.StatusOK {
-			resp.Body.Close()
-			log.WithField("url", p.readyURL).WithField("status", resp.StatusCode).Debug("workspace did not respond to ready probe with OK status")
+		if !result.Ok {
+			log.WithField("url", p.readyURL).Debug("workspace did not respond to ready probe with OK status")
 			time.Sleep(p.RetryDelay)
 			continue
 		}
 
-		rawBody, err := ioutil.ReadAll(resp.Body)
-		resp.Body.Close()
-		if err != nil {
-			log.WithField("url", p.readyURL).WithField("status", resp.StatusCode).WithError(err).Debug("ready probe failed: cannot read body")
-			continue
-		}
-		var probeResult struct {
-			Ok bool `json:"ok"`
-		}
-		err = json.Unmarshal(rawBody, &probeResult)
-		if err != nil {
-			log.WithField("url", p.readyURL).WithField("status", resp.StatusCode).WithError(err).Debug("ready probe failed: unable to unmarshal json")
-			continue
-		}
-		if probeResult.Ok {
-			break
-		}
+		break
 	}
 
 	// workspace is actually ready
 	return WorkspaceProbeReady
+}
+
+type probeResult struct {
+	Ok bool `json:"ok"`
+}
+
+func callWorkspaceProbe(url string, client *http.Client) (*probeResult, error) {
+	resp, err := client.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, xerrors.Errorf("workspace probe request returned %v as status code", resp.StatusCode)
+	}
+
+	rawBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var result probeResult
+	err = json.Unmarshal(rawBody, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
 }

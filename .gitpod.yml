@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-dev-update-image.8
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aa-fix-previewctl-get-name.0
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:

@@ -22,11 +22,11 @@ type FuseDeviceEnablerV1 struct{}
 func (c *FuseDeviceEnablerV1) Name() string  { return "fuse-device-enabler-v1" }
 func (c *FuseDeviceEnablerV1) Type() Version { return Version1 }
 
-func (c *FuseDeviceEnablerV1) Apply(ctx context.Context, basePath, cgroupPath string) error {
-	control, err := cgroups.Load(customV1(basePath), cgroups.StaticPath(cgroupPath))
+func (c *FuseDeviceEnablerV1) Apply(ctx context.Context, opts *PluginOptions) error {
+	control, err := cgroups.Load(customV1(opts.BasePath), cgroups.StaticPath(opts.CgroupPath))
 
 	if err != nil {
-		return xerrors.Errorf("error loading cgroup at path: %s %w", cgroupPath, err)
+		return xerrors.Errorf("error loading cgroup at path: %s %w", opts.CgroupPath, err)
 	}
 
 	res := &specs.LinuxResources{

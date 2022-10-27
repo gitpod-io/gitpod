@@ -32,6 +32,8 @@ type UsageServiceClient interface {
 	SetCostCenter(ctx context.Context, in *SetCostCenterRequest, opts ...grpc.CallOption) (*SetCostCenterResponse, error)
 	// Triggers reconciliation of usage.
 	ReconcileUsage(ctx context.Context, in *ReconcileUsageRequest, opts ...grpc.CallOption) (*ReconcileUsageResponse, error)
+	// ResetUsage resets Usage for CostCenters which have expired or will explire shortly
+	ResetUsage(ctx context.Context, in *ResetUsageRequest, opts ...grpc.CallOption) (*ResetUsageResponse, error)
 	// ListUsage retrieves all usage for the specified attributionId and theb given time range
 	ListUsage(ctx context.Context, in *ListUsageRequest, opts ...grpc.CallOption) (*ListUsageResponse, error)
 	// GetBalance returns the current credits balance for the given attributionId
@@ -73,6 +75,15 @@ func (c *usageServiceClient) ReconcileUsage(ctx context.Context, in *ReconcileUs
 	return out, nil
 }
 
+func (c *usageServiceClient) ResetUsage(ctx context.Context, in *ResetUsageRequest, opts ...grpc.CallOption) (*ResetUsageResponse, error) {
+	out := new(ResetUsageResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/ResetUsage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *usageServiceClient) ListUsage(ctx context.Context, in *ListUsageRequest, opts ...grpc.CallOption) (*ListUsageResponse, error) {
 	out := new(ListUsageResponse)
 	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/ListUsage", in, out, opts...)
@@ -101,6 +112,8 @@ type UsageServiceServer interface {
 	SetCostCenter(context.Context, *SetCostCenterRequest) (*SetCostCenterResponse, error)
 	// Triggers reconciliation of usage.
 	ReconcileUsage(context.Context, *ReconcileUsageRequest) (*ReconcileUsageResponse, error)
+	// ResetUsage resets Usage for CostCenters which have expired or will explire shortly
+	ResetUsage(context.Context, *ResetUsageRequest) (*ResetUsageResponse, error)
 	// ListUsage retrieves all usage for the specified attributionId and theb given time range
 	ListUsage(context.Context, *ListUsageRequest) (*ListUsageResponse, error)
 	// GetBalance returns the current credits balance for the given attributionId
@@ -120,6 +133,9 @@ func (UnimplementedUsageServiceServer) SetCostCenter(context.Context, *SetCostCe
 }
 func (UnimplementedUsageServiceServer) ReconcileUsage(context.Context, *ReconcileUsageRequest) (*ReconcileUsageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReconcileUsage not implemented")
+}
+func (UnimplementedUsageServiceServer) ResetUsage(context.Context, *ResetUsageRequest) (*ResetUsageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResetUsage not implemented")
 }
 func (UnimplementedUsageServiceServer) ListUsage(context.Context, *ListUsageRequest) (*ListUsageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListUsage not implemented")
@@ -194,6 +210,24 @@ func _UsageService_ReconcileUsage_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UsageService_ResetUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResetUsageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsageServiceServer).ResetUsage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.UsageService/ResetUsage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsageServiceServer).ResetUsage(ctx, req.(*ResetUsageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UsageService_ListUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListUsageRequest)
 	if err := dec(in); err != nil {
@@ -248,6 +282,10 @@ var UsageService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReconcileUsage",
 			Handler:    _UsageService_ReconcileUsage_Handler,
+		},
+		{
+			MethodName: "ResetUsage",
+			Handler:    _UsageService_ResetUsage_Handler,
 		},
 		{
 			MethodName: "ListUsage",

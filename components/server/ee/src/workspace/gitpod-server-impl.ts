@@ -116,12 +116,15 @@ import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billin
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { BillingModes } from "../billing/billing-mode";
 import { UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
+import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 import { IncrementalPrebuildsService } from "../prebuilds/incremental-prebuilds-service";
+import { ConfigProvider } from "../../../src/workspace/config-provider";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
     @inject(IncrementalPrebuildsService) protected readonly incrementalPrebuildsService: IncrementalPrebuildsService;
+    @inject(ConfigProvider) protected readonly configProvider: ConfigProvider;
     @inject(LicenseDB) protected readonly licenseDB: LicenseDB;
     @inject(LicenseKeySource) protected readonly licenseKeySource: LicenseKeySource;
 
@@ -163,6 +166,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
 
     @inject(BillingModes) protected readonly billingModes: BillingModes;
+
+    @inject(BillingServiceDefinition.name)
+    protected readonly billingService: BillingServiceClient;
 
     initialize(
         client: GitpodClient | undefined,
@@ -381,7 +387,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "update");
 
         // if any other running instance has a custom timeout other than the user's default, we'll reset that timeout
-        const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
+        const client = await this.workspaceManagerClientProvider.get(
+            runningInstance.region,
+            this.config.installationShortname,
+        );
         const defaultTimeout = await this.entitlementService.getDefaultWorkspaceTimeout(user, new Date());
         const instancesWithReset = runningInstances.filter(
             (i) => i.workspaceId !== workspaceId && i.status.timeout !== defaultTimeout && i.status.phase === "running",
@@ -392,7 +401,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 req.setId(i.id);
                 req.setDuration(this.userService.workspaceTimeoutToDuration(defaultTimeout));
 
-                const client = await this.workspaceManagerClientProvider.get(i.region);
+                const client = await this.workspaceManagerClientProvider.get(
+                    i.region,
+                    this.config.installationShortname,
+                );
                 return client.setTimeout(ctx, req);
             }),
         );
@@ -430,7 +442,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const req = new DescribeWorkspaceRequest();
         req.setId(runningInstance.id);
 
-        const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
+        const client = await this.workspaceManagerClientProvider.get(
+            runningInstance.region,
+            this.config.installationShortname,
+        );
         const desc = await client.describeWorkspace(ctx, req);
         const duration = this.userService.durationToWorkspaceTimeout(desc.getStatus()!.getSpec()!.getTimeout());
         const durationRaw = this.userService.workspaceTimeoutToDuration(duration);
@@ -485,7 +500,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             req.setId(instance.id);
             req.setLevel(lvlmap.get(level)!);
 
-            const client = await this.workspaceManagerClientProvider.get(instance.region);
+            const client = await this.workspaceManagerClientProvider.get(
+                instance.region,
+                this.config.installationShortname,
+            );
             await client.controlAdmission(ctx, req);
         }
 
@@ -511,7 +529,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
         await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "get");
 
-        const client = await this.workspaceManagerClientProvider.get(instance.region);
+        const client = await this.workspaceManagerClientProvider.get(
+            instance.region,
+            this.config.installationShortname,
+        );
         const request = new TakeSnapshotRequest();
         request.setId(instance.id);
         request.setReturnImmediately(true);
@@ -982,9 +1003,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             const logPayload = { mode, cloneUrl, commit: commitSHAs, prebuiltWorkspace };
             log.debug(logCtx, "Looking for prebuilt workspace: ", logPayload);
             if (prebuiltWorkspace?.state !== "available" && mode === CreateWorkspaceMode.UseLastSuccessfulPrebuild) {
+                const { config } = await this.configProvider.fetchConfig({}, user, context);
                 const history = await this.incrementalPrebuildsService.getCommitHistoryForContext(context, user);
                 prebuiltWorkspace = await this.incrementalPrebuildsService.findGoodBaseForIncrementalBuild(
                     context,
+                    config,
                     history,
                     user,
                 );
@@ -2114,17 +2137,23 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             }
             await this.ensureStripeApiIsAllowed({ user });
         }
+
+        const billingEmail = User.getPrimaryEmail(user);
+        const billingName = attrId.kind === "team" ? team!.name : User.getName(user);
         try {
-            if (!(await this.stripeService.findCustomerByAttributionId(attributionId))) {
-                const billingEmail = User.getPrimaryEmail(user);
-                const billingName = attrId.kind === "team" ? team!.name : User.getName(user);
-                await this.stripeService.createCustomerForAttributionId(
-                    attributionId,
-                    currency,
-                    billingEmail,
-                    billingName,
-                );
-            }
+            try {
+                // customer already exists, we don't need to create a new one.
+                await this.billingService.getStripeCustomer({ attributionId });
+                return;
+            } catch (e) {}
+
+            await this.billingService.createStripeCustomer({
+                attributionId,
+                currency,
+                email: billingEmail,
+                name: billingName,
+            });
+            return;
         } catch (error) {
             log.error(`Failed to create Stripe customer profile for '${attributionId}'`, error);
             throw new ResponseError(

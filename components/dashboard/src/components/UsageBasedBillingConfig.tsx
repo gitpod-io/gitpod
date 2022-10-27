@@ -19,6 +19,7 @@ import { getGitpodService } from "../service/service";
 import DropDown from "../components/DropDown";
 import Modal from "../components/Modal";
 import Alert from "./Alert";
+import dayjs from "dayjs";
 
 const BASE_USAGE_LIMIT_FOR_STRIPE_USERS = 1000;
 
@@ -40,12 +41,12 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
     const [stripePortalUrl, setStripePortalUrl] = useState<string | undefined>();
     const [pollStripeSubscriptionTimeout, setPollStripeSubscriptionTimeout] = useState<NodeJS.Timeout | undefined>();
     const [pendingStripeSubscription, setPendingStripeSubscription] = useState<PendingStripeSubscription | undefined>();
-    const [billingError, setBillingError] = useState<string | undefined>();
+    const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
     const localStorageKey = `pendingStripeSubscriptionFor${attributionId}`;
-    const billingPeriodFrom = new Date(new Date().toISOString().slice(0, 7) + "-01"); // First day of this month: YYYY-MM-01T00:00:00.000Z
-    const billingPeriodTo = new Date(billingPeriodFrom.getUTCFullYear(), billingPeriodFrom.getMonth() + 1); // First day of next month
-    billingPeriodTo.setMilliseconds(billingPeriodTo.getMilliseconds() - 1); // Last millisecond of this month
+    const now = dayjs().utc(true);
+    const billingPeriodFrom = now.startOf("month");
+    const billingPeriodTo = now.endOf("month");
 
     useEffect(() => {
         if (!attributionId) {
@@ -62,7 +63,8 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                 setStripeSubscriptionId(subscriptionId);
                 setUsageLimit(limit);
             } catch (error) {
-                console.error(error);
+                console.error("Could not get Stripe subscription details.", error);
+                setErrorMessage(`Could not get Stripe subscription details. ${error?.message || String(error)}`);
             } finally {
                 setIsLoadingStripeSubscription(false);
             }
@@ -111,7 +113,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                 window.localStorage.removeItem(localStorageKey);
                 clearTimeout(pollStripeSubscriptionTimeout!);
                 setPendingStripeSubscription(undefined);
-                setBillingError(`Could not subscribe to Stripe. ${error?.message || String(error)}`);
+                setErrorMessage(`Could not subscribe to Stripe. ${error?.message || String(error)}`);
             }
         })();
     }, [attributionId, location.search]);
@@ -129,7 +131,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
             const pending = JSON.parse(pendingStripeSubscription);
             setPendingStripeSubscription(pending);
         } catch (error) {
-            console.error("Could not load pending Stripe subscription", attributionId, error);
+            console.warn("Could not load pending Stripe subscription", attributionId, error);
         }
     }, [attributionId, localStorageKey]);
 
@@ -176,7 +178,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
             const response = await getGitpodService().server.listUsage({
                 attributionId,
                 order: Ordering.ORDERING_DESCENDING,
-                from: billingPeriodFrom.getTime(),
+                from: billingPeriodFrom.toDate().getTime(),
                 to: Date.now(),
             });
             setCurrentUsage(response.creditsUsed);
@@ -200,8 +202,8 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
             await getGitpodService().server.setUsageLimit(attributionId, newLimit);
             setUsageLimit(newLimit);
         } catch (error) {
-            console.error(error);
-            setBillingError(`Failed to update usage limit. ${error?.message || String(error)}`);
+            console.error("Failed to update usage limit", error);
+            setErrorMessage(`Failed to update usage limit. ${error?.message || String(error)}`);
         }
     };
 
@@ -209,9 +211,9 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
         <div className="mb-16">
             <h2 className="text-gray-500">Manage usage-based billing, usage limit, and payment method.</h2>
             <div className="max-w-xl flex flex-col">
-                {billingError && (
+                {errorMessage && (
                     <Alert className="max-w-xl mt-2" closable={false} showIcon={true} type="error">
-                        {billingError}
+                        {errorMessage}
                     </Alert>
                 )}
                 {showSpinner && (
@@ -247,18 +249,14 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                             )}
                         </div>
                         <div className="mt-2 flex">
-                            <progress className="h-4 flex-grow rounded-xl" value={currentUsage} max={usageLimit} />
+                            <progress className="h-2 flex-grow rounded-xl" value={currentUsage} max={usageLimit} />
                         </div>
                         <div className="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 -m-4 p-4 mt-4 rounded-b-xl flex">
                             <div className="flex-grow">
                                 <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Current Period</div>
                                 <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                    <span className="font-semibold">
-                                        {billingPeriodFrom.toLocaleString("default", { month: "long" })}{" "}
-                                        {billingPeriodFrom.getFullYear()}
-                                    </span>{" "}
-                                    ({billingPeriodFrom.toLocaleString("default", { month: "short", day: "numeric" })} -{" "}
-                                    {billingPeriodTo.toLocaleString("default", { month: "short", day: "numeric" })})
+                                    <span className="font-semibold">{`${billingPeriodFrom.format("MMMM YYYY")}`}</span>{" "}
+                                    {`(${billingPeriodFrom.format("MMM D")}` + ` - ${billingPeriodTo.format("MMM D")})`}
                                 </div>
                             </div>
                             <div>
@@ -279,7 +277,8 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                             <Check className="m-0.5 w-5 h-5" />
                             <div className="flex flex-col">
                                 <span>
-                                    {currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard workspace usage.{" "}
+                                    {currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard workspace
+                                    usage.{" "}
                                     <a
                                         className="gp-link"
                                         href="https://www.gitpod.io/docs/configure/billing/usage-based-billing"
@@ -330,7 +329,10 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                 <Check className="m-0.5 w-5 h-5" />
                                 <div className="flex flex-col">
                                     <span className="font-bold">Pay-as-you-go after 1,000 credits</span>
-                                    <span>{currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard workspace usage.</span>
+                                    <span>
+                                        {currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard
+                                        workspace usage.
+                                    </span>
                                 </div>
                             </div>
                             <div className="mt-5 flex flex-col">
@@ -373,7 +375,10 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                             <span className="font-bold text-gray-500 dark:text-gray-400">
                                                 Pay-as-you-go after 1,000 credits
                                             </span>
-                                            <span>{currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard workspace usage.</span>
+                                            <span>
+                                                {currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of
+                                                Standard workspace usage.
+                                            </span>
                                         </div>
                                     </div>
                                 </>
@@ -386,7 +391,8 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                         <Check className="m-0.5 w-5 h-5 text-orange-500" />
                                         <div className="flex flex-col">
                                             <span>
-                                                {currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard workspace usage.{" "}
+                                                {currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of
+                                                Standard workspace usage.{" "}
                                                 <a
                                                     className="gp-link"
                                                     href="https://www.gitpod.io/docs/configure/billing/usage-based-billing"
@@ -475,7 +481,7 @@ function CreditCardInputForm(props: { attributionId: string }) {
     const elements = useElements();
     const { currency, setCurrency } = useContext(PaymentContext);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [billingError, setBillingError] = useState<string | undefined>();
+    const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -483,7 +489,7 @@ function CreditCardInputForm(props: { attributionId: string }) {
         if (!stripe || !elements || !attrId) {
             return;
         }
-        setBillingError(undefined);
+        setErrorMessage(undefined);
         setIsLoading(true);
         try {
             // Create Stripe customer with currency
@@ -503,8 +509,8 @@ function CreditCardInputForm(props: { attributionId: string }) {
                 // site first to authorize the payment, then redirected to the `return_url`.
             }
         } catch (error) {
-            console.error(error);
-            setBillingError(`Failed to submit form. ${error?.message || String(error)}`);
+            console.error("Failed to submit form.", error);
+            setErrorMessage(`Failed to submit form. ${error?.message || String(error)}`);
         } finally {
             setIsLoading(false);
         }
@@ -512,9 +518,9 @@ function CreditCardInputForm(props: { attributionId: string }) {
 
     return (
         <form className="mt-4 flex-grow flex flex-col" onSubmit={handleSubmit}>
-            {billingError && (
+            {errorMessage && (
                 <Alert className="mb-4" closable={false} showIcon={true} type="error">
-                    {billingError}
+                    {errorMessage}
                 </Alert>
             )}
             <PaymentElement />
@@ -552,7 +558,7 @@ function UpdateLimitModal(props: {
     onClose: () => void;
     onUpdate: (newLimit: number) => {};
 }) {
-    const [error, setError] = useState<string>("");
+    const [errorMessage, setErrorMessage] = useState<string>("");
     const [newLimit, setNewLimit] = useState<string | undefined>(
         typeof props.currentValue === "number" ? String(props.currentValue) : undefined,
     );
@@ -560,16 +566,16 @@ function UpdateLimitModal(props: {
     function onSubmit(event: React.FormEvent) {
         event.preventDefault();
         if (!newLimit) {
-            setError("Please specify a limit");
+            setErrorMessage("Please specify a limit");
             return;
         }
         const n = parseInt(newLimit, 10);
         if (typeof n !== "number") {
-            setError("Please specify a limit that is a valid number");
+            setErrorMessage("Please specify a limit that is a valid number");
             return;
         }
         if (typeof props.minValue === "number" && n < props.minValue) {
-            setError(`Please specify a limit that is >= ${props.minValue}`);
+            setErrorMessage(`Please specify a limit that is >= ${props.minValue}`);
             return;
         }
         props.onUpdate(n);
@@ -581,9 +587,9 @@ function UpdateLimitModal(props: {
             <form onSubmit={onSubmit}>
                 <div className="border-t border-b border-gray-200 dark:border-gray-700 -mx-6 px-6 py-4 flex flex-col">
                     <p className="pb-4 text-gray-500 text-base">Set usage limit in total credits per month.</p>
-                    {error && (
+                    {errorMessage && (
                         <Alert type="error" className="-mt-2 mb-2">
-                            {error}
+                            {errorMessage}
                         </Alert>
                     )}
                     <label className="font-medium">
@@ -592,9 +598,11 @@ function UpdateLimitModal(props: {
                             <input
                                 type="text"
                                 value={newLimit}
-                                className={`rounded-md w-full truncate overflow-x-scroll pr-8 ${error ? "error" : ""}`}
+                                className={`rounded-md w-full truncate overflow-x-scroll pr-8 ${
+                                    errorMessage ? "error" : ""
+                                }`}
                                 onChange={(e) => {
-                                    setError("");
+                                    setErrorMessage("");
                                     setNewLimit(e.target.value);
                                 }}
                             />

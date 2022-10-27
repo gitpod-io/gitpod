@@ -16,8 +16,8 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
-	v1 "github.com/gitpod-io/gitpod/public-api/v1"
-	"github.com/gitpod-io/gitpod/public-api/v1/v1connect"
+	v1 "github.com/gitpod-io/gitpod/public-api/experimental/v1"
+	"github.com/gitpod-io/gitpod/public-api/experimental/v1/v1connect"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
@@ -65,7 +65,7 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 			},
 			Expect: Expectation{
 				Response: &v1.GetWorkspaceResponse{
-					Result: workspaceTestData[0].API.Result,
+					Result: workspaceTestData[0].API,
 				},
 			},
 		},
@@ -230,8 +230,8 @@ func TestWorkspaceService_ListWorkspaces(t *testing.T) {
 			},
 			Expectation: Expectation{
 				Response: &v1.ListWorkspacesResponse{
-					Result: []*v1.ListWorkspacesResponse_WorkspaceAndInstance{
-						&workspaceTestData[0].API,
+					Result: []*v1.Workspace{
+						workspaceTestData[0].API,
 					},
 				},
 			},
@@ -308,7 +308,7 @@ func TestWorkspaceService_ListWorkspaces(t *testing.T) {
 type workspaceTestDataEntry struct {
 	Name     string
 	Protocol protocol.WorkspaceInfo
-	API      v1.ListWorkspacesResponse_WorkspaceAndInstance
+	API      *v1.Workspace
 }
 
 var workspaceTestData = []workspaceTestDataEntry{
@@ -343,35 +343,35 @@ var workspaceTestData = []workspaceTestDataEntry{
 				},
 			},
 		},
-		API: v1.ListWorkspacesResponse_WorkspaceAndInstance{
-			Result: &v1.Workspace{
-				WorkspaceId: "gitpodio-gitpod-isq6xj458lj",
-				OwnerId:     "fake-owner-id",
-				Context: &v1.WorkspaceContext{
-					ContextUrl: "https://github.com/gitpod-io/gitpod",
-					Details: &v1.WorkspaceContext_Git_{
-						Git: &v1.WorkspaceContext_Git{
-							NormalizedContextUrl: "https://github.com/gitpod-io/gitpod",
-						},
+		API: &v1.Workspace{
+			WorkspaceId: "gitpodio-gitpod-isq6xj458lj",
+			OwnerId:     "fake-owner-id",
+			Context: &v1.WorkspaceContext{
+				ContextUrl: "https://github.com/gitpod-io/gitpod",
+				Details: &v1.WorkspaceContext_Git_{
+					Git: &v1.WorkspaceContext_Git{
+						NormalizedContextUrl: "https://github.com/gitpod-io/gitpod",
 					},
 				},
-				Description: "test description",
 			},
-			LastActiveInstances: &v1.WorkspaceInstance{
-				InstanceId:  "f2effcfd-3ddb-4187-b584-256e88a42442",
-				WorkspaceId: "gitpodio-gitpod-isq6xj458lj",
-				CreatedAt:   timestamppb.New(must(time.Parse(time.RFC3339, "2022-07-12T10:04:49Z"))),
-				Status: &v1.WorkspaceInstanceStatus{
-					StatusVersion: 42,
-					Phase:         v1.WorkspaceInstanceStatus_PHASE_RUNNING,
-					Conditions: &v1.WorkspaceInstanceStatus_Conditions{
-						Failed:            "nope",
-						Timeout:           "nada",
-						FirstUserActivity: timestamppb.New(must(time.Parse(time.RFC3339, "2022-07-12T10:04:49Z"))),
+			Description: "test description",
+			Status: &v1.WorkspaceStatus{
+				Instance: &v1.WorkspaceInstance{
+					InstanceId:  "f2effcfd-3ddb-4187-b584-256e88a42442",
+					WorkspaceId: "gitpodio-gitpod-isq6xj458lj",
+					CreatedAt:   timestamppb.New(must(time.Parse(time.RFC3339, "2022-07-12T10:04:49Z"))),
+					Status: &v1.WorkspaceInstanceStatus{
+						StatusVersion: 42,
+						Phase:         v1.WorkspaceInstanceStatus_PHASE_RUNNING,
+						Conditions: &v1.WorkspaceInstanceStatus_Conditions{
+							Failed:            "nope",
+							Timeout:           "nada",
+							FirstUserActivity: timestamppb.New(must(time.Parse(time.RFC3339, "2022-07-12T10:04:49Z"))),
+						},
+						Message:   "has no message",
+						Url:       "https://gitpodio-gitpod-isq6xj458lj.ws-eu53.protocol.io/",
+						Admission: v1.AdmissionLevel_ADMISSION_LEVEL_OWNER_ONLY,
 					},
-					Message:   "has no message",
-					Url:       "https://gitpodio-gitpod-isq6xj458lj.ws-eu53.protocol.io/",
-					Admission: v1.AdmissionLevel_ADMISSION_LEVEL_OWNER_ONLY,
 				},
 			},
 		},
@@ -380,7 +380,7 @@ var workspaceTestData = []workspaceTestDataEntry{
 
 func TestConvertWorkspaceInfo(t *testing.T) {
 	type Expectation struct {
-		Result *v1.ListWorkspacesResponse_WorkspaceAndInstance
+		Result *v1.Workspace
 		Error  string
 	}
 	tests := []struct {
@@ -391,7 +391,7 @@ func TestConvertWorkspaceInfo(t *testing.T) {
 		{
 			Name:        "happy path",
 			Input:       workspaceTestData[0].Protocol,
-			Expectation: Expectation{Result: &workspaceTestData[0].API},
+			Expectation: Expectation{Result: workspaceTestData[0].API},
 		},
 	}
 

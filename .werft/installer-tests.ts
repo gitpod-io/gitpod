@@ -227,6 +227,12 @@ const WORKSPACES_TESTS: { [name: string]: InfraConfig } = {
 };
 
 const IDE_TESTS: { [name: string]: InfraConfig } = {
+    SSH_TEST: {
+        phase: "run-ssh-tests",
+        makeTarget: "run-ssh-tests",
+        description: "SSH Gateway tests",
+        slackhook: slackHook.get("ide-jobs"),
+    },
     VSCODE_IDE_TEST: {
         phase: "run-vscode-ide-tests",
         makeTarget: "run-vscode-ide-tests",
@@ -238,7 +244,7 @@ const IDE_TESTS: { [name: string]: InfraConfig } = {
         makeTarget: "run-jb-ide-tests",
         description: "jetbrains IDE tests",
         slackhook: slackHook.get("ide-jobs"),
-    }
+    },
 }
 
 

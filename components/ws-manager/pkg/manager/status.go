@@ -405,7 +405,7 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 		// check if any container is still pulling images
 		for _, cs := range status.ContainerStatuses {
 			if cs.State.Waiting != nil {
-				if cs.State.Waiting.Reason != "ContainerCreating" {
+				if cs.State.Waiting.Reason != "ContainerCreating" && cs.State.Waiting.Reason != "PodInitializing" {
 					continue
 				}
 

@@ -931,7 +931,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             req.setId(instanceId);
             req.setClosed(wasClosed);
 
-            const client = await this.workspaceManagerClientProvider.get(wsi.region);
+            const client = await this.workspaceManagerClientProvider.get(wsi.region, this.config.installationShortname);
             await client.markActive(ctx, req);
 
             if (options && options.roundTripTime && Number.isFinite(options.roundTripTime)) {
@@ -1473,7 +1473,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const req = new DescribeWorkspaceRequest();
         req.setId(instance.id);
-        const client = await this.workspaceManagerClientProvider.get(instance.region);
+        const client = await this.workspaceManagerClientProvider.get(
+            instance.region,
+            this.config.installationShortname,
+        );
         const desc = await client.describeWorkspace(ctx, req);
 
         if (!desc.hasStatus()) {
@@ -1526,7 +1529,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         req.setExpose(true);
 
         try {
-            const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
+            const client = await this.workspaceManagerClientProvider.get(
+                runningInstance.region,
+                this.config.installationShortname,
+            );
             await client.controlPort(ctx, req);
         } catch (e) {
             throw this.mapGrpcError(e);
@@ -1578,7 +1584,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         req.setSpec(spec);
         req.setExpose(false);
 
-        const client = await this.workspaceManagerClientProvider.get(instance.region);
+        const client = await this.workspaceManagerClientProvider.get(
+            instance.region,
+            this.config.installationShortname,
+        );
         await client.controlPort(ctx, req);
     }
 
@@ -1985,7 +1994,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 const req = new UpdateSSHKeyRequest();
                 req.setId(instance.id);
                 req.setKeysList(keys);
-                const cli = await this.workspaceManagerClientProvider.get(instance.region);
+                const cli = await this.workspaceManagerClientProvider.get(
+                    instance.region,
+                    this.config.installationShortname,
+                );
                 await cli.updateSSHPublicKey(ctx, req);
             } catch (err) {
                 const logCtx = { userId, instanceId: instance.id };
@@ -3134,9 +3146,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 this.messageBus.notifyOnSubscriptionUpdate(ctx, attrId).catch();
             }
         } catch (error) {
-            log.error("cannot set usage attribution", error, { userId: user.id, usageAttributionId });
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `cannot set usage attribution`);
+            log.error({ userId: user.id }, "Cannot set usage attribution", error, { usageAttributionId });
+            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `Cannot set usage attribution`);
         }
+    }
+
+    async listAvailableUsageAttributionIds(ctx: TraceContext): Promise<string[]> {
+        const user = this.checkAndBlockUser("listAvailableUsageAttributionIds");
+
+        const attributionIds = await this.userService.listAvailableUsageAttributionIds(user);
+        return attributionIds.map(AttributionId.render);
     }
 
     async getBillingModeForUser(ctx: TraceContextWithSpan): Promise<BillingMode> {
@@ -3177,9 +3196,19 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             },
         );
         if (isMovedImageBuilder) {
-            return this.wsClusterImageBuilderClientProvider.getClient(user, workspace, instance);
+            return this.wsClusterImageBuilderClientProvider.getClient(
+                this.config.installationShortname,
+                user,
+                workspace,
+                instance,
+            );
         } else {
-            return this.imagebuilderClientProvider.getClient(user, workspace, instance);
+            return this.imagebuilderClientProvider.getClient(
+                this.config.installationShortname,
+                user,
+                workspace,
+                instance,
+            );
         }
     }
 

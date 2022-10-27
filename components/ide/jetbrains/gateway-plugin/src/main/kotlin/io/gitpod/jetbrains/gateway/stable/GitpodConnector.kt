@@ -5,54 +5,31 @@
 package io.gitpod.jetbrains.gateway.stable
 
 import com.jetbrains.gateway.api.GatewayConnector
-import com.jetbrains.gateway.api.GatewayConnectorView
-import com.jetbrains.gateway.api.GatewayRecentConnections
+import com.jetbrains.gateway.api.GatewayConnectorDocumentationPage
 import com.jetbrains.rd.util.lifetime.Lifetime
+import io.gitpod.jetbrains.gateway.GitpodRecentConnections
 import io.gitpod.jetbrains.icons.GitpodIcons
 import java.awt.Component
-import javax.swing.Icon
-import javax.swing.JComponent
-import com.intellij.ui.components.ActionLink
-import com.intellij.ide.BrowserUtil
-import io.gitpod.jetbrains.gateway.GitpodRecentConnections
 
 class GitpodConnector : GatewayConnector {
-    override val icon: Icon
-        get() = GitpodIcons.Logo
+    override val icon = GitpodIcons.Logo
 
-    override fun createView(lifetime: Lifetime): GatewayConnectorView {
-        return GitpodConnectorView(lifetime)
-    }
+    override fun createView(lifetime: Lifetime) = GitpodConnectorView(lifetime)
 
-    override fun getActionText(): String {
-        return "Connect to Gitpod"
-    }
+    override fun getActionText() = "Connect to Gitpod"
 
-    override fun getDescription(): String? {
-        return "Connect to Gitpod workspaces"
-    }
+    override fun getDescription() = "Connect to Gitpod workspaces"
 
-    override fun getDocumentationLink(): ActionLink {
-        val documentationLink = ActionLink("Documentation") {
-            BrowserUtil.browse("https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway")
-        }
-        documentationLink.setExternalLinkIcon()
-        return documentationLink
-    }
+    override fun getDocumentationAction() = GatewayConnectorDocumentationPage("https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway")
 
-    override fun getConnectorId(): String = "gitpod.connector"
+    override fun getConnectorId() = "gitpod.connector"
 
-    override fun getRecentConnections(setContentCallback: (Component) -> Unit): GatewayRecentConnections? {
-        return GitpodRecentConnections()
-    }
+    override fun getRecentConnections(setContentCallback: (Component) -> Unit) = GitpodRecentConnections()
 
-    override fun getTitle(): String {
-        return "Gitpod"
-    }
+    override fun getTitle() = "Gitpod"
 
-    override fun getTitleAdornment(): JComponent? {
-        return null
-    }
+    @Deprecated("Not used", ReplaceWith("null"))
+    override fun getTitleAdornment() = null
 
     override fun initProcedure() {}
 }

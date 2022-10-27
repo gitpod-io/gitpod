@@ -59,6 +59,10 @@ interface None {
 /** Sessions is handled with old subscription logic based on Chargebee */
 interface Chargebee {
     mode: "chargebee";
+
+    /** True iff this is a team, and is based on a paid plan. Currently only set for teams! */
+    paid?: boolean;
+
     canUpgradeToUBB?: boolean;
 }
 

@@ -17,6 +17,9 @@ service UsageService {
     // Triggers reconciliation of usage.
     rpc ReconcileUsage(ReconcileUsageRequest) returns (ReconcileUsageResponse) {}
 
+    // ResetUsage resets Usage for CostCenters which have expired or will explire shortly
+    rpc ResetUsage(ResetUsageRequest) returns (ResetUsageResponse) {}
+
     // ListUsage retrieves all usage for the specified attributionId and theb given time range
     rpc ListUsage(ListUsageRequest) returns (ListUsageResponse) {}
 
@@ -127,3 +130,7 @@ message CostCenter {
     // next_billing_time specifies when the next billing cycle happens. Only set when billing strategy is 'other'. This property is readonly.
     google.protobuf.Timestamp next_billing_time = 4;
 }
+
+message ResetUsageRequest {}
+
+message ResetUsageResponse {}

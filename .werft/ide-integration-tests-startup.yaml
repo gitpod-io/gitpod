@@ -17,7 +17,7 @@ pod:
         secretName: github-token-gitpod-bot
   containers:
     - name: gcloud
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-dev-update-image.8
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aa-fix-previewctl-get-name.0
       workingDir: /workspace
       imagePullPolicy: IfNotPresent
       env:
@@ -177,7 +177,7 @@ pod:
 
           [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
 
-          IDE_TEST_LIST=(/workspace/test/tests/ide/vscode /workspace/test/tests/ide/jetbrains)
+          IDE_TEST_LIST=(/workspace/test/tests/ide/ssh /workspace/test/tests/ide/vscode /workspace/test/tests/ide/jetbrains)
           for TEST_PATH in "${IDE_TEST_LIST[@]}"
           do
               TEST_NAME=$(basename "${TEST_PATH}")

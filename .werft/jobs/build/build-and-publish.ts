@@ -19,7 +19,6 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
         retag,
         version,
         localAppVersion,
-        publishToJBMarketplace,
         publishToNpm,
         coverageOutput,
     } = jobConfig;
@@ -55,7 +54,6 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
         REPLICATED_API_TOKEN: process.env.REPLICATED_API_TOKEN,
         REPLICATED_APP: process.env.REPLICATED_APP,
         npmPublishTrigger: publishToNpm ? Date.now().toString() : "false",
-        jbMarketplacePublishTrigger: publishToJBMarketplace ? Date.now().toString() : "false",
     }).map(([key, value]) => `-D${key}=${value}`).join(" ");
 
     const buildFlags = [

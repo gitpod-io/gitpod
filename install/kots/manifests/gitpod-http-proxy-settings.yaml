@@ -8,6 +8,8 @@ metadata:
   labels:
     app: gitpod
     component: gitpod-installer
+  annotations:
+    kots.io/when: '{{repl ConfigOptionEquals "enable_proxy_settings" "1" }}'
 type: Opaque
 data:
   httpProxy: repl{{ HTTPProxy | Base64Encode | quote }}

@@ -5,10 +5,10 @@ defaultArgs:
   coreYarnLockBase: ../..
   npmPublishTrigger: "false"
   publishToNPM: true
-  jbMarketplacePublishTrigger: "false"
   publishToJBMarketplace: true
   localAppVersion: unknown
-  codeCommit: 239fa626a44652cebf293a994a3330e90e873daa
+  codeCommit: 15e7467806334e6bdd73dfbdefebaec2c3c2efeb
+  codeVersion: 1.72.3
   codeQuality: stable
   noVerifyJBPlugin: false
   intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2022.2.3.tar.gz"

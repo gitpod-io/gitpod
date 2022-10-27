@@ -72,6 +72,9 @@ const (
 
 	// workspaceNetConnLimit denotes the maximum number of connections a workspace can make per minute
 	WorkspaceNetConnLimitAnnotation = "gitpod.io/netConnLimitPerMinute"
+
+	// workspacePressureStallInfo indicates if pressure stall information should be retrieved for the workspace
+	WorkspacePressureStallInfoAnnotation = "gitpod.io/psi"
 )
 
 // GetOWIFromObject finds the owner, workspace and instance information on a Kubernetes object using labels

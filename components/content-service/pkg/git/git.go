@@ -92,6 +92,9 @@ type Client struct {
 
 	// UpstreamCloneURI is the fork upstream of a repository
 	UpstreamRemoteURI string
+
+	// if true will run git command as gitpod user (should be executed as root that has access to sudo in this case)
+	RunAsGitpodUser bool
 }
 
 // Status describes the status of a Git repo/working copy akin to "git status"
@@ -197,7 +200,12 @@ func (c *Client) GitWithOutput(ctx context.Context, ignoreErr *string, subcomman
 
 	span.LogKV("args", fullArgs)
 
-	cmd := exec.Command("git", fullArgs...)
+	cmdName := "git"
+	if c.RunAsGitpodUser {
+		cmdName = "sudo"
+		fullArgs = append([]string{"-u", "gitpod", "git"}, fullArgs...)
+	}
+	cmd := exec.Command(cmdName, fullArgs...)
 	cmd.Dir = c.Location
 	cmd.Env = env
 
@@ -346,13 +354,6 @@ func (c *Client) Clone(ctx context.Context) (err error) {
 	args = append(args, ".")
 
 	return c.Git(ctx, "clone", args...)
-}
-
-// Fetch runs git fetch and prunes remote-tracking references as well as ALL LOCAL TAGS.
-func (c *Client) Fetch(ctx context.Context) (err error) {
-	// we need to fetch with pruning to avoid issues like github.com/gitpod-io/gitpod/issues/7561.
-	// See https://git-scm.com/docs/git-fetch#Documentation/git-fetch.txt---prune for more details.
-	return c.Git(ctx, "fetch", "-p", "-P", "--tags", "-f")
 }
 
 // UpdateRemote performs a git fetch on the upstream remote URI

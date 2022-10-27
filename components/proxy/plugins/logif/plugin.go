@@ -41,7 +41,7 @@ type ConditionalEncoder struct {
 	EncRaw    json.RawMessage `json:"encoder,omitempty" caddy:"namespace=caddy.logging.encoders inline_key=format"`
 	Eval      gval.Evaluable  `json:"-"`
 	Expr      string
-	Logger    func(caddy.Module) *zap.Logger `json:"-"`
+	Logger    func(...caddy.Module) *zap.Logger `json:"-"`
 	Formatter string
 }
 

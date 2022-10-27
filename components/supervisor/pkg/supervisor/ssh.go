@@ -219,13 +219,13 @@ func configureSSHDefaultDir(cfg *Config) {
 		log.Error("cannot configure ssh default dir with empty repo root")
 		return
 	}
-	file, err := os.OpenFile("/home/gitpod/.bashrc", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0o644)
+	file, err := os.OpenFile("/home/gitpod/.bash_profile", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0o644)
 	if err != nil {
-		log.WithError(err).Error("cannot write .bashrc")
+		log.WithError(err).Error("cannot write .bash_profile")
 	}
 	defer file.Close()
 	if _, err := file.WriteString(fmt.Sprintf("\nif [[ -n $SSH_CONNECTION ]]; then cd \"%s\"; fi\n", cfg.RepoRoot)); err != nil {
-		log.WithError(err).Error("write .bashrc failed")
+		log.WithError(err).Error("write .bash_profile failed")
 	}
 }
 

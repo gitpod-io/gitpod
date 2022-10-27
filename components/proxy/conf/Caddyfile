@@ -19,9 +19,7 @@
 	order gitpod.sec_websocket_key      before header
 
 	servers {
-        protocol {
-            allow_h2c
-        }
+        protocols h1 h2 h2c
     }
 }
 

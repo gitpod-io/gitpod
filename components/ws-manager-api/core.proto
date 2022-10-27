@@ -620,6 +620,9 @@ enum WorkspaceFeatureFlag {
 
     // WORKSPACE_CONNECTION_LIMITING feature flag for enabling network connection rate limiting
     WORKSPACE_CONNECTION_LIMITING = 10;
+
+    // WORKSPACE_PSI feature flag for enabling pressure stall information for workspaces
+    WORKSPACE_PSI = 11;
 }
 
 // GitSpec configures the Git available within the workspace

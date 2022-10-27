@@ -7,9 +7,10 @@ package cmd
 import (
 	"time"
 
-	"github.com/gitpod-io/gitpod/previewctl/pkg/preview"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/gitpod/previewctl/pkg/preview"
 )
 
 var (

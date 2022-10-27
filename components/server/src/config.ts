@@ -29,7 +29,7 @@ export type Config = Omit<
     stripeSecrets?: { publishableKey: string; secretKey: string };
     stripeConfig?: StripeConfig;
     builtinAuthProvidersConfigured: boolean;
-    inactivityPeriodForRepos?: number;
+    inactivityPeriodForReposInDays?: number;
 };
 
 export interface WorkspaceDefaults {
@@ -203,7 +203,7 @@ export interface ConfigSerialized {
      * If a numeric value interpreted as days is set, repositories not beeing opened with Gitpod are
      * considered inactive.
      */
-    inactivityPeriodForRepos?: number;
+    inactivityPeriodForReposInDays?: number;
 
     /**
      * Supported workspace classes
@@ -285,10 +285,10 @@ export namespace ConfigFile {
         if (licenseFile) {
             license = fs.readFileSync(filePathTelepresenceAware(licenseFile), "utf-8");
         }
-        let inactivityPeriodForRepos: number | undefined;
-        if (typeof config.inactivityPeriodForRepos === "number") {
-            if (config.inactivityPeriodForRepos >= 1) {
-                inactivityPeriodForRepos = config.inactivityPeriodForRepos;
+        let inactivityPeriodForReposInDays: number | undefined;
+        if (typeof config.inactivityPeriodForReposInDays === "number") {
+            if (config.inactivityPeriodForReposInDays >= 1) {
+                inactivityPeriodForReposInDays = config.inactivityPeriodForReposInDays;
             }
         }
 
@@ -320,7 +320,7 @@ export namespace ConfigFile {
                     ? new Date(config.workspaceGarbageCollection.startDate).getTime()
                     : Date.now(),
             },
-            inactivityPeriodForRepos,
+            inactivityPeriodForReposInDays,
         };
     }
 }

@@ -9,7 +9,6 @@ import (
 	"errors"
 	"io/fs"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -18,7 +17,6 @@ import (
 	"time"
 
 	"github.com/shirou/gopsutil/process"
-	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
@@ -39,6 +37,9 @@ const (
 	ProcessCodeServerHelper ProcessType = "vscode-server-helper"
 	// ProcessDefault referes to any process that is not one of the above
 	ProcessDefault ProcessType = "default"
+
+	// Repeat applying until this number of processes is reached
+	NumberOfProcessesToStopApplying = 5
 )
 
 type ProcessPriorityV2 struct {
@@ -48,24 +49,31 @@ type ProcessPriorityV2 struct {
 func (c *ProcessPriorityV2) Name() string  { return "process-priority-v2" }
 func (c *ProcessPriorityV2) Type() Version { return Version2 }
 
-func (c *ProcessPriorityV2) Apply(ctx context.Context, basePath, cgroupPath string) error {
-	fullCgroupPath := filepath.Join(basePath, cgroupPath)
+func (c *ProcessPriorityV2) Apply(ctx context.Context, opts *PluginOptions) error {
+	fullCgroupPath := filepath.Join(opts.BasePath, opts.CgroupPath)
 
-	_, err := os.Stat(fullCgroupPath)
-	if errors.Is(err, fs.ErrNotExist) {
-		return xerrors.Errorf("cannot read cgroup directory %s: %w", fullCgroupPath, err)
-	}
+	t := time.NewTicker(10 * time.Second)
+	defer t.Stop()
 
-	go func() {
-		time.Sleep(10 * time.Second)
-
-		data, err := ioutil.ReadFile(filepath.Join(fullCgroupPath, "workspace", "user", "cgroup.procs"))
-		if err != nil {
-			log.WithField("path", fullCgroupPath).WithError(err).Errorf("cannot read cgroup.procs file")
-			return
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-t.C:
 		}
 
-		for _, line := range strings.Split(string(data), "\n") {
+		data, err := ioutil.ReadFile(filepath.Join(fullCgroupPath, "workspace", "user", "cgroup.procs"))
+		if errors.Is(err, fs.ErrNotExist) {
+			// the target cgroup/workspace has gone
+			return nil
+		} else if err != nil {
+			log.WithField("path", fullCgroupPath).WithError(err).Errorf("cannot read cgroup.procs file")
+			return err
+		}
+
+		var countRunningProcess int
+		lines := strings.Split(string(data), "\n")
+		for _, line := range lines {
 			line = strings.TrimSpace(line)
 			if len(line) == 0 {
 				continue
@@ -97,14 +105,17 @@ func (c *ProcessPriorityV2) Apply(ctx context.Context, basePath, cgroupPath stri
 				continue
 			}
 
+			countRunningProcess += 1
 			err = syscall.Setpriority(syscall.PRIO_PROCESS, int(pid), priority)
 			if err != nil {
 				log.WithError(err).WithField("pid", pid).WithField("priority", priority).Warn("cannot set process priority")
 			}
 		}
-	}()
 
-	return nil
+		if countRunningProcess >= NumberOfProcessesToStopApplying {
+			return nil
+		}
+	}
 }
 
 var (

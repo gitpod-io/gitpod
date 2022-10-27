@@ -5,6 +5,7 @@
  */
 
 /* eslint-disable */
+import * as Long from "long";
 import { CallContext, CallOptions } from "nice-grpc-common";
 import * as _m0 from "protobufjs/minimal";
 
@@ -54,6 +55,29 @@ export interface CreateStripeCustomerRequest {
 
 export interface CreateStripeCustomerResponse {
   customer: StripeCustomer | undefined;
+}
+
+export interface CreateStripeSubscriptionRequest {
+  attributionId: string;
+  setupIntentId: string;
+  usageLimit: number;
+}
+
+export interface CreateStripeSubscriptionResponse {
+  subscription: StripeSubscription | undefined;
+}
+
+export interface StripeSubscription {
+  id: string;
+}
+
+export interface GetStripeSubscriptionRequest {
+  attributionId: string;
+  status: string;
+}
+
+export interface GetStripeSubscriptionResponse {
+  subscriptionId: string;
 }
 
 function createBaseReconcileInvoicesRequest(): ReconcileInvoicesRequest {
@@ -598,6 +622,275 @@ export const CreateStripeCustomerResponse = {
   },
 };
 
+function createBaseCreateStripeSubscriptionRequest(): CreateStripeSubscriptionRequest {
+  return { attributionId: "", setupIntentId: "", usageLimit: 0 };
+}
+
+export const CreateStripeSubscriptionRequest = {
+  encode(message: CreateStripeSubscriptionRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.attributionId !== "") {
+      writer.uint32(10).string(message.attributionId);
+    }
+    if (message.setupIntentId !== "") {
+      writer.uint32(18).string(message.setupIntentId);
+    }
+    if (message.usageLimit !== 0) {
+      writer.uint32(24).int64(message.usageLimit);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CreateStripeSubscriptionRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateStripeSubscriptionRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.attributionId = reader.string();
+          break;
+        case 2:
+          message.setupIntentId = reader.string();
+          break;
+        case 3:
+          message.usageLimit = longToNumber(reader.int64() as Long);
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateStripeSubscriptionRequest {
+    return {
+      attributionId: isSet(object.attributionId) ? String(object.attributionId) : "",
+      setupIntentId: isSet(object.setupIntentId) ? String(object.setupIntentId) : "",
+      usageLimit: isSet(object.usageLimit) ? Number(object.usageLimit) : 0,
+    };
+  },
+
+  toJSON(message: CreateStripeSubscriptionRequest): unknown {
+    const obj: any = {};
+    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
+    message.setupIntentId !== undefined && (obj.setupIntentId = message.setupIntentId);
+    message.usageLimit !== undefined && (obj.usageLimit = Math.round(message.usageLimit));
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<CreateStripeSubscriptionRequest>): CreateStripeSubscriptionRequest {
+    const message = createBaseCreateStripeSubscriptionRequest();
+    message.attributionId = object.attributionId ?? "";
+    message.setupIntentId = object.setupIntentId ?? "";
+    message.usageLimit = object.usageLimit ?? 0;
+    return message;
+  },
+};
+
+function createBaseCreateStripeSubscriptionResponse(): CreateStripeSubscriptionResponse {
+  return { subscription: undefined };
+}
+
+export const CreateStripeSubscriptionResponse = {
+  encode(message: CreateStripeSubscriptionResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.subscription !== undefined) {
+      StripeSubscription.encode(message.subscription, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CreateStripeSubscriptionResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateStripeSubscriptionResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.subscription = StripeSubscription.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateStripeSubscriptionResponse {
+    return { subscription: isSet(object.subscription) ? StripeSubscription.fromJSON(object.subscription) : undefined };
+  },
+
+  toJSON(message: CreateStripeSubscriptionResponse): unknown {
+    const obj: any = {};
+    message.subscription !== undefined &&
+      (obj.subscription = message.subscription ? StripeSubscription.toJSON(message.subscription) : undefined);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<CreateStripeSubscriptionResponse>): CreateStripeSubscriptionResponse {
+    const message = createBaseCreateStripeSubscriptionResponse();
+    message.subscription = (object.subscription !== undefined && object.subscription !== null)
+      ? StripeSubscription.fromPartial(object.subscription)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseStripeSubscription(): StripeSubscription {
+  return { id: "" };
+}
+
+export const StripeSubscription = {
+  encode(message: StripeSubscription, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): StripeSubscription {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStripeSubscription();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.id = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): StripeSubscription {
+    return { id: isSet(object.id) ? String(object.id) : "" };
+  },
+
+  toJSON(message: StripeSubscription): unknown {
+    const obj: any = {};
+    message.id !== undefined && (obj.id = message.id);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<StripeSubscription>): StripeSubscription {
+    const message = createBaseStripeSubscription();
+    message.id = object.id ?? "";
+    return message;
+  },
+};
+
+function createBaseGetStripeSubscriptionRequest(): GetStripeSubscriptionRequest {
+  return { attributionId: "", status: "" };
+}
+
+export const GetStripeSubscriptionRequest = {
+  encode(message: GetStripeSubscriptionRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.attributionId !== "") {
+      writer.uint32(10).string(message.attributionId);
+    }
+    if (message.status !== "") {
+      writer.uint32(18).string(message.status);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetStripeSubscriptionRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetStripeSubscriptionRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.attributionId = reader.string();
+          break;
+        case 2:
+          message.status = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetStripeSubscriptionRequest {
+    return {
+      attributionId: isSet(object.attributionId) ? String(object.attributionId) : "",
+      status: isSet(object.status) ? String(object.status) : "",
+    };
+  },
+
+  toJSON(message: GetStripeSubscriptionRequest): unknown {
+    const obj: any = {};
+    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
+    message.status !== undefined && (obj.status = message.status);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<GetStripeSubscriptionRequest>): GetStripeSubscriptionRequest {
+    const message = createBaseGetStripeSubscriptionRequest();
+    message.attributionId = object.attributionId ?? "";
+    message.status = object.status ?? "";
+    return message;
+  },
+};
+
+function createBaseGetStripeSubscriptionResponse(): GetStripeSubscriptionResponse {
+  return { subscriptionId: "" };
+}
+
+export const GetStripeSubscriptionResponse = {
+  encode(message: GetStripeSubscriptionResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.subscriptionId !== "") {
+      writer.uint32(10).string(message.subscriptionId);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetStripeSubscriptionResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetStripeSubscriptionResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.subscriptionId = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetStripeSubscriptionResponse {
+    return { subscriptionId: isSet(object.subscriptionId) ? String(object.subscriptionId) : "" };
+  },
+
+  toJSON(message: GetStripeSubscriptionResponse): unknown {
+    const obj: any = {};
+    message.subscriptionId !== undefined && (obj.subscriptionId = message.subscriptionId);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<GetStripeSubscriptionResponse>): GetStripeSubscriptionResponse {
+    const message = createBaseGetStripeSubscriptionResponse();
+    message.subscriptionId = object.subscriptionId ?? "";
+    return message;
+  },
+};
+
 export type BillingServiceDefinition = typeof BillingServiceDefinition;
 export const BillingServiceDefinition = {
   name: "BillingService",
@@ -656,6 +949,26 @@ export const BillingServiceDefinition = {
       responseStream: false,
       options: {},
     },
+    createStripeSubscription: {
+      name: "CreateStripeSubscription",
+      requestType: CreateStripeSubscriptionRequest,
+      requestStream: false,
+      responseType: CreateStripeSubscriptionResponse,
+      responseStream: false,
+      options: {},
+    },
+    /**
+     * GetStripeSubscription without passing in the `status` will return uncancelled subscriptions
+     * Stripe returns a list which may include more than one, but we will throw an error in that case
+     */
+    getStripeSubscription: {
+      name: "GetStripeSubscription",
+      requestType: GetStripeSubscriptionRequest,
+      requestStream: false,
+      responseType: GetStripeSubscriptionResponse,
+      responseStream: false,
+      options: {},
+    },
   },
 } as const;
 
@@ -693,6 +1006,18 @@ export interface BillingServiceServiceImplementation<CallContextExt = {}> {
     request: CreateStripeCustomerRequest,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<CreateStripeCustomerResponse>>;
+  createStripeSubscription(
+    request: CreateStripeSubscriptionRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<CreateStripeSubscriptionResponse>>;
+  /**
+   * GetStripeSubscription without passing in the `status` will return uncancelled subscriptions
+   * Stripe returns a list which may include more than one, but we will throw an error in that case
+   */
+  getStripeSubscription(
+    request: GetStripeSubscriptionRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<GetStripeSubscriptionResponse>>;
 }
 
 export interface BillingServiceClient<CallOptionsExt = {}> {
@@ -729,6 +1054,18 @@ export interface BillingServiceClient<CallOptionsExt = {}> {
     request: DeepPartial<CreateStripeCustomerRequest>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<CreateStripeCustomerResponse>;
+  createStripeSubscription(
+    request: DeepPartial<CreateStripeSubscriptionRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<CreateStripeSubscriptionResponse>;
+  /**
+   * GetStripeSubscription without passing in the `status` will return uncancelled subscriptions
+   * Stripe returns a list which may include more than one, but we will throw an error in that case
+   */
+  getStripeSubscription(
+    request: DeepPartial<GetStripeSubscriptionRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<GetStripeSubscriptionResponse>;
 }
 
 export interface DataLoaderOptions {
@@ -740,12 +1077,45 @@ export interface DataLoaders {
   getDataLoader<T>(identifier: string, constructorFn: () => T): T;
 }
 
+declare var self: any | undefined;
+declare var window: any | undefined;
+declare var global: any | undefined;
+var globalThis: any = (() => {
+  if (typeof globalThis !== "undefined") {
+    return globalThis;
+  }
+  if (typeof self !== "undefined") {
+    return self;
+  }
+  if (typeof window !== "undefined") {
+    return window;
+  }
+  if (typeof global !== "undefined") {
+    return global;
+  }
+  throw "Unable to locate global object";
+})();
+
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
 export type DeepPartial<T> = T extends Builtin ? T
   : T extends Array<infer U> ? Array<DeepPartial<U>> : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
   : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
+
+function longToNumber(long: Long): number {
+  if (long.gt(Number.MAX_SAFE_INTEGER)) {
+    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+  }
+  return long.toNumber();
+}
+
+// If you get a compile-error about 'Constructor<Long> and ... have no overlap',
+// add '--ts_proto_opt=esModuleInterop=true' as a flag when calling 'protoc'.
+if (_m0.util.Long !== Long) {
+  _m0.util.Long = Long as any;
+  _m0.configure();
+}
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;

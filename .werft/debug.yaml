@@ -54,7 +54,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-dev-update-image.8
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aa-fix-previewctl-get-name.0
     workingDir: /workspace
     imagePullPolicy: IfNotPresent
     volumeMounts:

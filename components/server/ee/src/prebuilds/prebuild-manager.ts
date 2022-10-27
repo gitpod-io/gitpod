@@ -406,9 +406,9 @@ export class PrebuildManager {
 
     private async shouldSkipInactiveRepository(ctx: TraceContext, cloneURL: string): Promise<boolean> {
         const span = TraceContext.startSpan("shouldSkipInactiveRepository", ctx);
-        const { inactivityPeriodForRepos } = this.config;
-        if (!inactivityPeriodForRepos) {
-            // skipping is disabled if `inactivityPeriodForRepos` is not set
+        const { inactivityPeriodForReposInDays } = this.config;
+        if (!inactivityPeriodForReposInDays) {
+            // skipping is disabled if `inactivityPeriodForReposInDays` is not set
             span.finish();
             return false;
         }
@@ -416,7 +416,8 @@ export class PrebuildManager {
             return (
                 (await this.workspaceDB
                     .trace({ span })
-                    .getWorkspaceCountByCloneURL(cloneURL, inactivityPeriodForRepos /* in days */, "regular")) === 0
+                    .getWorkspaceCountByCloneURL(cloneURL, inactivityPeriodForReposInDays /* in days */, "regular")) ===
+                0
             );
         } catch (error) {
             log.error("cannot compute activity for repository", { cloneURL }, error);

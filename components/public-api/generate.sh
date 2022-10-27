@@ -18,6 +18,9 @@ install_dependencies
 
 lint
 
+# Run breaking change detector
+buf breaking --against "https://github.com/gitpod-io/gitpod.git#branch=main,subdir=components/public-api"
+
 protoc_buf_generate
 
 update_license

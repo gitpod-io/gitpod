@@ -15,12 +15,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gitpod-io/gitpod/previewctl/pkg/k8s"
-
+	"github.com/cockroachdb/errors"
+	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
+	"github.com/gitpod-io/gitpod/previewctl/pkg/k8s"
+)
+
+var (
+	ErrBranchNotExist = errors.New("branch doesn't exist")
 )
 
 const harvesterContextName = "harvester"
@@ -38,31 +41,22 @@ type Preview struct {
 }
 
 func New(branch string, logger *logrus.Logger) (*Preview, error) {
-	if branch == "" {
-		out, err := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD").Output()
-		if err != nil {
-			logger.WithFields(logrus.Fields{"err": err}).Fatal("Could not retrieve branch name.")
-		}
-		branch = string(out)
-	} else {
-		_, err := exec.Command("git", "rev-parse", "--verify", branch).Output()
-		if err != nil {
-			logger.WithFields(logrus.Fields{"branch": branch, "err": err}).Fatal("Branch does not exist.")
-		}
+	branch, err := GetName(branch)
+	if err != nil {
+		return nil, err
 	}
 
-	branch = strings.TrimRight(branch, "\n")
 	logEntry := logger.WithFields(logrus.Fields{"branch": branch})
 
-	harvesterConfig, err := k8s.New(logEntry.Logger, harvesterContextName)
+	harvesterConfig, err := k8s.NewFromDefaultConfigWithContext(logEntry.Logger, harvesterContextName)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't instantiate a k8s config")
 	}
 
 	return &Preview{
 		branch:          branch,
-		namespace:       fmt.Sprintf("preview-%s", GetName(branch)),
-		name:            GetName(branch),
+		namespace:       fmt.Sprintf("preview-%s", branch),
+		name:            branch,
 		kubeClient:      harvesterConfig,
 		logger:          logEntry,
 		vmiCreationTime: nil,
@@ -168,7 +162,34 @@ func SSHPreview(branch string) error {
 	return sshCommand.Run()
 }
 
-func GetName(branch string) string {
+func branchFromGit(branch string) (string, error) {
+	if branch == "" {
+		out, err := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD").Output()
+		if err != nil {
+			return "", errors.Wrap(err, "Could not retrieve branch name.")
+		}
+
+		branch = string(out)
+	} else {
+		_, err := exec.Command("git", "rev-parse", "--verify", branch).Output()
+		if err != nil {
+			return "", errors.CombineErrors(err, ErrBranchNotExist)
+		}
+	}
+
+	return branch, nil
+}
+
+func GetName(branch string) (string, error) {
+	var err error
+	if branch == "" {
+		branch, err = branchFromGit(branch)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	branch = strings.TrimSpace(branch)
 	withoutRefsHead := strings.Replace(branch, "/refs/heads/", "", 1)
 	lowerCased := strings.ToLower(withoutRefsHead)
 
@@ -183,7 +204,7 @@ func GetName(branch string) string {
 		sanitizedBranch = sanitizedBranch[0:10] + hashedBranch[0:10]
 	}
 
-	return sanitizedBranch
+	return sanitizedBranch, nil
 }
 
 func (p *Preview) ListAllPreviews() error {

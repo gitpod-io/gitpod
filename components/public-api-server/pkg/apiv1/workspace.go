@@ -12,8 +12,8 @@ import (
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
-	v1 "github.com/gitpod-io/gitpod/public-api/v1"
-	"github.com/gitpod-io/gitpod/public-api/v1/v1connect"
+	v1 "github.com/gitpod-io/gitpod/public-api/experimental/v1"
+	"github.com/gitpod-io/gitpod/public-api/experimental/v1/v1connect"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/relvacode/iso8601"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -47,6 +47,12 @@ func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Reques
 		return nil, proxy.ConvertError(err)
 	}
 
+	instance, err := convertWorkspaceInstance(workspace)
+	if err != nil {
+		logger.WithError(err).Error("Failed to convert workspace instance.")
+		instance = &v1.WorkspaceInstance{}
+	}
+
 	return connect.NewResponse(&v1.GetWorkspaceResponse{
 		Result: &v1.Workspace{
 			WorkspaceId: workspace.Workspace.ID,
@@ -60,6 +66,9 @@ func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Reques
 				}},
 			},
 			Description: workspace.Workspace.Description,
+			Status: &v1.WorkspaceStatus{
+				Instance: instance,
+			},
 		},
 	}), nil
 }
@@ -106,15 +115,14 @@ func (s *WorkspaceService) ListWorkspaces(ctx context.Context, req *connect.Requ
 		return nil, proxy.ConvertError(err)
 	}
 
-	res := make([]*v1.ListWorkspacesResponse_WorkspaceAndInstance, 0, len(serverResp))
+	res := make([]*v1.Workspace, 0, len(serverResp))
 	for _, ws := range serverResp {
-		workspaceAndInstance, err := convertWorkspaceInfo(ws)
+		workspace, err := convertWorkspaceInfo(ws)
 		if err != nil {
 			// convertWorkspaceInfo returns gRPC errors
 			return nil, err
 		}
-
-		res = append(res, workspaceAndInstance)
+		res = append(res, workspace)
 	}
 
 	return connect.NewResponse(
@@ -144,88 +152,96 @@ func getLimitFromPagination(pagination *v1.Pagination) (int, error) {
 }
 
 // convertWorkspaceInfo convers a "protocol workspace" to a "public API workspace". Returns gRPC errors if things go wrong.
-func convertWorkspaceInfo(input *protocol.WorkspaceInfo) (*v1.ListWorkspacesResponse_WorkspaceAndInstance, error) {
-	var instance *v1.WorkspaceInstance
-	if wsi := input.LatestInstance; wsi != nil {
-		creationTime, err := parseGitpodTimestamp(wsi.CreationTime)
-		if err != nil {
-			// TODO(cw): should this really return an error and possibly fail the entire operation?
-			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("cannot parse creation time: %v", err))
-		}
+func convertWorkspaceInfo(input *protocol.WorkspaceInfo) (*v1.Workspace, error) {
+	instance, err := convertWorkspaceInstance(input)
+	if err != nil {
+		return nil, err
+	}
+	return &v1.Workspace{
+		WorkspaceId: input.Workspace.ID,
+		OwnerId:     input.Workspace.OwnerID,
+		ProjectId:   "",
+		Context: &v1.WorkspaceContext{
+			ContextUrl: input.Workspace.ContextURL,
+			Details: &v1.WorkspaceContext_Git_{Git: &v1.WorkspaceContext_Git{
+				NormalizedContextUrl: input.Workspace.ContextURL,
+				Commit:               "",
+			}},
+		},
+		Description: input.Workspace.Description,
+		Status: &v1.WorkspaceStatus{
+			Instance: instance,
+		},
+	}, nil
+}
 
-		var phase v1.WorkspaceInstanceStatus_Phase
-		switch wsi.Status.Phase {
-		case "unknown":
-			phase = v1.WorkspaceInstanceStatus_PHASE_UNSPECIFIED
-		case "preparing":
-			phase = v1.WorkspaceInstanceStatus_PHASE_PREPARING
-		case "building":
-			phase = v1.WorkspaceInstanceStatus_PHASE_IMAGEBUILD
-		case "pending":
-			phase = v1.WorkspaceInstanceStatus_PHASE_PENDING
-		case "creating":
-			phase = v1.WorkspaceInstanceStatus_PHASE_CREATING
-		case "initializing":
-			phase = v1.WorkspaceInstanceStatus_PHASE_INITIALIZING
-		case "running":
-			phase = v1.WorkspaceInstanceStatus_PHASE_RUNNING
-		case "interrupted":
-			phase = v1.WorkspaceInstanceStatus_PHASE_INTERRUPTED
-		case "stopping":
-			phase = v1.WorkspaceInstanceStatus_PHASE_STOPPING
-		case "stopped":
-			phase = v1.WorkspaceInstanceStatus_PHASE_STOPPED
-		default:
-			// TODO(cw): should this really return an error and possibly fail the entire operation?
-			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("cannot convert instance phase: %s", wsi.Status.Phase))
-		}
-
-		var admissionLevel v1.AdmissionLevel
-		if input.Workspace.Shareable {
-			admissionLevel = v1.AdmissionLevel_ADMISSION_LEVEL_EVERYONE
-		} else {
-			admissionLevel = v1.AdmissionLevel_ADMISSION_LEVEL_OWNER_ONLY
-		}
-
-		var firstUserActivity *timestamppb.Timestamp
-		if fua := wsi.Status.Conditions.FirstUserActivity; fua != "" {
-			firstUserActivity, _ = parseGitpodTimestamp(fua)
-		}
-
-		instance = &v1.WorkspaceInstance{
-			InstanceId:  wsi.ID,
-			WorkspaceId: wsi.WorkspaceID,
-			CreatedAt:   creationTime,
-			Status: &v1.WorkspaceInstanceStatus{
-				StatusVersion: uint64(wsi.Status.Version),
-				Phase:         phase,
-				Message:       wsi.Status.Message,
-				Url:           wsi.IdeURL,
-				Admission:     admissionLevel,
-				Conditions: &v1.WorkspaceInstanceStatus_Conditions{
-					Failed:            wsi.Status.Conditions.Failed,
-					Timeout:           wsi.Status.Conditions.Timeout,
-					FirstUserActivity: firstUserActivity,
-				},
-			},
-		}
+func convertWorkspaceInstance(input *protocol.WorkspaceInfo) (*v1.WorkspaceInstance, error) {
+	wsi := input.LatestInstance
+	if wsi == nil {
+		return nil, nil
 	}
 
-	return &v1.ListWorkspacesResponse_WorkspaceAndInstance{
-		Result: &v1.Workspace{
-			WorkspaceId: input.Workspace.ID,
-			OwnerId:     input.Workspace.OwnerID,
-			ProjectId:   "",
-			Context: &v1.WorkspaceContext{
-				ContextUrl: input.Workspace.ContextURL,
-				Details: &v1.WorkspaceContext_Git_{Git: &v1.WorkspaceContext_Git{
-					NormalizedContextUrl: input.Workspace.ContextURL,
-					Commit:               "",
-				}},
+	creationTime, err := parseGitpodTimestamp(wsi.CreationTime)
+	if err != nil {
+		// TODO(cw): should this really return an error and possibly fail the entire operation?
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("cannot parse creation time: %v", err))
+	}
+
+	var phase v1.WorkspaceInstanceStatus_Phase
+	switch wsi.Status.Phase {
+	case "unknown":
+		phase = v1.WorkspaceInstanceStatus_PHASE_UNSPECIFIED
+	case "preparing":
+		phase = v1.WorkspaceInstanceStatus_PHASE_PREPARING
+	case "building":
+		phase = v1.WorkspaceInstanceStatus_PHASE_IMAGEBUILD
+	case "pending":
+		phase = v1.WorkspaceInstanceStatus_PHASE_PENDING
+	case "creating":
+		phase = v1.WorkspaceInstanceStatus_PHASE_CREATING
+	case "initializing":
+		phase = v1.WorkspaceInstanceStatus_PHASE_INITIALIZING
+	case "running":
+		phase = v1.WorkspaceInstanceStatus_PHASE_RUNNING
+	case "interrupted":
+		phase = v1.WorkspaceInstanceStatus_PHASE_INTERRUPTED
+	case "stopping":
+		phase = v1.WorkspaceInstanceStatus_PHASE_STOPPING
+	case "stopped":
+		phase = v1.WorkspaceInstanceStatus_PHASE_STOPPED
+	default:
+		// TODO(cw): should this really return an error and possibly fail the entire operation?
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("cannot convert instance phase: %s", wsi.Status.Phase))
+	}
+
+	var admissionLevel v1.AdmissionLevel
+	if input.Workspace.Shareable {
+		admissionLevel = v1.AdmissionLevel_ADMISSION_LEVEL_EVERYONE
+	} else {
+		admissionLevel = v1.AdmissionLevel_ADMISSION_LEVEL_OWNER_ONLY
+	}
+
+	var firstUserActivity *timestamppb.Timestamp
+	if fua := wsi.Status.Conditions.FirstUserActivity; fua != "" {
+		firstUserActivity, _ = parseGitpodTimestamp(fua)
+	}
+
+	return &v1.WorkspaceInstance{
+		InstanceId:  wsi.ID,
+		WorkspaceId: wsi.WorkspaceID,
+		CreatedAt:   creationTime,
+		Status: &v1.WorkspaceInstanceStatus{
+			StatusVersion: uint64(wsi.Status.Version),
+			Phase:         phase,
+			Message:       wsi.Status.Message,
+			Url:           wsi.IdeURL,
+			Admission:     admissionLevel,
+			Conditions: &v1.WorkspaceInstanceStatus_Conditions{
+				Failed:            wsi.Status.Conditions.Failed,
+				Timeout:           wsi.Status.Conditions.Timeout,
+				FirstUserActivity: firstUserActivity,
 			},
-			Description: input.Workspace.Description,
 		},
-		LastActiveInstances: instance,
 	}, nil
 }
 

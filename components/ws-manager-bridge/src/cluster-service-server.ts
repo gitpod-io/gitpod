@@ -87,8 +87,11 @@ export class ClusterService implements IClusterServiceServer {
                 // check if the name or URL are already registered/in use
                 const req = call.request.toObject();
 
-                const clusterByNamePromise = this.clusterDB.findByName(req.name);
-                const clusterByUrlPromise = this.clusterDB.findFiltered({ url: req.url });
+                const clusterByNamePromise = this.clusterDB.findByName(req.name, this.config.installation);
+                const clusterByUrlPromise = this.clusterDB.findFiltered({
+                    url: req.url,
+                    applicationCluster: this.config.installation,
+                });
 
                 const [clusterByName, clusterByUrl] = await Promise.all([clusterByNamePromise, clusterByUrlPromise]);
 
@@ -163,7 +166,12 @@ export class ClusterService implements IClusterServiceServer {
                     {},
                 );
                 if (enabled) {
-                    let classConstraints = await getSupportedWorkspaceClasses(this.clientProvider, newCluster, false);
+                    let classConstraints = await getSupportedWorkspaceClasses(
+                        this.clientProvider,
+                        newCluster,
+                        this.config.installation,
+                        false,
+                    );
                     newCluster.admissionConstraints = admissionConstraints.concat(classConstraints);
                 } else {
                     // try to connect to validate the config. Throws an exception if it fails.
@@ -203,7 +211,7 @@ export class ClusterService implements IClusterServiceServer {
         this.queue.enqueue(async () => {
             try {
                 const req = call.request.toObject();
-                const cluster = await this.clusterDB.findByName(req.name);
+                const cluster = await this.clusterDB.findByName(req.name, this.config.installation);
                 if (!cluster) {
                     throw new GRPCError(
                         grpc.status.NOT_FOUND,
@@ -280,7 +288,7 @@ export class ClusterService implements IClusterServiceServer {
                     );
                 }
 
-                await this.clusterDB.deleteByName(req.name);
+                await this.clusterDB.deleteByName(req.name, this.config.installation);
                 log.info({}, "cluster deregistered", { cluster: req.name });
                 this.triggerReconcile("deregister", req.name);
 
@@ -298,14 +306,16 @@ export class ClusterService implements IClusterServiceServer {
                 const response = new ListResponse();
 
                 const dbClusterIdx = new Map<string, boolean>();
-                const allDBClusters = await this.clusterDB.findFiltered({});
+                const allDBClusters = await this.clusterDB.findFiltered({
+                    applicationCluster: this.config.installation,
+                });
                 for (const cluster of allDBClusters) {
                     const clusterStatus = convertToGRPC(cluster);
                     response.addStatus(clusterStatus);
                     dbClusterIdx.set(cluster.name, true);
                 }
 
-                const allCluster = await this.allClientProvider.getAllWorkspaceClusters();
+                const allCluster = await this.allClientProvider.getAllWorkspaceClusters(this.config.installation);
                 for (const cluster of allCluster) {
                     if (dbClusterIdx.get(cluster.name)) {
                         continue;
@@ -340,6 +350,7 @@ function convertToGRPC(ws: WorkspaceClusterWoTLS): ClusterStatus {
     clusterStatus.setScore(ws.score);
     clusterStatus.setMaxScore(ws.maxScore);
     clusterStatus.setGoverned(ws.govern);
+    clusterStatus.setApplicationCluster(ws.applicationCluster);
     ws.admissionConstraints?.forEach((c) => {
         const constraint = new GRPCAdmissionConstraint();
         switch (c.type) {

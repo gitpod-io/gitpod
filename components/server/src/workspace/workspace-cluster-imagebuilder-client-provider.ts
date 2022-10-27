@@ -32,13 +32,14 @@ export class WorkspaceClusterImagebuilderClientProvider implements ImageBuilderC
     protected readonly connectionCache = new Map<string, ImageBuilderClient>();
 
     async getClient(
+        applicationCluster: string,
         user: ExtendedUser,
         workspace: Workspace,
         instance: WorkspaceInstance,
     ): Promise<PromisifiedImageBuilderClient> {
-        const clusters = await this.clientProvider.getStartClusterSets(user, workspace, instance);
+        const clusters = await this.clientProvider.getStartClusterSets(applicationCluster, user, workspace, instance);
         for await (let cluster of clusters) {
-            const info = await this.source.getWorkspaceCluster(cluster.installation);
+            const info = await this.source.getWorkspaceCluster(cluster.installation, applicationCluster);
             if (!info) {
                 continue;
             }

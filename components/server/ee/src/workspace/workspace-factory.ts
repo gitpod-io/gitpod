@@ -121,6 +121,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
             let ws;
             const recentPrebuild = await this.incrementalPrebuildsService.findGoodBaseForIncrementalBuild(
                 commitContext,
+                config,
                 context,
                 user,
             );
@@ -270,15 +271,22 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
             }
 
             if (OpenPrebuildContext.is(context.originalContext)) {
+                if (CommitContext.is(buildWorkspace.context)) {
+                    if (
+                        CommitContext.is(context.originalContext) &&
+                        CommitContext.computeHash(context.originalContext) !==
+                            CommitContext.computeHash(buildWorkspace.context)
+                    ) {
+                        // If the current context has a newer/different commit hash than the prebuild
+                        // we force the checkout of the revision rather than the ref/branch.
+                        // Otherwise we'd get the correct prebuild with the "wrong" Git ref.
+                        delete buildWorkspace.context.ref;
+                    }
+                }
+
                 // Because of incremental prebuilds, createForContext will take over the original context.
                 // To ensure we get the right commit when forcing a prebuild, we force the context here.
                 context.originalContext = buildWorkspace.context;
-
-                if (CommitContext.is(context.originalContext)) {
-                    // We force the checkout of the revision rather than the ref/branch.
-                    // Otherwise we'd the correct prebuild with the "wrong" Git status.
-                    delete context.originalContext.ref;
-                }
             }
 
             const id = await this.generateWorkspaceID(context);

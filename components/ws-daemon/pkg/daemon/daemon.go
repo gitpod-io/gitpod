@@ -87,6 +87,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 			},
 		},
 		procV2Plugin,
+		cgroup.NewPSIMetrics(reg),
 	)
 	if err != nil {
 		return nil, err
@@ -97,23 +98,27 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		return nil, xerrors.Errorf("cannot register cgroup plugin metrics: %w", err)
 	}
 
-	var configReloader CompositeConfigReloader
-	configReloader = append(configReloader, ConfigReloaderFunc(func(ctx context.Context, config *Config) error {
-		cgroupV1IOLimiter.Update(config.IOLimit.WriteBWPerSecond.Value(), config.IOLimit.ReadBWPerSecond.Value(), config.IOLimit.WriteIOPS, config.IOLimit.ReadIOPS)
-		cgroupV2IOLimiter.Update(config.IOLimit.WriteBWPerSecond.Value(), config.IOLimit.ReadBWPerSecond.Value(), config.IOLimit.WriteIOPS, config.IOLimit.ReadIOPS)
-		procV2Plugin.Update(config.ProcLimit)
-		return nil
-	}))
-
 	listener := []dispatch.Listener{
 		cpulimit.NewDispatchListener(&config.CPULimit, reg),
 		markUnmountFallback,
 		cgroupPlugins,
 	}
 
+	netlimiter := netlimit.NewConnLimiter(config.NetLimit, reg)
 	if config.NetLimit.Enabled {
-		listener = append(listener, netlimit.NewConnLimiter(config.NetLimit, reg))
+		listener = append(listener, netlimiter)
 	}
+
+	var configReloader CompositeConfigReloader
+	configReloader = append(configReloader, ConfigReloaderFunc(func(ctx context.Context, config *Config) error {
+		cgroupV1IOLimiter.Update(config.IOLimit.WriteBWPerSecond.Value(), config.IOLimit.ReadBWPerSecond.Value(), config.IOLimit.WriteIOPS, config.IOLimit.ReadIOPS)
+		cgroupV2IOLimiter.Update(config.IOLimit.WriteBWPerSecond.Value(), config.IOLimit.ReadBWPerSecond.Value(), config.IOLimit.WriteIOPS, config.IOLimit.ReadIOPS)
+		procV2Plugin.Update(config.ProcLimit)
+		if config.NetLimit.Enabled {
+			netlimiter.Update(config.NetLimit)
+		}
+		return nil
+	}))
 
 	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename, listener...)
 	if err != nil {

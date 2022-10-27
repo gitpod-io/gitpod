@@ -14,10 +14,7 @@ packages:
       - "*.kts"
       - "*.md"
     env:
-      - JAVA_HOME=/home/gitpod/.sdkman/candidates/java/current
       - DO_PUBLISH=${publishToJBMarketplace}
-    argdeps:
-      - jbMarketplacePublishTrigger
     config:
       commands:
         - [ "./gradlew", "-PpluginVersion=0.0.1-${version}", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "-PenvironmentName=stable", "buildFromLeeway" ]
@@ -36,10 +33,7 @@ packages:
       - "*.kts"
       - "*.md"
     env:
-      - JAVA_HOME=/home/gitpod/.sdkman/candidates/java/current
       - DO_PUBLISH=${publishToJBMarketplace}
-    argdeps:
-      - jbMarketplacePublishTrigger
     config:
       commands:
         - [ "./gradlew", "-PpluginVersion=0.0.1-${version}", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "-PenvironmentName=latest", "buildFromLeeway" ]

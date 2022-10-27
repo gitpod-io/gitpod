@@ -77,6 +77,7 @@ type WorkspaceConfig struct {
 	} `json:"ioLimits"`
 	NetworkLimits struct {
 		Enabled              bool  `json:"enabled"`
+		Enforce              bool  `json:"enforce"`
 		ConnectionsPerMinute int64 `json:"connectionsPerMinute"`
 		BucketSize           int64 `json:"bucketSize"`
 	} `json:"networkLimits"`
@@ -166,6 +167,16 @@ type WorkspaceTemplates struct {
 	Regular    *corev1.Pod `json:"regular"`
 }
 
+type StripePriceIDs struct {
+	EUR string `json:"eur"`
+	USD string `json:"usd"`
+}
+
+type StripeConfig struct {
+	IndividualUsagePriceIDs StripePriceIDs `json:"individualUsagePriceIds"`
+	TeamUsagePriceIDs       StripePriceIDs `json:"teamUsagePriceIds"`
+}
+
 type WebAppConfig struct {
 	PublicAPI              *PublicAPIConfig       `json:"publicApi,omitempty"`
 	Server                 *ServerConfig          `json:"server,omitempty"`
@@ -177,6 +188,7 @@ type WebAppConfig struct {
 	Usage                  *UsageConfig           `json:"usage,omitempty"`
 	ConfigcatKey           string                 `json:"configcatKey"`
 	WorkspaceClasses       []WebAppWorkspaceClass `json:"workspaceClasses"`
+	Stripe                 *StripeConfig          `json:"stripe,omitempty"`
 }
 
 type WorkspaceDefaults struct {
@@ -220,6 +232,7 @@ type ServerConfig struct {
 	EnableLocalApp                    *bool             `json:"enableLocalApp"`
 	RunDbDeleter                      *bool             `json:"runDbDeleter"`
 	DisableWorkspaceGarbageCollection bool              `json:"disableWorkspaceGarbageCollection"`
+	InactivityPeriodForReposInDays    *int              `json:"inactivityPeriodForReposInDays"`
 
 	// @deprecated use containerRegistry.privateBaseImageAllowList instead
 	DefaultBaseImageRegistryWhiteList []string `json:"defaultBaseImageRegistryWhitelist"`

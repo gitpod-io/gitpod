@@ -76,7 +76,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-dev-update-image.8
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aa-fix-previewctl-get-name.0
     workingDir: /workspace
     imagePullPolicy: IfNotPresent
     resources:
@@ -167,6 +167,11 @@ pod:
         secretKeyRef:
           name: slack-path
           key: slackPath
+    - name: DEVX_SLACK_NOTIFICATION_PATH
+      valueFrom:
+        secretKeyRef:
+          name: devx-slack-path
+          key: token
     # used for GitHub releases (NOTE: for some reasons the token contains a trailing \n, is trimmed below)
     - name: GITHUB_TOKEN
       valueFrom:

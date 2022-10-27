@@ -3,14 +3,22 @@ variable "preview_name" {
   description = "The preview environment's name"
 }
 
-variable "harvester_kube_path" {
+variable "kubeconfig_path" {
   type        = string
-  description = "The path to the Harvester Cluster kubeconfig"
+  default     = "/home/gitpod/.kube/config"
+  description = "The path to the kubernetes config"
 }
 
-variable "dev_kube_path" {
+variable "harvester_kube_context" {
   type        = string
-  description = "The path to the Dev Cluster kubeconfig"
+  default     = "harvester"
+  description = "The name of the harvester kube context"
+}
+
+variable "dev_kube_context" {
+  type        = string
+  default     = "dev"
+  description = "The name of the dev kube context"
 }
 
 variable "vm_memory" {

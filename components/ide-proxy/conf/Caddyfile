@@ -2,10 +2,9 @@
 	auto_https off
 	admin off
 	servers {
-		protocol {
-			# gprc service required this, see detail https://github.com/gitpod-io/gitpod/pull/11542#discussion_r937947826
-			allow_h2c
-		}
+		# gprc service required this, see detail https://github.com/gitpod-io/gitpod/pull/11542#discussion_r937947826
+		# https://github.com/caddyserver/caddy/blob/master/modules/caddyhttp/app.go#L199
+		protocols h1 h2 h2c
 	}
 }
 

@@ -27,9 +27,13 @@ import (
 )
 
 type Config struct {
-	// ControllerSchedule determines how frequently to run the Usage/Billing controller.
-	// When ControllerSchedule is empty, the background controller is disabled.
-	ControllerSchedule string `json:"controllerSchedule,omitempty"`
+	// LedgerSchedule determines how frequently to run the Usage/Billing controller.
+	// When LedgerSchedule is empty, the background controller is disabled.
+	LedgerSchedule string `json:"controllerSchedule,omitempty"`
+
+	// ResetUsageSchedule determines how frequently to run the Usage Reset job.
+	// When empty, the job is disabled.
+	ResetUsageSchedule string `json:"resetUsageSchedule,omitempty"`
 
 	CreditsPerMinuteByWorkspaceClass map[string]float64 `json:"creditsPerMinuteByWorkspaceClass,omitempty"`
 
@@ -38,6 +42,19 @@ type Config struct {
 	Server *baseserver.Configuration `json:"server,omitempty"`
 
 	DefaultSpendingLimit db.DefaultSpendingLimit `json:"defaultSpendingLimit"`
+
+	// StripePrices configure which Stripe Price IDs should be used
+	StripePrices StripePrices `json:"stripePrices"`
+}
+
+type PriceConfig struct {
+	EUR string `json:"eur"`
+	USD string `json:"usd"`
+}
+
+type StripePrices struct {
+	IndividualUsagePriceIDs PriceConfig `json:"individualUsagePriceIds"`
+	TeamUsagePriceIDs       PriceConfig `json:"teamUsagePriceIds"`
 }
 
 func Start(cfg Config, version string) error {
@@ -104,10 +121,9 @@ func Start(cfg Config, version string) error {
 	}
 
 	var schedulerJobSpecs []scheduler.JobSpec
-
-	if cfg.ControllerSchedule != "" {
+	if cfg.LedgerSchedule != "" {
 		// we do not run the controller if there is no schedule defined.
-		schedule, err := time.ParseDuration(cfg.ControllerSchedule)
+		schedule, err := time.ParseDuration(cfg.LedgerSchedule)
 		if err != nil {
 			return fmt.Errorf("failed to parse schedule duration: %w", err)
 		}
@@ -123,6 +139,20 @@ func Start(cfg Config, version string) error {
 
 	} else {
 		log.Info("No controller schedule specified, controller will be disabled.")
+	}
+
+	if cfg.ResetUsageSchedule != "" {
+		schedule, err := time.ParseDuration(cfg.ResetUsageSchedule)
+		if err != nil {
+			return fmt.Errorf("failed to parse reset usage schedule as duration: %w", err)
+		}
+
+		spec, err := scheduler.NewResetUsageJobSpec(schedule)
+		if err != nil {
+			return fmt.Errorf("failed to setup reset usage job: %w", err)
+		}
+
+		schedulerJobSpecs = append(schedulerJobSpecs, spec)
 	}
 
 	sched := scheduler.New(schedulerJobSpecs...)

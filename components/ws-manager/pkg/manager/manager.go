@@ -311,34 +311,25 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		}
 	}
 
-	var createSecret bool
-	for _, feature := range startContext.Request.Spec.FeatureFlags {
-		if feature == api.WorkspaceFeatureFlag_PROTECTED_SECRETS {
-			createSecret = true
-			break
-		}
+	secrets, _ := buildWorkspaceSecrets(startContext.Request.Spec)
+
+	// This call actually modifies the initializer and removes the secrets.
+	// Prior to the `InitWorkspace` call, we inject the secrets back into the initializer.
+	// We do this so that no Git token is stored as annotation on the pod, but solely
+	// remains within the Kubernetes secret.
+	_ = csapi.ExtractAndReplaceSecretsFromInitializer(startContext.Request.Spec.Initializer)
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podName(startContext.Request),
+			Namespace: m.Config.Namespace,
+			Labels:    startContext.Labels,
+		},
+		StringData: secrets,
 	}
-	if createSecret {
-		secrets, _ := buildWorkspaceSecrets(startContext.Request.Spec)
-
-		// This call actually modifies the initializer and removes the secrets.
-		// Prior to the `InitWorkspace` call, we inject the secrets back into the initializer.
-		// We do this so that no Git token is stored as annotation on the pod, but solely
-		// remains within the Kubernetes secret.
-		_ = csapi.ExtractAndReplaceSecretsFromInitializer(startContext.Request.Spec.Initializer)
-
-		secret := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      podName(startContext.Request),
-				Namespace: m.Config.Namespace,
-				Labels:    startContext.Labels,
-			},
-			StringData: secrets,
-		}
-		err = m.Clientset.Create(ctx, secret)
-		if err != nil && !k8serr.IsAlreadyExists(err) {
-			return nil, xerrors.Errorf("cannot create secret for workspace pod: %w", err)
-		}
+	err = m.Clientset.Create(ctx, secret)
+	if err != nil && !k8serr.IsAlreadyExists(err) {
+		return nil, xerrors.Errorf("cannot create secret for workspace pod: %w", err)
 	}
 
 	err = m.Clientset.Create(ctx, pod)
@@ -1333,7 +1324,7 @@ func (m *Manager) dropSubscriber(dropouts []string) {
 
 // onChange is the default OnChange implementation which publishes workspace status updates to subscribers
 func (m *Manager) onChange(ctx context.Context, status *api.WorkspaceStatus) {
-	log := log.WithFields(log.OWI(status.Metadata.Owner, status.Metadata.MetaId, status.Id))
+	clog := log.WithFields(log.OWI(status.Metadata.Owner, status.Metadata.MetaId, status.Id))
 
 	header := make(map[string]string)
 	span := opentracing.SpanFromContext(ctx)
@@ -1344,7 +1335,7 @@ func (m *Manager) onChange(ctx context.Context, status *api.WorkspaceStatus) {
 			// if the error was caused by the span coming from the Noop tracer - ignore it.
 			// This can happen if the workspace doesn't have a span associated with it, then we resort to creating Noop spans.
 			if _, isNoopTracer := span.Tracer().(opentracing.NoopTracer); !isNoopTracer {
-				log.WithError(err).Debug("unable to extract tracing information - trace will be broken")
+				clog.WithError(err).Debug("unable to extract tracing information - trace will be broken")
 			}
 		} else {
 			for k, v := range tracingHeader {
@@ -1367,10 +1358,14 @@ func (m *Manager) onChange(ctx context.Context, status *api.WorkspaceStatus) {
 	// they represent out-of-the-ordinary situations.
 	// We attempt to use the GCP Error Reporting for this, hence log these situations as errors.
 	if status.Conditions.Failed != "" {
-		log.WithField("status", status).Error("workspace failed")
+		status, _ := protojson.Marshal(status)
+		safeStatus, _ := log.RedactJSON(status)
+		clog.WithField("status", string(safeStatus)).Error("workspace failed")
 	}
 	if status.Phase == 0 {
-		log.WithField("status", status).Error("workspace in UNKNOWN phase")
+		status, _ := protojson.Marshal(status)
+		safeStatus, _ := log.RedactJSON(status)
+		clog.WithField("status", string(safeStatus)).Error("workspace in UNKNOWN phase")
 	}
 }
 

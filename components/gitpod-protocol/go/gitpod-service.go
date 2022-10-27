@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"sync"
@@ -23,6 +24,8 @@ import (
 
 // APIInterface wraps the
 type APIInterface interface {
+	io.Closer
+
 	GetOwnerToken(ctx context.Context, workspaceID string) (res string, err error)
 	AdminBlockUser(ctx context.Context, req *AdminBlockUserRequest) (err error)
 	GetLoggedInUser(ctx context.Context) (res *User, err error)
@@ -80,6 +83,10 @@ type APIInterface interface {
 	GuessGitTokenScopes(ctx context.Context, params *GuessGitTokenScopesParams) (res *GuessedGitTokenScopes, err error)
 	TrackEvent(ctx context.Context, event *RemoteTrackMessage) (err error)
 	GetSupportedWorkspaceClasses(ctx context.Context) (res []*SupportedWorkspaceClass, err error)
+
+	CreateTeam(ctx context.Context, params string) (*Team, error)
+	GetTeamMembers(ctx context.Context, params string) ([]*TeamMemberInfo, error)
+	JoinTeam(ctx context.Context, params string) (*Team, error)
 
 	InstanceUpdates(ctx context.Context, instanceID string) (<-chan *WorkspaceInstance, error)
 }
@@ -1379,6 +1386,36 @@ func (gp *APIoverJSONRPC) GetSupportedWorkspaceClasses(ctx context.Context) (res
 	return
 }
 
+func (gp *APIoverJSONRPC) CreateTeam(ctx context.Context, teamName string) (res *Team, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{teamName}
+	err = gp.C.Call(ctx, "createTeam", _params, &res)
+	return
+}
+
+func (gp *APIoverJSONRPC) GetTeamMembers(ctx context.Context, teamID string) (res []*TeamMemberInfo, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{teamID}
+	err = gp.C.Call(ctx, "getTeamMembers", _params, &res)
+	return
+}
+
+func (gp *APIoverJSONRPC) JoinTeam(ctx context.Context, inviteID string) (res *Team, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{inviteID}
+	err = gp.C.Call(ctx, "joinTeam", _params, &res)
+	return
+}
+
 // PermissionName is the name of a permission
 type PermissionName string
 
@@ -1756,6 +1793,7 @@ type PortConfig struct {
 	Visibility  string  `json:"visibility,omitempty"`
 	Description string  `json:"description,omitempty"`
 	Name        string  `json:"name,omitempty"`
+	Sort        uint32  `json:"sort,omitempty"`
 }
 
 // TaskConfig is the TaskConfig message type
@@ -2069,4 +2107,27 @@ type UserMessage struct {
 	ID    string `json:"id,omitempty"`
 	Title string `json:"title,omitempty"`
 	URL   string `json:"url,omitempty"`
+}
+
+type Team struct {
+	ID           string `json:"id,omitempty"`
+	Name         string `json:"name,omitempty"`
+	Slug         string `json:"slug,omitempty"`
+	CreationTime string `json:"creationTime,omitempty"`
+}
+
+type TeamMemberRole string
+
+const (
+	TeamMember_Owner  TeamMemberRole = "owner"
+	TeamMember_Member TeamMemberRole = "member"
+)
+
+type TeamMemberInfo struct {
+	UserId       string         `json:"userId,omitempty"`
+	FullName     string         `json:"fullName,omitempty"`
+	PrimaryEmail string         `json:"primaryEmail,omitempty"`
+	AvatarUrl    string         `json:"avatarUrl,omitempty"`
+	Role         TeamMemberRole `json:"role,omitempty"`
+	MemberSince  string         `json:"memberSince,omitempty"`
 }

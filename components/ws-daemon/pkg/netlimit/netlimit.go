@@ -48,10 +48,12 @@ func NewConnLimiter(config Config, prom prometheus.Registerer) *ConnLimiter {
 
 	s.config = config
 
-	prom.MustRegister(
-		s.droppedBytes,
-		s.droppedPackets,
-	)
+	if config.Enabled {
+		prom.MustRegister(
+			s.droppedBytes,
+			s.droppedPackets,
+		)
+	}
 
 	return s
 }
@@ -136,6 +138,9 @@ func (c *ConnLimiter) limitWorkspace(ctx context.Context, ws *dispatch.Workspace
 	err = nsinsider.Nsinsider(ws.InstanceID, int(pid), func(cmd *exec.Cmd) {
 		cmd.Args = append(cmd.Args, "setup-connection-limit", "--limit", strconv.Itoa(int(c.config.ConnectionsPerMinute)),
 			"--bucketsize", strconv.Itoa(int(c.config.BucketSize)))
+		if c.config.Enforce {
+			cmd.Args = append(cmd.Args, "--enforce")
+		}
 	}, nsinsider.EnterMountNS(false), nsinsider.EnterNetNS(true))
 	if err != nil {
 		log.WithError(err).WithFields(ws.OWI()).Error("cannot enable connection limiting")
@@ -170,4 +175,12 @@ func (c *ConnLimiter) limitWorkspace(ctx context.Context, ws *dispatch.Workspace
 	}(ws)
 
 	return nil
+}
+
+func (c *ConnLimiter) Update(config Config) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.config = config
+	log.WithField("config", config).Info("updating network connection limits")
 }

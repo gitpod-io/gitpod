@@ -261,10 +261,11 @@ func newGitInitializer(ctx context.Context, loc string, req *csapi.GitInitialize
 			Config:            req.Config.CustomConfig,
 			AuthMethod:        authMethod,
 			AuthProvider:      authProvider,
+			RunAsGitpodUser:   forceGitpodUser,
 		},
 		TargetMode:  targetMode,
 		CloneTarget: req.CloneTaget,
-		Chown:       forceGitpodUser,
+		Chown:       false,
 	}, nil
 }
 

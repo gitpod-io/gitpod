@@ -100,7 +100,10 @@ func (m *Manager) markWorkspace(ctx context.Context, workspaceID string, annotat
 	}
 	// Retry on failure. Sometimes this doesn't work because of concurrent modification. The Kuberentes way is to just try again after waiting a bit.
 	err := retry.RetryOnConflict(backoff, func() error {
-		pod, err := m.findWorkspacePod(ctx, workspaceID)
+		sctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
+		defer cancel()
+
+		pod, err := m.findWorkspacePod(sctx, workspaceID)
 		if err != nil {
 			if isKubernetesObjNotFoundError(err) {
 				return nil
@@ -122,7 +125,7 @@ func (m *Manager) markWorkspace(ctx context.Context, workspaceID string, annotat
 			}
 		}
 
-		return m.Clientset.Update(ctx, pod)
+		return m.Clientset.Update(sctx, pod)
 	})
 	if err != nil {
 		an := make([]string, len(annotations))

@@ -15,7 +15,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 
 	"github.com/gitpod-io/gitpod/public-api/config"
-	"github.com/gitpod-io/gitpod/public-api/v1/v1connect"
+	"github.com/gitpod-io/gitpod/public-api/experimental/v1/v1connect"
 	"github.com/gorilla/handlers"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
@@ -81,17 +81,23 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool) error {
 	proxy.RegisterMetrics(srv.MetricsRegistry())
 
+	connectMetrics := NewConnectMetrics()
+
+	err := connectMetrics.Register(srv.MetricsRegistry())
+	if err != nil {
+		return err
+	}
+
 	handlerOptions := []connect.HandlerOption{
 		connect.WithInterceptors(
+			NewMetricsInterceptor(connectMetrics),
+			NewLogInterceptor(log.Log),
 			auth.NewServerInterceptor(),
 		),
 	}
 
 	workspacesRoute, workspacesServiceHandler := v1connect.NewWorkspacesServiceHandler(apiv1.NewWorkspaceService(connPool), handlerOptions...)
 	srv.HTTPMux().Handle(workspacesRoute, workspacesServiceHandler)
-
-	prebuildsRoute, prebuildsServiceHandler := v1connect.NewPrebuildsServiceHandler(apiv1.NewPrebuildService(), handlerOptions...)
-	srv.HTTPMux().Handle(prebuildsRoute, prebuildsServiceHandler)
 
 	return nil
 }
