@@ -219,7 +219,7 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 	t.Logf("attemp to start up the workspace directly: %s, %s", instanceID, workspaceID)
 	sresp, err := wsm.StartWorkspace(sctx, req)
 	if err != nil {
-		return nil, nil, xerrors.Errorf("cannot start workspace: %q", err)
+		return nil, nil, xerrors.Errorf("cannot start workspace: %w", err)
 	}
 	t.Log("successfully sent workspace start request")
 
@@ -275,14 +275,27 @@ func LaunchWorkspaceFromContextURL(t *testing.T, ctx context.Context, contextURL
 	cctx, ccancel := context.WithTimeout(context.Background(), perCallTimeout)
 	defer ccancel()
 
-	t.Logf("attemp to create the workspace: %s", contextURL)
-	resp, err := server.CreateWorkspace(cctx, &protocol.CreateWorkspaceOptions{
-		ContextURL:                         contextURL,
-		IgnoreRunningPrebuild:              true,
-		IgnoreRunningWorkspaceOnSameCommit: true,
-	})
-	if err != nil {
-		return nil, nil, xerrors.Errorf("cannot start workspace: %w", err)
+	var resp *protocol.WorkspaceCreationResult
+	for i := 0; i < 3; i++ {
+		t.Logf("attemp to create the workspace: %s", contextURL)
+		resp, err = server.CreateWorkspace(cctx, &protocol.CreateWorkspaceOptions{
+			ContextURL:                         contextURL,
+			IgnoreRunningPrebuild:              true,
+			IgnoreRunningWorkspaceOnSameCommit: true,
+		})
+		if err != nil {
+			scode := status.Code(err)
+			if scode == codes.NotFound || scode == codes.Unavailable {
+				time.Sleep(1 * time.Second)
+				server, err = api.GitpodServer(append(defaultServerOpts, serverOpts...)...)
+				if err != nil {
+					return nil, nil, xerrors.Errorf("cannot start server: %w", err)
+				}
+				continue
+			}
+			return nil, nil, xerrors.Errorf("cannot start workspace: %w", err)
+		}
+		break
 	}
 
 	t.Logf("attemp to get the workspace information: %s", resp.CreatedWorkspaceID)
@@ -323,6 +336,11 @@ func LaunchWorkspaceFromContextURL(t *testing.T, ctx context.Context, contextURL
 
 func stopWsF(t *testing.T, instanceID string, api *ComponentAPI) StopWorkspaceFunc {
 	return func(waitForStop bool, api *ComponentAPI) (*wsmanapi.WorkspaceStatus, error) {
+		parallelLimiter = make(chan struct{}, ParallelLunchableWorkspaceLimit)
+		defer func() {
+			<-parallelLimiter
+		}()
+
 		sctx, scancel := context.WithTimeout(context.Background(), perCallTimeout)
 		defer scancel()
 
@@ -423,11 +441,16 @@ func WaitForWorkspaceStart(ctx context.Context, instanceID string, api *Componen
 	var sub wsmanapi.WorkspaceManager_SubscribeClient
 	for i := 0; i < 5; i++ {
 		sub, err = wsman.Subscribe(ctx, &wsmanapi.SubscribeRequest{})
-		if status.Code(err) == codes.NotFound {
-			time.Sleep(1 * time.Second)
-			continue
-		}
 		if err != nil {
+			scode := status.Code(err)
+			if scode == codes.NotFound || scode == codes.Unavailable {
+				time.Sleep(1 * time.Second)
+				wsman, err = api.WorkspaceManager()
+				if err != nil {
+					return nil, err
+				}
+				continue
+			}
 			return nil, xerrors.Errorf("cannot listen for workspace updates: %w", err)
 		}
 		defer func() {

@@ -125,8 +125,6 @@ func TestGitActions(t *testing.T) {
 	f := features.New("GitActions").
 		WithLabel("component", "workspace").
 		Assess("it can run git actions", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			t.Parallel()
-
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*len(tests))*time.Minute)
 			defer cancel()
 
@@ -146,6 +144,7 @@ func TestGitActions(t *testing.T) {
 			for _, ff := range ffs {
 				for _, test := range tests {
 					t.Run(test.ContextURL+"_"+ff.Name, func(t *testing.T) {
+						t.Parallel()
 						if test.Skip {
 							t.SkipNow()
 						}
