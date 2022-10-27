@@ -19,5 +19,5 @@ spec:
     - record: metrics_total
       expr: count(count({__name__!=""}) by (__name__))
 
-    - record: __name__:timeseries_total
-      expr: count({__name__!=""}) by (__name__)
+    - record: metric:timeseries_total
+      expr: label_join(count by (__name__) ({__name__!=""}), "metric", "", "__name__")
