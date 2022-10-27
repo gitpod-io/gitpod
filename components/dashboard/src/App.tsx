@@ -275,6 +275,9 @@ function App() {
     }, [user]);
 
     useEffect(() => {
+        if (!teams) {
+            return;
+        }
         // Refresh billing mode (side effect on other components per UserContext!)
         refreshUserBillingMode();
     }, [teams]);
