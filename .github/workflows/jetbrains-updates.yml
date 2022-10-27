@@ -1,4 +1,4 @@
-name: JB Releases
+name: JB Stable IDEs Update
 on:
     workflow_dispatch:
     schedule:
@@ -13,7 +13,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3
-            - name: Update
+            - name: Update JetBrains IDEs download URLs
               run: |
                   cd ./components/ide/jetbrains/image/gha-update-image
                   yarn install
@@ -22,7 +22,7 @@ jobs:
               with:
                   FILES: WORKSPACE.yaml
             - name: Create Pull Request
-              if: env.GIT_DIFF
+              if: env.GIT_DIFF && env.MATCHED_FILES
               uses: peter-evans/create-pull-request@v4
               with:
                   title: "[JetBrains] Update IDE images to new build version"
@@ -58,9 +58,8 @@ jobs:
 
                       _This PR was created automatically with GitHub Actions using [this](https://github.com/gitpod-io/gitpod/blob/main/.github/workflows/jetbrains-updates-template.yml) template_
                   commit-message: "[JetBrains] Update IDE images to new build version"
-                  branch: "jetbrains/${{ inputs.productId }}-${{ steps.latest-release.outputs.version2 }}"
+                  branch: "jetbrains/update-stable-ides"
                   labels: "team: IDE,editor: jetbrains"
-                  team-reviewers: "engineering-ide"
             - name: Get previous job's status
               id: lastrun
               uses: filiptronicek/get-last-job-status@main
