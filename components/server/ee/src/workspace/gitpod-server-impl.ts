@@ -2213,6 +2213,35 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
+    async cancelStripeSubscription(ctx: TraceContext, attributionId: string): Promise<void> {
+        const attrId = AttributionId.parse(attributionId);
+        if (attrId === undefined) {
+            log.error(`Invalid attribution id: ${attributionId}`);
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+        }
+
+        const user = this.checkAndBlockUser("cancelStripeSubscription");
+        try {
+            if (attrId.kind === "team") {
+                const team = await this.guardTeamOperation(attrId.teamId, "update");
+                await this.ensureStripeApiIsAllowed({ team });
+            } else {
+                await this.ensureStripeApiIsAllowed({ user });
+            }
+            const subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(attributionId);
+            if (!subscriptionId) {
+                throw new Error(`There is no active subscription to cancel for '${attributionId}'`);
+            }
+            await this.stripeService.cancelSubscription(subscriptionId);
+        } catch (error) {
+            log.error(`Failed to cancel Stripe subscription for '${attributionId}'`, error);
+            throw new ResponseError(
+                ErrorCodes.INTERNAL_SERVER_ERROR,
+                `ed to cancel Stripe subscription for '${attributionId}'`,
+            );
+        }
+    }
+
     async getStripePortalUrl(ctx: TraceContext, attributionId: string): Promise<string> {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
