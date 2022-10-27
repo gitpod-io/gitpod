@@ -88,6 +88,7 @@
 /dev/loadgen @gitpod-io/engineering-workspace
 /dev/preview @gitpod-io/devx
 /operations/observability/mixins @gitpod-io/engineering-delivery-operations-experience
+/operations/observability/mixins/platform @gitpod-io/devx
 /operations/observability/mixins/IDE @gitpod-io/engineering-ide
 /operations/observability/mixins/meta @gitpod-io/engineering-webapp
 /operations/observability/mixins/workspace @gitpod-io/engineering-workspace
