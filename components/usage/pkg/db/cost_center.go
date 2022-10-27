@@ -32,7 +32,7 @@ type CostCenter struct {
 	SpendingLimit   int32           `gorm:"column:spendingLimit;type:int;default:0;" json:"spendingLimit"`
 	BillingStrategy BillingStrategy `gorm:"column:billingStrategy;type:varchar;size:255;" json:"billingStrategy"`
 	NextBillingTime VarcharTime     `gorm:"column:nextBillingTime;type:varchar;size:255;" json:"nextBillingTime"`
-	LastModified    time.Time       `gorm:"->:column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
+	LastModified    time.Time       `gorm:"->;column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
 }
 
 // TableName sets the insert table name for this struct type
@@ -232,4 +232,34 @@ func (c *CostCenterManager) ComputeInvoiceUsageRecord(ctx context.Context, attri
 		Kind:          InvoiceUsageKind,
 		Draft:         false,
 	}, nil
+}
+
+func (c *CostCenterManager) ListLatestCostCentersWithBillingTimeBefore(ctx context.Context, strategy BillingStrategy, billingTimeBefore time.Time) ([]CostCenter, error) {
+	db := c.conn.WithContext(ctx)
+
+	var results []CostCenter
+	var batch []CostCenter
+
+	subquery := db.
+		Table((&CostCenter{}).TableName()).
+		// Retrieve the latest CostCenter for a given (attribution) ID.
+		Select("DISTINCT id, MAX(creationTime) AS creationTime").
+		Group("id")
+	tx := db.
+		Table(fmt.Sprintf("%s as cc", (&CostCenter{}).TableName())).
+		// Join on our set of latest CostCenter records
+		Joins("INNER JOIN (?) AS expiredCC on cc.id = expiredCC.id AND cc.creationTime = expiredCC.creationTime", subquery).
+		Where("cc.billingStrategy = ?", strategy).
+		Where("nextBillingTime != ?", "").
+		Where("nextBillingTime < ?", TimeToISO8601(billingTimeBefore)).
+		FindInBatches(&batch, 1000, func(tx *gorm.DB, iteration int) error {
+			results = append(results, batch...)
+			return nil
+		})
+
+	if tx.Error != nil {
+		return nil, fmt.Errorf("failed to list cost centers with billing time before: %w", tx.Error)
+	}
+
+	return results, nil
 }
