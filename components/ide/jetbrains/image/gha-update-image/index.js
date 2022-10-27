@@ -55,13 +55,13 @@ const axios = require("axios");
 
     try {
         rawWorkspaceYaml = fs.readFileSync(workspaceYamlFilePath, "utf8");
-    } catch (e) {
-        console.log(e);
+    } catch {
+        throw new Error(`Failed to read ${workspaceYamlFilePath}.`);
     }
 
     const workspaceYaml = yaml.parse(rawWorkspaceYaml);
 
-    const majorVersions = {};
+    const majorVersions = new Set();
 
     for (const IDE of IDEs) {
         const url = `https://data.services.jetbrains.com/products?code=${IDE.productCode}&release.type=${
@@ -69,12 +69,15 @@ const axios = require("axios");
         }&fields=distributions%2Clink%2Cname%2Creleases&_=${Date.now()}"`;
 
         const resp = await axios(url);
-        majorVersions[resp.data[0].releases[0].majorVersion] = true;
+        console.log(`${IDE.productName} v${resp.data[0].releases[0].majorVersion}`);
+        majorVersions.add(resp.data[0].releases[0].majorVersion);
 
-        console.log(IDE.productName, resp.data[0].releases[0].majorVersion);
+        const oldDownloadUrl = workspaceYaml.defaultArgs[`${IDE.productId}DownloadUrl`];
+        rawWorkspaceYaml = rawWorkspaceYaml.replace(oldDownloadUrl, resp.data[0].releases[0].downloads.linux.link);
+    }
 
-        const oldDonwloadUrl = workspaceYaml.defaultArgs[`${IDE.productId}DownloadUrl`];
-        rawWorkspaceYaml = rawWorkspaceYaml.replace(oldDonwloadUrl, resp.data[0].releases[0].downloads.linux.link);
+    if (majorVersions.size === 1) {
+        console.log("All IDEs are in the same major version.");
     }
 
     console.log(rawWorkspaceYaml);
