@@ -236,6 +236,19 @@ func (s *UsageService) SetCostCenter(ctx context.Context, in *v1.SetCostCenterRe
 	}, nil
 }
 
+func (s UsageService) ResetUsage(ctx context.Context, req *v1.ResetUsageRequest) (*v1.ResetUsageResponse, error) {
+	now := time.Now()
+	costCentersToUpdate, err := s.costCenterManager.ListLatestCostCentersWithBillingTimeBefore(ctx, db.CostCenter_Other, now)
+	if err != nil {
+		log.WithError(err).Error("Failed to list cost centers to update.")
+		return nil, status.Errorf(codes.Internal, "Failed to identify expired cost centers for Other billing strategy")
+	}
+
+	log.Infof("Identified %d expired cost centers at relative to %s", len(costCentersToUpdate), now.Format(time.RFC3339))
+
+	return &v1.ResetUsageResponse{}, nil
+}
+
 func (s *UsageService) ReconcileUsage(ctx context.Context, req *v1.ReconcileUsageRequest) (*v1.ReconcileUsageResponse, error) {
 	from := req.GetFrom().AsTime()
 	to := req.GetTo().AsTime()

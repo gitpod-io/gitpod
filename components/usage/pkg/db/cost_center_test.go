@@ -244,3 +244,92 @@ func requireCostCenterEqual(t *testing.T, expected, actual db.CostCenter) {
 	require.EqualValues(t, expected.SpendingLimit, actual.SpendingLimit)
 	require.Equal(t, expected.BillingStrategy, actual.BillingStrategy)
 }
+
+func TestCostCenter_ListLatestCostCentersWithBillingTimeBefore(t *testing.T) {
+
+	t.Run("no cost centers found when no data exists", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+		mnr := db.NewCostCenterManager(conn, db.DefaultSpendingLimit{
+			ForTeams: 0,
+			ForUsers: 500,
+		})
+
+		ts := time.Date(2022, 10, 10, 10, 10, 10, 10, time.UTC)
+
+		retrieved, err := mnr.ListLatestCostCentersWithBillingTimeBefore(context.Background(), db.CostCenter_Other, ts.Add(7*24*time.Hour))
+		require.NoError(t, err)
+		require.Len(t, retrieved, 0)
+	})
+
+	t.Run("returns the most recent cost center (by creation time)", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+		mnr := db.NewCostCenterManager(conn, db.DefaultSpendingLimit{
+			ForTeams: 0,
+			ForUsers: 500,
+		})
+
+		attributionID := uuid.New().String()
+		firstCreation := time.Date(2022, 10, 10, 10, 10, 10, 10, time.UTC)
+		secondCreation := firstCreation.Add(24 * time.Hour)
+
+		costCenters := []db.CostCenter{
+			dbtest.NewCostCenter(t, db.CostCenter{
+				ID:              db.NewTeamAttributionID(attributionID),
+				SpendingLimit:   100,
+				CreationTime:    db.NewVarcharTime(firstCreation),
+				BillingStrategy: db.CostCenter_Other,
+				NextBillingTime: db.NewVarcharTime(firstCreation),
+			}),
+			dbtest.NewCostCenter(t, db.CostCenter{
+				ID:              db.NewTeamAttributionID(attributionID),
+				SpendingLimit:   100,
+				CreationTime:    db.NewVarcharTime(secondCreation),
+				BillingStrategy: db.CostCenter_Other,
+				NextBillingTime: db.NewVarcharTime(secondCreation),
+			}),
+		}
+
+		dbtest.CreateCostCenters(t, conn, costCenters...)
+
+		retrieved, err := mnr.ListLatestCostCentersWithBillingTimeBefore(context.Background(), db.CostCenter_Other, secondCreation.Add(7*24*time.Hour))
+		require.NoError(t, err)
+		require.Len(t, retrieved, 1)
+
+		requireCostCenterEqual(t, costCenters[1], retrieved[0])
+	})
+
+	t.Run("returns results only when most recent cost center matches billing strategy", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+		mnr := db.NewCostCenterManager(conn, db.DefaultSpendingLimit{
+			ForTeams: 0,
+			ForUsers: 500,
+		})
+
+		attributionID := uuid.New().String()
+		firstCreation := time.Date(2022, 10, 10, 10, 10, 10, 10, time.UTC)
+		secondCreation := firstCreation.Add(24 * time.Hour)
+
+		costCenters := []db.CostCenter{
+			dbtest.NewCostCenter(t, db.CostCenter{
+				ID:              db.NewTeamAttributionID(attributionID),
+				SpendingLimit:   100,
+				CreationTime:    db.NewVarcharTime(firstCreation),
+				BillingStrategy: db.CostCenter_Other,
+				NextBillingTime: db.NewVarcharTime(firstCreation),
+			}),
+			dbtest.NewCostCenter(t, db.CostCenter{
+				ID:              db.NewTeamAttributionID(attributionID),
+				SpendingLimit:   100,
+				CreationTime:    db.NewVarcharTime(secondCreation),
+				BillingStrategy: db.CostCenter_Stripe,
+			}),
+		}
+
+		dbtest.CreateCostCenters(t, conn, costCenters...)
+
+		retrieved, err := mnr.ListLatestCostCentersWithBillingTimeBefore(context.Background(), db.CostCenter_Other, secondCreation.Add(7*24*time.Hour))
+		require.NoError(t, err)
+		require.Len(t, retrieved, 0)
+	})
+
+}
