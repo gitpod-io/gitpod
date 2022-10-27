@@ -46,9 +46,12 @@ export default function Menu() {
     const [isFeedbackFormVisible, setFeedbackFormVisible] = useState<boolean>(false);
 
     const [hasIndividualProjects, setHasIndividualProjects] = useState(false);
-    getGitpodService()
-        .server.getUserProjects()
-        .then((projects) => setHasIndividualProjects(projects.length > 0));
+
+    useEffect(() => {
+        getGitpodService()
+            .server.getUserProjects()
+            .then((projects) => setHasIndividualProjects(projects.length > 0));
+    }, []);
 
     const match = useRouteMatch<{ segment1?: string; segment2?: string; segment3?: string }>(
         "/(t/)?:segment1/:segment2?/:segment3?",
