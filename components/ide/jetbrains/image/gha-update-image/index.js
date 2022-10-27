@@ -3,6 +3,9 @@ const yaml = require("yaml");
 const fs = require("fs");
 const axios = require("axios");
 
+const JB_PRODUCTS_DATA_URL = "https://data.services.jetbrains.com/products";
+const JB_ARTIFACTS_JSON_URL = "https://www.jetbrains.com/intellij-repository/snapshots/index.json";
+
 const IDEs = [
     {
         productName: "IntelliJ IDEA Ultimate",
@@ -50,42 +53,75 @@ const IDEs = [
 
 (async () => {
     const workspaceYamlFilePath = path.resolve(__dirname, "../../../../../", "WORKSPACE.yaml");
-
+    const backendPluginGradleLatestFilePath = path.resolve(__dirname, "../../backend-plugin", "gradle-latest.properties");
+    
     let rawWorkspaceYaml;
+    let backendPluginGradleLatest;
 
     try {
         rawWorkspaceYaml = fs.readFileSync(workspaceYamlFilePath, "utf8");
-    } catch {
-        throw new Error(`Failed to read ${workspaceYamlFilePath}.`);
+        backendPluginGradleLatest = fs.readFileSync(backendPluginGradleLatestFilePath, "utf8");
+    } catch (err) {
+        console.log(`Failed to read ${workspaceYamlFilePath}`);
+        throw err;
     }
+
+    console.log(backendPluginGradleLatest);
+    
 
     const workspaceYaml = yaml.parse(rawWorkspaceYaml);
 
-    const majorVersions = new Set();
-
-    const requestPromises = [];
-
+    const requests = [];
     for (const IDE of IDEs) {
-        const url = `https://data.services.jetbrains.com/products?code=${IDE.productCode}&release.type=${
-            IDE.productType
-        }&fields=distributions%2Clink%2Cname%2Creleases&_=${Date.now()}"`;
-        requestPromises.push(axios(url));
+        const params = new URLSearchParams({
+            code: IDE.productCode,
+            "release.type": IDE.productType,
+            fields: ["distributions", "link", "name", "releases"].join(","),
+            _: Date.now(),
+        });
+
+        const url = [JB_PRODUCTS_DATA_URL, "?", params].join("");
+        requests.push(axios(url));
     }
 
-    const responses = await Promise.all(requestPromises);
+    const responses = await Promise.all(requests);
+
+    const uniqueMajorVersions = new Set();
 
     responses.forEach((resp, index) => {
         const lastRelease = resp.data[0].releases[0];
-        majorVersions.add(lastRelease.majorVersion);
+        uniqueMajorVersions.add(lastRelease.majorVersion);
         const oldDownloadUrl = workspaceYaml.defaultArgs[`${IDEs[index].productId}DownloadUrl`];
         rawWorkspaceYaml = rawWorkspaceYaml.replace(oldDownloadUrl, lastRelease.downloads.linux.link);
     });
 
-    if (majorVersions.size === 1) {
-        const majorVersion = Array.from(majorVersions).pop();
-        console.log(`All IDEs are in the same major version: ${majorVersion}`);
-        // TODO: Check if there's any update on the IntelliJ SDK for ${majorVersion} and update components/ide/jetbrains/backend-plugin/gradle-stable.properties
+    const majorVersions = [...uniqueMajorVersions];
+
+    if (majorVersions.length !== 1) {
+        console.log(`Multiple major versions found, skipping update: ${majorVersions.join(", ")}`);
+        return;
     }
+
+    const majorVersion = majorVersions[0];
+
+    console.log(`All IDEs are in the same major version: ${majorVersion}`);
+
+    let artifacts;
+
+    try {
+        const response = await axios.get(JB_ARTIFACTS_JSON_URL);
+        artifacts = response.data.artifacts;
+    } catch (err) {
+        console.log(`Failed to download list of artifacts from ${JB_ARTIFACTS_JSON_URL}`);
+        throw err;
+    }
+
+    const ideaArtifact = artifacts.find(
+        (artifact) =>
+            artifact.groupId === "com.jetbrains.intellij.idea" && artifact.version.endsWith("-EAP-CANDIDATE-SNAPSHOT"),
+    );
+
+    console.log(ideaArtifact);
 
     fs.writeFileSync(workspaceYamlFilePath, rawWorkspaceYaml);
 })();
