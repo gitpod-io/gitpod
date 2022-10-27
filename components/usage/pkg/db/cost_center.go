@@ -36,8 +36,16 @@ type CostCenter struct {
 }
 
 // TableName sets the insert table name for this struct type
-func (d *CostCenter) TableName() string {
+func (c *CostCenter) TableName() string {
 	return "d_b_cost_center"
+}
+
+func (c *CostCenter) IsExpired() bool {
+	if !c.NextBillingTime.IsSet() {
+		return false
+	}
+
+	return c.NextBillingTime.Time().Before(time.Now().UTC())
 }
 
 type DefaultSpendingLimit struct {
@@ -62,6 +70,7 @@ type CostCenterManager struct {
 // This method creates a codt center and stores it in the DB if there is no preexisting one.
 func (c *CostCenterManager) GetOrCreateCostCenter(ctx context.Context, attributionID AttributionID) (CostCenter, error) {
 	logger := log.WithField("attributionId", attributionID)
+	now := time.Now().UTC()
 
 	result, err := getCostCenter(ctx, c.conn, attributionID)
 	if err != nil {
@@ -73,18 +82,33 @@ func (c *CostCenterManager) GetOrCreateCostCenter(ctx context.Context, attributi
 			}
 			result = CostCenter{
 				ID:              attributionID,
-				CreationTime:    NewVarcharTime(time.Now()),
+				CreationTime:    NewVarcharTime(now),
 				BillingStrategy: CostCenter_Other,
 				SpendingLimit:   defaultSpendingLimit,
-				NextBillingTime: NewVarcharTime(time.Now().AddDate(0, 1, 0)),
+				NextBillingTime: NewVarcharTime(now.AddDate(0, 1, 0)),
 			}
 			err := c.conn.Save(&result).Error
 			if err != nil {
 				return CostCenter{}, err
 			}
+			return result, nil
 		} else {
 			return CostCenter{}, err
 		}
+	}
+
+	// If we retrieved a CostCenter which is not on Stripe, and the NextBillingPeriod is expired,
+	// we want to reset it immediately.
+	// This can happen in the following scenario:
+	//	* User accesses gitpod just after their CostCenter expired, but just before our periodic CostCenter reset kicks in.
+	if result.BillingStrategy == CostCenter_Other && result.IsExpired() {
+		cc, err := c.ResetUsage(ctx, result)
+		if err != nil {
+			logger.WithError(err).Error("Failed to reset expired usage.")
+			return CostCenter{}, fmt.Errorf("failed to reset usage for expired cost center ID: %s: %w", result.ID, err)
+		}
+
+		return cc, nil
 	}
 
 	return result, nil
@@ -151,7 +175,7 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCent
 
 		// Upgrading to Stripe
 		if existingCC.BillingStrategy == CostCenter_Other && newCC.BillingStrategy == CostCenter_Stripe {
-			err := c.upgradeToStripe(ctx, attributionID)
+			err := c.BalanceOutUsage(ctx, attributionID)
 			if err != nil {
 				return CostCenter{}, err
 			}
@@ -177,7 +201,7 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCent
 
 		// Upgrading to Stripe
 		if existingCC.BillingStrategy == CostCenter_Other && newCC.BillingStrategy == CostCenter_Stripe {
-			err := c.upgradeToStripe(ctx, attributionID)
+			err := c.BalanceOutUsage(ctx, attributionID)
 			if err != nil {
 				return CostCenter{}, err
 			}
@@ -197,9 +221,9 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCent
 	return newCC, nil
 }
 
-func (c *CostCenterManager) upgradeToStripe(ctx context.Context, attributionID AttributionID) error {
+func (c *CostCenterManager) BalanceOutUsage(ctx context.Context, attributionID AttributionID) error {
 	// moving to stripe -> let's run a finalization
-	finalizationUsage, err := c.ComputeInvoiceUsageRecord(ctx, attributionID)
+	finalizationUsage, err := c.NewInvoiceUsageRecord(ctx, attributionID)
 	if err != nil {
 		return err
 	}
@@ -213,7 +237,7 @@ func (c *CostCenterManager) upgradeToStripe(ctx context.Context, attributionID A
 	return nil
 }
 
-func (c *CostCenterManager) ComputeInvoiceUsageRecord(ctx context.Context, attributionID AttributionID) (*Usage, error) {
+func (c *CostCenterManager) NewInvoiceUsageRecord(ctx context.Context, attributionID AttributionID) (*Usage, error) {
 	now := time.Now()
 	creditCents, err := GetBalance(ctx, c.conn, attributionID)
 	if err != nil {
@@ -262,4 +286,55 @@ func (c *CostCenterManager) ListLatestCostCentersWithBillingTimeBefore(ctx conte
 	}
 
 	return results, nil
+}
+
+func (c *CostCenterManager) ResetUsage(ctx context.Context, cc CostCenter) (CostCenter, error) {
+	if cc.BillingStrategy != CostCenter_Other {
+		return CostCenter{}, fmt.Errorf("cannot reset usage for Billing Strategy %s for Cost Center ID: %s", cc.BillingStrategy, cc.ID)
+	}
+
+	entity, _ := cc.ID.Values()
+
+	// We do not carry over the spending limit from the existing CostCenter.
+	// At the moment, we don't have a use case for it. Getting the spending limit from configured values
+	// ensures that we progressively update the spending limit to configured values rather than having to
+	// perform bulk DB queries when the defaults do change.
+	var spendingLimit int32
+	switch entity {
+	case AttributionEntity_Team:
+		spendingLimit = c.cfg.ForTeams
+	case AttributionEntity_User:
+		spendingLimit = c.cfg.ForUsers
+	default:
+		return CostCenter{}, fmt.Errorf("cannot reset usage for unknown attribution entity ID: %s", cc.ID)
+	}
+
+	now := time.Now().UTC()
+
+	// Default to 1 month from now, if there's no nextBillingTime set on the record.
+	nextBillingTime := now.AddDate(0, 1, 0)
+	if cc.NextBillingTime.IsSet() {
+		nextBillingTime = cc.NextBillingTime.Time().AddDate(0, 1, 0)
+	}
+
+	// Create a synthetic Invoice Usage record, to reset usage
+	err := c.BalanceOutUsage(ctx, cc.ID)
+	if err != nil {
+		return CostCenter{}, fmt.Errorf("failed to compute invocie usage record for AttributonID: %s: %w", cc.ID, err)
+	}
+
+	// All fields on the new cost center remain the same, except for CreationTime and NextBillingTime
+	newCostCenter := CostCenter{
+		ID:              cc.ID,
+		SpendingLimit:   spendingLimit,
+		BillingStrategy: cc.BillingStrategy,
+		NextBillingTime: NewVarcharTime(nextBillingTime),
+		CreationTime:    NewVarcharTime(now),
+	}
+	err = c.conn.Save(&newCostCenter).Error
+	if err != nil {
+		return CostCenter{}, fmt.Errorf("failed to store new cost center for AttribtuonID: %s: %w", cc.ID, err)
+	}
+
+	return newCostCenter, nil
 }
