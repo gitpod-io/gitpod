@@ -104,6 +104,7 @@ export default function Menu() {
         "account",
         "notifications",
         "billing",
+        "usage",
         "plans",
         "teams",
         "variables",
