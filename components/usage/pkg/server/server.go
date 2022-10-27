@@ -147,7 +147,7 @@ func Start(cfg Config, version string) error {
 			return fmt.Errorf("failed to parse reset usage schedule as duration: %w", err)
 		}
 
-		spec, err := scheduler.NewResetUsageJobSpec(schedule)
+		spec, err := scheduler.NewResetUsageJobSpec(schedule, v1.NewUsageServiceClient(selfConnection))
 		if err != nil {
 			return fmt.Errorf("failed to setup reset usage job: %w", err)
 		}
