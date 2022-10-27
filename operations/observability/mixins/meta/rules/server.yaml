@@ -24,7 +24,7 @@ spec:
         description: We have accumulated {{ printf "%.2f" $value }} open websocket connections.
 
     - alert: ServerEventLoopLagTooHigh
-      expr: avg_over_time(nodejs_eventloop_lag_seconds{job="server"}[20m]) by (cluster) > 0.35
+      expr: avg_over_time(nodejs_eventloop_lag_seconds{job="server"}[20m]) > 0.35
       for: 5m
       labels:
         severity: critical
