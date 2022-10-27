@@ -1,0 +1,406 @@
+{
+  "__inputs": [],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "9.1.7"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "text",
+      "name": "Text",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 7,
+      "options": {
+        "content": "## Individual metrics with a high number of series associated with them:\n\n* Could you drop some labels on that metric to reduce its cardinality?\n\n* Could you drop the entire metric?\n\n* Could you replace the large number of unique label/label value pairs?",
+        "mode": "markdown"
+      },
+      "pluginVersion": "9.1.7",
+      "title": "💡Tips for metrics",
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "9.1.7",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum(metrics_total{cluster=~\"$cluster\"})",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Total Metrics",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto",
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 0.2
+              },
+              {
+                "color": "dark-red",
+                "value": 0.5
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Percentage of total timeseries"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "gradient-gauge"
+              },
+              {
+                "id": "max",
+                "value": 1
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 5,
+      "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "frameIndex": 1,
+        "showHeader": true
+      },
+      "pluginVersion": "9.1.7",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "sort_desc(\r\n    topk(15, \r\n      sum(metric:timeseries_total{cluster=~\"$cluster\"}) by (metric)\r\n    )\r\n)",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "sort_desc(\r\n    topk(15, \r\n        sum(metric:timeseries_total{cluster=~\"$cluster\"}) by (metric) / sum(metric:timeseries_total{cluster=~\"$cluster\"})\r\n    )\r\n)",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "B"
+        }
+      ],
+      "title": "Top 15 - High cardinality metrics",
+      "transformations": [
+        {
+          "id": "seriesToColumns",
+          "options": {
+            "byField": "metric"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time 1": true,
+              "Time 2": true
+            },
+            "indexByName": {
+              "Time 1": 3,
+              "Time 2": 4,
+              "Value #A": 1,
+              "Value #B": 2,
+              "metric": 0
+            },
+            "renameByName": {
+              "Value #A": "Number of timeseries",
+              "Value #B": "Percentage of total timeseries"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 4
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "9.1.7",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum(metric:timeseries_total{cluster=~\"$cluster\"})",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Total timeseries",
+      "type": "stat"
+    }
+  ],
+  "schemaVersion": 37,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "VictoriaMetrics",
+          "value": "VictoriaMetrics"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(metrics_total, cluster)",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "cluster",
+        "options": [],
+        "query": {
+          "query": "label_values(metrics_total, cluster)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Cardinality Management - Overview",
+  "uid": "cardinality-management-overview",
+  "version": 1,
+  "weekStart": ""
+}
