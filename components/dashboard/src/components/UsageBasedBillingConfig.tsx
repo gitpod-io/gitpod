@@ -34,6 +34,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
     const { currency } = useContext(PaymentContext);
     const [showUpdateLimitModal, setShowUpdateLimitModal] = useState<boolean>(false);
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
+    const [showCancelPlanModal, setShowCancelPlanModal] = useState<boolean>(false);
     const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | undefined>();
     const [isLoadingStripeSubscription, setIsLoadingStripeSubscription] = useState<boolean>(true);
     const [currentUsage, setCurrentUsage] = useState<number | undefined>();
@@ -404,11 +405,16 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                     </div>
                                 </>
                             )}
-                            <a className="mt-5 self-end" href={stripePortalUrl}>
-                                <button className="secondary" disabled={!stripePortalUrl}>
-                                    Manage Plan ↗
+                            <div className="mt-5 self-end flex items-center space-x-4">
+                                <button className="gp-link" onClick={() => setShowCancelPlanModal(true)}>
+                                    Cancel Plan
                                 </button>
-                            </a>
+                                <a href={stripePortalUrl}>
+                                    <button className="secondary" disabled={!stripePortalUrl}>
+                                        Manage Plan ↗
+                                    </button>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -427,6 +433,9 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                     onClose={() => setShowUpdateLimitModal(false)}
                     onUpdate={(newLimit) => updateUsageLimit(newLimit)}
                 />
+            )}
+            {showCancelPlanModal && (
+                <CancelPlanModal attributionId={attributionId} onClose={() => setShowCancelPlanModal(false)} />
             )}
         </div>
     );
@@ -611,6 +620,53 @@ function UpdateLimitModal(props: {
                 </div>
                 <div className="flex justify-end mt-6 space-x-2">
                     <button className="secondary">Update</button>
+                </div>
+            </form>
+        </Modal>
+    );
+}
+
+function CancelPlanModal(props: { attributionId?: string; onClose: () => void }) {
+    const [isCancelling, setIsCancelling] = useState<boolean>(false);
+    const [errorMessage, setErrorMessage] = useState<string | undefined>();
+
+    const onSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+        if (!props.attributionId) {
+            return;
+        }
+        try {
+            setErrorMessage("");
+            setIsCancelling(true);
+            await getGitpodService().server.cancelStripeSubscription(props.attributionId);
+            window.location.reload();
+        } catch (error) {
+            console.error("Failed to cancel Stripe subscription", error);
+            setErrorMessage(`Failed to cancel Stripe subscription. ${error?.message || String(error)}`);
+            setIsCancelling(false);
+        }
+    };
+
+    return (
+        <Modal visible={true} onClose={props.onClose} onEnter={() => false}>
+            <h3 className="mb-4">Cancel Plan</h3>
+            <form onSubmit={onSubmit}>
+                <div className="border-t border-b border-gray-200 dark:border-gray-700 -mx-6 px-6 py-4 flex flex-col">
+                    <p className="pb-4 text-gray-500 text-base">You are about to cancel your current plan.</p>
+                    {errorMessage && (
+                        <Alert type="error" className="-mt-2 mb-2">
+                            {errorMessage}
+                        </Alert>
+                    )}
+                </div>
+                <div className="flex justify-end mt-6 space-x-2">
+                    <button
+                        className="danger flex items-center space-x-2"
+                        disabled={!props.attributionId || isCancelling}
+                    >
+                        <span>Cancel Plan</span>
+                        {isCancelling && <Spinner className="h-5 w-5 animate-spin filter brightness-150" />}
+                    </button>
                 </div>
             </form>
         </Modal>
