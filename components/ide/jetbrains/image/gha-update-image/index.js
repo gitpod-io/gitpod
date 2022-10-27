@@ -1,10 +1,11 @@
 const path = require("path");
 const yaml = require("yaml");
 const fs = require("fs");
+const axios = require("axios");
 
 const IDEs = [
     {
-        productName: "IntelliJ IDEA",
+        productName: "IntelliJ IDEA Ultimate",
         productId: "intellij",
         productCode: "IIU",
         productType: "release",
@@ -18,7 +19,7 @@ const IDEs = [
         exampleRepo: "https://github.com/gitpod-io/template-golang-cli",
     },
     {
-        productName: "PyCharm",
+        productName: "PyCharm Professional Edition",
         productId: "pycharm",
         productCode: "PCP",
         productType: "release",
@@ -47,7 +48,6 @@ const IDEs = [
     },
 ];
 
-const axios = require("axios");
 (async () => {
     const workspaceYamlFilePath = path.resolve(__dirname, "../../../../../", "WORKSPACE.yaml");
 
@@ -63,24 +63,29 @@ const axios = require("axios");
 
     const majorVersions = new Set();
 
+    const requestPromises = [];
+
     for (const IDE of IDEs) {
         const url = `https://data.services.jetbrains.com/products?code=${IDE.productCode}&release.type=${
             IDE.productType
         }&fields=distributions%2Clink%2Cname%2Creleases&_=${Date.now()}"`;
-
-        const resp = await axios(url);
-        console.log(`${IDE.productName} v${resp.data[0].releases[0].majorVersion}`);
-        majorVersions.add(resp.data[0].releases[0].majorVersion);
-
-        const oldDownloadUrl = workspaceYaml.defaultArgs[`${IDE.productId}DownloadUrl`];
-        rawWorkspaceYaml = rawWorkspaceYaml.replace(oldDownloadUrl, resp.data[0].releases[0].downloads.linux.link);
+        requestPromises.push(axios(url));
     }
+
+    const responses = await Promise.all(requestPromises);
+
+    responses.forEach((resp, index) => {
+        const lastRelease = resp.data[0].releases[0];
+        majorVersions.add(lastRelease.majorVersion);
+        const oldDownloadUrl = workspaceYaml.defaultArgs[`${IDEs[index].productId}DownloadUrl`];
+        rawWorkspaceYaml = rawWorkspaceYaml.replace(oldDownloadUrl, lastRelease.downloads.linux.link);
+    });
 
     if (majorVersions.size === 1) {
-        console.log("All IDEs are in the same major version.");
+        const majorVersion = Array.from(majorVersions).pop();
+        console.log(`All IDEs are in the same major version: ${majorVersion}`);
+        // TODO: Check if there's any update on the IntelliJ SDK for ${majorVersion} and update components/ide/jetbrains/backend-plugin/gradle-stable.properties
     }
-
-    console.log(rawWorkspaceYaml);
 
     fs.writeFileSync(workspaceYamlFilePath, rawWorkspaceYaml);
 })();
