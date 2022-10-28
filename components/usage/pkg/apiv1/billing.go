@@ -115,6 +115,8 @@ func (s *BillingService) GetStripeCustomer(ctx context.Context, req *v1.GetStrip
 			}
 
 			logger.WithError(err).Error("Failed to lookup stripe customer from DB")
+
+			return nil, status.Errorf(codes.NotFound, "Failed to lookup stripe customer from DB: %s", err.Error())
 		}
 
 		return &v1.GetStripeCustomerResponse{
@@ -156,6 +158,7 @@ func (s *BillingService) CreateStripeCustomer(ctx context.Context, req *v1.Creat
 		StripeCustomerID: customer.ID,
 		AttributionID:    attributionID,
 		CreationTime:     common_db.NewVarCharTime(time.Unix(customer.Created, 0)),
+		Currency:         req.GetCurrency(),
 	})
 	if err != nil {
 		log.WithField("attribution_id", attributionID).WithField("stripe_customer_id", customer.ID).WithError(err).Error("Failed to store Stripe Customer in the database.")
@@ -369,6 +372,7 @@ func (s *BillingService) storeStripeCustomer(ctx context.Context, cus *stripe_ap
 	err := db.CreateStripeCustomer(ctx, s.conn, db.StripeCustomer{
 		StripeCustomerID: cus.ID,
 		AttributionID:    attributionID,
+		Currency:         cus.Metadata[stripe.PreferredCurrencyMetadataKey],
 		// We use the original Stripe supplied creation timestamp, this ensures that we stay true to our ordering of customer creation records.
 		CreationTime: common_db.NewVarCharTime(time.Unix(cus.Created, 0)),
 	})
@@ -411,6 +415,7 @@ func convertStripeCustomer(customer *stripe_api.Customer) *v1.StripeCustomer {
 
 func convertDBStripeCustomerToResponse(cus db.StripeCustomer) *v1.StripeCustomer {
 	return &v1.StripeCustomer{
-		Id: cus.StripeCustomerID,
+		Id:       cus.StripeCustomerID,
+		Currency: cus.Currency,
 	}
 }
