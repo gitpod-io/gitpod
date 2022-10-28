@@ -2345,7 +2345,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
         await this.guardProjectOperation(user, projectId, "get");
         try {
-            return await this.projectsService.getProjectOverviewCached(user, project);
+            const result = await this.projectsService.getProjectOverviewCached(user, project);
+            if (result) {
+                result.isConsideredInactive = await this.projectsService.isProjectConsideredInactive(project.id);
+            }
+            return result;
         } catch (error) {
             if (UnauthorizedError.is(error)) {
                 throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);

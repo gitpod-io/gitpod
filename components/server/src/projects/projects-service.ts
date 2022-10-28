@@ -279,6 +279,17 @@ export class ProjectsService {
         return this.projectDB.getProjectUsage(projectId);
     }
 
+    async isProjectConsideredInactive(projectId: string): Promise<boolean> {
+        const usage = await this.getProjectUsage(projectId);
+        if (!usage?.lastWorkspaceStart) {
+            return false;
+        }
+        const now = Date.now();
+        const lastUse = new Date(usage.lastWorkspaceStart).getTime();
+        const inactiveProjectTime = 1000 * 60 * 60 * 24 * 7 * 1; // 1 week
+        return now - lastUse > inactiveProjectTime;
+    }
+
     async getPrebuildEvents(cloneUrl: string): Promise<PrebuildEvent[]> {
         const events = await this.webhookEventDB.findByCloneUrl(cloneUrl, 100);
         return events.map((we) => ({

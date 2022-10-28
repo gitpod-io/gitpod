@@ -2620,6 +2620,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const context = (await this.contextParser.handle(ctx, user, contextURL)) as CommitContext;
 
+        // HACK: treat manual triggered prebuild as a reset for the inactivity state
+        await this.projectDB.updateProjectUsage(project.id, {
+            lastWorkspaceStart: new Date().toISOString(),
+        });
+
         const prebuild = await this.prebuildManager.startPrebuild(ctx, {
             context,
             user,
