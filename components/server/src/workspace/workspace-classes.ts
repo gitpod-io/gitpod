@@ -5,7 +5,7 @@
  */
 
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { User, Workspace } from "@gitpod/gitpod-protocol";
+import { User, Workspace, WorkspaceRequirements } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { EntitlementService } from "../billing/entitlement-service";
@@ -213,5 +213,23 @@ export namespace WorkspaceClasses {
                 return getDefaultId(classes);
             }
         }
+    }
+
+    export function fromGitpodConfigOrDefault(
+        classes: WorkspaceClassesConfig,
+        requirements: WorkspaceRequirements | undefined,
+        defaultClass: string,
+    ): string {
+        let selected: string | undefined = undefined;
+        if (requirements?.class) {
+            if (Array.isArray(requirements.class)) {
+                selected = requirements.class.find((r) => classes.filter((c) => !c.deprecated).some((c) => r === c.id));
+            } else {
+                const singleClass = requirements.class as string;
+                selected = classes.filter((c) => !c.deprecated).find((c) => singleClass === c.id)?.id;
+            }
+        }
+
+        return selected ?? defaultClass;
     }
 }

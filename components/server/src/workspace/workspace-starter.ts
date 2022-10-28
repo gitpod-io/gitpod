@@ -225,9 +225,11 @@ export async function getWorkspaceClassForInstance(
             }
 
             if (workspace.type == "prebuild") {
-                if (user.additionalData?.workspaceClasses?.prebuild) {
-                    workspaceClass = user.additionalData?.workspaceClasses?.prebuild;
-                }
+                workspaceClass = WorkspaceClasses.fromGitpodConfigOrDefault(
+                    config,
+                    workspace.config.workspaceRequirements,
+                    WorkspaceClasses.getDefaultId(config),
+                );
             }
 
             if (!workspaceClass) {
