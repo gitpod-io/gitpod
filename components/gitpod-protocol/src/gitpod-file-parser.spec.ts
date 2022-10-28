@@ -141,5 +141,27 @@ gitConfig:
             image: DEFAULT_IMAGE,
         });
     }
+
+    @test public testSingleWorkspaceClass() {
+        const content = `workspaceRequirements: \n class: g1-standard`;
+        const result = this.parser.parse(content, {}, DEFAULT_CONFIG);
+        expect(result.config).to.deep.equal({
+            workspaceRequirements: {
+                class: "g1-standard",
+            },
+            image: DEFAULT_IMAGE,
+        });
+    }
+
+    @test public testMultiWorkspaceClass() {
+        const content = `workspaceRequirements: \n class:\n` + `  - g1-standard\n` + `  - g1-large`;
+        const result = this.parser.parse(content, {}, DEFAULT_CONFIG);
+        expect(result.config).to.deep.equal({
+            workspaceRequirements: {
+                class: ["g1-standard", "g1-large"],
+            },
+            image: DEFAULT_IMAGE,
+        });
+    }
 }
 module.exports = new TestGitpodFileParser(); // Only to circumvent no usage warning :-/
