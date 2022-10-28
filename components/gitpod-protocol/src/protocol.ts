@@ -818,6 +818,10 @@ export interface CoreDumpConfig {
     hardLimit?: number;
 }
 
+export interface WorkspaceRequirements {
+    class?: string | string[];
+}
+
 export interface WorkspaceConfig {
     mainConfiguration?: string;
     additionalRepositories?: RepositoryCloneInformation[];
@@ -831,6 +835,7 @@ export interface WorkspaceConfig {
     vscode?: VSCodeConfig;
     jetbrains?: JetBrainsConfig;
     coreDump?: CoreDumpConfig;
+    workspaceRequirements?: WorkspaceRequirements;
 
     /** deprecated. Enabled by default **/
     experimentalNetwork?: boolean;

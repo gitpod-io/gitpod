@@ -309,6 +309,17 @@
                     "description": "the hard limit acts as a ceiling for the soft limit. For more details please check https://man7.org/linux/man-pages/man2/getrlimit.2.html"
                 }
             }
+        },
+        "workspaceRequirements": {
+            "type": "object",
+            "description": "Configure the requirements of the workspace.",
+            "additionalProperties": false,
+            "properties": {
+                "class": {
+                    "type": ["string", "array"],
+                    "description": "The class that should be used for the workspace."
+                }
+            }
         }
     },
     "additionalProperties": false,
