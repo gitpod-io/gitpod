@@ -32,6 +32,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		openVSXProxyUrl = fmt.Sprintf("open-vsx.%s", ctx.Config.Domain)
 	}
 
+	extensionsGalleryItemUrl := "https://open-vsx.org/vscode/item"
+	trustedDomain := "https://open-vsx.org"
+
 	bscfg := config.Config{
 		BlobServe: blobserve.Config{
 			Port:    ContainerPort,
@@ -47,6 +50,22 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					}, {
 						Search:      "open-vsx.org",
 						Replacement: openVSXProxyUrl,
+						Path:        "/ide/out/vs/workbench/workbench.web.main.js",
+					}, {
+						Search:      "{{extensionsGalleryItemUrl}}",
+						Replacement: extensionsGalleryItemUrl,
+						Path:        "/ide/out/vs/workbench/workbench.web.api.js",
+					}, {
+						Search:      "{{extensionsGalleryItemUrl}}",
+						Replacement: extensionsGalleryItemUrl,
+						Path:        "/ide/out/vs/workbench/workbench.web.main.js",
+					}, {
+						Search:      "{{trustedDomain}}",
+						Replacement: trustedDomain,
+						Path:        "/ide/out/vs/workbench/workbench.web.api.js",
+					}, {
+						Search:      "{{trustedDomain}}",
+						Replacement: trustedDomain,
 						Path:        "/ide/out/vs/workbench/workbench.web.main.js",
 					}, {
 						Search:      "ide.gitpod.io/code/markeplace.json",
