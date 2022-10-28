@@ -59,6 +59,7 @@ var aptUpdated = false
 const (
 	dockerSocketFN = "/var/run/docker.sock"
 	gitpodUserId   = 33333
+	containerIf    = "ceth0"
 )
 
 func main() {
@@ -135,7 +136,6 @@ func runWithinNetns() (err error) {
 	}
 	args = append(args, userArgs...)
 
-	containerIf := "ceth0"
 	netIface, err := netlink.LinkByName(containerIf)
 	if err != nil {
 		return xerrors.Errorf("cannot get container network device %s: %w", containerIf, err)
