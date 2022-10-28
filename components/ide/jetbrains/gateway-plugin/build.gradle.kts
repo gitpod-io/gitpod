@@ -155,7 +155,7 @@ tasks {
         var pluginChannel: String? = System.getenv("JB_GATEWAY_GITPOD_PLUGIN_CHANNEL")
         if (pluginChannel.isNullOrBlank()) {
             pluginChannel = if (pluginVersion.contains("-main.")) {
-                "Nightly"
+                "Stable"
             } else {
                 "Dev"
             }
