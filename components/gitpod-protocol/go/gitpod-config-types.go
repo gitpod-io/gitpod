@@ -86,6 +86,9 @@ type GitpodConfig struct {
 
 	// Path to where the IDE's workspace should be opened. Supports vscode's `*.code-workspace` files.
 	WorkspaceLocation string `yaml:"workspaceLocation,omitempty"`
+
+	// Configure the requirements of the workspace.
+	WorkspaceRequirements *WorkspaceRequirements `yaml:"workspaceRequirements,omitempty"`
 }
 
 // Image_object The Docker image to run your workspace in.
@@ -223,6 +226,13 @@ type Vscode struct {
 
 	// List of extensions which should be installed for users of this workspace. The identifier of an extension is always '${publisher}.${name}'. For example: 'vscode.csharp'.
 	Extensions []string `yaml:"extensions,omitempty"`
+}
+
+// WorkspaceRequirements Configure the requirements of the workspace.
+type WorkspaceRequirements struct {
+
+	// The class that should be used for the workspace.
+	Class interface{} `yaml:"class,omitempty"`
 }
 
 func (strct *AdditionalRepositoriesItems) MarshalJSON() ([]byte, error) {
@@ -545,6 +555,17 @@ func (strct *GitpodConfig) MarshalJSON() ([]byte, error) {
 		buf.Write(tmp)
 	}
 	comma = true
+	// Marshal the "workspaceRequirements" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"workspaceRequirements\": ")
+	if tmp, err := json.Marshal(strct.WorkspaceRequirements); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
 
 	buf.WriteString("}")
 	rv := buf.Bytes()
@@ -609,6 +630,10 @@ func (strct *GitpodConfig) UnmarshalJSON(b []byte) error {
 			}
 		case "workspaceLocation":
 			if err := json.Unmarshal([]byte(v), &strct.WorkspaceLocation); err != nil {
+				return err
+			}
+		case "workspaceRequirements":
+			if err := json.Unmarshal([]byte(v), &strct.WorkspaceRequirements); err != nil {
 				return err
 			}
 		default:
@@ -1220,6 +1245,46 @@ func (strct *Vscode) UnmarshalJSON(b []byte) error {
 		switch k {
 		case "extensions":
 			if err := json.Unmarshal([]byte(v), &strct.Extensions); err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("additional property not allowed: \"" + k + "\"")
+		}
+	}
+	return nil
+}
+
+func (strct *WorkspaceRequirements) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0))
+	buf.WriteString("{")
+	comma := false
+	// Marshal the "class" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"class\": ")
+	if tmp, err := json.Marshal(strct.Class); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
+
+	buf.WriteString("}")
+	rv := buf.Bytes()
+	return rv, nil
+}
+
+func (strct *WorkspaceRequirements) UnmarshalJSON(b []byte) error {
+	var jsonMap map[string]json.RawMessage
+	if err := json.Unmarshal(b, &jsonMap); err != nil {
+		return err
+	}
+	// parse all the defined properties
+	for k, v := range jsonMap {
+		switch k {
+		case "class":
+			if err := json.Unmarshal([]byte(v), &strct.Class); err != nil {
 				return err
 			}
 		default:
