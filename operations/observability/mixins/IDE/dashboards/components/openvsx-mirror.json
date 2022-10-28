@@ -125,7 +125,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(rate(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\"}[2m]))",
@@ -224,7 +224,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\",outcome=~\"CLIENT_ERROR\",status!~\"404\"})[2m])/sum(rate(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\"})[2m])",
+          "expr": "sum(rate(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\",outcome!~\"SUCCESS|REDIRECTION\"})[2m])/sum(rate(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\"})[2m])",
           "legendFormat": "total ratio",
           "range": true,
           "refId": "A"
@@ -320,7 +320,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (status) (rate(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\",outcome=~\"CLIENT_ERROR\"})[2m])/ignoring(status) group_left sum(rate(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\"})[2m])",
+          "expr": "sum by (status) (rate(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\",outcome!~\"SUCCESS|REDIRECTION\"})[2m])/ignoring(status) group_left sum(rate(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\"})[2m])",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -504,7 +504,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "method_timed_seconds_max{cluster=~\"$cluster\", pod=~\"$pod\"}",
@@ -602,7 +602,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "method_timed_seconds_active_count{cluster=~\"$cluster\", pod=~\"$pod\"}",
@@ -614,7 +614,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "",
