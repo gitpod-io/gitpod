@@ -203,43 +203,47 @@ export async function getWorkspaceClassForInstance(
     previousInstance: WorkspaceInstance | undefined,
     user: User,
     entitlementService: EntitlementService,
-    config: WorkspaceClassesConfig,
+    classes: WorkspaceClassesConfig,
     workspaceDb: DBWithTracing<WorkspaceDB>,
 ): Promise<string> {
     const span = TraceContext.startSpan("getWorkspaceClassForInstance", ctx);
     try {
-        let workspaceClass = "";
+        let workspaceClass: string | undefined = "";
         if (!previousInstance?.workspaceClass) {
             if (workspace.type == "regular") {
                 const prebuildClass = await WorkspaceClasses.getFromPrebuild(ctx, workspace, workspaceDb.trace(ctx));
                 if (prebuildClass) {
                     const userClass = await WorkspaceClasses.getConfiguredOrUpgradeFromLegacy(
                         user,
-                        config,
+                        classes,
                         entitlementService,
                     );
-                    workspaceClass = WorkspaceClasses.selectClassForRegular(prebuildClass, userClass, config);
-                } else if (user.additionalData?.workspaceClasses?.regular) {
-                    workspaceClass = user.additionalData?.workspaceClasses?.regular;
+                    workspaceClass = WorkspaceClasses.selectClassForRegular(prebuildClass, userClass, classes);
+                } else {
+                    workspaceClass = WorkspaceClasses.fromGitpodConfigOrDefault(
+                        classes,
+                        workspace.config.workspaceRequirements,
+                        await WorkspaceClasses.getConfiguredOrUpgradeFromLegacy(user, classes, entitlementService),
+                    );
                 }
             }
 
             if (workspace.type == "prebuild") {
                 workspaceClass = WorkspaceClasses.fromGitpodConfigOrDefault(
-                    config,
+                    classes,
                     workspace.config.workspaceRequirements,
-                    WorkspaceClasses.getDefaultId(config),
+                    WorkspaceClasses.getDefaultId(classes),
                 );
             }
 
             if (!workspaceClass) {
-                workspaceClass = WorkspaceClasses.getDefaultId(config);
+                workspaceClass = WorkspaceClasses.getDefaultId(classes);
                 if (await entitlementService.userGetsMoreResources(user)) {
-                    workspaceClass = WorkspaceClasses.getMoreResourcesIdOrDefault(config);
+                    workspaceClass = WorkspaceClasses.getMoreResourcesIdOrDefault(classes);
                 }
             }
         } else {
-            workspaceClass = WorkspaceClasses.getPreviousOrDefault(config, previousInstance.workspaceClass);
+            workspaceClass = WorkspaceClasses.getPreviousOrDefault(classes, previousInstance.workspaceClass);
         }
 
         return workspaceClass;
