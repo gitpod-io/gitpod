@@ -14,7 +14,9 @@ on:
         required: true
       slackWebhook:
         required: true
-
+env:
+  BACKEND_PLUGIN_GRADLE_LATEST_PATH: components/ide/jetbrains/backend-plugin/gradle-latest.properties
+  SNAPSHOTS_HTML_FILENAME: snapshots.html
 jobs:
   update-jetbrains:
     runs-on: ubuntu-latest
@@ -41,12 +43,50 @@ jobs:
         uses: google-github-actions/setup-gcloud@v0
         with:
           project_id: ${{ secrets.projectId }}
+      - name: Save the snapshots page to an HTML file
+        run: curl -sL https://www.jetbrains.com/intellij-repository/snapshots > ${{ env.SNAPSHOTS_HTML_FILENAME }}
+      - name: Get Current Platform Version
+        id: current-version
+        run: |
+            CURRENT_VERSION=$(cat ${{ env.BACKEND_PLUGIN_GRADLE_LATEST_PATH }} | grep platformVersion= | sed 's/platformVersion=//')
+            echo "::set-output name=result::$CURRENT_VERSION"
+      - name: Extract Major Version from Current Platform Version
+        id: major-version
+        run: |
+            MAJOR_VERSION=$(cut -c 1-3 <<< ${{ steps.current-version.outputs.result }})
+            echo "Major Version from Current Platform Version: $MAJOR_VERSION"
+            echo "::set-output name=result::$MAJOR_VERSION"
+      - name: Replace Major Version Placeholder
+        id: update-xpath
+        run: |
+            UPDATED_XPATH=$(echo "${{ inputs.xpath }}" | sed 's/MAJOR_VERSION_PLACEHOLDER/${{ steps.major-version.outputs.result }}/')
+            echo "Updated xpath: $UPDATED_XPATH"
+            echo "::set-output name=result::$UPDATED_XPATH"
+      - name: Get Latest Platform Version
+        uses: QwerMike/xpath-action@v1
+        id: latest-version
+        with:
+            filename: ${{ env.SNAPSHOTS_HTML_FILENAME }}
+            expression: ${{ steps.update-xpath.outputs.result }}
+      - run: rm ${{ env.SNAPSHOTS_HTML_FILENAME }}
+      - name: Print Result
+        run: |
+            echo "Current platform version: ${{ steps.current-version.outputs.result }}"
+            echo "Latest platform version:  ${{ steps.latest-version.outputs.result }}"
+      - name: Update ${{ env.BACKEND_PLUGIN_GRADLE_LATEST_PATH }}
+        if: ${{ steps.latest-version.outputs.result != steps.current-version.outputs.result }}
+        run: |
+            sed -i 's/platformVersion=${{ steps.current-version.outputs.result }}/platformVersion=${{ steps.latest-version.outputs.result }}/' ${{ env.BACKEND_PLUGIN_GRADLE_LATEST_PATH }}
+            git diff
       - name: Leeway build
         run: |
           gcloud auth configure-docker --quiet
           export LEEWAY_WORKSPACE_ROOT=$(pwd)
           cd components/ide/jetbrains/image
-          leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build .:${{ inputs.productId }}-latest
+          leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib -- ./gradlew build && \
+          leeway exec --package components/ide/jetbrains/backend-plugin:plugin-latest -- ./gradlew buildPlugin && \
+          echo 12345
+      # leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build .:${{ inputs.productId }}-latest
       - name: Get previous job's status
         id: lastrun
         uses: filiptronicek/get-last-job-status@main
