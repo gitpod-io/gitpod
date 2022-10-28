@@ -7289,7 +7289,7 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 10
           successThreshold: 1
-          timeoutSeconds: 1
+          timeoutSeconds: 2
         name: registry-facade
         ports:
         - containerPort: 32223
@@ -7303,7 +7303,7 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 5
           successThreshold: 2
-          timeoutSeconds: 1
+          timeoutSeconds: 2
         resources:
           requests:
             cpu: 100m
@@ -8267,7 +8267,7 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 10
           successThreshold: 1
-          timeoutSeconds: 1
+          timeoutSeconds: 2
         name: blobserve
         ports:
         - containerPort: 32224
@@ -8280,7 +8280,7 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 5
           successThreshold: 1
-          timeoutSeconds: 1
+          timeoutSeconds: 2
         resources:
           requests:
             cpu: 100m
