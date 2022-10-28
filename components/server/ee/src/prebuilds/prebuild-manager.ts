@@ -394,14 +394,7 @@ export class PrebuildManager {
     }
 
     private async shouldSkipInactiveProject(project: Project): Promise<boolean> {
-        const usage = await this.projectService.getProjectUsage(project.id);
-        if (!usage?.lastWorkspaceStart) {
-            return false;
-        }
-        const now = Date.now();
-        const lastUse = new Date(usage.lastWorkspaceStart).getTime();
-        const inactiveProjectTime = 1000 * 60 * 60 * 24 * 7 * 1; // 1 week
-        return now - lastUse > inactiveProjectTime;
+        return await this.projectService.isProjectConsideredInactive(project.id);
     }
 
     private async shouldSkipInactiveRepository(ctx: TraceContext, cloneURL: string): Promise<boolean> {

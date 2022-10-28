@@ -45,6 +45,7 @@ export namespace Project {
 
     export interface Overview {
         branches: BranchDetails[];
+        isConsideredInactive?: boolean;
     }
 
     export namespace Overview {
