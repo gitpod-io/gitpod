@@ -25,7 +25,7 @@ func NetworkIsReachableProbe(url string) func() error {
 		}
 		client := &http.Client{
 			Transport: tr,
-			Timeout:   1 * time.Second,
+			Timeout:   5 * time.Second,
 			// never follow redirects
 			CheckRedirect: func(*http.Request, []*http.Request) error {
 				return http.ErrUseLastResponse
