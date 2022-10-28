@@ -61,7 +61,9 @@ RUN nameShort=$(jq --raw-output '.nameShort' product.json) && \
     setQuality="setpath([\"quality\"]; \"$CODE_QUALITY\")" && \
     setNameShort="setpath([\"nameShort\"]; \"$nameShort\")" && \
     setNameLong="setpath([\"nameLong\"]; \"$nameLong\")" && \
-    jqCommands="${setQuality} | ${setNameShort} | ${setNameLong}" && \
+    setExtensionsGalleryItemUrl="setpath([\"extensionsGallery\", \"itemUrl\"]; \"{{extensionsGalleryItemUrl}}\")" && \
+    addTrustedDomain=".linkProtectionTrustedDomains += [\"{{trustedDomain}}\"]" && \
+    jqCommands="${setQuality} | ${setNameShort} | ${setNameLong} | ${setExtensionsGalleryItemUrl} | ${addTrustedDomain}" && \
     cat product.json | jq "${jqCommands}" > product.json.tmp && \
     mv product.json.tmp product.json && \
     jq '{quality,nameLong,nameShort}' product.json
