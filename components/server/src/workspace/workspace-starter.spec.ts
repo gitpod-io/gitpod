@@ -6,7 +6,15 @@
 
 import { DBWithTracing, MaybeWorkspaceInstance, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { WorkspaceClassesConfig } from "./workspace-classes";
-import { PrebuiltWorkspace, User, Workspace, WorkspaceInstance, WorkspaceType } from "@gitpod/gitpod-protocol";
+import {
+    PrebuiltWorkspace,
+    User,
+    Workspace,
+    WorkspaceConfig,
+    WorkspaceInstance,
+    WorkspaceRequirements,
+    WorkspaceType,
+} from "@gitpod/gitpod-protocol";
 import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import * as chai from "chai";
 import { migrationIDESettings, chooseIDE, getWorkspaceClassForInstance } from "./workspace-starter";
@@ -301,19 +309,36 @@ describe("workspace-starter", function () {
             await execute(builder, "g1-standard");
         });
 
-        it("new prebuild workspace, prebuild class configured", async function () {
-            const builder = new WorkspaceClassTestBuilder("prebuild").withPrebuildClassConfigured("g1-large");
-            await execute(builder, "g1-large");
-        });
-
-        it("new prebuild workspace, prebuild class not configured, has more resources", async function () {
-            const builder = new WorkspaceClassTestBuilder("prebuild").withHasMoreResources();
-            await execute(builder, "g1-large");
-        });
-
         it("new prebuild workspace, prebuild class not configured, does not have more resources", async function () {
             const builder = new WorkspaceClassTestBuilder("prebuild");
             await execute(builder, "g1-standard");
+        });
+
+        it("new prebuild workspace, prebuild class not configured, gitpod.yaml has g1-large", async function () {
+            const requirements: WorkspaceRequirements = {
+                class: "g1-large",
+            };
+
+            const builder = new WorkspaceClassTestBuilder("prebuild").withWorkspaceRequirements(requirements);
+            await execute(builder, "g1-large");
+        });
+
+        it("new prebuild workspace, prebuild class not configured, first valid class from gitpod.yml", async function () {
+            const requirements: WorkspaceRequirements = {
+                class: ["unsupported", "g1-large"],
+            };
+
+            const builder = new WorkspaceClassTestBuilder("prebuild").withWorkspaceRequirements(requirements);
+            await execute(builder, "g1-large");
+        });
+
+        it("new regular workspace, class not configured, gitpod.yml has workspace class configured", async function () {
+            const requirements: WorkspaceRequirements = {
+                class: "g1-large",
+            };
+
+            const builder = new WorkspaceClassTestBuilder("regular").withWorkspaceRequirements(requirements);
+            await execute(builder, "g1-large");
         });
     });
 });
@@ -352,6 +377,9 @@ class WorkspaceClassTestBuilder {
     // User has more resources
     hasMoreResources: boolean;
 
+    // Requirements for the workspace
+    workspaceRequirements: WorkspaceRequirements;
+
     constructor(workspaceType: WorkspaceType) {
         this.workspaceType = workspaceType;
     }
@@ -381,6 +409,11 @@ class WorkspaceClassTestBuilder {
         return this;
     }
 
+    public withWorkspaceRequirements(req: WorkspaceRequirements): WorkspaceClassTestBuilder {
+        this.workspaceRequirements = req;
+        return this;
+    }
+
     public build(): [
         TraceContext,
         Workspace,
@@ -396,9 +429,14 @@ class WorkspaceClassTestBuilder {
             span,
         };
 
+        const workspaceConfig: WorkspaceConfig = {
+            workspaceRequirements: this.workspaceRequirements,
+        };
+
         const workspace: Workspace = {
             basedOnPrebuildId: this.basedOnPrebuild,
             type: this.workspaceType,
+            config: workspaceConfig,
         } as Workspace;
 
         const previousInstance: WorkspaceInstance = {
