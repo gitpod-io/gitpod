@@ -13,16 +13,22 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3
-            - name: Update JetBrains IDEs download URLs
+            - name: Check for updates
               run: |
+                  cat ./components/ide/jetbrains/backend-plugin/gradle-stable.properties
                   cd ./components/ide/jetbrains/image/gha-update-image
                   yarn install
                   node index.js
-            - uses: technote-space/get-diff-action@v6
-              with:
-                  FILES: WORKSPACE.yaml
+                  cat ../../backend-plugin/gradle-stable.properties
+                  git status
+
+            - name: Detect file changes
+              id: changes
+              run: |
+                echo "::set-output name=gradle-stable::$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep backend-plugin/gradle-stable.properties$ | xargs)"
+                echo "::set-output name=workspaceYaml::$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep WORKSPACE.yaml$ | xargs)"
             - name: Create Pull Request
-              if: env.GIT_DIFF && env.MATCHED_FILES
+              if: ${{steps.changes.outputs.gradle-stable || steps.changes.outputs.workspaceYaml}}
               uses: peter-evans/create-pull-request@v4
               with:
                   title: "[JetBrains] Update IDE images to new build version"

@@ -53,21 +53,34 @@ const IDEs = [
 
 (async () => {
     const workspaceYamlFilePath = path.resolve(__dirname, "../../../../../", "WORKSPACE.yaml");
-    const backendPluginGradleLatestFilePath = path.resolve(__dirname, "../../backend-plugin", "gradle-latest.properties");
-    
+    const backendPluginGradleStableFilePath = path.resolve(
+        __dirname,
+        "../../backend-plugin",
+        "gradle-stable.properties",
+    );
+
     let rawWorkspaceYaml;
-    let backendPluginGradleLatest;
+    let rawBackendPluginGradleLatest;
 
     try {
         rawWorkspaceYaml = fs.readFileSync(workspaceYamlFilePath, "utf8");
-        backendPluginGradleLatest = fs.readFileSync(backendPluginGradleLatestFilePath, "utf8");
+        rawBackendPluginGradleProps = fs.readFileSync(backendPluginGradleStableFilePath, "utf8");
     } catch (err) {
-        console.log(`Failed to read ${workspaceYamlFilePath}`);
+        console.log("Failed to read config files");
         throw err;
     }
 
-    console.log(backendPluginGradleLatest);
-    
+    const [, platformVersion] = rawBackendPluginGradleProps.match(/platformVersion=(.+)/);
+
+    if (!platformVersion) {
+        throw new Error("Missing platformVersion");
+    }
+
+    // const [currentMajorVersion] = platformVersion.split(".");
+
+    // if (!currentMajorVersion) {
+    //     throw new Error("Missing currentMajorVersion");
+    // }
 
     const workspaceYaml = yaml.parse(rawWorkspaceYaml);
 
@@ -116,12 +129,42 @@ const IDEs = [
         throw err;
     }
 
+    /**
+     * Calculating the currentMajorVersion from "2022.2" we want "222"
+     */
+    const [versionYear, versionQuarter] = majorVersion.split(".");
+    const [, , third, forth] = versionYear.split("");
+    const currentMajorVersion = [third, forth, versionQuarter].join("");
+
     const ideaArtifact = artifacts.find(
         (artifact) =>
-            artifact.groupId === "com.jetbrains.intellij.idea" && artifact.version.endsWith("-EAP-CANDIDATE-SNAPSHOT"),
+            artifact.groupId === "com.jetbrains.intellij.idea" &&
+            artifact.artifactId === "ideaIU" &&
+            artifact.version.startsWith(currentMajorVersion) &&
+            artifact.version.endsWith("-EAP-CANDIDATE-SNAPSHOT"),
     );
 
-    console.log(ideaArtifact);
+    if (!ideaArtifact) {
+        console.log("ideaArtifact not found");
+        throw err;
+    }
+
+    console.log({ majorVersion, platformVersion, currentMajorVersion, ideaArtifact });
+
+    const currentPluginSinceBuild = platformVersion.replace("-EAP-CANDIDATE-SNAPSHOT", "");
+    const newPluginSinceBuild = ideaArtifact.version.replace("-EAP-CANDIDATE-SNAPSHOT", "");
+    rawBackendPluginGradleProps = rawBackendPluginGradleProps.replace(
+        `platformVersion=${platformVersion}`,
+        `platformVersion=${ideaArtifact.version}`,
+    );
+    rawBackendPluginGradleProps = rawBackendPluginGradleProps.replace(
+        `pluginSinceBuild=${currentPluginSinceBuild}`,
+        `pluginSinceBuild=${newPluginSinceBuild}`,
+    );
 
     fs.writeFileSync(workspaceYamlFilePath, rawWorkspaceYaml);
+    fs.writeFileSync(backendPluginGradleStableFilePath, rawBackendPluginGradleProps);
+
+    console.log(`File updated: ${workspaceYamlFilePath}`);
+    console.log(`File updated: ${backendPluginGradleStableFilePath}`);
 })();
