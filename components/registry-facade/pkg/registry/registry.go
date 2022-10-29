@@ -261,7 +261,7 @@ func getRedisClient(cfg *config.RedisCacheConfig) (*redis.Client, error) {
 			Password: cfg.Password,
 		})
 
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
 		_, err := rdc.Ping(ctx).Result()
@@ -295,7 +295,7 @@ func getRedisClient(cfg *config.RedisCacheConfig) (*redis.Client, error) {
 		WriteTimeout:    time.Second * 5,
 	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	_, err := rdc.Ping(ctx).Result()
