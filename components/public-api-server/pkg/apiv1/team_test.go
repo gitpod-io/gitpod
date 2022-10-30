@@ -94,6 +94,7 @@ func TestTeamsService_ListTeams(t *testing.T) {
 		serverMock, client := setupTeamService(t)
 
 		teamMembers := []*protocol.TeamMemberInfo{
+<<<<<<< HEAD
 			newTeamMember(&protocol.TeamMemberInfo{
 				FullName: "Alice Alice",
 				Role:     protocol.TeamMember_Owner,
@@ -102,6 +103,31 @@ func TestTeamsService_ListTeams(t *testing.T) {
 				FullName: "Bob Bob",
 				Role:     protocol.TeamMember_Member,
 			}),
+=======
+			{
+				UserId:       uuid.New().String(),
+				FullName:     "Alice Alice",
+				PrimaryEmail: "alice@alice.com",
+				AvatarUrl:    "",
+				Role:         protocol.TeamMember_Owner,
+<<<<<<< HEAD
+				MemberSince:  memberSince,
+=======
+				MemberSince:  "",
+>>>>>>> 341fb7a4f ([public-api] Implement experimental ListTeams)
+			}, {
+				UserId:       uuid.New().String(),
+				FullName:     "Bob Bob",
+				PrimaryEmail: "bob@bob.com",
+				AvatarUrl:    "",
+				Role:         protocol.TeamMember_Member,
+<<<<<<< HEAD
+				MemberSince:  memberSince,
+=======
+				MemberSince:  "",
+>>>>>>> 341fb7a4f ([public-api] Implement experimental ListTeams)
+			},
+>>>>>>> dbb4e6399 ([public-api] Implement experimental ListTeams)
 		}
 		teams := []*protocol.Team{
 			newTeam(&protocol.Team{
