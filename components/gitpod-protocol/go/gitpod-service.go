@@ -84,9 +84,10 @@ type APIInterface interface {
 	TrackEvent(ctx context.Context, event *RemoteTrackMessage) (err error)
 	GetSupportedWorkspaceClasses(ctx context.Context) (res []*SupportedWorkspaceClass, err error)
 
-	CreateTeam(ctx context.Context, params string) (*Team, error)
-	GetTeamMembers(ctx context.Context, params string) ([]*TeamMemberInfo, error)
-	JoinTeam(ctx context.Context, params string) (*Team, error)
+	CreateTeam(ctx context.Context, teamName string) (*Team, error)
+	GetTeamMembers(ctx context.Context, teamID string) ([]*TeamMemberInfo, error)
+	JoinTeam(ctx context.Context, teamID string) (*Team, error)
+	GetGenericInvite(ctx context.Context, teamID string) (*TeamMembershipInvite, error)
 
 	InstanceUpdates(ctx context.Context, instanceID string) (<-chan *WorkspaceInstance, error)
 }
@@ -207,6 +208,15 @@ const (
 	FunctionTrackEvent FunctionName = "trackEvent"
 	// FunctionGetSupportedWorkspaceClasses is the name of the getSupportedWorkspaceClasses function
 	FunctionGetSupportedWorkspaceClasses FunctionName = "getSupportedWorkspaceClasses"
+
+	// FunctionCreateTeam is the name of the createTeam function
+	FunctionCreateTeam FunctionName = "createTeam"
+	// FunctionJoinTeam is the name of the joinTeam function
+	FunctionJoinTeam FunctionName = "joinTeam"
+	// FunctionGetTeamMembers is the name of the getTeamMembers function
+	FunctionGetTeamMembers FunctionName = "getTeamMembers"
+	// FunctionGetGenericInvite is the name of the getGenericInvite function
+	FunctionGetGenericInvite FunctionName = "getGenericInvite"
 
 	// FunctionOnInstanceUpdate is the name of the onInstanceUpdate callback function
 	FunctionOnInstanceUpdate = "onInstanceUpdate"
@@ -1392,7 +1402,7 @@ func (gp *APIoverJSONRPC) CreateTeam(ctx context.Context, teamName string) (res 
 		return
 	}
 	_params := []interface{}{teamName}
-	err = gp.C.Call(ctx, "createTeam", _params, &res)
+	err = gp.C.Call(ctx, string(FunctionCreateTeam), _params, &res)
 	return
 }
 
@@ -1402,7 +1412,7 @@ func (gp *APIoverJSONRPC) GetTeamMembers(ctx context.Context, teamID string) (re
 		return
 	}
 	_params := []interface{}{teamID}
-	err = gp.C.Call(ctx, "getTeamMembers", _params, &res)
+	err = gp.C.Call(ctx, string(FunctionGetTeamMembers), _params, &res)
 	return
 }
 
@@ -1412,7 +1422,17 @@ func (gp *APIoverJSONRPC) JoinTeam(ctx context.Context, inviteID string) (res *T
 		return
 	}
 	_params := []interface{}{inviteID}
-	err = gp.C.Call(ctx, "joinTeam", _params, &res)
+	err = gp.C.Call(ctx, string(FunctionJoinTeam), _params, &res)
+	return
+}
+
+func (gp *APIoverJSONRPC) GetGenericInvite(ctx context.Context, teamID string) (res *TeamMembershipInvite, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{teamID}
+	err = gp.C.Call(ctx, string(FunctionGetGenericInvite), _params, &res)
 	return
 }
 
@@ -2130,4 +2150,13 @@ type TeamMemberInfo struct {
 	AvatarUrl    string         `json:"avatarUrl,omitempty"`
 	Role         TeamMemberRole `json:"role,omitempty"`
 	MemberSince  string         `json:"memberSince,omitempty"`
+}
+
+type TeamMembershipInvite struct {
+	ID               string         `json:"id,omitempty"`
+	TeamID           string         `json:"teamId,omitempty"`
+	Role             TeamMemberRole `json:"role,omitempty"`
+	CreationTime     string         `json:"creationTime,omitempty"`
+	InvalidationTime string         `json:"invalidationTime,omitempty"`
+	InvitedEmail     string         `json:"invitedEmail,omitempty"`
 }
