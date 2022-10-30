@@ -26,6 +26,14 @@ func TestConvertError(t *testing.T) {
 			WebsocketError: errors.New("jsonrpc2: code -32603 message: Request getWorkspace failed with message: No workspace with id 'some-id' found."),
 			ExpectedStatus: connect.CodeInternal,
 		},
+		{
+			WebsocketError: errors.New("code 400"),
+			ExpectedStatus: connect.CodeInvalidArgument,
+		},
+		{
+			WebsocketError: errors.New("code 409"),
+			ExpectedStatus: connect.CodeAlreadyExists,
+		},
 	}
 
 	for _, s := range scenarios {
