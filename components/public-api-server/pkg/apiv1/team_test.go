@@ -25,13 +25,16 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+const (
+	memberSince = "2022-10-10T10:10:10.000Z"
+)
+
 func TestTeamsService_CreateTeam(t *testing.T) {
 
 	var (
-		name        = "Shiny New Team"
-		slug        = "shiny-new-team"
-		id          = uuid.New().String()
-		memberSince = "2022-10-10T10:10:10.000Z"
+		name = "Shiny New Team"
+		slug = "shiny-new-team"
+		id   = uuid.New().String()
 	)
 
 	t.Run("returns invalid argument when name is empty", func(t *testing.T) {
@@ -115,6 +118,105 @@ func TestTeamsService_CreateTeam(t *testing.T) {
 				},
 				TeamInvitation: &v1.TeamInvitation{
 					Id: inviteID,
+				},
+			},
+		}, response.Msg)
+	})
+}
+
+func TestTeamsService_ListTeams(t *testing.T) {
+	t.Run("returns teams with members and invite", func(t *testing.T) {
+		ctx := context.Background()
+		serverMock, client := setupTeamService(t)
+
+		teamMembers := []*protocol.TeamMemberInfo{
+			{
+				UserId:       uuid.New().String(),
+				FullName:     "Alice Alice",
+				PrimaryEmail: "alice@alice.com",
+				AvatarUrl:    "",
+				Role:         protocol.TeamMember_Owner,
+				MemberSince:  memberSince,
+			}, {
+				UserId:       uuid.New().String(),
+				FullName:     "Bob Bob",
+				PrimaryEmail: "bob@bob.com",
+				AvatarUrl:    "",
+				Role:         protocol.TeamMember_Member,
+				MemberSince:  memberSince,
+			},
+		}
+		teams := []*protocol.Team{
+			{
+				ID:   uuid.New().String(),
+				Name: "Team A",
+				Slug: "team_a",
+			}, {
+				ID:   uuid.New().String(),
+				Name: "Team B",
+				Slug: "team_ba",
+			},
+		}
+		inviteID := uuid.New().String()
+
+		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
+
+		// Mocks for populating team A details
+		serverMock.EXPECT().GetTeamMembers(gomock.Any(), teams[0].ID).Return(teamMembers, nil)
+		serverMock.EXPECT().GetGenericInvite(gomock.Any(), teams[0].ID).Return(&protocol.TeamMembershipInvite{
+			ID:     inviteID,
+			TeamID: teams[0].ID,
+		}, nil)
+		// Mock for populating team B details
+		serverMock.EXPECT().GetTeamMembers(gomock.Any(), teams[1].ID).Return(teamMembers, nil)
+		serverMock.EXPECT().GetGenericInvite(gomock.Any(), teams[1].ID).Return(&protocol.TeamMembershipInvite{
+			ID:     inviteID,
+			TeamID: teams[1].ID,
+		}, nil)
+
+		response, err := client.ListTeams(ctx, connect.NewRequest(&v1.ListTeamsRequest{}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.ListTeamsResponse{
+			Teams: []*v1.Team{
+				{
+					Id:   teams[0].ID,
+					Name: teams[0].Name,
+					Slug: teams[0].Slug,
+					Members: []*v1.TeamMember{
+						{
+							UserId:      teamMembers[0].UserId,
+							Role:        teamRoleToAPIResponse(teamMembers[0].Role),
+							MemberSince: parseTimeStamp(memberSince),
+						},
+						{
+							UserId:      teamMembers[1].UserId,
+							Role:        teamRoleToAPIResponse(teamMembers[1].Role),
+							MemberSince: parseTimeStamp(memberSince),
+						},
+					},
+					TeamInvitation: &v1.TeamInvitation{
+						Id: inviteID,
+					},
+				},
+				{
+					Id:   teams[1].ID,
+					Name: teams[1].Name,
+					Slug: teams[1].Slug,
+					Members: []*v1.TeamMember{
+						{
+							UserId:      teamMembers[0].UserId,
+							Role:        teamRoleToAPIResponse(teamMembers[0].Role),
+							MemberSince: parseTimeStamp(memberSince),
+						},
+						{
+							UserId:      teamMembers[1].UserId,
+							Role:        teamRoleToAPIResponse(teamMembers[1].Role),
+							MemberSince: parseTimeStamp(memberSince),
+						},
+					},
+					TeamInvitation: &v1.TeamInvitation{
+						Id: inviteID,
+					},
 				},
 			},
 		}, response.Msg)
