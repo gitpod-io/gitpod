@@ -84,6 +84,8 @@ type RedisCacheConfig struct {
 	SentinelAddrs []string `json:"sentinelAddrs,omitempty"`
 	Username      string   `json:"username,omitempty"`
 	Password      string   `json:"-" env:"REDIS_PASSWORD"`
+
+	UseTLS bool `json:"useTLS,omitempty"`
 }
 
 type IPFSCacheConfig struct {

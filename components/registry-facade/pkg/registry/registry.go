@@ -6,6 +6,7 @@ package registry
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -255,11 +256,20 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 func getRedisClient(cfg *config.RedisCacheConfig) (*redis.Client, error) {
 	if cfg.SingleHostAddress != "" {
 		log.WithField("addr", cfg.SingleHostAddress).WithField("username", cfg.Username).Info("connecting to single Redis host")
-		rdc := redis.NewClient(&redis.Options{
+
+		opts := &redis.Options{
 			Addr:     cfg.SingleHostAddress,
 			Username: cfg.Username,
 			Password: cfg.Password,
-		})
+		}
+
+		if cfg.UseTLS {
+			opts.TLSConfig = &tls.Config{
+				InsecureSkipVerify: true,
+			}
+		}
+
+		rdc := redis.NewClient(opts)
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
