@@ -12,7 +12,6 @@ export function registerServerMetrics(registry: prometheusClient.Registry) {
     registry.registerMetric(apiConnectionClosedCounter);
     registry.registerMetric(apiCallCounter);
     registry.registerMetric(apiCallDurationHistogram);
-    registry.registerMetric(apiCallUserCounter);
     registry.registerMetric(httpRequestTotal);
     registry.registerMetric(httpRequestDuration);
     registry.registerMetric(messagebusTopicReads);
@@ -73,16 +72,6 @@ export const apiCallDurationHistogram = new prometheusClient.Histogram({
 
 export function observeAPICallsDuration(method: string, statusCode: number, duration: number) {
     apiCallDurationHistogram.observe({ method, statusCode }, duration);
-}
-
-const apiCallUserCounter = new prometheusClient.Counter({
-    name: "gitpod_server_api_calls_user_total",
-    help: "Total amount of API calls per user",
-    labelNames: ["method", "user"],
-});
-
-export function increaseApiCallUserCounter(method: string, user: string) {
-    apiCallUserCounter.inc({ method, user });
 }
 
 const httpRequestTotal = new prometheusClient.Counter({

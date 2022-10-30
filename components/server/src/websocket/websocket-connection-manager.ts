@@ -40,7 +40,6 @@ import {
     increaseApiCallCounter,
     increaseApiConnectionClosedCounter,
     increaseApiConnectionCounter,
-    increaseApiCallUserCounter,
     observeAPICallsDuration,
     apiCallDurationHistogram,
 } from "../prometheus-metrics";
@@ -377,12 +376,6 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
     }
 
     protected async onRequest(method: string, ...args: any[]): Promise<any> {
-        if (!this.rateLimiter.user.startsWith("session-")) {
-            increaseApiCallUserCounter(method, this.rateLimiter.user);
-        } else {
-            increaseApiCallUserCounter(method, "anonymous");
-        }
-
         const span = TraceContext.startSpan(method, undefined);
         const ctx = { span };
         const userId = this.clientMetadata.userId;
