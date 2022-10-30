@@ -18,7 +18,7 @@ import gitpodIcon from "./icons/gitpod.svg";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { useHistory } from "react-router-dom";
 import { trackButtonOrAnchor, trackPathChange, trackLocation } from "./Analytics";
-import { ContextURL, User } from "@gitpod/gitpod-protocol";
+import { ContextURL, User, Team } from "@gitpod/gitpod-protocol";
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
 import { Experiment } from "./experiments";
 import { workspacesPathMain } from "./workspaces/workspaces.routes";
@@ -52,6 +52,8 @@ import { isGitpodIo, isLocalPreview } from "./utils";
 import Alert from "./components/Alert";
 import { BlockedRepositories } from "./admin/BlockedRepositories";
 import { AppNotifications } from "./AppNotifications";
+import { teamsService } from "./service/public-api";
+import { FeatureFlagContext } from "./contexts/FeatureFlagContext";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "./workspaces/Workspaces"));
@@ -154,6 +156,7 @@ function App() {
     const { user, setUser, refreshUserBillingMode } = useContext(UserContext);
     const { teams, setTeams } = useContext(TeamsContext);
     const { setIsDark } = useContext(ThemeContext);
+    const { usePublicApiTeamsService } = useContext(FeatureFlagContext);
 
     const [loading, setLoading] = useState<boolean>(true);
     const [isWhatsNewShown, setWhatsNewShown] = useState(false);
@@ -165,7 +168,22 @@ function App() {
         (async () => {
             var user: User | undefined;
             try {
-                const teamsPromise = getGitpodService().server.getTeams();
+                let teamsPromise: Promise<Team[]>;
+                if (usePublicApiTeamsService) {
+                    teamsPromise = teamsService.listTeams({}).then((response) => {
+                        return response.teams.map((team) => {
+                            const t: Team = {
+                                id: team.id,
+                                name: team.name,
+                                slug: team.slug,
+                                creationTime: "",
+                            };
+                            return t;
+                        });
+                    });
+                } else {
+                    teamsPromise = getGitpodService().server.getTeams();
+                }
 
                 user = await getGitpodService().server.getLoggedInUser();
                 setUser(user);
