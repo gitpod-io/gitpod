@@ -1134,7 +1134,7 @@
             "uid": "$datasource"
           },
           "exemplar": true,
-          "expr": "sum(rate(gitpod_server_api_calls_user_total{cluster=~\"$cluster\", method=~\"ts.*\"}[5m])) by (cluster, method) * 60",
+          "expr": "sum(rate(gitpod_server_api_calls_total{cluster=~\"$cluster\", method=~\"ts.*\"}[5m])) by (cluster, method) * 60",
           "interval": "",
           "legendFormat": "{{cluster}} {{method}}",
           "refId": "A"
