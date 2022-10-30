@@ -101,6 +101,9 @@ func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool) error
 	workspacesRoute, workspacesServiceHandler := v1connect.NewWorkspacesServiceHandler(apiv1.NewWorkspaceService(connPool), handlerOptions...)
 	srv.HTTPMux().Handle(workspacesRoute, workspacesServiceHandler)
 
+	teamsRoute, teamsServiceHandler := v1connect.NewTeamsServiceHandler(apiv1.NewTeamsService(connPool), handlerOptions...)
+	srv.HTTPMux().Handle(teamsRoute, teamsServiceHandler)
+
 	return nil
 }
 
