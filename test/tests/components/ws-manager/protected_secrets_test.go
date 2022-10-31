@@ -38,7 +38,6 @@ func TestProtectedSecrets(t *testing.T) {
 		})
 
 		swr := func(req *wsmanapi.StartWorkspaceRequest) error {
-			req.Spec.FeatureFlags = []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PROTECTED_SECRETS}
 			req.Spec.Envvars = []*wsmanapi.EnvironmentVariable{
 				{
 					Name:  SECRET_NAME,

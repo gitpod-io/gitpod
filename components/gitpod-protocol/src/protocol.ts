@@ -295,7 +295,6 @@ export type BillingTier = "paid" | "free";
 export const WorkspaceFeatureFlags = {
     full_workspace_backup: undefined,
     persistent_volume_claim: undefined,
-    protected_secrets: undefined,
     workspace_class_limiting: undefined,
     workspace_connection_limiting: undefined,
     workspace_psi: undefined,
