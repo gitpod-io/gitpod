@@ -41,12 +41,26 @@ jobs:
         uses: google-github-actions/setup-gcloud@v0
         with:
           project_id: ${{ secrets.projectId }}
+      - name: Get Current Platform Version
+        id: current-version
+        run: |
+          CURRENT_VERSION=$(cat ./components/ide/jetbrains/backend-plugin/gradle-latest.properties | grep platformVersion= | sed 's/platformVersion=//')
+          echo "::set-output name=result::$CURRENT_VERSION"
+          echo $CURRENT_VERSION
+      - name: Find next version
+        id: ide-version
+        run: |
+          curl -sL https://www.jetbrains.com/intellij-repository/snapshots/index.json > index.json
+          IDE_VERSION=$(cat index.json| jq -r -c '.artifacts[] | select(.content | . != null and . != "") | select(.groupId | . == "com.jetbrains.intellij.idea") | select(.version | . == "${{ steps.current-version.outputs.result }}") | .content')
+          echo "::set-output name=result::$IDE_VERSION"
+          echo $IDE_VERSION
       - name: Leeway build
+        if: ${{ steps.ide-version.outputs.result }}
         run: |
           gcloud auth configure-docker --quiet
           export LEEWAY_WORKSPACE_ROOT=$(pwd)
           cd components/ide/jetbrains/image
-          leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build .:${{ inputs.productId }}-latest
+          leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -DbuildNumber=${{ steps.ide-version.outputs.result }} .:${{ inputs.productId }}-latest
       - name: Get previous job's status
         id: lastrun
         uses: filiptronicek/get-last-job-status@main
