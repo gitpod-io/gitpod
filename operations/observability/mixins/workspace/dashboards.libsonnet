@@ -23,5 +23,6 @@
     'gitpod-network-limiting.json': (import 'dashboards/network-limiting.json'),
     'gitpod-component-image-builder.json': (import 'dashboards/components/image-builder.json'),
     'gitpod-psi.json': (import 'dashboards/psi.json'),
+    'gitpod-workspace-psi.json': (import 'dashboards/workspace-psi.json'),
   },
 }
