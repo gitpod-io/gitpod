@@ -1,6 +1,8 @@
 # Change Log
 
 ## October 2022
+- More stable docker-compose behavior with lots of containers ([#14259](https://github.com/gitpod-io/gitpod/pull/14259)) - [@utam0k](https://github.com/utam0k)
+- Show warning for inactive projects and allow to resume prebuilds again. ([#14081](https://github.com/gitpod-io/gitpod/pull/14081)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Deactivate team scope selector on personal usage ([#14238](https://github.com/gitpod-io/gitpod/pull/14238)) - [@gtsiolis](https://github.com/gtsiolis)
 - Reduction of noise error logs ([#14218](https://github.com/gitpod-io/gitpod/pull/14218)) - [@utam0k](https://github.com/utam0k)
 - Fix 'gp open' command to open files in JetBrains Client instead of the backend IDE ([#14182](https://github.com/gitpod-io/gitpod/pull/14182)) - [@felladrin](https://github.com/felladrin)
