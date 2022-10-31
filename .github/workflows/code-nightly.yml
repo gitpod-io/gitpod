@@ -31,7 +31,7 @@ jobs:
       - run: |
           gcloud auth configure-docker --quiet
           export LEEWAY_WORKSPACE_ROOT=$(pwd)
-          headCommit=$(curl -H 'Accept: application/vnd.github.VERSION.sha' https://api.github.com/repos/gitpod-io/openvscode-server/commits/gp-code/main)
+          headCommit=$(curl -H 'Accept: application/vnd.github.VERSION.sha' https://api.github.com/repos/gitpod-io/openvscode-server/commits/gp-code/release/1.73)
           cd components/ide/code
           codeVersion=$(curl https://raw.githubusercontent.com/gitpod-io/openvscode-server/$headCommit/package.json | jq .version)
           leeway build -Dversion=nightly -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -DcodeCommit=$headCommit -DcodeVersion=$codeVersion -DcodeQuality=insider .:docker
