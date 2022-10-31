@@ -57,7 +57,6 @@ export default function SelectWorkspaceClass(props: SelectWorkspaceClassProps) {
     } else {
         return (
             <div>
-                <h3 className="mt-12">Workspaces</h3>
                 <p className="text-base text-gray-500 dark:text-gray-400">
                     Choose the workspace machine type for your workspaces.
                 </p>

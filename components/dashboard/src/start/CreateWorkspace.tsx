@@ -6,12 +6,12 @@
 
 import React, { useEffect, useContext, useState } from "react";
 import {
-    CreateWorkspaceMode,
     WorkspaceCreationResult,
     RunningWorkspacePrebuildStarting,
     ContextURL,
-    DisposableCollection,
     Team,
+    GitpodServer,
+    User,
 } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import Modal from "../components/Modal";
@@ -48,22 +48,25 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
         this.state = { stillParsing: true };
     }
 
+    static contextType = UserContext;
+
     componentDidMount() {
         this.createWorkspace();
     }
 
-    async createWorkspace(mode = CreateWorkspaceMode.SelectIfRunning, forceDefaultConfig = false) {
+    async createWorkspace(opts?: Omit<GitpodServer.CreateWorkspaceOptions, "contextUrl">) {
         // Invalidate any previous result.
         this.setState({ result: undefined, stillParsing: true });
-
         // We assume anything longer than 3 seconds is no longer just parsing the context URL (i.e. it's now creating a workspace).
         let timeout = setTimeout(() => this.setState({ stillParsing: false }), 3000);
-
+        const user: User = this.context.user;
         try {
             const result = await getGitpodService().server.createWorkspace({
                 contextUrl: this.props.contextUrl,
-                mode,
-                forceDefaultConfig,
+                ignoreRunningPrebuild: !!user.additionalData?.ignoreRunnningPrebuilds,
+                allowUsingPreviousPrebuilds: !!user.additionalData?.allowUsingPreviousPrebuilds,
+                ignoreRunningWorkspaceOnSameCommit: !!user.additionalData?.ignoreRunningWorkspaceOnSameCommit,
+                ...opts,
             });
             if (result.workspaceURL) {
                 window.location.href = result.workspaceURL;
@@ -148,7 +151,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
                             <button
                                 className=""
                                 onClick={() => {
-                                    this.createWorkspace(CreateWorkspaceMode.Default, true);
+                                    this.createWorkspace({ forceDefaultConfig: true });
                                 }}
                             >
                                 Continue with default configuration
@@ -262,7 +265,9 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
                         </>
                     </div>
                     <div className="flex justify-end mt-6">
-                        <button onClick={() => this.createWorkspace(CreateWorkspaceMode.Default)}>New Workspace</button>
+                        <button onClick={() => this.createWorkspace({ ignoreRunningWorkspaceOnSameCommit: true })}>
+                            New Workspace
+                        </button>
                     </div>
                 </Modal>
             );
@@ -271,10 +276,12 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
                 <RunningPrebuildView
                     runningPrebuild={result.runningWorkspacePrebuild}
                     onUseLastSuccessfulPrebuild={() =>
-                        this.createWorkspace(CreateWorkspaceMode.UseLastSuccessfulPrebuild)
+                        this.createWorkspace({ allowUsingPreviousPrebuilds: true, ignoreRunningPrebuild: true })
                     }
-                    onIgnorePrebuild={() => this.createWorkspace(CreateWorkspaceMode.ForceNew)}
-                    onPrebuildSucceeded={() => this.createWorkspace(CreateWorkspaceMode.UsePrebuild)}
+                    onIgnorePrebuild={() =>
+                        this.createWorkspace({ allowUsingPreviousPrebuilds: false, ignoreRunningPrebuild: true })
+                    }
+                    onPrebuildSucceeded={() => this.createWorkspace()}
                 />
             );
         }
@@ -545,23 +552,18 @@ function RunningPrebuildView(props: RunningPrebuildViewProps) {
     const { showUseLastSuccessfulPrebuild } = useContext(FeatureFlagContext);
 
     useEffect(() => {
-        const disposables = new DisposableCollection();
-
-        disposables.push(
-            getGitpodService().registerClient({
-                onInstanceUpdate: (update) => {
-                    if (update.workspaceId !== workspaceId) {
-                        return;
-                    }
-                    if (update.status.phase === "stopped") {
+        const timeout = setTimeout(() => {
+            getGitpodService()
+                .server.getWorkspace(workspaceId)
+                .then((ws) => {
+                    if (ws.latestInstance?.status?.phase === "stopped") {
                         props.onPrebuildSucceeded();
                     }
-                },
-            }),
-        );
+                });
+        }, 2000);
 
         return function cleanup() {
-            disposables.dispose();
+            clearTimeout(timeout);
         };
         // eslint-disable-next-line
     }, [workspaceId]);

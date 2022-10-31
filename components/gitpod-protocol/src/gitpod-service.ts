@@ -12,7 +12,6 @@ import {
     WhitelistedRepository,
     WorkspaceImageBuild,
     AuthProviderInfo,
-    CreateWorkspaceMode,
     Token,
     UserEnvVarValue,
     Terms,
@@ -421,7 +420,12 @@ export namespace GitpodServer {
     }
     export interface CreateWorkspaceOptions {
         contextUrl: string;
-        mode?: CreateWorkspaceMode;
+        // whether running prebuilds should be ignored.
+        ignoreRunningPrebuild?: boolean;
+        // whether running workspaces on the same context should be ignored. If false (default) users will be asked.
+        ignoreRunningWorkspaceOnSameCommit?: boolean;
+        // whether older prebuilds can be used and incrementally updated.
+        allowUsingPreviousPrebuilds?: boolean;
         forceDefaultConfig?: boolean;
     }
     export interface StartWorkspaceOptions {

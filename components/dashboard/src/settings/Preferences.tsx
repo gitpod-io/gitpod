@@ -9,18 +9,32 @@ import SelectableCardSolid from "../components/SelectableCardSolid";
 import { getGitpodService } from "../service/service";
 import { ThemeContext } from "../theme-context";
 import { UserContext } from "../user-context";
-import { trackEvent } from "../Analytics";
 import SelectIDE from "./SelectIDE";
 import SelectWorkspaceClass from "./selectClass";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
+import CheckBox from "../components/CheckBox";
+import { AdditionalUserData } from "@gitpod/gitpod-protocol";
 
 type Theme = "light" | "dark" | "system";
 
 export default function Preferences() {
-    const { user, userBillingMode } = useContext(UserContext);
+    const { user, userBillingMode, setUser } = useContext(UserContext);
     const { setIsDark } = useContext(ThemeContext);
 
+    const updateAdditionalData = async (value: Partial<AdditionalUserData>) => {
+        if (!user) {
+            return;
+        }
+        const newAdditionalData = {
+            ...user?.additionalData,
+            ...value,
+        };
+        user.additionalData = newAdditionalData;
+        setUser({ ...user });
+        await getGitpodService().server.updateLoggedInUser(user);
+    };
+    const [dotfileRepo, setDotfileRepo] = useState<string>(user?.additionalData?.dotfileRepo || "");
     const [theme, setTheme] = useState<Theme>(localStorage.theme || "system");
     const actuallySetTheme = (theme: Theme) => {
         if (theme === "dark" || theme === "light") {
@@ -35,27 +49,49 @@ export default function Preferences() {
         setTheme(theme);
     };
 
-    const [dotfileRepo, setDotfileRepo] = useState<string>(user?.additionalData?.dotfileRepo || "");
-    const actuallySetDotfileRepo = async (value: string) => {
-        const additionalData = user?.additionalData || {};
-        const prevDotfileRepo = additionalData.dotfileRepo || "";
-        additionalData.dotfileRepo = value;
-        await getGitpodService().server.updateLoggedInUser({ additionalData });
-        if (value !== prevDotfileRepo) {
-            trackEvent("dotfile_repo_changed", {
-                previous: prevDotfileRepo,
-                current: value,
-            });
-        }
-    };
-
     return (
         <div>
             <PageWithSettingsSubMenu title="Preferences" subtitle="Configure user preferences.">
                 <h3>Editor</h3>
                 <p className="text-base text-gray-500 dark:text-gray-400">Choose the editor for opening workspaces.</p>
                 <SelectIDE location="preferences" />
+                <h3 className="mt-12">Workspaces</h3>
                 <SelectWorkspaceClass enabled={BillingMode.canSetWorkspaceClass(userBillingMode)} />
+                <CheckBox
+                    title="Never wait for running prebuilds"
+                    desc={
+                        <span>
+                            Whether to ignore any still running prebuilds when starting a fresh workspace. Enabling this
+                            will skip the prebuild is running dialog on workspace starts and start a workspace without a
+                            prebuild or based on a previous prebuild if enabled (see below).
+                        </span>
+                    }
+                    checked={!!user?.additionalData?.ignoreRunnningPrebuilds}
+                    onChange={(e) => updateAdditionalData({ ignoreRunnningPrebuilds: e.target.checked })}
+                />
+                <CheckBox
+                    title="Allow incremental workspaces"
+                    desc={
+                        <span>
+                            Whether new workspaces can be started based on prebuilds that ran on older Git commits and
+                            get incrementally updated.
+                        </span>
+                    }
+                    checked={!!user?.additionalData?.allowUsingPreviousPrebuilds}
+                    onChange={(e) => updateAdditionalData({ allowUsingPreviousPrebuilds: e.target.checked })}
+                />
+                <CheckBox
+                    title="Never ask when there are running workspaces on the same commit"
+                    desc={
+                        <span>
+                            Whether to ignore any running workspaces on the same commit, when starting a fresh
+                            workspace. Enabling this will skip the dialog about already running workspaces when starting
+                            a fresh workspace and always default to creating a fresh one.
+                        </span>
+                    }
+                    checked={!!user?.additionalData?.ignoreRunningWorkspaceOnSameCommit}
+                    onChange={(e) => updateAdditionalData({ ignoreRunningWorkspaceOnSameCommit: e.target.checked })}
+                />
                 <h3 className="mt-12">Theme</h3>
                 <p className="text-base text-gray-500 dark:text-gray-400">Early bird or night owl? Choose your side.</p>
                 <div className="mt-4 space-x-3 flex">
@@ -123,7 +159,7 @@ export default function Preferences() {
                             placeholder="e.g. https://github.com/username/dotfiles"
                             onChange={(e) => setDotfileRepo(e.target.value)}
                         />
-                        <button className="secondary ml-2" onClick={() => actuallySetDotfileRepo(dotfileRepo)}>
+                        <button className="secondary ml-2" onClick={() => updateAdditionalData({ dotfileRepo })}>
                             Save Changes
                         </button>
                     </span>
