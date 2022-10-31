@@ -11,6 +11,7 @@ scripts:
   - name: create-preview
     description: Provisions a new preview environment
     script: |
+      export TF_VAR_cert_issuer="${TF_VAR_cert_issuer:-zerossl-issuer-gitpod-core-dev}"
       export TF_VAR_dev_kube_path="${TF_VAR_dev_kube_path:-/home/gitpod/.kube/config}"
       export TF_VAR_dev_kube_context="${TF_VAR_dev_kube_context:-dev}"
       export TF_VAR_harvester_kube_path="${TF_VAR_harvester_kube_path:-/home/gitpod/.kube/config}"

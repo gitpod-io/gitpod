@@ -1,6 +1,6 @@
-import { exec } from "../../util/shell";
-import { Werft } from "../../util/werft";
-import { previewNameFromBranchName } from "../../util/preview";
+import {exec} from "../../util/shell";
+import {Werft} from "../../util/werft";
+import {previewNameFromBranchName} from "../../util/preview";
 
 type WithIntegrationTests = "skip" | "all" | "workspace" | "ide" | "webapp";
 
@@ -36,6 +36,9 @@ export interface JobConfig {
     replicatedVersion: string;
     observability: Observability;
     withLargeVM: boolean;
+    certIssuer: string;
+    recreatePreview: boolean;
+    recreateVm: boolean;
 }
 
 export interface PreviewEnvironmentConfig {
@@ -74,7 +77,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         return raw.split(",").map((e) => e.trim());
     })();
 
-    const coverageOutput = exec("mktemp -d", { silent: true }).stdout.trim();
+    const coverageOutput = exec("mktemp -d", {silent: true}).stdout.trim();
 
     // Main build should only contain the annotations below:
     // ['with-contrib', 'publish-to-npm', 'publish-to-jb-marketplace', 'with-clean-slate-deployment']
@@ -97,9 +100,21 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const withObservability = "with-observability" in buildConfig && !mainBuild;
     const withLargeVM = "with-large-vm" in buildConfig && !mainBuild;
     const withLocalPreview = "with-local-preview" in buildConfig || mainBuild
+    const recreatePreview = "recreate-preview" in buildConfig
+    const recreateVm = mainBuild || "recreate-vm" in buildConfig;
 
     const withIntegrationTests = parseWithIntegrationTests(werft, sliceId, buildConfig["with-integration-tests"]);
     const withPreview = decideWithPreview({werft, sliceID: sliceId, buildConfig, mainBuild, withIntegrationTests})
+
+    switch (buildConfig["cert-issuer"]) {
+        case "letsencrypt":
+            buildConfig["cert-issuer"] = "letsencrypt-issuer-gitpod-core-dev"
+            break
+        case "zerossl":
+        default:
+            buildConfig["cert-issuer"] = "zerossl-issuer-gitpod-core-dev"
+    }
+    const certIssuer = buildConfig["cert-issuer"];
 
     const repository: Repository = {
         owner: context.Repository.owner,
@@ -155,6 +170,9 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         withLocalPreview,
         workspaceFeatureFlags,
         withLargeVM,
+        certIssuer,
+        recreatePreview,
+        recreateVm,
     };
 
     werft.logOutput(sliceId, JSON.stringify(jobConfig, null, 2));
@@ -186,8 +204,8 @@ function parseVersion(context: any) {
     return version;
 }
 
-function decideWithPreview(options: {werft: Werft, sliceID: string, buildConfig: any, mainBuild: boolean, withIntegrationTests: WithIntegrationTests}) {
-    const {werft, sliceID, buildConfig, mainBuild, withIntegrationTests } = options
+function decideWithPreview(options: { werft: Werft, sliceID: string, buildConfig: any, mainBuild: boolean, withIntegrationTests: WithIntegrationTests }) {
+    const {werft, sliceID, buildConfig, mainBuild, withIntegrationTests} = options
     if (mainBuild) {
         werft.log(sliceID, "with-preview is disabled for main builds")
         return false
