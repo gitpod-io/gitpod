@@ -17,7 +17,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
-const RETRY = 2
+const RETRY = 3
 
 func main() {
 	log := logrus.New()
