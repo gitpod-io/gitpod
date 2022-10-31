@@ -25,6 +25,7 @@ export async function certReady(werft: Werft, config: JobConfig, slice: string):
     // We pass the GCP credentials explicitly, otherwise for some reason TF doesn't pick them up
     const commonVars = `GOOGLE_BACKEND_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
                         GOOGLE_APPLICATION_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
+                        TF_VAR_cert_issuer=${config.certIssuer} \
                         TF_VAR_kubeconfig_path=${GLOBAL_KUBECONFIG_PATH} \
                         TF_VAR_preview_name=${config.previewEnvironment.destname} \
                         TF_VAR_vm_cpu=${cpu} \
