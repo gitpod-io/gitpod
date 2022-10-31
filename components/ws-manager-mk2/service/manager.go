@@ -174,7 +174,7 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 				},
 				IDE: workspacev1.IDEImages{
 					Web:        req.Spec.IdeImage.WebRef,
-					Desktop:    req.Spec.IdeImage.DesktopRef,
+					Refs:       req.Spec.IdeImageLayers,
 					Supervisor: req.Spec.IdeImage.SupervisorRef,
 				},
 			},
@@ -555,13 +555,13 @@ func extractWorkspaceStatus(ws *workspacev1.Workspace) *wsmanapi.WorkspaceStatus
 			WorkspaceImage: pointer.StringDeref(ws.Spec.Image.Workspace.Ref, ""),
 			IdeImage: &wsmanapi.IDEImage{
 				WebRef:        ws.Spec.Image.IDE.Web,
-				DesktopRef:    ws.Spec.Image.IDE.Desktop,
 				SupervisorRef: ws.Spec.Image.IDE.Supervisor,
 			},
-			Headless: ws.Status.Headless,
-			Url:      ws.Status.URL,
-			Type:     tpe,
-			Timeout:  timeout,
+			IdeImageLayers: ws.Spec.Image.IDE.Refs,
+			Headless:       ws.Status.Headless,
+			Url:            ws.Status.URL,
+			Type:           tpe,
+			Timeout:        timeout,
 		},
 		Phase: phase,
 		Conditions: &wsmanapi.WorkspaceConditions{

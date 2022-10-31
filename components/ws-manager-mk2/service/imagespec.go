@@ -39,7 +39,7 @@ func (is *WorkspaceImageSpecProvider) GetImageSpec(ctx context.Context, req *reg
 		Spec: &regapi.ImageSpec{
 			BaseRef:       pointer.StringDeref(ws.Spec.Image.Workspace.Ref, ""),
 			IdeRef:        ws.Spec.Image.IDE.Web,
-			DesktopIdeRef: ws.Spec.Image.IDE.Desktop,
+			IdeLayerRef:   ws.Spec.Image.IDE.Refs,
 			SupervisorRef: ws.Spec.Image.IDE.Supervisor,
 		},
 	}, nil
