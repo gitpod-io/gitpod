@@ -114,6 +114,7 @@ import { ExtendedUser } from "@gitpod/ws-manager/lib/constraints";
 import {
     FailedInstanceStartReason,
     increaseFailedInstanceStartCounter,
+    increaseImageBuildsCompletedTotal,
     increaseImageBuildsStartedTotal,
     increaseSuccessfulInstanceStartCounter,
 } from "../prometheus-metrics";
@@ -1280,6 +1281,10 @@ export class WorkspaceStarter {
                 // ...and wait for the build to finish
                 buildResult = await result.buildPromise;
                 if (buildResult.getStatus() == BuildStatus.DONE_FAILURE) {
+                    // Register a failed image build only if the image actually needed to be built; ie the build was not a no-op.
+                    if (result.actuallyNeedsBuild) {
+                        increaseImageBuildsCompletedTotal("failed");
+                    }
                     throw new Error(buildResult.getMessage());
                 }
             } catch (err) {
@@ -1300,6 +1305,11 @@ export class WorkspaceStarter {
                 if (!!disposable) {
                     disposable.dispose();
                 }
+            }
+
+            // Register a successful image build only if the image actually needed to be built; ie the build was not a no-op.
+            if (result.actuallyNeedsBuild) {
+                increaseImageBuildsCompletedTotal("succeeded");
             }
 
             // We have just found out how our base image is called - remember that.
