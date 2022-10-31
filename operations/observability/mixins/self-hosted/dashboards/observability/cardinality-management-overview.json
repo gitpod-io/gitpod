@@ -68,8 +68,8 @@
         "uid": "grafana"
       },
       "gridPos": {
-        "h": 8,
-        "w": 6,
+        "h": 5,
+        "w": 9,
         "x": 0,
         "y": 0
       },
@@ -106,9 +106,9 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 6,
+        "h": 5,
+        "w": 3,
+        "x": 9,
         "y": 0
       },
       "id": 2,
@@ -142,6 +142,87 @@
       ],
       "title": "Total Metrics",
       "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "9.1.7",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum(metric:timeseries_total{cluster=~\"$cluster\"})",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Total timeseries",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 9,
+        "x": 15,
+        "y": 0
+      },
+      "id": 9,
+      "options": {
+        "content": "## Labels with a high number of unique values:\n\n* Could you drop this label entirely?\n\n* Could you decrease the number of unique values for it?\n\n* If you still need this information in this label, could you instead store it in a log file?",
+        "mode": "markdown"
+      },
+      "pluginVersion": "9.1.7",
+      "title": "💡Tips for labels",
+      "type": "text"
     },
     {
       "datasource": {
@@ -205,10 +286,10 @@
         ]
       },
       "gridPos": {
-        "h": 8,
+        "h": 16,
         "w": 12,
-        "x": 12,
-        "y": 0
+        "x": 0,
+        "y": 5
       },
       "id": 5,
       "options": {
@@ -295,6 +376,11 @@
           "color": {
             "mode": "thresholds"
           },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto",
+            "inspect": false
+          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -302,32 +388,62 @@
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 0.2
+              },
+              {
+                "color": "dark-red",
+                "value": 0.5
               }
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Percentage of total unique label values"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "gradient-gauge"
+              },
+              {
+                "id": "max",
+                "value": 1
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 6,
-        "y": 4
+        "h": 16,
+        "w": 12,
+        "x": 12,
+        "y": 5
       },
-      "id": 3,
+      "id": 8,
       "options": {
-        "colorMode": "none",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+        "footer": {
           "fields": "",
-          "values": false
+          "reducer": [
+            "sum"
+          ],
+          "show": false
         },
-        "textMode": "auto"
+        "frameIndex": 1,
+        "showHeader": true
       },
       "pluginVersion": "9.1.7",
       "targets": [
@@ -337,14 +453,75 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(metric:timeseries_total{cluster=~\"$cluster\"})",
-          "legendFormat": "__auto",
-          "range": true,
+          "exemplar": false,
+          "expr": "sort_desc(\r\n    topk(15, \r\n        sum(cardinality_exporter_label_value_count_by_label_name{cluster=~\"$cluster\"}) by (label)\r\n    )\r\n)",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "{{label}}",
+          "range": false,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "sort_desc(\r\n    topk(15, \r\n        sum(cardinality_exporter_label_value_count_by_label_name{cluster=~\"$cluster\"}) by (label) \r\n        / \r\n        sum(cardinality_exporter_label_value_count_by_label_name{cluster=~\"$cluster\"})\r\n    )\r\n)",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "{{label}}",
+          "range": false,
+          "refId": "B"
         }
       ],
-      "title": "Total timeseries",
-      "type": "stat"
+      "title": "Top 10 labels by unique value count",
+      "transformations": [
+        {
+          "id": "seriesToColumns",
+          "options": {
+            "byField": "label"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Time 1": true,
+              "Time 2": true,
+              "__name__": true,
+              "cluster": true,
+              "container": true,
+              "endpoint": true,
+              "instance": true,
+              "job": true,
+              "namespace": true,
+              "pod": true,
+              "prometheus": true,
+              "prometheus_replica": true,
+              "service": true
+            },
+            "indexByName": {
+              "Time 1": 4,
+              "Time 2": 3,
+              "Value #A": 1,
+              "Value #B": 2,
+              "label": 0
+            },
+            "renameByName": {
+              "Value": "Number of unique values",
+              "Value #A": "Number of timeseries",
+              "Value #B": "Percentage of total unique label values",
+              "label": "Label",
+              "label 1": "Label"
+            }
+          }
+        }
+      ],
+      "type": "table"
     }
   ],
   "schemaVersion": 37,
