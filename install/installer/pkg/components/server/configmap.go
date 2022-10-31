@@ -163,19 +163,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
-	// Enable protected_secrets by default
-	defaultFeatureFlags := []NamedWorkspaceFeatureFlag{NamedWorkspaceFeatureProtectedSecrets}
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg == nil || cfg.Workspace == nil || cfg.Workspace.EnableProtectedSecrets == nil {
-			return nil
-		}
-		if !*cfg.Workspace.EnableProtectedSecrets {
-			// Disable protected_secrets unless explicitly set to false in the installer configuration
-			defaultFeatureFlags = []NamedWorkspaceFeatureFlag{}
-		}
-		return nil
-	})
-
 	inactivityPeriodForReposInDays := 0
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.InactivityPeriodForReposInDays != nil {
@@ -197,7 +184,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		WorkspaceDefaults: WorkspaceDefaults{
 			WorkspaceImage:      workspaceImage,
 			PreviewFeatureFlags: []NamedWorkspaceFeatureFlag{},
-			DefaultFeatureFlags: defaultFeatureFlags,
+			DefaultFeatureFlags: []NamedWorkspaceFeatureFlag{},
 			TimeoutDefault:      ctx.Config.Workspace.TimeoutDefault,
 			TimeoutExtended:     ctx.Config.Workspace.TimeoutExtended,
 		},
