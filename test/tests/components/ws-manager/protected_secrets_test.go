@@ -64,7 +64,7 @@ func TestProtectedSecrets(t *testing.T) {
 			t.Fatalf("cannot launch a workspace: %q", err)
 		}
 
-		defer func() {
+		t.Cleanup(func() {
 			sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer scancel()
 
@@ -75,7 +75,7 @@ func TestProtectedSecrets(t *testing.T) {
 			if err != nil {
 				t.Errorf("cannot stop workspace: %q", err)
 			}
-		}()
+		})
 
 		k8sClient := cfg.Client()
 		var wsPod corev1.Pod
