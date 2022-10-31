@@ -220,7 +220,7 @@ func (pr *PrecachingRefResolver) StartCaching(ctx context.Context, interval time
 	for {
 		for _, c := range pr.Candidates {
 			var opts []DockerRefResolverOption
-			if pr.Auth != nil {
+			if pr.Auth != ((auth.RegistryAuthenticator)(nil)) {
 				ref, err := reference.ParseNormalizedNamed(c)
 				if err != nil {
 					log.WithError(err).WithField("ref", c).Warn("unable to precache reference: cannot parse")

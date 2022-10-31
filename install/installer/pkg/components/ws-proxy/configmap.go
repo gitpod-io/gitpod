@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
-	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 	wsmanagermk2 "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager-mk2"
+	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
