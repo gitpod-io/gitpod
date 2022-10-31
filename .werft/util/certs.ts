@@ -1,8 +1,6 @@
-import {exec, ExecOptions, execStream} from "./shell";
+import {exec, ExecOptions} from "./shell";
 import {
     CORE_DEV_KUBECONFIG_PATH,
-    GCLOUD_SERVICE_ACCOUNT_PATH,
-    GLOBAL_KUBECONFIG_PATH,
 } from "../jobs/build/const";
 import { Werft } from "./werft";
 import { reportCertificateError } from "../util/slack";
