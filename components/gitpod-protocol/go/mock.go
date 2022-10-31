@@ -523,6 +523,21 @@ func (mr *MockAPIInterfaceMockRecorder) GetTeamMembers(ctx, teamID interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTeamMembers", reflect.TypeOf((*MockAPIInterface)(nil).GetTeamMembers), ctx, teamID)
 }
 
+// GetTeams mocks base method.
+func (m *MockAPIInterface) GetTeams(ctx context.Context) ([]*Team, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTeams", ctx)
+	ret0, _ := ret[0].([]*Team)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTeams indicates an expected call of GetTeams.
+func (mr *MockAPIInterfaceMockRecorder) GetTeams(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTeams", reflect.TypeOf((*MockAPIInterface)(nil).GetTeams), ctx)
+}
+
 // GetToken mocks base method.
 func (m *MockAPIInterface) GetToken(ctx context.Context, query *GetTokenSearchOptions) (*Token, error) {
 	m.ctrl.T.Helper()

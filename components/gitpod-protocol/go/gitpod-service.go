@@ -84,6 +84,7 @@ type APIInterface interface {
 	TrackEvent(ctx context.Context, event *RemoteTrackMessage) (err error)
 	GetSupportedWorkspaceClasses(ctx context.Context) (res []*SupportedWorkspaceClass, err error)
 
+	GetTeams(ctx context.Context) ([]*Team, error)
 	CreateTeam(ctx context.Context, teamName string) (*Team, error)
 	GetTeamMembers(ctx context.Context, teamID string) ([]*TeamMemberInfo, error)
 	JoinTeam(ctx context.Context, teamID string) (*Team, error)
@@ -209,6 +210,8 @@ const (
 	// FunctionGetSupportedWorkspaceClasses is the name of the getSupportedWorkspaceClasses function
 	FunctionGetSupportedWorkspaceClasses FunctionName = "getSupportedWorkspaceClasses"
 
+	// FunctionGetTeams is the name of the getTeams function
+	FunctionGetTeams FunctionName = "getTeams"
 	// FunctionCreateTeam is the name of the createTeam function
 	FunctionCreateTeam FunctionName = "createTeam"
 	// FunctionJoinTeam is the name of the joinTeam function
@@ -1393,6 +1396,16 @@ func (gp *APIoverJSONRPC) GetSupportedWorkspaceClasses(ctx context.Context) (res
 	}
 	_params := []interface{}{}
 	err = gp.C.Call(ctx, "getSupportedWorkspaceClasses", _params, &res)
+	return
+}
+
+func (gp *APIoverJSONRPC) GetTeams(ctx context.Context) (res []*Team, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{}
+	err = gp.C.Call(ctx, string(FunctionGetTeams), _params, &res)
 	return
 }
 
