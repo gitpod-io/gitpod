@@ -92,11 +92,12 @@ type WorkspaceConfig struct {
 			IPFSAddr string `json:"ipfsAddr"`
 		} `json:"ipfsCache"`
 		RedisCache struct {
-			Enabled        bool     `json:"enabled"`
-			MasterName     string   `json:"masterName"`
-			SentinelAddrs  []string `json:"sentinelAddrs"`
-			Username       string   `json:"username"`
-			PasswordSecret string   `json:"passwordSecret"`
+			Enabled            bool   `json:"enabled"`
+			SingleHostAddress  string `json:"singleHostAddr"`
+			Username           string `json:"username"`
+			PasswordSecret     string `json:"passwordSecret"`
+			UseTLS             bool   `json:"useTLS"`
+			InsecureSkipVerify bool   `json:"insecureSkipVerify"`
 		} `json:"redisCache"`
 	} `json:"registryFacade"`
 

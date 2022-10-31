@@ -6,6 +6,7 @@ package registry
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -253,51 +254,29 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 }
 
 func getRedisClient(cfg *config.RedisCacheConfig) (*redis.Client, error) {
-	if cfg.SingleHostAddress != "" {
-		log.WithField("addr", cfg.SingleHostAddress).WithField("username", cfg.Username).Info("connecting to single Redis host")
-		rdc := redis.NewClient(&redis.Options{
-			Addr:     cfg.SingleHostAddress,
-			Username: cfg.Username,
-			Password: cfg.Password,
-		})
+	if cfg.SingleHostAddress == "" {
+		return nil, xerrors.Errorf("registry-facade setting 'singleHostAddr' is missing")
+	}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-		defer cancel()
+	opts := &redis.Options{
+		Addr:     cfg.SingleHostAddress,
+		Username: cfg.Username,
+		Password: cfg.Password,
+	}
 
-		_, err := rdc.Ping(ctx).Result()
-		if err != nil {
-			return nil, xerrors.Errorf("cannot check Redis connection: %w", err)
+	if cfg.UseTLS {
+		opts.TLSConfig = &tls.Config{
+			// golang tls does not support verify certificate without any SANs
+			InsecureSkipVerify: cfg.InsecureSkipVerify,
 		}
-
-		return rdc, nil
 	}
 
-	if cfg.MasterName == "" {
-		return nil, fmt.Errorf("redis masterName must not be empty")
-	}
-	if len(cfg.SentinelAddrs) == 0 {
-		return nil, fmt.Errorf("redis sentinelAddrs must not be empty")
-	}
+	log.WithField("addr", cfg.SingleHostAddress).WithField("tls", cfg.UseTLS).Info("connecting to single Redis host")
 
-	rdc := redis.NewFailoverClient(&redis.FailoverOptions{
-		MasterName:    cfg.MasterName,
-		SentinelAddrs: cfg.SentinelAddrs,
-		Username:      cfg.Username,
-		Password:      cfg.Password,
-
-		SentinelUsername: cfg.Username,
-		SentinelPassword: cfg.Password,
-
-		MaxRetries:      10,
-		MinRetryBackoff: time.Millisecond * 100,
-		MaxRetryBackoff: time.Minute * 1,
-		ReadTimeout:     time.Second * 30,
-		WriteTimeout:    time.Second * 5,
-	})
-
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	rdc := redis.NewClient(opts)
 	_, err := rdc.Ping(ctx).Result()
 	if err != nil {
 		return nil, xerrors.Errorf("cannot check Redis connection: %w", err)
