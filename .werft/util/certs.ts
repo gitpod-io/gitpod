@@ -18,40 +18,12 @@ export class InstallCertificateParams {
 
 export async function certReady(werft: Werft, config: JobConfig, slice: string): Promise<boolean> {
     const certName = `harvester-${config.previewEnvironment.destname}`;
-    const cpu = config.withLargeVM ? 12 : 6;
-    const memory = config.withLargeVM ? 24 : 12;
-
-    // set some common vars for TF
-    // We pass the GCP credentials explicitly, otherwise for some reason TF doesn't pick them up
-    const commonVars = `GOOGLE_BACKEND_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
-                        GOOGLE_APPLICATION_CREDENTIALS=${GCLOUD_SERVICE_ACCOUNT_PATH} \
-                        TF_VAR_cert_issuer=${config.certIssuer} \
-                        TF_VAR_kubeconfig_path=${GLOBAL_KUBECONFIG_PATH} \
-                        TF_VAR_preview_name=${config.previewEnvironment.destname} \
-                        TF_VAR_vm_cpu=${cpu} \
-                        TF_VAR_vm_memory=${memory}Gi \
-                        TF_VAR_vm_storage_class="longhorn-gitpod-k3s-202209251218-onereplica"`
-
     if (isCertReady(certName)){
         werft.log(slice, `Certificate ready`);
         return true
     }
 
-    const maxAttempts = 5
-    var certReady = false
-    for (var i = 1;i<=maxAttempts;i++) {
-        werft.log(slice, `Checking for cert readiness: Attempt ${i}`);
-        if (waitCertReady(certName)) {
-            certReady = true;
-            break;
-        }
-
-        werft.log(slice, `Creating cert: Attempt ${i}`);
-        await execStream(`${commonVars} \
-                        TF_CLI_ARGS_plan="-replace=kubernetes_manifest.cert" \
-                        ./dev/preview/workflow/preview/deploy-harvester.sh`,
-            {slice: slice})
-    }
+    const certReady = waitCertReady(certName)
 
     if (!certReady) {
         retrieveFailedCertDebug(certName, slice)
@@ -62,7 +34,7 @@ export async function certReady(werft: Werft, config: JobConfig, slice: string):
 }
 
 function waitCertReady(certName: string): boolean {
-    const timeout = "240s"
+    const timeout = "500s"
     const rc = exec(
         `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} wait --for=condition=Ready --timeout=${timeout} -n certs certificate ${certName}`,
         { dontCheckRc: true },
