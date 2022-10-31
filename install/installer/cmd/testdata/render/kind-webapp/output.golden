@@ -1016,6 +1016,9 @@ data:
           "wsManager": {
             "version": "test"
           },
+          "wsManagerMk2": {
+            "version": "test"
+          },
           "wsManagerBridge": {
             "version": "test"
           },
