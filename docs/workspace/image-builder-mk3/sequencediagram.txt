@@ -1,0 +1,29 @@
+title Workspace image build flow
+
+
+server->image-builder-mk3: buildWorkspaceImage
+
+image-builder-mk3->ws-manager: Start headless workspace
+
+participantgroup Headless workspace
+participant supervisor
+participant bob build
+participant bob proxy
+end
+
+ws-manager->bob build: Create workspace that\nruns image-builder-bob
+
+
+image-builder-mk3->ws-manager: Subscribe to image build\nworkspace updates
+image-builder-mk3->server: streams BuildInfo,\nincluding log URL
+
+server->supervisor: Watch image build logs\nusing headless-log-service
+
+group Custom base image [not yet built for ws]
+bob build->bob proxy: Build and push base layer
+bob proxy->base image repository: Proxy & authenticate\npush to repository
+
+end
+
+bob build->bob proxy: Build and push workspace\nimage from base layer
+bob proxy->workspace image repository: Proxy & authenticate\npush to repository
