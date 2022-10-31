@@ -89,7 +89,7 @@ func TestGitHooks(t *testing.T) {
 							t.Fatal(err)
 						}
 
-						defer func() {
+						t.Cleanup(func() {
 							sctx, scancel := context.WithTimeout(context.Background(), 10*time.Minute)
 							defer scancel()
 
@@ -99,7 +99,7 @@ func TestGitHooks(t *testing.T) {
 							if _, err := stopWs(true, sapi); err != nil {
 								t.Fatal(err)
 							}
-						}()
+						})
 						rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(wsInfo.LatestInstance.ID))
 						if err != nil {
 							t.Fatal(err)

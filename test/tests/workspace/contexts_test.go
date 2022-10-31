@@ -135,6 +135,10 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 					if err := api.UpdateUserFeatureFlag(userId, ff.FF); err != nil {
 						t.Fatal(err)
 					}
+
+					if err := api.MakeUserUnleashedPlan(username); err != nil {
+						t.Fatal(err)
+					}
 				}()
 			}
 
@@ -160,7 +164,7 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 							t.Fatal(err)
 						}
 
-						defer func() {
+						t.Cleanup(func() {
 							sctx, scancel := context.WithTimeout(context.Background(), 10*time.Minute)
 							defer scancel()
 
@@ -171,7 +175,7 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 							if err != nil {
 								t.Fatal(err)
 							}
-						}()
+						})
 
 						rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.LatestInstance.ID))
 						if err != nil {

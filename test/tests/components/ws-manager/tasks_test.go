@@ -55,19 +55,19 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 	f := features.New("ws-manager").
 		WithLabel("component", "ws-manager").
 		WithLabel("type", "tasks").
-		Assess("it can run workspace tasks", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			t.Parallel()
-
-			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*len(tests))*time.Minute)
-			defer cancel()
-
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
-			t.Cleanup(func() {
-				api.Done(t)
-			})
-
+		Assess("it can run workspace tasks", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			for _, test := range tests {
 				t.Run(test.Name, func(t *testing.T) {
+					t.Parallel()
+
+					ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*len(tests))*time.Minute)
+					defer cancel()
+
+					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+					t.Cleanup(func() {
+						api.Done(t)
+					})
+
 					addInitTask := func(swr *wsmanapi.StartWorkspaceRequest) error {
 						tasks, err := json.Marshal(test.Task)
 						if err != nil {
@@ -98,7 +98,7 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 						t.Fatal(err)
 					}
 
-					defer func() {
+					t.Cleanup(func() {
 						sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
 						defer scancel()
 
@@ -108,7 +108,7 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 						if _, err = stopWs(true, sapi); err != nil {
 							t.Errorf("cannot stop workspace: %q", err)
 						}
-					}()
+					})
 
 					rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.Req.Id))
 					integration.DeferCloser(t, closer)

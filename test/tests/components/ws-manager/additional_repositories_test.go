@@ -74,12 +74,12 @@ func TestAdditionalRepositories(t *testing.T) {
 						t.Fatal(err)
 					}
 
-					defer func() {
+					t.Cleanup(func() {
 						// stop workspace in defer function to prevent we forget to stop the workspace
 						if err := stopWorkspace(t, cfg, stopWs); err != nil {
 							t.Errorf("cannot stop workspace: %q", err)
 						}
-					}()
+					})
 
 					rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(),
 						integration.WithInstanceID(ws.Req.Id),
