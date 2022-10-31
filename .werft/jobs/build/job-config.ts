@@ -111,8 +111,10 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
             buildConfig["cert-issuer"] = "letsencrypt-issuer-gitpod-core-dev"
             break
         case "zerossl":
-        default:
             buildConfig["cert-issuer"] = "zerossl-issuer-gitpod-core-dev"
+            break
+        default:
+            buildConfig["cert-issuer"] = "letsencrypt-issuer-gitpod-core-dev"
     }
     const certIssuer = buildConfig["cert-issuer"];
 
