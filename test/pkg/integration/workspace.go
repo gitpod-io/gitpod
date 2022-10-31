@@ -334,11 +334,23 @@ func LaunchWorkspaceFromContextURL(t *testing.T, ctx context.Context, contextURL
 	return wi, stopWs, nil
 }
 
-func stopWsF(t *testing.T, instanceID string, api *ComponentAPI) StopWorkspaceFunc {
+func stopWsF(t *testing.T, instanceID string, workspaceID string, api *ComponentAPI, isPrebuild bool) StopWorkspaceFunc {
+	var already bool
 	return func(waitForStop bool, api *ComponentAPI) (*wsmanapi.WorkspaceStatus, error) {
-		parallelLimiter = make(chan struct{}, ParallelLunchableWorkspaceLimit)
+		if already {
+			t.Logf("already sent stop request: %s", instanceID)
+			return nil, nil
+		}
+
+		var err error
 		defer func() {
-			<-parallelLimiter
+			if already {
+				return
+			} else {
+				t.Log("unlock the parallelLimiter")
+				<-parallelLimiter
+			}
+			already = true
 		}()
 
 		sctx, scancel := context.WithTimeout(context.Background(), perCallTimeout)
