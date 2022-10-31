@@ -16,7 +16,6 @@ resource "kubernetes_manifest" "cert" {
       dnsNames = [
         "${var.preview_name}.preview.gitpod-dev.com",
         "*.${var.preview_name}.preview.gitpod-dev.com",
-        "*.ws.${var.preview_name}.preview.gitpod-dev.com",
         "*.ws-dev.${var.preview_name}.preview.gitpod-dev.com"
       ]
       issuerRef = {
