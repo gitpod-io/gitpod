@@ -70,9 +70,9 @@ type WorkspaceImage struct {
 }
 
 type IDEImages struct {
-	Web        string `json:"web"`
-	Desktop    string `json:"desktop"`
-	Supervisor string `json:"supervisor"`
+	Web        string   `json:"web"`
+	Refs       []string `json:"refs"`
+	Supervisor string   `json:"supervisor"`
 }
 
 type GitSpec struct {
