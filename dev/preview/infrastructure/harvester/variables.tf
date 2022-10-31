@@ -44,3 +44,9 @@ variable "harvester_ingress_ip" {
   default     = "159.69.172.117"
   description = "Ingress IP in Harvester cluster"
 }
+
+variable "cert_issuer" {
+  type        = string
+  default     = "zerossl-issuer-gitpod-core-dev"
+  description = "Certificate issuer"
+}
