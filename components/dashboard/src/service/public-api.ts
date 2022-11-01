@@ -5,9 +5,9 @@
  */
 
 import { createConnectTransport, createPromiseClient, Interceptor } from "@bufbuild/connect-web";
-
-// Import service definition that you want to connect to.
+import { Team as ProtocolTeam } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { TeamsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
+import { Team } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { getGitpodService } from "./service";
 
 let token: string | undefined;
@@ -18,13 +18,17 @@ const authInterceptor: Interceptor = (next) => async (req) => {
             type: 1,
             scopes: [
                 "function:getGitpodTokenScopes",
+
                 "function:getWorkspace",
                 "function:getWorkspaces",
+
                 "function:createTeam",
                 "function:joinTeam",
+                "function:getTeams",
+                "function:getTeam",
                 "function:getTeamMembers",
                 "function:getGenericInvite",
-                "function:listenForWorkspaceInstanceUpdates",
+
                 "resource:default",
             ],
         });
@@ -41,3 +45,17 @@ const transport = createConnectTransport({
 });
 
 export const teamsService = createPromiseClient(TeamsService, transport);
+
+export function publicApiTeamToProtocol(team: Team): ProtocolTeam {
+    return {
+        id: team.id,
+        name: team.name,
+        slug: team.slug,
+        // We do not use the creationTime in the dashboard anywhere, se we keep it empty.
+        creationTime: "",
+    };
+}
+
+export function publicApiTeamsToProtocol(teams: Team[]): ProtocolTeam[] {
+    return teams.map(publicApiTeamToProtocol);
+}
