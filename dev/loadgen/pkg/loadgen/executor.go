@@ -107,12 +107,18 @@ func (fe *FakeExecutor) StopAll() error {
 	return nil
 }
 
-const loadgenAnnotation = "loadgen"
+const (
+	loadgenAnnotation = "loadgen"
+	// loadgenSessionAnnotation is used to identify which loadgen session
+	// a workspace belongs to. Allows for running multiple loadgens in parallel.
+	loadgenSessionAnnotation = "loadgen-session-id"
+)
 
 // WsmanExecutor talks to a ws manager
 type WsmanExecutor struct {
 	C          api.WorkspaceManagerClient
 	Sub        []context.CancelFunc
+	SessionId  string
 	workspaces []string
 	mu         sync.Mutex
 }
@@ -125,7 +131,11 @@ func (w *WsmanExecutor) StartWorkspace(spec *StartWorkspaceSpec) (callDuration t
 	defer cancel()
 
 	s := *spec
+	if s.Metadata.Annotations == nil {
+		s.Metadata.Annotations = make(map[string]string)
+	}
 	s.Metadata.Annotations[loadgenAnnotation] = "true"
+	s.Metadata.Annotations[loadgenSessionAnnotation] = w.SessionId
 	ss := api.StartWorkspaceRequest(s)
 
 	t0 := time.Now()
@@ -148,7 +158,9 @@ func (w *WsmanExecutor) Observe() (<-chan WorkspaceUpdate, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	w.Sub = append(w.Sub, cancel)
 
-	sub, err := w.C.Subscribe(ctx, &api.SubscribeRequest{})
+	sub, err := w.C.Subscribe(ctx, &api.SubscribeRequest{
+		MustMatch: w.loadgenSessionFilter(),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -186,11 +198,7 @@ func (w *WsmanExecutor) StopAll(ctx context.Context) error {
 	}
 
 	listReq := api.GetWorkspacesRequest{
-		MustMatch: &api.MetadataFilter{
-			Annotations: map[string]string{
-				loadgenAnnotation: "true",
-			},
-		},
+		MustMatch: w.loadgenSessionFilter(),
 	}
 
 	log.Infof("stopping %d workspaces", len(w.workspaces))
@@ -239,11 +247,7 @@ func (w *WsmanExecutor) Dump(path string) error {
 	defer cancel()
 
 	listReq := api.GetWorkspacesRequest{
-		MustMatch: &api.MetadataFilter{
-			Annotations: map[string]string{
-				loadgenAnnotation: "true",
-			},
-		},
+		MustMatch: w.loadgenSessionFilter(),
 	}
 
 	resp, err := w.C.GetWorkspaces(ctx, &listReq)
@@ -271,6 +275,15 @@ func (w *WsmanExecutor) Dump(path string) error {
 		return err
 	}
 	return os.WriteFile(path, fc, 0644)
+}
+
+func (w *WsmanExecutor) loadgenSessionFilter() *api.MetadataFilter {
+	return &api.MetadataFilter{
+		Annotations: map[string]string{
+			loadgenAnnotation:        "true",
+			loadgenSessionAnnotation: w.SessionId,
+		},
+	}
 }
 
 type WorkspaceState struct {

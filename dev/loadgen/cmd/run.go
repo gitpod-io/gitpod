@@ -9,13 +9,16 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/signal"
+	"path"
 	"path/filepath"
 	"syscall"
 	"time"
 
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -112,13 +115,23 @@ var runCmd = &cobra.Command{
 			opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		}
 
+		sessionID := uuid.New().String()
+		resultsDir := fmt.Sprintf("results/run-%s", sessionID)
+		if err := os.MkdirAll(resultsDir, 0755); err != nil {
+			log.Fatal(err)
+		}
+		log.Infof("Results will be saved in dir %s", resultsDir)
+
 		conn, err := grpc.Dial("localhost:8080", opts...)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer conn.Close()
 		client := api.NewWorkspaceManagerClient(conn)
-		executor := &loadgen.WsmanExecutor{C: client}
+		executor := &loadgen.WsmanExecutor{
+			C:         client,
+			SessionId: sessionID,
+		}
 
 		session := &loadgen.Session{
 			Executor: executor,
@@ -133,7 +146,7 @@ var runCmd = &cobra.Command{
 					if err != nil {
 						return
 					}
-					os.WriteFile("stats.json", fc, 0644)
+					os.WriteFile(path.Join(resultsDir, "stats.json"), fc, 0644)
 				}),
 			},
 			PostLoadWait: func() {
