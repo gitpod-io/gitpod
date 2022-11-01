@@ -11,6 +11,9 @@ RUN apk add --no-cache curl file \
 
 FROM ubuntu:22.04
 
+# trigger manual rebuild increasing the value
+ENV TRIGGER_REBUILD=1
+
 ## Installing coreutils is super important here as otherwise the loopback device creation fails!
 ARG CLOUD_SDK_VERSION=402.0.0
 ENV CLOUD_SDK_VERSION=$CLOUD_SDK_VERSION
