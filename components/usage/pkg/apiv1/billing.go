@@ -173,9 +173,13 @@ func (s *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.C
 		return nil, status.Errorf(codes.InvalidArgument, "Invalid attribution ID %s", attributionID)
 	}
 
-	customer, err := s.GetStripeCustomer(ctx, &v1.GetStripeCustomerRequest{Identifier: &v1.GetStripeCustomerRequest_AttributionId{AttributionId: string(attributionID)}})
+	customer, err := s.GetStripeCustomer(ctx, &v1.GetStripeCustomerRequest{
+		Identifier: &v1.GetStripeCustomerRequest_AttributionId{
+			AttributionId: string(attributionID),
+		},
+	})
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "Stripe customer with attribution ID %s not found", attributionID)
+		return nil, err
 	}
 
 	_, err = s.stripeClient.SetDefaultPaymentForCustomer(ctx, customer.Customer.Id, req.SetupIntentId)
@@ -188,9 +192,9 @@ func (s *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.C
 		return nil, err
 	}
 
-	priceIdentifier := getPriceIdentifier(attributionID, stripeCustomer, s)
-	if priceIdentifier == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Invalid currency %s for customer ID %s", stripeCustomer.Metadata["preferredCurrency"], stripeCustomer.ID)
+	priceID, err := getPriceIdentifier(attributionID, stripeCustomer, s)
+	if err != nil {
+		return nil, err
 	}
 
 	var isAutomaticTaxSupported bool
@@ -201,9 +205,9 @@ func (s *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.C
 		log.Warnf("Automatic Stripe tax is not supported for customer %s", stripeCustomer.ID)
 	}
 
-	subscription, err := s.stripeClient.CreateSubscription(ctx, stripeCustomer.ID, priceIdentifier, isAutomaticTaxSupported)
+	subscription, err := s.stripeClient.CreateSubscription(ctx, stripeCustomer.ID, priceID, isAutomaticTaxSupported)
 	if err != nil {
-		return nil, status.Errorf(codes.Aborted, "Failed to create subscription with customer ID %s", customer.Customer.Id)
+		return nil, status.Errorf(codes.Internal, "Failed to create subscription with customer ID %s", customer.Customer.Id)
 	}
 
 	return &v1.CreateStripeSubscriptionResponse{
@@ -213,28 +217,36 @@ func (s *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.C
 	}, nil
 }
 
-func getPriceIdentifier(attributionID db.AttributionID, stripeCustomer *stripe_api.Customer, s *BillingService) string {
-	priceIdentifier := ""
-
+func getPriceIdentifier(attributionID db.AttributionID, stripeCustomer *stripe_api.Customer, s *BillingService) (string, error) {
+	preferredCurrency := stripeCustomer.Metadata["preferredCurrency"]
 	if stripeCustomer.Metadata["preferredCurrency"] == "" {
-		log.WithField("stripe_customer_id", stripeCustomer.ID).WithField("stripe_preferred_currency", stripeCustomer.Metadata["preferredCurrency"]).Warn("No preferred currency set. Defaulting to X")
+		log.
+			WithField("stripe_customer_id", stripeCustomer.ID).
+			Warn("No preferred currency set. Defaulting to USD")
 	}
 
-	if attributionID.IsEntity("team") {
-		if stripeCustomer.Metadata["preferredCurrency"] == "EUR" {
-			priceIdentifier = s.stripePrices.TeamUsagePriceIDs.EUR
-		} else {
-			priceIdentifier = s.stripePrices.TeamUsagePriceIDs.USD
+	entity, _ := attributionID.Values()
+
+	switch entity {
+	case db.AttributionEntity_User:
+		switch preferredCurrency {
+		case "EUR":
+			return s.stripePrices.IndividualUsagePriceIDs.EUR, nil
+		default:
+			return s.stripePrices.IndividualUsagePriceIDs.USD, nil
 		}
-	}
-	if attributionID.IsEntity("user") {
-		if stripeCustomer.Metadata["preferredCurrency"] == "EUR" {
-			priceIdentifier = s.stripePrices.IndividualUsagePriceIDs.EUR
-		} else {
-			priceIdentifier = s.stripePrices.IndividualUsagePriceIDs.USD
+
+	case db.AttributionEntity_Team:
+		switch preferredCurrency {
+		case "EUR":
+			return s.stripePrices.TeamUsagePriceIDs.EUR, nil
+		default:
+			return s.stripePrices.TeamUsagePriceIDs.USD, nil
 		}
+
+	default:
+		return "", status.Errorf(codes.InvalidArgument, "Invalid currency %s for customer ID %s", stripeCustomer.Metadata["preferredCurrency"], stripeCustomer.ID)
 	}
-	return priceIdentifier
 }
 
 func (s *BillingService) ReconcileInvoices(ctx context.Context, in *v1.ReconcileInvoicesRequest) (*v1.ReconcileInvoicesResponse, error) {

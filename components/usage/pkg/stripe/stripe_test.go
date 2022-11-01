@@ -93,13 +93,7 @@ func TestCustomerQueriesForTeamIds_MultipleQueries(t *testing.T) {
 }
 
 func TestStartOfNextMonth(t *testing.T) {
-	now := time.Now()
-	currentYear, currentMonth, _ := now.Date()
-	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, time.UTC)
-	nextMonth := firstOfMonth.AddDate(0, 1, 0).Month()
+	ts := time.Date(2022, 10, 1, 0, 0, 0, 0, time.UTC)
 
-	expectedStartOfNextMonth := time.Time(time.Date(currentYear, nextMonth, 1, 0, 0, 0, 0, time.UTC))
-	actualStartOfNextMonth := getStartOfNextMonth(now)
-
-	require.Equal(t, actualStartOfNextMonth, expectedStartOfNextMonth)
+	require.Equal(t, time.Date(2022, 11, 1, 0, 0, 0, 0, time.UTC), getStartOfNextMonth(ts))
 }

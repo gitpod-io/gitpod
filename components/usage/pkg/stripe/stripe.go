@@ -341,14 +341,14 @@ func (c *Client) CreateSubscription(ctx context.Context, customerID string, pric
 	startOfNextMonth := getStartOfNextMonth(time.Now())
 
 	params := &stripe.SubscriptionParams{
-		Customer: &customerID,
+		Customer: stripe.String(customerID),
 		Items: []*stripe.SubscriptionItemsParams{
 			{
-				Price: &priceID,
+				Price: stripe.String(priceID),
 			},
 		},
 		AutomaticTax: &stripe.SubscriptionAutomaticTaxParams{
-			Enabled: &isAutomaticTaxSupported,
+			Enabled: stripe.Bool(isAutomaticTaxSupported),
 		},
 		BillingCycleAnchor: stripe.Int64(startOfNextMonth.Unix()),
 	}
@@ -395,10 +395,10 @@ func (c *Client) SetDefaultPaymentForCustomer(ctx context.Context, customerID st
 
 	customer, _ := c.sc.Customers.Update(customerID, &stripe.CustomerParams{
 		InvoiceSettings: &stripe.CustomerInvoiceSettingsParams{
-			DefaultPaymentMethod: &paymentMethod.ID},
+			DefaultPaymentMethod: stripe.String(paymentMethod.ID)},
 		Address: &stripe.AddressParams{
-			Line1:   &paymentMethod.BillingDetails.Address.Line1,
-			Country: &paymentMethod.BillingDetails.Address.Country}})
+			Line1:   stripe.String(paymentMethod.BillingDetails.Address.Line1),
+			Country: stripe.String(paymentMethod.BillingDetails.Address.Country)}})
 	if err != nil {
 		return nil, fmt.Errorf("Failed to update customer with id %s", customerID)
 	}
