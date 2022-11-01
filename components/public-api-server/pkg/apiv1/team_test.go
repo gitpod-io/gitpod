@@ -179,6 +179,7 @@ func TestTeamService_GetTeam(t *testing.T) {
 }
 
 func TestTeamsService_JoinTeam(t *testing.T) {
+
 	var (
 		teamID   = uuid.New().String()
 		inviteID = uuid.New().String()
