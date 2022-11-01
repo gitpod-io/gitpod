@@ -9,7 +9,6 @@ metadata:
     prometheus: k8s
     role: alert-rules
   name: ws-manager-monitoring-rules
-  namespace: monitoring-satellite
 spec:
   groups:
   - name: ws-manager
