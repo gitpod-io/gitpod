@@ -11,11 +11,11 @@ import (
 
 	connect "github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
+	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
-	v1 "github.com/gitpod-io/gitpod/public-api/experimental/v1"
-	"github.com/gitpod-io/gitpod/public-api/experimental/v1/v1connect"
 	"github.com/relvacode/iso8601"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )

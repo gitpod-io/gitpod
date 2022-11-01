@@ -8,9 +8,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/gitpod-io/gitpod/public-api/config"
 	"os"
 	"path"
+
+	"github.com/gitpod-io/gitpod/components/public-api/go/config"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/spf13/cobra"

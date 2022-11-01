@@ -12,7 +12,7 @@ import (
 	context "context"
 	errors "errors"
 	connect_go "github.com/bufbuild/connect-go"
-	v1 "github.com/gitpod-io/gitpod/public-api/experimental/v1"
+	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	http "net/http"
 	strings "strings"
 )

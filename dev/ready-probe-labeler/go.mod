@@ -57,7 +57,7 @@ replace github.com/gitpod-io/gitpod/content-service/api => ../../components/cont
 
 replace github.com/gitpod-io/gitpod/image-builder/api => ../../components/image-builder-api/go // leeway
 
-replace github.com/gitpod-io/gitpod/public-api => ../../components/public-api/go // leeway
+replace github.com/gitpod-io/gitpod/components/public-api => ../../components/public-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/registry-facade/api => ../../components/registry-facade-api/go // leeway
 
