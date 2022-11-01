@@ -9,7 +9,7 @@
 /* eslint-disable */
 /* @ts-nocheck */
 
-import {CreateTeamRequest, CreateTeamResponse, DeleteTeamMemberRequest, DeleteTeamMemberResponse, JoinTeamRequest, JoinTeamResponse, ListTeamsRequest, ListTeamsResponse, ResetTeamInvitationRequest, ResetTeamInvitationResponse, UpdateTeamMemberRequest, UpdateTeamMemberResponse} from "./teams_pb.js";
+import {CreateTeamRequest, CreateTeamResponse, DeleteTeamMemberRequest, DeleteTeamMemberResponse, GetTeamRequest, GetTeamResponse, JoinTeamRequest, JoinTeamResponse, ListTeamsRequest, ListTeamsResponse, ResetTeamInvitationRequest, ResetTeamInvitationResponse, UpdateTeamMemberRequest, UpdateTeamMemberResponse} from "./teams_pb.js";
 import {MethodKind} from "@bufbuild/protobuf";
 
 /**
@@ -27,6 +27,17 @@ export const TeamsService = {
       name: "CreateTeam",
       I: CreateTeamRequest,
       O: CreateTeamResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetTeam retrieves a single Team.
+     *
+     * @generated from rpc gitpod.experimental.v1.TeamsService.GetTeam
+     */
+    getTeam: {
+      name: "GetTeam",
+      I: GetTeamRequest,
+      O: GetTeamResponse,
       kind: MethodKind.Unary,
     },
     /**

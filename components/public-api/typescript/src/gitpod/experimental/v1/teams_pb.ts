@@ -287,6 +287,82 @@ export class CreateTeamResponse extends Message<CreateTeamResponse> {
 }
 
 /**
+ * @generated from message gitpod.experimental.v1.GetTeamRequest
+ */
+export class GetTeamRequest extends Message<GetTeamRequest> {
+  /**
+   * team_id is the unique identifier of the Team to retreive.
+   *
+   * @generated from field: string team_id = 1;
+   */
+  teamId = "";
+
+  constructor(data?: PartialMessage<GetTeamRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.GetTeamRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "team_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetTeamRequest {
+    return new GetTeamRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetTeamRequest {
+    return new GetTeamRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetTeamRequest {
+    return new GetTeamRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetTeamRequest | PlainMessage<GetTeamRequest> | undefined, b: GetTeamRequest | PlainMessage<GetTeamRequest> | undefined): boolean {
+    return proto3.util.equals(GetTeamRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.GetTeamResponse
+ */
+export class GetTeamResponse extends Message<GetTeamResponse> {
+  /**
+   * @generated from field: gitpod.experimental.v1.Team team = 1;
+   */
+  team?: Team;
+
+  constructor(data?: PartialMessage<GetTeamResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.GetTeamResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "team", kind: "message", T: Team },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetTeamResponse {
+    return new GetTeamResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetTeamResponse {
+    return new GetTeamResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetTeamResponse {
+    return new GetTeamResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetTeamResponse | PlainMessage<GetTeamResponse> | undefined, b: GetTeamResponse | PlainMessage<GetTeamResponse> | undefined): boolean {
+    return proto3.util.equals(GetTeamResponse, a, b);
+  }
+}
+
+/**
  * TODO: pagination options
  *
  * @generated from message gitpod.experimental.v1.ListTeamsRequest

@@ -55,6 +55,9 @@ service TeamsService {
     // CreateTeam creates a new Team.
     rpc CreateTeam(CreateTeamRequest) returns (CreateTeamResponse) {};
 
+    // GetTeam retrieves a single Team.
+    rpc GetTeam(GetTeamRequest) returns (GetTeamResponse) {}
+
     // ListTeams lists the caller has access to.
     rpc ListTeams(ListTeamsRequest) returns (ListTeamsResponse) {};
 
@@ -77,6 +80,15 @@ message CreateTeamRequest {
 }
 
 message CreateTeamResponse {
+    Team team = 1;
+}
+
+message GetTeamRequest {
+    // team_id is the unique identifier of the Team to retreive.
+    string team_id = 1;
+}
+
+message GetTeamResponse {
     Team team = 1;
 }
 

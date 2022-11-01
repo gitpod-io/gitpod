@@ -371,6 +371,101 @@ func (x *CreateTeamResponse) GetTeam() *Team {
 	return nil
 }
 
+type GetTeamRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// team_id is the unique identifier of the Team to retreive.
+	TeamId string `protobuf:"bytes,1,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
+}
+
+func (x *GetTeamRequest) Reset() {
+	*x = GetTeamRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetTeamRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTeamRequest) ProtoMessage() {}
+
+func (x *GetTeamRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTeamRequest.ProtoReflect.Descriptor instead.
+func (*GetTeamRequest) Descriptor() ([]byte, []int) {
+	return file_gitpod_experimental_v1_teams_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GetTeamRequest) GetTeamId() string {
+	if x != nil {
+		return x.TeamId
+	}
+	return ""
+}
+
+type GetTeamResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Team *Team `protobuf:"bytes,1,opt,name=team,proto3" json:"team,omitempty"`
+}
+
+func (x *GetTeamResponse) Reset() {
+	*x = GetTeamResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetTeamResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTeamResponse) ProtoMessage() {}
+
+func (x *GetTeamResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTeamResponse.ProtoReflect.Descriptor instead.
+func (*GetTeamResponse) Descriptor() ([]byte, []int) {
+	return file_gitpod_experimental_v1_teams_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *GetTeamResponse) GetTeam() *Team {
+	if x != nil {
+		return x.Team
+	}
+	return nil
+}
+
 type ListTeamsRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -380,7 +475,7 @@ type ListTeamsRequest struct {
 func (x *ListTeamsRequest) Reset() {
 	*x = ListTeamsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[5]
+		mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -393,7 +488,7 @@ func (x *ListTeamsRequest) String() string {
 func (*ListTeamsRequest) ProtoMessage() {}
 
 func (x *ListTeamsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[5]
+	mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -406,7 +501,7 @@ func (x *ListTeamsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTeamsRequest.ProtoReflect.Descriptor instead.
 func (*ListTeamsRequest) Descriptor() ([]byte, []int) {
-	return file_gitpod_experimental_v1_teams_proto_rawDescGZIP(), []int{5}
+	return file_gitpod_experimental_v1_teams_proto_rawDescGZIP(), []int{7}
 }
 
 type ListTeamsResponse struct {
@@ -420,7 +515,7 @@ type ListTeamsResponse struct {
 func (x *ListTeamsResponse) Reset() {
 	*x = ListTeamsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[6]
+		mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -433,7 +528,7 @@ func (x *ListTeamsResponse) String() string {
 func (*ListTeamsResponse) ProtoMessage() {}
 
 func (x *ListTeamsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[6]
+	mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -446,7 +541,7 @@ func (x *ListTeamsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTeamsResponse.ProtoReflect.Descriptor instead.
 func (*ListTeamsResponse) Descriptor() ([]byte, []int) {
-	return file_gitpod_experimental_v1_teams_proto_rawDescGZIP(), []int{6}
+	return file_gitpod_experimental_v1_teams_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ListTeamsResponse) GetTeams() []*Team {
@@ -468,7 +563,7 @@ type JoinTeamRequest struct {
 func (x *JoinTeamRequest) Reset() {
 	*x = JoinTeamRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[7]
+		mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -481,7 +576,7 @@ func (x *JoinTeamRequest) String() string {
 func (*JoinTeamRequest) ProtoMessage() {}
 
 func (x *JoinTeamRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[7]
+	mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -494,7 +589,7 @@ func (x *JoinTeamRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JoinTeamRequest.ProtoReflect.Descriptor instead.
 func (*JoinTeamRequest) Descriptor() ([]byte, []int) {
-	return file_gitpod_experimental_v1_teams_proto_rawDescGZIP(), []int{7}
+	return file_gitpod_experimental_v1_teams_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *JoinTeamRequest) GetInvitationId() string {
@@ -516,7 +611,7 @@ type JoinTeamResponse struct {
 func (x *JoinTeamResponse) Reset() {
 	*x = JoinTeamResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[8]
+		mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -529,7 +624,7 @@ func (x *JoinTeamResponse) String() string {
 func (*JoinTeamResponse) ProtoMessage() {}
 
 func (x *JoinTeamResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[8]
+	mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -542,7 +637,7 @@ func (x *JoinTeamResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JoinTeamResponse.ProtoReflect.Descriptor instead.
 func (*JoinTeamResponse) Descriptor() ([]byte, []int) {
-	return file_gitpod_experimental_v1_teams_proto_rawDescGZIP(), []int{8}
+	return file_gitpod_experimental_v1_teams_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *JoinTeamResponse) GetTeam() *Team {
@@ -563,7 +658,7 @@ type ResetTeamInvitationRequest struct {
 func (x *ResetTeamInvitationRequest) Reset() {
 	*x = ResetTeamInvitationRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[9]
+		mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -576,7 +671,7 @@ func (x *ResetTeamInvitationRequest) String() string {
 func (*ResetTeamInvitationRequest) ProtoMessage() {}
 
 func (x *ResetTeamInvitationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[9]
+	mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -589,7 +684,7 @@ func (x *ResetTeamInvitationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResetTeamInvitationRequest.ProtoReflect.Descriptor instead.
 func (*ResetTeamInvitationRequest) Descriptor() ([]byte, []int) {
-	return file_gitpod_experimental_v1_teams_proto_rawDescGZIP(), []int{9}
+	return file_gitpod_experimental_v1_teams_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ResetTeamInvitationRequest) GetTeamId() string {
@@ -611,7 +706,7 @@ type ResetTeamInvitationResponse struct {
 func (x *ResetTeamInvitationResponse) Reset() {
 	*x = ResetTeamInvitationResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[10]
+		mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -624,7 +719,7 @@ func (x *ResetTeamInvitationResponse) String() string {
 func (*ResetTeamInvitationResponse) ProtoMessage() {}
 
 func (x *ResetTeamInvitationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[10]
+	mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -637,7 +732,7 @@ func (x *ResetTeamInvitationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResetTeamInvitationResponse.ProtoReflect.Descriptor instead.
 func (*ResetTeamInvitationResponse) Descriptor() ([]byte, []int) {
-	return file_gitpod_experimental_v1_teams_proto_rawDescGZIP(), []int{10}
+	return file_gitpod_experimental_v1_teams_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ResetTeamInvitationResponse) GetTeamInvitation() *TeamInvitation {
@@ -661,7 +756,7 @@ type UpdateTeamMemberRequest struct {
 func (x *UpdateTeamMemberRequest) Reset() {
 	*x = UpdateTeamMemberRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[11]
+		mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -674,7 +769,7 @@ func (x *UpdateTeamMemberRequest) String() string {
 func (*UpdateTeamMemberRequest) ProtoMessage() {}
 
 func (x *UpdateTeamMemberRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[11]
+	mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -687,7 +782,7 @@ func (x *UpdateTeamMemberRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTeamMemberRequest.ProtoReflect.Descriptor instead.
 func (*UpdateTeamMemberRequest) Descriptor() ([]byte, []int) {
-	return file_gitpod_experimental_v1_teams_proto_rawDescGZIP(), []int{11}
+	return file_gitpod_experimental_v1_teams_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *UpdateTeamMemberRequest) GetTeamId() string {
@@ -715,7 +810,7 @@ type UpdateTeamMemberResponse struct {
 func (x *UpdateTeamMemberResponse) Reset() {
 	*x = UpdateTeamMemberResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[12]
+		mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -728,7 +823,7 @@ func (x *UpdateTeamMemberResponse) String() string {
 func (*UpdateTeamMemberResponse) ProtoMessage() {}
 
 func (x *UpdateTeamMemberResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[12]
+	mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -741,7 +836,7 @@ func (x *UpdateTeamMemberResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTeamMemberResponse.ProtoReflect.Descriptor instead.
 func (*UpdateTeamMemberResponse) Descriptor() ([]byte, []int) {
-	return file_gitpod_experimental_v1_teams_proto_rawDescGZIP(), []int{12}
+	return file_gitpod_experimental_v1_teams_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *UpdateTeamMemberResponse) GetTeamMember() *TeamMember {
@@ -765,7 +860,7 @@ type DeleteTeamMemberRequest struct {
 func (x *DeleteTeamMemberRequest) Reset() {
 	*x = DeleteTeamMemberRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[13]
+		mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -778,7 +873,7 @@ func (x *DeleteTeamMemberRequest) String() string {
 func (*DeleteTeamMemberRequest) ProtoMessage() {}
 
 func (x *DeleteTeamMemberRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[13]
+	mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -791,7 +886,7 @@ func (x *DeleteTeamMemberRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTeamMemberRequest.ProtoReflect.Descriptor instead.
 func (*DeleteTeamMemberRequest) Descriptor() ([]byte, []int) {
-	return file_gitpod_experimental_v1_teams_proto_rawDescGZIP(), []int{13}
+	return file_gitpod_experimental_v1_teams_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *DeleteTeamMemberRequest) GetTeamId() string {
@@ -817,7 +912,7 @@ type DeleteTeamMemberResponse struct {
 func (x *DeleteTeamMemberResponse) Reset() {
 	*x = DeleteTeamMemberResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[14]
+		mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -830,7 +925,7 @@ func (x *DeleteTeamMemberResponse) String() string {
 func (*DeleteTeamMemberResponse) ProtoMessage() {}
 
 func (x *DeleteTeamMemberResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[14]
+	mi := &file_gitpod_experimental_v1_teams_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -843,7 +938,7 @@ func (x *DeleteTeamMemberResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTeamMemberResponse.ProtoReflect.Descriptor instead.
 func (*DeleteTeamMemberResponse) Descriptor() ([]byte, []int) {
-	return file_gitpod_experimental_v1_teams_proto_rawDescGZIP(), []int{14}
+	return file_gitpod_experimental_v1_teams_proto_rawDescGZIP(), []int{16}
 }
 
 var File_gitpod_experimental_v1_teams_proto protoreflect.FileDescriptor
@@ -883,6 +978,13 @@ var file_gitpod_experimental_v1_teams_proto_rawDesc = []byte{
 	0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x54, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
 	0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
 	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x46, 0x0a, 0x12, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x54,
+	0x65, 0x61, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x30, 0x0a, 0x04, 0x74,
+	0x65, 0x61, 0x6d, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x67, 0x69, 0x74, 0x70,
+	0x6f, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2e,
+	0x76, 0x31, 0x2e, 0x54, 0x65, 0x61, 0x6d, 0x52, 0x04, 0x74, 0x65, 0x61, 0x6d, 0x22, 0x29, 0x0a,
+	0x0e, 0x47, 0x65, 0x74, 0x54, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
+	0x17, 0x0a, 0x07, 0x74, 0x65, 0x61, 0x6d, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x06, 0x74, 0x65, 0x61, 0x6d, 0x49, 0x64, 0x22, 0x43, 0x0a, 0x0f, 0x47, 0x65, 0x74, 0x54,
 	0x65, 0x61, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x30, 0x0a, 0x04, 0x74,
 	0x65, 0x61, 0x6d, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x67, 0x69, 0x74, 0x70,
 	0x6f, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2e,
@@ -937,54 +1039,60 @@ var file_gitpod_experimental_v1_teams_proto_rawDesc = []byte{
 	0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x13, 0x0a, 0x0f, 0x54, 0x45, 0x41, 0x4d, 0x5f, 0x52,
 	0x4f, 0x4c, 0x45, 0x5f, 0x4f, 0x57, 0x4e, 0x45, 0x52, 0x10, 0x01, 0x12, 0x14, 0x0a, 0x10, 0x54,
 	0x45, 0x41, 0x4d, 0x5f, 0x52, 0x4f, 0x4c, 0x45, 0x5f, 0x4d, 0x45, 0x4d, 0x42, 0x45, 0x52, 0x10,
-	0x02, 0x32, 0xaf, 0x05, 0x0a, 0x0c, 0x54, 0x65, 0x61, 0x6d, 0x73, 0x53, 0x65, 0x72, 0x76, 0x69,
+	0x02, 0x32, 0x8d, 0x06, 0x0a, 0x0c, 0x54, 0x65, 0x61, 0x6d, 0x73, 0x53, 0x65, 0x72, 0x76, 0x69,
 	0x63, 0x65, 0x12, 0x65, 0x0a, 0x0a, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x54, 0x65, 0x61, 0x6d,
 	0x12, 0x29, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69,
 	0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65,
 	0x54, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2a, 0x2e, 0x67, 0x69,
 	0x74, 0x70, 0x6f, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61,
 	0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x54, 0x65, 0x61, 0x6d, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x62, 0x0a, 0x09, 0x4c, 0x69, 0x73,
-	0x74, 0x54, 0x65, 0x61, 0x6d, 0x73, 0x12, 0x28, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e,
-	0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e,
-	0x4c, 0x69, 0x73, 0x74, 0x54, 0x65, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x29, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69,
-	0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x54, 0x65,
-	0x61, 0x6d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x5f, 0x0a,
-	0x08, 0x4a, 0x6f, 0x69, 0x6e, 0x54, 0x65, 0x61, 0x6d, 0x12, 0x27, 0x2e, 0x67, 0x69, 0x74, 0x70,
-	0x6f, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2e,
-	0x76, 0x31, 0x2e, 0x4a, 0x6f, 0x69, 0x6e, 0x54, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x1a, 0x28, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65,
-	0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x4a, 0x6f, 0x69, 0x6e,
-	0x54, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x80,
-	0x01, 0x0a, 0x13, 0x52, 0x65, 0x73, 0x65, 0x74, 0x54, 0x65, 0x61, 0x6d, 0x49, 0x6e, 0x76, 0x69,
-	0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x32, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e,
-	0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e,
-	0x52, 0x65, 0x73, 0x65, 0x74, 0x54, 0x65, 0x61, 0x6d, 0x49, 0x6e, 0x76, 0x69, 0x74, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x33, 0x2e, 0x67, 0x69, 0x74,
-	0x70, 0x6f, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c,
-	0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65, 0x73, 0x65, 0x74, 0x54, 0x65, 0x61, 0x6d, 0x49, 0x6e, 0x76,
-	0x69, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
-	0x00, 0x12, 0x77, 0x0a, 0x10, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x54, 0x65, 0x61, 0x6d, 0x4d,
-	0x65, 0x6d, 0x62, 0x65, 0x72, 0x12, 0x2f, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x65,
-	0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x55,
-	0x70, 0x64, 0x61, 0x74, 0x65, 0x54, 0x65, 0x61, 0x6d, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x30, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e,
-	0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e,
-	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x54, 0x65, 0x61, 0x6d, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x77, 0x0a, 0x10, 0x44, 0x65,
-	0x6c, 0x65, 0x74, 0x65, 0x54, 0x65, 0x61, 0x6d, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x12, 0x2f,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x5c, 0x0a, 0x07, 0x47, 0x65, 0x74,
+	0x54, 0x65, 0x61, 0x6d, 0x12, 0x26, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x65, 0x78,
+	0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65,
+	0x74, 0x54, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x27, 0x2e, 0x67,
+	0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74,
+	0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x54, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x62, 0x0a, 0x09, 0x4c, 0x69, 0x73, 0x74, 0x54,
+	0x65, 0x61, 0x6d, 0x73, 0x12, 0x28, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x65, 0x78,
+	0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69,
+	0x73, 0x74, 0x54, 0x65, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x29,
 	0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65,
-	0x6e, 0x74, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x54, 0x65,
-	0x61, 0x6d, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
-	0x30, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d,
-	0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x54,
-	0x65, 0x61, 0x6d, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x22, 0x00, 0x42, 0x38, 0x5a, 0x36, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
-	0x6d, 0x2f, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2d, 0x69, 0x6f, 0x2f, 0x67, 0x69, 0x74, 0x70,
-	0x6f, 0x64, 0x2f, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x2d, 0x61, 0x70, 0x69, 0x2f, 0x65, 0x78,
-	0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2f, 0x76, 0x31, 0x62, 0x06, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6e, 0x74, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x54, 0x65, 0x61, 0x6d,
+	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x5f, 0x0a, 0x08, 0x4a,
+	0x6f, 0x69, 0x6e, 0x54, 0x65, 0x61, 0x6d, 0x12, 0x27, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64,
+	0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2e, 0x76, 0x31,
+	0x2e, 0x4a, 0x6f, 0x69, 0x6e, 0x54, 0x65, 0x61, 0x6d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x28, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69,
+	0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x4a, 0x6f, 0x69, 0x6e, 0x54, 0x65,
+	0x61, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x80, 0x01, 0x0a,
+	0x13, 0x52, 0x65, 0x73, 0x65, 0x74, 0x54, 0x65, 0x61, 0x6d, 0x49, 0x6e, 0x76, 0x69, 0x74, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x12, 0x32, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x65, 0x78,
+	0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65,
+	0x73, 0x65, 0x74, 0x54, 0x65, 0x61, 0x6d, 0x49, 0x6e, 0x76, 0x69, 0x74, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x33, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f,
+	0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2e, 0x76,
+	0x31, 0x2e, 0x52, 0x65, 0x73, 0x65, 0x74, 0x54, 0x65, 0x61, 0x6d, 0x49, 0x6e, 0x76, 0x69, 0x74,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12,
+	0x77, 0x0a, 0x10, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x54, 0x65, 0x61, 0x6d, 0x4d, 0x65, 0x6d,
+	0x62, 0x65, 0x72, 0x12, 0x2f, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x65, 0x78, 0x70,
+	0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x55, 0x70, 0x64,
+	0x61, 0x74, 0x65, 0x54, 0x65, 0x61, 0x6d, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x30, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x65, 0x78,
+	0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x55, 0x70,
+	0x64, 0x61, 0x74, 0x65, 0x54, 0x65, 0x61, 0x6d, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x77, 0x0a, 0x10, 0x44, 0x65, 0x6c, 0x65,
+	0x74, 0x65, 0x54, 0x65, 0x61, 0x6d, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x12, 0x2f, 0x2e, 0x67,
+	0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74,
+	0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x54, 0x65, 0x61, 0x6d,
+	0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x30, 0x2e,
+	0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e,
+	0x74, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x54, 0x65, 0x61,
+	0x6d, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
+	0x00, 0x42, 0x38, 0x5a, 0x36, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f,
+	0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2d, 0x69, 0x6f, 0x2f, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64,
+	0x2f, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x2d, 0x61, 0x70, 0x69, 0x2f, 0x65, 0x78, 0x70, 0x65,
+	0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2f, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1000,7 +1108,7 @@ func file_gitpod_experimental_v1_teams_proto_rawDescGZIP() []byte {
 }
 
 var file_gitpod_experimental_v1_teams_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_gitpod_experimental_v1_teams_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_gitpod_experimental_v1_teams_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_gitpod_experimental_v1_teams_proto_goTypes = []interface{}{
 	(TeamRole)(0),                       // 0: gitpod.experimental.v1.TeamRole
 	(*Team)(nil),                        // 1: gitpod.experimental.v1.Team
@@ -1008,46 +1116,51 @@ var file_gitpod_experimental_v1_teams_proto_goTypes = []interface{}{
 	(*TeamInvitation)(nil),              // 3: gitpod.experimental.v1.TeamInvitation
 	(*CreateTeamRequest)(nil),           // 4: gitpod.experimental.v1.CreateTeamRequest
 	(*CreateTeamResponse)(nil),          // 5: gitpod.experimental.v1.CreateTeamResponse
-	(*ListTeamsRequest)(nil),            // 6: gitpod.experimental.v1.ListTeamsRequest
-	(*ListTeamsResponse)(nil),           // 7: gitpod.experimental.v1.ListTeamsResponse
-	(*JoinTeamRequest)(nil),             // 8: gitpod.experimental.v1.JoinTeamRequest
-	(*JoinTeamResponse)(nil),            // 9: gitpod.experimental.v1.JoinTeamResponse
-	(*ResetTeamInvitationRequest)(nil),  // 10: gitpod.experimental.v1.ResetTeamInvitationRequest
-	(*ResetTeamInvitationResponse)(nil), // 11: gitpod.experimental.v1.ResetTeamInvitationResponse
-	(*UpdateTeamMemberRequest)(nil),     // 12: gitpod.experimental.v1.UpdateTeamMemberRequest
-	(*UpdateTeamMemberResponse)(nil),    // 13: gitpod.experimental.v1.UpdateTeamMemberResponse
-	(*DeleteTeamMemberRequest)(nil),     // 14: gitpod.experimental.v1.DeleteTeamMemberRequest
-	(*DeleteTeamMemberResponse)(nil),    // 15: gitpod.experimental.v1.DeleteTeamMemberResponse
-	(*timestamppb.Timestamp)(nil),       // 16: google.protobuf.Timestamp
+	(*GetTeamRequest)(nil),              // 6: gitpod.experimental.v1.GetTeamRequest
+	(*GetTeamResponse)(nil),             // 7: gitpod.experimental.v1.GetTeamResponse
+	(*ListTeamsRequest)(nil),            // 8: gitpod.experimental.v1.ListTeamsRequest
+	(*ListTeamsResponse)(nil),           // 9: gitpod.experimental.v1.ListTeamsResponse
+	(*JoinTeamRequest)(nil),             // 10: gitpod.experimental.v1.JoinTeamRequest
+	(*JoinTeamResponse)(nil),            // 11: gitpod.experimental.v1.JoinTeamResponse
+	(*ResetTeamInvitationRequest)(nil),  // 12: gitpod.experimental.v1.ResetTeamInvitationRequest
+	(*ResetTeamInvitationResponse)(nil), // 13: gitpod.experimental.v1.ResetTeamInvitationResponse
+	(*UpdateTeamMemberRequest)(nil),     // 14: gitpod.experimental.v1.UpdateTeamMemberRequest
+	(*UpdateTeamMemberResponse)(nil),    // 15: gitpod.experimental.v1.UpdateTeamMemberResponse
+	(*DeleteTeamMemberRequest)(nil),     // 16: gitpod.experimental.v1.DeleteTeamMemberRequest
+	(*DeleteTeamMemberResponse)(nil),    // 17: gitpod.experimental.v1.DeleteTeamMemberResponse
+	(*timestamppb.Timestamp)(nil),       // 18: google.protobuf.Timestamp
 }
 var file_gitpod_experimental_v1_teams_proto_depIdxs = []int32{
 	2,  // 0: gitpod.experimental.v1.Team.members:type_name -> gitpod.experimental.v1.TeamMember
 	3,  // 1: gitpod.experimental.v1.Team.team_invitation:type_name -> gitpod.experimental.v1.TeamInvitation
 	0,  // 2: gitpod.experimental.v1.TeamMember.role:type_name -> gitpod.experimental.v1.TeamRole
-	16, // 3: gitpod.experimental.v1.TeamMember.member_since:type_name -> google.protobuf.Timestamp
+	18, // 3: gitpod.experimental.v1.TeamMember.member_since:type_name -> google.protobuf.Timestamp
 	1,  // 4: gitpod.experimental.v1.CreateTeamResponse.team:type_name -> gitpod.experimental.v1.Team
-	1,  // 5: gitpod.experimental.v1.ListTeamsResponse.teams:type_name -> gitpod.experimental.v1.Team
-	1,  // 6: gitpod.experimental.v1.JoinTeamResponse.team:type_name -> gitpod.experimental.v1.Team
-	3,  // 7: gitpod.experimental.v1.ResetTeamInvitationResponse.team_invitation:type_name -> gitpod.experimental.v1.TeamInvitation
-	2,  // 8: gitpod.experimental.v1.UpdateTeamMemberRequest.team_member:type_name -> gitpod.experimental.v1.TeamMember
-	2,  // 9: gitpod.experimental.v1.UpdateTeamMemberResponse.team_member:type_name -> gitpod.experimental.v1.TeamMember
-	4,  // 10: gitpod.experimental.v1.TeamsService.CreateTeam:input_type -> gitpod.experimental.v1.CreateTeamRequest
-	6,  // 11: gitpod.experimental.v1.TeamsService.ListTeams:input_type -> gitpod.experimental.v1.ListTeamsRequest
-	8,  // 12: gitpod.experimental.v1.TeamsService.JoinTeam:input_type -> gitpod.experimental.v1.JoinTeamRequest
-	10, // 13: gitpod.experimental.v1.TeamsService.ResetTeamInvitation:input_type -> gitpod.experimental.v1.ResetTeamInvitationRequest
-	12, // 14: gitpod.experimental.v1.TeamsService.UpdateTeamMember:input_type -> gitpod.experimental.v1.UpdateTeamMemberRequest
-	14, // 15: gitpod.experimental.v1.TeamsService.DeleteTeamMember:input_type -> gitpod.experimental.v1.DeleteTeamMemberRequest
-	5,  // 16: gitpod.experimental.v1.TeamsService.CreateTeam:output_type -> gitpod.experimental.v1.CreateTeamResponse
-	7,  // 17: gitpod.experimental.v1.TeamsService.ListTeams:output_type -> gitpod.experimental.v1.ListTeamsResponse
-	9,  // 18: gitpod.experimental.v1.TeamsService.JoinTeam:output_type -> gitpod.experimental.v1.JoinTeamResponse
-	11, // 19: gitpod.experimental.v1.TeamsService.ResetTeamInvitation:output_type -> gitpod.experimental.v1.ResetTeamInvitationResponse
-	13, // 20: gitpod.experimental.v1.TeamsService.UpdateTeamMember:output_type -> gitpod.experimental.v1.UpdateTeamMemberResponse
-	15, // 21: gitpod.experimental.v1.TeamsService.DeleteTeamMember:output_type -> gitpod.experimental.v1.DeleteTeamMemberResponse
-	16, // [16:22] is the sub-list for method output_type
-	10, // [10:16] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	1,  // 5: gitpod.experimental.v1.GetTeamResponse.team:type_name -> gitpod.experimental.v1.Team
+	1,  // 6: gitpod.experimental.v1.ListTeamsResponse.teams:type_name -> gitpod.experimental.v1.Team
+	1,  // 7: gitpod.experimental.v1.JoinTeamResponse.team:type_name -> gitpod.experimental.v1.Team
+	3,  // 8: gitpod.experimental.v1.ResetTeamInvitationResponse.team_invitation:type_name -> gitpod.experimental.v1.TeamInvitation
+	2,  // 9: gitpod.experimental.v1.UpdateTeamMemberRequest.team_member:type_name -> gitpod.experimental.v1.TeamMember
+	2,  // 10: gitpod.experimental.v1.UpdateTeamMemberResponse.team_member:type_name -> gitpod.experimental.v1.TeamMember
+	4,  // 11: gitpod.experimental.v1.TeamsService.CreateTeam:input_type -> gitpod.experimental.v1.CreateTeamRequest
+	6,  // 12: gitpod.experimental.v1.TeamsService.GetTeam:input_type -> gitpod.experimental.v1.GetTeamRequest
+	8,  // 13: gitpod.experimental.v1.TeamsService.ListTeams:input_type -> gitpod.experimental.v1.ListTeamsRequest
+	10, // 14: gitpod.experimental.v1.TeamsService.JoinTeam:input_type -> gitpod.experimental.v1.JoinTeamRequest
+	12, // 15: gitpod.experimental.v1.TeamsService.ResetTeamInvitation:input_type -> gitpod.experimental.v1.ResetTeamInvitationRequest
+	14, // 16: gitpod.experimental.v1.TeamsService.UpdateTeamMember:input_type -> gitpod.experimental.v1.UpdateTeamMemberRequest
+	16, // 17: gitpod.experimental.v1.TeamsService.DeleteTeamMember:input_type -> gitpod.experimental.v1.DeleteTeamMemberRequest
+	5,  // 18: gitpod.experimental.v1.TeamsService.CreateTeam:output_type -> gitpod.experimental.v1.CreateTeamResponse
+	7,  // 19: gitpod.experimental.v1.TeamsService.GetTeam:output_type -> gitpod.experimental.v1.GetTeamResponse
+	9,  // 20: gitpod.experimental.v1.TeamsService.ListTeams:output_type -> gitpod.experimental.v1.ListTeamsResponse
+	11, // 21: gitpod.experimental.v1.TeamsService.JoinTeam:output_type -> gitpod.experimental.v1.JoinTeamResponse
+	13, // 22: gitpod.experimental.v1.TeamsService.ResetTeamInvitation:output_type -> gitpod.experimental.v1.ResetTeamInvitationResponse
+	15, // 23: gitpod.experimental.v1.TeamsService.UpdateTeamMember:output_type -> gitpod.experimental.v1.UpdateTeamMemberResponse
+	17, // 24: gitpod.experimental.v1.TeamsService.DeleteTeamMember:output_type -> gitpod.experimental.v1.DeleteTeamMemberResponse
+	18, // [18:25] is the sub-list for method output_type
+	11, // [11:18] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_gitpod_experimental_v1_teams_proto_init() }
@@ -1117,7 +1230,7 @@ func file_gitpod_experimental_v1_teams_proto_init() {
 			}
 		}
 		file_gitpod_experimental_v1_teams_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListTeamsRequest); i {
+			switch v := v.(*GetTeamRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1129,7 +1242,7 @@ func file_gitpod_experimental_v1_teams_proto_init() {
 			}
 		}
 		file_gitpod_experimental_v1_teams_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListTeamsResponse); i {
+			switch v := v.(*GetTeamResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1141,7 +1254,7 @@ func file_gitpod_experimental_v1_teams_proto_init() {
 			}
 		}
 		file_gitpod_experimental_v1_teams_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*JoinTeamRequest); i {
+			switch v := v.(*ListTeamsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1153,7 +1266,7 @@ func file_gitpod_experimental_v1_teams_proto_init() {
 			}
 		}
 		file_gitpod_experimental_v1_teams_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*JoinTeamResponse); i {
+			switch v := v.(*ListTeamsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1165,7 +1278,7 @@ func file_gitpod_experimental_v1_teams_proto_init() {
 			}
 		}
 		file_gitpod_experimental_v1_teams_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ResetTeamInvitationRequest); i {
+			switch v := v.(*JoinTeamRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1177,7 +1290,7 @@ func file_gitpod_experimental_v1_teams_proto_init() {
 			}
 		}
 		file_gitpod_experimental_v1_teams_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ResetTeamInvitationResponse); i {
+			switch v := v.(*JoinTeamResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1189,7 +1302,7 @@ func file_gitpod_experimental_v1_teams_proto_init() {
 			}
 		}
 		file_gitpod_experimental_v1_teams_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateTeamMemberRequest); i {
+			switch v := v.(*ResetTeamInvitationRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1201,7 +1314,7 @@ func file_gitpod_experimental_v1_teams_proto_init() {
 			}
 		}
 		file_gitpod_experimental_v1_teams_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateTeamMemberResponse); i {
+			switch v := v.(*ResetTeamInvitationResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1213,7 +1326,7 @@ func file_gitpod_experimental_v1_teams_proto_init() {
 			}
 		}
 		file_gitpod_experimental_v1_teams_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteTeamMemberRequest); i {
+			switch v := v.(*UpdateTeamMemberRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1225,6 +1338,30 @@ func file_gitpod_experimental_v1_teams_proto_init() {
 			}
 		}
 		file_gitpod_experimental_v1_teams_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*UpdateTeamMemberResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_experimental_v1_teams_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteTeamMemberRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_experimental_v1_teams_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteTeamMemberResponse); i {
 			case 0:
 				return &v.state
@@ -1243,7 +1380,7 @@ func file_gitpod_experimental_v1_teams_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_gitpod_experimental_v1_teams_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   15,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
