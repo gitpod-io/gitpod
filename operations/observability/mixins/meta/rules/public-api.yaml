@@ -1,0 +1,32 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: server-monitoring-rules
+spec:
+  groups:
+  - name: public-api
+    rules:
+    - alert: PublicAPI_NoMetrics
+      expr: absent(up{job="public-api-server"}) == 1
+      for: 15m
+      labels:
+        severity: warning
+        team: webapp
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/PublicAPI_NoMetrics.md
+        summary: We have not been able to collect metrics from the Public API. This can indicate an issue with the instances, or with metrics collection. Investigation required.
+        description: Metrics for Public API are not available. Either the public-api-server pods are down, or there is a problem with metric collection and we are flying blind. Investigate.
+
+    - alert: PublicAPI_ServiceReturningServerErrors
+      expr: sum(increase(connect_server_handled_seconds_count{code=~"unknown|internal|unavailable|data_loss"}[1m])) by (package, call) > 1
+      for: 15m
+      labels:
+        severity: warning
+        team: webapp
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/PublicAPI_ServiceReturningServerErrors.md
+        summary: PublicAPI serves multiple different Services and RPC. There have been failing requests due to server errors. Investigation required.
+        description: Service {{ $labels.package }}.{{ $labels.call }} has returned {{ printf "%.2f" $value }} server errors in the last 10 minutes.
