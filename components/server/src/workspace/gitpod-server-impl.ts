@@ -2115,20 +2115,22 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "The invite link is no longer valid.");
         }
         ctx.span?.setTag("teamId", invite.teamId);
-        await this.teamDB.addMemberToTeam(user.id, invite.teamId);
-        await this.onTeamMemberAdded(user.id, invite.teamId);
-        const team = await this.getTeam(ctx, invite.teamId);
+        const result = await this.teamDB.addMemberToTeam(user.id, invite.teamId);
+        const team = await this.teamDB.findTeamById(invite.teamId);
+        if (result !== "already_member") {
+            await this.onTeamMemberAdded(user.id, invite.teamId);
+            this.analytics.track({
+                userId: user.id,
+                event: "team_joined",
+                properties: {
+                    team_id: invite.teamId,
+                    team_name: team?.name,
+                    team_slug: team?.slug,
+                    invite_id: inviteId,
+                },
+            });
+        }
 
-        this.analytics.track({
-            userId: user.id,
-            event: "team_joined",
-            properties: {
-                team_id: invite.teamId,
-                team_name: team?.name,
-                team_slug: team?.slug,
-                invite_id: inviteId,
-            },
-        });
         return team!;
     }
 

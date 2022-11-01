@@ -23,20 +23,7 @@ export default function () {
                     throw new Error("This invite URL is incorrect.");
                 }
 
-                let team;
-                try {
-                    team = await getGitpodService().server.joinTeam(inviteId);
-                } catch (error) {
-                    const message: string | undefined = error && typeof error.message === "string" && error.message;
-                    const regExp = /You are already a member of this team. \((.*)\)/;
-                    const match = message && regExp.exec(message);
-                    if (match && match[1]) {
-                        const slug = match[1];
-                        history.push(`/t/${slug}/members`);
-                        return;
-                    }
-                    throw error;
-                }
+                const team = await getGitpodService().server.joinTeam(inviteId);
                 const teams = await getGitpodService().server.getTeams();
                 setTeams(teams);
 
