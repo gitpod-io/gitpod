@@ -18,7 +18,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -199,6 +201,7 @@ var runCmd = &cobra.Command{
 			Client:  mgr.GetClient(),
 			Log:     ctrl.Log.WithName("controllers").WithName("Pod"),
 			Scheme:  mgr.GetScheme(),
+			Pods:    make(map[types.NamespacedName]corev1.Pod),
 		}).SetupWithManager(mgr)
 		if err != nil {
 			log.WithError(err).Fatal("unable to create controller", "controller", "Pod")

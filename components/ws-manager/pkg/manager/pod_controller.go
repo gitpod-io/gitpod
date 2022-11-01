@@ -11,6 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -24,6 +25,7 @@ type PodReconciler struct {
 	Scheme *runtime.Scheme
 
 	Monitor *Monitor
+	Pods    map[types.NamespacedName]corev1.Pod
 }
 
 // Reconcile performs a reconciliation of a pod
@@ -34,8 +36,20 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	err := r.Client.Get(context.Background(), req.NamespacedName, &pod)
 	if errors.IsNotFound(err) {
 		// pod is gone - that's ok
+		if pod, ok := r.Pods[req.NamespacedName]; ok {
+			delete(r.Pods, req.NamespacedName)
+			queue := pod.Annotations[workspaceIDAnnotation]
+			if queue == "" {
+				return ctrl.Result{}, nil
+			}
+			r.Monitor.eventpool.Add(queue, watch.Event{
+				Type:   watch.Deleted,
+				Object: &pod,
+			})
+		}
 		return reconcile.Result{}, nil
 	}
+	r.Pods[req.NamespacedName] = pod
 
 	queue := pod.Annotations[workspaceIDAnnotation]
 	if queue == "" {
