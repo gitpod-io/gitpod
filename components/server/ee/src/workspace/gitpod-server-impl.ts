@@ -119,6 +119,7 @@ import { UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb"
 import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 import { IncrementalPrebuildsService } from "../prebuilds/incremental-prebuilds-service";
 import { ConfigProvider } from "../../../src/workspace/config-provider";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -2177,9 +2178,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const user = this.checkAndBlockUser("subscribeToStripe");
 
+        let team: Team | undefined;
         try {
             if (attrId.kind === "team") {
-                const team = await this.guardTeamOperation(attrId.teamId, "update");
+                team = await this.guardTeamOperation(attrId.teamId, "update");
                 await this.ensureStripeApiIsAllowed({ team });
             } else {
                 await this.ensureStripeApiIsAllowed({ user });
@@ -2189,8 +2191,21 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 throw new Error(`No Stripe customer profile for '${attributionId}'`);
             }
 
-            await this.stripeService.setDefaultPaymentMethodForCustomer(customerId, setupIntentId);
-            await this.stripeService.createSubscriptionForCustomer(customerId, attributionId);
+            const createStripeSubscriptionOnUsage = await getExperimentsClientForBackend().getValueAsync(
+                "createStripeSubscriptionOnUsage",
+                false,
+                {
+                    user: user,
+                    teamId: team ? team.id : undefined,
+                },
+            );
+
+            if (createStripeSubscriptionOnUsage) {
+                await this.billingService.createStripeSubscription({ attributionId, setupIntentId, usageLimit });
+            } else {
+                await this.stripeService.setDefaultPaymentMethodForCustomer(customerId, setupIntentId);
+                await this.stripeService.createSubscriptionForCustomer(customerId, attributionId);
+            }
 
             // Creating a cost center for this customer
             const { costCenter } = await this.usageService.setCostCenter({
