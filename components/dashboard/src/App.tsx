@@ -52,7 +52,7 @@ import { isGitpodIo, isLocalPreview } from "./utils";
 import Alert from "./components/Alert";
 import { BlockedRepositories } from "./admin/BlockedRepositories";
 import { AppNotifications } from "./AppNotifications";
-import { teamsService } from "./service/public-api";
+import { publicApiTeamsToProtocol, teamsService } from "./service/public-api";
 import { FeatureFlagContext } from "./contexts/FeatureFlagContext";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
@@ -168,27 +168,16 @@ function App() {
         (async () => {
             var user: User | undefined;
             try {
-                let teamsPromise: Promise<Team[]>;
-                if (usePublicApiTeamsService) {
-                    teamsPromise = teamsService.listTeams({}).then((response) => {
-                        return response.teams.map((team) => {
-                            const t: Team = {
-                                id: team.id,
-                                name: team.name,
-                                slug: team.slug,
-                                creationTime: "",
-                            };
-                            return t;
-                        });
-                    });
-                } else {
-                    teamsPromise = getGitpodService().server.getTeams();
-                }
-
                 user = await getGitpodService().server.getLoggedInUser();
                 setUser(user);
 
-                const teams = await teamsPromise;
+                let teams: Team[];
+                if (usePublicApiTeamsService) {
+                    const response = await teamsService.listTeams({});
+                    teams = publicApiTeamsToProtocol(response.teams);
+                } else {
+                    teams = await getGitpodService().server.getTeams();
+                }
 
                 {
                     // if a team was selected previously and we call the root URL (e.g. "gitpod.io"),
