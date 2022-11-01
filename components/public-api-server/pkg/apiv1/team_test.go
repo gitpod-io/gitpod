@@ -7,6 +7,11 @@ package apiv1
 import (
 	"context"
 	"errors"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
 	"github.com/bufbuild/connect-go"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
@@ -17,18 +22,16 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-	"time"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func TestTeamsService_CreateTeam(t *testing.T) {
 
 	var (
-		name = "Shiny New Team"
-		slug = "shiny-new-team"
-		id   = uuid.New().String()
+		name        = "Shiny New Team"
+		slug        = "shiny-new-team"
+		id          = uuid.New().String()
+		memberSince = "2022-10-10T10:10:10.000Z"
 	)
 
 	t.Run("returns invalid argument when name is empty", func(t *testing.T) {
@@ -60,14 +63,14 @@ func TestTeamsService_CreateTeam(t *testing.T) {
 				PrimaryEmail: "alice@alice.com",
 				AvatarUrl:    "",
 				Role:         protocol.TeamMember_Owner,
-				MemberSince:  "",
+				MemberSince:  memberSince,
 			}, {
 				UserId:       uuid.New().String(),
 				FullName:     "Bob Bob",
 				PrimaryEmail: "bob@bob.com",
 				AvatarUrl:    "",
 				Role:         protocol.TeamMember_Member,
-				MemberSince:  "",
+				MemberSince:  memberSince,
 			},
 		}
 		inviteID := uuid.New().String()
@@ -100,12 +103,14 @@ func TestTeamsService_CreateTeam(t *testing.T) {
 				Slug: slug,
 				Members: []*v1.TeamMember{
 					{
-						UserId: teamMembers[0].UserId,
-						Role:   teamRoleToAPIResponse(teamMembers[0].Role),
+						UserId:      teamMembers[0].UserId,
+						Role:        teamRoleToAPIResponse(teamMembers[0].Role),
+						MemberSince: timestamppb.New(time.Date(2022, 10, 10, 10, 10, 10, 0, time.UTC)),
 					},
 					{
-						UserId: teamMembers[1].UserId,
-						Role:   teamRoleToAPIResponse(teamMembers[1].Role),
+						UserId:      teamMembers[1].UserId,
+						Role:        teamRoleToAPIResponse(teamMembers[1].Role),
+						MemberSince: timestamppb.New(time.Date(2022, 10, 10, 10, 10, 10, 0, time.UTC)),
 					},
 				},
 				TeamInvitation: &v1.TeamInvitation{
