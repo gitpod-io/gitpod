@@ -96,6 +96,7 @@ const defaultFunctions: FunctionsConfig = {
     setProjectEnvironmentVariable: { group: "default", points: 1 },
     getProjectEnvironmentVariables: { group: "default", points: 1 },
     deleteProjectEnvironmentVariable: { group: "default", points: 1 },
+    getTeam: { group: "default", points: 1 },
     getTeams: { group: "default", points: 1 },
     getTeamMembers: { group: "default", points: 1 },
     createTeam: { group: "default", points: 1 },

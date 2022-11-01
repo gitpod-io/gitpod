@@ -2061,14 +2061,23 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return this.teamDB.findTeamsByUser(user.id);
     }
 
+    public async getTeam(ctx: TraceContext, teamId: string): Promise<Team> {
+        traceAPIParams(ctx, { teamId });
+        this.checkAndBlockUser("getTeam");
+
+        const team = await this.teamDB.findTeamById(teamId);
+        if (!team) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, `Team ${teamId} does not exist`);
+        }
+
+        return team;
+    }
+
     public async getTeamMembers(ctx: TraceContext, teamId: string): Promise<TeamMemberInfo[]> {
         traceAPIParams(ctx, { teamId });
 
         this.checkUser("getTeamMembers");
-        const team = await this.teamDB.findTeamById(teamId);
-        if (!team) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
-        }
+        const team = await this.getTeam(ctx, teamId);
         const members = await this.teamDB.findMembersByTeam(team.id);
         await this.guardAccess({ kind: "team", subject: team, members }, "get");
         return members;
@@ -2108,7 +2117,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         ctx.span?.setTag("teamId", invite.teamId);
         await this.teamDB.addMemberToTeam(user.id, invite.teamId);
         await this.onTeamMemberAdded(user.id, invite.teamId);
-        const team = await this.teamDB.findTeamById(invite.teamId);
+        const team = await this.getTeam(ctx, invite.teamId);
 
         this.analytics.track({
             userId: user.id,
