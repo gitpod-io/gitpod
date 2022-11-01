@@ -1,0 +1,25 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: ws-daemon-monitoring-rules
+spec:
+  groups:
+  - name: ws-daemon
+    rules:
+    - alert: BackupFailureBecauseOfGitpodWsDaemonCrash
+      labels:
+        severity: critical
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWsDaemonCrashLooping.md
+        summary: Increase the number of backup failure because of ws-daemon is crashlooping.
+        description: Ws-daemon is restarting {{ printf "%.2f" $value }} times / 10 minutes.
+        dashboard_url: https://grafana.gitpod.io/d/ws-daemon/gitpod-component-ws-daemon
+      expr: |
+        sum(increase(kube_pod_container_status_restarts_total{container="ws-daemon"}[10m])) by(cluster) > 0 AND sum(increase(gitpod_ws_manager_workspace_backups_failure_total{type="REGULAR"}[10m])) by(cluster) > 0

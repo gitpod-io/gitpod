@@ -9,7 +9,6 @@ metadata:
     prometheus: k8s
     role: alert-rules
   name: workspace-failure-slo-monitoring-rules
-  namespace: monitoring-satellite
 spec:
   groups:
   - name: workspace-failure-SLO
