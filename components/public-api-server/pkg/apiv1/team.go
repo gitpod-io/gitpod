@@ -7,7 +7,10 @@ package apiv1
 import (
 	"context"
 	"fmt"
+
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
+	"github.com/relvacode/iso8601"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	connect "github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -77,8 +80,9 @@ func teamMembersToAPIResponse(members []*protocol.TeamMemberInfo) []*v1.TeamMemb
 
 	for _, m := range members {
 		result = append(result, &v1.TeamMember{
-			UserId: m.UserId,
-			Role:   teamRoleToAPIResponse(m.Role),
+			UserId:      m.UserId,
+			Role:        teamRoleToAPIResponse(m.Role),
+			MemberSince: parseTimeStamp(m.MemberSince),
 		})
 	}
 
@@ -94,4 +98,13 @@ func teamRoleToAPIResponse(role protocol.TeamMemberRole) v1.TeamRole {
 	default:
 		return v1.TeamRole_TEAM_ROLE_UNSPECIFIED
 	}
+}
+
+func parseTimeStamp(s string) *timestamppb.Timestamp {
+	parsed, err := iso8601.ParseString(s)
+	if err != nil {
+		return &timestamppb.Timestamp{}
+	}
+
+	return timestamppb.New(parsed)
 }
