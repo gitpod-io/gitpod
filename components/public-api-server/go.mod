@@ -7,7 +7,7 @@ require (
 	github.com/bufbuild/connect-go v1.0.0
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/public-api v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/usage-api v0.0.0-00010101000000-000000000000
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.9
@@ -60,7 +60,7 @@ replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
 
 replace github.com/gitpod-io/gitpod/gitpod-protocol => ../gitpod-protocol/go // leeway
 
-replace github.com/gitpod-io/gitpod/public-api => ../public-api/go // leeway
+replace github.com/gitpod-io/gitpod/components/public-api/go => ../public-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/usage-api => ../usage-api/go // leeway
 
