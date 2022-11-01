@@ -268,7 +268,9 @@ func LaunchWorkspaceFromContextURL(t *testing.T, ctx context.Context, contextURL
 
 	// GetWorkspace might receive an instance before we seen the first event
 	// from ws-manager, in which case IdeURL is not set
-	wi.LatestInstance.IdeURL = resp.WorkspaceURL
+	if wi.LatestInstance.IdeURL == "" {
+		wi.LatestInstance.IdeURL = resp.WorkspaceURL
+	}
 
 	stopWs := stopWsF(t, wi.LatestInstance.ID, api)
 	defer func() {
@@ -278,9 +280,12 @@ func LaunchWorkspaceFromContextURL(t *testing.T, ctx context.Context, contextURL
 	}()
 
 	t.Log("wait for workspace to be fully up and running")
-	_, err = WaitForWorkspaceStart(ctx, wi.LatestInstance.ID, api)
+	wsState, err := WaitForWorkspaceStart(ctx, wi.LatestInstance.ID, api)
 	if err != nil {
 		return nil, nil, xerrors.Errorf("failed to wait for the workspace to start up: %w", err)
+	}
+	if wi.LatestInstance.IdeURL == "" {
+		wi.LatestInstance.IdeURL = wsState.Spec.Url
 	}
 	t.Log("successful launch of the workspace")
 
