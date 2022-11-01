@@ -1,6 +1,7 @@
 # Change Log
 
 ## October 2022
+- Fixed missing .tar file extension from a downloaded workspace ([#13678](https://github.com/gitpod-io/gitpod/pull/13678)) - [@ghostdevv](https://github.com/ghostdevv)
 - More stable docker-compose behavior with lots of containers ([#14259](https://github.com/gitpod-io/gitpod/pull/14259)) - [@utam0k](https://github.com/utam0k)
 - Show warning for inactive projects and allow to resume prebuilds again. ([#14081](https://github.com/gitpod-io/gitpod/pull/14081)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Deactivate team scope selector on personal usage ([#14238](https://github.com/gitpod-io/gitpod/pull/14238)) - [@gtsiolis](https://github.com/gtsiolis)
