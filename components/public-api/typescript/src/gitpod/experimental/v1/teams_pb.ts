@@ -10,7 +10,7 @@
 /* @ts-nocheck */
 
 import type {BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage} from "@bufbuild/protobuf";
-import {Message, proto3} from "@bufbuild/protobuf";
+import {Message, proto3, Timestamp} from "@bufbuild/protobuf";
 
 /**
  * @generated from enum gitpod.experimental.v1.TeamRole
@@ -134,6 +134,13 @@ export class TeamMember extends Message<TeamMember> {
    */
   role = TeamRole.UNSPECIFIED;
 
+  /**
+   * member_since is the timestamp when the member joined the team
+   *
+   * @generated from field: google.protobuf.Timestamp member_since = 3;
+   */
+  memberSince?: Timestamp;
+
   constructor(data?: PartialMessage<TeamMember>) {
     super();
     proto3.util.initPartial(data, this);
@@ -144,6 +151,7 @@ export class TeamMember extends Message<TeamMember> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "role", kind: "enum", T: proto3.getEnumType(TeamRole) },
+    { no: 3, name: "member_since", kind: "message", T: Timestamp },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): TeamMember {
