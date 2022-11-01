@@ -178,6 +178,45 @@ func TestTeamService_GetTeam(t *testing.T) {
 	})
 }
 
+func TestTeamsService_JoinTeam(t *testing.T) {
+	var (
+		teamID   = uuid.New().String()
+		inviteID = uuid.New().String()
+	)
+
+	t.Run("fails with invalid argument when no join ID is specified", func(t *testing.T) {
+		_, client := setupTeamService(t)
+
+		_, err := client.JoinTeam(context.Background(), connect.NewRequest(&v1.JoinTeamRequest{
+			InvitationId: "",
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("delegates joining to server, and populates team response", func(t *testing.T) {
+		serverMock, client := setupTeamService(t)
+
+		team := newTeam(&protocol.Team{ID: teamID})
+		teamMembers := []*protocol.TeamMemberInfo{newTeamMember(&protocol.TeamMemberInfo{})}
+		invite := &protocol.TeamMembershipInvite{
+			ID: uuid.New().String(),
+		}
+
+		serverMock.EXPECT().JoinTeam(gomock.Any(), inviteID).Return(team, nil)
+		serverMock.EXPECT().GetTeamMembers(gomock.Any(), teamID).Return(teamMembers, nil)
+		serverMock.EXPECT().GetGenericInvite(gomock.Any(), teamID).Return(invite, nil)
+
+		response, err := client.JoinTeam(context.Background(), connect.NewRequest(&v1.JoinTeamRequest{
+			InvitationId: inviteID,
+		}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.JoinTeamResponse{
+			Team: teamToAPIResponse(team, teamMembers, invite),
+		}, response.Msg)
+	})
+}
+
 func TestTeamToAPIResponse(t *testing.T) {
 	// Here, we're deliberately not using our helpers newTeam, newTeamMembers because
 	// we want to assert from first principles

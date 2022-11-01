@@ -6,6 +6,7 @@ package apiv1
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	connect "github.com/bufbuild/connect-go"
@@ -119,6 +120,35 @@ func (s *TeamService) ListTeams(ctx context.Context, req *connect.Request[v1.Lis
 	return connect.NewResponse(&v1.ListTeamsResponse{
 		Teams: response,
 	}), nil
+}
+
+func (s *TeamService) JoinTeam(ctx context.Context, req *connect.Request[v1.JoinTeamRequest]) (*connect.Response[v1.JoinTeamResponse], error) {
+	if req.Msg.GetInvitationId() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invitation id is a required argument to join a team"))
+	}
+
+	token := auth.TokenFromContext(ctx)
+	conn, err := s.connectionPool.Get(ctx, token)
+	if err != nil {
+		log.Log.WithError(err).Error("Failed to get connection to server.")
+		return nil, connect.NewError(connect.CodeInternal, errors.New("failed to establish connection to downstream services"))
+	}
+
+	team, err := conn.JoinTeam(ctx, req.Msg.GetInvitationId())
+	if err != nil {
+		return nil, proxy.ConvertError(err)
+	}
+
+	response, err := s.toTeamAPIResponse(ctx, conn, team)
+	if err != nil {
+		log.WithError(err).Error("Failed to populate team with details.")
+		return nil, err
+	}
+
+	return connect.NewResponse(&v1.JoinTeamResponse{
+		Team: response,
+	}), nil
+
 }
 
 func (s *TeamService) toTeamAPIResponse(ctx context.Context, conn protocol.APIInterface, team *protocol.Team) (*v1.Team, error) {
