@@ -352,7 +352,15 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		clog.WithError(err).WithField("pod", pod.Name).Warn("workspace pod did not transition to running state")
 		if err == wait.ErrWaitTimeout && isPodUnschedulable(m.Clientset, pod.Name, pod.Namespace) {
 			// this could be an error due to a scale-up event
-			delErr := deleteWorkspacePodForce(m.Clientset, pod.Name, pod.Namespace)
+			// delete the PVC object if present
+			delErr := m.deleteWorkspacePVC(ctx, pod.Name)
+			if delErr != nil {
+				clog.WithError(delErr).WithField("pvc", pod.Name).Warn("was unable to delete workspace pvc")
+				// do not return error to run the following logic
+			}
+
+			// force delete the workspace pod by removing the finalizer
+			delErr = deleteWorkspacePodForce(m.Clientset, pod.Name, pod.Namespace)
 			if delErr != nil {
 				clog.WithError(delErr).WithField("pod", pod.Name).Warn("was unable to delete workspace pod")
 				return nil, xerrors.Errorf("workspace pod never reached Running state: %w", err)
