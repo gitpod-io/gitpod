@@ -24,6 +24,7 @@ import { ReactComponent as UsageIcon } from "../images/usage-default.svg";
 import { toRemoteURL } from "../projects/render-utils";
 import { WorkspaceType } from "@gitpod/gitpod-protocol";
 import PillLabel from "./PillLabel";
+import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 
 interface UsageViewProps {
     attributionId: AttributionId;
@@ -39,6 +40,14 @@ function UsageView({ attributionId }: UsageViewProps) {
     const [endDateOfBillMonth, setEndDateOfBillMonth] = useState(Date.now());
     const [totalCreditsUsed, setTotalCreditsUsed] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [supportedClasses, setSupportedClasses] = useState<SupportedWorkspaceClass[]>([]);
+
+    useEffect(() => {
+        (async () => {
+            const classes = await getGitpodService().server.getSupportedWorkspaceClasses();
+            setSupportedClasses(classes);
+        })();
+    }, []);
 
     useEffect(() => {
         loadPage(1);
@@ -79,6 +88,14 @@ function UsageView({ attributionId }: UsageViewProps) {
             return "Workspace";
         }
         return "Prebuild";
+    };
+
+    const getDisplayName = (workspaceClass: string) => {
+        const workspaceDisplayName = supportedClasses.find((wc) => wc.id === workspaceClass)?.displayName;
+        if (!workspaceDisplayName) {
+            return workspaceClass;
+        }
+        return workspaceDisplayName;
     };
 
     const isRunning = (usage: Usage) => {
@@ -270,10 +287,10 @@ function UsageView({ attributionId }: UsageViewProps) {
                                                             )}
                                                         </span>
                                                         <span className="text-sm text-gray-400 dark:text-gray-500">
-                                                            {
+                                                            {getDisplayName(
                                                                 (usage.metadata as WorkspaceInstanceUsageData)
-                                                                    .workspaceClass
-                                                            }
+                                                                    .workspaceClass,
+                                                            )}
                                                         </span>
                                                     </div>
                                                     <div className="flex flex-col col-span-5 my-auto">
