@@ -28,6 +28,8 @@ const _ = grpc.SupportPackageIsVersion7
 type TeamsServiceClient interface {
 	// CreateTeam creates a new Team.
 	CreateTeam(ctx context.Context, in *CreateTeamRequest, opts ...grpc.CallOption) (*CreateTeamResponse, error)
+	// GetTeam retrieves a single Team.
+	GetTeam(ctx context.Context, in *GetTeamRequest, opts ...grpc.CallOption) (*GetTeamResponse, error)
 	// ListTeams lists the caller has access to.
 	ListTeams(ctx context.Context, in *ListTeamsRequest, opts ...grpc.CallOption) (*ListTeamsResponse, error)
 	// JoinTeam makes the caller a TeamMember of the Team.
@@ -51,6 +53,15 @@ func NewTeamsServiceClient(cc grpc.ClientConnInterface) TeamsServiceClient {
 func (c *teamsServiceClient) CreateTeam(ctx context.Context, in *CreateTeamRequest, opts ...grpc.CallOption) (*CreateTeamResponse, error) {
 	out := new(CreateTeamResponse)
 	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.TeamsService/CreateTeam", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *teamsServiceClient) GetTeam(ctx context.Context, in *GetTeamRequest, opts ...grpc.CallOption) (*GetTeamResponse, error) {
+	out := new(GetTeamResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.TeamsService/GetTeam", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -108,6 +119,8 @@ func (c *teamsServiceClient) DeleteTeamMember(ctx context.Context, in *DeleteTea
 type TeamsServiceServer interface {
 	// CreateTeam creates a new Team.
 	CreateTeam(context.Context, *CreateTeamRequest) (*CreateTeamResponse, error)
+	// GetTeam retrieves a single Team.
+	GetTeam(context.Context, *GetTeamRequest) (*GetTeamResponse, error)
 	// ListTeams lists the caller has access to.
 	ListTeams(context.Context, *ListTeamsRequest) (*ListTeamsResponse, error)
 	// JoinTeam makes the caller a TeamMember of the Team.
@@ -127,6 +140,9 @@ type UnimplementedTeamsServiceServer struct {
 
 func (UnimplementedTeamsServiceServer) CreateTeam(context.Context, *CreateTeamRequest) (*CreateTeamResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateTeam not implemented")
+}
+func (UnimplementedTeamsServiceServer) GetTeam(context.Context, *GetTeamRequest) (*GetTeamResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTeam not implemented")
 }
 func (UnimplementedTeamsServiceServer) ListTeams(context.Context, *ListTeamsRequest) (*ListTeamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListTeams not implemented")
@@ -170,6 +186,24 @@ func _TeamsService_CreateTeam_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TeamsServiceServer).CreateTeam(ctx, req.(*CreateTeamRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TeamsService_GetTeam_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTeamRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TeamsServiceServer).GetTeam(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.experimental.v1.TeamsService/GetTeam",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TeamsServiceServer).GetTeam(ctx, req.(*GetTeamRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -274,6 +308,10 @@ var TeamsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateTeam",
 			Handler:    _TeamsService_CreateTeam_Handler,
+		},
+		{
+			MethodName: "GetTeam",
+			Handler:    _TeamsService_GetTeam_Handler,
 		},
 		{
 			MethodName: "ListTeams",
