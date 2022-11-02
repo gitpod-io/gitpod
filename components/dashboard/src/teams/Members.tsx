@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { TeamMemberInfo, TeamMemberRole, TeamMembershipInvite } from "@gitpod/gitpod-protocol";
+import { TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
 import dayjs from "dayjs";
 import { useContext, useEffect, useState } from "react";
 import { useHistory, useLocation } from "react-router";
@@ -18,15 +18,19 @@ import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import { TeamsContext, getCurrentTeam } from "./teams-context";
 import { trackEvent } from "../Analytics";
+import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
+import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
 
 export default function () {
     const { user } = useContext(UserContext);
     const { teams, setTeams } = useContext(TeamsContext);
+    const { usePublicApiTeamsService } = useContext(FeatureFlagContext);
+
     const history = useHistory();
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
     const [members, setMembers] = useState<TeamMemberInfo[]>([]);
-    const [genericInvite, setGenericInvite] = useState<TeamMembershipInvite>();
+    const [genericInviteId, setGenericInviteId] = useState<string>();
     const [showInviteModal, setShowInviteModal] = useState<boolean>(false);
     const [searchText, setSearchText] = useState<string>("");
     const [roleFilter, setRoleFilter] = useState<TeamMemberRole | undefined>();
@@ -37,12 +41,24 @@ export default function () {
             return;
         }
         (async () => {
-            const [infos, invite] = await Promise.all([
-                getGitpodService().server.getTeamMembers(team.id),
-                getGitpodService().server.getGenericInvite(team.id),
-            ]);
-            setMembers(infos);
-            setGenericInvite(invite);
+            let members: TeamMemberInfo[];
+            let invite: string;
+
+            if (usePublicApiTeamsService) {
+                const response = await teamsService.getTeam({ teamId: team.id });
+                members = publicApiTeamMembersToProtocol(response.team?.members || []);
+                invite = response.team?.teamInvitation?.id || "";
+            } else {
+                const [teamMembers, genericInvite] = await Promise.all([
+                    getGitpodService().server.getTeamMembers(team.id),
+                    getGitpodService().server.getGenericInvite(team.id),
+                ]);
+                members = teamMembers;
+                invite = genericInvite.id;
+            }
+
+            setMembers(members);
+            setGenericInviteId(invite);
         })();
     }, [team]);
 
@@ -78,10 +94,10 @@ export default function () {
 
     const resetInviteLink = async () => {
         // reset genericInvite first to prevent races on double click
-        if (genericInvite) {
-            setGenericInvite(undefined);
+        if (genericInviteId) {
+            setGenericInviteId(undefined);
             const newInvite = await getGitpodService().server.resetGenericInvite(team!.id);
-            setGenericInvite(newInvite);
+            setGenericInviteId(newInvite.id);
         }
     };
 
@@ -166,7 +182,7 @@ export default function () {
                     <button
                         onClick={() => {
                             trackEvent("invite_url_requested", {
-                                invite_url: getInviteURL(genericInvite!.id),
+                                invite_url: getInviteURL(genericInviteId!),
                             });
                             setShowInviteModal(true);
                         }}
@@ -272,7 +288,7 @@ export default function () {
                     )}
                 </ItemsList>
             </div>
-            {genericInvite && showInviteModal && (
+            {genericInviteId && showInviteModal && (
                 // TODO: Use title and buttons props
                 <Modal visible={true} onClose={() => setShowInviteModal(false)}>
                     <h3 className="mb-4">Invite Members</h3>
@@ -286,12 +302,12 @@ export default function () {
                                 disabled={true}
                                 readOnly={true}
                                 type="text"
-                                value={getInviteURL(genericInvite.id)}
+                                value={getInviteURL(genericInviteId!)}
                                 className="rounded-md w-full truncate overflow-x-scroll pr-8"
                             />
                             <div
                                 className="cursor-pointer"
-                                onClick={() => copyToClipboard(getInviteURL(genericInvite.id))}
+                                onClick={() => copyToClipboard(getInviteURL(genericInviteId!))}
                             >
                                 <div className="absolute top-1/3 right-3">
                                     <Tooltip content={copied ? "Copied!" : "Copy Invite URL"}>
