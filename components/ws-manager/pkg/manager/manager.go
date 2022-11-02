@@ -17,6 +17,7 @@ import (
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/opentracing/opentracing-go"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -29,12 +30,15 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	covev1client "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -55,6 +59,7 @@ import (
 
 	volumesnapshotv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 	volumesnapshotclientv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned"
+	watchtools "k8s.io/client-go/tools/watch"
 )
 
 // Manager is a kubernetes backed implementation of a workspace manager
@@ -1520,6 +1525,96 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 	}
 
 	return wsdaemon.NewWorkspaceContentServiceClient(conn), nil
+}
+
+func (m *Manager) createWorkspaceSnapshotFromPVC(ctx context.Context, pvcName string, pvcVolumeSnapshotName string, pvcVolumeSnapshotClassName string, workspaceID string, labels map[string]string) error {
+	// create snapshot object out of PVC
+	volumeSnapshot := &volumesnapshotv1.VolumeSnapshot{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        pvcVolumeSnapshotName,
+			Namespace:   m.Config.Namespace,
+			Annotations: map[string]string{workspaceIDAnnotation: workspaceID},
+			Labels:      labels,
+		},
+		Spec: volumesnapshotv1.VolumeSnapshotSpec{
+			Source: volumesnapshotv1.VolumeSnapshotSource{
+				PersistentVolumeClaimName: &pvcName,
+			},
+			VolumeSnapshotClassName: &pvcVolumeSnapshotClassName,
+		},
+	}
+
+	err := m.Clientset.Create(ctx, volumeSnapshot)
+	if err != nil && !k8serr.IsAlreadyExists(err) {
+		err = xerrors.Errorf("cannot create volumesnapshot: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (m *Manager) waitForWorkspaceVolumeSnapshotReady(ctx context.Context, pvcVolumeSnapshotName string, log *logrus.Entry) (pvcVolumeSnapshotContentName string, readyVolumeSnapshot bool, err error) {
+	log = log.WithField("VolumeSnapshot.Name", pvcVolumeSnapshotName)
+
+	var volumeSnapshotWatcher *watchtools.RetryWatcher
+	volumeSnapshotWatcher, err = watchtools.NewRetryWatcher("1", &cache.ListWatch{
+		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+			return m.VolumeSnapshotClient.SnapshotV1().VolumeSnapshots(m.Config.Namespace).Watch(ctx, metav1.ListOptions{
+				FieldSelector: fields.OneTermEqualSelector("metadata.name", pvcVolumeSnapshotName).String(),
+			})
+		},
+	})
+	if err != nil {
+		log.WithError(err).Info("fall back to exponential backoff retry")
+		// we can not create a retry watcher, we fall back to exponential backoff retry
+		backoff := wait.Backoff{
+			Steps:    30,
+			Duration: 100 * time.Millisecond,
+			Factor:   1.5,
+			Jitter:   0.1,
+			Cap:      10 * time.Minute,
+		}
+		err = wait.ExponentialBackoff(backoff, func() (bool, error) {
+			var vs volumesnapshotv1.VolumeSnapshot
+			err := m.Clientset.Get(ctx, types.NamespacedName{Namespace: m.Config.Namespace, Name: pvcVolumeSnapshotName}, &vs)
+			if err != nil {
+				if k8serr.IsNotFound(err) {
+					// volumesnapshot doesn't exist yet, retry again
+					return false, nil
+				}
+				log.WithError(err).Error("was unable to get volume snapshot")
+				return false, err
+			}
+			if vs.Status != nil && vs.Status.ReadyToUse != nil && *vs.Status.ReadyToUse && vs.Status.BoundVolumeSnapshotContentName != nil {
+				pvcVolumeSnapshotContentName = *vs.Status.BoundVolumeSnapshotContentName
+				return true, nil
+			}
+			return false, nil
+		})
+		if err != nil {
+			log.WithError(err).Errorf("failed while waiting for volume snapshot to get ready")
+			return "", false, err
+		}
+		readyVolumeSnapshot = true
+	} else {
+		for event := range volumeSnapshotWatcher.ResultChan() {
+			vs, ok := event.Object.(*volumesnapshotv1.VolumeSnapshot)
+			if !ok {
+				log.Errorf("unexpected type assertion %T", event.Object)
+				continue
+			}
+
+			if vs != nil && vs.Status != nil && vs.Status.ReadyToUse != nil && *vs.Status.ReadyToUse && vs.Status.BoundVolumeSnapshotContentName != nil {
+				pvcVolumeSnapshotContentName = *vs.Status.BoundVolumeSnapshotContentName
+				readyVolumeSnapshot = true
+				break
+			}
+		}
+
+		// stop the volume snapshot retry watcher
+		volumeSnapshotWatcher.Stop()
+	}
+
+	return pvcVolumeSnapshotContentName, readyVolumeSnapshot, nil
 }
 
 // newWssyncConnectionFactory creates a new wsdaemon connection factory based on the wsmanager configuration
