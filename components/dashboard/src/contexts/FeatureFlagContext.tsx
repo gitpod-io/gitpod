@@ -45,7 +45,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 persistent_volume_claim: { defaultValue: true, setter: setShowPersistentVolumeClaimUI },
                 usage_view: { defaultValue: false, setter: setShowUsageView },
                 showUseLastSuccessfulPrebuild: { defaultValue: false, setter: setShowUseLastSuccessfulPrebuild },
-                usePublicApiTeamsService: { defaultValue: false, setter: setUsePublicApiTeamsService },
+                publicApiExperimentalTeamsService: { defaultValue: false, setter: setUsePublicApiTeamsService },
             };
             for (const [flagName, config] of Object.entries(featureFlags)) {
                 if (teams) {
