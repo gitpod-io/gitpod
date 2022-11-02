@@ -329,7 +329,7 @@
           },
           "editorMode": "code",
           "expr": "sum(increase(connect_server_handled_seconds_count{package=~\"$package\", call=~\"$call\", call_type=~\"$type\", code!=\"ok\"}[1m])) by (package, call, code)",
-          "legendFormat": "{{grpc_service}}.{{grpc_method}} - {{grpc_code}}",
+          "legendFormat": "{{package}}.{{call}} - {{code}}",
           "range": true,
           "refId": "A"
         }
