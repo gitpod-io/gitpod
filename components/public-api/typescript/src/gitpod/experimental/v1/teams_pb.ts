@@ -141,6 +141,20 @@ export class TeamMember extends Message<TeamMember> {
    */
   memberSince?: Timestamp;
 
+  /**
+   * avatar_url is the URL for the TeamMember
+   *
+   * @generated from field: string avatar_url = 4;
+   */
+  avatarUrl = "";
+
+  /**
+   * full_name is the name of the TeamMember
+   *
+   * @generated from field: string full_name = 5;
+   */
+  fullName = "";
+
   constructor(data?: PartialMessage<TeamMember>) {
     super();
     proto3.util.initPartial(data, this);
@@ -152,6 +166,8 @@ export class TeamMember extends Message<TeamMember> {
     { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "role", kind: "enum", T: proto3.getEnumType(TeamRole) },
     { no: 3, name: "member_since", kind: "message", T: Timestamp },
+    { no: 4, name: "avatar_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "full_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): TeamMember {

@@ -32,6 +32,12 @@ message TeamMember {
 
     // member_since is the timestamp when the member joined the team
     google.protobuf.Timestamp member_since = 3;
+
+    // avatar_url is the URL for the TeamMember
+    string avatar_url = 4;
+
+    // full_name is the name of the TeamMember
+    string full_name = 5;
 }
 
 enum TeamRole {
