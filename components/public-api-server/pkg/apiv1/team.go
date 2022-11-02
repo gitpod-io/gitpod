@@ -63,6 +63,33 @@ func (s *TeamService) CreateTeam(ctx context.Context, req *connect.Request[v1.Cr
 	}), nil
 }
 
+func (s *TeamService) GetTeam(ctx context.Context, req *connect.Request[v1.GetTeamRequest]) (*connect.Response[v1.GetTeamResponse], error) {
+	if req.Msg.GetTeamId() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("team ID is a required argument for retrieving a team."))
+	}
+
+	token := auth.TokenFromContext(ctx)
+	conn, err := s.connectionPool.Get(ctx, token)
+	if err != nil {
+		log.Log.WithError(err).Error("Failed to get connection to server.")
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	team, err := conn.GetTeam(ctx, req.Msg.GetTeamId())
+	if err != nil {
+		return nil, proxy.ConvertError(err)
+	}
+
+	response, err := s.toTeamAPIResponse(ctx, conn, team)
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&v1.GetTeamResponse{
+		Team: response,
+	}), nil
+}
+
 func (s *TeamService) ListTeams(ctx context.Context, req *connect.Request[v1.ListTeamsRequest]) (*connect.Response[v1.ListTeamsResponse], error) {
 	token := auth.TokenFromContext(ctx)
 
