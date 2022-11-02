@@ -43,19 +43,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Replacements: []blobserve.StringReplacement{{
 						Search:      "vscode-cdn.net",
 						Replacement: ctx.Config.Domain,
-						Path:        "/ide/out/vs/workbench/workbench.web.api.js",
-					}, {
-						Search:      "vscode-cdn.net",
-						Replacement: ctx.Config.Domain,
 						Path:        "/ide/out/vs/workbench/workbench.web.main.js",
-					}, {
-						Search:      "vscode-cdn.net",
-						Replacement: ctx.Config.Domain,
-						Path:        "/ide/out/vs/workbench/services/extensions/worker/extensionHostWorker.js",
-					}, {
-						Search:      "open-vsx.org",
-						Replacement: openVSXProxyUrl,
-						Path:        "/ide/out/vs/workbench/workbench.web.api.js",
 					}, {
 						Search:      "open-vsx.org",
 						Replacement: openVSXProxyUrl,
