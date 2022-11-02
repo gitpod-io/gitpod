@@ -13,14 +13,19 @@
         <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodTerminalService" client="controller" preload="true"/>
         <projectService serviceImplementation="io.gitpod.jetbrains.remote.latest.GitpodPortForwardingService" client="controller" preload="true"/>
     </extensions>
-    <!--
     <actions>
-        <action id="io.gitpod.jetbrains.remote.latest.GitpodPortsActionCopyUrl"
-                class="io.gitpod.jetbrains.remote.latest.GitpodPortsActionCopyUrl"
-                text="Gitpod: Copy Port URL"
+        <action id="io.gitpod.jetbrains.remote.latest.GitpodCopyUrlAction"
+                class="io.gitpod.jetbrains.remote.latest.GitpodCopyUrlAction"
+                text="Copy URL"
                 icon="AllIcons.Actions.Copy">
             <add-to-group group-id="PortForwardingPortGroup" anchor="last"/>
         </action>
+        <action id="io.gitpod.jetbrains.remote.latest.GitpodCopyWebUrlAction"
+                class="io.gitpod.jetbrains.remote.latest.GitpodCopyWebUrlAction"
+                text="Copy Web URL"
+                icon="AllIcons.Actions.Copy">
+            <add-to-group group-id="PortForwardingPortGroup" anchor="last"/>
+            <add-to-group group-id="PortForwardingSuggestionGroup" anchor="last"/>
+        </action>
     </actions>
-    -->
 </idea-plugin>
