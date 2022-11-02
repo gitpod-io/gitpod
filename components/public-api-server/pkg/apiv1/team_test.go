@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/bufbuild/connect-go"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
@@ -22,18 +21,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
-	"google.golang.org/protobuf/types/known/timestamppb"
-)
-
-const (
-	memberSince = "2022-10-10T10:10:10.000Z"
 )
 
 func TestTeamsService_CreateTeam(t *testing.T) {
 
 	var (
 		name = "Shiny New Team"
-		slug = "shiny-new-team"
 		id   = uuid.New().String()
 	)
 
@@ -58,68 +51,39 @@ func TestTeamsService_CreateTeam(t *testing.T) {
 	})
 
 	t.Run("returns team with members and invite", func(t *testing.T) {
-		ts := time.Now().UTC()
 		teamMembers := []*protocol.TeamMemberInfo{
-			{
-				UserId:       uuid.New().String(),
-				FullName:     "Alice Alice",
-				PrimaryEmail: "alice@alice.com",
-				AvatarUrl:    "",
-				Role:         protocol.TeamMember_Owner,
-				MemberSince:  memberSince,
-			}, {
-				UserId:       uuid.New().String(),
-				FullName:     "Bob Bob",
-				PrimaryEmail: "bob@bob.com",
-				AvatarUrl:    "",
-				Role:         protocol.TeamMember_Member,
-				MemberSince:  memberSince,
-			},
+			newTeamMember(&protocol.TeamMemberInfo{
+				FullName: "Alice Alice",
+				Role:     protocol.TeamMember_Owner,
+			}),
+			newTeamMember(&protocol.TeamMemberInfo{
+				FullName: "Bob Bob",
+				Role:     protocol.TeamMember_Member,
+			}),
 		}
 		inviteID := uuid.New().String()
+		invite := &protocol.TeamMembershipInvite{
+			ID:     inviteID,
+			TeamID: id,
+		}
+		team := newTeam(&protocol.Team{
+			ID: id,
+		})
 
 		serverMock, client := setupTeamService(t)
 
-		serverMock.EXPECT().CreateTeam(gomock.Any(), name).Return(&protocol.Team{
-			ID:           id,
-			Name:         name,
-			Slug:         slug,
-			CreationTime: ts.String(),
-		}, nil)
+		serverMock.EXPECT().CreateTeam(gomock.Any(), name).Return(team, nil)
 		serverMock.EXPECT().GetTeamMembers(gomock.Any(), id).Return(teamMembers, nil)
 		serverMock.EXPECT().GetGenericInvite(gomock.Any(), id).Return(&protocol.TeamMembershipInvite{
-			ID:               inviteID,
-			TeamID:           id,
-			Role:             "",
-			CreationTime:     "",
-			InvalidationTime: "",
-			InvitedEmail:     "",
+			ID:     inviteID,
+			TeamID: id,
 		}, nil)
 
 		response, err := client.CreateTeam(context.Background(), connect.NewRequest(&v1.CreateTeamRequest{Name: name}))
 		require.NoError(t, err)
 
 		requireEqualProto(t, &v1.CreateTeamResponse{
-			Team: &v1.Team{
-				Id:   id,
-				Name: name,
-				Slug: slug,
-				Members: []*v1.TeamMember{
-					{
-						UserId:      teamMembers[0].UserId,
-						Role:        teamRoleToAPIResponse(teamMembers[0].Role),
-						MemberSince: timestamppb.New(time.Date(2022, 10, 10, 10, 10, 10, 0, time.UTC)),
-					},
-					{
-						UserId:      teamMembers[1].UserId,
-						Role:        teamRoleToAPIResponse(teamMembers[1].Role),
-						MemberSince: timestamppb.New(time.Date(2022, 10, 10, 10, 10, 10, 0, time.UTC)),
-					},
-				},
-				TeamInvitation: &v1.TeamInvitation{
-					Id: inviteID,
-				},
-			},
+			Team: teamToAPIResponse(team, teamMembers, invite),
 		}, response.Msg)
 	})
 }
@@ -130,34 +94,28 @@ func TestTeamsService_ListTeams(t *testing.T) {
 		serverMock, client := setupTeamService(t)
 
 		teamMembers := []*protocol.TeamMemberInfo{
-			{
-				UserId:       uuid.New().String(),
-				FullName:     "Alice Alice",
-				PrimaryEmail: "alice@alice.com",
-				AvatarUrl:    "",
-				Role:         protocol.TeamMember_Owner,
-				MemberSince:  memberSince,
-			}, {
-				UserId:       uuid.New().String(),
-				FullName:     "Bob Bob",
-				PrimaryEmail: "bob@bob.com",
-				AvatarUrl:    "",
-				Role:         protocol.TeamMember_Member,
-				MemberSince:  memberSince,
-			},
+			newTeamMember(&protocol.TeamMemberInfo{
+				FullName: "Alice Alice",
+				Role:     protocol.TeamMember_Owner,
+			}),
+			newTeamMember(&protocol.TeamMemberInfo{
+				FullName: "Bob Bob",
+				Role:     protocol.TeamMember_Member,
+			}),
 		}
 		teams := []*protocol.Team{
-			{
-				ID:   uuid.New().String(),
+			newTeam(&protocol.Team{
 				Name: "Team A",
-				Slug: "team_a",
-			}, {
-				ID:   uuid.New().String(),
+			}),
+			newTeam(&protocol.Team{
 				Name: "Team B",
-				Slug: "team_ba",
-			},
+			}),
 		}
 		inviteID := uuid.New().String()
+		invite := &protocol.TeamMembershipInvite{
+			ID:     inviteID,
+			TeamID: teams[1].ID,
+		}
 
 		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
 
@@ -169,58 +127,139 @@ func TestTeamsService_ListTeams(t *testing.T) {
 		}, nil)
 		// Mock for populating team B details
 		serverMock.EXPECT().GetTeamMembers(gomock.Any(), teams[1].ID).Return(teamMembers, nil)
-		serverMock.EXPECT().GetGenericInvite(gomock.Any(), teams[1].ID).Return(&protocol.TeamMembershipInvite{
-			ID:     inviteID,
-			TeamID: teams[1].ID,
-		}, nil)
+		serverMock.EXPECT().GetGenericInvite(gomock.Any(), teams[1].ID).Return(invite, nil)
 
 		response, err := client.ListTeams(ctx, connect.NewRequest(&v1.ListTeamsRequest{}))
 		require.NoError(t, err)
 		requireEqualProto(t, &v1.ListTeamsResponse{
 			Teams: []*v1.Team{
-				{
-					Id:   teams[0].ID,
-					Name: teams[0].Name,
-					Slug: teams[0].Slug,
-					Members: []*v1.TeamMember{
-						{
-							UserId:      teamMembers[0].UserId,
-							Role:        teamRoleToAPIResponse(teamMembers[0].Role),
-							MemberSince: parseTimeStamp(memberSince),
-						},
-						{
-							UserId:      teamMembers[1].UserId,
-							Role:        teamRoleToAPIResponse(teamMembers[1].Role),
-							MemberSince: parseTimeStamp(memberSince),
-						},
-					},
-					TeamInvitation: &v1.TeamInvitation{
-						Id: inviteID,
-					},
-				},
-				{
-					Id:   teams[1].ID,
-					Name: teams[1].Name,
-					Slug: teams[1].Slug,
-					Members: []*v1.TeamMember{
-						{
-							UserId:      teamMembers[0].UserId,
-							Role:        teamRoleToAPIResponse(teamMembers[0].Role),
-							MemberSince: parseTimeStamp(memberSince),
-						},
-						{
-							UserId:      teamMembers[1].UserId,
-							Role:        teamRoleToAPIResponse(teamMembers[1].Role),
-							MemberSince: parseTimeStamp(memberSince),
-						},
-					},
-					TeamInvitation: &v1.TeamInvitation{
-						Id: inviteID,
-					},
-				},
+				teamToAPIResponse(teams[0], teamMembers, invite),
+				teamToAPIResponse(teams[1], teamMembers, invite),
 			},
 		}, response.Msg)
 	})
+}
+
+func TestTeamToAPIResponse(t *testing.T) {
+	// Here, we're deliberately not using our helpers newTeam, newTeamMembers because
+	// we want to assert from first principles
+	team := &protocol.Team{
+		ID:           uuid.New().String(),
+		Name:         "New Team",
+		Slug:         "new_team",
+		CreationTime: "2022-09-09T09:09:09.000Z",
+	}
+	members := []*protocol.TeamMemberInfo{
+		{
+			UserId:       uuid.New().String(),
+			FullName:     "First Last",
+			PrimaryEmail: "email1@gitpod.io",
+			AvatarUrl:    "https://avatars.com/foo",
+			Role:         protocol.TeamMember_Member,
+			MemberSince:  "2022-09-09T09:09:09.000Z",
+		},
+		{
+			UserId:       uuid.New().String(),
+			FullName:     "Second Last",
+			PrimaryEmail: "email2@gitpod.io",
+			AvatarUrl:    "https://avatars.com/bar",
+			Role:         protocol.TeamMember_Owner,
+			MemberSince:  "2022-09-09T09:09:09.000Z",
+		},
+	}
+	invite := &protocol.TeamMembershipInvite{
+		ID:               uuid.New().String(),
+		TeamID:           uuid.New().String(),
+		Role:             protocol.TeamMember_Member,
+		CreationTime:     "2022-08-08T08:08:08.000Z",
+		InvalidationTime: "2022-11-11T11:11:11.000Z",
+		InvitedEmail:     "nope@gitpod.io",
+	}
+
+	response := teamToAPIResponse(team, members, invite)
+	requireEqualProto(t, &v1.Team{
+		Id:   team.ID,
+		Name: team.Name,
+		Slug: team.Slug,
+		Members: []*v1.TeamMember{
+			{
+				UserId:      members[0].UserId,
+				Role:        teamRoleToAPIResponse(members[0].Role),
+				MemberSince: parseTimeStamp(members[0].MemberSince),
+				AvatarUrl:   members[0].AvatarUrl,
+				FullName:    members[0].FullName,
+			},
+			{
+				UserId:      members[1].UserId,
+				Role:        teamRoleToAPIResponse(members[1].Role),
+				MemberSince: parseTimeStamp(members[1].MemberSince),
+				AvatarUrl:   members[1].AvatarUrl,
+				FullName:    members[1].FullName,
+			},
+		},
+		TeamInvitation: &v1.TeamInvitation{
+			Id: invite.ID,
+		},
+	}, response)
+}
+
+func newTeam(t *protocol.Team) *protocol.Team {
+	result := &protocol.Team{
+		ID:           uuid.New().String(),
+		Name:         "Team Name",
+		Slug:         "team_name",
+		CreationTime: "2022-10-10T10:10:10.000Z",
+	}
+
+	if t.ID != "" {
+		result.ID = t.ID
+	}
+
+	if t.Name != "" {
+		result.Name = t.Name
+	}
+
+	if t.Slug != "" {
+		result.Slug = t.Slug
+	}
+
+	if t.CreationTime != "" {
+		result.CreationTime = t.CreationTime
+	}
+
+	return result
+}
+
+func newTeamMember(m *protocol.TeamMemberInfo) *protocol.TeamMemberInfo {
+	result := &protocol.TeamMemberInfo{
+		UserId:       uuid.New().String(),
+		FullName:     "First Last",
+		PrimaryEmail: "email@gitpod.io",
+		AvatarUrl:    "https://avatars.yolo/first.png",
+		Role:         protocol.TeamMember_Member,
+		MemberSince:  "2022-09-09T09:09:09.000Z",
+	}
+
+	if m.UserId != "" {
+		result.UserId = m.UserId
+	}
+	if m.FullName != "" {
+		result.FullName = m.FullName
+	}
+	if m.PrimaryEmail != "" {
+		result.PrimaryEmail = m.PrimaryEmail
+	}
+	if m.AvatarUrl != "" {
+		result.AvatarUrl = m.AvatarUrl
+	}
+	if m.Role != "" {
+		result.Role = m.Role
+	}
+	if m.MemberSince != "" {
+		result.MemberSince = m.MemberSince
+	}
+
+	return result
 }
 
 func setupTeamService(t *testing.T) (*protocol.MockAPIInterface, v1connect.TeamsServiceClient) {
