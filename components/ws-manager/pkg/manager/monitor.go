@@ -26,15 +26,10 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
-	watchtools "k8s.io/client-go/tools/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gitpod-io/gitpod/common-go/kubernetes"
@@ -1115,90 +1110,17 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			// pvc was created with the name of the pod. see createDefiniteWorkspacePod()
 			pvcName := wso.Pod.Name
 			if !createdVolumeSnapshot {
-				// create snapshot object out of PVC
-				volumeSnapshot := &volumesnapshotv1.VolumeSnapshot{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:        pvcVolumeSnapshotName,
-						Namespace:   m.manager.Config.Namespace,
-						Annotations: map[string]string{workspaceIDAnnotation: workspaceID},
-						Labels:      wso.Pod.Labels,
-					},
-					Spec: volumesnapshotv1.VolumeSnapshotSpec{
-						Source: volumesnapshotv1.VolumeSnapshotSource{
-							PersistentVolumeClaimName: &pvcName,
-						},
-						VolumeSnapshotClassName: &pvcVolumeSnapshotClassName,
-					},
-				}
-
-				err = m.manager.Clientset.Create(ctx, volumeSnapshot)
-				if err != nil && !k8serr.IsAlreadyExists(err) {
-					err = xerrors.Errorf("cannot create volumesnapshot: %v", err)
+				err = m.manager.createWorkspaceSnapshotFromPVC(ctx, pvcName, pvcVolumeSnapshotName, pvcVolumeSnapshotClassName, workspaceID, wso.Pod.Labels)
+				if err != nil {
 					return nil, err
 				}
 				createdVolumeSnapshot = true
 				volumeSnapshotTime = time.Now()
 			}
 			if createdVolumeSnapshot {
-				log = log.WithField("VolumeSnapshot.Name", pvcVolumeSnapshotName)
-
-				var volumeSnapshotWatcher *watchtools.RetryWatcher
-				volumeSnapshotWatcher, err = watchtools.NewRetryWatcher("1", &cache.ListWatch{
-					WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-						return m.manager.VolumeSnapshotClient.SnapshotV1().VolumeSnapshots(m.manager.Config.Namespace).Watch(ctx, metav1.ListOptions{
-							FieldSelector: fields.OneTermEqualSelector("metadata.name", pvcVolumeSnapshotName).String(),
-						})
-					},
-				})
+				pvcVolumeSnapshotContentName, readyVolumeSnapshot, err = m.manager.waitForWorkspaceVolumeSnapshotReady(ctx, pvcVolumeSnapshotName, log)
 				if err != nil {
-					log.WithError(err).Info("fall back to exponential backoff retry")
-					// we can not create a retry watcher, we fall back to exponential backoff retry
-					backoff := wait.Backoff{
-						Steps:    30,
-						Duration: 100 * time.Millisecond,
-						Factor:   1.5,
-						Jitter:   0.1,
-						Cap:      10 * time.Minute,
-					}
-					err = wait.ExponentialBackoff(backoff, func() (bool, error) {
-						var vs volumesnapshotv1.VolumeSnapshot
-						err := m.manager.Clientset.Get(ctx, types.NamespacedName{Namespace: m.manager.Config.Namespace, Name: pvcVolumeSnapshotName}, &vs)
-						if err != nil {
-							if k8serr.IsNotFound(err) {
-								// volumesnapshot doesn't exist yet, retry again
-								return false, nil
-							}
-							log.WithError(err).Error("was unable to get volume snapshot")
-							return false, err
-						}
-						if vs.Status != nil && vs.Status.ReadyToUse != nil && *vs.Status.ReadyToUse && vs.Status.BoundVolumeSnapshotContentName != nil {
-							pvcVolumeSnapshotContentName = *vs.Status.BoundVolumeSnapshotContentName
-							return true, nil
-						}
-						return false, nil
-					})
-					if err != nil {
-						log.WithError(err).Errorf("failed while waiting for volume snapshot to get ready")
-						return nil, err
-					}
-					readyVolumeSnapshot = true
-				} else {
-					for event := range volumeSnapshotWatcher.ResultChan() {
-						vs, ok := event.Object.(*volumesnapshotv1.VolumeSnapshot)
-						if !ok {
-							log.Errorf("unexpected type assertion %T", event.Object)
-							continue
-						}
-
-						if vs != nil && vs.Status != nil && vs.Status.ReadyToUse != nil && *vs.Status.ReadyToUse && vs.Status.BoundVolumeSnapshotContentName != nil {
-							pvcVolumeSnapshotContentName = *vs.Status.BoundVolumeSnapshotContentName
-							readyVolumeSnapshot = true
-							break
-						}
-					}
-
-					// stop the volume snapshot retry watcher
-					volumeSnapshotWatcher.Stop()
+					return nil, err
 				}
 
 				hist, err := m.manager.metrics.volumeSnapshotTimeHistVec.GetMetricWithLabelValues(wsType, wso.Pod.Labels[workspaceClassLabel])
