@@ -58,7 +58,7 @@ export class WorkspaceClusterDBImpl implements WorkspaceClusterDB {
         let qb = repo
             .createQueryBuilder("wsc")
             .select(Object.keys(prototype).map((k) => `wsc.${k}`))
-            .where("TRUE = TRUE"); // make sure andWhere works
+            .where("wsc.deleted = 0");
         if (predicate.name !== undefined) {
             qb = qb.andWhere("wsc.name = :name", predicate);
         }
