@@ -70,3 +70,15 @@ leeway build \
     --dont-retag \
     --dont-test \
     install/installer:app
+
+# shellcheck disable=SC2016
+if [[ -n "${DEBUG_BUILD_CACHE_SIZES}" ]]; then
+    rm -f /tmp/collect.txt
+    leeway collect \
+        -DSEGMENT_IO_TOKEN="$(kubectl --context=dev -n werft get secret self-hosted -o jsonpath='{.data.segmentIOToken}' | base64 -d)" \
+        -DREPLICATED_API_TOKEN="$(kubectl --context=dev -n werft get secret replicated -o jsonpath='{.data.token}' | base64 -d)" \
+        -DREPLICATED_APP="$(kubectl --context=dev -n werft get secret replicated -o jsonpath='{.data.app}' | base64 -d)" \
+        -Dversion="${VERSION}" \
+        --format-string '{{ range $n := . }}{{ $n.Metadata.FullName }}{{"\t"}}{{ $n.Metadata.Version }}{{"\n"}}{{end}}' \
+    > /tmp/collect.txt
+fi

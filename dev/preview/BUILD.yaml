@@ -33,3 +33,9 @@ scripts:
   - name: deploy-gitpod
     description: Deploys Gitpod to an existing preview environment
     script: ./workflow/preview/deploy-gitpod.sh
+
+  - name: debug-build-size
+    description: Use this to debug build cache sizes
+    script: |
+      DEBUG_BUILD_CACHE_SIZES=true leeway run dev/preview:build
+      ./workflow/preview/debug-build-cache-size.sh
