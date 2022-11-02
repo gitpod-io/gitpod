@@ -242,6 +242,47 @@ export class WorkspaceClusterDBSpec {
         expect(wscs2.length).to.equal(2);
         expect(wscs2).to.deep.include.members(expectedClusters2);
     }
+
+    @test public async testFindFilteredExcludesDeletedClusters() {
+        const wsc1: DBWorkspaceCluster = dbWorkspaceCluster({
+            name: "eu71",
+            applicationCluster: "eu02",
+            url: "some-url",
+            state: "available",
+            score: 100,
+            maxScore: 100,
+            govern: true,
+        });
+        const wsc1a: DBWorkspaceCluster = dbWorkspaceCluster({
+            name: "eu71",
+            applicationCluster: "us02",
+            url: "some-url",
+            state: "cordoned",
+            score: 0,
+            maxScore: 0,
+            govern: false,
+        });
+        const wsc2: DBWorkspaceCluster = dbWorkspaceCluster({
+            name: "us71",
+            applicationCluster: "us02",
+            url: "some-url",
+            state: "available",
+            score: 100,
+            maxScore: 100,
+            govern: true,
+        });
+
+        await this.db.save(wsc1);
+        await this.db.save(wsc1a);
+        await this.db.save(wsc2);
+
+        await this.db.deleteByName("eu71", "us02");
+
+        let wscs = await this.db.findFiltered({ applicationCluster: "us02" });
+        expect(wscs.length).to.equal(1);
+        wscs = await this.db.findFiltered({ applicationCluster: "eu02" });
+        expect(wscs.length).to.equal(1);
+    }
 }
 
 function dbWorkspaceCluster(cluster: Omit<DBWorkspaceCluster, "deleted">): DBWorkspaceCluster {
