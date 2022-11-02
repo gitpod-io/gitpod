@@ -263,6 +263,7 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[0].descr
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[0].powerups "1"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[0].isDefault "true"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[0].deprecated "false"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[0].credits.perMinute "0.3333333333"
 
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[+].id "small"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].category "GENERAL PURPOSE"
@@ -271,6 +272,7 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].descr
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].powerups "2"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].isDefault "false"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].deprecated "false"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].credits.perMinute "0.1666666667"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].marker.moreResources "true"
 
 # create two workspace classes (default and small) in ws-manager configmap
@@ -366,8 +368,6 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.billInstancesAfter 
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.defaultSpendingLimit.forUsers "500"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.defaultSpendingLimit.forTeams "0"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.defaultSpendingLimit.minForUsersOnStripe "1000"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.creditsPerMinuteByWorkspaceClass['default'] "0.1666666667"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.creditsPerMinuteByWorkspaceClass['gitpodio-internal-xl'] "0.3333333333"
 
 # Configure Price IDs
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.stripe.individualUsagePriceIds['EUR'] "price_1LmYVxGadRXm50o3AiLq0Qmo"

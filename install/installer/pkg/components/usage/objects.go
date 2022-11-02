@@ -51,3 +51,12 @@ func getExperimentalUsageConfig(ctx *common.RenderContext) *experimental.UsageCo
 
 	return experimentalWebAppCfg.Usage
 }
+
+func getExperimentalWorkspaceClassConfig(ctx *common.RenderContext) []experimental.WebAppWorkspaceClass {
+	experimentalWebAppCfg := getExperimentalWebAppConfig(ctx)
+	if experimentalWebAppCfg == nil {
+		return nil
+	}
+
+	return experimentalWebAppCfg.WorkspaceClasses
+}

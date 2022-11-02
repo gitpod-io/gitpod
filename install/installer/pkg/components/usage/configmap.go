@@ -62,7 +62,15 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		if expUsageConfig.DefaultSpendingLimit != nil {
 			cfg.DefaultSpendingLimit = *expUsageConfig.DefaultSpendingLimit
 		}
-		cfg.CreditsPerMinuteByWorkspaceClass = expUsageConfig.CreditsPerMinuteByWorkspaceClass
+	}
+
+	workspaceClassConfig := getExperimentalWorkspaceClassConfig(ctx)
+
+	cfg.CreditsPerMinuteByWorkspaceClass = make(map[string]float64)
+	for _, v := range workspaceClassConfig {
+		if v.Credits != nil {
+			cfg.CreditsPerMinuteByWorkspaceClass[v.Id] = v.Credits.PerMinute
+		}
 	}
 
 	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {

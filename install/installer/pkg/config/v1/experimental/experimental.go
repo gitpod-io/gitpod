@@ -276,14 +276,19 @@ type UsageConfig struct {
 }
 
 type WebAppWorkspaceClass struct {
-	Id          string          `json:"id"`
-	Category    string          `json:"category"`
-	DisplayName string          `json:"displayName"`
-	Description string          `json:"description"`
-	PowerUps    uint32          `json:"powerups"`
-	IsDefault   bool            `json:"isDefault"`
-	Deprecated  bool            `json:"deprecated"`
-	Marker      map[string]bool `json:"marker,omitempty"`
+	Id          string                 `json:"id"`
+	Category    string                 `json:"category"`
+	DisplayName string                 `json:"displayName"`
+	Description string                 `json:"description"`
+	PowerUps    uint32                 `json:"powerups"`
+	IsDefault   bool                   `json:"isDefault"`
+	Deprecated  bool                   `json:"deprecated"`
+	Marker      map[string]bool        `json:"marker,omitempty"`
+	Credits     *WorkspaceClassCredits `json:"credits,omitempty"`
+}
+
+type WorkspaceClassCredits struct {
+	PerMinute float64 `json:"perMinute,omitempty"`
 }
 
 type IDEConfig struct {
