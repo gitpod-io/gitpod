@@ -543,6 +543,49 @@ export namespace DeleteVolumeSnapshotResponse {
     }
 }
 
+export class GetVolumeSnapshotRequest extends jspb.Message {
+    getId(): string;
+    setId(value: string): GetVolumeSnapshotRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): GetVolumeSnapshotRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: GetVolumeSnapshotRequest): GetVolumeSnapshotRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: GetVolumeSnapshotRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): GetVolumeSnapshotRequest;
+    static deserializeBinaryFromReader(message: GetVolumeSnapshotRequest, reader: jspb.BinaryReader): GetVolumeSnapshotRequest;
+}
+
+export namespace GetVolumeSnapshotRequest {
+    export type AsObject = {
+        id: string,
+    }
+}
+
+export class GetVolumeSnapshotResponse extends jspb.Message {
+    getId(): string;
+    setId(value: string): GetVolumeSnapshotResponse;
+    getReady(): boolean;
+    setReady(value: boolean): GetVolumeSnapshotResponse;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): GetVolumeSnapshotResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: GetVolumeSnapshotResponse): GetVolumeSnapshotResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: GetVolumeSnapshotResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): GetVolumeSnapshotResponse;
+    static deserializeBinaryFromReader(message: GetVolumeSnapshotResponse, reader: jspb.BinaryReader): GetVolumeSnapshotResponse;
+}
+
+export namespace GetVolumeSnapshotResponse {
+    export type AsObject = {
+        id: string,
+        ready: boolean,
+    }
+}
+
 export class BackupWorkspaceRequest extends jspb.Message {
     getId(): string;
     setId(value: string): BackupWorkspaceRequest;

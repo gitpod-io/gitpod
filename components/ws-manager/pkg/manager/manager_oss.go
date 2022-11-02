@@ -23,6 +23,11 @@ func (m *Manager) TakeSnapshot(ctx context.Context, req *api.TakeSnapshotRequest
 	return nil, errEnterpriseFeature
 }
 
+// GetVolumeSnapshot returns volume snapshot information
+func (m *Manager) GetVolumeSnapshot(ctx context.Context, req *api.GetVolumeSnapshotRequest) (res *api.GetVolumeSnapshotResponse, err error) {
+	return nil, errEnterpriseFeature
+}
+
 // ControlAdmission makes a workspace accessible for everyone or for the owner only
 func (m *Manager) ControlAdmission(ctx context.Context, req *api.ControlAdmissionRequest) (res *api.ControlAdmissionResponse, err error) {
 	return nil, errEnterpriseFeature

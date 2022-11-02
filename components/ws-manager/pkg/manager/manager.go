@@ -1617,6 +1617,22 @@ func (m *Manager) waitForWorkspaceVolumeSnapshotReady(ctx context.Context, pvcVo
 	return pvcVolumeSnapshotContentName, readyVolumeSnapshot, nil
 }
 
+func (m *Manager) checkWorkspaceVolumeSnapshotIsReady(ctx context.Context, pvcVolumeSnapshotName string) (bool, error) {
+	var vs volumesnapshotv1.VolumeSnapshot
+	err := m.Clientset.Get(ctx, types.NamespacedName{Namespace: m.Config.Namespace, Name: pvcVolumeSnapshotName}, &vs)
+	if err != nil {
+		if k8serr.IsNotFound(err) {
+			return false, status.Error(codes.NotFound, "volume snapshot not found")
+		}
+		log.WithError(err).WithField("VolumeSnapshotName", pvcVolumeSnapshotName).Error("was unable to get volume snapshot")
+		return false, err
+	}
+	if vs.Status != nil && vs.Status.ReadyToUse != nil && *vs.Status.ReadyToUse && vs.Status.BoundVolumeSnapshotContentName != nil {
+		return true, nil
+	}
+	return false, nil
+}
+
 // newWssyncConnectionFactory creates a new wsdaemon connection factory based on the wsmanager configuration
 func newWssyncConnectionFactory(managerConfig config.Configuration) (grpcpool.Factory, error) {
 	cfg := managerConfig.WorkspaceDaemon

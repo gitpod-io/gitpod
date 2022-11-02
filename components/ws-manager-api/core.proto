@@ -44,6 +44,9 @@ service WorkspaceManager {
     // deleteVolumeSnapshot asks ws-manager to delete specific volume snapshot and delete source from cloud provider as well
     rpc DeleteVolumeSnapshot(DeleteVolumeSnapshotRequest) returns (DeleteVolumeSnapshotResponse) {}
 
+    // GetVolumeSnapshot returns the information about requested volume snapshot
+    rpc GetVolumeSnapshot(GetVolumeSnapshotRequest) returns (GetVolumeSnapshotResponse) {}
+
     // UpdateSSHKey update ssh keys
     rpc UpdateSSHKey(UpdateSSHKeyRequest) returns (UpdateSSHKeyResponse) {}
 
@@ -240,6 +243,18 @@ message DeleteVolumeSnapshotRequest{
 message DeleteVolumeSnapshotResponse {
     // was_deleted will be true if we were able to delete volume snapshot from the cluster
     bool was_deleted = 1;
+}
+
+message GetVolumeSnapshotRequest {
+    // ID is the name of volume snapshot
+    string id = 1;
+}
+
+message GetVolumeSnapshotResponse {
+    // id of this volume snapshot
+    string id = 1;
+    // ready will be true if snapshot is ready to be used
+    bool ready = 2;
 }
 
 enum AdmissionLevel {

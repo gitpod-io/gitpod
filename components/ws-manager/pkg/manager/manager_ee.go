@@ -9,6 +9,7 @@ package manager
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -44,6 +45,7 @@ func (m *Manager) TakeSnapshot(ctx context.Context, req *api.TakeSnapshotRequest
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get workspace status: %q", err)
 	}
+	log := log.WithFields(wso.GetOWI())
 
 	sts, err := m.getWorkspaceStatus(*wso)
 	if err != nil {
@@ -54,21 +56,69 @@ func (m *Manager) TakeSnapshot(ctx context.Context, req *api.TakeSnapshotRequest
 		return nil, status.Errorf(codes.FailedPrecondition, "can only take snapshots of running workspaces")
 	}
 
-	sync, err := m.connectToWorkspaceDaemon(ctx, workspaceObjects{Pod: pod})
-	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
+	_, pvcFeatureEnabled := wso.Pod.Labels[pvcWorkspaceFeatureLabel]
+	pvcVolumeSnapshotClassName := ""
+
+	if _, ok := wso.Pod.Labels[workspaceClassLabel]; ok {
+		wsClassName := wso.Pod.Labels[workspaceClassLabel]
+
+		workspaceClass := m.Config.WorkspaceClasses[wsClassName]
+		if workspaceClass != nil {
+			pvcVolumeSnapshotClassName = workspaceClass.PVC.SnapshotClass
+		}
 	}
 
-	r, err := sync.TakeSnapshot(ctx, &wsdaemon.TakeSnapshotRequest{
-		Id:                req.Id,
-		ReturnImmediately: req.ReturnImmediately,
-	})
+	if pvcFeatureEnabled {
+		workspaceID, _ := wso.WorkspaceID()
+		pvcVolumeSnapshotName := fmt.Sprintf("snapshot-%s-%d", workspaceID, time.Now().UnixNano())
+		pvcName := wso.Pod.Name
+		err = m.createWorkspaceSnapshotFromPVC(ctx, pvcName, pvcVolumeSnapshotName, pvcVolumeSnapshotClassName, workspaceID, wso.Pod.Labels)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "cannot create volume snapshot from pvc: %q", err)
+		}
+		if !req.ReturnImmediately {
+			_, ready, err := m.waitForWorkspaceVolumeSnapshotReady(ctx, pvcVolumeSnapshotName, log)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "cannot wait for volume snapshot to be ready: %q", err)
+			}
+			if !ready {
+				return nil, status.Errorf(codes.Internal, "volume snapshot is not ready")
+			}
+		}
+		return &api.TakeSnapshotResponse{Url: pvcVolumeSnapshotName}, nil
+	} else {
+		sync, err := m.connectToWorkspaceDaemon(ctx, workspaceObjects{Pod: pod})
+		if err != nil {
+			return nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
+		}
+
+		r, err := sync.TakeSnapshot(ctx, &wsdaemon.TakeSnapshotRequest{
+			Id:                req.Id,
+			ReturnImmediately: req.ReturnImmediately,
+		})
+		if err != nil {
+			// err is already a grpc error - no need to faff with that
+			return nil, err
+		}
+
+		return &api.TakeSnapshotResponse{Url: r.Url}, nil
+	}
+}
+
+// GetVolumeSnapshot returns volume snapshot information
+func (m *Manager) GetVolumeSnapshot(ctx context.Context, req *api.GetVolumeSnapshotRequest) (res *api.GetVolumeSnapshotResponse, err error) {
+	span, ctx := tracing.FromContext(ctx, "GetVolumeSnapshot")
+	defer tracing.FinishSpan(span, &err)
+
+	ready, err := m.checkWorkspaceVolumeSnapshotIsReady(ctx, req.Id)
 	if err != nil {
-		// err is already a grpc error - no need to faff with that
-		return nil, err
+		if status.Code(err) == codes.NotFound {
+			return nil, status.Errorf(codes.NotFound, "volume snapshot %s does not exist", req.Id)
+		}
+		return nil, status.Errorf(codes.Internal, "cannot check if volume snapshot is ready: %q", err)
 	}
 
-	return &api.TakeSnapshotResponse{Url: r.Url}, nil
+	return &api.GetVolumeSnapshotResponse{Id: req.Id, Ready: ready}, nil
 }
 
 // ControlAdmission makes a workspace accessible for everyone or for the owner only

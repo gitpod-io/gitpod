@@ -144,6 +144,28 @@ function deserialize_wsman_DescribeWorkspaceResponse(buffer_arg) {
   return core_pb.DescribeWorkspaceResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_wsman_GetVolumeSnapshotRequest(arg) {
+  if (!(arg instanceof core_pb.GetVolumeSnapshotRequest)) {
+    throw new Error('Expected argument of type wsman.GetVolumeSnapshotRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsman_GetVolumeSnapshotRequest(buffer_arg) {
+  return core_pb.GetVolumeSnapshotRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_wsman_GetVolumeSnapshotResponse(arg) {
+  if (!(arg instanceof core_pb.GetVolumeSnapshotResponse)) {
+    throw new Error('Expected argument of type wsman.GetVolumeSnapshotResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsman_GetVolumeSnapshotResponse(buffer_arg) {
+  return core_pb.GetVolumeSnapshotResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_wsman_GetWorkspacesRequest(arg) {
   if (!(arg instanceof core_pb.GetWorkspacesRequest)) {
     throw new Error('Expected argument of type wsman.GetWorkspacesRequest');
@@ -465,6 +487,18 @@ deleteVolumeSnapshot: {
     requestDeserialize: deserialize_wsman_DeleteVolumeSnapshotRequest,
     responseSerialize: serialize_wsman_DeleteVolumeSnapshotResponse,
     responseDeserialize: deserialize_wsman_DeleteVolumeSnapshotResponse,
+  },
+  // GetVolumeSnapshot returns the information about requested volume snapshot
+getVolumeSnapshot: {
+    path: '/wsman.WorkspaceManager/GetVolumeSnapshot',
+    requestStream: false,
+    responseStream: false,
+    requestType: core_pb.GetVolumeSnapshotRequest,
+    responseType: core_pb.GetVolumeSnapshotResponse,
+    requestSerialize: serialize_wsman_GetVolumeSnapshotRequest,
+    requestDeserialize: deserialize_wsman_GetVolumeSnapshotRequest,
+    responseSerialize: serialize_wsman_GetVolumeSnapshotResponse,
+    responseDeserialize: deserialize_wsman_GetVolumeSnapshotResponse,
   },
   // UpdateSSHKey update ssh keys
 updateSSHKey: {

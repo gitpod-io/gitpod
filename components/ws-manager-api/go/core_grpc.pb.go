@@ -50,6 +50,8 @@ type WorkspaceManagerClient interface {
 	ControlAdmission(ctx context.Context, in *ControlAdmissionRequest, opts ...grpc.CallOption) (*ControlAdmissionResponse, error)
 	// deleteVolumeSnapshot asks ws-manager to delete specific volume snapshot and delete source from cloud provider as well
 	DeleteVolumeSnapshot(ctx context.Context, in *DeleteVolumeSnapshotRequest, opts ...grpc.CallOption) (*DeleteVolumeSnapshotResponse, error)
+	// GetVolumeSnapshot returns the information about requested volume snapshot
+	GetVolumeSnapshot(ctx context.Context, in *GetVolumeSnapshotRequest, opts ...grpc.CallOption) (*GetVolumeSnapshotResponse, error)
 	// UpdateSSHKey update ssh keys
 	UpdateSSHKey(ctx context.Context, in *UpdateSSHKeyRequest, opts ...grpc.CallOption) (*UpdateSSHKeyResponse, error)
 	// describeCluster provides information about the cluster
@@ -195,6 +197,15 @@ func (c *workspaceManagerClient) DeleteVolumeSnapshot(ctx context.Context, in *D
 	return out, nil
 }
 
+func (c *workspaceManagerClient) GetVolumeSnapshot(ctx context.Context, in *GetVolumeSnapshotRequest, opts ...grpc.CallOption) (*GetVolumeSnapshotResponse, error) {
+	out := new(GetVolumeSnapshotResponse)
+	err := c.cc.Invoke(ctx, "/wsman.WorkspaceManager/GetVolumeSnapshot", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *workspaceManagerClient) UpdateSSHKey(ctx context.Context, in *UpdateSSHKeyRequest, opts ...grpc.CallOption) (*UpdateSSHKeyResponse, error) {
 	out := new(UpdateSSHKeyResponse)
 	err := c.cc.Invoke(ctx, "/wsman.WorkspaceManager/UpdateSSHKey", in, out, opts...)
@@ -241,6 +252,8 @@ type WorkspaceManagerServer interface {
 	ControlAdmission(context.Context, *ControlAdmissionRequest) (*ControlAdmissionResponse, error)
 	// deleteVolumeSnapshot asks ws-manager to delete specific volume snapshot and delete source from cloud provider as well
 	DeleteVolumeSnapshot(context.Context, *DeleteVolumeSnapshotRequest) (*DeleteVolumeSnapshotResponse, error)
+	// GetVolumeSnapshot returns the information about requested volume snapshot
+	GetVolumeSnapshot(context.Context, *GetVolumeSnapshotRequest) (*GetVolumeSnapshotResponse, error)
 	// UpdateSSHKey update ssh keys
 	UpdateSSHKey(context.Context, *UpdateSSHKeyRequest) (*UpdateSSHKeyResponse, error)
 	// describeCluster provides information about the cluster
@@ -287,6 +300,9 @@ func (UnimplementedWorkspaceManagerServer) ControlAdmission(context.Context, *Co
 }
 func (UnimplementedWorkspaceManagerServer) DeleteVolumeSnapshot(context.Context, *DeleteVolumeSnapshotRequest) (*DeleteVolumeSnapshotResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteVolumeSnapshot not implemented")
+}
+func (UnimplementedWorkspaceManagerServer) GetVolumeSnapshot(context.Context, *GetVolumeSnapshotRequest) (*GetVolumeSnapshotResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetVolumeSnapshot not implemented")
 }
 func (UnimplementedWorkspaceManagerServer) UpdateSSHKey(context.Context, *UpdateSSHKeyRequest) (*UpdateSSHKeyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateSSHKey not implemented")
@@ -526,6 +542,24 @@ func _WorkspaceManager_DeleteVolumeSnapshot_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkspaceManager_GetVolumeSnapshot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetVolumeSnapshotRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspaceManagerServer).GetVolumeSnapshot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/wsman.WorkspaceManager/GetVolumeSnapshot",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspaceManagerServer).GetVolumeSnapshot(ctx, req.(*GetVolumeSnapshotRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _WorkspaceManager_UpdateSSHKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateSSHKeyRequest)
 	if err := dec(in); err != nil {
@@ -612,6 +646,10 @@ var WorkspaceManager_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteVolumeSnapshot",
 			Handler:    _WorkspaceManager_DeleteVolumeSnapshot_Handler,
+		},
+		{
+			MethodName: "GetVolumeSnapshot",
+			Handler:    _WorkspaceManager_GetVolumeSnapshot_Handler,
 		},
 		{
 			MethodName: "UpdateSSHKey",
