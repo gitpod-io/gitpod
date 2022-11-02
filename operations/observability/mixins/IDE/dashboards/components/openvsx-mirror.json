@@ -1631,7 +1631,7 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "label_values(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"open-vsx.*\"}, pod)",
+        "definition": "label_values(jvm_memory_committed_bytes{cluster=~\"$cluster\", pod=~\"open-vsx.*\"}, pod)",
         "hide": 0,
         "includeAll": true,
         "label": "Pod",
@@ -1639,7 +1639,7 @@
         "name": "pod",
         "options": [],
         "query": {
-          "query": "label_values(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"open-vsx.*\"}, pod)",
+          "query": "label_values(jvm_memory_committed_bytes{cluster=~\"$cluster\", pod=~\"open-vsx.*\"}, pod)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
