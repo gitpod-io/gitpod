@@ -107,6 +107,10 @@ func (s *TeamService) toTeamAPIResponse(ctx context.Context, conn protocol.APIIn
 		return nil, proxy.ConvertError(err)
 	}
 
+	return teamToAPIResponse(team, members, invite), nil
+}
+
+func teamToAPIResponse(team *protocol.Team, members []*protocol.TeamMemberInfo, invite *protocol.TeamMembershipInvite) *v1.Team {
 	return &v1.Team{
 		Id:      team.ID,
 		Name:    team.Name,
@@ -115,7 +119,7 @@ func (s *TeamService) toTeamAPIResponse(ctx context.Context, conn protocol.APIIn
 		TeamInvitation: &v1.TeamInvitation{
 			Id: invite.ID,
 		},
-	}, nil
+	}
 }
 
 func teamMembersToAPIResponse(members []*protocol.TeamMemberInfo) []*v1.TeamMember {
@@ -126,6 +130,8 @@ func teamMembersToAPIResponse(members []*protocol.TeamMemberInfo) []*v1.TeamMemb
 			UserId:      m.UserId,
 			Role:        teamRoleToAPIResponse(m.Role),
 			MemberSince: parseTimeStamp(m.MemberSince),
+			AvatarUrl:   m.AvatarUrl,
+			FullName:    m.FullName,
 		})
 	}
 
