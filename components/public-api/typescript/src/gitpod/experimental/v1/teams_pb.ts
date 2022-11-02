@@ -155,6 +155,13 @@ export class TeamMember extends Message<TeamMember> {
    */
   fullName = "";
 
+  /**
+   * primary_email is the primary email of the TeamMember
+   *
+   * @generated from field: string primary_email = 6;
+   */
+  primaryEmail = "";
+
   constructor(data?: PartialMessage<TeamMember>) {
     super();
     proto3.util.initPartial(data, this);
@@ -168,6 +175,7 @@ export class TeamMember extends Message<TeamMember> {
     { no: 3, name: "member_since", kind: "message", T: Timestamp },
     { no: 4, name: "avatar_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "full_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "primary_email", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): TeamMember {

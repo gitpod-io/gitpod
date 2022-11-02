@@ -38,6 +38,9 @@ message TeamMember {
 
     // full_name is the name of the TeamMember
     string full_name = 5;
+
+    // primary_email is the primary email of the TeamMember
+    string primary_email = 6;
 }
 
 enum TeamRole {
