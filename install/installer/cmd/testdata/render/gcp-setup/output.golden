@@ -1111,24 +1111,9 @@ data:
             "workdir": "/ide",
             "replacements": [
               {
-                "path": "/ide/out/vs/workbench/workbench.web.api.js",
-                "search": "vscode-cdn.net",
-                "replacement": "gitpod.example.com"
-              },
-              {
                 "path": "/ide/out/vs/workbench/workbench.web.main.js",
                 "search": "vscode-cdn.net",
                 "replacement": "gitpod.example.com"
-              },
-              {
-                "path": "/ide/out/vs/workbench/services/extensions/worker/extensionHostWorker.js",
-                "search": "vscode-cdn.net",
-                "replacement": "gitpod.example.com"
-              },
-              {
-                "path": "/ide/out/vs/workbench/workbench.web.api.js",
-                "search": "open-vsx.org",
-                "replacement": "open-vsx.gitpod.example.com"
               },
               {
                 "path": "/ide/out/vs/workbench/workbench.web.main.js",
@@ -7478,7 +7463,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 852534778d4ef3fe1d87dd19fa8290cf02561d3b98c11493053ee39ea8a627b4
+        gitpod.io/checksum_config: b8dbabc816dce93d2e86e0a28361b528fef5c7cdb67833ef3c785afa986105df
       creationTimestamp: null
       labels:
         app: gitpod
