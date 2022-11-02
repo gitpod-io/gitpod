@@ -37,7 +37,7 @@ export class WorkspaceClusterDBSpec {
     }
 
     @test public async findByName() {
-        const wsc1: DBWorkspaceCluster = {
+        const wsc1: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "eu71",
             applicationCluster: "eu02",
             url: "some-url",
@@ -45,8 +45,8 @@ export class WorkspaceClusterDBSpec {
             score: 100,
             maxScore: 100,
             govern: true,
-        };
-        const wsc1a: DBWorkspaceCluster = {
+        });
+        const wsc1a: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "eu71",
             applicationCluster: "us02",
             url: "some-url",
@@ -54,8 +54,8 @@ export class WorkspaceClusterDBSpec {
             score: 0,
             maxScore: 0,
             govern: false,
-        };
-        const wsc2: DBWorkspaceCluster = {
+        });
+        const wsc2: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "us71",
             applicationCluster: "eu02",
             url: "some-url",
@@ -63,7 +63,7 @@ export class WorkspaceClusterDBSpec {
             score: 0,
             maxScore: 0,
             govern: false,
-        };
+        });
 
         await this.db.save(wsc1);
         await this.db.save(wsc1a);
@@ -89,7 +89,7 @@ export class WorkspaceClusterDBSpec {
     }
 
     @test public async deleteByName() {
-        const wsc1: DBWorkspaceCluster = {
+        const wsc1: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "eu71",
             applicationCluster: "eu02",
             url: "some-url",
@@ -97,8 +97,8 @@ export class WorkspaceClusterDBSpec {
             score: 100,
             maxScore: 100,
             govern: true,
-        };
-        const wsc1a: DBWorkspaceCluster = {
+        });
+        const wsc1a: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "eu71",
             applicationCluster: "us02",
             url: "some-url",
@@ -106,8 +106,8 @@ export class WorkspaceClusterDBSpec {
             score: 0,
             maxScore: 0,
             govern: false,
-        };
-        const wsc2: DBWorkspaceCluster = {
+        });
+        const wsc2: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "us71",
             applicationCluster: "eu02",
             url: "some-url",
@@ -115,7 +115,7 @@ export class WorkspaceClusterDBSpec {
             score: 0,
             maxScore: 0,
             govern: false,
-        };
+        });
 
         await this.db.save(wsc1);
         await this.db.save(wsc1a);
@@ -129,7 +129,7 @@ export class WorkspaceClusterDBSpec {
     }
 
     @test public async testFindFilteredByName() {
-        const wsc1: DBWorkspaceCluster = {
+        const wsc1: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "eu71",
             applicationCluster: "eu02",
             url: "some-url",
@@ -137,8 +137,8 @@ export class WorkspaceClusterDBSpec {
             score: 100,
             maxScore: 100,
             govern: true,
-        };
-        const wsc1a: DBWorkspaceCluster = {
+        });
+        const wsc1a: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "eu71",
             applicationCluster: "us02",
             url: "some-url",
@@ -146,8 +146,8 @@ export class WorkspaceClusterDBSpec {
             score: 0,
             maxScore: 0,
             govern: false,
-        };
-        const wsc2: DBWorkspaceCluster = {
+        });
+        const wsc2: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "us71",
             applicationCluster: "eu02",
             url: "some-url",
@@ -155,7 +155,7 @@ export class WorkspaceClusterDBSpec {
             score: 0,
             maxScore: 0,
             govern: false,
-        };
+        });
 
         await this.db.save(wsc1);
         await this.db.save(wsc1a);
@@ -168,7 +168,7 @@ export class WorkspaceClusterDBSpec {
     }
 
     @test public async testFindFilteredByApplicationCluster() {
-        const wsc1: DBWorkspaceCluster = {
+        const wsc1: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "eu71",
             applicationCluster: "eu02",
             url: "some-url",
@@ -176,8 +176,8 @@ export class WorkspaceClusterDBSpec {
             score: 100,
             maxScore: 100,
             govern: true,
-        };
-        const wsc1a: DBWorkspaceCluster = {
+        });
+        const wsc1a: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "eu71",
             applicationCluster: "us02",
             url: "some-url",
@@ -185,8 +185,8 @@ export class WorkspaceClusterDBSpec {
             score: 0,
             maxScore: 0,
             govern: false,
-        };
-        const wsc2: DBWorkspaceCluster = {
+        });
+        const wsc2: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "us71",
             applicationCluster: "us02",
             url: "some-url",
@@ -194,7 +194,7 @@ export class WorkspaceClusterDBSpec {
             score: 100,
             maxScore: 100,
             govern: true,
-        };
+        });
 
         await this.db.save(wsc1);
         await this.db.save(wsc1a);
@@ -242,6 +242,10 @@ export class WorkspaceClusterDBSpec {
         expect(wscs2.length).to.equal(2);
         expect(wscs2).to.deep.include.members(expectedClusters2);
     }
+}
+
+function dbWorkspaceCluster(cluster: Omit<DBWorkspaceCluster, "deleted">): DBWorkspaceCluster {
+    return { ...cluster, deleted: false };
 }
 
 module.exports = WorkspaceClusterDBSpec;
