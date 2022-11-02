@@ -154,11 +154,12 @@ func teamMembersToAPIResponse(members []*protocol.TeamMemberInfo) []*v1.TeamMemb
 
 	for _, m := range members {
 		result = append(result, &v1.TeamMember{
-			UserId:      m.UserId,
-			Role:        teamRoleToAPIResponse(m.Role),
-			MemberSince: parseTimeStamp(m.MemberSince),
-			AvatarUrl:   m.AvatarUrl,
-			FullName:    m.FullName,
+			UserId:       m.UserId,
+			Role:         teamRoleToAPIResponse(m.Role),
+			MemberSince:  parseTimeStamp(m.MemberSince),
+			AvatarUrl:    m.AvatarUrl,
+			FullName:     m.FullName,
+			PrimaryEmail: m.PrimaryEmail,
 		})
 	}
 
