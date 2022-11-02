@@ -22,6 +22,9 @@
 # This Dockerfile was taken from https://github.com/ep76/docker-openssh-static and adapted.
 FROM alpine:3.16 AS builder
 
+# trigger manual rebuild increasing the value
+ENV TRIGGER_REBUILD=1
+
 ARG openssh_url=https://github.com/openssh/openssh-portable/archive/refs/tags/V_9_0_P1.tar.gz
 
 WORKDIR /build
