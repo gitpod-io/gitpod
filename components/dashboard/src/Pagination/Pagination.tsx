@@ -5,7 +5,7 @@
  */
 
 import { getPaginationNumbers } from "./getPagination";
-import Arrow from "../components/Arrow";
+import PaginationNavigationButton from "./PaginationNavigationButton";
 
 interface PaginationProps {
     totalNumberOfPages: number;
@@ -29,23 +29,23 @@ function Pagination(props: PaginationProps) {
     };
     const getClassnames = (pageNumber: string | number) => {
         if (pageNumber === currentPage) {
-            return "text-gray-500 w-8 text-center rounded-md hover:bg-gray-50 bg-gray-100 disabled pointer-events-none";
+            return "font-semibold text-gray-500 dark:text-gray-400 max-h-9 max-w-8 flex items-center justify-center rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-700 bg-gray-100 disabled pointer-events-none px-3 py-2";
         }
         if (pageNumber === "...") {
-            return "text-gray-500 w-8 text-center rounded-md hover:bg-gray-50 disabled pointer-events-none";
+            return "font-semibold text-gray-500 dark:text-gray-400 max-h-9 max-w-8 flex items-center justify-center rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 disabled pointer-events-none px-3 py-2";
         }
-        return "text-gray-500 w-8 text-center rounded-md hover:bg-gray-50 cursor-pointer";
+        return "font-semibold text-gray-500 dark:text-gray-400 max-h-9 max-w-8 flex items-center justify-center rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer px-3 py-2";
     };
 
     return (
         <nav className="mt-16 mb-16">
-            <ul className="flex justify-center space-x-4">
-                <li className={`text-gray-400 ${currentPage === 1 ? "disabled" : "cursor-pointer text-gray-500"}`}>
-                    <span onClick={prevPage}>
-                        <Arrow direction={"left"} />
-                        Previous
-                    </span>
-                </li>
+            <ul className="flex justify-center items-center space-x-4">
+                <PaginationNavigationButton
+                    isDisabled={currentPage === 1}
+                    onClick={prevPage}
+                    label={"Previous"}
+                    arrowDirection={"left"}
+                />
                 {calculatedPagination.map((pn, i) => {
                     if (pn === "...") {
                         return <li className={getClassnames(pn)}>&#8230;</li>;
@@ -56,16 +56,12 @@ function Pagination(props: PaginationProps) {
                         </li>
                     );
                 })}
-                <li
-                    className={`text-gray-400 ${
-                        currentPage === totalNumberOfPages ? "disabled" : "cursor-pointer text-gray-500"
-                    }`}
-                >
-                    <span onClick={nextPage}>
-                        Next
-                        <Arrow direction={"right"} />
-                    </span>
-                </li>
+                <PaginationNavigationButton
+                    isDisabled={currentPage === totalNumberOfPages}
+                    onClick={nextPage}
+                    label={"Next"}
+                    arrowDirection={"right"}
+                />
             </ul>
         </nav>
     );
