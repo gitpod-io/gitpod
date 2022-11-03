@@ -283,6 +283,104 @@ func TestTeamToAPIResponse(t *testing.T) {
 	}, response)
 }
 
+func TestTeamsService_UpdateTeamMember(t *testing.T) {
+	var (
+		teamID       = uuid.New().String()
+		teamMemberID = uuid.New().String()
+	)
+
+	t.Run("invalid argument when team ID is missing", func(t *testing.T) {
+		_, client := setupTeamService(t)
+
+		_, err := client.UpdateTeamMember(context.Background(), connect.NewRequest(&v1.UpdateTeamMemberRequest{}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("invalid argument when team member ID is missing", func(t *testing.T) {
+		_, client := setupTeamService(t)
+
+		_, err := client.UpdateTeamMember(context.Background(), connect.NewRequest(&v1.UpdateTeamMemberRequest{
+			TeamId:     teamID,
+			TeamMember: &v1.TeamMember{},
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("invalid argument when team member role is missing", func(t *testing.T) {
+		_, client := setupTeamService(t)
+
+		_, err := client.UpdateTeamMember(context.Background(), connect.NewRequest(&v1.UpdateTeamMemberRequest{
+			TeamId: teamID,
+			TeamMember: &v1.TeamMember{
+				UserId: teamMemberID,
+			},
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("proxies request to server", func(t *testing.T) {
+		serverMock, client := setupTeamService(t)
+
+		serverMock.EXPECT().SetTeamMemberRole(gomock.Any(), teamID, teamMemberID, protocol.TeamMember_Owner).Return(nil)
+
+		response, err := client.UpdateTeamMember(context.Background(), connect.NewRequest(&v1.UpdateTeamMemberRequest{
+			TeamId: teamID,
+			TeamMember: &v1.TeamMember{
+				UserId: teamMemberID,
+				Role:   v1.TeamRole_TEAM_ROLE_OWNER,
+			},
+		}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.UpdateTeamMemberResponse{
+			TeamMember: &v1.TeamMember{
+				UserId: teamMemberID,
+				Role:   v1.TeamRole_TEAM_ROLE_OWNER,
+			},
+		}, response.Msg)
+	})
+}
+
+func TestTeamsService_DeleteTeamMember(t *testing.T) {
+	var (
+		teamID       = uuid.New().String()
+		teamMemberID = uuid.New().String()
+	)
+
+	t.Run("invalid argument when team ID is missing", func(t *testing.T) {
+		_, client := setupTeamService(t)
+
+		_, err := client.DeleteTeamMember(context.Background(), connect.NewRequest(&v1.DeleteTeamMemberRequest{}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("invalid argument when team member ID is missing", func(t *testing.T) {
+		_, client := setupTeamService(t)
+
+		_, err := client.DeleteTeamMember(context.Background(), connect.NewRequest(&v1.DeleteTeamMemberRequest{
+			TeamId: teamID,
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("proxies to server", func(t *testing.T) {
+		serverMock, client := setupTeamService(t)
+
+		serverMock.EXPECT().RemoveTeamMember(gomock.Any(), teamID, teamMemberID).Return(nil)
+
+		response, err := client.DeleteTeamMember(context.Background(), connect.NewRequest(&v1.DeleteTeamMemberRequest{
+			TeamId:       teamID,
+			TeamMemberId: teamMemberID,
+		}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.DeleteTeamMemberResponse{}, response.Msg)
+	})
+}
+
 func newTeam(t *protocol.Team) *protocol.Team {
 	result := &protocol.Team{
 		ID:           uuid.New().String(),
