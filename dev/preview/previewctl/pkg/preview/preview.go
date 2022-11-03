@@ -30,7 +30,7 @@ var (
 
 const harvesterContextName = "harvester"
 
-type Preview struct {
+type Config struct {
 	branch    string
 	name      string
 	namespace string
@@ -43,7 +43,7 @@ type Preview struct {
 	vmiCreationTime *metav1.Time
 }
 
-func New(branch string, logger *logrus.Logger) (*Preview, error) {
+func New(branch string, logger *logrus.Logger) (*Config, error) {
 	branch, err := GetName(branch)
 	if err != nil {
 		return nil, err
@@ -56,7 +56,7 @@ func New(branch string, logger *logrus.Logger) (*Preview, error) {
 		return nil, errors.Wrap(err, "couldn't instantiate a k8s config")
 	}
 
-	return &Preview{
+	return &Config{
 		branch:          branch,
 		namespace:       fmt.Sprintf("preview-%s", branch),
 		name:            branch,
@@ -73,13 +73,13 @@ type InstallCtxOpts struct {
 	SSHPrivateKeyPath string
 }
 
-func (p *Preview) InstallContext(ctx context.Context, opts InstallCtxOpts) error {
+func (c *Config) InstallContext(ctx context.Context, opts InstallCtxOpts) error {
 	// TODO: https://github.com/gitpod-io/ops/issues/6524
-	if p.configLoader == nil {
+	if c.configLoader == nil {
 		configLoader, err := k3s.New(ctx, k3s.ConfigLoaderOpts{
-			Logger:            p.logger.Logger,
-			PreviewName:       p.name,
-			PreviewNamespace:  p.namespace,
+			Logger:            c.logger.Logger,
+			PreviewName:       c.name,
+			PreviewNamespace:  c.namespace,
 			SSHPrivateKeyPath: opts.SSHPrivateKeyPath,
 			SSHUser:           "ubuntu",
 		})
@@ -88,37 +88,37 @@ func (p *Preview) InstallContext(ctx context.Context, opts InstallCtxOpts) error
 			return err
 		}
 
-		p.configLoader = configLoader
+		c.configLoader = configLoader
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, opts.Timeout)
 	defer cancel()
 
-	p.logger.WithFields(logrus.Fields{"timeout": opts.Timeout}).Debug("Installing context")
+	c.logger.WithFields(logrus.Fields{"timeout": opts.Timeout}).Debug("Installing context")
 
 	// we use this channel to signal when we've found an event in wait functions, so we know when we're done
 	doneCh := make(chan struct{})
 	defer close(doneCh)
 
-	err := p.harvesterClient.GetVMStatus(ctx, p.name, p.namespace)
+	err := c.harvesterClient.GetVMStatus(ctx, c.name, c.namespace)
 	if err != nil && !errors.Is(err, k8s.ErrVmNotReady) {
 		return err
 	} else if errors.Is(err, k8s.ErrVmNotReady) && !opts.Wait {
 		return err
 	} else if errors.Is(err, k8s.ErrVmNotReady) && opts.Wait {
-		err = p.harvesterClient.WaitVMReady(ctx, p.name, p.namespace, doneCh)
+		err = c.harvesterClient.WaitVMReady(ctx, c.name, c.namespace, doneCh)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = p.harvesterClient.GetProxyVMServiceStatus(ctx, p.namespace)
+	err = c.harvesterClient.GetProxyVMServiceStatus(ctx, c.namespace)
 	if err != nil && !errors.Is(err, k8s.ErrSvcNotReady) {
 		return err
 	} else if errors.Is(err, k8s.ErrSvcNotReady) && !opts.Wait {
 		return err
 	} else if errors.Is(err, k8s.ErrSvcNotReady) && opts.Wait {
-		err = p.harvesterClient.WaitProxySvcReady(ctx, p.namespace, doneCh)
+		err = c.harvesterClient.WaitProxySvcReady(ctx, c.namespace, doneCh)
 		if err != nil {
 			return err
 		}
@@ -130,50 +130,50 @@ func (p *Preview) InstallContext(ctx context.Context, opts InstallCtxOpts) error
 			case <-ctx.Done():
 				return ctx.Err()
 			case <-time.Tick(5 * time.Second):
-				p.logger.Infof("waiting for context install to succeed")
-				err = p.Install(ctx, opts)
+				c.logger.Infof("waiting for context install to succeed")
+				err = c.Install(ctx, opts)
 				if err == nil {
-					p.logger.Infof("Successfully installed context")
+					c.logger.Infof("Successfully installed context")
 					return nil
 				}
 			}
 		}
 	}
 
-	return p.Install(ctx, opts)
+	return c.Install(ctx, opts)
 }
 
 // Same compares two preview envrionments
 //
-// Preview environments are considered the same if they are based on the same underlying
+// Config environments are considered the same if they are based on the same underlying
 // branch and the VM hasn't changed.
-func (p *Preview) Same(newPreview *Preview) bool {
-	sameBranch := p.branch == newPreview.branch
+func (c *Config) Same(newPreview *Config) bool {
+	sameBranch := c.branch == newPreview.branch
 	if !sameBranch {
 		return false
 	}
 
-	ensureVMICreationTime(p)
+	ensureVMICreationTime(c)
 	ensureVMICreationTime(newPreview)
 
-	return p.vmiCreationTime.Equal(newPreview.vmiCreationTime)
+	return c.vmiCreationTime.Equal(newPreview.vmiCreationTime)
 }
 
-func ensureVMICreationTime(p *Preview) {
+func ensureVMICreationTime(c *Config) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if p.vmiCreationTime == nil {
-		creationTime, err := p.harvesterClient.GetVMICreationTimestamp(ctx, p.name, p.namespace)
-		p.vmiCreationTime = creationTime
+	if c.vmiCreationTime == nil {
+		creationTime, err := c.harvesterClient.GetVMICreationTimestamp(ctx, c.name, c.namespace)
+		c.vmiCreationTime = creationTime
 		if err != nil {
-			p.logger.WithFields(logrus.Fields{"err": err}).Infof("Failed to get creation time")
+			c.logger.WithFields(logrus.Fields{"err": err}).Infof("Failed to get creation time")
 		}
 	}
 }
 
-func (p *Preview) Install(ctx context.Context, opts InstallCtxOpts) error {
-	cfg, err := p.GetPreviewContext(ctx)
+func (c *Config) Install(ctx context.Context, opts InstallCtxOpts) error {
+	cfg, err := c.GetPreviewContext(ctx)
 	if err != nil {
 		return err
 	}
@@ -186,8 +186,8 @@ func (p *Preview) Install(ctx context.Context, opts InstallCtxOpts) error {
 	return k8s.OutputContext(opts.KubeSavePath, merged)
 }
 
-func (p *Preview) GetPreviewContext(ctx context.Context) (*api.Config, error) {
-	return p.configLoader.Load(ctx)
+func (c *Config) GetPreviewContext(ctx context.Context) (*api.Config, error) {
+	return c.configLoader.Load(ctx)
 }
 
 func InstallVMSSHKeys() error {
@@ -196,6 +196,10 @@ func InstallVMSSHKeys() error {
 }
 
 func SSHPreview(branch string) error {
+	branch, err := GetName(branch)
+	if err != nil {
+		return err
+	}
 	sshCommand := exec.Command("bash", "/workspace/gitpod/dev/preview/ssh-vm.sh", "-b", branch)
 
 	// We need to bind standard output files to the command
@@ -252,8 +256,8 @@ func GetName(branch string) (string, error) {
 	return sanitizedBranch, nil
 }
 
-func (p *Preview) ListAllPreviews(ctx context.Context) error {
-	previews, err := p.harvesterClient.GetVMs(ctx)
+func (c *Config) ListAllPreviews(ctx context.Context) error {
+	previews, err := c.harvesterClient.GetVMs(ctx)
 	if err != nil {
 		return err
 	}

@@ -12,17 +12,17 @@ import (
 	"github.com/gitpod-io/gitpod/previewctl/pkg/preview"
 )
 
-func newGetNameCmd(branch string) *cobra.Command {
+func newGetNameCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get-name",
 		Short: "Returns the name of the preview for the corresponding branch.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			branch, err := preview.GetName(branch)
+			previewName, err := preview.GetName(branch)
 			if err != nil {
 				return err
 			}
 
-			fmt.Println(branch)
+			fmt.Println(previewName)
 
 			return nil
 		},
