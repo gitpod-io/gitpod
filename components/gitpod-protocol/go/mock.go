@@ -792,6 +792,20 @@ func (mr *MockAPIInterfaceMockRecorder) RegisterGithubApp(ctx, installationID in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterGithubApp", reflect.TypeOf((*MockAPIInterface)(nil).RegisterGithubApp), ctx, installationID)
 }
 
+// RemoveTeamMember mocks base method.
+func (m *MockAPIInterface) RemoveTeamMember(ctx context.Context, teamID, userID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveTeamMember", ctx, teamID, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveTeamMember indicates an expected call of RemoveTeamMember.
+func (mr *MockAPIInterfaceMockRecorder) RemoveTeamMember(ctx, teamID, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveTeamMember", reflect.TypeOf((*MockAPIInterface)(nil).RemoveTeamMember), ctx, teamID, userID)
+}
+
 // ResetGenericInvite mocks base method.
 func (m *MockAPIInterface) ResetGenericInvite(ctx context.Context, teamID string) (*TeamMembershipInvite, error) {
 	m.ctrl.T.Helper()
@@ -833,6 +847,20 @@ func (m *MockAPIInterface) SetEnvVar(ctx context.Context, variable *UserEnvVarVa
 func (mr *MockAPIInterfaceMockRecorder) SetEnvVar(ctx, variable interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetEnvVar", reflect.TypeOf((*MockAPIInterface)(nil).SetEnvVar), ctx, variable)
+}
+
+// SetTeamMemberRole mocks base method.
+func (m *MockAPIInterface) SetTeamMemberRole(ctx context.Context, teamID, userID string, role TeamMemberRole) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetTeamMemberRole", ctx, teamID, userID, role)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetTeamMemberRole indicates an expected call of SetTeamMemberRole.
+func (mr *MockAPIInterfaceMockRecorder) SetTeamMemberRole(ctx, teamID, userID, role interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetTeamMemberRole", reflect.TypeOf((*MockAPIInterface)(nil).SetTeamMemberRole), ctx, teamID, userID, role)
 }
 
 // SetWorkspaceDescription mocks base method.
