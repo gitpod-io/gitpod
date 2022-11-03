@@ -234,6 +234,7 @@ var errNotConnected = errors.New("not connected to Gitpod server")
 type ConnectToServerOpts struct {
 	Context             context.Context
 	Token               string
+	Cookie              string
 	Log                 *logrus.Entry
 	ReconnectionHandler func()
 	CloseHandler        func(error)
@@ -267,6 +268,11 @@ func ConnectToServer(endpoint string, opts ConnectToServerOpts) (*APIoverJSONRPC
 	if opts.Token != "" {
 		reqHeader.Set("Authorization", "Bearer "+opts.Token)
 	}
+
+	if opts.Cookie != "" {
+		reqHeader.Set("Cookie", opts.Cookie)
+	}
+
 	ws := NewReconnectingWebsocket(endpoint, reqHeader, opts.Log)
 	ws.ReconnectionHandler = opts.ReconnectionHandler
 	go func() {
