@@ -71,9 +71,9 @@ func NewMetricsInterceptor(metrics *ConnectMetrics) connect.UnaryInterceptorFunc
 			isClient := req.Spec().IsClient
 
 			if isClient {
-				metrics.ClientRequestsStarted.WithLabelValues(callPackage, callName, callType)
+				metrics.ClientRequestsStarted.WithLabelValues(callPackage, callName, callType).Inc()
 			} else {
-				metrics.ServerRequestsStarted.WithLabelValues(callPackage, callName, callType)
+				metrics.ServerRequestsStarted.WithLabelValues(callPackage, callName, callType).Inc()
 			}
 
 			resp, err := next(ctx, req)
