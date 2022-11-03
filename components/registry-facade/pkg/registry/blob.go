@@ -172,12 +172,13 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 
 		n, err := io.CopyBuffer(w, rc, *bp)
 		if err != nil {
-			log.WithError(err).Error("unable to return blob")
+			bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "false").Inc()
+			log.WithField("blobSource", src.Name()).WithField("baseRef", bh.Spec.BaseRef).WithError(err).Error("unable to return blob")
 			return err
 		}
 
 		bh.Metrics.BlobDownloadSpeedHist.WithLabelValues(src.Name()).Observe(float64(n) / time.Since(t0).Seconds())
-		bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name()).Inc()
+		bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "true").Inc()
 		bh.Metrics.BlobDownloadSizeCounter.WithLabelValues(src.Name()).Add(float64(n))
 
 		if dontCache {

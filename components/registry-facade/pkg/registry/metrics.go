@@ -93,7 +93,7 @@ func newMetrics(reg prometheus.Registerer, upstream bool) (*metrics, error) {
 	blobDownloadCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "blob_req_dl_total",
 		Help: "number of blob download requests",
-	}, []string{"blobSource"})
+	}, []string{"blobSource", "ok"})
 	err = reg.Register(blobDownloadCounter)
 	if err != nil {
 		return nil, err
