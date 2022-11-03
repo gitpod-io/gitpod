@@ -162,7 +162,32 @@ func (s *TeamService) JoinTeam(ctx context.Context, req *connect.Request[v1.Join
 	return connect.NewResponse(&v1.JoinTeamResponse{
 		Team: response,
 	}), nil
+}
 
+func (s *TeamService) ResetTeamInvitation(ctx context.Context, req *connect.Request[v1.ResetTeamInvitationRequest]) (*connect.Response[v1.ResetTeamInvitationResponse], error) {
+	token, err := auth.TokenFromContext(ctx)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
+	}
+
+	if req.Msg.GetTeamId() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Team ID is a required argument to reset team invitiation."))
+	}
+
+	conn, err := s.connectionPool.Get(ctx, token)
+	if err != nil {
+		log.Log.WithError(err).Error("Failed to get connection to server.")
+		return nil, connect.NewError(connect.CodeInternal, errors.New("failed to establish connection to downstream services"))
+	}
+
+	invite, err := conn.ResetGenericInvite(ctx, req.Msg.GetTeamId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to reset team invitation"))
+	}
+
+	return connect.NewResponse(&v1.ResetTeamInvitationResponse{
+		TeamInvitation: teamInviteToAPIResponse(invite),
+	}), nil
 }
 
 func (s *TeamService) UpdateTeamMember(ctx context.Context, req *connect.Request[v1.UpdateTeamMemberRequest]) (*connect.Response[v1.UpdateTeamMemberResponse], error) {
@@ -256,13 +281,11 @@ func (s *TeamService) toTeamAPIResponse(ctx context.Context, conn protocol.APIIn
 
 func teamToAPIResponse(team *protocol.Team, members []*protocol.TeamMemberInfo, invite *protocol.TeamMembershipInvite) *v1.Team {
 	return &v1.Team{
-		Id:      team.ID,
-		Name:    team.Name,
-		Slug:    team.Slug,
-		Members: teamMembersToAPIResponse(members),
-		TeamInvitation: &v1.TeamInvitation{
-			Id: invite.ID,
-		},
+		Id:             team.ID,
+		Name:           team.Name,
+		Slug:           team.Slug,
+		Members:        teamMembersToAPIResponse(members),
+		TeamInvitation: teamInviteToAPIResponse(invite),
 	}
 }
 
@@ -291,6 +314,12 @@ func teamRoleToAPIResponse(role protocol.TeamMemberRole) v1.TeamRole {
 		return v1.TeamRole_TEAM_ROLE_MEMBER
 	default:
 		return v1.TeamRole_TEAM_ROLE_UNSPECIFIED
+	}
+}
+
+func teamInviteToAPIResponse(invite *protocol.TeamMembershipInvite) *v1.TeamInvitation {
+	return &v1.TeamInvitation{
+		Id: invite.ID,
 	}
 }
 
