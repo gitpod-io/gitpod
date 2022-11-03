@@ -1,6 +1,9 @@
 # Change Log
 
-## October 2022
+## November 2022
+- In JetBrains EAP IDEs, users now have the option to copy the URL from the terminal's ports context menu. ([#14356](https://github.com/gitpod-io/gitpod/pull/14356)) - [@felladrin](https://github.com/felladrin)
+
+##  October 2022
 - Fixed missing .tar file extension from a downloaded workspace ([#13678](https://github.com/gitpod-io/gitpod/pull/13678)) - [@ghostdevv](https://github.com/ghostdevv)
 - More stable docker-compose behavior with lots of containers ([#14259](https://github.com/gitpod-io/gitpod/pull/14259)) - [@utam0k](https://github.com/utam0k)
 - Show warning for inactive projects and allow to resume prebuilds again. ([#14081](https://github.com/gitpod-io/gitpod/pull/14081)) - [@AlexTugarev](https://github.com/AlexTugarev)
