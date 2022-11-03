@@ -792,6 +792,21 @@ func (mr *MockAPIInterfaceMockRecorder) RegisterGithubApp(ctx, installationID in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterGithubApp", reflect.TypeOf((*MockAPIInterface)(nil).RegisterGithubApp), ctx, installationID)
 }
 
+// ResetGenericInvite mocks base method.
+func (m *MockAPIInterface) ResetGenericInvite(ctx context.Context, teamID string) (*TeamMembershipInvite, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResetGenericInvite", ctx, teamID)
+	ret0, _ := ret[0].(*TeamMembershipInvite)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ResetGenericInvite indicates an expected call of ResetGenericInvite.
+func (mr *MockAPIInterfaceMockRecorder) ResetGenericInvite(ctx, teamID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResetGenericInvite", reflect.TypeOf((*MockAPIInterface)(nil).ResetGenericInvite), ctx, teamID)
+}
+
 // SendHeartBeat mocks base method.
 func (m *MockAPIInterface) SendHeartBeat(ctx context.Context, options *SendHeartBeatOptions) error {
 	m.ctrl.T.Helper()
