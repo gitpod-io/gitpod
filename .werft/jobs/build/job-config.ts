@@ -30,6 +30,7 @@ export interface JobConfig {
     withSelfHostedPreview: boolean;
     withObservability: boolean;
     withLocalPreview: boolean;
+    withSlowDatabase: boolean;
     workspaceFeatureFlags: string[];
     previewEnvironment: PreviewEnvironmentConfig;
     repository: Repository;
@@ -102,6 +103,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const withLocalPreview = "with-local-preview" in buildConfig || mainBuild
     const recreatePreview = "recreate-preview" in buildConfig
     const recreateVm = mainBuild || "recreate-vm" in buildConfig;
+    const withSlowDatabase = "with-slow-database" in buildConfig && !mainBuild;
 
     const withIntegrationTests = parseWithIntegrationTests(werft, sliceId, buildConfig["with-integration-tests"]);
     const withPreview = decideWithPreview({werft, sliceID: sliceId, buildConfig, mainBuild, withIntegrationTests})
@@ -173,6 +175,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         certIssuer,
         recreatePreview,
         recreateVm,
+        withSlowDatabase,
     };
 
     werft.logOutput(sliceId, JSON.stringify(jobConfig, null, 2));

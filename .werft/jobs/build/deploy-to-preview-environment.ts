@@ -133,6 +133,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         analytics: deploymentConfig.analytics,
         withEELicense: deploymentConfig.installEELicense,
         workspaceFeatureFlags: workspaceFeatureFlags,
+        withSlowDatabase: jobConfig.withSlowDatabase,
     });
     try {
         werft.log(phases.DEPLOY, "deploying using installer");
