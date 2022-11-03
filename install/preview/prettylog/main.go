@@ -31,8 +31,8 @@ var (
 	}{
 		{Msg: "checking prerequisites", Fail: "requires a system with at least", Success: "Gitpod Domain:", Status: "checking prerequisites"},
 		{Msg: "preparing system", Success: "extracting images to download ahead"},
-		{Msg: "downloading images", Success: "--output-split-files"},
-		{Msg: "preparing Gitpod preview installation", Success: "rm -rf /var/lib/rancher/k3s/server/manifests/gitpod"},
+		{Msg: "downloading images", Success: "images pulled"},
+		{Msg: "preparing Gitpod preview installation", Success: "manifests generated"},
 		{Msg: "starting Gitpod", Success: "Gitpod pods are ready", Status: "starting gitpod"},
 		{Msg: fmt.Sprintf("Gitpod is running. Visit https://%s to access the dashboard", os.Getenv("DOMAIN")), Status: "gitpod ready"},
 	}
