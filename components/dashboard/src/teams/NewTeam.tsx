@@ -8,7 +8,7 @@ import { FormEvent, useContext, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { getGitpodService } from "../service/service";
 import { TeamsContext } from "./teams-context";
-import { teamsService } from "../service/public-api";
+import { publicApiTeamsToProtocol, publicApiTeamToProtocol, teamsService } from "../service/public-api";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 
 export default function () {
@@ -22,24 +22,15 @@ export default function () {
     const createTeam = async (event: FormEvent) => {
         event.preventDefault();
 
-        if (usePublicApiTeamsService) {
-            try {
-                const response = await teamsService.createTeam({ name });
-                const team = response.team;
-                setTeams(await getGitpodService().server.getTeams());
-
-                history.push(`/t/${team!.slug}`);
-                return;
-            } catch (error) {
-                console.error(error);
-                setCreationError(error);
-                return;
-            }
-        }
-
         try {
-            const team = await getGitpodService().server.createTeam(name);
-            const teams = await getGitpodService().server.getTeams();
+            const team = usePublicApiTeamsService
+                ? publicApiTeamToProtocol((await teamsService.createTeam({ name })).team!)
+                : await getGitpodService().server.createTeam(name);
+
+            const teams = usePublicApiTeamsService
+                ? publicApiTeamsToProtocol((await teamsService.listTeams({})).teams)
+                : await getGitpodService().server.getTeams();
+
             setTeams(teams);
             history.push(`/t/${team.slug}`);
         } catch (error) {

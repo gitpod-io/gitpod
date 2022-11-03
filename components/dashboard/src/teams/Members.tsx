@@ -19,7 +19,7 @@ import { UserContext } from "../user-context";
 import { TeamsContext, getCurrentTeam } from "./teams-context";
 import { trackEvent } from "../Analytics";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
-import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
+import { publicApiTeamMembersToProtocol, publicApiTeamsToProtocol, teamsService } from "../service/public-api";
 
 export default function () {
     const { user } = useContext(UserContext);
@@ -108,10 +108,17 @@ export default function () {
 
     const removeTeamMember = async (userId: string) => {
         await getGitpodService().server.removeTeamMember(team!.id, userId);
-        const newTeams = await getGitpodService().server.getTeams();
+
+        const newTeams = usePublicApiTeamsService
+            ? publicApiTeamsToProtocol((await teamsService.listTeams({})).teams)
+            : await getGitpodService().server.getTeams();
+
         if (newTeams.some((t) => t.id === team!.id)) {
             // We're still a member of this team.
-            const newMembers = await getGitpodService().server.getTeamMembers(team!.id);
+
+            const newMembers = usePublicApiTeamsService
+                ? publicApiTeamMembersToProtocol((await teamsService.getTeam({ teamId: team!.id })).team?.members || [])
+                : await getGitpodService().server.getTeamMembers(team!.id);
             setMembers(newMembers);
         } else {
             // We're no longer a member of this team (note: we navigate away first in order to avoid a 404).

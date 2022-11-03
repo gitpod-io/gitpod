@@ -21,7 +21,7 @@ import { trackEvent } from "../Analytics";
 import exclamation from "../images/exclamation.svg";
 import ErrorMessage from "../components/ErrorMessage";
 import Spinner from "../icons/Spinner.svg";
-import { teamsService } from "../service/public-api";
+import { publicApiTeamsToProtocol, publicApiTeamToProtocol, teamsService } from "../service/public-api";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 
 export default function NewProject() {
@@ -733,32 +733,15 @@ function NewTeam(props: { onSuccess: (team: Team) => void }) {
             return;
         }
 
-        if (usePublicApiTeamsService) {
-            try {
-                const response = await teamsService.createTeam({
-                    name: teamName,
-                });
-                const team = response.team;
-                setTeams(await getGitpodService().server.getTeams());
-
-                const mappedTeam: Team = {
-                    id: team?.id || "",
-                    name: team?.name || "",
-                    slug: team?.slug || "",
-                    creationTime: "",
-                };
-                props.onSuccess(mappedTeam);
-                return;
-            } catch (error) {
-                console.error(error);
-                setError(error?.message || "Failed to create new team!");
-                return;
-            }
-        }
-
         try {
-            const team = await getGitpodService().server.createTeam(teamName);
-            setTeams(await getGitpodService().server.getTeams());
+            const team = usePublicApiTeamsService
+                ? publicApiTeamToProtocol((await teamsService.createTeam({ name: teamName })).team!)
+                : await getGitpodService().server.createTeam(teamName);
+            const teams = usePublicApiTeamsService
+                ? publicApiTeamsToProtocol((await teamsService.listTeams({})).teams)
+                : await getGitpodService().server.getTeams();
+
+            setTeams(teams);
             props.onSuccess(team);
         } catch (error) {
             console.error(error);

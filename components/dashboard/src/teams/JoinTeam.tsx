@@ -4,7 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Team } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
@@ -27,18 +26,13 @@ export default function () {
                     throw new Error("This invite URL is incorrect.");
                 }
 
-                let team: Team;
-                let teams: Team[];
-                if (usePublicApiTeamsService) {
-                    const joinResponse = await teamsService.joinTeam({ invitationId: inviteId });
-                    team = publicApiTeamToProtocol(joinResponse.team!);
+                const team = usePublicApiTeamsService
+                    ? publicApiTeamToProtocol((await teamsService.joinTeam({ invitationId: inviteId })).team!)
+                    : await getGitpodService().server.joinTeam(inviteId);
 
-                    const listResponse = await teamsService.listTeams({});
-                    teams = publicApiTeamsToProtocol(listResponse.teams);
-                } else {
-                    team = await getGitpodService().server.joinTeam(inviteId);
-                    teams = await getGitpodService().server.getTeams();
-                }
+                const teams = usePublicApiTeamsService
+                    ? publicApiTeamsToProtocol((await teamsService.listTeams({})).teams)
+                    : await getGitpodService().server.getTeams();
 
                 setTeams(teams);
 

@@ -18,7 +18,7 @@ import gitpodIcon from "./icons/gitpod.svg";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { useHistory } from "react-router-dom";
 import { trackButtonOrAnchor, trackPathChange, trackLocation } from "./Analytics";
-import { ContextURL, User, Team } from "@gitpod/gitpod-protocol";
+import { ContextURL, User } from "@gitpod/gitpod-protocol";
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
 import { Experiment } from "./experiments";
 import { workspacesPathMain } from "./workspaces/workspaces.routes";
@@ -172,13 +172,9 @@ function App() {
                 user = await getGitpodService().server.getLoggedInUser();
                 setUser(user);
 
-                let teams: Team[];
-                if (usePublicApiTeamsService) {
-                    const response = await teamsService.listTeams({});
-                    teams = publicApiTeamsToProtocol(response.teams);
-                } else {
-                    teams = await getGitpodService().server.getTeams();
-                }
+                const teams = usePublicApiTeamsService
+                    ? publicApiTeamsToProtocol((await teamsService.listTeams({})).teams)
+                    : await getGitpodService().server.getTeams();
 
                 {
                     // if a team was selected previously and we call the root URL (e.g. "gitpod.io"),
