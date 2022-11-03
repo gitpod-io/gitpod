@@ -18,7 +18,7 @@ func main() {
 		TimestampFormat: "2006-01-02 15:04:05",
 	})
 
-	root := cmd.RootCmd(logger)
+	root := cmd.NewRootCmd(logger)
 	if err := root.Execute(); err != nil {
 		logger.WithFields(logrus.Fields{"err": err}).Fatal("command failed.")
 	}

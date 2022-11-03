@@ -18,8 +18,10 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/gitpod-io/gitpod/previewctl/pkg/k8s"
+	"github.com/gitpod-io/gitpod/previewctl/pkg/k8s/context/k3s"
 )
 
 var (
@@ -33,7 +35,8 @@ type Preview struct {
 	name      string
 	namespace string
 
-	kubeClient *k8s.Config
+	harvesterClient *k8s.Config
+	configLoader    *k3s.ConfigLoader
 
 	logger *logrus.Entry
 
@@ -57,55 +60,78 @@ func New(branch string, logger *logrus.Logger) (*Preview, error) {
 		branch:          branch,
 		namespace:       fmt.Sprintf("preview-%s", branch),
 		name:            branch,
-		kubeClient:      harvesterConfig,
+		harvesterClient: harvesterConfig,
 		logger:          logEntry,
 		vmiCreationTime: nil,
 	}, nil
 }
 
-func (p *Preview) InstallContext(wait bool, timeout time.Duration) error {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+type InstallCtxOpts struct {
+	Wait              bool
+	Timeout           time.Duration
+	KubeSavePath      string
+	SSHPrivateKeyPath string
+}
+
+func (p *Preview) InstallContext(ctx context.Context, opts InstallCtxOpts) error {
+	// TODO: https://github.com/gitpod-io/ops/issues/6524
+	if p.configLoader == nil {
+		configLoader, err := k3s.New(ctx, k3s.ConfigLoaderOpts{
+			Logger:            p.logger.Logger,
+			PreviewName:       p.name,
+			PreviewNamespace:  p.namespace,
+			SSHPrivateKeyPath: opts.SSHPrivateKeyPath,
+			SSHUser:           "ubuntu",
+		})
+
+		if err != nil {
+			return err
+		}
+
+		p.configLoader = configLoader
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, opts.Timeout)
 	defer cancel()
 
-	p.logger.WithFields(logrus.Fields{"timeout": timeout}).Infof("Installing context")
+	p.logger.WithFields(logrus.Fields{"timeout": opts.Timeout}).Debug("Installing context")
 
 	// we use this channel to signal when we've found an event in wait functions, so we know when we're done
 	doneCh := make(chan struct{})
 	defer close(doneCh)
 
-	// TODO: fix this, as it's a bit ugly
-	err := p.kubeClient.GetVMStatus(ctx, p.name, p.namespace)
+	err := p.harvesterClient.GetVMStatus(ctx, p.name, p.namespace)
 	if err != nil && !errors.Is(err, k8s.ErrVmNotReady) {
 		return err
-	} else if errors.Is(err, k8s.ErrVmNotReady) && !wait {
+	} else if errors.Is(err, k8s.ErrVmNotReady) && !opts.Wait {
 		return err
-	} else if errors.Is(err, k8s.ErrVmNotReady) && wait {
-		err = p.kubeClient.WaitVMReady(ctx, p.name, p.namespace, doneCh)
+	} else if errors.Is(err, k8s.ErrVmNotReady) && opts.Wait {
+		err = p.harvesterClient.WaitVMReady(ctx, p.name, p.namespace, doneCh)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = p.kubeClient.GetProxyVMServiceStatus(ctx, p.namespace)
+	err = p.harvesterClient.GetProxyVMServiceStatus(ctx, p.namespace)
 	if err != nil && !errors.Is(err, k8s.ErrSvcNotReady) {
 		return err
-	} else if errors.Is(err, k8s.ErrSvcNotReady) && !wait {
+	} else if errors.Is(err, k8s.ErrSvcNotReady) && !opts.Wait {
 		return err
-	} else if errors.Is(err, k8s.ErrSvcNotReady) && wait {
-		err = p.kubeClient.WaitProxySvcReady(ctx, p.namespace, doneCh)
+	} else if errors.Is(err, k8s.ErrSvcNotReady) && opts.Wait {
+		err = p.harvesterClient.WaitProxySvcReady(ctx, p.namespace, doneCh)
 		if err != nil {
 			return err
 		}
 	}
 
-	if wait {
+	if opts.Wait {
 		for {
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
 			case <-time.Tick(5 * time.Second):
 				p.logger.Infof("waiting for context install to succeed")
-				err = installContext(p.branch)
+				err = p.Install(ctx, opts)
 				if err == nil {
 					p.logger.Infof("Successfully installed context")
 					return nil
@@ -114,7 +140,7 @@ func (p *Preview) InstallContext(wait bool, timeout time.Duration) error {
 		}
 	}
 
-	return installContext(p.branch)
+	return p.Install(ctx, opts)
 }
 
 // Same compares two preview envrionments
@@ -138,7 +164,7 @@ func ensureVMICreationTime(p *Preview) {
 	defer cancel()
 
 	if p.vmiCreationTime == nil {
-		creationTime, err := p.kubeClient.GetVMICreationTimestamp(ctx, p.name, p.namespace)
+		creationTime, err := p.harvesterClient.GetVMICreationTimestamp(ctx, p.name, p.namespace)
 		p.vmiCreationTime = creationTime
 		if err != nil {
 			p.logger.WithFields(logrus.Fields{"err": err}).Infof("Failed to get creation time")
@@ -146,8 +172,27 @@ func ensureVMICreationTime(p *Preview) {
 	}
 }
 
-func installContext(branch string) error {
-	return exec.Command("bash", "/workspace/gitpod/dev/preview/install-k3s-kubeconfig.sh", "-b", branch).Run()
+func (p *Preview) Install(ctx context.Context, opts InstallCtxOpts) error {
+	cfg, err := p.GetPreviewContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	merged, err := k8s.MergeContextsWithDefault(cfg)
+	if err != nil {
+		return err
+	}
+
+	return k8s.OutputContext(opts.KubeSavePath, merged)
+}
+
+func (p *Preview) GetPreviewContext(ctx context.Context) (*api.Config, error) {
+	return p.configLoader.Load(ctx)
+}
+
+func InstallVMSSHKeys() error {
+	// TODO: https://github.com/gitpod-io/ops/issues/6524
+	return exec.Command("bash", "/workspace/gitpod/dev/preview/util/install-vm-ssh-keys.sh").Run()
 }
 
 func SSHPreview(branch string) error {
@@ -207,8 +252,8 @@ func GetName(branch string) (string, error) {
 	return sanitizedBranch, nil
 }
 
-func (p *Preview) ListAllPreviews() error {
-	previews, err := p.kubeClient.GetVMs(context.Background())
+func (p *Preview) ListAllPreviews(ctx context.Context) error {
+	previews, err := p.harvesterClient.GetVMs(ctx)
 	if err != nil {
 		return err
 	}

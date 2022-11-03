@@ -6,88 +6,111 @@ package cmd
 
 import (
 	"context"
-	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/cockroachdb/errors"
+	kctx "github.com/gitpod-io/gitpod/previewctl/pkg/k8s/context"
+	"github.com/gitpod-io/gitpod/previewctl/pkg/k8s/context/gke"
+	"github.com/gitpod-io/gitpod/previewctl/pkg/k8s/context/harvester"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/client-go/util/homedir"
 
-	"github.com/gitpod-io/gitpod/previewctl/pkg/gcloud"
 	kube "github.com/gitpod-io/gitpod/previewctl/pkg/k8s"
 )
 
 var (
-	serviceAccountPath string
-	kubeConfigSavePath string
+	DefaultKubeConfigPath = filepath.Join(homedir.HomeDir(), clientcmd.RecommendedHomeDir, clientcmd.RecommendedFileName)
 )
 
 const (
-	coreDevClusterName        = "core-dev"
-	coreDevProjectID          = "gitpod-core-dev"
-	coreDevClusterZone        = "europe-west1-b"
-	coreDevDesiredContextName = "dev"
+	coreDevClusterName = "core-dev"
+	coreDevProjectID   = "gitpod-core-dev"
+	coreDevClusterZone = "europe-west1-b"
 )
 
 type getCredentialsOpts struct {
-	gcpClient *gcloud.Config
-	logger    *logrus.Logger
+	logger *logrus.Logger
 
-	getCredentialsMap map[string]func(ctx context.Context) (*api.Config, error)
-	configMap         map[string]*api.Config
+	serviceAccountPath string
+	kubeConfigSavePath string
 }
 
 func newGetCredentialsCommand(logger *logrus.Logger) *cobra.Command {
-	var err error
-	var client *gcloud.Config
 	ctx := context.Background()
 	opts := &getCredentialsOpts{
-		logger:    logger,
-		configMap: map[string]*api.Config{},
+		logger: logger,
 	}
 
 	cmd := &cobra.Command{
 		Use: "get-credentials",
 		Long: `previewctl get-credentials retrieves the kubernetes configs for core-dev and harvester clusters,
-merges them with the default config, and outputs them either to stdout or to a file.`,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			client, err = gcloud.New(ctx, serviceAccountPath)
+merges them with the default config, and saves them to the path in KUBECONFIG or the default path '~/.kube/config'"`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			configs, err := opts.getCredentials(ctx)
 			if err != nil {
 				return err
 			}
 
-			opts.gcpClient = client
-			opts.getCredentialsMap = map[string]func(ctx context.Context) (*api.Config, error){
-				"dev":       opts.getCoreDevKubeConfig,
-				"harvester": opts.getHarvesterKubeConfig,
-			}
-
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			for _, kc := range []string{coreDevDesiredContextName, "harvester"} {
-				if ok := hasAccess(logger, kc); !ok {
-					config, err := opts.getCredentialsMap[kc](ctx)
-					if err != nil {
-						return err
-					}
-
-					opts.configMap[kc] = config
-				}
-			}
-
-			return opts.mergeContexts()
+			opts.kubeConfigSavePath = getKubeConfigPath()
+			return kube.OutputContext(opts.kubeConfigSavePath, configs)
 		},
 	}
 
-	cmd.PersistentFlags().StringVar(&serviceAccountPath, "gcp-service-account", "", "path to the GCP service account to use")
-	cmd.PersistentFlags().StringVar(&kubeConfigSavePath, "kube-save-path", "", "path to save the generated kubeconfig to")
+	cmd.PersistentFlags().StringVar(&opts.serviceAccountPath, "gcp-service-account", "", "path to the GCP service account to use")
 
 	return cmd
 }
 
-func hasAccess(logger *logrus.Logger, contextName string) bool {
+func (o *getCredentialsOpts) getCredentials(ctx context.Context) (*api.Config, error) {
+	gkeLoader, err := gke.New(ctx, gke.ConfigLoaderOpts{
+		Logger:             o.logger,
+		ServiceAccountPath: o.serviceAccountPath,
+		Name:               coreDevClusterName,
+		ProjectID:          coreDevProjectID,
+		Zone:               coreDevClusterZone,
+		RenamedContextName: gke.DevContextName,
+	})
+
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to instantiate gke loader")
+	}
+
+	loaderMap := map[string]kctx.Loader{
+		gke.DevContextName:    gkeLoader,
+		harvester.ContextName: &harvester.ConfigLoader{},
+	}
+
+	for _, contextName := range []string{gke.DevContextName, harvester.ContextName} {
+		loader := loaderMap[contextName]
+		if kc, err := kube.NewFromDefaultConfigWithContext(o.logger, contextName); err == nil && kc.HasAccess(ctx) {
+			continue
+		}
+
+		kc, err := loader.Load(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		configs, err := kube.MergeContextsWithDefault(kc)
+		if err != nil {
+			return nil, err
+		}
+
+		// always save the context at the default path
+		err = kube.OutputContext(DefaultKubeConfigPath, configs)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return kube.MergeContextsWithDefault()
+}
+
+func hasAccess(ctx context.Context, logger *logrus.Logger, contextName string) bool {
 	config, err := kube.NewFromDefaultConfigWithContext(logger, contextName)
 	if err != nil {
 		if errors.Is(err, kube.ErrContextNotExists) {
@@ -97,60 +120,13 @@ func hasAccess(logger *logrus.Logger, contextName string) bool {
 		logger.Fatal(err)
 	}
 
-	return config.HasAccess()
+	return config.HasAccess(ctx)
 }
 
-func (o *getCredentialsOpts) mergeContexts() error {
-	var err error
-	configs := make([]*api.Config, 0, len(o.configMap))
-
-	for _, config := range o.configMap {
-		configs = append(configs, config)
+func getKubeConfigPath() string {
+	if v := os.Getenv("KUBECONFIG"); v != "" {
+		DefaultKubeConfigPath = v
 	}
 
-	finalConfig, err := kube.MergeWithDefaultConfig(configs...)
-	if err != nil {
-		return err
-	}
-
-	if kubeConfigSavePath != "" {
-		return clientcmd.WriteToFile(*finalConfig, kubeConfigSavePath)
-	}
-
-	bytes, err := clientcmd.Write(*finalConfig)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println(string(bytes))
-
-	return err
-}
-
-func (o *getCredentialsOpts) getCoreDevKubeConfig(ctx context.Context) (*api.Config, error) {
-	coreDevConfig, err := o.gcpClient.GenerateConfig(ctx, coreDevClusterName, coreDevProjectID, coreDevClusterZone, coreDevDesiredContextName)
-	if err != nil {
-		return nil, err
-	}
-
-	return coreDevConfig, nil
-}
-
-func (o *getCredentialsOpts) getHarvesterKubeConfig(ctx context.Context) (*api.Config, error) {
-	coreDevClientConfig, err := clientcmd.NewNonInteractiveClientConfig(*o.configMap[coreDevDesiredContextName], coreDevDesiredContextName, nil, nil).ClientConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	kubeConfig, err := kube.NewWithConfig(o.logger, coreDevClientConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	harvesterConfig, err := kubeConfig.GetHarvesterKubeConfig(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return harvesterConfig, nil
+	return DefaultKubeConfigPath
 }

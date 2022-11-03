@@ -21,12 +21,12 @@ var ErrSvcNotReady = errors.New("proxy service not ready")
 const proxySvcName = "proxy"
 
 func (c *Config) GetProxyVMServiceStatus(ctx context.Context, namespace string) error {
-	_, err := c.coreClient.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
+	_, err := c.CoreClient.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
 	if err != nil {
 		return errors.Wrap(ErrSvcNotReady, err.Error())
 	}
 
-	svc, err := c.coreClient.CoreV1().Services(namespace).Get(ctx, proxySvcName, metav1.GetOptions{})
+	svc, err := c.CoreClient.CoreV1().Services(namespace).Get(ctx, proxySvcName, metav1.GetOptions{})
 	if err != nil {
 		return errors.Wrap(ErrSvcNotReady, err.Error())
 	}
@@ -39,7 +39,7 @@ func (c *Config) GetProxyVMServiceStatus(ctx context.Context, namespace string) 
 }
 
 func (c *Config) WaitProxySvcReady(ctx context.Context, namespace string, doneCh chan struct{}) error {
-	kubeInformerFactory := informers.NewSharedInformerFactoryWithOptions(c.coreClient, time.Second*30, informers.WithNamespace(namespace))
+	kubeInformerFactory := informers.NewSharedInformerFactoryWithOptions(c.CoreClient, time.Second*30, informers.WithNamespace(namespace))
 	svcInformer := kubeInformerFactory.Core().V1().Services().Informer()
 
 	stopCh := make(chan struct{})
