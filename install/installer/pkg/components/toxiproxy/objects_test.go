@@ -23,7 +23,7 @@ func TestObjects_NotRenderedByDefault(t *testing.T) {
 }
 
 func TestObjects_RenderedWhenExperimentalConfigSet(t *testing.T) {
-	ctx := renderContextWithToxiproxyEnabled(t)
+	ctx := renderContextWithSlowDatabaseEnabled(t)
 
 	objects, err := Objects(ctx)
 	require.NoError(t, err)
@@ -31,11 +31,13 @@ func TestObjects_RenderedWhenExperimentalConfigSet(t *testing.T) {
 	require.Len(t, objects, 2, "should render expected k8s objects")
 }
 
-func renderContextWithToxiproxyEnabled(t *testing.T) *common.RenderContext {
+func renderContextWithSlowDatabaseEnabled(t *testing.T) *common.RenderContext {
+	t.Helper()
+
 	ctx, err := common.NewRenderContext(config.Config{
 		Experimental: &experimental.Config{
 			WebApp: &experimental.WebAppConfig{
-				Toxiproxy: &experimental.ToxiproxyConfig{Enabled: true},
+				SlowDatabase: true,
 			},
 		},
 	}, versions.Manifest{}, "test-namespace")

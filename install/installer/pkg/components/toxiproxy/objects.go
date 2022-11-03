@@ -10,8 +10,8 @@ import (
 )
 
 func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
-	cfg := getExperimentalToxiproxyConfig(ctx)
-	if cfg == nil || !cfg.Enabled {
+	cfg := getExperimentalWebAppConfig(ctx)
+	if cfg == nil || !cfg.SlowDatabase {
 		return nil, nil
 	}
 
@@ -33,13 +33,4 @@ func getExperimentalWebAppConfig(ctx *common.RenderContext) *experimental.WebApp
 	}
 
 	return experimentalCfg.WebApp
-}
-
-func getExperimentalToxiproxyConfig(ctx *common.RenderContext) *experimental.ToxiproxyConfig {
-	experimentalWebAppCfg := getExperimentalWebAppConfig(ctx)
-	if experimentalWebAppCfg == nil || experimentalWebAppCfg.Toxiproxy == nil {
-		return nil
-	}
-
-	return experimentalWebAppCfg.Toxiproxy
 }
