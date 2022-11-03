@@ -27,8 +27,8 @@ func TestNewServerInterceptor(t *testing.T) {
 	}
 
 	handler := connect.UnaryFunc(func(ctx context.Context, ar connect.AnyRequest) (connect.AnyResponse, error) {
-		token := TokenFromContext(ctx)
-		return connect.NewResponse(&TokenResponse{Token: token}), nil
+		token, _ := TokenFromContext(ctx)
+		return connect.NewResponse(&TokenResponse{Token: token.Value}), nil
 	})
 
 	scenarios := []struct {

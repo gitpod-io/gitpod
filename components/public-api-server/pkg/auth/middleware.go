@@ -26,7 +26,7 @@ func NewServerInterceptor() connect.UnaryInterceptorFunc {
 				return nil, connect.NewError(connect.CodeUnauthenticated, err)
 
 			}
-			return next(TokenToContext(ctx, token), req)
+			return next(TokenToContext(ctx, NewAccessToken(token)), req)
 		})
 	}
 
@@ -34,7 +34,7 @@ func NewServerInterceptor() connect.UnaryInterceptorFunc {
 }
 
 // NewClientInterceptor creates a client-side interceptor which injects token as a Bearer Authorization header
-func NewClientInterceptor(token string) connect.UnaryInterceptorFunc {
+func NewClientInterceptor(accessToken string) connect.UnaryInterceptorFunc {
 	interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
 		return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
 
@@ -42,7 +42,9 @@ func NewClientInterceptor(token string) connect.UnaryInterceptorFunc {
 				return next(ctx, req)
 			}
 
-			req.Header().Add(authorizationHeaderKey, bearerPrefix+token)
+			ctx = TokenToContext(ctx, NewAccessToken(accessToken))
+
+			req.Header().Add(authorizationHeaderKey, bearerPrefix+accessToken)
 			return next(ctx, req)
 		})
 	}

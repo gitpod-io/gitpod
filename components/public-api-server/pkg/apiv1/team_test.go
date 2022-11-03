@@ -353,7 +353,7 @@ func setupTeamService(t *testing.T) (*protocol.MockAPIInterface, v1connect.Teams
 		api: serverMock,
 	})
 
-	_, handler := v1connect.NewTeamsServiceHandler(svc)
+	_, handler := v1connect.NewTeamsServiceHandler(svc, connect.WithInterceptors(auth.NewServerInterceptor()))
 
 	srv := httptest.NewServer(handler)
 	t.Cleanup(srv.Close)

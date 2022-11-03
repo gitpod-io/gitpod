@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/golang/mock/gomock"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/stretchr/testify/require"
@@ -23,22 +24,26 @@ func TestConnectionPool(t *testing.T) {
 	require.NoError(t, err)
 	pool := &ConnectionPool{
 		cache: cache,
-		connConstructor: func(token string) (gitpod.APIInterface, error) {
+		connConstructor: func(token auth.Token) (gitpod.APIInterface, error) {
 			return srv, nil
 		},
 	}
 
-	_, err = pool.Get(context.Background(), "foo")
+	fooToken := auth.NewAccessToken("foo")
+	barToken := auth.NewAccessToken("bar")
+	bazToken := auth.NewAccessToken("baz")
+
+	_, err = pool.Get(context.Background(), fooToken)
 	require.NoError(t, err)
 	require.Equal(t, 1, pool.cache.Len())
 
-	_, err = pool.Get(context.Background(), "bar")
+	_, err = pool.Get(context.Background(), barToken)
 	require.NoError(t, err)
 	require.Equal(t, 2, pool.cache.Len())
 
-	_, err = pool.Get(context.Background(), "baz")
+	_, err = pool.Get(context.Background(), bazToken)
 	require.NoError(t, err)
 	require.Equal(t, 2, pool.cache.Len(), "must keep only last two connectons")
-	require.True(t, pool.cache.Contains("bar"))
-	require.True(t, pool.cache.Contains("baz"))
+	require.True(t, pool.cache.Contains(barToken))
+	require.True(t, pool.cache.Contains(bazToken))
 }

@@ -37,7 +37,7 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 
 	connPool := &FakeServerConnPool{}
 
-	route, handler := v1connect.NewWorkspacesServiceHandler(NewWorkspaceService(connPool))
+	route, handler := v1connect.NewWorkspacesServiceHandler(NewWorkspaceService(connPool), connect.WithInterceptors(auth.NewServerInterceptor()))
 	srv.HTTPMux().Handle(route, handler)
 
 	baseserver.StartServerForTests(t, srv)
@@ -118,7 +118,7 @@ func TestWorkspaceService_GetOwnerToken(t *testing.T) {
 
 	connPool := &FakeServerConnPool{}
 
-	route, handler := v1connect.NewWorkspacesServiceHandler(NewWorkspaceService(connPool))
+	route, handler := v1connect.NewWorkspacesServiceHandler(NewWorkspaceService(connPool), connect.WithInterceptors(auth.NewServerInterceptor()))
 	srv.HTTPMux().Handle(route, handler)
 
 	baseserver.StartServerForTests(t, srv)
@@ -195,7 +195,7 @@ func TestWorkspaceService_ListWorkspaces(t *testing.T) {
 
 	connPool := &FakeServerConnPool{}
 
-	route, handler := v1connect.NewWorkspacesServiceHandler(NewWorkspaceService(connPool))
+	route, handler := v1connect.NewWorkspacesServiceHandler(NewWorkspaceService(connPool), connect.WithInterceptors(auth.NewServerInterceptor()))
 	srv.HTTPMux().Handle(route, handler)
 
 	baseserver.StartServerForTests(t, srv)
@@ -437,7 +437,7 @@ type FakeServerConnPool struct {
 	api protocol.APIInterface
 }
 
-func (f *FakeServerConnPool) Get(ctx context.Context, token string) (protocol.APIInterface, error) {
+func (f *FakeServerConnPool) Get(ctx context.Context, token auth.Token) (protocol.APIInterface, error) {
 	return f.api, nil
 }
 
