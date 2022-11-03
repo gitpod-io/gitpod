@@ -6,11 +6,9 @@ package k8s
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/cockroachdb/errors"
-	"github.com/imdario/mergo"
 	"github.com/sirupsen/logrus"
 	authorizationv1 "k8s.io/api/authorization/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,8 +24,11 @@ var (
 )
 
 type Config struct {
-	coreClient    kubernetes.Interface
-	dynamicClient dynamic.Interface
+	CoreClient    kubernetes.Interface
+	DynamicClient dynamic.Interface
+
+	config       *rest.Config
+	clientConfig *api.Config
 
 	logger *logrus.Logger
 }
@@ -37,14 +38,15 @@ func NewWithConfig(logger *logrus.Logger, config *rest.Config) (*Config, error) 
 	dynamicClient := dynamic.NewForConfigOrDie(config)
 
 	return &Config{
-		coreClient:    coreClient,
-		dynamicClient: dynamicClient,
+		CoreClient:    coreClient,
+		DynamicClient: dynamicClient,
 		logger:        logger,
+		config:        config,
 	}, nil
 }
 
 func NewFromDefaultConfigWithContext(logger *logrus.Logger, contextName string) (*Config, error) {
-	kconf, err := getKubernetesConfig(contextName)
+	kconf, err := GetKubernetesConfigFromContext(contextName)
 	if err != nil {
 		return nil, errors.Wrapf(err, "couldn't get [%s] kube context", contextName)
 	}
@@ -52,14 +54,37 @@ func NewFromDefaultConfigWithContext(logger *logrus.Logger, contextName string) 
 	coreClient := kubernetes.NewForConfigOrDie(kconf)
 	dynamicClient := dynamic.NewForConfigOrDie(kconf)
 
+	clientConfig, err := GetClientConfigFromContext(contextName)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Config{
-		coreClient:    coreClient,
-		dynamicClient: dynamicClient,
+		CoreClient:    coreClient,
+		DynamicClient: dynamicClient,
 		logger:        logger,
+		config:        kconf,
+		clientConfig:  clientConfig,
 	}, nil
 }
 
-func getKubernetesConfig(context string) (*rest.Config, error) {
+func GetClientConfigFromContext(context string) (*api.Config, error) {
+	configLoadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	configOverrides := &clientcmd.ConfigOverrides{CurrentContext: context}
+
+	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(configLoadingRules, configOverrides).RawConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	if _, ok := config.Contexts[context]; !ok {
+		return nil, ErrContextNotExists
+	}
+
+	return &config, err
+}
+
+func GetKubernetesConfigFromContext(context string) (*rest.Config, error) {
 	configLoadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 	configOverrides := &clientcmd.ConfigOverrides{CurrentContext: context}
 
@@ -74,50 +99,11 @@ func getKubernetesConfig(context string) (*rest.Config, error) {
 	return kconf, err
 }
 
-func RenameContext(config *api.Config, oldName, newName string) (*api.Config, error) {
-	kubeCtx, exists := config.Contexts[oldName]
-	if !exists {
-		return nil, fmt.Errorf("cannot rename %q, it's not in the provided context", oldName)
-	}
-
-	if _, newExists := config.Contexts[newName]; newExists {
-		return nil, fmt.Errorf("cannot rename %q, it already exists in the provided context", oldName)
-	}
-
-	config.Contexts[newName] = kubeCtx
-	delete(config.Contexts, oldName)
-
-	if config.CurrentContext == oldName {
-		config.CurrentContext = newName
-	}
-
-	return config, nil
+func (c *Config) ClientConfig() *api.Config {
+	return c.clientConfig
 }
 
-func MergeWithDefaultConfig(configs ...*api.Config) (*api.Config, error) {
-	defaultConfig, err := clientcmd.NewDefaultClientConfigLoadingRules().Load()
-	if err != nil {
-		return nil, err
-	}
-
-	mapConfig := api.NewConfig()
-	err = mergo.Merge(mapConfig, defaultConfig, mergo.WithOverride)
-	if err != nil {
-		return nil, err
-	}
-
-	// If the same contexts exist in the default config, we'll override them with the configs we merge
-	for _, config := range configs {
-		err = mergo.Merge(mapConfig, config, mergo.WithOverride)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return mapConfig, nil
-}
-
-func (c *Config) HasAccess() bool {
+func (c *Config) HasAccess(ctx context.Context) bool {
 	sar := &authorizationv1.SelfSubjectAccessReview{
 		Spec: authorizationv1.SelfSubjectAccessReviewSpec{
 			ResourceAttributes: &authorizationv1.ResourceAttributes{
@@ -128,7 +114,7 @@ func (c *Config) HasAccess() bool {
 		},
 	}
 
-	_, err := c.coreClient.AuthorizationV1().SelfSubjectAccessReviews().Create(context.TODO(), sar, metav1.CreateOptions{})
+	_, err := c.CoreClient.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, sar, metav1.CreateOptions{})
 	if err != nil {
 		c.logger.Error(err)
 		return false

@@ -105,12 +105,12 @@ func TestGetVMStatus(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			c.coreClient = fake.NewSimpleClientset(test.objects...)
+			c.CoreClient = fake.NewSimpleClientset(test.objects...)
 
 			scheme := runtime.NewScheme()
 			_ = virtv1.AddToScheme(scheme)
 
-			c.dynamicClient = dfake.NewSimpleDynamicClient(scheme, test.dynObjects...)
+			c.DynamicClient = dfake.NewSimpleDynamicClient(scheme, test.dynObjects...)
 			err := c.GetVMStatus(context.TODO(), name, namespace)
 
 			if test.err != nil {
