@@ -620,8 +620,8 @@ func extractFailure(wso workspaceObjects, metrics *metrics) (string, *api.Worksp
 			// ref: https://github.com/kubernetes-sigs/gcp-compute-persistent-disk-csi-driver/issues/608
 			return "", nil
 		} else if strings.Contains(evt.Message, workspaceVolumeName) {
-			// ideally we do not just use evt.Message as failure reason because it contains internal paths and is not useful for the user
-			return "cannot mount workspace", nil
+			// ref: https://github.com/gitpod-io/gitpod/issues/14032
+			return "", nil
 		} else {
 			// if this happens we did not do a good job because that means we've introduced another volume to the pod
 			// but did not consider that mounting it might fail.
