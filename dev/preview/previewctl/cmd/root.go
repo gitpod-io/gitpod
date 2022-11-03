@@ -36,9 +36,9 @@ func NewRootCmd(logger *logrus.Logger) *cobra.Command {
 
 	cmd.AddCommand(
 		newInstallContextCmd(logger),
-		newGetNameCmd(branch),
-		listPreviewsCmd(logger),
-		SSHPreviewCmd(logger),
+		newGetNameCmd(),
+		newListPreviewsCmd(logger),
+		newSSHPreviewCmd(logger),
 		newGetCredentialsCommand(logger),
 	)
 

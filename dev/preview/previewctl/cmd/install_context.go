@@ -42,7 +42,7 @@ func newInstallContextCmd(logger *logrus.Logger) *cobra.Command {
 	}
 
 	// Used to ensure that we only install contexts
-	var lastSuccessfulPreviewEnvironment *preview.Preview = nil
+	var lastSuccessfulPreviewEnvironment *preview.Config = nil
 
 	install := func(timeout time.Duration) error {
 		name, err := preview.GetName(branch)

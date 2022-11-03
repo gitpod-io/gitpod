@@ -13,17 +13,12 @@ import (
 	"github.com/gitpod-io/gitpod/previewctl/pkg/preview"
 )
 
-func listPreviewsCmd(logger *logrus.Logger) *cobra.Command {
-
+func newListPreviewsCmd(logger *logrus.Logger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "List all existing Preview Environments.",
+		Short: "List all existing Config Environments.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if branch != "" {
-				logger.Warn("Branch flag is ignored for 'list' command.")
-			}
-
-			p, err := preview.New(branch, logger)
+			p, err := preview.New("", logger)
 			if err != nil {
 				return err
 			}
