@@ -103,6 +103,7 @@ function isWebsiteSlug(pathName: string) {
         "about",
         "blog",
         "careers",
+        "cde",
         "changelog",
         "chat",
         "code-of-conduct",
