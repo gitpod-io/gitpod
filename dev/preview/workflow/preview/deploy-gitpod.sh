@@ -111,6 +111,7 @@ EOF
 
 function waitUntilAllPodsAreReady {
   local namespace
+  local exitCode
   namespace="$1"
 
   echo "Waiting until all pods in namespace ${namespace} are Running/Succeeded/Completed."
@@ -119,6 +120,7 @@ function waitUntilAllPodsAreReady {
   while [ ${ATTEMPTS} -lt 200 ]
   do
     ATTEMPTS=$((ATTEMPTS+1))
+    set +e
     pods=$(
       kubectl \
         --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
@@ -127,9 +129,18 @@ function waitUntilAllPodsAreReady {
           -l 'component!=workspace' \
           -o=jsonpath='{range .items[*]}{@.metadata.name}:{@.metadata.ownerReferences[0].kind}:{@.status.phase} {end}'
     )
+    exitCode=$?
+    set -e
+    if [[ $exitCode -gt 0 ]]; then
+      echo "Failed to get pods in namespace. Exit code $exitCode"
+      echo "Sleeping 3 seconds"
+      sleep 3
+      continue
+    fi
+
     if [[ -z "${pods}" ]]; then
       echo "The namespace is empty or does not exist."
-      echo "Sleeping"
+      echo "Sleeping 3 seconds"
       sleep 3
       continue
     fi
