@@ -368,7 +368,7 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 					// check prebuild log message exists
 					checkPrebuildLogExist(t, cfg, rsa, ws, test.WorkspaceRoot)
 
-					// check the files/folders permission under .git/ is not root
+					// check the files/folders permission under .git/ is not gitpod
 					checkGitFolderPermission(t, rsa, test.WorkspaceRoot)
 
 					// write file foobar.txt and stop the workspace
@@ -807,7 +807,7 @@ func TestPrebuildAndRegularWorkspaceDifferentWorkspaceClass(t *testing.T) {
 					// check prebuild log message exists
 					checkPrebuildLogExist(t, cfg, rsa, ws, test.WorkspaceRoot)
 
-					// check the files/folders permission under .git/ is not root
+					// check the files/folders permission under .git/ is not gitpod
 					checkGitFolderPermission(t, rsa, test.WorkspaceRoot)
 				})
 			}
@@ -926,7 +926,7 @@ func checkPrebuildLogExist(t *testing.T, cfg *envconf.Config, rsa *rpc.Client, w
 	t.Fatal("did not find someFile from previous workspace instance")
 }
 
-// checkGitFolderPermission checks the files/folders permission under .git/ is not root
+// checkGitFolderPermission checks the files/folders permission under .git/ is not gitpod
 func checkGitFolderPermission(t *testing.T, rsa *rpc.Client, workspaceRoot string) {
 	var findUserResp agent.ExecResponse
 	var gitDir string = fmt.Sprintf("%s/%s", workspaceRoot, ".git")
@@ -934,7 +934,7 @@ func checkGitFolderPermission(t *testing.T, rsa *rpc.Client, workspaceRoot strin
 	err := rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 		Dir:     gitDir,
 		Command: "find",
-		Args:    []string{"-user", "root"},
+		Args:    []string{"!", "-user", "gitpod"},
 	}, &findUserResp)
 	if err != nil || findUserResp.ExitCode != 0 || strings.Trim(findUserResp.Stdout, " \t\n") != "" {
 		t.Fatalf("incorrect file perimssion under %s folder, err:%v, exitCode:%d, stdout:%s", gitDir, err, findUserResp.ExitCode, findUserResp.Stdout)
@@ -944,7 +944,7 @@ func checkGitFolderPermission(t *testing.T, rsa *rpc.Client, workspaceRoot strin
 	err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 		Dir:     gitDir,
 		Command: "find",
-		Args:    []string{"-group", "root"},
+		Args:    []string{"!", "-group", "gitpod"},
 	}, &findGroupResp)
 	if err != nil || findGroupResp.ExitCode != 0 || strings.Trim(findGroupResp.Stdout, " \t\n") != "" {
 		t.Fatalf("incorrect group perimssion under %s folder, err:%v, exitCode:%d, stdout:%s", gitDir, err, findGroupResp.ExitCode, findGroupResp.Stdout)
