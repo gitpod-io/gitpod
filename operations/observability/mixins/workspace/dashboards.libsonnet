@@ -24,5 +24,6 @@
     'gitpod-component-image-builder.json': (import 'dashboards/components/image-builder.json'),
     'gitpod-psi.json': (import 'dashboards/node-psi.json'),
     'gitpod-workspace-psi.json': (import 'dashboards/workspace-psi.json'),
+    'gitpod-workspace-registry-facade-blobsource.json': (import 'dashboards/registry-facade-blobsource.json'),
   },
 }
