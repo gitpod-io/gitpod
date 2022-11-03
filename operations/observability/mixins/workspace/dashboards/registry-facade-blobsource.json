@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 80,
+  "id": 84,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -88,7 +88,7 @@
             "uid": "P4169E866C3094E38"
           },
           "editorMode": "code",
-          "expr": "sum by(blobSource) (gitpod_registry_facade_registry_blob_req_dl_total{cluster=\"$cluster\"})",
+          "expr": "sum by(blobSource) (gitpod_registry_facade_registry_blob_req_dl_total{cluster=~\"$cluster\"})",
           "interval": "",
           "legendFormat": "{{blobSource}}",
           "range": true,
@@ -185,7 +185,7 @@
             "uid": "P4169E866C3094E38"
           },
           "editorMode": "code",
-          "expr": "sum by(blobSource) (rate(gitpod_registry_facade_registry_blob_req_bytes_second_sum{cluster=\"$cluster\"}[$__rate_interval]))",
+          "expr": "sum by(blobSource) (rate(gitpod_registry_facade_registry_blob_req_bytes_second_sum{cluster=~\"$cluster\"}[$__rate_interval]))",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -246,7 +246,7 @@
             "uid": "P4169E866C3094E38"
           },
           "editorMode": "code",
-          "expr": "sum(increase(gitpod_registry_facade_registry_blob_req_bytes_total{cluster=\"$cluster\"}[24h])) by(blobSource)",
+          "expr": "sum(increase(gitpod_registry_facade_registry_blob_req_bytes_total{cluster=~\"$cluster\"}[24h])) by(blobSource)",
           "interval": "",
           "legendFormat": "{{blobSource}}",
           "range": true,
@@ -327,7 +327,7 @@
             "uid": "P4169E866C3094E38"
           },
           "editorMode": "code",
-          "expr": "sum(\n    rate(gitpod_registry_facade_registry_blob_req_bytes_second_bucket{cluster=\"$cluster\", blobSource=\"proxy\",le!=\"+Inf\"}[$__rate_interval])\n  ) by (le)\n",
+          "expr": "sum(\n    rate(gitpod_registry_facade_registry_blob_req_bytes_second_bucket{cluster=~\"$cluster\", blobSource=\"proxy\",le!=\"+Inf\"}[$__rate_interval])\n  ) by (le)\n",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -405,7 +405,7 @@
             "uid": "P4169E866C3094E38"
           },
           "editorMode": "code",
-          "expr": "sum(\n    rate(gitpod_registry_facade_registry_blob_req_bytes_second_bucket{cluster=\"$cluster\", blobSource=\"blobstore\",le!=\"+Inf\"}[$__rate_interval])\n  ) by (le)\n",
+          "expr": "sum(\n    rate(gitpod_registry_facade_registry_blob_req_bytes_second_bucket{cluster=~\"$cluster\", blobSource=\"blobstore\",le!=\"+Inf\"}[$__rate_interval])\n  ) by (le)\n",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -503,10 +503,10 @@
         "current": {
           "selected": true,
           "text": [
-            "eu72"
+            "All"
           ],
           "value": [
-            "eu72"
+            "$__all"
           ]
         },
         "datasource": {
@@ -532,13 +532,13 @@
     ]
   },
   "time": {
-    "from": "now-12h",
+    "from": "now-24h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Registry facade download bytes",
   "uid": "-5J1T3S4k",
-  "version": 14,
+  "version": 2,
   "weekStart": ""
 }
