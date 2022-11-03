@@ -14,6 +14,7 @@ export type InstallerOptions = {
     analytics?: Analytics;
     withEELicense: boolean;
     workspaceFeatureFlags: string[];
+    withSlowDatabase: boolean;
 };
 
 export class Installer {
@@ -32,6 +33,7 @@ export class Installer {
             PREVIEW_NAME: this.options.previewName,
             GITPOD_ANALYTICS_SEGMENT_TOKEN: this.options.analytics?.token || "",
             GITPOD_WORKSPACE_FEATURE_FLAGS: this.options.workspaceFeatureFlags.join(" "),
+            GITPOD_WITH_SLOW_DATABASE: this.options.withSlowDatabase,
             GITPOD_WITH_EE_LICENSE: this.options.withEELicense,
         };
         const variables = Object.entries(environment)

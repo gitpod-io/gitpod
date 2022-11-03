@@ -26,6 +26,7 @@ GITPOD_PROXY_SECRET_NAME="proxy-config-certificates";
 GITPOD_ANALYTICS_SEGMENT_TOKEN="${GITPOD_ANALYTICS_SEGMENT_TOKEN:-}"
 GITPOD_WITH_EE_LICENSE="${GITPOD_WITH_EE_LICENSE:-true}"
 GITPOD_WORKSPACE_FEATURE_FLAGS="${GITPOD_WORKSPACE_FEATURE_FLAGS:-}"
+GITPOD_WITH_SLOW_DATABASE="${GITPOD_WITH_SLOW_DATABASE:-false}"
 
 VERSION="${VERSION:-${PREVIEW_NAME}-dev}"
 INSTALLER_BINARY_PATH="$(mktemp "/tmp/XXXXXX.installer")}"
@@ -443,6 +444,14 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.configcat.pollInter
 yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers[+].name' "workspace"
 yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_PREVENT_METADATA_ACCESS"
 yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_PREVENT_METADATA_ACCESS).value' "true"
+
+#
+# configureSlowDatabase
+#
+if [[ "${GITPOD_WITH_SLOW_DATABASE}" == "true" ]]
+then
+  yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.slowDatabase" "true"
+fi
 
 #
 # includeAnalytics
