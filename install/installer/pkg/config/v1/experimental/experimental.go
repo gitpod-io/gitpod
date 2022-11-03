@@ -177,10 +177,6 @@ type StripeConfig struct {
 	TeamUsagePriceIDs       StripePriceIDs `json:"teamUsagePriceIds"`
 }
 
-type ToxiproxyConfig struct {
-	Enabled bool `json:"enabled"`
-}
-
 type WebAppConfig struct {
 	PublicAPI              *PublicAPIConfig       `json:"publicApi,omitempty"`
 	Server                 *ServerConfig          `json:"server,omitempty"`
@@ -193,7 +189,7 @@ type WebAppConfig struct {
 	ConfigcatKey           string                 `json:"configcatKey"`
 	WorkspaceClasses       []WebAppWorkspaceClass `json:"workspaceClasses"`
 	Stripe                 *StripeConfig          `json:"stripe,omitempty"`
-	Toxiproxy              *ToxiproxyConfig       `json:"toxiproxy,omitempty"`
+	SlowDatabase           bool                   `json:"slowDatabase,omitempty"`
 }
 
 type WorkspaceDefaults struct {
