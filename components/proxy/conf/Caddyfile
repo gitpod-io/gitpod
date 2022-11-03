@@ -167,23 +167,6 @@ https://{$GITPOD_DOMAIN} {
 	import ssl_configuration
 	import security_headers
 
-	@workspace_download path /workspace-download*
-	handle @workspace_download {
-		import google_storage_headers
-
-		header {
-			# The browser needs to see the correct archive content type to trigger the download.
-			content-type "application/tar+gzip"
-		}
-
-		gitpod.workspace_download {
-			service http://server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000
-		}
-
-		# redirect works here because we "navigate" to this URL, which makes the browser handle this as primary request, and not fuff around with CORS at all
-		redir {http.gitpod.workspace_download_url} 303
-	}
-
 	@headless_log_download path /headless-log-download*
 	handle @headless_log_download {
 		header {

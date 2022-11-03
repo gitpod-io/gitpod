@@ -26,7 +26,6 @@ import { AddressInfo } from "net";
 import { ConsensusLeaderQorum } from "./consensus/consensus-leader-quorum";
 import { RabbitMQConsensusLeaderMessenger } from "./consensus/rabbitmq-consensus-leader-messenger";
 import { WorkspaceGarbageCollector } from "./workspace/garbage-collector";
-import { WorkspaceDownloadService } from "./workspace/workspace-download-service";
 import { MonitoringEndpointsApp } from "./monitoring-endpoints";
 import { WebsocketConnectionManager } from "./websocket/websocket-connection-manager";
 import { PeriodicDbDeleter, TypeORM } from "@gitpod/gitpod-db/lib";
@@ -65,7 +64,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(WebsocketConnectionManager) protected websocketConnectionHandler: WebsocketConnectionManager;
     @inject(MessageBusIntegration) protected readonly messagebus: MessageBusIntegration;
     @inject(LocalMessageBroker) protected readonly localMessageBroker: LocalMessageBroker;
-    @inject(WorkspaceDownloadService) protected readonly workspaceDownloadService: WorkspaceDownloadService;
     @inject(LivenessController) protected readonly livenessController: LivenessController;
     @inject(MonitoringEndpointsApp) protected readonly monitoringEndpointsApp: MonitoringEndpointsApp;
     @inject(CodeSyncService) private readonly codeSyncService: CodeSyncService;
@@ -296,7 +294,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         app.use(this.userController.apiRouter);
         app.use(this.oneTimeSecretServer.apiRouter);
         app.use("/enforcement", this.enforcementController.apiRouter);
-        app.use("/workspace-download", this.workspaceDownloadService.apiRouter);
         app.use("/code-sync", this.codeSyncService.apiRouter);
         app.use(HEADLESS_LOGS_PATH_PREFIX, this.headlessLogController.headlessLogs);
         app.use(HEADLESS_LOG_DOWNLOAD_PATH_PREFIX, this.headlessLogController.headlessLogDownload);
