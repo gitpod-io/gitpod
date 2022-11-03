@@ -12,7 +12,7 @@ import (
 )
 
 func TestConfigMap_ContainsSchedule(t *testing.T) {
-	ctx := renderContextWithUsageConfig(t, &experimental.UsageConfig{Enabled: true, Schedule: "2m"})
+	ctx := renderContextWithUsageConfig(t, &experimental.UsageConfig{Enabled: true, Schedule: "2m", ResetUsageSchedule: "5m"})
 
 	objs, err := configmap(ctx)
 	require.NoError(t, err)
@@ -23,7 +23,7 @@ func TestConfigMap_ContainsSchedule(t *testing.T) {
 	require.JSONEq(t,
 		`{
        "controllerSchedule": "2m",
-	   "resetUsageSchedule": "5m0s",
+	   "resetUsageSchedule": "5m",
        "stripeCredentialsFile": "stripe-secret/apikeys",
 	   "defaultSpendingLimit": {
 		"forUsers": 1000000000,
