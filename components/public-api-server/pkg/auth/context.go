@@ -34,6 +34,13 @@ func NewAccessToken(token string) Token {
 	}
 }
 
+func NewCookieToken(cookie string) Token {
+	return Token{
+		Type:  CookieTokenType,
+		Value: cookie,
+	}
+}
+
 func TokenToContext(ctx context.Context, token Token) context.Context {
 	return context.WithValue(ctx, authContextKey, token)
 }

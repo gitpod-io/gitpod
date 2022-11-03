@@ -6,6 +6,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/bufbuild/connect-go"
 )
@@ -19,18 +20,32 @@ func NewServerInterceptor() connect.UnaryInterceptorFunc {
 				return next(ctx, req)
 			}
 
-			headers := req.Header()
-
-			token, err := BearerTokenFromHeaders(headers)
+			token, err := tokenFromRequest(ctx, req)
 			if err != nil {
-				return nil, connect.NewError(connect.CodeUnauthenticated, err)
-
+				return nil, err
 			}
-			return next(TokenToContext(ctx, NewAccessToken(token)), req)
+
+			return next(TokenToContext(ctx, token), req)
 		})
 	}
 
 	return connect.UnaryInterceptorFunc(interceptor)
+}
+
+func tokenFromRequest(ctx context.Context, req connect.AnyRequest) (Token, error) {
+	headers := req.Header()
+
+	bearerToken, err := BearerTokenFromHeaders(headers)
+	if err == nil {
+		return NewAccessToken(bearerToken), nil
+	}
+
+	cookie := req.Header().Get("Cookie")
+	if cookie != "" {
+		return NewCookieToken(cookie), nil
+	}
+
+	return Token{}, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No access token or cookie credentials available on request."))
 }
 
 // NewClientInterceptor creates a client-side interceptor which injects token as a Bearer Authorization header

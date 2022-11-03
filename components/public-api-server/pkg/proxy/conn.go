@@ -38,21 +38,23 @@ func (p *NoConnectionPool) Get(ctx context.Context, token auth.Token) (gitpod.AP
 		reportConnectionDuration(time.Since(start))
 	}()
 
-	var conn *gitpod.APIoverJSONRPC
+	opts := gitpod.ConnectToServerOpts{
+		Context: ctx,
+		Log:     logger,
+	}
+
 	switch token.Type {
 	case auth.AccessTokenType:
-		server, err := gitpod.ConnectToServer(p.ServerAPI.String(), gitpod.ConnectToServerOpts{
-			Context: ctx,
-			Token:   token.Value,
-			Log:     logger,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to create new connection to server: %w", err)
-		}
-
-		conn = server
+		opts.Token = token.Value
+	case auth.CookieTokenType:
+		opts.Cookie = token.Value
 	default:
 		return nil, errors.New("unknown token type")
+	}
+
+	conn, err := gitpod.ConnectToServer(p.ServerAPI.String(), opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new connection to server: %w", err)
 	}
 
 	return conn, nil
@@ -81,21 +83,31 @@ func NewConnectionPool(address *url.URL, poolSize int) (*ConnectionPool, error) 
 	return &ConnectionPool{
 		cache: cache,
 		connConstructor: func(token auth.Token) (gitpod.APIInterface, error) {
+			opts := gitpod.ConnectToServerOpts{
+				// We're using Background context as we want the connection to persist beyond the lifecycle of a single request
+				Context: context.Background(),
+				Log:     log.Log,
+				CloseHandler: func(_ error) {
+					cache.Remove(token)
+					connectionPoolSize.Dec()
+				},
+			}
+
 			switch token.Type {
 			case auth.AccessTokenType:
-				return gitpod.ConnectToServer(address.String(), gitpod.ConnectToServerOpts{
-					// We're using Background context as we want the connection to persist beyond the lifecycle of a single request
-					Context: context.Background(),
-					Token:   token.Value,
-					Log:     log.Log,
-					CloseHandler: func(_ error) {
-						cache.Remove(token)
-						connectionPoolSize.Dec()
-					},
-				})
+				opts.Token = token.Value
+			case auth.CookieTokenType:
+				opts.Cookie = token.Value
 			default:
-				return nil, errors.New("unknown authentication token")
+				return nil, errors.New("unknown token type")
 			}
+
+			conn, err := gitpod.ConnectToServer(address.String(), opts)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create new connection to server: %w", err)
+			}
+
+			return conn, nil
 		},
 	}, nil
 
