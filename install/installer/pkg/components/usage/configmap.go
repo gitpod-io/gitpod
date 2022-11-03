@@ -22,7 +22,7 @@ import (
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	cfg := server.Config{
 		LedgerSchedule:     "", // By default controller is disabled
-		ResetUsageSchedule: time.Duration(5 * time.Minute).String(),
+		ResetUsageSchedule: time.Duration(15 * time.Minute).String(),
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{
@@ -57,6 +57,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	if expUsageConfig != nil {
 		if expUsageConfig.Schedule != "" {
 			cfg.LedgerSchedule = expUsageConfig.Schedule
+		}
+		if expUsageConfig.ResetUsageSchedule != "" {
+			cfg.ResetUsageSchedule = expUsageConfig.ResetUsageSchedule
 		}
 		if expUsageConfig.DefaultSpendingLimit != nil {
 			cfg.DefaultSpendingLimit = *expUsageConfig.DefaultSpendingLimit
