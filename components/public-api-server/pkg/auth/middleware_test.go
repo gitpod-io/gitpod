@@ -42,7 +42,7 @@ func TestNewServerInterceptor(t *testing.T) {
 		{
 			Name:          "no headers return Unathenticated",
 			Headers:       nil,
-			ExpectedError: connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("empty authorization header: %w", NoAccessToken)),
+			ExpectedError: connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No access token or cookie credentials available on request.")),
 		},
 		{
 			Name:          "authorization header with bearer token returns ok",
