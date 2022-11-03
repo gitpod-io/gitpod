@@ -57,7 +57,7 @@ export class BitbucketServerApi {
             result = "error " + error?.message;
             throw error;
         } finally {
-            console.debug(`BitbucketServer GET ${fullUrl} - ${result}`);
+            console.log(`BBS: ${method} ${fullUrl} - ${result}`);
         }
     }
 
