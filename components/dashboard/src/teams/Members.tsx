@@ -20,6 +20,7 @@ import { TeamsContext, getCurrentTeam } from "./teams-context";
 import { trackEvent } from "../Analytics";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { publicApiTeamMembersToProtocol, publicApiTeamsToProtocol, teamsService } from "../service/public-api";
+import { TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 
 export default function () {
     const { user } = useContext(UserContext);
@@ -102,12 +103,24 @@ export default function () {
     };
 
     const setTeamMemberRole = async (userId: string, role: TeamMemberRole) => {
-        await getGitpodService().server.setTeamMemberRole(team!.id, userId, role);
-        setMembers(await getGitpodService().server.getTeamMembers(team!.id));
+        usePublicApiTeamsService
+            ? await teamsService.updateTeamMember({
+                  teamId: team!.id,
+                  teamMember: { userId, role: role === "owner" ? TeamRole.OWNER : TeamRole.MEMBER },
+              })
+            : await getGitpodService().server.setTeamMemberRole(team!.id, userId, role);
+
+        const members = usePublicApiTeamsService
+            ? publicApiTeamMembersToProtocol((await teamsService.getTeam({ teamId: team!.id })).team?.members || [])
+            : await getGitpodService().server.getTeamMembers(team!.id);
+
+        setMembers(members);
     };
 
     const removeTeamMember = async (userId: string) => {
-        await getGitpodService().server.removeTeamMember(team!.id, userId);
+        usePublicApiTeamsService
+            ? await teamsService.deleteTeamMember({ teamId: team!.id, teamMemberId: userId })
+            : await getGitpodService().server.removeTeamMember(team!.id, userId);
 
         const newTeams = usePublicApiTeamsService
             ? publicApiTeamsToProtocol((await teamsService.listTeams({})).teams)
