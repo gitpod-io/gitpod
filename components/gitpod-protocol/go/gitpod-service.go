@@ -90,6 +90,7 @@ type APIInterface interface {
 	GetTeamMembers(ctx context.Context, teamID string) ([]*TeamMemberInfo, error)
 	JoinTeam(ctx context.Context, teamID string) (*Team, error)
 	GetGenericInvite(ctx context.Context, teamID string) (*TeamMembershipInvite, error)
+	ResetGenericInvite(ctx context.Context, teamID string) (*TeamMembershipInvite, error)
 
 	InstanceUpdates(ctx context.Context, instanceID string) (<-chan *WorkspaceInstance, error)
 }
@@ -223,6 +224,8 @@ const (
 	FunctionGetTeamMembers FunctionName = "getTeamMembers"
 	// FunctionGetGenericInvite is the name of the getGenericInvite function
 	FunctionGetGenericInvite FunctionName = "getGenericInvite"
+	// FunctionResetGenericInvite is the name of the resetGenericInvite function
+	FunctionResetGenericInvite FunctionName = "resetGenericInvite"
 
 	// FunctionOnInstanceUpdate is the name of the onInstanceUpdate callback function
 	FunctionOnInstanceUpdate = "onInstanceUpdate"
@@ -1459,6 +1462,16 @@ func (gp *APIoverJSONRPC) GetGenericInvite(ctx context.Context, teamID string) (
 	}
 	_params := []interface{}{teamID}
 	err = gp.C.Call(ctx, string(FunctionGetGenericInvite), _params, &res)
+	return
+}
+
+func (gp *APIoverJSONRPC) ResetGenericInvite(ctx context.Context, teamID string) (res *TeamMembershipInvite, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{teamID}
+	err = gp.C.Call(ctx, string(FunctionResetGenericInvite), _params, &res)
 	return
 }
 
