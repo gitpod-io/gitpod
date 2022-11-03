@@ -48,9 +48,7 @@ export class BitbucketServerService extends RepositoryService {
 
         const identity = user.identities.find((i) => i.authProviderId === this.authProviderConfig.id);
         if (!identity) {
-            console.error(
-                `Unexpected call of canInstallAutomatedPrebuilds. Not authorized with ${this.authProviderConfig.host}.`,
-            );
+            console.error(`BBS: no identity found.`, { host: this.authProviderConfig.host, userId: user.id, cloneUrl });
             return false;
         }
 
@@ -58,6 +56,7 @@ export class BitbucketServerService extends RepositoryService {
             await this.api.getWebhooks(user, { repoKind, repositorySlug: repoName, owner });
             // reading webhooks to check if admin scope is provided
         } catch (error) {
+            console.log(`BBS: could not read webhooks.`, error, { error, cloneUrl });
             return false;
         }
 
@@ -77,9 +76,7 @@ export class BitbucketServerService extends RepositoryService {
             return true;
         }
 
-        console.debug(
-            `User is not allowed to install webhooks.\n${JSON.stringify(identity)}\n${JSON.stringify(permission)}`,
-        );
+        console.log(`BBS: Not allowed to install webhooks.`, { permission });
         return false;
     }
 
@@ -97,7 +94,7 @@ export class BitbucketServerService extends RepositoryService {
         });
         const hookUrl = this.getHookUrl();
         if (existing.values && existing.values.some((hook) => hook.url && hook.url.indexOf(hookUrl) !== -1)) {
-            console.log(`BBS webhook already installed on ${cloneUrl}`);
+            console.log(`BBS webhook already installed.`, { cloneUrl });
             return;
         }
         const tokenEntry = await this.tokenService.createGitpodToken(
@@ -119,9 +116,9 @@ export class BitbucketServerService extends RepositoryService {
                     events: ["repo:refs_changed"],
                 },
             );
-            console.log("Installed Bitbucket Server Webhook for " + cloneUrl);
+            console.log("BBS: webhook installed.", { cloneUrl });
         } catch (error) {
-            console.error(`Couldn't install Bitbucket Server Webhook for ${cloneUrl}`, error);
+            console.error(`BBS: webhook installation failed.`, error, { cloneUrl, error });
         }
     }
 
