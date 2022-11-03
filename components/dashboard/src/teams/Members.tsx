@@ -97,8 +97,10 @@ export default function () {
         // reset genericInvite first to prevent races on double click
         if (genericInviteId) {
             setGenericInviteId(undefined);
-            const newInvite = await getGitpodService().server.resetGenericInvite(team!.id);
-            setGenericInviteId(newInvite.id);
+            const newInviteId = usePublicApiTeamsService
+                ? (await teamsService.resetTeamInvitation({ teamId: team!.id })).teamInvitation?.id
+                : (await getGitpodService().server.resetGenericInvite(team!.id)).id;
+            setGenericInviteId(newInviteId);
         }
     };
 
