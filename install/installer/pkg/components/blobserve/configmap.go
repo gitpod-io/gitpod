@@ -32,6 +32,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		openVSXProxyUrl = fmt.Sprintf("open-vsx.%s", ctx.Config.Domain)
 	}
 
+	// Check also link below before change values
+	// https://github.com/gitpod-io/gitpod/blob/2cba7bd1d8a2accd294ab7733f6da4532e48984c/components/ide/code/startup.sh#L37
 	extensionsGalleryItemUrl := "https://open-vsx.org/vscode/item"
 	trustedDomain := "https://open-vsx.org"
 
