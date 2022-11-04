@@ -28,7 +28,7 @@ func TestObjects_RenderedWhenExperimentalConfigSet(t *testing.T) {
 	objects, err := Objects(ctx)
 	require.NoError(t, err)
 	require.NotEmpty(t, objects, "must render objects because experimental config is specified")
-	require.Len(t, objects, 3, "should render expected k8s objects")
+	require.Len(t, objects, 4, "should render expected k8s objects")
 }
 
 func renderContextWithSlowDatabaseEnabled(t *testing.T) *common.RenderContext {

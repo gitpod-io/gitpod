@@ -4,6 +4,8 @@
 package toxiproxy
 
 const (
-	Component = "toxiproxy"
-	HttpPort  = 8474
+	Component         = "toxiproxy"
+	HttpContainerPort = 8474
+	HttpServicePort   = 8474
+	HttpPortName      = "http"
 )

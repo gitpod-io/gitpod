@@ -17,6 +17,7 @@ func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	return common.CompositeRenderFunc(
 		deployment,
+		service,
 		configmap,
 		common.DefaultServiceAccount(Component),
 	)(ctx)
