@@ -9,6 +9,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.client.ClientSession
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
@@ -18,6 +19,7 @@ import com.intellij.util.withFragment
 import com.intellij.util.withPath
 import com.intellij.util.withQuery
 import com.jetbrains.rd.util.URI
+import io.gitpod.jetbrains.remote.utils.LocalHostUri
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
@@ -29,12 +31,12 @@ import org.jetbrains.io.response
 import java.io.OutputStreamWriter
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import java.util.*
 
 @Suppress("UnstableApiUsage", "OPT_IN_USAGE")
 class GitpodCLIService : RestService() {
 
     private val manager = service<GitpodManager>()
-    private val portsService = service<GitpodPortsService>()
     private val cliHelperService = service<GitpodCLIHelper>()
 
     override fun getServiceName() = SERVICE_NAME
@@ -74,27 +76,33 @@ class GitpodCLIService : RestService() {
                 return "url is missing"
             }
 
-            val resolvedUrl = resolveExternalUrl(url)
-
             return withClient(request, context) { project ->
+                var resolvedUrl = url
+                val uri = URI.create(url)
+                val localHostUriMetadata = LocalHostUri.extractLocalHostUriMetaDataForPortMapping(uri)
+                val gitpodPortForwardingService = serviceOrNull<GitpodPortForwardingService>()
+
+                if (localHostUriMetadata.isPresent && gitpodPortForwardingService != null) {
+                    var localHostUriFromPort = Optional.empty<URI>()
+
+                    application.invokeAndWait {
+                        localHostUriFromPort = gitpodPortForwardingService
+                                .getLocalHostUriFromHostPort(localHostUriMetadata.get().port)
+                    }
+
+                    if (localHostUriFromPort.isPresent) {
+                        resolvedUrl =  localHostUriFromPort.get()
+                                .withPath(uri.path)
+                                .withQuery(uri.query)
+                                .withFragment(uri.fragment)
+                                .toString()
+                    }
+                }
+
                 BrowserUtil.browse(resolvedUrl, project)
             }
         }
         return "invalid operation"
-    }
-
-    private fun resolveExternalUrl(url: String): String {
-        val uri = URI.create(url)
-        val optionalLocalHostUriMetadata = portsService.extractLocalHostUriMetaDataForPortMapping(uri)
-
-        return when {
-            optionalLocalHostUriMetadata.isEmpty -> url
-            else -> portsService.getLocalHostUriFromHostPort(optionalLocalHostUriMetadata.get().port)
-                    .withPath(uri.path)
-                    .withQuery(uri.query)
-                    .withFragment(uri.fragment)
-                    .toString()
-        }
     }
 
     private fun withClient(request: FullHttpRequest, context: ChannelHandlerContext, action: suspend (project: Project?) -> Unit): String? {

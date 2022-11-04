@@ -2,16 +2,15 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package io.gitpod.jetbrains.remote
+package io.gitpod.jetbrains.remote.util
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import io.gitpod.jetbrains.remote.GitpodPortsService.LocalHostUriMetadata
+import io.gitpod.jetbrains.remote.utils.LocalHostUri
+import io.gitpod.jetbrains.remote.utils.LocalHostUri.LocalHostUriMetadata
 import java.net.URI
 
-class GitpodPortsServiceTest : BasePlatformTestCase() {
+class LocalHostUriTest : BasePlatformTestCase() {
     fun testExtractLocalHostUriMetaDataForPortMapping() {
-        val portsService = GitpodPortsService()
-
         val urlToMetadataMap = mapOf(
             "https://localhost:80" to object: LocalHostUriMetadata {
                 override val address = "localhost"
@@ -41,7 +40,7 @@ class GitpodPortsServiceTest : BasePlatformTestCase() {
 
         urlToMetadataMap.forEach { (url, expected) ->
             val uri = URI.create(url)
-            val actualLocalHostUriMetadataOptional = portsService.extractLocalHostUriMetaDataForPortMapping(uri)
+            val actualLocalHostUriMetadataOptional = LocalHostUri.extractLocalHostUriMetaDataForPortMapping(uri)
             val actual = actualLocalHostUriMetadataOptional.get()
 
             assertEquals(expected.address, actual.address)
@@ -59,7 +58,7 @@ class GitpodPortsServiceTest : BasePlatformTestCase() {
 
         urlsThatShouldReturnEmpty.forEach { url ->
             val uri = URI.create(url)
-            val localHostUriMetaDataForPort = portsService.extractLocalHostUriMetaDataForPortMapping(uri)
+            val localHostUriMetaDataForPort = LocalHostUri.extractLocalHostUriMetaDataForPortMapping(uri)
 
             assertTrue(localHostUriMetaDataForPort.isEmpty)
         }

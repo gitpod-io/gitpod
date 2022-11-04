@@ -8,7 +8,6 @@
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceInterface="io.gitpod.jetbrains.remote.GitpodIgnoredPortsForNotificationService" serviceImplementation="io.gitpod.jetbrains.remote.stable.GitpodIgnoredPortsForNotificationServiceImpl" preload="true"/>
         <applicationService serviceInterface="io.gitpod.jetbrains.remote.GitpodCLIHelper" serviceImplementation="io.gitpod.jetbrains.remote.stable.GitpodCLIHelperImpl"/>
-        <applicationService serviceInterface="io.gitpod.jetbrains.remote.GitpodGlobalPortForwardingService" serviceImplementation="io.gitpod.jetbrains.remote.latest.GitpodGlobalPortForwardingServiceImpl"/>
         <projectService serviceImplementation="io.gitpod.jetbrains.remote.stable.GitpodClientProjectGuestSessionTracker" client="guest" preload="true"/>
         <projectService serviceImplementation="io.gitpod.jetbrains.remote.stable.GitpodTerminalGuestService" client="guest" preload="true"/>
     </extensions>

@@ -4,7 +4,6 @@
 
 package io.gitpod.jetbrains.remote
 
-// import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.util.application
@@ -35,7 +34,6 @@ class GitpodTerminalService(project: Project) {
     private val terminalServiceFutureStub = TerminalServiceGrpc.newFutureStub(GitpodManager.supervisorChannel)
     private val terminalServiceStub = TerminalServiceGrpc.newStub(GitpodManager.supervisorChannel)
     private val statusServiceStub = StatusServiceGrpc.newStub(GitpodManager.supervisorChannel)
-    // private val portForwardingService = service<GitpodGlobalPortForwardingService>()
 
     init {
         start()
@@ -187,10 +185,6 @@ class GitpodTerminalService(project: Project) {
         exitTaskWhenTerminalWidgetGetsClosed(supervisorTerminal, shellTerminalWidget)
 
         listenForTaskTerminationAndTitleChanges(supervisorTerminal, shellTerminalWidget)
-
-        // This works for auto-forwarding ports opened in Gitpod Terminals, but it's currently not useful as we
-        // have the GitpodPortForwardingService already auto-forwarding all the ports from the workspace.
-        // portForwardingService.monitorPortsOfPid(shellTerminalWidget, supervisorTerminal.pid)
     }
 
     private fun listenForTaskTerminationAndTitleChanges(
