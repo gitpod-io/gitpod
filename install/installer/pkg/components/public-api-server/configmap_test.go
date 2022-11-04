@@ -31,7 +31,7 @@ func TestConfigMap(t *testing.T) {
 	})
 
 	expectedConfiguration := config.Configuration{
-		GitpodServiceURL:               "wss://test.domain.everything.awesome.is/api/gitpod",
+		GitpodServiceURL:               "wss://test.domain.everything.awesome.is",
 		BillingServiceAddress:          fmt.Sprintf("usage.%s.svc.cluster.local:9001", ctx.Namespace),
 		StripeWebhookSigningSecretPath: stripeSecretPath,
 		Server: &baseserver.Configuration{

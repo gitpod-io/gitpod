@@ -35,7 +35,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	})
 
 	cfg := config.Configuration{
-		GitpodServiceURL:               fmt.Sprintf("wss://%s/api/gitpod", ctx.Config.Domain),
+		GitpodServiceURL:               fmt.Sprintf("wss://%s", ctx.Config.Domain),
 		StripeWebhookSigningSecretPath: stripeSecretPath,
 		BillingServiceAddress:          net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", usage.Component, ctx.Namespace), strconv.Itoa(usage.GRPCServicePort)),
 		Server: &baseserver.Configuration{

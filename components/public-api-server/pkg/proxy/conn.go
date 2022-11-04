@@ -102,7 +102,12 @@ func NewConnectionPool(address *url.URL, poolSize int) (*ConnectionPool, error) 
 				return nil, errors.New("unknown token type")
 			}
 
-			conn, err := gitpod.ConnectToServer(address.String(), opts)
+			endpoint, err := getEndpointBasedOnToken(token, address)
+			if err != nil {
+				return nil, fmt.Errorf("failed to construct endpoint: %w", err)
+			}
+
+			conn, err := gitpod.ConnectToServer(endpoint, opts)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create new connection to server: %w", err)
 			}
@@ -139,4 +144,15 @@ func (p *ConnectionPool) Get(ctx context.Context, token auth.Token) (gitpod.APII
 	connectionPoolSize.Inc()
 
 	return conn, nil
+}
+
+func getEndpointBasedOnToken(t auth.Token, u *url.URL) (string, error) {
+	switch t.Type {
+	case auth.AccessTokenType:
+		return fmt.Sprintf("%s/api/v1", u.String()), nil
+	case auth.CookieTokenType:
+		return fmt.Sprintf("%s/api/gitpod", u.String()), nil
+	default:
+		return "", errors.New("unknown token type")
+	}
 }
