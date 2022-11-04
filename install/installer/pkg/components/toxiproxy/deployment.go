@@ -4,6 +4,8 @@
 package toxiproxy
 
 import (
+	"path/filepath"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	appsv1 "k8s.io/api/apps/v1"
@@ -83,6 +85,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Containers: []corev1.Container{{
 							Name:            Component,
 							Image:           ctx.ImageName(imageRegistry, imageName, imageTag),
+							Args:            []string{"-config", filepath.Join(configMountPath, configFilename)},
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
