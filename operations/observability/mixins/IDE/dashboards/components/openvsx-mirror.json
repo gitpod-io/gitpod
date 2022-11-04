@@ -224,7 +224,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\",outcome!~\"SUCCESS|REDIRECTION\"})[2m])/sum(rate(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\"})[2m])",
+          "expr": "sum(rate(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\",outcome!~\"SUCCESS|REDIRECTION|CLIENT_ERROR\"})[2m])/sum(rate(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\"})[2m])",
           "legendFormat": "total ratio",
           "range": true,
           "refId": "A"
@@ -320,7 +320,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (status) (rate(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\",outcome!~\"SUCCESS|REDIRECTION\"})[2m])/ignoring(status) group_left sum(rate(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\"})[2m])",
+          "expr": "sum by (status) (rate(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\",outcome!~\"SUCCESS|REDIRECTION|CLIENT_ERROR\"})[2m])/ignoring(status) group_left sum(rate(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\"})[2m])",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -414,227 +414,6 @@
         "x": 0,
         "y": 17
       },
-      "id": 36,
-      "panels": [],
-      "title": "JVM - Quartz Jobs",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "P4169E866C3094E38"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 18
-      },
-      "id": 39,
-      "options": {
-        "legend": {
-          "calcs": [
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true,
-          "sortBy": "Max",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "method_timed_seconds_max{cluster=~\"$cluster\", pod=~\"$pod\"}",
-          "hide": false,
-          "legendFormat": "{{class}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "longest in-progress timing",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "P4169E866C3094E38"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 18
-      },
-      "id": 38,
-      "options": {
-        "legend": {
-          "calcs": [
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true,
-          "sortBy": "Max",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "method_timed_seconds_active_count{cluster=~\"$cluster\", pod=~\"$pod\"}",
-          "hide": false,
-          "legendFormat": "{{class}}",
-          "range": true,
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "",
-          "hide": false,
-          "legendFormat": "__auto",
-          "range": true,
-          "refId": "B"
-        }
-      ],
-      "title": "active in progress",
-      "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 26
-      },
       "id": 17,
       "panels": [],
       "title": "JVM - Memory/CPU",
@@ -702,7 +481,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 27
+        "y": 18
       },
       "id": 7,
       "options": {
@@ -824,7 +603,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 27
+        "y": 18
       },
       "id": 9,
       "options": {
@@ -919,7 +698,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 35
+        "y": 26
       },
       "id": 2,
       "options": {
@@ -969,6 +748,7 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMax": 1,
             "barAlignment": 0,
             "drawStyle": "line",
             "fillOpacity": 0,
@@ -1016,7 +796,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 35
+        "y": 26
       },
       "id": 4,
       "options": {
@@ -1057,7 +837,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 43
+        "y": 34
       },
       "id": 19,
       "panels": [
