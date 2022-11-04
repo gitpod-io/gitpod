@@ -257,11 +257,9 @@ func Run(options ...RunOption) {
 	if opts.RunGP {
 		cstate.MarkContentReady(csapi.WorkspaceInitFromOther)
 	} else {
-		analytics := analytics.NewFromEnvironment()
-		defer analytics.Close()
-		go analyseConfigChanges(ctx, cfg, analytics, gitpodConfigService, gitpodService)
-		go analysePerfChanges(ctx, cfg, analytics, topService, gitpodService)
-
+		if !cfg.isHeadless() {
+			go startAnalyze(ctx, cfg, gitpodConfigService, topService, gitpodService)
+		}
 		_, gitpodHost, err := cfg.GitpodAPIEndpoint()
 		if err != nil {
 			log.WithError(err).Error("supervisor: grpc metrics: failed to parse gitpod host")
@@ -1483,6 +1481,14 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 			log.WithError(err).Error("cannot provide Docker activation socket")
 		}
 	}
+}
+
+func startAnalyze(ctx context.Context, cfg *Config, gitpodConfigService config.ConfigInterface, topService *TopService, gitpodService gitpod.APIInterface) {
+	analytics := analytics.NewFromEnvironment()
+	go analyseConfigChanges(ctx, cfg, analytics, gitpodConfigService, gitpodService)
+	go analysePerfChanges(ctx, cfg, analytics, topService, gitpodService)
+	<-ctx.Done()
+	analytics.Close()
 }
 
 type PerfAnalyzer struct {
