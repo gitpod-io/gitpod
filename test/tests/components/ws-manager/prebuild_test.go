@@ -368,7 +368,10 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 					// check prebuild log message exists
 					checkPrebuildLogExist(t, cfg, rsa, ws, test.WorkspaceRoot)
 
-					// check the files/folders permission under .git/ is not gitpod
+					// check the folder permission is gitpod
+					checkFolderPermission(t, rsa, "/workspace")
+
+					// check the files/folders permission under .git/ is gitpod
 					checkGitFolderPermission(t, rsa, test.WorkspaceRoot)
 
 					// write file foobar.txt and stop the workspace
@@ -807,7 +810,10 @@ func TestPrebuildAndRegularWorkspaceDifferentWorkspaceClass(t *testing.T) {
 					// check prebuild log message exists
 					checkPrebuildLogExist(t, cfg, rsa, ws, test.WorkspaceRoot)
 
-					// check the files/folders permission under .git/ is not gitpod
+					// check the folder permission is gitpod
+					checkFolderPermission(t, rsa, "/workspace")
+
+					// check the files/folders permission under .git/ is gitpod
 					checkGitFolderPermission(t, rsa, test.WorkspaceRoot)
 				})
 			}
@@ -926,7 +932,28 @@ func checkPrebuildLogExist(t *testing.T, cfg *envconf.Config, rsa *rpc.Client, w
 	t.Fatal("did not find someFile from previous workspace instance")
 }
 
-// checkGitFolderPermission checks the files/folders permission under .git/ is not gitpod
+// checkFolderPermission checks the folder UID and GID is gitpod
+func checkFolderPermission(t *testing.T, rsa *rpc.Client, workspace string) {
+	var uid agent.ExecResponse
+	err := rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+		Command: "stat",
+		Args:    []string{"--format", "%U", workspace},
+	}, &uid)
+	if err != nil || uid.ExitCode != 0 || strings.Trim(uid.Stdout, " \t\n") != "gitpod" {
+		t.Fatalf("folder %s UID %s is incorrect, err:%v, exitCode:%d", workspace, uid.Stdout, err, uid.ExitCode)
+	}
+
+	var gid agent.ExecResponse
+	err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+		Command: "stat",
+		Args:    []string{"--format", "%G", workspace},
+	}, &gid)
+	if err != nil || uid.ExitCode != 0 || strings.Trim(gid.Stdout, " \t\n") != "gitpod" {
+		t.Fatalf("folder %s GID %s is incorrect, err:%v, exitCode:%d", workspace, gid.Stdout, err, uid.ExitCode)
+	}
+}
+
+// checkGitFolderPermission checks the files/folders UID and GID under .git/ is gitpod
 func checkGitFolderPermission(t *testing.T, rsa *rpc.Client, workspaceRoot string) {
 	var findUserResp agent.ExecResponse
 	var gitDir string = fmt.Sprintf("%s/%s", workspaceRoot, ".git")
@@ -937,7 +964,7 @@ func checkGitFolderPermission(t *testing.T, rsa *rpc.Client, workspaceRoot strin
 		Args:    []string{"!", "-user", "gitpod"},
 	}, &findUserResp)
 	if err != nil || findUserResp.ExitCode != 0 || strings.Trim(findUserResp.Stdout, " \t\n") != "" {
-		t.Fatalf("incorrect file perimssion under %s folder, err:%v, exitCode:%d, stdout:%s", gitDir, err, findUserResp.ExitCode, findUserResp.Stdout)
+		t.Fatalf("incorrect UID under %s folder, err:%v, exitCode:%d, stdout:%s", gitDir, err, findUserResp.ExitCode, findUserResp.Stdout)
 	}
 
 	var findGroupResp agent.ExecResponse
@@ -947,7 +974,7 @@ func checkGitFolderPermission(t *testing.T, rsa *rpc.Client, workspaceRoot strin
 		Args:    []string{"!", "-group", "gitpod"},
 	}, &findGroupResp)
 	if err != nil || findGroupResp.ExitCode != 0 || strings.Trim(findGroupResp.Stdout, " \t\n") != "" {
-		t.Fatalf("incorrect group perimssion under %s folder, err:%v, exitCode:%d, stdout:%s", gitDir, err, findGroupResp.ExitCode, findGroupResp.Stdout)
+		t.Fatalf("incorrect GID under %s folder, err:%v, exitCode:%d, stdout:%s", gitDir, err, findGroupResp.ExitCode, findGroupResp.Stdout)
 	}
 }
 
