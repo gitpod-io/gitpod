@@ -4324,6 +4324,13 @@ data:
                   "unknown"
                 ],
                 "defaultValue": "unknown"
+              },
+              {
+                "name": "galleryHost",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
               }
             ]
           },
@@ -4856,6 +4863,13 @@ data:
                   "unknown"
                 ],
                 "defaultValue": "unknown"
+              },
+              {
+                "name": "galleryHost",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
               }
             ]
           }
@@ -4874,6 +4888,13 @@ data:
                   "unknown"
                 ],
                 "defaultValue": "unknown"
+              },
+              {
+                "name": "galleryHost",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
               }
             ],
             "buckets": [
@@ -4889,7 +4910,15 @@ data:
           {
             "name": "gitpod_vscode_extension_gallery_query_duration_seconds",
             "help": "Duration of extension gallery query in seconds",
-            "labels": null,
+            "labels": [
+              {
+                "name": "galleryHost",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              }
+            ],
             "buckets": [
               0.1,
               0.5,
@@ -9277,7 +9306,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: 05679fb283e29bcb12e216617962028f947e33d2e525e7ad0a06ce75f5df6fb3
+        gitpod.io/checksum_config: 74ecbbd8492d8fefde88122798e66f4d886da1cc357b33e62d71b3d80dcc2234
         hello: world
       creationTimestamp: null
       labels:
