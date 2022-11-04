@@ -5,4 +5,5 @@ package toxiproxy
 
 const (
 	Component = "toxiproxy"
+	HttpPort  = 8474
 )
