@@ -151,6 +151,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					AllowValues:  []string{"success", "failure", "unknown"},
 					DefaultValue: "unknown",
 				},
+				{
+					Name:        "galleryHost",
+					AllowValues: []string{"*"},
+				},
 				// TODO(ak) errorCode - we should analyze error codes collect in analytics and categotize them here
 			},
 		},
@@ -173,6 +177,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					AllowValues:  []string{"canceled", "timeout", "failed", "unknown"},
 					DefaultValue: "unknown",
 				},
+				{
+					Name:        "galleryHost",
+					AllowValues: []string{"*"},
+				},
 			},
 		},
 	}
@@ -187,11 +195,21 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					AllowValues:  []string{"install", "update", "uninstall", "unknown"},
 					DefaultValue: "unknown",
 				},
+				{
+					Name:        "galleryHost",
+					AllowValues: []string{"*"},
+				},
 			},
 			Buckets: []float64{0.1, 0.5, 1, 5, 10, 15, 30},
 		}, {
-			Name:    "gitpod_vscode_extension_gallery_query_duration_seconds",
-			Help:    "Duration of extension gallery query in seconds",
+			Name: "gitpod_vscode_extension_gallery_query_duration_seconds",
+			Help: "Duration of extension gallery query in seconds",
+			Labels: []config.LabelAllowList{
+				{
+					Name:        "galleryHost",
+					AllowValues: []string{"*"},
+				},
+			},
 			Buckets: []float64{0.1, 0.5, 1, 5, 10, 15, 30},
 		},
 	}
