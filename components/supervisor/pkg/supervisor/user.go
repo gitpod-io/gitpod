@@ -260,7 +260,7 @@ var adduserCommands = []func(*user.User) []string{
 		return []string{"adduser", "--home", opts.HomeDir, "--shell", defaultShell, "--disabled-login", "--gid", opts.Gid, "--uid", opts.Uid, opts.Username}
 	}, // Debian
 	func(opts *user.User) []string {
-		return []string{"adduser", "-h", opts.HomeDir, "-s", defaultShell, "-D", "-G", opts.Gid, "-u", opts.Uid, opts.Username}
+		return []string{"adduser", "-h", opts.HomeDir, "-s", defaultShell, "-D", "-G", gitpodGroupName, "-u", opts.Uid, opts.Username}
 	}, // Busybox
 	func(opts *user.User) []string {
 		return []string{"useradd", "-m", "--home-dir", opts.HomeDir, "--shell", defaultShell, "--gid", opts.Gid, "--uid", opts.Uid, opts.Username}
