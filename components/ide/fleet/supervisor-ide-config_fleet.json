@@ -1,0 +1,4 @@
+{
+    "entrypoint": "/ide-desktop/startup.sh",
+    "entrypointArgs": [ "{DESKTOPIDEPORT}", "fleet", "Open in Fleet" ]
+}

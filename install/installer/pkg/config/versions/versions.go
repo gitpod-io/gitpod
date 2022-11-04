@@ -61,6 +61,7 @@ type Components struct {
 			WebStormLatestImage               Versioned `json:"webstormLatest"`
 			JetBrainsBackendPluginImage       Versioned `json:"jbBackendPlugin"`
 			JetBrainsBackendPluginLatestImage Versioned `json:"jbBackendPluginLatest"`
+			Fleet                             Versioned `json:"fleet"`
 		} `json:"desktopIdeImages"`
 	} `json:"workspace"`
 	WSDaemon struct {

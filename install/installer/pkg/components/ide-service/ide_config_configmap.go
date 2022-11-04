@@ -34,6 +34,8 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	rubymine := "rubymine"
 	webstorm := "webstorm"
 
+	fleet := "fleet"
+
 	resolveLatestImage := func(name string, tag string, bundledLatest versions.Versioned) string {
 		resolveLatest := true
 		ctx.WithExperimental(func(ucfg *experimental.Config) error {
@@ -73,6 +75,13 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					DesktopIDEs:       []string{intellij, goland, pycharm, phpstorm, rubymine, webstorm},
 					InstallationSteps: []string{
 						"If you don't see an open dialog in your browser, make sure you have the <a target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'>JetBrains Gateway with Gitpod Plugin</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
+					},
+				},
+				"fleet": {
+					DefaultDesktopIDE: fleet,
+					DesktopIDEs:       []string{fleet},
+					InstallationSteps: []string{
+						"TODO",
 					},
 				},
 			},
@@ -153,6 +162,14 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					LatestImage:       ctx.ImageName(ctx.Config.Repository, ide.WebStormDesktopIdeImage, "latest"),
 					PluginImage:       jbPluginImage,
 					PluginLatestImage: jbPluginLatestImage,
+				},
+				fleet: {
+					OrderKey:    "10",
+					Title:       "Fleet",
+					Type:        ide_config.IDETypeDesktop,
+					Logo:        getIdeLogoPath("webstormLogo"),
+					Image:       ctx.ImageName(ctx.Config.Repository, ide.WebStormDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.Fleet.Version),
+					LatestImage: ctx.ImageName(ctx.Config.Repository, ide.WebStormDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.Fleet.Version),
 				},
 			},
 			DefaultIde:        "code",

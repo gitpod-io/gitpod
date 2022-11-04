@@ -40,6 +40,7 @@ packages:
       - components/ide/code-desktop:docker
       - components/ide/code-desktop:docker-insiders
       - components/ide/code:docker
+      - components/ide/fleet/fleet:docker
       - components/ide/jetbrains/backend-plugin:stable
       - components/ide/jetbrains/backend-plugin:latest
       - components/ide/jetbrains/image:goland

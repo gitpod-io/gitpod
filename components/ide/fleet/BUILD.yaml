@@ -1,0 +1,12 @@
+packages:
+  - name: docker
+    type: docker
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.desktopIdeImages.fleet
+      image:
+        - ${imageRepoBase}/ide/fleet:${version}
+# add status to dependencies
