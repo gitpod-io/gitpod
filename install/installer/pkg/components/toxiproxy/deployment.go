@@ -79,7 +79,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Spec: corev1.PodSpec{
 						Affinity:           common.NodeAffinity(cluster.AffinityLabelMeta),
 						ServiceAccountName: Component,
-						DNSPolicy:          "ClusterFirst",
 						Volumes:            volumes,
 						Containers: []corev1.Container{{
 							Name:            Component,
