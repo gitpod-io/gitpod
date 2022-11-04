@@ -11,6 +11,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -29,6 +30,7 @@ import io.grpc.stub.ClientCallStreamObserver
 import io.grpc.stub.ClientResponseObserver
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
+import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 
@@ -36,7 +38,6 @@ import java.util.concurrent.CompletableFuture
 class GitpodClientProjectSessionTracker(private val project: Project) : Disposable {
 
     private val manager = service<GitpodManager>()
-    private val portsService = service<GitpodPortsService>()
     private val session = ClientSessionsManager.getProjectSession(project)
 
     private lateinit var info: Info.WorkspaceInfoResponse
@@ -64,8 +65,12 @@ class GitpodClientProjectSessionTracker(private val project: Project) : Disposab
     }
 
     private fun getForwardedPortUrl(port: PortsStatus): String {
+        val localHostUri = serviceOrNull<GitpodPortForwardingService>()
+                ?.getLocalHostUriFromHostPort(port.localPort)
+                ?: Optional.empty()
+
         return when {
-            portsService.isForwarded(port.localPort) -> portsService.getLocalHostUriFromHostPort(port.localPort).toString()
+            localHostUri.isPresent -> localHostUri.get().toString()
             else -> port.exposed.url
         }
     }
