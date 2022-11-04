@@ -4,8 +4,11 @@
 package toxiproxy
 
 const (
-	Component         = "toxiproxy"
-	HttpContainerPort = 8474
-	HttpServicePort   = 8474
-	HttpPortName      = "http"
+	Component               = "toxiproxy"
+	HttpPortName            = "http"
+	HttpContainerPort       = 8474
+	HttpServicePort         = 8474
+	MySqlProxyPortName      = "mysql"
+	MySqlProxyContainerPort = 3306
+	MySqlProxyServicePort   = 3306
 )
