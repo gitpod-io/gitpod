@@ -19,7 +19,7 @@ featureFlags:
 #   authUser: ""
 #   authPassword: ""
 repos:
-  - cloneURL: https://github.com/Furisto/workspace-stress
+  - cloneURL: https://github.com/gitpod-io/workspace-stress
     cloneTarget: main
     score: 20
     workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest
