@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/prometheus/procfs"
 	"golang.org/x/sys/unix"
@@ -169,4 +170,23 @@ func (*WorkspaceAgent) Exec(req *api.ExecRequest, resp *api.ExecResponse) (err e
 		Stderr:   stderr.String(),
 	}
 	return
+}
+
+func (*WorkspaceAgent) BurnCpu(req *api.BurnCpuRequest, resp *api.BurnCpuResponse) error {
+	done := make(chan int)
+	for i := 0; i < int(req.Procs); i++ {
+		go func() {
+			for {
+				select {
+				case <-done:
+					return
+				default:
+				}
+			}
+		}()
+	}
+
+	time.Sleep(req.Timeout)
+	close(done)
+	return nil
 }

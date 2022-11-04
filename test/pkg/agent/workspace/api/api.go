@@ -4,7 +4,10 @@
 
 package api
 
-import "os"
+import (
+	"os"
+	"time"
+)
 
 // ListDirRequest is the argument for ListDir
 type ListDirRequest struct {
@@ -39,3 +42,9 @@ type ExecResponse struct {
 	Stdout   string
 	Stderr   string
 }
+
+type BurnCpuRequest struct {
+	Procs   uint
+	Timeout time.Duration
+}
+type BurnCpuResponse struct{}
