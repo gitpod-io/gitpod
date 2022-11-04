@@ -1,0 +1,154 @@
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+package wsmanager
+
+import (
+	"context"
+	"strings"
+	"testing"
+	"time"
+
+	"sigs.k8s.io/e2e-framework/pkg/envconf"
+	"sigs.k8s.io/e2e-framework/pkg/features"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	daemon "github.com/gitpod-io/gitpod/test/pkg/agent/daemon/api"
+	wsapi "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
+	"github.com/gitpod-io/gitpod/test/pkg/integration"
+	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
+	corev1 "k8s.io/api/core/v1"
+)
+
+const (
+	expectedMinCpu   = 200_000
+	expectedBurstCpu = 600_000
+)
+
+func TestCpuBurst(t *testing.T) {
+	f := features.New("cpulimiting").WithLabel("component", "ws-manager").Assess("check cpu limiting", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
+
+		api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+		t.Cleanup(func() {
+			api.Done(t)
+		})
+
+		swr := func(req *wsmanapi.StartWorkspaceRequest) error {
+			req.Spec.Initializer = &csapi.WorkspaceInitializer{
+				Spec: &csapi.WorkspaceInitializer_Git{
+					Git: &csapi.GitInitializer{
+						RemoteUri:        "https://github.com/gitpod-io/empty",
+						CheckoutLocation: "empty",
+						Config:           &csapi.GitConfig{},
+					},
+				},
+			}
+
+			req.Spec.WorkspaceLocation = "empty"
+			return nil
+		}
+
+		ws, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(swr))
+		defer stopWs(true, api)
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		daemonClient, daemonCloser, err := integration.Instrument(integration.ComponentWorkspaceDaemon, "daemon", cfg.Namespace(), kubeconfig, cfg.Client(),
+			integration.WithWorkspacekitLift(false),
+			integration.WithContainer("ws-daemon"),
+		)
+
+		if err != nil {
+			t.Fatal(err)
+		}
+		integration.DeferCloser(t, daemonCloser)
+
+		var pod corev1.Pod
+		if err := cfg.Client().Resources().Get(ctx, "ws-"+ws.Req.Id, cfg.Namespace(), &pod); err != nil {
+			t.Fatal(err)
+		}
+
+		containerId := getWorkspaceContainerId(&pod)
+		var resp daemon.GetWorkspaceResourcesResponse
+		for i := 0; i < 6; i++ {
+			err = daemonClient.Call("DaemonAgent.GetWorkspaceResources", daemon.GetWorkspaceResourcesRequest{
+				ContainerId: containerId,
+			}, &resp)
+
+			if resp.CpuQuota == expectedMinCpu {
+				break
+			}
+			time.Sleep(5 * time.Second)
+		}
+
+		if err != nil {
+			t.Fatalf("cannot get workspace resources: %q", err)
+		}
+
+		if resp.CpuQuota != expectedMinCpu {
+			t.Fatalf("expected cpu quota of %v, but was %v", expectedMinCpu, resp.CpuQuota)
+		}
+
+		workspaceClient, workspaceCloser, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(),
+			integration.WithInstanceID(ws.Req.Id),
+			integration.WithContainer("workspace"),
+			integration.WithWorkspacekitLift(true),
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+		integration.DeferCloser(t, workspaceCloser)
+
+		var cpuResp wsapi.BurnCpuResponse
+		go func() {
+			err := workspaceClient.Call("WorkspaceAgent.BurnCpu", &wsapi.BurnCpuRequest{
+				Timeout: 30 * time.Second,
+				Procs:   12,
+			}, &cpuResp)
+
+			if err != nil && err.Error() != "unexpected EOF" {
+				log.WithError(err).Error("could not perform cpu burn")
+			}
+		}()
+
+		for i := 0; i < 8; i++ {
+			err = daemonClient.Call("DaemonAgent.GetWorkspaceResources", daemon.GetWorkspaceResourcesRequest{
+				ContainerId: containerId,
+			}, &resp)
+
+			if resp.CpuQuota == expectedBurstCpu {
+				break
+			}
+			time.Sleep(5 * time.Second)
+		}
+
+		if err != nil {
+			t.Fatalf("cannot get workspace resources: %q", err)
+		}
+
+		if resp.CpuQuota != expectedBurstCpu {
+			t.Fatalf("expected cpu quota of %v, but was %v", expectedBurstCpu, resp.CpuQuota)
+		}
+		return ctx
+	}).Feature()
+
+	testEnv.Test(t, f)
+}
+
+func getWorkspaceContainerId(pod *corev1.Pod) string {
+	for _, c := range pod.Status.ContainerStatuses {
+		if c.Name != "workspace" {
+			continue
+		}
+
+		return strings.TrimPrefix(c.ContainerID, "containerd://")
+	}
+
+	return ""
+}
