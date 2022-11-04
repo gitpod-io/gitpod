@@ -6,6 +6,7 @@ package proxy
 
 import (
 	"context"
+	"net/url"
 	"testing"
 
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
@@ -46,4 +47,17 @@ func TestConnectionPool(t *testing.T) {
 	require.Equal(t, 2, pool.cache.Len(), "must keep only last two connectons")
 	require.True(t, pool.cache.Contains(barToken))
 	require.True(t, pool.cache.Contains(bazToken))
+}
+
+func TestEndpointBasedOnToken(t *testing.T) {
+	u, err := url.Parse("wss://gitpod.io")
+	require.NoError(t, err)
+
+	endpointForAccessToken, err := getEndpointBasedOnToken(auth.NewAccessToken("foo"), u)
+	require.NoError(t, err)
+	require.Equal(t, "wss://gitpod.io/api/v1", endpointForAccessToken)
+
+	endpointForCookie, err := getEndpointBasedOnToken(auth.NewCookieToken("foo"), u)
+	require.NoError(t, err)
+	require.Equal(t, "wss://gitpod.io/api/gitpod", endpointForCookie)
 }
