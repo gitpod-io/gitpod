@@ -545,7 +545,7 @@ func (m *Manager) DeleteVolumeSnapshot(ctx context.Context, req *api.DeleteVolum
 	err = m.Clientset.Get(ctx, types.NamespacedName{Namespace: m.Config.Namespace, Name: req.Id}, &volumeSnapshot)
 	if k8serr.IsNotFound(err) {
 		if !req.SoftDelete {
-			err = m.restoreVolumeSnapshotFromHandle(ctx, req.Id, req.VolumeHandle)
+			err = m.restoreVolumeSnapshotFromHandle(ctx, req.WsType, req.Id, req.VolumeHandle)
 			if err != nil {
 				log.WithError(err).Error("was unable to restore volume snapshot")
 				return nil, err
