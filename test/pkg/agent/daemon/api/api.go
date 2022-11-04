@@ -11,3 +11,12 @@ type CreateBucketRequest struct {
 
 // CreateBucketResponse is the response for CreateBucket
 type CreateBucketResponse struct{}
+
+type GetWorkspaceResourcesRequest struct {
+	ContainerId string
+}
+
+type GetWorkspaceResourcesResponse struct {
+	CpuQuota int64
+	Found    bool
+}
