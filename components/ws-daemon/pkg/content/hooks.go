@@ -110,6 +110,8 @@ func hookInstallQuota(xfs *quota.XFS, isHard bool) session.WorkspaceLivecycleHoo
 
 		size := quota.Size(ws.StorageQuota)
 
+		log.WithFields(ws.OWI()).WithField("size", size).WithField("directory", ws.Location).Debug("setting disk quota")
+
 		var (
 			prj int
 			err error
