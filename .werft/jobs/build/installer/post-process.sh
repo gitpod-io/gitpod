@@ -287,7 +287,11 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       yq r k8s.yaml -d "$documentIndex" > /tmp/"$NAME"-"$KIND"-overrides.yaml
       # Parse and update the JSON, and write it to a file
       yq r /tmp/"$NAME"-"$KIND"-overrides.yaml 'data.[config.json]' \
-      | jq ".service.address = $WS_DAEMON_PORT" > /tmp/"$NAME"-"$KIND"-overrides.json
+      | jq ".service.address = $WS_DAEMON_PORT" \
+      | jq ".daemon.cpulimit.enabled = true" \
+      | jq ".daemon.cpulimit.totalBandwidth = 12" \
+      | jq ".daemon.cpulimit.limit = 2" \
+      | jq ".daemon.cpulimit.burstLimit = 6" > /tmp/"$NAME"-"$KIND"-overrides.json
       # Give the port a colon prefix, ("5678" to ":5678")
       # jq would not have it, hence the usage of sed to do the transformation
       PORT_NUM_FORMAT_EXPR="s/\"address\": $WS_DAEMON_PORT/\"address\": \":$WS_DAEMON_PORT\"/"
