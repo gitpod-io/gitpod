@@ -134,7 +134,7 @@
             "uid": "P4169E866C3094E38"
           },
           "editorMode": "code",
-          "expr": "sum(rate(gitpod_vscode_web_load_total{status='failed',galleryHost=~\"$gallery\"}[2m])) /sum(rate(gitpod_vscode_web_load_total{status='loading',galleryHost=~\"$gallery\"}[2m]))",
+          "expr": "sum(rate(gitpod_vscode_web_load_total{status='failed'}[2m])) /sum(rate(gitpod_vscode_web_load_total{status='loading'}[2m]))",
           "legendFormat": "total_ratio",
           "range": true,
           "refId": "A"
