@@ -58,9 +58,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		if expUsageConfig.Schedule != "" {
 			cfg.LedgerSchedule = expUsageConfig.Schedule
 		}
-		if expUsageConfig.ResetUsageSchedule != "" {
-			cfg.ResetUsageSchedule = expUsageConfig.ResetUsageSchedule
-		}
+		cfg.ResetUsageSchedule = expUsageConfig.ResetUsageSchedule
 		if expUsageConfig.DefaultSpendingLimit != nil {
 			cfg.DefaultSpendingLimit = *expUsageConfig.DefaultSpendingLimit
 		}
