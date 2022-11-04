@@ -41,6 +41,8 @@ export class GitLabApp {
          *  - never return 500 status responses if the event has been handled
          *  - prefer to return 200; indicate that the webhook is asynchronous by returning 201
          *  - to support fast response times, perform I/O or computationally intensive operations asynchronously
+         *  - if a webhook fails repeatedly, it may be disabled automatically
+         *  - webhooks that return failure codes in the 4xx range are understood to be misconfigured, and these are disabled (permanently)
          */
         this._router.post("/", async (req, res) => {
             const eventType = req.header("X-Gitlab-Event");
@@ -60,7 +62,7 @@ export class GitLabApp {
             if (eventType !== "Push Hook" || !secretToken) {
                 log.warn("Unhandled GitLab event.", { event: eventType, secretToken: !!secretToken });
                 res.status(200).send("Unhandled event.");
-                await this.webhookEvents.updateEvent(event.id, { status: "dismissed_unauthorized" });
+                await this.webhookEvents.updateEvent(event.id, { status: "ignored" });
                 return;
             }
 
@@ -75,11 +77,12 @@ export class GitLabApp {
                 TraceContext.setError({ span }, error);
             }
             if (!user) {
-                // If the webhook installer is no longer found in Gitpod's DB
-                // we should send a UNAUTHORIZED signal.
+                // webhooks are not supposed to return 4xx codes on application issues.
+                // sending "Unauthorized" as content to support inspection of webhook delivery logs.
                 span.finish();
-                res.status(401).send("Unauthorized.");
+                res.status(200).send("Unauthorized.");
                 await this.webhookEvents.updateEvent(event.id, { status: "dismissed_unauthorized" });
+                // TODO(at) explore ways to mark a project having issues with permissions.
                 return;
             }
             /** no await */ this.handlePushHook({ span }, context, user, event).catch((error) => {
