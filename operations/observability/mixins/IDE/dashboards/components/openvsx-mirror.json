@@ -179,6 +179,7 @@
             }
           },
           "mappings": [],
+          "max": 1,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -249,6 +250,7 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMax": 1,
             "barAlignment": 0,
             "drawStyle": "bars",
             "fillOpacity": 0,
@@ -320,7 +322,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (status) (rate(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\",outcome!~\"SUCCESS|REDIRECTION|CLIENT_ERROR\"})[2m])/ignoring(status) group_left sum(rate(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\"})[2m])",
+          "expr": "sum by (status) (rate(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\",outcome!~\"SUCCESS|REDIRECTION\"})[2m])/ignoring(status) group_left sum(rate(http_client_requests_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\"})[2m])",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
