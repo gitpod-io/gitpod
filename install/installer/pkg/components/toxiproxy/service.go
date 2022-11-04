@@ -15,6 +15,11 @@ func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ContainerPort: HttpContainerPort,
 			ServicePort:   HttpServicePort,
 		},
+		{
+			Name:          MySqlProxyPortName,
+			ContainerPort: MySqlProxyContainerPort,
+			ServicePort:   MySqlProxyServicePort,
+		},
 	}
 
 	return common.GenerateService(Component, servicePorts)(ctx)
