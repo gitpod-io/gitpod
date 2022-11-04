@@ -8,9 +8,13 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"io/fs"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
+	cgroups_v2 "github.com/gitpod-io/gitpod/common-go/cgroups/v2"
 	ctntcfg "github.com/gitpod-io/gitpod/content-service/api/config"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/gitpod-io/gitpod/test/pkg/agent/daemon/api"
@@ -77,6 +81,27 @@ func (*DaemonAgent) CreateBucket(args *api.CreateBucketRequest, resp *api.Create
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (*DaemonAgent) GetWorkspaceResources(args *api.GetWorkspaceResourcesRequest, resp *api.GetWorkspaceResourcesResponse) error {
+	*resp = api.GetWorkspaceResourcesResponse{}
+
+	filepath.WalkDir("/mnt/node-cgroups", func(path string, d fs.DirEntry, err error) error {
+		if strings.Contains(path, args.ContainerId) {
+			cpu := cgroups_v2.NewCpuController(path)
+			quota, _, err := cpu.Max()
+			if err != nil {
+				return err
+			}
+
+			resp.Found = true
+			resp.CpuQuota = int64(quota)
+		}
+
+		return nil
+	})
 
 	return nil
 }
