@@ -162,6 +162,7 @@ EOF
             | base64 -d \
             > /tmp/currentconfig.json
 
+        echo "${REGISTRY_DOCKER_CONFIG_JSON}" > /tmp/userconfig.json
         echo "Gitpod: update the in-cluster registry secret"
         REGISTRY_SECRET="$(jq -s '.[0] * .[1]' /tmp/userconfig.json /tmp/currentconfig.json | base64 -w 0)"
         export REGISTRY_SECRET
