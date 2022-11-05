@@ -295,7 +295,7 @@ func main() {
 						LinkAttrs: netlink.LinkAttrs{
 							Name:  vethIf,
 							Flags: net.FlagUp,
-							MTU:   eth0.Attrs().MTU,
+							MTU:   eth0.Attrs().MTU - 20,
 						},
 						PeerName:      cethIf,
 						PeerNamespace: netlink.NsPid(targetPid),
@@ -313,6 +313,16 @@ func main() {
 					}
 					if err := netlink.LinkSetUp(vethLink); err != nil {
 						return xerrors.Errorf("failed to enable %q: %v", vethIf, err)
+					}
+
+					tunl0, err := netlink.LinkByName("tunl0")
+					if err != nil {
+						return xerrors.Errorf("cannot found tunl0: %v", err)
+					}
+
+					err = netlink.LinkSetMTU(tunl0, eth0.Attrs().MTU)
+					if err != nil {
+						return xerrors.Errorf("cannot found tunl0: %v", err)
 					}
 
 					nc := &nftables.Conn{}
@@ -463,9 +473,20 @@ func main() {
 					defaultGw := netlink.Route{
 						Scope: netlink.SCOPE_UNIVERSE,
 						Gw:    vethIp.IP,
+						MTU:   cethLink.Attrs().MTU,
 					}
 					if err := netlink.RouteReplace(&defaultGw); err != nil {
 						return xerrors.Errorf("failed to set up deafult gw: %v", err)
+					}
+
+					tunl0, err := netlink.LinkByName("tunl0")
+					if err != nil {
+						return xerrors.Errorf("cannot found tunl0: %v", err)
+					}
+
+					err = netlink.LinkSetMTU(tunl0, cethLink.Attrs().MTU)
+					if err != nil {
+						return xerrors.Errorf("cannot found tunl0: %v", err)
 					}
 
 					return nil
