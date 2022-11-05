@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"syscall"
 	"time"
 
@@ -40,6 +41,8 @@ var runCmd = &cobra.Command{
 		if err != nil {
 			log.WithError(err).Fatal("Cannot read configuration. Maybe missing --config?")
 		}
+
+		createLVMDevices()
 
 		health := healthcheck.NewHandler()
 		srv, err := baseserver.New(grpcServerName,
@@ -140,5 +143,15 @@ func grpcProbe(cfg baseserver.ServerConfiguration) func() error {
 		}
 
 		return fmt.Errorf("grpc service not ready")
+	}
+}
+
+// createLVMDevices creates LVM logical volume special files missing when we run inside a container.
+// Without this devices we cannot enforce disk quotas. In installations without LVM this is a NOOP.
+func createLVMDevices() {
+	cmd := exec.Command("/usr/sbin/vgmknodes")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.WithError(err).WithField("out", string(out)).Error("cannot recreate LVM files in /dev/mapper")
 	}
 }
