@@ -61,7 +61,7 @@ const (
 )
 
 // TODO: enable custom configuration
-var blockDevices = []string{"sd*", "md*", "nvme0n*"}
+var blockDevices = []string{"dm*", "sd*", "md*", "nvme0n*"}
 
 func buildLimits(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs int64) ioLimitOptions {
 	return ioLimitOptions{
