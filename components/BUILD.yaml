@@ -66,6 +66,7 @@ packages:
       - components/server:docker
       - components/service-waiter:docker
       - components/supervisor:docker
+      - components/toxic-config:docker
       - components/installation-telemetry:docker
       - components/workspacekit:docker
       - components/ws-daemon:docker
@@ -119,6 +120,7 @@ packages:
       - components/service-waiter:app
       - components/supervisor:app
       - components/supervisor/frontend:app
+      - components/toxic-config:app
       - components/installation-telemetry:app
       - components/workspacekit:app
       - components/ws-daemon:app
