@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	proxyName      = "mysql"
 	configFilename = "toxiproxy.json"
 )
 
@@ -29,7 +30,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	txcfg := []ToxiproxyConfig{
 		{
-			Name:     "mysql",
+			Name:     proxyName,
 			Listen:   fmt.Sprintf("[::]:%d", dbPort),
 			Upstream: fmt.Sprintf("%s:%d", dbHost, dbPort),
 			Enabled:  true,
