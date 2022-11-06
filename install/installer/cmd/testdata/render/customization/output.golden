@@ -1672,6 +1672,9 @@ data:
           "serviceWaiter": {
             "version": "test"
           },
+          "toxic-config": {
+            "version": "test"
+          },
           "usage": {
             "version": "test"
           },
