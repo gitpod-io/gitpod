@@ -38,6 +38,7 @@ type Components struct {
 	RegistryFacade        Versioned `json:"registryFacade"`
 	Server                Versioned `json:"server"`
 	ServiceWaiter         Versioned `json:"serviceWaiter"`
+	ToxicConfig           Versioned `json:"toxic-config"`
 	Usage                 Versioned `json:"usage"`
 	Workspace             struct {
 		CodeImage        Versioned `json:"codeImage"`
