@@ -4,6 +4,7 @@
 package toxiproxy
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
@@ -102,6 +103,15 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							},
 							Env:          common.CustomizeEnvvar(ctx, Component, common.MergeEnv(common.DefaultEnv(&ctx.Config))),
 							VolumeMounts: volumeMounts,
+						}, {
+							Name:  "toxic-config",
+							Image: ctx.ImageName(ctx.Config.Repository, ConfigComponent, ctx.VersionManifest.Components.ToxicConfig.Version),
+							Args: []string{
+								fmt.Sprintf("--proxy=%s", proxyName),
+								"--latency=1000",
+								"--jitter=250",
+								"--wait=true",
+							},
 						},
 							*common.KubeRBACProxyContainerWithConfig(ctx),
 						},

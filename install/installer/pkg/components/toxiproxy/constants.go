@@ -5,6 +5,7 @@ package toxiproxy
 
 const (
 	Component               = "toxiproxy"
+	ConfigComponent         = "toxic-config"
 	HttpPortName            = "http"
 	HttpContainerPort       = 8474
 	HttpServicePort         = 8474

@@ -40,7 +40,10 @@ func renderContextWithSlowDatabaseEnabled(t *testing.T) *common.RenderContext {
 				SlowDatabase: true,
 			},
 		},
-	}, versions.Manifest{}, "test-namespace")
+	}, versions.Manifest{
+		Version:    "test",
+		Components: versions.Components{ToxicConfig: versions.Versioned{Version: "test"}},
+	}, "test-namespace")
 	require.NoError(t, err)
 
 	return ctx
