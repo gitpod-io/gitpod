@@ -30,7 +30,6 @@ import {
     AuthProviderInfo,
     CommitContext,
     Configuration,
-    CreateWorkspaceMode,
     DisposableCollection,
     GetWorkspaceTimeoutResult,
     GitpodClient as GitpodApiClient,
@@ -1053,12 +1052,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { options });
 
         const contextUrl = options.contextUrl;
-        const mode = options.mode || CreateWorkspaceMode.Default;
         let normalizedContextUrl: string = "";
         let logContext: LogContext = {};
 
         try {
-            const user = this.checkAndBlockUser("createWorkspace", { mode });
+            const user = this.checkAndBlockUser("createWorkspace", { options });
             await this.checkTermsAcceptance();
 
             const envVars = this.userDB.getEnvVars(user.id);
@@ -1070,7 +1068,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             normalizedContextUrl = this.contextParser.normalizeContextURL(contextUrl);
             let runningForContextPromise: Promise<WorkspaceInfo[]> = Promise.resolve([]);
             const contextPromise = this.contextParser.handle(ctx, user, normalizedContextUrl);
-            if (mode === CreateWorkspaceMode.SelectIfRunning) {
+            if (!options.ignoreRunningWorkspaceOnSameCommit) {
                 runningForContextPromise = this.findRunningInstancesForContext(
                     ctx,
                     contextPromise,
@@ -1153,14 +1151,22 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 }
             }
 
-            if (mode === CreateWorkspaceMode.SelectIfRunning && context.forceCreateNewWorkspace !== true) {
+            if (!options.ignoreRunningWorkspaceOnSameCommit && !context.forceCreateNewWorkspace) {
                 const runningForContext = await runningForContextPromise;
                 if (runningForContext.length > 0) {
                     return { existingWorkspaces: runningForContext };
                 }
             }
-
-            const prebuiltWorkspace = await this.findPrebuiltWorkspace(ctx, user, context, mode);
+            const project = CommitContext.is(context)
+                ? await this.projectDB.findProjectByCloneUrl(context.repository.cloneUrl)
+                : undefined;
+            const prebuiltWorkspace = await this.findPrebuiltWorkspace(
+                ctx,
+                user,
+                context,
+                options.ignoreRunningPrebuild,
+                options.allowUsingPreviousPrebuilds || project?.settings?.allowUsingPreviousPrebuilds,
+            );
             if (WorkspaceCreationResult.is(prebuiltWorkspace)) {
                 ctx.span?.log({ prebuild: "running" });
                 return prebuiltWorkspace as WorkspaceCreationResult;
@@ -1170,7 +1176,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 context = prebuiltWorkspace;
             }
 
-            const workspace = await this.workspaceFactory.createForContext(ctx, user, context, normalizedContextUrl);
+            const workspace = await this.workspaceFactory.createForContext(
+                ctx,
+                user,
+                project,
+                context,
+                normalizedContextUrl,
+            );
             await this.mayStartWorkspace(ctx, user, workspace, runningInstancesPromise);
             try {
                 await this.guardAccess({ kind: "workspace", subject: workspace }, "create");
@@ -1242,10 +1254,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     protected async findPrebuiltWorkspace(
-        ctx: TraceContext,
+        parentCtx: TraceContext,
         user: User,
         context: WorkspaceContext,
-        mode: CreateWorkspaceMode,
+        ignoreRunningPrebuild?: boolean,
+        allowUsingPreviousPrebuilds?: boolean,
     ): Promise<WorkspaceCreationResult | PrebuiltWorkspaceContext | undefined> {
         // prebuilds are an EE feature
         return undefined;
