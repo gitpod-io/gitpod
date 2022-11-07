@@ -191,10 +191,11 @@ func (s *UsageService) GetCostCenter(ctx context.Context, in *v1.GetCostCenterRe
 
 func dbCostCenterToAPI(c db.CostCenter) *v1.CostCenter {
 	return &v1.CostCenter{
-		AttributionId:   string(c.ID),
-		SpendingLimit:   c.SpendingLimit,
-		BillingStrategy: convertBillingStrategyToAPI(c.BillingStrategy),
-		NextBillingTime: timestamppb.New(c.NextBillingTime.Time()),
+		AttributionId:     string(c.ID),
+		SpendingLimit:     c.SpendingLimit,
+		BillingStrategy:   convertBillingStrategyToAPI(c.BillingStrategy),
+		NextBillingTime:   timestamppb.New(c.NextBillingTime.Time()),
+		BillingCycleStart: timestamppb.New(c.BillingCycleStart.Time()),
 	}
 }
 
