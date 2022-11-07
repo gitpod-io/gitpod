@@ -71,26 +71,29 @@ func TestCostCenterManager_GetOrCreateCostCenter_ResetsExpired(t *testing.T) {
 	unexpired := ts.Add(1 * time.Minute)
 
 	expiredCC := db.CostCenter{
-		ID:              db.NewTeamAttributionID(uuid.New().String()),
-		CreationTime:    db.NewVarcharTime(now),
-		SpendingLimit:   0,
-		BillingStrategy: db.CostCenter_Other,
-		NextBillingTime: db.NewVarcharTime(expired),
+		ID:                db.NewTeamAttributionID(uuid.New().String()),
+		CreationTime:      db.NewVarcharTime(now),
+		SpendingLimit:     0,
+		BillingStrategy:   db.CostCenter_Other,
+		NextBillingTime:   db.NewVarcharTime(expired),
+		BillingCycleStart: db.NewVarcharTime(now),
 	}
 	unexpiredCC := db.CostCenter{
-		ID:              db.NewUserAttributionID(uuid.New().String()),
-		CreationTime:    db.NewVarcharTime(now),
-		SpendingLimit:   500,
-		BillingStrategy: db.CostCenter_Other,
-		NextBillingTime: db.NewVarcharTime(unexpired),
+		ID:                db.NewUserAttributionID(uuid.New().String()),
+		CreationTime:      db.NewVarcharTime(now),
+		SpendingLimit:     500,
+		BillingStrategy:   db.CostCenter_Other,
+		NextBillingTime:   db.NewVarcharTime(unexpired),
+		BillingCycleStart: db.NewVarcharTime(now),
 	}
 	// Stripe billing strategy should not be reset
 	stripeCC := db.CostCenter{
-		ID:              db.NewUserAttributionID(uuid.New().String()),
-		CreationTime:    db.NewVarcharTime(now),
-		SpendingLimit:   0,
-		BillingStrategy: db.CostCenter_Stripe,
-		NextBillingTime: db.VarcharTime{},
+		ID:                db.NewUserAttributionID(uuid.New().String()),
+		CreationTime:      db.NewVarcharTime(now),
+		SpendingLimit:     0,
+		BillingStrategy:   db.CostCenter_Stripe,
+		NextBillingTime:   db.VarcharTime{},
+		BillingCycleStart: db.NewVarcharTime(now),
 	}
 
 	dbtest.CreateCostCenters(t, conn,

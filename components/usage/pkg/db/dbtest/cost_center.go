@@ -18,11 +18,12 @@ func NewCostCenter(t *testing.T, record db.CostCenter) db.CostCenter {
 	t.Helper()
 
 	result := db.CostCenter{
-		ID:              db.NewUserAttributionID(uuid.New().String()),
-		CreationTime:    db.NewVarcharTime(time.Now()),
-		SpendingLimit:   100,
-		BillingStrategy: db.CostCenter_Stripe,
-		NextBillingTime: db.NewVarcharTime(time.Now().Add(10 * time.Hour)),
+		ID:                db.NewUserAttributionID(uuid.New().String()),
+		CreationTime:      db.NewVarcharTime(time.Now()),
+		SpendingLimit:     100,
+		BillingStrategy:   db.CostCenter_Stripe,
+		BillingCycleStart: db.NewVarcharTime(time.Now()),
+		NextBillingTime:   db.NewVarcharTime(time.Now().Add(10 * time.Hour)),
 	}
 
 	if record.ID != "" {
@@ -38,6 +39,7 @@ func NewCostCenter(t *testing.T, record db.CostCenter) db.CostCenter {
 		result.BillingStrategy = record.BillingStrategy
 	}
 
+	result.BillingCycleStart = record.BillingCycleStart
 	result.NextBillingTime = record.NextBillingTime
 
 	return result

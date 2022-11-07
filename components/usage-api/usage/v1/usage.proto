@@ -129,6 +129,7 @@ message CostCenter {
 
     // next_billing_time specifies when the next billing cycle happens. Only set when billing strategy is 'other'. This property is readonly.
     google.protobuf.Timestamp next_billing_time = 4;
+    google.protobuf.Timestamp billing_cycle_start = 5;
 }
 
 message ResetUsageRequest {}

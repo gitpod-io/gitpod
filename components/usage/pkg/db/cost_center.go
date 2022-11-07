@@ -27,12 +27,13 @@ const (
 )
 
 type CostCenter struct {
-	ID              AttributionID   `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
-	CreationTime    VarcharTime     `gorm:"primary_key;column:creationTime;type:varchar;size:255;" json:"creationTime"`
-	SpendingLimit   int32           `gorm:"column:spendingLimit;type:int;default:0;" json:"spendingLimit"`
-	BillingStrategy BillingStrategy `gorm:"column:billingStrategy;type:varchar;size:255;" json:"billingStrategy"`
-	NextBillingTime VarcharTime     `gorm:"column:nextBillingTime;type:varchar;size:255;" json:"nextBillingTime"`
-	LastModified    time.Time       `gorm:"->;column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
+	ID                AttributionID   `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
+	CreationTime      VarcharTime     `gorm:"primary_key;column:creationTime;type:varchar;size:255;" json:"creationTime"`
+	SpendingLimit     int32           `gorm:"column:spendingLimit;type:int;default:0;" json:"spendingLimit"`
+	BillingStrategy   BillingStrategy `gorm:"column:billingStrategy;type:varchar;size:255;" json:"billingStrategy"`
+	BillingCycleStart VarcharTime     `gorm:"column:billingCycleStart;type:varchar;size:255;" json:"billingCycleStart"`
+	NextBillingTime   VarcharTime     `gorm:"column:nextBillingTime;type:varchar;size:255;" json:"nextBillingTime"`
+	LastModified      time.Time       `gorm:"->;column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
 }
 
 // TableName sets the insert table name for this struct type
@@ -81,11 +82,12 @@ func (c *CostCenterManager) GetOrCreateCostCenter(ctx context.Context, attributi
 				defaultSpendingLimit = c.cfg.ForTeams
 			}
 			result = CostCenter{
-				ID:              attributionID,
-				CreationTime:    NewVarcharTime(now),
-				BillingStrategy: CostCenter_Other,
-				SpendingLimit:   defaultSpendingLimit,
-				NextBillingTime: NewVarcharTime(now.AddDate(0, 1, 0)),
+				ID:                attributionID,
+				CreationTime:      NewVarcharTime(now),
+				BillingStrategy:   CostCenter_Other,
+				SpendingLimit:     defaultSpendingLimit,
+				BillingCycleStart: NewVarcharTime(now),
+				NextBillingTime:   NewVarcharTime(now.AddDate(0, 1, 0)),
 			}
 			err := c.conn.Save(&result).Error
 			if err != nil {
@@ -145,7 +147,8 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCent
 
 	// we always update the creationTime
 	newCC.CreationTime = NewVarcharTime(now)
-	// we don't allow setting the nextBillingTime from outside
+	// we don't allow setting billingCycleStart or nextBillingTime from outside
+	newCC.BillingCycleStart = existingCC.BillingCycleStart
 	newCC.NextBillingTime = existingCC.NextBillingTime
 
 	isTeam := attributionID.IsEntity(AttributionEntity_Team)
@@ -169,6 +172,7 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCent
 		// Downgrading from stripe
 		if existingCC.BillingStrategy == CostCenter_Stripe && newCC.BillingStrategy == CostCenter_Other {
 			newCC.SpendingLimit = c.cfg.ForUsers
+			newCC.BillingCycleStart = NewVarcharTime(now)
 			// see you next month
 			newCC.NextBillingTime = NewVarcharTime(now.AddDate(0, 1, 0))
 		}
@@ -180,6 +184,7 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCent
 				return CostCenter{}, err
 			}
 
+			newCC.BillingCycleStart = NewVarcharTime(now)
 			// we don't manage stripe billing cycle
 			newCC.NextBillingTime = VarcharTime{}
 		}
@@ -195,6 +200,7 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCent
 		// Downgrading from stripe
 		if existingCC.BillingStrategy == CostCenter_Stripe && newCC.BillingStrategy == CostCenter_Other {
 			newCC.SpendingLimit = c.cfg.ForTeams
+			newCC.BillingCycleStart = NewVarcharTime(now)
 			// see you next month
 			newCC.NextBillingTime = NewVarcharTime(now.AddDate(0, 1, 0))
 		}
@@ -206,6 +212,7 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCent
 				return CostCenter{}, err
 			}
 
+			newCC.BillingCycleStart = NewVarcharTime(now)
 			// we don't manage stripe billing cycle
 			newCC.NextBillingTime = VarcharTime{}
 		}
@@ -311,6 +318,9 @@ func (c *CostCenterManager) ResetUsage(ctx context.Context, cc CostCenter) (Cost
 
 	now := time.Now().UTC()
 
+	// Resetting the usage always resets the billing cycle start time
+	billingCycleStart := now
+
 	// Default to 1 month from now, if there's no nextBillingTime set on the record.
 	nextBillingTime := now.AddDate(0, 1, 0)
 	if cc.NextBillingTime.IsSet() {
@@ -325,11 +335,12 @@ func (c *CostCenterManager) ResetUsage(ctx context.Context, cc CostCenter) (Cost
 
 	// All fields on the new cost center remain the same, except for CreationTime and NextBillingTime
 	newCostCenter := CostCenter{
-		ID:              cc.ID,
-		SpendingLimit:   spendingLimit,
-		BillingStrategy: cc.BillingStrategy,
-		NextBillingTime: NewVarcharTime(nextBillingTime),
-		CreationTime:    NewVarcharTime(now),
+		ID:                cc.ID,
+		SpendingLimit:     spendingLimit,
+		BillingStrategy:   cc.BillingStrategy,
+		BillingCycleStart: NewVarcharTime(billingCycleStart),
+		NextBillingTime:   NewVarcharTime(nextBillingTime),
+		CreationTime:      NewVarcharTime(now),
 	}
 	err = c.conn.Save(&newCostCenter).Error
 	if err != nil {
