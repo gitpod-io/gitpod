@@ -586,7 +586,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 
 			pod.Spec.Containers[0].VolumeDevices = append(pod.Spec.Containers[0].VolumeDevices, corev1.VolumeDevice{
 				Name:       workspaceVolumeName,
-				DevicePath: "/dev/pvc",
+				DevicePath: "/dev/workspace",
 			})
 
 			// get rid of first volume mount as PVC is mounted as block device and will be mounted by workspacekit
