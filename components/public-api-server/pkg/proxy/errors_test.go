@@ -34,6 +34,10 @@ func TestConvertError(t *testing.T) {
 			WebsocketError: errors.New("code 409"),
 			ExpectedStatus: connect.CodeAlreadyExists,
 		},
+		{
+			WebsocketError: errors.New("code 470"),
+			ExpectedStatus: connect.CodePermissionDenied,
+		},
 	}
 
 	for _, s := range scenarios {

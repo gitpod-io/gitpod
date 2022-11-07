@@ -47,5 +47,9 @@ func ConvertError(err error) error {
 		return connect.NewError(connect.CodeInternal, err)
 	}
 
+	if strings.Contains(s, "code 470") {
+		return connect.NewError(connect.CodePermissionDenied, err)
+	}
+
 	return connect.NewError(connect.CodeInternal, err)
 }
