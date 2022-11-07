@@ -164,7 +164,12 @@ args+=( "-namespace=default" )
 [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
 args+=( "-timeout=60m" )
 
-IDE_TEST_LIST=(/workspace/test/tests/ide/ssh /workspace/test/tests/ide/vscode /workspace/test/tests/ide/jetbrains)
+IDE_TESTS_DIR="/workspace/test/tests/ide"
+JETBRAINS_TESTS="$IDE_TESTS_DIR/jetbrains"
+VSCODE_TESTS="$IDE_TESTS_DIR/vscode"
+SSH_TESTS="$IDE_TESTS_DIR/ssh"
+
+IDE_TEST_LIST=("$SSH_TESTS $VSCODE_TESTS $JETBRAINS_TESTS")
 for TEST_PATH in "${IDE_TEST_LIST[@]}"
 do
     TEST_NAME=$(basename "${TEST_PATH}")
