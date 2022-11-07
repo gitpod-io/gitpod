@@ -77,7 +77,8 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		cgroupV2IOLimiter,
 		&cgroup.ProcessPriorityV2{
 			ProcessPriorities: map[cgroup.ProcessType]int{
-				cgroup.ProcessSupervisor: -10,
+				cgroup.ProcessWorkspaceKit: -10,
+				cgroup.ProcessSupervisor:   -10,
 
 				cgroup.ProcessIDE:          -10,
 				cgroup.ProcessWebIDEHelper: -5,
@@ -85,13 +86,14 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 				cgroup.ProcessCodeServer:       -10,
 				cgroup.ProcessCodeServerHelper: -5,
 			},
+			EnableOOMScoreAdj: config.OOMScores.Enabled,
 			OOMScoreAdj: map[cgroup.ProcessType]int{
-				cgroup.ProcessWorkspaceKit:     -1000,
-				cgroup.ProcessSupervisor:       -1000,
-				cgroup.ProcessCodeServer:       -1000,
-				cgroup.ProcessIDE:              -1000,
-				cgroup.ProcessCodeServerHelper: -100,
-				cgroup.ProcessWebIDEHelper:     -100,
+				cgroup.ProcessWorkspaceKit:     config.OOMScores.Tier1,
+				cgroup.ProcessSupervisor:       config.OOMScores.Tier1,
+				cgroup.ProcessCodeServer:       config.OOMScores.Tier1,
+				cgroup.ProcessIDE:              config.OOMScores.Tier1,
+				cgroup.ProcessCodeServerHelper: config.OOMScores.Tier2,
+				cgroup.ProcessWebIDEHelper:     config.OOMScores.Tier2,
 			},
 		},
 		procV2Plugin,

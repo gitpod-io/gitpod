@@ -45,9 +45,16 @@ const (
 	NumberOfProcessesToStopApplying = 5
 )
 
+type OOMScoreAdjConfig struct {
+	Enabled bool `json:"enabled"`
+	Tier1   int  `json:"tier1"`
+	Tier2   int  `json:"tier2"`
+}
+
 type ProcessPriorityV2 struct {
 	ProcessPriorities map[ProcessType]int
 	OOMScoreAdj       map[ProcessType]int
+	EnableOOMScoreAdj bool
 }
 
 func (c *ProcessPriorityV2) Name() string  { return "process-priority-v2" }
@@ -105,7 +112,9 @@ func (c *ProcessPriorityV2) Apply(ctx context.Context, opts *PluginOptions) erro
 			}
 
 			c.adaptProcessPriorites(procType, pid)
-			c.adaptOOMScore(procType, pid)
+			if c.EnableOOMScoreAdj {
+				c.adaptOOMScore(procType, pid)
+			}
 		}
 
 		if countRunningProcess >= NumberOfProcessesToStopApplying {
@@ -124,9 +133,7 @@ func determineProcessType(p *process.Process) ProcessType {
 		return ProcessDefault
 	}
 
-	log.Infof("process cmd: %v", cmd)
 	if strings.HasSuffix(cmd[0], "workspacekit") || (len(cmd) >= 2 && cmd[1] == "ring1") {
-		log.Info("workspacekit")
 		return ProcessWorkspaceKit
 	}
 
