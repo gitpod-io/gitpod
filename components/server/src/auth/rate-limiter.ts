@@ -214,7 +214,7 @@ const defaultFunctions: FunctionsConfig = {
     getPrebuildEvents: { group: "default", points: 1 },
     setUsageAttribution: { group: "default", points: 1 },
     listAvailableUsageAttributionIds: { group: "default", points: 1 },
-    getUsageLimit: { group: "default", points: 1 },
+    getCostCenter: { group: "default", points: 1 },
     setUsageLimit: { group: "default", points: 1 },
     getNotifications: { group: "default", points: 1 },
     getSupportedWorkspaceClasses: { group: "default", points: 1 },

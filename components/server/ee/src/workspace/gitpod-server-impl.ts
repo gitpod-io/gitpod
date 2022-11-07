@@ -73,6 +73,7 @@ import { AccountStatementProvider } from "../user/account-statement-provider";
 import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/payment-protocol";
 import { ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
 import {
+    CostCenter,
     CostCenter_BillingStrategy,
     ListUsageRequest_Ordering,
     UsageServiceClient,
@@ -2263,21 +2264,18 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return url;
     }
 
-    async getUsageLimit(ctx: TraceContext, attributionId: string): Promise<number | undefined> {
+    async getCostCenter(ctx: TraceContext, attributionId: string): Promise<CostCenter | undefined> {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
             throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
         }
 
-        const user = this.checkAndBlockUser("getUsageLimit");
+        const user = this.checkAndBlockUser("getCostCenter");
         await this.guardCostCenterAccess(ctx, user.id, attrId, "get");
 
-        const costCenter = await this.usageService.getCostCenter({ attributionId });
-        if (costCenter?.costCenter) {
-            return costCenter.costCenter.spendingLimit;
-        }
-        return undefined;
+        const { costCenter } = await this.usageService.getCostCenter({ attributionId });
+        return costCenter;
     }
 
     async setUsageLimit(ctx: TraceContext, attributionId: string, usageLimit: number): Promise<void> {
