@@ -71,7 +71,8 @@ do
 
   cd "${TEST_PATH}"
   set +e
-  go test -v ./... "${args[@]}" 2>&1 | tee "${LOG_FILE}" | werft log slice "test-${TEST_NAME}"
+  #go test -v ./... "${args[@]}" 2>&1 | tee "${LOG_FILE}" | werft log slice "test-${TEST_NAME}"
+  sh -c "asdsad" 2>&1 | tee "${LOG_FILE}" | werft log slice "test-${TEST_NAME}"
   RC=${PIPESTATUS[0]}
   set -e
   cd -
