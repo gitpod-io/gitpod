@@ -8,7 +8,6 @@ import { WorkspaceInstance, PortVisibility } from "./workspace-instance";
 import { RoleOrPermission } from "./permission";
 import { Project } from "./teams-projects-protocol";
 import { createHash } from "crypto";
-import { AttributionId } from "./attribution";
 
 export interface UserInfo {
     name?: string;
@@ -1517,14 +1516,4 @@ export interface Terms {
 export interface StripeConfig {
     individualUsagePriceIds: { [currency: string]: string };
     teamUsagePriceIds: { [currency: string]: string };
-}
-
-export type BillingStrategy = "other" | "stripe";
-export interface CostCenter {
-    readonly id: AttributionId;
-    /**
-     * Unit: credits
-     */
-    spendingLimit: number;
-    billingStrategy: BillingStrategy;
 }

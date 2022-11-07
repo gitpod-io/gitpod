@@ -5,6 +5,7 @@ packages:
       - :lib
       - components/gitpod-protocol/go:lib
       - components/gitpod-protocol/java:lib
+      - components/usage-api/typescript:lib
   - name: lib
     type: yarn
     srcs:

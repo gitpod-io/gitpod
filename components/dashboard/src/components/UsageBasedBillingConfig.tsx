@@ -45,30 +45,34 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
 
     const localStorageKey = `pendingStripeSubscriptionFor${attributionId}`;
     const now = dayjs().utc(true);
-    const billingPeriodFrom = now.startOf("month");
-    const billingPeriodTo = now.endOf("month");
+    const [billingCycleFrom, setBillingCycleFrom] = useState<dayjs.Dayjs>(now.startOf("month"));
+    const [billingCycleTo, setBillingCycleTo] = useState<dayjs.Dayjs>(now.endOf("month"));
+
+    const refreshSubscriptionDetails = async (attributionId: string) => {
+        setStripeSubscriptionId(undefined);
+        setIsLoadingStripeSubscription(true);
+        try {
+            const [subscriptionId, costCenter] = await Promise.all([
+                getGitpodService().server.findStripeSubscriptionId(attributionId),
+                getGitpodService().server.getCostCenter(attributionId),
+            ]);
+            setStripeSubscriptionId(subscriptionId);
+            setUsageLimit(costCenter?.spendingLimit);
+            setBillingCycleFrom(dayjs(costCenter?.billingCycleStart || now.startOf("month")).utc(true));
+            setBillingCycleTo(dayjs(costCenter?.nextBillingTime || now.endOf("month")).utc(true));
+        } catch (error) {
+            console.error("Could not get Stripe subscription details.", error);
+            setErrorMessage(`Could not get Stripe subscription details. ${error?.message || String(error)}`);
+        } finally {
+            setIsLoadingStripeSubscription(false);
+        }
+    };
 
     useEffect(() => {
         if (!attributionId) {
             return;
         }
-        (async () => {
-            setStripeSubscriptionId(undefined);
-            setIsLoadingStripeSubscription(true);
-            try {
-                const [subscriptionId, limit] = await Promise.all([
-                    getGitpodService().server.findStripeSubscriptionId(attributionId),
-                    getGitpodService().server.getUsageLimit(attributionId),
-                ]);
-                setStripeSubscriptionId(subscriptionId);
-                setUsageLimit(limit);
-            } catch (error) {
-                console.error("Could not get Stripe subscription details.", error);
-                setErrorMessage(`Could not get Stripe subscription details. ${error?.message || String(error)}`);
-            } finally {
-                setIsLoadingStripeSubscription(false);
-            }
-        })();
+        refreshSubscriptionDetails(attributionId);
     }, [attributionId]);
 
     useEffect(() => {
@@ -156,8 +160,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
         if (!pollStripeSubscriptionTimeout) {
             // Refresh Stripe subscription in 5 seconds in order to poll for upgrade confirmation
             const timeout = setTimeout(async () => {
-                const subscriptionId = await getGitpodService().server.findStripeSubscriptionId(attributionId);
-                setStripeSubscriptionId(subscriptionId);
+                await refreshSubscriptionDetails(attributionId);
                 setPollStripeSubscriptionTimeout(undefined);
             }, 5000);
             setPollStripeSubscriptionTimeout(timeout);
@@ -178,12 +181,12 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
             const response = await getGitpodService().server.listUsage({
                 attributionId,
                 order: Ordering.ORDERING_DESCENDING,
-                from: billingPeriodFrom.toDate().getTime(),
+                from: billingCycleFrom.toDate().getTime(),
                 to: Date.now(),
             });
             setCurrentUsage(response.creditsUsed);
         })();
-    }, [attributionId]);
+    }, [attributionId, billingCycleFrom]);
 
     const showSpinner = !attributionId || isLoadingStripeSubscription || !!pendingStripeSubscription;
     const showBalance = !showSpinner && !(AttributionId.parse(attributionId)?.kind === "team" && !stripeSubscriptionId);
@@ -255,8 +258,15 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                             <div className="flex-grow">
                                 <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Current Period</div>
                                 <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                    <span className="font-semibold">{`${billingPeriodFrom.format("MMMM YYYY")}`}</span>{" "}
-                                    {`(${billingPeriodFrom.format("MMM D")}` + ` - ${billingPeriodTo.format("MMM D")})`}
+                                    <span className="font-semibold">{`${billingCycleFrom.format("MMMM YYYY")}`}</span> (
+                                    <span title={billingCycleFrom.toDate().toUTCString().replace("GMT", "UTC")}>
+                                        {billingCycleFrom.format("MMM D")}
+                                    </span>{" "}
+                                    -{" "}
+                                    <span title={billingCycleTo.toDate().toUTCString().replace("GMT", "UTC")}>
+                                        {billingCycleTo.format("MMM D")}
+                                    </span>
+                                    )
                                 </div>
                             </div>
                             <div>

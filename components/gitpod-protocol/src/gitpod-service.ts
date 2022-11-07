@@ -62,6 +62,7 @@ import { InstallationAdminSettings, TelemetryData } from "./installation-admin-p
 import { ListUsageRequest, ListUsageResponse } from "./usage";
 import { SupportedWorkspaceClass } from "./workspace-class";
 import { BillingMode } from "./billing-mode";
+import { CostCenter } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
@@ -280,7 +281,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     createStripeCustomerIfNeeded(attributionId: string, currency: string): Promise<void>;
     subscribeToStripe(attributionId: string, setupIntentId: string, usageLimit: number): Promise<number | undefined>;
     getStripePortalUrl(attributionId: string): Promise<string>;
-    getUsageLimit(attributionId: string): Promise<number | undefined>;
+    getCostCenter(attributionId: string): Promise<CostCenter | undefined>;
     setUsageLimit(attributionId: string, usageLimit: number): Promise<void>;
 
     listUsage(req: ListUsageRequest): Promise<ListUsageResponse>;
