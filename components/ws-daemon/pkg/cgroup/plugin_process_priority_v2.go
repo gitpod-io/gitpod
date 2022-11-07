@@ -7,8 +7,10 @@ package cgroup
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/fs"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -25,6 +27,7 @@ import (
 type ProcessType string
 
 const (
+	ProcessWorkspaceKit ProcessType = "workspacekit"
 	// ProcessSupervisor referes to a supervisor process
 	ProcessSupervisor ProcessType = "supervisor"
 	// ProcessIDE refers to node.js IDE process
@@ -44,6 +47,7 @@ const (
 
 type ProcessPriorityV2 struct {
 	ProcessPriorities map[ProcessType]int
+	OOMScoreAdj       map[ProcessType]int
 }
 
 func (c *ProcessPriorityV2) Name() string  { return "process-priority-v2" }
@@ -100,16 +104,8 @@ func (c *ProcessPriorityV2) Apply(ctx context.Context, opts *PluginOptions) erro
 				continue
 			}
 
-			priority, ok := c.ProcessPriorities[procType]
-			if !ok {
-				continue
-			}
-
-			countRunningProcess += 1
-			err = syscall.Setpriority(syscall.PRIO_PROCESS, int(pid), priority)
-			if err != nil {
-				log.WithError(err).WithField("pid", pid).WithField("priority", priority).Warn("cannot set process priority")
-			}
+			c.adaptProcessPriorites(procType, pid)
+			c.adaptOOMScore(procType, pid)
 		}
 
 		if countRunningProcess >= NumberOfProcessesToStopApplying {
@@ -126,6 +122,12 @@ func determineProcessType(p *process.Process) ProcessType {
 	cmd := extractCommand(p)
 	if len(cmd) == 0 {
 		return ProcessDefault
+	}
+
+	log.Infof("process cmd: %v", cmd)
+	if strings.HasSuffix(cmd[0], "workspacekit") || (len(cmd) >= 2 && cmd[1] == "ring1") {
+		log.Info("workspacekit")
+		return ProcessWorkspaceKit
 	}
 
 	if strings.HasSuffix(cmd[0], "supervisor") {
@@ -171,4 +173,28 @@ func extractCommand(p *process.Process) []string {
 	}
 
 	return cmdLine
+}
+
+func (c *ProcessPriorityV2) adaptProcessPriorites(procType ProcessType, pid int64) {
+	priority, ok := c.ProcessPriorities[procType]
+	if !ok {
+		return
+	}
+
+	err := syscall.Setpriority(syscall.PRIO_PROCESS, int(pid), priority)
+	if err != nil {
+		log.WithError(err).WithField("pid", pid).WithField("priority", priority).Warn("cannot set process priority")
+	}
+}
+
+func (c *ProcessPriorityV2) adaptOOMScore(procType ProcessType, pid int64) {
+	oomScoreAdj, ok := c.OOMScoreAdj[procType]
+	if !ok {
+		return
+	}
+
+	err := os.WriteFile(fmt.Sprintf("/proc/%v/oom_score_adj", pid), []byte(strconv.Itoa(oomScoreAdj)), 0644)
+	if err != nil {
+		log.WithError(err).WithField("pid", pid).WithField("oomScoreAdj", oomScoreAdj).Warn("cannot set oomScoreAdj")
+	}
 }
