@@ -378,17 +378,7 @@ export default function () {
                                                     )}
                                                 </a>
                                                 <span className="flex-grow" />
-                                                <a
-                                                    href={
-                                                        prebuild
-                                                            ? gitpodHostUrl
-                                                                  .withContext(
-                                                                      `open-prebuild/${prebuild.info.id}/${prebuild.info.changeUrl}`,
-                                                                  )
-                                                                  .toString()
-                                                            : gitpodHostUrl.withContext(`${branch.url}`).toString()
-                                                    }
-                                                >
+                                                <a href={gitpodHostUrl.withContext(`${branch.url}`).toString()}>
                                                     <button
                                                         className={`primary mr-2 py-2 opacity-0 group-hover:opacity-100`}
                                                     >

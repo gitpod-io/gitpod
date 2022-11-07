@@ -6,12 +6,12 @@
 
 import React, { useEffect, useContext, useState } from "react";
 import {
-    CreateWorkspaceMode,
     WorkspaceCreationResult,
     RunningWorkspacePrebuildStarting,
     ContextURL,
     DisposableCollection,
     Team,
+    GitpodServer,
 } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import Modal from "../components/Modal";
@@ -52,7 +52,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
         this.createWorkspace();
     }
 
-    async createWorkspace(mode = CreateWorkspaceMode.SelectIfRunning, forceDefaultConfig = false) {
+    async createWorkspace(options?: Omit<GitpodServer.CreateWorkspaceOptions, "contextUrl">) {
         // Invalidate any previous result.
         this.setState({ result: undefined, stillParsing: true });
 
@@ -62,8 +62,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
         try {
             const result = await getGitpodService().server.createWorkspace({
                 contextUrl: this.props.contextUrl,
-                mode,
-                forceDefaultConfig,
+                ...options,
             });
             if (result.workspaceURL) {
                 window.location.href = result.workspaceURL;
@@ -148,7 +147,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
                             <button
                                 className=""
                                 onClick={() => {
-                                    this.createWorkspace(CreateWorkspaceMode.Default, true);
+                                    this.createWorkspace({ forceDefaultConfig: true });
                                 }}
                             >
                                 Continue with default configuration
@@ -262,7 +261,9 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
                         </>
                     </div>
                     <div className="flex justify-end mt-6">
-                        <button onClick={() => this.createWorkspace(CreateWorkspaceMode.Default)}>New Workspace</button>
+                        <button onClick={() => this.createWorkspace({ ignoreRunningWorkspaceOnSameCommit: true })}>
+                            New Workspace
+                        </button>
                     </div>
                 </Modal>
             );
@@ -271,10 +272,10 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
                 <RunningPrebuildView
                     runningPrebuild={result.runningWorkspacePrebuild}
                     onUseLastSuccessfulPrebuild={() =>
-                        this.createWorkspace(CreateWorkspaceMode.UseLastSuccessfulPrebuild)
+                        this.createWorkspace({ allowUsingPreviousPrebuilds: true, ignoreRunningPrebuild: true })
                     }
-                    onIgnorePrebuild={() => this.createWorkspace(CreateWorkspaceMode.ForceNew)}
-                    onPrebuildSucceeded={() => this.createWorkspace(CreateWorkspaceMode.UsePrebuild)}
+                    onIgnorePrebuild={() => this.createWorkspace({ ignoreRunningPrebuild: true })}
+                    onPrebuildSucceeded={() => this.createWorkspace()}
                 />
             );
         }

@@ -18,6 +18,7 @@ import {
     WithSnapshot,
     WithPrebuild,
     OpenPrebuildContext,
+    Project,
 } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
@@ -62,16 +63,17 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
     public async createForContext(
         ctx: TraceContext,
         user: User,
+        project: Project | undefined,
         context: WorkspaceContext,
         normalizedContextURL: string,
     ): Promise<Workspace> {
         if (StartPrebuildContext.is(context)) {
             return this.createForStartPrebuild(ctx, user, context, normalizedContextURL);
         } else if (PrebuiltWorkspaceContext.is(context)) {
-            return this.createForPrebuiltWorkspace(ctx, user, context, normalizedContextURL);
+            return this.createForPrebuiltWorkspace(ctx, user, project, context, normalizedContextURL);
         }
 
-        return super.createForContext(ctx, user, context, normalizedContextURL);
+        return super.createForContext(ctx, user, project, context, normalizedContextURL);
     }
 
     protected async createForStartPrebuild(
@@ -146,6 +148,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                 ws = await this.createForPrebuiltWorkspace(
                     { span },
                     user,
+                    project,
                     incrementalPrebuildContext,
                     normalizedContextURL,
                 );
@@ -166,7 +169,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
 
             if (!ws) {
                 // No suitable parent prebuild was found -- create a (fresh) full prebuild.
-                ws = await this.createForCommit({ span }, user, commitContext, normalizedContextURL);
+                ws = await this.createForCommit({ span }, user, project, commitContext, normalizedContextURL);
             }
             ws.type = "prebuild";
             ws.projectId = project?.id;
@@ -217,6 +220,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
     protected async createForPrebuiltWorkspace(
         ctx: TraceContext,
         user: User,
+        project: Project | undefined,
         context: PrebuiltWorkspaceContext,
         normalizedContextURL: string,
     ): Promise<Workspace> {
@@ -234,14 +238,19 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                 span.log({
                     error: `No build workspace with ID ${buildWorkspaceID} found - falling back to original context`,
                 });
-                return await this.createForContext({ span }, user, context.originalContext, normalizedContextURL);
+                return await this.createForContext(
+                    { span },
+                    user,
+                    project,
+                    context.originalContext,
+                    normalizedContextURL,
+                );
             }
             const config = { ...buildWorkspace.config };
             config.vscode = {
                 extensions: (config && config.vscode && config.vscode.extensions) || [],
             };
 
-            const project = await this.projectDB.findProjectByCloneUrl(context.prebuiltWorkspace.cloneURL);
             let projectId: string | undefined;
             // associate with a project, if it's the personal project of the current user
             if (project?.userId && project?.userId === user.id) {

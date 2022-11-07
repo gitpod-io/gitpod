@@ -191,6 +191,7 @@ export class PrebuildManager {
             const workspace = await this.workspaceFactory.createForContext(
                 { span },
                 user,
+                project,
                 prebuildContext,
                 context.normalizedContextURL!,
             );

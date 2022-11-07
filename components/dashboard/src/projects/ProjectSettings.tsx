@@ -90,6 +90,18 @@ export default function () {
                 checked={!project.settings?.keepOutdatedPrebuildsRunning}
                 onChange={({ target }) => updateProjectSettings({ keepOutdatedPrebuildsRunning: !target.checked })}
             />
+            <h3 className="mt-12">Workspace Starts</h3>
+            <CheckBox
+                title={<span>Incrementally update from old prebuilds</span>}
+                desc={
+                    <span>
+                        Whether new workspaces can be started based on prebuilds that ran on older Git commits and get
+                        incrementally updated.
+                    </span>
+                }
+                checked={!!project.settings?.allowUsingPreviousPrebuilds}
+                onChange={({ target }) => updateProjectSettings({ allowUsingPreviousPrebuilds: target.checked })}
+            />
             {showPersistentVolumeClaimUI && (
                 <>
                     <br></br>
