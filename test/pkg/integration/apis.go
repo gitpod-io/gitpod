@@ -255,6 +255,10 @@ func (c *ComponentAPI) CreateOAuth2Token(user string, scopes []string) (string, 
 	return tkn, nil
 }
 
+func (c *ComponentAPI) ClearGitpodServerClientCache() {
+	c.serverStatus.Client = map[string]*gitpod.APIoverJSONRPC{}
+}
+
 // GitpodServer provides access to the Gitpod server API
 func (c *ComponentAPI) GitpodServer(opts ...GitpodServerOpt) (gitpod.APIInterface, error) {
 	var options gitpodServerOpts

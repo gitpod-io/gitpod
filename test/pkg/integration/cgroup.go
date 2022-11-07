@@ -2,15 +2,13 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package common
+package integration
 
 import (
-	"net/rpc"
-
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 )
 
-func IsCgroupV2(rsa *rpc.Client) (bool, error) {
+func IsCgroupV2(rsa *RpcClient) (bool, error) {
 	var resp agent.ExecResponse
 	err := rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 		Dir:     "/",
