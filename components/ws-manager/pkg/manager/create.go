@@ -258,6 +258,7 @@ func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) 
 		PVCConfig = startContext.Class.PVC
 	}
 
+	volumeMode := corev1.PersistentVolumeBlock
 	PVC := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%s", prefix, req.Id),
@@ -266,6 +267,7 @@ func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) 
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
 			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+			VolumeMode:  &volumeMode,
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
 					corev1.ResourceName(corev1.ResourceStorage): PVCConfig.Size,
@@ -582,29 +584,13 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 				},
 			}
 
-			// SubPath so that lost+found is not visible
-			pod.Spec.Containers[0].VolumeMounts[0].SubPath = "workspace"
-			// not needed, since it is using dedicated disk
-			pod.Spec.Containers[0].VolumeMounts[0].MountPropagation = nil
+			// get rid of first volume mount as PVC is mounted as block device and will be mounted by workspacekit
+			pod.Spec.Containers[0].VolumeMounts = pod.Spec.Containers[0].VolumeMounts[1:]
 
-			// pavel: 133332 is the Gitpod UID (33333) shifted by 99999. The shift happens inside the workspace container due to the user namespace use.
-			// We set this magical ID to make sure that gitpod user inside the workspace can write into /workspace folder mounted by PVC
-			gitpodGUID := int64(133332)
-			pod.Spec.SecurityContext.FSGroup = &gitpodGUID
-
-			// add init container to chown workspace subpath, so that it is owned by gitpod user (there is no k8s native way of doing this as of right now)
-			pod.Spec.InitContainers = append(pod.Spec.InitContainers, corev1.Container{
-				Name:            "chown-workspace",
-				Image:           "busybox",
-				ImagePullPolicy: corev1.PullIfNotPresent,
-				Command:         []string{"chown", "133332:133332", "/workspace"},
-				VolumeMounts: []corev1.VolumeMount{
-					{
-						Name:      workspaceVolumeName,
-						SubPath:   "workspace",
-						MountPath: "/workspace",
-					},
-				},
+			// add as device instead
+			pod.Spec.Containers[0].VolumeDevices = append(pod.Spec.Containers[0].VolumeDevices, corev1.VolumeDevice{
+				Name:       workspaceVolumeName,
+				DevicePath: "/dev/workspace",
 			})
 
 		case api.WorkspaceFeatureFlag_WORKSPACE_CLASS_LIMITING:

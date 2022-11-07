@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -225,7 +226,33 @@ func main() {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					err := ioutil.WriteFile("/dev/kmsg", nil, 0644)
+					workspaceDevice := "/dev/workspace"
+					isReady, err := isWorkspaceDeviceReady(workspaceDevice)
+					if err != nil {
+						log.WithError(err).Error("cannot check if device is ready")
+						return err
+					}
+
+					if !isReady {
+						err = prepareWorkspaceDevice(workspaceDevice)
+						if err != nil {
+							log.WithError(err).Error("cannot prepare device")
+							return err
+						}
+					}
+
+					err = mountWorkspaceDevice(workspaceDevice, "/workspace")
+					if err != nil {
+						log.WithError(err).Error("cannot mount device")
+						return err
+					}
+
+					err = os.Chown("/workspace", c.Int("uid"), c.Int("gid"))
+					if err != nil {
+						return err
+					}
+
+					err = ioutil.WriteFile("/dev/kmsg", nil, 0644)
 					if err != nil {
 						return err
 					}
@@ -643,6 +670,50 @@ func main() {
 	if err != nil {
 		log.WithField("instanceId", os.Getenv("GITPOD_INSTANCE_ID")).WithField("args", os.Args).Fatal(err)
 	}
+}
+
+func isWorkspaceDeviceReady(device string) (bool, error) {
+	var stderr bytes.Buffer
+	cmd := exec.Command("/usr/sbin/blkid", "-o", "value", "-s", "TYPE", device)
+	cmd.Stderr = &stderr
+	out, err := cmd.Output()
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			if exitErr.ExitCode() == 2 {
+				// unformatted device
+				return false, nil
+			}
+		}
+
+		log.WithError(err).WithField("stdout", string(out)).WithField("stderr", stderr.String()).Error("cannot obtain details from the workspace disk")
+		return false, xerrors.Errorf("cannot obtain details from the workspace disk: %w", err)
+	}
+
+	return string(out) == "ext4", nil
+}
+
+func prepareWorkspaceDevice(device string) error {
+	var stderr bytes.Buffer
+	cmd := exec.Command("/usr/sbin/mkfs.ext4", "-m1", device)
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		log.WithError(err).WithField("reason", stderr.String()).Error("cannot mount workspace disk")
+		return xerrors.Errorf("cannot format workspace disk using ext4: %w", err)
+	}
+
+	return nil
+}
+
+func mountWorkspaceDevice(device, target string) error {
+	if err := os.MkdirAll(target, 0755); err != nil {
+		return xerrors.Errorf("cannot create directory %v: %w", target, err)
+	}
+
+	if err := unix.Mount(device, target, "ext4", uintptr(0), "user_xattr"); err != nil {
+		return xerrors.Errorf("cannot mount workspace disk in %v: %w", target, err)
+	}
+
+	return nil
 }
 
 func syscallMoveMount(fromDirFD int, fromPath string, toDirFD int, toPath string, flags uintptr) error {
