@@ -18,6 +18,7 @@ declare SIGNAL # used to record signal caught by trap
 
 context_name=$1
 context_repo=$2
+annotation_withIntegrationTests=$3
 
 function cleanup ()
 {
@@ -79,6 +80,8 @@ git config --global user.email roboquat@gitpod.io
 git remote set-url origin https://oauth2:"${ROBOQUAT_TOKEN}"@github.com/gitpod-io/gitpod.git
 
 werft log phase "build preview environment" "build preview environment"
+
+echo "annotation_withIntegrationTests=${annotation_withIntegrationTests}"
 
 REVISION=$(git show -s --format="%h" HEAD)
 
@@ -164,7 +167,12 @@ args+=( "-namespace=default" )
 [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
 args+=( "-timeout=60m" )
 
-IDE_TEST_LIST=(/workspace/test/tests/ide/ssh /workspace/test/tests/ide/vscode /workspace/test/tests/ide/jetbrains)
+IDE_TESTS_DIR="/workspace/test/tests/ide"
+JETBRAINS_TESTS="$IDE_TESTS_DIR/jetbrains"
+VSCODE_TESTS="$IDE_TESTS_DIR/vscode"
+SSH_TESTS="$IDE_TESTS_DIR/ssh"
+
+IDE_TEST_LIST=("$SSH_TESTS $VSCODE_TESTS $JETBRAINS_TESTS")
 for TEST_PATH in "${IDE_TEST_LIST[@]}"
 do
     TEST_NAME=$(basename "${TEST_PATH}")

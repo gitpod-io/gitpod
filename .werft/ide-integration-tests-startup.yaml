@@ -64,5 +64,6 @@ pod:
         - .werft/ide-integration-tests-startup.sh
         - "{{ .Name }}"
         - "{{ .Repository.Repo }}"
+        - "{{ .Annotations.withIntegrationTests }}"
 plugins:
   cron: "0 3 * * *"
