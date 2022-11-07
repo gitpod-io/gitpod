@@ -28,6 +28,7 @@
                 }
             },
             "storageClassName": "test-storage",
+            "volumeMode": "Block",
             "dataSource": {
                 "apiGroup": "snapshot.storage.k8s.io",
                 "kind": "VolumeSnapshot",
