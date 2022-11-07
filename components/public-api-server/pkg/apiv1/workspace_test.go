@@ -6,7 +6,6 @@ package apiv1
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -20,6 +19,7 @@ import (
 	"github.com/gitpod-io/gitpod/public-api/experimental/v1/v1connect"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
+	"github.com/sourcegraph/jsonrpc2"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -70,7 +70,10 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 			serverMock.EXPECT().GetWorkspace(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, id string) (res *protocol.WorkspaceInfo, err error) {
 				w, ok := test.Workspaces[id]
 				if !ok {
-					return nil, errors.New("code 404")
+					return nil, &jsonrpc2.Error{
+						Code:    404,
+						Message: "not found",
+					}
 				}
 				return &w, nil
 			})
@@ -129,7 +132,10 @@ func TestWorkspaceService_GetOwnerToken(t *testing.T) {
 			serverMock.EXPECT().GetOwnerToken(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, workspaceID string) (res string, err error) {
 				w, ok := test.Tokens[workspaceID]
 				if !ok {
-					return "", errors.New("code 404")
+					return "", &jsonrpc2.Error{
+						Code:    404,
+						Message: "not found",
+					}
 				}
 				return w, nil
 			})
