@@ -29,6 +29,10 @@
     "grpc-tools": "^1.11.2",
     "grpc_tools_node_protoc_ts": "^5.3.2",
     "typescript": "~4.4.2",
-    "typescript-formatter": "^7.2.2"
+    "typescript-formatter": "^7.2.2",
+    "mocha": "^5.0.0",
+    "mocha-typescript": "^1.1.11",
+    "ts-node": "^9.0.0",
+    "chai": "^4.3.4"
   }
 }
