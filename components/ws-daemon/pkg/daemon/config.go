@@ -7,6 +7,7 @@ package daemon
 import (
 	"context"
 
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cgroup"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
@@ -21,14 +22,15 @@ import (
 type Config struct {
 	Runtime RuntimeConfig `json:"runtime"`
 
-	Content        content.Config      `json:"content"`
-	Uidmapper      iws.UidmapperConfig `json:"uidmapper"`
-	CPULimit       cpulimit.Config     `json:"cpulimit"`
-	IOLimit        IOLimitConfig       `json:"ioLimit"`
-	ProcLimit      int64               `json:"procLimit"`
-	NetLimit       netlimit.Config     `json:"netlimit"`
-	Hosts          hosts.Config        `json:"hosts"`
-	DiskSpaceGuard diskguard.Config    `json:"disk"`
+	Content        content.Config           `json:"content"`
+	Uidmapper      iws.UidmapperConfig      `json:"uidmapper"`
+	CPULimit       cpulimit.Config          `json:"cpulimit"`
+	IOLimit        IOLimitConfig            `json:"ioLimit"`
+	ProcLimit      int64                    `json:"procLimit"`
+	NetLimit       netlimit.Config          `json:"netlimit"`
+	OOMScores      cgroup.OOMScoreAdjConfig `json:"oomScores"`
+	Hosts          hosts.Config             `json:"hosts"`
+	DiskSpaceGuard diskguard.Config         `json:"disk"`
 }
 
 type RuntimeConfig struct {
