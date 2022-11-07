@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
@@ -22,12 +23,27 @@ import (
 )
 
 func main() {
+	done := make(chan struct{})
+	go func() {
+		mux := http.NewServeMux()
+		mux.Handle("/shutdown", shugtdownHandler(done))
+		_ = http.ListenAndServe(":8080", mux)
+	}()
+
 	err := enterSupervisorNamespaces()
 	if err != nil {
 		panic(fmt.Sprintf("enterSupervisorNamespaces: %v", err))
 	}
 
-	integration.ServeAgent(new(WorkspaceAgent))
+	integration.ServeAgent(done, new(WorkspaceAgent))
+}
+
+func shugtdownHandler(done chan struct{}) http.HandlerFunc {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		close(done)
+		w.Write([]byte("shutdown"))
+		w.WriteHeader(http.StatusOK)
+	}
 }
 
 func enterSupervisorNamespaces() error {

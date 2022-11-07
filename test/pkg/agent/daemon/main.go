@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 	"os"
 	"time"
 
@@ -17,7 +18,21 @@ import (
 )
 
 func main() {
-	integration.ServeAgent(new(DaemonAgent))
+	done := make(chan struct{})
+	go func() {
+		mux := http.NewServeMux()
+		mux.Handle("/shutdown", shugtdownHandler(done))
+		_ = http.ListenAndServe(":8080", mux)
+	}()
+	integration.ServeAgent(done, new(DaemonAgent))
+}
+
+func shugtdownHandler(done chan struct{}) http.HandlerFunc {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		close(done)
+		w.Write([]byte("shutdown"))
+		w.WriteHeader(http.StatusOK)
+	}
 }
 
 type daemonConfig struct {
