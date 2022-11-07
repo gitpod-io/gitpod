@@ -435,6 +435,25 @@ func stopWsF(t *testing.T, instanceID string, workspaceID string, api *Component
 		sctx, scancel := context.WithTimeout(context.Background(), perCallTimeout)
 		defer scancel()
 
+		done := make(chan *wsmanapi.WorkspaceStatus)
+		errCh := make(chan error)
+		ready := make(chan struct{}, 1)
+		go func() {
+			var lastStatus *wsmanapi.WorkspaceStatus
+			defer func() {
+				done <- lastStatus
+				close(done)
+			}()
+
+			t.Logf("waiting for stopping the workspace: %s", instanceID)
+			lastStatus, err = WaitForWorkspaceStop(t, sctx, ready, api, instanceID, workspaceID)
+			if err != nil {
+				errCh <- err
+			}
+		}()
+
+		<-ready
+
 		for {
 			t.Logf("attemp to delete the workspace: %s", instanceID)
 			err := DeleteWorkspace(sctx, api, instanceID)
@@ -448,60 +467,22 @@ func stopWsF(t *testing.T, instanceID string, workspaceID string, api *Component
 
 				return nil, err
 			}
-
 			break
-		}
-
-		wm, err := api.WorkspaceManager()
-		if err != nil {
-			return nil, err
-		}
-
-		dr, err := wm.DescribeWorkspace(sctx, &wsmanapi.DescribeWorkspaceRequest{
-			Id: instanceID,
-		})
-		if err != nil {
-			if s, ok := status.FromError(err); ok && s.Code() == codes.NotFound {
-				t.Logf("the workspace is already gone: %v", instanceID)
-				return &wsmanapi.WorkspaceStatus{
-					Id:    instanceID,
-					Phase: wsmanapi.WorkspacePhase_STOPPED,
-				}, nil
-			}
-
-			return nil, err
 		}
 
 		if !waitForStop {
-			return dr.Status, nil
+			return nil, nil
 		}
 
-		var lastStatus *wsmanapi.WorkspaceStatus
 		for {
-			t.Logf("waiting for stopping the workspace: %s", instanceID)
-			lastStatus, err = WaitForWorkspaceStop(t, sctx, api, instanceID, workspaceID)
-			if err != nil {
-				if st, ok := status.FromError(err); ok {
-					switch st.Code() {
-					case codes.Unavailable:
-						api.ClearWorkspaceManagerClientCache()
-						t.Logf("got %v during waiting for stopping the workspace", st)
-						time.Sleep(5 * time.Second)
-						continue
-					case codes.NotFound:
-						t.Logf("the workspace is already gone: %v", instanceID)
-						return lastStatus, nil
-					}
-				}
-
-				return lastStatus, err
+			select {
+			case err := <-errCh:
+				return nil, err
+			case s := <-done:
+				t.Logf("successfully terminated workspace")
+				return s, nil
 			}
-
-			break
 		}
-		t.Logf("Successfully terminated workspace")
-
-		return lastStatus, nil
 	}
 }
 
@@ -525,44 +506,61 @@ func WaitForWorkspaceStart(t *testing.T, ctx context.Context, instanceID string,
 		o(&cfg)
 	}
 
-	t.Log("prepare for a connection with ws-manager")
-	sub, err := getWsManagerSubClientWithRetry(ctx, api, workspaceID)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if sub != nil {
-			_ = sub.CloseSend()
-		}
-	}()
-	t.Log("established for a connection with ws-manager")
-
 	done := make(chan *wsmanapi.WorkspaceStatus)
 	errStatus := make(chan error)
-
+	reboot := make(chan struct{}, 1)
 	go func() {
+		t.Log("prepare for a connection with ws-manager")
+		wsman, err := api.WorkspaceManager()
+		if err != nil {
+			errStatus <- err
+			return
+		}
+		sub, err := wsman.Subscribe(ctx, &wsmanapi.SubscribeRequest{
+			MustMatch: &wsmanapi.MetadataFilter{
+				MetaId: workspaceID,
+			},
+		})
+		if err != nil {
+			errStatus <- err
+			return
+		}
+
+		defer func() {
+			if sub != nil {
+				_ = sub.CloseSend()
+			}
+		}()
+		t.Log("established for a connection with ws-manager")
+
 		var s *wsmanapi.WorkspaceStatus
 		defer func() {
 			done <- s
 			close(done)
 		}()
 		for {
+			t.Logf("check if the status of workspace is in the running phase: %s", instanceID)
 			resp, err := sub.Recv()
 			if err != nil {
 				if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
 					sub.CloseSend()
 					api.ClearWorkspaceManagerClientCache()
-					wsman, err := api.WorkspaceManager()
+					wsman, err = api.WorkspaceManager()
+					if err != nil {
+						time.Sleep(5 * time.Second)
+						reboot <- struct{}{}
+						t.Logf("we can't get the worksapce manger client: %v", err)
+						continue
+					}
+					sub, err = wsman.Subscribe(ctx, &wsmanapi.SubscribeRequest{
+						MustMatch: &wsmanapi.MetadataFilter{
+							MetaId: workspaceID,
+						},
+					})
 					if err != nil {
 						errStatus <- xerrors.Errorf("cannot listen for workspace updates: %w", err)
 						return
 					}
-					sub, err = wsman.Subscribe(ctx, &wsmanapi.SubscribeRequest{})
-					if err != nil {
-						errStatus <- xerrors.Errorf("cannot listen for workspace updates: %w", err)
-						return
-					}
-
 					continue
 				}
 				errStatus <- xerrors.Errorf("workspace update error: %w", err)
@@ -578,11 +576,9 @@ func WaitForWorkspaceStart(t *testing.T, ctx context.Context, instanceID string,
 
 			if cfg.CanFail {
 				if s.Phase == wsmanapi.WorkspacePhase_STOPPING {
-					// <-parallelLimiter
 					return
 				}
 				if s.Phase == wsmanapi.WorkspacePhase_STOPPED {
-					// <-parallelLimiter
 					return
 				}
 			} else {
@@ -605,74 +601,101 @@ func WaitForWorkspaceStart(t *testing.T, ctx context.Context, instanceID string,
 		}
 	}()
 
-	// maybe the workspace has started in the meantime and we've missed the update
-	desc, _ := wsman.DescribeWorkspace(ctx, &wsmanapi.DescribeWorkspaceRequest{Id: instanceID})
-	if desc != nil {
-		switch desc.Status.Phase {
-		case wsmanapi.WorkspacePhase_RUNNING:
-			return
-		case wsmanapi.WorkspacePhase_STOPPING:
-			if !cfg.CanFail {
-				return nil, ErrWorkspaceInstanceStopping
-			}
-		case wsmanapi.WorkspacePhase_STOPPED:
-			if !cfg.CanFail {
-				return nil, ErrWorkspaceInstanceStopped
+	handle := func() (*wsmanapi.WorkspaceStatus, bool, error) {
+		wsman, err := api.WorkspaceManager()
+		if err != nil {
+			api.ClearWorkspaceManagerClientCache()
+			return nil, true, nil
+		}
+		desc, err := wsman.DescribeWorkspace(ctx, &wsmanapi.DescribeWorkspaceRequest{
+			Id: instanceID,
+		})
+		if err != nil {
+			scode := status.Code(err)
+			if scode == codes.NotFound || strings.Contains(err.Error(), "not found") {
+				if !cfg.CanFail {
+					return nil, false, xerrors.New("the workspace couldn't find")
+				}
+				return nil, false, nil
 			}
 		}
+		if desc != nil && desc.Status != nil {
+			switch desc.Status.Phase {
+			case wsmanapi.WorkspacePhase_RUNNING:
+				return desc.Status, false, nil
+			case wsmanapi.WorkspacePhase_STOPPING:
+				if !cfg.CanFail {
+					return nil, false, ErrWorkspaceInstanceStopping
+				}
+			case wsmanapi.WorkspacePhase_STOPPED:
+				if !cfg.CanFail {
+					return nil, false, ErrWorkspaceInstanceStopped
+				}
+			}
+		}
+		return nil, true, nil
 	}
 
-	select {
-	case <-ctx.Done():
-		return nil, xerrors.Errorf("cannot wait for workspace: %w", ctx.Err())
-	case s := <-done:
-		return s, nil
-	case err := <-errStatus:
-		return nil, err
+	ticker := time.NewTicker(30 * time.Second)
+	for {
+		select {
+		case <-ticker.C:
+			// For in case missed the status change
+			desc, cont, err := handle()
+			if cont {
+				continue
+			} else if err != nil {
+				return nil, err
+			} else if desc != nil {
+				return desc, nil
+			}
+		case <-reboot:
+			// Consider workspace state changes during subscriber reboot
+			desc, cont, err := handle()
+			if cont {
+				continue
+			} else if err != nil {
+				return nil, err
+			} else if desc != nil {
+				return desc, nil
+			}
+		case <-ctx.Done():
+			return nil, xerrors.Errorf("cannot wait for workspace: %w", ctx.Err())
+		case s := <-done:
+			return s, nil
+		case err := <-errStatus:
+			return nil, err
+		}
 	}
 }
 
 // WaitForWorkspaceStop waits until a workspace is stopped. Fails the test if the workspace
 // fails or does not stop before the context is canceled.
-func WaitForWorkspaceStop(t *testing.T, ctx context.Context, api *ComponentAPI, instanceID string, workspaceID string) (lastStatus *wsmanapi.WorkspaceStatus, err error) {
+func WaitForWorkspaceStop(t *testing.T, ctx context.Context, ready chan<- struct{}, api *ComponentAPI, instanceID string, workspaceID string) (lastStatus *wsmanapi.WorkspaceStatus, err error) {
 	wsman, err := api.WorkspaceManager()
 	if err != nil {
-		return nil, xerrors.Errorf("cannot listen for workspace updates: %w", err)
+		return nil, err
 	}
-
-	_, err = wsman.DescribeWorkspace(ctx, &wsmanapi.DescribeWorkspaceRequest{
-		Id: instanceID,
+	sub, err := wsman.Subscribe(ctx, &wsmanapi.SubscribeRequest{
+		MustMatch: &wsmanapi.MetadataFilter{
+			MetaId: workspaceID,
+		},
 	})
 	if err != nil {
+		ready <- struct{}{}
 		return nil, err
 	}
 
-	sub, err := wsman.Subscribe(ctx, &wsmanapi.SubscribeRequest{})
-	if err != nil {
-		return nil, err
-	}
 	defer func() {
 		if sub != nil {
 			_ = sub.CloseSend()
 		}
 	}()
 
+	var notFound bool
 	done := make(chan *wsmanapi.WorkspaceStatus)
 	errCh := make(chan error)
-	resetSubscriber := func(subscriber wsmanapi.WorkspaceManager_SubscribeClient, sapi *ComponentAPI) (wsmanapi.WorkspaceManager_SubscribeClient, error) {
-		subscriber.CloseSend()
-		sapi.ClearWorkspaceManagerClientCache()
-		wsman, err := sapi.WorkspaceManager()
-		if err != nil {
-			return nil, xerrors.Errorf("cannot listen for workspace updates: %w", err)
-		}
-		new_sub, err := wsman.Subscribe(ctx, &wsmanapi.SubscribeRequest{})
-		if err != nil {
-			return nil, xerrors.Errorf("cannot listen for workspace updates: %w", err)
-		}
-		return new_sub, nil
-	}
-
+	reboot := make(chan struct{}, 1)
 	go func() {
 		var wss *wsmanapi.WorkspaceStatus
 		defer func() {
@@ -680,61 +703,103 @@ func WaitForWorkspaceStop(t *testing.T, ctx context.Context, api *ComponentAPI, 
 			close(done)
 		}()
 
+		ready <- struct{}{}
 		for {
-			t.Log("check if the status of workspace is in the stopped phase")
-			time.Sleep(5 * time.Second)
 			resp, err := sub.Recv()
+			notFound = false
 			if err != nil {
-				t.Logf("recv err %v", err)
 				if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
-					sub, err = resetSubscriber(sub, api)
-					if err == nil {
-						t.Logf("continue because unavailable: %v", err)
+					var serr error
+					sub.CloseSend()
+					api.ClearWorkspaceManagerClientCache()
+					wsman, err = api.WorkspaceManager()
+					if err != nil {
+						t.Logf("we can't get the worksapce manger client: %v", err)
+						time.Sleep(5 * time.Second)
+						reboot <- struct{}{}
+						continue
+					}
+					sub, err = wsman.Subscribe(ctx, &wsmanapi.SubscribeRequest{
+						MustMatch: &wsmanapi.MetadataFilter{
+							MetaId: workspaceID,
+						},
+					})
+					if serr == nil {
 						continue
 					}
 				}
-				errCh <- xerrors.Errorf("workspace update error: %q", err)
+				errCh <- xerrors.Errorf("workspace update error: %v", err)
 				return
 			}
 
-			if wss = resp.GetStatus(); wss != nil && wss.Id == instanceID {
-				t.Logf("status: %s, %s", wss.Id, wss.Phase)
-				if wss.Conditions.Failed != "" {
-					// TODO(toru): we have to fix https://github.com/gitpod-io/gitpod/issues/12021
-					if wss.Conditions.Failed != "The container could not be located when the pod was deleted.  The container used to be Running" && wss.Conditions.Failed != "The container could not be located when the pod was terminated" {
-						errCh <- xerrors.Errorf("workspace instance %s failed: %s", instanceID, wss.Conditions.Failed)
-					}
-					t.Logf("return with failed: %s", wss.Conditions.Failed)
-					return
+			wss = resp.GetStatus()
+			if wss.Conditions.Failed != "" {
+				// TODO(toru): we have to fix https://github.com/gitpod-io/gitpod/issues/12021
+				if wss.Conditions.Failed != "The container could not be located when the pod was deleted.  The container used to be Running" && wss.Conditions.Failed != "The container could not be located when the pod was terminated" {
+					errCh <- xerrors.Errorf("workspace instance %s failed: %s", instanceID, wss.Conditions.Failed)
 				}
-				if wss.Phase == wsmanapi.WorkspacePhase_STOPPED {
-					t.Logf("confirm the worksapce is stopped: %s, %s", wss.Id, wss.Phase)
-					return
-				}
-				continue
+				return
 			}
-
-			return
+			if wss.Phase == wsmanapi.WorkspacePhase_STOPPED {
+				t.Logf("confirmed the worksapce is stopped: %s, %s", wss.Id, wss.Phase)
+				return
+			}
+			continue
 		}
 	}()
 
-	// maybe the workspace has stopped in the meantime and we've missed the update
-	desc, _ := wsman.DescribeWorkspace(ctx, &wsmanapi.DescribeWorkspaceRequest{Id: instanceID})
-	if desc != nil {
-		switch desc.Status.Phase {
-		case wsmanapi.WorkspacePhase_STOPPED:
-			// ensure theia service is cleaned up
-			lastStatus = desc.Status
+	desc, err := wsman.DescribeWorkspace(ctx, &wsmanapi.DescribeWorkspaceRequest{
+		Id: instanceID,
+	})
+	if err != nil {
+		scode := status.Code(err)
+		if scode == codes.NotFound || strings.Contains(err.Error(), "not found") {
+			t.Log("for some reason, ws-manager subscriber doesn't get updated. But the workspace is gone")
+			return nil, nil
+		}
+	}
+	if desc != nil && desc.Status != nil {
+		if desc.Status.Phase == wsmanapi.WorkspacePhase_STOPPED {
+			return desc.Status, nil
 		}
 	}
 
-	select {
-	case err := <-errCh:
-		return nil, err
-	case <-ctx.Done():
-		return nil, xerrors.Errorf("cannot wait for workspace: %q", ctx.Err())
-	case s := <-done:
-		return s, nil
+	for {
+		select {
+		// Consider workspace state changes during subscriber reboot
+		case <-reboot:
+			wsman, err := api.WorkspaceManager()
+			if err != nil {
+				api.ClearWorkspaceManagerClientCache()
+				continue
+			}
+			desc, err := wsman.DescribeWorkspace(ctx, &wsmanapi.DescribeWorkspaceRequest{
+				Id: instanceID,
+			})
+			if err != nil {
+				scode := status.Code(err)
+				if scode == codes.NotFound || strings.Contains(err.Error(), "not found") {
+					if notFound {
+						t.Log("for some reason, ws-manager subscriber doesn't get updated. But the workspace is gone")
+						return nil, nil
+					}
+					notFound = true
+					continue
+				}
+			}
+			notFound = false
+			if desc != nil && desc.Status != nil {
+				if desc.Status.Phase == wsmanapi.WorkspacePhase_STOPPED {
+					return desc.Status, nil
+				}
+			}
+		case err := <-errCh:
+			return nil, err
+		case <-ctx.Done():
+			return nil, xerrors.Errorf("cannot wait for workspace: %w", ctx.Err())
+		case s := <-done:
+			return s, nil
+		}
 	}
 }
 
