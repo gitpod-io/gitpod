@@ -19,7 +19,6 @@ import (
 
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
-	"github.com/gitpod-io/gitpod/test/pkg/integration/common"
 )
 
 func TestCgroupV2(t *testing.T) {
@@ -60,7 +59,7 @@ func TestCgroupV2(t *testing.T) {
 			defer rsa.Close()
 			integration.DeferCloser(t, closer)
 
-			cgv2, err := common.IsCgroupV2(rsa)
+			cgv2, err := integration.IsCgroupV2(rsa)
 			if err != nil {
 				t.Fatalf("unexpected error checking cgroup v2: %v", err)
 			}
@@ -75,7 +74,7 @@ func TestCgroupV2(t *testing.T) {
 				Command: "bash",
 				Args: []string{
 					"-c",
-					fmt.Sprintf("sudo mkdir %s", cgroupBase),
+					fmt.Sprintf("if [ ! -e %s ]; then sudo mkdir %s; fi", cgroupBase, cgroupBase),
 				},
 			}, &respNewCgroup)
 			if err != nil {

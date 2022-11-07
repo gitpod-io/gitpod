@@ -6,7 +6,6 @@ package wsmanager
 
 import (
 	"context"
-	"net/rpc"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -18,7 +17,6 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
-	"github.com/gitpod-io/gitpod/test/pkg/integration/common"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
@@ -148,7 +146,7 @@ func TestMultiRepoWorkspaceSuccess(t *testing.T) {
 	testEnv.Test(t, f)
 }
 
-func assertRepositories(t *testing.T, rsa *rpc.Client) {
+func assertRepositories(t *testing.T, rsa *integration.RpcClient) {
 	var ls agent.ListDirResponse
 	err := rsa.Call("WorkspaceAgent.ListDir", &agent.ListDirRequest{
 		Dir: "/workspace",
@@ -183,7 +181,7 @@ func assertRepositories(t *testing.T, rsa *rpc.Client) {
 		}
 	}
 
-	git := common.Git(rsa)
+	git := integration.Git(rsa)
 
 	for k, v := range expected {
 		if !v.Cloned {

@@ -94,7 +94,7 @@ func TestStartWorkspace(t *testing.T) {
 				t.Fatal("CreateWorkspace did not start the workspace")
 			}
 
-			_, err = integration.WaitForWorkspaceStart(ctx, nfo.LatestInstance.ID, api)
+			_, err = integration.WaitForWorkspaceStart(t, ctx, nfo.LatestInstance.ID, resp.CreatedWorkspaceID, api)
 			if err != nil {
 				t.Fatalf("cannot get workspace: %q", err)
 			}

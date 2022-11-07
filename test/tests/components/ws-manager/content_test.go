@@ -129,12 +129,6 @@ func TestBackup(t *testing.T) {
 						t.Fatal(err)
 					}
 
-					t.Logf("status is nil?: %v", lastStatusWs1 == nil)
-					if lastStatusWs1 != nil && lastStatusWs1.Conditions != nil {
-						t.Logf("vs is nil?: %v", lastStatusWs1.Conditions.VolumeSnapshot == nil)
-					} else {
-						t.Logf("not found vs")
-					}
 					ws2, stopWs2, err := integration.LaunchWorkspaceDirectly(t, ctx, api,
 						integration.WithRequestModifier(func(w *wsmanapi.StartWorkspaceRequest) error {
 							w.ServicePrefix = ws1.Req.ServicePrefix
@@ -145,12 +139,10 @@ func TestBackup(t *testing.T) {
 							w.Spec.WorkspaceLocation = ws1.Req.Spec.WorkspaceLocation
 
 							if !reflect.DeepEqual(w.Spec.FeatureFlags, []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM}) {
-								t.Log("return not pvc")
 								return nil
 							}
 
 							if lastStatusWs1 != nil && lastStatusWs1.Conditions != nil && lastStatusWs1.Conditions.VolumeSnapshot != nil {
-								t.Logf("use the VolumeSnapshot from the first workspace")
 								w.Spec.VolumeSnapshot = lastStatusWs1.Conditions.VolumeSnapshot
 							}
 							return nil
@@ -160,7 +152,7 @@ func TestBackup(t *testing.T) {
 						t.Fatal(err)
 					}
 					t.Cleanup(func() {
-						sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
+						sctx, scancel := context.WithTimeout(context.Background(), 10*time.Minute)
 						defer scancel()
 
 						sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -198,7 +190,7 @@ func TestBackup(t *testing.T) {
 						}
 					}
 					if !found {
-						t.Fatalf("did not find foobar.txt from previous workspace instance: len(ls.Files): %v", len(ls.Files))
+						t.Fatal("did not find foobar.txt from previous workspace instance")
 					}
 				})
 			}
