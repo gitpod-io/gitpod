@@ -81,6 +81,11 @@ type WorkspaceConfig struct {
 		ConnectionsPerMinute int64 `json:"connectionsPerMinute"`
 		BucketSize           int64 `json:"bucketSize"`
 	} `json:"networkLimits"`
+	OOMScores struct {
+		Enabled bool `json:"enabled"`
+		Tier1   int  `json:"tier1"`
+		Tier2   int  `json:"tier2"`
+	} `json:"oomScores"`
 
 	ProcLimit int64 `json:"procLimit"`
 

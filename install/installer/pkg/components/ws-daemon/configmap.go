@@ -14,6 +14,7 @@ import (
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	wsdapi "github.com/gitpod-io/gitpod/ws-daemon/api"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cgroup"
 	wsdconfig "github.com/gitpod-io/gitpod/ws-daemon/pkg/config"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
@@ -55,6 +56,12 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		BucketSize:           1000,
 	}
 
+	oomScoreAdjConfig := cgroup.OOMScoreAdjConfig{
+		Enabled: false,
+		Tier1:   0,
+		Tier2:   0,
+	}
+
 	runtimeMapping := make(map[string]string)
 	// default runtime mapping
 	runtimeMapping[ctx.Config.Workspace.Runtime.ContainerDRuntimeDir] = "/mnt/node0"
@@ -78,6 +85,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		networkLimitConfig.Enforce = ucfg.Workspace.NetworkLimits.Enforce
 		networkLimitConfig.ConnectionsPerMinute = ucfg.Workspace.NetworkLimits.ConnectionsPerMinute
 		networkLimitConfig.BucketSize = ucfg.Workspace.NetworkLimits.BucketSize
+
+		oomScoreAdjConfig.Enabled = ucfg.Workspace.OOMScores.Enabled
+		oomScoreAdjConfig.Tier1 = ucfg.Workspace.OOMScores.Tier1
+		oomScoreAdjConfig.Tier2 = ucfg.Workspace.OOMScores.Tier2
 
 		if len(ucfg.Workspace.WSDaemon.Runtime.NodeToContainerMapping) > 0 {
 			// reset map
