@@ -577,7 +577,7 @@ func TestOpenWorkspaceFromOutdatedPrebuild(t *testing.T) {
 							t.Errorf("cannot stop workspace: %q", err)
 						}
 					}()
-					prebuildSnapshot, prebuildVSInfo, err := watchStopWorkspaceAndFindSnapshot(ctx, ws.Req.Id, api)
+					prebuildSnapshot, prebuildVSInfo, err := watchStopWorkspaceAndFindSnapshot(t, ctx, ws.Req.Id, ws.WorkspaceID, api)
 					if err != nil {
 						t.Fatalf("stop workspace and find snapshot error: %v", err)
 					}

@@ -401,7 +401,7 @@ func LaunchWorkspaceFromContextURL(t *testing.T, ctx context.Context, contextURL
 	}()
 
 	t.Log("wait for workspace to be fully up and running")
-	wsState, err := WaitForWorkspaceStart(ctx, wi.LatestInstance.ID, resp.CreatedWorkspaceID, api)
+	wsState, err := WaitForWorkspaceStart(t, ctx, wi.LatestInstance.ID, resp.CreatedWorkspaceID, api)
 	if err != nil {
 		return nil, nil, xerrors.Errorf("failed to wait for the workspace to start up: %w", err)
 	}
