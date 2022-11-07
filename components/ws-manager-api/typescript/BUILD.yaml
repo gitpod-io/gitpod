@@ -8,9 +8,10 @@ packages:
       - "src/*.ts"
       - "src/*.js"
       - package.json
+      - mocha.opts
     config:
       packaging: library
-      dontTest: true
+      dontTest: false
       commands:
         build: ["yarn", "build"]
       yarnLock: ${coreYarnLockBase}/../yarn.lock
