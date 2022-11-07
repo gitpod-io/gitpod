@@ -1,6 +1,8 @@
 # Change Log
 
 ## November 2022
+- Improve pagination usability ([#13590](https://github.com/gitpod-io/gitpod/pull/13590)) - [@Hardik500](https://github.com/Hardik500)
+- [kots] merge custom docker config correctly ([#14432](https://github.com/gitpod-io/gitpod/pull/14432)) - [@Pothulapati](https://github.com/Pothulapati)
 - [local-preview] Update status messages to depend on echo's ([#14391](https://github.com/gitpod-io/gitpod/pull/14391)) - [@Pothulapati](https://github.com/Pothulapati)
 - In JetBrains EAP IDEs, users now have the option to copy the URL from the terminal's ports context menu. ([#14356](https://github.com/gitpod-io/gitpod/pull/14356)) - [@felladrin](https://github.com/felladrin)
 
