@@ -14,6 +14,8 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 const (
@@ -52,17 +54,16 @@ func forwardPort(ctx context.Context, kubeconfig string, namespace, resourceType
 		command.Stdout = &sout
 		command.Stderr = &serr
 		err := command.Start()
+		defer func() {
+			if command.Process != nil {
+				_ = command.Process.Kill()
+			}
+		}()
 		if err != nil {
 			if strings.TrimSuffix(serr.String(), "\n") == errorDialingBackend {
 				errchan <- io.EOF
-				if command.Process != nil {
-					_ = command.Process.Kill()
-				}
 			} else {
 				errchan <- fmt.Errorf("unexpected error string port-forward: %w", errors.New(serr.String()))
-				if command.Process != nil {
-					_ = command.Process.Kill()
-				}
 			}
 		}
 
@@ -70,14 +71,8 @@ func forwardPort(ctx context.Context, kubeconfig string, namespace, resourceType
 		if err != nil {
 			if strings.TrimSuffix(serr.String(), "\n") == errorDialingBackend {
 				errchan <- io.EOF
-				if command.Process != nil {
-					_ = command.Process.Kill()
-				}
 			} else {
 				errchan <- fmt.Errorf("unexpected error running port-forward: %w", errors.New(serr.String()))
-				if command.Process != nil {
-					_ = command.Process.Kill()
-				}
 			}
 		}
 	}()
@@ -85,16 +80,29 @@ func forwardPort(ctx context.Context, kubeconfig string, namespace, resourceType
 	// wait until we can reach the local port before signaling we are ready
 	go func() {
 		localPort := strings.Split(port, ":")[0]
-		for {
-			conn, _ := net.DialTimeout("tcp", net.JoinHostPort("localhost", localPort), time.Second)
-			if conn != nil {
-				conn.Close()
-				break
+		waitErr := wait.PollImmediate(5*time.Second, 1*time.Minute, func() (bool, error) {
+			conn, err := net.DialTimeout("tcp", net.JoinHostPort("localhost", localPort), 1*time.Second)
+			if err != nil {
+				return false, nil
 			}
-			time.Sleep(5 * time.Second)
-		}
+			if conn == nil {
+				return false, nil
+			}
 
-		readychan <- struct{}{}
+			conn.Close()
+			return true, nil
+		})
+
+		if waitErr == wait.ErrWaitTimeout {
+			errchan <- fmt.Errorf("timeout waiting for port-foward: %w", waitErr)
+			return
+		} else if waitErr != nil {
+			errchan <- waitErr
+			return
+		} else {
+			readychan <- struct{}{}
+
+		}
 	}()
 
 	return readychan, errchan
