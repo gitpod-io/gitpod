@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/gitpod-io/gitpod/common-go/namegen"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
@@ -27,7 +29,7 @@ import (
 const (
 	gitpodBuiltinUserID             = "builtin-user-workspace-probe-0000000"
 	perCallTimeout                  = 5 * time.Minute
-	ParallelLunchableWorkspaceLimit = 2
+	ParallelLunchableWorkspaceLimit = 4
 )
 
 var (
@@ -94,9 +96,10 @@ func WithWaitWorkspaceForOpts(opt ...WaitForWorkspaceOpt) LaunchWorkspaceDirectl
 
 // LaunchWorkspaceDirectlyResult is returned by LaunchWorkspaceDirectly
 type LaunchWorkspaceDirectlyResult struct {
-	Req        *wsmanapi.StartWorkspaceRequest
-	IdeURL     string
-	LastStatus *wsmanapi.WorkspaceStatus
+	Req         *wsmanapi.StartWorkspaceRequest
+	WorkspaceID string
+	IdeURL      string
+	LastStatus  *wsmanapi.WorkspaceStatus
 }
 
 type StopWorkspaceFunc = func(waitForStop bool, api *ComponentAPI) (*wsmanapi.WorkspaceStatus, error)
@@ -138,28 +141,70 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 
 	var workspaceImage string
 	if options.BaseImage != "" {
-		for {
+		for i := 0; i < 3; i++ {
 			workspaceImage, err = resolveOrBuildImage(ctx, api, options.BaseImage)
 			if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
 				api.ClearImageBuilderClientCache()
 				time.Sleep(5 * time.Second)
 				continue
+			} else if err != nil && strings.Contains(err.Error(), "the server is currently unable to handle the request") {
+				api.ClearImageBuilderClientCache()
+				time.Sleep(5 * time.Second)
+				continue
+			} else if err != nil && strings.Contains(err.Error(), "apiserver not ready") {
+				api.ClearImageBuilderClientCache()
+				time.Sleep(5 * time.Second)
+				continue
 			} else if err != nil {
-				return nil, nil, xerrors.Errorf("cannot resolve base image: %v", err)
+				time.Sleep(5 * time.Second)
+				continue
 			}
 			break
 		}
+		if err != nil {
+			return nil, nil, err
+		}
 	}
-	if workspaceImage == "" {
+
+	waitErr := wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
+		workspaceImage, err = resolveOrBuildImage(ctx, api, options.BaseImage)
+		if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+			api.ClearImageBuilderClientCache()
+			return false, nil
+		} else if err != nil && strings.Contains(err.Error(), "the server is currently unable to handle the request") {
+			api.ClearImageBuilderClientCache()
+			return false, nil
+		} else if err != nil && strings.Contains(err.Error(), "apiserver not ready") {
+			api.ClearImageBuilderClientCache()
+			return false, nil
+		} else if err != nil {
+			return false, nil
+		}
+		return true, nil
+	})
+
+	if waitErr == wait.ErrWaitTimeout {
+		return nil, nil, fmt.Errorf("timeout waiting for resolving the build image: %w", waitErr)
+	} else if waitErr != nil {
+		return nil, nil, waitErr
+	} else if err != nil {
+		return nil, nil, err
+	} else if workspaceImage == "" {
 		err = xerrors.Errorf("cannot start workspaces without a workspace image (required by registry-facade resolver)")
 		return nil, nil, err
 	}
 
 	ideImage := options.IdeImage
 	if ideImage == "" {
-		cfg, err := GetServerIDEConfig(api.namespace, api.client)
+		var cfg *ServerIDEConfigPartial
+		for i := 0; i < 3; i++ {
+			cfg, err = GetServerIDEConfig(api.namespace, api.client)
+			if err != nil {
+				continue
+			}
+		}
 		if err != nil {
-			return nil, nil, xerrors.Errorf("cannot find server IDE config: %q", err)
+			return nil, nil, xerrors.Errorf("cannot find server IDE config: %w", err)
 		}
 		ideImage = cfg.IDEOptions.Options.Code.Image
 		if ideImage == "" {
@@ -211,24 +256,43 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 		}
 	}
 
-	sctx, scancel := context.WithTimeout(ctx, perCallTimeout)
-	defer scancel()
-
 	t.Log("prepare for a connection with ws-manager")
 	wsm, err := api.WorkspaceManager()
 	if err != nil {
-		return nil, nil, xerrors.Errorf("cannot start workspace manager: %q", err)
+		return nil, nil, xerrors.Errorf("cannot start workspace manager: %w", err)
 	}
 	t.Log("established a connection with ws-manager")
 
-	t.Logf("attemp to start up the workspace directly: %s, %s", instanceID, workspaceID)
-	sresp, err := wsm.StartWorkspace(sctx, req)
-	if err != nil {
-		return nil, nil, xerrors.Errorf("cannot start workspace: %w", err)
+	var sresp *wsmanapi.StartWorkspaceResponse
+	for i := 0; i < 3; i++ {
+		t.Logf("attemp to start up the workspace directly: %s, %s", instanceID, workspaceID)
+		sresp, err = wsm.StartWorkspace(ctx, req)
+		if err != nil {
+			scode := status.Code(err)
+			if scode == codes.NotFound || scode == codes.Unavailable {
+				t.Log("retry strarting a workspace because cannnot start workspace: %w", err)
+				time.Sleep(1 * time.Second)
+
+				api.ClearWorkspaceManagerClientCache()
+				wsm, err = api.WorkspaceManager()
+				if err != nil {
+					return nil, nil, xerrors.Errorf("cannot start workspace manager: %w", err)
+				}
+				continue
+			}
+			if strings.Contains(err.Error(), "too many requests") {
+				t.Log("hit too many requests so retry after some seconds")
+				time.Sleep(30 * time.Second)
+				continue
+			}
+			err = xerrors.Errorf("cannot start workspace: %w", err)
+			return nil, nil, err
+		}
+		break
 	}
 	t.Log("successfully sent workspace start request")
 
-	stopWs = stopWsF(t, req.Id, api)
+	stopWs = stopWsF(t, req.Id, req.Metadata.MetaId, api, req.Type == wsmanapi.WorkspaceType_PREBUILD)
 	defer func() {
 		if err != nil {
 			_, _ = stopWs(false, api)
@@ -236,16 +300,17 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 	}()
 
 	t.Log("wait for workspace to be fully up and running")
-	lastStatus, err := WaitForWorkspaceStart(ctx, instanceID.String(), api, options.WaitForOpts...)
+	lastStatus, err := WaitForWorkspaceStart(t, ctx, req.Id, req.Metadata.MetaId, api, options.WaitForOpts...)
 	if err != nil {
-		return nil, nil, xerrors.Errorf("cannot wait for workspace start: %q", err)
+		return nil, nil, xerrors.Errorf("cannot wait for workspace start: %w", err)
 	}
 	t.Log("successful launch of the workspace")
 
 	return &LaunchWorkspaceDirectlyResult{
-		Req:        req,
-		IdeURL:     sresp.Url,
-		LastStatus: lastStatus,
+		Req:         req,
+		WorkspaceID: workspaceID,
+		IdeURL:      sresp.Url,
+		LastStatus:  lastStatus,
 	}, stopWs, nil
 }
 
@@ -293,11 +358,18 @@ func LaunchWorkspaceFromContextURL(t *testing.T, ctx context.Context, contextURL
 		if err != nil {
 			scode := status.Code(err)
 			if scode == codes.NotFound || scode == codes.Unavailable {
+				t.Log("retry strarting a workspace because cannnot start workspace: %w", err)
 				time.Sleep(1 * time.Second)
+				api.ClearGitpodServerClientCache()
 				server, err = api.GitpodServer(append(defaultServerOpts, serverOpts...)...)
 				if err != nil {
 					return nil, nil, xerrors.Errorf("cannot start server: %w", err)
 				}
+				continue
+			}
+			if strings.Contains(err.Error(), "too many requests") {
+				t.Log("hit too many requests so retry after some seconds")
+				time.Sleep(30 * time.Second)
 				continue
 			}
 			return nil, nil, xerrors.Errorf("cannot start workspace: %w", err)
@@ -321,7 +393,7 @@ func LaunchWorkspaceFromContextURL(t *testing.T, ctx context.Context, contextURL
 		wi.LatestInstance.IdeURL = resp.WorkspaceURL
 	}
 
-	stopWs = stopWsF(t, wi.LatestInstance.ID, api)
+	stopWs = stopWsF(t, wi.LatestInstance.ID, resp.CreatedWorkspaceID, api, false)
 	defer func() {
 		if err != nil {
 			_, _ = stopWs(false, api)
