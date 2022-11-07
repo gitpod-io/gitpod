@@ -5329,6 +5329,11 @@ data:
           "connectionsPerMinute": 3000,
           "bucketSize": 1000
         },
+        "oomScores": {
+          "enabled": false,
+          "tier1": 0,
+          "tier2": 0
+        },
         "hosts": {
           "enabled": true,
           "nodeHostsFile": "/mnt/hosts",
@@ -7695,7 +7700,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: c6d2a80d1de7a1f91bb2bea177c784c3bc7d4cd50a3e761795fad1188e41f831
+        gitpod.io/checksum_config: b938c6e286051c22b503c29f5de266741c2045a3ed69be85d7fd9f22a9346254
         seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
       creationTimestamp: null
       labels:
