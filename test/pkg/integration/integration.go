@@ -168,12 +168,54 @@ func WithWorkspacekitLift(lift bool) InstrumentOption {
 	}
 }
 
+// The rpc is brittle because it installs the agent in the workspace and port-foward to send instructions. Therefore, wrap and retry.
+type RpcClient struct {
+	client     *rpc.Client
+	component  ComponentType
+	agentName  string
+	namespace  string
+	kubeconfig string
+	kclient    klient.Client
+	opts       []InstrumentOption
+}
+
+func (r *RpcClient) Call(serviceMethod string, args any, reply any) error {
+	var err error
+	var new *RpcClient
+	for i := 0; i < connectFailureMaxTries; i++ {
+		if r != nil {
+			if err = r.client.Call(serviceMethod, args, reply); err != nil {
+				time.Sleep(10 * time.Second)
+				r.Close()
+				new, _, err = Instrument(r.component, r.agentName, r.namespace, r.kubeconfig, r.kclient, r.opts...)
+				if err != nil {
+					time.Sleep(10 * time.Second)
+					continue
+				}
+				r = new
+			}
+		} else {
+			new, _, err = Instrument(r.component, r.agentName, r.namespace, r.kubeconfig, r.kclient, r.opts...)
+			if err != nil {
+				time.Sleep(10 * time.Second)
+				continue
+			}
+			r = new
+		}
+	}
+	return err
+}
+
+func (r *RpcClient) Close() error {
+	return r.client.Close()
+}
+
 // Instrument builds and uploads an agent to a pod, then connects to its RPC service.
 // We first check if there's an executable in the path named `gitpod-integration-test-<agentName>-agent`.
 // If there isn't, we attempt to build `<agentName>_agent/main.go`.
 // The binary is copied to the destination pod, started and port-forwarded. Then we
 // create an RPC client.
-func Instrument(component ComponentType, agentName string, namespace string, kubeconfig string, client klient.Client, opts ...InstrumentOption) (*rpc.Client, []func() error, error) {
+func Instrument(component ComponentType, agentName string, namespace string, kubeconfig string, client klient.Client, opts ...InstrumentOption) (*RpcClient, []func() error, error) {
 	var closer []func() error
 
 	options := instrumentOptions{
@@ -277,7 +319,15 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 		return nil
 	})
 
-	return res, closer, nil
+	return &RpcClient{
+		client:     res,
+		component:  component,
+		agentName:  agentName,
+		namespace:  namespace,
+		kubeconfig: kubeconfig,
+		kclient:    client,
+		opts:       opts,
+	}, closer, nil
 }
 
 func portfw(podExec *PodExec, kubeconfig string, podName string, namespace string, containerName string, tgtFN string, options instrumentOptions) (*rpc.Client, []func() error, error) {
