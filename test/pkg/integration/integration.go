@@ -92,24 +92,36 @@ func shouldRetry(count int, err error) bool {
 }
 
 func (p *PodExec) ExecCmd(command []string, podname string, namespace string, containername string) (*bytes.Buffer, *bytes.Buffer, *bytes.Buffer, error) {
-	ioStreams, in, out, errOut := genericclioptions.NewTestIOStreams()
-	execOptions := &kubectlexec.ExecOptions{
-		StreamOptions: kubectlexec.StreamOptions{
-			IOStreams:     ioStreams,
-			Namespace:     namespace,
-			PodName:       podname,
-			ContainerName: containername,
-		},
+	var (
+		in, out, errOut *bytes.Buffer
+		ioStreams       genericclioptions.IOStreams
+	)
+	for count := 0; ; count++ {
+		ioStreams, in, out, errOut = genericclioptions.NewTestIOStreams()
+		execOptions := &kubectlexec.ExecOptions{
+			StreamOptions: kubectlexec.StreamOptions{
+				IOStreams:     ioStreams,
+				Namespace:     namespace,
+				PodName:       podname,
+				ContainerName: containername,
+			},
 
-		Command:   command,
-		Executor:  &kubectlexec.DefaultRemoteExecutor{},
-		PodClient: p.Clientset.CoreV1(),
-		Config:    p.RestConfig,
+			Command:   command,
+			Executor:  &kubectlexec.DefaultRemoteExecutor{},
+			PodClient: p.Clientset.CoreV1(),
+			Config:    p.RestConfig,
+		}
+		err := execOptions.Run()
+		if err != nil {
+			if !shouldRetry(count, err) {
+				return nil, nil, nil, fmt.Errorf("could not run exec operation: %v", err)
+			}
+			time.Sleep(30 * time.Second)
+			continue
+		}
+		break
 	}
-	err := execOptions.Run()
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("Could not run exec operation: %v", err)
-	}
+
 	return in, out, errOut, nil
 }
 
@@ -174,61 +186,93 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 		}
 	}
 
-	expectedBinaryName := fmt.Sprintf("gitpod-integration-test-%s-agent", agentName)
-	agentLoc, _ := exec.LookPath(expectedBinaryName)
-	if agentLoc == "" {
-		var err error
-		agentLoc, err = buildAgent(agentName)
+	var (
+		res           *rpc.Client
+		clientConfig  *kubernetes.Clientset
+		cl            []func() error
+		podName       string
+		containerName string
+		err           error
+	)
+	for i := 0; i < connectFailureMaxTries; i++ {
+		expectedBinaryName := fmt.Sprintf("gitpod-integration-test-%d-%s-agent", i, agentName)
+		agentLoc, _ := exec.LookPath(expectedBinaryName)
+		if agentLoc == "" {
+			var err error
+			agentLoc, err = buildAgent(agentName)
+			if err != nil {
+				return nil, closer, err
+			}
+			defer os.Remove(agentLoc)
+		}
+
+		podName, containerName, err = selectPod(component, options.SPO, namespace, client)
+		if err != nil {
+			time.Sleep(10 * time.Second)
+			continue
+		}
+
+		clientConfig, err = kubernetes.NewForConfig(client.RESTConfig())
 		if err != nil {
 			return nil, closer, err
 		}
-		defer os.Remove(agentLoc)
-	}
+		podExec := NewPodExec(*client.RESTConfig(), clientConfig)
 
-	podName, containerName, err := selectPod(component, options.SPO, namespace, client)
-	if err != nil {
-		return nil, closer, err
-	}
-
-	clientConfig, err := kubernetes.NewForConfig(client.RESTConfig())
-	if err != nil {
-		return nil, closer, err
-	}
-	podExec := NewPodExec(*client.RESTConfig(), clientConfig)
-
-	tgtFN := filepath.Base(agentLoc)
-	_, _, _, err = podExec.PodCopyFile(agentLoc, fmt.Sprintf("%s/%s:/home/gitpod/%s", namespace, podName, tgtFN), containerName)
-	if err != nil {
-		return nil, closer, err
-	}
-
-	var (
-		res *rpc.Client
-		cl  []func() error
-	)
-	for i := 0; i < connectFailureMaxTries; i++ {
-		res, cl, err = portfw(podExec, kubeconfig, podName, namespace, containerName, tgtFN, options)
-		if err == nil {
-			closer = append(closer, cl...)
-			break
+		tgtFN := filepath.Base(agentLoc)
+		_, _, _, err = podExec.PodCopyFile(agentLoc, fmt.Sprintf("%s/%s:/home/gitpod/%s", namespace, podName, tgtFN), containerName)
+		if err != nil {
+			return nil, closer, err
 		}
+
+		res, cl, err = portfw(podExec, kubeconfig, podName, namespace, containerName, tgtFN, options)
+		if err != nil {
+			var serror error
+			waitErr := wait.PollImmediate(10*time.Second, 2*time.Minute, func() (bool, error) {
+				serror = shutdownAgent(podExec, kubeconfig, podName, namespace, containerName)
+				if serror != nil {
+					if strings.Contains(serror.Error(), "exit code 7") {
+						serror = nil
+						return true, nil
+					}
+					return false, nil
+				}
+				return true, nil
+			})
+			if waitErr == wait.ErrWaitTimeout {
+				return nil, closer, xerrors.Errorf("timed out attempting to shutdown agent: %v", serror)
+			} else if waitErr != nil {
+				return nil, closer, waitErr
+			}
+
+			if serror != nil {
+				return nil, closer, serror
+			}
+			for _, c := range cl {
+				_ = c()
+			}
+
+			continue
+		}
+		break
+	}
+	if err != nil {
 		for _, c := range cl {
 			_ = c()
 		}
-		time.Sleep(5 * time.Second)
-	}
-	if err != nil {
 		return nil, closer, err
 	}
 
+	closer = append(closer, cl...)
 	closer = append(closer, func() error {
-		err := res.Call(MethodTestAgentShutdown, new(TestAgentShutdownRequest), new(TestAgentShutdownResponse))
-		if err != nil && strings.Contains(err.Error(), "connection is shut down") {
-			return nil
-		}
+		if res != nil {
+			err := res.Call(MethodTestAgentShutdown, new(TestAgentShutdownRequest), new(TestAgentShutdownResponse))
+			if err != nil && strings.Contains(err.Error(), "connection is shut down") {
+				return nil
+			}
 
-		if err != nil {
-			return xerrors.Errorf("cannot shutdown agent: %w", err)
+			if err != nil {
+				return xerrors.Errorf("cannot shutdown agent: %w", err)
+			}
 		}
 		return nil
 	})
@@ -272,19 +316,21 @@ func portfw(podExec *PodExec, kubeconfig string, podName string, namespace strin
 L:
 	for {
 		fwdReady, fwdErr := common.ForwardPortOfPod(ctx, kubeconfig, namespace, podName, strconv.Itoa(localAgentPort))
+
 		select {
+		case <-time.After(2 * time.Minute):
+			cancel()
+			return nil, closer, xerrors.New("timeout")
 		case <-fwdReady:
 			break L
-		case err := <-execErrs:
-			if err != nil {
-				return nil, closer, err
-			}
-		case err := <-fwdErr:
+		case err = <-execErrs:
+			return nil, closer, xerrors.Errorf("failure of port-fowarding: %w", err)
+		case err = <-fwdErr:
 			var eno syscall.Errno
 			if errors.Is(err, io.EOF) || (errors.As(err, &eno) && eno == syscall.ECONNREFUSED) {
-				time.Sleep(10 * time.Second)
+				time.Sleep(5 * time.Second)
 			} else if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
-				time.Sleep(10 * time.Second)
+				time.Sleep(5 * time.Second)
 			} else if err != nil {
 				return nil, closer, err
 			}
@@ -293,7 +339,7 @@ L:
 
 	var res *rpc.Client
 	var lastError error
-	waitErr := wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
+	waitErr := wait.PollImmediate(10*time.Second, 1*time.Minute, func() (bool, error) {
 		res, lastError = rpc.DialHTTP("tcp", net.JoinHostPort("localhost", strconv.Itoa(localAgentPort)))
 		if lastError != nil {
 			return false, nil
@@ -302,13 +348,20 @@ L:
 		return true, nil
 	})
 	if waitErr == wait.ErrWaitTimeout {
+		cancel()
 		return nil, closer, xerrors.Errorf("timed out attempting to connect agent: %v", lastError)
-	}
-	if waitErr != nil {
-		return nil, closer, err
+	} else if waitErr != nil {
+		cancel()
+		return nil, closer, waitErr
 	}
 
 	return res, closer, nil
+}
+
+func shutdownAgent(podExec *PodExec, kubeconfig string, podName string, namespace string, containerName string) error {
+	cmd := []string{"curl", "localhost:8080/shutdown"}
+	_, _, _, err := podExec.ExecCmd(cmd, podName, namespace, containerName)
+	return err
 }
 
 func getFreePort() (int, error) {
@@ -393,10 +446,6 @@ func selectPod(component ComponentType, options selectPodOptions, namespace stri
 
 	if len(pods.Items) == 0 {
 		return "", "", xerrors.Errorf("no pods for %s", component)
-	}
-
-	if len(pods.Items) > 1 {
-		//t.t.Logf("found multiple pods for %s, choosing %s", component, pod)
 	}
 
 	p := pods.Items[0]
