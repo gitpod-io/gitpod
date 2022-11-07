@@ -6,7 +6,6 @@ package apiv1
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -19,6 +18,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
+	"github.com/sourcegraph/jsonrpc2"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
 )
@@ -43,7 +43,10 @@ func TestTeamsService_CreateTeam(t *testing.T) {
 		ctx := context.Background()
 		serverMock, client := setupTeamService(t)
 
-		serverMock.EXPECT().CreateTeam(gomock.Any(), name).Return(nil, errors.New("code 400"))
+		serverMock.EXPECT().CreateTeam(gomock.Any(), name).Return(nil, &jsonrpc2.Error{
+			Code:    400,
+			Message: "invalid request",
+		})
 
 		_, err := client.CreateTeam(ctx, connect.NewRequest(&v1.CreateTeamRequest{Name: name}))
 		require.Error(t, err)
