@@ -6,7 +6,6 @@ package workspace
 
 import (
 	"context"
-	"net/rpc"
 	"os"
 	"testing"
 	"time"
@@ -16,7 +15,6 @@ import (
 
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
-	"github.com/gitpod-io/gitpod/test/pkg/integration/common"
 )
 
 type GitTest struct {
@@ -27,7 +25,7 @@ type GitTest struct {
 	Action        GitFunc
 }
 
-type GitFunc func(rsa *rpc.Client, git common.GitClient, workspaceRoot string) error
+type GitFunc func(rsa *integration.RpcClient, git integration.GitClient, workspaceRoot string) error
 
 func TestGitActions(t *testing.T) {
 	userToken, _ := os.LookupEnv("USER_TOKEN")
@@ -39,7 +37,7 @@ func TestGitActions(t *testing.T) {
 			Name:          "create, add and commit",
 			ContextURL:    "github.com/gitpod-io/gitpod-test-repo/tree/integration-test/commit-and-push",
 			WorkspaceRoot: "/workspace/gitpod-test-repo",
-			Action: func(rsa *rpc.Client, git common.GitClient, workspaceRoot string) (err error) {
+			Action: func(rsa *integration.RpcClient, git integration.GitClient, workspaceRoot string) (err error) {
 				var resp agent.ExecResponse
 				err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 					Dir:     workspaceRoot,
@@ -80,7 +78,7 @@ func TestGitActions(t *testing.T) {
 			Name:          "create, add and commit and PUSH",
 			ContextURL:    "github.com/gitpod-io/gitpod-test-repo/tree/integration-test/commit-and-push",
 			WorkspaceRoot: "/workspace/gitpod-test-repo",
-			Action: func(rsa *rpc.Client, git common.GitClient, workspaceRoot string) (err error) {
+			Action: func(rsa *integration.RpcClient, git integration.GitClient, workspaceRoot string) (err error) {
 				var resp agent.ExecResponse
 				err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 					Dir:     workspaceRoot,
@@ -183,7 +181,7 @@ func TestGitActions(t *testing.T) {
 						defer rsa.Close()
 						integration.DeferCloser(t, closer)
 
-						git := common.Git(rsa)
+						git := integration.Git(rsa)
 						err = test.Action(rsa, git, test.WorkspaceRoot)
 						if err != nil {
 							t.Fatal(err)

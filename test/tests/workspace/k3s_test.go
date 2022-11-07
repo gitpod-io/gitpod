@@ -15,7 +15,6 @@ import (
 
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
-	"github.com/gitpod-io/gitpod/test/pkg/integration/common"
 )
 
 const (
@@ -61,7 +60,7 @@ func TestK3s(t *testing.T) {
 			defer rsa.Close()
 			integration.DeferCloser(t, closer)
 
-			cgv2, err := common.IsCgroupV2(rsa)
+			cgv2, err := integration.IsCgroupV2(rsa)
 			if err != nil {
 				t.Fatalf("unexpected error checking cgroup v2: %v", err)
 			}

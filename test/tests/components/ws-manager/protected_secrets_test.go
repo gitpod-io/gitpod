@@ -7,7 +7,6 @@ package wsmanager
 import (
 	"context"
 	"fmt"
-	"net/rpc"
 	"strings"
 	"testing"
 	"time"
@@ -129,7 +128,7 @@ func assertEnvSuppliedBySecret(t *testing.T, wsPod *corev1.Pod, secretEnv string
 	}
 }
 
-func assertEnvAvailableInWs(t *testing.T, rsa *rpc.Client) {
+func assertEnvAvailableInWs(t *testing.T, rsa *integration.RpcClient) {
 	var grepResp agent.ExecResponse
 	err := rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 		Dir:     prebuildLogPath,
