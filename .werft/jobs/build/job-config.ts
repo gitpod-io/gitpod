@@ -2,7 +2,8 @@ import {exec} from "../../util/shell";
 import {Werft} from "../../util/werft";
 import {previewNameFromBranchName} from "../../util/preview";
 
-type WithIntegrationTests = "skip" | "all" | "workspace" | "ide" | "webapp";
+type IdeIntegrationTests = "ide" | "jetbrains" | "ssh" | "vscode";
+type WithIntegrationTests = "skip" | "all" | "workspace" | "webapp" | IdeIntegrationTests
 
 export type Analytics = "skip" | "segment";
 
@@ -249,6 +250,9 @@ export function parseWithIntegrationTests(werft: Werft, sliceID: string, value?:
         case "all":
         case "webapp":
         case "ide":
+        case "jetbrains":
+        case "vscode":
+        case "ssh":
         case "workspace":
         case "webapp":
             return value;

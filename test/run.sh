@@ -20,7 +20,12 @@ FAILURE_COUNT=0
 LOGS_DIR=$(mktemp -d)
 
 WEBAPP_TEST_LIST="$THIS_DIR/tests/components/database $THIS_DIR/tests/components/server"
-IDE_TEST_LIST="$THIS_DIR/tests/ide/ssh $THIS_DIR/tests/ide/vscode $THIS_DIR/tests/ide/jetbrains"
+
+JETBRAINS_TESTS="$THIS_DIR/tests/ide/jetbrains"
+VSCODE_TESTS="$THIS_DIR/tests/ide/vscode"
+SSH_TESTS="$THIS_DIR/tests/ide/ssh"
+IDE_TEST_LIST="$SSH_TESTS $VSCODE_TESTS $JETBRAINS_TESTS"
+
 WORKSPACE_TEST_LIST="$THIS_DIR/tests/components/content-service $THIS_DIR/tests/components/image-builder $THIS_DIR/tests/components/ws-daemon $THIS_DIR/tests/components/ws-manager $THIS_DIR/tests/workspace"
 
 case $TEST_SUITE in
@@ -29,6 +34,15 @@ case $TEST_SUITE in
     ;;
   "ide")
     TEST_LIST="$IDE_TEST_LIST"
+    ;;
+  "jetbrains")
+    TEST_LIST="$JETBRAINS_TESTS"
+    ;;
+  "vscode")
+    TEST_LIST="$VSCODE_TESTS"
+    ;;
+  "ssh")
+    TEST_LIST="$SSH_TESTS"
     ;;
   "workspace")
     TEST_LIST="${WORKSPACE_TEST_LIST}"

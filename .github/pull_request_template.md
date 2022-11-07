@@ -36,4 +36,4 @@ Does this PR require updates to the documentation at www.gitpod.io/docs?
 - [ ] /werft with-preview
 - [ ] /werft with-large-vm
 - [ ] /werft with-integration-tests=all
-      Valid options are `all`, `workspace`, `webapp`, `ide`
+      Valid options are `all`, `workspace`, `webapp`, `ide`, `jetbrains`, `vscode`, `ssh`
