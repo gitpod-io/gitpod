@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/rpc"
 	"os"
 	"strings"
 	"testing"
@@ -152,7 +151,7 @@ func getHostUrl(ctx context.Context, t *testing.T, k8sClient klient.Client) stri
 	return strings.TrimPrefix(strings.Trim(string(hostUrlRaw), "\""), "https://")
 }
 
-func assertDotfiles(t *testing.T, rsa *rpc.Client) error {
+func assertDotfiles(t *testing.T, rsa *integration.RpcClient) error {
 	var ls agent.ListDirResponse
 	err := rsa.Call("WorkspaceAgent.ListDir", &agent.ListDirRequest{
 		Dir: "/home/gitpod/.dotfiles",

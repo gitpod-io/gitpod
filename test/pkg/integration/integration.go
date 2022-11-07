@@ -394,7 +394,6 @@ L:
 		if lastError != nil {
 			return false, nil
 		}
-
 		return true, nil
 	})
 	if waitErr == wait.ErrWaitTimeout {
