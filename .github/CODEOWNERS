@@ -116,3 +116,4 @@
 # that user as an owner in case we need to manually approve changes
 #
 /CHANGELOG.md
+/components/ide/jetbrains/backend-plugin/gradle-latest.properties
