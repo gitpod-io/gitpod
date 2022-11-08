@@ -200,6 +200,26 @@ aws-kubeconfig:
 	aws eks update-kubeconfig --name gp-${TF_VAR_TEST_ID} --region eu-west-1 --kubeconfig ${KUBECONFIG} || echo "No cluster present"
 	@echo -e "\033[0;33mAWS service account credentials fetched, run 'source $$(pwd)/$${TF_VAR_TEST_ID}-creds' to load them into your environment\033[0;m"
 
+# GitHub SCM credentials are stored within the gitpod-core-dev cluster. Credentials must be presented
+# in the `SCM_GITHUB_OAUTH` variable in the following format:
+#
+# ```yaml
+# description: ""
+# host: github.com
+# icon: ""
+# id: Public-GitHub
+# oauth:
+#   clientId: <client-id>
+#   clientSecret: <client-secret>
+#   settingsUrl: https://github.com/settings/apps/new
+# type: GitHub
+# ```
+#
+# Credentials can be fetched with the following:
+#
+# ```
+# export GITHUB_SCM_OAUTH="$(kubectl -n werft get secret self-hosted-github-oauth -ojson | jq -r '.data.provider | @base64d')"
+# ```
 get-github-config: check-var-DOMAIN check-var-TF_VAR_TEST_ID
 ifneq ($(GITHUB_SCM_OAUTH),)
 	@export SCM_OAUTH=./manifests/github-oauth.yaml && \
