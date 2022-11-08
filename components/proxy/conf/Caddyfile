@@ -13,7 +13,6 @@
 	# configure plugin order
 	# https://caddyserver.com/docs/caddyfile/directives#directive-order
 	order gitpod.cors_origin            before header
-	order gitpod.workspace_download     before redir
 	order gitpod.headless_log_download	before rewrite
 	order gitpod.configcat	            before rewrite
 	order gitpod.sec_websocket_key      before header
@@ -166,23 +165,6 @@ https://{$GITPOD_DOMAIN} {
 	import remove_server_header
 	import ssl_configuration
 	import security_headers
-
-	@workspace_download path /workspace-download*
-	handle @workspace_download {
-		import google_storage_headers
-
-		header {
-			# The browser needs to see the correct archive content type to trigger the download.
-			content-type "application/tar+gzip"
-		}
-
-		gitpod.workspace_download {
-			service http://server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000
-		}
-
-		# redirect works here because we "navigate" to this URL, which makes the browser handle this as primary request, and not fuff around with CORS at all
-		redir {http.gitpod.workspace_download_url} 303
-	}
 
 	@headless_log_download path /headless-log-download*
 	handle @headless_log_download {
