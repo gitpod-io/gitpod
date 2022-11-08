@@ -47,10 +47,6 @@ export function WorkspaceSearch(props: Props) {
     const [currentWorkspace, setCurrentWorkspaceState] = useState<WorkspaceAndInstance | undefined>(undefined);
     const pageLength = 50;
     const [currentPage, setCurrentPage] = useState(1);
-    const updateCurrentPage = (page: number) => {
-        setCurrentPage(page);
-        search();
-    };
 
     useEffect(() => {
         const workspaceId = location.pathname.split("/")[3];
@@ -79,7 +75,7 @@ export function WorkspaceSearch(props: Props) {
         return <WorkspaceDetail workspace={currentWorkspace} />;
     }
 
-    const search = async () => {
+    const search = async (page: number = 1) => {
         // Disables empty search on the workspace search page
         if (isGitpodIo() && !props.user && queryTerm.length === 0) {
             return;
@@ -102,10 +98,11 @@ export function WorkspaceSearch(props: Props) {
             const result = await getGitpodService().server.adminGetWorkspaces({
                 limit: pageLength,
                 orderBy: "instanceCreationTime",
-                offset: (currentPage - 1) * pageLength,
+                offset: (page - 1) * pageLength,
                 orderDir: "desc",
                 ...query,
             });
+            setCurrentPage(page);
             setSearchResult(result);
         } finally {
             setSearching(false);
@@ -141,7 +138,7 @@ export function WorkspaceSearch(props: Props) {
                             }}
                         />
                     </div>
-                    <button disabled={searching} onClick={search}>
+                    <button disabled={searching} onClick={() => search()}>
                         Search
                     </button>
                 </div>
@@ -162,7 +159,7 @@ export function WorkspaceSearch(props: Props) {
             </div>
             <Pagination
                 currentPage={currentPage}
-                setPage={updateCurrentPage}
+                setPage={search}
                 totalNumberOfPages={Math.ceil(searchResult.total / pageLength)}
             />
         </>
