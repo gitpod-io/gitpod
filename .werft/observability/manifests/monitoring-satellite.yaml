@@ -41,7 +41,7 @@ imports:
     - gitURL: https://github.com/gitpod-io/gitpod
       path: operations/observability/mixins/workspace/rules/central
     - gitURL: https://github.com/gitpod-io/gitpod
-      path: operations/observability/mixins/workspace/satellite/rules
+      path: operations/observability/mixins/workspace/rules/satellite
     - gitURL: https://github.com/gitpod-io/gitpod
       path: operations/observability/mixins/meta/rules
     - gitURL: https://github.com/gitpod-io/gitpod
