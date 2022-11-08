@@ -593,6 +593,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			// get rid of first volume mount as PVC is mounted as block device and will be mounted by workspacekit
 			pod.Spec.Containers[0].VolumeMounts = pod.Spec.Containers[0].VolumeMounts[1:]
 
+			rootUID := int64(0)
 			// add init container to mount PVC block device
 			pod.Spec.InitContainers = append(pod.Spec.InitContainers, corev1.Container{
 				Name:            "mount-workspace-volume",
@@ -601,7 +602,12 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 				Command:         []string{"/.supervisor/workspacekit", "fsprep"},
 				VolumeDevices:   []corev1.VolumeDevice{volumeDevice},
 				SecurityContext: &corev1.SecurityContext{
+					Capabilities: &corev1.Capabilities{
+						Add: []corev1.Capability{"SYS_ADMIN"},
+					},
 					Privileged: &boolTrue,
+					RunAsUser:  &rootUID,
+					RunAsGroup: &rootUID,
 				},
 			})
 
