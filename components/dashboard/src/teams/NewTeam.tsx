@@ -10,6 +10,7 @@ import { getGitpodService } from "../service/service";
 import { TeamsContext } from "./teams-context";
 import { publicApiTeamsToProtocol, publicApiTeamToProtocol, teamsService } from "../service/public-api";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
+import { ConnectError } from "@bufbuild/connect-web";
 
 export default function () {
     const { setTeams } = useContext(TeamsContext);
@@ -35,7 +36,11 @@ export default function () {
             history.push(`/t/${team.slug}`);
         } catch (error) {
             console.error(error);
-            setCreationError(error);
+            if (error instanceof ConnectError) {
+                setCreationError(new Error(error.rawMessage));
+            } else {
+                setCreationError(error);
+            }
         }
     };
 
