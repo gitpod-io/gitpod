@@ -408,11 +408,6 @@ yq w -i "${INSTALLER_CONFIG_PATH}" sshGatewayHostKey.kind "secret"
 yq w -i "${INSTALLER_CONFIG_PATH}" sshGatewayHostKey.name "host-key"
 
 #
-# configurePublicAPIServer
-#
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.publicApi.enabled true
-
-#
 # configureUsage
 #
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.enabled "true"

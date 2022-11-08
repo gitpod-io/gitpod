@@ -267,6 +267,35 @@ spec:
     - Ingress
 
 ---
+# networking.k8s.io/v1/NetworkPolicy public-api-server
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: public-api-server
+  name: public-api-server
+  namespace: default
+spec:
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              component: proxy
+      ports:
+        - port: 9001
+          protocol: TCP
+        - port: 9002
+          protocol: TCP
+  podSelector:
+    matchLabels:
+      app: gitpod
+      component: public-api-server
+  policyTypes:
+    - Ingress
+
+---
 # networking.k8s.io/v1/NetworkPolicy registry-facade
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -992,6 +1021,23 @@ metadata:
     gitpod.io: hello
     hello: world
   name: proxy
+  namespace: default
+---
+# v1/ServiceAccount public-api-server
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  annotations:
+    gitpod.io: hello
+    hello: world
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: public-api-server
+    gitpod.io: hello
+    hello: world
+  name: public-api-server
   namespace: default
 ---
 # v1/ServiceAccount rabbitmq
@@ -2954,6 +3000,97 @@ data:
         gitpod.io: hello
         hello: world
       name: ws-manager-bridge
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      annotations:
+        gitpod.io: hello
+        hello: world
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+        gitpod.io: hello
+        hello: world
+      name: public-api-server
+      namespace: default
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      annotations:
+        gitpod.io: hello
+        gitpod.io/checksum_config: cdfc28fc7531a2a524d1a6ada588bb7a547a34a2236ce588de015b4a3915eadb
+        hello: world
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+        gitpod.io: hello
+        hello: world
+      name: public-api-server
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+      name: default-public-api-server-rb-kube-rbac-proxy
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+      name: public-api-server
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      annotations:
+        gitpod.io: hello
+        hello: world
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+        gitpod.io: hello
+        hello: world
+      name: public-api-server
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        gitpod.io: hello
+        hello: world
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+        gitpod.io: hello
+        hello: world
+        kind: service
+      name: public-api-server
+      namespace: default
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+      name: public-api-server
       namespace: default
     ---
     apiVersion: v1
@@ -5247,6 +5384,39 @@ metadata:
   name: proxy-config
   namespace: default
 ---
+# v1/ConfigMap public-api-server
+apiVersion: v1
+data:
+  config.json: |-
+    {
+      "gitpodServiceUrl": "wss://gitpod.example.com",
+      "billingServiceAddress": "usage.default.svc.cluster.local:9001",
+      "stripeWebhookSigningSecretPath": "",
+      "server": {
+        "services": {
+          "grpc": {
+            "address": "0.0.0.0:9001"
+          },
+          "http": {
+            "address": "0.0.0.0:9002"
+          }
+        }
+      }
+    }
+kind: ConfigMap
+metadata:
+  annotations:
+    gitpod.io: hello
+    hello: world
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: public-api-server
+    gitpod.io: hello
+    hello: world
+  name: public-api-server
+  namespace: default
+---
 # v1/ConfigMap registry-config
 # Source: docker-registry/charts/docker-registry/templates/configmap.yaml
 apiVersion: v1
@@ -6303,6 +6473,24 @@ subjects:
   name: proxy
   namespace: default
 ---
+# rbac.authorization.k8s.io/v1/ClusterRoleBinding default-public-api-server-rb-kube-rbac-proxy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: public-api-server
+  name: default-public-api-server-rb-kube-rbac-proxy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-kube-rbac-proxy
+subjects:
+- kind: ServiceAccount
+  name: public-api-server
+  namespace: default
+---
 # rbac.authorization.k8s.io/v1/ClusterRoleBinding default-registry-facade-kube-rbac-proxy
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -6955,6 +7143,24 @@ subjects:
 - kind: ServiceAccount
   name: proxy
 ---
+# rbac.authorization.k8s.io/v1/RoleBinding public-api-server
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: public-api-server
+  name: public-api-server
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-ns-psp:restricted-root-user
+subjects:
+- kind: ServiceAccount
+  name: public-api-server
+---
 # rbac.authorization.k8s.io/v1/RoleBinding rabbitmq
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -7580,6 +7786,39 @@ spec:
     app: gitpod
     component: proxy
   type: LoadBalancer
+status:
+  loadBalancer: {}
+---
+# v1/Service public-api-server
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    gitpod.io: hello
+    hello: world
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: public-api-server
+    gitpod.io: hello
+    hello: world
+    kind: service
+  name: public-api-server
+  namespace: default
+spec:
+  ports:
+  - name: grpc
+    port: 9001
+    protocol: TCP
+    targetPort: 9001
+  - name: http
+    port: 9002
+    protocol: TCP
+    targetPort: 9002
+  selector:
+    app: gitpod
+    component: public-api-server
+  type: ClusterIP
 status:
   loadBalancer: {}
 ---
@@ -10056,6 +10295,143 @@ spec:
       - name: builtin-registry-certs
         secret:
           secretName: builtin-registry-certs
+status: {}
+---
+# apps/v1/Deployment public-api-server
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    gitpod.io: hello
+    gitpod.io/checksum_config: cdfc28fc7531a2a524d1a6ada588bb7a547a34a2236ce588de015b4a3915eadb
+    hello: world
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: public-api-server
+    gitpod.io: hello
+    hello: world
+  name: public-api-server
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitpod
+      component: public-api-server
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        gitpod.io: hello
+        hello: world
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+        gitpod.io: hello
+        hello: world
+      name: public-api-server
+      namespace: default
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: gitpod.io/workload_meta
+                operator: Exists
+      containers:
+      - args:
+        - run
+        - --config=/config.json
+        - --json-log=true
+        env:
+        - name: GITPOD_DOMAIN
+          value: gitpod.example.com
+        - name: GITPOD_INSTALLATION_SHORTNAME
+          value: default
+        - name: GITPOD_REGION
+          value: local
+        - name: HOST_URL
+          value: https://gitpod.example.com
+        - name: KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBE_DOMAIN
+          value: svc.cluster.local
+        - name: LOG_LEVEL
+          value: info
+        image: eu.gcr.io/gitpod-core-dev/build/public-api-server:test
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /live
+            port: 9501
+            scheme: HTTP
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: public-api-server
+        ports:
+        - containerPort: 9001
+          name: grpc
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ready
+            port: 9501
+            scheme: HTTP
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 32Mi
+        securityContext:
+          privileged: false
+        volumeMounts:
+        - mountPath: /config.json
+          name: config
+          readOnly: true
+          subPath: config.json
+      - args:
+        - --logtostderr
+        - --insecure-listen-address=[$(IP)]:9500
+        - --upstream=http://127.0.0.1:9500/
+        env:
+        - name: IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        image: quay.io/brancz/kube-rbac-proxy:v0.12.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 9500
+          name: metrics
+        resources:
+          requests:
+            cpu: 1m
+            memory: 30Mi
+        securityContext:
+          runAsGroup: 65532
+          runAsNonRoot: true
+          runAsUser: 65532
+        terminationMessagePolicy: FallbackToLogsOnError
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: false
+      restartPolicy: Always
+      serviceAccountName: public-api-server
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          name: public-api-server
+        name: config
 status: {}
 ---
 # apps/v1/Deployment registry

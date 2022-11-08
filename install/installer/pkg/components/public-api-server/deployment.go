@@ -26,7 +26,6 @@ const (
 )
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
-
 	configHash, err := common.ObjectHash(configmap(ctx))
 	if err != nil {
 		return nil, err

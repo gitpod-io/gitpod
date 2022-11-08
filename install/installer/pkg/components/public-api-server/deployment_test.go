@@ -4,16 +4,17 @@
 package public_api_server
 
 import (
+	"testing"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/pointer"
-	"testing"
 
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 )
 
 func TestDeployment(t *testing.T) {
-	ctx := renderContextWithPublicAPIEnabled(t)
+	ctx := renderContextWithPublicAPI(t)
 
 	objects, err := deployment(ctx)
 	require.NoError(t, err)
@@ -25,7 +26,7 @@ func TestDeployment(t *testing.T) {
 }
 
 func TestDeployment_ServerArguments(t *testing.T) {
-	ctx := renderContextWithPublicAPIEnabled(t)
+	ctx := renderContextWithPublicAPI(t)
 
 	objects, err := deployment(ctx)
 	require.NoError(t, err)
