@@ -37,33 +37,6 @@ func NewWorkspaceService(cfg config.StorageConfig) (res *WorkspaceService, err e
 	return &WorkspaceService{cfg: cfg, s: s}, nil
 }
 
-// WorkspaceDownloadURL provides a URL from where the content of a workspace can be downloaded from
-func (cs *WorkspaceService) WorkspaceDownloadURL(ctx context.Context, req *api.WorkspaceDownloadURLRequest) (resp *api.WorkspaceDownloadURLResponse, err error) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "WorkspaceDownloadURL")
-	span.SetTag("user", req.OwnerId)
-	span.SetTag("workspaceId", req.WorkspaceId)
-	defer tracing.FinishSpan(span, &err)
-
-	blobName := cs.s.BackupObject(req.OwnerId, req.WorkspaceId, storage.DefaultBackup)
-
-	info, err := cs.s.SignDownload(ctx, cs.s.Bucket(req.OwnerId), blobName, &storage.SignedURLOptions{})
-	if err != nil {
-		log.WithFields(log.OWI(req.OwnerId, req.WorkspaceId, "")).
-			WithField("bucket", cs.s.Bucket(req.OwnerId)).
-			WithField("blobName", blobName).
-			WithError(err).
-			Error("error getting SignDownload URL")
-		if errors.Is(err, storage.ErrNotFound) {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		return nil, status.Error(codes.Unknown, err.Error())
-	}
-
-	return &api.WorkspaceDownloadURLResponse{
-		Url: info.URL,
-	}, nil
-}
-
 // DeleteWorkspace deletes the content of a single workspace
 func (cs *WorkspaceService) DeleteWorkspace(ctx context.Context, req *api.DeleteWorkspaceRequest) (resp *api.DeleteWorkspaceResponse, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "DeleteWorkspace")
