@@ -1,0 +1,3909 @@
+---
+# networking.k8s.io/v1/NetworkPolicy agent-smith
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: agent-smith
+  name: agent-smith
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: gitpod
+      component: agent-smith
+  policyTypes:
+    - Ingress
+
+---
+# networking.k8s.io/v1/NetworkPolicy image-builder-mk3
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: image-builder-mk3
+  name: image-builder-mk3
+  namespace: default
+spec:
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              component: server
+        - podSelector:
+            matchLabels:
+              component: ws-manager
+  podSelector:
+    matchLabels:
+      app: gitpod
+      component: image-builder-mk3
+  policyTypes:
+    - Ingress
+
+---
+# networking.k8s.io/v1/NetworkPolicy registry-facade
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: registry-facade
+  name: registry-facade
+  namespace: default
+spec:
+  ingress:
+    - {}
+  podSelector:
+    matchLabels:
+      app: gitpod
+      component: registry-facade
+  policyTypes:
+    - Ingress
+
+---
+# networking.k8s.io/v1/NetworkPolicy workspace-default
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: workspace
+  name: workspace-default
+  namespace: default
+spec:
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 169.254.169.254/32
+    - to:
+        - podSelector:
+            matchLabels:
+              app: gitpod
+              component: proxy
+    - ports:
+        - port: 53
+          protocol: TCP
+        - port: 53
+          protocol: UDP
+      to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: coredns
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: gitpod
+              component: proxy
+    - from:
+        - podSelector:
+            matchLabels:
+              app: gitpod
+              component: ws-proxy
+    - from:
+        - podSelector:
+            matchLabels:
+              app: gitpod
+              component: agent-smith
+    - from:
+        - podSelector:
+            matchLabels:
+              app: gitpod
+              component: ws-daemon
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              chart: monitoring
+          podSelector:
+            matchLabels:
+              app: gitpod
+              component: server
+      ports:
+        - port: 23000
+          protocol: TCP
+  podSelector:
+    matchLabels:
+      app: gitpod
+      component: workspace
+      gitpod.io/networkpolicy: default
+  policyTypes:
+    - Ingress
+    - Egress
+
+---
+# networking.k8s.io/v1/NetworkPolicy ws-daemon
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-daemon
+  name: ws-daemon
+  namespace: default
+spec:
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: gitpod
+              component: ws-manager
+      ports:
+        - port: 8080
+          protocol: TCP
+    - from:
+        - podSelector:
+            matchLabels:
+              app: prometheus
+              component: server
+      ports:
+        - port: 9500
+          protocol: TCP
+  podSelector:
+    matchLabels:
+      app: gitpod
+      component: ws-daemon
+  policyTypes:
+    - Ingress
+
+---
+# networking.k8s.io/v1/NetworkPolicy ws-manager
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-manager
+  name: ws-manager
+  namespace: default
+spec:
+  ingress:
+    - {}
+  podSelector:
+    matchLabels:
+      app: gitpod
+      component: ws-manager
+  policyTypes:
+    - Ingress
+
+---
+# networking.k8s.io/v1/NetworkPolicy ws-proxy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-proxy
+  name: ws-proxy
+  namespace: default
+spec:
+  ingress:
+    - ports:
+        - port: 8080
+          protocol: TCP
+        - port: 9090
+          protocol: TCP
+        - port: 2200
+          protocol: TCP
+  podSelector:
+    matchLabels:
+      app: gitpod
+      component: ws-proxy
+  policyTypes:
+    - Ingress
+
+---
+# v1/ResourceQuota gitpod-resource-quota
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  creationTimestamp: null
+  name: gitpod-resource-quota
+  namespace: default
+spec:
+  hard:
+    pods: 10k
+  scopeSelector:
+    matchExpressions:
+    - operator: In
+      scopeName: PriorityClass
+      values:
+      - system-node-critical
+status: {}
+---
+# cert-manager.io/v1/Issuer ca-issuer
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: cluster
+  name: ca-issuer
+  namespace: default
+spec:
+  ca:
+    secretName: ca-issuer-ca
+status: {}
+---
+# cert-manager.io/v1/Issuer gitpod-selfsigned-issuer
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: cluster
+  name: gitpod-selfsigned-issuer
+  namespace: default
+spec:
+  selfSigned: {}
+status: {}
+---
+# cert-manager.io/v1/Certificate builtin-registry-certs
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: docker-registry
+  name: builtin-registry-certs
+  namespace: default
+spec:
+  dnsNames:
+  - registry.default.svc.cluster.local
+  duration: 2160h0m0s
+  issuerRef:
+    group: cert-manager.io
+    kind: Issuer
+    name: ca-issuer
+  secretName: builtin-registry-certs
+  secretTemplate:
+    labels:
+      app: gitpod
+      component: docker-registry
+status: {}
+---
+# cert-manager.io/v1/Certificate builtin-registry-facade-cert
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: registry-facade
+  name: builtin-registry-facade-cert
+  namespace: default
+spec:
+  dnsNames:
+  - reg.gitpod.example.com
+  duration: 2160h0m0s
+  issuerRef:
+    group: cert-manager.io
+    kind: Issuer
+    name: ca-issuer
+  secretName: builtin-registry-facade-cert
+  secretTemplate:
+    labels:
+      app: gitpod
+      component: registry-facade
+status: {}
+---
+# cert-manager.io/v1/Certificate ca-issuer-ca
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: cluster
+  name: ca-issuer-ca
+  namespace: default
+spec:
+  commonName: ca-issuer-ca
+  duration: 2160h0m0s
+  isCA: true
+  issuerRef:
+    group: cert-manager.io
+    kind: Issuer
+    name: gitpod-selfsigned-issuer
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  secretName: ca-issuer-ca
+  secretTemplate:
+    labels:
+      app: gitpod
+      component: cluster
+status: {}
+---
+# cert-manager.io/v1/Certificate ws-daemon-tls
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-daemon
+  name: ws-daemon-tls
+  namespace: default
+spec:
+  dnsNames:
+  - gitpod.default
+  - ws-daemon.default.svc
+  - ws-daemon
+  - wsdaemon
+  duration: 2160h0m0s
+  issuerRef:
+    group: cert-manager.io
+    kind: Issuer
+    name: ca-issuer
+  secretName: ws-daemon-tls
+  secretTemplate:
+    labels:
+      app: gitpod
+      component: ws-daemon
+status: {}
+---
+# cert-manager.io/v1/Certificate ws-manager
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-manager
+  name: ws-manager
+  namespace: default
+spec:
+  dnsNames:
+  - registry-facade
+  - server
+  - ws-manager-bridge
+  - ws-proxy
+  - ws-manager
+  duration: 2160h0m0s
+  issuerRef:
+    group: cert-manager.io
+    kind: Issuer
+    name: ca-issuer
+  secretName: ws-manager-client-tls
+  secretTemplate:
+    labels:
+      app: gitpod
+      component: ws-manager
+status: {}
+---
+# cert-manager.io/v1/Certificate ws-manager-tls
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-manager
+  name: ws-manager-tls
+  namespace: default
+spec:
+  dnsNames:
+  - gitpod.default
+  - ws-manager.default.svc
+  - ws-manager
+  - ws-manager-dev
+  duration: 2160h0m0s
+  issuerRef:
+    group: cert-manager.io
+    kind: Issuer
+    name: ca-issuer
+  secretName: ws-manager-tls
+  secretTemplate:
+    labels:
+      app: gitpod
+      component: ws-manager
+status: {}
+---
+# v1/ServiceAccount agent-smith
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: agent-smith
+  name: agent-smith
+  namespace: default
+---
+# v1/ServiceAccount docker-registry
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: docker-registry
+  name: docker-registry
+  namespace: default
+---
+# v1/ServiceAccount gitpod
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: gitpod
+  name: gitpod
+  namespace: default
+---
+# v1/ServiceAccount image-builder-mk3
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: image-builder-mk3
+  name: image-builder-mk3
+  namespace: default
+---
+# v1/ServiceAccount nobody
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: nobody
+  name: nobody
+  namespace: default
+---
+# v1/ServiceAccount registry-facade
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: registry-facade
+  name: registry-facade
+  namespace: default
+---
+# v1/ServiceAccount workspace
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: workspace
+  name: workspace
+  namespace: default
+---
+# v1/ServiceAccount ws-daemon
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-daemon
+  name: ws-daemon
+  namespace: default
+---
+# v1/ServiceAccount ws-manager
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-manager
+  name: ws-manager
+  namespace: default
+---
+# v1/ServiceAccount ws-proxy
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-proxy
+  name: ws-proxy
+  namespace: default
+---
+# v1/Secret builtin-registry-auth
+apiVersion: v1
+data:
+  .dockerconfigjson: eyJhdXRocyI6eyJyZWdpc3RyeS5naXRwb2QuZXhhbXBsZS5jb20iOnsiYXV0aCI6ImVGTmxaRXBwUkdkS1VWRm5ORUpyVnpWNFMzVTZRMWMwUTFKQ2FtazJVakJpUjBjNE1XZDVSWGs9In19fQ==
+  password: Q1c0Q1JCamk2UjBiR0c4MWd5RXk=
+  user: eFNlZEppRGdKUVFnNEJrVzV4S3U=
+kind: Secret
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: docker-registry
+  name: builtin-registry-auth
+  namespace: default
+type: kubernetes.io/dockerconfigjson
+---
+# v1/Secret registry-secret
+# Source: docker-registry/charts/docker-registry/templates/secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: registry-secret
+  namespace: default
+  labels:
+    app: docker-registry
+    chart: docker-registry-1.16.0
+    heritage: Helm
+    release: docker-registry
+type: Opaque
+data:
+  haSharedSecret: "bVZZaFJrcXRhdGxyemthaQ=="
+  proxyUsername: ""
+  proxyPassword: ""
+---
+# v1/ConfigMap agent-smith
+apiVersion: v1
+data:
+  config.json: |-
+    {
+      "gitpodAPI": {
+        "hostURL": "https://gitpod.example.com",
+        "apiToken": ""
+      },
+      "enforcement": {},
+      "kubernetes": {
+        "enabled": true
+      },
+      "namespace": "default",
+      "pprofAddr": "127.0.0.1:6060",
+      "prometheusAddr": "127.0.0.1:9500"
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: agent-smith
+  name: agent-smith
+  namespace: default
+---
+# v1/ConfigMap gitpod
+apiVersion: v1
+data:
+  config.yaml: |
+    apiVersion: v1
+    authProviders: []
+    blockNewUsers:
+      enabled: false
+      passlist: []
+    certificate:
+      kind: secret
+      name: https-certificates
+    containerRegistry:
+      inCluster: true
+      privateBaseImageAllowList: []
+    database:
+      inCluster: true
+    disableDefinitelyGp: true
+    domain: gitpod.example.com
+    kind: Workspace
+    metadata:
+      region: local
+      shortname: default
+    objectStorage:
+      inCluster: true
+      resources:
+        requests:
+          memory: 2Gi
+    observability:
+      logLevel: info
+    openVSX:
+      url: https://open-vsx.org
+    repository: eu.gcr.io/gitpod-core-dev/build
+    workspace:
+      maxLifetime: 36h0m0s
+      pvc:
+        size: 30Gi
+        snapshotClass: ""
+        storageClass: ""
+      resources:
+        requests:
+          cpu: "1"
+          memory: 2Gi
+      runtime:
+        containerdRuntimeDir: /var/lib/containerd/io.containerd.runtime.v2.task/k8s.io
+        containerdSocket: /run/containerd/containerd.sock
+        fsShiftMethod: fuse
+  versions.json: |-
+    {
+      "versions": {
+        "version": "pd-ide-metrics.23",
+        "components": {
+          "agentSmith": {
+            "version": "test"
+          },
+          "blobserve": {
+            "version": "test"
+          },
+          "caUpdater": {
+            "version": "test"
+          },
+          "contentService": {
+            "version": "test"
+          },
+          "dashboard": {
+            "version": "test"
+          },
+          "dbMigrations": {
+            "version": "test"
+          },
+          "dbSync": {
+            "version": "test"
+          },
+          "ideProxy": {
+            "version": "test"
+          },
+          "ideMetrics": {
+            "version": "test"
+          },
+          "ideService": {
+            "version": "test"
+          },
+          "imageBuilder": {
+            "version": ""
+          },
+          "imageBuilderMk3": {
+            "version": "test",
+            "builderImage": {
+              "version": "test"
+            }
+          },
+          "installationTelemetry": {
+            "version": "test"
+          },
+          "integrationTests": {
+            "version": ""
+          },
+          "openVSXProxy": {
+            "version": "test"
+          },
+          "paymentEndpoint": {
+            "version": "test"
+          },
+          "proxy": {
+            "version": "test"
+          },
+          "public-api-server": {
+            "version": "test"
+          },
+          "registryFacade": {
+            "version": "test"
+          },
+          "server": {
+            "version": "test"
+          },
+          "serviceWaiter": {
+            "version": "test"
+          },
+          "usage": {
+            "version": "test"
+          },
+          "workspace": {
+            "codeImage": {
+              "version": "test"
+            },
+            "dockerUp": {
+              "version": "test"
+            },
+            "supervisor": {
+              "version": "test"
+            },
+            "workspacekit": {
+              "version": "test"
+            },
+            "desktopIdeImages": {
+              "codeDesktop": {
+                "version": "test"
+              },
+              "codeDesktopInsiders": {
+                "version": "test"
+              },
+              "intellij": {
+                "version": "test"
+              },
+              "intellijLatest": {
+                "version": "test"
+              },
+              "goland": {
+                "version": "test"
+              },
+              "golandLatest": {
+                "version": "test"
+              },
+              "pycharm": {
+                "version": "test"
+              },
+              "pycharmLatest": {
+                "version": "test"
+              },
+              "phpstorm": {
+                "version": "test"
+              },
+              "phpstormLatest": {
+                "version": "test"
+              },
+              "rubymine": {
+                "version": "test"
+              },
+              "rubymineLatest": {
+                "version": "test"
+              },
+              "webstorm": {
+                "version": "test"
+              },
+              "webstormLatest": {
+                "version": "test"
+              },
+              "jbBackendPlugin": {
+                "version": "test"
+              },
+              "jbBackendPluginLatest": {
+                "version": "test"
+              }
+            }
+          },
+          "wsDaemon": {
+            "version": "test",
+            "userNamespaces": {
+              "seccompProfileInstaller": {
+                "version": "test"
+              },
+              "shiftfsModuleLoader": {
+                "version": "test"
+              }
+            }
+          },
+          "wsManager": {
+            "version": "test"
+          },
+          "wsManagerBridge": {
+            "version": "test"
+          },
+          "wsProxy": {
+            "version": "test"
+          }
+        }
+      }
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: gitpod
+  name: gitpod
+  namespace: default
+---
+# v1/ConfigMap gitpod-app
+apiVersion: v1
+data:
+  app.yaml: |
+    apiVersion: cert-manager.io/v1
+    kind: Certificate
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: docker-registry
+      name: builtin-registry-certs
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: docker-registry
+      name: docker-registry
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: docker-registry
+      name: builtin-registry-auth
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: docker-registry
+      name: docker-registry
+      namespace: default
+    ---
+    apiVersion: cert-manager.io/v1
+    kind: Issuer
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: cluster
+      name: gitpod-selfsigned-issuer
+      namespace: default
+    ---
+    apiVersion: cert-manager.io/v1
+    kind: Certificate
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: cluster
+      name: ca-issuer-ca
+      namespace: default
+    ---
+    apiVersion: cert-manager.io/v1
+    kind: Issuer
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: cluster
+      name: ca-issuer
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      creationTimestamp: null
+      name: default-kube-rbac-proxy
+    ---
+    apiVersion: v1
+    kind: ResourceQuota
+    metadata:
+      creationTimestamp: null
+      name: gitpod-resource-quota
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      name: default-ns-nobody
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: nobody
+      name: nobody
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: gitpod
+      name: gitpod
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: gitpod
+      name: gitpod
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: gitpod
+      name: gitpod
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: agent-smith
+      name: agent-smith
+      namespace: default
+    ---
+    apiVersion: apps/v1
+    kind: DaemonSet
+    metadata:
+      annotations:
+        gitpod.io/checksum_config: e5f1dd2a1327394b4bef4172c43487842026ef965fe8cec2475f00b1588de01f
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: agent-smith
+      name: agent-smith
+      namespace: default
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: agent-smith
+      name: agent-smith
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: agent-smith
+      name: agent-smith
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: agent-smith
+      name: agent-smith
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: agent-smith
+      name: default-agent-smith-rb-kube-rbac-proxy
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: agent-smith
+      name: agent-smith
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: registry-facade
+      name: default-ns-registry-facade
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: registry-facade
+      name: registry-facade
+      namespace: default
+    ---
+    apiVersion: apps/v1
+    kind: DaemonSet
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: registry-facade
+      name: registry-facade
+      namespace: default
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: registry-facade
+      name: registry-facade
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: registry-facade
+      name: default-registry-facade-rb
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: registry-facade
+      name: default-registry-facade-kube-rbac-proxy
+    ---
+    apiVersion: cert-manager.io/v1
+    kind: Certificate
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: registry-facade
+      name: builtin-registry-facade-cert
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: registry-facade
+        kind: service
+      name: registry-facade
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: registry-facade
+      name: registry-facade
+      namespace: default
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: workspace
+      name: workspace-default
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: workspace
+      name: workspace
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: workspace
+      name: workspace
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-daemon
+      name: default-ns-ws-daemon
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-daemon
+      name: ws-daemon
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-daemon
+      name: ws-daemon
+      namespace: default
+    ---
+    apiVersion: apps/v1
+    kind: DaemonSet
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-daemon
+      name: ws-daemon
+      namespace: default
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-daemon
+      name: ws-daemon
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-daemon
+      name: default-ws-daemon-rb-kube-rbac-proxy
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-daemon
+      name: default-ws-daemon-rb
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-daemon
+        kind: service
+      name: ws-daemon
+      namespace: default
+    ---
+    apiVersion: cert-manager.io/v1
+    kind: Certificate
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-daemon
+      name: ws-daemon-tls
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-manager
+      name: ws-manager
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-manager
+      name: workspace-templates
+      namespace: default
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-manager
+      name: ws-manager
+      namespace: default
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-manager
+      name: ws-manager
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-manager
+      name: ws-manager
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-manager
+      name: ws-manager
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-manager
+      name: default-ws-manager-kube-rbac-proxy
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-manager
+      name: ws-manager
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-manager
+      name: ws-manager
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-manager
+      name: ws-manager
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-manager
+        kind: service
+      name: ws-manager
+      namespace: default
+    ---
+    apiVersion: cert-manager.io/v1
+    kind: Certificate
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-manager
+      name: ws-manager-tls
+      namespace: default
+    ---
+    apiVersion: cert-manager.io/v1
+    kind: Certificate
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-manager
+      name: ws-manager
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-manager
+      name: ws-manager-unpriviledged
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-proxy
+      name: ws-proxy
+      namespace: default
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-proxy
+      name: ws-proxy
+      namespace: default
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-proxy
+      name: ws-proxy
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-proxy
+      name: default-ws-proxy-kube-rbac-proxy
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-proxy
+      name: ws-proxy
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-proxy
+      name: ws-proxy-api
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-proxy
+      name: ws-proxy
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        cloud.google.com/neg: '{"exposed_ports": {"80":{},"443": {}}}'
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-proxy
+        kind: service
+      name: ws-proxy
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-proxy
+      name: ws-proxy
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: image-builder-mk3
+      name: image-builder-mk3-config
+      namespace: default
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: image-builder-mk3
+      name: image-builder-mk3
+      namespace: default
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: image-builder-mk3
+      name: image-builder-mk3
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: image-builder-mk3
+      name: image-builder-mk3
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: image-builder-mk3
+      name: default-image-builder-mk3-proxy-kube-rbac-proxy
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: image-builder-mk3
+        kind: service
+      name: image-builder-mk3
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: image-builder-mk3
+      name: image-builder-mk3
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: docker-registry
+        chart: docker-registry-1.16.0
+        heritage: Helm
+        release: docker-registry
+      name: registry-secret
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: docker-registry
+        chart: docker-registry-1.16.0
+        heritage: Helm
+        release: docker-registry
+      name: registry-config
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: registry
+        chart: docker-registry-1.16.0
+        heritage: Helm
+        release: docker-registry
+      name: registry
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: docker-registry
+        chart: docker-registry-1.16.0
+        heritage: Helm
+        release: docker-registry
+      name: registry
+      namespace: default
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: docker-registry
+        chart: docker-registry-1.16.0
+        heritage: Helm
+        release: docker-registry
+      name: registry
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: gitpod-app
+      name: gitpod-app
+      namespace: default
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: gitpod-app
+  name: gitpod-app
+  namespace: default
+
+---
+# v1/ConfigMap image-builder-mk3-config
+apiVersion: v1
+data:
+  image-builder.json: |-
+    {
+      "orchestrator": {
+        "wsman": {
+          "address": "ws-manager:8080",
+          "tls": {
+            "ca": "/wsman-certs/ca.crt",
+            "crt": "/wsman-certs/tls.crt",
+            "key": "/wsman-certs/tls.key"
+          }
+        },
+        "pullSecret": "builtin-registry-auth",
+        "pullSecretFile": "/config/pull-secret.json",
+        "baseImageRepository": "registry.gitpod.example.com/base-images",
+        "workspaceImageRepository": "registry.gitpod.example.com/workspace-images",
+        "builderImage": "eu.gcr.io/gitpod-core-dev/build/image-builder-mk3/bob:test"
+      },
+      "refCache": {
+        "interval": "6h0m0s",
+        "refs": [
+          "docker.io/gitpod/workspace-full:latest"
+        ]
+      },
+      "server": {
+        "services": {
+          "grpc": {
+            "address": "0.0.0.0:8080"
+          }
+        }
+      }
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: image-builder-mk3
+  name: image-builder-mk3-config
+  namespace: default
+---
+# v1/ConfigMap registry-config
+# Source: docker-registry/charts/docker-registry/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: registry-config
+  namespace: default
+  labels:
+    app: docker-registry
+    chart: docker-registry-1.16.0
+    heritage: Helm
+    release: docker-registry
+data:
+  config.yml: |-
+    health:
+      storagedriver:
+        enabled: true
+        interval: 10s
+        threshold: 3
+    http:
+      addr: :5000
+      debug:
+        addr: :5001
+        prometheus:
+          enabled: false
+          path: /metrics
+      headers:
+        X-Content-Type-Options:
+        - nosniff
+    log:
+      fields:
+        service: registry
+    storage:
+      cache:
+        blobdescriptor: inmemory
+    version: 0.1
+---
+# v1/ConfigMap registry-facade
+apiVersion: v1
+data:
+  config.json: |-
+    {
+      "registry": {
+        "port": 32223,
+        "prefix": "",
+        "staticLayer": [
+          {
+            "ref": "eu.gcr.io/gitpod-core-dev/build/supervisor:test",
+            "type": "image"
+          },
+          {
+            "ref": "eu.gcr.io/gitpod-core-dev/build/workspacekit:test",
+            "type": "image"
+          },
+          {
+            "ref": "eu.gcr.io/gitpod-core-dev/build/docker-up:test",
+            "type": "image"
+          }
+        ],
+        "remoteSpecProvider": {
+          "addr": "dns:///ws-manager:8080",
+          "tls": {
+            "ca": "/ws-manager-client-tls-certs/ca.crt",
+            "crt": "/ws-manager-client-tls-certs/tls.crt",
+            "key": "/ws-manager-client-tls-certs/tls.key"
+          }
+        },
+        "store": "/mnt/cache/registry",
+        "requireAuth": false,
+        "tls": {
+          "ca": "",
+          "crt": "/mnt/certificates/tls.crt",
+          "key": "/mnt/certificates/tls.key"
+        }
+      },
+      "dockerAuth": "/mnt/pull-secret.json",
+      "pprofAddr": "127.0.0.1:6060",
+      "prometheusAddr": "127.0.0.1:9500",
+      "readinessProbeAddr": ":8086"
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: registry-facade
+  name: registry-facade
+  namespace: default
+---
+# v1/ConfigMap workspace-templates
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-manager
+  name: workspace-templates
+  namespace: default
+---
+# v1/ConfigMap ws-daemon
+apiVersion: v1
+data:
+  config.json: |-
+    {
+      "daemon": {
+        "runtime": {
+          "containerRuntime": {
+            "mounts": {
+              "proc": "/mnt/mounts"
+            },
+            "nodeToContainerMapping": {
+              "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io": "/mnt/node0"
+            },
+            "runtime": "containerd",
+            "containerd": {
+              "socket": "/mnt/containerd.sock"
+            }
+          },
+          "kubeconfig": "",
+          "namespace": "default"
+        },
+        "content": {
+          "workingArea": "/mnt/workingarea",
+          "workingAreaNode": "/var/gitpod/workspaces",
+          "tempDir": "/tmp",
+          "storage": {
+            "stage": "",
+            "kind": "minio",
+            "gcloud": {
+              "credentialsFile": "",
+              "region": "",
+              "projectId": ""
+            },
+            "minio": {
+              "endpoint": "minio.default.svc.cluster.local:9000",
+              "accessKey": "8-WGqw2oTnsPfUDNSk0Y",
+              "accessKeyFile": "",
+              "secretKey": "DpC.aSAxkWBPu2_bJ_AE",
+              "secretKeyFile": "",
+              "region": "local",
+              "parallelUpload": 6
+            },
+            "blobQuota": 5368709120
+          },
+          "backup": {
+            "timeout": "5m0s",
+            "attempts": 3,
+            "period": "0s"
+          },
+          "userNamespaces": {
+            "fsShift": "FUSE"
+          },
+          "initializer": {
+            "command": "/app/content-initializer",
+            "args": null
+          }
+        },
+        "uidmapper": {
+          "procLocation": "/proc",
+          "rootUIDRange": {
+            "start": 33333,
+            "size": 1
+          },
+          "userUIDRange": [
+            {
+              "start": 100000,
+              "size": 70000
+            }
+          ]
+        },
+        "cpulimit": {
+          "enabled": false,
+          "totalBandwidth": "0",
+          "limit": "0",
+          "burstLimit": "0",
+          "controlPeriod": "15s",
+          "cgroupBasePath": "/mnt/node-cgroups"
+        },
+        "ioLimit": {
+          "writeBandwidthPerSecond": "0",
+          "readBandwidthPerSecond": "0",
+          "writeIOPS": 0,
+          "readIOPS": 0
+        },
+        "procLimit": 0,
+        "netlimit": {
+          "enabled": false,
+          "enforce": false,
+          "connectionsPerMinute": 3000,
+          "bucketSize": 1000
+        },
+        "hosts": {
+          "enabled": true,
+          "nodeHostsFile": "/mnt/hosts",
+          "fixedHosts": {
+            "registryFacade": [
+              {
+                "addr": "127.0.0.1",
+                "name": "reg.gitpod.example.com"
+              }
+            ]
+          }
+        },
+        "disk": {
+          "enabled": true,
+          "interval": "5m0s",
+          "locations": [
+            {
+              "path": "/mnt/workingarea",
+              "minBytesAvail": 21474836480
+            }
+          ]
+        }
+      },
+      "service": {
+        "address": "0.0.0.0:8080",
+        "tls": {
+          "caPath": "/certs/ca.crt",
+          "certPath": "/certs/tls.crt",
+          "keyPath": "/certs/tls.key"
+        }
+      }
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-daemon
+  name: ws-daemon
+  namespace: default
+---
+# v1/ConfigMap ws-manager
+apiVersion: v1
+data:
+  config.json: |-
+    {
+      "manager": {
+        "namespace": "default",
+        "schedulerName": "",
+        "seccompProfile": "workspace_default_pd-ide-metrics.23.json",
+        "timeouts": {
+          "startup": "1h0m0s",
+          "initialization": "30m0s",
+          "regularWorkspace": "30m0s",
+          "maxLifetime": "36h0m0s",
+          "headlessWorkspace": "1h0m0s",
+          "afterClose": "2m0s",
+          "contentFinalization": "1h0m0s",
+          "stopping": "1h0m0s",
+          "interrupted": "5m0s"
+        },
+        "initProbe": {
+          "timeout": "1s"
+        },
+        "urlTemplate": "https://{{ .Prefix }}.ws.gitpod.example.com",
+        "portUrlTemplate": "https://{{ .WorkspacePort }}-{{ .Prefix }}.ws.gitpod.example.com",
+        "workspaceHostPath": "/var/gitpod/workspaces",
+        "heartbeatInterval": "30s",
+        "hostURL": "https://gitpod.example.com",
+        "reconnectionInterval": "30s",
+        "wsdaemon": {
+          "port": 8080,
+          "tls": {
+            "ca": "/ws-daemon-tls-certs/ca.crt",
+            "crt": "/ws-daemon-tls-certs/tls.crt",
+            "key": "/ws-daemon-tls-certs/tls.key"
+          }
+        },
+        "registryFacadeHost": "reg.gitpod.example.com:20000",
+        "workspaceClusterHost": "ws.gitpod.example.com",
+        "workspaceClass": {
+          "default": {
+            "name": "default",
+            "container": {
+              "requests": {
+                "cpu": "1",
+                "memory": "2Gi",
+                "ephemeral-storage": ""
+              },
+              "limits": {
+                "cpu": {
+                  "min": "",
+                  "burst": ""
+                },
+                "memory": "",
+                "ephemeral-storage": ""
+              }
+            },
+            "templates": {},
+            "pvc": {
+              "size": "30Gi",
+              "storageClass": "",
+              "snapshotClass": ""
+            }
+          }
+        }
+      },
+      "content": {
+        "storage": {
+          "stage": "",
+          "kind": "minio",
+          "gcloud": {
+            "credentialsFile": "",
+            "region": "",
+            "projectId": ""
+          },
+          "minio": {
+            "endpoint": "minio.default.svc.cluster.local:9000",
+            "accessKey": "8-WGqw2oTnsPfUDNSk0Y",
+            "accessKeyFile": "",
+            "secretKey": "DpC.aSAxkWBPu2_bJ_AE",
+            "secretKeyFile": "",
+            "region": "local",
+            "parallelUpload": 6
+          },
+          "blobQuota": 5368709120
+        }
+      },
+      "rpcServer": {
+        "addr": ":8080",
+        "tls": {
+          "ca": "/certs/ca.crt",
+          "crt": "/certs/tls.crt",
+          "key": "/certs/tls.key"
+        },
+        "ratelimits": {}
+      },
+      "imageBuilderProxy": {
+        "targetAddr": "image-builder-mk3.default.svc.cluster.local:8080"
+      },
+      "pprof": {
+        "addr": "127.0.0.1:6060"
+      },
+      "prometheus": {
+        "addr": "127.0.0.1:9500"
+      }
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-manager
+  name: ws-manager
+  namespace: default
+---
+# v1/ConfigMap ws-proxy
+apiVersion: v1
+data:
+  config.json: |-
+    {
+      "ingress": {
+        "httpAddress": "0.0.0.0:8080",
+        "httpsAddress": "0.0.0.0:9090",
+        "header": "x-wsproxy-host"
+      },
+      "proxy": {
+        "https": {
+          "key": "/mnt/certificates/tls.key",
+          "crt": "/mnt/certificates/tls.crt"
+        },
+        "transportConfig": {
+          "connectTimeout": "10s",
+          "idleConnTimeout": "1m0s",
+          "maxIdleConns": 0,
+          "maxIdleConnsPerHost": 100
+        },
+        "blobServer": {
+          "scheme": "https",
+          "host": "ide.gitpod.example.com",
+          "pathPrefix": "/blobserve"
+        },
+        "gitpodInstallation": {
+          "scheme": "https",
+          "hostName": "gitpod.example.com",
+          "workspaceHostSuffix": ".ws.gitpod.example.com",
+          "workspaceHostSuffixRegex": "\\.ws[^\\.]*\\.gitpod.example.com"
+        },
+        "workspacePodConfig": {
+          "theiaPort": 23000,
+          "supervisorPort": 22999,
+          "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:test"
+        },
+        "builtinPages": {
+          "location": "/app/public"
+        }
+      },
+      "pprofAddr": "127.0.0.1:6060",
+      "prometheusAddr": "127.0.0.1:9500",
+      "readinessProbeAddr": ":8086",
+      "namespace": "default",
+      "wsManager": {
+        "addr": "ws-manager:8080",
+        "tls": {
+          "ca": "/ws-manager-client-tls-certs/ca.crt",
+          "crt": "/ws-manager-client-tls-certs/tls.crt",
+          "key": "/ws-manager-client-tls-certs/tls.key"
+        }
+      }
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-proxy
+  name: ws-proxy
+  namespace: default
+---
+# v1/PersistentVolumeClaim registry
+# Source: docker-registry/charts/docker-registry/templates/pvc.yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: registry
+  namespace: default
+  labels:
+    app: registry
+    chart: "docker-registry-1.16.0"
+    release: "docker-registry"
+    heritage: "Helm"
+spec:
+  accessModes:
+    - "ReadWriteOnce"
+  resources:
+    requests:
+      storage: "10Gi"
+---
+# rbac.authorization.k8s.io/v1/ClusterRole default-kube-rbac-proxy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: default-kube-rbac-proxy
+rules:
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+# rbac.authorization.k8s.io/v1/ClusterRole default-ns-registry-facade
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: registry-facade
+  name: default-ns-registry-facade
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - update
+  - patch
+---
+# rbac.authorization.k8s.io/v1/ClusterRole default-ns-ws-daemon
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-daemon
+  name: default-ns-ws-daemon
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - delete
+  - update
+  - patch
+---
+# rbac.authorization.k8s.io/v1/ClusterRole ws-manager
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-manager
+  name: ws-manager
+  namespace: default
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - snapshot.storage.k8s.io
+  resources:
+  - volumesnapshotcontents
+  - volumesnapshotclasses
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - patch
+  - watch
+  - delete
+  - deletecollection
+---
+# rbac.authorization.k8s.io/v1/ClusterRoleBinding default-agent-smith-rb-kube-rbac-proxy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: agent-smith
+  name: default-agent-smith-rb-kube-rbac-proxy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-kube-rbac-proxy
+subjects:
+- kind: ServiceAccount
+  name: agent-smith
+  namespace: default
+---
+# rbac.authorization.k8s.io/v1/ClusterRoleBinding default-image-builder-mk3-proxy-kube-rbac-proxy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: image-builder-mk3
+  name: default-image-builder-mk3-proxy-kube-rbac-proxy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-kube-rbac-proxy
+subjects:
+- kind: ServiceAccount
+  name: image-builder-mk3
+  namespace: default
+---
+# rbac.authorization.k8s.io/v1/ClusterRoleBinding default-registry-facade-kube-rbac-proxy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: registry-facade
+  name: default-registry-facade-kube-rbac-proxy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-kube-rbac-proxy
+subjects:
+- kind: ServiceAccount
+  name: registry-facade
+  namespace: default
+---
+# rbac.authorization.k8s.io/v1/ClusterRoleBinding default-registry-facade-rb
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: registry-facade
+  name: default-registry-facade-rb
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-ns-registry-facade
+subjects:
+- kind: ServiceAccount
+  name: registry-facade
+  namespace: default
+---
+# rbac.authorization.k8s.io/v1/ClusterRoleBinding default-ws-daemon-rb
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-daemon
+  name: default-ws-daemon-rb
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-ns-ws-daemon
+subjects:
+- kind: ServiceAccount
+  name: ws-daemon
+  namespace: default
+---
+# rbac.authorization.k8s.io/v1/ClusterRoleBinding default-ws-daemon-rb-kube-rbac-proxy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-daemon
+  name: default-ws-daemon-rb-kube-rbac-proxy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-kube-rbac-proxy
+subjects:
+- kind: ServiceAccount
+  name: ws-daemon
+  namespace: default
+---
+# rbac.authorization.k8s.io/v1/ClusterRoleBinding default-ws-manager-kube-rbac-proxy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-manager
+  name: default-ws-manager-kube-rbac-proxy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-kube-rbac-proxy
+subjects:
+- kind: ServiceAccount
+  name: ws-manager
+  namespace: default
+---
+# rbac.authorization.k8s.io/v1/ClusterRoleBinding default-ws-proxy-kube-rbac-proxy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-proxy
+  name: default-ws-proxy-kube-rbac-proxy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-kube-rbac-proxy
+subjects:
+- kind: ServiceAccount
+  name: ws-proxy
+  namespace: default
+---
+# rbac.authorization.k8s.io/v1/ClusterRoleBinding ws-manager
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-manager
+  name: ws-manager
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ws-manager
+subjects:
+- kind: ServiceAccount
+  name: ws-manager
+  namespace: default
+---
+# rbac.authorization.k8s.io/v1/Role agent-smith
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: agent-smith
+  name: agent-smith
+  namespace: default
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - update
+---
+# rbac.authorization.k8s.io/v1/Role ws-manager
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-manager
+  name: ws-manager
+  namespace: default
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - pods/log
+  - events
+  - services
+  - endpoints
+  - configmaps
+  - persistentvolumeclaims
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - patch
+  - watch
+  - delete
+  - deletecollection
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - create
+  - delete
+  - watch
+  - list
+- apiGroups:
+  - snapshot.storage.k8s.io
+  resources:
+  - volumesnapshots
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - patch
+  - watch
+  - delete
+  - deletecollection
+---
+# rbac.authorization.k8s.io/v1/Role ws-proxy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-proxy
+  name: ws-proxy
+  namespace: default
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+---
+# rbac.authorization.k8s.io/v1/RoleBinding agent-smith
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: agent-smith
+  name: agent-smith
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: agent-smith
+subjects:
+- kind: ServiceAccount
+  name: agent-smith
+---
+# rbac.authorization.k8s.io/v1/RoleBinding default-ns-nobody
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  name: default-ns-nobody
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-ns-psp:unprivileged
+subjects:
+- kind: ServiceAccount
+  name: nobody
+  namespace: default
+---
+# rbac.authorization.k8s.io/v1/RoleBinding docker-registry
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: docker-registry
+  name: docker-registry
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-ns-psp:restricted-root-user
+subjects:
+- kind: ServiceAccount
+  name: docker-registry
+---
+# rbac.authorization.k8s.io/v1/RoleBinding gitpod
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: gitpod
+  name: gitpod
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-ns-psp:restricted-root-user
+subjects:
+- kind: ServiceAccount
+  name: gitpod
+---
+# rbac.authorization.k8s.io/v1/RoleBinding image-builder-mk3
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: image-builder-mk3
+  name: image-builder-mk3
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-ns-image-builder-mk3
+subjects:
+- kind: ServiceAccount
+  name: image-builder-mk3
+---
+# rbac.authorization.k8s.io/v1/RoleBinding workspace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: workspace
+  name: workspace
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: workspace
+subjects:
+- kind: ServiceAccount
+  name: workspace
+---
+# rbac.authorization.k8s.io/v1/RoleBinding ws-manager
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-manager
+  name: ws-manager
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ws-manager
+subjects:
+- kind: ServiceAccount
+  name: ws-manager
+---
+# rbac.authorization.k8s.io/v1/RoleBinding ws-manager-unpriviledged
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-manager
+  name: ws-manager-unpriviledged
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-ns-psp:unprivileged
+subjects:
+- kind: ServiceAccount
+  name: ws-manager
+---
+# rbac.authorization.k8s.io/v1/RoleBinding ws-proxy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-proxy
+  name: ws-proxy
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-ns-psp:unprivileged
+subjects:
+- kind: ServiceAccount
+  name: ws-proxy
+---
+# rbac.authorization.k8s.io/v1/RoleBinding ws-proxy-api
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-proxy
+  name: ws-proxy-api
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ws-proxy
+subjects:
+- kind: ServiceAccount
+  name: ws-proxy
+---
+# v1/Service image-builder-mk3
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: image-builder-mk3
+    kind: service
+  name: image-builder-mk3
+  namespace: default
+spec:
+  ports:
+  - name: service
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: gitpod
+    component: image-builder-mk3
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
+# v1/Service registry
+# Source: docker-registry/charts/docker-registry/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry
+  namespace: default
+  labels:
+    app: docker-registry
+    chart: docker-registry-1.16.0
+    release: docker-registry
+    heritage: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 443
+      protocol: TCP
+      name: https-443
+      targetPort: 5000
+  selector:
+    app: docker-registry
+    release: docker-registry
+---
+# v1/Service registry-facade
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: registry-facade
+    kind: service
+  name: registry-facade
+  namespace: default
+spec:
+  ports:
+  - name: registry
+    port: 20000
+    protocol: TCP
+    targetPort: 32223
+  selector:
+    app: gitpod
+    component: registry-facade
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
+# v1/Service ws-daemon
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-daemon
+    kind: service
+  name: ws-daemon
+  namespace: default
+spec:
+  clusterIP: None
+  selector:
+    app: gitpod
+    component: ws-daemon
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
+# v1/Service ws-manager
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-manager
+    kind: service
+  name: ws-manager
+  namespace: default
+spec:
+  ports:
+  - name: rpc
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: gitpod
+    component: ws-manager
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
+# v1/Service ws-proxy
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    cloud.google.com/neg: '{"exposed_ports": {"80":{},"443": {}}}'
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-proxy
+    kind: service
+  name: ws-proxy
+  namespace: default
+spec:
+  ports:
+  - name: http-proxy
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  - name: https-proxy
+    port: 9090
+    protocol: TCP
+    targetPort: 9090
+  - name: metrics
+    port: 9500
+    protocol: TCP
+    targetPort: 9500
+  - name: ssh
+    port: 22
+    protocol: TCP
+    targetPort: 2200
+  selector:
+    app: gitpod
+    component: ws-proxy
+  type: LoadBalancer
+status:
+  loadBalancer: {}
+---
+# apps/v1/DaemonSet agent-smith
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  annotations:
+    gitpod.io/checksum_config: e5f1dd2a1327394b4bef4172c43487842026ef965fe8cec2475f00b1588de01f
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: agent-smith
+  name: agent-smith
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: gitpod
+      component: agent-smith
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: agent-smith
+      name: agent-smith
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: gitpod.io/workload_workspace_regular
+                operator: Exists
+            - matchExpressions:
+              - key: gitpod.io/workload_workspace_headless
+                operator: Exists
+      containers:
+      - args:
+        - run
+        - --config
+        - /config/config.json
+        env:
+        - name: GITPOD_DOMAIN
+          value: gitpod.example.com
+        - name: GITPOD_INSTALLATION_SHORTNAME
+          value: default
+        - name: GITPOD_REGION
+          value: local
+        - name: HOST_URL
+          value: https://gitpod.example.com
+        - name: KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBE_DOMAIN
+          value: svc.cluster.local
+        - name: LOG_LEVEL
+          value: info
+        - name: JAEGER_DISABLED
+          value: "true"
+        - name: NODENAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        image: eu.gcr.io/gitpod-core-dev/build/agent-smith:test
+        imagePullPolicy: IfNotPresent
+        name: agent-smith
+        resources:
+          requests:
+            cpu: 100m
+            memory: 32Mi
+        securityContext:
+          privileged: true
+          procMount: Default
+        volumeMounts:
+        - mountPath: /config
+          name: config
+      - args:
+        - --logtostderr
+        - --insecure-listen-address=[$(IP)]:9500
+        - --upstream=http://127.0.0.1:9500/
+        env:
+        - name: IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        image: quay.io/brancz/kube-rbac-proxy:v0.12.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 9500
+          name: metrics
+        resources:
+          requests:
+            cpu: 1m
+            memory: 30Mi
+        securityContext:
+          runAsGroup: 65532
+          runAsNonRoot: true
+          runAsUser: 65532
+        terminationMessagePolicy: FallbackToLogsOnError
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: false
+      hostPID: true
+      restartPolicy: Always
+      serviceAccountName: agent-smith
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          name: agent-smith
+        name: config
+  updateStrategy: {}
+status:
+  currentNumberScheduled: 0
+  desiredNumberScheduled: 0
+  numberMisscheduled: 0
+  numberReady: 0
+---
+# apps/v1/DaemonSet registry-facade
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: registry-facade
+  name: registry-facade
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: gitpod
+      component: registry-facade
+  template:
+    metadata:
+      annotations:
+        gitpod.io/checksum_config: 1568539df3f78cad79c3dd7b7e3ae3f5cf4fa74ad7263936762f004a8a6af77c
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: registry-facade
+      name: registry-facade
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: gitpod.io/workload_workspace_regular
+                operator: Exists
+            - matchExpressions:
+              - key: gitpod.io/workload_workspace_headless
+                operator: Exists
+      containers:
+      - args:
+        - run
+        - /mnt/config/config.json
+        env:
+        - name: GITPOD_DOMAIN
+          value: gitpod.example.com
+        - name: GITPOD_INSTALLATION_SHORTNAME
+          value: default
+        - name: GITPOD_REGION
+          value: local
+        - name: HOST_URL
+          value: https://gitpod.example.com
+        - name: KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBE_DOMAIN
+          value: svc.cluster.local
+        - name: LOG_LEVEL
+          value: info
+        - name: JAEGER_DISABLED
+          value: "true"
+        - name: GRPC_GO_RETRY
+          value: "on"
+        - name: NODENAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        image: eu.gcr.io/gitpod-core-dev/build/registry-facade:test
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /live
+            port: 8086
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+        name: registry-facade
+        ports:
+        - containerPort: 32223
+          hostPort: 20000
+          name: registry
+        readinessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: /ready
+            port: 8086
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 2
+          timeoutSeconds: 2
+        resources:
+          requests:
+            cpu: 100m
+            memory: 32Mi
+        securityContext:
+          privileged: false
+          runAsUser: 1000
+        volumeMounts:
+        - mountPath: /mnt/cache
+          name: cache
+        - mountPath: /mnt/config
+          name: config
+          readOnly: true
+        - mountPath: /ws-manager-client-tls-certs
+          name: ws-manager-client-tls-certs
+          readOnly: true
+        - mountPath: /mnt/pull-secret.json
+          name: pull-secret
+          subPath: .dockerconfigjson
+        - mountPath: /mnt/certificates
+          name: config-certificates
+      - args:
+        - --logtostderr
+        - --insecure-listen-address=[$(IP)]:9500
+        - --upstream=http://127.0.0.1:9500/
+        env:
+        - name: IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        image: quay.io/brancz/kube-rbac-proxy:v0.12.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 9500
+          name: metrics
+        resources:
+          requests:
+            cpu: 1m
+            memory: 30Mi
+        securityContext:
+          runAsGroup: 65532
+          runAsNonRoot: true
+          runAsUser: 65532
+        terminationMessagePolicy: FallbackToLogsOnError
+      - command:
+        - /app/ready-probe-labeler
+        - --label=gitpod.io/registry-facade_ready_ns_default
+        - --probe-url=http://localhost:8086/ready
+        env:
+        - name: NODENAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        image: eu.gcr.io/gitpod-core-dev/build/registry-facade:test
+        imagePullPolicy: IfNotPresent
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - /app/ready-probe-labeler
+              - --label=gitpod.io/registry-facade_ready_ns_default
+              - --shutdown
+        name: node-labeler
+        resources: {}
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: false
+      initContainers:
+      - command:
+        - bash
+        - -c
+        - set -e; update-ca-certificates -f; cp /etc/ssl/certs/* /ssl-certs; echo
+          'OK'
+        image: eu.gcr.io/gitpod-core-dev/build/ca-updater:test
+        imagePullPolicy: IfNotPresent
+        name: update-ca-certificates
+        resources: {}
+        volumeMounts:
+        - mountPath: /ssl-certs
+          name: cacerts
+        - mountPath: /usr/local/share/ca-certificates/gitpod-ca.crt
+          name: gitpod-ca-certificate
+          subPath: ca.crt
+      priorityClassName: system-node-critical
+      restartPolicy: Always
+      serviceAccountName: registry-facade
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - emptyDir: {}
+        name: cache
+      - configMap:
+          name: registry-facade
+        name: config
+      - name: ws-manager-client-tls-certs
+        secret:
+          secretName: ws-manager-client-tls
+      - name: pull-secret
+        secret:
+          secretName: builtin-registry-auth
+      - hostPath:
+          path: /
+        name: hostfs
+      - emptyDir: {}
+        name: gitpod-ca-certificate
+      - emptyDir: {}
+        name: cacerts
+      - name: config-certificates
+        secret:
+          secretName: https-certificates
+  updateStrategy: {}
+status:
+  currentNumberScheduled: 0
+  desiredNumberScheduled: 0
+  numberMisscheduled: 0
+  numberReady: 0
+---
+# apps/v1/DaemonSet ws-daemon
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-daemon
+  name: ws-daemon
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: gitpod
+      component: ws-daemon
+  template:
+    metadata:
+      annotations:
+        gitpod.io/checksum_config: c6d2a80d1de7a1f91bb2bea177c784c3bc7d4cd50a3e761795fad1188e41f831
+        seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-daemon
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: gitpod.io/workload_workspace_regular
+                operator: Exists
+            - matchExpressions:
+              - key: gitpod.io/workload_workspace_headless
+                operator: Exists
+      containers:
+      - args:
+        - run
+        - --config
+        - /config/config.json
+        env:
+        - name: GITPOD_DOMAIN
+          value: gitpod.example.com
+        - name: GITPOD_INSTALLATION_SHORTNAME
+          value: default
+        - name: GITPOD_REGION
+          value: local
+        - name: HOST_URL
+          value: https://gitpod.example.com
+        - name: KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBE_DOMAIN
+          value: svc.cluster.local
+        - name: LOG_LEVEL
+          value: info
+        - name: JAEGER_DISABLED
+          value: "true"
+        - name: NODENAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        image: eu.gcr.io/gitpod-core-dev/build/ws-daemon:test
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: /live
+            port: 9501
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: ws-daemon
+        ports:
+        - containerPort: 8080
+          hostPort: 8080
+          name: rpc
+        readinessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: /ready
+            port: 9501
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 2
+          timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: 500m
+            memory: 4Gi
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /mnt/workingarea
+          mountPropagation: Bidirectional
+          name: working-area
+        - mountPath: /config
+          name: config
+        - mountPath: /mnt/containerd.sock
+          name: containerd-socket
+        - mountPath: /mnt/node0
+          name: node-fs0
+        - mountPath: /mnt/mounts
+          mountPropagation: HostToContainer
+          name: node-mounts
+          readOnly: true
+        - mountPath: /mnt/node-cgroups
+          mountPropagation: HostToContainer
+          name: node-cgroups
+        - mountPath: /mnt/hosts
+          name: node-hosts
+        - mountPath: /certs
+          name: tls-certs
+        - mountPath: /mnt/sync-tmp
+          name: gcloud-tmp
+      - args:
+        - --logtostderr
+        - --insecure-listen-address=[$(IP)]:9500
+        - --upstream=http://127.0.0.1:9500/
+        env:
+        - name: IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        image: quay.io/brancz/kube-rbac-proxy:v0.12.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 9500
+          name: metrics
+        resources:
+          requests:
+            cpu: 1m
+            memory: 30Mi
+        securityContext:
+          runAsGroup: 65532
+          runAsNonRoot: true
+          runAsUser: 65532
+        terminationMessagePolicy: FallbackToLogsOnError
+      - command:
+        - /app/ready-probe-labeler
+        - --label=gitpod.io/ws-daemon_ready_ns_default
+        - --probe-url=http://localhost:9501/ready
+        env:
+        - name: NODENAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        image: eu.gcr.io/gitpod-core-dev/build/ws-daemon:test
+        imagePullPolicy: IfNotPresent
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - /app/ready-probe-labeler
+              - --label=gitpod.io/ws-daemon_ready_ns_default
+              - --shutdown
+        name: node-labeler
+        resources: {}
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: false
+      hostPID: true
+      initContainers:
+      - args:
+        - "exec {BASH_XTRACEFD}>&1 # this causes 'set -x' to write to stdout insted
+          of stderr\nset -euExo pipefail\nsystemctl status kube-container-runtime-monitor.service
+          || true\nif [ \"$(systemctl is-active kube-container-runtime-monitor.service)\"
+          == \"active\" ]\nthen\n\techo \"kube-container-runtime-monitor.service is
+          active\"\n\tsystemctl stop kube-container-runtime-monitor.service\n\tsystemctl
+          disable kube-container-runtime-monitor.service\n\tsystemctl status kube-container-runtime-monitor.service
+          || true\nelse\n\techo \"kube-container-runtime-monitor.service is not active,
+          not doing anything\"\nfi\n"
+        command:
+        - /usr/bin/nsenter
+        - -t
+        - "1"
+        - -a
+        - /bin/bash
+        - -c
+        image: docker.io/library/ubuntu:20.04
+        name: disable-kube-health-monitor
+        resources: {}
+        securityContext:
+          privileged: true
+          procMount: Default
+      - command:
+        - /bin/sh
+        - -c
+        - cp -f /installer/workspace_default.json /mnt/dst/workspace_default_pd-ide-metrics.23.json
+        image: eu.gcr.io/gitpod-core-dev/build/seccomp-profile-installer:test
+        name: seccomp-profile-installer
+        resources: {}
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /mnt/dst
+          name: hostseccomp
+      - command:
+        - sh
+        - -c
+        - "(\n\techo \"running sysctls\" &&\n\tsysctl -w net.core.somaxconn=4096 &&\n\tsysctl
+          -w \"net.ipv4.ip_local_port_range=5000 65000\" &&\n\tsysctl -w \"net.ipv4.tcp_tw_reuse=1\"
+          &&\n\tsysctl -w fs.inotify.max_user_watches=1000000 &&\n\tsysctl -w \"kernel.dmesg_restrict=1\"
+          &&\n\tsysctl -w vm.unprivileged_userfaultfd=0\n) && echo \"done!\" || echo
+          \"failed!\"\n"
+        image: eu.gcr.io/gitpod-core-dev/build/ws-daemon:test
+        name: sysctl
+        resources: {}
+        securityContext:
+          privileged: true
+      priorityClassName: system-node-critical
+      restartPolicy: Always
+      serviceAccountName: ws-daemon
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - effect: NoExecute
+        key: node.kubernetes.io/disk-pressure
+        operator: Exists
+      - effect: NoExecute
+        key: node.kubernetes.io/memory-pressure
+        operator: Exists
+      - effect: NoExecute
+        key: node.kubernetes.io/out-of-disk
+        operator: Exists
+      volumes:
+      - hostPath:
+          path: /
+        name: hostfs
+      - hostPath:
+          path: /var/gitpod/workspaces
+          type: DirectoryOrCreate
+        name: working-area
+      - name: tls-certs
+        secret:
+          secretName: ws-daemon-tls
+      - configMap:
+          name: ws-daemon
+        name: config
+      - hostPath:
+          path: /run/containerd/containerd.sock
+          type: Socket
+        name: containerd-socket
+      - hostPath:
+          path: /var/lib/containerd/io.containerd.runtime.v2.task/k8s.io
+          type: Directory
+        name: node-fs0
+      - hostPath:
+          path: /proc/mounts
+          type: File
+        name: node-mounts
+      - hostPath:
+          path: /sys/fs/cgroup
+          type: Directory
+        name: node-cgroups
+      - hostPath:
+          path: /etc/hosts
+          type: File
+        name: node-hosts
+      - hostPath:
+          path: /usr/src
+          type: Directory
+        name: node-linux-src
+      - hostPath:
+          path: /var/lib/kubelet/seccomp
+        name: hostseccomp
+      - hostPath:
+          path: /var/gitpod/tmp/backup
+          type: DirectoryOrCreate
+        name: gcloud-tmp
+  updateStrategy: {}
+status:
+  currentNumberScheduled: 0
+  desiredNumberScheduled: 0
+  numberMisscheduled: 0
+  numberReady: 0
+---
+# apps/v1/Deployment image-builder-mk3
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: image-builder-mk3
+  name: image-builder-mk3
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitpod
+      component: image-builder-mk3
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        gitpod.io/checksum_config: 6b82d310231a10f059f0a9efebcf1422f6b2e72eacb55b1ac68f283695b1a167
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: image-builder-mk3
+      name: image-builder-mk3
+      namespace: default
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: gitpod.io/workload_meta
+                operator: Exists
+      containers:
+      - args:
+        - run
+        - --config
+        - /config/image-builder.json
+        env:
+        - name: GITPOD_DOMAIN
+          value: gitpod.example.com
+        - name: GITPOD_INSTALLATION_SHORTNAME
+          value: default
+        - name: GITPOD_REGION
+          value: local
+        - name: HOST_URL
+          value: https://gitpod.example.com
+        - name: KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBE_DOMAIN
+          value: svc.cluster.local
+        - name: LOG_LEVEL
+          value: info
+        - name: JAEGER_DISABLED
+          value: "true"
+        image: eu.gcr.io/gitpod-core-dev/build/image-builder-mk3:test
+        imagePullPolicy: IfNotPresent
+        name: image-builder-mk3
+        ports:
+        - containerPort: 8080
+          name: service
+        resources:
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        securityContext:
+          privileged: false
+          runAsUser: 33333
+        volumeMounts:
+        - mountPath: /config/image-builder.json
+          name: configuration
+          subPath: image-builder.json
+        - mountPath: /wsman-certs
+          name: wsman-tls-certs
+          readOnly: true
+        - mountPath: /config/pull-secret.json
+          name: pull-secret
+          subPath: .dockerconfigjson
+      - args:
+        - --logtostderr
+        - --insecure-listen-address=[$(IP)]:9500
+        - --upstream=http://127.0.0.1:9500/
+        env:
+        - name: IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        image: quay.io/brancz/kube-rbac-proxy:v0.12.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 9500
+          name: metrics
+        resources:
+          requests:
+            cpu: 1m
+            memory: 30Mi
+        securityContext:
+          runAsGroup: 65532
+          runAsNonRoot: true
+          runAsUser: 65532
+        terminationMessagePolicy: FallbackToLogsOnError
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: false
+      initContainers:
+      - command:
+        - bash
+        - -c
+        - set -e; update-ca-certificates -f; cp /etc/ssl/certs/* /ssl-certs; echo
+          'OK'
+        image: eu.gcr.io/gitpod-core-dev/build/ca-updater:test
+        imagePullPolicy: IfNotPresent
+        name: update-ca-certificates
+        resources: {}
+        volumeMounts:
+        - mountPath: /ssl-certs
+          name: cacerts
+        - mountPath: /usr/local/share/ca-certificates/gitpod-ca.crt
+          name: gitpod-ca-certificate
+          subPath: ca.crt
+      restartPolicy: Always
+      serviceAccountName: image-builder-mk3
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          name: image-builder-mk3-config
+        name: configuration
+      - name: wsman-tls-certs
+        secret:
+          secretName: ws-manager-client-tls
+      - name: pull-secret
+        secret:
+          secretName: builtin-registry-auth
+      - emptyDir: {}
+        name: gitpod-ca-certificate
+      - emptyDir: {}
+        name: cacerts
+status: {}
+---
+# apps/v1/Deployment registry
+# Source: docker-registry/charts/docker-registry/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: registry
+  namespace: default
+  labels:
+    app: docker-registry
+    chart: docker-registry-1.16.0
+    release: docker-registry
+    heritage: Helm
+spec:
+  selector:
+    matchLabels:
+      app: docker-registry
+      release: docker-registry
+  replicas: 1
+  minReadySeconds: 5
+  template:
+    metadata:
+      labels:
+        app: docker-registry
+        release: docker-registry
+      annotations:
+        checksum/config: 1d22b82e19bbc654e029029c4fb86ad02dc13422dc3ac52f8175ad190e52a0bb
+        gitpod.io/checksum_config: 0ce55d51677cd683df3c7a244542c6aeaaf5dd6dca0f0458e8053a713228f535
+    spec:
+      serviceAccountName: docker-registry
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+      containers:
+        - name: docker-registry
+          image: "docker.io/library/registry:2.7.1"
+          imagePullPolicy: IfNotPresent
+          command:
+          - /bin/registry
+          - serve
+          - /etc/docker/registry/config.yml
+          ports:
+            - containerPort: 5000
+          livenessProbe:
+            httpGet:
+              scheme: HTTPS
+              path: /
+              port: 5000
+          readinessProbe:
+            httpGet:
+              scheme: HTTPS
+              path: /
+              port: 5000
+          resources:
+            {}
+          env:
+            - name: REGISTRY_HTTP_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: registry-secret
+                  key: haSharedSecret
+            - name: REGISTRY_HTTP_TLS_CERTIFICATE
+              value: /etc/ssl/docker/tls.crt
+            - name: REGISTRY_HTTP_TLS_KEY
+              value: /etc/ssl/docker/tls.key
+            - name: REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY
+              value: "/var/lib/registry"
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/registry/
+            - name: "registry-config"
+              mountPath: "/etc/docker/registry"
+            - mountPath: /etc/ssl/docker
+              name: tls-cert
+              readOnly: true
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: registry
+        - name: registry-config
+          configMap:
+            name: registry-config
+        - name: tls-cert
+          secret:
+            secretName: builtin-registry-certs
+---
+# apps/v1/Deployment ws-manager
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-manager
+  name: ws-manager
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitpod
+      component: ws-manager
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        gitpod.io/checksum_config: 4ac62854eccd472efc91ccb1041633960da4448fe1534555abb4ac94fe22861d
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-manager
+      name: ws-manager
+      namespace: default
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: gitpod.io/workload_workspace_services
+                operator: Exists
+      containers:
+      - args:
+        - run
+        - --config
+        - /config/config.json
+        env:
+        - name: GITPOD_DOMAIN
+          value: gitpod.example.com
+        - name: GITPOD_INSTALLATION_SHORTNAME
+          value: default
+        - name: GITPOD_REGION
+          value: local
+        - name: HOST_URL
+          value: https://gitpod.example.com
+        - name: KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBE_DOMAIN
+          value: svc.cluster.local
+        - name: LOG_LEVEL
+          value: info
+        - name: JAEGER_DISABLED
+          value: "true"
+        - name: GRPC_GO_RETRY
+          value: "on"
+        image: eu.gcr.io/gitpod-core-dev/build/ws-manager:test
+        imagePullPolicy: IfNotPresent
+        name: ws-manager
+        ports:
+        - containerPort: 8080
+          name: rpc
+        resources:
+          requests:
+            cpu: 100m
+            memory: 32Mi
+        securityContext:
+          privileged: false
+        volumeMounts:
+        - mountPath: /config
+          name: config
+          readOnly: true
+        - mountPath: /workspace-templates
+          name: workspace-template
+          readOnly: true
+        - mountPath: /ws-daemon-tls-certs
+          name: ws-daemon-tls-certs
+          readOnly: true
+        - mountPath: /certs
+          name: tls-certs
+          readOnly: true
+      - args:
+        - --logtostderr
+        - --insecure-listen-address=[$(IP)]:9500
+        - --upstream=http://127.0.0.1:9500/
+        env:
+        - name: IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        image: quay.io/brancz/kube-rbac-proxy:v0.12.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 9500
+          name: metrics
+        resources:
+          requests:
+            cpu: 1m
+            memory: 30Mi
+        securityContext:
+          runAsGroup: 65532
+          runAsNonRoot: true
+          runAsUser: 65532
+        terminationMessagePolicy: FallbackToLogsOnError
+      enableServiceLinks: false
+      priorityClassName: system-node-critical
+      securityContext:
+        runAsUser: 31002
+      serviceAccountName: ws-manager
+      volumes:
+      - configMap:
+          name: ws-manager
+        name: config
+      - configMap:
+          name: workspace-templates
+        name: workspace-template
+      - name: ws-daemon-tls-certs
+        secret:
+          secretName: ws-daemon-tls
+      - name: tls-certs
+        secret:
+          secretName: ws-manager-tls
+status: {}
+---
+# apps/v1/Deployment ws-proxy
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-proxy
+  name: ws-proxy
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitpod
+      component: ws-proxy
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        gitpod.io/checksum_config: f88055f3ce58c8eca0064866deeb5131473b6ba2980dce8bf4f9989e997f1ff5
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-proxy
+      name: ws-proxy
+      namespace: default
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: gitpod.io/workload_workspace_services
+                operator: Exists
+      containers:
+      - args:
+        - run
+        - /config/config.json
+        env:
+        - name: GITPOD_DOMAIN
+          value: gitpod.example.com
+        - name: GITPOD_INSTALLATION_SHORTNAME
+          value: default
+        - name: GITPOD_REGION
+          value: local
+        - name: HOST_URL
+          value: https://gitpod.example.com
+        - name: KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBE_DOMAIN
+          value: svc.cluster.local
+        - name: LOG_LEVEL
+          value: info
+        - name: JAEGER_DISABLED
+          value: "true"
+        image: eu.gcr.io/gitpod-core-dev/build/ws-proxy:test
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 10
+          httpGet:
+            path: /healthz
+            port: 8086
+          initialDelaySeconds: 2
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 2
+        name: ws-proxy
+        ports:
+        - containerPort: 8080
+          name: http-proxy
+        - containerPort: 9090
+          name: https-proxy
+        - containerPort: 9500
+          name: metrics
+        readinessProbe:
+          failureThreshold: 10
+          httpGet:
+            path: /readyz
+            port: 8086
+          initialDelaySeconds: 2
+          periodSeconds: 5
+        resources:
+          requests:
+            cpu: 100m
+            memory: 32Mi
+        securityContext:
+          privileged: false
+        volumeMounts:
+        - mountPath: /config
+          name: config
+          readOnly: true
+        - mountPath: /ws-manager-client-tls-certs
+          name: ws-manager-client-tls-certs
+          readOnly: true
+        - mountPath: /mnt/certificates
+          name: config-certificates
+      - args:
+        - --logtostderr
+        - --insecure-listen-address=[$(IP)]:9500
+        - --upstream=http://127.0.0.1:9500/
+        env:
+        - name: IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        image: quay.io/brancz/kube-rbac-proxy:v0.12.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 9500
+          name: metrics
+        resources:
+          requests:
+            cpu: 1m
+            memory: 30Mi
+        securityContext:
+          runAsGroup: 65532
+          runAsNonRoot: true
+          runAsUser: 65532
+        terminationMessagePolicy: FallbackToLogsOnError
+      enableServiceLinks: false
+      priorityClassName: system-node-critical
+      securityContext:
+        runAsUser: 31002
+      serviceAccountName: ws-proxy
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            app: gitpod
+            component: ws-proxy
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: DoNotSchedule
+      volumes:
+      - configMap:
+          name: ws-proxy
+        name: config
+      - name: ws-manager-client-tls-certs
+        secret:
+          secretName: ws-manager-client-tls
+      - name: config-certificates
+        secret:
+          secretName: https-certificates
+status: {}
