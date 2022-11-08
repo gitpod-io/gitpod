@@ -1947,6 +1947,7 @@ type SSHPublicKeyValue struct {
 type UserSSHPublicKeyValue struct {
 	ID           string `json:"id,omitempty"`
 	Name         string `json:"name,omitempty"`
+	Key          string `json:"key,omitempty"`
 	Fingerprint  string `json:"fingerprint,omitempty"`
 	CreationTime string `json:"creationTime,omitempty"`
 	LastUsedTime string `json:"lastUsedTime,omitempty"`

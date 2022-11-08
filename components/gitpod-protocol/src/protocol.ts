@@ -470,7 +470,7 @@ export interface UserSSHPublicKey extends SSHPublicKeyValue {
     lastUsedTime?: string;
 }
 
-export type UserSSHPublicKeyValue = Omit<UserSSHPublicKey, "key" | "userId">;
+export type UserSSHPublicKeyValue = Omit<UserSSHPublicKey, "userId">;
 
 export namespace SSHPublicKeyValue {
     export function validate(value: SSHPublicKeyValue): string | undefined {

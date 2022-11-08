@@ -1942,6 +1942,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return list.map((e) => ({
             id: e.id,
             name: e.name,
+            key: e.key,
             fingerprint: e.fingerprint,
             creationTime: e.creationTime,
             lastUsedTime: e.lastUsedTime,
@@ -1955,6 +1956,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return {
             id: data.id,
             name: data.name,
+            key: data.key,
             fingerprint: data.fingerprint,
             creationTime: data.creationTime,
             lastUsedTime: data.lastUsedTime,

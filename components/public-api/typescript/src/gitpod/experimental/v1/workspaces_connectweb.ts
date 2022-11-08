@@ -9,7 +9,7 @@
 /* eslint-disable */
 /* @ts-nocheck */
 
-import {CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, GetOwnerTokenRequest, GetOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspacesRequest, ListWorkspacesResponse, StopWorkspaceRequest, StopWorkspaceResponse} from "./workspaces_pb.js";
+import {CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, GetOwnerTokenRequest, GetOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspacesRequest, ListWorkspacesResponse, SendCloseSignalRequest, SendCloseSignalResponse, SendHeartbeatRequest, SendHeartbeatResponse, StopWorkspaceRequest, StopWorkspaceResponse} from "./workspaces_pb.js";
 import {MethodKind} from "@bufbuild/protobuf";
 
 /**
@@ -75,6 +75,28 @@ export const WorkspacesService = {
       I: StopWorkspaceRequest,
       O: StopWorkspaceResponse,
       kind: MethodKind.ServerStreaming,
+    },
+    /**
+     * SendHeartbeat sends a heartbeat signal to a running workspace.
+     *
+     * @generated from rpc gitpod.experimental.v1.WorkspacesService.SendHeartbeat
+     */
+    sendHeartbeat: {
+      name: "SendHeartbeat",
+      I: SendHeartbeatRequest,
+      O: SendHeartbeatResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * SendCloseSignal sends a close signal to a running workspace.
+     *
+     * @generated from rpc gitpod.experimental.v1.WorkspacesService.SendCloseSignal
+     */
+    sendCloseSignal: {
+      name: "SendCloseSignal",
+      I: SendCloseSignalRequest,
+      O: SendCloseSignalResponse,
+      kind: MethodKind.Unary,
     },
   }
 } as const;
