@@ -257,8 +257,9 @@ func LaunchWorkspaceFromContextURL(t *testing.T, ctx context.Context, contextURL
 
 	t.Logf("attemp to create the workspace: %s", contextURL)
 	resp, err := server.CreateWorkspace(cctx, &protocol.CreateWorkspaceOptions{
-		ContextURL: contextURL,
-		Mode:       "force-new",
+		ContextURL:                         contextURL,
+		IgnoreRunningPrebuild:              true,
+		IgnoreRunningWorkspaceOnSameCommit: true,
 	})
 	if err != nil {
 		return nil, nil, xerrors.Errorf("cannot start workspace: %q", err)

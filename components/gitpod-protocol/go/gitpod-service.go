@@ -1986,8 +1986,11 @@ type UpdateOwnAuthProviderParams struct {
 
 // CreateWorkspaceOptions is the CreateWorkspaceOptions message type
 type CreateWorkspaceOptions struct {
-	ContextURL string `json:"contextUrl,omitempty"`
-	Mode       string `json:"mode,omitempty"`
+	ContextURL                         string `json:"contextUrl,omitempty"`
+	IgnoreRunningWorkspaceOnSameCommit bool   `json:"ignoreRunningWorkspaceOnSameCommit,omitemopty"`
+	IgnoreRunningPrebuild              bool   `json:"ignoreRunningPrebuild,omitemopty"`
+	AllowUsingPreviousPrebuilds        bool   `json:"allowUsingPreviousPrebuilds,omitemopty"`
+	ForceDefaultConfig                 bool   `json:"forceDefaultConfig,omitemopty"`
 }
 
 // DeleteOwnAuthProviderParams is the DeleteOwnAuthProviderParams message type
