@@ -74,6 +74,7 @@ data:
   ADVANCED_MODE_ENABLED: repl{{ ConfigOption "advanced_mode_enabled" | quote }}
   COMPONENT_PROXY_SERVICE_TYPE: repl{{ ConfigOption "component_proxy_service_serviceType" | quote }}
   CUSTOMIZATION_PATCH_ENABLED: repl{{ ConfigOptionNotEquals "customization_patch" "" | quote }} # Use comparison not value
+  INSTALLER_TIMEOUT: repl{{ ConfigOption "installer_timeout" | quote }}
 
   # Customizations
   CONFIG_PATCH: repl{{ ConfigOptionData "config_patch" | default "" | quote }}

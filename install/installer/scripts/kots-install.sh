@@ -177,6 +177,9 @@ EOF
     # If certificate secret already exists, set the timeout to 5m
     CERT_SECRET=$(kubectl get secrets -n "${NAMESPACE}" https-certificates -o jsonpath='{.metadata.name}' || echo '')
     HELM_TIMEOUT="5m"
+    if [ "${ADVANCED_MODE_ENABLED}" = "1" ]; then
+        HELM_TIMEOUT="${INSTALLER_TIMEOUT}"
+    fi
     if [ "${CERT_SECRET}" = "" ]; then
         HELM_TIMEOUT="1h"
     fi
