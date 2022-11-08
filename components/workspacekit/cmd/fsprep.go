@@ -43,7 +43,7 @@ var fsPrepCmd = &cobra.Command{
 			}
 		}
 
-		err = mountWorkspaceDevice(workspaceDevice, "/workspace_pvc")
+		err = mountWorkspaceDevice(workspaceDevice, "/pvc/workspace")
 		if err != nil {
 			return err
 		}
