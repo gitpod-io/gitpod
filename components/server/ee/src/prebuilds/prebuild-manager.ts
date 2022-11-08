@@ -46,6 +46,7 @@ export interface StartPrebuildParams {
     context: CommitContext;
     project?: Project;
     commitInfo?: CommitInfo;
+    forcePrebuild?: boolean;
 }
 
 const PREBUILD_LIMITER_WINDOW_SECONDS = 60;
@@ -115,7 +116,7 @@ export class PrebuildManager {
 
     async startPrebuild(
         ctx: TraceContext,
-        { context, project, user, commitInfo }: StartPrebuildParams,
+        { context, project, user, commitInfo, forcePrebuild }: StartPrebuildParams,
     ): Promise<StartPrebuildResult> {
         const span = TraceContext.startSpan("startPrebuild", ctx);
         const cloneURL = context.repository.cloneUrl;
@@ -130,15 +131,15 @@ export class PrebuildManager {
             const existingPB = await this.findNonFailedPrebuiltWorkspace({ span }, cloneURL, commitSHAIdentifier);
 
             // If the existing prebuild is failed, it will be retriggered in the afterwards
+            const config = await this.fetchConfig({ span }, user, context);
             if (existingPB) {
                 // If the existing prebuild is based on an outdated project config, we also want to retrigger it.
                 const existingPBWS = await this.workspaceDB.trace({ span }).findById(existingPB.buildWorkspaceId);
                 const existingConfig = existingPBWS?.config;
-                const newConfig = await this.fetchConfig({ span }, user, context);
                 log.debug(
                     `startPrebuild | commits: ${commitSHAIdentifier}, existingPB: ${
                         existingPB.id
-                    }, existingConfig: ${JSON.stringify(existingConfig)}, newConfig: ${JSON.stringify(newConfig)}}`,
+                    }, existingConfig: ${JSON.stringify(existingConfig)}, newConfig: ${JSON.stringify(config)}}`,
                 );
                 const filterPrebuildTasks = (tasks: TaskConfig[] = []) =>
                     tasks
@@ -151,7 +152,7 @@ export class PrebuildManager {
                         .filter((task) => Object.keys(task).length > 0);
                 const isSameConfig =
                     JSON.stringify(filterPrebuildTasks(existingConfig?.tasks)) ===
-                    JSON.stringify(filterPrebuildTasks(newConfig?.tasks));
+                    JSON.stringify(filterPrebuildTasks(config?.tasks));
                 // If there is an existing prebuild that isn't failed and it's based on the current config, we return it here instead of triggering a new prebuild.
                 if (isSameConfig) {
                     return { prebuildId: existingPB.id, wsid: existingPB.buildWorkspaceId, done: true };
@@ -173,11 +174,30 @@ export class PrebuildManager {
                 normalizedContextURL: context.normalizedContextURL,
             };
 
-            if (this.shouldPrebuildIncrementally(context.repository.cloneUrl, project)) {
+            const { commitHistory, additionalRepositoryCommitHistories } =
+                await this.incrementalPrebuildsService.getCommitHistoryForContext(context, user);
+
+            const prebuildEveryNthCommit = project?.settings?.prebuildEveryNthCommit || 0;
+            if (!forcePrebuild && prebuildEveryNthCommit > 0) {
+                const history = {
+                    commitHistory: commitHistory?.slice(0, prebuildEveryNthCommit),
+                    additionalRepositoryCommitHistories: additionalRepositoryCommitHistories?.map((repoHist) => ({
+                        cloneUrl: repoHist.cloneUrl,
+                        commitHistory: repoHist.commitHistory.slice(0, prebuildEveryNthCommit),
+                    })),
+                };
+                const prebuild = await this.incrementalPrebuildsService.findGoodBaseForIncrementalBuild(
+                    context,
+                    config,
+                    history,
+                    user,
+                );
+                if (prebuild) {
+                    return { prebuildId: prebuild.id, wsid: prebuild.buildWorkspaceId, done: true };
+                }
+            } else if (this.shouldPrebuildIncrementally(context.repository.cloneUrl, project)) {
                 // We store the commit histories in the `StartPrebuildContext` in order to pass them down to
                 // `WorkspaceFactoryEE.createForStartPrebuild`.
-                const { commitHistory, additionalRepositoryCommitHistories } =
-                    await this.incrementalPrebuildsService.getCommitHistoryForContext(context, user);
                 if (commitHistory) {
                     prebuildContext.commitHistory = commitHistory;
                 }

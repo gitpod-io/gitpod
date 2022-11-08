@@ -323,11 +323,13 @@ export class GithubApp {
             this.prebuildManager
                 .startPrebuild({ span }, { user, context, project, commitInfo })
                 .then(async (result) => {
-                    await this.webhookEvents.updateEvent(event.id, {
-                        prebuildStatus: "prebuild_triggered",
-                        status: "processed",
-                        prebuildId: result.prebuildId,
-                    });
+                    if (!result.done) {
+                        await this.webhookEvents.updateEvent(event.id, {
+                            prebuildStatus: "prebuild_triggered",
+                            status: "processed",
+                            prebuildId: result.prebuildId,
+                        });
+                    }
                 })
                 .catch(async (err) => {
                     log.error(logCtx, "Error while starting prebuild", err, { contextURL });
@@ -533,7 +535,7 @@ export class GithubApp {
         const isFork = pr.head.repo.id !== pr.base.repo.id;
         const runPrebuild =
             this.prebuildManager.shouldPrebuild(config) && this.appRules.shouldRunPrebuild(config, false, true, isFork);
-        let prebuildStartPromise: Promise<StartPrebuildResult> | undefined;
+        let prebuildStartPromise: Promise<StartPrebuildResult | undefined> | undefined;
         if (runPrebuild) {
             const commitInfo = await this.getCommitInfo(user, ctx.payload.repository.html_url, pr.head.sha);
             prebuildStartPromise = this.prebuildManager.startPrebuild(tracecContext, {
@@ -542,6 +544,7 @@ export class GithubApp {
                 project,
                 commitInfo,
             });
+            prebuildStartPromise = prebuildStartPromise.then((result) => (result?.done ? undefined : result));
             prebuildStartPromise.catch((err) => log.error(err, "Error while starting prebuild", { contextURL }));
             return prebuildStartPromise;
         } else {
