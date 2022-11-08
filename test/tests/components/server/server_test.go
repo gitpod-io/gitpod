@@ -67,8 +67,9 @@ func TestStartWorkspace(t *testing.T) {
 			}
 
 			resp, err := server.CreateWorkspace(ctx, &protocol.CreateWorkspaceOptions{
-				ContextURL: "github.com/gitpod-io/gitpod",
-				Mode:       "force-new",
+				ContextURL:                         "github.com/gitpod-io/gitpod",
+				IgnoreRunningPrebuild:              true,
+				IgnoreRunningWorkspaceOnSameCommit: true,
 			})
 			if err != nil {
 				t.Fatalf("cannot start workspace: %q", err)
