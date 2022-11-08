@@ -331,9 +331,14 @@ var ring1Cmd = &cobra.Command{
 				log.WithError(err).Error("cannot remove /workspace")
 			}
 
-			mnts = append(mnts,
-				mnte{Target: "/workspace", Source: "/pvc/workspace", Flags: unix.MS_BIND | unix.MS_REC},
-			)
+			err = os.Link("/pvc/workspace", "/workspace")
+			if err != nil {
+				log.WithError(err).Error("cannot link /pvc/workspace to /workspace")
+			}
+
+			//mnts = append(mnts,
+			//	mnte{Target: "/workspace", Source: "/pvc/workspace", Flags: unix.MS_BIND | unix.MS_REC},
+			//)
 		}
 
 		for _, m := range mnts {
