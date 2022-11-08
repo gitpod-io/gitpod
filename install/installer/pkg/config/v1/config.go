@@ -277,7 +277,9 @@ type ObjectStorageAzure struct {
 type InstallationKind string
 
 const (
-	InstallationMeta      InstallationKind = "Meta"
+	InstallationIDE       InstallationKind = "IDE"
+	InstallationWebApp    InstallationKind = "WebApp"
+	InstallationMeta      InstallationKind = "Meta" // IDE plus WebApp components
 	InstallationWorkspace InstallationKind = "Workspace"
 	InstallationFull      InstallationKind = "Full"
 )

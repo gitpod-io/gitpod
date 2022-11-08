@@ -20,6 +20,8 @@ import (
 )
 
 var InstallationKindList = map[InstallationKind]struct{}{
+	InstallationIDE:       {},
+	InstallationWebApp:    {},
 	InstallationMeta:      {},
 	InstallationWorkspace: {},
 	InstallationFull:      {},

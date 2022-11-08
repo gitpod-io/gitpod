@@ -174,6 +174,12 @@ func renderKubernetesObjects(cfgVersion string, cfg *configv1.Config) ([]string,
 		renderable = components.FullObjects
 		helmCharts = components.FullHelmDependencies
 	case configv1.InstallationMeta:
+		renderable = components.MetaObjects
+		helmCharts = components.MetaHelmDependencies
+	case configv1.InstallationIDE:
+		renderable = components.IDEObjects
+		helmCharts = components.IDEHelmDependencies
+	case configv1.InstallationWebApp:
 		renderable = components.WebAppObjects
 		helmCharts = components.WebAppHelmDependencies
 	case configv1.InstallationWorkspace:

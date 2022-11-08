@@ -36,6 +36,7 @@
 /install/installer/cmd/testdata
 /install/installer/pkg/components/agent-smith @gitpod-io/engineering-workspace
 /install/installer/pkg/components/blobserve @gitpod-io/engineering-ide
+/install/installer/pkg/components/components-ide @gitpod-io/engineering-ide
 /install/installer/pkg/components/components-webapp @gitpod-io/engineering-webapp
 /install/installer/pkg/components/components-workspace @gitpod-io/engineering-workspace
 /install/installer/pkg/components/content-service @gitpod-io/engineering-workspace

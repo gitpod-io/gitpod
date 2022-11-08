@@ -6,16 +6,11 @@ package componentswebapp
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/blobserve"
 	contentservice "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/dashboard"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/database"
-	ide_metrics "github.com/gitpod-io/gitpod/installer/pkg/components/ide-metrics"
-	ide_proxy "github.com/gitpod-io/gitpod/installer/pkg/components/ide-proxy"
-	ide_service "github.com/gitpod-io/gitpod/installer/pkg/components/ide-service"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/migrations"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/minio"
-	openvsxproxy "github.com/gitpod-io/gitpod/installer/pkg/components/openvsx-proxy"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/proxy"
 	public_api_server "github.com/gitpod-io/gitpod/installer/pkg/components/public-api-server"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/rabbitmq"
@@ -27,16 +22,11 @@ import (
 )
 
 var Objects = common.CompositeRenderFunc(
-	blobserve.Objects,
 	contentservice.Objects,
 	dashboard.Objects,
 	database.Objects,
-	ide_metrics.Objects,
-	ide_service.Objects,
-	ide_proxy.Objects,
 	migrations.Objects,
 	minio.Objects,
-	openvsxproxy.Objects,
 	proxy.Objects,
 	rabbitmq.Objects,
 	server.Objects,
