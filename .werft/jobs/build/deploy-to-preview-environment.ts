@@ -4,9 +4,9 @@ import { MonitoringSatelliteInstaller } from "../../observability/monitoring-sat
 
 import { PREVIEW_K3S_KUBECONFIG_PATH } from "./const";
 import { Werft } from "../../util/werft";
-import { JobConfig } from "./job-config";
+import { Analytics, JobConfig } from "./job-config";
 import * as VM from "../../vm/vm";
-import { Analytics, Installer } from "./installer/installer";
+import { Installer } from "./installer/installer";
 import { previewNameFromBranchName } from "../../util/preview";
 import { SpanStatusCode } from "@opentelemetry/api";
 
