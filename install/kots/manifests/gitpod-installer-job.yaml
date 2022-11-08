@@ -44,6 +44,8 @@ spec:
             - mountPath: /mnt/node0
               name: node-fs0
               readOnly: true
+            - mountPath: /tmp
+              name: temp-storage
           env:
             - name: MOUNT_PATH
               value: /mnt/node0
@@ -75,3 +77,5 @@ spec:
           hostPath:
             path: /
             type: Directory
+        - name: temp-storage
+          emptyDir: {}
