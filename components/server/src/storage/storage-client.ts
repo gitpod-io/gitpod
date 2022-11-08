@@ -13,9 +13,6 @@ export interface StorageClient {
     // deleteWorkspaceBackups deletes storage objects for a given workspace
     deleteWorkspaceBackups(ownerId: string, workspaceId: string, includeSnapshots: boolean): Promise<void>;
 
-    // createWorkspaceContentDownloadUrl creates a signed URL from which one can download workspace content
-    createWorkspaceContentDownloadUrl(ownerId: string, workspaceId: string): Promise<string>;
-
     createPluginUploadUrl(bucket: string, objectPath: string): Promise<string>;
     createPluginDownloadUrl(bucket: string, objectPath: string): Promise<string>;
 
