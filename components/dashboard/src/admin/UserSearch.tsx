@@ -22,10 +22,6 @@ export default function UserSearch() {
     const [currentUser, setCurrentUserState] = useState<User | undefined>(undefined);
     const pageLength = 50;
     const [currentPage, setCurrentPage] = useState(1);
-    const updateCurrentPage = (page: number) => {
-        setCurrentPage(page);
-        search();
-    };
 
     useEffect(() => {
         const userId = location.pathname.split("/")[3];
@@ -48,17 +44,18 @@ export default function UserSearch() {
         return <UserDetail user={currentUser} />;
     }
 
-    const search = async () => {
+    const search = async (page: number = 1) => {
         setSearching(true);
         try {
             const result = await getGitpodService().server.adminGetUsers({
                 searchTerm,
                 limit: pageLength,
                 orderBy: "creationDate",
-                offset: (currentPage - 1) * pageLength,
+                offset: (page - 1) * pageLength,
                 orderDir: "desc",
             });
             setSearchResult(result);
+            setCurrentPage(page);
         } finally {
             setSearching(false);
         }
@@ -93,7 +90,7 @@ export default function UserSearch() {
                             }}
                         />
                     </div>
-                    <button disabled={searching} onClick={search}>
+                    <button disabled={searching} onClick={() => search()}>
                         Search
                     </button>
                 </div>
@@ -112,7 +109,7 @@ export default function UserSearch() {
             </div>
             <Pagination
                 currentPage={currentPage}
-                setPage={updateCurrentPage}
+                setPage={search}
                 totalNumberOfPages={Math.ceil(searchResult.total / pageLength)}
             />
         </PageWithAdminSubMenu>
