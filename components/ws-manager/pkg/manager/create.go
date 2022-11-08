@@ -584,13 +584,26 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 				},
 			}
 
-			pod.Spec.Containers[0].VolumeDevices = append(pod.Spec.Containers[0].VolumeDevices, corev1.VolumeDevice{
+			volumeDevice := corev1.VolumeDevice{
 				Name:       workspaceVolumeName,
 				DevicePath: "/dev/workspace",
-			})
+			}
+			pod.Spec.Containers[0].VolumeDevices = append(pod.Spec.Containers[0].VolumeDevices, volumeDevice)
 
 			// get rid of first volume mount as PVC is mounted as block device and will be mounted by workspacekit
 			pod.Spec.Containers[0].VolumeMounts = pod.Spec.Containers[0].VolumeMounts[1:]
+
+			// add init container to mount PVC block device
+			pod.Spec.InitContainers = append(pod.Spec.InitContainers, corev1.Container{
+				Name:            "mount-workspace-volume",
+				Image:           pod.Spec.Containers[0].Image,
+				ImagePullPolicy: corev1.PullIfNotPresent,
+				Command:         []string{"/.supervisor/workspacekit", "fsprep"},
+				VolumeDevices:   []corev1.VolumeDevice{volumeDevice},
+				SecurityContext: &corev1.SecurityContext{
+					Privileged: &boolTrue,
+				},
+			})
 
 		case api.WorkspaceFeatureFlag_WORKSPACE_CLASS_LIMITING:
 			limits := startContext.Class.Container.Limits

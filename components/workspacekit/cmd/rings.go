@@ -111,34 +111,6 @@ var ring0Cmd = &cobra.Command{
 			}
 		}()
 
-		if prep.PersistentVolumeClaim {
-			// assume PVC is in block device mode, so mount it here now
-			const (
-				workspaceDevice = "/dev/workspace"
-			)
-			isReady, err := isWorkspaceDeviceReady(workspaceDevice)
-			if err != nil {
-				log.WithError(err).Error("cannot check if device is ready")
-				time.Sleep(1 * time.Hour)
-				return
-			}
-			if !isReady {
-				err = prepareWorkspaceDevice(workspaceDevice)
-				if err != nil {
-					log.WithError(err).Error("cannot prepare device")
-					time.Sleep(1 * time.Hour)
-					return
-				}
-			}
-
-			err = mountWorkspaceDevice(workspaceDevice, "/workspace")
-			if err != nil {
-				log.WithError(err).Error("cannot mount device")
-				time.Sleep(1 * time.Hour)
-				return
-			}
-		}
-
 		cmd := exec.Command("/proc/self/exe", "ring1")
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Pdeathsig:  syscall.SIGKILL,
@@ -213,54 +185,6 @@ var ring0Cmd = &cobra.Command{
 		}
 		exitCode = 0 // once we get here everythings good
 	},
-}
-
-func prepareWorkspaceDevice(device string) error {
-	var stderr bytes.Buffer
-	cmd := exec.Command("mkfs.ext4", "-m1", device)
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
-		log.WithError(err).WithField("reason", stderr.String()).Error("cannot mount workspace disk")
-		return xerrors.Errorf("cannot format workspace disk using ext4: %w", err)
-	}
-
-	return nil
-}
-
-func mountWorkspaceDevice(device, target string) error {
-	if err := os.MkdirAll(target, 0755); err != nil {
-		return xerrors.Errorf("cannot create directory %v: %w", target, err)
-	}
-
-	if err := os.Chown(target, 133332, 133332); err != nil {
-		return xerrors.Errorf("cannot chown directory %v: %w", target, err)
-	}
-
-	if err := unix.Mount(device, target, "ext4", uintptr(0), "user_xattr"); err != nil {
-		return xerrors.Errorf("cannot mount workspace disk in %v: %w", target, err)
-	}
-
-	return nil
-}
-
-func isWorkspaceDeviceReady(device string) (bool, error) {
-	var stderr bytes.Buffer
-	cmd := exec.Command("blkid", "-o", "value", "-s", "TYPE", device)
-	cmd.Stderr = &stderr
-	out, err := cmd.Output()
-	if err != nil {
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			if exitErr.ExitCode() == 2 {
-				// unformatted device
-				return false, nil
-			}
-		}
-
-		log.WithError(err).WithField("stdout", string(out)).WithField("stderr", stderr.String()).Error("cannot obtain details from the workspace disk")
-		return false, xerrors.Errorf("cannot obtain details from the workspace disk: %w", err)
-	}
-
-	return string(out) == "ext4", nil
 }
 
 var ring1Opts struct {
