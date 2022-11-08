@@ -2,7 +2,6 @@ import * as fs from "fs";
 import { exec } from "../../util/shell";
 import { MonitoringSatelliteInstaller } from "../../observability/monitoring-satellite";
 
-import { PREVIEW_K3S_KUBECONFIG_PATH } from "./const";
 import { Werft } from "../../util/werft";
 import { Analytics, JobConfig } from "./job-config";
 import * as VM from "../../vm/vm";
@@ -89,19 +88,14 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
     // In the future we can consider not closing spans when closing phases, or restructuring our phases
     // based on parallelism boundaries
     const monitoringSatelliteInstaller = new MonitoringSatelliteInstaller({
-        kubeconfigPath: PREVIEW_K3S_KUBECONFIG_PATH,
         branch: jobConfig.observability.branch,
-        satelliteNamespace: deploymentConfig.namespace,
-        clusterName: deploymentConfig.namespace,
-        nodeExporterPort: 9100,
-        previewDomain: deploymentConfig.domain,
         previewName: previewNameFromBranchName(jobConfig.repository.branch),
         stackdriverServiceAccount: STACKDRIVER_SERVICEACCOUNT,
         werft: werft,
     });
     const sliceID = "observability";
     monitoringSatelliteInstaller
-        .install()
+        .install(sliceID)
         .then(() => {
             werft.rootSpan.setAttributes({ "preview.monitoring_installed_successfully": true });
             werft.log(sliceID, "Succeeded installing monitoring satellite");
