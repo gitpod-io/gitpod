@@ -36,10 +36,10 @@ interface DeploymentConfig {
     domain: string;
     monitoringDomain: string;
     url: string;
-    analytics?: Analytics;
     cleanSlateDeployment: boolean;
     installEELicense: boolean;
     withObservability: boolean;
+    analytics: Analytics;
 }
 
 export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobConfig) {
@@ -51,14 +51,6 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
     const monitoringDomain = `${destname}.preview.gitpod-dev.com`;
     const url = `https://${domain}`;
 
-    let analytics: Analytics | null;
-    if ((jobConfig.analytics || "").startsWith("segment|")) {
-        analytics = {
-            type: "segment",
-            token: jobConfig.analytics!.substring("segment|".length),
-        };
-    }
-
     const deploymentConfig: DeploymentConfig = {
         version,
         destname,
@@ -66,10 +58,10 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         domain,
         monitoringDomain,
         url,
-        analytics,
         cleanSlateDeployment,
         installEELicense,
         withObservability,
+        analytics: jobConfig.analytics,
     };
 
     // We set all attributes to false as default and only set it to true once the each process is complete.

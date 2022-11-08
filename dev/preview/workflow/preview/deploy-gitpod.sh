@@ -23,7 +23,7 @@ GITPOD_AGENT_SMITH_TOKEN_HASH="$(echo -n "$GITPOD_AGENT_SMITH_TOKEN" | sha256sum
 GITPOD_CONTAINER_REGISTRY_URL="eu.gcr.io/gitpod-core-dev/build/";
 GITPOD_IMAGE_PULL_SECRET_NAME="gcp-sa-registry-auth";
 GITPOD_PROXY_SECRET_NAME="proxy-config-certificates";
-GITPOD_ANALYTICS_SEGMENT_TOKEN="${GITPOD_ANALYTICS_SEGMENT_TOKEN:-}"
+GITPOD_ANALYTICS="${GITPOD_ANALYTICS:-}"
 GITPOD_WITH_EE_LICENSE="${GITPOD_WITH_EE_LICENSE:-true}"
 GITPOD_WORKSPACE_FEATURE_FLAGS="${GITPOD_WORKSPACE_FEATURE_FLAGS:-}"
 GITPOD_WITH_SLOW_DATABASE="${GITPOD_WITH_SLOW_DATABASE:-false}"
@@ -456,7 +456,15 @@ fi
 #
 # includeAnalytics
 #
-if [[ -n "${GITPOD_ANALYTICS_SEGMENT_TOKEN}" ]]; then
+if [[ "${GITPOD_ANALYTICS}" == "segment" ]]; then
+
+  GITPOD_ANALYTICS_SEGMENT_TOKEN=$(kubectl \
+    --kubeconfig "${DEV_KUBE_PATH}" \
+    --context "${DEV_KUBE_CONTEXT}" \
+    --namespace werft \
+    get secret "segment-staging-write-key" -o jsonpath='{.data.token}' \
+  | base64 -d)
+
   yq w -i "${INSTALLER_CONFIG_PATH}" analytics.writer segment
   yq w -i "${INSTALLER_CONFIG_PATH}" analytics.segmentKey "${GITPOD_ANALYTICS_SEGMENT_TOKEN}"
   yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_WRITER"

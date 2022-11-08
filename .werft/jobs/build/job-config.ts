@@ -4,8 +4,10 @@ import {previewNameFromBranchName} from "../../util/preview";
 
 type WithIntegrationTests = "skip" | "all" | "workspace" | "ide" | "webapp";
 
+export type Analytics = "skip" | "segment";
+
 export interface JobConfig {
-    analytics: string;
+    analytics: Analytics;
     buildConfig: any;
     cleanSlateDeployment: boolean;
     cluster: string;
@@ -93,7 +95,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const publishToNpm = "publish-to-npm" in buildConfig || mainBuild;
     const publishToJBMarketplace = "publish-to-jb-marketplace" in buildConfig || mainBuild;
     const publishToKots = "publish-to-kots" in buildConfig || withSelfHostedPreview || mainBuild;
-    const analytics = buildConfig["analytics"];
+
     const localAppVersion = mainBuild || "with-localapp-version" in buildConfig ? version : "unknown";
     const retag = "with-retag" in buildConfig ? "" : "--dont-retag";
     const cleanSlateDeployment = mainBuild || "with-clean-slate-deployment" in buildConfig;
@@ -105,6 +107,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const recreateVm = mainBuild || "recreate-vm" in buildConfig;
     const withSlowDatabase = "with-slow-database" in buildConfig && !mainBuild;
 
+    const analytics = parseAnalytics(werft, sliceId, buildConfig["analytics"])
     const withIntegrationTests = parseWithIntegrationTests(werft, sliceId, buildConfig["with-integration-tests"]);
     const withPreview = decideWithPreview({werft, sliceID: sliceId, buildConfig, mainBuild, withIntegrationTests})
 
@@ -224,6 +227,17 @@ function decideWithPreview(options: { werft: Werft, sliceID: string, buildConfig
 
     return false
 }
+
+export function parseAnalytics(werft: Werft, sliceId: string, value: string): Analytics {
+    switch (value) {
+        case "segment":
+            return "segment"
+    }
+
+    werft.log(sliceId, "Analytics is not enabled")
+    return "skip";
+}
+
 
 export function parseWithIntegrationTests(werft: Werft, sliceID: string, value?: string): WithIntegrationTests {
     switch (value) {
