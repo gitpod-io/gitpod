@@ -43,10 +43,25 @@ var fsPrepCmd = &cobra.Command{
 			}
 		}
 
+		err = os.RemoveAll("/workspace")
+		if err != nil {
+			log.WithError(err).Error("cannot remove /workspace")
+		}
+
 		err = mountWorkspaceDevice(workspaceDevice, "/pvc/workspace")
 		if err != nil {
 			return err
 		}
+
+		// write a test file into /pvc/workspace folder
+		// this is to make sure that the workspace folder is writable
+		// and the workspace disk is mounted
+		err = os.WriteFile("/pvc/workspace/test", []byte("test"), 0644)
+		if err != nil {
+			log.WithError(err).Error("cannot write test file to /pvc/workspace")
+		}
+
+		log.Info("All done")
 
 		return nil
 	},
