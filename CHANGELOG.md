@@ -1,6 +1,8 @@
 # Change Log
 
 ## November 2022
+- display the team names which block upgrade to the UBP free tier ([#12805](https://github.com/gitpod-io/gitpod/pull/12805)) - [@geropl](https://github.com/geropl)
+- Gitlab webhooks: play nice, don't respond with code 401. ([#14421](https://github.com/gitpod-io/gitpod/pull/14421)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Improve pagination usability ([#13590](https://github.com/gitpod-io/gitpod/pull/13590)) - [@Hardik500](https://github.com/Hardik500)
 - [kots] merge custom docker config correctly ([#14432](https://github.com/gitpod-io/gitpod/pull/14432)) - [@Pothulapati](https://github.com/Pothulapati)
 - [local-preview] Update status messages to depend on echo's ([#14391](https://github.com/gitpod-io/gitpod/pull/14391)) - [@Pothulapati](https://github.com/Pothulapati)
