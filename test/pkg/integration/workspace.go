@@ -179,6 +179,14 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 				Email:    "integration-test@gitpod.io",
 			},
 			Admission: wsmanapi.AdmissionLevel_ADMIT_OWNER_ONLY,
+			Envvars: []*wsmanapi.EnvironmentVariable{
+				// VSX_REGISTRY_URL is set by server, since we start the workspace directly
+				// from ws-manager in these tests we need to set it here ourselves.
+				{
+					Name:  "VSX_REGISTRY_URL",
+					Value: "http://open-vsx.gitpod.io/",
+				},
+			},
 		},
 	}
 	for _, m := range options.Mods {
