@@ -56,6 +56,7 @@ HONEYCOMB_API_KEY="$(readWerftSecret honeycomb-api-key apikey)" \
 PROM_REMOTE_WRITE_USER="$(readWerftSecret prometheus-remote-write-auth user)" \
 PROM_REMOTE_WRITE_PASSWORD="$(readWerftSecret prometheus-remote-write-auth password)" \
 PREVIEW_NAME="${PREVIEW_NAME}" \
+WORKSPACE_ROOT="${ROOT}" \
 envsubst <"${ROOT}/dev/preview/workflow/config/monitoring-satellite.yaml" \
 | ./observability-installer render --app monitoring-satellite --output-split-files "${manifests_dir}" --config -
 

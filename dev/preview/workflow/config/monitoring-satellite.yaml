@@ -38,15 +38,10 @@ imports:
       path: monitoring-satellite/manifests/grafana
     - gitURL: https://github.com/gitpod-io/observability
       path: monitoring-satellite/manifests/probers
-    - gitURL: https://github.com/gitpod-io/gitpod
-      path: operations/observability/mixins/workspace/rules/central
-    - gitURL: https://github.com/gitpod-io/gitpod
-      path: operations/observability/mixins/workspace/rules/satellite
-    - gitURL: https://github.com/gitpod-io/gitpod
-      path: operations/observability/mixins/meta/rules
-    - gitURL: https://github.com/gitpod-io/gitpod
-      path: operations/observability/mixins/IDE/rules
-    - gitURL: https://github.com/gitpod-io/gitpod
-      path: operations/observability/mixins/self-hosted/rules/cardinality-analysis
     - gitURL: https://github.com/gitpod-io/observability
       path: monitoring-satellite/manifests/crds
+    - path: ${WORKSPACE_ROOT}/operations/observability/mixins/workspace/rules/central
+    - path: ${WORKSPACE_ROOT}/operations/observability/mixins/workspace/rules/satellite
+    - path: ${WORKSPACE_ROOT}/operations/observability/mixins/meta/rules
+    - path: ${WORKSPACE_ROOT}/operations/observability/mixins/IDE/rules
+    - path: ${WORKSPACE_ROOT}/operations/observability/mixins/self-hosted/rules/cardinality-analysis
