@@ -200,6 +200,32 @@ aws-kubeconfig:
 	aws eks update-kubeconfig --name gp-${TF_VAR_TEST_ID} --region eu-west-1 --kubeconfig ${KUBECONFIG} || echo "No cluster present"
 	@echo -e "\033[0;33mAWS service account credentials fetched, run 'source $$(pwd)/$${TF_VAR_TEST_ID}-creds' to load them into your environment\033[0;m"
 
+# GitHub SCM integration can configured prior to install. To enable the integration,
+# set the `GITHUB_SCM_OAUTH` variable to a path containing the following contents:
+#
+# ```yaml
+# description: ""
+# host: github.com
+# icon: ""
+# id: Public-GitHub
+# oauth:
+#   clientId: <client-id>
+#   clientSecret: <client-secret>
+#   settingsUrl: https://github.com/settings/apps/new
+# type: GitHub
+# ```
+#
+# Credentials can be fetched with the following:
+#
+# ```
+# export GITHUB_SCM_OAUTH="/workspace/gitpod/install/tests/github.yaml"
+# kubectl -n werft get secret self-hosted-github-oauth -ojson | jq -r '.data.provider | @base64d' > $GITHUB_SCM_OAUTH
+# make get-github-config
+# ```
+#
+# Note: The credentials needed to interact with werft may differ from the credentials used to interact
+# with cloud resources created by the CI pipelines. Care may be necessary to switch kubectl credentials
+# depending on the context.
 get-github-config: check-var-DOMAIN check-var-TF_VAR_TEST_ID
 ifneq ($(GITHUB_SCM_OAUTH),)
 	@export SCM_OAUTH=./manifests/github-oauth.yaml && \
