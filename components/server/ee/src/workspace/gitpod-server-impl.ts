@@ -51,7 +51,6 @@ import {
 } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import {
-    TakeSnapshotRequest,
     AdmissionLevel,
     ControlAdmissionRequest,
     StopWorkspacePolicy,
@@ -530,18 +529,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
         await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "get");
 
-        const client = await this.workspaceManagerClientProvider.get(
-            instance.region,
-            this.config.installationShortname,
-        );
-        const request = new TakeSnapshotRequest();
-        request.setId(instance.id);
-        request.setReturnImmediately(true);
-
-        // this triggers the snapshots, but returns early! cmp. waitForSnapshot to wait for it's completion
-        const resp = await client.takeSnapshot(ctx, request);
-
-        const snapshot = await this.snapshotService.createSnapshot(options, resp.getUrl());
+        const snapshot = await this.snapshotService.createSnapshot(ctx, instance);
 
         // to be backwards compatible during rollout, we require new clients to explicitly pass "dontWait: true"
         const waitOpts = { workspaceOwner: workspace.ownerId, snapshot };

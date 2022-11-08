@@ -30,6 +30,8 @@ import {
     TakeSnapshotResponse,
     UpdateSSHKeyRequest,
     UpdateSSHKeyResponse,
+    GetVolumeSnapshotResponse,
+    GetVolumeSnapshotRequest,
 } from "./core_pb";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
@@ -120,7 +122,7 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
                         {
                             // Important!!!!: client timeout must be higher than ws-manager to be able to process any error
                             // https://github.com/gitpod-io/gitpod/blob/main/components/ws-manager/pkg/manager/manager.go#L171
-                            deadline: new Date(new Date().getTime() + 60000*11),
+                            deadline: new Date(new Date().getTime() + 60000 * 11),
                             interceptors: this.interceptor,
                         },
                         (err, resp) => {
@@ -289,6 +291,30 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
                     const span = TraceContext.startSpan(`/ws-manager/takeSnapshot`, ctx);
                     span.log({ attempt });
                     this.client.takeSnapshot(
+                        request,
+                        withTracing({ span }),
+                        this.getDefaultUnaryOptions(),
+                        (err, resp) => {
+                            span.finish();
+                            if (err) {
+                                TraceContext.setError(ctx, err);
+                                reject(err);
+                            } else {
+                                resolve(resp);
+                            }
+                        },
+                    );
+                }),
+        );
+    }
+
+    public getVolumeSnapshot(ctx: TraceContext, request: GetVolumeSnapshotRequest): Promise<GetVolumeSnapshotResponse> {
+        return this.retryIfUnavailable(
+            (attempt: number) =>
+                new Promise<GetVolumeSnapshotResponse>((resolve, reject) => {
+                    const span = TraceContext.startSpan(`/ws-manager/getVolumeSnapshot`, ctx);
+                    span.log({ attempt });
+                    this.client.getVolumeSnapshot(
                         request,
                         withTracing({ span }),
                         this.getDefaultUnaryOptions(),

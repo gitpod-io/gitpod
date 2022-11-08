@@ -7,11 +7,15 @@
 import { inject, injectable } from "inversify";
 import { v4 as uuidv4 } from "uuid";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { Disposable, GitpodServer, Snapshot } from "@gitpod/gitpod-protocol";
+import { Disposable, Snapshot, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { StorageClient } from "../../../src/storage/storage-client";
 import { ConsensusLeaderQorum } from "../../../src/consensus/consensus-leader-quorum";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
+import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
+import { GetVolumeSnapshotRequest, TakeSnapshotRequest } from "@gitpod/ws-manager/lib";
+import { Config } from "../../../src/config";
+import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 
 const SNAPSHOT_TIMEOUT_SECONDS = 60 * 30;
 const SNAPSHOT_POLL_INTERVAL_SECONDS = 5;
@@ -31,6 +35,9 @@ export class SnapshotService {
     @inject(WorkspaceDB) protected readonly workspaceDb: WorkspaceDB;
     @inject(StorageClient) protected readonly storageClient: StorageClient;
     @inject(ConsensusLeaderQorum) protected readonly leaderQuorum: ConsensusLeaderQorum;
+    @inject(WorkspaceManagerClientProvider)
+    protected readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider;
+    @inject(Config) protected readonly config: Config;
 
     protected readonly runningSnapshots: Map<string, Promise<void>> = new Map();
 
@@ -74,14 +81,24 @@ export class SnapshotService {
         }
     }
 
-    public async createSnapshot(options: GitpodServer.TakeSnapshotOptions, snapshotUrl: string): Promise<Snapshot> {
+    public async createSnapshot(ctx: TraceContext, instance: WorkspaceInstance): Promise<Snapshot> {
+        const client = await this.workspaceManagerClientProvider.get(
+            instance.region,
+            this.config.installationShortname,
+        );
+        const request = new TakeSnapshotRequest();
+        request.setId(instance.id);
+        request.setReturnImmediately(true);
+
+        // this triggers the snapshots, but returns early! cmp. waitForSnapshot to wait for it's completion
+        const resp = await client.takeSnapshot(ctx, request);
         const id = uuidv4();
         return await this.workspaceDb.storeSnapshot({
             id,
             creationTime: new Date().toISOString(),
             state: "pending",
-            bucketId: snapshotUrl,
-            originalWorkspaceId: options.workspaceId,
+            bucketId: resp.getUrl(),
+            originalWorkspaceId: instance.workspaceId,
         });
     }
 
@@ -112,6 +129,24 @@ export class SnapshotService {
 
         const { id: snapshotId, bucketId, originalWorkspaceId, creationTime } = opts.snapshot;
         const start = new Date(creationTime).getTime();
+        const workspace = await this.workspaceDb.findWorkspaceAndInstance(originalWorkspaceId);
+        if (!workspace) {
+            const message = `Couldn't find original workspace for snapshot.`;
+            await this.workspaceDb.updateSnapshot({
+                id: snapshotId,
+                state: "error",
+                message,
+            });
+            throw new Error(message);
+        }
+        const client = await this.workspaceManagerClientProvider.get(
+            workspace.region,
+            this.config.installationShortname,
+        );
+        const req = new GetVolumeSnapshotRequest();
+        req.setId(workspace.instanceId);
+
+        const isPVC = workspace?.config._featureFlags?.some((f) => f === "persistent_volume_claim");
         while (start + SNAPSHOT_TIMEOUT_SECONDS * 1000 > Date.now()) {
             await new Promise((resolve) => setTimeout(resolve, SNAPSHOT_POLL_INTERVAL_SECONDS * 1000));
 
@@ -126,13 +161,19 @@ export class SnapshotService {
             if (snapshot.state === "error") {
                 throw new Error(`snapshot error: ${snapshot.message}`);
             }
+            let exists = false;
+            if (isPVC) {
+                const response = await client.getVolumeSnapshot({}, req);
+                exists = response.getReady();
+            } else {
+                // pending: check if the snapshot is there
+                exists = await this.storageClient.workspaceSnapshotExists(
+                    opts.workspaceOwner,
+                    originalWorkspaceId,
+                    bucketId,
+                );
+            }
 
-            // pending: check if the snapshot is there
-            const exists = await this.storageClient.workspaceSnapshotExists(
-                opts.workspaceOwner,
-                originalWorkspaceId,
-                bucketId,
-            );
             if (exists) {
                 await this.workspaceDb.updateSnapshot({
                     id: snapshotId,
