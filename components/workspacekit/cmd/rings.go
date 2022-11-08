@@ -380,12 +380,14 @@ var ring1Cmd = &cobra.Command{
 			isReady, err := isWorkspaceDeviceReady(workspaceDevice)
 			if err != nil {
 				log.WithError(err).Error("cannot check if device is ready")
+				time.Sleep(1 * time.Hour)
 				return
 			}
 			if !isReady {
 				err = prepareWorkspaceDevice(workspaceDevice)
 				if err != nil {
 					log.WithError(err).Error("cannot prepare device")
+					time.Sleep(1 * time.Hour)
 					return
 				}
 			}
@@ -393,6 +395,7 @@ var ring1Cmd = &cobra.Command{
 			err = mountWorkspaceDevice(workspaceDevice, "/workspace")
 			if err != nil {
 				log.WithError(err).Error("cannot mount device")
+				time.Sleep(1 * time.Hour)
 				return
 			}
 		}
