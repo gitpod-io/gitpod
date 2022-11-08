@@ -50,6 +50,10 @@ const (
 	// environment variables provided as part of the start workspace request.
 	// The value of 768kb is a somewhat arbitrary choice, but steers way clear of the 1MiB Kubernetes imposes.
 	maxSecretsLength = 768 * 1024 * 1024
+
+	// Grace time until the process in the workspace is properly completed
+	// e.g. dockerd in the workspace may take some time to clean up the overlay directory.
+	gracePeriod = 3 * time.Minute
 )
 
 // createWorkspacePod creates the actual workspace pod based on the definite workspace pod and appropriate
@@ -507,6 +511,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		},
 	}
 
+	graceSec := int64(gracePeriod.Seconds())
 	pod := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        podName(req),
@@ -533,8 +538,9 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			Containers: []corev1.Container{
 				*workspaceContainer,
 			},
-			RestartPolicy: corev1.RestartPolicyNever,
-			Volumes:       volumes,
+			RestartPolicy:                 corev1.RestartPolicyNever,
+			Volumes:                       volumes,
+			TerminationGracePeriodSeconds: &graceSec,
 			Tolerations: []corev1.Toleration{
 				{
 					Key:      "node.kubernetes.io/disk-pressure",
