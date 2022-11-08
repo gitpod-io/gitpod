@@ -14,30 +14,20 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 )
 
-func TestObjects_NotRenderedDefault(t *testing.T) {
-	ctx, err := common.NewRenderContext(config.Config{}, versions.Manifest{}, "test-namespace")
-	require.NoError(t, err)
+func TestObjects_RenderedByDefault(t *testing.T) {
+	ctx := renderContextWithPublicAPI(t)
 
 	objects, err := Objects(ctx)
 	require.NoError(t, err)
-	require.Empty(t, objects, "no objects should be rendered with default config")
+	require.NotEmpty(t, objects)
 }
 
-func TestObjects_RenderedWhenExperimentalConfigSet(t *testing.T) {
-	ctx := renderContextWithPublicAPIEnabled(t)
-
-	objects, err := Objects(ctx)
-	require.NoError(t, err)
-	require.NotEmpty(t, objects, "must render objects because experimental config is specified")
-}
-
-func renderContextWithPublicAPIEnabled(t *testing.T) *common.RenderContext {
+func renderContextWithPublicAPI(t *testing.T) *common.RenderContext {
 	ctx, err := common.NewRenderContext(config.Config{
 		Domain: "test.domain.everything.awesome.is",
 		Experimental: &experimental.Config{
 			WebApp: &experimental.WebAppConfig{
 				PublicAPI: &experimental.PublicAPIConfig{
-					Enabled:          true,
 					StripeSecretName: "stripe-webhook-secret",
 				},
 			},

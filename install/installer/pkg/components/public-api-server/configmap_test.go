@@ -18,7 +18,7 @@ import (
 )
 
 func TestConfigMap(t *testing.T) {
-	ctx := renderContextWithPublicAPIEnabled(t)
+	ctx := renderContextWithPublicAPI(t)
 	objs, err := configmap(ctx)
 	require.NoError(t, err)
 

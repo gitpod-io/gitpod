@@ -14,7 +14,7 @@ import (
 )
 
 func TestNetworkPolicy(t *testing.T) {
-	objects, err := networkpolicy(renderContextWithPublicAPIEnabled(t))
+	objects, err := networkpolicy(renderContextWithPublicAPI(t))
 	require.NoError(t, err)
 	require.Len(t, objects, 1)
 
