@@ -325,6 +325,12 @@ var ring1Cmd = &cobra.Command{
 				mnte{Target: "/workspace", Flags: unix.MS_BIND | unix.MS_REC},
 			)
 		} else {
+			// remove /workspace folder
+			err = os.RemoveAll("/workspace")
+			if err != nil {
+				log.WithError(err).Error("cannot remove /workspace")
+			}
+
 			mnts = append(mnts,
 				mnte{Target: "/workspace", Source: "/pvc/workspace", Flags: unix.MS_BIND | unix.MS_REC},
 			)
