@@ -101,6 +101,9 @@ type Image_object struct {
 // Jetbrains Configure JetBrains integration
 type Jetbrains struct {
 
+	// Configure CLion integration
+	Clion *JetbrainsProduct `yaml:"clion,omitempty"`
+
 	// Configure GoLand integration
 	Goland *JetbrainsProduct `yaml:"goland,omitempty"`
 
@@ -115,6 +118,9 @@ type Jetbrains struct {
 
 	// Configure PyCharm integration
 	Pycharm *JetbrainsProduct `yaml:"pycharm,omitempty"`
+
+	// Configure Rider integration
+	Rider *JetbrainsProduct `yaml:"rider,omitempty"`
 
 	// Configure RubyMine integration
 	Rubymine *JetbrainsProduct `yaml:"rubymine,omitempty"`
@@ -685,6 +691,17 @@ func (strct *Jetbrains) MarshalJSON() ([]byte, error) {
 	buf := bytes.NewBuffer(make([]byte, 0))
 	buf.WriteString("{")
 	comma := false
+	// Marshal the "clion" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"clion\": ")
+	if tmp, err := json.Marshal(strct.Clion); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
 	// Marshal the "goland" field
 	if comma {
 		buf.WriteString(",")
@@ -740,6 +757,17 @@ func (strct *Jetbrains) MarshalJSON() ([]byte, error) {
 		buf.Write(tmp)
 	}
 	comma = true
+	// Marshal the "rider" field
+	if comma {
+		buf.WriteString(",")
+	}
+	buf.WriteString("\"rider\": ")
+	if tmp, err := json.Marshal(strct.Rider); err != nil {
+		return nil, err
+	} else {
+		buf.Write(tmp)
+	}
+	comma = true
 	// Marshal the "rubymine" field
 	if comma {
 		buf.WriteString(",")
@@ -776,6 +804,10 @@ func (strct *Jetbrains) UnmarshalJSON(b []byte) error {
 	// parse all the defined properties
 	for k, v := range jsonMap {
 		switch k {
+		case "clion":
+			if err := json.Unmarshal([]byte(v), &strct.Clion); err != nil {
+				return err
+			}
 		case "goland":
 			if err := json.Unmarshal([]byte(v), &strct.Goland); err != nil {
 				return err
@@ -794,6 +826,10 @@ func (strct *Jetbrains) UnmarshalJSON(b []byte) error {
 			}
 		case "pycharm":
 			if err := json.Unmarshal([]byte(v), &strct.Pycharm); err != nil {
+				return err
+			}
+		case "rider":
+			if err := json.Unmarshal([]byte(v), &strct.Rider); err != nil {
 				return err
 			}
 		case "rubymine":

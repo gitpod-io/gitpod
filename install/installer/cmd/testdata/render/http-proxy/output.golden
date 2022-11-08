@@ -1638,6 +1638,18 @@ data:
               "webstormLatest": {
                 "version": "test"
               },
+              "rider": {
+                "version": "test"
+              },
+              "riderLatest": {
+                "version": "test"
+              },
+              "clion": {
+                "version": "test"
+              },
+              "clionLatest": {
+                "version": "test"
+              },
               "jbBackendPlugin": {
                 "version": "test"
               },
@@ -3625,6 +3637,16 @@ data:
       "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:test",
       "ideOptions": {
         "options": {
+          "clion": {
+            "orderKey": "11",
+            "title": "CLion",
+            "type": "desktop",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/clionLogo.svg",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/clion:test",
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/clion:latest",
+            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
+          },
           "code": {
             "orderKey": "00",
             "title": "VS Code",
@@ -3682,6 +3704,16 @@ data:
             "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
             "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
           },
+          "rider": {
+            "orderKey": "10",
+            "title": "Rider",
+            "type": "desktop",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/riderLogo.svg",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/rider:test",
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/rider:latest",
+            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
+          },
           "rubymine": {
             "orderKey": "08",
             "title": "RubyMine",
@@ -3714,7 +3746,9 @@ data:
               "pycharm",
               "phpstorm",
               "rubymine",
-              "webstorm"
+              "webstorm",
+              "rider",
+              "clion"
             ],
             "installationSteps": [
               "If you don't see an open dialog in your browser, make sure you have the \u003ca target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'\u003eJetBrains Gateway with Gitpod Plugin\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."
@@ -5098,6 +5132,16 @@ data:
       "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:test",
       "ideOptions": {
         "options": {
+          "clion": {
+            "orderKey": "11",
+            "title": "CLion",
+            "type": "desktop",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/clionLogo.svg",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/clion:test",
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/clion:latest",
+            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
+          },
           "code": {
             "orderKey": "00",
             "title": "VS Code",
@@ -5155,6 +5199,16 @@ data:
             "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
             "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
           },
+          "rider": {
+            "orderKey": "10",
+            "title": "Rider",
+            "type": "desktop",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/riderLogo.svg",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/rider:test",
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/rider:latest",
+            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
+          },
           "rubymine": {
             "orderKey": "08",
             "title": "RubyMine",
@@ -5187,7 +5241,9 @@ data:
               "pycharm",
               "phpstorm",
               "rubymine",
-              "webstorm"
+              "webstorm",
+              "rider",
+              "clion"
             ],
             "installationSteps": [
               "If you don't see an open dialog in your browser, make sure you have the \u003ca target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'\u003eJetBrains Gateway with Gitpod Plugin\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."

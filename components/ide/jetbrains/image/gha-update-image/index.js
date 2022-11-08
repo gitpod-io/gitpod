@@ -49,6 +49,20 @@ const IDEs = [
         productType: "release",
         exampleRepo: "https://github.com/gitpod-io/template-jetbrains-webstorm",
     },
+    {
+        productName: "Rider",
+        productId: "rider",
+        productCode: "RD",
+        productType: "release",
+        exampleRepo: "https://github.com/gitpod-io/template-dotnet-core-cli-csharp",
+    },
+    {
+        productName: "CLion",
+        productId: "clion",
+        productCode: "CL",
+        productType: "release",
+        exampleRepo: "https://github.com/gitpod-io/template-cpp",
+    },
 ];
 
 (async () => {

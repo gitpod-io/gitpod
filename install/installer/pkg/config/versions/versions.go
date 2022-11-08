@@ -60,6 +60,10 @@ type Components struct {
 			RubyMineLatestImage               Versioned `json:"rubymineLatest"`
 			WebStormImage                     Versioned `json:"webstorm"`
 			WebStormLatestImage               Versioned `json:"webstormLatest"`
+			RiderImage                        Versioned `json:"rider"`
+			RiderLatestImage                  Versioned `json:"riderLatest"`
+			CLionImage                        Versioned `json:"clion"`
+			CLionLatestImage                  Versioned `json:"clionLatest"`
 			JetBrainsBackendPluginImage       Versioned `json:"jbBackendPlugin"`
 			JetBrainsBackendPluginLatestImage Versioned `json:"jbBackendPluginLatest"`
 		} `json:"desktopIdeImages"`

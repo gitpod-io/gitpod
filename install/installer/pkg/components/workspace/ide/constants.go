@@ -15,5 +15,7 @@ const (
 	PhpStormDesktopIdeImage     = "ide/phpstorm"
 	RubyMineDesktopIdeImage     = "ide/rubymine"
 	WebStormDesktopIdeImage     = "ide/webstorm"
+	RiderDesktopIdeImage        = "ide/rider"
+	CLionDesktopIdeImage        = "ide/clion"
 	JetBrainsBackendPluginImage = "ide/jb-backend-plugin"
 )

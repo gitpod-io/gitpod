@@ -801,6 +801,8 @@ export interface JetBrainsConfig {
     phpstorm?: JetBrainsProductConfig;
     rubymine?: JetBrainsProductConfig;
     webstorm?: JetBrainsProductConfig;
+    rider?: JetBrainsProductConfig;
+    clion?: JetBrainsProductConfig;
 }
 export interface JetBrainsProductConfig {
     prebuilds?: JetBrainsPrebuilds;

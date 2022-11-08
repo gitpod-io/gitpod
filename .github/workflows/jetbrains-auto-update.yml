@@ -65,3 +65,21 @@ jobs:
       projectId: ${{ secrets.GCP_PROJECT_ID }}
       serviceAccountKey: ${{ secrets.GCP_SA_KEY }}
       slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+  rider:
+    uses: ./.github/workflows/jetbrains-auto-update-template.yml
+    with:
+      productId: rider
+      productCode: RD
+    secrets:
+      projectId: ${{ secrets.GCP_PROJECT_ID }}
+      serviceAccountKey: ${{ secrets.GCP_SA_KEY }}
+      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+  clion:
+    uses: ./.github/workflows/jetbrains-auto-update-template.yml
+    with:
+      productId: clion
+      productCode: CL
+    secrets:
+      projectId: ${{ secrets.GCP_PROJECT_ID }}
+      serviceAccountKey: ${{ secrets.GCP_SA_KEY }}
+      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}

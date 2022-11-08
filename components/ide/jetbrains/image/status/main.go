@@ -18,6 +18,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
@@ -48,12 +49,54 @@ const BackendPath = "/ide-desktop/backend"
 const ProductInfoPath = BackendPath + "/product-info.json"
 
 type LaunchContext struct {
-	alias            string
-	projectDir       string
-	configDir        string
-	systemDir        string
-	projectConfigDir string
-	wsInfo           *supervisor.WorkspaceInfoResponse
+	alias             string
+	projectDir        string
+	configDir         string
+	systemDir         string
+	projectConfigDir  string
+	projectContextDir string
+	riderSolutionFile string
+	wsInfo            *supervisor.WorkspaceInfoResponse
+}
+
+// TODO(andreafalzetti): remove dir scanning once this is implemented https://youtrack.jetbrains.com/issue/GTW-2402/Rider-Open-Project-dialog-not-displaying-in-remote-dev
+func findRiderSolutionFile(root string) (string, error) {
+	slnRegEx := regexp.MustCompile(`^.+\.sln$`)
+	projRegEx := regexp.MustCompile(`^.+\.csproj$`)
+
+	var slnFiles []string
+	var csprojFiles []string
+
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		} else if slnRegEx.MatchString(info.Name()) {
+			slnFiles = append(slnFiles, path)
+		} else if projRegEx.MatchString(info.Name()) {
+			csprojFiles = append(csprojFiles, path)
+		}
+		return nil
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	if len(slnFiles) > 0 {
+		return slnFiles[0], nil
+	} else if len(csprojFiles) > 0 {
+		return csprojFiles[0], nil
+	}
+
+	return root, nil
+}
+
+func resolveProjectContextDir(launchCtx *LaunchContext) string {
+	if launchCtx.alias == "rider" {
+		return launchCtx.riderSolutionFile
+	}
+
+	return launchCtx.projectDir
 }
 
 // JB startup entrypoint
@@ -114,15 +157,28 @@ func main() {
 	} else {
 		qualifier = "-" + qualifier
 	}
+
+	var riderSolutionFile string
+	if alias == "rider" {
+		riderSolutionFile, err = findRiderSolutionFile(projectDir)
+		if err != nil {
+			log.WithError(err).Error("failed to find a rider solution file")
+		}
+	}
+
 	configDir := fmt.Sprintf("/workspace/.config/JetBrains%s", qualifier)
 	launchCtx := &LaunchContext{
-		alias:            alias,
-		wsInfo:           wsInfo,
-		projectDir:       projectDir,
-		configDir:        configDir,
-		systemDir:        fmt.Sprintf("/workspace/.cache/JetBrains%s", qualifier),
-		projectConfigDir: fmt.Sprintf("%s/RemoteDev-%s/%s", configDir, info.ProductCode, strings.ReplaceAll(projectDir, "/", "_")),
+		alias:             alias,
+		wsInfo:            wsInfo,
+		projectDir:        projectDir,
+		projectContextDir: projectDir,
+		configDir:         configDir,
+		systemDir:         fmt.Sprintf("/workspace/.cache/JetBrains%s", qualifier),
+		riderSolutionFile: riderSolutionFile,
 	}
+
+	launchCtx.projectContextDir = resolveProjectContextDir(launchCtx)
+	launchCtx.projectConfigDir = fmt.Sprintf("%s/RemoteDev-%s/%s", configDir, info.ProductCode, strings.ReplaceAll(launchCtx.projectContextDir, "/", "_"))
 
 	// sync initial options
 	err = syncOptions(launchCtx)
@@ -362,7 +418,8 @@ func resolveWorkspaceInfo(ctx context.Context) (*supervisor.WorkspaceInfoRespons
 func run(launchCtx *LaunchContext) {
 	var args []string
 	args = append(args, "run")
-	args = append(args, launchCtx.projectDir)
+	args = append(args, launchCtx.projectContextDir)
+
 	cmd := remoteDevServerCmd(args, launchCtx)
 	cmd.Env = append(cmd.Env, "JETBRAINS_GITPOD_BACKEND_KIND="+launchCtx.alias)
 	workspaceUrl, err := url.Parse(launchCtx.wsInfo.WorkspaceUrl)
@@ -599,7 +656,7 @@ func installPlugins(config *gitpod.GitpodConfig, launchCtx *LaunchContext) error
 
 	var args []string
 	args = append(args, "installPlugins")
-	args = append(args, launchCtx.projectDir)
+	args = append(args, launchCtx.projectContextDir)
 	args = append(args, plugins...)
 	cmd := remoteDevServerCmd(args, launchCtx)
 	installErr := cmd.Run()

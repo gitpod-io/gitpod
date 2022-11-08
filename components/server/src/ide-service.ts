@@ -59,6 +59,10 @@ export class IDEService {
                     productCode = "RM";
                 } else if (key === "webstorm") {
                     productCode = "WS";
+                } else if (key === "rider") {
+                    productCode = "RD";
+                } else if (key === "clion") {
+                    productCode = "CL";
                 }
                 const prebuilds = productCode && ws.config.jetbrains[key as keyof JetBrainsConfig]?.prebuilds;
                 if (prebuilds) {
