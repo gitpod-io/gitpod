@@ -392,6 +392,26 @@ spec:
           default: "0"
           help_text: Enables advanced customization options. Enable only when you know what you are doing!
 
+        - name: installer_timeout
+          title: Installer timeout
+          type: select_one
+          default: 5m
+          when: '{{repl ConfigOptionEquals "advanced_mode_enabled" "1" }}'
+          help_text: Override the timeout for the Installer.
+          items:
+            - name: 5m
+              title: 5 minutes
+            - name: 10m
+              title: 10 minutes
+            - name: 30m
+              title: 30 minutes
+            - name: 1h
+              title: 1 hour
+            - name: 90m
+              title: 90 minutes
+            - name: 2h
+              title: 2 hours
+
         - name: customization_patch
           title: Gitpod customization patch (YAML file)
           type: file
