@@ -12,49 +12,6 @@
 
 import * as jspb from "google-protobuf";
 
-export class WorkspaceDownloadURLRequest extends jspb.Message {
-    getOwnerId(): string;
-    setOwnerId(value: string): WorkspaceDownloadURLRequest;
-    getWorkspaceId(): string;
-    setWorkspaceId(value: string): WorkspaceDownloadURLRequest;
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): WorkspaceDownloadURLRequest.AsObject;
-    static toObject(includeInstance: boolean, msg: WorkspaceDownloadURLRequest): WorkspaceDownloadURLRequest.AsObject;
-    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: WorkspaceDownloadURLRequest, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): WorkspaceDownloadURLRequest;
-    static deserializeBinaryFromReader(message: WorkspaceDownloadURLRequest, reader: jspb.BinaryReader): WorkspaceDownloadURLRequest;
-}
-
-export namespace WorkspaceDownloadURLRequest {
-    export type AsObject = {
-        ownerId: string,
-        workspaceId: string,
-    }
-}
-
-export class WorkspaceDownloadURLResponse extends jspb.Message {
-    getUrl(): string;
-    setUrl(value: string): WorkspaceDownloadURLResponse;
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): WorkspaceDownloadURLResponse.AsObject;
-    static toObject(includeInstance: boolean, msg: WorkspaceDownloadURLResponse): WorkspaceDownloadURLResponse.AsObject;
-    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: WorkspaceDownloadURLResponse, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): WorkspaceDownloadURLResponse;
-    static deserializeBinaryFromReader(message: WorkspaceDownloadURLResponse, reader: jspb.BinaryReader): WorkspaceDownloadURLResponse;
-}
-
-export namespace WorkspaceDownloadURLResponse {
-    export type AsObject = {
-        url: string,
-    }
-}
-
 export class DeleteWorkspaceRequest extends jspb.Message {
     getOwnerId(): string;
     setOwnerId(value: string): DeleteWorkspaceRequest;

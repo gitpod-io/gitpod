@@ -26,8 +26,6 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type WorkspaceServiceClient interface {
-	// WorkspaceDownloadURL provides a URL from where the content of a workspace can be downloaded from
-	WorkspaceDownloadURL(ctx context.Context, in *WorkspaceDownloadURLRequest, opts ...grpc.CallOption) (*WorkspaceDownloadURLResponse, error)
 	// DeleteWorkspace deletes the content of a single workspace
 	DeleteWorkspace(ctx context.Context, in *DeleteWorkspaceRequest, opts ...grpc.CallOption) (*DeleteWorkspaceResponse, error)
 	// WorkspaceSnapshotExists checks whether the snapshot exists or not
@@ -40,15 +38,6 @@ type workspaceServiceClient struct {
 
 func NewWorkspaceServiceClient(cc grpc.ClientConnInterface) WorkspaceServiceClient {
 	return &workspaceServiceClient{cc}
-}
-
-func (c *workspaceServiceClient) WorkspaceDownloadURL(ctx context.Context, in *WorkspaceDownloadURLRequest, opts ...grpc.CallOption) (*WorkspaceDownloadURLResponse, error) {
-	out := new(WorkspaceDownloadURLResponse)
-	err := c.cc.Invoke(ctx, "/contentservice.WorkspaceService/WorkspaceDownloadURL", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *workspaceServiceClient) DeleteWorkspace(ctx context.Context, in *DeleteWorkspaceRequest, opts ...grpc.CallOption) (*DeleteWorkspaceResponse, error) {
@@ -73,8 +62,6 @@ func (c *workspaceServiceClient) WorkspaceSnapshotExists(ctx context.Context, in
 // All implementations must embed UnimplementedWorkspaceServiceServer
 // for forward compatibility
 type WorkspaceServiceServer interface {
-	// WorkspaceDownloadURL provides a URL from where the content of a workspace can be downloaded from
-	WorkspaceDownloadURL(context.Context, *WorkspaceDownloadURLRequest) (*WorkspaceDownloadURLResponse, error)
 	// DeleteWorkspace deletes the content of a single workspace
 	DeleteWorkspace(context.Context, *DeleteWorkspaceRequest) (*DeleteWorkspaceResponse, error)
 	// WorkspaceSnapshotExists checks whether the snapshot exists or not
@@ -86,9 +73,6 @@ type WorkspaceServiceServer interface {
 type UnimplementedWorkspaceServiceServer struct {
 }
 
-func (UnimplementedWorkspaceServiceServer) WorkspaceDownloadURL(context.Context, *WorkspaceDownloadURLRequest) (*WorkspaceDownloadURLResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method WorkspaceDownloadURL not implemented")
-}
 func (UnimplementedWorkspaceServiceServer) DeleteWorkspace(context.Context, *DeleteWorkspaceRequest) (*DeleteWorkspaceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteWorkspace not implemented")
 }
@@ -106,24 +90,6 @@ type UnsafeWorkspaceServiceServer interface {
 
 func RegisterWorkspaceServiceServer(s grpc.ServiceRegistrar, srv WorkspaceServiceServer) {
 	s.RegisterService(&WorkspaceService_ServiceDesc, srv)
-}
-
-func _WorkspaceService_WorkspaceDownloadURL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(WorkspaceDownloadURLRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(WorkspaceServiceServer).WorkspaceDownloadURL(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/contentservice.WorkspaceService/WorkspaceDownloadURL",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WorkspaceServiceServer).WorkspaceDownloadURL(ctx, req.(*WorkspaceDownloadURLRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _WorkspaceService_DeleteWorkspace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -169,10 +135,6 @@ var WorkspaceService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "contentservice.WorkspaceService",
 	HandlerType: (*WorkspaceServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "WorkspaceDownloadURL",
-			Handler:    _WorkspaceService_WorkspaceDownloadURL_Handler,
-		},
 		{
 			MethodName: "DeleteWorkspace",
 			Handler:    _WorkspaceService_DeleteWorkspace_Handler,
