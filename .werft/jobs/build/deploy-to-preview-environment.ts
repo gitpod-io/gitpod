@@ -7,7 +7,6 @@ import { Analytics, JobConfig } from "./job-config";
 import * as VM from "../../vm/vm";
 import { Installer } from "./installer/installer";
 import { previewNameFromBranchName } from "../../util/preview";
-import { SpanStatusCode } from "@opentelemetry/api";
 
 // used by Installer
 const STACKDRIVER_SERVICEACCOUNT = JSON.parse(
@@ -77,57 +76,46 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
     VM.copyk3sKubeconfigShell({ name: destname, timeoutMS: 1000 * 60 * 6, slice: vmSlices.KUBECONFIG });
     werft.done(vmSlices.KUBECONFIG);
 
-    // Deploying monitoring satellite to VM-based preview environments is currently best-effort.
-    // That means we currently don't wait for the promise here, and should the installation fail
-    // we'll simply log an error rather than failing the build.
-    //
-    // Note: Werft currently doesn't support slices spanning across multiple phases so running this
-    // can result in many 'observability' slices. Currently we close all the spans in a phase
-    // when we complete a phase. This means we can't currently measure the full duration or the
-    // success rate or installing monitoring satellite, but we can at least count and debug errors.
-    // In the future we can consider not closing spans when closing phases, or restructuring our phases
-    // based on parallelism boundaries
-    const monitoringSatelliteInstaller = new MonitoringSatelliteInstaller({
-        branch: jobConfig.observability.branch,
-        previewName: previewNameFromBranchName(jobConfig.repository.branch),
-        stackdriverServiceAccount: STACKDRIVER_SERVICEACCOUNT,
-        werft: werft,
-    });
-    const sliceID = "observability";
-    monitoringSatelliteInstaller
-        .install(sliceID)
-        .then(() => {
+    werft.phase(phases.DEPLOY, "Deploying Gitpod and Observability Stack");
+
+    const installMonitoringSatellite = (async () => {
+        const sliceID = "Install monitoring satellite";
+        const monitoringSatelliteInstaller = new MonitoringSatelliteInstaller({
+            branch: jobConfig.observability.branch,
+            previewName: previewNameFromBranchName(jobConfig.repository.branch),
+            stackdriverServiceAccount: STACKDRIVER_SERVICEACCOUNT,
+            werft: werft,
+        });
+        try {
+            await monitoringSatelliteInstaller.install(sliceID);
             werft.rootSpan.setAttributes({ "preview.monitoring_installed_successfully": true });
-            werft.log(sliceID, "Succeeded installing monitoring satellite");
-        })
-        .catch((err) => {
-            werft.log(sliceID, `Failed to install monitoring: ${err}`);
-            const span = werft.getSpanForSlice(sliceID);
-            span.setStatus({
-                code: SpanStatusCode.ERROR,
-                message: err,
-            });
-        })
-        .finally(() => werft.done(sliceID));
+        } catch (err) {
+            // Currently failing to install the monitoring-satellite stack shouldn't cause the job to fail
+            // so we only mark this single slice as failed.
+            werft.failSlice(sliceID, err);
+        }
+    })();
 
-    werft.phase(phases.DEPLOY, "deploying to dev with Installer");
+    const installGitpod = (async () => {
+        const installer = new Installer({
+            werft: werft,
+            previewName: deploymentConfig.destname,
+            version: deploymentConfig.version,
+            analytics: deploymentConfig.analytics,
+            withEELicense: deploymentConfig.installEELicense,
+            workspaceFeatureFlags: workspaceFeatureFlags,
+            withSlowDatabase: jobConfig.withSlowDatabase,
+        });
+        try {
+            werft.log(installerSlices.INSTALL, "deploying using installer");
+            await installer.install(installerSlices.INSTALL);
+            exec(
+                `werft log result -d "dev installation" -c github-check-preview-env url https://${deploymentConfig.domain}/workspaces`,
+            );
+        } catch (err) {
+            werft.fail(installerSlices.INSTALL, err);
+        }
+    })();
 
-    const installer = new Installer({
-        werft: werft,
-        previewName: deploymentConfig.destname,
-        version: deploymentConfig.version,
-        analytics: deploymentConfig.analytics,
-        withEELicense: deploymentConfig.installEELicense,
-        workspaceFeatureFlags: workspaceFeatureFlags,
-        withSlowDatabase: jobConfig.withSlowDatabase,
-    });
-    try {
-        werft.log(phases.DEPLOY, "deploying using installer");
-        await installer.install(installerSlices.INSTALL);
-        exec(
-            `werft log result -d "dev installation" -c github-check-preview-env url https://${deploymentConfig.domain}/workspaces`,
-        );
-    } catch (err) {
-        werft.fail(installerSlices.INSTALL, err);
-    }
+    await Promise.all([installMonitoringSatellite, installGitpod]);
 }

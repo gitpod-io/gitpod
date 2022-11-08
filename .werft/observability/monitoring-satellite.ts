@@ -29,6 +29,7 @@ export class MonitoringSatelliteInstaller {
         await execStream(`${variables} leeway run dev/preview:deploy-monitoring-satellite`, {
             slice: slice,
         });
+        this.options.werft.log(slice, "Succeeded installing monitoring satellite");
         this.options.werft.done(slice);
     }
 }
