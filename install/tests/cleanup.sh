@@ -26,7 +26,7 @@ cleanup() {
     echo "Trying to archive replicated license"
 
     curl --request POST \
-    --url https://api.replicated.com/vendor/v3/customer/$CUSTOMERID/archive \
+    --url "https://api.replicated.com/vendor/v3/customer/$CUSTOMERID/archive" \
     --header "Authorization: ${REPLICATED_API_TOKEN}" || echo "Couldn't delete replicated licese"
 }
 
