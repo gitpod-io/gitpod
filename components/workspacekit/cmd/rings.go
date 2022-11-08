@@ -111,6 +111,34 @@ var ring0Cmd = &cobra.Command{
 			}
 		}()
 
+		if prep.PersistentVolumeClaim {
+			// assume PVC is in block device mode, so mount it here now
+			const (
+				workspaceDevice = "/dev/workspace"
+			)
+			isReady, err := isWorkspaceDeviceReady(workspaceDevice)
+			if err != nil {
+				log.WithError(err).Error("cannot check if device is ready")
+				time.Sleep(1 * time.Hour)
+				return
+			}
+			if !isReady {
+				err = prepareWorkspaceDevice(workspaceDevice)
+				if err != nil {
+					log.WithError(err).Error("cannot prepare device")
+					time.Sleep(1 * time.Hour)
+					return
+				}
+			}
+
+			err = mountWorkspaceDevice(workspaceDevice, "/workspace")
+			if err != nil {
+				log.WithError(err).Error("cannot mount device")
+				time.Sleep(1 * time.Hour)
+				return
+			}
+		}
+
 		cmd := exec.Command("/proc/self/exe", "ring1")
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Pdeathsig:  syscall.SIGKILL,
@@ -372,32 +400,6 @@ var ring1Cmd = &cobra.Command{
 			mnts = append(mnts,
 				mnte{Target: "/workspace", Flags: unix.MS_BIND | unix.MS_REC},
 			)
-		} else {
-			// assume PVC is in block device mode, so mount it here now
-			const (
-				workspaceDevice = "/dev/workspace"
-			)
-			isReady, err := isWorkspaceDeviceReady(workspaceDevice)
-			if err != nil {
-				log.WithError(err).Error("cannot check if device is ready")
-				time.Sleep(1 * time.Hour)
-				return
-			}
-			if !isReady {
-				err = prepareWorkspaceDevice(workspaceDevice)
-				if err != nil {
-					log.WithError(err).Error("cannot prepare device")
-					time.Sleep(1 * time.Hour)
-					return
-				}
-			}
-
-			err = mountWorkspaceDevice(workspaceDevice, "/workspace")
-			if err != nil {
-				log.WithError(err).Error("cannot mount device")
-				time.Sleep(1 * time.Hour)
-				return
-			}
 		}
 
 		for _, m := range mnts {
