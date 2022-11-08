@@ -23,6 +23,7 @@ import ErrorMessage from "../components/ErrorMessage";
 import Spinner from "../icons/Spinner.svg";
 import { publicApiTeamsToProtocol, publicApiTeamToProtocol, teamsService } from "../service/public-api";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
+import { ConnectError } from "@bufbuild/connect-web";
 
 export default function NewProject() {
     const location = useLocation();
@@ -745,7 +746,11 @@ function NewTeam(props: { onSuccess: (team: Team) => void }) {
             props.onSuccess(team);
         } catch (error) {
             console.error(error);
-            setError(error?.message || "Failed to create new team!");
+            if (error instanceof ConnectError) {
+                setError(error.rawMessage);
+            } else {
+                setError(error?.message || "Failed to create new team!");
+            }
         }
     };
 
