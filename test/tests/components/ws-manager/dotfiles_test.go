@@ -57,12 +57,12 @@ func TestDotfiles(t *testing.T) {
 		}
 
 		swr := func(req *wsmanapi.StartWorkspaceRequest) error {
-			req.Spec.Envvars = []*wsmanapi.EnvironmentVariable{
-				{
+			req.Spec.Envvars = append(req.Spec.Envvars,
+				&wsmanapi.EnvironmentVariable{
 					Name:  "SUPERVISOR_DOTFILE_REPO",
 					Value: "https://github.com/gitpod-io/test-dotfiles-support",
 				},
-				{
+				&wsmanapi.EnvironmentVariable{
 					Name: "THEIA_SUPERVISOR_TOKENS",
 					Value: fmt.Sprintf(`[{
 						"token": "%v",
@@ -73,7 +73,7 @@ func TestDotfiles(t *testing.T) {
 						"reuse": 4
 					}]`, tokenId, getHostUrl(ctx, t, cfg.Client())),
 				},
-			}
+			)
 
 			req.Spec.Initializer = &csapi.WorkspaceInitializer{
 				Spec: &csapi.WorkspaceInitializer_Git{

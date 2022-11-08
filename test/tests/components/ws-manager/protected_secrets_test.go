@@ -38,12 +38,10 @@ func TestProtectedSecrets(t *testing.T) {
 		})
 
 		swr := func(req *wsmanapi.StartWorkspaceRequest) error {
-			req.Spec.Envvars = []*wsmanapi.EnvironmentVariable{
-				{
-					Name:  SECRET_NAME,
-					Value: SECRET_VALUE,
-				},
-			}
+			req.Spec.Envvars = append(req.Spec.Envvars, &wsmanapi.EnvironmentVariable{
+				Name:  SECRET_NAME,
+				Value: SECRET_VALUE,
+			})
 
 			req.Spec.Initializer = &csapi.WorkspaceInitializer{
 				Spec: &csapi.WorkspaceInitializer_Git{
