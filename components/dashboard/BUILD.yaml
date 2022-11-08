@@ -21,9 +21,9 @@ packages:
     config:
       commands:
         build: ["yarn", "build"]
-        test: ["yarn", "test"]
+        test: ["yarn", "test:unit"]
       yarnLock: ${coreYarnLockBase}/yarn.lock
-      dontTest: true
+      dontTest: false
       packaging: archive
   - name: static
     type: generic
