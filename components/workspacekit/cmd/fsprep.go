@@ -69,6 +69,11 @@ func prepareWorkspaceDevice(device string) error {
 }
 
 func mountWorkspaceDevice(device, target string) error {
+	// make sure target dir does not exist, in case if there is some garbage coming from image itself
+	if err := os.RemoveAll(target); err != nil {
+		return xerrors.Errorf("cannot remove workspace mount target: %w", err)
+	}
+
 	if err := os.MkdirAll(target, 0755); err != nil {
 		return xerrors.Errorf("cannot create directory %v: %w", target, err)
 	}
