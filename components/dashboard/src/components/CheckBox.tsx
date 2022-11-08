@@ -37,7 +37,10 @@ function CheckBox(props: {
             <div className="flex flex-col ml-2">
                 <label
                     htmlFor={checkboxId}
-                    className="text-gray-800 dark:text-gray-100 text-md font-semibold cursor-pointer tracking-wide"
+                    className={
+                        "text-md font-semibold cursor-pointer tracking-wide " +
+                        (inputProps.disabled ? "text-gray-500 dark:text-gray-400" : "text-gray-800 dark:text-gray-100")
+                    }
                 >
                     {props.title}
                 </label>

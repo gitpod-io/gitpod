@@ -2662,6 +2662,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             context,
             user,
             project,
+            forcePrebuild: true,
         });
 
         this.analytics.track({

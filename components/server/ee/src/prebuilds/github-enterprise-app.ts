@@ -184,12 +184,14 @@ export class GitHubEnterpriseApp {
                     commitInfo,
                 },
             );
-            await this.webhookEvents.updateEvent(event.id, {
-                prebuildStatus: "prebuild_triggered",
-                status: "processed",
-                prebuildId: ws.prebuildId,
-            });
-            return ws;
+            if (!ws.done) {
+                await this.webhookEvents.updateEvent(event.id, {
+                    prebuildStatus: "prebuild_triggered",
+                    status: "processed",
+                    prebuildId: ws.prebuildId,
+                });
+                return ws;
+            }
         } catch (e) {
             log.error("Error processing GitHub Enterprise webhook event.", e);
             await this.webhookEvents.updateEvent(event.id, {

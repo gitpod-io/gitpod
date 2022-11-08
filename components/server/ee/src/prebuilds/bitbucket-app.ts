@@ -156,12 +156,14 @@ export class BitbucketApp {
                 { span },
                 { user, project: projectAndOwner.project, context, commitInfo },
             );
-            await this.webhookEvents.updateEvent(event.id, {
-                prebuildStatus: "prebuild_triggered",
-                status: "processed",
-                prebuildId: ws.prebuildId,
-            });
-            return ws;
+            if (!ws.done) {
+                await this.webhookEvents.updateEvent(event.id, {
+                    prebuildStatus: "prebuild_triggered",
+                    status: "processed",
+                    prebuildId: ws.prebuildId,
+                });
+                return ws;
+            }
         } catch (e) {
             console.error("Error processing Bitbucket webhook event", e);
             await this.webhookEvents.updateEvent(event.id, {
