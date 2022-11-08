@@ -107,6 +107,9 @@ func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool) error
 	tokensRoute, tokensServiceHandler := v1connect.NewTokensServiceHandler(apiv1.NewTokensService(), handlerOptions...)
 	srv.HTTPMux().Handle(tokensRoute, tokensServiceHandler)
 
+	userRoute, userServiceHandler := v1connect.NewUserServiceHandler(apiv1.NewUserService(connPool), handlerOptions...)
+	srv.HTTPMux().Handle(userRoute, userServiceHandler)
+
 	return nil
 }
 
