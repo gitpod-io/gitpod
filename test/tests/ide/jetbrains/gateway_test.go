@@ -297,3 +297,41 @@ func TestWebStorm(t *testing.T) {
 		Feature()
 	testEnv.Test(t, f)
 }
+
+func TestRider(t *testing.T) {
+	if roboquatToken == "" {
+		t.Skip("this test need github action run permission")
+	}
+	integration.SkipWithoutUsername(t, username)
+	integration.SkipWithoutUserToken(t, userToken)
+	f := features.New("Start a workspace using Rider").
+		WithLabel("component", "IDE").
+		WithLabel("ide", "Rider").
+		Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+			defer cancel()
+			JetBrainsIDETest(ctx, t, cfg, "Rider", "https://github.com/gitpod-io/template-dotnet-core-cli-csharp")
+			return ctx
+		}).
+		Feature()
+	testEnv.Test(t, f)
+}
+
+func TestCLion(t *testing.T) {
+	if roboquatToken == "" {
+		t.Skip("this test need github action run permission")
+	}
+	integration.SkipWithoutUsername(t, username)
+	integration.SkipWithoutUserToken(t, userToken)
+	f := features.New("Start a workspace using CLion").
+		WithLabel("component", "IDE").
+		WithLabel("ide", "CLion").
+		Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+			defer cancel()
+			JetBrainsIDETest(ctx, t, cfg, "CLion", "https://github.com/gitpod-io/template-cpp")
+			return ctx
+		}).
+		Feature()
+	testEnv.Test(t, f)
+}

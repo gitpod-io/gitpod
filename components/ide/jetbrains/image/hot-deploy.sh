@@ -31,7 +31,7 @@ echo "Image Version: $version"
 bldfn="/tmp/build-$version.tar.gz"
 
 docker ps &> /dev/null || (echo "You need a working Docker daemon. Maybe set DOCKER_HOST?"; exit 1)
-leeway build -Dversion="$version" -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build ".:$component" --save "$bldfn" --dont-retag
+leeway build -Dversion="$version" -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build ".:$component" --save "$bldfn"
 dev_image="$(tar xfO "$bldfn" ./imgnames.txt | head -n1)"
 echo "Dev Image: $dev_image"
 

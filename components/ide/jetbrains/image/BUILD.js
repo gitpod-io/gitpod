@@ -27,6 +27,14 @@ const ideConfigs = [
         name: "webstorm",
         productCode: "WS",
     },
+    {
+        name: "rider",
+        productCode: "RD",
+    },
+    {
+        name: "clion",
+        productCode: "CL",
+    },
 ];
 
 const packages = [];

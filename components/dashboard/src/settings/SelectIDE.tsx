@@ -92,7 +92,7 @@ export default function SelectIDE(props: SelectIDEProps) {
                 <>
                     {allIdeOptions && (
                         <>
-                            <div className={`my-4 gap-3 flex flex-wrap max-w-2xl`}>
+                            <div className={`my-4 gap-3 flex flex-wrap max-w-3xl`}>
                                 {allIdeOptions.map(([id, option]) => {
                                     const selected = defaultIde === id;
                                     const onSelect = () => actuallySetDefaultIde(id);

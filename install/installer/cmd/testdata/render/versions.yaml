@@ -90,6 +90,14 @@ components:
         version: test
       webstormLatest:
         version: test
+      rider:
+        version: test
+      riderLatest:
+        version: test
+      clion:
+        version: test
+      clionLatest:
+        version: test
       jbBackendPlugin:
         version: test
       jbBackendPluginLatest:

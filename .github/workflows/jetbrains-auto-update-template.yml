@@ -57,6 +57,8 @@ jobs:
           echo $IDE_VERSION
       - name: Leeway build
         if: ${{ steps.ide-version.outputs.result }}
+        env:
+          LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE: '8388608'
         run: |
           gcloud auth configure-docker --quiet
           export LEEWAY_WORKSPACE_ROOT=$(pwd)

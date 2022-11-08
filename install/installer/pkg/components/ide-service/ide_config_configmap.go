@@ -33,6 +33,8 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	phpstorm := "phpstorm"
 	rubymine := "rubymine"
 	webstorm := "webstorm"
+	rider := "rider"
+	clion := "clion"
 
 	resolveLatestImage := func(name string, tag string, bundledLatest versions.Versioned) string {
 		resolveLatest := true
@@ -70,7 +72,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 				"jetbrains-gateway": {
 					DefaultDesktopIDE: intellij,
-					DesktopIDEs:       []string{intellij, goland, pycharm, phpstorm, rubymine, webstorm},
+					DesktopIDEs:       []string{intellij, goland, pycharm, phpstorm, rubymine, webstorm, rider, clion},
 					InstallationSteps: []string{
 						"If you don't see an open dialog in your browser, make sure you have the <a target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'>JetBrains Gateway with Gitpod Plugin</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
 					},
@@ -151,6 +153,26 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Logo:              getIdeLogoPath("webstormLogo"),
 					Image:             ctx.ImageName(ctx.Config.Repository, ide.WebStormDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.WebStormImage.Version),
 					LatestImage:       ctx.ImageName(ctx.Config.Repository, ide.WebStormDesktopIdeImage, "latest"),
+					PluginImage:       jbPluginImage,
+					PluginLatestImage: jbPluginLatestImage,
+				},
+				rider: {
+					OrderKey:          "10",
+					Title:             "Rider",
+					Type:              ide_config.IDETypeDesktop,
+					Logo:              getIdeLogoPath("riderLogo"),
+					Image:             ctx.ImageName(ctx.Config.Repository, ide.RiderDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.RiderImage.Version),
+					LatestImage:       ctx.ImageName(ctx.Config.Repository, ide.RiderDesktopIdeImage, "latest"),
+					PluginImage:       jbPluginImage,
+					PluginLatestImage: jbPluginLatestImage,
+				},
+				clion: {
+					OrderKey:          "11",
+					Title:             "CLion",
+					Type:              ide_config.IDETypeDesktop,
+					Logo:              getIdeLogoPath("clionLogo"),
+					Image:             ctx.ImageName(ctx.Config.Repository, ide.CLionDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CLionImage.Version),
+					LatestImage:       ctx.ImageName(ctx.Config.Repository, ide.CLionDesktopIdeImage, "latest"),
 					PluginImage:       jbPluginImage,
 					PluginLatestImage: jbPluginLatestImage,
 				},
