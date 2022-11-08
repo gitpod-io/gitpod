@@ -42,3 +42,7 @@ scripts:
   - name: deploy-gitpod
     description: Deploys Gitpod to an existing preview environment
     script: ./workflow/preview/deploy-gitpod.sh
+
+  - name: deploy-monitoring-satellite
+    description: Deploys monitoring-satellite to an existing preview environment
+    script: ./workflow/preview/deploy-monitoring-satellite.sh

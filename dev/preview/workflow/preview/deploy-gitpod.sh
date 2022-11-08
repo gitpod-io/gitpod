@@ -9,6 +9,8 @@ ROOT="${SCRIPT_PATH}/../../../../"
 source "$(realpath "${SCRIPT_PATH}/../lib/common.sh")"
 # shellcheck source=../../util/preview-name-from-branch.sh
 source "$(realpath "${SCRIPT_PATH}/../../util/preview-name-from-branch.sh")"
+# shellcheck source=../lib/k8s-util.sh
+source "$(realpath "${SCRIPT_PATH}/../lib/k8s-util.sh")"
 
 DEV_KUBE_PATH="${DEV_KUBE_PATH:-/home/gitpod/.kube/config}"
 DEV_KUBE_CONTEXT="${DEV_KUBE_CONTEXT:-dev}"
@@ -110,73 +112,6 @@ EOF
   rm -f ${GITPOD_IMAGE_PULL_SECRET_NAME}
 }
 
-function waitUntilAllPodsAreReady {
-  local namespace
-  local exitCode
-  namespace="$1"
-
-  echo "Waiting until all pods in namespace ${namespace} are Running/Succeeded/Completed."
-  ATTEMPTS=0
-  SUCCESSFUL="false"
-  while [ ${ATTEMPTS} -lt 200 ]
-  do
-    ATTEMPTS=$((ATTEMPTS+1))
-    set +e
-    pods=$(
-      kubectl \
-        --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-        --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-        get pods -n "${namespace}" \
-          -l 'component!=workspace' \
-          -o=jsonpath='{range .items[*]}{@.metadata.name}:{@.metadata.ownerReferences[0].kind}:{@.status.phase} {end}'
-    )
-    exitCode=$?
-    set -e
-    if [[ $exitCode -gt 0 ]]; then
-      echo "Failed to get pods in namespace. Exit code $exitCode"
-      echo "Sleeping 3 seconds"
-      sleep 3
-      continue
-    fi
-
-    if [[ -z "${pods}" ]]; then
-      echo "The namespace is empty or does not exist."
-      echo "Sleeping 3 seconds"
-      sleep 3
-      continue
-    fi
-
-    unreadyPods=""
-    for  pod in $pods; do
-      owner=$(echo "$pod" | cut -d ":" -f 2)
-      phase=$(echo "$pod" | cut -d ":" -f 3)
-      if [[ $owner == "Job" && $phase != "Succeeded" ]]; then
-        unreadyPods="$pod $unreadyPods"
-      fi
-      if [[ $owner != "Job" && $phase != "Running" ]]; then
-        unreadyPods="$pod $unreadyPods"
-      fi
-    done
-
-    if [[ -z "${unreadyPods}" ]]; then
-      echo "All pods are Running/Succeeded/Completed!"
-      SUCCESSFUL="true"
-      break
-    fi
-
-    echo "Uneady pods: $unreadyPods"
-    echo "Sleeping 10 seconds before checking again"
-    sleep 10
-  done
-
-  if [[ "${SUCCESSFUL}" == "true" ]]; then
-    return 0
-  else
-    echo "Not all pods in namespace ${namespace} transitioned to 'Running' or 'Succeeded/Completed' during the expected time."
-    return 1
-  fi
-}
-
 function installRookCeph {
   kubectl \
     --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
@@ -247,8 +182,8 @@ function installFluentBit {
 # Prerequisites
 # ====================================
 
-waitUntilAllPodsAreReady "kube-system"
-waitUntilAllPodsAreReady "cert-manager"
+waitUntilAllPodsAreReady "${PREVIEW_K3S_KUBE_PATH}" "${PREVIEW_K3S_KUBE_CONTEXT}" "kube-system"
+waitUntilAllPodsAreReady "${PREVIEW_K3S_KUBE_PATH}" "${PREVIEW_K3S_KUBE_CONTEXT}" "cert-manager"
 
 # Note: These should ideally be handled by `leeway run dev/preview:create`
 copyCachedCertificate
@@ -458,14 +393,7 @@ fi
 # includeAnalytics
 #
 if [[ "${GITPOD_ANALYTICS}" == "segment" ]]; then
-
-  GITPOD_ANALYTICS_SEGMENT_TOKEN=$(kubectl \
-    --kubeconfig "${DEV_KUBE_PATH}" \
-    --context "${DEV_KUBE_CONTEXT}" \
-    --namespace werft \
-    get secret "segment-staging-write-key" -o jsonpath='{.data.token}' \
-  | base64 -d)
-
+  GITPOD_ANALYTICS_SEGMENT_TOKEN="$(readWerftSecret "segment-staging-write-key" "token")"
   yq w -i "${INSTALLER_CONFIG_PATH}" analytics.writer segment
   yq w -i "${INSTALLER_CONFIG_PATH}" analytics.segmentKey "${GITPOD_ANALYTICS_SEGMENT_TOKEN}"
   yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_WRITER"
@@ -517,13 +445,7 @@ log_info "Post-processing"
 #
 if [[ "${GITPOD_WITH_EE_LICENSE}" == "true" ]]
 then
-  kubectl \
-    --kubeconfig "${DEV_KUBE_PATH}" \
-    --context "${DEV_KUBE_CONTEXT}" \
-    --namespace werft \
-    get secret "gpsh-harvester-license" -o jsonpath='{.data.license}' \
-  | base64 -d \
-  > /tmp/license
+  readWerftSecret "gpsh-harvester-license" "license" > /tmp/license
 else
   touch /tmp/license
 fi
@@ -584,7 +506,7 @@ rm -f "${INSTALLER_RENDER_PATH}"
 # =========================
 # Wait for pods to be ready
 # =========================
-waitUntilAllPodsAreReady "$PREVIEW_NAMESPACE"
+waitUntilAllPodsAreReady "${PREVIEW_K3S_KUBE_PATH}" "${PREVIEW_K3S_KUBE_CONTEXT}" "$PREVIEW_NAMESPACE"
 
 # =====================
 # Add agent smith token

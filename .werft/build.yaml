@@ -136,16 +136,6 @@ pod:
         secretKeyRef:
           name: npm-auth-token
           key: npm-auth-token.json
-    - name: PROM_REMOTE_WRITE_USER
-      valueFrom:
-        secretKeyRef:
-          name: prometheus-remote-write-auth
-          key: user
-    - name: PROM_REMOTE_WRITE_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: prometheus-remote-write-auth
-          key: password
     - name: JB_MARKETPLACE_PUBLISH_TOKEN
       valueFrom:
         secretKeyRef:
