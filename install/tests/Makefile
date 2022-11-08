@@ -222,21 +222,21 @@ get-base-config:
 	export PATCH=$$(cat ${config_patch}) || export PATCH="" && \
 	envsubst < ${KOTS_KONFIG} > tmp_config.yml
 
-storage-config-k3s:
+storage-config-k3s: tf-init tf-output
 	@export k3s_storage_credentials=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'storage.value.service_account_key_path') && \
 	[[ $$k3s_storage_credentials = /* ]] || export k3s_storage_credentials=$$(realpath $(TF_MOD)/$$k3s_storage_credentials) && \
 	export BASE64_GCP_KEY=$$(cat $$k3s_storage_credentials | tr -d '\n' | base64 -w 0) && \
 	envsubst < ./manifests/kots-config-gcp-storage.yaml > tmp_2_config.yml
 	yq m -i tmp_config.yml tmp_2_config.yml
 
-registry-config-k3s:
+registry-config-k3s: tf-init tf-output
 	@export k3s_registry_credentials=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'registry.value.password_file_path') && \
 	[[ $$k3s_registry_credentials = /* ]] || export k3s_registry_credentials=$$(realpath $(TF_MOD)/$$k3s_registry_credentials) && \
 	export GCP_KEY=$$(cat $$k3s_registry_credentials | tr -d '\n' | jq -Rsa .) && \
 	envsubst < ./manifests/kots-config-gcp-registry.yaml > tmp_4_config.yml
 	yq m -i tmp_config.yml tmp_4_config.yml
 
-db-config-k3s:
+db-config-k3s: tf-init tf-output
 	@export k3s_db_credentials=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'database.value.service_account_key_path') && \
 	[[ $$k3s_db_credentials = /* ]] || export k3s_db_credentials=$$(realpath $(TF_MOD)/$$k3s_db_credentials) && \
 	export BASE64_GCP_KEY=$$(cat $$k3s_db_credentials | tr -d '\n' | base64 -w 0) && \
@@ -247,19 +247,19 @@ db-config-k3s:
 	envsubst < tmp_4_config.yml > tmp_5_config.yml
 	yq m -i tmp_config.yml tmp_5_config.yml
 
-storage-config-gcp:
+storage-config-gcp: tf-init tf-output
 	@echo "Creating GCP storage configuration"
 	@export BASE64_GCP_KEY=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'storage.value.service_account_key' | tr -d '\n' | base64 -w 0) && \
 	envsubst < ./manifests/kots-config-gcp-storage.yaml > tmp_2_config.yml
 	@yq m -i tmp_config.yml tmp_2_config.yml
 
-registry-config-gcp:
+registry-config-gcp: tf-init tf-output
 	@echo "Creating GCP registry configuration"
 	@export GCP_KEY=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'registry.value.password' | tr -d '\n' | jq -Rsa .) && \
 	envsubst < ./manifests/kots-config-gcp-registry.yaml > tmp_4_config.yml
 	@yq m -i tmp_config.yml tmp_4_config.yml
 
-db-config-gcp:
+db-config-gcp: tf-init tf-output
 	@echo "Creating GCP database configuration"
 	@export BASE64_GCP_KEY=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'database.value.service_account_key' | tr -d '\n' | base64 -w 0) && \
 	export DB_INSTANCE=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'database.value.instance') && \
@@ -268,7 +268,7 @@ db-config-gcp:
 	envsubst < ./manifests/kots-config-gcp-db.yaml > tmp_4_config.yml
 	@envsubst < tmp_4_config.yml > tmp_5_config.yml
 
-registry-config-azure:
+registry-config-azure: tf-init tf-output
 	@echo "Creating Azure registry configuration"
 	@export SERVER=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'registry.value.server') && \
 	export URL=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'registry.value.url') && \
@@ -277,7 +277,7 @@ registry-config-azure:
 	envsubst < ./manifests/kots-config-azure-registry.yaml > tmp_2_config.yml
 	@yq m -i tmp_config.yml tmp_2_config.yml
 
-storage-config-azure:
+storage-config-azure: tf-init tf-output
 	@echo "Creating Azure storage configuration"
 	@export USERNAME=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'storage.value.account_name') && \
 	export PASSWORD=$$(cat ${TF_VAR_TEST_ID}-output.json| yq r - 'storage.value.account_key') && \
@@ -285,7 +285,7 @@ storage-config-azure:
 	envsubst < ./manifests/kots-config-azure-storage.yaml > tmp_2_config.yml
 	@yq m -i tmp_config.yml tmp_2_config.yml
 
-db-config-azure:
+db-config-azure: tf-init tf-output
 	@echo "Creating Azure database configuration"
 	@export DBHOST=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'database.value.host') && \
 	export DBPASS=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'database.value.password') && \
@@ -293,7 +293,7 @@ db-config-azure:
 	envsubst < ./manifests/kots-config-azure-db.yaml > tmp_2_config.yml
 	@yq m -i tmp_config.yml tmp_2_config.yml
 
-db-config-aws:
+db-config-aws: tf-init tf-output
 	@echo "Creating AWS database configuration"
 	@export DBHOST=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'database.value.host') && \
 	export DBPASS=$$(cat ${TF_VAR_TEST_ID}-output.json  | yq r - 'database.value.password') && \
@@ -301,7 +301,7 @@ db-config-aws:
 	envsubst < ./manifests/kots-config-aws-db.yaml > tmp_2_config.yml
 	@yq m -i tmp_config.yml tmp_2_config.yml
 
-storage-config-aws:
+storage-config-aws: tf-init tf-output
 	@echo "Creating AWS storage configuration"
 	@export REGION=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'storage.value.region') && \
 	export ENDPOINT=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'storage.value.endpoint') && \
@@ -311,7 +311,7 @@ storage-config-aws:
 	envsubst < ./manifests/kots-config-aws-storage.yaml > tmp_2_config.yml
 	@yq m -i tmp_config.yml tmp_2_config.yml
 
-s3-registry-backend-config-aws: # this registry config involves using s3 backend for incluster registry
+s3-registry-backend-config-aws: tf-init tf-output # this registry config involves using s3 backend for incluster registry
 	@echo "Creating AWS registry backend configuration"
 	@export REGION=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'storage.value.region') && \
 	export ENDPOINT=$$(cat ${TF_VAR_TEST_ID}-output.json | yq r - 'storage.value.endpoint') && \
@@ -373,7 +373,7 @@ generate-kots-config: cloud_storage = $(if $(findstring external,$(storage)),$(c
 generate-kots-config: cloud_registry = $(if $(findstring external,$(registry)),$(cloud),incluster)
 generate-kots-config: cloud_db = $(if $(findstring external,$(db)),$(cloud),incluster)
 ## generate-kots-config: Generate the kots config based on test config
-generate-kots-config: tf-init tf-output check-var-cloud check-var-DOMAIN check-var-TF_VAR_TEST_ID
+generate-kots-config: check-var-cloud check-var-DOMAIN check-var-TF_VAR_TEST_ID
 	@if [[ $$skipTests == "false" ]]; then $(MAKE) get-github-config; fi
 	$(MAKE) get-base-config
 	$(MAKE) storage-config-${cloud_storage}
