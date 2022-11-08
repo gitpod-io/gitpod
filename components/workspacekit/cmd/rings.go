@@ -324,6 +324,10 @@ var ring1Cmd = &cobra.Command{
 			mnts = append(mnts,
 				mnte{Target: "/workspace", Flags: unix.MS_BIND | unix.MS_REC},
 			)
+		} else {
+			mnts = append(mnts,
+				mnte{Target: "/workspace", Source: "/pvc/workspace", Flags: unix.MS_BIND | unix.MS_REC},
+			)
 		}
 
 		for _, m := range mnts {
