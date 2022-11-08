@@ -54,7 +54,6 @@ tasks:
       leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib -- ./gradlew build
       leeway exec --package components/ide/jetbrains/backend-plugin:plugin-latest --package components/ide/jetbrains/gateway-plugin:publish-latest --parallel -- ./gradlew buildPlugin
   - name: TypeScript
-    before: scripts/branch-namespace.sh
     init: yarn --network-timeout 100000 && yarn build
   - name: Go
     before: pre-commit install --install-hooks
