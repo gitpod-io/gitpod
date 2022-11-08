@@ -221,6 +221,35 @@ spec:
     - Ingress
 
 ---
+# networking.k8s.io/v1/NetworkPolicy public-api-server
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: public-api-server
+  name: public-api-server
+  namespace: default
+spec:
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              component: proxy
+      ports:
+        - port: 9001
+          protocol: TCP
+        - port: 9002
+          protocol: TCP
+  podSelector:
+    matchLabels:
+      app: gitpod
+      component: public-api-server
+  policyTypes:
+    - Ingress
+
+---
 # networking.k8s.io/v1/NetworkPolicy server
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -554,6 +583,18 @@ metadata:
     app: gitpod
     component: proxy
   name: proxy
+  namespace: default
+---
+# v1/ServiceAccount public-api-server
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: public-api-server
+  name: public-api-server
   namespace: default
 ---
 # v1/ServiceAccount rabbitmq
@@ -996,6 +1037,10 @@ data:
     repository: eu.gcr.io/gitpod-core-dev/build
     workspace:
       maxLifetime: 36h0m0s
+      prebuildPVC:
+        size: 30Gi
+        snapshotClass: ""
+        storageClass: ""
       pvc:
         size: 30Gi
         snapshotClass: ""
@@ -1079,6 +1124,9 @@ data:
           "serviceWaiter": {
             "version": "test"
           },
+          "toxic-config": {
+            "version": "test"
+          },
           "usage": {
             "version": "test"
           },
@@ -1136,6 +1184,18 @@ data:
                 "version": "test"
               },
               "webstormLatest": {
+                "version": "test"
+              },
+              "rider": {
+                "version": "test"
+              },
+              "riderLatest": {
+                "version": "test"
+              },
+              "clion": {
+                "version": "test"
+              },
+              "clionLatest": {
                 "version": "test"
               },
               "jbBackendPlugin": {
@@ -1398,187 +1458,6 @@ data:
       creationTimestamp: null
       labels:
         app: gitpod
-        component: content-service
-      name: content-service
-      namespace: default
-    ---
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: content-service
-      name: content-service
-      namespace: default
-    ---
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: content-service
-      name: content-service
-      namespace: default
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: RoleBinding
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: content-service
-      name: content-service
-      namespace: default
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRoleBinding
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: content-service
-      name: default-content-service-rb-kube-rbac-proxy
-    ---
-    apiVersion: v1
-    kind: Service
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: content-service
-        kind: service
-      name: content-service
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: content-service
-      name: content-service
-      namespace: default
-    ---
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: dashboard
-      name: dashboard
-      namespace: default
-    ---
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: dashboard
-      name: dashboard-deny-all-allow-explicit
-      namespace: default
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: RoleBinding
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: dashboard
-      name: dashboard
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: Service
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: dashboard
-        kind: service
-      name: dashboard
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: dashboard
-      name: dashboard
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: db
-      name: db-init-scripts
-      namespace: default
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: RoleBinding
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: db
-      name: db
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: db
-      name: db-password
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: db
-      name: mysql
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: Service
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: db
-      name: db
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: db
-      name: db
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
         component: ide-metrics
       name: ide-metrics
       namespace: default
@@ -1792,36 +1671,6 @@ data:
       name: ide-proxy
       namespace: default
     ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: RoleBinding
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: migrations
-      name: migrations
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: migrations
-      name: migrations
-      namespace: default
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: RoleBinding
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: minio
-      name: minio
-      namespace: default
-    ---
     apiVersion: v1
     kind: ConfigMap
     metadata:
@@ -1890,6 +1739,217 @@ data:
         app: gitpod
         component: openvsx-proxy
       name: openvsx-proxy
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: content-service
+      name: content-service
+      namespace: default
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: content-service
+      name: content-service
+      namespace: default
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: content-service
+      name: content-service
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: content-service
+      name: content-service
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: content-service
+      name: default-content-service-rb-kube-rbac-proxy
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: content-service
+        kind: service
+      name: content-service
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: content-service
+      name: content-service
+      namespace: default
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: dashboard
+      name: dashboard
+      namespace: default
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: dashboard
+      name: dashboard-deny-all-allow-explicit
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: dashboard
+      name: dashboard
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: dashboard
+        kind: service
+      name: dashboard
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: dashboard
+      name: dashboard
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: db
+      name: db-init-scripts
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: db
+      name: db
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: db
+      name: db-password
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: db
+      name: mysql
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: db
+      name: db
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: db
+      name: db
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: migrations
+      name: migrations
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: migrations
+      name: migrations
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: minio
+      name: minio
       namespace: default
     ---
     apiVersion: v1
@@ -2132,6 +2192,78 @@ data:
         app: gitpod
         component: ws-manager-bridge
       name: ws-manager-bridge
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+      name: public-api-server
+      namespace: default
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      annotations:
+        gitpod.io/checksum_config: 2d64dca8ac18437c4ba1d80fd2112af408f1e5fb2ca0294f422f03bcbad647bb
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+      name: public-api-server
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+      name: default-public-api-server-rb-kube-rbac-proxy
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+      name: public-api-server
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+      name: public-api-server
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+        kind: service
+      name: public-api-server
+      namespace: default
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+      name: public-api-server
       namespace: default
     ---
     apiVersion: v1
@@ -2477,13 +2609,23 @@ data:
       "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:test",
       "ideOptions": {
         "options": {
+          "clion": {
+            "orderKey": "11",
+            "title": "CLion",
+            "type": "desktop",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/clionLogo.svg",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/clion:test",
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/clion:latest",
+            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
+          },
           "code": {
             "orderKey": "00",
             "title": "VS Code",
             "type": "browser",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "label": "Browser",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-6fb745a090b05048a96ab47bdab5e4a88f848b98",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-7faac86f8121d3099a81f5adb1ac9804ffc8c23a",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
           },
           "code-desktop": {
@@ -2534,6 +2676,16 @@ data:
             "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
             "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
           },
+          "rider": {
+            "orderKey": "10",
+            "title": "Rider",
+            "type": "desktop",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/riderLogo.svg",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/rider:test",
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/rider:latest",
+            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
+          },
           "rubymine": {
             "orderKey": "08",
             "title": "RubyMine",
@@ -2566,7 +2718,9 @@ data:
               "pycharm",
               "phpstorm",
               "rubymine",
-              "webstorm"
+              "webstorm",
+              "rider",
+              "clion"
             ],
             "installationSteps": [
               "If you don't see an open dialog in your browser, make sure you have the \u003ca target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'\u003eJetBrains Gateway with Gitpod Plugin\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."
@@ -3548,7 +3702,10 @@ data:
       "max_idle_conns": 1000,
       "max_idle_conns_per_host": 1000,
       "redis_addr": "localhost:6379",
-      "prometheusAddr": "127.0.0.1:9500"
+      "prometheusAddr": "127.0.0.1:9500",
+      "allow_cache_domain": [
+        "open-vsx.org"
+      ]
     }
   redis.conf: "\nmaxmemory 100mb\nmaxmemory-policy allkeys-lfu\n\t"
 kind: ConfigMap
@@ -3644,6 +3801,34 @@ metadata:
   name: proxy-config
   namespace: default
 ---
+# v1/ConfigMap public-api-server
+apiVersion: v1
+data:
+  config.json: |-
+    {
+      "gitpodServiceUrl": "wss://gitpod.example.com",
+      "billingServiceAddress": "usage.default.svc.cluster.local:9001",
+      "stripeWebhookSigningSecretPath": "",
+      "server": {
+        "services": {
+          "grpc": {
+            "address": "0.0.0.0:9001"
+          },
+          "http": {
+            "address": "0.0.0.0:9002"
+          }
+        }
+      }
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: public-api-server
+  name: public-api-server
+  namespace: default
+---
 # v1/ConfigMap registry-config
 # Source: docker-registry/charts/docker-registry/templates/configmap.yaml
 apiVersion: v1
@@ -3709,7 +3894,7 @@ data:
       "vsxRegistryUrl": "https://open-vsx.gitpod.example.com",
       "chargebeeProviderOptionsFile": "/chargebee/providerOptions",
       "stripeSecretsFile": "/stripe-secret/apikeys",
-      "stripeConfigFile": "/stripe-config/config",
+      "stripeConfigFile": "",
       "enablePayment": false,
       "workspaceHeartbeat": {
         "intervalSeconds": 60,
@@ -3738,12 +3923,12 @@ data:
       "workspaceGarbageCollection": {
         "disabled": false,
         "startDate": 0,
-        "intervalSeconds": 1800,
+        "intervalSeconds": 300,
         "chunkLimit": 1000,
         "minAgeDays": 14,
         "minAgePrebuildDays": 7,
         "contentRetentionPeriodDays": 21,
-        "contentChunkLimit": 1000,
+        "contentChunkLimit": 100,
         "purgeRetentionPeriodDays": 365,
         "purgeChunkLimit": 5000
       },
@@ -3824,13 +4009,23 @@ data:
       "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:test",
       "ideOptions": {
         "options": {
+          "clion": {
+            "orderKey": "11",
+            "title": "CLion",
+            "type": "desktop",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/clionLogo.svg",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/clion:test",
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/clion:latest",
+            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
+          },
           "code": {
             "orderKey": "00",
             "title": "VS Code",
             "type": "browser",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "label": "Browser",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-6fb745a090b05048a96ab47bdab5e4a88f848b98",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-7faac86f8121d3099a81f5adb1ac9804ffc8c23a",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
           },
           "code-desktop": {
@@ -3881,6 +4076,16 @@ data:
             "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
             "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
           },
+          "rider": {
+            "orderKey": "10",
+            "title": "Rider",
+            "type": "desktop",
+            "logo": "https://ide.gitpod.example.com/image/ide-logo/riderLogo.svg",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/rider:test",
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/rider:latest",
+            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
+          },
           "rubymine": {
             "orderKey": "08",
             "title": "RubyMine",
@@ -3913,7 +4118,9 @@ data:
               "pycharm",
               "phpstorm",
               "rubymine",
-              "webstorm"
+              "webstorm",
+              "rider",
+              "clion"
             ],
             "installationSteps": [
               "If you don't see an open dialog in your browser, make sure you have the \u003ca target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'\u003eJetBrains Gateway with Gitpod Plugin\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."
@@ -4162,6 +4369,24 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: proxy
+  namespace: default
+---
+# rbac.authorization.k8s.io/v1/ClusterRoleBinding default-public-api-server-rb-kube-rbac-proxy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: public-api-server
+  name: default-public-api-server-rb-kube-rbac-proxy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-kube-rbac-proxy
+subjects:
+- kind: ServiceAccount
+  name: public-api-server
   namespace: default
 ---
 # rbac.authorization.k8s.io/v1/ClusterRoleBinding default-server-rb-kube-rbac-proxy
@@ -4560,6 +4785,24 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: proxy
+---
+# rbac.authorization.k8s.io/v1/RoleBinding public-api-server
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: public-api-server
+  name: public-api-server
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-ns-psp:restricted-root-user
+subjects:
+- kind: ServiceAccount
+  name: public-api-server
 ---
 # rbac.authorization.k8s.io/v1/RoleBinding rabbitmq
 apiVersion: rbac.authorization.k8s.io/v1
@@ -5026,6 +5269,34 @@ spec:
 status:
   loadBalancer: {}
 ---
+# v1/Service public-api-server
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: public-api-server
+    kind: service
+  name: public-api-server
+  namespace: default
+spec:
+  ports:
+  - name: grpc
+    port: 9001
+    protocol: TCP
+    targetPort: 9001
+  - name: http
+    port: 9002
+    protocol: TCP
+    targetPort: 9002
+  selector:
+    app: gitpod
+    component: public-api-server
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
 # v1/Service registry
 # Source: docker-registry/charts/docker-registry/templates/service.yaml
 apiVersion: v1
@@ -5465,7 +5736,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 7c868f444d805d107d758063ca5d27eb27acce6de2e5a5d917d0a5bb46cc13b6
+        gitpod.io/checksum_config: abc77df6fd99cdbb10a25a4e54f17ad9407f29b9bf966edab17a15024359c560
       creationTimestamp: null
       labels:
         app: gitpod
@@ -6516,6 +6787,195 @@ spec:
           secretName: builtin-registry-certs
 status: {}
 ---
+# apps/v1/Deployment public-api-server
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    gitpod.io/checksum_config: 2d64dca8ac18437c4ba1d80fd2112af408f1e5fb2ca0294f422f03bcbad647bb
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: public-api-server
+  name: public-api-server
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitpod
+      component: public-api-server
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+      name: public-api-server
+      namespace: default
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: gitpod.io/workload_meta
+                operator: Exists
+      containers:
+      - args:
+        - run
+        - --config=/config.json
+        - --json-log=true
+        env:
+        - name: GITPOD_DOMAIN
+          value: gitpod.example.com
+        - name: GITPOD_INSTALLATION_SHORTNAME
+          value: default
+        - name: GITPOD_REGION
+          value: local
+        - name: HOST_URL
+          value: https://gitpod.example.com
+        - name: KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBE_DOMAIN
+          value: svc.cluster.local
+        - name: LOG_LEVEL
+          value: info
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              key: host
+              name: mysql
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              key: port
+              name: mysql
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: mysql
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: mysql
+        - name: DB_ENCRYPTION_KEYS
+          valueFrom:
+            secretKeyRef:
+              key: encryptionKeys
+              name: mysql
+        image: eu.gcr.io/gitpod-core-dev/build/public-api-server:test
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /live
+            port: 9501
+            scheme: HTTP
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: public-api-server
+        ports:
+        - containerPort: 9001
+          name: grpc
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ready
+            port: 9501
+            scheme: HTTP
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 32Mi
+        securityContext:
+          privileged: false
+        volumeMounts:
+        - mountPath: /config.json
+          name: config
+          readOnly: true
+          subPath: config.json
+      - args:
+        - --logtostderr
+        - --insecure-listen-address=[$(IP)]:9500
+        - --upstream=http://127.0.0.1:9500/
+        env:
+        - name: IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        image: quay.io/brancz/kube-rbac-proxy:v0.12.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 9500
+          name: metrics
+        resources:
+          requests:
+            cpu: 1m
+            memory: 30Mi
+        securityContext:
+          runAsGroup: 65532
+          runAsNonRoot: true
+          runAsUser: 65532
+        terminationMessagePolicy: FallbackToLogsOnError
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: false
+      initContainers:
+      - args:
+        - -v
+        - database
+        env:
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              key: host
+              name: mysql
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              key: port
+              name: mysql
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: mysql
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: mysql
+        - name: DB_ENCRYPTION_KEYS
+          valueFrom:
+            secretKeyRef:
+              key: encryptionKeys
+              name: mysql
+        image: eu.gcr.io/gitpod-core-dev/build/service-waiter:test
+        name: database-waiter
+        resources: {}
+        securityContext:
+          privileged: false
+          runAsUser: 31001
+      restartPolicy: Always
+      serviceAccountName: public-api-server
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          name: public-api-server
+        name: config
+status: {}
+---
 # apps/v1/Deployment registry
 # Source: docker-registry/charts/docker-registry/templates/deployment.yaml
 apiVersion: apps/v1
@@ -6625,7 +7085,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 73b946defb35ba9413b518f34fc9c39bb287e474874f5e38cc83e7971a85916e
+        gitpod.io/checksum_config: 3d98dffb48bebba57afb1ffd2b059e4a1a95bb679d843bee0158e5d4b1814914
       creationTimestamp: null
       labels:
         app: gitpod

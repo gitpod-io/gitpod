@@ -653,6 +653,10 @@ data:
     repository: eu.gcr.io/gitpod-core-dev/build
     workspace:
       maxLifetime: 36h0m0s
+      prebuildPVC:
+        size: 30Gi
+        snapshotClass: ""
+        storageClass: ""
       pvc:
         size: 30Gi
         snapshotClass: ""
@@ -736,6 +740,9 @@ data:
           "serviceWaiter": {
             "version": "test"
           },
+          "toxic-config": {
+            "version": "test"
+          },
           "usage": {
             "version": "test"
           },
@@ -793,6 +800,18 @@ data:
                 "version": "test"
               },
               "webstormLatest": {
+                "version": "test"
+              },
+              "rider": {
+                "version": "test"
+              },
+              "riderLatest": {
+                "version": "test"
+              },
+              "clion": {
+                "version": "test"
+              },
+              "clionLatest": {
                 "version": "test"
               },
               "jbBackendPlugin": {
@@ -1861,6 +1880,11 @@ data:
           "connectionsPerMinute": 3000,
           "bucketSize": 1000
         },
+        "oomScores": {
+          "enabled": false,
+          "tier1": 0,
+          "tier2": 0
+        },
         "hosts": {
           "enabled": true,
           "nodeHostsFile": "/mnt/hosts",
@@ -1960,6 +1984,11 @@ data:
               }
             },
             "templates": {},
+            "prebuildPVC": {
+              "size": "30Gi",
+              "storageClass": "",
+              "snapshotClass": ""
+            },
             "pvc": {
               "size": "30Gi",
               "storageClass": "",
@@ -3134,7 +3163,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: c6d2a80d1de7a1f91bb2bea177c784c3bc7d4cd50a3e761795fad1188e41f831
+        gitpod.io/checksum_config: b938c6e286051c22b503c29f5de266741c2045a3ed69be85d7fd9f22a9346254
         seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
       creationTimestamp: null
       labels:
@@ -3648,7 +3677,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 4ac62854eccd472efc91ccb1041633960da4448fe1534555abb4ac94fe22861d
+        gitpod.io/checksum_config: cd4b2686fe34e3488f453e58aabb2197bd886fb64b6e6fc3ab840694d09b6391
       creationTimestamp: null
       labels:
         app: gitpod
