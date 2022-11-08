@@ -1,11 +1,7 @@
 import { execStream } from "../../../util/shell";
 import { Werft } from "../../../util/werft";
+import { Analytics } from "../job-config";
 import { CORE_DEV_KUBECONFIG_PATH, PREVIEW_K3S_KUBECONFIG_PATH } from "../const";
-
-export type Analytics = {
-    type: string;
-    token: string;
-};
 
 export type InstallerOptions = {
     werft: Werft;
@@ -31,7 +27,7 @@ export class Installer {
             DEV_KUBE_CONTEXT: "gke_gitpod-core-dev_europe-west1-b_core-dev",
             PREVIEW_K3S_KUBE_PATH: PREVIEW_K3S_KUBECONFIG_PATH,
             PREVIEW_NAME: this.options.previewName,
-            GITPOD_ANALYTICS_SEGMENT_TOKEN: this.options.analytics?.token || "",
+            GITPOD_ANALYTICS: this.options.analytics,
             GITPOD_WORKSPACE_FEATURE_FLAGS: this.options.workspaceFeatureFlags.join(" "),
             GITPOD_WITH_SLOW_DATABASE: this.options.withSlowDatabase,
             GITPOD_WITH_EE_LICENSE: this.options.withEELicense,
