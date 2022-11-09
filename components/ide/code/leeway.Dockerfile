@@ -22,7 +22,7 @@ ARG CODE_COMMIT
 ARG CODE_QUALITY
 ARG CODE_VERSION
 
-ARG NODE_VERSION=16.16.0
+ARG NODE_VERSION=16.18.1
 ARG NVM_DIR="/root/.nvm"
 RUN mkdir -p $NVM_DIR \
     && curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | sh \
