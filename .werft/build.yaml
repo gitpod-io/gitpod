@@ -241,6 +241,15 @@ pod:
           echo "done" \
         ) | werft log slice "chowning /workspace and $GOCACHE"
 
+        {{ if .Annotations.leewayfromgit }}
+        ( \
+          LEEWAY_SRC="github.com/gitpod-io/leeway@{{ .Annotations.leewayfromgit }}" && \
+          echo "Installing Leeway from $LEEWAY_SRC" && \
+          GOBIN=$(pwd) go install "$LEEWAY_SRC" && \
+          sudo mv leeway $(dirname $(which leeway))
+        ) | werft log slice "Building fresh Leeway binary from source"
+        {{ end }}
+
         ( \
           mkdir -p /workspace/.ssh && \
           cp /mnt/secrets/harvester-vm-ssh-keys/id_rsa /workspace/.ssh/id_rsa_harvester_vm && \
