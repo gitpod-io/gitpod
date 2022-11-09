@@ -10,6 +10,8 @@ import { useContext, useEffect, useState } from "react";
 import { Redirect, useLocation } from "react-router";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
+import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
+import { teamsService } from "../service/public-api";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import { getCurrentTeam, TeamsContext } from "./teams-context";
@@ -39,6 +41,7 @@ export default function TeamSettings() {
     const [isUserOwner, setIsUserOwner] = useState(true);
     const { teams } = useContext(TeamsContext);
     const { user } = useContext(UserContext);
+    const { usePublicApiTeamsService } = useContext(FeatureFlagContext);
     const [billingMode, setBillingMode] = useState<BillingMode | undefined>(undefined);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
@@ -65,7 +68,11 @@ export default function TeamSettings() {
         if (!team || !user) {
             return;
         }
-        await getGitpodService().server.deleteTeam(team.id);
+
+        usePublicApiTeamsService
+            ? await teamsService.deleteTeam({ teamId: team.id })
+            : await getGitpodService().server.deleteTeam(team.id);
+
         document.location.href = gitpodHostUrl.asDashboard().toString();
     };
 
