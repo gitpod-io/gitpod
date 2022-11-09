@@ -17,8 +17,6 @@ import {
     WorkspaceDB,
     DBWithTracing,
     TracedWorkspaceDB,
-    DBGitpodToken,
-    DBUser,
     UserStorageResourcesDB,
     TeamDB,
     InstallationAdminDB,
@@ -130,7 +128,6 @@ import {
     StopWorkspacePolicy,
     UpdateSSHKeyRequest,
 } from "@gitpod/ws-manager/lib/core_pb";
-import * as crypto from "crypto";
 import { inject, injectable } from "inversify";
 import { URL } from "url";
 import { v4 as uuidv4 } from "uuid";
@@ -2507,6 +2504,29 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const res = (await this.userDB.findAllGitpodTokensOfUser(user.id)).filter((v) => !v.deleted);
         await Promise.all(res.map((tkn) => this.guardAccess({ kind: "gitpodToken", subject: tkn }, "get")));
         return res;
+    }
+
+    public async generateNewGitpodToken(
+        ctx: TraceContext,
+        options: { name?: string; type: GitpodTokenType; scopes?: string[] },
+    ): Promise<string> {
+        // traceAPIParams(ctx, { options });
+
+        // const user = this.checkAndBlockUser("generateNewGitpodToken");
+        // const token = crypto.randomBytes(30).toString("hex");
+        // const tokenHash = crypto.createHash("sha256").update(token, "utf8").digest("hex");
+        // const dbToken: DBGitpodToken = {
+        //     tokenHash,
+        //     name: options.name,
+        //     type: options.type,
+        //     user: user as DBUser,
+        //     scopes: options.scopes || [],
+        //     created: new Date().toISOString(),
+        // };
+        // await this.guardAccess({ kind: "gitpodToken", subject: dbToken }, "create");
+
+        // await this.userDB.storeGitpodToken(dbToken);
+        return "token";
     }
 
     public async getGitpodTokenScopes(ctx: TraceContext, tokenHash: string): Promise<string[]> {

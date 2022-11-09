@@ -121,6 +121,7 @@ const defaultFunctions: FunctionsConfig = {
     getContentBlobUploadUrl: { group: "default", points: 1 },
     getContentBlobDownloadUrl: { group: "default", points: 1 },
     getGitpodTokens: { group: "default", points: 1 },
+    generateNewGitpodToken: { group: "default", points: 1 },
     deleteGitpodToken: { group: "default", points: 1 },
     isGitHubAppEnabled: { group: "default", points: 1 },
     registerGithubApp: { group: "default", points: 1 },
