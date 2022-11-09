@@ -50,12 +50,7 @@ export const poll = async <T>(
 };
 
 export function isGitpodIo() {
-    return (
-        window.location.hostname === "gitpod.io" ||
-        window.location.hostname === "gitpod-staging.com" ||
-        window.location.hostname.endsWith("gitpod-dev.com") ||
-        window.location.hostname.endsWith("gitpod-io-dev.com")
-    );
+    return false;
 }
 
 export function isLocalPreview() {

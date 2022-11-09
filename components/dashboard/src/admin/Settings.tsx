@@ -11,7 +11,6 @@ import CheckBox from "../components/CheckBox";
 import { getGitpodService } from "../service/service";
 import { useEffect, useState } from "react";
 import InfoBox from "../components/InfoBox";
-import { isGitpodIo } from "../utils";
 import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
 
 export default function Settings() {
@@ -19,9 +18,6 @@ export default function Settings() {
     const [telemetryData, setTelemetryData] = useState<TelemetryData>();
 
     useEffect(() => {
-        if (isGitpodIo()) {
-            return; // temporarily disable to avoid hight CPU on the DB
-        }
         (async () => {
             const data = await getGitpodService().server.adminGetTelemetryData();
             setTelemetryData(data);
