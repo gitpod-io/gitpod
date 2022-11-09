@@ -100,8 +100,6 @@ jobs:
         id: create-pr
         if: ${{ inputs.pluginId == 'backend-plugin' && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
         uses: peter-evans/create-pull-request@v4
-        env:
-          GITHUB_TOKEN: ${{ secrets.ROBOQUAT_REPO_PAT }}
         with:
           title: "Update Platform Version from ${{ inputs.pluginName }}"
           body: |
@@ -129,17 +127,13 @@ jobs:
           commit-message: "Update Platform Version of ${{ inputs.pluginName }} to ${{ steps.latest-version.outputs.result }}"
           branch: "jetbrains/${{ inputs.pluginId }}-platform"
           labels: "team: IDE"
-          committer: Robo Quat <roboquat@gitpod.io>
-          author: Robo Quat <roboquat@gitpod.io>
           # We can't use `team-reviewers` until we resolve https://github.com/gitpod-io/gitpod/issues/12194
           # team-reviewers: "engineering-ide"
       - name: Auto Approve Pull Request
         if: ${{ inputs.pluginId == 'backend-plugin' && steps.create-pr.outputs.pull-request-number }}
-        uses: hmarr/auto-approve-action@v3
-        env:
-          GITHUB_TOKEN: ${{ secrets.ROBOQUAT_REPO_PAT }}
+        uses: ./.github/workflows/jetbrains-update-plugin-platform-template.yml
         with:
-          pull-request-number: ${{ steps.create-pr.outputs.pull-request-number }}
+          pullRequestNumber: ${{ steps.create-pr.outputs.pull-request-number }}
       - name: Get previous job's status
         id: lastrun
         uses: filiptronicek/get-last-job-status@main
