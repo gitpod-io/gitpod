@@ -14,6 +14,7 @@ jobs:
             gradlePropertiesPath: components/ide/jetbrains/backend-plugin/gradle-latest.properties
         secrets:
             slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+            roboquatRepoPat: ${{ secrets.ROBOQUAT_REPO_PAT }}
     update-gateway-plugin-platform:
         uses: ./.github/workflows/jetbrains-update-plugin-platform-template.yml
         with:
@@ -23,3 +24,4 @@ jobs:
             gradlePropertiesPath: components/ide/jetbrains/gateway-plugin/gradle-latest.properties
         secrets:
             slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+            roboquatRepoPat: ${{ secrets.ROBOQUAT_REPO_PAT }}
