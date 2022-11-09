@@ -192,7 +192,7 @@
 - Update docker compose to v2.10.0 ([#12280](https://github.com/gitpod-io/gitpod/pull/12280)) - [@aledbf](https://github.com/aledbf)
 - [installer]: add golden files for aws, azure and gcp ([#12267](https://github.com/gitpod-io/gitpod/pull/12267)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - [installer]: remove all podsecuritypolicies ([#12173](https://github.com/gitpod-io/gitpod/pull/12173)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
--  ([#11346](https://github.com/gitpod-io/gitpod/pull/11346)) - 
+-  ([#11346](https://github.com/gitpod-io/gitpod/pull/11346)) -
 - Truncate project environment variable name ([#12234](https://github.com/gitpod-io/gitpod/pull/12234)) - [@gtsiolis](https://github.com/gtsiolis)
 - Update spending limit modal on workspace start ([#12096](https://github.com/gitpod-io/gitpod/pull/12096)) - [@gtsiolis](https://github.com/gtsiolis)
 - [kots] Allow users to upload a `.docker/config.json` file ([#12174](https://github.com/gitpod-io/gitpod/pull/12174)) - [@Pothulapati](https://github.com/Pothulapati)
