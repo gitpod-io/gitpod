@@ -438,6 +438,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		if update.Status == protocol.BuildStatus_done_failure || update.Status == protocol.BuildStatus_done_success {
 			// build is done
 			o.clearListener(buildID)
+			o.metrics.BuildDone(update.Status == protocol.BuildStatus_done_success)
 			break
 		}
 	}
