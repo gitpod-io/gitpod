@@ -16,6 +16,7 @@ import (
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
+	"github.com/google/uuid"
 	"github.com/relvacode/iso8601"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -73,8 +74,9 @@ func (s *TeamService) GetTeam(ctx context.Context, req *connect.Request[v1.GetTe
 		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
 	}
 
-	if req.Msg.GetTeamId() == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("team ID is a required argument for retrieving a team."))
+	teamID, err := validateTeamID(req.Msg.GetTeamId())
+	if err != nil {
+		return nil, err
 	}
 
 	conn, err := s.connectionPool.Get(ctx, token)
@@ -83,7 +85,7 @@ func (s *TeamService) GetTeam(ctx context.Context, req *connect.Request[v1.GetTe
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	team, err := conn.GetTeam(ctx, req.Msg.GetTeamId())
+	team, err := conn.GetTeam(ctx, teamID.String())
 	if err != nil {
 		return nil, proxy.ConvertError(err)
 	}
@@ -170,8 +172,9 @@ func (s *TeamService) ResetTeamInvitation(ctx context.Context, req *connect.Requ
 		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
 	}
 
-	if req.Msg.GetTeamId() == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Team ID is a required argument to reset team invitiation."))
+	teamID, err := validateTeamID(req.Msg.GetTeamId())
+	if err != nil {
+		return nil, err
 	}
 
 	conn, err := s.connectionPool.Get(ctx, token)
@@ -180,7 +183,7 @@ func (s *TeamService) ResetTeamInvitation(ctx context.Context, req *connect.Requ
 		return nil, connect.NewError(connect.CodeInternal, errors.New("failed to establish connection to downstream services"))
 	}
 
-	invite, err := conn.ResetGenericInvite(ctx, req.Msg.GetTeamId())
+	invite, err := conn.ResetGenericInvite(ctx, teamID.String())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to reset team invitation"))
 	}
@@ -330,4 +333,17 @@ func parseTimeStamp(s string) *timestamppb.Timestamp {
 	}
 
 	return timestamppb.New(parsed)
+}
+
+func validateTeamID(s string) (uuid.UUID, error) {
+	if s == "" {
+		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Team ID is a required argument."))
+	}
+
+	teamID, err := uuid.Parse(s)
+	if err != nil {
+		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Team ID must be a valid UUID."))
+	}
+
+	return teamID, nil
 }
