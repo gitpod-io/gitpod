@@ -578,6 +578,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 
 			// update volume to use persistent volume claim, and name of it is the same as pod's name
 			pvcName := pod.ObjectMeta.Name
+			pod.Spec.Volumes[0].Name = workspaceVolumeName
 			pod.Spec.Volumes[0].VolumeSource = corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 					ClaimName: pvcName,
@@ -591,21 +592,21 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			pod.Spec.Containers[0].VolumeDevices = append(pod.Spec.Containers[0].VolumeDevices, volumeDevice)
 
 			// get rid of first volume mount as PVC is mounted as block device and will be mounted by workspacekit
-			pod.Spec.Containers[0].VolumeMounts = pod.Spec.Containers[0].VolumeMounts[1:]
+			// pod.Spec.Containers[0].VolumeMounts = pod.Spec.Containers[0].VolumeMounts[1:]
 
-			pod.Spec.Containers[0].VolumeMounts = append(pod.Spec.Containers[0].VolumeMounts, corev1.VolumeMount{
-				Name:      "test",
-				MountPath: "/pvc",
-			})
+			// pod.Spec.Containers[0].VolumeMounts = append(pod.Spec.Containers[0].VolumeMounts, corev1.VolumeMount{
+			// 	Name:      "test",
+			// 	MountPath: "/pvc",
+			// })
 
-			pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
-				Name: "test",
-				VolumeSource: corev1.VolumeSource{
-					EmptyDir: &corev1.EmptyDirVolumeSource{
-						Medium: corev1.StorageMediumDefault,
-					},
-				},
-			})
+			// pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
+			// 	Name: "test",
+			// 	VolumeSource: corev1.VolumeSource{
+			// 		EmptyDir: &corev1.EmptyDirVolumeSource{
+			// 			Medium: corev1.StorageMediumDefault,
+			// 		},
+			// 	},
+			// })
 
 			rootUID := int64(0)
 			// add init container to mount PVC block device
@@ -615,12 +616,12 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 				ImagePullPolicy: corev1.PullIfNotPresent,
 				Command:         []string{"/.supervisor/workspacekit", "fsprep"},
 				VolumeDevices:   []corev1.VolumeDevice{volumeDevice},
-				VolumeMounts: []corev1.VolumeMount{
-					{
-						Name:      "test",
-						MountPath: "/pvc",
-					},
-				},
+				// VolumeMounts: []corev1.VolumeMount{
+				// 	{
+				// 		Name:      "test",
+				// 		MountPath: "/pvc",
+				// 	},
+				// },
 				SecurityContext: &corev1.SecurityContext{
 					Capabilities: &corev1.Capabilities{
 						Add: []corev1.Capability{"SYS_ADMIN"},
