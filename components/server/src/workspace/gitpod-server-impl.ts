@@ -119,7 +119,7 @@ import {
     RemoteTrackMessage,
 } from "@gitpod/gitpod-protocol/lib/analytics";
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
-import { ImageBuilderClientProvider, LogsRequest } from "@gitpod/image-builder/lib";
+import { ImageBuilderClientProvider } from "@gitpod/image-builder/lib";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import {
     ControlPortRequest,
@@ -1692,43 +1692,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             );
         } finally {
             aborted.resolve(false);
-        }
-    }
-
-    protected async deprecatedDoWatchWorkspaceImageBuildLogs(
-        ctx: TraceContext,
-        logCtx: LogContext,
-        user: User,
-        workspace: Workspace,
-    ) {
-        if (!workspace.imageNameResolved) {
-            log.debug(logCtx, `No imageNameResolved set for workspaceId, cannot watch logs.`);
-            return;
-        }
-
-        try {
-            const imgbuilder = await this.getImageBuilderClient(user, workspace, undefined);
-            const req = new LogsRequest();
-            req.setCensored(true);
-            req.setBuildRef(workspace.imageNameResolved);
-
-            let lineCount = 0;
-            await imgbuilder.logs(ctx, req, (data) => {
-                if (!this.client) {
-                    return "stop";
-                }
-                data = data.replace("\n", WorkspaceImageBuild.LogLine.DELIMITER);
-                lineCount += data.split(WorkspaceImageBuild.LogLine.DELIMITER_REGEX).length;
-
-                this.client.onWorkspaceImageBuildLogs(undefined as any, {
-                    text: data,
-                    isDiff: true,
-                    upToLine: lineCount,
-                });
-                return "continue";
-            });
-        } catch (err) {
-            log.error(logCtx, `cannot watch logs for workspaceId`, err);
         }
     }
 
