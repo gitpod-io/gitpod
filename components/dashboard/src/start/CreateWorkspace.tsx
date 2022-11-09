@@ -64,6 +64,9 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
                 contextUrl: this.props.contextUrl,
                 ...options,
             });
+            // TODO: maybe we can fire an analytics event with duration of createWorkspace
+            // or look at https://grafana.gitpod.io/explore?orgId=1&left=%7B%22datasource%22:%22P4169E866C3094E38%22,%22queries%22:%5B%7B%22refId%22:%22B%22,%22datasource%22:%7B%22type%22:%22prometheus%22,%22uid%22:%22P4169E866C3094E38%22%7D,%22editorMode%22:%22code%22,%22expr%22:%22histogram_quantile%280.9,%20sum%28rate%28gitpod_server_api_calls_duration_seconds_bucket%7Bmethod%3D%5C%22createWorkspace%5C%22,%20cluster%3D%5C%22prod-meta-eu02%5C%22%7D%5B5m%5D%29%29%20by%20%28le%29%29%22,%22legendFormat%22:%22__auto%22,%22range%22:true,%22instant%22:true%7D%5D,%22range%22:%7B%22from%22:%22now-7d%22,%22to%22:%22now%22%7D%7D
+            // to see impact for all users
             if (result.workspaceURL) {
                 window.location.href = result.workspaceURL;
                 return;

@@ -338,7 +338,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		return nil, xerrors.Errorf("cannot create secret for workspace pod: %w", err)
 	}
 
-	time.Sleep(15 * time.Second)
+	// time.Sleep(15 * time.Second)
 
 	err = m.Clientset.Create(ctx, pod)
 

@@ -152,7 +152,7 @@ import { ContextParser } from "./context-parser-service";
 import { GitTokenScopeGuesser } from "./git-token-scope-guesser";
 import { WorkspaceDeletionService } from "./workspace-deletion-service";
 import { WorkspaceFactory } from "./workspace-factory";
-import { WorkspaceStarter } from "./workspace-starter";
+import { StartWorkspaceOptions, WorkspaceStarter } from "./workspace-starter";
 import { HeadlessLogUrls } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { HeadlessLogService, HeadlessLogEndpoint } from "./headless-log-service";
 import { InvalidGitpodYMLError } from "./config-provider";
@@ -307,12 +307,21 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         );
     }
 
+    private readonly updateListeners = new Map<string, Set<(instance: WorkspaceInstance) => void>>();
+
     protected forwardInstanceUpdateToClient(ctx: TraceContext, instance: WorkspaceInstance) {
         TraceContext.withSpan(
             "forwardInstanceUpdateToClient",
             (ctx) => {
                 traceClientMetadata(ctx, this.clientMetadata);
                 TraceContext.setJsonRPCMetadata(ctx, "onInstanceUpdate");
+
+                const listeners = this.updateListeners.get(instance.workspaceId);
+                if (listeners) {
+                    for (const listener of listeners) {
+                        listener(instance);
+                    }
+                }
 
                 this.client?.onInstanceUpdate(this.censorInstance(instance));
             },
@@ -723,7 +732,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await mayStartPromise;
 
         // at this point we're about to actually start a new workspace
-        const result = await this.workspaceStarter.startWorkspace(
+        const result = await this.doStartWorkspace(
             ctx,
             workspace,
             user,
@@ -1195,7 +1204,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
             logContext.workspaceId = workspace.id;
             traceWI(ctx, { workspaceId: workspace.id });
-            const startWorkspaceResult = await this.workspaceStarter.startWorkspace(
+            const startWorkspaceResult = await this.doStartWorkspace(
                 ctx,
                 workspace,
                 user,
@@ -1229,6 +1238,46 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 ErrorCodes.CONTEXT_PARSE_ERROR,
                 error && error.message ? error.message : `Cannot create workspace for URL: ${normalizedContextUrl}`,
             );
+        }
+    }
+
+    private async doStartWorkspace(
+        ctx: TraceContext,
+        workspace: Workspace,
+        user: User,
+        userEnvVars: UserEnvVar[],
+        projectEnvVars: ProjectEnvVar[],
+        options?: StartWorkspaceOptions,
+    ): Promise<StartWorkspaceResult> {
+        const listenForCreate = new Deferred<StartWorkspaceResult>();
+        const listeners = this.updateListeners.get(workspace.id) || new Set();
+        const listener = (instance: WorkspaceInstance) => {
+            if (instance.workspaceId === workspace.id && instance.ideUrl) {
+                listenForCreate.resolve({
+                    instanceID: instance.id,
+                    workspaceURL: instance.ideUrl,
+                });
+            }
+        };
+        listeners.add(listener);
+        this.updateListeners.set(workspace.id, listeners);
+
+        const pendingStart = this.workspaceStarter.startWorkspace(
+            ctx,
+            workspace,
+            user,
+            userEnvVars,
+            projectEnvVars,
+            options,
+        );
+
+        try {
+            return await Promise.race([listenForCreate.promise, pendingStart]);
+        } finally {
+            const listeners = this.updateListeners.get(workspace.id);
+            if (listeners) {
+                listeners.delete(listener);
+            }
         }
     }
 
