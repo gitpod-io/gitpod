@@ -2509,29 +2509,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return res;
     }
 
-    public async generateNewGitpodToken(
-        ctx: TraceContext,
-        options: { name?: string; type: GitpodTokenType; scopes?: string[] },
-    ): Promise<string> {
-        traceAPIParams(ctx, { options });
-
-        const user = this.checkAndBlockUser("generateNewGitpodToken");
-        const token = crypto.randomBytes(30).toString("hex");
-        const tokenHash = crypto.createHash("sha256").update(token, "utf8").digest("hex");
-        const dbToken: DBGitpodToken = {
-            tokenHash,
-            name: options.name,
-            type: options.type,
-            user: user as DBUser,
-            scopes: options.scopes || [],
-            created: new Date().toISOString(),
-        };
-        await this.guardAccess({ kind: "gitpodToken", subject: dbToken }, "create");
-
-        await this.userDB.storeGitpodToken(dbToken);
-        return token;
-    }
-
     public async getGitpodTokenScopes(ctx: TraceContext, tokenHash: string): Promise<string[]> {
         traceAPIParams(ctx, {}); // do not trace tokenHash
 
