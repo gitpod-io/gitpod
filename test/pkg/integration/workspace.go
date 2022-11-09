@@ -184,7 +184,7 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 				// from ws-manager in these tests we need to set it here ourselves.
 				{
 					Name:  "VSX_REGISTRY_URL",
-					Value: "http://open-vsx.gitpod.io/",
+					Value: "https://open-vsx.gitpod.io/",
 				},
 			},
 		},
