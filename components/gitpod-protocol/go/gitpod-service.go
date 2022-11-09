@@ -87,6 +87,7 @@ type APIInterface interface {
 	GetTeam(ctx context.Context, teamID string) (*Team, error)
 	GetTeams(ctx context.Context) ([]*Team, error)
 	CreateTeam(ctx context.Context, teamName string) (*Team, error)
+	DeleteTeam(ctx context.Context, teamID string) error
 	GetTeamMembers(ctx context.Context, teamID string) ([]*TeamMemberInfo, error)
 	JoinTeam(ctx context.Context, teamID string) (*Team, error)
 	GetGenericInvite(ctx context.Context, teamID string) (*TeamMembershipInvite, error)
@@ -232,6 +233,8 @@ const (
 	FunctionSetTeamMemberRole FunctionName = "setTeamMemberRole"
 	// FunctionRemoveTeamMember is the name of the removeTeamMember function
 	FunctionRemoveTeamMember FunctionName = "removeTeamMember"
+	// FunctionDeleteTeam is the name of the deleteTeam function
+	FunctionDeleteTeam FunctionName = "deleteTeam"
 
 	// FunctionOnInstanceUpdate is the name of the onInstanceUpdate callback function
 	FunctionOnInstanceUpdate = "onInstanceUpdate"
@@ -1504,6 +1507,16 @@ func (gp *APIoverJSONRPC) RemoveTeamMember(ctx context.Context, teamID, userID s
 	}
 	_params := []interface{}{teamID, userID}
 	err = gp.C.Call(ctx, string(FunctionRemoveTeamMember), _params, nil)
+	return
+}
+
+func (gp *APIoverJSONRPC) DeleteTeam(ctx context.Context, teamID string) (err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{teamID}
+	err = gp.C.Call(ctx, string(FunctionDeleteTeam), _params, nil)
 	return
 }
 
