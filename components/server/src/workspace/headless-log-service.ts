@@ -32,7 +32,7 @@ import {
     LogDownloadURLResponse,
 } from "@gitpod/content-service/lib/headless-log_pb";
 import { HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from "./headless-log-controller";
-import { CachingHeadlessLogServiceClientProvider } from "@gitpod/content-service/lib/sugar";
+import { CachingHeadlessLogServiceClientProvider } from "../util/content-service-sugar";
 
 export type HeadlessLogEndpoint = {
     url: string;

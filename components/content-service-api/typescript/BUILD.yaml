@@ -1,8 +1,6 @@
 packages:
   - name: lib
     type: yarn
-    deps:
-      - components/gitpod-protocol:lib
     srcs:
       - "src/*.ts"
       - "src/*.js"

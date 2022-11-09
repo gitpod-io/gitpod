@@ -7,11 +7,11 @@
 import { inject, injectable, interfaces, optional } from "inversify";
 import * as grpc from "@grpc/grpc-js";
 import { createClientCallMetricsInterceptor, IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
-import { IDEPluginServiceClient } from "./ideplugin_grpc_pb";
-import { ContentServiceClient } from "./content_grpc_pb";
-import { BlobServiceClient } from "./blobs_grpc_pb";
-import { WorkspaceServiceClient } from "./workspace_grpc_pb";
-import { HeadlessLogServiceClient } from "./headless-log_grpc_pb";
+import { IDEPluginServiceClient } from "@gitpod/content-service/lib/ideplugin_grpc_pb";
+import { ContentServiceClient } from "@gitpod/content-service/lib/content_grpc_pb";
+import { BlobServiceClient } from "@gitpod/content-service/lib/blobs_grpc_pb";
+import { WorkspaceServiceClient } from "@gitpod/content-service/lib/workspace_grpc_pb";
+import { HeadlessLogServiceClient } from "@gitpod/content-service/lib/headless-log_grpc_pb";
 
 export const ContentServiceClientConfig = Symbol("ContentServiceClientConfig");
 export const ContentServiceClientCallMetrics = Symbol("ContentServiceClientCallMetrics");

@@ -158,7 +158,6 @@ import { HeadlessLogService, HeadlessLogEndpoint } from "./headless-log-service"
 import { InvalidGitpodYMLError } from "./config-provider";
 import { ProjectsService } from "../projects/projects-service";
 import { LocalMessageBroker } from "../messaging/local-message-broker";
-import { CachingBlobServiceClientProvider } from "@gitpod/content-service/lib/sugar";
 import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { PartialProject } from "@gitpod/gitpod-protocol/src/teams-projects-protocol";
 import { ClientMetadata, traceClientMetadata } from "../websocket/websocket-connection-manager";
@@ -181,6 +180,7 @@ import { IDEService } from "../ide-service";
 import { MessageBusIntegration } from "./messagebus-integration";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import * as grpc from "@grpc/grpc-js";
+import { CachingBlobServiceClientProvider } from "../util/content-service-sugar";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
