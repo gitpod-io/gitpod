@@ -134,7 +134,7 @@ jobs:
         uses: hmarr/auto-approve-action@v3
         with:
           pull-request-number: ${{ steps.create-pr.outputs.pull-request-number }}
-          token: ${{ secrets.GITOPS_BOT_PR_APPROVAL_TOKEN }}
+          github-token: ${{ secrets.ROBOQUAT_AUTOMATIC_CHANGELOG }}
       - name: Get previous job's status
         id: lastrun
         uses: filiptronicek/get-last-job-status@main
