@@ -70,6 +70,9 @@ service TeamsService {
     // ListTeams lists the caller has access to.
     rpc ListTeams(ListTeamsRequest) returns (ListTeamsResponse) {};
 
+    // DeleteTeam deletes the specified team.
+    rpc DeleteTeam(DeleteTeamRequest) returns (DeleteTeamResponse) {};
+
     // JoinTeam makes the caller a TeamMember of the Team.
     rpc JoinTeam(JoinTeamRequest) returns (JoinTeamResponse) {};
 
@@ -107,6 +110,14 @@ message ListTeamsRequest {
 
 message ListTeamsResponse {
     repeated Team teams = 1;
+}
+
+message DeleteTeamRequest {
+    // team_id is the ID of the team to delete
+    string team_id = 1;
+}
+
+message DeleteTeamResponse {
 }
 
 message JoinTeamRequest {

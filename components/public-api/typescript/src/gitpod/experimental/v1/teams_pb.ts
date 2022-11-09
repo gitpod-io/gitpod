@@ -457,6 +457,76 @@ export class ListTeamsResponse extends Message<ListTeamsResponse> {
 }
 
 /**
+ * @generated from message gitpod.experimental.v1.DeleteTeamRequest
+ */
+export class DeleteTeamRequest extends Message<DeleteTeamRequest> {
+  /**
+   * team_id is the ID of the team to delete
+   *
+   * @generated from field: string team_id = 1;
+   */
+  teamId = "";
+
+  constructor(data?: PartialMessage<DeleteTeamRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.DeleteTeamRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "team_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteTeamRequest {
+    return new DeleteTeamRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeleteTeamRequest {
+    return new DeleteTeamRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeleteTeamRequest {
+    return new DeleteTeamRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: DeleteTeamRequest | PlainMessage<DeleteTeamRequest> | undefined, b: DeleteTeamRequest | PlainMessage<DeleteTeamRequest> | undefined): boolean {
+    return proto3.util.equals(DeleteTeamRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.DeleteTeamResponse
+ */
+export class DeleteTeamResponse extends Message<DeleteTeamResponse> {
+  constructor(data?: PartialMessage<DeleteTeamResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.DeleteTeamResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteTeamResponse {
+    return new DeleteTeamResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeleteTeamResponse {
+    return new DeleteTeamResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeleteTeamResponse {
+    return new DeleteTeamResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: DeleteTeamResponse | PlainMessage<DeleteTeamResponse> | undefined, b: DeleteTeamResponse | PlainMessage<DeleteTeamResponse> | undefined): boolean {
+    return proto3.util.equals(DeleteTeamResponse, a, b);
+  }
+}
+
+/**
  * @generated from message gitpod.experimental.v1.JoinTeamRequest
  */
 export class JoinTeamRequest extends Message<JoinTeamRequest> {

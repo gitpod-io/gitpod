@@ -209,6 +209,20 @@ func (mr *MockAPIInterfaceMockRecorder) DeleteSSHPublicKey(ctx, id interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSSHPublicKey", reflect.TypeOf((*MockAPIInterface)(nil).DeleteSSHPublicKey), ctx, id)
 }
 
+// DeleteTeam mocks base method.
+func (m *MockAPIInterface) DeleteTeam(ctx context.Context, teamID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteTeam", ctx, teamID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteTeam indicates an expected call of DeleteTeam.
+func (mr *MockAPIInterfaceMockRecorder) DeleteTeam(ctx, teamID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTeam", reflect.TypeOf((*MockAPIInterface)(nil).DeleteTeam), ctx, teamID)
+}
+
 // DeleteWorkspace mocks base method.
 func (m *MockAPIInterface) DeleteWorkspace(ctx context.Context, id string) error {
 	m.ctrl.T.Helper()
