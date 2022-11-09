@@ -598,6 +598,9 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			// We set this magical ID to make sure that gitpod user inside the workspace can write into /workspace folder mounted by PVC
 			gitpodGUID := int64(133332)
 			pod.Spec.SecurityContext.FSGroup = &gitpodGUID
+			// only do chown if there is a mismatch
+			fsGroupChangePolicy := corev1.FSGroupChangeOnRootMismatch
+			pod.Spec.SecurityContext.FSGroupChangePolicy = &fsGroupChangePolicy
 
 			// add init container to chown workspace subpath, so that it is owned by gitpod user (there is no k8s native way of doing this as of right now)
 			pod.Spec.InitContainers = append(pod.Spec.InitContainers, corev1.Container{
