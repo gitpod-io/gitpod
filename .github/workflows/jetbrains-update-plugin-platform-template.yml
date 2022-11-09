@@ -127,6 +127,9 @@ jobs:
           commit-message: "Update Platform Version of ${{ inputs.pluginName }} to ${{ steps.latest-version.outputs.result }}"
           branch: "jetbrains/${{ inputs.pluginId }}-platform"
           labels: "team: IDE"
+          token: ${{ secrets.ROBOQUAT_REPO_PAT }}
+          committer: Robo Quat <roboquat@gitpod.io>
+          author: Robo Quat <roboquat@gitpod.io>
           # We can't use `team-reviewers` until we resolve https://github.com/gitpod-io/gitpod/issues/12194
           # team-reviewers: "engineering-ide"
       - name: Auto Approve Pull Request
@@ -134,7 +137,6 @@ jobs:
         uses: hmarr/auto-approve-action@v3
         with:
           pull-request-number: ${{ steps.create-pr.outputs.pull-request-number }}
-          github-token: ${{ secrets.ROBOQUAT_REPO_PAT }}
       - name: Get previous job's status
         id: lastrun
         uses: filiptronicek/get-last-job-status@main
