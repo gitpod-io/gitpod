@@ -1,6 +1,8 @@
 # Change Log
 
 ## November 2022
+- Remove download workspace button from admin ([#14393](https://github.com/gitpod-io/gitpod/pull/14393)) - [@gtsiolis](https://github.com/gtsiolis)
+- Introduced a new project setting that allows starting workspaces based on the last successful prebuild in the git commit history. ([#14461](https://github.com/gitpod-io/gitpod/pull/14461)) - [@svenefftinge](https://github.com/svenefftinge)
 - display the team names which block upgrade to the UBP free tier ([#12805](https://github.com/gitpod-io/gitpod/pull/12805)) - [@geropl](https://github.com/geropl)
 - Gitlab webhooks: play nice, don't respond with code 401. ([#14421](https://github.com/gitpod-io/gitpod/pull/14421)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Improve pagination usability ([#13590](https://github.com/gitpod-io/gitpod/pull/13590)) - [@Hardik500](https://github.com/Hardik500)
