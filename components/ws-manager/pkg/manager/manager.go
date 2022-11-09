@@ -181,6 +181,12 @@ type (
 func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceRequest) (res *api.StartWorkspaceResponse, err error) {
 	startWorkspaceTime := time.Now()
 
+	if req.Spec.VolumeSnapshot != nil {
+		log.Infof("Start workspace: volume snapshot info: %v", *req.Spec.VolumeSnapshot)
+	} else {
+		log.Infof("Start workspace: no volume snapshot info")
+	}
+
 	// We cannot use the passed context because we need to decouple the timeouts
 	// Create a context with a high timeout value to be able to wait for scale-up events in the cluster (slow operation)
 	// Important!!!: this timeout must be lower than https://github.com/gitpod-io/gitpod/blob/main/components/ws-manager-api/typescript/src/promisified-client.ts#L122
