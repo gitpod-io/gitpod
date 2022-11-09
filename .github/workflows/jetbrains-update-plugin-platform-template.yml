@@ -131,7 +131,7 @@ jobs:
           # team-reviewers: "engineering-ide"
       - name: Auto Approve Pull Request
         if: ${{ inputs.pluginId == 'backend-plugin' && steps.create-pr.outputs.pull-request-number }}
-        uses: ./.github/workflows/jetbrains-update-plugin-platform-template.yml
+        uses: ./.github/workflows/auto-approve.yml
         with:
           pullRequestNumber: ${{ steps.create-pr.outputs.pull-request-number }}
       - name: Get previous job's status
