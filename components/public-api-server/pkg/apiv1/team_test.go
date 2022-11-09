@@ -414,6 +414,30 @@ func TestTeamService_ResetTeamInvitation(t *testing.T) {
 	})
 }
 
+func TestTeamService_DeleteTeam(t *testing.T) {
+	t.Run("missing team ID returns invalid argument", func(t *testing.T) {
+		_, client := setupTeamService(t)
+
+		_, err := client.DeleteTeam(context.Background(), connect.NewRequest(&v1.DeleteTeamRequest{}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("proxies request to server", func(t *testing.T) {
+		teamID := uuid.New().String()
+
+		serverMock, client := setupTeamService(t)
+
+		serverMock.EXPECT().DeleteTeam(gomock.Any(), teamID).Return(nil)
+
+		response, err := client.DeleteTeam(context.Background(), connect.NewRequest(&v1.DeleteTeamRequest{
+			TeamId: teamID,
+		}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.DeleteTeamResponse{}, response.Msg)
+	})
+}
+
 func newTeam(t *protocol.Team) *protocol.Team {
 	result := &protocol.Team{
 		ID:           uuid.New().String(),

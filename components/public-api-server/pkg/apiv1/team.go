@@ -116,6 +116,25 @@ func (s *TeamService) ListTeams(ctx context.Context, req *connect.Request[v1.Lis
 	}), nil
 }
 
+func (s *TeamService) DeleteTeam(ctx context.Context, req *connect.Request[v1.DeleteTeamRequest]) (*connect.Response[v1.DeleteTeamResponse], error) {
+	teamID, err := validateTeamID(req.Msg.GetTeamId())
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := s.getConnection(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = conn.DeleteTeam(ctx, teamID.String())
+	if err != nil {
+		return nil, proxy.ConvertError(err)
+	}
+
+	return connect.NewResponse(&v1.DeleteTeamResponse{}), nil
+}
+
 func (s *TeamService) JoinTeam(ctx context.Context, req *connect.Request[v1.JoinTeamRequest]) (*connect.Response[v1.JoinTeamResponse], error) {
 	if req.Msg.GetInvitationId() == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invitation id is a required argument to join a team"))
