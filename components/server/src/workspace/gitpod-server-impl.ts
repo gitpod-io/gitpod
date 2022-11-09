@@ -2263,10 +2263,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return this.projectsService.deleteProject(projectId);
     }
 
-    public async deleteTeam(ctx: TraceContext, teamId: string, userId: string): Promise<void> {
-        traceAPIParams(ctx, { teamId, userId });
-
+    public async deleteTeam(ctx: TraceContext, teamId: string): Promise<void> {
         const user = this.checkAndBlockUser("deleteTeam");
+        traceAPIParams(ctx, { teamId, userId: user.id });
 
         await this.guardTeamOperation(teamId, "delete");
 

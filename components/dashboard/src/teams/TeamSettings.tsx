@@ -65,7 +65,7 @@ export default function TeamSettings() {
         if (!team || !user) {
             return;
         }
-        await getGitpodService().server.deleteTeam(team.id, user.id);
+        await getGitpodService().server.deleteTeam(team.id);
         document.location.href = gitpodHostUrl.asDashboard().toString();
     };
 
