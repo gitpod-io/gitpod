@@ -15,7 +15,7 @@ spec:
     rules:
     - record: gitpod_workspace_regular_not_active_percentage
       expr: |
-        gitpod_ws_manager_workspace_activity_total{active="false"}) / gitpod_ws_manager_workspace_activity_total
+        gitpod_ws_manager_workspace_activity_total{active="false"} / gitpod_ws_manager_workspace_activity_total
 
   - name: workspace-alerts
     rules:
@@ -43,4 +43,4 @@ spec:
       expr: |
         avg_over_time(gitpod_workspace_regular_not_active_percentage[1m]) > 0
         AND
-        rate(gitpod_ws_manager_workspace_startup_seconds_sum{type="REGULAR"[1m]) == 0
+        rate(gitpod_ws_manager_workspace_startup_seconds_sum{type="REGULAR"}[1m]) == 0
