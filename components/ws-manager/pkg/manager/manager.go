@@ -247,6 +247,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	span.LogKV("event", "validated workspace start request")
 	// create the objects required to start the workspace pod/service
 	startContext, err := m.newStartWorkspaceContext(ctx, req)
+	// push an event to update ideUrl
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create context: %w", err)
 	}
@@ -337,7 +338,12 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		return nil, xerrors.Errorf("cannot create secret for workspace pod: %w", err)
 	}
 
+	time.Sleep(15 * time.Second)
+
 	err = m.Clientset.Create(ctx, pod)
+
+	time.Sleep(15 * time.Second)
+
 	if err != nil {
 		m, _ := json.Marshal(pod)
 		safePod, _ := log.RedactJSON(m)
