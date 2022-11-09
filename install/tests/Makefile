@@ -200,7 +200,7 @@ aws-kubeconfig:
 	aws eks update-kubeconfig --name gp-${TF_VAR_TEST_ID} --region eu-west-1 --kubeconfig ${KUBECONFIG} || echo "No cluster present"
 	@echo -e "\033[0;33mAWS service account credentials fetched, run 'source $$(pwd)/$${TF_VAR_TEST_ID}-creds' to load them into your environment\033[0;m"
 
-# GitHub SCM integration can configured prior to install. To enable the integration,
+# GitHub SCM integration can be configured prior to install. To enable the integration,
 # set the `GITHUB_SCM_OAUTH` variable to a path containing the following contents:
 #
 # ```yaml
