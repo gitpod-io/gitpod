@@ -125,7 +125,7 @@ export class BillingModesImpl implements BillingModes {
             await this.teamSubscriptionDb.findTeamSubscriptions({ userId: user.id })
         ).filter((ts) => TeamSubscription.isActive(ts, now.toISOString()));
 
-        let canUpgradeToUBB = false;
+        let canUpgradeToUBB: boolean | undefined = undefined;
         if (cbPersonalSubscriptions.length > 0) {
             if (cbPersonalSubscriptions.every((s) => Subscription.isCancelled(s, now.toISOString()))) {
                 // The user has one or more paid subscriptions, but all of them have already been cancelled
@@ -168,7 +168,7 @@ export class BillingModesImpl implements BillingModes {
             // UBB is greedy: once a user has at least a paid team membership, they should benefit from it!
             return usageBased();
         }
-        if (hasCbPaidTeamMembership || hasCbPaidTeamSeat || canUpgradeToUBB) {
+        if (hasCbPaidTeamMembership || hasCbPaidTeamSeat) {
             // Q: How to test the free-tier, then? A: Make sure you have no CB paid seats anymore
             // For that we lists all Team Subscriptions/Team Memberships that are "blocking" you, and display them in the UI somewhere.
             const result: BillingMode = { mode: "chargebee", canUpgradeToUBB }; // UBB is enabled, but no seat nor subscription yet.
