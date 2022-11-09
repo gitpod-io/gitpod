@@ -36,19 +36,13 @@ type TeamService struct {
 }
 
 func (s *TeamService) CreateTeam(ctx context.Context, req *connect.Request[v1.CreateTeamRequest]) (*connect.Response[v1.CreateTeamResponse], error) {
-	token, err := auth.TokenFromContext(ctx)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
-	}
-
 	if req.Msg.GetName() == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Name is a required argument when creating a team."))
 	}
 
-	conn, err := s.connectionPool.Get(ctx, token)
+	conn, err := s.getConnection(ctx)
 	if err != nil {
-		log.Log.WithError(err).Error("Failed to get connection to server.")
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, err
 	}
 
 	created, err := conn.CreateTeam(ctx, req.Msg.GetName())
@@ -69,20 +63,14 @@ func (s *TeamService) CreateTeam(ctx context.Context, req *connect.Request[v1.Cr
 }
 
 func (s *TeamService) GetTeam(ctx context.Context, req *connect.Request[v1.GetTeamRequest]) (*connect.Response[v1.GetTeamResponse], error) {
-	token, err := auth.TokenFromContext(ctx)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
-	}
-
 	teamID, err := validateTeamID(req.Msg.GetTeamId())
 	if err != nil {
 		return nil, err
 	}
 
-	conn, err := s.connectionPool.Get(ctx, token)
+	conn, err := s.getConnection(ctx)
 	if err != nil {
-		log.Log.WithError(err).Error("Failed to get connection to server.")
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, err
 	}
 
 	team, err := conn.GetTeam(ctx, teamID.String())
@@ -101,15 +89,9 @@ func (s *TeamService) GetTeam(ctx context.Context, req *connect.Request[v1.GetTe
 }
 
 func (s *TeamService) ListTeams(ctx context.Context, req *connect.Request[v1.ListTeamsRequest]) (*connect.Response[v1.ListTeamsResponse], error) {
-	token, err := auth.TokenFromContext(ctx)
+	conn, err := s.getConnection(ctx)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
-	}
-
-	conn, err := s.connectionPool.Get(ctx, token)
-	if err != nil {
-		log.Log.WithError(err).Error("Failed to get connection to server.")
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, err
 	}
 
 	teams, err := conn.GetTeams(ctx)
@@ -135,19 +117,13 @@ func (s *TeamService) ListTeams(ctx context.Context, req *connect.Request[v1.Lis
 }
 
 func (s *TeamService) JoinTeam(ctx context.Context, req *connect.Request[v1.JoinTeamRequest]) (*connect.Response[v1.JoinTeamResponse], error) {
-	token, err := auth.TokenFromContext(ctx)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
-	}
-
 	if req.Msg.GetInvitationId() == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invitation id is a required argument to join a team"))
 	}
 
-	conn, err := s.connectionPool.Get(ctx, token)
+	conn, err := s.getConnection(ctx)
 	if err != nil {
-		log.Log.WithError(err).Error("Failed to get connection to server.")
-		return nil, connect.NewError(connect.CodeInternal, errors.New("failed to establish connection to downstream services"))
+		return nil, err
 	}
 
 	team, err := conn.JoinTeam(ctx, req.Msg.GetInvitationId())
@@ -167,20 +143,14 @@ func (s *TeamService) JoinTeam(ctx context.Context, req *connect.Request[v1.Join
 }
 
 func (s *TeamService) ResetTeamInvitation(ctx context.Context, req *connect.Request[v1.ResetTeamInvitationRequest]) (*connect.Response[v1.ResetTeamInvitationResponse], error) {
-	token, err := auth.TokenFromContext(ctx)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
-	}
-
 	teamID, err := validateTeamID(req.Msg.GetTeamId())
 	if err != nil {
 		return nil, err
 	}
 
-	conn, err := s.connectionPool.Get(ctx, token)
+	conn, err := s.getConnection(ctx)
 	if err != nil {
-		log.Log.WithError(err).Error("Failed to get connection to server.")
-		return nil, connect.NewError(connect.CodeInternal, errors.New("failed to establish connection to downstream services"))
+		return nil, err
 	}
 
 	invite, err := conn.ResetGenericInvite(ctx, teamID.String())
@@ -194,11 +164,6 @@ func (s *TeamService) ResetTeamInvitation(ctx context.Context, req *connect.Requ
 }
 
 func (s *TeamService) UpdateTeamMember(ctx context.Context, req *connect.Request[v1.UpdateTeamMemberRequest]) (*connect.Response[v1.UpdateTeamMemberResponse], error) {
-	token, err := auth.TokenFromContext(ctx)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
-	}
-
 	teamID := req.Msg.GetTeamId()
 	if teamID == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Team ID is a required parameter to update team member."))
@@ -219,10 +184,9 @@ func (s *TeamService) UpdateTeamMember(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Unknown TeamMember.Role specified."))
 	}
 
-	conn, err := s.connectionPool.Get(ctx, token)
+	conn, err := s.getConnection(ctx)
 	if err != nil {
-		log.Log.WithError(err).Error("Failed to get connection to server.")
-		return nil, connect.NewError(connect.CodeInternal, errors.New("failed to establish connection to downstream services"))
+		return nil, err
 	}
 
 	err = conn.SetTeamMemberRole(ctx, teamID, userID, role)
@@ -237,11 +201,6 @@ func (s *TeamService) UpdateTeamMember(ctx context.Context, req *connect.Request
 }
 
 func (s *TeamService) DeleteTeamMember(ctx context.Context, req *connect.Request[v1.DeleteTeamMemberRequest]) (*connect.Response[v1.DeleteTeamMemberResponse], error) {
-	token, err := auth.TokenFromContext(ctx)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
-	}
-
 	teamID := req.Msg.GetTeamId()
 	if teamID == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Team ID is a required parameter to delete team member."))
@@ -252,10 +211,9 @@ func (s *TeamService) DeleteTeamMember(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Team Member ID is a required parameter to delete team member."))
 	}
 
-	conn, err := s.connectionPool.Get(ctx, token)
+	conn, err := s.getConnection(ctx)
 	if err != nil {
-		log.Log.WithError(err).Error("Failed to get connection to server.")
-		return nil, connect.NewError(connect.CodeInternal, errors.New("failed to establish connection to downstream services"))
+		return nil, err
 	}
 
 	err = conn.RemoveTeamMember(ctx, teamID, memberID)
@@ -264,6 +222,21 @@ func (s *TeamService) DeleteTeamMember(ctx context.Context, req *connect.Request
 	}
 
 	return connect.NewResponse(&v1.DeleteTeamMemberResponse{}), nil
+}
+
+func (s *TeamService) getConnection(ctx context.Context) (protocol.APIInterface, error) {
+	token, err := auth.TokenFromContext(ctx)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
+	}
+
+	conn, err := s.connectionPool.Get(ctx, token)
+	if err != nil {
+		log.Log.WithError(err).Error("Failed to get connection to server.")
+		return nil, connect.NewError(connect.CodeInternal, errors.New("Failed to establish connection to downstream services. If this issue persists, please contact Gitpod Support."))
+	}
+
+	return conn, nil
 }
 
 func (s *TeamService) toTeamAPIResponse(ctx context.Context, conn protocol.APIInterface, team *protocol.Team) (*v1.Team, error) {
