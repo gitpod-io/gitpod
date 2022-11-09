@@ -60,6 +60,7 @@ import {
     WithReferrerContext,
     EnvVarWithValue,
     BillingTier,
+    Project,
 } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -204,6 +205,7 @@ export async function getWorkspaceClassForInstance(
     workspace: Workspace,
     previousInstance: WorkspaceInstance | undefined,
     user: User,
+    project: Project | undefined,
     entitlementService: EntitlementService,
     config: WorkspaceClassesConfig,
     workspaceDb: DBWithTracing<WorkspaceDB>,
@@ -217,17 +219,22 @@ export async function getWorkspaceClassForInstance(
                 if (prebuildClass) {
                     const userClass = await WorkspaceClasses.getConfiguredOrUpgradeFromLegacy(
                         user,
+                        project,
                         config,
                         entitlementService,
                     );
                     workspaceClass = WorkspaceClasses.selectClassForRegular(prebuildClass, userClass, config);
+                } else if (project?.settings?.workspaceClasses?.regular) {
+                    workspaceClass = project?.settings?.workspaceClasses?.regular;
                 } else if (user.additionalData?.workspaceClasses?.regular) {
                     workspaceClass = user.additionalData?.workspaceClasses?.regular;
                 }
             }
 
             if (workspace.type == "prebuild") {
-                if (user.additionalData?.workspaceClasses?.prebuild) {
+                if (project?.settings?.workspaceClasses?.prebuild) {
+                    workspaceClass = project?.settings?.workspaceClasses?.prebuild;
+                } else if (user.additionalData?.workspaceClasses?.prebuild) {
                     workspaceClass = user.additionalData?.workspaceClasses?.prebuild;
                 }
             }
@@ -283,6 +290,7 @@ export class WorkspaceStarter {
         ctx: TraceContext,
         workspace: Workspace,
         user: User,
+        project: Project | undefined,
         userEnvVars: UserEnvVar[],
         projectEnvVars: ProjectEnvVar[],
         options?: StartWorkspaceOptions,
@@ -360,6 +368,7 @@ export class WorkspaceStarter {
                         workspace,
                         lastValidWorkspaceInstance,
                         user,
+                        project,
                         options.excludeFeatureFlags || [],
                         ideConfig,
                     ),
@@ -768,6 +777,7 @@ export class WorkspaceStarter {
         workspace: Workspace,
         previousInstance: WorkspaceInstance | undefined,
         user: User,
+        project: Project | undefined,
         excludeFeatureFlags: NamedWorkspaceFeatureFlag[],
         ideConfig: IDEConfig,
     ): Promise<WorkspaceInstance> {
@@ -874,6 +884,7 @@ export class WorkspaceStarter {
                     workspace,
                     previousInstance,
                     user,
+                    project,
                     this.entitlementService,
                     this.config.workspaceClasses,
                     this.workspaceDb,

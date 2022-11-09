@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { PrebuiltWorkspaceState } from "./protocol";
+import { PrebuiltWorkspaceState, WorkspaceClasses } from "./protocol";
 import { v4 as uuidv4 } from "uuid";
 import { DeepPartial } from "./util/deep-partial";
 import { WebhookEvent } from "./webhook-event";
@@ -21,6 +21,8 @@ export interface ProjectSettings {
     allowUsingPreviousPrebuilds?: boolean;
     // how many commits in the commit history a prebuild is good (undefined and 0 means every commit is prebuilt)
     prebuildEveryNthCommit?: number;
+    // preferred workspace classes
+    workspaceClasses?: WorkspaceClasses;
 }
 
 export interface Project {

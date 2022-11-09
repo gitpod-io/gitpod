@@ -718,7 +718,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Cannot (re-)start a deleted workspace.");
         }
         const userEnvVars = this.userDB.getEnvVars(user.id);
-        let projectEnvVarsPromise = this.internalGetProjectEnvVars(workspace.projectId);
+        const projectEnvVarsPromise = this.internalGetProjectEnvVars(workspace.projectId);
+        const projectPromise = workspace.projectId
+            ? this.projectDB.findProjectById(workspace.projectId)
+            : Promise.resolve(undefined);
 
         await mayStartPromise;
 
@@ -727,6 +730,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             ctx,
             workspace,
             user,
+            await projectPromise,
             await userEnvVars,
             await projectEnvVarsPromise,
             {
@@ -1199,6 +1203,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 ctx,
                 workspace,
                 user,
+                project,
                 await envVars,
                 await projectEnvVarsPromise,
             );
@@ -2980,6 +2985,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         let user = this.checkAndBlockUser("getSupportedWorkspaceClasses");
         let selectedClass = await WorkspaceClasses.getConfiguredOrUpgradeFromLegacy(
             user,
+            undefined,
             this.config.workspaceClasses,
             this.entitlementService,
         );

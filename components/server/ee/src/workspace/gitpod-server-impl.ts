@@ -1060,7 +1060,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                             // queued for long than a minute? Let's retrigger
                             console.warn("Retriggering queued prebuild.", prebuiltWorkspace);
                             try {
-                                await this.prebuildManager.retriggerPrebuild(ctx, user, workspaceID);
+                                const project = prebuiltWorkspace.projectId
+                                    ? await this.projectDB.findProjectById(prebuiltWorkspace.projectId)
+                                    : undefined;
+                                await this.prebuildManager.retriggerPrebuild(ctx, user, project, workspaceID);
                             } catch (err) {
                                 console.error(err);
                             }

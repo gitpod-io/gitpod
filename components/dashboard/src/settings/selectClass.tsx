@@ -4,33 +4,25 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { getGitpodService } from "../service/service";
-import { UserContext } from "../user-context";
 import { trackEvent } from "../Analytics";
-import { WorkspaceClasses } from "@gitpod/gitpod-protocol";
 import WorkspaceClass from "../components/WorkspaceClass";
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 
 interface SelectWorkspaceClassProps {
     enabled: boolean;
+    workspaceClass?: string;
+    setWorkspaceClass: (value: string) => Promise<string | undefined>;
 }
 
 export default function SelectWorkspaceClass(props: SelectWorkspaceClassProps) {
-    const { user } = useContext(UserContext);
-
-    const [workspaceClass, setWorkspaceClass] = useState<string>(user?.additionalData?.workspaceClasses?.regular || "");
+    const [workspaceClass, setWorkspaceClass] = useState<string | undefined>(props.workspaceClass);
     const actuallySetWorkspaceClass = async (value: string) => {
-        const additionalData = user?.additionalData || {};
-        const prevWorkspaceClass = additionalData?.workspaceClasses?.regular || "";
-        const workspaceClasses = (additionalData?.workspaceClasses || {}) as WorkspaceClasses;
-        workspaceClasses.regular = value;
-        workspaceClasses.prebuild = value;
-        additionalData.workspaceClasses = workspaceClasses;
-        if (value !== prevWorkspaceClass) {
-            await getGitpodService().server.updateLoggedInUser({ additionalData });
+        const previousValue = await props.setWorkspaceClass(value);
+        if (previousValue !== value) {
             trackEvent("workspace_class_changed", {
-                previous: prevWorkspaceClass,
+                previous: previousValue,
                 current: value,
             });
             setWorkspaceClass(value);
