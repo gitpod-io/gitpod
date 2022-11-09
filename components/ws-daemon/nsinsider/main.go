@@ -213,8 +213,8 @@ func main() {
 				},
 			},
 			{
-				Name:  "prepare-dev",
-				Usage: "prepares a workspaces /dev directory",
+				Name:  "prepare-workspace",
+				Usage: "prepares a /workspace directory",
 				Flags: []cli.Flag{
 					&cli.IntFlag{
 						Name:     "uid",
@@ -229,30 +229,47 @@ func main() {
 					workspaceDevice := "/dev/workspace"
 					isReady, err := isWorkspaceDeviceReady(workspaceDevice)
 					if err != nil {
-						log.WithError(err).Error("cannot check if device is ready")
+						log.WithError(err).Errorf("cannot check if device %s is ready", workspaceDevice)
 						return err
 					}
 
 					if !isReady {
 						err = prepareWorkspaceDevice(workspaceDevice)
 						if err != nil {
-							log.WithError(err).Error("cannot prepare device")
+							log.WithError(err).Errorf("cannot prepare device %s", workspaceDevice)
 							return err
 						}
 					}
 
 					err = mountWorkspaceDevice(workspaceDevice, "/workspace")
 					if err != nil {
-						log.WithError(err).Error("cannot mount device")
+						log.WithError(err).Errorf("cannot mount device %s", workspaceDevice)
 						return err
 					}
 
 					err = os.Chown("/workspace", c.Int("uid"), c.Int("gid"))
 					if err != nil {
+						log.WithError(err).Error("cannot chown /workspace")
 						return err
 					}
-
-					err = ioutil.WriteFile("/dev/kmsg", nil, 0644)
+					return nil
+				},
+			},
+			{
+				Name:  "prepare-dev",
+				Usage: "prepares a workspaces /dev directory",
+				Flags: []cli.Flag{
+					&cli.IntFlag{
+						Name:     "uid",
+						Required: true,
+					},
+					&cli.IntFlag{
+						Name:     "gid",
+						Required: true,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					err := ioutil.WriteFile("/dev/kmsg", nil, 0644)
 					if err != nil {
 						return err
 					}

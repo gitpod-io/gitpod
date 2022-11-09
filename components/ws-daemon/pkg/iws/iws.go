@@ -234,6 +234,16 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 
 	log.WithField("type", wbs.FSShift).Debug("FSShift")
 
+	if wbs.Session.PersistentVolumeClaim {
+		err = nsi.Nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
+			c.Args = append(c.Args, "prepare-workspace", "--uid", strconv.Itoa(wsinit.GitpodUID), "--gid", strconv.Itoa(wsinit.GitpodGID))
+		})
+		if err != nil {
+			log.WithError(err).WithFields(wbs.Session.OWI()).Error("PrepareForUserNS: cannot prepare /workspace")
+			return nil, status.Errorf(codes.Internal, "cannot prepare /workspace")
+		}
+	}
+
 	// user namespace support for FUSE landed in Linux 4.18:
 	//   - http://lkml.iu.edu/hypermail/linux/kernel/1806.0/04385.html
 	// Development leading up to this point:
