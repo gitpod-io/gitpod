@@ -43,7 +43,7 @@ func (o *OpenVSXProxy) Handler(p *httputil.ReverseProxy) func(http.ResponseWrite
 			"request_content_length": strconv.FormatInt(r.ContentLength, 10),
 		}
 
-		log.WithFields(logFields).Info("handling request")
+		log.WithFields(logFields).Debug("handling request")
 		r = r.WithContext(context.WithValue(r.Context(), REQUEST_ID_CTX, reqid))
 
 		key, err := o.key(r)
@@ -101,7 +101,7 @@ func (o *OpenVSXProxy) Handler(p *httputil.ReverseProxy) func(http.ResponseWrite
 		}
 
 		duration := time.Since(start)
-		log.WithFields(logFields).WithFields(o.DurationLogFields(duration)).Info("processing request finished")
+		log.WithFields(logFields).WithFields(o.DurationLogFields(duration)).Debug("processing request finished")
 		o.metrics.DurationRequestProcessingHistogram.Observe(duration.Seconds())
 
 		p.ServeHTTP(rw, r)

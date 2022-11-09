@@ -67,6 +67,6 @@ func (o *OpenVSXProxy) ErrorHandler(rw http.ResponseWriter, r *http.Request, e e
 	}
 	rw.WriteHeader(cached.StatusCode)
 	rw.Write(cached.Body)
-	log.WithFields(logFields).Info("used cached response due to a proxy error")
+	log.WithFields(logFields).Debug("used cached response due to a proxy error")
 	o.metrics.BackupCacheServeCounter.Inc()
 }
