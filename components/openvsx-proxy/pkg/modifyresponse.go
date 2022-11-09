@@ -39,7 +39,7 @@ func (o *OpenVSXProxy) ModifyResponse(r *http.Response) error {
 			Info("processing response finished")
 	}(start)
 
-	log.WithFields(logFields).Info("handling response")
+	log.WithFields(logFields).Debug("handling response")
 	o.metrics.IncStatusCounter(r.Request, strconv.Itoa(r.StatusCode))
 
 	if key == "" {
@@ -85,7 +85,7 @@ func (o *OpenVSXProxy) ModifyResponse(r *http.Response) error {
 		r.Body = ioutil.NopCloser(bytes.NewBuffer(cached.Body))
 		r.ContentLength = int64(len(cached.Body))
 		r.StatusCode = cached.StatusCode
-		log.WithFields(logFields).Info("used cache response due to an upstream error")
+		log.WithFields(logFields).Debug("used cache response due to an upstream error")
 		o.metrics.BackupCacheServeCounter.Inc()
 		return nil
 	}
@@ -100,7 +100,7 @@ func (o *OpenVSXProxy) ModifyResponse(r *http.Response) error {
 	if err != nil {
 		log.WithFields(logFields).WithError(err).Error("error storing response to cache")
 	} else {
-		log.WithFields(logFields).Info("successfully stored response to cache")
+		log.WithFields(logFields).Debug("successfully stored response to cache")
 	}
 
 	r.Body = ioutil.NopCloser(bytes.NewBuffer(rawBody))

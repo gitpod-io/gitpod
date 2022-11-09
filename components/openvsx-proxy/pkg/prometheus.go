@@ -47,7 +47,7 @@ func (p *Prometheus) Start(cfg *Config) {
 				log.WithError(err).Error("Prometheus metrics server failed")
 			}
 		}()
-		log.WithField("addr", cfg.PrometheusAddr).Info("started Prometheus metrics server")
+		log.WithField("addr", cfg.PrometheusAddr).Debug("started Prometheus metrics server")
 	}
 
 	p.createMetrics()
