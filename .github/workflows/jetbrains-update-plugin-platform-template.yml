@@ -119,9 +119,9 @@ jobs:
             ```
 
             ## Werft options:
-            - [x] /werft with-preview
-            - [x] /werft with-large-vm
-            - [x] /werft with-integration-tests=jetbrains
+            - [ ] /werft with-preview
+            - [ ] /werft with-large-vm
+            - [ ] /werft with-integration-tests=jetbrains
 
             _This PR was created automatically with GitHub Actions using [this](https://github.com/gitpod-io/gitpod/blob/main/.github/workflows/jetbrains-update-plugin-platform-template.yml) template._
           commit-message: "Update Platform Version of ${{ inputs.pluginName }} to ${{ steps.latest-version.outputs.result }}"
