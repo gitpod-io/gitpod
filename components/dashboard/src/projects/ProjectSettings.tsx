@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { Project, ProjectSettings, Team } from "@gitpod/gitpod-protocol";
 import CheckBox from "../components/CheckBox";
@@ -14,6 +14,8 @@ import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import PillLabel from "../components/PillLabel";
 import { ProjectContext } from "./project-context";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
+import SelectWorkspaceClass from "../settings/selectClass";
+import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 
 export function getProjectSettingsMenu(project?: Project, team?: Team) {
     const teamOrUserSlug = !!team ? "t/" + team.slug : "projects";
@@ -48,6 +50,14 @@ export function ProjectSettingsPage(props: { project?: Project; children?: React
 export default function () {
     const { showPersistentVolumeClaimUI } = useContext(FeatureFlagContext);
     const { project, setProject } = useContext(ProjectContext);
+    const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
+    const { teams } = useContext(TeamsContext);
+    const team = getCurrentTeam(useLocation(), teams);
+    useEffect(() => {
+        if (team) {
+            getGitpodService().server.getBillingModeForTeam(team.id).then(setTeamBillingMode);
+        }
+    }, [team]);
 
     if (!project) return null;
 
@@ -57,6 +67,15 @@ export default function () {
         const newSettings = { ...project.settings, ...settings };
         getGitpodService().server.updateProjectPartial({ id: project.id, settings: newSettings });
         setProject({ ...project, settings: newSettings });
+    };
+
+    const setWorkspaceClass = async (value: string) => {
+        if (!project) {
+            return value;
+        }
+        const before = project.settings?.workspaceClasses?.regular;
+        updateProjectSettings({ workspaceClasses: { prebuild: value, regular: value } });
+        return before;
     };
 
     return (
@@ -142,8 +161,12 @@ export default function () {
 
             {showPersistentVolumeClaimUI && (
                 <>
-                    <br></br>
-                    <h3 className="mt-12">Workspaces</h3>
+                    <SelectWorkspaceClass
+                        workspaceClass={project.settings?.workspaceClasses?.regular}
+                        enabled={BillingMode.canSetWorkspaceClass(teamBillingMode)}
+                        setWorkspaceClass={setWorkspaceClass}
+                    />
+                    {!BillingMode.canSetWorkspaceClass(teamBillingMode) && <h3 className="mt-12">Workspaces</h3>}
                     <CheckBox
                         title={
                             <span>

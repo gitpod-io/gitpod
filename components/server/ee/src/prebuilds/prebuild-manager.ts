@@ -259,7 +259,7 @@ export class PrebuildManager {
             } else {
                 span.setTag("starting", true);
                 const projectEnvVars = await projectEnvVarsPromise;
-                await this.workspaceStarter.startWorkspace({ span }, workspace, user, [], projectEnvVars, {
+                await this.workspaceStarter.startWorkspace({ span }, workspace, user, project, [], projectEnvVars, {
                     excludeFeatureFlags: ["full_workspace_backup"],
                 });
             }
@@ -273,7 +273,12 @@ export class PrebuildManager {
         }
     }
 
-    async retriggerPrebuild(ctx: TraceContext, user: User, workspaceId: string): Promise<StartPrebuildResult> {
+    async retriggerPrebuild(
+        ctx: TraceContext,
+        user: User,
+        project: Project | undefined,
+        workspaceId: string,
+    ): Promise<StartPrebuildResult> {
         const span = TraceContext.startSpan("retriggerPrebuild", ctx);
         span.setTag("workspaceId", workspaceId);
         try {
@@ -297,7 +302,7 @@ export class PrebuildManager {
             if (workspace.projectId) {
                 projectEnvVars = await this.projectService.getProjectEnvironmentVariables(workspace.projectId);
             }
-            await this.workspaceStarter.startWorkspace({ span }, workspace, user, [], projectEnvVars);
+            await this.workspaceStarter.startWorkspace({ span }, workspace, user, project, [], projectEnvVars);
             return { prebuildId: prebuild.id, wsid: workspace.id, done: false };
         } catch (err) {
             TraceContext.setError({ span }, err);

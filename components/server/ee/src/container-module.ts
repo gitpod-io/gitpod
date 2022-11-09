@@ -46,8 +46,6 @@ import { ChargebeeService } from "./user/chargebee-service";
 import { StripeService } from "./user/stripe-service";
 import { EligibilityService } from "./user/eligibility-service";
 import { AccountStatementProvider } from "./user/account-statement-provider";
-import { WorkspaceStarterEE } from "./workspace/workspace-starter";
-import { WorkspaceStarter } from "../../src/workspace/workspace-starter";
 import { UserDeletionService } from "../../src/user/user-deletion-service";
 import { BlockedUserFilter } from "../../src/auth/blocked-user-filter";
 import { EMailDomainService, EMailDomainServiceImpl } from "./auth/email-domain-service";
@@ -104,9 +102,6 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
 
     bind(UserDeletionServiceEE).toSelf().inSingletonScope();
     rebind(UserDeletionService).to(UserDeletionServiceEE).inSingletonScope();
-
-    // workspace management
-    rebind(WorkspaceStarter).to(WorkspaceStarterEE).inSingletonScope();
 
     // acounting
     bind(AccountService).to(AccountServiceImpl).inSingletonScope();

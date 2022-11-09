@@ -5,7 +5,7 @@
  */
 
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { User, Workspace } from "@gitpod/gitpod-protocol";
+import { Project, User, Workspace } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { EntitlementService } from "../billing/entitlement-service";
@@ -159,9 +159,13 @@ export namespace WorkspaceClasses {
      */
     export async function getConfiguredOrUpgradeFromLegacy(
         user: User,
+        project: Project | undefined,
         classes: WorkspaceClassesConfig,
         entitlementService: EntitlementService,
     ): Promise<string> {
+        if (project?.settings?.workspaceClasses?.regular) {
+            return project?.settings?.workspaceClasses?.regular;
+        }
         if (user.additionalData?.workspaceClasses?.regular) {
             return user.additionalData?.workspaceClasses?.regular;
         }

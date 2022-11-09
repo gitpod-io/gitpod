@@ -326,6 +326,7 @@ async function execute(builder: WorkspaceClassTestBuilder, expectedClass: string
         workspace,
         previousInstance,
         user,
+        undefined,
         entitlementService,
         config,
         workspaceDb,
