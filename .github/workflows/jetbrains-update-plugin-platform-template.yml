@@ -20,6 +20,8 @@ on:
     secrets:
       slackWebhook:
         required: true
+      roboquatRepoPat:
+        required: true
 jobs:
   update-plugin-platform:
     name: Update Platform Version from ${{ inputs.pluginName }}
@@ -99,7 +101,7 @@ jobs:
       - name: Create Pull Request for Backend Plugin
         id: create-pr
         env:
-          PAT: ${{ secrets.ROBOQUAT_REPO_PAT }}
+          PAT: ${{ secrets.roboquatRepoPat }}
         if: ${{ env.PAT != '' && inputs.pluginId == 'backend-plugin' && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
         uses: peter-evans/create-pull-request@v4
         with:
@@ -134,11 +136,9 @@ jobs:
       - name: Auto Approve Pull Request
         if: ${{ inputs.pluginId == 'backend-plugin' && steps.create-pr.outputs.pull-request-number }}
         uses: hmarr/auto-approve-action@v3
-        env:
-          PAT: ${{ secrets.ROBOQUAT_REPO_PAT }}
         with:
           pull-request-number: ${{ steps.create-pr.outputs.pull-request-number }}
-          github-token: ${{ env.PAT }}
+          github-token: ${{ secrets.roboquatRepoPat }}
       - name: Get previous job's status
         id: lastrun
         uses: filiptronicek/get-last-job-status@main
