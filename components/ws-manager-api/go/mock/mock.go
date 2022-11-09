@@ -175,21 +175,6 @@ func (mr *MockWorkspaceManagerServerMockRecorder) BackupWorkspace(arg0, arg1 int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BackupWorkspace", reflect.TypeOf((*MockWorkspaceManagerServer)(nil).BackupWorkspace), arg0, arg1)
 }
 
-// CheckVolumeSnapshotIsReady mocks base method.
-func (m *MockWorkspaceManagerServer) CheckVolumeSnapshotIsReady(arg0 context.Context, arg1 *api.CheckVolumeSnapshotIsReadyRequest) (*api.CheckVolumeSnapshotIsReadyResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CheckVolumeSnapshotIsReady", arg0, arg1)
-	ret0, _ := ret[0].(*api.CheckVolumeSnapshotIsReadyResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CheckVolumeSnapshotIsReady indicates an expected call of CheckVolumeSnapshotIsReady.
-func (mr *MockWorkspaceManagerServerMockRecorder) CheckVolumeSnapshotIsReady(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckVolumeSnapshotIsReady", reflect.TypeOf((*MockWorkspaceManagerServer)(nil).CheckVolumeSnapshotIsReady), arg0, arg1)
-}
-
 // ControlAdmission mocks base method.
 func (m *MockWorkspaceManagerServer) ControlAdmission(arg0 context.Context, arg1 *api.ControlAdmissionRequest) (*api.ControlAdmissionResponse, error) {
 	m.ctrl.T.Helper()
@@ -575,26 +560,6 @@ func (mr *MockWorkspaceManagerClientMockRecorder) BackupWorkspace(arg0, arg1 int
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BackupWorkspace", reflect.TypeOf((*MockWorkspaceManagerClient)(nil).BackupWorkspace), varargs...)
-}
-
-// CheckVolumeSnapshotIsReady mocks base method.
-func (m *MockWorkspaceManagerClient) CheckVolumeSnapshotIsReady(arg0 context.Context, arg1 *api.CheckVolumeSnapshotIsReadyRequest, arg2 ...grpc.CallOption) (*api.CheckVolumeSnapshotIsReadyResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{arg0, arg1}
-	for _, a := range arg2 {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "CheckVolumeSnapshotIsReady", varargs...)
-	ret0, _ := ret[0].(*api.CheckVolumeSnapshotIsReadyResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CheckVolumeSnapshotIsReady indicates an expected call of CheckVolumeSnapshotIsReady.
-func (mr *MockWorkspaceManagerClientMockRecorder) CheckVolumeSnapshotIsReady(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{arg0, arg1}, arg2...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckVolumeSnapshotIsReady", reflect.TypeOf((*MockWorkspaceManagerClient)(nil).CheckVolumeSnapshotIsReady), varargs...)
 }
 
 // ControlAdmission mocks base method.
