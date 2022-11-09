@@ -98,7 +98,7 @@ jobs:
           # team-reviewers: "engineering-ide"
       - name: Create Pull Request for Backend Plugin
         id: create-pr
-        if: ${{ inputs.pluginId == 'backend-plugin' && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
+        if: ${{ secrets.ROBOQUAT_REPO_PAT && inputs.pluginId == 'backend-plugin' && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
         uses: peter-evans/create-pull-request@v4
         with:
           title: "Update Platform Version from ${{ inputs.pluginName }}"
@@ -119,9 +119,9 @@ jobs:
             ```
 
             ## Werft options:
-            - [ ] /werft with-preview
-            - [ ] /werft with-large-vm
-            - [ ] /werft with-integration-tests=jetbrains
+            - [x] /werft with-preview
+            - [x] /werft with-large-vm
+            - [x] /werft with-integration-tests=jetbrains
 
             _This PR was created automatically with GitHub Actions using [this](https://github.com/gitpod-io/gitpod/blob/main/.github/workflows/jetbrains-update-plugin-platform-template.yml) template._
           commit-message: "Update Platform Version of ${{ inputs.pluginName }} to ${{ steps.latest-version.outputs.result }}"
@@ -131,9 +131,10 @@ jobs:
           # team-reviewers: "engineering-ide"
       - name: Auto Approve Pull Request
         if: ${{ inputs.pluginId == 'backend-plugin' && steps.create-pr.outputs.pull-request-number }}
-        uses: ./.github/workflows/auto-approve.yml
+        uses: hmarr/auto-approve-action@v3
         with:
-          pullRequestNumber: ${{ steps.create-pr.outputs.pull-request-number }}
+          pull-request-number: ${{ steps.create-pr.outputs.pull-request-number }}
+          github-token: ${{ secrets.ROBOQUAT_REPO_PAT }}
       - name: Get previous job's status
         id: lastrun
         uses: filiptronicek/get-last-job-status@main
