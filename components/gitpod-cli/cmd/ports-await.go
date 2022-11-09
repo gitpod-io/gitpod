@@ -15,6 +15,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	fnNetTCP  = "/proc/net/tcp"
+	fnNetTCP6 = "/proc/net/tcp6"
+)
+
 var awaitPortCmd = &cobra.Command{
 	Use:   "await <port>",
 	Short: "Waits for a process to listen on a port",
@@ -31,26 +36,29 @@ var awaitPortCmd = &cobra.Command{
 			log.Fatal("cannot compile regexp pattern")
 		}
 
+		var protos []string
+		for _, path := range []string{fnNetTCP, fnNetTCP6} {
+			if _, err := os.Stat(path); err == nil {
+				protos = append(protos, path)
+			}
+		}
+
 		fmt.Printf("Awaiting port %d... ", port)
 		for {
-			tcp, err := os.ReadFile("/proc/net/tcp")
-			if err != nil {
-				log.Fatalf("cannot read /proc/net/tcp: %s", err)
-			}
+			for _, proto := range protos {
+				tcp, err := os.ReadFile(proto)
+				if err != nil {
+					log.Fatalf("cannot read %v: %s", proto, err)
+				}
 
-			tcp6, err := os.ReadFile("/proc/net/tcp6")
-			if err != nil {
-				log.Fatalf("cannot read /proc/net/tcp6: %s", err)
-			}
-
-			if pattern.MatchString(string(tcp)) || pattern.MatchString(string(tcp6)) {
-				break
+				if pattern.MatchString(string(tcp)) {
+					fmt.Println("ok")
+					return
+				}
 			}
 
 			time.Sleep(2 * time.Second)
 		}
-
-		fmt.Println("ok")
 	},
 }
 
