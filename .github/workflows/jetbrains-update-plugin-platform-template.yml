@@ -131,7 +131,7 @@ jobs:
           # team-reviewers: "engineering-ide"
       - name: Auto Approve Pull Request
         if: ${{ inputs.pluginId == 'backend-plugin' && steps.create-pr.outputs.pull-request-number }}
-        uses: hmarr/auto-approve-action@v3
+        uses: hmarr/auto-approve-action@v2
         with:
           pull-request-number: ${{ steps.create-pr.outputs.pull-request-number }}
           github-token: ${{ secrets.GITOPS_BOT_PR_APPROVAL_TOKEN }}
