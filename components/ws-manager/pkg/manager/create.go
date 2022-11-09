@@ -578,7 +578,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 
 			// update volume to use persistent volume claim, and name of it is the same as pod's name
 			pvcName := pod.ObjectMeta.Name
-			pod.Spec.Volumes[0].Name = workspaceVolumeName
 			pod.Spec.Volumes[0].VolumeSource = corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 					ClaimName: pvcName,
