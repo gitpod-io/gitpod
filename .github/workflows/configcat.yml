@@ -1,4 +1,7 @@
-on: [push]
+on:
+  push:
+    branches:
+    - main
 name: Configcat code references
 jobs:
   scan-repo:
