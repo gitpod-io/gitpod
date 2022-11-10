@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { useEffect, useState } from "react";
+import { forwardRef, useEffect, useState } from "react";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import {
     ListUsageRequest,
@@ -25,6 +25,11 @@ import { toRemoteURL } from "../projects/render-utils";
 import { WorkspaceType } from "@gitpod/gitpod-protocol";
 import PillLabel from "./PillLabel";
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import "./react-datepicker.css";
+import { useLocation } from "react-router";
+import dayjs from "dayjs";
 
 interface UsageViewProps {
     attributionId: AttributionId;
@@ -33,25 +38,29 @@ interface UsageViewProps {
 function UsageView({ attributionId }: UsageViewProps) {
     const [usagePage, setUsagePage] = useState<ListUsageResponse | undefined>(undefined);
     const [errorMessage, setErrorMessage] = useState("");
-    const today = new Date();
-    const startOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const timestampStartOfCurrentMonth = startOfCurrentMonth.getTime();
-    const [startDateOfBillMonth, setStartDateOfBillMonth] = useState(timestampStartOfCurrentMonth);
-    const [endDateOfBillMonth, setEndDateOfBillMonth] = useState(Date.now());
+    const startOfCurrentMonth = dayjs().startOf("month");
+    const [startDate, setStartDate] = useState(startOfCurrentMonth);
+    const [endDate, setEndDate] = useState(dayjs());
     const [totalCreditsUsed, setTotalCreditsUsed] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [supportedClasses, setSupportedClasses] = useState<SupportedWorkspaceClass[]>([]);
 
+    const location = useLocation();
     useEffect(() => {
+        const match = /#(\d{4}-\d{2}-\d{2}):(\d{4}-\d{2}-\d{2})/.exec(location.hash);
+        if (match) {
+            try {
+                setStartDate(dayjs(match[1], "YYYY-MM-DD"));
+                setEndDate(dayjs(match[2], "YYYY-MM-DD"));
+            } catch (e) {
+                console.error(e);
+            }
+        }
         (async () => {
             const classes = await getGitpodService().server.getSupportedWorkspaceClasses();
             setSupportedClasses(classes);
         })();
-    }, []);
-
-    useEffect(() => {
-        loadPage(1);
-    }, [startDateOfBillMonth, endDateOfBillMonth]);
+    }, [location]);
 
     const loadPage = async (page: number = 1) => {
         if (usagePage === undefined) {
@@ -60,8 +69,8 @@ function UsageView({ attributionId }: UsageViewProps) {
         }
         const request: ListUsageRequest = {
             attributionId: AttributionId.render(attributionId),
-            from: startDateOfBillMonth,
-            to: endDateOfBillMonth,
+            from: startDate.startOf("day").valueOf(),
+            to: endDate.endOf("day").valueOf(),
             order: Ordering.ORDERING_DESCENDING,
             pagination: {
                 perPage: 50,
@@ -82,6 +91,18 @@ function UsageView({ attributionId }: UsageViewProps) {
             setIsLoading(false);
         }
     };
+    useEffect(() => {
+        if (startDate.isAfter(endDate)) {
+            setErrorMessage("The start date needs to be before the end date.");
+            return;
+        }
+        if (startDate.add(300, "day").isBefore(endDate)) {
+            setErrorMessage("Range is too long. Max range is 300 days.");
+            return;
+        }
+        setErrorMessage("");
+        loadPage(1);
+    }, [startDate, endDate]);
 
     const getType = (type: WorkspaceType) => {
         if (type === "regular") {
@@ -118,27 +139,24 @@ function UsageView({ attributionId }: UsageViewProps) {
         return inMinutes + " min";
     };
 
-    const handleMonthClick = (start: any, end: any) => {
-        setStartDateOfBillMonth(start);
-        setEndDateOfBillMonth(end);
+    const handleMonthClick = (start: dayjs.Dayjs, end: dayjs.Dayjs) => {
+        setStartDate(start);
+        setEndDate(end);
     };
 
     const getBillingHistory = () => {
         let rows = [];
         // This goes back 6 months from the current month
         for (let i = 1; i < 7; i++) {
-            const endDateVar = i - 1;
-            const startDate = new Date(today.getFullYear(), today.getMonth() - i);
-            const endDate = new Date(today.getFullYear(), today.getMonth() - endDateVar);
-            const timeStampOfStartDate = startDate.getTime();
-            const timeStampOfEndDate = endDate.getTime();
+            const startDate = dayjs().subtract(i, "month").startOf("month");
+            const endDate = startDate.endOf("month");
             rows.push(
                 <div
                     key={`billing${i}`}
                     className="text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500 truncate cursor-pointer gp-link"
-                    onClick={() => handleMonthClick(timeStampOfStartDate, timeStampOfEndDate)}
+                    onClick={() => handleMonthClick(startDate, endDate)}
                 >
-                    {startDate.toLocaleString("default", { month: "long" })} {startDate.getFullYear()}
+                    {startDate.format("MMMM YYYY")}
                 </div>,
             );
         }
@@ -160,13 +178,68 @@ function UsageView({ attributionId }: UsageViewProps) {
 
     const headerTitle = attributionId.kind === "team" ? "Team Usage" : "Personal Usage";
 
+    const DateDisplay = forwardRef((arg: any, ref: any) => (
+        <div
+            className="px-2 py-0.5 text-gray-500 bg-gray-50 dark:text-gray-400 dark:bg-gray-800 rounded-md cursor-pointer flex items-center hover:bg-gray-100 dark:hover:bg-gray-700"
+            onClick={arg.onClick}
+            ref={ref}
+        >
+            <div className="font-medium">{arg.value}</div>
+            <div>
+                <svg
+                    width="20"
+                    height="20"
+                    fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg"
+                    onClick={arg.onClick}
+                    ref={ref}
+                >
+                    <path
+                        fillRule="evenodd"
+                        clipRule="evenodd"
+                        d="M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414Z"
+                    />
+                    <title>Change Date</title>
+                </svg>
+            </div>
+        </div>
+    ));
+
     return (
         <>
             <Header
-                title={headerTitle}
-                subtitle={`${new Date(startDateOfBillMonth).toLocaleDateString()} - ${new Date(
-                    endDateOfBillMonth,
-                ).toLocaleDateString()} (updated every 15 minutes).`}
+                title={
+                    <div className="flex items-baseline">
+                        <h1 className="tracking-tight">{headerTitle}</h1>
+                        <h2 className="ml-3">(updated every 15 minutes).</h2>
+                    </div>
+                }
+                subtitle={
+                    <div className="tracking-wide flex mt-3 items-center">
+                        <h2 className="mr-1">Showing usage from </h2>
+                        <DatePicker
+                            selected={startDate.toDate()}
+                            onChange={(date) => date && setStartDate(dayjs(date))}
+                            selectsStart
+                            startDate={startDate.toDate()}
+                            endDate={endDate.toDate()}
+                            maxDate={endDate.toDate()}
+                            customInput={<DateDisplay />}
+                            dateFormat={"MMM d, yyyy"}
+                        />
+                        <h2 className="mx-1">to</h2>
+                        <DatePicker
+                            selected={endDate.toDate()}
+                            onChange={(date) => date && setEndDate(dayjs(date))}
+                            selectsEnd
+                            startDate={startDate.toDate()}
+                            endDate={endDate.toDate()}
+                            minDate={startDate.toDate()}
+                            customInput={<DateDisplay />}
+                            dateFormat={"MMM d, yyyy"}
+                        />
+                    </div>
+                }
             />
             <div className="app-container pt-5">
                 {errorMessage && <p className="text-base">{errorMessage}</p>}
@@ -178,10 +251,9 @@ function UsageView({ attributionId }: UsageViewProps) {
                                     <div className="text-base text-gray-500 truncate">Current Month</div>
                                     <div
                                         className="text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500 truncate cursor-pointer mb-5"
-                                        onClick={() => handleMonthClick(timestampStartOfCurrentMonth, Date.now())}
+                                        onClick={() => handleMonthClick(startOfCurrentMonth, dayjs())}
                                     >
-                                        {startOfCurrentMonth.toLocaleString("default", { month: "long" })}{" "}
-                                        {startOfCurrentMonth.getFullYear()}
+                                        {dayjs(startOfCurrentMonth).format("MMMM YYYY")}
                                     </div>
                                     <div className="text-base text-gray-500 truncate">Previous Months</div>
                                     {getBillingHistory()}
@@ -189,7 +261,7 @@ function UsageView({ attributionId }: UsageViewProps) {
                                 {!isLoading && (
                                     <div>
                                         <div className="flex flex-col truncate">
-                                            <div className="text-base text-gray-500">Total usage</div>
+                                            <div className="text-base text-gray-500">Total Usage</div>
                                             <div className="flex text-lg text-gray-600 font-semibold">
                                                 <CreditsSvg className="my-auto mr-1" />
                                                 <span>{totalCreditsUsed.toLocaleString()} Credits</span>
@@ -235,11 +307,7 @@ function UsageView({ attributionId }: UsageViewProps) {
                                             {" "}
                                             workspaces
                                         </a>{" "}
-                                        in{" "}
-                                        {new Date(startDateOfBillMonth).toLocaleString("default", {
-                                            month: "long",
-                                        })}{" "}
-                                        {new Date(startDateOfBillMonth).getFullYear()} or checked your other teams?
+                                        in {startDate.format("MMMM YYYY")} or checked your other teams?
                                     </p>
                                 </div>
                             )}
