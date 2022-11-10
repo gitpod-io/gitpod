@@ -143,6 +143,7 @@ type WorkspaceClass struct {
 	IsDefault   bool                   `json:"isDefault"`
 	Deprecated  bool                   `json:"deprecated"`
 	Marker      map[string]bool        `json:"marker,omitempty"`
+	Credits     WorkspaceClassCredits  `json:"credits"`
 }
 
 type NamedWorkspaceFeatureFlag string
@@ -152,6 +153,10 @@ const (
 )
 
 type WorkspaceClassCategory string
+
+type WorkspaceClassCredits struct {
+	PerMinute float64 `json:"perMinute"`
+}
 
 const (
 	GeneralPurpose WorkspaceClassCategory = "GENERAL PURPOSE"
