@@ -19,6 +19,15 @@ PREVIEW_NAME="${PREVIEW_NAME:-$(preview-name-from-branch)}"
 PREVIEW_K3S_KUBE_PATH="${PREVIEW_K3S_KUBECONFIG_PATH:-/home/gitpod/.kube/config}"
 PREVIEW_K3S_KUBE_CONTEXT="${PREVIEW_K3S_KUBE_CONTEXT:-$PREVIEW_NAME}"
 
+INITIAL_DEFAULT_NAMESPACE="$(kubens -c)"
+
+function resetDefaultNamespace {
+    echo "Restting default namespace back to $INITIAL_DEFAULT_NAMESPACE"
+    kubens "$INITIAL_DEFAULT_NAMESPACE"
+}
+
+trap resetDefaultNamespace EXIT
+
 waitUntilAllPodsAreReady "${PREVIEW_K3S_KUBE_PATH}" "${PREVIEW_K3S_KUBE_CONTEXT}" "kube-system"
 
 kubectl \
@@ -59,6 +68,12 @@ PREVIEW_NAME="${PREVIEW_NAME}" \
 WORKSPACE_ROOT="${ROOT}" \
 envsubst <"${ROOT}/dev/preview/workflow/config/monitoring-satellite.yaml" \
 | ./observability-installer render --app monitoring-satellite --output-split-files "${manifests_dir}" --config -
+
+# Not all resources will have the namespace explicitly defined in the manifest but rather expect the
+# "default namespace" to be the appropriate one - this is because we deploy the same resources to different
+# namespaces in depending on the environment. So we temporarily set the default namespace to monitoring-satellite
+echo "Setting default namespace to monitoring-satellite"
+kubens monitoring-satellite
 
 # we have to apply the CRDs first and wait until they are available before we can apply the rest
 find "${manifests_dir}" -name "*CustomResourceDefinition*" -exec kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" apply -f {} --server-side \;
