@@ -5,12 +5,10 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -20,7 +18,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"reflect"
-	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
@@ -50,9 +47,19 @@ var (
 const BackendPath = "/ide-desktop/backend"
 const ProductInfoPath = BackendPath + "/product-info.json"
 
+type LaunchContext struct {
+	alias            string
+	projectDir       string
+	configDir        string
+	systemDir        string
+	projectConfigDir string
+	wsInfo           *supervisor.WorkspaceInfoResponse
+}
+
 // JB startup entrypoint
 func main() {
 	log.Init(ServiceName, Version, true, false)
+	log.Info(ServiceName + ": " + Version)
 	startTime := time.Now()
 
 	if len(os.Args) < 3 {
@@ -65,7 +72,13 @@ func main() {
 		label = os.Args[3]
 	}
 
-	backendVersion, err := resolveBackendVersion()
+	info, err := resolveProductInfo()
+	if err != nil {
+		log.WithError(err).Error("failed to resolve product info")
+		return
+	}
+
+	backendVersion, err := version.NewVersion(info.Version)
 	if err != nil {
 		log.WithError(err).Error("failed to resolve backend version")
 		return
@@ -77,8 +90,8 @@ func main() {
 		return
 	}
 
-	repoRoot := wsInfo.GetCheckoutLocation()
-	gitpodConfig, err := parseGitpodConfig(repoRoot)
+	projectDir := wsInfo.GetCheckoutLocation()
+	gitpodConfig, err := parseGitpodConfig(projectDir)
 	if err != nil {
 		log.WithError(err).Error("failed to parse .gitpod.yml")
 	}
@@ -95,10 +108,32 @@ func main() {
 		log.WithError(err).Error("failed to configure vmoptions")
 	}
 
+	qualifier := os.Getenv("JETBRAINS_BACKEND_QUALIFIER")
+	if qualifier == "stable" {
+		qualifier = ""
+	} else {
+		qualifier = "-" + qualifier
+	}
+	configDir := fmt.Sprintf("/workspace/.config/JetBrains%s", qualifier)
+	launchCtx := &LaunchContext{
+		alias:            alias,
+		wsInfo:           wsInfo,
+		projectDir:       projectDir,
+		configDir:        configDir,
+		systemDir:        fmt.Sprintf("/workspace/.cache/JetBrains%s", qualifier),
+		projectConfigDir: fmt.Sprintf("%s/RemoteDev-%s/%s", configDir, info.ProductCode, strings.ReplaceAll(projectDir, "/", "_")),
+	}
+
+	// sync initial options
+	err = syncOptions(launchCtx)
+	if err != nil {
+		log.WithError(err).Error("failed to sync initial options")
+	}
+
 	// install project plugins
 	version_2022_1, _ := version.NewVersion("2022.1")
 	if version_2022_1.LessThanOrEqual(backendVersion) {
-		err = installPlugins(repoRoot, gitpodConfig, alias)
+		err = installPlugins(gitpodConfig, launchCtx)
 		installPluginsCost := time.Now().Local().Sub(startTime).Milliseconds()
 		if err != nil {
 			log.WithError(err).WithField("cost", installPluginsCost).Error("installing repo plugins: done")
@@ -112,7 +147,7 @@ func main() {
 	if err != nil {
 		log.WithError(err).Error("failed to install gitpod-remote plugin")
 	}
-	go run(wsInfo, alias)
+	go run(launchCtx)
 
 	debugAgentPrefix := "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:"
 	http.HandleFunc("/debug", func(w http.ResponseWriter, r *http.Request) {
@@ -324,13 +359,13 @@ func resolveWorkspaceInfo(ctx context.Context) (*supervisor.WorkspaceInfoRespons
 	return nil, errors.New("failed with attempt 10 times")
 }
 
-func run(wsInfo *supervisor.WorkspaceInfoResponse, alias string) {
+func run(launchCtx *LaunchContext) {
 	var args []string
 	args = append(args, "run")
-	args = append(args, wsInfo.GetCheckoutLocation())
-	cmd := remoteDevServerCmd(args)
-	cmd.Env = append(cmd.Env, "JETBRAINS_GITPOD_BACKEND_KIND="+alias)
-	workspaceUrl, err := url.Parse(wsInfo.WorkspaceUrl)
+	args = append(args, launchCtx.projectDir)
+	cmd := remoteDevServerCmd(args, launchCtx)
+	cmd.Env = append(cmd.Env, "JETBRAINS_GITPOD_BACKEND_KIND="+launchCtx.alias)
+	workspaceUrl, err := url.Parse(launchCtx.wsInfo.WorkspaceUrl)
 	if err == nil {
 		cmd.Env = append(cmd.Env, "JETBRAINS_GITPOD_WORKSPACE_HOST="+workspaceUrl.Hostname())
 	}
@@ -342,7 +377,7 @@ func run(wsInfo *supervisor.WorkspaceInfoResponse, alias string) {
 	}
 
 	// Nicely handle SIGTERM sinal
-	go handleSignal(wsInfo.GetCheckoutLocation())
+	go handleSignal()
 
 	if err := cmd.Wait(); err != nil {
 		log.WithError(err).Error("failed to wait")
@@ -351,20 +386,14 @@ func run(wsInfo *supervisor.WorkspaceInfoResponse, alias string) {
 	os.Exit(cmd.ProcessState.ExitCode())
 }
 
-func remoteDevServerCmd(args []string) *exec.Cmd {
+func remoteDevServerCmd(args []string, productContext *LaunchContext) *exec.Cmd {
 	cmd := exec.Command(BackendPath+"/bin/remote-dev-server.sh", args...)
 	cmd.Env = os.Environ()
 
 	// Set default config and system directories under /workspace to preserve between restarts
-	qualifier := os.Getenv("JETBRAINS_BACKEND_QUALIFIER")
-	if qualifier == "stable" {
-		qualifier = ""
-	} else {
-		qualifier = "-" + qualifier
-	}
 	cmd.Env = append(cmd.Env,
-		fmt.Sprintf("IJ_HOST_CONFIG_BASE_DIR=/workspace/.config/JetBrains%s", qualifier),
-		fmt.Sprintf("IJ_HOST_SYSTEM_BASE_DIR=/workspace/.cache/JetBrains%s", qualifier),
+		fmt.Sprintf("IJ_HOST_CONFIG_BASE_DIR=%s", productContext.configDir),
+		fmt.Sprintf("IJ_HOST_SYSTEM_BASE_DIR=%s", productContext.systemDir),
 	)
 
 	cmd.Stderr = os.Stderr
@@ -372,7 +401,7 @@ func remoteDevServerCmd(args []string) *exec.Cmd {
 	return cmd
 }
 
-func handleSignal(projectPath string) {
+func handleSignal() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
@@ -488,10 +517,11 @@ func updateVMOptions(
 	}
 */
 type ProductInfo struct {
-	Version string `json:"version"`
+	Version     string `json:"version"`
+	ProductCode string `json:"productCode"`
 }
 
-func resolveBackendVersion() (*version.Version, error) {
+func resolveProductInfo() (*ProductInfo, error) {
 	f, err := os.Open(ProductInfoPath)
 	if err != nil {
 		return nil, err
@@ -504,52 +534,80 @@ func resolveBackendVersion() (*version.Version, error) {
 
 	var info ProductInfo
 	err = json.Unmarshal(content, &info)
-	if err != nil {
-		return nil, err
-	}
-	return version.NewVersion(info.Version)
+	return &info, err
 }
 
-func installPlugins(repoRoot string, config *gitpod.GitpodConfig, alias string) error {
-	plugins, err := getPlugins(config, alias)
+func syncOptions(launchCtx *LaunchContext) error {
+	userHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+	var srcDirs []string
+	for _, srcDir := range []string{
+		fmt.Sprintf("%s/.gitpod/jetbrains/options", userHomeDir),
+		fmt.Sprintf("%s/.gitpod/jetbrains/%s/options", userHomeDir, launchCtx.alias),
+		fmt.Sprintf("%s/.gitpod/jetbrains/options", launchCtx.projectDir),
+		fmt.Sprintf("%s/.gitpod/jetbrains/%s/options", launchCtx.projectDir, launchCtx.alias),
+	} {
+		srcStat, err := os.Stat(srcDir)
+		if os.IsNotExist(err) {
+			// nothing to sync
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		if !srcStat.IsDir() {
+			return fmt.Errorf("%s is not a directory", srcDir)
+		}
+		srcDirs = append(srcDirs, srcDir)
+	}
+	if len(srcDirs) == 0 {
+		// nothing to sync
+		return nil
+	}
+
+	destDir := fmt.Sprintf("%s/options", launchCtx.projectConfigDir)
+	_, err = os.Stat(destDir)
+	if !os.IsNotExist(err) {
+		// already synced skipping, i.e. restart of jb backend
+		return nil
+	}
+	err = os.MkdirAll(destDir, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	for _, srcDir := range srcDirs {
+		cp := exec.Command("cp", "-rf", srcDir+"/.", destDir)
+		err = cp.Run()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func installPlugins(config *gitpod.GitpodConfig, launchCtx *LaunchContext) error {
+	plugins, err := getPlugins(config, launchCtx.alias)
 	if err != nil {
 		return err
 	}
 	if len(plugins) <= 0 {
 		return nil
 	}
-	r, w, err := os.Pipe()
-	if err != nil {
-		return err
-	}
-	defer r.Close()
-
-	outC := make(chan string)
-	go func() {
-		var buf bytes.Buffer
-		_, _ = io.Copy(&buf, r)
-		outC <- buf.String()
-	}()
 
 	var args []string
 	args = append(args, "installPlugins")
-	args = append(args, repoRoot)
+	args = append(args, launchCtx.projectDir)
 	args = append(args, plugins...)
-	cmd := remoteDevServerCmd(args)
-	cmd.Stdout = io.MultiWriter(w, os.Stdout)
+	cmd := remoteDevServerCmd(args, launchCtx)
 	installErr := cmd.Run()
 
 	// delete alien_plugins.txt to suppress 3rd-party plugins consent on startup to workaround backend startup freeze
-	w.Close()
-	out := <-outC
-	configR := regexp.MustCompile("IDE config directory: (\\S+)\n")
-	matches := configR.FindStringSubmatch(out)
-	if len(matches) == 2 {
-		configDir := matches[1]
-		err := os.Remove(configDir + "/alien_plugins.txt")
-		if err != nil {
-			log.WithError(err).Error("failed to suppress 3rd-party plugins consent")
-		}
+	err = os.Remove(launchCtx.projectConfigDir + "/alien_plugins.txt")
+	if err != nil {
+		log.WithError(err).Error("failed to suppress 3rd-party plugins consent")
 	}
 
 	if installErr != nil {
