@@ -117,3 +117,4 @@
 #
 /CHANGELOG.md
 /components/ide/jetbrains/backend-plugin/gradle-latest.properties
+/components/ide/jetbrains/gateway-plugin/gradle-latest.properties
