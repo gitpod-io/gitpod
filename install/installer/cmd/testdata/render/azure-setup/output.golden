@@ -4660,7 +4660,10 @@ data:
           "description": "Default workspace class",
           "powerups": 1,
           "isDefault": true,
-          "deprecated": false
+          "deprecated": false,
+          "credits": {
+            "perMinute": 0
+          }
         }
       ],
       "inactivityPeriodForReposInDays": 0
@@ -8956,7 +8959,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 618db8c457548e940ad053974cfe8b16b6702bd63f5e7c79a3d58178570e1b39
+        gitpod.io/checksum_config: 2f1bf76b8b2d8b183a82740dd9ab4021b9c803b7c7226a40746fff3951fce7fe
       creationTimestamp: null
       labels:
         app: gitpod
