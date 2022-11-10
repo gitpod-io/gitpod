@@ -16,6 +16,8 @@ import {
 import {
     DeleteWorkspaceRequest,
     DeleteWorkspaceResponse,
+    WorkspaceDownloadURLRequest,
+    WorkspaceDownloadURLResponse,
     WorkspaceSnapshotExistsRequest,
     WorkspaceSnapshotExistsResponse,
 } from "@gitpod/content-service/lib/workspace_pb";
@@ -73,6 +75,24 @@ export class ContentServiceStorageClient implements StorageClient {
                 }
             });
         });
+    }
+
+    public async createWorkspaceContentDownloadUrl(ownerId: string, workspaceId: string): Promise<string> {
+        const request = new WorkspaceDownloadURLRequest();
+        request.setOwnerId(ownerId);
+        request.setWorkspaceId(workspaceId);
+
+        const response = await new Promise<WorkspaceDownloadURLResponse>((resolve, reject) => {
+            const client = this.workspaceServiceClientProvider.getDefault();
+            client.workspaceDownloadURL(request, (err: any, resp: WorkspaceDownloadURLResponse) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(resp);
+                }
+            });
+        });
+        return response.toObject().url;
     }
 
     public async createPluginUploadUrl(bucket: string, objectPath: string): Promise<string> {
