@@ -69,6 +69,7 @@ jobs:
                   sed -i 's/platformVersion=${{ steps.current-version.outputs.result }}/platformVersion=${{ steps.latest-version.outputs.result }}/' ${{ inputs.gradlePropertiesPath }}
                   git diff
             - name: Create Pull Request for Gateway Plugin
+              id: create-gateway-pr
               if: ${{ inputs.pluginId == 'gateway-plugin' && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
               uses: peter-evans/create-pull-request@v4
               with:
@@ -100,8 +101,13 @@ jobs:
                   token: ${{ secrets.roboquatRepoPat }}
                   committer: Robo Quat <roboquat@gitpod.io>
                   author: Robo Quat <roboquat@gitpod.io>
+            - name: Approve Pull Request for Gateway Plugin
+              if: ${{ steps.create-gateway-pr.outputs.pull-request-number }}
+              uses: hmarr/auto-approve-action@v3
+              with:
+                  pull-request-number: ${{ steps.create-gateway-pr.outputs.pull-request-number }}
             - name: Create Pull Request for Backend Plugin
-              id: create-pr
+              id: create-backend-pr
               if: ${{ inputs.pluginId == 'backend-plugin' && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
               uses: peter-evans/create-pull-request@v4
               with:
@@ -135,11 +141,11 @@ jobs:
                   token: ${{ secrets.roboquatRepoPat }}
                   committer: Robo Quat <roboquat@gitpod.io>
                   author: Robo Quat <roboquat@gitpod.io>
-            - name: Auto Approve Pull Request
-              if: ${{ steps.create-pr.outputs.pull-request-number }}
+            - name: Approve Pull Request for Backend Plugin
+              if: ${{ steps.create-backend-pr.outputs.pull-request-number }}
               uses: hmarr/auto-approve-action@v3
               with:
-                  pull-request-number: ${{ steps.create-pr.outputs.pull-request-number }}
+                  pull-request-number: ${{ steps.create-backend-pr.outputs.pull-request-number }}
             - name: Get previous job's status
               id: lastrun
               uses: filiptronicek/get-last-job-status@main
