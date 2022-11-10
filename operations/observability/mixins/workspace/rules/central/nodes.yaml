@@ -1,0 +1,56 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: workspace-nodes-monitoring-rules
+spec:
+  groups:
+  - name: workspace-nodes-rules
+    rules:
+    - record: nodepool:node_load1:normalized
+      expr:
+        |
+          node_load1 * on(node) group_left(nodepool) kube_node_labels
+          /
+          count without (cpu) (
+            count without (mode) (
+              node_cpu_seconds_total * on(node) group_left(nodepool) kube_node_labels
+            )
+          )
+  - name: workspace-nodes-alerts
+    rules:
+    - alert: GitpodWorkspaceNodeHighNormalizedLoadAverage
+      labels:
+        severity: warning
+        team: workspace
+      for: 20m
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceNodeHighNormalizedLoadAverage.md
+        summary: Workspace node's normalized load average is higher than 10 for more than 20 minutes. Check for abuse.
+        description: Node {{ $labels.node }} in {{ $labels.cluster }} is reporting {{ printf "%.2f" $value }}% normalized load average. Normalized load average is current load average divided by number of CPU cores of the node.
+      expr: nodepool:node_load1:normalized{nodepool=~".*workspace.*", cluster!~"ephemeral.*"} > 10
+
+    - alert: AutoscalerAddsNodesTooFast
+      labels:
+        severity: critical
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/AutoscalerAddsNodesTooFast.md
+        summary: Autoscaler is adding new nodes rapidly
+        description: Autoscaler in cluster {{ $labels.cluster }} is rapidly adding new nodes.
+      expr: ((sum(kube_node_labels{nodepool=~"workspace-.*", cluster!~"ephemeral.*"}) by (cluster)) - (sum(kube_node_labels{nodepool=~"workspace-.*", cluster!~"ephemeral.*"} offset 10m) by (cluster))) > 15
+
+    - alert: AutoscaleFailure
+      labels:
+        severity: critical
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/AutoscaleFailure.md
+        summary: Automatic scale-up failed for some reason.
+        description: Automatic scale-up in cluster {{ $labels.cluster }} failed for some reason.
+      expr: |
+        increase(cluster_autoscaler_failed_scale_ups_total{cluster!~"ephemeral.*"}[1m]) != 0

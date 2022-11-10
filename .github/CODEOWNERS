@@ -29,6 +29,7 @@
 /components/image-builder-mk3 @gitpod-io/engineering-workspace
 /components/installation-telemetry @gitpod-io/engineering-delivery-operations-experience
 /components/kots-config-check @gitpod-io/engineering-delivery-operations-experience
+/components/toxic-config @gitpod-io/engineering-webapp
 /install @gitpod-io/engineering-delivery-operations-experience
 /install/installer @gitpod-io/engineering-delivery-operations-experience
 # For testdata a single review from anyone who is allowed to review PRs is sufficent.
@@ -50,6 +51,7 @@
 /install/installer/pkg/components/server @gitpod-io/engineering-webapp
 /install/installer/pkg/components/server/ide @gitpod-io/engineering-ide
 /install/installer/pkg/components/usage @gitpod-io/engineering-webapp
+/install/installer/pkg/components/toxiproxy @gitpod-io/engineering-webapp
 /install/installer/pkg/components/usage-api @gitpod-io/engineering-webapp
 /install/installer/pkg/components/workspace @gitpod-io/engineering-workspace
 /install/installer/pkg/components/workspace/ide @gitpod-io/engineering-ide
@@ -88,6 +90,7 @@
 /dev/loadgen @gitpod-io/engineering-workspace
 /dev/preview @gitpod-io/devx
 /operations/observability/mixins @gitpod-io/engineering-delivery-operations-experience
+/operations/observability/mixins/platform @gitpod-io/devx
 /operations/observability/mixins/IDE @gitpod-io/engineering-ide
 /operations/observability/mixins/meta @gitpod-io/engineering-webapp
 /operations/observability/mixins/workspace @gitpod-io/engineering-workspace
@@ -113,3 +116,4 @@
 # that user as an owner in case we need to manually approve changes
 #
 /CHANGELOG.md
+/components/ide/jetbrains/backend-plugin/gradle-latest.properties

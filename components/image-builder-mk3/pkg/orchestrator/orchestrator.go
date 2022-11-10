@@ -151,7 +151,7 @@ func (o *Orchestrator) ResolveBaseImage(ctx context.Context, req *protocol.Resol
 
 	reqs, _ := protojson.Marshal(req)
 	safeReqs, _ := log.RedactJSON(reqs)
-	log.WithField("req", safeReqs).Debug("ResolveBaseImage")
+	log.WithField("req", string(safeReqs)).Debug("ResolveBaseImage")
 
 	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
 
@@ -173,7 +173,7 @@ func (o *Orchestrator) ResolveWorkspaceImage(ctx context.Context, req *protocol.
 
 	reqs, _ := protojson.Marshal(req)
 	safeReqs, _ := log.RedactJSON(reqs)
-	log.WithField("req", safeReqs).Debug("ResolveWorkspaceImage")
+	log.WithField("req", string(safeReqs)).Debug("ResolveWorkspaceImage")
 
 	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
 	baseref, err := o.getBaseImageRef(ctx, req.Source, reqauth)
@@ -267,6 +267,8 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		}
 		return nil
 	}
+
+	o.metrics.BuildStarted()
 
 	// Once a build is running we don't want it cancelled becuase the server disconnected i.e. during deployment.
 	// Instead we want to impose our own timeout/lifecycle on the build. Using context.WithTimeout does not shadow its parent's
@@ -436,6 +438,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		if update.Status == protocol.BuildStatus_done_failure || update.Status == protocol.BuildStatus_done_success {
 			// build is done
 			o.clearListener(buildID)
+			o.metrics.BuildDone(update.Status == protocol.BuildStatus_done_success)
 			break
 		}
 	}

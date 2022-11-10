@@ -9,12 +9,12 @@ require (
 	github.com/gitpod-io/gitpod/agent-smith v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/blobserve v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ide-metrics-api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ide-service-api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/image-builder/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/openvsx-proxy v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/public-api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/registry-facade/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/usage v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-daemon v0.0.0-00010101000000-000000000000
@@ -341,7 +341,7 @@ replace github.com/gitpod-io/gitpod/image-builder/api => ../../components/image-
 
 replace github.com/gitpod-io/gitpod/openvsx-proxy => ../../components/openvsx-proxy // leeway
 
-replace github.com/gitpod-io/gitpod/public-api => ../../components/public-api/go // leeway
+replace github.com/gitpod-io/gitpod/components/public-api/go => ../../components/public-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/registry-facade => ../../components/registry-facade // leeway
 

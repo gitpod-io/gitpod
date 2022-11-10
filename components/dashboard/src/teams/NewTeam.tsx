@@ -8,23 +8,39 @@ import { FormEvent, useContext, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { getGitpodService } from "../service/service";
 import { TeamsContext } from "./teams-context";
+import { publicApiTeamsToProtocol, publicApiTeamToProtocol, teamsService } from "../service/public-api";
+import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
+import { ConnectError } from "@bufbuild/connect-web";
 
 export default function () {
     const { setTeams } = useContext(TeamsContext);
+    const { usePublicApiTeamsService } = useContext(FeatureFlagContext);
+
     const history = useHistory();
 
     const [creationError, setCreationError] = useState<Error>();
     let name = "";
     const createTeam = async (event: FormEvent) => {
         event.preventDefault();
+
         try {
-            const team = await getGitpodService().server.createTeam(name);
-            const teams = await getGitpodService().server.getTeams();
+            const team = usePublicApiTeamsService
+                ? publicApiTeamToProtocol((await teamsService.createTeam({ name })).team!)
+                : await getGitpodService().server.createTeam(name);
+
+            const teams = usePublicApiTeamsService
+                ? publicApiTeamsToProtocol((await teamsService.listTeams({})).teams)
+                : await getGitpodService().server.getTeams();
+
             setTeams(teams);
             history.push(`/t/${team.slug}`);
         } catch (error) {
             console.error(error);
-            setCreationError(error);
+            if (error instanceof ConnectError) {
+                setCreationError(new Error(error.rawMessage));
+            } else {
+                setCreationError(error);
+            }
         }
     };
 

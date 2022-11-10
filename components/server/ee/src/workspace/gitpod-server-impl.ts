@@ -28,7 +28,6 @@ import {
     WorkspaceTimeoutValues,
     SetWorkspaceTimeoutResult,
     WorkspaceContext,
-    CreateWorkspaceMode,
     WorkspaceCreationResult,
     PrebuiltWorkspaceContext,
     CommitContext,
@@ -116,12 +115,16 @@ import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billin
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { BillingModes } from "../billing/billing-mode";
 import { UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
+import { IncrementalPrebuildsService } from "../prebuilds/incremental-prebuilds-service";
+import { ConfigProvider } from "../../../src/workspace/config-provider";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
+    @inject(IncrementalPrebuildsService) protected readonly incrementalPrebuildsService: IncrementalPrebuildsService;
+    @inject(ConfigProvider) protected readonly configProvider: ConfigProvider;
     @inject(LicenseDB) protected readonly licenseDB: LicenseDB;
     @inject(LicenseKeySource) protected readonly licenseKeySource: LicenseKeySource;
 
@@ -384,7 +387,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "update");
 
         // if any other running instance has a custom timeout other than the user's default, we'll reset that timeout
-        const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
+        const client = await this.workspaceManagerClientProvider.get(
+            runningInstance.region,
+            this.config.installationShortname,
+        );
         const defaultTimeout = await this.entitlementService.getDefaultWorkspaceTimeout(user, new Date());
         const instancesWithReset = runningInstances.filter(
             (i) => i.workspaceId !== workspaceId && i.status.timeout !== defaultTimeout && i.status.phase === "running",
@@ -395,7 +401,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 req.setId(i.id);
                 req.setDuration(this.userService.workspaceTimeoutToDuration(defaultTimeout));
 
-                const client = await this.workspaceManagerClientProvider.get(i.region);
+                const client = await this.workspaceManagerClientProvider.get(
+                    i.region,
+                    this.config.installationShortname,
+                );
                 return client.setTimeout(ctx, req);
             }),
         );
@@ -433,7 +442,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const req = new DescribeWorkspaceRequest();
         req.setId(runningInstance.id);
 
-        const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
+        const client = await this.workspaceManagerClientProvider.get(
+            runningInstance.region,
+            this.config.installationShortname,
+        );
         const desc = await client.describeWorkspace(ctx, req);
         const duration = this.userService.durationToWorkspaceTimeout(desc.getStatus()!.getSpec()!.getTimeout());
         const durationRaw = this.userService.workspaceTimeoutToDuration(duration);
@@ -488,7 +500,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             req.setId(instance.id);
             req.setLevel(lvlmap.get(level)!);
 
-            const client = await this.workspaceManagerClientProvider.get(instance.region);
+            const client = await this.workspaceManagerClientProvider.get(
+                instance.region,
+                this.config.installationShortname,
+            );
             await client.controlAdmission(ctx, req);
         }
 
@@ -514,7 +529,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
         await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "get");
 
-        const client = await this.workspaceManagerClientProvider.get(instance.region);
+        const client = await this.workspaceManagerClientProvider.get(
+            instance.region,
+            this.config.installationShortname,
+        );
         const request = new TakeSnapshotRequest();
         request.setId(instance.id);
         request.setReturnImmediately(true);
@@ -957,7 +975,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         parentCtx: TraceContext,
         user: User,
         context: WorkspaceContext,
-        mode: CreateWorkspaceMode,
+        ignoreRunningPrebuild?: boolean,
+        allowUsingPreviousPrebuilds?: boolean,
     ): Promise<WorkspaceCreationResult | PrebuiltWorkspaceContext | undefined> {
         const ctx = TraceContext.childContext("findPrebuiltWorkspace", parentCtx);
         try {
@@ -970,20 +989,39 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             const logCtx: LogContext = { userId: user.id };
             const cloneUrl = context.repository.cloneUrl;
             let prebuiltWorkspace: PrebuiltWorkspace | undefined;
+            const logPayload = {
+                allowUsingPreviousPrebuilds,
+                ignoreRunningPrebuild,
+                cloneUrl,
+                commit: commitSHAs,
+                prebuiltWorkspace,
+            };
             if (OpenPrebuildContext.is(context)) {
                 prebuiltWorkspace = await this.workspaceDb.trace(ctx).findPrebuildByID(context.openPrebuildID);
-                if (prebuiltWorkspace?.cloneURL !== cloneUrl) {
+                if (
+                    prebuiltWorkspace?.cloneURL !== cloneUrl &&
+                    (ignoreRunningPrebuild || prebuiltWorkspace?.state === "available")
+                ) {
                     // prevent users from opening arbitrary prebuilds this way - they must match the clone URL so that the resource guards are correct.
                     return;
                 }
             } else {
-                prebuiltWorkspace = await this.workspaceDb
-                    .trace(ctx)
-                    .findPrebuiltWorkspaceByCommit(cloneUrl, commitSHAs);
+                log.debug(logCtx, "Looking for prebuilt workspace: ", logPayload);
+                if (!allowUsingPreviousPrebuilds) {
+                    prebuiltWorkspace = await this.workspaceDb
+                        .trace(ctx)
+                        .findPrebuiltWorkspaceByCommit(cloneUrl, commitSHAs);
+                } else {
+                    const { config } = await this.configProvider.fetchConfig({}, user, context);
+                    const history = await this.incrementalPrebuildsService.getCommitHistoryForContext(context, user);
+                    prebuiltWorkspace = await this.incrementalPrebuildsService.findGoodBaseForIncrementalBuild(
+                        context,
+                        config,
+                        history,
+                        user,
+                    );
+                }
             }
-
-            const logPayload = { mode, cloneUrl, commit: commitSHAs, prebuiltWorkspace };
-            log.debug(logCtx, "Looking for prebuilt workspace: ", logPayload);
             if (!prebuiltWorkspace) {
                 return;
             }
@@ -997,13 +1035,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 };
                 return result;
             } else if (prebuiltWorkspace.state === "queued" || prebuiltWorkspace.state === "building") {
-                if (mode === CreateWorkspaceMode.ForceNew) {
+                if (ignoreRunningPrebuild) {
                     // in force mode we ignore running prebuilds as we want to start a workspace as quickly as we can.
                     return;
-                    // TODO(janx): Fall back to parent prebuild instead, if it's available:
-                    //   const buildWorkspace = await this.workspaceDb.trace({span}).findById(prebuiltWorkspace.buildWorkspaceId);
-                    //   const parentPrebuild = await this.workspaceDb.trace({span}).findPrebuildByID(buildWorkspace.basedOnPrebuildId);
-                    // Also, make sure to initialize it by both printing the parent prebuild logs AND re-runnnig the before/init/prebuild tasks.
                 }
 
                 const workspaceID = prebuiltWorkspace.buildWorkspaceId;
@@ -1068,36 +1102,34 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
                 const inSameCluster = wsi.region === this.config.installationShortname;
                 if (!inSameCluster) {
-                    if (mode === CreateWorkspaceMode.UsePrebuild) {
-                        /* We need to wait for this prebuild to finish before we return from here.
-                         * This creation mode is meant to be used once we have gone through default mode, have confirmation from the
-                         * message bus that the prebuild is done, and now only have to wait for dbsync to come through. Thus,
-                         * in this mode we'll poll the database until the prebuild is ready (or we time out).
-                         *
-                         * Note: This polling mechanism only makes sense if the prebuild runs in cluster different from ours.
-                         *       Otherwise there's no dbsync inbetween that we might have to wait for.
-                         *
-                         * DB sync interval is 2 seconds at the moment, we wait ten "ticks" for the data to be synchronized.
-                         */
-                        const finishedPrebuiltWorkspace = await this.pollDatabaseUntilPrebuildIsAvailable(
-                            ctx,
-                            prebuiltWorkspace.id,
-                            20000,
+                    /* We need to wait for this prebuild to finish before we return from here.
+                     * This creation mode is meant to be used once we have gone through default mode, have confirmation from the
+                     * message bus that the prebuild is done, and now only have to wait for dbsync to come through. Thus,
+                     * in this mode we'll poll the database until the prebuild is ready (or we time out).
+                     *
+                     * Note: This polling mechanism only makes sense if the prebuild runs in cluster different from ours.
+                     *       Otherwise there's no dbsync inbetween that we might have to wait for.
+                     *
+                     * DB sync interval is 2 seconds at the moment, we wait ten "ticks" for the data to be synchronized.
+                     */
+                    const finishedPrebuiltWorkspace = await this.pollDatabaseUntilPrebuildIsAvailable(
+                        ctx,
+                        prebuiltWorkspace.id,
+                        20000,
+                    );
+                    if (!finishedPrebuiltWorkspace) {
+                        log.warn(
+                            logCtx,
+                            "did not find a finished prebuild in the database despite waiting long enough after msgbus confirmed that the prebuild had finished",
+                            logPayload,
                         );
-                        if (!finishedPrebuiltWorkspace) {
-                            log.warn(
-                                logCtx,
-                                "did not find a finished prebuild in the database despite waiting long enough after msgbus confirmed that the prebuild had finished",
-                                logPayload,
-                            );
-                            return;
-                        } else {
-                            return {
-                                title: context.title,
-                                originalContext: context,
-                                prebuiltWorkspace: finishedPrebuiltWorkspace,
-                            } as PrebuiltWorkspaceContext;
-                        }
+                        return;
+                    } else {
+                        return {
+                            title: context.title,
+                            originalContext: context,
+                            prebuiltWorkspace: finishedPrebuiltWorkspace,
+                        } as PrebuiltWorkspaceContext;
                     }
                 }
 
@@ -2112,48 +2144,20 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const billingEmail = User.getPrimaryEmail(user);
         const billingName = attrId.kind === "team" ? team!.name : User.getName(user);
-
-        const isCreateStripeCustomerOnUsageEnabled = await getExperimentsClientForBackend().getValueAsync(
-            "createStripeCustomersOnUsage",
-            false,
-            {
-                user: user,
-                teamId: team ? team.id : undefined,
-            },
-        );
-        if (isCreateStripeCustomerOnUsageEnabled) {
-            try {
-                try {
-                    // customer already exists, we don't need to create a new one.
-                    await this.billingService.getStripeCustomer({ attributionId });
-                    return;
-                } catch (e) {}
-
-                await this.billingService.createStripeCustomer({
-                    attributionId,
-                    currency,
-                    email: billingEmail,
-                    name: billingName,
-                });
-                return;
-            } catch (error) {
-                log.error(`Failed to create Stripe customer profile for '${attributionId}'`, error);
-                throw new ResponseError(
-                    ErrorCodes.INTERNAL_SERVER_ERROR,
-                    `Failed to create Stripe customer profile for '${attributionId}'`,
-                );
-            }
-        }
-
         try {
-            if (!(await this.stripeService.findCustomerByAttributionId(attributionId))) {
-                await this.stripeService.createCustomerForAttributionId(
-                    attributionId,
-                    currency,
-                    billingEmail,
-                    billingName,
-                );
-            }
+            try {
+                // customer already exists, we don't need to create a new one.
+                await this.billingService.getStripeCustomer({ attributionId });
+                return;
+            } catch (e) {}
+
+            await this.billingService.createStripeCustomer({
+                attributionId,
+                currency,
+                email: billingEmail,
+                name: billingName,
+            });
+            return;
         } catch (error) {
             log.error(`Failed to create Stripe customer profile for '${attributionId}'`, error);
             throw new ResponseError(
@@ -2177,9 +2181,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const user = this.checkAndBlockUser("subscribeToStripe");
 
+        let team: Team | undefined;
         try {
             if (attrId.kind === "team") {
-                const team = await this.guardTeamOperation(attrId.teamId, "update");
+                team = await this.guardTeamOperation(attrId.teamId, "update");
                 await this.ensureStripeApiIsAllowed({ team });
             } else {
                 await this.ensureStripeApiIsAllowed({ user });
@@ -2189,8 +2194,21 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 throw new Error(`No Stripe customer profile for '${attributionId}'`);
             }
 
-            await this.stripeService.setDefaultPaymentMethodForCustomer(customerId, setupIntentId);
-            await this.stripeService.createSubscriptionForCustomer(customerId, attributionId);
+            const createStripeSubscriptionOnUsage = await getExperimentsClientForBackend().getValueAsync(
+                "createStripeSubscriptionOnUsage",
+                false,
+                {
+                    user: user,
+                    teamId: team ? team.id : undefined,
+                },
+            );
+
+            if (createStripeSubscriptionOnUsage) {
+                await this.billingService.createStripeSubscription({ attributionId, setupIntentId, usageLimit });
+            } else {
+                await this.stripeService.setDefaultPaymentMethodForCustomer(customerId, setupIntentId);
+                await this.stripeService.createSubscriptionForCustomer(customerId, attributionId);
+            }
 
             // Creating a cost center for this customer
             const { costCenter } = await this.usageService.setCostCenter({
@@ -2635,10 +2653,16 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const context = (await this.contextParser.handle(ctx, user, contextURL)) as CommitContext;
 
+        // HACK: treat manual triggered prebuild as a reset for the inactivity state
+        await this.projectDB.updateProjectUsage(project.id, {
+            lastWorkspaceStart: new Date().toISOString(),
+        });
+
         const prebuild = await this.prebuildManager.startPrebuild(ctx, {
             context,
             user,
             project,
+            forcePrebuild: true,
         });
 
         this.analytics.track({

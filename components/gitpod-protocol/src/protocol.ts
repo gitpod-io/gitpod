@@ -295,9 +295,9 @@ export type BillingTier = "paid" | "free";
 export const WorkspaceFeatureFlags = {
     full_workspace_backup: undefined,
     persistent_volume_claim: undefined,
-    protected_secrets: undefined,
     workspace_class_limiting: undefined,
     workspace_connection_limiting: undefined,
+    workspace_psi: undefined,
 };
 export type NamedWorkspaceFeatureFlag = keyof typeof WorkspaceFeatureFlags;
 export namespace NamedWorkspaceFeatureFlag {
@@ -657,6 +657,11 @@ export interface VolumeSnapshot {
     workspaceId: string;
     creationTime: string;
     volumeHandle: string;
+}
+
+export interface VolumeSnapshotWithWSType {
+    vs: VolumeSnapshot;
+    wsType: WorkspaceType;
 }
 
 export type SnapshotState = "pending" | "available" | "error";
@@ -1111,13 +1116,16 @@ export namespace SnapshotContext {
     }
 }
 
-export interface StartPrebuildContext extends WorkspaceContext {
-    actual: WorkspaceContext;
+export interface WithCommitHistory {
     commitHistory?: string[];
     additionalRepositoryCommitHistories?: {
         cloneUrl: string;
         commitHistory: string[];
     }[];
+}
+
+export interface StartPrebuildContext extends WorkspaceContext, WithCommitHistory {
+    actual: WorkspaceContext;
     project?: Project;
     branch?: string;
 }
@@ -1372,17 +1380,6 @@ export interface WorkspaceCreationResult {
     runningPrebuildWorkspaceID?: string;
 }
 export type RunningWorkspacePrebuildStarting = "queued" | "starting" | "running";
-
-export enum CreateWorkspaceMode {
-    // Default returns a running prebuild if there is any, otherwise creates a new workspace (using a prebuild if one is available)
-    Default = "default",
-    // ForceNew creates a new workspace irrespective of any running prebuilds. This mode is guaranteed to actually create a workspace - but may degrade user experience as currently runnig prebuilds are ignored.
-    ForceNew = "force-new",
-    // UsePrebuild polls the database waiting for a currently running prebuild to become available. This mode exists to handle the db-sync delay.
-    UsePrebuild = "use-prebuild",
-    // SelectIfRunning returns a list of currently running workspaces for the context URL if there are any, otherwise falls back to Default mode
-    SelectIfRunning = "select-if-running",
-}
 
 export namespace WorkspaceCreationResult {
     export function is(data: any): data is WorkspaceCreationResult {

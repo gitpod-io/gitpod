@@ -934,7 +934,9 @@ func (wbs *InWorkspaceServiceServer) WorkspaceInfo(ctx context.Context, req *api
 
 	resources, err := getWorkspaceResourceInfo(wbs.CGroupMountPoint, cgroupPath, unified)
 	if err != nil {
-		log.WithError(err).Error("could not get resource information")
+		if !errors.Is(err, os.ErrNotExist) {
+			log.WithError(err).Error("could not get resource information")
+		}
 		return nil, status.Error(codes.Unknown, err.Error())
 	}
 

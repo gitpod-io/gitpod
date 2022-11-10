@@ -12,7 +12,6 @@ import {
     WhitelistedRepository,
     WorkspaceImageBuild,
     AuthProviderInfo,
-    CreateWorkspaceMode,
     Token,
     UserEnvVarValue,
     Terms,
@@ -165,6 +164,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     deleteSSHPublicKey(id: string): Promise<void>;
 
     // Teams
+    getTeam(teamId: string): Promise<Team>;
     getTeams(): Promise<Team[]>;
     getTeamMembers(teamId: string): Promise<TeamMemberInfo[]>;
     createTeam(name: string): Promise<Team>;
@@ -173,7 +173,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     removeTeamMember(teamId: string, userId: string): Promise<void>;
     getGenericInvite(teamId: string): Promise<TeamMembershipInvite>;
     resetGenericInvite(inviteId: string): Promise<TeamMembershipInvite>;
-    deleteTeam(teamId: string, userId: string): Promise<void>;
+    deleteTeam(teamId: string): Promise<void>;
 
     // Admin Settings
     adminGetSettings(): Promise<InstallationAdminSettings>;
@@ -286,6 +286,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     listUsage(req: ListUsageRequest): Promise<ListUsageResponse>;
 
     setUsageAttribution(usageAttribution: string): Promise<void>;
+    listAvailableUsageAttributionIds(): Promise<string[]>;
 
     getBillingModeForUser(): Promise<BillingMode>;
     getBillingModeForTeam(teamId: string): Promise<BillingMode>;
@@ -420,7 +421,10 @@ export namespace GitpodServer {
     }
     export interface CreateWorkspaceOptions {
         contextUrl: string;
-        mode?: CreateWorkspaceMode;
+        // whether running workspaces on the same context should be ignored. If false (default) users will be asked.
+        ignoreRunningWorkspaceOnSameCommit?: boolean;
+        ignoreRunningPrebuild?: boolean;
+        allowUsingPreviousPrebuilds?: boolean;
         forceDefaultConfig?: boolean;
     }
     export interface StartWorkspaceOptions {

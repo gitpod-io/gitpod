@@ -93,7 +93,7 @@ func newMetrics(reg prometheus.Registerer, upstream bool) (*metrics, error) {
 	blobDownloadCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "blob_req_dl_total",
 		Help: "number of blob download requests",
-	}, []string{"blobSource"})
+	}, []string{"blobSource", "ok"})
 	err = reg.Register(blobDownloadCounter)
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func newMetrics(reg prometheus.Registerer, upstream bool) (*metrics, error) {
 
 	blobDownloadSizeCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "blob_req_bytes_total",
-		Help: "amount of blob byytes downloaded",
+		Help: "amount of blob bytes downloaded",
 	}, []string{"blobSource"})
 	err = reg.Register(blobDownloadSizeCounter)
 	if err != nil {
@@ -111,7 +111,7 @@ func newMetrics(reg prometheus.Registerer, upstream bool) (*metrics, error) {
 	blobDownloadSpeedHist := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "blob_req_bytes_second",
 		Help:    "blob download speed in bytes per second",
-		Buckets: prometheus.ExponentialBuckets(1024*1024, 2, 10),
+		Buckets: prometheus.ExponentialBuckets(1024*1024, 2, 15),
 	}, []string{"blobSource"})
 	if upstream {
 		err = reg.Register(blobDownloadSpeedHist)

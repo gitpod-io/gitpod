@@ -22,6 +22,7 @@ import { PrebuildStatusMaintainer } from "./prebuilds/prebuilt-status-maintainer
 import { GitLabApp } from "./prebuilds/gitlab-app";
 import { BitbucketApp } from "./prebuilds/bitbucket-app";
 import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
+import { IncrementalPrebuildsService } from "./prebuilds/incremental-prebuilds-service";
 import { IPrefixContextParser } from "../../src/workspace/context-parser";
 import { StartPrebuildContextParser } from "./prebuilds/start-prebuild-context-parser";
 import { WorkspaceFactory } from "../../src/workspace/workspace-factory";
@@ -64,6 +65,7 @@ import { BillingModes, BillingModesImpl } from "./billing/billing-mode";
 import { EntitlementServiceLicense } from "./billing/entitlement-service-license";
 import { EntitlementServiceImpl } from "./billing/entitlement-service";
 import { EntitlementServiceUBP } from "./billing/entitlement-service-ubp";
+import { UsageService, UsageServiceImpl, NoOpUsageService } from "../../src/user/usage-service";
 
 export const productionEEContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     rebind(Server).to(ServerEE).inSingletonScope();
@@ -83,6 +85,7 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(BitbucketAppSupport).toSelf().inSingletonScope();
     bind(GitHubEnterpriseApp).toSelf().inSingletonScope();
     bind(BitbucketServerApp).toSelf().inSingletonScope();
+    bind(IncrementalPrebuildsService).toSelf().inSingletonScope();
 
     bind(UserCounter).toSelf().inSingletonScope();
 
@@ -130,4 +133,15 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(EntitlementServiceImpl).toSelf().inSingletonScope();
     rebind(EntitlementService).to(EntitlementServiceImpl).inSingletonScope();
     bind(BillingModes).to(BillingModesImpl).inSingletonScope();
+
+    // TODO(gpl) Remove as part of fixing https://github.com/gitpod-io/gitpod/issues/14129
+    rebind(UsageService)
+        .toDynamicValue((ctx) => {
+            const config = ctx.container.get<Config>(Config);
+            if (config.enablePayment) {
+                return ctx.container.get<UsageServiceImpl>(UsageServiceImpl);
+            }
+            return new NoOpUsageService();
+        })
+        .inSingletonScope();
 });

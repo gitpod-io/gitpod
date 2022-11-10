@@ -66,6 +66,7 @@ packages:
       - components/server:docker
       - components/service-waiter:docker
       - components/supervisor:docker
+      - components/toxic-config:docker
       - components/installation-telemetry:docker
       - components/workspacekit:docker
       - components/ws-daemon:docker
@@ -119,6 +120,7 @@ packages:
       - components/service-waiter:app
       - components/supervisor:app
       - components/supervisor/frontend:app
+      - components/toxic-config:app
       - components/installation-telemetry:app
       - components/workspacekit:app
       - components/ws-daemon:app
@@ -269,9 +271,27 @@ scripts:
       - components/service-waiter:app
     script: |
       echo "$"
-      export DB_USERNAME=$(kubectl get secrets mysql -o jsonpath="{.data.username}" | base64 -d)
-      export DB_PASSWORD=$(kubectl get secrets mysql -o jsonpath="{.data.password}" | base64 -d)
-      kubectl port-forward statefulset/mysql 3306 &
+      export DB_USERNAME=$(\
+        kubectl \
+          --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+          --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+          --namespace "${PREVIEW_NAMESPACE}" \
+          get secrets mysql -o jsonpath="{.data.username}" \
+        | base64 -d \
+      )
+      export DB_PASSWORD=$(\
+        kubectl \
+          --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+          --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+          --namespace "${PREVIEW_NAMESPACE}" \
+          get secrets mysql -o jsonpath="{.data.password}" \
+        | base64 -d \
+      )
+      kubectl \
+        --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+        --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+        --namespace "${PREVIEW_NAMESPACE}" \
+        port-forward statefulset/mysql 3306 &
       PID=$!
       service-waiter database -t 20s
       if [ $? -ne 0 ]; then
@@ -283,7 +303,7 @@ scripts:
       query="insert into d_b_user(id,name,creationDate,rolesOrPermissions,additionalData) values('builtin-user-agent-smith-0000000', 'agent-smith', DATE_FORMAT(NOW(3), '%Y-%m-%dT%T.%fZ'),'[\"admin\"]','{\"emailNotificationSettings\": {\"allowsChangelogMail\": false, \"allowsOnboardingMail\": true}}') on duplicate key update id=id;"
       mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
 
-      query="insert into d_b_gitpod_token(tokenHash,name,type,userId,scopes,created,deleted) VALUES('$TOKEN','agent-smith',0,'builtin-user-agent-smith-0000000','function:adminBlockUser', '2021-03-16T10:28:57.608Z', false) on duplicate key update tokenHash=tokenHash;"
+      query="insert into d_b_gitpod_token(tokenHash,name,type,userId,scopes,created,deleted) VALUES('${TOKEN}','agent-smith',0,'builtin-user-agent-smith-0000000','function:adminBlockUser', '2021-03-16T10:28:57.608Z', false) on duplicate key update tokenHash=tokenHash;"
       mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
 
       kill $PID || true

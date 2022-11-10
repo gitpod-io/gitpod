@@ -29,8 +29,6 @@ Tracing.initialize()
         werft = new Werft("delete-preview-environment-cron");
     })
     .then(() => deletePreviewEnvironments())
-    .then(() => cleanLoadbalancer())
-    .then(() => removeOrphanCertificates())
     .catch((err) => {
         werft.rootSpan.setStatus({
             code: SpanStatusCode.ERROR,
@@ -226,93 +224,6 @@ async function removePreviewEnvironment(previewEnvironment: PreviewEnvironment) 
     } catch (e) {
         werft.failSlice(sliceID, e);
     }
-}
-
-async function removeOrphanCertificates() {
-    const certificatesNamespace = "certs";
-    werft.phase(SLICES.DELETING_ORPHAN_CERTIFICATES);
-
-    const certificates = exec(
-        `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} get certificates -n ${certificatesNamespace} -o=custom-columns=:metadata.name | grep harvester-`,
-        { slice: SLICES.DELETING_ORPHAN_CERTIFICATES, silent: true, async: false },
-    )
-        .stdout.trim()
-        .split("\n");
-
-    const previews = exec(
-        `kubectl --kubeconfig ${HARVESTER_KUBECONFIG_PATH} get ns -o=custom-columns=:metadata.name | grep preview-`,
-        { slice: SLICES.DELETING_ORPHAN_CERTIFICATES, silent: true, async: false },
-    )
-        .stdout.trim()
-        .replace(/preview-/g, "")
-        .split("\n");
-
-    certificates.forEach((certificate) => {
-        const owner = exec(
-            `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} get certificates ${certificate} -n ${certificatesNamespace} -o=custom-columns=:metadata.annotations.preview/owner`,
-            { slice: SLICES.DELETING_ORPHAN_CERTIFICATES, silent: true, async: false },
-        ).stdout.trim();
-
-        if (DRY_RUN) {
-            if (!previews.includes(owner)) {
-                werft.log(SLICES.DELETING_ORPHAN_CERTIFICATES, `Certificate ${certificate} would have been deleted`);
-            } else {
-                werft.log(
-                    SLICES.DELETING_ORPHAN_CERTIFICATES,
-                    `Certificate ${certificate} would NOT have been deleted`,
-                );
-            }
-        }
-
-        if (!previews.includes(owner) && !DRY_RUN) {
-            exec(
-                `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n ${certificatesNamespace} delete --ignore-not-found=true cert ${certificate}`,
-                { slice: SLICES.DELETING_ORPHAN_CERTIFICATES, async: true, silent: true },
-            );
-        }
-    });
-
-    werft.done(SLICES.DELETING_ORPHAN_CERTIFICATES);
-}
-
-async function cleanLoadbalancer() {
-    const fetchPhase = "fetching unuse loadbalancer";
-    const deletionPhase = "deleting unused load balancers";
-
-    werft.phase(fetchPhase);
-    let lbsToDelete: string[];
-    try {
-        // get all loadbalancer
-        let lbs: string[] = exec(
-            `kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} get deployment -n loadbalancers -o=jsonpath="{.items[*].metadata.labels['gitpod\\.io\\/lbName']}"`,
-            { silent: true },
-        )
-            .stdout.trim()
-            .split(" ");
-        let previews = exec(
-            `kubectl --kubeconfig ${HARVESTER_KUBECONFIG_PATH} get namespaces -o go-template --template '{{range .items}}{{.metadata.name}}{{"\\n"}}{{end}}' | awk '/(preview-.*)/ { print $1 }'`,
-            { silent: true },
-        )
-            .stdout.trim()
-            .split("\n");
-        let previewSet = new Set(previews);
-        lbsToDelete = lbs.filter((lb) => !previewSet.has("preview-" + lb));
-        lbsToDelete.forEach((lb) => werft.log(fetchPhase, "will delete " + lb));
-    } catch (err) {
-        werft.fail(fetchPhase, err);
-    }
-
-    werft.phase(deletionPhase);
-    try {
-        lbsToDelete.forEach((lb) => {
-            werft.log(deletionPhase, "deleteing " + lb);
-            exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n loadbalancers delete deployment lb-${lb}`);
-            exec(`kubectl --kubeconfig ${CORE_DEV_KUBECONFIG_PATH} -n loadbalancers delete service lb-${lb}`);
-        });
-    } catch (err) {
-        werft.fail(deletionPhase, err);
-    }
-    werft.done(deletionPhase);
 }
 
 function getAllBranches(): string[] {

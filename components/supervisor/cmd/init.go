@@ -84,7 +84,6 @@ var initCmd = &cobra.Command{
 				defer close(terminationDone)
 				slog.TerminateSync(ctx, runCommand.Process.Pid)
 				terminateAllProcesses(ctx, slog)
-				close(supervisorDone)
 			}()
 			// wait for either successful termination or the timeout
 			select {

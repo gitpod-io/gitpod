@@ -23,17 +23,16 @@ plugins {
 }
 
 group = properties("pluginGroup")
+val environmentName = properties("environmentName")
 var pluginVersion = properties("pluginVersion")
 
-val environmentName = properties("environmentName")
-if (!environmentName.isNullOrBlank()) {
-    pluginVersion += "-" + environmentName
+if (environmentName.isNotBlank()) {
+    pluginVersion += "-$environmentName"
 }
 
 project(":") {
     kotlin {
-        var excludedPackage = "stable"
-        if (environmentName == excludedPackage) excludedPackage = "latest"
+        val excludedPackage = if (environmentName == "latest") "stable" else "latest"
         sourceSets["main"].kotlin.exclude("io/gitpod/jetbrains/remote/${excludedPackage}/**")
     }
 

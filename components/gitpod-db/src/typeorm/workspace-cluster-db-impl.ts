@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Repository, EntityManager, DeepPartial } from "typeorm";
+import { Repository, EntityManager } from "typeorm";
 import { injectable, inject } from "inversify";
 import { TypeORM } from "./typeorm";
 import { WorkspaceClusterDB } from "../workspace-cluster-db";
@@ -32,17 +32,17 @@ export class WorkspaceClusterDBImpl implements WorkspaceClusterDB {
         await repo.save(cluster);
     }
 
-    async deleteByName(name: string): Promise<void> {
+    async deleteByName(name: string, applicationCluster: string): Promise<void> {
         const repo = await this.getRepo();
-        await repo.delete(name);
+        await repo.update({ name, applicationCluster }, { deleted: true });
     }
 
-    async findByName(name: string): Promise<WorkspaceCluster | undefined> {
+    async findByName(name: string, applicationCluster: string): Promise<WorkspaceCluster | undefined> {
         const repo = await this.getRepo();
-        return repo.findOne(name);
+        return repo.findOne({ name, applicationCluster, deleted: false });
     }
 
-    async findFiltered(predicate: DeepPartial<WorkspaceClusterFilter>): Promise<WorkspaceClusterWoTLS[]> {
+    async findFiltered(predicate: WorkspaceClusterFilter): Promise<WorkspaceClusterWoTLS[]> {
         const prototype: WorkspaceClusterWoTLS = {
             name: "",
             url: "",
@@ -58,7 +58,13 @@ export class WorkspaceClusterDBImpl implements WorkspaceClusterDB {
         let qb = repo
             .createQueryBuilder("wsc")
             .select(Object.keys(prototype).map((k) => `wsc.${k}`))
-            .where("TRUE = TRUE"); // make sure andWhere works
+            .where("wsc.deleted = 0");
+        if (predicate.name !== undefined) {
+            qb = qb.andWhere("wsc.name = :name", predicate);
+        }
+        if (predicate.applicationCluster !== undefined) {
+            qb = qb.andWhere("wsc.applicationCluster = :applicationCluster", predicate);
+        }
         if (predicate.state !== undefined) {
             qb = qb.andWhere("wsc.state = :state", predicate);
         }

@@ -86,6 +86,8 @@ version: "1.0.0"
 appVersion: "$(/app/installer version | yq e '.version' -)"
 EOF
 
+    echo "Gitpod: Installer version - $(/app/installer version | yq e '.version' -)"
+
     echo "Gitpod: Generate the base Installer config"
     /app/installer config init
 
@@ -160,6 +162,7 @@ EOF
             | base64 -d \
             > /tmp/currentconfig.json
 
+        echo "${REGISTRY_DOCKER_CONFIG_JSON}" > /tmp/userconfig.json
         echo "Gitpod: update the in-cluster registry secret"
         REGISTRY_SECRET="$(jq -s '.[0] * .[1]' /tmp/userconfig.json /tmp/currentconfig.json | base64 -w 0)"
         export REGISTRY_SECRET
@@ -174,6 +177,9 @@ EOF
     # If certificate secret already exists, set the timeout to 5m
     CERT_SECRET=$(kubectl get secrets -n "${NAMESPACE}" https-certificates -o jsonpath='{.metadata.name}' || echo '')
     HELM_TIMEOUT="5m"
+    if [ "${ADVANCED_MODE_ENABLED}" = "1" ]; then
+        HELM_TIMEOUT="${INSTALLER_TIMEOUT}"
+    fi
     if [ "${CERT_SECRET}" = "" ]; then
         HELM_TIMEOUT="1h"
     fi

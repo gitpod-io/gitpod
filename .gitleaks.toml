@@ -1,0 +1,4 @@
+[allowlist]
+    paths = [
+        '''^components/ws-manager/pkg/manager/testdata/.*\.(golden|json)$'''
+    ]

@@ -3,15 +3,15 @@ plugins:
   - name: go
     out: go
     opt:
-     - module=github.com/gitpod-io/gitpod/public-api
+     - module=github.com/gitpod-io/gitpod/components/public-api/go
   - name: go-grpc
     out: go
     opt:
-      - module=github.com/gitpod-io/gitpod/public-api
+      - module=github.com/gitpod-io/gitpod/components/public-api/go
   - name: connect-go
     out: go
     opt:
-     - module=github.com/gitpod-io/gitpod/public-api
+     - module=github.com/gitpod-io/gitpod/components/public-api/go
 
   - name: es
     out: typescript/src

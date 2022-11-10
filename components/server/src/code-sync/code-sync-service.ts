@@ -31,9 +31,8 @@ import {
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { v4 as uuidv4 } from "uuid";
 import { accessCodeSyncStorage, UserRateLimiter } from "../auth/rate-limiter";
-import { increaseApiCallUserCounter } from "../prometheus-metrics";
 import { Config } from "../config";
-import { CachingBlobServiceClientProvider } from "@gitpod/content-service/lib/sugar";
+import { CachingBlobServiceClientProvider } from "../util/content-service-sugar";
 
 // By default: 5 kind of resources * 20 revs * 1Mb = 100Mb max in the content service for user data.
 const defaultRevLimit = 20;
@@ -125,7 +124,6 @@ export class CodeSyncService {
             }
 
             const id = req.user.id;
-            increaseApiCallUserCounter(accessCodeSyncStorage, id);
             try {
                 await UserRateLimiter.instance(this.config.rateLimiter).consume(id, accessCodeSyncStorage);
             } catch (e) {

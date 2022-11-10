@@ -25,8 +25,8 @@ type CacheReclaim struct{}
 func (c *CacheReclaim) Name() string  { return "cache-reclaim-v1" }
 func (c *CacheReclaim) Type() Version { return Version1 }
 
-func (c *CacheReclaim) Apply(ctx context.Context, basePath, cgroupPath string) error {
-	memPath := filepath.Join(string(basePath), "memory", cgroupPath)
+func (c *CacheReclaim) Apply(ctx context.Context, opts *PluginOptions) error {
+	memPath := filepath.Join(string(opts.BasePath), "memory", opts.CgroupPath)
 
 	t := time.NewTicker(10 * time.Second)
 	defer t.Stop()

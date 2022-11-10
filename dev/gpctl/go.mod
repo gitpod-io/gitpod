@@ -8,6 +8,7 @@ require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/alecthomas/repr v0.0.0-20200325044227-4184120f674c
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/image-builder/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-daemon/api v0.0.0-00010101000000-000000000000
@@ -23,8 +24,6 @@ require (
 	k8s.io/apimachinery v0.24.4
 	k8s.io/client-go v0.0.0
 )
-
-require github.com/gitpod-io/gitpod/public-api v0.0.0-00010101000000-000000000000
 
 require (
 	cloud.google.com/go v0.81.0 // indirect
@@ -97,7 +96,7 @@ replace github.com/gitpod-io/gitpod/content-service/api => ../../components/cont
 
 replace github.com/gitpod-io/gitpod/image-builder/api => ../../components/image-builder-api/go // leeway
 
-replace github.com/gitpod-io/gitpod/public-api => ../../components/public-api/go // leeway
+replace github.com/gitpod-io/gitpod/components/public-api/go => ../../components/public-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/registry-facade/api => ../../components/registry-facade-api/go // leeway
 

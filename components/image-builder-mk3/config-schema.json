@@ -1,89 +1,40 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "$ref": "#/definitions/config",
+  "$ref": "#/definitions/ServiceConfig",
   "title": "image-builder config schema - generated using img generate config",
   "definitions": {
-    "": {
-      "required": [
-        "address",
-        "tls"
-      ],
-      "properties": {
-        "address": {
-          "type": "string"
-        },
-        "tls": {
-          "$schema": "http://json-schema.org/draft-04/schema#",
-          "$ref": "#/definitions/tlsConfig"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object"
-    },
     "Configuration": {
       "required": [
+        "wsman",
         "baseImageRepository",
         "workspaceImageRepository",
-        "gitpodLayerLoc",
-        "workdir"
+        "builderImage"
       ],
       "properties": {
+        "wsman": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/WorkspaceManagerConfig"
+        },
+        "pullSecret": {
+          "type": "string"
+        },
+        "pullSecretFile": {
+          "type": "string"
+        },
         "baseImageRepository": {
-          "type": "string"
-        },
-        "dockerCfgFile": {
-          "type": "string"
-        },
-        "gitpodLayerLoc": {
-          "type": "string"
-        },
-        "imageBuildSalt": {
-          "type": "string"
-        },
-        "imagebuilderRef": {
-          "type": "string"
-        },
-        "workdir": {
           "type": "string"
         },
         "workspaceImageRepository": {
           "type": "string"
+        },
+        "builderImage": {
+          "type": "string"
         }
       },
       "additionalProperties": false,
       "type": "object"
     },
-    "config": {
-      "required": [
-        "builder",
-        "service",
-        "prometheus",
-        "pprof"
-      ],
-      "properties": {
-        "builder": {
-          "$schema": "http://json-schema.org/draft-04/schema#",
-          "$ref": "#/definitions/Configuration"
-        },
-        "pprof": {
-          "$ref": "#/definitions/"
-        },
-        "prometheus": {
-          "$ref": "#/definitions/"
-        },
-        "refCache": {
-          "$schema": "http://json-schema.org/draft-04/schema#",
-          "$ref": "#/definitions/refcacheConfig"
-        },
-        "service": {
-          "$schema": "http://json-schema.org/draft-04/schema#",
-          "$ref": "#/definitions/"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object"
-    },
-    "refcacheConfig": {
+    "RefCacheConfig": {
       "required": [
         "interval",
         "refs"
@@ -102,7 +53,28 @@
       "additionalProperties": false,
       "type": "object"
     },
-    "tlsConfig": {
+    "ServiceConfig": {
+      "required": [
+        "orchestrator",
+        "server"
+      ],
+      "properties": {
+        "orchestrator": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/Configuration"
+        },
+        "refCache": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/RefCacheConfig"
+        },
+        "server": {
+          "$ref": "#/definitions/Configuration"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "TLS": {
       "required": [
         "ca",
         "crt",
@@ -117,6 +89,22 @@
         },
         "key": {
           "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "WorkspaceManagerConfig": {
+      "required": [
+        "address"
+      ],
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "tls": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/TLS"
         }
       },
       "additionalProperties": false,

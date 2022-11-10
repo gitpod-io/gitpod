@@ -28,3 +28,11 @@ packages:
       image:
         - ${imageRepoBase}/dev-utils:${version}
         - ${imageRepoBase}/dev-utils:commit-${__git_commit}
+scripts:
+  - name: preview
+    description: Build Gitpod, create a preview environment, and deploy to it
+    script: |
+      leeway run dev/preview:create-preview
+      leeway run dev/preview:build
+      previewctl install-context
+      leeway run dev/preview:deploy-gitpod

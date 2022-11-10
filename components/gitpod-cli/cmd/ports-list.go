@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"sort"
 	"time"
 
 	supervisor_helper "github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor-helper"
@@ -38,19 +37,24 @@ var listPortsCmd = &cobra.Command{
 			return
 		}
 
-		sort.Slice(ports, func(i, j int) bool {
-			return int(ports[i].LocalPort) < int(ports[j].LocalPort)
-		})
-
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetHeader([]string{"Port", "Status", "URL", "Name & Description"})
 		table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
 		table.SetCenterSeparator("|")
 
 		for _, port := range ports {
-			status := "not served"
+			status := ""
 			statusColor := tablewriter.FgHiBlackColor
-			if port.Exposed == nil && port.Tunneled == nil {
+			accessible := port.Exposed != nil || port.Tunneled != nil
+
+			exposedUrl := ""
+			if port.Exposed != nil {
+				exposedUrl = port.Exposed.Url
+			}
+
+			if !port.Served {
+				status = "not served"
+			} else if !accessible {
 				if port.AutoExposure == supervisor.PortAutoExposure_failed {
 					status = "failed to expose"
 					statusColor = tablewriter.FgRedColor
@@ -58,12 +62,23 @@ var listPortsCmd = &cobra.Command{
 					status = "detecting..."
 					statusColor = tablewriter.FgYellowColor
 				}
-			} else if port.Served {
-				status = "open (" + port.Exposed.Visibility.String() + ")"
+			} else if port.Exposed != nil {
 				if port.Exposed.Visibility == supervisor.PortVisibility_public {
+					status = "open (public)"
 					statusColor = tablewriter.FgHiGreenColor
-				} else {
+				}
+				if port.Exposed.Visibility == supervisor.PortVisibility_private {
+					status = "open (private)"
 					statusColor = tablewriter.FgHiCyanColor
+				}
+			} else if port.Tunneled != nil {
+				if port.Tunneled.Visibility == supervisor.TunnelVisiblity(supervisor.TunnelVisiblity_value["network"]) {
+					status = "open on all interfaces"
+					statusColor = tablewriter.FgHiGreenColor
+				}
+				if port.Tunneled.Visibility == supervisor.TunnelVisiblity(supervisor.TunnelVisiblity_value["host"]) {
+					status = "open on localhost"
+					statusColor = tablewriter.FgHiGreenColor
 				}
 			}
 
@@ -82,7 +97,7 @@ var listPortsCmd = &cobra.Command{
 			}
 
 			table.Rich(
-				[]string{fmt.Sprint(port.LocalPort), status, port.Exposed.Url, nameAndDescription},
+				[]string{fmt.Sprint(port.LocalPort), status, exposedUrl, nameAndDescription},
 				colors,
 			)
 		}

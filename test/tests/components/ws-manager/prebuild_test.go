@@ -368,7 +368,10 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 					// check prebuild log message exists
 					checkPrebuildLogExist(t, cfg, rsa, ws, test.WorkspaceRoot)
 
-					// check the files/folders permission under .git/ is not root
+					// check the folder permission is gitpod
+					checkFolderPermission(t, rsa, "/workspace")
+
+					// check the files/folders permission under .git/ is gitpod
 					checkGitFolderPermission(t, rsa, test.WorkspaceRoot)
 
 					// write file foobar.txt and stop the workspace
@@ -482,6 +485,162 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 					}
 					if !found {
 						t.Fatal("did not find foobar.txt from previous workspace instance")
+					}
+				})
+			}
+			return ctx
+		}).
+		Feature()
+
+	testEnv.Test(t, f)
+}
+
+// TestOpenWorkspaceFromOutdatedPrebuild
+// - create a prebuild on older commit
+// - open a workspace from a later commit with a prebuild initializer
+// - make sure the workspace's init task ran (the init task will create a file `incremental.txt` see https://github.com/gitpod-io/test-incremental-workspace/blob/main/.gitpod.yml)
+func TestOpenWorkspaceFromOutdatedPrebuild(t *testing.T) {
+
+	f := features.New("prebuild").
+		WithLabel("component", "ws-manager").
+		Assess("it should open a workspace from with an older prebuild initializer successfully and run the init task", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			tests := []struct {
+				Name                    string
+				RemoteUri               string
+				CloneTargetForPrebuild  string
+				CloneTargetForWorkspace string
+				WorkspaceRoot           string
+				CheckoutLocation        string
+				FF                      []wsmanapi.WorkspaceFeatureFlag
+			}{
+				{
+					Name:                    "classic",
+					RemoteUri:               "https://github.com/gitpod-io/test-incremental-workspace",
+					CloneTargetForPrebuild:  "prebuild",
+					CloneTargetForWorkspace: "main",
+					CheckoutLocation:        "test-incremental-workspace",
+					WorkspaceRoot:           "/workspace/test-incremental-workspace",
+				},
+			}
+
+			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10*len(tests))*time.Minute)
+			defer cancel()
+
+			for _, test := range tests {
+				t.Run(test.Name, func(t *testing.T) {
+
+					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+					t.Cleanup(func() {
+						api.Done(t)
+					})
+
+					// create a prebuild
+					ws, prebuildStopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
+						req.Type = wsmanapi.WorkspaceType_PREBUILD
+						req.Spec.Envvars = append(req.Spec.Envvars, &wsmanapi.EnvironmentVariable{
+							Name:  "GITPOD_TASKS",
+							Value: `[{ "init": "./init.sh" }]`,
+						})
+						req.Spec.FeatureFlags = test.FF
+						req.Spec.Initializer = &csapi.WorkspaceInitializer{
+							Spec: &csapi.WorkspaceInitializer_Git{
+								Git: &csapi.GitInitializer{
+									RemoteUri:        test.RemoteUri,
+									TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,
+									CloneTaget:       test.CloneTargetForPrebuild,
+									CheckoutLocation: test.CheckoutLocation,
+									Config:           &csapi.GitConfig{},
+								},
+							},
+						}
+						req.Spec.WorkspaceLocation = test.CheckoutLocation
+						return nil
+					}))
+					if err != nil {
+						t.Fatalf("cannot launch a workspace: %q", err)
+					}
+					defer func() {
+						// stop workspace in defer function to prevent we forget to stop the workspace
+						if err := stopWorkspace(t, cfg, prebuildStopWs); err != nil {
+							t.Errorf("cannot stop workspace: %q", err)
+						}
+					}()
+					prebuildSnapshot, prebuildVSInfo, err := watchStopWorkspaceAndFindSnapshot(ctx, ws.Req.Id, api)
+					if err != nil {
+						t.Fatalf("stop workspace and find snapshot error: %v", err)
+					}
+
+					t.Logf("prebuild snapshot: %s", prebuildSnapshot)
+
+					// launch the workspace on a later commit using this prebuild
+					ws, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
+						req.Spec.Envvars = append(req.Spec.Envvars, &wsmanapi.EnvironmentVariable{
+							Name:  "GITPOD_TASKS",
+							Value: `[{ "init": "./init.sh" }]`,
+						})
+						req.Spec.FeatureFlags = test.FF
+						req.Spec.Initializer = &csapi.WorkspaceInitializer{
+							Spec: &csapi.WorkspaceInitializer_Prebuild{
+								Prebuild: &csapi.PrebuildInitializer{
+									Prebuild: &csapi.SnapshotInitializer{
+										Snapshot: prebuildSnapshot,
+									},
+									Git: []*csapi.GitInitializer{
+										{
+											RemoteUri:        test.RemoteUri,
+											TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,
+											CloneTaget:       test.CloneTargetForWorkspace,
+											CheckoutLocation: test.CheckoutLocation,
+											Config:           &csapi.GitConfig{},
+										},
+									},
+								},
+							},
+						}
+						req.Spec.VolumeSnapshot = prebuildVSInfo
+						req.Spec.WorkspaceLocation = test.CheckoutLocation
+						return nil
+					}))
+					if err != nil {
+						t.Fatalf("cannot launch a workspace: %q", err)
+					}
+
+					defer func() {
+						// stop workspace in defer function to prevent we forget to stop the workspace
+						if err := stopWorkspace(t, cfg, stopWs); err != nil {
+							t.Errorf("cannot stop workspace: %q", err)
+						}
+					}()
+
+					rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(),
+						integration.WithInstanceID(ws.Req.Id),
+					)
+					if err != nil {
+						t.Fatal(err)
+					}
+					t.Cleanup(func() {
+						rsa.Close()
+					})
+					integration.DeferCloser(t, closer)
+
+					var ls agent.ListDirResponse
+					err = rsa.Call("WorkspaceAgent.ListDir", &agent.ListDirRequest{
+						Dir: test.WorkspaceRoot,
+					}, &ls)
+					if err != nil {
+						t.Fatal(err)
+					}
+					rsa.Close()
+
+					var found bool
+					for _, f := range ls.Files {
+						t.Logf("file: %s", f)
+						if filepath.Base(f) == "incremental.txt" {
+							found = true
+						}
+					}
+					if !found {
+						t.Fatal("did not find incremental.txt")
 					}
 				})
 			}
@@ -651,7 +810,10 @@ func TestPrebuildAndRegularWorkspaceDifferentWorkspaceClass(t *testing.T) {
 					// check prebuild log message exists
 					checkPrebuildLogExist(t, cfg, rsa, ws, test.WorkspaceRoot)
 
-					// check the files/folders permission under .git/ is not root
+					// check the folder permission is gitpod
+					checkFolderPermission(t, rsa, "/workspace")
+
+					// check the files/folders permission under .git/ is gitpod
 					checkGitFolderPermission(t, rsa, test.WorkspaceRoot)
 				})
 			}
@@ -770,7 +932,28 @@ func checkPrebuildLogExist(t *testing.T, cfg *envconf.Config, rsa *rpc.Client, w
 	t.Fatal("did not find someFile from previous workspace instance")
 }
 
-// checkGitFolderPermission checks the files/folders permission under .git/ is not root
+// checkFolderPermission checks the folder UID and GID is gitpod
+func checkFolderPermission(t *testing.T, rsa *rpc.Client, workspace string) {
+	var uid agent.ExecResponse
+	err := rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+		Command: "stat",
+		Args:    []string{"--format", "%U", workspace},
+	}, &uid)
+	if err != nil || uid.ExitCode != 0 || strings.Trim(uid.Stdout, " \t\n") != "gitpod" {
+		t.Fatalf("folder %s UID %s is incorrect, err:%v, exitCode:%d", workspace, uid.Stdout, err, uid.ExitCode)
+	}
+
+	var gid agent.ExecResponse
+	err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+		Command: "stat",
+		Args:    []string{"--format", "%G", workspace},
+	}, &gid)
+	if err != nil || uid.ExitCode != 0 || strings.Trim(gid.Stdout, " \t\n") != "gitpod" {
+		t.Fatalf("folder %s GID %s is incorrect, err:%v, exitCode:%d", workspace, gid.Stdout, err, uid.ExitCode)
+	}
+}
+
+// checkGitFolderPermission checks the files/folders UID and GID under .git/ is gitpod
 func checkGitFolderPermission(t *testing.T, rsa *rpc.Client, workspaceRoot string) {
 	var findUserResp agent.ExecResponse
 	var gitDir string = fmt.Sprintf("%s/%s", workspaceRoot, ".git")
@@ -778,20 +961,20 @@ func checkGitFolderPermission(t *testing.T, rsa *rpc.Client, workspaceRoot strin
 	err := rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 		Dir:     gitDir,
 		Command: "find",
-		Args:    []string{"-user", "root"},
+		Args:    []string{"!", "-user", "gitpod"},
 	}, &findUserResp)
 	if err != nil || findUserResp.ExitCode != 0 || strings.Trim(findUserResp.Stdout, " \t\n") != "" {
-		t.Fatalf("incorrect file perimssion under %s folder, err:%v, exitCode:%d, stdout:%s", gitDir, err, findUserResp.ExitCode, findUserResp.Stdout)
+		t.Fatalf("incorrect UID under %s folder, err:%v, exitCode:%d, stdout:%s", gitDir, err, findUserResp.ExitCode, findUserResp.Stdout)
 	}
 
 	var findGroupResp agent.ExecResponse
 	err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 		Dir:     gitDir,
 		Command: "find",
-		Args:    []string{"-group", "root"},
+		Args:    []string{"!", "-group", "gitpod"},
 	}, &findGroupResp)
 	if err != nil || findGroupResp.ExitCode != 0 || strings.Trim(findGroupResp.Stdout, " \t\n") != "" {
-		t.Fatalf("incorrect group perimssion under %s folder, err:%v, exitCode:%d, stdout:%s", gitDir, err, findGroupResp.ExitCode, findGroupResp.Stdout)
+		t.Fatalf("incorrect GID under %s folder, err:%v, exitCode:%d, stdout:%s", gitDir, err, findGroupResp.ExitCode, findGroupResp.Stdout)
 	}
 }
 

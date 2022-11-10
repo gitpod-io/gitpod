@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
+	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
@@ -26,8 +27,15 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	header := HostHeader
 	blobServeHost := fmt.Sprintf("ide.%s", ctx.Config.Domain)
 	gitpodInstallationHostName := ctx.Config.Domain
-	gitpodInstallationWorkspaceHostSuffix := fmt.Sprintf(".ws.%s", ctx.Config.Domain)
+
+	installationShortNameSuffix := ""
+	if ctx.Config.Metadata.InstallationShortname != "" && ctx.Config.Metadata.InstallationShortname != configv1.InstallationShortNameOldDefault {
+		installationShortNameSuffix = "-" + ctx.Config.Metadata.InstallationShortname
+	}
+
+	gitpodInstallationWorkspaceHostSuffix := fmt.Sprintf(".ws%s.%s", installationShortNameSuffix, ctx.Config.Domain)
 	gitpodInstallationWorkspaceHostSuffixRegex := fmt.Sprintf("\\.ws[^\\.]*\\.%s", ctx.Config.Domain)
+
 	ctx.WithExperimental(func(ucfg *experimental.Config) error {
 		if ucfg.Workspace == nil {
 			return nil

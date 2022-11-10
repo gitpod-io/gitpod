@@ -1,0 +1,34 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: ws-daemon-monitoring-rules
+spec:
+  groups:
+  - name: ws-daemon
+    rules:
+    - alert: GitpodWsDaemonCrashLooping
+      labels:
+        severity: warning
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWsDaemonCrashLooping.md
+        summary: Ws-daemon is crashlooping in cluster {{ $labels.cluster }}.
+        description: Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) is restarting {{ printf "%.2f" $value }} times / 10 minutes.
+      expr: |
+        increase(kube_pod_container_status_restarts_total{container="ws-daemon"}[10m]) > 0
+
+    - alert: GitpodWsDaemonExcessiveGC
+      labels:
+        severity: warning
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWsDaemonExcessiveGC.md
+        summary: Pod {{ $labels.pod }} in cluster {{ $labels.cluster }} is doing excessive garbage collection.
+        description: Ws-daemon has excessive garbage collection time. Collecting garbage for more than 1 second.
+      expr: |
+        go_gc_duration_seconds{job="ws-daemon", quantile="1"} > 1

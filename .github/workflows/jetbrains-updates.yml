@@ -1,68 +1,75 @@
-name: JB Releases
+name: JB Stable IDEs Update
 on:
-  workflow_dispatch:
-  schedule:
-    # At 11:00 on every day-of-week from Monday through Friday.
-    - cron: "0 11 * * 1-5"
+    workflow_dispatch:
+    schedule:
+        # At 11:00 on every day-of-week from Monday through Friday.
+        - cron: "0 11 * * 1-5"
 
 jobs:
-  intellij:
-    uses: ./.github/workflows/jetbrains-updates-template.yml
-    with:
-      productName: IntelliJ IDEA
-      productId: intellij
-      productCode: IIU
-      productType: release
-      exampleRepo: https://github.com/gitpod-io/spring-petclinic
-    secrets:
-      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
-  goland:
-    uses: ./.github/workflows/jetbrains-updates-template.yml
-    with:
-      productName: GoLand
-      productId: goland
-      productCode: GO
-      productType: release
-      exampleRepo: https://github.com/gitpod-io/template-golang-cli
-    secrets:
-      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
-  pycharm:
-    uses: ./.github/workflows/jetbrains-updates-template.yml
-    with:
-      productName: PyCharm
-      productId: pycharm
-      productCode: PCP
-      productType: release
-      exampleRepo: https://github.com/gitpod-io/template-python-django
-    secrets:
-      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
-  phpstorm:
-    uses: ./.github/workflows/jetbrains-updates-template.yml
-    with:
-      productName: PhpStorm
-      productId: phpstorm
-      productCode: PS
-      productType: release
-      exampleRepo: https://github.com/gitpod-io/template-php-laravel-mysql
-    secrets:
-      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
-  rubymine:
-    uses: ./.github/workflows/jetbrains-updates-template.yml
-    with:
-      productName: RubyMine
-      productId: rubymine
-      productCode: RM
-      productType: release
-      exampleRepo: https://github.com/gitpod-io/template-jetbrains-rubymine
-    secrets:
-      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
-  webstorm:
-    uses: ./.github/workflows/jetbrains-updates-template.yml
-    with:
-      productName: WebStorm
-      productId: webstorm
-      productCode: WS
-      productType: release
-      exampleRepo: https://github.com/gitpod-io/template-jetbrains-webstorm
-    secrets:
-      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+    update-jetbrains:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - name: Check for updates
+              run: |
+                  cd ./components/ide/jetbrains/image/gha-update-image
+                  yarn install
+                  node index.js
+                  git diff
+
+            - name: Detect file changes
+              id: changes
+              run: |
+                echo "::set-output name=gradle-stable::$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep backend-plugin/gradle-stable.properties$ | xargs)"
+                echo "::set-output name=workspaceYaml::$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep WORKSPACE.yaml$ | xargs)"
+            - name: Create Pull Request
+              if: ${{steps.changes.outputs.gradle-stable || steps.changes.outputs.workspaceYaml}}
+              uses: peter-evans/create-pull-request@v4
+              with:
+                  title: "[JetBrains] Update IDE images to new build version"
+                  body: |
+                      ## Description
+                      This PR updates the JetBrains IDE images to the most recent `stable` version.
+
+                      ## How to test
+                      1. For each IDE changed on this PR, follow these steps:
+                      1. Open the preview environment generated for this branch
+                      1. Choose the stable version of the IDE that you're testing as your default editor
+                      1. Start a workspace using any repository (e.g: `https://github.com/gitpod-io/empty`)
+                      1. Verify that the workspace starts successfully
+                      1. Verify that the IDE opens successfully
+                      1. Verify that the version of the IDE corresponds to the one being updated in this PR
+
+                      The following resources should help, in case something goes wrong (e.g. workspaces don't start):
+
+                      - https://www.gitpod.io/docs/troubleshooting#gitpod-logs-in-jetbrains-gateway
+                      - https://docs.google.com/document/d/1K9PSB0G6NwX2Ns_SX_HEgMYTKYsgMJMY2wbh0p6t3lQ
+
+                      ## Release Notes
+                      ```release-note
+                      Update JetBrains IDE images to most recent stable version.
+                      ```
+
+                      ## Werft options:
+                      <!--
+                      Optional annotations to add to the werft job.
+                      * with-preview - whether to create a preview environment for this PR
+                      -->
+                      - [x] /werft with-preview
+                      - [x] /werft with-large-vm
+                      - [x] /werft with-integration-tests=jetbrains
+
+                      _This PR was created automatically with GitHub Actions using [this](https://github.com/gitpod-io/gitpod/blob/main/.github/workflows/jetbrains-updates.yml) GHA_
+                  commit-message: "[JetBrains] Update IDE images to new build version"
+                  branch: "jetbrains/update-stable-ides"
+                  labels: "team: IDE,editor: jetbrains"
+            - name: Get previous job's status
+              id: lastrun
+              uses: filiptronicek/get-last-job-status@main
+            - name: Slack Notification
+              if: ${{ (success() && steps.lastrun.outputs.status == 'failed') || failure() }}
+              uses: rtCamp/action-slack-notify@v2
+              env:
+                  SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
+                  SLACK_COLOR: ${{ job.status }}
+                  SLACK_TITLE: ${{ inputs.productName }}

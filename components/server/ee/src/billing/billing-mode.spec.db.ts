@@ -40,89 +40,25 @@ import Stripe from "stripe";
 import { Config } from "../../../src/config";
 import { BillingModes, BillingModesImpl } from "./billing-mode";
 import * as deepEqualInAnyOrder from "deep-equal-in-any-order";
-import {
-    UsageServiceDefinition,
-    UsageServiceClient,
-    GetCostCenterResponse,
-    CostCenter_BillingStrategy,
-    GetBalanceResponse,
-    SetCostCenterResponse,
-    ReconcileUsageResponse,
-    ListUsageRequest_Ordering,
-    ListUsageResponse,
-} from "@gitpod/usage-api/lib/usage/v1/usage.pb";
-import { CallOptions } from "nice-grpc-common";
+import { CostCenter_BillingStrategy } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
+import { UsageService } from "../../../src/user/usage-service";
 chai.use(deepEqualInAnyOrder);
 const expect = chai.expect;
 
 type StripeSubscription = Pick<Stripe.Subscription, "id"> & { customer: string };
-class UsageServiceClientMock implements UsageServiceClient {
+class UsageServiceMock implements UsageService {
     constructor(protected readonly subscription?: StripeSubscription) {}
 
-    async getCostCenter(
-        request: { attributionId?: string | undefined },
-        options?: CallOptions | undefined,
-    ): Promise<GetCostCenterResponse> {
-        if (!request.attributionId) {
-            return { costCenter: undefined };
-        }
+    async getCurrentBalance(attributionId: AttributionId): Promise<{ usedCredits: number; usageLimit: number }> {
+        throw new Error("Mock: not implemented");
+    }
 
+    async getCurrentBillingStategy(attributionId: AttributionId): Promise<CostCenter_BillingStrategy | undefined> {
         let billingStrategy = CostCenter_BillingStrategy.BILLING_STRATEGY_OTHER;
         if (this.subscription !== undefined) {
             billingStrategy = CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
         }
-
-        return {
-            costCenter: {
-                attributionId: request.attributionId,
-                billingStrategy,
-                nextBillingTime: new Date(), // does not matter here.
-                spendingLimit: 1234,
-            },
-        };
-    }
-
-    async getBalance(
-        request: { attributionId?: string | undefined },
-        options?: CallOptions | undefined,
-    ): Promise<GetBalanceResponse> {
-        throw new Error("Mock: not implemented");
-    }
-
-    async setCostCenter(
-        request: {
-            costCenter?:
-                | {
-                      attributionId?: string | undefined;
-                      spendingLimit?: number | undefined;
-                      billingStrategy?: CostCenter_BillingStrategy | undefined;
-                      nextBillingTime?: Date | undefined;
-                  }
-                | undefined;
-        },
-        options?: CallOptions | undefined,
-    ): Promise<SetCostCenterResponse> {
-        throw new Error("Mock: not implemented");
-    }
-
-    async reconcileUsage(
-        request: { from?: Date | undefined; to?: Date | undefined },
-        options?: CallOptions | undefined,
-    ): Promise<ReconcileUsageResponse> {
-        throw new Error("Mock: not implemented");
-    }
-
-    async listUsage(
-        request: {
-            attributionId?: string | undefined;
-            from?: Date | undefined;
-            to?: Date | undefined;
-            order?: ListUsageRequest_Ordering | undefined;
-            pagination?: { perPage?: number | undefined; page?: number | undefined } | undefined;
-        },
-        options?: CallOptions | undefined,
-    ): Promise<ListUsageResponse> {
-        throw new Error("Mock: not implemented");
+        return billingStrategy;
     }
 }
 
@@ -151,6 +87,7 @@ class BillingModeSpec {
         function user(): User {
             return {
                 id: userId,
+                name: `user-${userId}`,
                 creationDate,
                 identities: [],
             };
@@ -306,6 +243,7 @@ class BillingModeSpec {
                 expectation: {
                     mode: "chargebee",
                     canUpgradeToUBB: true,
+                    teamNames: ["Team Subscription 'Team Unleashed' (owner: user-123)"],
                 },
             },
             {
@@ -322,6 +260,7 @@ class BillingModeSpec {
                 expectation: {
                     mode: "chargebee",
                     canUpgradeToUBB: true,
+                    teamNames: ["Team Subscription 'Team Unleashed' (owner: user-123)"],
                 },
             },
             {
@@ -352,6 +291,18 @@ class BillingModeSpec {
                         subscription(Plans.PERSONAL_EUR, cancellationDate, cancellationDate),
                         teamSubscription(Plans.TEAM_PROFESSIONAL_EUR, cancellationDate, cancellationDate),
                     ],
+                },
+                expectation: {
+                    mode: "usage-based",
+                },
+            },
+            {
+                name: "user: UBP free tier, chargebee paid personal (inactive)",
+                subject: user(),
+                config: {
+                    enablePayment: true,
+                    usageBasedPricingEnabled: true,
+                    subscriptions: [subscription(Plans.PERSONAL_EUR, cancellationDate, cancellationDate)],
                 },
                 expectation: {
                     mode: "usage-based",
@@ -442,6 +393,7 @@ class BillingModeSpec {
                 expectation: {
                     mode: "chargebee",
                     paid: true,
+                    teamNames: ["team-123"],
                 },
             },
             {
@@ -455,6 +407,7 @@ class BillingModeSpec {
                 expectation: {
                     mode: "chargebee",
                     paid: true,
+                    teamNames: ["team-123"],
                 },
             },
             // team: transition chargebee -> UBB
@@ -547,9 +500,7 @@ class BillingModeSpec {
                     bind(SubscriptionService).toSelf().inSingletonScope();
                     bind(BillingModes).to(BillingModesImpl).inSingletonScope();
 
-                    bind(UsageServiceDefinition.name).toConstantValue(
-                        new UsageServiceClientMock(test.config.stripeSubscription),
-                    );
+                    bind(UsageService).toConstantValue(new UsageServiceMock(test.config.stripeSubscription));
                     bind(ConfigCatClientFactory).toConstantValue(
                         () =>
                             new ConfigCatClientMock({

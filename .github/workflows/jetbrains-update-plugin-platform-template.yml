@@ -20,6 +20,8 @@ on:
         secrets:
             slackWebhook:
                 required: true
+            roboquatRepoPat:
+                required: true
 jobs:
     update-plugin-platform:
         name: Update Platform Version from ${{ inputs.pluginName }}
@@ -70,7 +72,7 @@ jobs:
               if: ${{ inputs.pluginId == 'gateway-plugin' && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
               uses: peter-evans/create-pull-request@v4
               with:
-                  title: "Update Platform Version from ${{ inputs.pluginName }}"
+                  title: "[JetBrains] Update Platform Version from ${{ inputs.pluginName }}"
                   body: |
                       ## Description
                       This PR updates the Platform Version from ${{ inputs.pluginName }} to the latest version.
@@ -86,19 +88,24 @@ jobs:
                       ```
 
                       ## Werft options:
-                      - [ ] /werft with-preview
+                      - [x] /werft with-preview
+                      - [x] /werft with-large-vm
+                      - [x] /werft with-integration-tests=jetbrains
 
                       _This PR was created automatically with GitHub Actions using [this](https://github.com/gitpod-io/gitpod/blob/main/.github/workflows/jetbrains-update-plugin-platform-template.yml) template._
                   commit-message: "Update Platform Version of ${{ inputs.pluginName }} to ${{ steps.latest-version.outputs.result }}"
                   branch: "jetbrains/${{ inputs.pluginId }}-platform"
                   labels: "team: IDE,editor: jetbrains"
-                  # We can't use `team-reviewers` until we resolve https://github.com/gitpod-io/gitpod/issues/12194
-                  # team-reviewers: "engineering-ide"
+                  team-reviewers: "engineering-ide"
+                  token: ${{ secrets.roboquatRepoPat }}
+                  committer: Robo Quat <roboquat@gitpod.io>
+                  author: Robo Quat <roboquat@gitpod.io>
             - name: Create Pull Request for Backend Plugin
+              id: create-pr
               if: ${{ inputs.pluginId == 'backend-plugin' && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
               uses: peter-evans/create-pull-request@v4
               with:
-                  title: "Update Platform Version from ${{ inputs.pluginName }}"
+                  title: "[JetBrains] Update Platform Version from ${{ inputs.pluginName }}"
                   body: |
                       ## Description
                       This PR updates the Platform Version from ${{ inputs.pluginName }} to the latest version.
@@ -117,13 +124,22 @@ jobs:
 
                       ## Werft options:
                       - [x] /werft with-preview
+                      - [x] /werft with-large-vm
+                      - [x] /werft with-integration-tests=jetbrains
 
                       _This PR was created automatically with GitHub Actions using [this](https://github.com/gitpod-io/gitpod/blob/main/.github/workflows/jetbrains-update-plugin-platform-template.yml) template._
                   commit-message: "Update Platform Version of ${{ inputs.pluginName }} to ${{ steps.latest-version.outputs.result }}"
                   branch: "jetbrains/${{ inputs.pluginId }}-platform"
                   labels: "team: IDE"
-                  # We can't use `team-reviewers` until we resolve https://github.com/gitpod-io/gitpod/issues/12194
-                  # team-reviewers: "engineering-ide"
+                  team-reviewers: "engineering-ide"
+                  token: ${{ secrets.roboquatRepoPat }}
+                  committer: Robo Quat <roboquat@gitpod.io>
+                  author: Robo Quat <roboquat@gitpod.io>
+            - name: Auto Approve Pull Request
+              if: ${{ inputs.pluginId == 'backend-plugin' && steps.create-pr.outputs.pull-request-number }}
+              uses: hmarr/auto-approve-action@v3
+              with:
+                  pull-request-number: ${{ steps.create-pr.outputs.pull-request-number }}
             - name: Get previous job's status
               id: lastrun
               uses: filiptronicek/get-last-job-status@main

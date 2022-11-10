@@ -290,6 +290,8 @@ export class MarkActiveRequest extends jspb.Message {
     setId(value: string): MarkActiveRequest;
     getClosed(): boolean;
     setClosed(value: boolean): MarkActiveRequest;
+    getIgnoreIfActive(): boolean;
+    setIgnoreIfActive(value: boolean): MarkActiveRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): MarkActiveRequest.AsObject;
@@ -305,6 +307,7 @@ export namespace MarkActiveRequest {
     export type AsObject = {
         id: string,
         closed: boolean,
+        ignoreIfActive: boolean,
     }
 }
 
@@ -501,6 +504,8 @@ export class DeleteVolumeSnapshotRequest extends jspb.Message {
     setVolumeHandle(value: string): DeleteVolumeSnapshotRequest;
     getSoftDelete(): boolean;
     setSoftDelete(value: boolean): DeleteVolumeSnapshotRequest;
+    getWsType(): WorkspaceType;
+    setWsType(value: WorkspaceType): DeleteVolumeSnapshotRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): DeleteVolumeSnapshotRequest.AsObject;
@@ -517,6 +522,7 @@ export namespace DeleteVolumeSnapshotRequest {
         id: string,
         volumeHandle: string,
         softDelete: boolean,
+        wsType: WorkspaceType,
     }
 }
 
@@ -1282,9 +1288,9 @@ export enum WorkspaceFeatureFlag {
     NOOP = 0,
     FULL_WORKSPACE_BACKUP = 4,
     PERSISTENT_VOLUME_CLAIM = 7,
-    PROTECTED_SECRETS = 8,
     WORKSPACE_CLASS_LIMITING = 9,
     WORKSPACE_CONNECTION_LIMITING = 10,
+    WORKSPACE_PSI = 11,
 }
 
 export enum WorkspaceType {

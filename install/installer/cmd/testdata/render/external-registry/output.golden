@@ -267,6 +267,35 @@ spec:
     - Ingress
 
 ---
+# networking.k8s.io/v1/NetworkPolicy public-api-server
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: public-api-server
+  name: public-api-server
+  namespace: default
+spec:
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              component: proxy
+      ports:
+        - port: 9001
+          protocol: TCP
+        - port: 9002
+          protocol: TCP
+  podSelector:
+    matchLabels:
+      app: gitpod
+      component: public-api-server
+  policyTypes:
+    - Ingress
+
+---
 # networking.k8s.io/v1/NetworkPolicy registry-facade
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -882,6 +911,18 @@ metadata:
   name: proxy
   namespace: default
 ---
+# v1/ServiceAccount public-api-server
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: public-api-server
+  name: public-api-server
+  namespace: default
+---
 # v1/ServiceAccount rabbitmq
 # Source: rabbitmq/charts/rabbitmq/templates/serviceaccount.yaml
 apiVersion: v1
@@ -1165,29 +1206,34 @@ data:
             "workdir": "/ide",
             "replacements": [
               {
-                "path": "/ide/out/vs/workbench/workbench.web.api.js",
-                "search": "vscode-cdn.net",
-                "replacement": "gitpod.example.com"
-              },
-              {
                 "path": "/ide/out/vs/workbench/workbench.web.main.js",
                 "search": "vscode-cdn.net",
                 "replacement": "gitpod.example.com"
               },
               {
-                "path": "/ide/out/vs/workbench/services/extensions/worker/extensionHostWorker.js",
-                "search": "vscode-cdn.net",
-                "replacement": "gitpod.example.com"
-              },
-              {
-                "path": "/ide/out/vs/workbench/workbench.web.api.js",
-                "search": "open-vsx.org",
-                "replacement": "open-vsx.gitpod.example.com"
-              },
-              {
                 "path": "/ide/out/vs/workbench/workbench.web.main.js",
                 "search": "open-vsx.org",
                 "replacement": "open-vsx.gitpod.example.com"
+              },
+              {
+                "path": "/ide/out/vs/workbench/workbench.web.api.js",
+                "search": "{{extensionsGalleryItemUrl}}",
+                "replacement": "https://open-vsx.org/vscode/item"
+              },
+              {
+                "path": "/ide/out/vs/workbench/workbench.web.main.js",
+                "search": "{{extensionsGalleryItemUrl}}",
+                "replacement": "https://open-vsx.org/vscode/item"
+              },
+              {
+                "path": "/ide/out/vs/workbench/workbench.web.api.js",
+                "search": "{{trustedDomain}}",
+                "replacement": "https://open-vsx.org"
+              },
+              {
+                "path": "/ide/out/vs/workbench/workbench.web.main.js",
+                "search": "{{trustedDomain}}",
+                "replacement": "https://open-vsx.org"
               },
               {
                 "path": "/ide/out/vs/workbench/workbench.web.main.js",
@@ -1374,6 +1420,10 @@ data:
     repository: eu.gcr.io/gitpod-core-dev/build
     workspace:
       maxLifetime: 36h0m0s
+      prebuildPVC:
+        size: 30Gi
+        snapshotClass: ""
+        storageClass: ""
       pvc:
         size: 30Gi
         snapshotClass: ""
@@ -2478,6 +2528,78 @@ data:
       creationTimestamp: null
       labels:
         app: gitpod
+        component: public-api-server
+      name: public-api-server
+      namespace: default
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      annotations:
+        gitpod.io/checksum_config: 2d64dca8ac18437c4ba1d80fd2112af408f1e5fb2ca0294f422f03bcbad647bb
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+      name: public-api-server
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+      name: default-public-api-server-rb-kube-rbac-proxy
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+      name: public-api-server
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+      name: public-api-server
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+        kind: service
+      name: public-api-server
+      namespace: default
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+      name: public-api-server
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
         component: agent-smith
       name: agent-smith
       namespace: default
@@ -3337,7 +3459,7 @@ data:
             "type": "browser",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "label": "Browser",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-02a29e83c566d3ccb4295d050773541b7458c1ad",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-6fb745a090b05048a96ab47bdab5e4a88f848b98",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
           },
           "code-desktop": {
@@ -3356,7 +3478,7 @@ data:
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/goland:test",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/goland:latest",
             "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
           },
           "intellij": {
             "orderKey": "04",
@@ -3366,7 +3488,7 @@ data:
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:test",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:latest",
             "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
           },
           "phpstorm": {
             "orderKey": "07",
@@ -3376,7 +3498,7 @@ data:
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:test",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:latest",
             "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
           },
           "pycharm": {
             "orderKey": "06",
@@ -3386,7 +3508,7 @@ data:
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:test",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:latest",
             "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
           },
           "rubymine": {
             "orderKey": "08",
@@ -3396,7 +3518,7 @@ data:
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/rubymine:test",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/rubymine:latest",
             "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
           },
           "webstorm": {
             "orderKey": "09",
@@ -3406,7 +3528,7 @@ data:
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/webstorm:test",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/webstorm:latest",
             "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
           }
         },
         "defaultIde": "code",
@@ -3643,6 +3765,13 @@ data:
                   "unknown"
                 ],
                 "defaultValue": "unknown"
+              },
+              {
+                "name": "galleryHost",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
               }
             ]
           },
@@ -4175,6 +4304,13 @@ data:
                   "unknown"
                 ],
                 "defaultValue": "unknown"
+              },
+              {
+                "name": "galleryHost",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
               }
             ]
           }
@@ -4193,6 +4329,13 @@ data:
                   "unknown"
                 ],
                 "defaultValue": "unknown"
+              },
+              {
+                "name": "galleryHost",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
               }
             ],
             "buckets": [
@@ -4208,7 +4351,15 @@ data:
           {
             "name": "gitpod_vscode_extension_gallery_query_duration_seconds",
             "help": "Duration of extension gallery query in seconds",
-            "labels": null,
+            "labels": [
+              {
+                "name": "galleryHost",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              }
+            ],
             "buckets": [
               0.1,
               0.5,
@@ -4495,6 +4646,34 @@ metadata:
   name: proxy-config
   namespace: default
 ---
+# v1/ConfigMap public-api-server
+apiVersion: v1
+data:
+  config.json: |-
+    {
+      "gitpodServiceUrl": "wss://gitpod.example.com",
+      "billingServiceAddress": "usage.default.svc.cluster.local:9001",
+      "stripeWebhookSigningSecretPath": "",
+      "server": {
+        "services": {
+          "grpc": {
+            "address": "0.0.0.0:9001"
+          },
+          "http": {
+            "address": "0.0.0.0:9002"
+          }
+        }
+      }
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: public-api-server
+  name: public-api-server
+  namespace: default
+---
 # v1/ConfigMap registry-facade
 apiVersion: v1
 data:
@@ -4584,9 +4763,7 @@ data:
       "workspaceDefaults": {
         "workspaceImage": "docker.io/gitpod/workspace-full:latest",
         "previewFeatureFlags": [],
-        "defaultFeatureFlags": [
-          "protected_secrets"
-        ]
+        "defaultFeatureFlags": []
       },
       "session": {
         "maxAgeMs": 259200000,
@@ -4672,7 +4849,8 @@ data:
           "isDefault": true,
           "deprecated": false
         }
-      ]
+      ],
+      "inactivityPeriodForReposInDays": 0
     }
 kind: ConfigMap
 metadata:
@@ -4697,7 +4875,7 @@ data:
             "type": "browser",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "label": "Browser",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-02a29e83c566d3ccb4295d050773541b7458c1ad",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-6fb745a090b05048a96ab47bdab5e4a88f848b98",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
           },
           "code-desktop": {
@@ -4716,7 +4894,7 @@ data:
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/goland:test",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/goland:latest",
             "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
           },
           "intellij": {
             "orderKey": "04",
@@ -4726,7 +4904,7 @@ data:
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:test",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:latest",
             "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
           },
           "phpstorm": {
             "orderKey": "07",
@@ -4736,7 +4914,7 @@ data:
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:test",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:latest",
             "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
           },
           "pycharm": {
             "orderKey": "06",
@@ -4746,7 +4924,7 @@ data:
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:test",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:latest",
             "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
           },
           "rubymine": {
             "orderKey": "08",
@@ -4756,7 +4934,7 @@ data:
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/rubymine:test",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/rubymine:latest",
             "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
           },
           "webstorm": {
             "orderKey": "09",
@@ -4766,7 +4944,7 @@ data:
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/webstorm:test",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/webstorm:latest",
             "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test"
+            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest"
           }
         },
         "defaultIde": "code",
@@ -5018,6 +5196,11 @@ data:
               }
             },
             "templates": {},
+            "prebuildPVC": {
+              "size": "30Gi",
+              "storageClass": "",
+              "snapshotClass": ""
+            },
             "pvc": {
               "size": "30Gi",
               "storageClass": "",
@@ -5459,6 +5642,24 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: proxy
+  namespace: default
+---
+# rbac.authorization.k8s.io/v1/ClusterRoleBinding default-public-api-server-rb-kube-rbac-proxy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: public-api-server
+  name: default-public-api-server-rb-kube-rbac-proxy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-kube-rbac-proxy
+subjects:
+- kind: ServiceAccount
+  name: public-api-server
   namespace: default
 ---
 # rbac.authorization.k8s.io/v1/ClusterRoleBinding default-registry-facade-kube-rbac-proxy
@@ -6095,6 +6296,24 @@ subjects:
 - kind: ServiceAccount
   name: proxy
 ---
+# rbac.authorization.k8s.io/v1/RoleBinding public-api-server
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: public-api-server
+  name: public-api-server
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-ns-psp:restricted-root-user
+subjects:
+- kind: ServiceAccount
+  name: public-api-server
+---
 # rbac.authorization.k8s.io/v1/RoleBinding rabbitmq
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -6674,6 +6893,34 @@ spec:
 status:
   loadBalancer: {}
 ---
+# v1/Service public-api-server
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: public-api-server
+    kind: service
+  name: public-api-server
+  namespace: default
+spec:
+  ports:
+  - name: grpc
+    port: 9001
+    protocol: TCP
+    targetPort: 9001
+  - name: http
+    port: 9002
+    protocol: TCP
+    targetPort: 9002
+  selector:
+    app: gitpod
+    component: public-api-server
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
 # v1/Service registry-facade
 apiVersion: v1
 kind: Service
@@ -7008,7 +7255,7 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 10
           successThreshold: 1
-          timeoutSeconds: 1
+          timeoutSeconds: 2
         name: registry-facade
         ports:
         - containerPort: 32223
@@ -7022,7 +7269,7 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 5
           successThreshold: 2
-          timeoutSeconds: 1
+          timeoutSeconds: 2
         resources:
           requests:
             cpu: 100m
@@ -7938,7 +8185,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 852534778d4ef3fe1d87dd19fa8290cf02561d3b98c11493053ee39ea8a627b4
+        gitpod.io/checksum_config: 15d99333e20408bb28398cdfffeb658e161608de2b3f3d9fd983a85a796254d5
       creationTimestamp: null
       labels:
         app: gitpod
@@ -7986,7 +8233,7 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 10
           successThreshold: 1
-          timeoutSeconds: 1
+          timeoutSeconds: 2
         name: blobserve
         ports:
         - containerPort: 32224
@@ -7999,7 +8246,7 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 5
           successThreshold: 1
-          timeoutSeconds: 1
+          timeoutSeconds: 2
         resources:
           requests:
             cpu: 100m
@@ -8276,7 +8523,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 3b484bff26b16b51cc8e2df68b21ecb4a69ce4cd7a98de9fc2b568210918e948
+        gitpod.io/checksum_config: a15b2b182f09debb86b167e728add4f9d341bc9706bc4e330e1d4a5c9d4deee9
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8978,6 +9225,134 @@ spec:
           secretName: https-certificates
 status: {}
 ---
+# apps/v1/Deployment public-api-server
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    gitpod.io/checksum_config: 2d64dca8ac18437c4ba1d80fd2112af408f1e5fb2ca0294f422f03bcbad647bb
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: public-api-server
+  name: public-api-server
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitpod
+      component: public-api-server
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: public-api-server
+      name: public-api-server
+      namespace: default
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: gitpod.io/workload_meta
+                operator: Exists
+      containers:
+      - args:
+        - run
+        - --config=/config.json
+        - --json-log=true
+        env:
+        - name: GITPOD_DOMAIN
+          value: gitpod.example.com
+        - name: GITPOD_INSTALLATION_SHORTNAME
+          value: default
+        - name: GITPOD_REGION
+          value: local
+        - name: HOST_URL
+          value: https://gitpod.example.com
+        - name: KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBE_DOMAIN
+          value: svc.cluster.local
+        - name: LOG_LEVEL
+          value: info
+        image: eu.gcr.io/gitpod-core-dev/build/public-api-server:test
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /live
+            port: 9501
+            scheme: HTTP
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: public-api-server
+        ports:
+        - containerPort: 9001
+          name: grpc
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ready
+            port: 9501
+            scheme: HTTP
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 32Mi
+        securityContext:
+          privileged: false
+        volumeMounts:
+        - mountPath: /config.json
+          name: config
+          readOnly: true
+          subPath: config.json
+      - args:
+        - --logtostderr
+        - --insecure-listen-address=[$(IP)]:9500
+        - --upstream=http://127.0.0.1:9500/
+        env:
+        - name: IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        image: quay.io/brancz/kube-rbac-proxy:v0.12.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 9500
+          name: metrics
+        resources:
+          requests:
+            cpu: 1m
+            memory: 30Mi
+        securityContext:
+          runAsGroup: 65532
+          runAsNonRoot: true
+          runAsUser: 65532
+        terminationMessagePolicy: FallbackToLogsOnError
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: false
+      restartPolicy: Always
+      serviceAccountName: public-api-server
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          name: public-api-server
+        name: config
+status: {}
+---
 # apps/v1/Deployment server
 apiVersion: apps/v1
 kind: Deployment
@@ -9002,7 +9377,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: a4e77dfdb4f0f6103762722c99d4ba4eaf570a7c3d9fbc3e292a2d48cb17ad24
+        gitpod.io/checksum_config: 73b946defb35ba9413b518f34fc9c39bb287e474874f5e38cc83e7971a85916e
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9277,7 +9652,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 4ac62854eccd472efc91ccb1041633960da4448fe1534555abb4ac94fe22861d
+        gitpod.io/checksum_config: cd4b2686fe34e3488f453e58aabb2197bd886fb64b6e6fc3ab840694d09b6391
       creationTimestamp: null
       labels:
         app: gitpod

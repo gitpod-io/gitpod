@@ -123,13 +123,18 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 
 		var srcs []BlobSource
 
-		ipfsSrc := ipfsBlobSource{source: bh.IPFS}
+		// 1. local store (faster)
+		srcs = append(srcs, storeBlobSource{Store: bh.Store})
+
+		// 2. IPFS (if configured)
 		if bh.IPFS != nil {
+			ipfsSrc := ipfsBlobSource{source: bh.IPFS}
 			srcs = append(srcs, ipfsSrc)
 		}
 
-		srcs = append(srcs, storeBlobSource{Store: bh.Store})
+		// 3. upstream registry
 		srcs = append(srcs, proxyingBlobSource{Fetcher: fetcher, Blobs: manifest.Layers})
+
 		srcs = append(srcs, &configBlobSource{Fetcher: fetcher, Spec: bh.Spec, Manifest: manifest, ConfigModifier: bh.ConfigModifier})
 		srcs = append(srcs, bh.AdditionalSources...)
 
@@ -143,6 +148,8 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 		if src == nil {
 			return distv2.ErrorCodeBlobUnknown
 		}
+
+		t0 := time.Now()
 
 		dontCache, mediaType, url, rc, err := src.GetBlob(ctx, bh.Spec, bh.Digest)
 		if err != nil {
@@ -160,19 +167,18 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", mediaType)
 		w.Header().Set("Etag", bh.Digest.String())
 
-		t0 := time.Now()
-
 		bp := bufPool.Get().(*[]byte)
 		defer bufPool.Put(bp)
 
 		n, err := io.CopyBuffer(w, rc, *bp)
 		if err != nil {
-			log.WithError(err).Error("unable to return blob")
+			bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "false").Inc()
+			log.WithField("blobSource", src.Name()).WithField("baseRef", bh.Spec.BaseRef).WithError(err).Error("unable to return blob")
 			return err
 		}
 
 		bh.Metrics.BlobDownloadSpeedHist.WithLabelValues(src.Name()).Observe(float64(n) / time.Since(t0).Seconds())
-		bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name()).Inc()
+		bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "true").Inc()
 		bh.Metrics.BlobDownloadSizeCounter.WithLabelValues(src.Name()).Add(float64(n))
 
 		if dontCache {
@@ -191,6 +197,9 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 				log.WithField("digest", bh.Digest).Warn("cannot push to IPFS - blob is nil")
 				return
 			}
+
+			defer rc.Close()
+
 			err = bh.IPFS.Store(context.Background(), bh.Digest, rc, mediaType)
 			if err != nil {
 				log.WithError(err).WithField("digest", bh.Digest).Warn("cannot push to IPFS")

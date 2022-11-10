@@ -32,6 +32,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		openVSXProxyUrl = fmt.Sprintf("open-vsx.%s", ctx.Config.Domain)
 	}
 
+	// Check also link below before change values
+	// https://github.com/gitpod-io/gitpod/blob/2cba7bd1d8a2accd294ab7733f6da4532e48984c/components/ide/code/startup.sh#L37
+	extensionsGalleryItemUrl := "https://open-vsx.org/vscode/item"
+	trustedDomain := "https://open-vsx.org"
+
 	bscfg := config.Config{
 		BlobServe: blobserve.Config{
 			Port:    ContainerPort,
@@ -43,22 +48,26 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Replacements: []blobserve.StringReplacement{{
 						Search:      "vscode-cdn.net",
 						Replacement: ctx.Config.Domain,
-						Path:        "/ide/out/vs/workbench/workbench.web.api.js",
-					}, {
-						Search:      "vscode-cdn.net",
-						Replacement: ctx.Config.Domain,
 						Path:        "/ide/out/vs/workbench/workbench.web.main.js",
 					}, {
-						Search:      "vscode-cdn.net",
-						Replacement: ctx.Config.Domain,
-						Path:        "/ide/out/vs/workbench/services/extensions/worker/extensionHostWorker.js",
-					}, {
 						Search:      "open-vsx.org",
 						Replacement: openVSXProxyUrl,
+						Path:        "/ide/out/vs/workbench/workbench.web.main.js",
+					}, {
+						Search:      "{{extensionsGalleryItemUrl}}",
+						Replacement: extensionsGalleryItemUrl,
 						Path:        "/ide/out/vs/workbench/workbench.web.api.js",
 					}, {
-						Search:      "open-vsx.org",
-						Replacement: openVSXProxyUrl,
+						Search:      "{{extensionsGalleryItemUrl}}",
+						Replacement: extensionsGalleryItemUrl,
+						Path:        "/ide/out/vs/workbench/workbench.web.main.js",
+					}, {
+						Search:      "{{trustedDomain}}",
+						Replacement: trustedDomain,
+						Path:        "/ide/out/vs/workbench/workbench.web.api.js",
+					}, {
+						Search:      "{{trustedDomain}}",
+						Replacement: trustedDomain,
 						Path:        "/ide/out/vs/workbench/workbench.web.main.js",
 					}, {
 						Search:      "ide.gitpod.io/code/markeplace.json",

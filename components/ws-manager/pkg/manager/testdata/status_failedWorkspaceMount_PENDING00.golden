@@ -16,7 +16,6 @@
         },
         "phase": 1,
         "conditions": {
-            "failed": "cannot mount workspace",
             "volume_snapshot": {}
         },
         "message": "pod is pending",

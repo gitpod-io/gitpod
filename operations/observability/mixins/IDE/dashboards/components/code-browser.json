@@ -243,7 +243,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(gitpod_vscode_extension_gallery_query_total[2m]))",
+          "expr": "sum(rate(gitpod_vscode_extension_gallery_query_total{galleryHost=~\"$gallery\"}[2m]))",
           "legendFormat": "rate",
           "range": true,
           "refId": "A"
@@ -339,7 +339,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(1, sum(rate(gitpod_vscode_extension_gallery_query_duration_seconds_bucket[1m])) by (le))",
+          "expr": "histogram_quantile(1, sum(rate(gitpod_vscode_extension_gallery_query_duration_seconds_bucket{galleryHost=~\"$gallery\"}[1m])) by (le))",
           "legendFormat": "max",
           "range": true,
           "refId": "A"
@@ -350,7 +350,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum(rate(gitpod_vscode_extension_gallery_query_duration_seconds_bucket[1m])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(gitpod_vscode_extension_gallery_query_duration_seconds_bucket{galleryHost=~\"$gallery\"}[1m])) by (le))",
           "hide": false,
           "legendFormat": "P99",
           "range": true,
@@ -362,7 +362,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum(rate(gitpod_vscode_extension_gallery_query_duration_seconds_bucket[1m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(gitpod_vscode_extension_gallery_query_duration_seconds_bucket{galleryHost=~\"$gallery\"}[1m])) by (le))",
           "hide": false,
           "legendFormat": "P95",
           "range": true,
@@ -374,7 +374,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.5, sum(rate(gitpod_vscode_extension_gallery_query_duration_seconds_bucket[1m])) by (le))",
+          "expr": "histogram_quantile(0.5, sum(rate(gitpod_vscode_extension_gallery_query_duration_seconds_bucket{galleryHost=~\"$gallery\"}[1m])) by (le))",
           "hide": false,
           "legendFormat": "mean",
           "range": true,
@@ -472,7 +472,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(gitpod_vscode_extension_gallery_query_total{status=\"failure\",errorCode!=\"canceled\"}[2m]))/sum(rate(gitpod_vscode_extension_gallery_query_total[2m]))",
+          "expr": "sum(rate(gitpod_vscode_extension_gallery_query_total{status=\"failure\",errorCode!=\"canceled\",galleryHost=~\"$gallery\"}[2m]))/sum(rate(gitpod_vscode_extension_gallery_query_total{galleryHost=~\"$gallery\"}[2m]))",
           "legendFormat": "total ratio",
           "range": true,
           "refId": "A"
@@ -569,7 +569,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (statusCode) (rate(gitpod_vscode_extension_gallery_query_total{status=\"failure\",errorCode!=\"canceled\"}[2m]))/ignoring(statusCode) group_left sum(rate(gitpod_vscode_extension_gallery_query_total[2m]))",
+          "expr": "sum by (statusCode) (rate(gitpod_vscode_extension_gallery_query_total{status=\"failure\",errorCode!=\"canceled\",galleryHost=~\"$gallery\"}[2m]))/ignoring(statusCode) group_left sum(rate(gitpod_vscode_extension_gallery_query_total{galleryHost=~\"$gallery\"}[2m]))",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -665,7 +665,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (errorCode) (rate(gitpod_vscode_extension_gallery_query_total{status=\"failure\"}[2m]))/ignoring(errorCode) group_left sum(rate(gitpod_vscode_extension_gallery_query_total[2m]))",
+          "expr": "sum by (errorCode) (rate(gitpod_vscode_extension_gallery_query_total{status=\"failure\",galleryHost=~\"$gallery\"}[2m]))/ignoring(errorCode) group_left sum(rate(gitpod_vscode_extension_gallery_query_total{galleryHost=~\"$gallery\"}[2m]))",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -773,7 +773,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(gitpod_vscode_extension_gallery_operation_total{operation=~\"$operation\"}[2m]))",
+          "expr": "sum(rate(gitpod_vscode_extension_gallery_operation_total{operation=~\"$operation\",galleryHost=~\"$gallery\"}[2m]))",
           "legendFormat": "rate",
           "range": true,
           "refId": "A"
@@ -869,7 +869,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(gitpod_vscode_extension_gallery_operation_total{status=\"failure\",operation=~\"$operation\"}[2m]))/sum(rate(gitpod_vscode_extension_gallery_operation_total{operation=~\"$operation\"}[2m]))",
+          "expr": "sum(rate(gitpod_vscode_extension_gallery_operation_total{status=\"failure\",operation=~\"$operation\",galleryHost=~\"$gallery\"}[2m]))/sum(rate(gitpod_vscode_extension_gallery_operation_total{operation=~\"$operation\",galleryHost=~\"$gallery\"}[2m]))",
           "legendFormat": "total ratio",
           "range": true,
           "refId": "A"
@@ -965,7 +965,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (operation) (rate(gitpod_vscode_extension_gallery_operation_total{status=\"failure\",operation=~\"$operation\"}[2m]))/ignoring(operation) group_left sum(rate(gitpod_vscode_extension_gallery_operation_total{operation=~\"$operation\"}[2m]))",
+          "expr": "sum by (operation) (rate(gitpod_vscode_extension_gallery_operation_total{status=\"failure\",operation=~\"$operation\",galleryHost=~\"$gallery\"}[2m]))/ignoring(operation) group_left sum(rate(gitpod_vscode_extension_gallery_operation_total{operation=~\"$operation\",galleryHost=~\"$gallery\"}[2m]))",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -1060,7 +1060,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(1, sum(rate(gitpod_vscode_extension_gallery_operation_duration_seconds_bucket{operation=~\"$operation\"}[1m])) by (le))",
+          "expr": "histogram_quantile(1, sum(rate(gitpod_vscode_extension_gallery_operation_duration_seconds_bucket{operation=~\"$operation\",galleryHost=~\"$gallery\"}[1m])) by (le))",
           "legendFormat": "max",
           "range": true,
           "refId": "A"
@@ -1071,7 +1071,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum(rate(gitpod_vscode_extension_gallery_operation_duration_seconds_bucket{operation=~\"$operation\"}[1m])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(gitpod_vscode_extension_gallery_operation_duration_seconds_bucket{operation=~\"$operation\",galleryHost=~\"$gallery\"}[1m])) by (le))",
           "hide": false,
           "legendFormat": "P99",
           "range": true,
@@ -1083,7 +1083,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum(rate(gitpod_vscode_extension_gallery_operation_duration_seconds_bucket{operation=~\"$operation\"}[1m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(gitpod_vscode_extension_gallery_operation_duration_seconds_bucket{operation=~\"$operation\",galleryHost=~\"$gallery\"}[1m])) by (le))",
           "hide": false,
           "legendFormat": "P95",
           "range": true,
@@ -1095,7 +1095,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.5, sum(rate(gitpod_vscode_extension_gallery_operation_duration_seconds_bucket{operation=~\"$operation\"}[1m])) by (le))",
+          "expr": "histogram_quantile(0.5, sum(rate(gitpod_vscode_extension_gallery_operation_duration_seconds_bucket{operation=~\"$operation\",galleryHost=~\"$gallery\"}[1m])) by (le))",
           "hide": false,
           "legendFormat": "mean",
           "range": true,
@@ -1191,7 +1191,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(1, sum(rate(gitpod_vscode_extension_gallery_operation_duration_seconds_bucket{operation=~\"$operation\"}[1m])) by (le, operation))",
+          "expr": "histogram_quantile(1, sum(rate(gitpod_vscode_extension_gallery_operation_duration_seconds_bucket{operation=~\"$operation\",galleryHost=~\"$gallery\"}[1m])) by (le, operation))",
           "legendFormat": "{{operation}} - max",
           "range": true,
           "refId": "A"
@@ -1202,7 +1202,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum(rate(gitpod_vscode_extension_gallery_operation_duration_seconds_bucket{operation=~\"$operation\"}[1m])) by (le, operation))",
+          "expr": "histogram_quantile(0.99, sum(rate(gitpod_vscode_extension_gallery_operation_duration_seconds_bucket{operation=~\"$operation\",galleryHost=~\"$gallery\"}[1m])) by (le, operation))",
           "hide": false,
           "legendFormat": "{{operation}} - P99",
           "range": true,
@@ -1214,7 +1214,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum(rate(gitpod_vscode_extension_gallery_operation_duration_seconds_bucket{operation=~\"$operation\"}[1m])) by (le, operation))",
+          "expr": "histogram_quantile(0.95, sum(rate(gitpod_vscode_extension_gallery_operation_duration_seconds_bucket{operation=~\"$operation\",galleryHost=~\"$gallery\"}[1m])) by (le, operation))",
           "hide": false,
           "legendFormat": "{{operation}} - P95",
           "range": true,
@@ -1226,7 +1226,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.5, sum(rate(gitpod_vscode_extension_gallery_operation_duration_seconds_bucket{operation=~\"$operation\"}[1m])) by (le, operation))",
+          "expr": "histogram_quantile(0.5, sum(rate(gitpod_vscode_extension_gallery_operation_duration_seconds_bucket{operation=~\"$operation\",galleryHost=~\"$gallery\"}[1m])) by (le, operation))",
           "hide": false,
           "legendFormat": "{{operation}} - mean",
           "range": true,
@@ -1288,6 +1288,36 @@
         "regex": "",
         "skipUrlSync": false,
         "type": "datasource"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "label_values(gitpod_vscode_extension_gallery_operation_total, galleryHost)",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "gallery",
+        "options": [],
+        "query": {
+          "query": "label_values(gitpod_vscode_extension_gallery_operation_total, galleryHost)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
       }
     ]
   },

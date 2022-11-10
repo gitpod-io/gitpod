@@ -41,12 +41,27 @@ jobs:
         uses: google-github-actions/setup-gcloud@v0
         with:
           project_id: ${{ secrets.projectId }}
+      - name: Get Platform Version from JetBrains EAP Backend Plugin
+        id: platform-version
+        run: |
+          PLATFORM_VERSION=$(cat ./components/ide/jetbrains/backend-plugin/gradle-latest.properties | grep platformVersion= | sed 's/platformVersion=//' | sed 's/-EAP-CANDIDATE-SNAPSHOT//')
+          echo "::set-output name=result::$PLATFORM_VERSION"
+          echo $PLATFORM_VERSION
+      - name: Find IDE version to download
+        id: ide-version
+        run: |
+          curl -sL "https://data.services.jetbrains.com/products/releases?code=${{ inputs.productCode }}&type=eap,rc,release&platform=linux" > releases.json
+          IDE_VERSION=$(cat releases.json | jq -r -c 'first(.${{ inputs.productCode }}[] | select(.build | contains("${{ steps.platform-version.outputs.result }}")) | .build)')
+          rm releases.json
+          echo "::set-output name=result::$IDE_VERSION"
+          echo $IDE_VERSION
       - name: Leeway build
+        if: ${{ steps.ide-version.outputs.result }}
         run: |
           gcloud auth configure-docker --quiet
           export LEEWAY_WORKSPACE_ROOT=$(pwd)
           cd components/ide/jetbrains/image
-          leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build .:${{ inputs.productId }}-latest
+          leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -DbuildNumber=${{ steps.ide-version.outputs.result }} .:${{ inputs.productId }}-latest
       - name: Get previous job's status
         id: lastrun
         uses: filiptronicek/get-last-job-status@main

@@ -52,6 +52,8 @@ type metrics struct {
 	totalRestoreCounterVec                    *prometheus.CounterVec
 	totalRestoreFailureCounterVec             *prometheus.CounterVec
 	totalUnintentionalWorkspaceStopCounterVec *prometheus.CounterVec
+	totalMountDeviceFailedVec                 *prometheus.CounterVec
+	totalCannotMountVolumeVec                 *prometheus.CounterVec
 
 	// Gauge
 	totalOpenPortGauge prometheus.GaugeFunc
@@ -142,6 +144,18 @@ func newMetrics(m *Manager) *metrics {
 			Name:      "workspace_unintentional_stop_total",
 			Help:      "total number of workspaces when container stopped without being deleted prior",
 		}, []string{"type", "class"}),
+		totalMountDeviceFailedVec: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      "workspace_mount_device_failed",
+			Help:      "total number of workspace mount device failed",
+		}, []string{"type", "class"}),
+		totalCannotMountVolumeVec: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      "workspace_cannot_mount_volume",
+			Help:      "total number of workspace cannot mount volume",
+		}, []string{"type", "class"}),
 		totalOpenPortGauge: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
@@ -205,6 +219,8 @@ func (m *metrics) Register(reg prometheus.Registerer) error {
 		m.totalRestoreCounterVec,
 		m.totalRestoreFailureCounterVec,
 		m.totalUnintentionalWorkspaceStopCounterVec,
+		m.totalMountDeviceFailedVec,
+		m.totalCannotMountVolumeVec,
 		m.totalOpenPortGauge,
 	}
 	for _, c := range collectors {

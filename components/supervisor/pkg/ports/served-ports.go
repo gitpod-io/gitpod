@@ -83,7 +83,15 @@ func (p *PollingServedPortsObserver) Observe(ctx context.Context) (<-chan []Serv
 				visited = make(map[string]struct{})
 				ports   []ServedPort
 			)
-			for _, fn := range []string{fnNetTCP, fnNetTCP6} {
+
+			var protos []string
+			for _, path := range []string{fnNetTCP, fnNetTCP6} {
+				if _, err := os.Stat(path); err == nil {
+					protos = append(protos, path)
+				}
+			}
+
+			for _, fn := range protos {
 				fc, err := p.fileOpener(fn)
 				if err != nil {
 					errchan <- err

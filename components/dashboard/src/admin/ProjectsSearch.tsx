@@ -32,10 +32,6 @@ export function ProjectsSearch() {
     const [currentProjectOwner, setCurrentProjectOwner] = useState<string | undefined>("");
     const pageLength = 50;
     const [currentPage, setCurrentPage] = useState(1);
-    const updateCurrentPage = (page: number) => {
-        setCurrentPage(page);
-        search();
-    };
 
     useEffect(() => {
         const projectId = location.pathname.split("/")[3];
@@ -77,16 +73,17 @@ export function ProjectsSearch() {
         return <ProjectDetail project={currentProject} owner={currentProjectOwner} />;
     }
 
-    const search = async () => {
+    const search = async (page: number = 1) => {
         setSearching(true);
         try {
             const result = await getGitpodService().server.adminGetProjectsBySearchTerm({
                 searchTerm,
                 limit: pageLength,
                 orderBy: "creationTime",
-                offset: (currentPage - 1) * pageLength,
+                offset: (page - 1) * pageLength,
                 orderDir: "desc",
             });
+            setCurrentPage(page);
             setSearchResult(result);
         } finally {
             setSearching(false);
@@ -123,7 +120,7 @@ export function ProjectsSearch() {
                             }}
                         />
                     </div>
-                    <button disabled={searching} onClick={search}>
+                    <button disabled={searching} onClick={() => search()}>
                         Search
                     </button>
                 </div>
@@ -140,7 +137,7 @@ export function ProjectsSearch() {
             </div>
             <Pagination
                 currentPage={currentPage}
-                setPage={updateCurrentPage}
+                setPage={search}
                 totalNumberOfPages={Math.ceil(searchResult.total / pageLength)}
             />
         </>

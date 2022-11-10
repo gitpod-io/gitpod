@@ -240,9 +240,9 @@
       "maxDataPoints": 100,
       "options": {
         "colorMode": "none",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "auto",
-        "orientation": "horizontal",
+        "orientation": "auto",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -259,14 +259,14 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (server) (argocd_cluster_info))",
+          "expr": "count(\r\n  count by (dest_server) (\r\n    argocd_app_info \r\n    * on(name) group_left(label_environment) argocd_app_labels{label_environment=~\"$environment\", label_team=~\"$team\"}\r\n  )\r\n)",
           "format": "time_series",
           "instant": false,
           "intervalFactor": 1,
           "refId": "A"
         }
       ],
-      "title": "Managed Clusters",
+      "title": "Clusters with apps deployed",
       "type": "stat"
     },
     {
@@ -319,7 +319,7 @@
       "maxDataPoints": 100,
       "options": {
         "colorMode": "none",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "horizontal",
         "reduceOptions": {
@@ -339,7 +339,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(\r\n    argocd_app_info{health_status=~\"$health_status\",sync_status=~\"$sync_status\"} \r\n    * on(name) group_left(label_environment) argocd_app_labels{label_environment=~\"$environment\"}\r\n)",
+          "expr": "sum(\r\n    argocd_app_info{health_status=~\"$health_status\",sync_status=~\"$sync_status\"} \r\n    * on(name) group_left(label_environment) argocd_app_labels{label_environment=~\"$environment\", label_team=~\"$team\"}\r\n)",
           "format": "time_series",
           "instant": false,
           "intervalFactor": 1,
@@ -399,7 +399,7 @@
       "maxDataPoints": 100,
       "options": {
         "colorMode": "none",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "horizontal",
         "reduceOptions": {
@@ -418,7 +418,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "count(count by (repo) (\r\n    argocd_app_info * on(name) group_left argocd_app_labels{label_environment=~\"$environment\"}\r\n))",
+          "expr": "count(count by (repo) (\r\n    argocd_app_info * on(name) group_left argocd_app_labels{label_environment=~\"$environment\", label_team=~\"$team\"}\r\n))",
           "format": "time_series",
           "instant": false,
           "intervalFactor": 1,
@@ -618,7 +618,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "argocd_app_info{health_status=~\"$health_status\",sync_status=~\"$sync_status\"} \r\n* on(name) group_left(label_environment, label_team) argocd_app_labels{label_environment=~\"$environment\"}",
+          "expr": "argocd_app_info{health_status=~\"$health_status\",sync_status=~\"$sync_status\"} \r\n* on(name) group_left(label_environment, label_team) argocd_app_labels{label_environment=~\"$environment\", label_team=~\"$team\"}",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
@@ -654,31 +654,34 @@
               "service": true
             },
             "indexByName": {
-              "Time": 4,
-              "Value": 20,
-              "cluster": 5,
-              "container": 6,
-              "dest_namespace": 7,
-              "dest_server": 8,
-              "endpoint": 9,
-              "exported_namespace": 10,
-              "health_status": 2,
-              "instance": 11,
-              "job": 12,
+              "Time": 5,
+              "Value": 21,
+              "cluster": 6,
+              "container": 7,
+              "dest_namespace": 8,
+              "dest_server": 9,
+              "endpoint": 10,
+              "exported_namespace": 11,
+              "health_status": 3,
+              "instance": 12,
+              "job": 13,
               "label_environment": 1,
+              "label_team": 2,
               "name": 0,
-              "namespace": 13,
-              "pod": 14,
-              "project": 15,
-              "prometheus": 16,
-              "prometheus_replica": 17,
-              "repo": 18,
-              "service": 19,
-              "sync_status": 3
+              "namespace": 14,
+              "operation": 22,
+              "pod": 15,
+              "project": 16,
+              "prometheus": 17,
+              "prometheus_replica": 18,
+              "repo": 19,
+              "service": 20,
+              "sync_status": 4
             },
             "renameByName": {
               "health_status": "Health",
               "label_environment": "Environment",
+              "label_team": "Team Owner",
               "name": "Application",
               "sync_status": "Synchronization Status"
             }
@@ -892,7 +895,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(\r\n    argocd_app_info{health_status=~\"$health_status\",sync_status=~\"$sync_status\",health_status!=\"\"} \r\n    * on(name) group_left argocd_app_labels{label_environment=~\"$environment\"}\r\n) by (health_status)",
+          "expr": "sum(\r\n    argocd_app_info{health_status=~\"$health_status\",sync_status=~\"$sync_status\",health_status!=\"\"} \r\n    * on(name) group_left argocd_app_labels{label_environment=~\"$environment\", label_team=~\"$team\"}\r\n) by (health_status)",
           "format": "time_series",
           "instant": false,
           "intervalFactor": 1,
@@ -1114,7 +1117,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(\r\n    argocd_app_info{health_status=~\"$health_status\",sync_status=~\"$sync_status\",health_status!=\"\"}\r\n    * on(name) group_left argocd_app_labels{label_environment=~\"$environment\"}\r\n) by (sync_status)",
+          "expr": "sum(\r\n    argocd_app_info{health_status=~\"$health_status\",sync_status=~\"$sync_status\",health_status!=\"\"}\r\n    * on(name) group_left argocd_app_labels{label_environment=~\"$environment\", label_team=~\"$team\"}\r\n) by (sync_status)",
           "format": "time_series",
           "instant": false,
           "intervalFactor": 1,
@@ -1240,7 +1243,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(\r\n    round(\r\n        increase(\r\n            argocd_app_sync_total[$interval]\r\n            * on(name) group_left argocd_app_labels{label_environment=~\"$environment\"}\r\n        )\r\n    )\r\n) by (name)",
+          "expr": "sum(\r\n    round(\r\n        increase(\r\n            argocd_app_sync_total[$interval]\r\n            * on(name) group_left argocd_app_labels{label_environment=~\"$environment\", label_team=~\"$team\"}\r\n        )\r\n    )\r\n) by (name)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{name}}",
@@ -1314,7 +1317,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(\r\n    round(\r\n        increase(\r\n            argocd_app_sync_total{phase=~\"Error|Failed\"}[$interval]\r\n            * on(name) group_left argocd_app_labels{label_environment=~\"$environment\"}\r\n        )\r\n    )\r\n) by (name, phase)",
+          "expr": "sum(\r\n    round(\r\n        increase(\r\n            argocd_app_sync_total{phase=~\"Error|Failed\"}[$interval]\r\n            * on(name) group_left argocd_app_labels{label_environment=~\"$environment\", label_team=~\"$team\"}\r\n        )\r\n    )\r\n) by (name, phase)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{phase}}: {{name}}",
@@ -2605,8 +2608,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -2702,8 +2704,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -3021,8 +3022,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -4535,6 +4535,32 @@
       },
       {
         "allValue": ".*",
+        "current": {},
+        "datasource": {
+          "uid": "$datasource"
+        },
+        "definition": "label_values(argocd_app_labels, label_team)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Team",
+        "multi": false,
+        "name": "team",
+        "options": [],
+        "query": {
+          "query": "label_values(argocd_app_labels, label_team)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "tagValuesQuery": "",
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": ".*",
         "current": {
           "selected": true,
           "text": "All",
@@ -4658,6 +4684,6 @@
   "timezone": "",
   "title": "ArgoCD",
   "uid": "argocd-apps",
-  "version": 2,
+  "version": 1,
   "weekStart": ""
 }

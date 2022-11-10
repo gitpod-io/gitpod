@@ -163,6 +163,9 @@ message MarkActiveRequest {
 
     // closed marks a workspace as closed which will shorten its timeout
     bool closed = 2;
+
+    // ignore_if_active only marks active when user never mark active, otherwise it will ignore
+    bool ignore_if_active = 3;
 }
 
 // MarkActiveResponse is the answer to a mark workspace active request
@@ -232,6 +235,9 @@ message DeleteVolumeSnapshotRequest{
 
     // soft_delete controls whether manager should attempt to restore volume snapshot from handle if it doesn't exist in the cluster yet
     bool soft_delete = 3;
+
+    // ws_type is the type of workspace (prebuild or regular) to which this volume snapshot belongs
+    WorkspaceType ws_type = 4;
 }
 
 message DeleteVolumeSnapshotResponse {
@@ -612,14 +618,17 @@ enum WorkspaceFeatureFlag {
     // PERSISTENT_VOLUME_CLAIM feature flag for enabling PVC\Snapshot feature support
     PERSISTENT_VOLUME_CLAIM = 7;
 
-    // PROTECTED_SECRETS feature flag for enable secrets support
-    PROTECTED_SECRETS = 8;
+    // Was used for PROTECTED_SECRETS feature flag to enable secrets support
+    reserved 8;
 
     // WORKSPACE_CLASS_LIMITING feature flag for enabling resuorce limiting based on workspace class
     WORKSPACE_CLASS_LIMITING = 9;
 
     // WORKSPACE_CONNECTION_LIMITING feature flag for enabling network connection rate limiting
     WORKSPACE_CONNECTION_LIMITING = 10;
+
+    // WORKSPACE_PSI feature flag for enabling pressure stall information for workspaces
+    WORKSPACE_PSI = 11;
 }
 
 // GitSpec configures the Git available within the workspace

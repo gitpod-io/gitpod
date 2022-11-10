@@ -30,7 +30,6 @@ import {
     AuthProviderInfo,
     CommitContext,
     Configuration,
-    CreateWorkspaceMode,
     DisposableCollection,
     GetWorkspaceTimeoutResult,
     GitpodClient as GitpodApiClient,
@@ -159,7 +158,6 @@ import { HeadlessLogService, HeadlessLogEndpoint } from "./headless-log-service"
 import { InvalidGitpodYMLError } from "./config-provider";
 import { ProjectsService } from "../projects/projects-service";
 import { LocalMessageBroker } from "../messaging/local-message-broker";
-import { CachingBlobServiceClientProvider } from "@gitpod/content-service/lib/sugar";
 import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { PartialProject } from "@gitpod/gitpod-protocol/src/teams-projects-protocol";
 import { ClientMetadata, traceClientMetadata } from "../websocket/websocket-connection-manager";
@@ -182,6 +180,7 @@ import { IDEService } from "../ide-service";
 import { MessageBusIntegration } from "./messagebus-integration";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import * as grpc from "@grpc/grpc-js";
+import { CachingBlobServiceClientProvider } from "../util/content-service-sugar";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -931,7 +930,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             req.setId(instanceId);
             req.setClosed(wasClosed);
 
-            const client = await this.workspaceManagerClientProvider.get(wsi.region);
+            const client = await this.workspaceManagerClientProvider.get(wsi.region, this.config.installationShortname);
             await client.markActive(ctx, req);
 
             if (options && options.roundTripTime && Number.isFinite(options.roundTripTime)) {
@@ -1053,12 +1052,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { options });
 
         const contextUrl = options.contextUrl;
-        const mode = options.mode || CreateWorkspaceMode.Default;
         let normalizedContextUrl: string = "";
         let logContext: LogContext = {};
 
         try {
-            const user = this.checkAndBlockUser("createWorkspace", { mode });
+            const user = this.checkAndBlockUser("createWorkspace", { options });
             await this.checkTermsAcceptance();
 
             const envVars = this.userDB.getEnvVars(user.id);
@@ -1070,7 +1068,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             normalizedContextUrl = this.contextParser.normalizeContextURL(contextUrl);
             let runningForContextPromise: Promise<WorkspaceInfo[]> = Promise.resolve([]);
             const contextPromise = this.contextParser.handle(ctx, user, normalizedContextUrl);
-            if (mode === CreateWorkspaceMode.SelectIfRunning) {
+            if (!options.ignoreRunningWorkspaceOnSameCommit) {
                 runningForContextPromise = this.findRunningInstancesForContext(
                     ctx,
                     contextPromise,
@@ -1153,14 +1151,22 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 }
             }
 
-            if (mode === CreateWorkspaceMode.SelectIfRunning && context.forceCreateNewWorkspace !== true) {
+            if (!options.ignoreRunningWorkspaceOnSameCommit && !context.forceCreateNewWorkspace) {
                 const runningForContext = await runningForContextPromise;
                 if (runningForContext.length > 0) {
                     return { existingWorkspaces: runningForContext };
                 }
             }
-
-            const prebuiltWorkspace = await this.findPrebuiltWorkspace(ctx, user, context, mode);
+            const project = CommitContext.is(context)
+                ? await this.projectDB.findProjectByCloneUrl(context.repository.cloneUrl)
+                : undefined;
+            const prebuiltWorkspace = await this.findPrebuiltWorkspace(
+                ctx,
+                user,
+                context,
+                options.ignoreRunningPrebuild,
+                options.allowUsingPreviousPrebuilds || project?.settings?.allowUsingPreviousPrebuilds,
+            );
             if (WorkspaceCreationResult.is(prebuiltWorkspace)) {
                 ctx.span?.log({ prebuild: "running" });
                 return prebuiltWorkspace as WorkspaceCreationResult;
@@ -1170,7 +1176,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 context = prebuiltWorkspace;
             }
 
-            const workspace = await this.workspaceFactory.createForContext(ctx, user, context, normalizedContextUrl);
+            const workspace = await this.workspaceFactory.createForContext(
+                ctx,
+                user,
+                project,
+                context,
+                normalizedContextUrl,
+            );
             await this.mayStartWorkspace(ctx, user, workspace, runningInstancesPromise);
             try {
                 await this.guardAccess({ kind: "workspace", subject: workspace }, "create");
@@ -1242,10 +1254,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     protected async findPrebuiltWorkspace(
-        ctx: TraceContext,
+        parentCtx: TraceContext,
         user: User,
         context: WorkspaceContext,
-        mode: CreateWorkspaceMode,
+        ignoreRunningPrebuild?: boolean,
+        allowUsingPreviousPrebuilds?: boolean,
     ): Promise<WorkspaceCreationResult | PrebuiltWorkspaceContext | undefined> {
         // prebuilds are an EE feature
         return undefined;
@@ -1473,7 +1486,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const req = new DescribeWorkspaceRequest();
         req.setId(instance.id);
-        const client = await this.workspaceManagerClientProvider.get(instance.region);
+        const client = await this.workspaceManagerClientProvider.get(
+            instance.region,
+            this.config.installationShortname,
+        );
         const desc = await client.describeWorkspace(ctx, req);
 
         if (!desc.hasStatus()) {
@@ -1526,7 +1542,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         req.setExpose(true);
 
         try {
-            const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
+            const client = await this.workspaceManagerClientProvider.get(
+                runningInstance.region,
+                this.config.installationShortname,
+            );
             await client.controlPort(ctx, req);
         } catch (e) {
             throw this.mapGrpcError(e);
@@ -1578,7 +1597,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         req.setSpec(spec);
         req.setExpose(false);
 
-        const client = await this.workspaceManagerClientProvider.get(instance.region);
+        const client = await this.workspaceManagerClientProvider.get(
+            instance.region,
+            this.config.installationShortname,
+        );
         await client.controlPort(ctx, req);
     }
 
@@ -1985,7 +2007,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 const req = new UpdateSSHKeyRequest();
                 req.setId(instance.id);
                 req.setKeysList(keys);
-                const cli = await this.workspaceManagerClientProvider.get(instance.region);
+                const cli = await this.workspaceManagerClientProvider.get(
+                    instance.region,
+                    this.config.installationShortname,
+                );
                 await cli.updateSSHPublicKey(ctx, req);
             } catch (err) {
                 const logCtx = { userId, instanceId: instance.id };
@@ -2049,14 +2074,23 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return this.teamDB.findTeamsByUser(user.id);
     }
 
+    public async getTeam(ctx: TraceContext, teamId: string): Promise<Team> {
+        traceAPIParams(ctx, { teamId });
+        this.checkAndBlockUser("getTeam");
+
+        const team = await this.teamDB.findTeamById(teamId);
+        if (!team) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, `Team ${teamId} does not exist`);
+        }
+
+        return team;
+    }
+
     public async getTeamMembers(ctx: TraceContext, teamId: string): Promise<TeamMemberInfo[]> {
         traceAPIParams(ctx, { teamId });
 
         this.checkUser("getTeamMembers");
-        const team = await this.teamDB.findTeamById(teamId);
-        if (!team) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
-        }
+        const team = await this.getTeam(ctx, teamId);
         const members = await this.teamDB.findMembersByTeam(team.id);
         await this.guardAccess({ kind: "team", subject: team, members }, "get");
         return members;
@@ -2094,20 +2128,22 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "The invite link is no longer valid.");
         }
         ctx.span?.setTag("teamId", invite.teamId);
-        await this.teamDB.addMemberToTeam(user.id, invite.teamId);
-        await this.onTeamMemberAdded(user.id, invite.teamId);
+        const result = await this.teamDB.addMemberToTeam(user.id, invite.teamId);
         const team = await this.teamDB.findTeamById(invite.teamId);
+        if (result !== "already_member") {
+            await this.onTeamMemberAdded(user.id, invite.teamId);
+            this.analytics.track({
+                userId: user.id,
+                event: "team_joined",
+                properties: {
+                    team_id: invite.teamId,
+                    team_name: team?.name,
+                    team_slug: team?.slug,
+                    invite_id: inviteId,
+                },
+            });
+        }
 
-        this.analytics.track({
-            userId: user.id,
-            event: "team_joined",
-            properties: {
-                team_id: invite.teamId,
-                team_name: team?.name,
-                team_slug: team?.slug,
-                invite_id: inviteId,
-            },
-        });
         return team!;
     }
 
@@ -2227,10 +2263,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return this.projectsService.deleteProject(projectId);
     }
 
-    public async deleteTeam(ctx: TraceContext, teamId: string, userId: string): Promise<void> {
-        traceAPIParams(ctx, { teamId, userId });
-
+    public async deleteTeam(ctx: TraceContext, teamId: string): Promise<void> {
         const user = this.checkAndBlockUser("deleteTeam");
+        traceAPIParams(ctx, { teamId, userId: user.id });
 
         await this.guardTeamOperation(teamId, "delete");
 
@@ -2345,7 +2380,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
         await this.guardProjectOperation(user, projectId, "get");
         try {
-            return await this.projectsService.getProjectOverviewCached(user, project);
+            const result = await this.projectsService.getProjectOverviewCached(user, project);
+            if (result) {
+                result.isConsideredInactive = await this.projectsService.isProjectConsideredInactive(project.id);
+            }
+            return result;
         } catch (error) {
             if (UnauthorizedError.is(error)) {
                 throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
@@ -3134,9 +3173,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 this.messageBus.notifyOnSubscriptionUpdate(ctx, attrId).catch();
             }
         } catch (error) {
-            log.error("cannot set usage attribution", error, { userId: user.id, usageAttributionId });
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `cannot set usage attribution`);
+            log.error({ userId: user.id }, "Cannot set usage attribution", error, { usageAttributionId });
+            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `Cannot set usage attribution`);
         }
+    }
+
+    async listAvailableUsageAttributionIds(ctx: TraceContext): Promise<string[]> {
+        const user = this.checkAndBlockUser("listAvailableUsageAttributionIds");
+
+        const attributionIds = await this.userService.listAvailableUsageAttributionIds(user);
+        return attributionIds.map(AttributionId.render);
     }
 
     async getBillingModeForUser(ctx: TraceContextWithSpan): Promise<BillingMode> {
@@ -3177,9 +3223,19 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             },
         );
         if (isMovedImageBuilder) {
-            return this.wsClusterImageBuilderClientProvider.getClient(user, workspace, instance);
+            return this.wsClusterImageBuilderClientProvider.getClient(
+                this.config.installationShortname,
+                user,
+                workspace,
+                instance,
+            );
         } else {
-            return this.imagebuilderClientProvider.getClient(user, workspace, instance);
+            return this.imagebuilderClientProvider.getClient(
+                this.config.installationShortname,
+                user,
+                workspace,
+                instance,
+            );
         }
     }
 

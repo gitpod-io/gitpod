@@ -26,11 +26,8 @@ import { Config } from "../../../src/config";
 import { UserService } from "../../../src/user/user-service";
 import { StripeService } from "../user/stripe-service";
 import { BillingModes } from "./billing-mode";
-import {
-    CostCenter_BillingStrategy,
-    UsageServiceClient,
-    UsageServiceDefinition,
-} from "@gitpod/usage-api/lib/usage/v1/usage.pb";
+import { CostCenter_BillingStrategy } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
+import { UsageService } from "../../../src/user/usage-service";
 
 const MAX_PARALLEL_WORKSPACES_FREE = 4;
 const MAX_PARALLEL_WORKSPACES_PAID = 16;
@@ -45,7 +42,7 @@ export class EntitlementServiceUBP implements EntitlementService {
     @inject(BillingModes) protected readonly billingModes: BillingModes;
     @inject(UserService) protected readonly userService: UserService;
     @inject(StripeService) protected readonly stripeService: StripeService;
-    @inject(UsageServiceDefinition.name) protected readonly usageService: UsageServiceClient;
+    @inject(UsageService) protected readonly usageService: UsageService;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
 
     async mayStartWorkspace(
@@ -136,11 +133,8 @@ export class EntitlementServiceUBP implements EntitlementService {
         // Member of paid team?
         const teams = await this.teamDB.findTeamsByUser(user.id);
         const isTeamSubscribedPromises = teams.map(async (team: Team) => {
-            const costCenter = await this.usageService.getCostCenter({
-                attributionId: AttributionId.render({ kind: "team", teamId: team.id }),
-            });
-
-            return costCenter.costCenter?.billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
+            const billingStrategy = await this.usageService.getCurrentBillingStategy(AttributionId.create(team));
+            return billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
         });
         // Return the first truthy promise, or false if all the promises were falsy.
         // Source: https://gist.github.com/jbreckmckye/66364021ebaa0785e426deec0410a235

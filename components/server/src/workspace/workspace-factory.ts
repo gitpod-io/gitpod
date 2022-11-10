@@ -10,6 +10,7 @@ import {
     CommitContext,
     IssueContext,
     PrebuiltWorkspaceContext,
+    Project,
     PullRequestContext,
     Repository,
     SnapshotContext,
@@ -38,13 +39,14 @@ export class WorkspaceFactory {
     public async createForContext(
         ctx: TraceContext,
         user: User,
+        project: Project | undefined,
         context: WorkspaceContext,
         normalizedContextURL: string,
     ): Promise<Workspace> {
         if (SnapshotContext.is(context)) {
             return this.createForSnapshot(ctx, user, context);
         } else if (CommitContext.is(context)) {
-            return this.createForCommit(ctx, user, context, normalizedContextURL);
+            return this.createForCommit(ctx, user, project, context, normalizedContextURL);
         }
         log.error({ userId: user.id }, "Couldn't create workspace for context", context);
         throw new Error("Couldn't create workspace for context");
@@ -106,16 +108,14 @@ export class WorkspaceFactory {
     protected async createForCommit(
         ctx: TraceContext,
         user: User,
+        project: Project | undefined,
         context: CommitContext,
         normalizedContextURL: string,
     ) {
         const span = TraceContext.startSpan("createForCommit", ctx);
 
         try {
-            const [{ config, literalConfig }, project] = await Promise.all([
-                this.configProvider.fetchConfig({ span }, user, context),
-                this.projectDB.findProjectByCloneUrl(context.repository.cloneUrl),
-            ]);
+            const { config, literalConfig } = await this.configProvider.fetchConfig({ span }, user, context);
             const imageSource = await this.imageSourceProvider.getImageSource(ctx, user, context, config);
             if (config._origin === "derived" && literalConfig) {
                 (context as any as AdditionalContentContext).additionalFiles = { ...literalConfig };

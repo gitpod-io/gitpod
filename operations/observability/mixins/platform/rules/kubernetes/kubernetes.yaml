@@ -49,32 +49,6 @@ spec:
       labels:
         severity: warning
         team: platform
-    - alert: KubeCPUOvercommit
-      annotations:
-        description: Cluster has overcommitted CPU resource requests for Pods by {{ $value }} CPU shares and cannot tolerate node failure.
-        summary: Cluster has overcommitted CPU resource requests.
-        dashboard_url: https://grafana.gitpod.io/d/efa86fd1d0c121a26444b636a3f509a8
-      expr: |
-        sum(namespace_cpu:kube_pod_container_resource_requests:sum{}) - (sum(kube_node_status_allocatable{resource="cpu"}) - max(kube_node_status_allocatable{resource="cpu"})) > 0
-        and
-        (sum(kube_node_status_allocatable{resource="cpu"}) - max(kube_node_status_allocatable{resource="cpu"})) > 0
-      for: 60m
-      labels:
-        severity: warning
-        team: platform
-    - alert: KubeMemoryOvercommit
-      annotations:
-        description: Cluster has overcommitted memory resource requests for Pods by {{ $value | humanize }} bytes and cannot tolerate node failure.
-        summary: Cluster has overcommitted memory resource requests.
-        dashboard_url: https://grafana.gitpod.io/d/efa86fd1d0c121a26444b636a3f509a8
-      expr: |
-        sum(namespace_memory:kube_pod_container_resource_requests:sum{}) - (sum(kube_node_status_allocatable{resource="memory"}) - max(kube_node_status_allocatable{resource="memory"})) > 0
-        and
-        (sum(kube_node_status_allocatable{resource="memory"}) - max(kube_node_status_allocatable{resource="memory"})) > 0
-      for: 60m
-      labels:
-        severity: warning
-        team: platform
     - alert: KubePersistentVolumeFillingUp
       annotations:
         description: The PersistentVolume claimed by {{ $labels.persistentvolumeclaim }} in Namespace {{ $labels.namespace }} is only {{ $value | humanizePercentage }} free.

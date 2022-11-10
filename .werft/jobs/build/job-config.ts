@@ -1,11 +1,14 @@
-import { exec } from "../../util/shell";
-import { Werft } from "../../util/werft";
-import { previewNameFromBranchName } from "../../util/preview";
+import {exec} from "../../util/shell";
+import {Werft} from "../../util/werft";
+import {previewNameFromBranchName} from "../../util/preview";
 
-type WithIntegrationTests = "skip" | "all" | "workspace" | "ide" | "webapp";
+type IdeIntegrationTests = "ide" | "jetbrains" | "ssh" | "vscode";
+type WithIntegrationTests = "skip" | "all" | "workspace" | "webapp" | IdeIntegrationTests
+
+export type Analytics = "skip" | "segment";
 
 export interface JobConfig {
-    analytics: string;
+    analytics: Analytics;
     buildConfig: any;
     cleanSlateDeployment: boolean;
     cluster: string;
@@ -30,12 +33,16 @@ export interface JobConfig {
     withSelfHostedPreview: boolean;
     withObservability: boolean;
     withLocalPreview: boolean;
+    withSlowDatabase: boolean;
     workspaceFeatureFlags: string[];
     previewEnvironment: PreviewEnvironmentConfig;
     repository: Repository;
     replicatedVersion: string;
     observability: Observability;
     withLargeVM: boolean;
+    certIssuer: string;
+    recreatePreview: boolean;
+    recreateVm: boolean;
 }
 
 export interface PreviewEnvironmentConfig {
@@ -74,7 +81,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         return raw.split(",").map((e) => e.trim());
     })();
 
-    const coverageOutput = exec("mktemp -d", { silent: true }).stdout.trim();
+    const coverageOutput = exec("mktemp -d", {silent: true}).stdout.trim();
 
     // Main build should only contain the annotations below:
     // ['with-contrib', 'publish-to-npm', 'publish-to-jb-marketplace', 'with-clean-slate-deployment']
@@ -89,7 +96,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const publishToNpm = "publish-to-npm" in buildConfig || mainBuild;
     const publishToJBMarketplace = "publish-to-jb-marketplace" in buildConfig || mainBuild;
     const publishToKots = "publish-to-kots" in buildConfig || withSelfHostedPreview || mainBuild;
-    const analytics = buildConfig["analytics"];
+
     const localAppVersion = mainBuild || "with-localapp-version" in buildConfig ? version : "unknown";
     const retag = "with-retag" in buildConfig ? "" : "--dont-retag";
     const cleanSlateDeployment = mainBuild || "with-clean-slate-deployment" in buildConfig;
@@ -97,9 +104,23 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const withObservability = "with-observability" in buildConfig && !mainBuild;
     const withLargeVM = "with-large-vm" in buildConfig && !mainBuild;
     const withLocalPreview = "with-local-preview" in buildConfig || mainBuild
+    const recreatePreview = "recreate-preview" in buildConfig
+    const recreateVm = mainBuild || "recreate-vm" in buildConfig;
+    const withSlowDatabase = "with-slow-database" in buildConfig && !mainBuild;
 
+    const analytics = parseAnalytics(werft, sliceId, buildConfig["analytics"])
     const withIntegrationTests = parseWithIntegrationTests(werft, sliceId, buildConfig["with-integration-tests"]);
     const withPreview = decideWithPreview({werft, sliceID: sliceId, buildConfig, mainBuild, withIntegrationTests})
+
+    switch (buildConfig["cert-issuer"]) {
+        case "letsencrypt":
+            buildConfig["cert-issuer"] = "letsencrypt-issuer-gitpod-core-dev"
+            break
+        case "zerossl":
+        default:
+            buildConfig["cert-issuer"] = "zerossl-issuer-gitpod-core-dev"
+    }
+    const certIssuer = buildConfig["cert-issuer"];
 
     const repository: Repository = {
         owner: context.Repository.owner,
@@ -155,6 +176,10 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         withLocalPreview,
         workspaceFeatureFlags,
         withLargeVM,
+        certIssuer,
+        recreatePreview,
+        recreateVm,
+        withSlowDatabase,
     };
 
     werft.logOutput(sliceId, JSON.stringify(jobConfig, null, 2));
@@ -186,8 +211,8 @@ function parseVersion(context: any) {
     return version;
 }
 
-function decideWithPreview(options: {werft: Werft, sliceID: string, buildConfig: any, mainBuild: boolean, withIntegrationTests: WithIntegrationTests}) {
-    const {werft, sliceID, buildConfig, mainBuild, withIntegrationTests } = options
+function decideWithPreview(options: { werft: Werft, sliceID: string, buildConfig: any, mainBuild: boolean, withIntegrationTests: WithIntegrationTests }) {
+    const {werft, sliceID, buildConfig, mainBuild, withIntegrationTests} = options
     if (mainBuild) {
         werft.log(sliceID, "with-preview is disabled for main builds")
         return false
@@ -204,6 +229,17 @@ function decideWithPreview(options: {werft: Werft, sliceID: string, buildConfig:
     return false
 }
 
+export function parseAnalytics(werft: Werft, sliceId: string, value: string): Analytics {
+    switch (value) {
+        case "segment":
+            return "segment"
+    }
+
+    werft.log(sliceId, "Analytics is not enabled")
+    return "skip";
+}
+
+
 export function parseWithIntegrationTests(werft: Werft, sliceID: string, value?: string): WithIntegrationTests {
     switch (value) {
         case null:
@@ -214,6 +250,9 @@ export function parseWithIntegrationTests(werft: Werft, sliceID: string, value?:
         case "all":
         case "webapp":
         case "ide":
+        case "jetbrains":
+        case "vscode":
+        case "ssh":
         case "workspace":
         case "webapp":
             return value;

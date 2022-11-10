@@ -8,17 +8,22 @@
 
 set -euo pipefail
 
+# Node pool index was only relevant with core-dev
+NODE_POOL_INDEX=0
+
+# These were previously using "findLastPort" etc. but in harvester-based preview environments they can be stable
+REG_DAEMON_PORT="30000"
+WS_DAEMON_PORT="10000"
+
 # Required params
-REG_DAEMON_PORT=$1
-WS_DAEMON_PORT=$2
-NODE_POOL_INDEX=$3
-DEV_BRANCH=$4
-SMITH_TOKEN=$5
-if [[ -z ${REG_DAEMON_PORT} ]] || [[ -z ${WS_DAEMON_PORT} ]] || [[ -z ${NODE_POOL_INDEX} ]] || [[ -z ${DEV_BRANCH} ]] || [[ -z ${SMITH_TOKEN} ]]; then
-   echo "One or more input params were invalid: ${REG_DAEMON_PORT} ${WS_DAEMON_PORT} ${NODE_POOL_INDEX} ${DEV_BRANCH} ${SMITH_TOKEN}"
+DEV_BRANCH=$1
+SMITH_TOKEN=$2
+
+if [[ -z ${REG_DAEMON_PORT} ]] || [[ -z ${WS_DAEMON_PORT} ]] || [[ -z ${DEV_BRANCH} ]] || [[ -z ${SMITH_TOKEN} ]]; then
+   echo "One or more input params were invalid: ${REG_DAEMON_PORT} ${WS_DAEMON_PORT} ${DEV_BRANCH} ${SMITH_TOKEN}"
    exit 1
 else
-   echo "Running with the following params: ${REG_DAEMON_PORT} ${WS_DAEMON_PORT} ${NODE_POOL_INDEX} ${DEV_BRANCH}"
+   echo "Running with the following params: ${REG_DAEMON_PORT} ${WS_DAEMON_PORT} ${DEV_BRANCH}"
 fi
 
 echo "Use node pool index $NODE_POOL_INDEX"
@@ -103,6 +108,7 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       yq m --arrays=overwrite -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"pool.yaml
    fi
 
+   SHORT_NAME="dev"
    # overrides for server-config
    if [[ "server-config" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
       WORK="overrides for $NAME $KIND"
@@ -113,14 +119,8 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       DEV_BRANCH_EXPR="s/\"devBranch\": \"\"/\"devBranch\": \"$DEV_BRANCH\"/"
       sed -i "$DEV_BRANCH_EXPR" /tmp/"$NAME"overrides.yaml
 
-      # InstallationShortname
-      # is expected to look like ws-dev.<branch-name-with-dashes>.staging.gitpod-dev.com
-      SHORT_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml installation.shortname)
-      NAMESPACE=$(kubens -c)
-      INSTALL_SHORT_NAME_EXPR="s/\"installationShortname\": \"$NAMESPACE\"/\"installationShortname\": \"$SHORT_NAME\"/"
-      sed -i "$INSTALL_SHORT_NAME_EXPR" /tmp/"$NAME"overrides.yaml
       # Stage
-      STAGE=$(yq r ./.werft/jobs/build/helm/values.dev.yaml installation.stage)
+      STAGE="devstaging"
       STAGE_EXPR="s/\"stage\": \"production\"/\"stage\": \"$STAGE\"/"
       sed -i "$STAGE_EXPR" /tmp/"$NAME"overrides.yaml
       # Install EE license, if it exists
@@ -154,10 +154,6 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       touch /tmp/"$NAME"overrides.yaml
       yq r k8s.yaml -d "$documentIndex" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
 
-      # simliar to server, except the ConfigMap hierarchy, key, and value are different
-      SHORT_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml installation.shortname)
-      INSTALL_SHORT_NAME_EXPR="s/\"installation\": \"\"/\"installation\": \"$SHORT_NAME\"/"
-      sed -i "$INSTALL_SHORT_NAME_EXPR" /tmp/"$NAME"overrides.yaml
       yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"overrides.yaml
    fi
 
@@ -175,8 +171,7 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       touch /tmp/"$NAME"overrides.yaml
       yq r k8s.yaml -d "$documentIndex" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
 
-      SHORT_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml installation.shortname)
-      STAGING_HOST_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml hostname)
+      STAGING_HOST_NAME="staging.gitpod-dev.com"
       CURRENT_WS_HOST_NAME="ws.$DEV_BRANCH.$STAGING_HOST_NAME"
       NEW_WS_HOST_NAME="ws-$SHORT_NAME.$DEV_BRANCH.$STAGING_HOST_NAME"
 
@@ -222,8 +217,7 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       yq r k8s.yaml -d "$documentIndex" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
 
       # simliar to server, except the ConfigMap hierarchy, key, and value are different
-      SHORT_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml installation.shortname)
-      STAGING_HOST_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml hostname)
+      STAGING_HOST_NAME="staging.gitpod-dev.com"
       CURRENT_WS_HOST_NAME="ws.$DEV_BRANCH.$STAGING_HOST_NAME"
       NEW_WS_HOST_NAME="ws-$SHORT_NAME.$DEV_BRANCH.$STAGING_HOST_NAME"
 

@@ -1,0 +1,23 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app.kubernetes.io/name: cardinality-analysis
+    app.kubernetes.io/part-of: kube-prometheus
+    prometheus: k8s
+    role: alert-rules
+  name: cardinality-analysis-monitoring-rules
+  namespace: monitoring-satellite
+spec:
+  groups:
+  - name: cardinality-analysis
+    rules:
+    - record: metrics_total
+      expr: count(count({__name__!=""}) by (__name__))
+
+    - record: metric:timeseries_total
+      expr: label_join(count by (__name__) ({__name__!=""}), "metric", "", "__name__")

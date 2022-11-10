@@ -11,10 +11,13 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 )
+
+const RETRY = 3
 
 func main() {
 	log := logrus.New()
@@ -95,9 +98,16 @@ func createAndRunc(runcPath, bundle string) error {
 		}
 	}
 
-	err = syscall.Exec(runcPath, os.Args, os.Environ())
-	if err != nil {
-		return xerrors.Errorf("exec %s: %w", runcPath, err)
+	// See here for more details on why retries are necessary.
+	// https://github.com/gitpod-io/gitpod/issues/12365
+	for i := 0; i <= RETRY; i++ {
+		err = syscall.Exec(runcPath, os.Args, os.Environ())
+		if err == nil {
+			return err
+		} else {
+			log.WithError(err).Warn("runc failed")
+		}
 	}
-	return nil
+
+	return xerrors.Errorf("exec %s: %w", runcPath, err)
 }

@@ -92,7 +92,7 @@ func (c *Config) GetVMICreationTimestamp(ctx context.Context, name, namespace st
 }
 
 func (c *Config) WaitVMReady(ctx context.Context, name, namespace string, doneCh chan struct{}) error {
-	kubeInformerFactory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(c.dynamicClient, time.Second*30, namespace, nil)
+	kubeInformerFactory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(c.DynamicClient, time.Second*30, namespace, nil)
 	vmInformer := kubeInformerFactory.ForResource(vmInstanceResource).Informer()
 
 	vmInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -149,7 +149,7 @@ func (c *Config) WaitVMReady(ctx context.Context, name, namespace string, doneCh
 }
 
 func (c *Config) GetVMs(ctx context.Context) ([]string, error) {
-	virtualMachineClient := c.dynamicClient.Resource(vmResource).Namespace("")
+	virtualMachineClient := c.DynamicClient.Resource(vmResource).Namespace("")
 	vmObjs, err := virtualMachineClient.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -164,7 +164,7 @@ func (c *Config) GetVMs(ctx context.Context) ([]string, error) {
 }
 
 func (c *Config) getVMI(ctx context.Context, name, namespace string) (*virtv1.VirtualMachineInstance, error) {
-	_, err := c.coreClient.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
+	_, err := c.CoreClient.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
 	if err != nil && !kerrors.IsNotFound(err) {
 		return nil, errors.Wrap(ErrVmNotReady, err.Error())
 	}
@@ -174,7 +174,7 @@ func (c *Config) getVMI(ctx context.Context, name, namespace string) (*virtv1.Vi
 		return nil, errors.Wrap(ErrVmNotReady, err.Error())
 	}
 
-	vmClient := c.dynamicClient.Resource(vmInstanceResource).Namespace(namespace)
+	vmClient := c.DynamicClient.Resource(vmInstanceResource).Namespace(namespace)
 	res, err := vmClient.Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrap(ErrVmNotReady, err.Error())

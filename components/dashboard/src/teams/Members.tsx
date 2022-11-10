@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { TeamMemberInfo, TeamMemberRole, TeamMembershipInvite } from "@gitpod/gitpod-protocol";
+import { TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
 import dayjs from "dayjs";
 import { useContext, useEffect, useState } from "react";
 import { useHistory, useLocation } from "react-router";
@@ -18,15 +18,20 @@ import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import { TeamsContext, getCurrentTeam } from "./teams-context";
 import { trackEvent } from "../Analytics";
+import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
+import { publicApiTeamMembersToProtocol, publicApiTeamsToProtocol, teamsService } from "../service/public-api";
+import { TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 
 export default function () {
     const { user } = useContext(UserContext);
     const { teams, setTeams } = useContext(TeamsContext);
+    const { usePublicApiTeamsService } = useContext(FeatureFlagContext);
+
     const history = useHistory();
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
     const [members, setMembers] = useState<TeamMemberInfo[]>([]);
-    const [genericInvite, setGenericInvite] = useState<TeamMembershipInvite>();
+    const [genericInviteId, setGenericInviteId] = useState<string>();
     const [showInviteModal, setShowInviteModal] = useState<boolean>(false);
     const [searchText, setSearchText] = useState<string>("");
     const [roleFilter, setRoleFilter] = useState<TeamMemberRole | undefined>();
@@ -37,12 +42,24 @@ export default function () {
             return;
         }
         (async () => {
-            const [infos, invite] = await Promise.all([
-                getGitpodService().server.getTeamMembers(team.id),
-                getGitpodService().server.getGenericInvite(team.id),
-            ]);
-            setMembers(infos);
-            setGenericInvite(invite);
+            let members: TeamMemberInfo[];
+            let invite: string;
+
+            if (usePublicApiTeamsService) {
+                const response = await teamsService.getTeam({ teamId: team.id });
+                members = publicApiTeamMembersToProtocol(response.team?.members || []);
+                invite = response.team?.teamInvitation?.id || "";
+            } else {
+                const [teamMembers, genericInvite] = await Promise.all([
+                    getGitpodService().server.getTeamMembers(team.id),
+                    getGitpodService().server.getGenericInvite(team.id),
+                ]);
+                members = teamMembers;
+                invite = genericInvite.id;
+            }
+
+            setMembers(members);
+            setGenericInviteId(invite);
         })();
     }, [team]);
 
@@ -78,24 +95,45 @@ export default function () {
 
     const resetInviteLink = async () => {
         // reset genericInvite first to prevent races on double click
-        if (genericInvite) {
-            setGenericInvite(undefined);
-            const newInvite = await getGitpodService().server.resetGenericInvite(team!.id);
-            setGenericInvite(newInvite);
+        if (genericInviteId) {
+            setGenericInviteId(undefined);
+            const newInviteId = usePublicApiTeamsService
+                ? (await teamsService.resetTeamInvitation({ teamId: team!.id })).teamInvitation?.id
+                : (await getGitpodService().server.resetGenericInvite(team!.id)).id;
+            setGenericInviteId(newInviteId);
         }
     };
 
     const setTeamMemberRole = async (userId: string, role: TeamMemberRole) => {
-        await getGitpodService().server.setTeamMemberRole(team!.id, userId, role);
-        setMembers(await getGitpodService().server.getTeamMembers(team!.id));
+        usePublicApiTeamsService
+            ? await teamsService.updateTeamMember({
+                  teamId: team!.id,
+                  teamMember: { userId, role: role === "owner" ? TeamRole.OWNER : TeamRole.MEMBER },
+              })
+            : await getGitpodService().server.setTeamMemberRole(team!.id, userId, role);
+
+        const members = usePublicApiTeamsService
+            ? publicApiTeamMembersToProtocol((await teamsService.getTeam({ teamId: team!.id })).team?.members || [])
+            : await getGitpodService().server.getTeamMembers(team!.id);
+
+        setMembers(members);
     };
 
     const removeTeamMember = async (userId: string) => {
-        await getGitpodService().server.removeTeamMember(team!.id, userId);
-        const newTeams = await getGitpodService().server.getTeams();
+        usePublicApiTeamsService
+            ? await teamsService.deleteTeamMember({ teamId: team!.id, teamMemberId: userId })
+            : await getGitpodService().server.removeTeamMember(team!.id, userId);
+
+        const newTeams = usePublicApiTeamsService
+            ? publicApiTeamsToProtocol((await teamsService.listTeams({})).teams)
+            : await getGitpodService().server.getTeams();
+
         if (newTeams.some((t) => t.id === team!.id)) {
             // We're still a member of this team.
-            const newMembers = await getGitpodService().server.getTeamMembers(team!.id);
+
+            const newMembers = usePublicApiTeamsService
+                ? publicApiTeamMembersToProtocol((await teamsService.getTeam({ teamId: team!.id })).team?.members || [])
+                : await getGitpodService().server.getTeamMembers(team!.id);
             setMembers(newMembers);
         } else {
             // We're no longer a member of this team (note: we navigate away first in order to avoid a 404).
@@ -166,7 +204,7 @@ export default function () {
                     <button
                         onClick={() => {
                             trackEvent("invite_url_requested", {
-                                invite_url: getInviteURL(genericInvite!.id),
+                                invite_url: getInviteURL(genericInviteId!),
                             });
                             setShowInviteModal(true);
                         }}
@@ -272,7 +310,7 @@ export default function () {
                     )}
                 </ItemsList>
             </div>
-            {genericInvite && showInviteModal && (
+            {genericInviteId && showInviteModal && (
                 // TODO: Use title and buttons props
                 <Modal visible={true} onClose={() => setShowInviteModal(false)}>
                     <h3 className="mb-4">Invite Members</h3>
@@ -286,12 +324,12 @@ export default function () {
                                 disabled={true}
                                 readOnly={true}
                                 type="text"
-                                value={getInviteURL(genericInvite.id)}
+                                value={getInviteURL(genericInviteId!)}
                                 className="rounded-md w-full truncate overflow-x-scroll pr-8"
                             />
                             <div
                                 className="cursor-pointer"
-                                onClick={() => copyToClipboard(getInviteURL(genericInvite.id))}
+                                onClick={() => copyToClipboard(getInviteURL(genericInviteId!))}
                             >
                                 <div className="absolute top-1/3 right-3">
                                     <Tooltip content={copied ? "Copied!" : "Copy Invite URL"}>

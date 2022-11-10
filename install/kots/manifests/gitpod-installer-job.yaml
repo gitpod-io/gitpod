@@ -39,11 +39,13 @@ spec:
       containers:
         - name: installer
           # This will normally be the release tag
-          image: "eu.gcr.io/gitpod-core-dev/build/installer:sje-installer-kill-workspaces.14"
+          image: "eu.gcr.io/gitpod-core-dev/build/installer:sje-installer-fixes.0"
           volumeMounts:
             - mountPath: /mnt/node0
               name: node-fs0
               readOnly: true
+            - mountPath: /tmp
+              name: temp-storage
           env:
             - name: MOUNT_PATH
               value: /mnt/node0
@@ -75,3 +77,5 @@ spec:
           hostPath:
             path: /
             type: Directory
+        - name: temp-storage
+          emptyDir: {}

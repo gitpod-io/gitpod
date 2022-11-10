@@ -42,10 +42,18 @@ func TestGetPreviewName(t *testing.T) {
 			branch:         "/refs/heads/this-is-a-long-branch-that-should-be-replaced-with-a-hash",
 			expectedResult: "this-is-a-a868caa3c3",
 		},
+		{
+			testName:       "Branch with whitespace",
+			branch:         "/refs/heads/jetbrains/backend-plugin-platform-2 ",
+			expectedResult: "jetbrains-35a989462b",
+		},
 	}
 
 	for _, tc := range testCases {
-		previewName := preview.GetName(tc.branch)
+		previewName, err := preview.GetName(tc.branch)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		if tc.expectedResult != previewName {
 			log.Fatalf("Test '%s' failed. Expected '%s' but got '%s'", tc.testName, tc.expectedResult, previewName)

@@ -18,39 +18,37 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/gitpod-io/gitpod/previewctl/pkg/k8s"
+	"github.com/gitpod-io/gitpod/previewctl/pkg/k8s/context/k3s"
+)
+
+var (
+	ErrBranchNotExist = errors.New("branch doesn't exist")
 )
 
 const harvesterContextName = "harvester"
 
-type Preview struct {
+type Config struct {
 	branch    string
 	name      string
 	namespace string
 
-	kubeClient *k8s.Config
+	harvesterClient *k8s.Config
+	configLoader    *k3s.ConfigLoader
 
 	logger *logrus.Entry
 
 	vmiCreationTime *metav1.Time
 }
 
-func New(branch string, logger *logrus.Logger) (*Preview, error) {
-	if branch == "" {
-		out, err := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD").Output()
-		if err != nil {
-			logger.WithFields(logrus.Fields{"err": err}).Fatal("Could not retrieve branch name.")
-		}
-		branch = string(out)
-	} else {
-		_, err := exec.Command("git", "rev-parse", "--verify", branch).Output()
-		if err != nil {
-			logger.WithFields(logrus.Fields{"branch": branch, "err": err}).Fatal("Branch does not exist.")
-		}
+func New(branch string, logger *logrus.Logger) (*Config, error) {
+	branch, err := GetName(branch)
+	if err != nil {
+		return nil, err
 	}
 
-	branch = strings.TrimRight(branch, "\n")
 	logEntry := logger.WithFields(logrus.Fields{"branch": branch})
 
 	harvesterConfig, err := k8s.NewFromDefaultConfigWithContext(logEntry.Logger, harvesterContextName)
@@ -58,104 +56,150 @@ func New(branch string, logger *logrus.Logger) (*Preview, error) {
 		return nil, errors.Wrap(err, "couldn't instantiate a k8s config")
 	}
 
-	return &Preview{
+	return &Config{
 		branch:          branch,
-		namespace:       fmt.Sprintf("preview-%s", GetName(branch)),
-		name:            GetName(branch),
-		kubeClient:      harvesterConfig,
+		namespace:       fmt.Sprintf("preview-%s", branch),
+		name:            branch,
+		harvesterClient: harvesterConfig,
 		logger:          logEntry,
 		vmiCreationTime: nil,
 	}, nil
 }
 
-func (p *Preview) InstallContext(wait bool, timeout time.Duration) error {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+type InstallCtxOpts struct {
+	Wait              bool
+	Timeout           time.Duration
+	KubeSavePath      string
+	SSHPrivateKeyPath string
+}
+
+func (c *Config) InstallContext(ctx context.Context, opts InstallCtxOpts) error {
+	// TODO: https://github.com/gitpod-io/ops/issues/6524
+	if c.configLoader == nil {
+		configLoader, err := k3s.New(ctx, k3s.ConfigLoaderOpts{
+			Logger:            c.logger.Logger,
+			PreviewName:       c.name,
+			PreviewNamespace:  c.namespace,
+			SSHPrivateKeyPath: opts.SSHPrivateKeyPath,
+			SSHUser:           "ubuntu",
+		})
+
+		if err != nil {
+			return err
+		}
+
+		c.configLoader = configLoader
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, opts.Timeout)
 	defer cancel()
 
-	p.logger.WithFields(logrus.Fields{"timeout": timeout}).Infof("Installing context")
+	c.logger.WithFields(logrus.Fields{"timeout": opts.Timeout}).Debug("Installing context")
 
 	// we use this channel to signal when we've found an event in wait functions, so we know when we're done
 	doneCh := make(chan struct{})
 	defer close(doneCh)
 
-	// TODO: fix this, as it's a bit ugly
-	err := p.kubeClient.GetVMStatus(ctx, p.name, p.namespace)
+	err := c.harvesterClient.GetVMStatus(ctx, c.name, c.namespace)
 	if err != nil && !errors.Is(err, k8s.ErrVmNotReady) {
 		return err
-	} else if errors.Is(err, k8s.ErrVmNotReady) && !wait {
+	} else if errors.Is(err, k8s.ErrVmNotReady) && !opts.Wait {
 		return err
-	} else if errors.Is(err, k8s.ErrVmNotReady) && wait {
-		err = p.kubeClient.WaitVMReady(ctx, p.name, p.namespace, doneCh)
+	} else if errors.Is(err, k8s.ErrVmNotReady) && opts.Wait {
+		err = c.harvesterClient.WaitVMReady(ctx, c.name, c.namespace, doneCh)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = p.kubeClient.GetProxyVMServiceStatus(ctx, p.namespace)
+	err = c.harvesterClient.GetProxyVMServiceStatus(ctx, c.namespace)
 	if err != nil && !errors.Is(err, k8s.ErrSvcNotReady) {
 		return err
-	} else if errors.Is(err, k8s.ErrSvcNotReady) && !wait {
+	} else if errors.Is(err, k8s.ErrSvcNotReady) && !opts.Wait {
 		return err
-	} else if errors.Is(err, k8s.ErrSvcNotReady) && wait {
-		err = p.kubeClient.WaitProxySvcReady(ctx, p.namespace, doneCh)
+	} else if errors.Is(err, k8s.ErrSvcNotReady) && opts.Wait {
+		err = c.harvesterClient.WaitProxySvcReady(ctx, c.namespace, doneCh)
 		if err != nil {
 			return err
 		}
 	}
 
-	if wait {
+	if opts.Wait {
 		for {
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
 			case <-time.Tick(5 * time.Second):
-				p.logger.Infof("waiting for context install to succeed")
-				err = installContext(p.branch)
+				c.logger.Infof("waiting for context install to succeed")
+				err = c.Install(ctx, opts)
 				if err == nil {
-					p.logger.Infof("Successfully installed context")
+					c.logger.Infof("Successfully installed context")
 					return nil
 				}
 			}
 		}
 	}
 
-	return installContext(p.branch)
+	return c.Install(ctx, opts)
 }
 
 // Same compares two preview envrionments
 //
-// Preview environments are considered the same if they are based on the same underlying
+// Config environments are considered the same if they are based on the same underlying
 // branch and the VM hasn't changed.
-func (p *Preview) Same(newPreview *Preview) bool {
-	sameBranch := p.branch == newPreview.branch
+func (c *Config) Same(newPreview *Config) bool {
+	sameBranch := c.branch == newPreview.branch
 	if !sameBranch {
 		return false
 	}
 
-	ensureVMICreationTime(p)
+	ensureVMICreationTime(c)
 	ensureVMICreationTime(newPreview)
 
-	return p.vmiCreationTime.Equal(newPreview.vmiCreationTime)
+	return c.vmiCreationTime.Equal(newPreview.vmiCreationTime)
 }
 
-func ensureVMICreationTime(p *Preview) {
+func ensureVMICreationTime(c *Config) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if p.vmiCreationTime == nil {
-		creationTime, err := p.kubeClient.GetVMICreationTimestamp(ctx, p.name, p.namespace)
-		p.vmiCreationTime = creationTime
+	if c.vmiCreationTime == nil {
+		creationTime, err := c.harvesterClient.GetVMICreationTimestamp(ctx, c.name, c.namespace)
+		c.vmiCreationTime = creationTime
 		if err != nil {
-			p.logger.WithFields(logrus.Fields{"err": err}).Infof("Failed to get creation time")
+			c.logger.WithFields(logrus.Fields{"err": err}).Infof("Failed to get creation time")
 		}
 	}
 }
 
-func installContext(branch string) error {
-	return exec.Command("bash", "/workspace/gitpod/dev/preview/install-k3s-kubeconfig.sh", "-b", branch).Run()
+func (c *Config) Install(ctx context.Context, opts InstallCtxOpts) error {
+	cfg, err := c.GetPreviewContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	merged, err := k8s.MergeContextsWithDefault(cfg)
+	if err != nil {
+		return err
+	}
+
+	return k8s.OutputContext(opts.KubeSavePath, merged)
+}
+
+func (c *Config) GetPreviewContext(ctx context.Context) (*api.Config, error) {
+	return c.configLoader.Load(ctx)
+}
+
+func InstallVMSSHKeys() error {
+	// TODO: https://github.com/gitpod-io/ops/issues/6524
+	return exec.Command("bash", "/workspace/gitpod/dev/preview/util/install-vm-ssh-keys.sh").Run()
 }
 
 func SSHPreview(branch string) error {
+	branch, err := GetName(branch)
+	if err != nil {
+		return err
+	}
 	sshCommand := exec.Command("bash", "/workspace/gitpod/dev/preview/ssh-vm.sh", "-b", branch)
 
 	// We need to bind standard output files to the command
@@ -167,7 +211,34 @@ func SSHPreview(branch string) error {
 	return sshCommand.Run()
 }
 
-func GetName(branch string) string {
+func branchFromGit(branch string) (string, error) {
+	if branch == "" {
+		out, err := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD").Output()
+		if err != nil {
+			return "", errors.Wrap(err, "Could not retrieve branch name.")
+		}
+
+		branch = string(out)
+	} else {
+		_, err := exec.Command("git", "rev-parse", "--verify", branch).Output()
+		if err != nil {
+			return "", errors.CombineErrors(err, ErrBranchNotExist)
+		}
+	}
+
+	return branch, nil
+}
+
+func GetName(branch string) (string, error) {
+	var err error
+	if branch == "" {
+		branch, err = branchFromGit(branch)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	branch = strings.TrimSpace(branch)
 	withoutRefsHead := strings.Replace(branch, "/refs/heads/", "", 1)
 	lowerCased := strings.ToLower(withoutRefsHead)
 
@@ -182,11 +253,11 @@ func GetName(branch string) string {
 		sanitizedBranch = sanitizedBranch[0:10] + hashedBranch[0:10]
 	}
 
-	return sanitizedBranch
+	return sanitizedBranch, nil
 }
 
-func (p *Preview) ListAllPreviews() error {
-	previews, err := p.kubeClient.GetVMs(context.Background())
+func (c *Config) ListAllPreviews(ctx context.Context) error {
+	previews, err := c.harvesterClient.GetVMs(ctx)
 	if err != nil {
 		return err
 	}

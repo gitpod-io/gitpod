@@ -44,5 +44,7 @@ imports:
       path: operations/observability/mixins/meta/rules
     - gitURL: https://github.com/gitpod-io/gitpod
       path: operations/observability/mixins/IDE/rules
+    - gitURL: https://github.com/gitpod-io/gitpod
+      path: operations/observability/mixins/self-hosted/rules/cardinality-analysis
     - gitURL: https://github.com/gitpod-io/observability
       path: monitoring-satellite/manifests/crds

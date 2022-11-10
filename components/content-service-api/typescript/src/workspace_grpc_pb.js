@@ -31,28 +31,6 @@ function deserialize_contentservice_DeleteWorkspaceResponse(buffer_arg) {
   return workspace_pb.DeleteWorkspaceResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-function serialize_contentservice_WorkspaceDownloadURLRequest(arg) {
-  if (!(arg instanceof workspace_pb.WorkspaceDownloadURLRequest)) {
-    throw new Error('Expected argument of type contentservice.WorkspaceDownloadURLRequest');
-  }
-  return Buffer.from(arg.serializeBinary());
-}
-
-function deserialize_contentservice_WorkspaceDownloadURLRequest(buffer_arg) {
-  return workspace_pb.WorkspaceDownloadURLRequest.deserializeBinary(new Uint8Array(buffer_arg));
-}
-
-function serialize_contentservice_WorkspaceDownloadURLResponse(arg) {
-  if (!(arg instanceof workspace_pb.WorkspaceDownloadURLResponse)) {
-    throw new Error('Expected argument of type contentservice.WorkspaceDownloadURLResponse');
-  }
-  return Buffer.from(arg.serializeBinary());
-}
-
-function deserialize_contentservice_WorkspaceDownloadURLResponse(buffer_arg) {
-  return workspace_pb.WorkspaceDownloadURLResponse.deserializeBinary(new Uint8Array(buffer_arg));
-}
-
 function serialize_contentservice_WorkspaceSnapshotExistsRequest(arg) {
   if (!(arg instanceof workspace_pb.WorkspaceSnapshotExistsRequest)) {
     throw new Error('Expected argument of type contentservice.WorkspaceSnapshotExistsRequest');
@@ -77,18 +55,6 @@ function deserialize_contentservice_WorkspaceSnapshotExistsResponse(buffer_arg) 
 
 
 var WorkspaceServiceService = exports.WorkspaceServiceService = {
-  // WorkspaceDownloadURL provides a URL from where the content of a workspace can be downloaded from
-workspaceDownloadURL: {
-    path: '/contentservice.WorkspaceService/WorkspaceDownloadURL',
-    requestStream: false,
-    responseStream: false,
-    requestType: workspace_pb.WorkspaceDownloadURLRequest,
-    responseType: workspace_pb.WorkspaceDownloadURLResponse,
-    requestSerialize: serialize_contentservice_WorkspaceDownloadURLRequest,
-    requestDeserialize: deserialize_contentservice_WorkspaceDownloadURLRequest,
-    responseSerialize: serialize_contentservice_WorkspaceDownloadURLResponse,
-    responseDeserialize: deserialize_contentservice_WorkspaceDownloadURLResponse,
-  },
   // DeleteWorkspace deletes the content of a single workspace
 deleteWorkspace: {
     path: '/contentservice.WorkspaceService/DeleteWorkspace',

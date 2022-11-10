@@ -38,10 +38,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		if ucfg.Workspace.RegistryFacade.RedisCache.Enabled {
 			cacheCfg := ucfg.Workspace.RegistryFacade.RedisCache
 			redisCache = &regfac.RedisCacheConfig{
-				Enabled:       true,
-				MasterName:    cacheCfg.MasterName,
-				SentinelAddrs: cacheCfg.SentinelAddrs,
-				Username:      cacheCfg.Username,
+				Enabled:            true,
+				SingleHostAddress:  cacheCfg.SingleHostAddress,
+				Username:           cacheCfg.Username,
+				UseTLS:             cacheCfg.UseTLS,
+				InsecureSkipVerify: cacheCfg.InsecureSkipVerify,
 			}
 		}
 

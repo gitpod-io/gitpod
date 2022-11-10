@@ -46,9 +46,12 @@ export default function Menu() {
     const [isFeedbackFormVisible, setFeedbackFormVisible] = useState<boolean>(false);
 
     const [hasIndividualProjects, setHasIndividualProjects] = useState(false);
-    getGitpodService()
-        .server.getUserProjects()
-        .then((projects) => setHasIndividualProjects(projects.length > 0));
+
+    useEffect(() => {
+        getGitpodService()
+            .server.getUserProjects()
+            .then((projects) => setHasIndividualProjects(projects.length > 0));
+    }, []);
 
     const match = useRouteMatch<{ segment1?: string; segment2?: string; segment3?: string }>(
         "/(t/)?:segment1/:segment2?/:segment3?",
@@ -101,6 +104,7 @@ export default function Menu() {
         "account",
         "notifications",
         "billing",
+        "usage",
         "plans",
         "teams",
         "variables",
@@ -249,7 +253,7 @@ export default function Menu() {
     };
     const isTeamLevelActive = !projectSlug && !isWorkspacesUI && !isPersonalSettingsUI && !isAdminUI && teamOrUserSlug;
     const renderTeamMenu = () => {
-        if (!teams || teams.length === 0) {
+        if (!hasIndividualProjects && (!teams || teams.length === 0)) {
             return (
                 <div className="p-1 text-base text-gray-500 dark:text-gray-400 border-gray-800">
                     <PillMenuItem
@@ -301,7 +305,7 @@ export default function Menu() {
                 }))
                 .sort((a, b) => (a.title.toLowerCase() > b.title.toLowerCase() ? 1 : -1)),
             {
-                slug: "teams/new",
+                slug: "new",
                 title: "Create a new team",
                 customContent: (
                     <div className="w-full text-gray-400 flex items-center">

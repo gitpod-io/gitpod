@@ -176,7 +176,7 @@ export class TeamDBImpl implements TeamDB {
         }
     }
 
-    public async addMemberToTeam(userId: string, teamId: string): Promise<void> {
+    public async addMemberToTeam(userId: string, teamId: string): Promise<"added" | "already_member"> {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOne(teamId);
         if (!team || !!team.deleted) {
@@ -185,7 +185,8 @@ export class TeamDBImpl implements TeamDB {
         const membershipRepo = await this.getMembershipRepo();
         const membership = await membershipRepo.findOne({ teamId, userId, deleted: false });
         if (!!membership) {
-            throw new ResponseError(ErrorCodes.CONFLICT, `You are already a member of this team. (${team.slug})`);
+            // already a member, this is the desired outcome
+            return "already_member";
         }
         await membershipRepo.save({
             id: uuidv4(),
@@ -194,6 +195,7 @@ export class TeamDBImpl implements TeamDB {
             role: "member",
             creationTime: new Date().toISOString(),
         });
+        return "added";
     }
 
     public async setTeamMemberRole(userId: string, teamId: string, role: TeamMemberRole): Promise<void> {

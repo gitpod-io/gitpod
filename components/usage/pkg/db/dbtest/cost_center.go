@@ -37,9 +37,8 @@ func NewCostCenter(t *testing.T, record db.CostCenter) db.CostCenter {
 	if record.BillingStrategy != "" {
 		result.BillingStrategy = record.BillingStrategy
 	}
-	if record.NextBillingTime.IsSet() {
-		result.NextBillingTime = record.NextBillingTime
-	}
+
+	result.NextBillingTime = record.NextBillingTime
 
 	return result
 }

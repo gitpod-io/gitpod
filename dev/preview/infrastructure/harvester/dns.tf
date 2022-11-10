@@ -26,10 +26,10 @@ resource "google_dns_record_set" "root-wc" {
 }
 
 
-resource "google_dns_record_set" "root-wc-ws" {
+resource "google_dns_record_set" "root-wc-ws-dev" {
   provider = google
 
-  name = "*.ws.${var.preview_name}.${data.google_dns_managed_zone.preview-gitpod-dev.dns_name}"
+  name = "*.ws-dev.${var.preview_name}.${data.google_dns_managed_zone.preview-gitpod-dev.dns_name}"
   type = "A"
   ttl  = 300
 
@@ -38,10 +38,10 @@ resource "google_dns_record_set" "root-wc-ws" {
 }
 
 
-resource "google_dns_record_set" "root-wc-ws-ssh" {
+resource "google_dns_record_set" "root-wc-ws-dev-ssh" {
   provider = google
 
-  name = "*.ssh.ws.${var.preview_name}.${data.google_dns_managed_zone.preview-gitpod-dev.dns_name}"
+  name = "*.ssh.ws-dev.${var.preview_name}.${data.google_dns_managed_zone.preview-gitpod-dev.dns_name}"
   type = "A"
   ttl  = 300
 

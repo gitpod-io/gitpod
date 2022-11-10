@@ -57,7 +57,7 @@ In order to configure the benchmark, you can use the configuration file
 | repo.auth.authUser | The user that should be used for authentication |
 | repo.auth.authPassword | The password that should be used for authentication |
 
-After the benchmark has completed, you will find a benchmark-result.json file in your working directory, that contains information about every started workspace.
+After the benchmark has completed, the command will print where the results are stored (this will be a `benchmark-result.json` file inside a unique directory under `results/`). This results file contains information about every started workspace.
 
 ```
 [

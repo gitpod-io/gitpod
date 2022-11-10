@@ -45,20 +45,20 @@ func NewConnectMetrics() *ConnectMetrics {
 		ServerRequestsStarted: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "connect_server_started_total",
 			Help: "Counter of server connect (gRPC/HTTP) requests started",
-		}, []string{"service", "call", "call_type"}),
+		}, []string{"package", "call", "call_type"}),
 		ServerRequestsHandled: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Name: "connect_server_handled_seconds",
 			Help: "Histogram of server connect (gRPC/HTTP) requests completed",
-		}, []string{"service", "call", "call_type", "code"}),
+		}, []string{"package", "call", "call_type", "code"}),
 
 		ClientRequestsStarted: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "connect_client_started_total",
 			Help: "Counter of client connect (gRPC/HTTP) requests started",
-		}, []string{"service", "call", "call_type"}),
+		}, []string{"package", "call", "call_type"}),
 		ClientRequestsHandled: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Name: "connect_client_handled_seconds",
 			Help: "Histogram of client connect (gRPC/HTTP) requests completed",
-		}, []string{"service", "call", "call_type", "code"}),
+		}, []string{"package", "call", "call_type", "code"}),
 	}
 }
 
@@ -66,23 +66,23 @@ func NewMetricsInterceptor(metrics *ConnectMetrics) connect.UnaryInterceptorFunc
 	interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
 		return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
 			now := time.Now()
-			service, call := splitServiceCall(req.Spec().Procedure)
+			callPackage, callName := splitServiceCall(req.Spec().Procedure)
 			callType := streamType(req.Spec().StreamType)
 			isClient := req.Spec().IsClient
 
 			if isClient {
-				metrics.ClientRequestsStarted.WithLabelValues(service, call, callType)
+				metrics.ClientRequestsStarted.WithLabelValues(callPackage, callName, callType).Inc()
 			} else {
-				metrics.ServerRequestsStarted.WithLabelValues(service, call, callType)
+				metrics.ServerRequestsStarted.WithLabelValues(callPackage, callName, callType).Inc()
 			}
 
 			resp, err := next(ctx, req)
 
 			code := codeOf(err)
 			if isClient {
-				metrics.ClientRequestsHandled.WithLabelValues(service, call, callType, code).Observe(time.Since(now).Seconds())
+				metrics.ClientRequestsHandled.WithLabelValues(callPackage, callName, callType, code).Observe(time.Since(now).Seconds())
 			} else {
-				metrics.ServerRequestsHandled.WithLabelValues(service, call, callType, code).Observe(time.Since(now).Seconds())
+				metrics.ServerRequestsHandled.WithLabelValues(callPackage, callName, callType, code).Observe(time.Since(now).Seconds())
 			}
 
 			return resp, err

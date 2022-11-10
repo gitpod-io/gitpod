@@ -4,7 +4,10 @@
 
 package auth
 
-import "context"
+import (
+	"context"
+	"errors"
+)
 
 type contextKey int
 
@@ -12,14 +15,40 @@ const (
 	authContextKey contextKey = iota
 )
 
-func TokenToContext(ctx context.Context, token string) context.Context {
+type TokenType int
+
+const (
+	AccessTokenType TokenType = iota
+	CookieTokenType
+)
+
+type Token struct {
+	Type  TokenType
+	Value string
+}
+
+func NewAccessToken(token string) Token {
+	return Token{
+		Type:  AccessTokenType,
+		Value: token,
+	}
+}
+
+func NewCookieToken(cookie string) Token {
+	return Token{
+		Type:  CookieTokenType,
+		Value: cookie,
+	}
+}
+
+func TokenToContext(ctx context.Context, token Token) context.Context {
 	return context.WithValue(ctx, authContextKey, token)
 }
 
-func TokenFromContext(ctx context.Context) string {
-	if val, ok := ctx.Value(authContextKey).(string); ok {
-		return val
+func TokenFromContext(ctx context.Context) (Token, error) {
+	if val, ok := ctx.Value(authContextKey).(Token); ok {
+		return val, nil
 	}
 
-	return ""
+	return Token{}, errors.New("no token present on context")
 }

@@ -52,6 +52,8 @@ import { isGitpodIo, isLocalPreview } from "./utils";
 import Alert from "./components/Alert";
 import { BlockedRepositories } from "./admin/BlockedRepositories";
 import { AppNotifications } from "./AppNotifications";
+import { publicApiTeamsToProtocol, teamsService } from "./service/public-api";
+import { FeatureFlagContext } from "./contexts/FeatureFlagContext";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "./workspaces/Workspaces"));
@@ -101,6 +103,7 @@ function isWebsiteSlug(pathName: string) {
         "about",
         "blog",
         "careers",
+        "cde",
         "changelog",
         "chat",
         "code-of-conduct",
@@ -154,6 +157,7 @@ function App() {
     const { user, setUser, refreshUserBillingMode } = useContext(UserContext);
     const { teams, setTeams } = useContext(TeamsContext);
     const { setIsDark } = useContext(ThemeContext);
+    const { usePublicApiTeamsService } = useContext(FeatureFlagContext);
 
     const [loading, setLoading] = useState<boolean>(true);
     const [isWhatsNewShown, setWhatsNewShown] = useState(false);
@@ -165,12 +169,12 @@ function App() {
         (async () => {
             var user: User | undefined;
             try {
-                const teamsPromise = getGitpodService().server.getTeams();
-
                 user = await getGitpodService().server.getLoggedInUser();
                 setUser(user);
 
-                const teams = await teamsPromise;
+                const teams = usePublicApiTeamsService
+                    ? publicApiTeamsToProtocol((await teamsService.listTeams({})).teams)
+                    : await getGitpodService().server.getTeams();
 
                 {
                     // if a team was selected previously and we call the root URL (e.g. "gitpod.io"),
@@ -275,6 +279,9 @@ function App() {
     }, [user]);
 
     useEffect(() => {
+        if (!teams) {
+            return;
+        }
         // Refresh billing mode (side effect on other components per UserContext!)
         refreshUserBillingMode();
     }, [teams]);
@@ -428,21 +435,20 @@ function App() {
                         <Route
                             exact
                             path={projectsPathMainWithParams}
-                            render={(props) => {
-                                const { resourceOrPrebuild } = props.match.params;
-                                if (resourceOrPrebuild === "events") {
-                                    return <Events />;
+                            render={({ match }) => {
+                                const { resourceOrPrebuild } = match.params;
+                                switch (resourceOrPrebuild) {
+                                    case "events":
+                                        return <Events />;
+                                    case "prebuilds":
+                                        return <Prebuilds />;
+                                    case "settings":
+                                        return <ProjectSettings />;
+                                    case "variables":
+                                        return <ProjectVariables />;
+                                    default:
+                                        return resourceOrPrebuild ? <Prebuild /> : <Project />;
                                 }
-                                if (resourceOrPrebuild === "prebuilds") {
-                                    return <Prebuilds />;
-                                }
-                                if (resourceOrPrebuild === "settings") {
-                                    return <ProjectSettings />;
-                                }
-                                if (resourceOrPrebuild === "variables") {
-                                    return <ProjectVariables />;
-                                }
-                                return resourceOrPrebuild ? <Prebuild /> : <Project />;
                             }}
                         />
                     </Route>
@@ -459,39 +465,36 @@ function App() {
                             <Route
                                 exact
                                 path={`/t/${team.slug}/:maybeProject/:resourceOrPrebuild?`}
-                                render={(props) => {
-                                    const { maybeProject, resourceOrPrebuild } = props.match.params;
-                                    if (maybeProject === "projects") {
-                                        return <Projects />;
+                                render={({ match }) => {
+                                    const { maybeProject, resourceOrPrebuild } = match.params;
+                                    switch (maybeProject) {
+                                        case "projects":
+                                            return <Projects />;
+                                        case "workspaces":
+                                            return <Workspaces />;
+                                        case "members":
+                                            return <Members />;
+                                        case "settings":
+                                            return <TeamSettings />;
+                                        case "billing":
+                                            return <TeamBilling />;
+                                        case "usage":
+                                            return <TeamUsage />;
+                                        default:
+                                            break;
                                     }
-                                    if (maybeProject === "workspaces") {
-                                        return <Workspaces />;
+                                    switch (resourceOrPrebuild) {
+                                        case "events":
+                                            return <Events />;
+                                        case "prebuilds":
+                                            return <Prebuilds />;
+                                        case "settings":
+                                            return <ProjectSettings />;
+                                        case "variables":
+                                            return <ProjectVariables />;
+                                        default:
+                                            return resourceOrPrebuild ? <Prebuild /> : <Project />;
                                     }
-                                    if (maybeProject === "members") {
-                                        return <Members />;
-                                    }
-                                    if (maybeProject === "settings") {
-                                        return <TeamSettings />;
-                                    }
-                                    if (maybeProject === "billing") {
-                                        return <TeamBilling />;
-                                    }
-                                    if (maybeProject === "usage") {
-                                        return <TeamUsage />;
-                                    }
-                                    if (resourceOrPrebuild === "events") {
-                                        return <Events />;
-                                    }
-                                    if (resourceOrPrebuild === "prebuilds") {
-                                        return <Prebuilds />;
-                                    }
-                                    if (resourceOrPrebuild === "settings") {
-                                        return <ProjectSettings />;
-                                    }
-                                    if (resourceOrPrebuild === "variables") {
-                                        return <ProjectVariables />;
-                                    }
-                                    return resourceOrPrebuild ? <Prebuild /> : <Project />;
                                 }}
                             />
                         </Route>

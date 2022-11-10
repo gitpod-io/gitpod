@@ -10,12 +10,12 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.util.ExceptionUtil
-import io.gitpod.gitpodprotocol.api.entities.TakeSnapshotOptions
 import io.gitpod.gitpodprotocol.api.entities.Error
+import io.gitpod.gitpodprotocol.api.entities.TakeSnapshotOptions
 import io.gitpod.jetbrains.remote.GitpodManager
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
-import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 
 class ShareWorkspaceSnapshotAction : AnAction() {
@@ -61,8 +61,7 @@ class ShareWorkspaceSnapshotAction : AnAction() {
                         )
                         val copyUrlAction = NotificationAction.createSimple("Copy URL to Clipboard") {
                             val uri = "${workspaceInfo.gitpodHost}#snapshot/$snapshotId";
-                            val clipboard = Toolkit.getDefaultToolkit().systemClipboard
-                            clipboard.setContents(StringSelection(uri), null)
+                            CopyPasteManager.getInstance().setContents(StringSelection(uri))
                         }
                         notification.addAction(copyUrlAction)
                         notification.notify(null)

@@ -61,7 +61,7 @@ const (
 )
 
 // TODO: enable custom configuration
-var blockDevices = []string{"sd*", "md*", "nvme0n*"}
+var blockDevices = []string{"dm*", "sd*", "md*", "nvme0n*"}
 
 func buildLimits(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs int64) ioLimitOptions {
 	return ioLimitOptions{
@@ -82,8 +82,8 @@ func (c *IOLimiterV1) Update(writeBytesPerSecond, readBytesPerSecond, writeIOPs,
 	c.cond.Broadcast()
 }
 
-func (c *IOLimiterV1) Apply(ctx context.Context, basePath, cgroupPath string) error {
-	baseCgroupPath := filepath.Join(basePath, "blkio", cgroupPath)
+func (c *IOLimiterV1) Apply(ctx context.Context, opts *PluginOptions) error {
+	baseCgroupPath := filepath.Join(opts.BasePath, "blkio", opts.CgroupPath)
 
 	writeLimits := func(l ioLimitOptions, fromCache bool) error {
 		err := writeLimit(filepath.Join(baseCgroupPath, fnBlkioThrottleWriteBps), c.produceLimits(fnBlkioThrottleWriteBps, l.WriteBytesPerSecond, fromCache))
@@ -123,19 +123,19 @@ func (c *IOLimiterV1) Apply(ctx context.Context, basePath, cgroupPath string) er
 	}()
 
 	go func() {
-		log.WithField("cgroupPath", cgroupPath).Debug("starting IO limiting")
+		log.WithField("cgroupPath", opts.CgroupPath).Debug("starting IO limiting")
 		err := writeLimits(c.limits, false)
 		if err != nil {
-			log.WithError(err).WithField("cgroupPath", cgroupPath).Error("cannot write IO limits")
+			log.WithError(err).WithField("cgroupPath", opts.CgroupPath).Error("cannot write IO limits")
 		}
 
 		for {
 			select {
 			case <-update:
-				log.WithField("cgroupPath", cgroupPath).WithField("l", c.limits).Debug("writing new IO limiting")
+				log.WithField("cgroupPath", opts.CgroupPath).WithField("l", c.limits).Debug("writing new IO limiting")
 				err := writeLimits(c.limits, false)
 				if err != nil {
-					log.WithError(err).WithField("cgroupPath", cgroupPath).Error("cannot write IO limits")
+					log.WithError(err).WithField("cgroupPath", opts.CgroupPath).Error("cannot write IO limits")
 				}
 			case <-ctx.Done():
 				// Prior to shutting down though, we need to reset the IO limits to ensure we don't have
@@ -143,9 +143,9 @@ func (c *IOLimiterV1) Apply(ctx context.Context, basePath, cgroupPath string) er
 				// workspace pod from shutting down.
 				err = writeLimits(ioLimitOptions{}, false)
 				if err != nil {
-					log.WithError(err).WithField("cgroupPath", cgroupPath).Error("cannot reset IO limits")
+					log.WithError(err).WithField("cgroupPath", opts.CgroupPath).Error("cannot reset IO limits")
 				}
-				log.WithField("cgroupPath", cgroupPath).Debug("stopping IO limiting")
+				log.WithField("cgroupPath", opts.CgroupPath).Debug("stopping IO limiting")
 				return
 			}
 		}

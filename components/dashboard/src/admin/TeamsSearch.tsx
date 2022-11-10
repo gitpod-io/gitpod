@@ -32,10 +32,6 @@ export function TeamsSearch() {
     const [searchResult, setSearchResult] = useState<AdminGetListResult<Team>>({ total: 0, rows: [] });
     const pageLength = 50;
     const [currentPage, setCurrentPage] = useState(1);
-    const updateCurrentPage = (page: number) => {
-        setCurrentPage(page);
-        search();
-    };
 
     useEffect(() => {
         const teamId = location.pathname.split("/")[3];
@@ -58,16 +54,17 @@ export function TeamsSearch() {
         return <TeamDetail team={currentTeam} />;
     }
 
-    const search = async () => {
+    const search = async (page: number = 1) => {
         setSearching(true);
         try {
             const result = await getGitpodService().server.adminGetTeams({
                 searchTerm,
                 limit: pageLength,
                 orderBy: "creationTime",
-                offset: (currentPage - 1) * pageLength,
+                offset: (page - 1) * pageLength,
                 orderDir: "desc",
             });
+            setCurrentPage(page);
             setSearchResult(result);
         } finally {
             setSearching(false);
@@ -103,7 +100,7 @@ export function TeamsSearch() {
                             }}
                         />
                     </div>
-                    <button disabled={searching} onClick={search}>
+                    <button disabled={searching} onClick={() => search()}>
                         Search
                     </button>
                 </div>
@@ -129,7 +126,7 @@ export function TeamsSearch() {
             </div>
             <Pagination
                 currentPage={currentPage}
-                setPage={updateCurrentPage}
+                setPage={search}
                 totalNumberOfPages={Math.ceil(searchResult.total / pageLength)}
             />
         </>

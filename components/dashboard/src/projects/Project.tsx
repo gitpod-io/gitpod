@@ -14,10 +14,11 @@ import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
 import { prebuildStatusIcon, prebuildStatusLabel } from "./Prebuilds";
 import { shortCommitMessage, toRemoteURL } from "./render-utils";
-import Spinner from "../icons/Spinner.svg";
+import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import NoAccess from "../icons/NoAccess.svg";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { openAuthorizeWindow } from "../provider-utils";
+import Alert from "../components/Alert";
 
 export default function () {
     const location = useLocation();
@@ -34,6 +35,8 @@ export default function () {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isLoadingBranches, setIsLoadingBranches] = useState<boolean>(false);
     const [branches, setBranches] = useState<Project.BranchDetails[]>([]);
+    const [isConsideredInactive, setIsConsideredInactive] = useState<boolean>(false);
+    const [isResuming, setIsResuming] = useState<boolean>(false);
     const [prebuilds, setPrebuilds] = useState<Map<string, PrebuildWithStatus | undefined>>(new Map());
     const [prebuildLoaders] = useState<Set<string>>(new Set());
 
@@ -91,6 +94,7 @@ export default function () {
                 // default branch on top of the rest
                 const branches = details.branches.sort((a, b) => (b.isDefault as any) - (a.isDefault as any)) || [];
                 setBranches(branches);
+                setIsConsideredInactive(!!details.isConsideredInactive);
             }
         } finally {
             setIsLoadingBranches(false);
@@ -184,6 +188,22 @@ export default function () {
         return date ? dayjs(date).fromNow() : "";
     };
 
+    const resumePrebuilds = async () => {
+        if (!project) {
+            return;
+        }
+        try {
+            setIsResuming(true);
+            const response = await getGitpodService().server.triggerPrebuild(project.id, null);
+            setIsConsideredInactive(false);
+            history.push(`/${!!team ? "t/" + team.slug : "projects"}/${projectSlug}/${response.prebuildId}`);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsResuming(false);
+        }
+    };
+
     return (
         <>
             <Header
@@ -243,7 +263,7 @@ export default function () {
                             <div className="flex-1" />
                             {isLoading && (
                                 <div className="flex justify-center w-1/12">
-                                    <img alt="" className="h-4 w-4 animate-spin" src={Spinner} />
+                                    <Spinner className="h-4 w-4 animate-spin" />
                                 </div>
                             )}
                         </div>
@@ -259,9 +279,34 @@ export default function () {
                                     <span>Prebuild</span>
                                 </ItemField>
                             </Item>
+                            {isConsideredInactive && (
+                                <Alert
+                                    type={"warning"}
+                                    onClose={() => {}}
+                                    showIcon={true}
+                                    className="flex rounded mb-2 w-full"
+                                >
+                                    To reduce resource usage, prebuilds are automatically paused when not used for a
+                                    workspace after 7 days.{" "}
+                                    {isResuming && (
+                                        <>
+                                            Resuming <Spinner className="h-4 w-4 animate-spin" />
+                                        </>
+                                    )}
+                                    {!isResuming && (
+                                        <a
+                                            href="javascript:void(0)"
+                                            className="gp-link hover:text-gray-600"
+                                            onClick={() => resumePrebuilds()}
+                                        >
+                                            Resume prebuilds
+                                        </a>
+                                    )}
+                                </Alert>
+                            )}
                             {isLoadingBranches && (
                                 <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm pt-16 pb-40">
-                                    <img className="h-4 w-4 animate-spin" src={Spinner} />
+                                    <Spinner className="h-4 w-4 animate-spin" />
                                     <span>Fetching repository branches...</span>
                                 </div>
                             )}

@@ -63,14 +63,7 @@ export default function () {
         <ProjectSettingsPage project={project}>
             <h3>Prebuilds</h3>
             <CheckBox
-                title={
-                    <span>
-                        Enable Incremental Prebuilds{" "}
-                        <PillLabel type="warn" className="font-semibold mt-2 ml-2 py-0.5 px-2 self-center">
-                            Beta
-                        </PillLabel>
-                    </span>
-                }
+                title={<span>Enable Incremental Prebuilds </span>}
                 desc={
                     <span>
                         When possible, use an earlier successful prebuild as a base to create new prebuilds. This can
@@ -90,16 +83,73 @@ export default function () {
                 checked={!project.settings?.keepOutdatedPrebuildsRunning}
                 onChange={({ target }) => updateProjectSettings({ keepOutdatedPrebuildsRunning: !target.checked })}
             />
+            <CheckBox
+                title={
+                    <span>
+                        Use Last Successful Prebuild{" "}
+                        <PillLabel type="warn" className="font-semibold mt-2 ml-2 py-0.5 px-2 self-center">
+                            Alpha
+                        </PillLabel>
+                    </span>
+                }
+                desc={
+                    <span>
+                        Skip waiting for prebuilds in progress and use the last successful prebuild from previous
+                        commits on the same branch.
+                    </span>
+                }
+                checked={!!project.settings?.allowUsingPreviousPrebuilds}
+                onChange={({ target }) =>
+                    updateProjectSettings({
+                        allowUsingPreviousPrebuilds: target.checked,
+                        // we are disabling prebuild cancellation when incremental workspaces are enabled
+                        keepOutdatedPrebuildsRunning: target.checked || project?.settings?.keepOutdatedPrebuildsRunning,
+                    })
+                }
+            />
+            <div className="flex mt-4 max-w-2xl">
+                <div className="flex flex-col ml-6">
+                    <label
+                        htmlFor="prebuildNthCommit"
+                        className="text-gray-800 dark:text-gray-100 text-md font-semibold cursor-pointer tracking-wide"
+                    >
+                        Skip Prebuilds
+                    </label>
+                    <input
+                        type="number"
+                        id="prebuildNthCommit"
+                        min="0"
+                        max="100"
+                        step="5"
+                        className="mt-2"
+                        disabled={!project.settings?.allowUsingPreviousPrebuilds}
+                        value={
+                            project.settings?.prebuildEveryNthCommit === undefined
+                                ? 0
+                                : project.settings?.prebuildEveryNthCommit
+                        }
+                        onChange={({ target }) =>
+                            updateProjectSettings({
+                                prebuildEveryNthCommit: Math.abs(Math.min(Number.parseInt(target.value), 100)) || 0,
+                            })
+                        }
+                    />
+                    <div className="text-gray-500 dark:text-gray-400 text-sm mt-2">
+                        The number of commits that are skipped between prebuilds.
+                    </div>
+                </div>
+            </div>
+
             {showPersistentVolumeClaimUI && (
                 <>
                     <br></br>
-                    <h3 className="mt-12">Workspace Persistence</h3>
+                    <h3 className="mt-12">Workspaces</h3>
                     <CheckBox
                         title={
                             <span>
                                 Enable Persistent Volume Claim{" "}
                                 <PillLabel type="warn" className="font-semibold mt-2 ml-2 py-0.5 px-2 self-center">
-                                    Experimental
+                                    Alpha
                                 </PillLabel>
                             </span>
                         }

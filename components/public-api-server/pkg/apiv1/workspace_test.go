@@ -6,20 +6,20 @@ package apiv1
 
 import (
 	"context"
-	"errors"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
 	fuzz "github.com/AdaLogics/go-fuzz-headers"
 	"github.com/bufbuild/connect-go"
-	"github.com/gitpod-io/gitpod/common-go/baseserver"
+	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
+	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
-	v1 "github.com/gitpod-io/gitpod/public-api/experimental/v1"
-	"github.com/gitpod-io/gitpod/public-api/experimental/v1/v1connect"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
+	"github.com/sourcegraph/jsonrpc2"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -30,21 +30,6 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 		bearerToken      = "bearer-token-for-tests"
 		foundWorkspaceID = "easycz-seer-xl8o1zacpyw"
 	)
-
-	srv := baseserver.NewForTests(t,
-		baseserver.WithHTTP(baseserver.MustUseRandomLocalAddress(t)),
-	)
-
-	connPool := &FakeServerConnPool{}
-
-	route, handler := v1connect.NewWorkspacesServiceHandler(NewWorkspaceService(connPool))
-	srv.HTTPMux().Handle(route, handler)
-
-	baseserver.StartServerForTests(t, srv)
-
-	client := v1connect.NewWorkspacesServiceClient(http.DefaultClient, srv.HTTPAddress(), connect.WithInterceptors(
-		auth.NewClientInterceptor(bearerToken),
-	))
 
 	type Expectation struct {
 		Code     connect.Code
@@ -80,26 +65,25 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 
 	for _, test := range scenarios {
 		t.Run(test.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-			srv := protocol.NewMockAPIInterface(ctrl)
-			srv.EXPECT().GetWorkspace(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, id string) (res *protocol.WorkspaceInfo, err error) {
+			serverMock, client := setupWorkspacesService(t)
+
+			serverMock.EXPECT().GetWorkspace(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, id string) (res *protocol.WorkspaceInfo, err error) {
 				w, ok := test.Workspaces[id]
 				if !ok {
-					return nil, errors.New("code 404")
+					return nil, &jsonrpc2.Error{
+						Code:    404,
+						Message: "not found",
+					}
 				}
 				return &w, nil
 			})
-			connPool.api = srv
 
 			resp, err := client.GetWorkspace(context.Background(), connect.NewRequest(&v1.GetWorkspaceRequest{
 				WorkspaceId: test.WorkspaceID,
 			}))
 			requireErrorCode(t, test.Expect.Code, err)
 			if test.Expect.Response != nil {
-				if diff := cmp.Diff(test.Expect.Response, resp.Msg, protocmp.Transform()); diff != "" {
-					t.Errorf("unexpected difference:\n%v", diff)
-				}
+				requireEqualProto(t, test.Expect.Response, resp.Msg)
 			}
 		})
 	}
@@ -111,21 +95,6 @@ func TestWorkspaceService_GetOwnerToken(t *testing.T) {
 		foundWorkspaceID = "easycz-seer-xl8o1zacpyw"
 		ownerToken       = "some-owner-token"
 	)
-
-	srv := baseserver.NewForTests(t,
-		baseserver.WithHTTP(baseserver.MustUseRandomLocalAddress(t)),
-	)
-
-	connPool := &FakeServerConnPool{}
-
-	route, handler := v1connect.NewWorkspacesServiceHandler(NewWorkspaceService(connPool))
-	srv.HTTPMux().Handle(route, handler)
-
-	baseserver.StartServerForTests(t, srv)
-
-	client := v1connect.NewWorkspacesServiceClient(http.DefaultClient, srv.HTTPAddress(), connect.WithInterceptors(
-		auth.NewClientInterceptor(bearerToken),
-	))
 
 	type Expectation struct {
 		Code     connect.Code
@@ -158,51 +127,32 @@ func TestWorkspaceService_GetOwnerToken(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-			srv := protocol.NewMockAPIInterface(ctrl)
-			srv.EXPECT().GetOwnerToken(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, workspaceID string) (res string, err error) {
+			serverMock, client := setupWorkspacesService(t)
+
+			serverMock.EXPECT().GetOwnerToken(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, workspaceID string) (res string, err error) {
 				w, ok := test.Tokens[workspaceID]
 				if !ok {
-					return "", errors.New("code 404")
+					return "", &jsonrpc2.Error{
+						Code:    404,
+						Message: "not found",
+					}
 				}
 				return w, nil
 			})
-			connPool.api = srv
 
 			resp, err := client.GetOwnerToken(context.Background(), connect.NewRequest(&v1.GetOwnerTokenRequest{
 				WorkspaceId: test.WorkspaceID,
 			}))
 			requireErrorCode(t, test.Expect.Code, err)
 			if test.Expect.Response != nil {
-				if diff := cmp.Diff(test.Expect.Response, resp.Msg, protocmp.Transform()); diff != "" {
-					t.Errorf("unexpected difference:\n%v", diff)
-				}
+				requireEqualProto(t, test.Expect.Response, resp.Msg)
 			}
 		})
 	}
 }
 
 func TestWorkspaceService_ListWorkspaces(t *testing.T) {
-	const (
-		bearerToken = "bearer-token-for-tests"
-	)
 	ctx := context.Background()
-
-	srv := baseserver.NewForTests(t,
-		baseserver.WithHTTP(baseserver.MustUseRandomLocalAddress(t)),
-	)
-
-	connPool := &FakeServerConnPool{}
-
-	route, handler := v1connect.NewWorkspacesServiceHandler(NewWorkspaceService(connPool))
-	srv.HTTPMux().Handle(route, handler)
-
-	baseserver.StartServerForTests(t, srv)
-
-	client := v1connect.NewWorkspacesServiceClient(http.DefaultClient, srv.HTTPAddress(), connect.WithInterceptors(
-		auth.NewClientInterceptor(bearerToken),
-	))
 
 	type Expectation struct {
 		Code     connect.Code
@@ -281,15 +231,13 @@ func TestWorkspaceService_ListWorkspaces(t *testing.T) {
 				pagination = &v1.Pagination{PageSize: test.PageSize}
 			}
 
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-			srv := protocol.NewMockAPIInterface(ctrl)
+			serverMock, client := setupWorkspacesService(t)
+
 			if test.Workspaces != nil {
-				srv.EXPECT().GetWorkspaces(gomock.Any(), gomock.Any()).Return(test.Workspaces, nil)
+				serverMock.EXPECT().GetWorkspaces(gomock.Any(), gomock.Any()).Return(test.Workspaces, nil)
 			} else if test.Setup != nil {
-				test.Setup(t, srv)
+				test.Setup(t, serverMock)
 			}
-			connPool.api = srv
 
 			resp, err := client.ListWorkspaces(ctx, connect.NewRequest(&v1.ListWorkspacesRequest{
 				Pagination: pagination,
@@ -433,11 +381,35 @@ func must[T any](t T, err error) T {
 	return t
 }
 
+func setupWorkspacesService(t *testing.T) (*protocol.MockAPIInterface, v1connect.WorkspacesServiceClient) {
+	t.Helper()
+
+	ctrl := gomock.NewController(t)
+	t.Cleanup(ctrl.Finish)
+
+	serverMock := protocol.NewMockAPIInterface(ctrl)
+
+	svc := NewWorkspaceService(&FakeServerConnPool{
+		api: serverMock,
+	})
+
+	_, handler := v1connect.NewWorkspacesServiceHandler(svc, connect.WithInterceptors(auth.NewServerInterceptor()))
+
+	srv := httptest.NewServer(handler)
+	t.Cleanup(srv.Close)
+
+	client := v1connect.NewWorkspacesServiceClient(http.DefaultClient, srv.URL, connect.WithInterceptors(
+		auth.NewClientInterceptor("auth-token"),
+	))
+
+	return serverMock, client
+}
+
 type FakeServerConnPool struct {
 	api protocol.APIInterface
 }
 
-func (f *FakeServerConnPool) Get(ctx context.Context, token string) (protocol.APIInterface, error) {
+func (f *FakeServerConnPool) Get(ctx context.Context, token auth.Token) (protocol.APIInterface, error) {
 	return f.api, nil
 }
 

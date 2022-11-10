@@ -2,6 +2,8 @@
 #
 #
 
+declare -g rc=0
+
 cleanup() {
     TF_VAR_TEST_ID=$1
     cloud=$(echo "$TF_VAR_TEST_ID" | sed 's/\(.*\)-/\1 /' | xargs | awk '{print $2}')
@@ -18,6 +20,7 @@ cleanup() {
     export TF_VAR_TEST_ID=$TF_VAR_TEST_ID
 
     make cleanup cloud=$cloud
+    (( rc |= $? ))
 
     CUSTOMERID=$(replicated customer ls --app "${REPLICATED_APP}" | grep "$TF_VAR_TEST_ID" | awk '{print $1}')
 
@@ -26,7 +29,7 @@ cleanup() {
     echo "Trying to archive replicated license"
 
     curl --request POST \
-    --url https://api.replicated.com/vendor/v3/customer/$CUSTOMERID/archive \
+    --url "https://api.replicated.com/vendor/v3/customer/$CUSTOMERID/archive" \
     --header "Authorization: ${REPLICATED_API_TOKEN}" || echo "Couldn't delete replicated licese"
 }
 
@@ -57,3 +60,5 @@ for i in $(gsutil ls gs://nightly-tests/tf-state); do
     cleanup "$TF_VAR_TEST_ID"
 
 done
+
+exit $rc

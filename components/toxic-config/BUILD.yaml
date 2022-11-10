@@ -1,0 +1,29 @@
+packages:
+  - name: app
+    type: go
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    deps:
+      - components/common-go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    config:
+      packaging: app
+  - name: docker
+    type: docker
+    deps:
+      - :app
+    argdeps:
+      - imageRepoBase
+    config:
+      buildArgs:
+        VERSION: ${version}
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: toxic-config
+      image:
+        - ${imageRepoBase}/toxic-config:${version}
+        - ${imageRepoBase}/toxic-config:commit-${__git_commit}

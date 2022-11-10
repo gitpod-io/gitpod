@@ -197,6 +197,7 @@ done
 
 ctr images pull "docker.io/gitpod/workspace-full:latest" >/dev/null &
 
+echo "images pulled"
 /gitpod-installer render --use-experimental-config --config config.yaml --output-split-files /var/lib/rancher/k3s/server/manifests/gitpod
 
 # store files in `gitpod.debug` for debugging purposes
@@ -235,6 +236,7 @@ mv -f /app/manifests/coredns.yaml /var/lib/rancher/k3s/server/manifests/custom-c
 for f in /var/lib/rancher/k3s/server/manifests/gitpod/*.yaml; do (cat "$f"; echo) >> /var/lib/rancher/k3s/server/manifests/gitpod.yaml; done
 rm -rf /var/lib/rancher/k3s/server/manifests/gitpod
 
+echo "manifests generated"
 # waits for gitpod pods to be ready, and manually runs the `gitpod-telemetry` cronjob
 run_telemetry(){
   # wait for the k3s cluster to be ready and Gitpod workloads are added

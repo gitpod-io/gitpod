@@ -92,11 +92,12 @@ type WorkspaceConfig struct {
 			IPFSAddr string `json:"ipfsAddr"`
 		} `json:"ipfsCache"`
 		RedisCache struct {
-			Enabled        bool     `json:"enabled"`
-			MasterName     string   `json:"masterName"`
-			SentinelAddrs  []string `json:"sentinelAddrs"`
-			Username       string   `json:"username"`
-			PasswordSecret string   `json:"passwordSecret"`
+			Enabled            bool   `json:"enabled"`
+			SingleHostAddress  string `json:"singleHostAddr"`
+			Username           string `json:"username"`
+			PasswordSecret     string `json:"passwordSecret"`
+			UseTLS             bool   `json:"useTLS"`
+			InsecureSkipVerify bool   `json:"insecureSkipVerify"`
 		} `json:"redisCache"`
 	} `json:"registryFacade"`
 
@@ -136,10 +137,11 @@ type PersistentVolumeClaim struct {
 }
 
 type WorkspaceClass struct {
-	Name      string                `json:"name" validate:"required"`
-	Resources WorkspaceResources    `json:"resources" validate:"required"`
-	Templates WorkspaceTemplates    `json:"templates,omitempty"`
-	PVC       PersistentVolumeClaim `json:"pvc" validate:"required"`
+	Name        string                `json:"name" validate:"required"`
+	Resources   WorkspaceResources    `json:"resources" validate:"required"`
+	Templates   WorkspaceTemplates    `json:"templates,omitempty"`
+	PrebuildPVC PersistentVolumeClaim `json:"prebuildPVC" validate:"required"`
+	PVC         PersistentVolumeClaim `json:"pvc" validate:"required"`
 }
 
 type WorkspaceResources struct {
@@ -167,6 +169,16 @@ type WorkspaceTemplates struct {
 	Regular    *corev1.Pod `json:"regular"`
 }
 
+type StripePriceIDs struct {
+	EUR string `json:"eur"`
+	USD string `json:"usd"`
+}
+
+type StripeConfig struct {
+	IndividualUsagePriceIDs StripePriceIDs `json:"individualUsagePriceIds"`
+	TeamUsagePriceIDs       StripePriceIDs `json:"teamUsagePriceIds"`
+}
+
 type WebAppConfig struct {
 	PublicAPI              *PublicAPIConfig       `json:"publicApi,omitempty"`
 	Server                 *ServerConfig          `json:"server,omitempty"`
@@ -178,6 +190,8 @@ type WebAppConfig struct {
 	Usage                  *UsageConfig           `json:"usage,omitempty"`
 	ConfigcatKey           string                 `json:"configcatKey"`
 	WorkspaceClasses       []WebAppWorkspaceClass `json:"workspaceClasses"`
+	Stripe                 *StripeConfig          `json:"stripe,omitempty"`
+	SlowDatabase           bool                   `json:"slowDatabase,omitempty"`
 }
 
 type WorkspaceDefaults struct {
@@ -221,6 +235,7 @@ type ServerConfig struct {
 	EnableLocalApp                    *bool             `json:"enableLocalApp"`
 	RunDbDeleter                      *bool             `json:"runDbDeleter"`
 	DisableWorkspaceGarbageCollection bool              `json:"disableWorkspaceGarbageCollection"`
+	InactivityPeriodForReposInDays    *int              `json:"inactivityPeriodForReposInDays"`
 
 	// @deprecated use containerRegistry.privateBaseImageAllowList instead
 	DefaultBaseImageRegistryWhiteList []string `json:"defaultBaseImageRegistryWhitelist"`
@@ -242,7 +257,6 @@ type ConfigcatProxyConfig struct {
 }
 
 type PublicAPIConfig struct {
-	Enabled bool `json:"enabled"`
 	// Name of the kubernetes secret to use for Stripe secrets
 	StripeSecretName string `json:"stripeSecretName"`
 }
@@ -250,6 +264,7 @@ type PublicAPIConfig struct {
 type UsageConfig struct {
 	Enabled                          bool                     `json:"enabled"`
 	Schedule                         string                   `json:"schedule"`
+	ResetUsageSchedule               string                   `json:"resetUsageSchedule"`
 	BillInstancesAfter               *time.Time               `json:"billInstancesAfter"`
 	DefaultSpendingLimit             *db.DefaultSpendingLimit `json:"defaultSpendingLimit"`
 	CreditsPerMinuteByWorkspaceClass map[string]float64       `json:"creditsPerMinuteByWorkspaceClass"`

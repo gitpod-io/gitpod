@@ -74,6 +74,13 @@ spec:
               Path /gitpod/log-collector
               Format plain
 
+          [OUTPUT]
+              Name file
+              Match migrations*
+              Mkdir true
+              Path /gitpod/log-collector
+              Format plain
+
           # Workspaces
           [OUTPUT]
               Name file

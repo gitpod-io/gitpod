@@ -80,10 +80,11 @@ type RedisCacheConfig struct {
 
 	SingleHostAddress string `json:"singleHostAddr,omitempty"`
 
-	MasterName    string   `json:"masterName,omitempty"`
-	SentinelAddrs []string `json:"sentinelAddrs,omitempty"`
-	Username      string   `json:"username,omitempty"`
-	Password      string   `json:"-" env:"REDIS_PASSWORD"`
+	Username string `json:"username,omitempty"`
+	Password string `json:"-" env:"REDIS_PASSWORD"`
+
+	UseTLS             bool `json:"useTLS,omitempty"`
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 }
 
 type IPFSCacheConfig struct {

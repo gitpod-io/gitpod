@@ -5,7 +5,6 @@
  */
 
 import { User, WorkspaceAndInstance, ContextURL } from "@gitpod/gitpod-protocol";
-import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -66,18 +65,6 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                     </div>
                     <p>{getProject(WorkspaceAndInstance.toWorkspace(workspace))}</p>
                 </div>
-                <button
-                    className="secondary ml-3"
-                    onClick={() => {
-                        window.location.href = new GitpodHostUrl(window.location.href)
-                            .with({
-                                pathname: `/workspace-download/get/${workspace.workspaceId}`,
-                            })
-                            .toString();
-                    }}
-                >
-                    Download Workspace
-                </button>
                 <button
                     className="danger ml-3"
                     disabled={activity || workspace.phase === "stopped"}

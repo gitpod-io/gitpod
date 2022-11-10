@@ -80,7 +80,7 @@ func TestGetVMProxySvcStatus(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			c.coreClient = fake.NewSimpleClientset(test.objects...)
+			c.CoreClient = fake.NewSimpleClientset(test.objects...)
 
 			err := c.GetProxyVMServiceStatus(context.TODO(), namespace)
 

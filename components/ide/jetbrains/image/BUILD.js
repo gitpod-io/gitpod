@@ -76,9 +76,11 @@ const generateIDEDownloadPackage = function (ideConfig, qualifier) {
     if (qualifier === "stable") {
         pkg.env.push(`JETBRAINS_BACKEND_URL=${args[`${ideConfig.name}DownloadUrl`]}`);
     } else {
-        pkg.env.push(
-            `JETBRAINS_BACKEND_URL=${`https://download.jetbrains.com/product?type=release,rc,eap&distribution=linux&code=${ideConfig.productCode}`}`,
-        );
+        let url = `https://download.jetbrains.com/product?type=release,rc,eap&distribution=linux&code=${ideConfig.productCode}`;
+        if (args["buildNumber"]) {
+            url = `${url}&build=${args["buildNumber"]}`;
+        }
+        pkg.env.push(`JETBRAINS_BACKEND_URL=${url}`);
     }
     return pkg;
 };

@@ -12,12 +12,14 @@ import { TeamsContext } from "../teams/teams-context";
 import { UserContext } from "../user-context";
 import SelectableCardSolid from "../components/SelectableCardSolid";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
+import Alert from "./Alert";
 
 export function BillingAccountSelector(props: { onSelected?: () => void }) {
     const { user, setUser } = useContext(UserContext);
     const { teams } = useContext(TeamsContext);
     const [teamsAvailableForAttribution, setTeamsAvailableForAttribution] = useState<Team[] | undefined>();
     const [membersByTeam, setMembersByTeam] = useState<Record<string, TeamMemberInfo[]>>({});
+    const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
     useEffect(() => {
         if (!teams) {
@@ -25,27 +27,39 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
             return;
         }
 
-        // Filter teams based on whether they can actually "resolve" any credits thrown at them
-        const teamsWithBilling: Team[] = [];
-        Promise.all(
-            teams.map(async (t) => {
-                const attributionId: string = AttributionId.render({ kind: "team", teamId: t.id });
-                const subscriptionId = await getGitpodService().server.findStripeSubscriptionId(attributionId);
-                if (subscriptionId) {
-                    teamsWithBilling.push(t);
+        // Fetch the list of teams we can actually attribute to
+        getGitpodService()
+            .server.listAvailableUsageAttributionIds()
+            .then((attrIds) => {
+                const teamsAvailableForAttribution = [];
+                for (const attrId of attrIds.map(AttributionId.parse)) {
+                    if (attrId?.kind !== "team") {
+                        continue;
+                    }
+                    const team = teams.find((t) => t.id === attrId.teamId);
+                    if (team) {
+                        teamsAvailableForAttribution.push(team);
+                    }
                 }
-            }),
-        ).then(() => setTeamsAvailableForAttribution(teamsWithBilling.sort((a, b) => (a.name > b.name ? 1 : -1))));
+                setTeamsAvailableForAttribution(
+                    teamsAvailableForAttribution.sort((a, b) => (a.name > b.name ? 1 : -1)),
+                );
+            })
+            .catch((error) => {
+                console.error("Could not get list of available billing accounts.", error);
+                setErrorMessage(`Could not get list of available billing accounts. ${error?.message || String(error)}`);
+            });
 
         const members: Record<string, TeamMemberInfo[]> = {};
-        teams.forEach(async (team) => {
-            try {
-                members[team.id] = await getGitpodService().server.getTeamMembers(team.id);
-            } catch (error) {
-                console.error("Could not get members of team", team, error);
-            }
-        });
-        setMembersByTeam(members);
+        Promise.all(
+            teams.map(async (team) => {
+                try {
+                    members[team.id] = await getGitpodService().server.getTeamMembers(team.id);
+                } catch (error) {
+                    console.warn("Could not get members of team", team, error);
+                }
+            }),
+        ).then(() => setMembersByTeam(members));
     }, [teams]);
 
     const setUsageAttributionTeam = async (team?: Team) => {
@@ -67,6 +81,11 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
 
     return (
         <>
+            {errorMessage && (
+                <Alert className="max-w-xl mt-2" closable={false} showIcon={true} type="error">
+                    {errorMessage}
+                </Alert>
+            )}
             {teamsAvailableForAttribution === undefined && <Spinner className="m-2 h-5 w-5 animate-spin" />}
             {teamsAvailableForAttribution && (
                 <div>

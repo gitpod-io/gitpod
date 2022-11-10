@@ -1,6 +1,36 @@
 # Change Log
 
-## October 2022
+## November 2022
+- Remove download workspace button from admin ([#14393](https://github.com/gitpod-io/gitpod/pull/14393)) - [@gtsiolis](https://github.com/gtsiolis)
+- Introduced a new project setting that allows starting workspaces based on the last successful prebuild in the git commit history. ([#14461](https://github.com/gitpod-io/gitpod/pull/14461)) - [@svenefftinge](https://github.com/svenefftinge)
+- display the team names which block upgrade to the UBP free tier ([#12805](https://github.com/gitpod-io/gitpod/pull/12805)) - [@geropl](https://github.com/geropl)
+- Gitlab webhooks: play nice, don't respond with code 401. ([#14421](https://github.com/gitpod-io/gitpod/pull/14421)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- Improve pagination usability ([#13590](https://github.com/gitpod-io/gitpod/pull/13590)) - [@Hardik500](https://github.com/Hardik500)
+- [kots] merge custom docker config correctly ([#14432](https://github.com/gitpod-io/gitpod/pull/14432)) - [@Pothulapati](https://github.com/Pothulapati)
+- [local-preview] Update status messages to depend on echo's ([#14391](https://github.com/gitpod-io/gitpod/pull/14391)) - [@Pothulapati](https://github.com/Pothulapati)
+- In JetBrains EAP IDEs, users now have the option to copy the URL from the terminal's ports context menu. ([#14356](https://github.com/gitpod-io/gitpod/pull/14356)) - [@felladrin](https://github.com/felladrin)
+
+##  October 2022
+- Fixed missing .tar file extension from a downloaded workspace ([#13678](https://github.com/gitpod-io/gitpod/pull/13678)) - [@ghostdevv](https://github.com/ghostdevv)
+- More stable docker-compose behavior with lots of containers ([#14259](https://github.com/gitpod-io/gitpod/pull/14259)) - [@utam0k](https://github.com/utam0k)
+- Show warning for inactive projects and allow to resume prebuilds again. ([#14081](https://github.com/gitpod-io/gitpod/pull/14081)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- Deactivate team scope selector on personal usage ([#14238](https://github.com/gitpod-io/gitpod/pull/14238)) - [@gtsiolis](https://github.com/gtsiolis)
+- Reduction of noise error logs ([#14218](https://github.com/gitpod-io/gitpod/pull/14218)) - [@utam0k](https://github.com/utam0k)
+- Fix 'gp open' command to open files in JetBrains Client instead of the backend IDE ([#14182](https://github.com/gitpod-io/gitpod/pull/14182)) - [@felladrin](https://github.com/felladrin)
+- Check out the correct branch when opening a prebuild for a commit that is also the latest HEAD of the context branch ([#14019](https://github.com/gitpod-io/gitpod/pull/14019)) - [@nVitius](https://github.com/nVitius)
+- Update JetBrains Backend Plugin to work with EAP IDEs v223.7126 ([#13990](https://github.com/gitpod-io/gitpod/pull/13990)) - [@felladrin](https://github.com/felladrin)
+- A bit faster IDE startup ([#14111](https://github.com/gitpod-io/gitpod/pull/14111)) - [@sagor999](https://github.com/sagor999), [@utam0k](https://github.com/utam0k)
+- [installer]: print the installer version to the kots-install script ([#14120](https://github.com/gitpod-io/gitpod/pull/14120)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- reliably close Workspaces which fail to start for whatever reason ([#13831](https://github.com/gitpod-io/gitpod/pull/13831)) - [@geropl](https://github.com/geropl)
+- Fixes default location of PortsView incorrect ([#14102](https://github.com/gitpod-io/gitpod/pull/14102)) - [@mustard-mh](https://github.com/mustard-mh)
+- Bugfix for gitpod CLI: avoid failure on `ports list` when port is not exposed ([#14040](https://github.com/gitpod-io/gitpod/pull/14040)) - [@andreafalzetti](https://github.com/andreafalzetti)
+- Provide pressure stall information for workspaces ([#13703](https://github.com/gitpod-io/gitpod/pull/13703)) - [@Furisto](https://github.com/Furisto)
+- [kots]: add db migration job to fluent bit logger ([#14051](https://github.com/gitpod-io/gitpod/pull/14051)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Fix a bug that a workspace is not started when there was a checkout hook ([#14067](https://github.com/gitpod-io/gitpod/pull/14067)) - [@utam0k](https://github.com/utam0k)
+- ws-manager: Redact logs of a workspace status. ([#14064](https://github.com/gitpod-io/gitpod/pull/14064)) - [@utam0k](https://github.com/utam0k)
+- Fixes port 3000 becomes the default config of ports if there is no `.gitpod.yml` file ([#14056](https://github.com/gitpod-io/gitpod/pull/14056)) - [@mustard-mh](https://github.com/mustard-mh)
+- Display sorted ports with both `gp-cli` and VSCode Browser `PortsView` ([#13788](https://github.com/gitpod-io/gitpod/pull/13788)) - [@mustard-mh](https://github.com/mustard-mh)
+- Update balance used progress indicator height ([#14054](https://github.com/gitpod-io/gitpod/pull/14054)) - [@gtsiolis](https://github.com/gtsiolis)
 - [kots]: put the HTTP Proxy settings behind a KOTS config bool ([#13959](https://github.com/gitpod-io/gitpod/pull/13959)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Fixed the "Lean More" button behavior from JetBrains Gateway home screen. ([#13966](https://github.com/gitpod-io/gitpod/pull/13966)) - [@felladrin](https://github.com/felladrin)
 - Revert "Use Last Successful Prebuild" for now ([#13997](https://github.com/gitpod-io/gitpod/pull/13997)) - [@jankeromnes](https://github.com/jankeromnes)

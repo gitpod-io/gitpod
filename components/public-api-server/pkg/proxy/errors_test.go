@@ -10,28 +10,62 @@ import (
 	"testing"
 
 	"github.com/bufbuild/connect-go"
+	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
+	"github.com/sourcegraph/jsonrpc2"
 	"github.com/stretchr/testify/require"
 )
 
 func TestConvertError(t *testing.T) {
 	scenarios := []struct {
 		WebsocketError error
-		ExpectedStatus connect.Code
+		ExpectedError  error
 	}{
 		{
-			WebsocketError: errors.New("reconnecting-ws: bad handshake: code 401 - URL: wss://main.preview.gitpod-dev.com/api/v1 - headers: map[Authorization:[Bearer foo] Origin:[http://main.preview.gitpod-dev.com/]]"),
-			ExpectedStatus: connect.CodePermissionDenied,
+			WebsocketError: &protocol.ErrBadHandshake{
+				URL: "https://foo.bar",
+			},
+			ExpectedError: connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("Failed to establish caller identity")),
 		},
 		{
-			WebsocketError: errors.New("jsonrpc2: code -32603 message: Request getWorkspace failed with message: No workspace with id 'some-id' found."),
-			ExpectedStatus: connect.CodeInternal,
+			WebsocketError: &jsonrpc2.Error{
+				Code:    400,
+				Message: "user id is a required argument",
+			},
+			ExpectedError: connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("user id is a required argument")),
+		},
+		{
+			WebsocketError: &jsonrpc2.Error{
+				Code:    -32603,
+				Message: "Request getWorkspace failed with message: No workspace with id 'some-id' found.",
+			},
+			ExpectedError: connect.NewError(connect.CodeInternal, fmt.Errorf("Request getWorkspace failed with message: No workspace with id 'some-id' found.")),
+		},
+		{
+			WebsocketError: &jsonrpc2.Error{
+				Code:    409,
+				Message: "already exists",
+			},
+			ExpectedError: connect.NewError(connect.CodeAlreadyExists, fmt.Errorf("already exists")),
+		},
+		{
+			WebsocketError: &jsonrpc2.Error{
+				Code:    470,
+				Message: "user blocked",
+			},
+			ExpectedError: connect.NewError(connect.CodePermissionDenied, fmt.Errorf("user blocked")),
+		},
+		{
+			WebsocketError: nil,
+			ExpectedError:  nil,
+		},
+		{
+			WebsocketError: errors.New("some other random error returns internal error"),
+			ExpectedError:  connect.NewError(connect.CodeInternal, fmt.Errorf("some other random error returns internal error")),
 		},
 	}
 
 	for _, s := range scenarios {
 		converted := ConvertError(s.WebsocketError)
-		require.Equal(t, s.ExpectedStatus, connect.CodeOf(converted))
-		// the error message should remain the same
-		require.Equal(t, fmt.Errorf("%s: %w", s.ExpectedStatus.String(), s.WebsocketError).Error(), converted.Error())
+		require.Equal(t, s.ExpectedError, converted)
 	}
 }

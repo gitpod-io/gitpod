@@ -14,6 +14,7 @@ import {
 import { ValueTransformer } from "typeorm/decorator/options/ValueTransformer";
 
 @Entity()
+// on DB but not Typeorm: @Index("ind_lastModified", ["_lastModified"])   // DBSync
 export class DBWorkspaceCluster implements WorkspaceCluster {
     @PrimaryColumn()
     name: string;
@@ -85,9 +86,13 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
     })
     admissionConstraints?: AdmissionConstraint[];
 
-    @Column({
+    @PrimaryColumn({
         type: "varchar",
         length: 60,
     })
     applicationCluster: string;
+
+    // This column triggers the db-sync deletion mechanism. It's not intended for public consumption.
+    @Column()
+    deleted: boolean;
 }

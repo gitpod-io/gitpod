@@ -6,11 +6,14 @@
 
 import { useContext, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
+import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
+import { publicApiTeamsToProtocol, publicApiTeamToProtocol, teamsService } from "../service/public-api";
 import { getGitpodService } from "../service/service";
 import { TeamsContext } from "./teams-context";
 
 export default function () {
     const { setTeams } = useContext(TeamsContext);
+    const { usePublicApiTeamsService } = useContext(FeatureFlagContext);
     const history = useHistory();
 
     const [joinError, setJoinError] = useState<Error>();
@@ -23,21 +26,14 @@ export default function () {
                     throw new Error("This invite URL is incorrect.");
                 }
 
-                let team;
-                try {
-                    team = await getGitpodService().server.joinTeam(inviteId);
-                } catch (error) {
-                    const message: string | undefined = error && typeof error.message === "string" && error.message;
-                    const regExp = /You are already a member of this team. \((.*)\)/;
-                    const match = message && regExp.exec(message);
-                    if (match && match[1]) {
-                        const slug = match[1];
-                        history.push(`/t/${slug}/members`);
-                        return;
-                    }
-                    throw error;
-                }
-                const teams = await getGitpodService().server.getTeams();
+                const team = usePublicApiTeamsService
+                    ? publicApiTeamToProtocol((await teamsService.joinTeam({ invitationId: inviteId })).team!)
+                    : await getGitpodService().server.joinTeam(inviteId);
+
+                const teams = usePublicApiTeamsService
+                    ? publicApiTeamsToProtocol((await teamsService.listTeams({})).teams)
+                    : await getGitpodService().server.getTeams();
+
                 setTeams(teams);
 
                 history.push(`/t/${team.slug}/members`);

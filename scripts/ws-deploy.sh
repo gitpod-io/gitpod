@@ -14,7 +14,7 @@ version="dev-$(date +%F_T"%H-%M-%S")"
 bldfn="/tmp/build-$version.tar.gz"
 
 docker ps &> /dev/null || (echo "You need a working Docker daemon. Maybe set DOCKER_HOST?"; exit 1)
-leeway build .:docker -Dversion="$version" -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev --save "$bldfn"
+leeway build .:docker -Dversion="$version" -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev --save "$bldfn" --dont-test
 dev_image="$(tar xfO "$bldfn" ./imgnames.txt | head -n1)"
 
 kubectl set image "$resource_type" "$resource_name" "$resource_name"="$dev_image"

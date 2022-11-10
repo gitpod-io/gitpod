@@ -9,11 +9,11 @@ import (
 	"fmt"
 
 	connect "github.com/bufbuild/connect-go"
+	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
+	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
-	v1 "github.com/gitpod-io/gitpod/public-api/experimental/v1"
-	"github.com/gitpod-io/gitpod/public-api/experimental/v1/v1connect"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/relvacode/iso8601"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -32,7 +32,11 @@ type WorkspaceService struct {
 }
 
 func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Request[v1.GetWorkspaceRequest]) (*connect.Response[v1.GetWorkspaceResponse], error) {
-	token := auth.TokenFromContext(ctx)
+	token, err := auth.TokenFromContext(ctx)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
+	}
+
 	logger := ctxlogrus.Extract(ctx)
 
 	server, err := s.connectionPool.Get(ctx, token)
@@ -75,7 +79,10 @@ func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Reques
 
 func (s *WorkspaceService) GetOwnerToken(ctx context.Context, req *connect.Request[v1.GetOwnerTokenRequest]) (*connect.Response[v1.GetOwnerTokenResponse], error) {
 	logger := ctxlogrus.Extract(ctx)
-	token := auth.TokenFromContext(ctx)
+	token, err := auth.TokenFromContext(ctx)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
+	}
 
 	server, err := s.connectionPool.Get(ctx, token)
 	if err != nil {
@@ -95,7 +102,10 @@ func (s *WorkspaceService) GetOwnerToken(ctx context.Context, req *connect.Reque
 
 func (s *WorkspaceService) ListWorkspaces(ctx context.Context, req *connect.Request[v1.ListWorkspacesRequest]) (*connect.Response[v1.ListWorkspacesResponse], error) {
 	logger := ctxlogrus.Extract(ctx)
-	token := auth.TokenFromContext(ctx)
+	token, err := auth.TokenFromContext(ctx)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
+	}
 
 	server, err := s.connectionPool.Get(ctx, token)
 	if err != nil {

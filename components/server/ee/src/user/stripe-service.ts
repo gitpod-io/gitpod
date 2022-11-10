@@ -16,9 +16,6 @@ import {
 } from "../../../src/prometheus-metrics";
 import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 
-const POLL_CREATED_CUSTOMER_INTERVAL_MS = 1000;
-const POLL_CREATED_CUSTOMER_MAX_ATTEMPTS = 30;
-
 @injectable()
 export class StripeService {
     @inject(Config) protected readonly config: Config;
@@ -56,34 +53,6 @@ export class StripeService {
             log.error("Failed to get stripe customer", e, { attributionId });
             throw e;
         }
-    }
-
-    async createCustomerForAttributionId(
-        attributionId: string,
-        preferredCurrency: string,
-        billingEmail?: string,
-        billingName?: string,
-    ): Promise<string> {
-        if (await this.findCustomerByAttributionId(attributionId)) {
-            throw new Error(`A Stripe customer already exists for '${attributionId}'`);
-        }
-        // Create the customer in Stripe
-        const customer = await reportStripeOutcome("customers_create", () => {
-            return this.getStripe().customers.create({
-                email: billingEmail,
-                name: billingName,
-                metadata: { attributionId, preferredCurrency },
-            });
-        });
-        // Wait for the customer to show up in Stripe search results before proceeding
-        let attempts = 0;
-        while (!(await this.findCustomerByAttributionId(attributionId))) {
-            await new Promise((resolve) => setTimeout(resolve, POLL_CREATED_CUSTOMER_INTERVAL_MS));
-            if (++attempts > POLL_CREATED_CUSTOMER_MAX_ATTEMPTS) {
-                throw new Error(`Could not confirm Stripe customer creation for '${attributionId}'`);
-            }
-        }
-        return customer.id;
     }
 
     async setDefaultPaymentMethodForCustomer(customerId: string, setupIntentId: string): Promise<void> {
@@ -148,7 +117,7 @@ export class StripeService {
 
     async cancelSubscription(subscriptionId: string): Promise<void> {
         await reportStripeOutcome("subscriptions_cancel", () => {
-            return this.getStripe().subscriptions.del(subscriptionId);
+            return this.getStripe().subscriptions.del(subscriptionId, { invoice_now: true });
         });
     }
 

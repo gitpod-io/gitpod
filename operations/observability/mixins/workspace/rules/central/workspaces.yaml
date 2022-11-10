@@ -1,0 +1,94 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: workspace-monitoring-rules
+spec:
+  groups:
+
+  - name: workspace-alerts
+    rules:
+    - alert: GitpodWorkspaceStuckOnStarting
+      labels:
+        severity: warning
+        team: workspace
+      for: 20m
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceStuckOnStarting.md
+        summary: 5 or more workspaces are stuck on starting in cluster {{ $labels.cluster }}.
+        description: '{{ printf "%.2f" $value }} regular workspaces are stuck on starting for more than 20 minutes. Current status: {{ $labels.reason }}'
+      expr: |
+        count(
+          kube_pod_container_status_waiting_reason{cluster!~"ephemeral.*"} * on(pod) group_left kube_pod_labels{component="workspace", workspace_type="regular"}
+        ) by (reason, cluster) > 5
+
+    - alert: GitpodWorkspaceStuckOnStopping
+      labels:
+        severity: critical
+      for: 30m
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceStuckOnStopping.md
+        summary: 5 or more workspaces are stuck on stopping in cluster {{ $labels.cluster }}.
+        description: '{{ printf "%.2f" $value }} {{ $labels.workspace_type }} workspaces are stuck on stopping for more than 20 minutes.'
+      expr: |
+        sum(
+          gitpod_ws_manager_workspace_phase_total{type="REGULAR", phase="STOPPING", cluster!~"ephemeral.*"}
+        ) without(phase) > 5
+
+    - alert: GitpodWorkspaceHighFailureRate
+      labels:
+        severity: critical
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceHighFailureRate.md
+        summary: Workspaces are failing in cluster {{ $labels.cluster }}.
+        description: Multiple workspaces are failing for the last 5 minutes
+      expr: |
+          rate(gitpod_ws_manager_workspace_stops_total{reason="failed", type="REGULAR", cluster!~"ephemeral.*"}[5m]) >= 1
+
+    - alert: GitpodWorkspaceStatusUpdatesCeased
+      labels:
+        severity: warning
+      for: 10m
+      annotations:
+        summary: meta has not seen a workspace update in the last 10 minutes despite starting workspaces
+        description: meta has not seen a workspace update in the last 10 minutes despite starting workspaces
+      expr: |
+        sum(rate(gitpod_ws_manager_bridge_status_updates_total[1m])) == 0 AND sum(rate(grpc_client_handled_total{grpc_method="StartWorkspace", grpc_service="wsman.WorkspaceManager"}[1m])) != 0
+
+    - alert: GitpodTooManyWorkspacesInPending
+      labels:
+        severity: critical
+      for: 15m
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodTooManyWorkspacesInPending.md
+        summary: workspaces are in pending phase
+        description: regular workspaces are stuck in pending phase in cluster {{ $labels.cluster }}.
+      expr: |
+        gitpod_ws_manager_workspace_phase_total{phase="PENDING", type="REGULAR", cluster!~"ephemeral.*"} > 20
+
+    - alert: GitpodTooManyPrebuildsInPending
+      labels:
+        severity: critical
+      for: 15m
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodTooManyPrebuildsInPending.md
+        summary: workspaces are in pending phase
+        description: prebuilds are stuck in pending phase in cluster {{ $labels.cluster }}.
+      expr: |
+        gitpod_ws_manager_workspace_phase_total{phase="PENDING", type="PREBUILD", cluster!~"ephemeral.*"} > 20
+
+    - alert: GitpodWorkspaceTooLongTerminating
+      labels:
+        severity: warning
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceTooLongTerminating.md
+        summary: workspace pods are terminating for too long.
+        description: workspace pods are terminating for too long in cluster {{ $labels.cluster }}.
+      expr: |
+        sum(time() - kube_pod_deletion_timestamp{namespace="default", pod=~"^ws-.*", cluster!~"ephemeral.*"}) by (pod) > 24 * 60 * 60

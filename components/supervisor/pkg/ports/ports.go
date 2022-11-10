@@ -740,8 +740,29 @@ func (pm *Manager) Subscribe() (*Subscription, error) {
 func (pm *Manager) getStatus() []*api.PortsStatus {
 	res := make([]*api.PortsStatus, 0, len(pm.state))
 	for port := range pm.state {
-		res = append(res, pm.getPortStatus(port))
+		portStatus := pm.getPortStatus(port)
+		// Filter out ports that not served and not inside `.gitpod.yml`
+		if _, _, ok := pm.configs.Get(port); !ok && !portStatus.Served {
+			continue
+		}
+		res = append(res, portStatus)
 	}
+	sort.SliceStable(res, func(i, j int) bool {
+		// Max number of port 65536
+		score1 := 100000 + res[i].LocalPort
+		score2 := 100000 + res[j].LocalPort
+		if c, _, ok := pm.configs.Get(res[i].LocalPort); ok {
+			score1 = c.Sort
+		}
+		if c, _, ok := pm.configs.Get(res[j].LocalPort); ok {
+			score2 = c.Sort
+		}
+		if score1 != score2 {
+			return score1 < score2
+		}
+		// Ranged ports
+		return res[i].LocalPort < res[j].LocalPort
+	})
 	return res
 }
 

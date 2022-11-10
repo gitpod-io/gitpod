@@ -244,18 +244,24 @@ func mergeProbe(dst, src reflect.Value) (err error) {
 func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) (*corev1.PersistentVolumeClaim, error) {
 	req := startContext.Request
 	var prefix string
+	var pvcConfig config.PVCConfiguration
 	switch req.Type {
 	case api.WorkspaceType_PREBUILD:
 		prefix = "prebuild"
+
+		pvcConfig = m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PrebuildPVC
+		if startContext.Class != nil {
+			pvcConfig = startContext.Class.PrebuildPVC
+		}
 	case api.WorkspaceType_IMAGEBUILD:
 		prefix = "imagebuild"
 	default:
 		prefix = "ws"
-	}
 
-	PVCConfig := m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PVC
-	if startContext.Class != nil {
-		PVCConfig = startContext.Class.PVC
+		pvcConfig = m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PVC
+		if startContext.Class != nil {
+			pvcConfig = startContext.Class.PVC
+		}
 	}
 
 	PVC := &corev1.PersistentVolumeClaim{
@@ -268,16 +274,17 @@ func (m *Manager) createPVCForWorkspacePod(startContext *startWorkspaceContext) 
 			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
-					corev1.ResourceName(corev1.ResourceStorage): PVCConfig.Size,
+					corev1.ResourceName(corev1.ResourceStorage): pvcConfig.Size,
 				},
 			},
 		},
 	}
-	if PVCConfig.StorageClass != "" {
+
+	if pvcConfig.StorageClass != "" {
 		// Specify the storageClassName when the storage class is non-empty.
 		// This way, the Kubernetes uses the default StorageClass within the cluster.
 		// Otherwise, the Kubernetes would try to request the PVC with no class.
-		PVC.Spec.StorageClassName = &PVCConfig.StorageClass
+		PVC.Spec.StorageClassName = &pvcConfig.StorageClass
 	}
 
 	if startContext.VolumeSnapshot != nil && startContext.VolumeSnapshot.VolumeSnapshotName != "" {
@@ -555,6 +562,8 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		pod.Finalizers = append(pod.Finalizers, "gitpod.io/debugfinalizer")
 	}
 
+	setProtectedSecrets(&pod, req)
+
 	ffidx := make(map[api.WorkspaceFeatureFlag]struct{})
 	for _, feature := range startContext.Request.Spec.FeatureFlags {
 		if _, seen := ffidx[feature]; seen {
@@ -589,28 +598,25 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			// We set this magical ID to make sure that gitpod user inside the workspace can write into /workspace folder mounted by PVC
 			gitpodGUID := int64(133332)
 			pod.Spec.SecurityContext.FSGroup = &gitpodGUID
+			// only do chown if there is a mismatch
+			fsGroupChangePolicy := corev1.FSGroupChangeOnRootMismatch
+			pod.Spec.SecurityContext.FSGroupChangePolicy = &fsGroupChangePolicy
 
-		case api.WorkspaceFeatureFlag_PROTECTED_SECRETS:
-			for _, c := range pod.Spec.Containers {
-				if c.Name != "workspace" {
-					continue
-				}
+			// add init container to chown workspace subpath, so that it is owned by gitpod user (there is no k8s native way of doing this as of right now)
+			pod.Spec.InitContainers = append(pod.Spec.InitContainers, corev1.Container{
+				Name:            "chown-workspace",
+				Image:           "busybox",
+				ImagePullPolicy: corev1.PullIfNotPresent,
+				Command:         []string{"chown", "133332:133332", "/workspace"},
+				VolumeMounts: []corev1.VolumeMount{
+					{
+						Name:      workspaceVolumeName,
+						SubPath:   "workspace",
+						MountPath: "/workspace",
+					},
+				},
+			})
 
-				for i, env := range c.Env {
-					if !isProtectedEnvVar(env.Name, req.Spec.SysEnvvars) {
-						continue
-					}
-
-					env.Value = ""
-					env.ValueFrom = &corev1.EnvVarSource{
-						SecretKeyRef: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{Name: pod.Name},
-							Key:                  fmt.Sprintf("%x", sha256.Sum256([]byte(env.Name))),
-						},
-					}
-					c.Env[i] = env
-				}
-			}
 		case api.WorkspaceFeatureFlag_WORKSPACE_CLASS_LIMITING:
 			limits := startContext.Class.Container.Limits
 			if limits != nil && limits.CPU != nil {
@@ -625,6 +631,9 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 
 		case api.WorkspaceFeatureFlag_WORKSPACE_CONNECTION_LIMITING:
 			annotations[kubernetes.WorkspaceNetConnLimitAnnotation] = util.BooleanTrueString
+
+		case api.WorkspaceFeatureFlag_WORKSPACE_PSI:
+			annotations[kubernetes.WorkspacePressureStallInfoAnnotation] = util.BooleanTrueString
 
 		default:
 			log.Warnf("Unknown feature flag %v", feature)
@@ -646,6 +655,34 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	}
 
 	return &pod, nil
+}
+
+func setProtectedSecrets(pod *corev1.Pod, req *api.StartWorkspaceRequest) {
+	for _, c := range pod.Spec.Containers {
+		if c.Name != "workspace" {
+			continue
+		}
+
+		for i, env := range c.Env {
+			if !isProtectedEnvVar(env.Name, req.Spec.SysEnvvars) {
+				continue
+			}
+
+			// already sourced from somewhere else
+			if env.ValueFrom != nil {
+				continue
+			}
+
+			env.Value = ""
+			env.ValueFrom = &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{Name: pod.Name},
+					Key:                  fmt.Sprintf("%x", sha256.Sum256([]byte(env.Name))),
+				},
+			}
+			c.Env[i] = env
+		}
+	}
 }
 
 func removeVolume(pod *corev1.Pod, name string) {

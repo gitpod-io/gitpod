@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM moby/buildkit:v0.10.4
+FROM moby/buildkit:v0.10.5
 
 USER root
 RUN apk --no-cache add sudo bash \

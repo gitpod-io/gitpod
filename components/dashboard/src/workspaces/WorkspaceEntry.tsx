@@ -57,11 +57,6 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
         pathname: "/start/",
         hash: "#" + ws.id,
     });
-    const downloadURL = new GitpodHostUrl(window.location.href)
-        .with({
-            pathname: `/workspace-download/get/${ws.id}`,
-        })
-        .toString();
     const menuEntries: ContextMenuEntry[] = [
         {
             title: "Open",
@@ -91,7 +86,22 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
     }
     menuEntries.push({
         title: "Download",
-        href: downloadURL,
+        customContent: (
+            <div className="">
+                <span className="block text-gray-300">Download</span>
+                <span className="text-gray-400">
+                    Deprecated.{" "}
+                    <a
+                        href="https://github.com/gitpod-io/gitpod/issues/7901"
+                        className="gp-link"
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        Learn more
+                    </a>
+                </span>
+            </div>
+        ),
     });
     if (!isAdmin) {
         menuEntries.push(

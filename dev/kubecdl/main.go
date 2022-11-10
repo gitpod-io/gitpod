@@ -127,7 +127,7 @@ func getNodeName(clusterName, project string) (nodeName, zone string, err error)
 		Zone string `json:"zone"`
 	}
 
-	out, err := exec.Command("gcloud", "compute", "instances", "list", "--format=json", "--quiet", "--project", project, "--filter=name~server-ws-.*"+clusterName).CombinedOutput()
+	out, err := exec.Command("gcloud", "compute", "instances", "list", "--format=json", "--quiet", "--project", project, "--filter", "labels.cluster-name>=ws-"+clusterName+" AND labels.cluster-name<=ws-"+clusterName+" AND labels.instance-type>=control-plane AND labels.instance-type<=control-plane").CombinedOutput()
 	if err != nil {
 		return "", "", fmt.Errorf("failed to describe node instances: %s: %w", string(out), err)
 	}

@@ -21,6 +21,9 @@ import { trackEvent } from "../Analytics";
 import exclamation from "../images/exclamation.svg";
 import ErrorMessage from "../components/ErrorMessage";
 import Spinner from "../icons/Spinner.svg";
+import { publicApiTeamsToProtocol, publicApiTeamToProtocol, teamsService } from "../service/public-api";
+import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
+import { ConnectError } from "@bufbuild/connect-web";
 
 export default function NewProject() {
     const location = useLocation();
@@ -721,6 +724,7 @@ function GitProviders(props: {
 
 function NewTeam(props: { onSuccess: (team: Team) => void }) {
     const { setTeams } = useContext(TeamsContext);
+    const { usePublicApiTeamsService } = useContext(FeatureFlagContext);
 
     const [teamName, setTeamName] = useState<string | undefined>();
     const [error, setError] = useState<string | undefined>();
@@ -729,13 +733,24 @@ function NewTeam(props: { onSuccess: (team: Team) => void }) {
         if (!teamName) {
             return;
         }
+
         try {
-            const team = await getGitpodService().server.createTeam(teamName);
-            setTeams(await getGitpodService().server.getTeams());
+            const team = usePublicApiTeamsService
+                ? publicApiTeamToProtocol((await teamsService.createTeam({ name: teamName })).team!)
+                : await getGitpodService().server.createTeam(teamName);
+            const teams = usePublicApiTeamsService
+                ? publicApiTeamsToProtocol((await teamsService.listTeams({})).teams)
+                : await getGitpodService().server.getTeams();
+
+            setTeams(teams);
             props.onSuccess(team);
         } catch (error) {
             console.error(error);
-            setError(error?.message || "Failed to create new team!");
+            if (error instanceof ConnectError) {
+                setError(error.rawMessage);
+            } else {
+                setError(error?.message || "Failed to create new team!");
+            }
         }
     };
 

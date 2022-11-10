@@ -5,19 +5,20 @@ package public_api_server
 
 import (
 	"fmt"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"testing"
 
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
+
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
+	"github.com/gitpod-io/gitpod/components/public-api/go/config"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/public-api/config"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestConfigMap(t *testing.T) {
-	ctx := renderContextWithPublicAPIEnabled(t)
+	ctx := renderContextWithPublicAPI(t)
 	objs, err := configmap(ctx)
 	require.NoError(t, err)
 
@@ -30,7 +31,7 @@ func TestConfigMap(t *testing.T) {
 	})
 
 	expectedConfiguration := config.Configuration{
-		GitpodServiceURL:               "wss://test.domain.everything.awesome.is/api/v1",
+		GitpodServiceURL:               "wss://test.domain.everything.awesome.is",
 		BillingServiceAddress:          fmt.Sprintf("usage.%s.svc.cluster.local:9001", ctx.Namespace),
 		StripeWebhookSigningSecretPath: stripeSecretPath,
 		Server: &baseserver.Configuration{

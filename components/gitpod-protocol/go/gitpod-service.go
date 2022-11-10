@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"sync"
@@ -23,6 +24,8 @@ import (
 
 // APIInterface wraps the
 type APIInterface interface {
+	io.Closer
+
 	GetOwnerToken(ctx context.Context, workspaceID string) (res string, err error)
 	AdminBlockUser(ctx context.Context, req *AdminBlockUserRequest) (err error)
 	GetLoggedInUser(ctx context.Context) (res *User, err error)
@@ -80,6 +83,16 @@ type APIInterface interface {
 	GuessGitTokenScopes(ctx context.Context, params *GuessGitTokenScopesParams) (res *GuessedGitTokenScopes, err error)
 	TrackEvent(ctx context.Context, event *RemoteTrackMessage) (err error)
 	GetSupportedWorkspaceClasses(ctx context.Context) (res []*SupportedWorkspaceClass, err error)
+
+	GetTeam(ctx context.Context, teamID string) (*Team, error)
+	GetTeams(ctx context.Context) ([]*Team, error)
+	CreateTeam(ctx context.Context, teamName string) (*Team, error)
+	GetTeamMembers(ctx context.Context, teamID string) ([]*TeamMemberInfo, error)
+	JoinTeam(ctx context.Context, teamID string) (*Team, error)
+	GetGenericInvite(ctx context.Context, teamID string) (*TeamMembershipInvite, error)
+	ResetGenericInvite(ctx context.Context, teamID string) (*TeamMembershipInvite, error)
+	SetTeamMemberRole(ctx context.Context, teamID, userID string, role TeamMemberRole) error
+	RemoveTeamMember(ctx context.Context, teamID, userID string) error
 
 	InstanceUpdates(ctx context.Context, instanceID string) (<-chan *WorkspaceInstance, error)
 }
@@ -201,6 +214,25 @@ const (
 	// FunctionGetSupportedWorkspaceClasses is the name of the getSupportedWorkspaceClasses function
 	FunctionGetSupportedWorkspaceClasses FunctionName = "getSupportedWorkspaceClasses"
 
+	// FunctionGetTeam is the name of the getTeam function
+	FunctionGetTeam FunctionName = "getTeam"
+	// FunctionGetTeams is the name of the getTeams function
+	FunctionGetTeams FunctionName = "getTeams"
+	// FunctionCreateTeam is the name of the createTeam function
+	FunctionCreateTeam FunctionName = "createTeam"
+	// FunctionJoinTeam is the name of the joinTeam function
+	FunctionJoinTeam FunctionName = "joinTeam"
+	// FunctionGetTeamMembers is the name of the getTeamMembers function
+	FunctionGetTeamMembers FunctionName = "getTeamMembers"
+	// FunctionGetGenericInvite is the name of the getGenericInvite function
+	FunctionGetGenericInvite FunctionName = "getGenericInvite"
+	// FunctionResetGenericInvite is the name of the resetGenericInvite function
+	FunctionResetGenericInvite FunctionName = "resetGenericInvite"
+	// FunctionSetTeamMemberRole is the name of the setTeamMemberRole function
+	FunctionSetTeamMemberRole FunctionName = "setTeamMemberRole"
+	// FunctionRemoveTeamMember is the name of the removeTeamMember function
+	FunctionRemoveTeamMember FunctionName = "removeTeamMember"
+
 	// FunctionOnInstanceUpdate is the name of the onInstanceUpdate callback function
 	FunctionOnInstanceUpdate = "onInstanceUpdate"
 )
@@ -211,6 +243,7 @@ var errNotConnected = errors.New("not connected to Gitpod server")
 type ConnectToServerOpts struct {
 	Context             context.Context
 	Token               string
+	Cookie              string
 	Log                 *logrus.Entry
 	ReconnectionHandler func()
 	CloseHandler        func(error)
@@ -244,6 +277,11 @@ func ConnectToServer(endpoint string, opts ConnectToServerOpts) (*APIoverJSONRPC
 	if opts.Token != "" {
 		reqHeader.Set("Authorization", "Bearer "+opts.Token)
 	}
+
+	if opts.Cookie != "" {
+		reqHeader.Set("Cookie", opts.Cookie)
+	}
+
 	ws := NewReconnectingWebsocket(endpoint, reqHeader, opts.Log)
 	ws.ReconnectionHandler = opts.ReconnectionHandler
 	go func() {
@@ -1379,6 +1417,96 @@ func (gp *APIoverJSONRPC) GetSupportedWorkspaceClasses(ctx context.Context) (res
 	return
 }
 
+func (gp *APIoverJSONRPC) GetTeam(ctx context.Context, teamID string) (res *Team, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{teamID}
+	err = gp.C.Call(ctx, string(FunctionGetTeam), _params, &res)
+	return
+}
+
+func (gp *APIoverJSONRPC) GetTeams(ctx context.Context) (res []*Team, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{}
+	err = gp.C.Call(ctx, string(FunctionGetTeams), _params, &res)
+	return
+}
+
+func (gp *APIoverJSONRPC) CreateTeam(ctx context.Context, teamName string) (res *Team, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{teamName}
+	err = gp.C.Call(ctx, string(FunctionCreateTeam), _params, &res)
+	return
+}
+
+func (gp *APIoverJSONRPC) GetTeamMembers(ctx context.Context, teamID string) (res []*TeamMemberInfo, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{teamID}
+	err = gp.C.Call(ctx, string(FunctionGetTeamMembers), _params, &res)
+	return
+}
+
+func (gp *APIoverJSONRPC) JoinTeam(ctx context.Context, inviteID string) (res *Team, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{inviteID}
+	err = gp.C.Call(ctx, string(FunctionJoinTeam), _params, &res)
+	return
+}
+
+func (gp *APIoverJSONRPC) GetGenericInvite(ctx context.Context, teamID string) (res *TeamMembershipInvite, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{teamID}
+	err = gp.C.Call(ctx, string(FunctionGetGenericInvite), _params, &res)
+	return
+}
+
+func (gp *APIoverJSONRPC) ResetGenericInvite(ctx context.Context, teamID string) (res *TeamMembershipInvite, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{teamID}
+	err = gp.C.Call(ctx, string(FunctionResetGenericInvite), _params, &res)
+	return
+}
+
+func (gp *APIoverJSONRPC) SetTeamMemberRole(ctx context.Context, teamID, userID string, role TeamMemberRole) (err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{teamID, userID, role}
+	err = gp.C.Call(ctx, string(FunctionSetTeamMemberRole), _params, nil)
+	return
+}
+
+func (gp *APIoverJSONRPC) RemoveTeamMember(ctx context.Context, teamID, userID string) (err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{teamID, userID}
+	err = gp.C.Call(ctx, string(FunctionRemoveTeamMember), _params, nil)
+	return
+}
+
 // PermissionName is the name of a permission
 type PermissionName string
 
@@ -1756,6 +1884,7 @@ type PortConfig struct {
 	Visibility  string  `json:"visibility,omitempty"`
 	Description string  `json:"description,omitempty"`
 	Name        string  `json:"name,omitempty"`
+	Sort        uint32  `json:"sort,omitempty"`
 }
 
 // TaskConfig is the TaskConfig message type
@@ -2069,4 +2198,36 @@ type UserMessage struct {
 	ID    string `json:"id,omitempty"`
 	Title string `json:"title,omitempty"`
 	URL   string `json:"url,omitempty"`
+}
+
+type Team struct {
+	ID           string `json:"id,omitempty"`
+	Name         string `json:"name,omitempty"`
+	Slug         string `json:"slug,omitempty"`
+	CreationTime string `json:"creationTime,omitempty"`
+}
+
+type TeamMemberRole string
+
+const (
+	TeamMember_Owner  TeamMemberRole = "owner"
+	TeamMember_Member TeamMemberRole = "member"
+)
+
+type TeamMemberInfo struct {
+	UserId       string         `json:"userId,omitempty"`
+	FullName     string         `json:"fullName,omitempty"`
+	PrimaryEmail string         `json:"primaryEmail,omitempty"`
+	AvatarUrl    string         `json:"avatarUrl,omitempty"`
+	Role         TeamMemberRole `json:"role,omitempty"`
+	MemberSince  string         `json:"memberSince,omitempty"`
+}
+
+type TeamMembershipInvite struct {
+	ID               string         `json:"id,omitempty"`
+	TeamID           string         `json:"teamId,omitempty"`
+	Role             TeamMemberRole `json:"role,omitempty"`
+	CreationTime     string         `json:"creationTime,omitempty"`
+	InvalidationTime string         `json:"invalidationTime,omitempty"`
+	InvitedEmail     string         `json:"invitedEmail,omitempty"`
 }

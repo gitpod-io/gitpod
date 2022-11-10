@@ -81,13 +81,19 @@ func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 
 	// at this point we're actually a prebuild initialiser because we've been able to restore
 	// the prebuild.
+
 	src = csapi.WorkspaceInitFromPrebuild
 
 	// make sure we're on the correct branch
 	for _, gi := range p.Git {
-		err = runGitInit(ctx, gi)
+
+		commitChanged, err := runGitInit(ctx, gi)
 		if err != nil {
 			return src, err
+		}
+		if commitChanged {
+			// head commit has changed, so it's an outdated prebuild, which we treat as other
+			src = csapi.WorkspaceInitFromOther
 		}
 	}
 	log.Debug("Initialized workspace with prebuilt snapshot")
@@ -108,7 +114,7 @@ func clearWorkspace(location string) error {
 	return nil
 }
 
-func runGitInit(ctx context.Context, gInit *GitInitializer) (err error) {
+func runGitInit(ctx context.Context, gInit *GitInitializer) (commitChanged bool, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "runGitInit")
 	span.LogFields(
 		tracelog.String("IsWorkingCopy", fmt.Sprintf("%v", git.IsWorkingCopy(gInit.Location))),
@@ -125,14 +131,25 @@ func runGitInit(ctx context.Context, gInit *GitInitializer) (err error) {
 			} else {
 				// git returned a non-zero exit code because of some reason we did not anticipate or an actual failure.
 				log.WithError(err).WithField("output", string(out)).Error("unexpected git stash error")
-				return xerrors.Errorf("prebuild initializer: %w", err)
+				return commitChanged, xerrors.Errorf("prebuild initializer: %w", err)
 			}
 		}
 		didStash := !strings.Contains(string(out), "No local changes to save")
 
+		statusBefore, err := gInit.Status(ctx)
+		if err != nil {
+			log.WithError(err).Warn("couldn't run git status - continuing")
+		}
 		err = checkGitStatus(gInit.realizeCloneTarget(ctx))
 		if err != nil {
-			return xerrors.Errorf("prebuild initializer: %w", err)
+			return commitChanged, xerrors.Errorf("prebuild initializer: %w", err)
+		}
+		statusAfter, err := gInit.Status(ctx)
+		if err != nil {
+			log.WithError(err).Warn("couldn't run git status - continuing")
+		}
+		if statusBefore != nil && statusAfter != nil {
+			commitChanged = statusBefore.LatestCommit != statusAfter.LatestCommit
 		}
 
 		err = gInit.UpdateSubmodules(ctx)
@@ -173,5 +190,5 @@ func runGitInit(ctx context.Context, gInit *GitInitializer) (err error) {
 			return
 		}
 	}()
-	return nil
+	return commitChanged, nil
 }

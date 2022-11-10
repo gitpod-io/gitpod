@@ -23,8 +23,8 @@ type FuseDeviceEnablerV2 struct{}
 func (c *FuseDeviceEnablerV2) Name() string  { return "fuse-device-enabler-v2" }
 func (c *FuseDeviceEnablerV2) Type() Version { return Version2 }
 
-func (c *FuseDeviceEnablerV2) Apply(ctx context.Context, basePath, cgroupPath string) error {
-	fullCgroupPath := filepath.Join(basePath, cgroupPath)
+func (c *FuseDeviceEnablerV2) Apply(ctx context.Context, opts *PluginOptions) error {
+	fullCgroupPath := filepath.Join(opts.BasePath, opts.CgroupPath)
 	log.WithField("cgroupPath", fullCgroupPath).Debug("configuring devices")
 
 	cgroupFD, err := unix.Open(fullCgroupPath, unix.O_DIRECTORY|unix.O_RDONLY|unix.O_CLOEXEC, 0600)

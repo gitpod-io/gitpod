@@ -11,7 +11,7 @@ import (
 )
 
 func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
-	cfg := getExperimentalConfig(ctx)
+	cfg := getExperimentalUsageConfig(ctx)
 	if cfg == nil {
 		return nil, nil
 	}
@@ -27,7 +27,7 @@ func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
 	)(ctx)
 }
 
-func getExperimentalConfig(ctx *common.RenderContext) *experimental.UsageConfig {
+func getExperimentalWebAppConfig(ctx *common.RenderContext) *experimental.WebAppConfig {
 	var experimentalCfg *experimental.Config
 
 	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
@@ -35,9 +35,19 @@ func getExperimentalConfig(ctx *common.RenderContext) *experimental.UsageConfig 
 		return nil
 	})
 
-	if experimentalCfg == nil || experimentalCfg.WebApp == nil || experimentalCfg.WebApp.Usage == nil {
+	if experimentalCfg == nil || experimentalCfg.WebApp == nil {
 		return nil
 	}
 
-	return experimentalCfg.WebApp.Usage
+	return experimentalCfg.WebApp
+}
+
+func getExperimentalUsageConfig(ctx *common.RenderContext) *experimental.UsageConfig {
+	experimentalWebAppCfg := getExperimentalWebAppConfig(ctx)
+	if experimentalWebAppCfg == nil || experimentalWebAppCfg.Usage == nil {
+
+		return nil
+	}
+
+	return experimentalWebAppCfg.Usage
 }

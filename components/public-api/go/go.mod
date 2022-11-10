@@ -1,4 +1,4 @@
-module github.com/gitpod-io/gitpod/public-api
+module github.com/gitpod-io/gitpod/components/public-api/go
 
 go 1.19
 

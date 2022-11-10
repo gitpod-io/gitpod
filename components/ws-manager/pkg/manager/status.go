@@ -405,7 +405,7 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 		// check if any container is still pulling images
 		for _, cs := range status.ContainerStatuses {
 			if cs.State.Waiting != nil {
-				if cs.State.Waiting.Reason != "ContainerCreating" {
+				if cs.State.Waiting.Reason != "ContainerCreating" && cs.State.Waiting.Reason != "PodInitializing" {
 					continue
 				}
 
@@ -528,6 +528,8 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 // one should extract the phase themselves. If the pod has not failed, this function returns "", nil.
 func extractFailure(wso workspaceObjects, metrics *metrics) (string, *api.WorkspacePhase) {
 	pod := wso.Pod
+	wsType := strings.ToUpper(pod.Labels[wsk8s.TypeLabel])
+	wsClass := pod.Labels[workspaceClassLabel]
 
 	// if the workspace was explicitely marked as failed that also constitutes a failure reason
 	reason, explicitFailure := pod.Annotations[workspaceExplicitFailAnnotation]
@@ -590,8 +592,6 @@ func extractFailure(wso workspaceObjects, metrics *metrics) (string, *api.Worksp
 			} else if terminationState.Reason == "Completed" {
 				// container terminated successfully - this is not a failure
 				if !isPodBeingDeleted(pod) {
-					wsType := strings.ToUpper(pod.Labels[wsk8s.TypeLabel])
-					wsClass := pod.Labels[workspaceClassLabel]
 					if metrics != nil && !wso.IsWorkspaceHeadless() {
 						metrics.totalUnintentionalWorkspaceStopCounterVec.WithLabelValues(wsType, wsClass).Inc()
 					}
@@ -618,10 +618,18 @@ func extractFailure(wso workspaceObjects, metrics *metrics) (string, *api.Worksp
 		if strings.Contains(evt.Message, "MountVolume.MountDevice failed for volume") {
 			// ref: https://github.com/gitpod-io/gitpod/issues/13353
 			// ref: https://github.com/kubernetes-sigs/gcp-compute-persistent-disk-csi-driver/issues/608
+			log.WithField("pod", pod.Name).Warnf("%s", evt.Message)
+			if metrics != nil {
+				metrics.totalMountDeviceFailedVec.WithLabelValues(wsType, wsClass).Inc()
+			}
 			return "", nil
 		} else if strings.Contains(evt.Message, workspaceVolumeName) {
-			// ideally we do not just use evt.Message as failure reason because it contains internal paths and is not useful for the user
-			return "cannot mount workspace", nil
+			// ref: https://github.com/gitpod-io/gitpod/issues/14032
+			log.WithField("pod", pod.Name).Warnf("%s", evt.Message)
+			if metrics != nil {
+				metrics.totalCannotMountVolumeVec.WithLabelValues(wsType, wsClass).Inc()
+			}
+			return "", nil
 		} else {
 			// if this happens we did not do a good job because that means we've introduced another volume to the pod
 			// but did not consider that mounting it might fail.

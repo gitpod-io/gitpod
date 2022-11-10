@@ -17,6 +17,7 @@ import (
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/opentracing/opentracing-go"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -29,12 +30,15 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	covev1client "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -55,6 +59,7 @@ import (
 
 	volumesnapshotv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 	volumesnapshotclientv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned"
+	watchtools "k8s.io/client-go/tools/watch"
 )
 
 // Manager is a kubernetes backed implementation of a workspace manager
@@ -268,7 +273,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 			err = m.Clientset.Get(ctx, types.NamespacedName{Namespace: m.Config.Namespace, Name: startContext.VolumeSnapshot.VolumeSnapshotName}, &volumeSnapshot)
 			if k8serr.IsNotFound(err) {
 				// restore volume snapshot from handle
-				err = m.restoreVolumeSnapshotFromHandle(ctx, startContext.VolumeSnapshot.VolumeSnapshotName, startContext.VolumeSnapshot.VolumeSnapshotHandle)
+				err = m.restoreVolumeSnapshotFromHandle(ctx, req.Type, startContext.VolumeSnapshot.VolumeSnapshotName, startContext.VolumeSnapshot.VolumeSnapshotHandle)
 				if err != nil {
 					clog.WithError(err).Error("was unable to restore volume snapshot")
 					return nil, err
@@ -311,34 +316,25 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		}
 	}
 
-	var createSecret bool
-	for _, feature := range startContext.Request.Spec.FeatureFlags {
-		if feature == api.WorkspaceFeatureFlag_PROTECTED_SECRETS {
-			createSecret = true
-			break
-		}
+	secrets, _ := buildWorkspaceSecrets(startContext.Request.Spec)
+
+	// This call actually modifies the initializer and removes the secrets.
+	// Prior to the `InitWorkspace` call, we inject the secrets back into the initializer.
+	// We do this so that no Git token is stored as annotation on the pod, but solely
+	// remains within the Kubernetes secret.
+	_ = csapi.ExtractAndReplaceSecretsFromInitializer(startContext.Request.Spec.Initializer)
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podName(startContext.Request),
+			Namespace: m.Config.Namespace,
+			Labels:    startContext.Labels,
+		},
+		StringData: secrets,
 	}
-	if createSecret {
-		secrets, _ := buildWorkspaceSecrets(startContext.Request.Spec)
-
-		// This call actually modifies the initializer and removes the secrets.
-		// Prior to the `InitWorkspace` call, we inject the secrets back into the initializer.
-		// We do this so that no Git token is stored as annotation on the pod, but solely
-		// remains within the Kubernetes secret.
-		_ = csapi.ExtractAndReplaceSecretsFromInitializer(startContext.Request.Spec.Initializer)
-
-		secret := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      podName(startContext.Request),
-				Namespace: m.Config.Namespace,
-				Labels:    startContext.Labels,
-			},
-			StringData: secrets,
-		}
-		err = m.Clientset.Create(ctx, secret)
-		if err != nil && !k8serr.IsAlreadyExists(err) {
-			return nil, xerrors.Errorf("cannot create secret for workspace pod: %w", err)
-		}
+	err = m.Clientset.Create(ctx, secret)
+	if err != nil && !k8serr.IsAlreadyExists(err) {
+		return nil, xerrors.Errorf("cannot create secret for workspace pod: %w", err)
 	}
 
 	err = m.Clientset.Create(ctx, pod)
@@ -361,7 +357,15 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		clog.WithError(err).WithField("pod", pod.Name).Warn("workspace pod did not transition to running state")
 		if err == wait.ErrWaitTimeout && isPodUnschedulable(m.Clientset, pod.Name, pod.Namespace) {
 			// this could be an error due to a scale-up event
-			delErr := deleteWorkspacePodForce(m.Clientset, pod.Name, pod.Namespace)
+			// delete the PVC object if present
+			delErr := m.deleteWorkspacePVC(ctx, pod.Name)
+			if delErr != nil {
+				clog.WithError(delErr).WithField("pvc", pod.Name).Warn("was unable to delete workspace pvc")
+				// do not return error to run the following logic
+			}
+
+			// force delete the workspace pod by removing the finalizer
+			delErr = deleteWorkspacePodForce(m.Clientset, pod.Name, pod.Namespace)
 			if delErr != nil {
 				clog.WithError(delErr).WithField("pod", pod.Name).Warn("was unable to delete workspace pod")
 				return nil, xerrors.Errorf("workspace pod never reached Running state: %w", err)
@@ -452,7 +456,7 @@ func buildWorkspaceSecrets(spec *api.StartWorkspaceSpec) (secrets map[string]str
 	return secrets, secretsLen
 }
 
-func (m *Manager) restoreVolumeSnapshotFromHandle(ctx context.Context, id, handle string) (err error) {
+func (m *Manager) restoreVolumeSnapshotFromHandle(ctx context.Context, wsType api.WorkspaceType, id, handle string) (err error) {
 	span, ctx := tracing.FromContext(ctx, "restoreVolumeSnapshotFromHandle")
 	defer tracing.FinishSpan(span, &err)
 
@@ -463,8 +467,15 @@ func (m *Manager) restoreVolumeSnapshotFromHandle(ctx context.Context, id, handl
 
 	// todo(pavel): figure out if there is a way to find out which snapshot class we need to use here. For now use default class info.
 	var volumeSnapshotClassName string
-	if m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PVC.SnapshotClass != "" {
-		volumeSnapshotClassName = m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PVC.SnapshotClass
+	switch wsType {
+	case api.WorkspaceType_PREBUILD:
+		if m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PrebuildPVC.SnapshotClass != "" {
+			volumeSnapshotClassName = m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PrebuildPVC.SnapshotClass
+		}
+	case api.WorkspaceType_REGULAR:
+		if m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PVC.SnapshotClass != "" {
+			volumeSnapshotClassName = m.Config.WorkspaceClasses[config.DefaultWorkspaceClass].PVC.SnapshotClass
+		}
 	}
 
 	var volumeSnapshotClass volumesnapshotv1.VolumeSnapshotClass
@@ -534,7 +545,7 @@ func (m *Manager) DeleteVolumeSnapshot(ctx context.Context, req *api.DeleteVolum
 	err = m.Clientset.Get(ctx, types.NamespacedName{Namespace: m.Config.Namespace, Name: req.Id}, &volumeSnapshot)
 	if k8serr.IsNotFound(err) {
 		if !req.SoftDelete {
-			err = m.restoreVolumeSnapshotFromHandle(ctx, req.Id, req.VolumeHandle)
+			err = m.restoreVolumeSnapshotFromHandle(ctx, req.WsType, req.Id, req.VolumeHandle)
 			if err != nil {
 				log.WithError(err).Error("was unable to restore volume snapshot")
 				return nil, err
@@ -917,6 +928,12 @@ func (m *Manager) MarkActive(ctx context.Context, req *api.MarkActiveRequest) (r
 	if err != nil {
 		return nil, xerrors.Errorf("cannot mark workspace: %w", err)
 	}
+	_, hasFirstUserActivityAnnotation := pod.Annotations[firstUserActivityAnnotation]
+
+	// if user already mark workspace as active and this request has IgnoreIfActive flag, just simple ignore it
+	if hasFirstUserActivityAnnotation && req.IgnoreIfActive {
+		return &api.MarkActiveResponse{}, nil
+	}
 
 	// We do not keep the last activity as annotation on the workspace to limit the load we're placing
 	// on the K8S master in check. Thus, this state lives locally in a map.
@@ -936,7 +953,7 @@ func (m *Manager) MarkActive(ctx context.Context, req *api.MarkActiveRequest) (r
 	}
 
 	// If it's the first call: Mark the pod with firstUserActivityAnnotation
-	if _, hasFirstUserAcitviyAnnotation := pod.Annotations[firstUserActivityAnnotation]; !hasFirstUserAcitviyAnnotation {
+	if !hasFirstUserActivityAnnotation {
 		err = m.markWorkspace(ctx, workspaceID, addMark(firstUserActivityAnnotation, now.Format(time.RFC3339Nano)))
 		if err != nil {
 			log.WithError(err).WithFields(log.OWI("", "", workspaceID)).Warn("was unable to mark workspace with firstUserAcitviy")
@@ -1333,7 +1350,7 @@ func (m *Manager) dropSubscriber(dropouts []string) {
 
 // onChange is the default OnChange implementation which publishes workspace status updates to subscribers
 func (m *Manager) onChange(ctx context.Context, status *api.WorkspaceStatus) {
-	log := log.WithFields(log.OWI(status.Metadata.Owner, status.Metadata.MetaId, status.Id))
+	clog := log.WithFields(log.OWI(status.Metadata.Owner, status.Metadata.MetaId, status.Id))
 
 	header := make(map[string]string)
 	span := opentracing.SpanFromContext(ctx)
@@ -1344,7 +1361,7 @@ func (m *Manager) onChange(ctx context.Context, status *api.WorkspaceStatus) {
 			// if the error was caused by the span coming from the Noop tracer - ignore it.
 			// This can happen if the workspace doesn't have a span associated with it, then we resort to creating Noop spans.
 			if _, isNoopTracer := span.Tracer().(opentracing.NoopTracer); !isNoopTracer {
-				log.WithError(err).Debug("unable to extract tracing information - trace will be broken")
+				clog.WithError(err).Debug("unable to extract tracing information - trace will be broken")
 			}
 		} else {
 			for k, v := range tracingHeader {
@@ -1367,10 +1384,14 @@ func (m *Manager) onChange(ctx context.Context, status *api.WorkspaceStatus) {
 	// they represent out-of-the-ordinary situations.
 	// We attempt to use the GCP Error Reporting for this, hence log these situations as errors.
 	if status.Conditions.Failed != "" {
-		log.WithField("status", status).Error("workspace failed")
+		status, _ := protojson.Marshal(status)
+		safeStatus, _ := log.RedactJSON(status)
+		clog.WithField("status", string(safeStatus)).Error("workspace failed")
 	}
 	if status.Phase == 0 {
-		log.WithField("status", status).Error("workspace in UNKNOWN phase")
+		status, _ := protojson.Marshal(status)
+		safeStatus, _ := log.RedactJSON(status)
+		clog.WithField("status", string(safeStatus)).Error("workspace in UNKNOWN phase")
 	}
 }
 
@@ -1517,6 +1538,96 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 	}
 
 	return wsdaemon.NewWorkspaceContentServiceClient(conn), nil
+}
+
+func (m *Manager) createWorkspaceSnapshotFromPVC(ctx context.Context, pvcName string, pvcVolumeSnapshotName string, pvcVolumeSnapshotClassName string, workspaceID string, labels map[string]string) error {
+	// create snapshot object out of PVC
+	volumeSnapshot := &volumesnapshotv1.VolumeSnapshot{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        pvcVolumeSnapshotName,
+			Namespace:   m.Config.Namespace,
+			Annotations: map[string]string{workspaceIDAnnotation: workspaceID},
+			Labels:      labels,
+		},
+		Spec: volumesnapshotv1.VolumeSnapshotSpec{
+			Source: volumesnapshotv1.VolumeSnapshotSource{
+				PersistentVolumeClaimName: &pvcName,
+			},
+			VolumeSnapshotClassName: &pvcVolumeSnapshotClassName,
+		},
+	}
+
+	err := m.Clientset.Create(ctx, volumeSnapshot)
+	if err != nil && !k8serr.IsAlreadyExists(err) {
+		err = xerrors.Errorf("cannot create volumesnapshot: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (m *Manager) waitForWorkspaceVolumeSnapshotReady(ctx context.Context, pvcVolumeSnapshotName string, log *logrus.Entry) (pvcVolumeSnapshotContentName string, readyVolumeSnapshot bool, err error) {
+	log = log.WithField("VolumeSnapshot.Name", pvcVolumeSnapshotName)
+
+	var volumeSnapshotWatcher *watchtools.RetryWatcher
+	volumeSnapshotWatcher, err = watchtools.NewRetryWatcher("1", &cache.ListWatch{
+		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+			return m.VolumeSnapshotClient.SnapshotV1().VolumeSnapshots(m.Config.Namespace).Watch(ctx, metav1.ListOptions{
+				FieldSelector: fields.OneTermEqualSelector("metadata.name", pvcVolumeSnapshotName).String(),
+			})
+		},
+	})
+	if err != nil {
+		log.WithError(err).Info("fall back to exponential backoff retry")
+		// we can not create a retry watcher, we fall back to exponential backoff retry
+		backoff := wait.Backoff{
+			Steps:    30,
+			Duration: 100 * time.Millisecond,
+			Factor:   1.5,
+			Jitter:   0.1,
+			Cap:      10 * time.Minute,
+		}
+		err = wait.ExponentialBackoff(backoff, func() (bool, error) {
+			var vs volumesnapshotv1.VolumeSnapshot
+			err := m.Clientset.Get(ctx, types.NamespacedName{Namespace: m.Config.Namespace, Name: pvcVolumeSnapshotName}, &vs)
+			if err != nil {
+				if k8serr.IsNotFound(err) {
+					// volumesnapshot doesn't exist yet, retry again
+					return false, nil
+				}
+				log.WithError(err).Error("was unable to get volume snapshot")
+				return false, err
+			}
+			if vs.Status != nil && vs.Status.ReadyToUse != nil && *vs.Status.ReadyToUse && vs.Status.BoundVolumeSnapshotContentName != nil {
+				pvcVolumeSnapshotContentName = *vs.Status.BoundVolumeSnapshotContentName
+				return true, nil
+			}
+			return false, nil
+		})
+		if err != nil {
+			log.WithError(err).Errorf("failed while waiting for volume snapshot to get ready")
+			return "", false, err
+		}
+		readyVolumeSnapshot = true
+	} else {
+		for event := range volumeSnapshotWatcher.ResultChan() {
+			vs, ok := event.Object.(*volumesnapshotv1.VolumeSnapshot)
+			if !ok {
+				log.Errorf("unexpected type assertion %T", event.Object)
+				continue
+			}
+
+			if vs != nil && vs.Status != nil && vs.Status.ReadyToUse != nil && *vs.Status.ReadyToUse && vs.Status.BoundVolumeSnapshotContentName != nil {
+				pvcVolumeSnapshotContentName = *vs.Status.BoundVolumeSnapshotContentName
+				readyVolumeSnapshot = true
+				break
+			}
+		}
+
+		// stop the volume snapshot retry watcher
+		volumeSnapshotWatcher.Stop()
+	}
+
+	return pvcVolumeSnapshotContentName, readyVolumeSnapshot, nil
 }
 
 // newWssyncConnectionFactory creates a new wsdaemon connection factory based on the wsmanager configuration

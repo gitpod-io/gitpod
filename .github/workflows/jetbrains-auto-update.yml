@@ -1,9 +1,14 @@
-name: JB Nightly
+name: JB Update Latest IDE Images
 on:
   workflow_dispatch:
   schedule:
     # At 11:00 on every day.
     - cron: "0 11 * * *"
+  push:
+    branches:
+      - "main"
+    paths:
+      - "components/ide/jetbrains/backend-plugin/gradle-latest.properties"
 
 jobs:
   intellij:

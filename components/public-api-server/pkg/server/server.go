@@ -14,8 +14,8 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/log"
 
-	"github.com/gitpod-io/gitpod/public-api/config"
-	"github.com/gitpod-io/gitpod/public-api/experimental/v1/v1connect"
+	"github.com/gitpod-io/gitpod/components/public-api/go/config"
+	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	"github.com/gorilla/handlers"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
@@ -35,7 +35,10 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 		return fmt.Errorf("failed to parse Gitpod API URL: %w", err)
 	}
 
-	connPool := &proxy.NoConnectionPool{ServerAPI: gitpodAPI}
+	connPool, err := proxy.NewConnectionPool(gitpodAPI, 3000)
+	if err != nil {
+		return fmt.Errorf("failed to setup connection pool: %w", err)
+	}
 
 	srv, err := baseserver.New("public_api_server",
 		baseserver.WithLogger(logger),
@@ -82,7 +85,6 @@ func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool) error
 	proxy.RegisterMetrics(srv.MetricsRegistry())
 
 	connectMetrics := NewConnectMetrics()
-
 	err := connectMetrics.Register(srv.MetricsRegistry())
 	if err != nil {
 		return err
@@ -98,6 +100,9 @@ func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool) error
 
 	workspacesRoute, workspacesServiceHandler := v1connect.NewWorkspacesServiceHandler(apiv1.NewWorkspaceService(connPool), handlerOptions...)
 	srv.HTTPMux().Handle(workspacesRoute, workspacesServiceHandler)
+
+	teamsRoute, teamsServiceHandler := v1connect.NewTeamsServiceHandler(apiv1.NewTeamsService(connPool), handlerOptions...)
+	srv.HTTPMux().Handle(teamsRoute, teamsServiceHandler)
 
 	return nil
 }

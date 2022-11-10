@@ -37,6 +37,16 @@ type ClientConfig struct {
 	SecretKey      string `json:"secretKey"`
 }
 
+type PriceConfig struct {
+	EUR string `json:"eur"`
+	USD string `json:"usd"`
+}
+
+type StripePrices struct {
+	IndividualUsagePriceIDs PriceConfig `json:"individualUsagePriceIds"`
+	TeamUsagePriceIDs       PriceConfig `json:"teamUsagePriceIds"`
+}
+
 func ReadConfigFromFile(path string) (ClientConfig, error) {
 	bytes, err := os.ReadFile(path)
 	if err != nil {
@@ -318,6 +328,82 @@ func (c *Client) GetSubscriptionWithCustomer(ctx context.Context, subscriptionID
 		return nil, fmt.Errorf("failed to get subscription %s: %w", subscriptionID, err)
 	}
 	return subscription, nil
+}
+
+func (c *Client) CreateSubscription(ctx context.Context, customerID string, priceID string, isAutomaticTaxSupported bool) (*stripe.Subscription, error) {
+	if customerID == "" {
+		return nil, fmt.Errorf("no customerID specified")
+	}
+	if priceID == "" {
+		return nil, fmt.Errorf("no priceID specified")
+	}
+
+	startOfNextMonth := getStartOfNextMonth(time.Now())
+
+	params := &stripe.SubscriptionParams{
+		Customer: stripe.String(customerID),
+		Items: []*stripe.SubscriptionItemsParams{
+			{
+				Price: stripe.String(priceID),
+			},
+		},
+		AutomaticTax: &stripe.SubscriptionAutomaticTaxParams{
+			Enabled: stripe.Bool(isAutomaticTaxSupported),
+		},
+		BillingCycleAnchor: stripe.Int64(startOfNextMonth.Unix()),
+	}
+
+	subscription, err := c.sc.Subscriptions.New(params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get subscription with customer ID %s", customerID)
+	}
+
+	return subscription, err
+}
+
+func getStartOfNextMonth(t time.Time) time.Time {
+	currentYear, currentMonth, _ := t.Date()
+
+	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, time.UTC)
+	startOfNextMonth := firstOfMonth.AddDate(0, 1, 0)
+
+	return startOfNextMonth
+}
+
+func (c *Client) SetDefaultPaymentForCustomer(ctx context.Context, customerID string, setupIntentId string) (*stripe.Customer, error) {
+	if customerID == "" {
+		return nil, fmt.Errorf("no customerID specified")
+	}
+
+	if setupIntentId == "" {
+		return nil, fmt.Errorf("no setupIntentID specified")
+	}
+
+	setupIntent, err := c.sc.SetupIntents.Get(setupIntentId, &stripe.SetupIntentParams{
+		Params: stripe.Params{
+			Context: ctx,
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Failed to retrieve setup intent with id %s", setupIntentId)
+	}
+
+	paymentMethod, err := c.sc.PaymentMethods.Attach(setupIntent.PaymentMethod.ID, &stripe.PaymentMethodAttachParams{Customer: &customerID})
+	if err != nil {
+		return nil, fmt.Errorf("Failed to attach payment method to setup intent ID %s", setupIntentId)
+	}
+
+	customer, _ := c.sc.Customers.Update(customerID, &stripe.CustomerParams{
+		InvoiceSettings: &stripe.CustomerInvoiceSettingsParams{
+			DefaultPaymentMethod: stripe.String(paymentMethod.ID)},
+		Address: &stripe.AddressParams{
+			Line1:   stripe.String(paymentMethod.BillingDetails.Address.Line1),
+			Country: stripe.String(paymentMethod.BillingDetails.Address.Country)}})
+	if err != nil {
+		return nil, fmt.Errorf("Failed to update customer with id %s", customerID)
+	}
+
+	return customer, nil
 }
 
 func GetAttributionID(ctx context.Context, customer *stripe.Customer) (db.AttributionID, error) {

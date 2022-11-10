@@ -60,7 +60,6 @@ import {
 import { ImageSourceProvider } from "./workspace/image-source-provider";
 import { WorkspaceGarbageCollector } from "./workspace/garbage-collector";
 import { TokenGarbageCollector } from "./user/token-garbage-collector";
-import { WorkspaceDownloadService } from "./workspace/workspace-download-service";
 import { WebsocketConnectionManager } from "./websocket/websocket-connection-manager";
 import { OneTimeSecretServer } from "./one-time-secret-server";
 import { HostContainerMapping } from "./auth/host-container-mapping";
@@ -92,7 +91,6 @@ import { PrometheusClientCallMetrics } from "@gitpod/gitpod-protocol/lib/messagi
 import { IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
 import { LocalMessageBroker, LocalRabbitMQBackedMessageBroker } from "./messaging/local-message-broker";
-import { contentServiceBinder } from "@gitpod/content-service/lib/sugar";
 import { ReferrerPrefixParser } from "./workspace/referrer-prefix-context-parser";
 import { InstallationAdminTelemetryDataProvider } from "./installation-admin/telemetry-data-provider";
 import { IDEService } from "./ide-service";
@@ -111,8 +109,9 @@ import { WebhookEventGarbageCollector } from "./projects/webhook-event-garbage-c
 import { LivenessController } from "./liveness/liveness-controller";
 import { IDEServiceClient, IDEServiceDefinition } from "@gitpod/ide-service-api/lib/ide.pb";
 import { prometheusClientMiddleware } from "@gitpod/gitpod-protocol/lib/util/nice-grpc";
-import { UsageService } from "./user/usage-service";
+import { UsageService, UsageServiceImpl } from "./user/usage-service";
 import { OpenPrebuildPrefixContextParser } from "./workspace/open-prebuild-prefix-context-parser";
+import { contentServiceBinder } from "./util/content-service-sugar";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -219,7 +218,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(ConsensusLeaderQorum).toSelf().inSingletonScope();
 
     bind(WorkspaceGarbageCollector).toSelf().inSingletonScope();
-    bind(WorkspaceDownloadService).toSelf().inSingletonScope();
     bind(LivenessController).toSelf().inSingletonScope();
 
     bind(OneTimeSecretServer).toSelf().inSingletonScope();
@@ -297,5 +295,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(WebhookEventGarbageCollector).toSelf().inSingletonScope();
 
-    bind(UsageService).toSelf().inSingletonScope();
+    bind(UsageServiceImpl).toSelf().inSingletonScope();
+    bind(UsageService).toService(UsageServiceImpl);
 });

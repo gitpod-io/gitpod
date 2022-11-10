@@ -339,7 +339,7 @@ function getPrebuildStatusDescription(prebuild: PrebuildWithStatus): string {
         case "building":
             return `Prebuild is currently in progress.`;
         case "aborted":
-            return `Prebuild has been cancelled. Either a newer commit was pushed to the same branch, a user cancelled it manually, or the prebuild rate limit has been exceeded.`;
+            return `Prebuild has been cancelled. Either a newer commit was pushed to the same branch, a user cancelled it manually, or the prebuild rate limit has been exceeded. ${prebuild.error}`;
         case "failed":
             return `Prebuild failed for system reasons. Please contact support. ${prebuild.error}`;
         case "timeout":

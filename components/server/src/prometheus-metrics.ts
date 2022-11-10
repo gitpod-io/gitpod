@@ -12,7 +12,6 @@ export function registerServerMetrics(registry: prometheusClient.Registry) {
     registry.registerMetric(apiConnectionClosedCounter);
     registry.registerMetric(apiCallCounter);
     registry.registerMetric(apiCallDurationHistogram);
-    registry.registerMetric(apiCallUserCounter);
     registry.registerMetric(httpRequestTotal);
     registry.registerMetric(httpRequestDuration);
     registry.registerMetric(messagebusTopicReads);
@@ -21,6 +20,8 @@ export function registerServerMetrics(registry: prometheusClient.Registry) {
     registry.registerMetric(instanceStartsFailedTotal);
     registry.registerMetric(prebuildsStartedTotal);
     registry.registerMetric(stripeClientRequestsCompletedDurationSeconds);
+    registry.registerMetric(imageBuildsStartedTotal);
+    registry.registerMetric(imageBuildsCompletedTotal);
 }
 
 const loginCounter = new prometheusClient.Counter({
@@ -73,16 +74,6 @@ export const apiCallDurationHistogram = new prometheusClient.Histogram({
 
 export function observeAPICallsDuration(method: string, statusCode: number, duration: number) {
     apiCallDurationHistogram.observe({ method, statusCode }, duration);
-}
-
-const apiCallUserCounter = new prometheusClient.Counter({
-    name: "gitpod_server_api_calls_user_total",
-    help: "Total amount of API calls per user",
-    labelNames: ["method", "user"],
-});
-
-export function increaseApiCallUserCounter(method: string, user: string) {
-    apiCallUserCounter.inc({ method, user });
 }
 
 const httpRequestTotal = new prometheusClient.Counter({
@@ -175,4 +166,23 @@ export const stripeClientRequestsCompletedDurationSeconds = new prometheusClient
 
 export function observeStripeClientRequestsCompleted(operation: string, outcome: string, durationInSeconds: number) {
     stripeClientRequestsCompletedDurationSeconds.observe({ operation, outcome }, durationInSeconds);
+}
+
+export const imageBuildsStartedTotal = new prometheusClient.Counter({
+    name: "gitpod_server_image_builds_started_total",
+    help: "counter of the total number of image builds started on server",
+});
+
+export function increaseImageBuildsStartedTotal() {
+    imageBuildsStartedTotal.inc();
+}
+
+export const imageBuildsCompletedTotal = new prometheusClient.Counter({
+    name: "gitpod_server_image_builds_completed_total",
+    help: "counter of the total number of image builds recorded as completed on server",
+    labelNames: ["outcome"],
+});
+
+export function increaseImageBuildsCompletedTotal(outcome: "succeeded" | "failed") {
+    imageBuildsCompletedTotal.inc({ outcome });
 }

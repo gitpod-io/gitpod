@@ -470,7 +470,7 @@
             "uid": "${datasource}"
           },
           "exemplar": false,
-          "expr": "1-((\n  (\n    (sum by (cluster)(rate(gitpod_ws_manager_workspace_stops_total{reason=\"failed\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d])) OR on() vector(0))\n    /\n    sum by (cluster)(rate(gitpod_ws_manager_workspace_stops_total{cluster!~\"prod-meta-.*|ephemeral.*\"}[1d]))\n  )\n) + (\n  (\n    (sum by (cluster)(rate(grpc_server_handled_total{grpc_method=\"StartWorkspace\",grpc_code!~\"OK|ResourceExhausted\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d])) OR on() vector(0))\n    /\n    sum by (cluster)(rate(grpc_server_handled_total{grpc_method=\"StartWorkspace\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d]))\n  )\n))",
+          "expr": "1-((\n  (\n    (sum by (cluster)(rate(gitpod_ws_manager_workspace_stops_total{reason=\"failed\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d])) OR on() vector(0))\n    /\n    sum by (cluster)(rate(gitpod_ws_manager_workspace_stops_total{cluster!~\"prod-meta-.*|ephemeral.*\"}[1d]))\n  )\n) OR on() vector(0) + (\n  (\n    (sum by (cluster)(rate(grpc_server_handled_total{grpc_method=\"StartWorkspace\",grpc_code!~\"OK|ResourceExhausted\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d])) OR on() vector(0))\n    /\n    sum by (cluster)(rate(grpc_server_handled_total{grpc_method=\"StartWorkspace\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d]))\n  )\n))",
           "instant": false,
           "interval": "",
           "legendFormat": "{{ cluster }}",
