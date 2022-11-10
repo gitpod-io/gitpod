@@ -9,7 +9,7 @@
 /* eslint-disable */
 /* @ts-nocheck */
 
-import {CreateTeamRequest, CreateTeamResponse, DeleteTeamMemberRequest, DeleteTeamMemberResponse, DeleteTeamRequest, DeleteTeamResponse, GetTeamRequest, GetTeamResponse, JoinTeamRequest, JoinTeamResponse, ListTeamsRequest, ListTeamsResponse, ResetTeamInvitationRequest, ResetTeamInvitationResponse, UpdateTeamMemberRequest, UpdateTeamMemberResponse} from "./teams_pb.js";
+import {AdminListTeamsRequest, AdminListTeamsResponse, CreateTeamRequest, CreateTeamResponse, DeleteTeamMemberRequest, DeleteTeamMemberResponse, DeleteTeamRequest, DeleteTeamResponse, GetTeamRequest, GetTeamResponse, JoinTeamRequest, JoinTeamResponse, ListTeamsRequest, ListTeamsResponse, ResetTeamInvitationRequest, ResetTeamInvitationResponse, UpdateTeamMemberRequest, UpdateTeamMemberResponse} from "./teams_pb.js";
 import {MethodKind} from "@bufbuild/protobuf";
 
 /**
@@ -41,7 +41,7 @@ export const TeamsService = {
       kind: MethodKind.Unary,
     },
     /**
-     * ListTeams lists the caller has access to.
+     * ListTeams lists teams the caller has access to.
      *
      * @generated from rpc gitpod.experimental.v1.TeamsService.ListTeams
      */
@@ -49,6 +49,17 @@ export const TeamsService = {
       name: "ListTeams",
       I: ListTeamsRequest,
       O: ListTeamsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * AdminListTeams lists all teams that exist on the installation. Admin permissions are required.
+     *
+     * @generated from rpc gitpod.experimental.v1.TeamsService.AdminListTeams
+     */
+    adminListTeams: {
+      name: "AdminListTeams",
+      I: AdminListTeamsRequest,
+      O: AdminListTeamsResponse,
       kind: MethodKind.Unary,
     },
     /**

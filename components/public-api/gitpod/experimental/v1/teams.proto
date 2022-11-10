@@ -4,6 +4,7 @@ package gitpod.experimental.v1;
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1";
 
+import "gitpod/experimental/v1/pagination.proto";
 import "google/protobuf/timestamp.proto";
 
 message Team {
@@ -44,7 +45,7 @@ message TeamMember {
 }
 
 enum TeamRole {
-    // TEAM_ROLE_UNKNOWN is the unkwnon state.
+    // TEAM_ROLE_UNSPECIFIED is the unkwnon state.
     TEAM_ROLE_UNSPECIFIED = 0;
 
     // TEAM_ROLE_OWNER is the owner of the team.
@@ -67,8 +68,11 @@ service TeamsService {
     // GetTeam retrieves a single Team.
     rpc GetTeam(GetTeamRequest) returns (GetTeamResponse) {}
 
-    // ListTeams lists the caller has access to.
+    // ListTeams lists teams the caller has access to.
     rpc ListTeams(ListTeamsRequest) returns (ListTeamsResponse) {};
+
+    // AdminListTeams lists all teams that exist on the installation. Admin permissions are required.
+    rpc AdminListTeams(AdminListTeamsRequest) returns (AdminListTeamsResponse) {};
 
     // DeleteTeam deletes the specified team.
     rpc DeleteTeam(DeleteTeamRequest) returns (DeleteTeamResponse) {};
@@ -110,6 +114,18 @@ message ListTeamsRequest {
 
 message ListTeamsResponse {
     repeated Team teams = 1;
+}
+
+message AdminListTeamsRequest {
+    Pagination pagination = 1;
+    string order_by = 2;
+}
+
+message AdminListTeamsResponse {
+    repeated Team teams = 1;
+
+    // total_results is the total number of results available
+    int32 total_results = 2;
 }
 
 message DeleteTeamRequest {

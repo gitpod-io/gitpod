@@ -11,13 +11,14 @@
 
 import type {BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage} from "@bufbuild/protobuf";
 import {Message, proto3, Timestamp} from "@bufbuild/protobuf";
+import {Pagination} from "./pagination_pb.js";
 
 /**
  * @generated from enum gitpod.experimental.v1.TeamRole
  */
 export enum TeamRole {
   /**
-   * TEAM_ROLE_UNKNOWN is the unkwnon state.
+   * TEAM_ROLE_UNSPECIFIED is the unkwnon state.
    *
    * @generated from enum value: TEAM_ROLE_UNSPECIFIED = 0;
    */
@@ -453,6 +454,94 @@ export class ListTeamsResponse extends Message<ListTeamsResponse> {
 
   static equals(a: ListTeamsResponse | PlainMessage<ListTeamsResponse> | undefined, b: ListTeamsResponse | PlainMessage<ListTeamsResponse> | undefined): boolean {
     return proto3.util.equals(ListTeamsResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.AdminListTeamsRequest
+ */
+export class AdminListTeamsRequest extends Message<AdminListTeamsRequest> {
+  /**
+   * @generated from field: gitpod.experimental.v1.Pagination pagination = 1;
+   */
+  pagination?: Pagination;
+
+  /**
+   * @generated from field: string order_by = 2;
+   */
+  orderBy = "";
+
+  constructor(data?: PartialMessage<AdminListTeamsRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.AdminListTeamsRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "pagination", kind: "message", T: Pagination },
+    { no: 2, name: "order_by", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AdminListTeamsRequest {
+    return new AdminListTeamsRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): AdminListTeamsRequest {
+    return new AdminListTeamsRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): AdminListTeamsRequest {
+    return new AdminListTeamsRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: AdminListTeamsRequest | PlainMessage<AdminListTeamsRequest> | undefined, b: AdminListTeamsRequest | PlainMessage<AdminListTeamsRequest> | undefined): boolean {
+    return proto3.util.equals(AdminListTeamsRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.AdminListTeamsResponse
+ */
+export class AdminListTeamsResponse extends Message<AdminListTeamsResponse> {
+  /**
+   * @generated from field: repeated gitpod.experimental.v1.Team teams = 1;
+   */
+  teams: Team[] = [];
+
+  /**
+   * total_results is the total number of results available
+   *
+   * @generated from field: int32 total_results = 2;
+   */
+  totalResults = 0;
+
+  constructor(data?: PartialMessage<AdminListTeamsResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.AdminListTeamsResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "teams", kind: "message", T: Team, repeated: true },
+    { no: 2, name: "total_results", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AdminListTeamsResponse {
+    return new AdminListTeamsResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): AdminListTeamsResponse {
+    return new AdminListTeamsResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): AdminListTeamsResponse {
+    return new AdminListTeamsResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: AdminListTeamsResponse | PlainMessage<AdminListTeamsResponse> | undefined, b: AdminListTeamsResponse | PlainMessage<AdminListTeamsResponse> | undefined): boolean {
+    return proto3.util.equals(AdminListTeamsResponse, a, b);
   }
 }
 

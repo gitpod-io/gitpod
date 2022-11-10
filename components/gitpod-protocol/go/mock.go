@@ -67,6 +67,21 @@ func (mr *MockAPIInterfaceMockRecorder) AdminBlockUser(ctx, req interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminBlockUser", reflect.TypeOf((*MockAPIInterface)(nil).AdminBlockUser), ctx, req)
 }
 
+// AdminGetTeams mocks base method.
+func (m *MockAPIInterface) AdminGetTeams(ctx context.Context, options *AdminGetTeamsOptions) (*AdminGetTeamsResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminGetTeams", ctx, options)
+	ret0, _ := ret[0].(*AdminGetTeamsResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminGetTeams indicates an expected call of AdminGetTeams.
+func (mr *MockAPIInterfaceMockRecorder) AdminGetTeams(ctx, options interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminGetTeams", reflect.TypeOf((*MockAPIInterface)(nil).AdminGetTeams), ctx, options)
+}
+
 // Close mocks base method.
 func (m *MockAPIInterface) Close() error {
 	m.ctrl.T.Helper()

@@ -86,6 +86,7 @@ type APIInterface interface {
 
 	GetTeam(ctx context.Context, teamID string) (*Team, error)
 	GetTeams(ctx context.Context) ([]*Team, error)
+	AdminGetTeams(ctx context.Context, options *AdminGetTeamsOptions) (*AdminGetTeamsResult, error)
 	CreateTeam(ctx context.Context, teamName string) (*Team, error)
 	DeleteTeam(ctx context.Context, teamID string) error
 	GetTeamMembers(ctx context.Context, teamID string) ([]*TeamMemberInfo, error)
@@ -219,6 +220,8 @@ const (
 	FunctionGetTeam FunctionName = "getTeam"
 	// FunctionGetTeams is the name of the getTeams function
 	FunctionGetTeams FunctionName = "getTeams"
+	// FunctionAdminGetTeams is the name of the adminGetTeams function
+	FunctionAdminGetTeams FunctionName = "adminGetTeams"
 	// FunctionCreateTeam is the name of the createTeam function
 	FunctionCreateTeam FunctionName = "createTeam"
 	// FunctionJoinTeam is the name of the joinTeam function
@@ -1440,6 +1443,19 @@ func (gp *APIoverJSONRPC) GetTeams(ctx context.Context) (res []*Team, err error)
 	return
 }
 
+func (gp *APIoverJSONRPC) AdminGetTeams(ctx context.Context, options *AdminGetTeamsOptions) (res *AdminGetTeamsResult, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+
+	var _params []interface{}
+	_params = append(_params, options)
+
+	err = gp.C.Call(ctx, string(FunctionAdminGetTeams), _params, &res)
+	return
+}
+
 func (gp *APIoverJSONRPC) CreateTeam(ctx context.Context, teamName string) (res *Team, err error) {
 	if gp == nil {
 		err = errNotConnected
@@ -2246,4 +2262,24 @@ type TeamMembershipInvite struct {
 	CreationTime     string         `json:"creationTime,omitempty"`
 	InvalidationTime string         `json:"invalidationTime,omitempty"`
 	InvitedEmail     string         `json:"invitedEmail,omitempty"`
+}
+
+type Ordering string
+
+const (
+	Ordering_Ascending  Ordering = "asc"
+	Ordering_Descending Ordering = "desc"
+)
+
+type AdminGetTeamsOptions struct {
+	Offset     int      `json:"offset,omitempty"`
+	Limit      int      `json:"limit,omitempty"`
+	OrderBy    int      `json:"orderBy,omitempty"`
+	Order      Ordering `json:"orderDir,omitempty"`
+	SearchTerm string   `json:"searchTerm,omitempty"`
+}
+
+type AdminGetTeamsResult struct {
+	Total int     `json:"total,omitempty"`
+	Rows  []*Team `json:"rows,omitempty"`
 }

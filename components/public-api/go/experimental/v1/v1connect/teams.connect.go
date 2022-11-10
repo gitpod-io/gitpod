@@ -35,8 +35,10 @@ type TeamsServiceClient interface {
 	CreateTeam(context.Context, *connect_go.Request[v1.CreateTeamRequest]) (*connect_go.Response[v1.CreateTeamResponse], error)
 	// GetTeam retrieves a single Team.
 	GetTeam(context.Context, *connect_go.Request[v1.GetTeamRequest]) (*connect_go.Response[v1.GetTeamResponse], error)
-	// ListTeams lists the caller has access to.
+	// ListTeams lists teams the caller has access to.
 	ListTeams(context.Context, *connect_go.Request[v1.ListTeamsRequest]) (*connect_go.Response[v1.ListTeamsResponse], error)
+	// AdminListTeams lists all teams that exist on the installation. Admin permissions are required.
+	AdminListTeams(context.Context, *connect_go.Request[v1.AdminListTeamsRequest]) (*connect_go.Response[v1.AdminListTeamsResponse], error)
 	// DeleteTeam deletes the specified team.
 	DeleteTeam(context.Context, *connect_go.Request[v1.DeleteTeamRequest]) (*connect_go.Response[v1.DeleteTeamResponse], error)
 	// JoinTeam makes the caller a TeamMember of the Team.
@@ -74,6 +76,11 @@ func NewTeamsServiceClient(httpClient connect_go.HTTPClient, baseURL string, opt
 			baseURL+"/gitpod.experimental.v1.TeamsService/ListTeams",
 			opts...,
 		),
+		adminListTeams: connect_go.NewClient[v1.AdminListTeamsRequest, v1.AdminListTeamsResponse](
+			httpClient,
+			baseURL+"/gitpod.experimental.v1.TeamsService/AdminListTeams",
+			opts...,
+		),
 		deleteTeam: connect_go.NewClient[v1.DeleteTeamRequest, v1.DeleteTeamResponse](
 			httpClient,
 			baseURL+"/gitpod.experimental.v1.TeamsService/DeleteTeam",
@@ -107,6 +114,7 @@ type teamsServiceClient struct {
 	createTeam          *connect_go.Client[v1.CreateTeamRequest, v1.CreateTeamResponse]
 	getTeam             *connect_go.Client[v1.GetTeamRequest, v1.GetTeamResponse]
 	listTeams           *connect_go.Client[v1.ListTeamsRequest, v1.ListTeamsResponse]
+	adminListTeams      *connect_go.Client[v1.AdminListTeamsRequest, v1.AdminListTeamsResponse]
 	deleteTeam          *connect_go.Client[v1.DeleteTeamRequest, v1.DeleteTeamResponse]
 	joinTeam            *connect_go.Client[v1.JoinTeamRequest, v1.JoinTeamResponse]
 	resetTeamInvitation *connect_go.Client[v1.ResetTeamInvitationRequest, v1.ResetTeamInvitationResponse]
@@ -127,6 +135,11 @@ func (c *teamsServiceClient) GetTeam(ctx context.Context, req *connect_go.Reques
 // ListTeams calls gitpod.experimental.v1.TeamsService.ListTeams.
 func (c *teamsServiceClient) ListTeams(ctx context.Context, req *connect_go.Request[v1.ListTeamsRequest]) (*connect_go.Response[v1.ListTeamsResponse], error) {
 	return c.listTeams.CallUnary(ctx, req)
+}
+
+// AdminListTeams calls gitpod.experimental.v1.TeamsService.AdminListTeams.
+func (c *teamsServiceClient) AdminListTeams(ctx context.Context, req *connect_go.Request[v1.AdminListTeamsRequest]) (*connect_go.Response[v1.AdminListTeamsResponse], error) {
+	return c.adminListTeams.CallUnary(ctx, req)
 }
 
 // DeleteTeam calls gitpod.experimental.v1.TeamsService.DeleteTeam.
@@ -160,8 +173,10 @@ type TeamsServiceHandler interface {
 	CreateTeam(context.Context, *connect_go.Request[v1.CreateTeamRequest]) (*connect_go.Response[v1.CreateTeamResponse], error)
 	// GetTeam retrieves a single Team.
 	GetTeam(context.Context, *connect_go.Request[v1.GetTeamRequest]) (*connect_go.Response[v1.GetTeamResponse], error)
-	// ListTeams lists the caller has access to.
+	// ListTeams lists teams the caller has access to.
 	ListTeams(context.Context, *connect_go.Request[v1.ListTeamsRequest]) (*connect_go.Response[v1.ListTeamsResponse], error)
+	// AdminListTeams lists all teams that exist on the installation. Admin permissions are required.
+	AdminListTeams(context.Context, *connect_go.Request[v1.AdminListTeamsRequest]) (*connect_go.Response[v1.AdminListTeamsResponse], error)
 	// DeleteTeam deletes the specified team.
 	DeleteTeam(context.Context, *connect_go.Request[v1.DeleteTeamRequest]) (*connect_go.Response[v1.DeleteTeamResponse], error)
 	// JoinTeam makes the caller a TeamMember of the Team.
@@ -194,6 +209,11 @@ func NewTeamsServiceHandler(svc TeamsServiceHandler, opts ...connect_go.HandlerO
 	mux.Handle("/gitpod.experimental.v1.TeamsService/ListTeams", connect_go.NewUnaryHandler(
 		"/gitpod.experimental.v1.TeamsService/ListTeams",
 		svc.ListTeams,
+		opts...,
+	))
+	mux.Handle("/gitpod.experimental.v1.TeamsService/AdminListTeams", connect_go.NewUnaryHandler(
+		"/gitpod.experimental.v1.TeamsService/AdminListTeams",
+		svc.AdminListTeams,
 		opts...,
 	))
 	mux.Handle("/gitpod.experimental.v1.TeamsService/DeleteTeam", connect_go.NewUnaryHandler(
@@ -237,6 +257,10 @@ func (UnimplementedTeamsServiceHandler) GetTeam(context.Context, *connect_go.Req
 
 func (UnimplementedTeamsServiceHandler) ListTeams(context.Context, *connect_go.Request[v1.ListTeamsRequest]) (*connect_go.Response[v1.ListTeamsResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.TeamsService.ListTeams is not implemented"))
+}
+
+func (UnimplementedTeamsServiceHandler) AdminListTeams(context.Context, *connect_go.Request[v1.AdminListTeamsRequest]) (*connect_go.Response[v1.AdminListTeamsResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.TeamsService.AdminListTeams is not implemented"))
 }
 
 func (UnimplementedTeamsServiceHandler) DeleteTeam(context.Context, *connect_go.Request[v1.DeleteTeamRequest]) (*connect_go.Response[v1.DeleteTeamResponse], error) {

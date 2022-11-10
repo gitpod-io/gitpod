@@ -30,8 +30,10 @@ type TeamsServiceClient interface {
 	CreateTeam(ctx context.Context, in *CreateTeamRequest, opts ...grpc.CallOption) (*CreateTeamResponse, error)
 	// GetTeam retrieves a single Team.
 	GetTeam(ctx context.Context, in *GetTeamRequest, opts ...grpc.CallOption) (*GetTeamResponse, error)
-	// ListTeams lists the caller has access to.
+	// ListTeams lists teams the caller has access to.
 	ListTeams(ctx context.Context, in *ListTeamsRequest, opts ...grpc.CallOption) (*ListTeamsResponse, error)
+	// AdminListTeams lists all teams that exist on the installation. Admin permissions are required.
+	AdminListTeams(ctx context.Context, in *AdminListTeamsRequest, opts ...grpc.CallOption) (*AdminListTeamsResponse, error)
 	// DeleteTeam deletes the specified team.
 	DeleteTeam(ctx context.Context, in *DeleteTeamRequest, opts ...grpc.CallOption) (*DeleteTeamResponse, error)
 	// JoinTeam makes the caller a TeamMember of the Team.
@@ -73,6 +75,15 @@ func (c *teamsServiceClient) GetTeam(ctx context.Context, in *GetTeamRequest, op
 func (c *teamsServiceClient) ListTeams(ctx context.Context, in *ListTeamsRequest, opts ...grpc.CallOption) (*ListTeamsResponse, error) {
 	out := new(ListTeamsResponse)
 	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.TeamsService/ListTeams", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *teamsServiceClient) AdminListTeams(ctx context.Context, in *AdminListTeamsRequest, opts ...grpc.CallOption) (*AdminListTeamsResponse, error) {
+	out := new(AdminListTeamsResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.TeamsService/AdminListTeams", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -132,8 +143,10 @@ type TeamsServiceServer interface {
 	CreateTeam(context.Context, *CreateTeamRequest) (*CreateTeamResponse, error)
 	// GetTeam retrieves a single Team.
 	GetTeam(context.Context, *GetTeamRequest) (*GetTeamResponse, error)
-	// ListTeams lists the caller has access to.
+	// ListTeams lists teams the caller has access to.
 	ListTeams(context.Context, *ListTeamsRequest) (*ListTeamsResponse, error)
+	// AdminListTeams lists all teams that exist on the installation. Admin permissions are required.
+	AdminListTeams(context.Context, *AdminListTeamsRequest) (*AdminListTeamsResponse, error)
 	// DeleteTeam deletes the specified team.
 	DeleteTeam(context.Context, *DeleteTeamRequest) (*DeleteTeamResponse, error)
 	// JoinTeam makes the caller a TeamMember of the Team.
@@ -159,6 +172,9 @@ func (UnimplementedTeamsServiceServer) GetTeam(context.Context, *GetTeamRequest)
 }
 func (UnimplementedTeamsServiceServer) ListTeams(context.Context, *ListTeamsRequest) (*ListTeamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListTeams not implemented")
+}
+func (UnimplementedTeamsServiceServer) AdminListTeams(context.Context, *AdminListTeamsRequest) (*AdminListTeamsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminListTeams not implemented")
 }
 func (UnimplementedTeamsServiceServer) DeleteTeam(context.Context, *DeleteTeamRequest) (*DeleteTeamResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteTeam not implemented")
@@ -238,6 +254,24 @@ func _TeamsService_ListTeams_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TeamsServiceServer).ListTeams(ctx, req.(*ListTeamsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TeamsService_AdminListTeams_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminListTeamsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TeamsServiceServer).AdminListTeams(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.experimental.v1.TeamsService/AdminListTeams",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TeamsServiceServer).AdminListTeams(ctx, req.(*AdminListTeamsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -350,6 +384,10 @@ var TeamsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListTeams",
 			Handler:    _TeamsService_ListTeams_Handler,
+		},
+		{
+			MethodName: "AdminListTeams",
+			Handler:    _TeamsService_AdminListTeams_Handler,
 		},
 		{
 			MethodName: "DeleteTeam",
