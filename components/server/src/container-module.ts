@@ -60,6 +60,7 @@ import {
 import { ImageSourceProvider } from "./workspace/image-source-provider";
 import { WorkspaceGarbageCollector } from "./workspace/garbage-collector";
 import { TokenGarbageCollector } from "./user/token-garbage-collector";
+import { WorkspaceDownloadService } from "./workspace/workspace-download-service";
 import { WebsocketConnectionManager } from "./websocket/websocket-connection-manager";
 import { OneTimeSecretServer } from "./one-time-secret-server";
 import { HostContainerMapping } from "./auth/host-container-mapping";
@@ -218,6 +219,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(ConsensusLeaderQorum).toSelf().inSingletonScope();
 
     bind(WorkspaceGarbageCollector).toSelf().inSingletonScope();
+    bind(WorkspaceDownloadService).toSelf().inSingletonScope();
     bind(LivenessController).toSelf().inSingletonScope();
 
     bind(OneTimeSecretServer).toSelf().inSingletonScope();
