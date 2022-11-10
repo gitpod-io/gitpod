@@ -1,6 +1,10 @@
 # Change Log
 
 ## November 2022
+- Don't trigger heartbeat on all ssh connections. Only for pty sessions. ([#14071](https://github.com/gitpod-io/gitpod/pull/14071)) - [@akosyakov](https://github.com/akosyakov)
+- [public-api] Deploy API server in all installations ([#14538](https://github.com/gitpod-io/gitpod/pull/14538)) - [@easyCZ](https://github.com/easyCZ)
+- fix rollout behavior of Usage-Based Pricing ([#14557](https://github.com/gitpod-io/gitpod/pull/14557)) - [@geropl](https://github.com/geropl)
+- [kots]: set emptyDir and allow timeout configuration ([#14500](https://github.com/gitpod-io/gitpod/pull/14500)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Remove download workspace button from admin ([#14393](https://github.com/gitpod-io/gitpod/pull/14393)) - [@gtsiolis](https://github.com/gtsiolis)
 - Introduced a new project setting that allows starting workspaces based on the last successful prebuild in the git commit history. ([#14461](https://github.com/gitpod-io/gitpod/pull/14461)) - [@svenefftinge](https://github.com/svenefftinge)
 - display the team names which block upgrade to the UBP free tier ([#12805](https://github.com/gitpod-io/gitpod/pull/12805)) - [@geropl](https://github.com/geropl)
