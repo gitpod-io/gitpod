@@ -93,7 +93,7 @@ func (u *Usage) TableName() string {
 func InsertUsage(ctx context.Context, conn *gorm.DB, records ...Usage) error {
 	return conn.WithContext(ctx).
 		Clauses(clause.OnConflict{DoNothing: true}).
-		CreateInBatches(records, 1000).Error
+		CreateInBatches(records, 100).Error
 }
 
 func UpdateUsage(ctx context.Context, conn *gorm.DB, records ...Usage) error {
