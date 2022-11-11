@@ -17,18 +17,18 @@ import {Message, proto3} from "@bufbuild/protobuf";
  */
 export class Pagination extends Message<Pagination> {
   /**
-   * page_size is the maximum number of results we expect
+   * page_size is the maximum number of results to retrieve per page
    *
    * @generated from field: int32 page_size = 1;
    */
   pageSize = 0;
 
   /**
-   * page_token points to a specific page of the results
+   * page is the page number of results to retrieve.
    *
-   * @generated from field: string page_token = 2;
+   * @generated from field: string page = 2;
    */
-  pageToken = "";
+  page = "";
 
   constructor(data?: PartialMessage<Pagination>) {
     super();
@@ -39,7 +39,7 @@ export class Pagination extends Message<Pagination> {
   static readonly typeName = "gitpod.experimental.v1.Pagination";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "page_size", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 2, name: "page_token", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "page", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Pagination {
