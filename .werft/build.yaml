@@ -218,6 +218,11 @@ pod:
         secretKeyRef:
           name: integration-test-user
           key: token
+    - name: ROBOQUAT_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: github-roboquat-automatic-changelog
+          key: token
     command:
       - bash
       - -c
