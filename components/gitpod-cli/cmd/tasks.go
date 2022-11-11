@@ -12,9 +12,10 @@ import (
 var tasksCmd = &cobra.Command{
 	Use:   "tasks",
 	Short: "Interact with workspace tasks",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			cmd.Help()
+			_ = cmd.Help()
 		}
 	},
 }

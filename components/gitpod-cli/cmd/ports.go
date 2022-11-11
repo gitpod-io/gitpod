@@ -11,6 +11,7 @@ import (
 var portsCmd = &cobra.Command{
 	Use:   "ports",
 	Short: "Interact with workspace ports.",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			_ = cmd.Help()
