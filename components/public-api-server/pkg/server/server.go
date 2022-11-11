@@ -104,6 +104,9 @@ func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool) error
 	teamsRoute, teamsServiceHandler := v1connect.NewTeamsServiceHandler(apiv1.NewTeamsService(connPool), handlerOptions...)
 	srv.HTTPMux().Handle(teamsRoute, teamsServiceHandler)
 
+	tokensRoute, tokensServiceHandler := v1connect.NewTokensServiceHandler(apiv1.NewTokensService(), handlerOptions...)
+	srv.HTTPMux().Handle(tokensRoute, tokensServiceHandler)
+
 	return nil
 }
 
