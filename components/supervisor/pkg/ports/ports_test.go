@@ -15,6 +15,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
+	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/sirupsen/logrus"
@@ -832,5 +833,69 @@ func TestManager_getStatus(t *testing.T) {
 				t.Errorf("unexpected exposures (-want +got):\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestManager_exposeNotServed(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	var (
+		served = &testServedPorts{
+			Changes: make(chan []ServedPort),
+			Error:   make(chan error, 1),
+		}
+		config = &testConfigService{
+			Changes: make(chan *Configs),
+			Error:   make(chan error, 1),
+		}
+		tunneled = &testTunneledPorts{
+			Changes: make(chan []PortTunnelState),
+			Error:   make(chan error, 1),
+		}
+
+		gitpodAPI = gitpod.NewMockAPIInterface(ctrl)
+		exposed   = NewGitpodExposedPorts("foo", "bar", "bazz", gitpodAPI)
+
+		pm    = NewManager(exposed, served, config, tunneled)
+		updts [][]*api.PortsStatus
+	)
+	pm.proxyStarter = func(port uint32) (io.Closer, error) {
+		return io.NopCloser(nil), nil
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	updateChan := make(chan *gitpod.WorkspaceInstance)
+	gitpodAPI.EXPECT().InstanceUpdates(gomock.Any(), "bar").Times(1).Return(updateChan, nil)
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go pm.Run(ctx, &wg)
+	sub, err := pm.Subscribe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	go func() {
+		defer close(tunneled.Changes)
+		defer wg.Done()
+		defer sub.Close()
+
+		for up := range sub.Updates() {
+			updts = append(updts, up)
+			// return
+		}
+	}()
+
+	err = pm.Expose(ctx, 32145)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	wg.Wait()
+
+	if diff := cmp.Diff(updts, nil); diff != "" {
+		t.Errorf("unexpected exposures (-want +got):\n%s", diff)
 	}
 }
