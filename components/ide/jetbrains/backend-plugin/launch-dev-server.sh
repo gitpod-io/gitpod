@@ -71,7 +71,7 @@ if [ ! -d "$TEST_DIR" ]; then
 fi
 
 export JB_DEV=true
-export JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:$DEBUG_PORT"
+export JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=127.0.0.1:$DEBUG_PORT"
 
 # Set default config and system directories under /workspace to preserve between restarts
 export IJ_HOST_CONFIG_BASE_DIR=/workspace/.config/JetBrains
