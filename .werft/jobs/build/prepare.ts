@@ -61,7 +61,7 @@ function configureDocker() {
 }
 
 function configureGlobalKubernetesContext() {
-    const rc = exec(`previewctl get-credentials --gcp-service-account=${GCLOUD_SERVICE_ACCOUNT_PATH} --kube-save-path=${GLOBAL_KUBECONFIG_PATH}`, { slice: prepareSlices.CONFIGURE_K8S }).code;
+    const rc = exec(`KUBECONFIG=${GLOBAL_KUBECONFIG_PATH} previewctl get-credentials --gcp-service-account=${GCLOUD_SERVICE_ACCOUNT_PATH}`, { slice: prepareSlices.CONFIGURE_K8S }).code;
 
     if (rc != 0) {
         throw new Error("Failed to configure global kubernetes context.");
