@@ -403,7 +403,12 @@ type Workspace struct {
 }
 
 type OpenVSX struct {
-	URL string `json:"url" validate:"url"`
+	URL   string `json:"url" validate:"url"`
+	Proxy *Proxy `json:"proxy,omitempty"`
+}
+
+type Proxy struct {
+	DisablePVC bool `json:"disablePVC"`
 }
 
 type LicensorType string

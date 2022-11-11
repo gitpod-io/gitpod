@@ -29,7 +29,43 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
+	volumeClaimTemplates := []v1.PersistentVolumeClaim{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:   "redis-data",
+				Labels: common.DefaultLabels(Component),
+			},
+			Spec: v1.PersistentVolumeClaimSpec{
+				AccessModes: []v1.PersistentVolumeAccessMode{
+					v1.ReadWriteOnce,
+				},
+				Resources: v1.ResourceRequirements{
+					Requests: v1.ResourceList{
+						"storage": resource.MustParse("8Gi"),
+					},
+				},
+			},
+		},
+	}
+
+	volumes := []v1.Volume{
+		{
+			Name: "config",
+			VolumeSource: v1.VolumeSource{
+				ConfigMap: &v1.ConfigMapVolumeSource{
+					LocalObjectReference: v1.LocalObjectReference{Name: fmt.Sprintf("%s-config", Component)},
+				},
+			},
+		},
+	}
+
+	if ctx.Config.OpenVSX.Proxy != nil && ctx.Config.OpenVSX.Proxy.DisablePVC {
+		volumeClaimTemplates = nil
+		volumes = append(volumes, *common.NewEmptyDirVolume("redis-data"))
+	}
+
 	const redisContainerName = "redis"
+
 	return []runtime.Object{&appsv1.StatefulSet{
 		TypeMeta: common.TypeMetaStatefulSet,
 		ObjectMeta: metav1.ObjectMeta{
@@ -63,14 +99,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					DNSPolicy:                     "ClusterFirst",
 					RestartPolicy:                 "Always",
 					TerminationGracePeriodSeconds: pointer.Int64(30),
-					Volumes: []v1.Volume{{
-						Name: "config",
-						VolumeSource: v1.VolumeSource{
-							ConfigMap: &v1.ConfigMapVolumeSource{
-								LocalObjectReference: v1.LocalObjectReference{Name: fmt.Sprintf("%s-config", Component)},
-							},
-						},
-					}},
+					Volumes:                       volumes,
 					Containers: []v1.Container{{
 						Name:  Component,
 						Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.OpenVSXProxy.Version),
@@ -136,23 +165,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 				},
 			},
-			VolumeClaimTemplates: []v1.PersistentVolumeClaim{{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:   "redis-data",
-					Labels: common.DefaultLabels(Component),
-				},
-				Spec: v1.PersistentVolumeClaimSpec{
-					AccessModes: []v1.PersistentVolumeAccessMode{
-						v1.ReadWriteOnce,
-					},
-					Resources: v1.ResourceRequirements{
-						Requests: v1.ResourceList{
-							"storage": resource.MustParse("8Gi"),
-						},
-					},
-				},
-			},
-			},
-		},
-	}}, nil
+			VolumeClaimTemplates: volumeClaimTemplates,
+		}},
+	}, nil
 }
