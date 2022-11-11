@@ -1,6 +1,9 @@
 # Change Log
 
 ## November 2022
+- Usage view allows for arbitrary date ranges ([#14515](https://github.com/gitpod-io/gitpod/pull/14515)) - [@svenefftinge](https://github.com/svenefftinge)
+- Ensure that workspace do not crash due to OOM kills ([#14507](https://github.com/gitpod-io/gitpod/pull/14507)) - [@Furisto](https://github.com/Furisto)
+- Workspace classes can be set in the project settings ([#14535](https://github.com/gitpod-io/gitpod/pull/14535)) - [@svenefftinge](https://github.com/svenefftinge)
 - Don't trigger heartbeat on all ssh connections. Only for pty sessions. ([#14071](https://github.com/gitpod-io/gitpod/pull/14071)) - [@akosyakov](https://github.com/akosyakov)
 - [public-api] Deploy API server in all installations ([#14538](https://github.com/gitpod-io/gitpod/pull/14538)) - [@easyCZ](https://github.com/easyCZ)
 - fix rollout behavior of Usage-Based Pricing ([#14557](https://github.com/gitpod-io/gitpod/pull/14557)) - [@geropl](https://github.com/geropl)
