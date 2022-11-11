@@ -515,7 +515,7 @@ func TestOpenWorkspaceFromOutdatedPrebuild(t *testing.T) {
 
 	f := features.New("prebuild").
 		WithLabel("component", "ws-manager").
-		Assess("it should open a workspace from with an older prebuild initializer successfully and run the init task", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it should open a workspace from with an older prebuild initializer successfully and run the init task", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			tests := []struct {
 				Name                    string
 				RemoteUri               string
@@ -535,11 +535,12 @@ func TestOpenWorkspaceFromOutdatedPrebuild(t *testing.T) {
 				},
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10*len(tests))*time.Minute)
-			defer cancel()
-
 			for _, test := range tests {
 				t.Run(test.Name, func(t *testing.T) {
+					t.Parallel()
+
+					ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10*len(tests))*time.Minute)
+					defer cancel()
 
 					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 					t.Cleanup(func() {
