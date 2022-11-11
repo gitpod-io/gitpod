@@ -84,6 +84,7 @@ type APIInterface interface {
 	TrackEvent(ctx context.Context, event *RemoteTrackMessage) (err error)
 	GetSupportedWorkspaceClasses(ctx context.Context) (res []*SupportedWorkspaceClass, err error)
 
+	// Teams
 	GetTeam(ctx context.Context, teamID string) (*Team, error)
 	GetTeams(ctx context.Context) ([]*Team, error)
 	CreateTeam(ctx context.Context, teamName string) (*Team, error)
@@ -94,6 +95,12 @@ type APIInterface interface {
 	ResetGenericInvite(ctx context.Context, teamID string) (*TeamMembershipInvite, error)
 	SetTeamMemberRole(ctx context.Context, teamID, userID string, role TeamMemberRole) error
 	RemoveTeamMember(ctx context.Context, teamID, userID string) error
+
+	// Projects
+	CreateProject(ctx context.Context, options *CreateProjectOptions) (*Project, error)
+	DeleteProject(ctx context.Context, projectID string) error
+	GetUserProjects(ctx context.Context) ([]*Project, error)
+	GetTeamProjects(ctx context.Context, teamID string) ([]*Project, error)
 
 	InstanceUpdates(ctx context.Context, instanceID string) (<-chan *WorkspaceInstance, error)
 }
@@ -215,6 +222,7 @@ const (
 	// FunctionGetSupportedWorkspaceClasses is the name of the getSupportedWorkspaceClasses function
 	FunctionGetSupportedWorkspaceClasses FunctionName = "getSupportedWorkspaceClasses"
 
+	// Teams
 	// FunctionGetTeam is the name of the getTeam function
 	FunctionGetTeam FunctionName = "getTeam"
 	// FunctionGetTeams is the name of the getTeams function
@@ -235,6 +243,12 @@ const (
 	FunctionRemoveTeamMember FunctionName = "removeTeamMember"
 	// FunctionDeleteTeam is the name of the deleteTeam function
 	FunctionDeleteTeam FunctionName = "deleteTeam"
+
+	// Projects
+	FunctionCreateProject   FunctionName = "createProject"
+	FunctionDeleteProject   FunctionName = "deleteProject"
+	FunctionGetUserProjects FunctionName = "getUserProjects"
+	FunctionGetTeamProjects FunctionName = "getTeamProjects"
 
 	// FunctionOnInstanceUpdate is the name of the onInstanceUpdate callback function
 	FunctionOnInstanceUpdate = "onInstanceUpdate"
@@ -1520,6 +1534,46 @@ func (gp *APIoverJSONRPC) DeleteTeam(ctx context.Context, teamID string) (err er
 	return
 }
 
+func (gp *APIoverJSONRPC) CreateProject(ctx context.Context, options *CreateProjectOptions) (res *Project, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{options}
+	err = gp.C.Call(ctx, string(FunctionCreateProject), _params, nil)
+	return
+}
+
+func (gp *APIoverJSONRPC) DeleteProject(ctx context.Context, projectID string) (err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{projectID}
+	err = gp.C.Call(ctx, string(FunctionDeleteProject), _params, nil)
+	return
+}
+
+func (gp *APIoverJSONRPC) GetUserProjects(ctx context.Context) (res []*Project, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{}
+	err = gp.C.Call(ctx, string(FunctionGetUserProjects), _params, nil)
+	return
+}
+
+func (gp *APIoverJSONRPC) GetTeamProjects(ctx context.Context, teamID string) (res []*Project, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{teamID}
+	err = gp.C.Call(ctx, string(FunctionGetTeamProjects), _params, nil)
+	return
+}
+
 // PermissionName is the name of a permission
 type PermissionName string
 
@@ -2247,4 +2301,39 @@ type TeamMembershipInvite struct {
 	CreationTime     string         `json:"creationTime,omitempty"`
 	InvalidationTime string         `json:"invalidationTime,omitempty"`
 	InvitedEmail     string         `json:"invitedEmail,omitempty"`
+}
+
+type Project struct {
+	ID                string           `json:"id,omitempty"`
+	UserID            string           `json:"userId,omitempty"`
+	TeamID            string           `json:"teamId,omitempty"`
+	Name              string           `json:"name,omitempty"`
+	Slug              string           `json:"slug,omitempty"`
+	CloneURL          string           `json:"cloneUrl,omitempty"`
+	AppInstallationID string           `json:"appInstallationId,omitempty"`
+	Settings          *ProjectSettings `json:"settings,omitempty"`
+	CreationTime      string           `json:"creationTime,omitempty"`
+}
+
+type ProjectSettings struct {
+	UseIncrementalPrebuilds      bool                      `json:"useIncrementalPrebuilds,omitempty"`
+	UsePersistentVolumeClaim     bool                      `json:"usePersistentVolumeClaim,omitempty"`
+	KeepOutdatedPrebuildsRunning bool                      `json:"keepOutdatedPrebuildsRunning,omitempty"`
+	AllowUsingPreviousPrebuilds  bool                      `json:"allowUsingPreviousPrebuilds,omitempty"`
+	PrebuildEveryNthCommit       int                       `json:"prebuildEveryNthCommit,omitempty"`
+	WorkspaceClasses             *WorkspaceClassesSettings `json:"workspaceClasses,omitempty"`
+}
+
+type WorkspaceClassesSettings struct {
+	Regular  string `json:"regular,omitempty"`
+	Prebuild string `json:"prebuild,omitempty"`
+}
+
+type CreateProjectOptions struct {
+	UserID            string `json:"userId,omitempty"`
+	TeamID            string `json:"teamId,omitempty"`
+	Name              string `json:"name,omitempty"`
+	Slug              string `json:"slug,omitempty"`
+	CloneURL          string `json:"cloneUrl,omitempty"`
+	AppInstallationID string `json:"appInstallationId,omitempty"`
 }

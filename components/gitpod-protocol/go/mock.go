@@ -109,6 +109,21 @@ func (mr *MockAPIInterfaceMockRecorder) ControlAdmission(ctx, id, level interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ControlAdmission", reflect.TypeOf((*MockAPIInterface)(nil).ControlAdmission), ctx, id, level)
 }
 
+// CreateProject mocks base method.
+func (m *MockAPIInterface) CreateProject(ctx context.Context, options *CreateProjectOptions) (*Project, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateProject", ctx, options)
+	ret0, _ := ret[0].(*Project)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateProject indicates an expected call of CreateProject.
+func (mr *MockAPIInterfaceMockRecorder) CreateProject(ctx, options interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProject", reflect.TypeOf((*MockAPIInterface)(nil).CreateProject), ctx, options)
+}
+
 // CreateTeam mocks base method.
 func (m *MockAPIInterface) CreateTeam(ctx context.Context, teamName string) (*Team, error) {
 	m.ctrl.T.Helper()
@@ -193,6 +208,20 @@ func (m *MockAPIInterface) DeleteOwnAuthProvider(ctx context.Context, params *De
 func (mr *MockAPIInterfaceMockRecorder) DeleteOwnAuthProvider(ctx, params interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOwnAuthProvider", reflect.TypeOf((*MockAPIInterface)(nil).DeleteOwnAuthProvider), ctx, params)
+}
+
+// DeleteProject mocks base method.
+func (m *MockAPIInterface) DeleteProject(ctx context.Context, projectID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteProject", ctx, projectID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteProject indicates an expected call of DeleteProject.
+func (mr *MockAPIInterfaceMockRecorder) DeleteProject(ctx, projectID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteProject", reflect.TypeOf((*MockAPIInterface)(nil).DeleteProject), ctx, projectID)
 }
 
 // DeleteSSHPublicKey mocks base method.
@@ -552,6 +581,21 @@ func (mr *MockAPIInterfaceMockRecorder) GetTeamMembers(ctx, teamID interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTeamMembers", reflect.TypeOf((*MockAPIInterface)(nil).GetTeamMembers), ctx, teamID)
 }
 
+// GetTeamProjects mocks base method.
+func (m *MockAPIInterface) GetTeamProjects(ctx context.Context, teamID string) ([]*Project, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTeamProjects", ctx, teamID)
+	ret0, _ := ret[0].([]*Project)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTeamProjects indicates an expected call of GetTeamProjects.
+func (mr *MockAPIInterfaceMockRecorder) GetTeamProjects(ctx, teamID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTeamProjects", reflect.TypeOf((*MockAPIInterface)(nil).GetTeamProjects), ctx, teamID)
+}
+
 // GetTeams mocks base method.
 func (m *MockAPIInterface) GetTeams(ctx context.Context) ([]*Team, error) {
 	m.ctrl.T.Helper()
@@ -580,6 +624,21 @@ func (m *MockAPIInterface) GetToken(ctx context.Context, query *GetTokenSearchOp
 func (mr *MockAPIInterfaceMockRecorder) GetToken(ctx, query interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetToken", reflect.TypeOf((*MockAPIInterface)(nil).GetToken), ctx, query)
+}
+
+// GetUserProjects mocks base method.
+func (m *MockAPIInterface) GetUserProjects(ctx context.Context) ([]*Project, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserProjects", ctx)
+	ret0, _ := ret[0].([]*Project)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserProjects indicates an expected call of GetUserProjects.
+func (mr *MockAPIInterfaceMockRecorder) GetUserProjects(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserProjects", reflect.TypeOf((*MockAPIInterface)(nil).GetUserProjects), ctx)
 }
 
 // GetUserStorageResource mocks base method.
