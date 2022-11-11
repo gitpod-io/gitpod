@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM gitpod/workspace-full:2022-10-15-02-50-27
+FROM gitpod/workspace-full:2022-11-09-13-54-49
 
 ENV TRIGGER_REBUILD 24
 
@@ -58,7 +58,7 @@ RUN cd /usr/bin && curl -fsSL https://github.com/praetorian-inc/gokart/releases/
 
 # leeway
 ENV LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE=8388608
-RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.3.1/leeway_0.3.1_Linux_x86_64.tar.gz | tar xz
+RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.4.0/leeway_0.4.0_Linux_x86_64.tar.gz | tar xz
 
 # evans (gRPC client)
 RUN cd /usr/bin && curl -fsSL https://github.com/ktr0731/evans/releases/download/v0.10.6/evans_linux_amd64.tar.gz | tar xz evans
