@@ -1273,10 +1273,6 @@ export class WorkspaceStarter {
                 // ...and wait for the build to finish
                 buildResult = await result.buildPromise;
                 if (buildResult.getStatus() == BuildStatus.DONE_FAILURE) {
-                    // Register a failed image build only if the image actually needed to be built; ie the build was not a no-op.
-                    if (result.actuallyNeedsBuild) {
-                        increaseImageBuildsCompletedTotal("failed");
-                    }
                     throw new Error(buildResult.getMessage());
                 }
             } catch (err) {
@@ -1352,6 +1348,7 @@ export class WorkspaceStarter {
                     `workspace image build failed: ${message}`,
                 );
                 err = new StartInstanceError("imageBuildFailed", err);
+                increaseImageBuildsCompletedTotal("failed");
             }
             this.analytics.track({
                 userId: user.id,
