@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"sync"
@@ -19,10 +20,13 @@ import (
 	distv2 "github.com/docker/distribution/registry/api/v2"
 	"github.com/gorilla/handlers"
 	files "github.com/ipfs/go-ipfs-files"
+	httpapi "github.com/ipfs/go-ipfs-http-client"
 	icorepath "github.com/ipfs/interface-go-ipfs-core/path"
+	ipath "github.com/ipfs/interface-go-ipfs-core/path"
 	"github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opentracing/opentracing-go"
+	"github.com/pkg/errors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -169,6 +173,9 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 
 		bp := bufPool.Get().(*[]byte)
 		defer bufPool.Put(bp)
+
+		http.ServeContent(w, r, "", time.Now(), rc)
+		//logrus.WithField("CID", cid).Debugf("served file")
 
 		n, err := io.CopyBuffer(w, rc, *bp)
 		if err != nil {
@@ -397,19 +404,9 @@ func (sbs ipfsBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst
 		return
 	}
 
-	ipfsFile, err := sbs.source.IPFS.Unixfs().Get(ctx, icorepath.New(ipfsCID))
+	ipfsFile, err := sbs.getFile(ctx, icorepath.New(ipfsCID))
 	if err != nil {
 		log.WithError(err).Error("unable to get blob from IPFS")
-		err = distv2.ErrorCodeBlobUnknown
-		return
-	}
-
-	f, ok := ipfsFile.(interface {
-		files.File
-		io.ReaderAt
-	})
-	if !ok {
-		log.WithError(err).Error("IPFS file does not support io.ReaderAt")
 		err = distv2.ErrorCodeBlobUnknown
 		return
 	}
@@ -422,7 +419,70 @@ func (sbs ipfsBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst
 	}
 
 	log.Debug("returning blob from IPFS")
-	return true, mediaType, "", f, nil
+	return true, mediaType, "", io.NopCloser(ipfsFile), nil
+}
+
+func (sbs ipfsBlobSource) getFile(ctx context.Context, target ipath.Path) (*io.SectionReader, error) {
+	n, err := sbs.source.IPFS.Unixfs().Get(ctx, target)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get file %q: %v", target, err)
+	}
+
+	f := files.ToFile(n)
+	defer f.Close()
+
+	size, err := f.Size()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get size: %v", err)
+	}
+
+	ra := &retryReaderAt{
+		ctx: ctx,
+		readAtFunc: func(ctx context.Context, p []byte, off int64) (int, error) {
+			resp, err := sbs.source.IPFS.(*httpapi.HttpApi).Request("cat", target.String()).Option("offset", off).Option("length", len(p)).Send(ctx)
+			if err != nil {
+				return 0, err
+			}
+			if resp.Error != nil {
+				return 0, resp.Error
+			}
+			defer resp.Output.Close()
+			return io.ReadFull(resp.Output, p)
+		},
+		timeout: 1 * time.Minute,
+		retry:   5,
+	}
+
+	return io.NewSectionReader(ra, 0, size), nil
+}
+
+type retryReaderAt struct {
+	ctx        context.Context
+	readAtFunc func(ctx context.Context, p []byte, off int64) (int, error)
+	timeout    time.Duration
+	retry      int
+}
+
+func (r *retryReaderAt) ReadAt(p []byte, off int64) (int, error) {
+	if r.retry < 0 {
+		r.retry = 0
+	}
+	for i := 0; i <= r.retry; i++ {
+		ctx := r.ctx
+		if r.timeout != 0 {
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, r.timeout)
+			defer cancel()
+		}
+		n, err := r.readAtFunc(ctx, p, off)
+		if err == nil {
+			return n, nil
+		} else if !errors.Is(err, context.DeadlineExceeded) {
+			return 0, err
+		}
+		// deadline exceeded. retry.
+	}
+	return 0, context.DeadlineExceeded
 }
 
 func mediaTypeKeyFromDigest(dgst digest.Digest) string {
