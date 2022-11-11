@@ -45,4 +45,4 @@ jobs:
       - run: |
           gcloud auth configure-docker --quiet
           export LEEWAY_WORKSPACE_ROOT=$(pwd)
-          leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build components/ide/jetbrains/backend-plugin:latest --dont-retag
+          leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build components/ide/jetbrains/backend-plugin:latest
