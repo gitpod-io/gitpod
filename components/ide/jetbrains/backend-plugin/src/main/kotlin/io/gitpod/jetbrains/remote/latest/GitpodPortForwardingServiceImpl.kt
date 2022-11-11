@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.ui.RowIcon
 import com.intellij.util.application
+import com.jetbrains.rd.framework.util.launch
 import com.jetbrains.rd.platform.codeWithMe.portForwarding.*
 import com.jetbrains.rd.util.URI
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -22,10 +23,13 @@ import io.gitpod.supervisor.api.StatusServiceGrpc
 import io.grpc.stub.ClientCallStreamObserver
 import io.grpc.stub.ClientResponseObserver
 import io.ktor.utils.io.*
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.isActive
 import org.apache.http.client.utils.URIBuilder
 import java.util.*
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit
 
 @Suppress("UnstableApiUsage")
 class GitpodPortForwardingServiceImpl : GitpodPortForwardingService {
@@ -46,22 +50,25 @@ class GitpodPortForwardingServiceImpl : GitpodPortForwardingService {
         observePortsListWhileProjectIsOpen()
     }
 
-    private fun observePortsListWhileProjectIsOpen() = application.executeOnPooledThread {
-        lifetime.executeIfAlive {
+    private fun observePortsListWhileProjectIsOpen() = lifetime.launch {
+        while (isActive) {
             try {
-                observePortsList().get()
+                observePortsList().asDeferred().await()
             } catch (throwable: Throwable) {
                 when (throwable) {
-                    is InterruptedException, is CancellationException -> lifetime.terminate()
-                    else -> thisLogger().error(
-                            "gitpod: Got an error while trying to get ports list from Supervisor. " +
-                                    "Going to try again in a second.",
-                            throwable
-                    )
+                    is InterruptedException, is CancellationException -> {
+                        cancel("gitpod: Stopped observing ports list due to an expected interruption.")
+                    }
+                    else -> {
+                        thisLogger().warn(
+                                "gitpod: Got an error while trying to get ports list from Supervisor. " +
+                                        "Going to try again in a second.",
+                                throwable
+                        )
+                        delay(1000)
+                    }
                 }
             }
-
-            TimeUnit.SECONDS.sleep(1)
         }
     }
 
@@ -75,7 +82,7 @@ class GitpodPortForwardingServiceImpl : GitpodPortForwardingService {
         val portsStatusResponseObserver = object :
                 ClientResponseObserver<Status.PortsStatusRequest, Status.PortsStatusResponse> {
             override fun beforeStart(request: ClientCallStreamObserver<Status.PortsStatusRequest>) {
-                lifetime.onTerminationOrNow { request.cancel("gitpod: Project terminated.", null) }
+                lifetime.onTerminationOrNow { request.cancel("gitpod: Service lifetime terminated.", null) }
             }
 
             override fun onNext(response: Status.PortsStatusResponse) {
