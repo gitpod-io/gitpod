@@ -2304,24 +2304,24 @@ type TeamMembershipInvite struct {
 }
 
 type Project struct {
-	ID                string           `json:"id,omitempty"`
-	UserID            string           `json:"userId,omitempty"`
-	TeamID            string           `json:"teamId,omitempty"`
-	Name              string           `json:"name,omitempty"`
-	Slug              string           `json:"slug,omitempty"`
-	CloneURL          string           `json:"cloneUrl,omitempty"`
-	AppInstallationID string           `json:"appInstallationId,omitempty"`
-	Settings          *ProjectSettings `json:"settings,omitempty"`
-	CreationTime      string           `json:"creationTime,omitempty"`
+	ID                string          `json:"id,omitempty"`
+	UserID            string          `json:"userId,omitempty"`
+	TeamID            string          `json:"teamId,omitempty"`
+	Name              string          `json:"name,omitempty"`
+	Slug              string          `json:"slug,omitempty"`
+	CloneURL          string          `json:"cloneUrl,omitempty"`
+	AppInstallationID string          `json:"appInstallationId,omitempty"`
+	Settings          ProjectSettings `json:"settings,omitempty"`
+	CreationTime      string          `json:"creationTime,omitempty"`
 }
 
 type ProjectSettings struct {
-	UseIncrementalPrebuilds      bool                      `json:"useIncrementalPrebuilds,omitempty"`
-	UsePersistentVolumeClaim     bool                      `json:"usePersistentVolumeClaim,omitempty"`
-	KeepOutdatedPrebuildsRunning bool                      `json:"keepOutdatedPrebuildsRunning,omitempty"`
-	AllowUsingPreviousPrebuilds  bool                      `json:"allowUsingPreviousPrebuilds,omitempty"`
-	PrebuildEveryNthCommit       int                       `json:"prebuildEveryNthCommit,omitempty"`
-	WorkspaceClasses             *WorkspaceClassesSettings `json:"workspaceClasses,omitempty"`
+	UseIncrementalPrebuilds      bool                     `json:"useIncrementalPrebuilds,omitempty"`
+	UsePersistentVolumeClaim     bool                     `json:"usePersistentVolumeClaim,omitempty"`
+	KeepOutdatedPrebuildsRunning bool                     `json:"keepOutdatedPrebuildsRunning,omitempty"`
+	AllowUsingPreviousPrebuilds  bool                     `json:"allowUsingPreviousPrebuilds,omitempty"`
+	PrebuildEveryNthCommit       int                      `json:"prebuildEveryNthCommit,omitempty"`
+	WorkspaceClasses             WorkspaceClassesSettings `json:"workspaceClasses,omitempty"`
 }
 
 type WorkspaceClassesSettings struct {
