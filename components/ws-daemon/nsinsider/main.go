@@ -233,6 +233,8 @@ func main() {
 						return err
 					}
 
+					log.Infof("isReady: %t", isReady)
+
 					if !isReady {
 						err = prepareWorkspaceDevice(workspaceDevice)
 						if err != nil {
