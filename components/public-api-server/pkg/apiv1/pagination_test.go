@@ -75,5 +75,33 @@ func TestValidatePagination(t *testing.T) {
 			Page:     9,
 		}))
 	})
+}
+
+func TestPageFromResults(t *testing.T) {
+	var results []int
+	for i := 0; i < 26; i++ {
+		results = append(results, i)
+	}
+
+	require.EqualValues(t, results[0:25], pageFromResults(results, &v1.Pagination{}), "defaults to first page and 25 records")
+	require.EqualValues(t, results[0:5], pageFromResults(results, &v1.Pagination{
+		PageSize: 5,
+	}), "defaults to first page, 10 records")
+	require.EqualValues(t, results[5:10], pageFromResults(results, &v1.Pagination{
+		PageSize: 5,
+		Page:     2,
+	}), "second page, 5 records")
+	require.EqualValues(t, results[10:15], pageFromResults(results, &v1.Pagination{
+		PageSize: 5,
+		Page:     3,
+	}), "third page, 5 records")
+	require.EqualValues(t, results[25:], pageFromResults(results, &v1.Pagination{
+		PageSize: 5,
+		Page:     6,
+	}), "last page, 5 records")
+	require.Len(t, pageFromResults(results, &v1.Pagination{
+		PageSize: 5,
+		Page:     7,
+	}), 0, "out of bound page, 5 records")
 
 }

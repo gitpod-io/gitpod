@@ -91,6 +91,59 @@ func (s *ProjectsService) CreateProject(ctx context.Context, req *connect.Reques
 	}), nil
 }
 
+func (s *ProjectsService) ListProjects(ctx context.Context, req *connect.Request[v1.ListProjectsRequest]) (*connect.Response[v1.ListProjectsResponse], error) {
+	userID, teamID := req.Msg.GetUserId(), req.Msg.GetTeamId()
+	if userID == "" && teamID == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Neither User ID nor Team ID specified. Specify one of them."))
+	}
+
+	if userID != "" && teamID != "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Specifying both User ID and Team ID is not allowed."))
+	}
+
+	conn, err := s.getConnection(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var projects []*protocol.Project
+
+	if userID != "" {
+		_, err := uuid.Parse(userID)
+		if err != nil {
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("User ID is not a valid UUID."))
+		}
+
+		projects, err = conn.GetUserProjects(ctx)
+		if err != nil {
+			return nil, proxy.ConvertError(err)
+		}
+	}
+
+	if teamID != "" {
+		_, err := uuid.Parse(teamID)
+		if err != nil {
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Team ID is not a valid UUID."))
+		}
+
+		projects, err = conn.GetTeamProjects(ctx, teamID)
+		if err != nil {
+			return nil, proxy.ConvertError(err)
+		}
+	}
+
+	// We're extracting a particular page of results from the full set of results.
+	// This is wasteful, but necessary, until we either:
+	// 	* Add new APIs to server which support pagination
+	// 	* Port the query logic to Public API
+	results := pageFromResults(projects, req.Msg.GetPagination())
+
+	return connect.NewResponse(&v1.ListProjectsResponse{
+		Projects:     projectsToAPIResponse(results),
+		TotalResults: int32(len(projects)),
+	}), nil
+}
+
 func (s *ProjectsService) getConnection(ctx context.Context) (protocol.APIInterface, error) {
 	token, err := auth.TokenFromContext(ctx)
 	if err != nil {
@@ -104,6 +157,15 @@ func (s *ProjectsService) getConnection(ctx context.Context) (protocol.APIInterf
 	}
 
 	return conn, nil
+}
+
+func projectsToAPIResponse(ps []*protocol.Project) []*v1.Project {
+	var projects []*v1.Project
+	for _, p := range ps {
+		projects = append(projects, projectToAPIResponse(p))
+	}
+
+	return projects
 }
 
 func projectToAPIResponse(p *protocol.Project) *v1.Project {

@@ -25,7 +25,6 @@ import (
 func TestProjectsService_CreateProject(t *testing.T) {
 
 	t.Run("returns invalid argument when request validation fails", func(t *testing.T) {
-
 		for _, s := range []struct {
 			Name          string
 			Spec          *v1.Project
@@ -149,7 +148,169 @@ func TestProjectsService_CreateProject(t *testing.T) {
 		}, response.Msg)
 
 	})
+}
 
+func TestProjectsService_ListProjects(t *testing.T) {
+
+	t.Run("invalid argument when both team id and project id are missing", func(t *testing.T) {
+		_, client := setupProjectsService(t)
+
+		_, err := client.ListProjects(context.Background(), connect.NewRequest(&v1.ListProjectsRequest{}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("invalid argument when both team id and project id are set", func(t *testing.T) {
+		_, client := setupProjectsService(t)
+
+		_, err := client.ListProjects(context.Background(), connect.NewRequest(&v1.ListProjectsRequest{
+			UserId: "user-id",
+			TeamId: "team-id",
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("invalid argument when user ID is not a valid UUID", func(t *testing.T) {
+		_, client := setupProjectsService(t)
+
+		_, err := client.ListProjects(context.Background(), connect.NewRequest(&v1.ListProjectsRequest{
+			UserId: "some-id",
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("invalid argument when team ID is not a valid UUID", func(t *testing.T) {
+		_, client := setupProjectsService(t)
+
+		_, err := client.ListProjects(context.Background(), connect.NewRequest(&v1.ListProjectsRequest{
+			TeamId: "some-id",
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("no projects from server return empty list", func(t *testing.T) {
+		serverMock, client := setupProjectsService(t)
+
+		serverMock.EXPECT().GetUserProjects(gomock.Any()).Return(nil, nil)
+
+		response, err := client.ListProjects(context.Background(), connect.NewRequest(&v1.ListProjectsRequest{
+			UserId: uuid.New().String(),
+		}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.ListProjectsResponse{
+			Projects:     nil,
+			TotalResults: 0,
+		}, response.Msg)
+	})
+
+	t.Run("retrieves projects for user, when user ID is specified and paginates", func(t *testing.T) {
+		serverMock, client := setupProjectsService(t)
+
+		projects := []*protocol.Project{
+			newProject(&protocol.Project{}),
+			newProject(&protocol.Project{}),
+			newProject(&protocol.Project{}),
+			newProject(&protocol.Project{}),
+			newProject(&protocol.Project{}),
+		}
+
+		serverMock.EXPECT().GetUserProjects(gomock.Any()).Return(projects, nil).Times(3)
+
+		firstPage, err := client.ListProjects(context.Background(), connect.NewRequest(&v1.ListProjectsRequest{
+			UserId: uuid.New().String(),
+			Pagination: &v1.Pagination{
+				PageSize: 2,
+			},
+		}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.ListProjectsResponse{
+			Projects:     projectsToAPIResponse(projects[0:2]),
+			TotalResults: int32(len(projects)),
+		}, firstPage.Msg)
+
+		secondPage, err := client.ListProjects(context.Background(), connect.NewRequest(&v1.ListProjectsRequest{
+			UserId: uuid.New().String(),
+			Pagination: &v1.Pagination{
+				PageSize: 2,
+				Page:     2,
+			},
+		}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.ListProjectsResponse{
+			Projects:     projectsToAPIResponse(projects[2:4]),
+			TotalResults: int32(len(projects)),
+		}, secondPage.Msg)
+
+		thirdPage, err := client.ListProjects(context.Background(), connect.NewRequest(&v1.ListProjectsRequest{
+			UserId: uuid.New().String(),
+			Pagination: &v1.Pagination{
+				PageSize: 2,
+				Page:     3,
+			},
+		}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.ListProjectsResponse{
+			Projects:     projectsToAPIResponse(projects[4:]),
+			TotalResults: int32(len(projects)),
+		}, thirdPage.Msg)
+	})
+
+	t.Run("retrieves projects for team, when team ID is specified and paginates", func(t *testing.T) {
+		serverMock, client := setupProjectsService(t)
+
+		teamID := uuid.New().String()
+
+		projects := []*protocol.Project{
+			newProject(&protocol.Project{}),
+			newProject(&protocol.Project{}),
+			newProject(&protocol.Project{}),
+			newProject(&protocol.Project{}),
+			newProject(&protocol.Project{}),
+		}
+
+		serverMock.EXPECT().GetTeamProjects(gomock.Any(), teamID).Return(projects, nil).Times(3)
+
+		firstPage, err := client.ListProjects(context.Background(), connect.NewRequest(&v1.ListProjectsRequest{
+			TeamId: teamID,
+			Pagination: &v1.Pagination{
+				PageSize: 2,
+			},
+		}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.ListProjectsResponse{
+			Projects:     projectsToAPIResponse(projects[0:2]),
+			TotalResults: int32(len(projects)),
+		}, firstPage.Msg)
+
+		secondPage, err := client.ListProjects(context.Background(), connect.NewRequest(&v1.ListProjectsRequest{
+			TeamId: teamID,
+			Pagination: &v1.Pagination{
+				PageSize: 2,
+				Page:     2,
+			},
+		}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.ListProjectsResponse{
+			Projects:     projectsToAPIResponse(projects[2:4]),
+			TotalResults: int32(len(projects)),
+		}, secondPage.Msg)
+
+		thirdPage, err := client.ListProjects(context.Background(), connect.NewRequest(&v1.ListProjectsRequest{
+			TeamId: teamID,
+			Pagination: &v1.Pagination{
+				PageSize: 2,
+				Page:     3,
+			},
+		}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.ListProjectsResponse{
+			Projects:     projectsToAPIResponse(projects[4:]),
+			TotalResults: int32(len(projects)),
+		}, thirdPage.Msg)
+	})
 }
 
 func setupProjectsService(t *testing.T) (*protocol.MockAPIInterface, v1connect.ProjectsServiceClient) {
