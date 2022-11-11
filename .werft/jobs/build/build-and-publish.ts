@@ -16,7 +16,6 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
     const {
         publishRelease,
         dontTest,
-        retag,
         version,
         localAppVersion,
         publishToNpm,
@@ -38,7 +37,7 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
     exec(
         `leeway build --docker-build-options network=host --werft=true -c remote ${
             dontTest ? "--dont-test" : ""
-        } --dont-retag --coverage-output-path=${coverageOutput} --save /tmp/dev.tar.gz -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`,
+        } --coverage-output-path=${coverageOutput} --save /tmp/dev.tar.gz -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`,
     );
 
     if (publishRelease) {
@@ -61,7 +60,6 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
         "--werft=true",
         "-c remote",
         dontTest ? "--dont-test" : "",
-        retag,
         `--coverage-output-path=${coverageOutput}`,
     ].filter((value) => value).join(" ");
 

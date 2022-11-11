@@ -71,6 +71,5 @@ leeway build \
     -DREPLICATED_API_TOKEN="$(kubectl --context=dev -n werft get secret replicated -o jsonpath='{.data.token}' | base64 -d)" \
     -DREPLICATED_APP="$(kubectl --context=dev -n werft get secret replicated -o jsonpath='{.data.app}' | base64 -d)" \
     -Dversion="${VERSION}" \
-    --dont-retag \
     --dont-test \
     dev/preview:deploy-dependencies

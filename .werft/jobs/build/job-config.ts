@@ -23,7 +23,6 @@ export interface JobConfig {
     publishToJBMarketplace: boolean;
     publishToNpm: string;
     publishToKots: boolean;
-    retag: string;
     replicatedChannel: string;
     storage: string;
     version: string;
@@ -98,7 +97,6 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const publishToKots = "publish-to-kots" in buildConfig || withSelfHostedPreview || mainBuild;
 
     const localAppVersion = mainBuild || "with-localapp-version" in buildConfig ? version : "unknown";
-    const retag = "with-retag" in buildConfig ? "" : "--dont-retag";
     const cleanSlateDeployment = mainBuild || "with-clean-slate-deployment" in buildConfig;
     const installEELicense = !("without-ee-license" in buildConfig) || mainBuild;
     const withObservability = "with-observability" in buildConfig && !mainBuild;
@@ -165,7 +163,6 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         replicatedChannel,
         replicatedVersion,
         repository,
-        retag,
         storage,
         version,
         withContrib,
