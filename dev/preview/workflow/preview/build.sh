@@ -13,7 +13,11 @@ import "ensure-gcloud-auth.sh"
 
 ensure_gcloud_auth
 
-VERSION="$(preview-name-from-branch)-dev"
+if [[ "${VERSION:-}" == "" ]]; then
+    VERSION="$(preview-name-from-branch)-dev-$(date +%F_T%H-%M-%S)"
+    log_info "VERSION is not set - using $VERSION"
+    echo "$VERSION" > /tmp/local-dev-version
+fi
 
 # We have quite a few Leeway packages whose hash includes files from .gitignore.
 # Some of these files (such as build folders) are populated as part of our prebuilds

@@ -30,7 +30,16 @@ GITPOD_WITH_EE_LICENSE="${GITPOD_WITH_EE_LICENSE:-true}"
 GITPOD_WORKSPACE_FEATURE_FLAGS="${GITPOD_WORKSPACE_FEATURE_FLAGS:-}"
 GITPOD_WITH_SLOW_DATABASE="${GITPOD_WITH_SLOW_DATABASE:-false}"
 
-VERSION="${VERSION:-${PREVIEW_NAME}-dev}"
+if [[ "${VERSION:-}" == "" ]]; then
+  if [[ ! -f  /tmp/local-dev-version ]]; then
+    log_error "VERSION is not set and no fallback version exists in /tmp/local-dev-version."
+    log_info "Please run leeway run dev/preview:build or set VERSION"
+    exit 1
+  fi
+  VERSION="$(cat /tmp/local-dev-version)"
+  log_info "VERSION is not set - using value from /tmp/local-dev-version which is $VERSION"
+fi
+
 INSTALLER_BINARY_PATH="$(mktemp "/tmp/XXXXXX.installer")}"
 INSTALLER_CONFIG_PATH="${INSTALLER_CONFIG_PATH:-$(mktemp "/tmp/XXXXXX.gitpod.config.yaml")}"
 INSTALLER_RENDER_PATH="k8s.yaml" # k8s.yaml is hardcoded in post-prcess.sh - we can fix that later.
