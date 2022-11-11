@@ -15,7 +15,7 @@ scripts:
   - name: get-credentials
     description: Provisions a new preview environment
     script: |
-      previewctl get-credentials --kube-save-path $HOME/.kube/config
+      KUBECONFIG=$HOME/.kube/config previewctl get-credentials
 
   - name: create-preview
     description: Provisions a new preview environment
