@@ -36,3 +36,22 @@ func paginationToDB(p *v1.Pagination) db.Pagination {
 		PageSize: int(validated.GetPageSize()),
 	}
 }
+
+func pageFromResults[T any](results []T, p *v1.Pagination) []T {
+	pagination := validatePagination(p)
+
+	size := len(results)
+
+	start := int((pagination.Page - 1) * pagination.PageSize)
+	end := int(pagination.Page * pagination.PageSize)
+
+	if start > size {
+		return nil
+	}
+
+	if end > size {
+		end = size
+	}
+
+	return results[start:end]
+}
