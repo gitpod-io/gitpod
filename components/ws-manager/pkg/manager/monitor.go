@@ -73,8 +73,7 @@ type Monitor struct {
 	eventpool *workpool.EventWorkerPool
 	ticker    *time.Ticker
 
-	probeMap     map[string]context.CancelFunc
-	probeMapLock sync.Mutex
+	probeMap sync.Map
 
 	initializerMap sync.Map
 	finalizerMap   sync.Map
@@ -95,9 +94,8 @@ func (m *Manager) CreateMonitor() (*Monitor, error) {
 
 	log.WithField("interval", monitorInterval).Info("starting workspace monitor")
 	res := Monitor{
-		manager:  m,
-		ticker:   time.NewTicker(monitorInterval),
-		probeMap: make(map[string]context.CancelFunc),
+		manager: m,
+		ticker:  time.NewTicker(monitorInterval),
 
 		OnError: func(err error) {
 			log.WithError(err).Error("workspace monitor error")
@@ -188,12 +186,11 @@ func (m *Monitor) onPodEvent(evt watch.Event) error {
 	if evt.Type == watch.Deleted {
 		// If we're still probing this workspace (because it was stopped by someone other than the monitor while we
 		// were probing), stop doing that.
-		m.probeMapLock.Lock()
-		if cancelProbe, ok := m.probeMap[pod.Name]; ok {
+		if cancelProbeFunc, ok := m.probeMap.Load(pod.Name); ok {
+			cancelProbe := cancelProbeFunc.(context.CancelFunc)
 			cancelProbe()
-			delete(m.probeMap, pod.Name)
+			m.probeMap.Delete(pod.Name)
 		}
-		m.probeMapLock.Unlock()
 
 		// We're handling a pod event, thus Kubernetes gives us the pod we're handling. However, this is also a deleted
 		// event which means the pod doesn't actually exist anymore. We need to reflect that in our status compution, hence
@@ -727,16 +724,13 @@ func (m *Monitor) probeWorkspaceReady(ctx context.Context, pod *corev1.Pod) (res
 
 	// Probe preparation, i.e. checking if a probe exists already and if it doesn't registering a new one has to be atomic with
 	// regards to the probeMapLock. Ensure both operations are within the same locked section.
-	m.probeMapLock.Lock()
-	_, alreadyProbing := m.probeMap[pod.Name]
+	_, alreadyProbing := m.probeMap.Load(pod.Name)
 	if alreadyProbing {
-		m.probeMapLock.Unlock()
 		return nil, nil
 	}
 
 	ctx, cancelProbe := context.WithTimeout(ctx, 30*time.Minute)
-	m.probeMap[pod.Name] = cancelProbe
-	m.probeMapLock.Unlock()
+	m.probeMap.Store(pod.Name, cancelProbe)
 
 	// The probe run will block until either the probe finds the pod ready or the probe itself is stopped.
 	// Because of that it's best to run probeWorkspaceReady as a go routine.
@@ -755,9 +749,7 @@ func (m *Monitor) probeWorkspaceReady(ctx context.Context, pod *corev1.Pod) (res
 	span.LogFields(tracelog.String("result", string(probeResult)))
 
 	// we're done probing: deregister probe from probe map
-	m.probeMapLock.Lock()
-	delete(m.probeMap, pod.Name)
-	m.probeMapLock.Unlock()
+	m.probeMap.Delete(pod.Name)
 
 	cancelProbe()
 
