@@ -74,13 +74,13 @@ func (p *WorkspaceReadyProbe) Run(ctx context.Context) WorkspaceProbeResult {
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			DialContext: (&net.Dialer{
-				Timeout:   30 * time.Second,
-				KeepAlive: 30 * time.Second,
+				Timeout:   1 * time.Second,
+				KeepAlive: -1 * time.Second,
 				DualStack: false,
 			}).DialContext,
 			MaxIdleConns:          0,
 			MaxIdleConnsPerHost:   32,
-			IdleConnTimeout:       30 * time.Second,
+			IdleConnTimeout:       10 * time.Second,
 			TLSHandshakeTimeout:   10 * time.Second,
 			ExpectContinueTimeout: 5 * time.Second,
 			DisableKeepAlives:     true,
