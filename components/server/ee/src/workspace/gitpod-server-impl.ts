@@ -1007,11 +1007,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 }
             } else {
                 log.debug(logCtx, "Looking for prebuilt workspace: ", logPayload);
-                if (!allowUsingPreviousPrebuilds) {
-                    prebuiltWorkspace = await this.workspaceDb
-                        .trace(ctx)
-                        .findPrebuiltWorkspaceByCommit(cloneUrl, commitSHAs);
-                } else {
+                prebuiltWorkspace = await this.workspaceDb
+                    .trace(ctx)
+                    .findPrebuiltWorkspaceByCommit(cloneUrl, commitSHAs);
+                if (!prebuiltWorkspace && allowUsingPreviousPrebuilds) {
                     const { config } = await this.configProvider.fetchConfig({}, user, context);
                     const history = await this.incrementalPrebuildsService.getCommitHistoryForContext(context, user);
                     prebuiltWorkspace = await this.incrementalPrebuildsService.findGoodBaseForIncrementalBuild(
