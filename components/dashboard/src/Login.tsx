@@ -192,7 +192,7 @@ export function Login() {
                                 {providerFromContext ? (
                                     <>
                                         <h2 className="text-xl text-black dark:text-gray-50 font-semibold">
-                                            Open a cloud developer environment
+                                            Open a cloud development environment
                                         </h2>
                                         <h2 className="text-xl">for the repository {repoPathname?.slice(1)}</h2>
                                     </>
