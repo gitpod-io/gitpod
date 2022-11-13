@@ -41,11 +41,12 @@ export interface Project {
 }
 
 export namespace Project {
-    export const create = (project: Omit<Project, "id" | "creationTime">): Project => {
+    export const create = (project: Omit<Project, "id" | "creationTime" | "appInstallationId">): Project => {
         return {
             ...project,
             id: uuidv4(),
             creationTime: new Date().toISOString(),
+            appInstallationId: "",
         };
     };
 

@@ -51,7 +51,6 @@ class ProjectDBSpec {
             slug: "some-project",
             cloneUrl: "some-random-clone-url",
             userId: user.id,
-            appInstallationId: "app-1",
         });
         const searchTerm = "rand";
         const storedProject = await this.projectDb.storeProject(project);

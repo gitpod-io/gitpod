@@ -230,7 +230,7 @@ export default function NewProject() {
                 slug: repoSlug,
                 cloneUrl: repo.cloneUrl,
                 ...(User.is(teamOrUser) ? { userId: teamOrUser.id } : { teamId: teamOrUser.id }),
-                appInstallationId: String(repo.installationId),
+                appInstallationId: "",
             });
 
             setProject(project);

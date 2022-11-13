@@ -41,7 +41,7 @@ const team1: Team = {
     creationTime: t1,
 };
 const pr1: Project = {
-    appInstallationId: "app1",
+    appInstallationId: "",
     cloneUrl: "https://github.com/AlexTugarev/txt.git",
     creationTime: t1,
     id: "pr1",

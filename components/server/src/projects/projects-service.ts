@@ -144,7 +144,6 @@ export class ProjectsService {
             slug: uniqueSlug,
             cloneUrl,
             ...(!!userId ? { userId } : { teamId }),
-            appInstallationId,
         });
         await this.projectDB.storeProject(project);
         await this.onDidCreateProject(project, installer);
