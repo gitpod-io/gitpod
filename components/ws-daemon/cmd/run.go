@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"golang.org/x/xerrors"
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/heptiolabs/healthcheck"
@@ -61,6 +62,7 @@ var runCmd = &cobra.Command{
 
 		health.AddReadinessCheck("grpc-server", grpcProbe(cfg.Service))
 		health.AddReadinessCheck("ws-daemon", dmn.ReadinessProbe())
+		health.AddReadinessCheck("disk-space", freeDiskSpace(cfg.Daemon))
 
 		dmn.Register(srv.GRPC())
 
@@ -153,5 +155,29 @@ func createLVMDevices() {
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		log.WithError(err).WithField("out", string(out)).Error("cannot recreate LVM files in /dev/mapper")
+	}
+}
+
+func freeDiskSpace(cfg daemon.Config) func() error {
+	return func() error {
+		var diskDiskAvailable uint64 = 1
+		for _, loc := range cfg.DiskSpaceGuard.Locations {
+			if loc.Path == cfg.Content.WorkingArea {
+				diskDiskAvailable = loc.MinBytesAvail
+			}
+		}
+
+		var stat syscall.Statfs_t
+		err := syscall.Statfs(cfg.Content.WorkingArea, &stat)
+		if err != nil {
+			return xerrors.Errorf("cannot get disk space details from path %s: %w", cfg.Content.WorkingArea, err)
+		}
+
+		diskAvailable := stat.Bavail * uint64(stat.Bsize) * (1024 * 1024 * 1024) // In GB
+		if diskAvailable < diskDiskAvailable {
+			return xerrors.Errorf("not enough disk available (%v)", diskAvailable)
+		}
+
+		return nil
 	}
 }
