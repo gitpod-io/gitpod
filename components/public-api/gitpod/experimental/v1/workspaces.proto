@@ -27,12 +27,6 @@ service WorkspacesService {
     //   NOT_FOUND:           the workspace_id is unkown
     //   FAILED_PRECONDITION: if there's no running instance
     rpc StopWorkspace(StopWorkspaceRequest) returns (stream StopWorkspaceResponse) {}
-
-    // SendHeartbeat sends a heartbeat signal to a running workspace.
-    rpc SendHeartbeat(SendHeartbeatRequest) returns (SendHeartbeatResponse) {}
-
-    // SendCloseSignal sends a close signal to a running workspace.
-    rpc SendCloseSignal(SendCloseSignalRequest) returns (SendCloseSignalResponse) {}
 }
 
 message ListWorkspacesRequest {
@@ -90,16 +84,6 @@ message StopWorkspaceRequest {
     string workspace_id = 2;
 }
 message StopWorkspaceResponse {}
-
-message SendHeartbeatRequest {
-    string workspace_id = 1;
-}
-message SendHeartbeatResponse {}
-
-message SendCloseSignalRequest {
-    string workspace_id = 1;
-}
-message SendCloseSignalResponse {}
 
 ////////////////////////////////
 // Shared messages come here

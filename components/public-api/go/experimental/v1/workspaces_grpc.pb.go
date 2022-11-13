@@ -40,10 +40,6 @@ type WorkspacesServiceClient interface {
 	//	NOT_FOUND:           the workspace_id is unkown
 	//	FAILED_PRECONDITION: if there's no running instance
 	StopWorkspace(ctx context.Context, in *StopWorkspaceRequest, opts ...grpc.CallOption) (WorkspacesService_StopWorkspaceClient, error)
-	// SendHeartbeat sends a heartbeat signal to a running workspace.
-	SendHeartbeat(ctx context.Context, in *SendHeartbeatRequest, opts ...grpc.CallOption) (*SendHeartbeatResponse, error)
-	// SendCloseSignal sends a close signal to a running workspace.
-	SendCloseSignal(ctx context.Context, in *SendCloseSignalRequest, opts ...grpc.CallOption) (*SendCloseSignalResponse, error)
 }
 
 type workspacesServiceClient struct {
@@ -122,24 +118,6 @@ func (x *workspacesServiceStopWorkspaceClient) Recv() (*StopWorkspaceResponse, e
 	return m, nil
 }
 
-func (c *workspacesServiceClient) SendHeartbeat(ctx context.Context, in *SendHeartbeatRequest, opts ...grpc.CallOption) (*SendHeartbeatResponse, error) {
-	out := new(SendHeartbeatResponse)
-	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.WorkspacesService/SendHeartbeat", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *workspacesServiceClient) SendCloseSignal(ctx context.Context, in *SendCloseSignalRequest, opts ...grpc.CallOption) (*SendCloseSignalResponse, error) {
-	out := new(SendCloseSignalResponse)
-	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.WorkspacesService/SendCloseSignal", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // WorkspacesServiceServer is the server API for WorkspacesService service.
 // All implementations must embed UnimplementedWorkspacesServiceServer
 // for forward compatibility
@@ -158,10 +136,6 @@ type WorkspacesServiceServer interface {
 	//	NOT_FOUND:           the workspace_id is unkown
 	//	FAILED_PRECONDITION: if there's no running instance
 	StopWorkspace(*StopWorkspaceRequest, WorkspacesService_StopWorkspaceServer) error
-	// SendHeartbeat sends a heartbeat signal to a running workspace.
-	SendHeartbeat(context.Context, *SendHeartbeatRequest) (*SendHeartbeatResponse, error)
-	// SendCloseSignal sends a close signal to a running workspace.
-	SendCloseSignal(context.Context, *SendCloseSignalRequest) (*SendCloseSignalResponse, error)
 	mustEmbedUnimplementedWorkspacesServiceServer()
 }
 
@@ -183,12 +157,6 @@ func (UnimplementedWorkspacesServiceServer) CreateAndStartWorkspace(context.Cont
 }
 func (UnimplementedWorkspacesServiceServer) StopWorkspace(*StopWorkspaceRequest, WorkspacesService_StopWorkspaceServer) error {
 	return status.Errorf(codes.Unimplemented, "method StopWorkspace not implemented")
-}
-func (UnimplementedWorkspacesServiceServer) SendHeartbeat(context.Context, *SendHeartbeatRequest) (*SendHeartbeatResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendHeartbeat not implemented")
-}
-func (UnimplementedWorkspacesServiceServer) SendCloseSignal(context.Context, *SendCloseSignalRequest) (*SendCloseSignalResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendCloseSignal not implemented")
 }
 func (UnimplementedWorkspacesServiceServer) mustEmbedUnimplementedWorkspacesServiceServer() {}
 
@@ -296,42 +264,6 @@ func (x *workspacesServiceStopWorkspaceServer) Send(m *StopWorkspaceResponse) er
 	return x.ServerStream.SendMsg(m)
 }
 
-func _WorkspacesService_SendHeartbeat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SendHeartbeatRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(WorkspacesServiceServer).SendHeartbeat(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/gitpod.experimental.v1.WorkspacesService/SendHeartbeat",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WorkspacesServiceServer).SendHeartbeat(ctx, req.(*SendHeartbeatRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _WorkspacesService_SendCloseSignal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SendCloseSignalRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(WorkspacesServiceServer).SendCloseSignal(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/gitpod.experimental.v1.WorkspacesService/SendCloseSignal",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WorkspacesServiceServer).SendCloseSignal(ctx, req.(*SendCloseSignalRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // WorkspacesService_ServiceDesc is the grpc.ServiceDesc for WorkspacesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -354,14 +286,6 @@ var WorkspacesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateAndStartWorkspace",
 			Handler:    _WorkspacesService_CreateAndStartWorkspace_Handler,
-		},
-		{
-			MethodName: "SendHeartbeat",
-			Handler:    _WorkspacesService_SendHeartbeat_Handler,
-		},
-		{
-			MethodName: "SendCloseSignal",
-			Handler:    _WorkspacesService_SendCloseSignal_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
