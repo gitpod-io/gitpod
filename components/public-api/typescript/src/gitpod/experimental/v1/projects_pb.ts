@@ -124,6 +124,11 @@ export class ProjectSettings extends Message<ProjectSettings> {
    */
   prebuild?: PrebuildSettings;
 
+  /**
+   * @generated from field: gitpod.experimental.v1.WorkspaceSettings workspace = 2;
+   */
+  workspace?: WorkspaceSettings;
+
   constructor(data?: PartialMessage<ProjectSettings>) {
     super();
     proto3.util.initPartial(data, this);
@@ -133,6 +138,7 @@ export class ProjectSettings extends Message<ProjectSettings> {
   static readonly typeName = "gitpod.experimental.v1.ProjectSettings";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "prebuild", kind: "message", T: PrebuildSettings },
+    { no: 2, name: "workspace", kind: "message", T: WorkspaceSettings },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ProjectSettings {
@@ -161,6 +167,21 @@ export class PrebuildSettings extends Message<PrebuildSettings> {
    */
   enableIncrementalPrebuilds = false;
 
+  /**
+   * @generated from field: bool keep_outdated_prebuilds_running = 2;
+   */
+  keepOutdatedPrebuildsRunning = false;
+
+  /**
+   * @generated from field: bool use_previous_prebuilds = 3;
+   */
+  usePreviousPrebuilds = false;
+
+  /**
+   * @generated from field: int32 prebuild_every_nth = 4;
+   */
+  prebuildEveryNth = 0;
+
   constructor(data?: PartialMessage<PrebuildSettings>) {
     super();
     proto3.util.initPartial(data, this);
@@ -170,6 +191,9 @@ export class PrebuildSettings extends Message<PrebuildSettings> {
   static readonly typeName = "gitpod.experimental.v1.PrebuildSettings";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "enable_incremental_prebuilds", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "keep_outdated_prebuilds_running", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 3, name: "use_previous_prebuilds", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 4, name: "prebuild_every_nth", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PrebuildSettings {
