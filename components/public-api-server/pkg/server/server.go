@@ -126,6 +126,9 @@ func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool, expCl
 	userRoute, userServiceHandler := v1connect.NewUserServiceHandler(apiv1.NewUserService(connPool), handlerOptions...)
 	srv.HTTPMux().Handle(userRoute, userServiceHandler)
 
+	ideClientRoute, ideClientServiceHandler := v1connect.NewIDEClientServiceHandler(apiv1.NewIDEClientService(connPool), handlerOptions...)
+	srv.HTTPMux().Handle(ideClientRoute, ideClientServiceHandler)
+
 	return nil
 }
 

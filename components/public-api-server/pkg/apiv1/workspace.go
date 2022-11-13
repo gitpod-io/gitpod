@@ -122,40 +122,6 @@ func (s *WorkspaceService) ListWorkspaces(ctx context.Context, req *connect.Requ
 	), nil
 }
 
-func (s *WorkspaceService) SendHeartbeat(ctx context.Context, req *connect.Request[v1.SendHeartbeatRequest]) (*connect.Response[v1.SendHeartbeatResponse], error) {
-	conn, err := getConnection(ctx, s.connectionPool)
-	if err != nil {
-		return nil, err
-	}
-
-	err = conn.SendHeartBeat(ctx, &protocol.SendHeartBeatOptions{
-		InstanceID: req.Msg.GetWorkspaceId(),
-		WasClosed:  false,
-	})
-	if err != nil {
-		return nil, proxy.ConvertError(err)
-	}
-
-	return connect.NewResponse(&v1.SendHeartbeatResponse{}), nil
-}
-
-func (s *WorkspaceService) SendCloseSignal(ctx context.Context, req *connect.Request[v1.SendCloseSignalRequest]) (*connect.Response[v1.SendCloseSignalResponse], error) {
-	conn, err := getConnection(ctx, s.connectionPool)
-	if err != nil {
-		return nil, err
-	}
-
-	err = conn.SendHeartBeat(ctx, &protocol.SendHeartBeatOptions{
-		InstanceID: req.Msg.GetWorkspaceId(),
-		WasClosed:  true,
-	})
-	if err != nil {
-		return nil, proxy.ConvertError(err)
-	}
-
-	return connect.NewResponse(&v1.SendCloseSignalResponse{}), nil
-}
-
 func getLimitFromPagination(pagination *v1.Pagination) (int, error) {
 	const (
 		defaultLimit = 20
