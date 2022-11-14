@@ -15,7 +15,7 @@ jobs:
         with:
           go-version: '1.19'
       - name: Download leeway
-        run: cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.3.1/leeway_0.3.1_Linux_x86_64.tar.gz | sudo tar xz
+        run: cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.4.1/leeway_0.4.1_Linux_x86_64.tar.gz | sudo tar xz
       - name: Download golangci-lint
         run: cd /usr/local && curl -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.49.0
       - name: Download GoKart

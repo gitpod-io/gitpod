@@ -33,7 +33,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Download build dependency
         run: |
-          cd /usr/local/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.3.1/leeway_0.3.1_Linux_x86_64.tar.gz | sudo tar xz
+          cd /usr/local/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.4.1/leeway_0.4.1_Linux_x86_64.tar.gz | sudo tar xz
           cd /usr/local && curl -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sudo sh -s v1.49.0
           cd /usr/local/bin && curl -fsSL https://github.com/praetorian-inc/gokart/releases/download/v0.4.0/gokart_0.4.0_linux_x86_64.tar.gz | sudo tar xzv gokart
 
