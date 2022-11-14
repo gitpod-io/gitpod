@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	Component             = common.ServerComponent
+	Component             = "slow-server"
 	ContainerPort         = 3000
 	ContainerPortName     = "http"
 	authProviderFilePath  = "/gitpod/auth-providers"
