@@ -362,7 +362,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									Name: "config",
 									VolumeSource: corev1.VolumeSource{
 										ConfigMap: &corev1.ConfigMapVolumeSource{
-											LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-config", Component)},
+											LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-config", common.ServerComponent)},
 										},
 									},
 								},
@@ -370,7 +370,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									Name: "ide-config",
 									VolumeSource: corev1.VolumeSource{
 										ConfigMap: &corev1.ConfigMapVolumeSource{
-											LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-ide-config", Component)},
+											LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-ide-config", common.ServerComponent)},
 										},
 									},
 								},
