@@ -42,6 +42,7 @@ export default function Menu() {
     const team = getCurrentTeam(location, teams);
     const { setCurrency, setIsStudent, setIsChargebeeCustomer } = useContext(PaymentContext);
     const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
+    const [userBillingMode, setUserBillingMode] = useState<BillingMode | undefined>(undefined);
     const { project, setProject } = useContext(ProjectContext);
     const [isFeedbackFormVisible, setFeedbackFormVisible] = useState<boolean>(false);
 
@@ -51,6 +52,7 @@ export default function Menu() {
         getGitpodService()
             .server.getUserProjects()
             .then((projects) => setHasIndividualProjects(projects.length > 0));
+        getGitpodService().server.getBillingModeForUser().then(setUserBillingMode);
     }, []);
 
     const match = useRouteMatch<{ segment1?: string; segment2?: string; segment3?: string }>(
@@ -449,6 +451,14 @@ export default function Menu() {
                                         title: "Settings",
                                         link: "/settings",
                                     },
+                                    ...(BillingMode.showUsageBasedBilling(userBillingMode)
+                                        ? [
+                                              {
+                                                  title: "Usage",
+                                                  link: "/usage",
+                                              },
+                                          ]
+                                        : []),
                                     {
                                         title: "Docs",
                                         href: "https://www.gitpod.io/docs/",
