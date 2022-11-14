@@ -2,10 +2,11 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package wsmanager
+package wsdaemon
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 	"testing"
 	"time"
@@ -22,20 +23,33 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-const (
-	expectedMinCpu   = 200_000
-	expectedBurstCpu = 600_000
-)
+type DaemonConfig struct {
+	CpuLimitConfig struct {
+		Enabled    bool  `json:"enabled"`
+		Limit      int64 `json:"limit,string"`
+		BurstLimit int64 `json:"burstLimit,string"`
+	} `json:"cpuLimit"`
+}
 
 func TestCpuBurst(t *testing.T) {
 	f := features.New("cpulimiting").WithLabel("component", "ws-manager").Assess("check cpu limiting", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		t.Parallel()
+
+		ctx, cancel := context.WithTimeout(context.Background(), 8*time.Minute)
 		defer cancel()
 
 		api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 		t.Cleanup(func() {
 			api.Done(t)
 		})
+
+		daemonConfig := getDaemonConfig(ctx, t, cfg)
+		if !daemonConfig.CpuLimitConfig.Enabled {
+			return ctx
+		}
+
+		daemonConfig.CpuLimitConfig.Limit = daemonConfig.CpuLimitConfig.Limit * 100_000
+		daemonConfig.CpuLimitConfig.BurstLimit = daemonConfig.CpuLimitConfig.BurstLimit * 100_000
 
 		swr := func(req *wsmanapi.StartWorkspaceRequest) error {
 			req.Spec.Initializer = &csapi.WorkspaceInitializer{
@@ -81,7 +95,7 @@ func TestCpuBurst(t *testing.T) {
 				ContainerId: containerId,
 			}, &resp)
 
-			if resp.CpuQuota == expectedMinCpu {
+			if resp.CpuQuota == daemonConfig.CpuLimitConfig.Limit {
 				break
 			}
 			time.Sleep(5 * time.Second)
@@ -91,8 +105,8 @@ func TestCpuBurst(t *testing.T) {
 			t.Fatalf("cannot get workspace resources: %q", err)
 		}
 
-		if resp.CpuQuota != expectedMinCpu {
-			t.Fatalf("expected cpu quota of %v, but was %v", expectedMinCpu, resp.CpuQuota)
+		if resp.CpuQuota != daemonConfig.CpuLimitConfig.Limit {
+			t.Fatalf("expected cpu quota of %v, but was %v", daemonConfig.CpuLimitConfig.Limit, resp.CpuQuota)
 		}
 
 		workspaceClient, workspaceCloser, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(),
@@ -122,7 +136,7 @@ func TestCpuBurst(t *testing.T) {
 				ContainerId: containerId,
 			}, &resp)
 
-			if resp.CpuQuota == expectedBurstCpu {
+			if resp.CpuQuota == daemonConfig.CpuLimitConfig.BurstLimit {
 				break
 			}
 			time.Sleep(5 * time.Second)
@@ -132,13 +146,38 @@ func TestCpuBurst(t *testing.T) {
 			t.Fatalf("cannot get workspace resources: %q", err)
 		}
 
-		if resp.CpuQuota != expectedBurstCpu {
-			t.Fatalf("expected cpu quota of %v, but was %v", expectedBurstCpu, resp.CpuQuota)
+		if resp.CpuQuota != daemonConfig.CpuLimitConfig.BurstLimit {
+			t.Fatalf("expected cpu quota of %v, but was %v", daemonConfig.CpuLimitConfig.BurstLimit, resp.CpuQuota)
 		}
 		return ctx
 	}).Feature()
 
 	testEnv.Test(t, f)
+}
+
+func getDaemonConfig(ctx context.Context, t *testing.T, cfg *envconf.Config) DaemonConfig {
+	var daemonConfigMap corev1.ConfigMap
+
+	if err := cfg.Client().Resources().Get(ctx, "ws-daemon", cfg.Namespace(), &daemonConfigMap); err != nil {
+		t.Fatal(err)
+	}
+
+	data, ok := daemonConfigMap.Data["config.json"]
+	if !ok {
+		t.Fatal("server config map does not contain config.json")
+	}
+
+	config := make(map[string]json.RawMessage)
+	if err := json.Unmarshal([]byte(data), &config); err != nil {
+		t.Fatal(err)
+	}
+
+	var daemonConfig DaemonConfig
+	if err := json.Unmarshal(config["daemon"], &daemonConfig); err != nil {
+		t.Fatal(err)
+	}
+
+	return daemonConfig
 }
 
 func getWorkspaceContainerId(pod *corev1.Pod) string {
