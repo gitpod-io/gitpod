@@ -11,6 +11,7 @@ import (
 	"k8s.io/utils/pointer"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/toxiproxy"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
@@ -32,6 +33,27 @@ func TestObjects_RenderedWhenExperimentalConfigSet(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, objects, "must render objects because experimental config is specified")
 	require.Len(t, objects, 9, "should render expected k8s objects")
+}
+
+func TestServerDeployment_UsesToxiproxyDbHost(t *testing.T) {
+	ctx := renderContext(t, true)
+
+	objects, err := deployment(ctx)
+	require.NoError(t, err)
+
+	require.Len(t, objects, 1, "must render only one object")
+
+	deployment := objects[0].(*appsv1.Deployment)
+
+	for _, c := range deployment.Spec.Template.Spec.Containers {
+		if c.Name == Component {
+			for _, e := range c.Env {
+				if e.Name == "DB_HOST" {
+					require.Equal(t, toxiproxy.Component, e.Value)
+				}
+			}
+		}
+	}
 }
 
 func TestServerDeployment_MountsGithubAppSecret(t *testing.T) {

@@ -13,6 +13,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	contentservice "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/toxiproxy"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -125,6 +126,13 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 		},
 	)
+
+	for i := range env {
+		if env[i].Name == "DB_HOST" {
+			env[i].ValueFrom = nil
+			env[i].Value = toxiproxy.Component
+		}
+	}
 
 	if ctx.Config.HTTPProxy != nil {
 		env = append(env, corev1.EnvVar{
