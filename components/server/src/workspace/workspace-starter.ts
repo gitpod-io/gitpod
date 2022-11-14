@@ -128,6 +128,7 @@ import { BillingModes } from "../../ee/src/billing/billing-mode";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 
 export interface StartWorkspaceOptions {
     rethrow?: boolean;
@@ -530,54 +531,104 @@ export class WorkspaceStarter {
                 ...user,
             };
 
-            // choose a cluster and start the instance
-            let resp: StartWorkspaceResponse.AsObject | undefined = undefined;
-            let retries = 0;
-            try {
-                for (; retries < MAX_INSTANCE_START_RETRIES; retries++) {
-                    resp = await this.tryStartOnCluster({ span }, startRequest, euser, workspace, instance);
-                    if (resp) {
-                        break;
+            const ideUrlPromise = new Deferred<string>();
+            const before = Date.now();
+            const logSuccess = (fromWsManager: boolean) => {
+                log.info(
+                    {
+                        instanceId: instance.id,
+                        userId: workspace.ownerId,
+                        workspaceId: workspace.id,
+                    },
+                    "Received ideURL",
+                    {
+                        tookMs: Date.now() - before,
+                        fromWsManager,
+                    },
+                );
+            };
+
+            (async () => {
+                try {
+                    // choose a cluster and start the instance
+                    let resp: StartWorkspaceResponse.AsObject | undefined = undefined;
+                    let retries = 0;
+                    try {
+                        for (; retries < MAX_INSTANCE_START_RETRIES; retries++) {
+                            resp = await this.tryStartOnCluster({ span }, startRequest, euser, workspace, instance);
+                            if (resp) {
+                                break;
+                            }
+                            await new Promise((resolve) =>
+                                setTimeout(resolve, INSTANCE_START_RETRY_INTERVAL_SECONDS * 1000),
+                            );
+                        }
+                    } catch (err) {
+                        await this.failInstanceStart({ span }, err, workspace, instance);
+                        throw new StartInstanceError("startOnClusterFailed", err);
                     }
-                    await new Promise((resolve) => setTimeout(resolve, INSTANCE_START_RETRY_INTERVAL_SECONDS * 1000));
+
+                    if (!resp) {
+                        const err = new Error("cannot start a workspace because no workspace clusters are available");
+                        await this.failInstanceStart({ span }, err, workspace, instance);
+                        throw new StartInstanceError("clusterSelectionFailed", err);
+                    }
+                    increaseSuccessfulInstanceStartCounter(retries);
+
+                    if (!ideUrlPromise.isResolved) {
+                        span.log({ resp: resp });
+                        logSuccess(true);
+                        ideUrlPromise.resolve(resp.url);
+                    }
+                } catch (err) {
+                    ideUrlPromise.reject(err);
                 }
-            } catch (err) {
-                await this.failInstanceStart({ span }, err, workspace, instance);
-                throw new StartInstanceError("startOnClusterFailed", err);
-            }
+            })();
 
-            if (!resp) {
-                const err = new Error("cannot start a workspace because no workspace clusters are available");
-                await this.failInstanceStart({ span }, err, workspace, instance);
-                throw new StartInstanceError("clusterSelectionFailed", err);
-            }
-            increaseSuccessfulInstanceStartCounter(retries);
-
-            span.log({ resp: resp });
-
-            this.analytics.track({
-                userId: user.id,
-                event: "workspace_started",
-                properties: {
-                    workspaceId: workspace.id,
-                    instanceId: instance.id,
-                    projectId: workspace.projectId,
-                    contextURL: workspace.contextURL,
-                    type: workspace.type,
-                    usesPrebuild: spec.getInitializer()?.hasPrebuild(),
-                },
-            });
-
-            {
-                if (type === WorkspaceType.PREBUILD) {
-                    // do not await
-                    this.notifyOnPrebuildQueued(ctx, workspace.id).catch((err) => {
-                        log.error("failed to notify on prebuild queued", err);
-                    });
+            const noWaitForWsMan = await getExperimentsClientForBackend().getValueAsync(
+                "do_not_wait_for_ws_manager",
+                false,
+                { user },
+            );
+            const intervalHandle = repeat(async () => {
+                if (noWaitForWsMan) {
+                    const inst = await this.workspaceDb.trace(ctx).findInstanceById(instance.id);
+                    if (inst?.ideUrl && !ideUrlPromise.isResolved) {
+                        logSuccess(false);
+                        ideUrlPromise.resolve(inst?.ideUrl);
+                    }
                 }
-            }
+            }, 50);
 
-            return { instanceID: instance.id, workspaceURL: resp.url };
+            try {
+                const url = await ideUrlPromise.promise;
+
+                this.analytics.track({
+                    userId: user.id,
+                    event: "workspace_started",
+                    properties: {
+                        workspaceId: workspace.id,
+                        instanceId: instance.id,
+                        projectId: workspace.projectId,
+                        contextURL: workspace.contextURL,
+                        type: workspace.type,
+                        usesPrebuild: spec.getInitializer()?.hasPrebuild(),
+                    },
+                });
+
+                {
+                    if (type === WorkspaceType.PREBUILD) {
+                        // do not await
+                        this.notifyOnPrebuildQueued(ctx, workspace.id).catch((err) => {
+                            log.error("failed to notify on prebuild queued", err);
+                        });
+                    }
+                }
+
+                return { instanceID: instance.id, workspaceURL: url };
+            } finally {
+                intervalHandle.dispose();
+            }
         } catch (err) {
             if (rethrow) {
                 throw err;
