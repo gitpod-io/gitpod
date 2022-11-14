@@ -16,8 +16,26 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 )
 
+func TestObjects_NotRenderedByDefault(t *testing.T) {
+	ctx, err := common.NewRenderContext(config.Config{}, versions.Manifest{}, "test-namespace")
+	require.NoError(t, err)
+
+	objects, err := Objects(ctx)
+	require.NoError(t, err)
+	require.Empty(t, objects, "no objects should be rendered with default config")
+}
+
+func TestObjects_RenderedWhenExperimentalConfigSet(t *testing.T) {
+	ctx := renderContext(t, true)
+
+	objects, err := Objects(ctx)
+	require.NoError(t, err)
+	require.NotEmpty(t, objects, "must render objects because experimental config is specified")
+	require.Len(t, objects, 9, "should render expected k8s objects")
+}
+
 func TestServerDeployment_MountsGithubAppSecret(t *testing.T) {
-	ctx := renderContext(t)
+	ctx := renderContext(t, false)
 
 	objects, err := deployment(ctx)
 	require.NoError(t, err)
@@ -47,7 +65,7 @@ func TestServerDeployment_MountsGithubAppSecret(t *testing.T) {
 }
 
 func TestServerDeployment_UsesTracingConfig(t *testing.T) {
-	ctx := renderContext(t)
+	ctx := renderContext(t, false)
 
 	objects, err := deployment(ctx)
 	require.NoError(t, err)
@@ -70,7 +88,7 @@ func TestServerDeployment_UsesTracingConfig(t *testing.T) {
 	require.Equal(t, "12.5", actualSamplerParam)
 }
 
-func renderContext(t *testing.T) *common.RenderContext {
+func renderContext(t *testing.T, slowDatabase bool) *common.RenderContext {
 	var samplerType experimental.TracingSampleType = "probabilistic"
 
 	ctx, err := common.NewRenderContext(config.Config{
@@ -90,6 +108,7 @@ func renderContext(t *testing.T) *common.RenderContext {
 					SamplerType:  &samplerType,
 					SamplerParam: pointer.Float64(12.5),
 				},
+				SlowDatabase: slowDatabase,
 				Server: &experimental.ServerConfig{
 					GithubApp: &experimental.GithubApp{
 						AppId:           0,
