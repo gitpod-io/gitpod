@@ -75,7 +75,7 @@ export class PeriodicReplicator {
             console.info("Cannot find a valid sync period; skipping this time.");
             return;
         }
-        console.info(`Replicating: syncing period ${SyncPeriod.toString(period)}`);
+        console.info(`Replicating ${this.toString()}: syncing period ${SyncPeriod.toString(period)}`);
 
         const modifications = await this.tableUpdateProvider.getAllStatementsForAllTables(
             this.source,
