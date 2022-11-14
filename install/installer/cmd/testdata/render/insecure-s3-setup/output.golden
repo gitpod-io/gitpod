@@ -4650,7 +4650,10 @@ data:
       "max_idle_conns": 1000,
       "max_idle_conns_per_host": 1000,
       "redis_addr": "localhost:6379",
-      "prometheusAddr": "127.0.0.1:9500"
+      "prometheusAddr": "127.0.0.1:9500",
+      "allow_cache_domain": [
+        "open-vsx.org"
+      ]
     }
   redis.conf: "\nmaxmemory 100mb\nmaxmemory-policy allkeys-lfu\n\t"
 kind: ConfigMap
@@ -8202,7 +8205,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 7c868f444d805d107d758063ca5d27eb27acce6de2e5a5d917d0a5bb46cc13b6
+        gitpod.io/checksum_config: abc77df6fd99cdbb10a25a4e54f17ad9407f29b9bf966edab17a15024359c560
       creationTimestamp: null
       labels:
         app: gitpod

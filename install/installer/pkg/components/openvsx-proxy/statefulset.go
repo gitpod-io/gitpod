@@ -103,6 +103,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						}},
 						Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 							common.DefaultEnv(&ctx.Config),
+							common.ConfigcatEnv(ctx),
 						)),
 					}, {
 						Name:  redisContainerName,

@@ -14,7 +14,10 @@ import (
 
 func (o *OpenVSXProxy) ErrorHandler(rw http.ResponseWriter, r *http.Request, e error) {
 	reqid := r.Context().Value(REQUEST_ID_CTX).(string)
-	key := r.Context().Value(REQUEST_CACHE_KEY_CTX).(string)
+	key, ok := r.Context().Value(REQUEST_CACHE_KEY_CTX).(string)
+	if !ok {
+		return
+	}
 
 	logFields := logrus.Fields{
 		LOG_FIELD_FUNC:       "error_handler",
