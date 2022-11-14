@@ -5,9 +5,14 @@
 package auth
 
 import (
+	"bytes"
+	"context"
+	"crypto/sha256"
 	"encoding/base64"
+	"fmt"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/distribution/reference"
@@ -15,6 +20,7 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/watch"
 	"github.com/gitpod-io/gitpod/image-builder/api"
 )
 
@@ -26,24 +32,62 @@ type RegistryAuthenticator interface {
 
 // NewDockerConfigFileAuth reads a docker config file to provide authentication
 func NewDockerConfigFileAuth(fn string) (*DockerConfigFileAuth, error) {
-	fp, err := os.OpenFile(fn, os.O_RDONLY, 0600)
-	if err != nil {
-		return nil, err
-	}
-	defer fp.Close()
-
-	cfg := configfile.New(fn)
-	err = cfg.LoadFromReader(fp)
+	res := &DockerConfigFileAuth{}
+	err := res.loadFromFile(fn)
 	if err != nil {
 		return nil, err
 	}
 
-	return &DockerConfigFileAuth{cfg}, nil
+	err = watch.File(context.Background(), fn, func() {
+		res.loadFromFile(fn)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
 
 // DockerConfigFileAuth uses a Docker config file to provide authentication
 type DockerConfigFileAuth struct {
 	C *configfile.ConfigFile
+
+	hash string
+	mu   sync.RWMutex
+}
+
+func (a *DockerConfigFileAuth) loadFromFile(fn string) (err error) {
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("error loading Docker config from %s: %w", fn, err)
+		}
+	}()
+
+	cntnt, err := os.ReadFile(fn)
+	if err != nil {
+		return err
+	}
+	hash := sha256.New()
+	_, _ = hash.Write(cntnt)
+	newHash := fmt.Sprintf("%x", hash.Sum(nil))
+	if a.hash == newHash {
+		return nil
+	}
+
+	log.WithField("path", fn).Info("reloading auth from Docker config")
+
+	cfg := configfile.New(fn)
+	err = cfg.LoadFromReader(bytes.NewReader(cntnt))
+	if err != nil {
+		return err
+	}
+
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.C = cfg
+	a.hash = newHash
+
+	return nil
 }
 
 // Authenticate attempts to provide an encoded authentication string for Docker registry access
