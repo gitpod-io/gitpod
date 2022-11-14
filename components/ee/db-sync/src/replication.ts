@@ -70,39 +70,30 @@ export class PeriodicReplicator {
     }
 
     public async synchronize(ignoreStartDate: boolean): Promise<void> {
-        const now = new Date();
-        let previousRun = await this.getLastExportDate();
-        console.info(`Replicating ${this.toString()}: last ran on ${previousRun}`);
-        if (ignoreStartDate) {
-            if (previousRun && previousRun > now) {
-                console.warn(
-                    `Previous run was in the future (${previousRun} > now=${now}). Possible time sync issue between database and db-sync.`,
-                );
-            }
-
-            console.info("Synchronizing complete database (ignoring previous run)");
-            previousRun = undefined;
-        } else if (previousRun && previousRun > now) {
-            throw new Error(
-                `Previous run was in the future (${previousRun} > now=${now}). Possible time sync issue between database and db-sync.`,
-            );
+        const period = await this.getSyncPeriod({ ignoreStartDate, offsetFromNowSeconds: 5 });
+        if (period === undefined) {
+            console.info("Cannot find a valid sync period; skipping this time.");
+            return;
         }
+        console.info(`Replicating: syncing period ${SyncPeriod.toString(period)}`);
 
         const modifications = await this.tableUpdateProvider.getAllStatementsForAllTables(
             this.source,
             this.tableSet,
-            previousRun,
+            period.from,
+            period.to,
         );
         const deletions = modifications.deletions;
         const updates = modifications.updates;
         const total = [...deletions, ...updates];
         console.debug(`Collected ${total.length} statements`);
         try {
-            /* nowait */ this.logStatements(now, total);
+            /* nowait */ this.logStatements(period.to, total);
 
             await Promise.all([this.source, ...this.targets].map((target) => this.update(target, deletions)));
             await Promise.all(this.targets.map((target) => this.update(target, updates)));
-            await this.markLastExportDate(now);
+
+            await this.markLastExportDate(period.to);
         } catch (err) {
             console.error("Error during replication", err);
         }
@@ -173,6 +164,47 @@ export class PeriodicReplicator {
         } catch (err) {
             console.debug("Error while cleaning up old replicator logs", err);
         }
+    }
+
+    protected async getSyncPeriod(options: {
+        ignoreStartDate: boolean;
+        offsetFromNowSeconds: number;
+    }): Promise<SyncPeriod | undefined> {
+        let previousRun = await this.getLastExportDate();
+        if (options.ignoreStartDate) {
+            console.info("Synchronizing database from beginning of time (ignoring previous run)");
+            previousRun = undefined;
+        }
+
+        const periodEnd = await this.getNextPeriodEnd(options.offsetFromNowSeconds);
+        if (previousRun && periodEnd.getTime() <= previousRun.getTime()) {
+            console.warn(
+                `Period end (now - ${
+                    options.offsetFromNowSeconds
+                }s) '${periodEnd.toISOString()}' <= previous run '${previousRun.toISOString()}', no valid SyncPeriod.`,
+            );
+            return undefined;
+        }
+
+        return {
+            to: periodEnd,
+            from: previousRun,
+        };
+    }
+
+    protected async getNextPeriodEnd(offsetSeconds: number): Promise<Date> {
+        // End of syncperiod: now - Xs, DB clock
+        const rows = (await query(
+            this.source,
+            // Why CURRENT_TIMESTAMP(3) you ask? Well, because we want to match the precision of getLastExportDate, which is (indirectly) governed by "toISOString" in "markLastExportDate" below.
+            "SELECT SUBTIME(CURRENT_TIMESTAMP(3), SEC_TO_TIME(?)) as upperBound",
+            { values: [offsetSeconds] }, // seconds in the past
+        )) as { upperBound: string | undefined }[];
+        const upperBound = rows[0].upperBound;
+        if (!upperBound) {
+            throw new Error("Unable to retrieve next period end: " + JSON.stringify(rows));
+        }
+        return new Date(upperBound);
     }
 
     protected async getLastExportDate(): Promise<Date | undefined> {
@@ -250,5 +282,17 @@ export class PeriodicReplicator {
 
     public toString(): string {
         return `${this.source.name} -> [ ${this.targets.map((t) => t.name).join(", ")} ]`;
+    }
+}
+
+interface SyncPeriod {
+    to: Date;
+    from: Date | undefined;
+}
+
+namespace SyncPeriod {
+    export function toString(p: SyncPeriod): string {
+        const from = p.from ? p.from.toISOString() : "---";
+        return `${from} -> ${p.to.toISOString()}`;
     }
 }
