@@ -4,19 +4,12 @@
 package usage
 
 import (
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
-	cfg := getExperimentalUsageConfig(ctx)
-	if cfg == nil {
-		return nil, nil
-	}
-
-	log.Debug("Detected experimental.WebApp.Usage configuration", cfg)
 	return common.CompositeRenderFunc(
 		deployment,
 		rolebinding,

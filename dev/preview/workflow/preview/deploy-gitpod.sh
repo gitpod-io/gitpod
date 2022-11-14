@@ -362,7 +362,6 @@ yq w -i "${INSTALLER_CONFIG_PATH}" sshGatewayHostKey.name "host-key"
 #
 # configureUsage
 #
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.enabled "true"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.schedule "1m"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.billInstancesAfter "2022-08-11T08:05:32.499Z"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.defaultSpendingLimit.forUsers "500"

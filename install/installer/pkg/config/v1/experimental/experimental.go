@@ -267,7 +267,6 @@ type PublicAPIConfig struct {
 }
 
 type UsageConfig struct {
-	Enabled                          bool                     `json:"enabled"`
 	Schedule                         string                   `json:"schedule"`
 	ResetUsageSchedule               string                   `json:"resetUsageSchedule"`
 	BillInstancesAfter               *time.Time               `json:"billInstancesAfter"`

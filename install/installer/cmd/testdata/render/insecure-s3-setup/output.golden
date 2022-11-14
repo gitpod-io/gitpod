@@ -361,6 +361,36 @@ spec:
     - Ingress
 
 ---
+# networking.k8s.io/v1/NetworkPolicy usage
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: usage
+  name: usage
+  namespace: default
+spec:
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              component: server
+        - podSelector:
+            matchLabels:
+              component: public-api-server
+      ports:
+        - port: 9001
+          protocol: TCP
+  podSelector:
+    matchLabels:
+      app: gitpod
+      component: usage
+  policyTypes:
+    - Ingress
+
+---
 # networking.k8s.io/v1/NetworkPolicy workspace-default
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -982,6 +1012,18 @@ metadata:
     app: gitpod
     component: server
   name: server
+  namespace: default
+---
+# v1/ServiceAccount usage
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: usage
+  name: usage
   namespace: default
 ---
 # v1/ServiceAccount workspace
@@ -2675,6 +2717,78 @@ data:
         app: gitpod
         component: public-api-server
       name: public-api-server
+      namespace: default
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      annotations:
+        gitpod.io/checksum_config: 2e5e440024a9f86e101eefce306c4888024c495f968ee92ee01e072aad7fa13e
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: usage
+      name: usage
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: usage
+      name: default-usage-rb-kube-rbac-proxy
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: usage
+      name: usage
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: usage
+      name: usage
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: usage
+      name: usage
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: usage
+        kind: service
+      name: usage
+      namespace: default
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: usage
+      name: usage
       namespace: default
     ---
     apiVersion: v1
@@ -5134,6 +5248,48 @@ metadata:
   name: server-ide-config
   namespace: default
 ---
+# v1/ConfigMap usage
+apiVersion: v1
+data:
+  config.json: |-
+    {
+      "controllerSchedule": "15m0s",
+      "resetUsageSchedule": "15m0s",
+      "creditsPerMinuteByWorkspaceClass": {
+        "default": 0.1666666667
+      },
+      "server": {
+        "services": {
+          "grpc": {
+            "address": "0.0.0.0:9001"
+          }
+        }
+      },
+      "defaultSpendingLimit": {
+        "forTeams": 1000000000,
+        "forUsers": 1000000000,
+        "minForUsersOnStripe": 0
+      },
+      "stripePrices": {
+        "individualUsagePriceIds": {
+          "eur": "",
+          "usd": ""
+        },
+        "teamUsagePriceIds": {
+          "eur": "",
+          "usd": ""
+        }
+      }
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: usage
+  name: usage
+  namespace: default
+---
 # v1/ConfigMap workspace-templates
 apiVersion: v1
 kind: ConfigMap
@@ -5863,6 +6019,24 @@ subjects:
   name: server
   namespace: default
 ---
+# rbac.authorization.k8s.io/v1/ClusterRoleBinding default-usage-rb-kube-rbac-proxy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: usage
+  name: default-usage-rb-kube-rbac-proxy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-kube-rbac-proxy
+subjects:
+- kind: ServiceAccount
+  name: usage
+  namespace: default
+---
 # rbac.authorization.k8s.io/v1/ClusterRoleBinding default-ws-daemon-rb
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -6533,6 +6707,24 @@ subjects:
 - kind: ServiceAccount
   name: server
 ---
+# rbac.authorization.k8s.io/v1/RoleBinding usage
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: usage
+  name: usage
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-ns-psp:restricted-root-user
+subjects:
+- kind: ServiceAccount
+  name: usage
+---
 # rbac.authorization.k8s.io/v1/RoleBinding workspace
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -7142,6 +7334,30 @@ spec:
   selector:
     app: gitpod
     component: server
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
+# v1/Service usage
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: usage
+    kind: service
+  name: usage
+  namespace: default
+spec:
+  ports:
+  - name: grpc
+    port: 9001
+    protocol: TCP
+    targetPort: 9001
+  selector:
+    app: gitpod
+    component: usage
   type: ClusterIP
 status:
   loadBalancer: {}
@@ -9783,6 +9999,191 @@ spec:
         secret:
           optional: true
           secretName: twilio-secret
+status: {}
+---
+# apps/v1/Deployment usage
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    gitpod.io/checksum_config: 2e5e440024a9f86e101eefce306c4888024c495f968ee92ee01e072aad7fa13e
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: usage
+  name: usage
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitpod
+      component: usage
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: usage
+      name: usage
+      namespace: default
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: gitpod.io/workload_meta
+                operator: Exists
+      containers:
+      - args:
+        - run
+        - --config=/config.json
+        env:
+        - name: GITPOD_DOMAIN
+          value: gitpod.example.com
+        - name: GITPOD_INSTALLATION_SHORTNAME
+          value: default
+        - name: GITPOD_REGION
+          value: local
+        - name: HOST_URL
+          value: https://gitpod.example.com
+        - name: KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBE_DOMAIN
+          value: svc.cluster.local
+        - name: LOG_LEVEL
+          value: info
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              key: host
+              name: mysql
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              key: port
+              name: mysql
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: mysql
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: mysql
+        - name: DB_ENCRYPTION_KEYS
+          valueFrom:
+            secretKeyRef:
+              key: encryptionKeys
+              name: mysql
+        image: eu.gcr.io/gitpod-core-dev/build/usage:test
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /live
+            port: 9501
+            scheme: HTTP
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: usage
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ready
+            port: 9501
+            scheme: HTTP
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+        securityContext:
+          privileged: false
+        volumeMounts:
+        - mountPath: /config.json
+          name: config
+          readOnly: true
+          subPath: config.json
+      - args:
+        - --logtostderr
+        - --insecure-listen-address=[$(IP)]:9500
+        - --upstream=http://127.0.0.1:9500/
+        env:
+        - name: IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        image: quay.io/brancz/kube-rbac-proxy:v0.12.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 9500
+          name: metrics
+        resources:
+          requests:
+            cpu: 1m
+            memory: 30Mi
+        securityContext:
+          runAsGroup: 65532
+          runAsNonRoot: true
+          runAsUser: 65532
+        terminationMessagePolicy: FallbackToLogsOnError
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: false
+      initContainers:
+      - args:
+        - -v
+        - database
+        env:
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              key: host
+              name: mysql
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              key: port
+              name: mysql
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: mysql
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: mysql
+        - name: DB_ENCRYPTION_KEYS
+          valueFrom:
+            secretKeyRef:
+              key: encryptionKeys
+              name: mysql
+        image: eu.gcr.io/gitpod-core-dev/build/service-waiter:test
+        name: database-waiter
+        resources: {}
+        securityContext:
+          privileged: false
+          runAsUser: 31001
+      restartPolicy: Always
+      serviceAccountName: usage
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          name: usage
+        name: config
 status: {}
 ---
 # apps/v1/Deployment ws-manager
