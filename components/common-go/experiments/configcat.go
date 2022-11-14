@@ -6,16 +6,18 @@ package experiments
 
 import (
 	"context"
+	"time"
+
 	configcat "github.com/configcat/go-sdk/v7"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/sirupsen/logrus"
-	"time"
 )
 
 const (
-	projectIDAttribute = "project_id"
-	teamIDAttribute    = "team_id"
-	teamNameAttribute  = "team_name"
+	projectIDAttribute      = "project_id"
+	teamIDAttribute         = "team_id"
+	teamNameAttribute       = "team_name"
+	vscodeClientIDAttribute = "vscode_client_id"
 )
 
 func newConfigCatClient(sdkKey string) *configCatClient {
@@ -51,7 +53,7 @@ func (c *configCatClient) GetStringValue(_ context.Context, experimentName strin
 	return c.client.GetStringValue(experimentName, defaultValue, attributesToUser(attributes))
 }
 
-func attributesToUser(attributes Attributes) configcat.UserData {
+func attributesToUser(attributes Attributes) *configcat.UserData {
 	custom := make(map[string]string)
 
 	if attributes.TeamID != "" {
@@ -66,7 +68,11 @@ func attributesToUser(attributes Attributes) configcat.UserData {
 		custom[projectIDAttribute] = attributes.ProjectID
 	}
 
-	return configcat.UserData{
+	if attributes.VSCodeClientID != "" {
+		custom[vscodeClientIDAttribute] = attributes.VSCodeClientID
+	}
+
+	return &configcat.UserData{
 		Identifier: attributes.UserID,
 		Email:      attributes.UserEmail,
 		Country:    "",

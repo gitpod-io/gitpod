@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/eko/gocache/cache"
+	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
@@ -21,6 +22,7 @@ import (
 const (
 	REQUEST_CACHE_KEY_CTX = "gitpod-cache-key"
 	REQUEST_ID_CTX        = "gitpod-request-id"
+	UPSTREAM_CTX          = "gitpod-upstream"
 	LOG_FIELD_REQUEST_ID  = "request_id"
 	LOG_FIELD_REQUEST     = "request"
 	LOG_FIELD_FUNC        = "func"
@@ -28,13 +30,41 @@ const (
 )
 
 type OpenVSXProxy struct {
-	Config       *Config
-	upstreamURL  *url.URL
-	cacheManager *cache.Cache
-	metrics      *Prometheus
+	Config             *Config
+	defaultUpstreamURL *url.URL
+	cacheManager       *cache.Cache
+	metrics            *Prometheus
+	experiments        experiments.Client
+}
+
+func (o *OpenVSXProxy) GetUpstreamUrl(r *http.Request) *url.URL {
+	reqid := r.Context().Value(REQUEST_ID_CTX).(string)
+
+	clientID := r.Header.Get("x-market-client-id")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	upstream := o.experiments.GetStringValue(ctx, "openvsx_proxy_upstream", o.Config.URLUpstream, experiments.Attributes{
+		UserID:         reqid,
+		VSCodeClientID: clientID,
+	})
+	upstreamUrl, err := url.Parse(upstream)
+	if err != nil {
+		return o.defaultUpstreamURL
+	}
+	return upstreamUrl
+}
+
+func (o *OpenVSXProxy) IsDisabledCache(u *url.URL) bool {
+	for _, v := range o.Config.AllowCacheDomain {
+		if strings.ToLower(u.Host) == v {
+			return false
+		}
+	}
+	return true
 }
 
 func (o *OpenVSXProxy) Setup() error {
+	o.experiments = experiments.NewClient()
 	o.metrics = &Prometheus{}
 	o.metrics.Start(o.Config)
 
@@ -43,7 +73,7 @@ func (o *OpenVSXProxy) Setup() error {
 		return xerrors.Errorf("error setting up cache: %v", err)
 	}
 
-	o.upstreamURL, err = url.Parse(o.Config.URLUpstream)
+	o.defaultUpstreamURL, err = url.Parse(o.Config.URLUpstream)
 	if err != nil {
 		return xerrors.Errorf("error parsing upstream URL: %v", err)
 	}
@@ -54,12 +84,12 @@ func (o *OpenVSXProxy) Setup() error {
 }
 
 func (o *OpenVSXProxy) Start() (shutdown func(context.Context) error, err error) {
-	if o.upstreamURL == nil {
+	if o.defaultUpstreamURL == nil {
 		if err := o.Setup(); err != nil {
 			return nil, err
 		}
 	}
-	proxy := newSingleHostReverseProxy(o.upstreamURL)
+	proxy := newSingleHostReverseProxy()
 	proxy.ErrorHandler = o.ErrorHandler
 	proxy.ModifyResponse = o.ModifyResponse
 	proxy.Transport = &DurationTrackingTransport{o: o}
@@ -94,7 +124,7 @@ type DurationTrackingTransport struct {
 
 func (t *DurationTrackingTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	reqid := r.Context().Value(REQUEST_ID_CTX).(string)
-	key := r.Context().Value(REQUEST_CACHE_KEY_CTX).(string)
+	key, _ := r.Context().Value(REQUEST_CACHE_KEY_CTX).(string)
 
 	logFields := logrus.Fields{
 		LOG_FIELD_FUNC:       "transport_roundtrip",
@@ -149,9 +179,11 @@ func joinURLPath(a, b *url.URL) (path, rawpath string) {
 	return a.Path + b.Path, apath + bpath
 }
 
-func newSingleHostReverseProxy(target *url.URL) *httputil.ReverseProxy {
-	targetQuery := target.RawQuery
+func newSingleHostReverseProxy() *httputil.ReverseProxy {
 	director := func(req *http.Request) {
+		target := req.Context().Value(UPSTREAM_CTX).(*url.URL)
+		targetQuery := target.RawQuery
+
 		originalHost := req.Host
 
 		req.URL.Scheme = target.Scheme

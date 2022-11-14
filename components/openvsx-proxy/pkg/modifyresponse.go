@@ -19,7 +19,10 @@ import (
 
 func (o *OpenVSXProxy) ModifyResponse(r *http.Response) error {
 	reqid := r.Request.Context().Value(REQUEST_ID_CTX).(string)
-	key := r.Request.Context().Value(REQUEST_CACHE_KEY_CTX).(string)
+	key, ok := r.Request.Context().Value(REQUEST_CACHE_KEY_CTX).(string)
+	if !ok {
+		return nil
+	}
 
 	logFields := logrus.Fields{
 		LOG_FIELD_FUNC:            "response_handler",

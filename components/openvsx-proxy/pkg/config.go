@@ -24,6 +24,7 @@ type Config struct {
 	MaxIdleConnsPerHost  int           `json:"max_idle_conns_per_host"`
 	RedisAddr            string        `json:"redis_addr"`
 	PrometheusAddr       string        `json:"prometheusAddr"`
+	AllowCacheDomain     []string      `json:"allow_cache_domain"`
 }
 
 // Validate validates the configuration to catch issues during startup and not at runtime

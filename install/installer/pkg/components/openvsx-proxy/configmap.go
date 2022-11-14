@@ -6,6 +6,7 @@ package openvsx_proxy
 
 import (
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/util"
@@ -17,6 +18,10 @@ import (
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
+	domain, err := url.Parse(ctx.Config.OpenVSX.URL)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse openvsx url: %w", err)
+	}
 	imgcfg := openvsx.Config{
 		LogDebug:             false,
 		CacheDurationRegular: util.Duration(time.Minute * 5),
@@ -27,6 +32,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		MaxIdleConnsPerHost:  1000,
 		PrometheusAddr:       common.LocalhostPrometheusAddr(),
 		RedisAddr:            "localhost:6379",
+		AllowCacheDomain:     []string{domain.Host},
 	}
 
 	redisCfg := `

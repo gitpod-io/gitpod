@@ -46,6 +46,17 @@ func (o *OpenVSXProxy) Handler(p *httputil.ReverseProxy) func(http.ResponseWrite
 		log.WithFields(logFields).Debug("handling request")
 		r = r.WithContext(context.WithValue(r.Context(), REQUEST_ID_CTX, reqid))
 
+		upstream := o.GetUpstreamUrl(r)
+		r = r.WithContext(context.WithValue(r.Context(), UPSTREAM_CTX, upstream))
+
+		if o.IsDisabledCache(upstream) {
+			log.WithFields(logFields).WithField("upstream", upstream.String()).Debug("go without cache")
+			p.ServeHTTP(rw, r)
+			o.finishLog(logFields, start, false, false)
+			o.metrics.DurationRequestProcessingHistogram.Observe(time.Since(start).Seconds())
+			return
+		}
+
 		key, err := o.key(r)
 		if err != nil {
 			log.WithFields(logFields).WithError(err).Error("cannot create cache key")

@@ -22,6 +22,9 @@ type Attributes struct {
 	ProjectID string
 	TeamID    string
 	TeamName  string
+
+	// this is vscode header `x-market-client-id`
+	VSCodeClientID string
 }
 
 // NewClient constructs a new experiments.Client. This is NOT A SINGLETON.

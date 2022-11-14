@@ -29,6 +29,8 @@ require (
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
+	github.com/blang/semver v3.5.1+incompatible // indirect
+	github.com/configcat/go-sdk/v7 v7.6.0 // indirect
 	github.com/onsi/ginkgo v1.15.0 // indirect
 	github.com/onsi/gomega v1.10.5 // indirect
 )
