@@ -1,6 +1,7 @@
 # Change Log
 
 ## November 2022
+- [Gitpod CLI] Display helper for unknown subcommands ([#14630](https://github.com/gitpod-io/gitpod/pull/14630)) - [@andreafalzetti](https://github.com/andreafalzetti)
 - Usage view allows for arbitrary date ranges ([#14515](https://github.com/gitpod-io/gitpod/pull/14515)) - [@svenefftinge](https://github.com/svenefftinge)
 - Ensure that workspace do not crash due to OOM kills ([#14507](https://github.com/gitpod-io/gitpod/pull/14507)) - [@Furisto](https://github.com/Furisto)
 - Workspace classes can be set in the project settings ([#14535](https://github.com/gitpod-io/gitpod/pull/14535)) - [@svenefftinge](https://github.com/svenefftinge)
