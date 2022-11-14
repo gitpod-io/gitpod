@@ -12,10 +12,10 @@
     <vendor>Gitpod</vendor>
     <description>Provides integrations within a Gitpod workspace.</description>
 
-
     <!-- Product and plugin compatibility requirements -->
     <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
+    <depends optional="true" config-file="maven.xml">org.jetbrains.idea.maven</depends>
     <dependencies>
         <plugin id="Git4Idea"/>
         <plugin id="org.jetbrains.plugins.terminal"/>
