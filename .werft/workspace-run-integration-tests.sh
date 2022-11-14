@@ -76,12 +76,12 @@ function gc_integration_branches ()
 {
     werft log phase "GC too old integration branches" "GC too old integration branches"
     now=$(date --utc +%s)
-    for br in $(git branch --format="%(refname:short)" -a | grep -v HEAD); do 
-        if echo $br | grep -q "origin/wk-inte-test/*"; then
-            last_commite_date=$(date --utc --date "$(git show --format="%ci" $br | head -n 1)" +%s)
-            diff=$(( $now-$last_commite_date ))
+    for br in $(git branch --format="%(refname:short)" -a | grep -v HEAD); do
+        if echo "$br" | grep -q "origin/wk-inte-test/*"; then
+            last_commite_date=$(date --utc --date "$(git show --format="%ci" "$br" | head -n 1)" +%s)
+            diff=$(( now-last_commite_date ))
             if [[ $diff > $BRANCH_TIMEOUT_SEC ]]; then
-                local_branch_name=$(echo $br | cut -d '/' -f2-)
+                local_branch_name=$(echo "$br" | cut -d '/' -f2-)
                 werft log slice "delete $local_branch_name"
                 set +e
                 git push origin :"$local_branch_name"
@@ -182,34 +182,22 @@ mkdir -p /home/gitpod/.ssh
 werft log slice "kubectx" --done
 
 werft log phase "integration test" "integration test"
-args=()
-args+=( "-kubeconfig=/home/gitpod/.kube/config" )
-args+=( "-namespace=default" )
-[[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
-args+=( "-timeout=120m" )
-args+=( "-p=2" )
+TEST_DIR=$(basename "/workspace/test/")
+cd "${TEST_DIR}"
+werft log slice "running integration test"
+export INTEGRATION_TEST_USERNAME="$USERNAME"
+export INTEGRATION_TEST_USER_TOKEN="$USER_TOKEN"
+set +e
+KUBECONFIG=/home/gitpod/.kube/config GOOGLE_APPLICATION_CREDENTIALS=/home/gitpod/.config/gcloud/legacy_credentials/cd-gitpod-deployer@gitpod-core-dev.iam.gserviceaccount.com/adc.json ./run.sh workspace
+RC=${PIPESTATUS[0]}
+set -e
+RUN_COUNT=1
+FAILURE_COUNT="$RC"
 
-WK_TEST_LIST=(/workspace/test/tests/components/content-service /workspace/test/tests/components/image-builder /workspace/test/tests/components/ws-daemon /workspace/test/tests/components/ws-manager /workspace/test/tests/workspace)
-for TEST_PATH in "${WK_TEST_LIST[@]}"
-do
-    TEST_NAME=$(basename "${TEST_PATH}")
-    echo "running integration for ${TEST_NAME}" | werft log slice "test-${TEST_NAME}"
-    RUN_COUNT=$((RUN_COUNT+1))
+if [ "${RC}" -ne "0" ]; then
+    werft log slice "running integration test" --fail "${RC}"
+else
+    werft log slice "running integration test" --done
+fi
 
-    cd "${TEST_PATH}"
-    set +e
-    go test -v ./... "${args[@]}" 2>&1 | tee "${TEST_NAME}".log | werft log slice "test-${TEST_NAME}"
-    RC=${PIPESTATUS[0]}
-    set -e
-
-    if [ "${RC}" -ne "0" ]; then
-      FAILURE_COUNT=$((FAILURE_COUNT+1))
-      FAILURE_TESTS["${TEST_NAME}"]=$(grep "\-\-\- FAIL: " "${TEST_PATH}"/"${TEST_NAME}".log)
-      werft log slice "test-${TEST_NAME}" --fail "${RC}"
-    else
-      werft log slice "test-${TEST_NAME}" --done
-    fi
-done
-
-exit $FAILURE_COUNT
-
+exit "${RC}"
