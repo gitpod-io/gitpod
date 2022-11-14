@@ -270,7 +270,11 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                 </div>
                             </div>
                             <div>
-                                <Link to="./usage">
+                                <Link
+                                    to={`./usage#${billingCycleFrom.format("YYYY-MM-DD")}:${billingCycleTo.format(
+                                        "YYYY-MM-DD",
+                                    )}`}
+                                >
                                     <button className="secondary">View Usage →</button>
                                 </Link>
                             </div>
