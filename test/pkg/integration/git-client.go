@@ -12,7 +12,7 @@ import (
 )
 
 type GitClient struct {
-	rpc *RpcClient
+	rpcClient *RpcClient
 }
 
 func Git(rsa *RpcClient) GitClient {
@@ -21,7 +21,7 @@ func Git(rsa *RpcClient) GitClient {
 
 func (g GitClient) GetBranch(workspaceRoot string, ignoreError bool) (string, error) {
 	var resp agent.ExecResponse
-	err := g.rpc.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+	err := g.rpcClient.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 		Dir:     workspaceRoot,
 		Command: "git",
 		Args:    []string{"rev-parse", "--abbrev-ref", "HEAD"},
@@ -45,7 +45,7 @@ func (g GitClient) Add(dir string, files ...string) error {
 		args = append(args, files...)
 	}
 	var resp agent.ExecResponse
-	err := g.rpc.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+	err := g.rpcClient.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 		Dir:     dir,
 		Command: "git",
 		Args:    args,
@@ -61,7 +61,7 @@ func (g GitClient) Add(dir string, files ...string) error {
 
 func (g GitClient) ConfigSafeDirectory() error {
 	var resp agent.ExecResponse
-	err := g.rpc.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+	err := g.rpcClient.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 		Command: "git",
 		Args:    []string{"config", "--global", "--add", "safe.directory", "'*'"},
 	}, &resp)
@@ -77,7 +77,7 @@ func (g GitClient) ConfigSafeDirectory() error {
 func (g GitClient) ConfigUserName(dir string) error {
 	args := []string{"config", "--local", "user.name", "integration-test"}
 	var resp agent.ExecResponse
-	err := g.rpc.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+	err := g.rpcClient.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 		Dir:     dir,
 		Command: "git",
 		Args:    args,
@@ -94,7 +94,7 @@ func (g GitClient) ConfigUserName(dir string) error {
 func (g GitClient) ConfigUserEmail(dir string, files ...string) error {
 	args := []string{"config", "--local", "user.email", "integration-test@gitpod.io"}
 	var resp agent.ExecResponse
-	err := g.rpc.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+	err := g.rpcClient.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 		Dir:     dir,
 		Command: "git",
 		Args:    args,
@@ -114,7 +114,7 @@ func (g GitClient) Commit(dir string, message string, all bool) error {
 		args = append(args, "--all")
 	}
 	var resp agent.ExecResponse
-	err := g.rpc.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+	err := g.rpcClient.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 		Dir:     dir,
 		Command: "git",
 		Args:    args,
@@ -137,7 +137,7 @@ func (g GitClient) Push(dir string, force bool, moreArgs ...string) error {
 		args = append(args, "--force")
 	}
 	var resp agent.ExecResponse
-	err := g.rpc.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+	err := g.rpcClient.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 		Dir:     dir,
 		Command: "git",
 		Args:    args,
