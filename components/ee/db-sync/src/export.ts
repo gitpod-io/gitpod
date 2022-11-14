@@ -66,7 +66,7 @@ export class TableUpdate {
             dataQueryParams.push(this.start);
         }
         if (this.end) {
-            timeConditions.push(`${this.table.timeColumn} <= ?`);
+            timeConditions.push(`${this.table.timeColumn} < ?`);
             dataQueryParams.push(this.end);
         }
         if (this.table.expiryColumn) {
