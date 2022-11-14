@@ -20,11 +20,13 @@ const FeatureFlagContext = createContext<{
     showUsageView: boolean;
     showUseLastSuccessfulPrebuild: boolean;
     usePublicApiTeamsService: boolean;
+    enablePersonalAccessTokens: boolean;
 }>({
     showPersistentVolumeClaimUI: false,
     showUsageView: false,
     showUseLastSuccessfulPrebuild: false,
     usePublicApiTeamsService: false,
+    enablePersonalAccessTokens: false,
 });
 
 const FeatureFlagContextProvider: React.FC = ({ children }) => {
@@ -37,6 +39,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const [showUsageView, setShowUsageView] = useState<boolean>(false);
     const [showUseLastSuccessfulPrebuild, setShowUseLastSuccessfulPrebuild] = useState<boolean>(false);
     const [usePublicApiTeamsService, setUsePublicApiTeamsService] = useState<boolean>(false);
+    const [enablePersonalAccessTokens, setPersonalAccessTokensEnabled] = useState<boolean>(false);
 
     useEffect(() => {
         if (!user) return;
@@ -46,6 +49,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 usage_view: { defaultValue: false, setter: setShowUsageView },
                 showUseLastSuccessfulPrebuild: { defaultValue: false, setter: setShowUseLastSuccessfulPrebuild },
                 publicApiExperimentalTeamsService: { defaultValue: false, setter: setUsePublicApiTeamsService },
+                personalAccessTokensEnabled: { defaultValue: false, setter: setPersonalAccessTokensEnabled },
             };
             for (const [flagName, config] of Object.entries(featureFlags)) {
                 if (teams) {
@@ -83,6 +87,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 showUsageView,
                 showUseLastSuccessfulPrebuild,
                 usePublicApiTeamsService,
+                enablePersonalAccessTokens,
             }}
         >
             {children}

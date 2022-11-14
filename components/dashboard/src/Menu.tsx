@@ -113,6 +113,7 @@ export default function Menu() {
         "keys",
         "integrations",
         "preferences",
+        "personal-tokens",
     ]);
     const isAdminUI = inResource(window.location.pathname, ["admin"]);
 
