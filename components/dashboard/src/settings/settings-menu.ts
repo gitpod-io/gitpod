@@ -16,9 +16,13 @@ import {
     settingsPathTeams,
     settingsPathVariables,
     settingsPathSSHKeys,
+    settingsPathPersonalAccessTokens,
 } from "./settings.routes";
 
-export default function getSettingsMenu(params: { userBillingMode?: BillingMode }) {
+export default function getSettingsMenu(params: {
+    userBillingMode?: BillingMode;
+    enablePersonalAccessTokens?: boolean;
+}) {
     return [
         {
             title: "Account",
@@ -29,6 +33,14 @@ export default function getSettingsMenu(params: { userBillingMode?: BillingMode 
             link: [settingsPathNotifications],
         },
         ...renderBillingMenuEntries(params.userBillingMode),
+        ...(params.enablePersonalAccessTokens
+            ? [
+                  {
+                      title: "Personal Access Tokens",
+                      link: [settingsPathPersonalAccessTokens],
+                  },
+              ]
+            : []),
         {
             title: "Variables",
             link: [settingsPathVariables],
