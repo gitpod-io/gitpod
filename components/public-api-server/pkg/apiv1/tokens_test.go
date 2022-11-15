@@ -12,24 +12,30 @@ import (
 
 	connect "github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/experiments"
+	"github.com/gitpod-io/gitpod/common-go/experiments/experimentstest"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/golang/mock/gomock"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
 func TestTokensService_CreatePersonalAccessTokenWithoutFeatureFlag(t *testing.T) {
-	t.Run("returns a personal access token", func(t *testing.T) {
-		serverMock, client := setupTokensService(t)
+	experimentsClient := &experimentstest.Client{
+		BoolMatcher: func(ctx context.Context, experiment string, defaultValue bool, attributes experiments.Attributes) bool {
+			return experiment == experiments.PersonalAccessTokensEnabledFlag
+		},
+	}
 
-		user := &protocol.User{
-			ID:           uuid.New().String(),
-			Name:         "Someone",
-			CreationDate: "2022-11-15T10:10:10.000Z",
-		}
+	user := newUser(&protocol.User{})
+
+	t.Run("permission denied when feature flag is not enabled", func(t *testing.T) {
+		serverMock, client := setupTokensService(t, &experimentstest.Client{
+			BoolMatcher: func(ctx context.Context, experiment string, defaultValue bool, attributes experiments.Attributes) bool {
+				return false
+			},
+		})
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
@@ -38,9 +44,18 @@ func TestTokensService_CreatePersonalAccessTokenWithoutFeatureFlag(t *testing.T)
 		require.Error(t, err, "This feature is currently in beta. If you would like to be part of the beta, please contact us.")
 		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
 	})
+
+	t.Run("unimplemented when feature flag enabled", func(t *testing.T) {
+		serverMock, client := setupTokensService(t, experimentsClient)
+
+		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
+
+		_, err := client.CreatePersonalAccessToken(context.Background(), &connect.Request[v1.CreatePersonalAccessTokenRequest]{})
+		require.Equal(t, connect.CodeUnimplemented, connect.CodeOf(err))
+	})
 }
 
-func setupTokensService(t *testing.T) (*protocol.MockAPIInterface, v1connect.TokensServiceClient) {
+func setupTokensService(t *testing.T, expClient experiments.Client) (*protocol.MockAPIInterface, v1connect.TokensServiceClient) {
 	t.Helper()
 
 	ctrl := gomock.NewController(t)
@@ -48,7 +63,7 @@ func setupTokensService(t *testing.T) (*protocol.MockAPIInterface, v1connect.Tok
 
 	serverMock := protocol.NewMockAPIInterface(ctrl)
 
-	svc := NewTokensService(&FakeServerConnPool{api: serverMock}, experiments.NewAlwaysReturningDefaultValueClient())
+	svc := NewTokensService(&FakeServerConnPool{api: serverMock}, expClient)
 
 	_, handler := v1connect.NewTokensServiceHandler(svc, connect.WithInterceptors(auth.NewServerInterceptor()))
 
