@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/bufbuild/connect-go"
+	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 
 	"github.com/gitpod-io/gitpod/components/public-api/go/config"
@@ -39,6 +40,8 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	if err != nil {
 		return fmt.Errorf("failed to setup connection pool: %w", err)
 	}
+
+	expClient := experiments.NewClient()
 
 	srv, err := baseserver.New("public_api_server",
 		baseserver.WithLogger(logger),
@@ -70,7 +73,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 
 	srv.HTTPMux().Handle("/stripe/invoices/webhook", handlers.ContentTypeHandler(stripeWebhookHandler, "application/json"))
 
-	if registerErr := register(srv, connPool); registerErr != nil {
+	if registerErr := register(srv, connPool, expClient); registerErr != nil {
 		return fmt.Errorf("failed to register services: %w", registerErr)
 	}
 
@@ -81,7 +84,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	return nil
 }
 
-func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool) error {
+func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool, expClient experiments.Client) error {
 	proxy.RegisterMetrics(srv.MetricsRegistry())
 
 	connectMetrics := NewConnectMetrics()
@@ -104,7 +107,7 @@ func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool) error
 	teamsRoute, teamsServiceHandler := v1connect.NewTeamsServiceHandler(apiv1.NewTeamsService(connPool), handlerOptions...)
 	srv.HTTPMux().Handle(teamsRoute, teamsServiceHandler)
 
-	tokensRoute, tokensServiceHandler := v1connect.NewTokensServiceHandler(apiv1.NewTokensService(), handlerOptions...)
+	tokensRoute, tokensServiceHandler := v1connect.NewTokensServiceHandler(apiv1.NewTokensService(connPool, expClient), handlerOptions...)
 	srv.HTTPMux().Handle(tokensRoute, tokensServiceHandler)
 
 	userRoute, userServiceHandler := v1connect.NewUserServiceHandler(apiv1.NewUserService(connPool), handlerOptions...)

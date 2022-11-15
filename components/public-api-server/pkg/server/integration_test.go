@@ -12,6 +12,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
+	"github.com/gitpod-io/gitpod/common-go/experiments"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
@@ -28,9 +29,9 @@ func TestPublicAPIServer_v1_WorkspaceService(t *testing.T) {
 	gitpodAPI, err := url.Parse("wss://main.preview.gitpod-dev.com/api/v1")
 	require.NoError(t, err)
 
-	connPool := &proxy.NoConnectionPool{ServerAPI: gitpodAPI}
+	connPool := proxy.ServerConnectionPool(&proxy.NoConnectionPool{ServerAPI: gitpodAPI})
 
-	require.NoError(t, register(srv, connPool))
+	require.NoError(t, register(srv, connPool, experiments.NewAlwaysReturningDefaultValueClient()))
 	baseserver.StartServerForTests(t, srv)
 
 	workspaceClient := v1connect.NewWorkspacesServiceClient(http.DefaultClient, srv.HTTPAddress(), connect.WithInterceptors(auth.NewClientInterceptor("some-token")))
@@ -57,9 +58,9 @@ func TestConnectWorkspaceService_RequiresAuth(t *testing.T) {
 	gitpodAPI, err := url.Parse("wss://main.preview.gitpod-dev.com/api/v1")
 	require.NoError(t, err)
 
-	connPool := &proxy.NoConnectionPool{ServerAPI: gitpodAPI}
+	connPool := proxy.ServerConnectionPool(&proxy.NoConnectionPool{ServerAPI: gitpodAPI})
 
-	require.NoError(t, register(srv, connPool))
+	require.NoError(t, register(srv, connPool, experiments.NewAlwaysReturningDefaultValueClient()))
 
 	baseserver.StartServerForTests(t, srv)
 
