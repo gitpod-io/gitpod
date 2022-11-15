@@ -34,6 +34,8 @@ scripts:
     script: |
       export TF_INPUT=0
       export TF_IN_AUTOMATION=true
+      source "preview/workflow/lib/ensure-gcloud-auth.sh"
+      ensure_gcloud_auth
       leeway run dev/preview:create-preview
       leeway run dev/preview:build
       previewctl install-context
