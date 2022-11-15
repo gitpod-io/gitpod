@@ -338,8 +338,6 @@ func (c *Client) CreateSubscription(ctx context.Context, customerID string, pric
 		return nil, fmt.Errorf("no priceID specified")
 	}
 
-	startOfNextMonth := getStartOfNextMonth(time.Now())
-
 	params := &stripe.SubscriptionParams{
 		Customer: stripe.String(customerID),
 		Items: []*stripe.SubscriptionItemsParams{
@@ -350,7 +348,6 @@ func (c *Client) CreateSubscription(ctx context.Context, customerID string, pric
 		AutomaticTax: &stripe.SubscriptionAutomaticTaxParams{
 			Enabled: stripe.Bool(isAutomaticTaxSupported),
 		},
-		BillingCycleAnchor: stripe.Int64(startOfNextMonth.Unix()),
 	}
 
 	subscription, err := c.sc.Subscriptions.New(params)
@@ -359,15 +356,6 @@ func (c *Client) CreateSubscription(ctx context.Context, customerID string, pric
 	}
 
 	return subscription, err
-}
-
-func getStartOfNextMonth(t time.Time) time.Time {
-	currentYear, currentMonth, _ := t.Date()
-
-	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, time.UTC)
-	startOfNextMonth := firstOfMonth.AddDate(0, 1, 0)
-
-	return startOfNextMonth
 }
 
 func (c *Client) SetDefaultPaymentForCustomer(ctx context.Context, customerID string, setupIntentId string) (*stripe.Customer, error) {

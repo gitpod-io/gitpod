@@ -7,7 +7,6 @@ package stripe
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 
@@ -90,10 +89,4 @@ func TestCustomerQueriesForTeamIds_MultipleQueries(t *testing.T) {
 			require.Equal(t, tc.ExpectedNumberOfQueries, len(actualQueries))
 		})
 	}
-}
-
-func TestStartOfNextMonth(t *testing.T) {
-	ts := time.Date(2022, 10, 1, 0, 0, 0, 0, time.UTC)
-
-	require.Equal(t, time.Date(2022, 11, 1, 0, 0, 0, 0, time.UTC), getStartOfNextMonth(ts))
 }

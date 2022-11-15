@@ -154,15 +154,12 @@ export class StripeService {
                 taxInformation: customer.tax,
             });
         }
-        const startOfNextMonth = new Date(new Date().toISOString().slice(0, 7) + "-01"); // First day of this month (YYYY-MM-01)
-        startOfNextMonth.setMonth(startOfNextMonth.getMonth() + 1); // Add one month
 
         await reportStripeOutcome("subscriptions_create", () => {
             return this.getStripe().subscriptions.create({
                 customer: customer.id,
                 items: [{ price: priceId }],
                 automatic_tax: { enabled: isAutomaticTaxSupported },
-                billing_cycle_anchor: Math.round(startOfNextMonth.getTime() / 1000),
             });
         });
     }
