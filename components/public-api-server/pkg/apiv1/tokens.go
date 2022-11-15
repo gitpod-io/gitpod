@@ -70,6 +70,80 @@ func (s *TokensService) GetPersonalAccessToken(ctx context.Context, req *connect
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gitpod.experimental.v1.TokensService.GetPersonalAccessToken is not implemented"))
 }
 
+func (s *TokensService) ListPersonalAccessTokens(ctx context.Context, req *connect.Request[v1.ListPersonalAccessTokensRequest]) (*connect.Response[v1.ListPersonalAccessTokensResponse], error) {
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = s.getUser(ctx, conn)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gitpod.experimental.v1.TokensService.ListPersonalAccessTokens is not implemented"))
+}
+
+func (s *TokensService) RegeneratePersonalAccessToken(ctx context.Context, req *connect.Request[v1.RegeneratePersonalAccessTokenRequest]) (*connect.Response[v1.RegeneratePersonalAccessTokenResponse], error) {
+	tokenID, err := validateTokenID(req.Msg.GetId())
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = s.getUser(ctx, conn)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Infof("Handling RegeneratePersonalAccessToken request for Token ID '%s'", tokenID.String())
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gitpod.experimental.v1.TokensService.RegeneratePersonalAccessToken is not implemented"))
+}
+
+func (s *TokensService) UpdatePersonalAccessToken(ctx context.Context, req *connect.Request[v1.UpdatePersonalAccessTokenRequest]) (*connect.Response[v1.UpdatePersonalAccessTokenResponse], error) {
+	tokenID, err := validateTokenID(req.Msg.GetToken().GetId())
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = s.getUser(ctx, conn)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Infof("Handling UpdatePersonalAccessToken request for Token ID '%s'", tokenID.String())
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gitpod.experimental.v1.TokensService.UpdatePersonalAccessToken is not implemented"))
+}
+
+func (s *TokensService) DeletePersonalAccessToken(ctx context.Context, req *connect.Request[v1.DeletePersonalAccessTokenRequest]) (*connect.Response[v1.DeletePersonalAccessTokenResponse], error) {
+	tokenID, err := validateTokenID(req.Msg.GetId())
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = s.getUser(ctx, conn)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Infof("Handling DeletePersonalAccessToken request for Token ID '%s'", tokenID.String())
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gitpod.experimental.v1.TokensService.DeletePersonalAccessToken is not implemented"))
+}
+
 func (s *TokensService) getUser(ctx context.Context, conn protocol.APIInterface) (*protocol.User, error) {
 	user, err := conn.GetLoggedInUser(ctx)
 	if err != nil {
