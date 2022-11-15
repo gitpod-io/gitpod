@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
+	common_db "github.com/gitpod-io/gitpod/common-go/db"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/db/dbtest"
@@ -36,14 +37,14 @@ func TestUsageService_ReconcileUsage(t *testing.T) {
 	// stopped instances
 	instance := dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 		UsageAttributionID: attributionID,
-		StartedTime:        db.NewVarcharTime(from),
-		StoppingTime:       db.NewVarcharTime(to.Add(-1 * time.Minute)),
+		StartedTime:        common_db.NewVarCharTime(from),
+		StoppingTime:       common_db.NewVarCharTime(to.Add(-1 * time.Minute)),
 	})
 	dbtest.CreateWorkspaceInstances(t, dbconn, instance)
 
 	// running instances
 	dbtest.CreateWorkspaceInstances(t, dbconn, dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
-		StartedTime:        db.NewVarcharTime(to.Add(-1 * time.Minute)),
+		StartedTime:        common_db.NewVarCharTime(to.Add(-1 * time.Minute)),
 		UsageAttributionID: attributionID,
 	}))
 
@@ -134,7 +135,7 @@ func TestReconcile(t *testing.T) {
 			WorkspaceClass:     db.WorkspaceClass_Default,
 			Type:               db.WorkspaceType_Regular,
 			UsageAttributionID: db.NewTeamAttributionID(uuid.New().String()),
-			StartedTime:        db.NewVarcharTime(now.Add(1 * time.Minute)),
+			StartedTime:        common_db.NewVarCharTime(now.Add(1 * time.Minute)),
 		}
 
 		inserts, updates, err := reconcileUsage([]db.WorkspaceInstanceForUsage{instance, instance}, nil, pricer, now)
@@ -146,7 +147,7 @@ func TestReconcile(t *testing.T) {
 			AttributionID:       instance.UsageAttributionID,
 			Description:         usageDescriptionFromController,
 			CreditCents:         db.NewCreditCents(pricer.CreditsUsedByInstance(&instance, now)),
-			EffectiveTime:       db.NewVarcharTime(now),
+			EffectiveTime:       common_db.NewVarCharTime(now),
 			Kind:                db.WorkspaceInstanceUsageKind,
 			WorkspaceInstanceID: &instance.ID,
 			Draft:               true,
@@ -157,7 +158,7 @@ func TestReconcile(t *testing.T) {
 			WorkspaceType:  instance.Type,
 			WorkspaceClass: instance.WorkspaceClass,
 			ContextURL:     instance.ContextURL,
-			StartTime:      db.TimeToISO8601(instance.StartedTime.Time()),
+			StartTime:      common_db.TimeToISO8601(instance.StartedTime.Time()),
 			EndTime:        "",
 			UserName:       instance.UserName,
 			UserAvatarURL:  instance.UserAvatarURL,
@@ -177,7 +178,7 @@ func TestReconcile(t *testing.T) {
 			WorkspaceClass:     db.WorkspaceClass_Default,
 			Type:               db.WorkspaceType_Regular,
 			UsageAttributionID: db.NewTeamAttributionID(uuid.New().String()),
-			StartedTime:        db.NewVarcharTime(now.Add(1 * time.Minute)),
+			StartedTime:        common_db.NewVarCharTime(now.Add(1 * time.Minute)),
 		}
 
 		// the fields in the usage record deliberately do not match the instance, except for the Instance ID.
@@ -187,7 +188,7 @@ func TestReconcile(t *testing.T) {
 			AttributionID:       db.NewUserAttributionID(uuid.New().String()),
 			Description:         "Some description",
 			CreditCents:         1,
-			EffectiveTime:       db.VarcharTime{},
+			EffectiveTime:       common_db.VarcharTime{},
 			Kind:                db.WorkspaceInstanceUsageKind,
 			WorkspaceInstanceID: &instance.ID,
 			Draft:               true,
@@ -204,7 +205,7 @@ func TestReconcile(t *testing.T) {
 			AttributionID:       instance.UsageAttributionID,
 			Description:         usageDescriptionFromController,
 			CreditCents:         db.NewCreditCents(pricer.CreditsUsedByInstance(&instance, now)),
-			EffectiveTime:       db.NewVarcharTime(now),
+			EffectiveTime:       common_db.NewVarCharTime(now),
 			Kind:                db.WorkspaceInstanceUsageKind,
 			WorkspaceInstanceID: &instance.ID,
 			Draft:               true,
@@ -215,7 +216,7 @@ func TestReconcile(t *testing.T) {
 			WorkspaceType:  instance.Type,
 			WorkspaceClass: instance.WorkspaceClass,
 			ContextURL:     instance.ContextURL,
-			StartTime:      db.TimeToISO8601(instance.StartedTime.Time()),
+			StartTime:      common_db.TimeToISO8601(instance.StartedTime.Time()),
 			EndTime:        "",
 			UserName:       instance.UserName,
 			UserAvatarURL:  instance.UserAvatarURL,
@@ -272,34 +273,34 @@ func TestListUsage(t *testing.T) {
 
 	draftBefore := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
-		EffectiveTime: db.NewVarcharTime(start.Add(-1 * 23 * time.Hour)),
+		EffectiveTime: common_db.NewVarCharTime(start.Add(-1 * 23 * time.Hour)),
 		CreditCents:   100,
 		Draft:         true,
 	})
 
 	nondraftBefore := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
-		EffectiveTime: db.NewVarcharTime(start.Add(-1 * 23 * time.Hour)),
+		EffectiveTime: common_db.NewVarCharTime(start.Add(-1 * 23 * time.Hour)),
 		CreditCents:   200,
 		Draft:         false,
 	})
 
 	draftInside := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
-		EffectiveTime: db.NewVarcharTime(start.Add(2 * time.Hour)),
+		EffectiveTime: common_db.NewVarCharTime(start.Add(2 * time.Hour)),
 		CreditCents:   300,
 		Draft:         true,
 	})
 	nonDraftInside := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
-		EffectiveTime: db.NewVarcharTime(start.Add(2 * time.Hour)),
+		EffectiveTime: common_db.NewVarCharTime(start.Add(2 * time.Hour)),
 		CreditCents:   400,
 		Draft:         false,
 	})
 
 	nonDraftAfter := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
-		EffectiveTime: db.NewVarcharTime(end.Add(2 * time.Hour)),
+		EffectiveTime: common_db.NewVarCharTime(end.Add(2 * time.Hour)),
 		CreditCents:   1000,
 	})
 

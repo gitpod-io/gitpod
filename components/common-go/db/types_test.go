@@ -2,13 +2,14 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package db
+package common_db
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestVarcharTime_Scan(t *testing.T) {
@@ -85,7 +86,7 @@ func TestVarcharTime_Value_ISO8601(t *testing.T) {
 		Expected string
 	}{
 		{
-			Time:     NewVarcharTime(time.Date(2019, 05, 10, 9, 54, 28, 185000000, time.UTC)),
+			Time:     NewVarCharTime(time.Date(2019, 05, 10, 9, 54, 28, 185000000, time.UTC)),
 			Expected: "2019-05-10T09:54:28.185Z",
 		},
 		{
@@ -105,7 +106,7 @@ func TestVarcharTime_String_ISO8601(t *testing.T) {
 		Expected string
 	}{
 		{
-			Time:     NewVarcharTime(time.Date(2019, 05, 10, 9, 54, 28, 185000000, time.UTC)),
+			Time:     NewVarCharTime(time.Date(2019, 05, 10, 9, 54, 28, 185000000, time.UTC)),
 			Expected: "2019-05-10T09:54:28.185Z",
 		},
 		{
@@ -118,7 +119,7 @@ func TestVarcharTime_String_ISO8601(t *testing.T) {
 }
 
 func TestVarCharTime_ToJSON(t *testing.T) {
-	vt := NewVarcharTime(time.Date(2022, 7, 25, 11, 17, 23, 300, time.UTC))
+	vt := NewVarCharTime(time.Date(2022, 7, 25, 11, 17, 23, 300, time.UTC))
 
 	serialized, err := json.Marshal(vt)
 	require.NoError(t, err)

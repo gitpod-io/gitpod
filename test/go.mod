@@ -10,9 +10,10 @@ require (
 	github.com/gitpod-io/gitpod/image-builder/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
-	github.com/go-sql-driver/mysql v1.5.0
+	github.com/go-sql-driver/mysql v1.6.0
 	github.com/google/go-github/v42 v42.0.0
 	github.com/google/uuid v1.3.0
+	github.com/helloyi/go-sshclient v1.1.1
 	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.2.0
 	github.com/prometheus/procfs v0.8.0
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
@@ -74,7 +75,6 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
-	github.com/helloyi/go-sshclient v1.1.1 // indirect
 	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect

@@ -2,23 +2,24 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package db
+package common_db
 
 import (
 	"database/sql/driver"
 	"fmt"
-	"github.com/relvacode/iso8601"
 	"time"
+
+	"github.com/relvacode/iso8601"
 )
 
-func NewVarcharTime(t time.Time) VarcharTime {
+func NewVarCharTime(t time.Time) VarcharTime {
 	return VarcharTime{
 		t:     t.UTC(),
 		valid: true,
 	}
 }
 
-func NewVarcharTimeFromStr(s string) (VarcharTime, error) {
+func NewVarCharTimeFromStr(s string) (VarcharTime, error) {
 	var vt VarcharTime
 	err := vt.Scan(s)
 	return vt, err

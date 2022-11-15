@@ -5,18 +5,19 @@
 package db_test
 
 import (
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
+	"testing"
+
+	common_db "github.com/gitpod-io/gitpod/common-go/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/db/dbtest"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
-	"testing"
 )
 
 func TestVarcharTime_SerializeAndDeserialize(t *testing.T) {
 	// Custom table to be able to exercise serialization easily, independent of other models
 	type VarcharModel struct {
-		ID   int            `gorm:"primaryKey"`
-		Time db.VarcharTime `gorm:"column:time;type:varchar(255);"`
+		ID   int                   `gorm:"primaryKey"`
+		Time common_db.VarcharTime `gorm:"column:time;type:varchar(255);"`
 	}
 
 	conn := dbtest.ConnectForTests(t)
@@ -33,11 +34,11 @@ func TestVarcharTime_SerializeAndDeserialize(t *testing.T) {
 			Description: "empty value for VarcharTime",
 			Input: VarcharModel{
 				ID:   1,
-				Time: db.VarcharTime{},
+				Time: common_db.VarcharTime{},
 			},
 			Expected: VarcharModel{
 				ID:   1,
-				Time: db.VarcharTime{},
+				Time: common_db.VarcharTime{},
 			},
 		},
 	} {

@@ -6,9 +6,11 @@ package db
 
 import (
 	"database/sql"
+	"time"
+
+	common_db "github.com/gitpod-io/gitpod/common-go/db"
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
-	"time"
 )
 
 type Project struct {
@@ -20,8 +22,8 @@ type Project struct {
 
 	AppInstallationID string `gorm:"column:appInstallationId;type:varchar;size:255;" json:"appInstallationId"`
 
-	CreationTime VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
-	LastModified time.Time   `gorm:"column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
+	CreationTime common_db.VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
+	LastModified time.Time             `gorm:"column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
 
 	TeamID sql.NullString `gorm:"column:teamId;type:char;size:36;" json:"teamId"`
 	UserID sql.NullString `gorm:"column:userId;type:char;size:36;" json:"userId"`
