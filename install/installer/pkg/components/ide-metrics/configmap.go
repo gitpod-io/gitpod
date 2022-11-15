@@ -155,7 +155,16 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Name:        "galleryHost",
 					AllowValues: []string{"*"},
 				},
-				// TODO(ak) errorCode - we should analyze error codes collect in analytics and categotize them here
+				{
+					Name:         "extensionType",
+					AllowValues:  []string{"critical", "normal", "unknown"},
+					DefaultValue: "unknown",
+				},
+				{
+					// TODO(ak) errorCode - we should analyze error codes collect in analytics and categotize them here
+					Name:        "errorCode",
+					AllowValues: []string{"*"},
+				},
 			},
 		},
 		{
@@ -198,6 +207,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				{
 					Name:        "galleryHost",
 					AllowValues: []string{"*"},
+				},
+				{
+					Name:         "extensionType",
+					AllowValues:  []string{"critical", "normal", "unknown"},
+					DefaultValue: "unknown",
 				},
 			},
 			Buckets: []float64{0.1, 0.5, 1, 5, 10, 15, 30},

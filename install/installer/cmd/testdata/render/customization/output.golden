@@ -4475,6 +4475,22 @@ data:
                   "*"
                 ],
                 "defaultValue": ""
+              },
+              {
+                "name": "extensionType",
+                "allowValues": [
+                  "critical",
+                  "normal",
+                  "unknown"
+                ],
+                "defaultValue": "unknown"
+              },
+              {
+                "name": "errorCode",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
               }
             ]
           },
@@ -5039,6 +5055,15 @@ data:
                   "*"
                 ],
                 "defaultValue": ""
+              },
+              {
+                "name": "extensionType",
+                "allowValues": [
+                  "critical",
+                  "normal",
+                  "unknown"
+                ],
+                "defaultValue": "unknown"
               }
             ],
             "buckets": [
@@ -9565,7 +9590,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: 74ecbbd8492d8fefde88122798e66f4d886da1cc357b33e62d71b3d80dcc2234
+        gitpod.io/checksum_config: 0520a6aeb6064313dd082434007f162aa4ef117e40f6ca40543e52b5d86c032b
         hello: world
       creationTimestamp: null
       labels:
