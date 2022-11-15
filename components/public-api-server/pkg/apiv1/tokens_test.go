@@ -18,24 +18,28 @@ import (
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
-func TestTokensService_CreatePersonalAccessTokenWithoutFeatureFlag(t *testing.T) {
-	experimentsClient := &experimentstest.Client{
+var (
+	withTokenFeatureDisabled = &experimentstest.Client{
+		BoolMatcher: func(ctx context.Context, experiment string, defaultValue bool, attributes experiments.Attributes) bool {
+			return false
+		},
+	}
+	withTokenFeatureEnabled = &experimentstest.Client{
 		BoolMatcher: func(ctx context.Context, experiment string, defaultValue bool, attributes experiments.Attributes) bool {
 			return experiment == experiments.PersonalAccessTokensEnabledFlag
 		},
 	}
+)
 
+func TestTokensService_CreatePersonalAccessTokenWithoutFeatureFlag(t *testing.T) {
 	user := newUser(&protocol.User{})
 
 	t.Run("permission denied when feature flag is not enabled", func(t *testing.T) {
-		serverMock, client := setupTokensService(t, &experimentstest.Client{
-			BoolMatcher: func(ctx context.Context, experiment string, defaultValue bool, attributes experiments.Attributes) bool {
-				return false
-			},
-		})
+		serverMock, client := setupTokensService(t, withTokenFeatureDisabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
@@ -46,11 +50,58 @@ func TestTokensService_CreatePersonalAccessTokenWithoutFeatureFlag(t *testing.T)
 	})
 
 	t.Run("unimplemented when feature flag enabled", func(t *testing.T) {
-		serverMock, client := setupTokensService(t, experimentsClient)
+		serverMock, client := setupTokensService(t, withTokenFeatureEnabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
 		_, err := client.CreatePersonalAccessToken(context.Background(), &connect.Request[v1.CreatePersonalAccessTokenRequest]{})
+		require.Equal(t, connect.CodeUnimplemented, connect.CodeOf(err))
+	})
+}
+
+func TestTokensService_GetPersonalAccessToken(t *testing.T) {
+	user := newUser(&protocol.User{})
+
+	t.Run("permission denied when feature flag is disabled", func(t *testing.T) {
+		serverMock, client := setupTokensService(t, withTokenFeatureDisabled)
+
+		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
+
+		_, err := client.GetPersonalAccessToken(context.Background(), connect.NewRequest(&v1.GetPersonalAccessTokenRequest{
+			Id: uuid.New().String(),
+		}))
+
+		require.Error(t, err, "This feature is currently in beta. If you would like to be part of the beta, please contact us.")
+		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
+	})
+
+	t.Run("invalid argument when Token ID is empty", func(t *testing.T) {
+		_, client := setupTokensService(t, withTokenFeatureEnabled)
+
+		_, err := client.GetPersonalAccessToken(context.Background(), connect.NewRequest(&v1.GetPersonalAccessTokenRequest{}))
+
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("invalid argument when Token ID is not a valid UUID", func(t *testing.T) {
+		_, client := setupTokensService(t, withTokenFeatureEnabled)
+
+		_, err := client.GetPersonalAccessToken(context.Background(), connect.NewRequest(&v1.GetPersonalAccessTokenRequest{
+			Id: "foo-bar",
+		}))
+
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("unimplemented when feature flag enabled", func(t *testing.T) {
+		serverMock, client := setupTokensService(t, withTokenFeatureEnabled)
+
+		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
+
+		_, err := client.GetPersonalAccessToken(context.Background(), connect.NewRequest(&v1.GetPersonalAccessTokenRequest{
+			Id: uuid.New().String(),
+		}))
+
 		require.Equal(t, connect.CodeUnimplemented, connect.CodeOf(err))
 	})
 }
