@@ -88,8 +88,11 @@ message ListPersonalAccessTokensResponse {
 }
 
 message RegeneratePersonalAccessTokenRequest {
+    // id is the ID of the PersonalAccessToken
+    string id = 1;
+
     // expiration time is the time when the new token should expire
-    google.protobuf.Timestamp expiration_time = 1;
+    google.protobuf.Timestamp expiration_time = 2;
 }
 
 message RegeneratePersonalAccessTokenResponse {

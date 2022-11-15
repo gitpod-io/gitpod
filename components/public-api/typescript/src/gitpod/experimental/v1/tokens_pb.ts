@@ -339,9 +339,16 @@ export class ListPersonalAccessTokensResponse extends Message<ListPersonalAccess
  */
 export class RegeneratePersonalAccessTokenRequest extends Message<RegeneratePersonalAccessTokenRequest> {
   /**
+   * id is the ID of the PersonalAccessToken
+   *
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
    * expiration time is the time when the new token should expire
    *
-   * @generated from field: google.protobuf.Timestamp expiration_time = 1;
+   * @generated from field: google.protobuf.Timestamp expiration_time = 2;
    */
   expirationTime?: Timestamp;
 
@@ -353,7 +360,8 @@ export class RegeneratePersonalAccessTokenRequest extends Message<RegeneratePers
   static readonly runtime = proto3;
   static readonly typeName = "gitpod.experimental.v1.RegeneratePersonalAccessTokenRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "expiration_time", kind: "message", T: Timestamp },
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "expiration_time", kind: "message", T: Timestamp },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RegeneratePersonalAccessTokenRequest {
