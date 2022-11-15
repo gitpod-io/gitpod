@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/relvacode/iso8601"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func NewVarCharTime(t time.Time) VarcharTime {
@@ -128,4 +129,12 @@ const ISO8601Format = "2006-01-02T15:04:05.000Z"
 
 func TimeToISO8601(t time.Time) string {
 	return t.UTC().Format(ISO8601Format)
+}
+
+func VarcharTimeToTimestamppb(t VarcharTime) *timestamppb.Timestamp {
+	if !t.IsSet() {
+		return nil
+	}
+
+	return timestamppb.New(t.Time())
 }

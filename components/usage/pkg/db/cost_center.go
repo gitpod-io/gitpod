@@ -319,9 +319,6 @@ func (c *CostCenterManager) ResetUsage(ctx context.Context, cc CostCenter) (Cost
 
 	now := time.Now().UTC()
 
-	// Resetting the usage always resets the billing cycle start time
-	billingCycleStart := now
-
 	// Default to 1 month from now, if there's no nextBillingTime set on the record.
 	nextBillingTime := now.AddDate(0, 1, 0)
 	if cc.NextBillingTime.IsSet() {
@@ -334,12 +331,12 @@ func (c *CostCenterManager) ResetUsage(ctx context.Context, cc CostCenter) (Cost
 		return CostCenter{}, fmt.Errorf("failed to compute invocie usage record for AttributonID: %s: %w", cc.ID, err)
 	}
 
-	// All fields on the new cost center remain the same, except for CreationTime and NextBillingTime
+	// All fields on the new cost center remain the same, except for BillingCycleStart, NextBillingTime, and CreationTime
 	newCostCenter := CostCenter{
 		ID:                cc.ID,
 		SpendingLimit:     spendingLimit,
 		BillingStrategy:   cc.BillingStrategy,
-		BillingCycleStart: common_db.NewVarCharTime(billingCycleStart),
+		BillingCycleStart: common_db.NewVarCharTime(now),
 		NextBillingTime:   common_db.NewVarCharTime(nextBillingTime),
 		CreationTime:      common_db.NewVarCharTime(now),
 	}
