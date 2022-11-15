@@ -289,7 +289,7 @@ func TestSaveCostCenterMovedToStripe(t *testing.T) {
 	teamCC, err = mnr.UpdateCostCenter(context.Background(), teamCC)
 	require.NoError(t, err)
 	require.Equal(t, db.CostCenter_Stripe, teamCC.BillingStrategy)
-	require.Equal(t, common_db.VarcharTime{}, teamCC.NextBillingTime)
+	require.Equal(t, teamCC.CreationTime.Time().AddDate(0, 1, 0), teamCC.NextBillingTime.Time())
 	require.Equal(t, int32(400050), teamCC.SpendingLimit)
 
 	teamCC.BillingStrategy = db.CostCenter_Other
