@@ -85,8 +85,8 @@ if [ "$TEST_SUITE" == "workspace" ]; then
   set +e
   # shellcheck disable=SC2086
   go test -v $TEST_LIST "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1 | tee "${LOG_FILE}" | werft log slice "test-${TEST_NAME}-parallel"
-  set -e
   RC=${PIPESTATUS[0]}
+  set -e
 
   if [ "${RC}" -ne "0" ]; then
     FAILURE_COUNT=$((FAILURE_COUNT+1))
@@ -99,8 +99,8 @@ if [ "$TEST_SUITE" == "workspace" ]; then
   set +e
   # shellcheck disable=SC2086
   go test -v $TEST_LIST "${args[@]}" -run '.*SerialOnly$' -p 1 2>&1 | tee "${LOG_FILE}" | werft log slice "test-${TEST_NAME}-serial-only"
-  set -e
   RC=${PIPESTATUS[0]}
+  set -e
 
   if [ "${RC}" -ne "0" ]; then
     FAILURE_COUNT=$((FAILURE_COUNT+1))
