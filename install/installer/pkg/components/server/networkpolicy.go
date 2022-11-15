@@ -15,14 +15,14 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+func Networkpolicy(ctx *common.RenderContext, component string) ([]runtime.Object, error) {
+	labels := common.DefaultLabels(component)
 
 	return []runtime.Object{
 		&networkingv1.NetworkPolicy{
 			TypeMeta: common.TypeMetaNetworkPolicy,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      Component,
+				Name:      component,
 				Namespace: ctx.Namespace,
 				Labels:    labels,
 			},
