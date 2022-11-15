@@ -20,9 +20,6 @@ import (
 func (o *OpenVSXProxy) ModifyResponse(r *http.Response) error {
 	reqid := r.Request.Context().Value(REQUEST_ID_CTX).(string)
 	key, ok := r.Request.Context().Value(REQUEST_CACHE_KEY_CTX).(string)
-	if !ok {
-		return nil
-	}
 
 	logFields := logrus.Fields{
 		LOG_FIELD_FUNC:            "response_handler",
@@ -44,6 +41,10 @@ func (o *OpenVSXProxy) ModifyResponse(r *http.Response) error {
 
 	log.WithFields(logFields).Debug("handling response")
 	o.metrics.IncStatusCounter(r.Request, strconv.Itoa(r.StatusCode))
+
+	if !ok {
+		return nil
+	}
 
 	if key == "" {
 		log.WithFields(logFields).Error("cache key header is missing - sending response as is")

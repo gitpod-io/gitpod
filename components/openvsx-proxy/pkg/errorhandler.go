@@ -15,9 +15,6 @@ import (
 func (o *OpenVSXProxy) ErrorHandler(rw http.ResponseWriter, r *http.Request, e error) {
 	reqid := r.Context().Value(REQUEST_ID_CTX).(string)
 	key, ok := r.Context().Value(REQUEST_CACHE_KEY_CTX).(string)
-	if !ok {
-		return
-	}
 
 	logFields := logrus.Fields{
 		LOG_FIELD_FUNC:       "error_handler",
@@ -38,6 +35,10 @@ func (o *OpenVSXProxy) ErrorHandler(rw http.ResponseWriter, r *http.Request, e e
 
 	log.WithFields(logFields).WithError(e).Warn("handling error")
 	o.metrics.IncStatusCounter(r, "error")
+
+	if !ok {
+		return
+	}
 
 	if key == "" {
 		log.WithFields(logFields).Error("cache key header is missing")
