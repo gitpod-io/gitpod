@@ -8871,6 +8871,31 @@ spec:
           value: svc.cluster.local
         - name: LOG_LEVEL
           value: info
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              key: host
+              name: azure-database
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              key: port
+              name: azure-database
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: azure-database
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: azure-database
+        - name: DB_ENCRYPTION_KEYS
+          valueFrom:
+            secretKeyRef:
+              key: encryptionKeys
+              name: azure-database
         image: eu.gcr.io/gitpod-core-dev/build/public-api-server:test
         imagePullPolicy: IfNotPresent
         livenessProbe:

@@ -8800,6 +8800,25 @@ spec:
           value: svc.cluster.local
         - name: LOG_LEVEL
           value: info
+        - name: DB_HOST
+          value: cloudsqlproxy
+        - name: DB_PORT
+          value: "3306"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: gcp-database
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: gcp-database
+        - name: DB_ENCRYPTION_KEYS
+          valueFrom:
+            secretKeyRef:
+              key: encryptionKeys
+              name: gcp-database
         image: eu.gcr.io/gitpod-core-dev/build/public-api-server:test
         imagePullPolicy: IfNotPresent
         livenessProbe:
