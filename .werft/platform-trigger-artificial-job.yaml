@@ -24,7 +24,7 @@ pod:
         secretName: github-token-gitpod-bot
   containers:
     - name: build
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-leeway401.1
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aa-upd-docker-img.1
       workingDir: /workspace
       imagePullPolicy: IfNotPresent
       volumeMounts:
