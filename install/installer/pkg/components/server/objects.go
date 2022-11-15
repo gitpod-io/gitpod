@@ -13,11 +13,15 @@ import (
 var Objects = common.CompositeRenderFunc(
 	configmap,
 	deployment,
-	networkpolicy,
+	func(ctx *common.RenderContext) ([]runtime.Object, error) {
+		return Networkpolicy(ctx, Component)
+	},
 	func(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return Role(ctx, Component)
 	},
-	rolebinding,
+	func(ctx *common.RenderContext) ([]runtime.Object, error) {
+		return Rolebinding(ctx, Component)
+	},
 	common.GenerateService(Component, []common.ServicePort{
 		{
 			Name:          ContainerPortName,
