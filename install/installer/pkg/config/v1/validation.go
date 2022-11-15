@@ -5,6 +5,7 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 
@@ -15,6 +16,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/rest"
 )
 
 var InstallationKindList = map[InstallationKind]struct{}{
@@ -120,6 +122,12 @@ func (v version) ClusterValidation(rcfg interface{}) cluster.ValidationChecks {
 
 	var res cluster.ValidationChecks
 	res = append(res, cluster.CheckSecret(cfg.Certificate.Name, cluster.CheckSecretRequiredData("tls.crt", "tls.key")))
+
+	res = append(res, cluster.ValidationCheck{
+		Name:        "affinity labels",
+		Check:       checkAffinityLabels(getAffinityListByKind(cfg.Kind)),
+		Description: "all required affinity node labels " + fmt.Sprint(getAffinityListByKind(cfg.Kind)) + " are present in the cluster",
+	})
 
 	if cfg.ObjectStorage.CloudStorage != nil {
 		secretName := cfg.ObjectStorage.CloudStorage.ServiceAccount.Name
@@ -251,4 +259,53 @@ func (v version) ClusterValidation(rcfg interface{}) cluster.ValidationChecks {
 	res = append(res, experimental.ClusterValidation(cfg.Experimental)...)
 
 	return res
+}
+
+// checkAffinityLabels validates that the nodes have all the required affinity labels applied
+// It assumes all the values are `true`
+func checkAffinityLabels(targetAffinityList []string) func(context.Context, *rest.Config, string) ([]cluster.ValidationError, error) {
+	return func(ctx context.Context, config *rest.Config, namespace string) ([]cluster.ValidationError, error) {
+		nodes, err := cluster.ListNodesFromContext(ctx, config)
+		if err != nil {
+			return nil, err
+		}
+
+		affinityList := map[string]bool{}
+		for _, affinity := range targetAffinityList {
+			affinityList[affinity] = false
+		}
+
+		var res []cluster.ValidationError
+		for _, node := range nodes {
+			for k, v := range node.GetLabels() {
+				if _, found := affinityList[k]; found {
+					affinityList[k] = v == "true"
+				}
+			}
+		}
+
+		// Check all the values in the map are `true`
+		for k, v := range affinityList {
+			if !v {
+				res = append(res, cluster.ValidationError{
+					Message: "Affinity label not found in cluster: " + k,
+					Type:    cluster.ValidationStatusError,
+				})
+			}
+		}
+		return res, nil
+	}
+}
+
+func getAffinityListByKind(kind InstallationKind) []string {
+	var affinityList []string
+	switch kind {
+	case InstallationMeta:
+		affinityList = cluster.AffinityListMeta
+	case InstallationWorkspace:
+		affinityList = cluster.AffinityListWorkspace
+	default:
+		affinityList = cluster.AffinityList
+	}
+	return affinityList
 }

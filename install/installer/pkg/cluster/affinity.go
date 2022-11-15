@@ -13,10 +13,22 @@ const (
 	AffinityLabelWorkspacesHeadless = "gitpod.io/workload_workspace_headless"
 )
 
-var AffinityList = []string{
+var AffinityListMeta = []string{
 	AffinityLabelMeta,
 	AffinityLabelIDE,
+}
+
+var AffinityListWorkspace = []string{
 	AffinityLabelWorkspaceServices,
 	AffinityLabelWorkspacesRegular,
 	AffinityLabelWorkspacesHeadless,
 }
+
+var AffinityList = func() []string {
+	list := []string{}
+
+	list = append(list, AffinityListMeta...)
+	list = append(list, AffinityListWorkspace...)
+
+	return list
+}()
