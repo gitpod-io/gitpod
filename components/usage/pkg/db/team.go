@@ -5,8 +5,10 @@
 package db
 
 import (
-	"github.com/google/uuid"
 	"time"
+
+	common_db "github.com/gitpod-io/gitpod/common-go/db"
+	"github.com/google/uuid"
 )
 
 type Team struct {
@@ -14,8 +16,8 @@ type Team struct {
 	Name string    `gorm:"column:name;type:varchar;size:255;" json:"name"`
 	Slug string    `gorm:"column:slug;type:varchar;size:255;" json:"slug"`
 
-	CreationTime VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
-	LastModified time.Time   `gorm:"column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
+	CreationTime common_db.VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
+	LastModified time.Time             `gorm:"column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
 
 	MarkedDeleted bool `gorm:"column:markedDeleted;type:tinyint;default:0;" json:"marked_deleted"`
 

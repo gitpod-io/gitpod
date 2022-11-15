@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	common_db "github.com/gitpod-io/gitpod/common-go/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/db/dbtest"
 	"github.com/google/uuid"
@@ -26,18 +27,18 @@ func TestFindUsageInRange(t *testing.T) {
 
 	entryBefore := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
-		EffectiveTime: db.NewVarcharTime(start.Add(-1 * 23 * time.Hour)),
+		EffectiveTime: common_db.NewVarCharTime(start.Add(-1 * 23 * time.Hour)),
 		Draft:         true,
 	})
 
 	entryInside := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
-		EffectiveTime: db.NewVarcharTime(start.Add(2 * time.Minute)),
+		EffectiveTime: common_db.NewVarCharTime(start.Add(2 * time.Minute)),
 	})
 
 	entryAfter := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
-		EffectiveTime: db.NewVarcharTime(end.Add(2 * time.Hour)),
+		EffectiveTime: common_db.NewVarCharTime(end.Add(2 * time.Hour)),
 	})
 
 	usageEntries := []db.Usage{entryBefore, entryInside, entryAfter}
@@ -63,40 +64,40 @@ func TestGetUsageSummary(t *testing.T) {
 
 	draftBefore := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
-		EffectiveTime: db.NewVarcharTime(start.Add(-1 * 23 * time.Hour)),
+		EffectiveTime: common_db.NewVarCharTime(start.Add(-1 * 23 * time.Hour)),
 		CreditCents:   100,
 		Draft:         true,
 	})
 	nondraftBefore := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
-		EffectiveTime: db.NewVarcharTime(start.Add(-1 * 23 * time.Hour)),
+		EffectiveTime: common_db.NewVarCharTime(start.Add(-1 * 23 * time.Hour)),
 		CreditCents:   200,
 		Draft:         false,
 	})
 
 	draftInside := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
-		EffectiveTime: db.NewVarcharTime(start.Add(2 * time.Hour)),
+		EffectiveTime: common_db.NewVarCharTime(start.Add(2 * time.Hour)),
 		CreditCents:   300,
 		Draft:         true,
 	})
 	nonDraftInside := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
-		EffectiveTime: db.NewVarcharTime(start.Add(2 * time.Hour)),
+		EffectiveTime: common_db.NewVarCharTime(start.Add(2 * time.Hour)),
 		CreditCents:   400,
 		Draft:         false,
 	})
 
 	nonDraftAfter := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
-		EffectiveTime: db.NewVarcharTime(end.Add(2 * time.Hour)),
+		EffectiveTime: common_db.NewVarCharTime(end.Add(2 * time.Hour)),
 		CreditCents:   1000,
 	})
 
 	invoice := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
 		Kind:          db.InvoiceUsageKind,
-		EffectiveTime: db.NewVarcharTime(start.Add(2 * time.Hour)),
+		EffectiveTime: common_db.NewVarCharTime(start.Add(2 * time.Hour)),
 		CreditCents:   -400,
 		Draft:         false,
 	})
@@ -143,7 +144,7 @@ func TestInsertUsageRecords(t *testing.T) {
 
 	usage := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
-		EffectiveTime: db.NewVarcharTime(start.Add(2 * time.Hour)),
+		EffectiveTime: common_db.NewVarCharTime(start.Add(2 * time.Hour)),
 		Draft:         true,
 	})
 
@@ -178,7 +179,7 @@ func TestUpdateUsageRecords(t *testing.T) {
 
 	usage := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
-		EffectiveTime: db.NewVarcharTime(start.Add(2 * time.Hour)),
+		EffectiveTime: common_db.NewVarCharTime(start.Add(2 * time.Hour)),
 		Draft:         true,
 	})
 
@@ -203,17 +204,17 @@ func TestFindAllDraftUsage(t *testing.T) {
 
 	usage1 := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
-		EffectiveTime: db.NewVarcharTime(start.Add(2 * time.Hour)),
+		EffectiveTime: common_db.NewVarCharTime(start.Add(2 * time.Hour)),
 		Draft:         true,
 	})
 	usage2 := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
-		EffectiveTime: db.NewVarcharTime(start.Add(2 * time.Hour)),
+		EffectiveTime: common_db.NewVarCharTime(start.Add(2 * time.Hour)),
 		Draft:         true,
 	})
 	usage3 := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
-		EffectiveTime: db.NewVarcharTime(start.Add(2 * time.Hour)),
+		EffectiveTime: common_db.NewVarCharTime(start.Add(2 * time.Hour)),
 		Draft:         false,
 	})
 

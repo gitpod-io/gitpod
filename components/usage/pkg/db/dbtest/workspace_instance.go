@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	common_db "github.com/gitpod-io/gitpod/common-go/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -33,31 +34,31 @@ func NewWorkspaceInstance(t *testing.T, instance db.WorkspaceInstance) db.Worksp
 		workspaceID = instance.WorkspaceID
 	}
 
-	creationTime := db.VarcharTime{}
+	creationTime := common_db.VarcharTime{}
 	if instance.CreationTime.IsSet() {
 		creationTime = instance.CreationTime
 	} else if instance.StartedTime.IsSet() {
 		creationTime = instance.StartedTime
 	}
 
-	startedTime := db.VarcharTime{}
+	startedTime := common_db.VarcharTime{}
 	if instance.StartedTime.IsSet() {
 		startedTime = instance.StartedTime
 	}
 
-	deployedTime := db.VarcharTime{}
+	deployedTime := common_db.VarcharTime{}
 	if instance.DeployedTime.IsSet() {
 		deployedTime = instance.DeployedTime
 	}
 
-	stoppedTime := db.VarcharTime{}
+	stoppedTime := common_db.VarcharTime{}
 	if instance.StoppedTime.IsSet() {
 		stoppedTime = instance.StoppedTime
 	} else if instance.StoppingTime.IsSet() {
 		creationTime = instance.StoppingTime
 	}
 
-	stoppingTime := db.VarcharTime{}
+	stoppingTime := common_db.VarcharTime{}
 	if instance.StoppingTime.IsSet() {
 		stoppingTime = instance.StoppingTime
 	}

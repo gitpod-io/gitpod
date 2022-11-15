@@ -5,11 +5,12 @@
 package dbtest
 
 import (
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
-	"github.com/stretchr/testify/require"
-	"gorm.io/gorm"
 	"sync"
 	"testing"
+
+	common_db "github.com/gitpod-io/gitpod/common-go/db"
+	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 )
 
 var (
@@ -30,7 +31,7 @@ func ConnectForTests(t *testing.T) *gorm.DB {
 	// These are static connection details for tests, started by `leeway components/usage:init-testdb`.
 	// We use the same static credentials for CI & local instance of MySQL Server.
 	var err error
-	conn, err = db.Connect(db.ConnectionParams{
+	conn, err = common_db.Connect(common_db.ConnectionParams{
 		User:     "root",
 		Password: "test",
 		Host:     "localhost:23306",

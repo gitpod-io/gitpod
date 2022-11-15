@@ -8,11 +8,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math"
+	"time"
+
+	common_db "github.com/gitpod-io/gitpod/common-go/db"
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
-	"math"
-	"time"
 )
 
 // Workspace represents the underlying DB object
@@ -33,10 +35,10 @@ type Workspace struct {
 	ImageNameResolved     string         `gorm:"column:imageNameResolved;type:varchar;size:255;" json:"imageNameResolved"`
 	BaseImageNameResolved string         `gorm:"column:baseImageNameResolved;type:varchar;size:255;" json:"baseImageNameResolved"`
 
-	CreationTime       VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
-	LastModified       time.Time   `gorm:"column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
-	SoftDeletedTime    VarcharTime `gorm:"column:softDeletedTime;type:varchar;size:255;" json:"softDeletedTime"`
-	ContentDeletedTime VarcharTime `gorm:"column:contentDeletedTime;type:varchar;size:255;" json:"contentDeletedTime"`
+	CreationTime       common_db.VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
+	LastModified       time.Time             `gorm:"column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
+	SoftDeletedTime    common_db.VarcharTime `gorm:"column:softDeletedTime;type:varchar;size:255;" json:"softDeletedTime"`
+	ContentDeletedTime common_db.VarcharTime `gorm:"column:contentDeletedTime;type:varchar;size:255;" json:"contentDeletedTime"`
 
 	Archived  bool `gorm:"column:archived;type:tinyint;default:0;" json:"archived"`
 	Shareable bool `gorm:"column:shareable;type:tinyint;default:0;" json:"shareable"`

@@ -10,7 +10,7 @@ require (
 	github.com/gitpod-io/gitpod/image-builder/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
-	github.com/go-sql-driver/mysql v1.5.0
+	github.com/go-sql-driver/mysql v1.6.0
 	github.com/google/go-github/v42 v42.0.0
 	github.com/google/uuid v1.3.0
 	github.com/helloyi/go-sshclient v1.1.1

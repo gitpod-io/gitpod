@@ -2,17 +2,18 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package db
+package common_db
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	driver_mysql "github.com/go-sql-driver/mysql"
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"time"
 )
 
 type ConnectionParams struct {

@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 
+	common_db "github.com/gitpod-io/gitpod/common-go/db"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"github.com/gitpod-io/gitpod/usage/pkg/db"
@@ -390,7 +391,7 @@ func newUsageFromInstance(instance db.WorkspaceInstanceForUsage, pricer *Workspa
 		AttributionID:       instance.UsageAttributionID,
 		Description:         usageDescriptionFromController,
 		CreditCents:         db.NewCreditCents(pricer.CreditsUsedByInstance(&instance, now)),
-		EffectiveTime:       db.NewVarcharTime(effectiveTime),
+		EffectiveTime:       common_db.NewVarCharTime(effectiveTime),
 		Kind:                db.WorkspaceInstanceUsageKind,
 		WorkspaceInstanceID: &instance.ID,
 		Draft:               draft,
@@ -398,11 +399,11 @@ func newUsageFromInstance(instance db.WorkspaceInstanceForUsage, pricer *Workspa
 
 	startedTime := ""
 	if instance.StartedTime.IsSet() {
-		startedTime = db.TimeToISO8601(instance.StartedTime.Time())
+		startedTime = common_db.TimeToISO8601(instance.StartedTime.Time())
 	}
 	endTime := ""
 	if instance.StoppingTime.IsSet() {
-		endTime = db.TimeToISO8601(instance.StoppingTime.Time())
+		endTime = common_db.TimeToISO8601(instance.StoppingTime.Time())
 	}
 	err := usage.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
 		WorkspaceId:    instance.WorkspaceID,

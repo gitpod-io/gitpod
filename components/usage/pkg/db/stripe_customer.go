@@ -10,13 +10,14 @@ import (
 	"fmt"
 	"time"
 
+	common_db "github.com/gitpod-io/gitpod/common-go/db"
 	"gorm.io/gorm"
 )
 
 type StripeCustomer struct {
-	StripeCustomerID string        `gorm:"primary_key;column:stripeCustomerId;type:char;size:255;" json:"stripeCustomerId"`
-	AttributionID    AttributionID `gorm:"column:attributionId;type:varchar;size:255;" json:"attributionId"`
-	CreationTime     VarcharTime   `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
+	StripeCustomerID string                `gorm:"primary_key;column:stripeCustomerId;type:char;size:255;" json:"stripeCustomerId"`
+	AttributionID    AttributionID         `gorm:"column:attributionId;type:varchar;size:255;" json:"attributionId"`
+	CreationTime     common_db.VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
 
 	LastModified time.Time `gorm:"->;column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
 	// deleted is reserved for use by db-sync.
@@ -30,7 +31,7 @@ func (d *StripeCustomer) TableName() string {
 
 func CreateStripeCustomer(ctx context.Context, conn *gorm.DB, customer StripeCustomer) error {
 	if !customer.CreationTime.IsSet() {
-		customer.CreationTime = NewVarcharTime(time.Now())
+		customer.CreationTime = common_db.NewVarCharTime(time.Now())
 	}
 
 	tx := conn.WithContext(ctx).Create(customer)

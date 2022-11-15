@@ -8,18 +8,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
+	common_db "github.com/gitpod-io/gitpod/common-go/db"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 )
 
 type User struct {
-	ID           uuid.UUID      `gorm:"primary_key;column:id;type:char;size:36;"`
-	AvatarURL    string         `gorm:"column:avatarUrl;type:char;size:255;"`
-	Name         string         `gorm:"column:name;type:char;size:255;"`
-	FullName     string         `gorm:"column:fullName;type:char;size:255;"`
-	CreationDate db.VarcharTime `gorm:"column:creationDate;type:varchar;size:255;"`
+	ID           uuid.UUID             `gorm:"primary_key;column:id;type:char;size:36;"`
+	AvatarURL    string                `gorm:"column:avatarUrl;type:char;size:255;"`
+	Name         string                `gorm:"column:name;type:char;size:255;"`
+	FullName     string                `gorm:"column:fullName;type:char;size:255;"`
+	CreationDate common_db.VarcharTime `gorm:"column:creationDate;type:varchar;size:255;"`
 
 	// user has more field but we don't care here as they are just used in tests.
 }
@@ -36,7 +36,7 @@ func NewUser(t *testing.T, user User) User {
 		AvatarURL:    "https://avatars.githubusercontent.com/u/9071",
 		Name:         "HomerJSimpson",
 		FullName:     "Homer Simpson",
-		CreationDate: db.NewVarcharTime(time.Now()),
+		CreationDate: common_db.NewVarCharTime(time.Now()),
 	}
 
 	if user.ID != uuid.Nil {
