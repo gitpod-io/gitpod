@@ -52,6 +52,7 @@
 /install/installer/pkg/components/server/ide @gitpod-io/engineering-ide
 /install/installer/pkg/components/usage @gitpod-io/engineering-webapp
 /install/installer/pkg/components/toxiproxy @gitpod-io/engineering-webapp
+/install/installer/pkg/components/slowserver @gitpod-io/engineering-webapp
 /install/installer/pkg/components/usage-api @gitpod-io/engineering-webapp
 /install/installer/pkg/components/workspace @gitpod-io/engineering-workspace
 /install/installer/pkg/components/workspace/ide @gitpod-io/engineering-ide
