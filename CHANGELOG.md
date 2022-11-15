@@ -1,6 +1,8 @@
 # Change Log
 
 ## November 2022
+- Add semgrep.yml to this repository ([#14653](https://github.com/gitpod-io/gitpod/pull/14653)) - [@securitymirco](https://github.com/securitymirco)
+- [supervisor] don't swallow supervisor exit error ([#14650](https://github.com/gitpod-io/gitpod/pull/14650)) - [@mustard-mh](https://github.com/mustard-mh)
 - [Gitpod CLI] Display helper for unknown subcommands ([#14630](https://github.com/gitpod-io/gitpod/pull/14630)) - [@andreafalzetti](https://github.com/andreafalzetti)
 - Usage view allows for arbitrary date ranges ([#14515](https://github.com/gitpod-io/gitpod/pull/14515)) - [@svenefftinge](https://github.com/svenefftinge)
 - Ensure that workspace do not crash due to OOM kills ([#14507](https://github.com/gitpod-io/gitpod/pull/14507)) - [@Furisto](https://github.com/Furisto)
