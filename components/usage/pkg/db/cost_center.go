@@ -186,8 +186,8 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCent
 			}
 
 			newCC.BillingCycleStart = common_db.NewVarCharTime(now)
-			// we don't manage stripe billing cycle
-			newCC.NextBillingTime = common_db.VarcharTime{}
+			// set an informative nextBillingTime, even though we don't manage Stripe billing cycle
+			newCC.NextBillingTime = common_db.NewVarCharTime(now.AddDate(0, 1, 0))
 		}
 	} else if isTeam {
 		// Billing strategy is Other, and it remains unchanged
@@ -214,8 +214,8 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCent
 			}
 
 			newCC.BillingCycleStart = common_db.NewVarCharTime(now)
-			// we don't manage stripe billing cycle
-			newCC.NextBillingTime = common_db.VarcharTime{}
+			// set an informative nextBillingTime, even though we don't manage Stripe billing cycle
+			newCC.NextBillingTime = common_db.NewVarCharTime(now.AddDate(0, 1, 0))
 		}
 	} else {
 		return CostCenter{}, status.Errorf(codes.InvalidArgument, "Unknown attribution entity %s", string(attributionID))
