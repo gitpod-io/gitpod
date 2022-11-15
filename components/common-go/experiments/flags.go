@@ -10,3 +10,7 @@ import "context"
 func IsMyFirstFeatureFlagEnabled(ctx context.Context, client Client, attributes Attributes) bool {
 	return client.GetBoolValue(ctx, "isMyFirstFeatureEnabled", false, attributes)
 }
+
+func IsPersonalAccessTokensEnabled(ctx context.Context, client Client, attributes Attributes) bool {
+	return client.GetBoolValue(ctx, "personalAccessTokensEnabled", false, attributes)
+}
