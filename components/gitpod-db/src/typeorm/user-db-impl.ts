@@ -425,15 +425,20 @@ export class TypeORMUserDBImpl implements UserDB {
         if (allKeys.length > SSHPublicKeyValue.MAXIMUM_KEY_LENGTH) {
             throw new Error(`The maximum of public keys is ${SSHPublicKeyValue.MAXIMUM_KEY_LENGTH}`);
         }
-        return repo.save({
-            id: uuidv4(),
-            userId,
-            fingerprint,
-            name: value.name,
-            key: value.key,
-            creationTime: new Date().toISOString(),
-            deleted: false,
-        });
+        try {
+            return await repo.save({
+                id: uuidv4(),
+                userId,
+                fingerprint,
+                name: value.name,
+                key: value.key,
+                creationTime: new Date().toISOString(),
+                deleted: false,
+            });
+        } catch (err) {
+            log.error("Failed to store public ssh key", err, { err });
+            throw err;
+        }
     }
 
     public async deleteSSHPublicKey(userId: string, id: string): Promise<void> {
