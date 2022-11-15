@@ -220,6 +220,7 @@
                 }
             ],
             "restartPolicy": "Never",
+            "terminationGracePeriodSeconds": 180,
             "serviceAccountName": "workspace",
             "automountServiceAccountToken": false,
             "securityContext": {
