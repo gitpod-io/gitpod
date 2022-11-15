@@ -24,40 +24,6 @@ const (
 	kubernetesVersionConstraint = ">= 1.21.0-0"
 )
 
-// checkAffinityLabels validates that the nodes have all the required affinity labels applied
-// It assumes all the values are `true`
-func checkAffinityLabels(ctx context.Context, config *rest.Config, namespace string) ([]ValidationError, error) {
-	nodes, err := listNodesFromContext(ctx, config)
-	if err != nil {
-		return nil, err
-	}
-
-	affinityList := map[string]bool{}
-	for _, affinity := range AffinityList {
-		affinityList[affinity] = false
-	}
-
-	var res []ValidationError
-	for _, node := range nodes {
-		for k, v := range node.GetLabels() {
-			if _, found := affinityList[k]; found {
-				affinityList[k] = v == "true"
-			}
-		}
-	}
-
-	// Check all the values in the map are `true`
-	for k, v := range affinityList {
-		if !v {
-			res = append(res, ValidationError{
-				Message: "Affinity label not found in cluster: " + k,
-				Type:    ValidationStatusError,
-			})
-		}
-	}
-	return res, nil
-}
-
 // checkCertManagerInstalled checks that cert-manager is installed as a cluster dependency
 func checkCertManagerInstalled(ctx context.Context, config *rest.Config, namespace string) ([]ValidationError, error) {
 	client, err := certmanager.NewForConfig(config)
@@ -91,7 +57,7 @@ func checkCertManagerInstalled(ctx context.Context, config *rest.Config, namespa
 
 // checkContainerDRuntime checks that the nodes are running with the containerd runtime
 func checkContainerDRuntime(ctx context.Context, config *rest.Config, namespace string) ([]ValidationError, error) {
-	nodes, err := listNodesFromContext(ctx, config)
+	nodes, err := ListNodesFromContext(ctx, config)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +105,7 @@ func checkKubernetesVersion(ctx context.Context, config *rest.Config, namespace 
 		})
 	}
 
-	nodes, err := listNodesFromContext(ctx, config)
+	nodes, err := ListNodesFromContext(ctx, config)
 	if err != nil {
 		return nil, err
 	}
@@ -263,7 +229,7 @@ func checkKernelVersion(ctx context.Context, config *rest.Config, namespace stri
 		return nil, err
 	}
 
-	nodes, err := listNodesFromContext(ctx, config)
+	nodes, err := ListNodesFromContext(ctx, config)
 	if err != nil {
 		return nil, err
 	}
