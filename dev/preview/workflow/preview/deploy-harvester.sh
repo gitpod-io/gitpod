@@ -16,7 +16,7 @@ PROJECT_ROOT=$(realpath "${SCRIPT_PATH}/../../../../")
 
 if [[ -n ${WERFT_SERVICE_HOST+x} ]]; then
   export TF_INPUT=0
-  TF_IN_AUTOMATION=true
+  export TF_IN_AUTOMATION=true
 fi
 
 WORKSPACE="${TF_VAR_preview_name:-$WORKSPACE}"
@@ -46,8 +46,8 @@ case ${PLAN_EXIT_CODE} in
   exit "${ERROR_PLAN_FAIL}"
   ;;
 2)
-  # If we're NOT in werft, ask if we want to apply the plan
-  if [ -z ${WERFT_SERVICE_HOST+x} ]; then
+  # If we don't require tf input, ask for the plan
+  if [[ -z ${TF_IN_AUTOMATION+x} ]];then
     ask "Do you want to apply the plan?"
   fi
   terraform_apply
