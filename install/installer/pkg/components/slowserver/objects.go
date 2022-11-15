@@ -7,6 +7,7 @@ package slowserver
 import (
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -21,7 +22,9 @@ func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
 		configmap,
 		deployment,
 		networkpolicy,
-		role,
+		func(ctx *common.RenderContext) ([]runtime.Object, error) {
+			return server.Role(ctx, Component)
+		},
 		rolebinding,
 		common.GenerateService(Component, []common.ServicePort{
 			{

@@ -7,13 +7,16 @@ package server
 import (
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 var Objects = common.CompositeRenderFunc(
 	configmap,
 	deployment,
 	networkpolicy,
-	role,
+	func(ctx *common.RenderContext) ([]runtime.Object, error) {
+		return Role(ctx, Component)
+	},
 	rolebinding,
 	common.GenerateService(Component, []common.ServicePort{
 		{
