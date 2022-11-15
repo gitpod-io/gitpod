@@ -88,7 +88,7 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
         title: "Download",
         customContent: (
             <div className="">
-                <span className="block text-gray-300">Download</span>
+                <span className="block text-gray-300 dark:text-gray-500">Download</span>
                 <span className="text-gray-400">
                     Deprecated.{" "}
                     <a
