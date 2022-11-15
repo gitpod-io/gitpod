@@ -24,6 +24,9 @@ import (
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
+	// The random `jwtSecret` value is overwritten by config in production clusters.
+	// For preview environments, the value will vary between `server` and `slow-server` deployments.
+	// This variance could have an effect on integration with the local companion app.
 	jwtSecret, err := common.RandomString(20)
 	if err != nil {
 		return nil, err
