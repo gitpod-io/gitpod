@@ -221,6 +221,7 @@
                 }
             ],
             "restartPolicy": "Never",
+            "terminationGracePeriodSeconds": 180,
             "dnsPolicy": "None",
             "serviceAccountName": "workspace",
             "automountServiceAccountToken": false,
