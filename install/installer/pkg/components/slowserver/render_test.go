@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/pointer"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -15,6 +16,8 @@ import (
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
+	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 )
 
 func TestObjects_NotRenderedByDefault(t *testing.T) {
@@ -27,7 +30,7 @@ func TestObjects_NotRenderedByDefault(t *testing.T) {
 }
 
 func TestObjects_RenderedWhenExperimentalConfigSet(t *testing.T) {
-	ctx := renderContext(t, true)
+	ctx := renderContext(t, nil, true)
 
 	objects, err := Objects(ctx)
 	require.NoError(t, err)
@@ -36,7 +39,7 @@ func TestObjects_RenderedWhenExperimentalConfigSet(t *testing.T) {
 }
 
 func TestServerDeployment_UsesToxiproxyDbHost(t *testing.T) {
-	ctx := renderContext(t, true)
+	ctx := renderContext(t, nil, true)
 
 	objects, err := deployment(ctx)
 	require.NoError(t, err)
@@ -56,8 +59,56 @@ func TestServerDeployment_UsesToxiproxyDbHost(t *testing.T) {
 	}
 }
 
+func TestSlowServerDeployment_UsesServerReplicaCountAndResources(t *testing.T) {
+	resources := map[string]*v1.ResourceRequirements{
+		common.ServerComponent: {
+			Limits: corev1.ResourceList{
+				"cpu":    resource.MustParse("300m"),
+				"memory": resource.MustParse("300Mi"),
+			},
+			Requests: corev1.ResourceList{
+				"cpu":    resource.MustParse("200m"),
+				"memory": resource.MustParse("200Mi"),
+			},
+		},
+	}
+
+	commonConfig := &experimental.CommonConfig{
+		PodConfig: map[string]*experimental.PodConfig{
+			common.ServerComponent: {
+				Replicas:  pointer.Int32(5),
+				Resources: resources,
+			},
+		},
+	}
+
+	ctx := renderContext(t, commonConfig, true)
+
+	objects, err := deployment(ctx)
+	require.NoError(t, err)
+
+	require.Len(t, objects, 1, "must render only one object")
+
+	deployment := objects[0].(*appsv1.Deployment)
+
+	require.NotNil(t, deployment.Spec.Replicas, "replica count must be specified")
+	require.Equal(t, int32(5), *deployment.Spec.Replicas, "unexpected number of replicas")
+
+	for _, c := range deployment.Spec.Template.Spec.Containers {
+		if c.Name == Component {
+			expectedResources := *resources[common.ServerComponent]
+			actualResources := c.Resources
+
+			require.Equal(t, expectedResources.Limits["cpu"], actualResources.Limits["cpu"], "cpu limit not set correctly")
+			require.Equal(t, expectedResources.Limits["memory"], actualResources.Limits["memory"], "memory limit not set correctly")
+			require.Equal(t, expectedResources.Requests["cpu"], actualResources.Requests["cpu"], "cpu request not set correctly")
+			require.Equal(t, expectedResources.Requests["memory"], actualResources.Requests["memory"], "memory request not set correctly")
+		}
+	}
+}
+
 func TestServerDeployment_MountsGithubAppSecret(t *testing.T) {
-	ctx := renderContext(t, false)
+	ctx := renderContext(t, nil, false)
 
 	objects, err := deployment(ctx)
 	require.NoError(t, err)
@@ -87,7 +138,7 @@ func TestServerDeployment_MountsGithubAppSecret(t *testing.T) {
 }
 
 func TestServerDeployment_UsesTracingConfig(t *testing.T) {
-	ctx := renderContext(t, false)
+	ctx := renderContext(t, nil, false)
 
 	objects, err := deployment(ctx)
 	require.NoError(t, err)
@@ -110,7 +161,7 @@ func TestServerDeployment_UsesTracingConfig(t *testing.T) {
 	require.Equal(t, "12.5", actualSamplerParam)
 }
 
-func renderContext(t *testing.T, slowDatabase bool) *common.RenderContext {
+func renderContext(t *testing.T, commonConfig *experimental.CommonConfig, slowDatabase bool) *common.RenderContext {
 	var samplerType experimental.TracingSampleType = "probabilistic"
 
 	ctx, err := common.NewRenderContext(config.Config{
@@ -125,6 +176,7 @@ func renderContext(t *testing.T, slowDatabase bool) *common.RenderContext {
 			},
 		},
 		Experimental: &experimental.Config{
+			Common: commonConfig,
 			WebApp: &experimental.WebAppConfig{
 				Tracing: &experimental.Tracing{
 					SamplerType:  &samplerType,
