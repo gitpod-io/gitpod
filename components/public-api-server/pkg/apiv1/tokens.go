@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/experiments"
@@ -17,6 +18,7 @@ import (
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
+	"github.com/google/uuid"
 )
 
 func NewTokensService(connPool proxy.ServerConnectionPool, expClient experiments.Client) *TokensService {
@@ -35,24 +37,50 @@ type TokensService struct {
 }
 
 func (s *TokensService) CreatePersonalAccessToken(ctx context.Context, req *connect.Request[v1.CreatePersonalAccessTokenRequest]) (*connect.Response[v1.CreatePersonalAccessTokenResponse], error) {
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = s.getUser(ctx, conn)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gitpod.experimental.v1.TokensService.CreatePersonalAccessToken is not implemented"))
+}
+
+func (s *TokensService) GetPersonalAccessToken(ctx context.Context, req *connect.Request[v1.GetPersonalAccessTokenRequest]) (*connect.Response[v1.GetPersonalAccessTokenResponse], error) {
+	tokenID, err := validateTokenID(req.Msg.GetId())
+	if err != nil {
+		return nil, err
+	}
 
 	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
 		return nil, err
 	}
 
+	_, err = s.getUser(ctx, conn)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Infof("Handling GetPersonalAccessToken request for Token ID '%s'", tokenID.String())
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gitpod.experimental.v1.TokensService.GetPersonalAccessToken is not implemented"))
+}
+
+func (s *TokensService) getUser(ctx context.Context, conn protocol.APIInterface) (*protocol.User, error) {
 	user, err := conn.GetLoggedInUser(ctx)
 	if err != nil {
 		return nil, proxy.ConvertError(err)
 	}
 
-	isEnabled := experiments.IsPersonalAccessTokensEnabled(ctx, s.expClient, experiments.Attributes{UserID: user.ID})
-
-	if !isEnabled {
+	if !experiments.IsPersonalAccessTokensEnabled(ctx, s.expClient, experiments.Attributes{UserID: user.ID}) {
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("This feature is currently in beta. If you would like to be part of the beta, please contact us."))
 	}
 
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gitpod.experimental.v1.TokensService.CreatePersonalAccessToken is not implemented"))
+	return user, nil
 }
 
 func getConnection(ctx context.Context, pool proxy.ServerConnectionPool) (protocol.APIInterface, error) {
@@ -68,4 +96,18 @@ func getConnection(ctx context.Context, pool proxy.ServerConnectionPool) (protoc
 	}
 
 	return conn, nil
+}
+
+func validateTokenID(id string) (uuid.UUID, error) {
+	trimmed := strings.TrimSpace(id)
+	if trimmed == "" {
+		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Token ID is a required argument."))
+	}
+
+	tokenID, err := uuid.Parse(trimmed)
+	if err != nil {
+		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Token ID must be a valid UUID"))
+	}
+
+	return tokenID, nil
 }
