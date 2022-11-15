@@ -12,13 +12,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func role(ctx *common.RenderContext) ([]runtime.Object, error) {
+func Role(ctx *common.RenderContext, component string) ([]runtime.Object, error) {
 	return []runtime.Object{&rbacv1.Role{
 		TypeMeta: common.TypeMetaRole,
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      Component,
+			Name:      component,
 			Namespace: ctx.Namespace,
-			Labels:    common.DefaultLabels(Component),
+			Labels:    common.DefaultLabels(component),
 		},
 		Rules: []rbacv1.PolicyRule{
 			{
