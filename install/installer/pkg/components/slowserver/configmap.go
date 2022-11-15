@@ -68,14 +68,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
-	runDbDeleter := true
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.RunDbDeleter != nil {
-			runDbDeleter = *cfg.WebApp.Server.RunDbDeleter
-		}
-		return nil
-	})
-
 	defaultBaseImageRegistryWhitelist := []string{}
 	allowList := ctx.Config.ContainerRegistry.PrivateBaseImageAllowList
 	if len(allowList) > 0 {
@@ -223,7 +215,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		BlockNewUsers:                     ctx.Config.BlockNewUsers,
 		MakeNewUsersAdmin:                 false,
 		DefaultBaseImageRegistryWhitelist: defaultBaseImageRegistryWhitelist,
-		RunDbDeleter:                      runDbDeleter,
+		RunDbDeleter:                      false,
 		OAuthServer: OAuthServer{
 			Enabled:   true,
 			JWTSecret: jwtSecret,
