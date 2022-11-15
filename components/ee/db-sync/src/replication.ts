@@ -285,12 +285,12 @@ export class PeriodicReplicator {
     }
 }
 
-interface SyncPeriod {
+export interface SyncPeriod {
     to: Date;
     from: Date | undefined;
 }
 
-namespace SyncPeriod {
+export namespace SyncPeriod {
     export function toString(p: SyncPeriod): string {
         const from = p.from ? p.from.toISOString() : "---";
         return `${from} -> ${p.to.toISOString()}`;
