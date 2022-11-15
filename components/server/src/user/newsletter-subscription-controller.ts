@@ -18,7 +18,10 @@ export class NewsletterSubscriptionController {
         const router = express.Router();
 
         router.get("/unsubscribe", async (req: express.Request, res: express.Response) => {
-            const email: string | undefined = req.query.email?.toString();
+            // Parsed query parameter values always have any "+" signs converted to spaces (" ").
+            // Thankfully, since spaces are very uncommon in email addresses, we know that any space
+            // was likely a "+" sign originally, and we can replace them back.
+            const email: string | undefined = req.query.email?.toString().trim().replace(/ /g, "+");
             const newsletterType: string | undefined = req.query.type?.toString();
             if (!email || !newsletterType) {
                 res.sendStatus(400);
