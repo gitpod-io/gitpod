@@ -6,7 +6,6 @@ package apiv1
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	connect "github.com/bufbuild/connect-go"
@@ -14,7 +13,6 @@ import (
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
-	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/google/uuid"
 	"github.com/relvacode/iso8601"
@@ -40,7 +38,7 @@ func (s *TeamService) CreateTeam(ctx context.Context, req *connect.Request[v1.Cr
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Name is a required argument when creating a team."))
 	}
 
-	conn, err := s.getConnection(ctx)
+	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +66,7 @@ func (s *TeamService) GetTeam(ctx context.Context, req *connect.Request[v1.GetTe
 		return nil, err
 	}
 
-	conn, err := s.getConnection(ctx)
+	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +87,7 @@ func (s *TeamService) GetTeam(ctx context.Context, req *connect.Request[v1.GetTe
 }
 
 func (s *TeamService) ListTeams(ctx context.Context, req *connect.Request[v1.ListTeamsRequest]) (*connect.Response[v1.ListTeamsResponse], error) {
-	conn, err := s.getConnection(ctx)
+	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +120,7 @@ func (s *TeamService) DeleteTeam(ctx context.Context, req *connect.Request[v1.De
 		return nil, err
 	}
 
-	conn, err := s.getConnection(ctx)
+	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +138,7 @@ func (s *TeamService) JoinTeam(ctx context.Context, req *connect.Request[v1.Join
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invitation id is a required argument to join a team"))
 	}
 
-	conn, err := s.getConnection(ctx)
+	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +165,7 @@ func (s *TeamService) ResetTeamInvitation(ctx context.Context, req *connect.Requ
 		return nil, err
 	}
 
-	conn, err := s.getConnection(ctx)
+	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +201,7 @@ func (s *TeamService) UpdateTeamMember(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Unknown TeamMember.Role specified."))
 	}
 
-	conn, err := s.getConnection(ctx)
+	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
 		return nil, err
 	}
@@ -230,7 +228,7 @@ func (s *TeamService) DeleteTeamMember(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Team Member ID is a required parameter to delete team member."))
 	}
 
-	conn, err := s.getConnection(ctx)
+	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
 		return nil, err
 	}
@@ -241,21 +239,6 @@ func (s *TeamService) DeleteTeamMember(ctx context.Context, req *connect.Request
 	}
 
 	return connect.NewResponse(&v1.DeleteTeamMemberResponse{}), nil
-}
-
-func (s *TeamService) getConnection(ctx context.Context) (protocol.APIInterface, error) {
-	token, err := auth.TokenFromContext(ctx)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
-	}
-
-	conn, err := s.connectionPool.Get(ctx, token)
-	if err != nil {
-		log.Log.WithError(err).Error("Failed to get connection to server.")
-		return nil, connect.NewError(connect.CodeInternal, errors.New("Failed to establish connection to downstream services. If this issue persists, please contact Gitpod Support."))
-	}
-
-	return conn, nil
 }
 
 func (s *TeamService) toTeamAPIResponse(ctx context.Context, conn protocol.APIInterface, team *protocol.Team) (*v1.Team, error) {

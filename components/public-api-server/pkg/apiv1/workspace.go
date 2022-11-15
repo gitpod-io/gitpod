@@ -12,7 +12,6 @@ import (
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
-	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/relvacode/iso8601"
@@ -32,20 +31,14 @@ type WorkspaceService struct {
 }
 
 func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Request[v1.GetWorkspaceRequest]) (*connect.Response[v1.GetWorkspaceResponse], error) {
-	token, err := auth.TokenFromContext(ctx)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
-	}
-
 	logger := ctxlogrus.Extract(ctx)
 
-	server, err := s.connectionPool.Get(ctx, token)
+	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
-		logger.WithError(err).Error("Failed to get connection to server.")
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, err
 	}
 
-	workspace, err := server.GetWorkspace(ctx, req.Msg.GetWorkspaceId())
+	workspace, err := conn.GetWorkspace(ctx, req.Msg.GetWorkspaceId())
 	if err != nil {
 		logger.WithError(err).Error("Failed to get workspace.")
 		return nil, proxy.ConvertError(err)
@@ -79,18 +72,12 @@ func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Reques
 
 func (s *WorkspaceService) GetOwnerToken(ctx context.Context, req *connect.Request[v1.GetOwnerTokenRequest]) (*connect.Response[v1.GetOwnerTokenResponse], error) {
 	logger := ctxlogrus.Extract(ctx)
-	token, err := auth.TokenFromContext(ctx)
+	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
+		return nil, err
 	}
 
-	server, err := s.connectionPool.Get(ctx, token)
-	if err != nil {
-		logger.WithError(err).Error("Failed to get connection to server.")
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to establish connection to downstream services"))
-	}
-
-	ownerToken, err := server.GetOwnerToken(ctx, req.Msg.GetWorkspaceId())
+	ownerToken, err := conn.GetOwnerToken(ctx, req.Msg.GetWorkspaceId())
 
 	if err != nil {
 		logger.WithError(err).Error("Failed to get owner token.")
@@ -101,16 +88,9 @@ func (s *WorkspaceService) GetOwnerToken(ctx context.Context, req *connect.Reque
 }
 
 func (s *WorkspaceService) ListWorkspaces(ctx context.Context, req *connect.Request[v1.ListWorkspacesRequest]) (*connect.Response[v1.ListWorkspacesResponse], error) {
-	logger := ctxlogrus.Extract(ctx)
-	token, err := auth.TokenFromContext(ctx)
+	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
-	}
-
-	server, err := s.connectionPool.Get(ctx, token)
-	if err != nil {
-		logger.WithError(err).Error("Failed to get connection to server.")
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to establish connection to downstream services"))
+		return nil, err
 	}
 
 	limit, err := getLimitFromPagination(req.Msg.GetPagination())
@@ -118,7 +98,7 @@ func (s *WorkspaceService) ListWorkspaces(ctx context.Context, req *connect.Requ
 		// getLimitFromPagination returns gRPC errors
 		return nil, err
 	}
-	serverResp, err := server.GetWorkspaces(ctx, &protocol.GetWorkspacesOptions{
+	serverResp, err := conn.GetWorkspaces(ctx, &protocol.GetWorkspacesOptions{
 		Limit: float64(limit),
 	})
 	if err != nil {
@@ -143,19 +123,12 @@ func (s *WorkspaceService) ListWorkspaces(ctx context.Context, req *connect.Requ
 }
 
 func (s *WorkspaceService) SendHeartbeat(ctx context.Context, req *connect.Request[v1.SendHeartbeatRequest]) (*connect.Response[v1.SendHeartbeatResponse], error) {
-	logger := ctxlogrus.Extract(ctx)
-	token, err := auth.TokenFromContext(ctx)
+	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
+		return nil, err
 	}
 
-	server, err := s.connectionPool.Get(ctx, token)
-	if err != nil {
-		logger.WithError(err).Error("Failed to get connection to server.")
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to establish connection to downstream services"))
-	}
-
-	err = server.SendHeartBeat(ctx, &protocol.SendHeartBeatOptions{
+	err = conn.SendHeartBeat(ctx, &protocol.SendHeartBeatOptions{
 		InstanceID: req.Msg.GetWorkspaceId(),
 		WasClosed:  false,
 	})
@@ -167,19 +140,12 @@ func (s *WorkspaceService) SendHeartbeat(ctx context.Context, req *connect.Reque
 }
 
 func (s *WorkspaceService) SendCloseSignal(ctx context.Context, req *connect.Request[v1.SendCloseSignalRequest]) (*connect.Response[v1.SendCloseSignalResponse], error) {
-	logger := ctxlogrus.Extract(ctx)
-	token, err := auth.TokenFromContext(ctx)
+	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
+		return nil, err
 	}
 
-	server, err := s.connectionPool.Get(ctx, token)
-	if err != nil {
-		logger.WithError(err).Error("Failed to get connection to server.")
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to establish connection to downstream services"))
-	}
-
-	err = server.SendHeartBeat(ctx, &protocol.SendHeartBeatOptions{
+	err = conn.SendHeartBeat(ctx, &protocol.SendHeartBeatOptions{
 		InstanceID: req.Msg.GetWorkspaceId(),
 		WasClosed:  true,
 	})

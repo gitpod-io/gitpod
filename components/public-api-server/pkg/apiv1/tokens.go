@@ -36,7 +36,7 @@ type TokensService struct {
 
 func (s *TokensService) CreatePersonalAccessToken(ctx context.Context, req *connect.Request[v1.CreatePersonalAccessTokenRequest]) (*connect.Response[v1.CreatePersonalAccessTokenResponse], error) {
 
-	conn, err := s.getConnection(ctx)
+	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
 		return nil, err
 	}
@@ -55,13 +55,13 @@ func (s *TokensService) CreatePersonalAccessToken(ctx context.Context, req *conn
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gitpod.experimental.v1.TokensService.CreatePersonalAccessToken is not implemented"))
 }
 
-func (s *TokensService) getConnection(ctx context.Context) (protocol.APIInterface, error) {
+func getConnection(ctx context.Context, pool proxy.ServerConnectionPool) (protocol.APIInterface, error) {
 	token, err := auth.TokenFromContext(ctx)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
 	}
 
-	conn, err := s.connectionPool.Get(ctx, token)
+	conn, err := pool.Get(ctx, token)
 	if err != nil {
 		log.Log.WithError(err).Error("Failed to get connection to server.")
 		return nil, connect.NewError(connect.CodeInternal, errors.New("Failed to establish connection to downstream services. If this issue persists, please contact Gitpod Support."))
