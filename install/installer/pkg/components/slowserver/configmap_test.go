@@ -13,6 +13,7 @@ import (
 	"k8s.io/utils/pointer"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
@@ -96,7 +97,7 @@ func TestConfigMap(t *testing.T) {
 		t.Errorf("no %q key found in configmap data", "config.json")
 	}
 
-	var config ConfigSerialized
+	var config server.ConfigSerialized
 	if err := json.Unmarshal([]byte(configJson), &config); err != nil {
 		t.Errorf("failed to unmarshal config json: %s", err)
 	}

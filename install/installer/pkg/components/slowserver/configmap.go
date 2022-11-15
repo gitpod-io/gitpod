@@ -13,6 +13,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	contentservice "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
 	ideservice "github.com/gitpod-io/gitpod/installer/pkg/components/ide-service"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
@@ -98,7 +99,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
-	githubApp := GitHubApp{}
+	githubApp := server.GitHubApp{}
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.GithubApp != nil {
 			githubApp.AppId = cfg.WebApp.Server.GithubApp.AppId
@@ -114,10 +115,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
-	workspaceClasses := []WorkspaceClass{
+	workspaceClasses := []server.WorkspaceClass{
 		{
 			Id:          config.DefaultWorkspaceClass,
-			Category:    GeneralPurpose,
+			Category:    server.GeneralPurpose,
 			DisplayName: strings.Title(config.DefaultWorkspaceClass),
 			Description: "Default workspace class",
 			PowerUps:    1,
@@ -129,9 +130,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		if cfg.WebApp != nil && cfg.WebApp.WorkspaceClasses != nil && len(cfg.WebApp.WorkspaceClasses) > 0 {
 			workspaceClasses = nil
 			for _, cl := range cfg.WebApp.WorkspaceClasses {
-				class := WorkspaceClass{
+				class := server.WorkspaceClass{
 					Id:          cl.Id,
-					Category:    WorkspaceClassCategory(cl.Category),
+					Category:    server.WorkspaceClassCategory(cl.Category),
 					DisplayName: cl.DisplayName,
 					Description: cl.Description,
 					PowerUps:    cl.PowerUps,
@@ -156,29 +157,29 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	})
 
 	// todo(sje): all these values are configurable
-	scfg := ConfigSerialized{
+	scfg := server.ConfigSerialized{
 		Version:               ctx.VersionManifest.Version,
 		HostURL:               fmt.Sprintf("https://%s", ctx.Config.Domain),
 		InstallationShortname: ctx.Config.Metadata.InstallationShortname,
 		LicenseFile:           license,
-		WorkspaceHeartbeat: WorkspaceHeartbeat{
+		WorkspaceHeartbeat: server.WorkspaceHeartbeat{
 			IntervalSeconds: 60,
 			TimeoutSeconds:  300,
 		},
-		WorkspaceDefaults: WorkspaceDefaults{
+		WorkspaceDefaults: server.WorkspaceDefaults{
 			WorkspaceImage:      workspaceImage,
-			PreviewFeatureFlags: []NamedWorkspaceFeatureFlag{},
-			DefaultFeatureFlags: []NamedWorkspaceFeatureFlag{},
+			PreviewFeatureFlags: []server.NamedWorkspaceFeatureFlag{},
+			DefaultFeatureFlags: []server.NamedWorkspaceFeatureFlag{},
 			TimeoutDefault:      ctx.Config.Workspace.TimeoutDefault,
 			TimeoutExtended:     ctx.Config.Workspace.TimeoutExtended,
 		},
-		Session: Session{
+		Session: server.Session{
 			MaxAgeMs: 259200000,
 			Secret:   sessionSecret,
 		},
 		DefinitelyGpDisabled: ctx.Config.DisableDefinitelyGP,
 		GitHubApp:            githubApp,
-		WorkspaceGarbageCollection: WorkspaceGarbageCollection{
+		WorkspaceGarbageCollection: server.WorkspaceGarbageCollection{
 			Disabled:                   true,
 			IntervalSeconds:            5 * 60,
 			MinAgeDays:                 14,
@@ -203,23 +204,23 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		DisableDynamicAuthProviderLogin:   disableDynamicAuthProviderLogin,
 		MaxEnvvarPerUserCount:             4048,
 		MaxConcurrentPrebuildsPerRef:      10,
-		IncrementalPrebuilds:              IncrementalPrebuilds{CommitHistory: 100, RepositoryPasslist: []string{}},
+		IncrementalPrebuilds:              server.IncrementalPrebuilds{CommitHistory: 100, RepositoryPasslist: []string{}},
 		BlockNewUsers:                     ctx.Config.BlockNewUsers,
 		MakeNewUsersAdmin:                 false,
 		DefaultBaseImageRegistryWhitelist: defaultBaseImageRegistryWhitelist,
 		RunDbDeleter:                      false,
-		OAuthServer: OAuthServer{
+		OAuthServer: server.OAuthServer{
 			Enabled:   true,
 			JWTSecret: jwtSecret,
 		},
-		RateLimiter: RateLimiter{
-			Groups: map[string]GroupsConfig{
+		RateLimiter: server.RateLimiter{
+			Groups: map[string]server.GroupsConfig{
 				"inWorkspaceUserAction": {
 					Points:       10,
 					DurationsSec: 2,
 				},
 			},
-			Functions: map[string]FunctionsConfig{
+			Functions: map[string]server.FunctionsConfig{
 				"openPort":         {Group: "inWorkspaceUserAction"},
 				"closePort":        {Group: "inWorkspaceUserAction"},
 				"controlAdmission": {Group: "inWorkspaceUserAction"},
@@ -231,7 +232,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		UsageServiceAddr:             net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", usage.Component, ctx.Namespace), strconv.Itoa(usage.GRPCServicePort)),
 		IDEServiceAddr:               net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", ideservice.Component, ctx.Namespace), strconv.Itoa(ideservice.GRPCServicePort)),
 		MaximumEventLoopLag:          0.35,
-		CodeSync:                     CodeSync{},
+		CodeSync:                     server.CodeSync{},
 		VSXRegistryUrl:               fmt.Sprintf("https://open-vsx.%s", ctx.Config.Domain), // todo(sje): or "https://{{ .Values.vsxRegistry.host | default "open-vsx.org" }}" if not using OpenVSX proxy
 		EnablePayment:                chargebeeSecret != "" || stripeSecret != "" || stripeConfig != "",
 		ChargebeeProviderOptionsFile: fmt.Sprintf("%s/providerOptions", chargebeeMountPath),
