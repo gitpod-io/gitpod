@@ -10673,6 +10673,31 @@ spec:
           value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         - name: no_proxy
           value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              key: host
+              name: mysql
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              key: port
+              name: mysql
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: mysql
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: mysql
+        - name: DB_ENCRYPTION_KEYS
+          valueFrom:
+            secretKeyRef:
+              key: encryptionKeys
+              name: mysql
         image: eu.gcr.io/gitpod-core-dev/build/public-api-server:test
         imagePullPolicy: IfNotPresent
         livenessProbe:

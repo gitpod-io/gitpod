@@ -32,6 +32,13 @@ func renderContextWithPublicAPI(t *testing.T) *common.RenderContext {
 				},
 			},
 		},
+		Database: config.Database{
+			CloudSQL: &config.DatabaseCloudSQL{
+				ServiceAccount: config.ObjectRef{
+					Name: "gcp-db-creds-service-account-name",
+				},
+			},
+		},
 	}, versions.Manifest{
 		Components: versions.Components{
 			PublicAPIServer: versions.Versioned{
