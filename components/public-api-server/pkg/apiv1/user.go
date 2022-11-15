@@ -6,14 +6,11 @@ package apiv1
 
 import (
 	"context"
-	"fmt"
 
 	connect "github.com/bufbuild/connect-go"
-	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
-	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 )
 
@@ -32,15 +29,9 @@ type UserService struct {
 }
 
 func (s *UserService) GetAuthenticatedUser(ctx context.Context, req *connect.Request[v1.GetAuthenticatedUserRequest]) (*connect.Response[v1.GetAuthenticatedUserResponse], error) {
-	token, err := auth.TokenFromContext(ctx)
+	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
-	}
-
-	conn, err := s.connectionPool.Get(ctx, token)
-	if err != nil {
-		log.Log.WithError(err).Error("Failed to get connection to server.")
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, err
 	}
 
 	user, err := conn.GetLoggedInUser(ctx)
@@ -56,15 +47,9 @@ func (s *UserService) GetAuthenticatedUser(ctx context.Context, req *connect.Req
 }
 
 func (s *UserService) ListSSHKeys(ctx context.Context, req *connect.Request[v1.ListSSHKeysRequest]) (*connect.Response[v1.ListSSHKeysResponse], error) {
-	token, err := auth.TokenFromContext(ctx)
+	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No credentials present on request."))
-	}
-
-	conn, err := s.connectionPool.Get(ctx, token)
-	if err != nil {
-		log.Log.WithError(err).Error("Failed to get connection to server.")
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, err
 	}
 
 	sshKeys, err := conn.GetSSHPublicKeys(ctx)
