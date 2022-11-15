@@ -98,14 +98,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
-	disableWsGarbageCollection := false
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.Server != nil {
-			disableWsGarbageCollection = cfg.WebApp.Server.DisableWorkspaceGarbageCollection
-		}
-		return nil
-	})
-
 	githubApp := GitHubApp{}
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.GithubApp != nil {
@@ -187,7 +179,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		DefinitelyGpDisabled: ctx.Config.DisableDefinitelyGP,
 		GitHubApp:            githubApp,
 		WorkspaceGarbageCollection: WorkspaceGarbageCollection{
-			Disabled:                   disableWsGarbageCollection,
+			Disabled:                   true,
 			IntervalSeconds:            5 * 60,
 			MinAgeDays:                 14,
 			MinAgePrebuildDays:         7,
