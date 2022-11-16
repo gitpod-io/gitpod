@@ -21,7 +21,7 @@ import (
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	cfg := server.Config{
-		LedgerSchedule:     time.Duration(15 * time.Minute).String(),
+		LedgerSchedule:     "", // By default controller is disabled
 		ResetUsageSchedule: time.Duration(15 * time.Minute).String(),
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
@@ -35,12 +35,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ForTeams:            1_000_000_000,
 			ForUsers:            1_000_000_000,
 			MinForUsersOnStripe: 0,
-		},
-
-		// This is the default configuration, used in self-hosted installs.
-		// For SaaS, we explicitly configure it based on workspace classes below.
-		CreditsPerMinuteByWorkspaceClass: map[string]float64{
-			"default": 0.1666666667,
 		},
 	}
 
@@ -61,23 +55,22 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	expUsageConfig := getExperimentalUsageConfig(ctx)
 
 	if expUsageConfig != nil {
-		cfg.LedgerSchedule = expUsageConfig.Schedule
+		if expUsageConfig.Schedule != "" {
+			cfg.LedgerSchedule = expUsageConfig.Schedule
+		}
 		cfg.ResetUsageSchedule = expUsageConfig.ResetUsageSchedule
-
 		if expUsageConfig.DefaultSpendingLimit != nil {
 			cfg.DefaultSpendingLimit = *expUsageConfig.DefaultSpendingLimit
 		}
 	}
 
 	workspaceClassConfig := getExperimentalWorkspaceClassConfig(ctx)
-	if len(workspaceClassConfig) > 0 {
-		creditsPerMinuteByWorkspaceClass := make(map[string]float64)
-		for _, v := range workspaceClassConfig {
-			if v.Credits != nil {
-				cfg.CreditsPerMinuteByWorkspaceClass[v.Id] = v.Credits.PerMinute
-			}
+
+	cfg.CreditsPerMinuteByWorkspaceClass = make(map[string]float64)
+	for _, v := range workspaceClassConfig {
+		if v.Credits != nil {
+			cfg.CreditsPerMinuteByWorkspaceClass[v.Id] = v.Credits.PerMinute
 		}
-		cfg.CreditsPerMinuteByWorkspaceClass = creditsPerMinuteByWorkspaceClass
 	}
 
 	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {

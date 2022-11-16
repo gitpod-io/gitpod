@@ -14,14 +14,13 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 )
 
-func TestObjects_RenderedByDefault(t *testing.T) {
-	cfg, version := newConfig(t)
-	ctx, err := common.NewRenderContext(cfg, version, "test-namespace")
+func TestObjects_NotRenderedByDefault(t *testing.T) {
+	ctx, err := common.NewRenderContext(config.Config{}, versions.Manifest{}, "test-namespace")
 	require.NoError(t, err)
 
 	objects, err := Objects(ctx)
 	require.NoError(t, err)
-	require.NotEmpty(t, objects, "objects should be rendered with default config")
+	require.Empty(t, objects, "no objects should be rendered with default config")
 }
 
 func TestObjects_RenderedWhenExperimentalConfigSet(t *testing.T) {
@@ -33,47 +32,39 @@ func TestObjects_RenderedWhenExperimentalConfigSet(t *testing.T) {
 	require.Len(t, objects, 7, "should render expected k8s objects")
 }
 
-func newConfig(t *testing.T) (config.Config, versions.Manifest) {
-	return config.Config{
-			Domain: "test.domain.everything.awesome.is",
-			Database: config.Database{
-				CloudSQL: &config.DatabaseCloudSQL{
-					ServiceAccount: config.ObjectRef{
-						Name: "gcp-db-creds-service-account-name",
-					},
-				},
-			},
-		},
-		versions.Manifest{
-			Components: versions.Components{
-				Usage: versions.Versioned{
-					Version: "commit-test-latest",
-				},
-				ServiceWaiter: versions.Versioned{
-					Version: "commit-test-latest",
-				},
-			},
-		}
-}
-
 func renderContextWithUsageConfig(t *testing.T, usage *experimental.UsageConfig) *common.RenderContext {
-	cfg, version := newConfig(t)
-
-	cfg.Experimental = &experimental.Config{
-		WebApp: &experimental.WebAppConfig{
-			Usage:  usage,
-			Server: &experimental.ServerConfig{StripeSecret: "stripe-secret-name"},
+	ctx, err := common.NewRenderContext(config.Config{
+		Domain: "test.domain.everything.awesome.is",
+		Experimental: &experimental.Config{
+			WebApp: &experimental.WebAppConfig{
+				Usage:  usage,
+				Server: &experimental.ServerConfig{StripeSecret: "stripe-secret-name"},
+			},
 		},
-	}
-
-	ctx, err := common.NewRenderContext(cfg, version, "test-namespace")
+		Database: config.Database{
+			CloudSQL: &config.DatabaseCloudSQL{
+				ServiceAccount: config.ObjectRef{
+					Name: "gcp-db-creds-service-account-name",
+				},
+			},
+		},
+	}, versions.Manifest{
+		Components: versions.Components{
+			Usage: versions.Versioned{
+				Version: "commit-test-latest",
+			},
+			ServiceWaiter: versions.Versioned{
+				Version: "commit-test-latest",
+			},
+		},
+	}, "test-namespace")
 	require.NoError(t, err)
 
 	return ctx
 }
 
 func renderContextWithUsageEnabled(t *testing.T) *common.RenderContext {
-	return renderContextWithUsageConfig(t, &experimental.UsageConfig{})
+	return renderContextWithUsageConfig(t, &experimental.UsageConfig{Enabled: true})
 }
 
 func renderContextWithStripeSecretSet(t *testing.T) *common.RenderContext {
