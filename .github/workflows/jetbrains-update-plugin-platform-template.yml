@@ -70,7 +70,7 @@ jobs:
                   git diff
             - name: Create Pull Request for Gateway Plugin
               id: create-gateway-pr
-              if: ${{ inputs.pluginId == 'gateway-plugin' && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
+              if: ${{ contains(inputs.pluginId, 'gateway-plugin') && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
               uses: peter-evans/create-pull-request@v4
               with:
                   title: "[JetBrains] Update Platform Version from ${{ inputs.pluginName }}"
@@ -108,7 +108,7 @@ jobs:
                   pull-request-number: ${{ steps.create-gateway-pr.outputs.pull-request-number }}
             - name: Create Pull Request for Backend Plugin
               id: create-backend-pr
-              if: ${{ inputs.pluginId == 'backend-plugin' && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
+              if: ${{ contains(inputs.pluginId, 'backend-plugin') && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
               uses: peter-evans/create-pull-request@v4
               with:
                   title: "[JetBrains] Update Platform Version from ${{ inputs.pluginName }}"
