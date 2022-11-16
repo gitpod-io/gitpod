@@ -1,0 +1,17 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: containerd-metrics
+  labels:
+    app.kubernetes.io/component: containerd-metrics
+    app.kubernetes.io/name: containerd-metrics
+    app.kubernetes.io/part-of: kube-prometheus
+spec:
+  namespaceSelector:
+    matchNames:
+    - monitoring-satellite
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: containerd-exporter
+  endpoints:
+  - port: metrics
