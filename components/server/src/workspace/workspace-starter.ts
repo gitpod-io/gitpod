@@ -548,42 +548,39 @@ export class WorkspaceStarter {
                 );
             };
 
-            (async () => {
+            const doStartWorkspace = async () => {
+                // choose a cluster and start the instance
+                let resp: StartWorkspaceResponse.AsObject | undefined = undefined;
+                let retries = 0;
                 try {
-                    // choose a cluster and start the instance
-                    let resp: StartWorkspaceResponse.AsObject | undefined = undefined;
-                    let retries = 0;
-                    try {
-                        for (; retries < MAX_INSTANCE_START_RETRIES; retries++) {
-                            resp = await this.tryStartOnCluster({ span }, startRequest, euser, workspace, instance);
-                            if (resp) {
-                                break;
-                            }
-                            await new Promise((resolve) =>
-                                setTimeout(resolve, INSTANCE_START_RETRY_INTERVAL_SECONDS * 1000),
-                            );
+                    for (; retries < MAX_INSTANCE_START_RETRIES; retries++) {
+                        resp = await this.tryStartOnCluster({ span }, startRequest, euser, workspace, instance);
+                        if (resp) {
+                            break;
                         }
-                    } catch (err) {
-                        await this.failInstanceStart({ span }, err, workspace, instance);
-                        throw new StartInstanceError("startOnClusterFailed", err);
-                    }
-
-                    if (!resp) {
-                        const err = new Error("cannot start a workspace because no workspace clusters are available");
-                        await this.failInstanceStart({ span }, err, workspace, instance);
-                        throw new StartInstanceError("clusterSelectionFailed", err);
-                    }
-                    increaseSuccessfulInstanceStartCounter(retries);
-
-                    if (!ideUrlPromise.isResolved) {
-                        span.log({ resp: resp });
-                        logSuccess(true);
-                        ideUrlPromise.resolve(resp.url);
+                        await new Promise((resolve) =>
+                            setTimeout(resolve, INSTANCE_START_RETRY_INTERVAL_SECONDS * 1000),
+                        );
                     }
                 } catch (err) {
-                    ideUrlPromise.reject(err);
+                    await this.failInstanceStart({ span }, err, workspace, instance);
+                    throw new StartInstanceError("startOnClusterFailed", err);
                 }
-            })();
+
+                if (!resp) {
+                    const err = new Error("cannot start a workspace because no workspace clusters are available");
+                    await this.failInstanceStart({ span }, err, workspace, instance);
+                    throw new StartInstanceError("clusterSelectionFailed", err);
+                }
+                increaseSuccessfulInstanceStartCounter(retries);
+
+                if (!ideUrlPromise.isResolved) {
+                    span.log({ resp: resp });
+                    logSuccess(true);
+                    ideUrlPromise.resolve(resp.url);
+                }
+            };
+            doStartWorkspace().catch((err) => ideUrlPromise.reject(err));
 
             const noWaitForWsMan = await getExperimentsClientForBackend().getValueAsync(
                 "do_not_wait_for_ws_manager",
