@@ -4,9 +4,11 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { useContext } from "react";
+import { PersonalAccessToken } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_pb";
+import { useContext, useEffect, useState } from "react";
 import { Redirect } from "react-router";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
+import { personalAccessTokensService } from "../service/public-api";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 
 function PersonalAccessTokens() {
@@ -21,8 +23,34 @@ function PersonalAccessTokens() {
             <PageWithSettingsSubMenu
                 title="Preferences"
                 subtitle="Manage your Personal Access Tokens to access the Gitpod API."
-                children={undefined}
-            ></PageWithSettingsSubMenu>
+            >
+                <ListAccessTokensView />
+            </PageWithSettingsSubMenu>
+        </div>
+    );
+}
+
+function ListAccessTokensView() {
+    const [tokens, setTokens] = useState<PersonalAccessToken[]>([]);
+
+    useEffect(() => {
+        (async () => {
+            const response = await personalAccessTokensService.listPersonalAccessTokens({});
+            setTokens(response.tokens);
+        })();
+    }, []);
+
+    return (
+        <div>
+            <ul>
+                {tokens.map((t: PersonalAccessToken) => {
+                    return (
+                        <li>
+                            {t.id} - {t.name} - {t.value}
+                        </li>
+                    );
+                })}
+            </ul>
         </div>
     );
 }

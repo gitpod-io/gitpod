@@ -7,6 +7,7 @@
 import { createConnectTransport, createPromiseClient } from "@bufbuild/connect-web";
 import { Team as ProtocolTeam } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { TeamsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
+import { TokensService } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_connectweb";
 import { Team } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
 import { TeamMember, TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
@@ -17,6 +18,7 @@ const transport = createConnectTransport({
 });
 
 export const teamsService = createPromiseClient(TeamsService, transport);
+export const personalAccessTokensService = createPromiseClient(TokensService, transport);
 
 export function publicApiTeamToProtocol(team: Team): ProtocolTeam {
     return {
