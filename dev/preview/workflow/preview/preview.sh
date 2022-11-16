@@ -18,6 +18,10 @@ if git:is-on-main; then
     exit 1
 fi
 
+if ! git:branch-exists-remotely; then
+    log_warn "Your branch doesn't exist on GitHub. Your preview environment might get garbage collected at any time. To avoid this please push your branch."
+fi
+
 ensure_gcloud_auth
 
 leeway run dev/preview:create-preview
