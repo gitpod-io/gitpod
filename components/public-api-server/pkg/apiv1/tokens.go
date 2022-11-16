@@ -19,19 +19,21 @@ import (
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
-func NewTokensService(connPool proxy.ServerConnectionPool, expClient experiments.Client) *TokensService {
+func NewTokensService(connPool proxy.ServerConnectionPool, expClient experiments.Client, dbConn *gorm.DB) *TokensService {
 	return &TokensService{
 		connectionPool: connPool,
 		expClient:      expClient,
+		dbConn:         dbConn,
 	}
 }
 
 type TokensService struct {
 	connectionPool proxy.ServerConnectionPool
-
-	expClient experiments.Client
+	expClient      experiments.Client
+	dbConn         *gorm.DB
 
 	v1connect.UnimplementedTokensServiceHandler
 }
