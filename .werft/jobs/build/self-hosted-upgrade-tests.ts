@@ -56,13 +56,14 @@ export async function triggerUpgradeTests(werft: Werft, config: JobConfig, usern
 
         werft.phase(upgradeConfig.phase, upgradeConfig.description);
 
-        annotation = `${annotation} -a updateGitHubStatus=gitpod-io/gitpod -a subdomain=${subdomain}-${upgradeConfig.cloud} -a deps=external`
+        annotation = `${annotation} -a updateGitHubStatus=gitpod-io/gitpod \
+                        -a subdomain=${subdomain}-${upgradeConfig.cloud} -a deps=external -a deleteOnFail=false`
 
         const testFile: string = `.werft/${phase}-installer-tests.yaml`;
 
         try {
             const ret = exec(
-                `werft run --remote-job-path ${testFile} ${annotation} github`,
+                `werft run --remote-job-path ${testFile} ${annotation} -a deleteOnFail=false github`,
                 {
                     slice: upgradeConfig.phase,
                 },
@@ -124,7 +125,7 @@ export async function triggerSelfHostedPreview(werft: Werft, config: JobConfig, 
 
     werft.phase("self-hosted-preview", `Create self-hosted preview in ${cluster}`);
 
-    annotation = `${annotation} -a cluster=${cluster} -a updateGitHubStatus=gitpod-io/gitpod -a subdomain=${subdomain}`
+    annotation = `${annotation} -a cluster=${cluster} -a updateGitHubStatus=gitpod-io/gitpod -a subdomain=${subdomain} -a deleteOnFail=false`
 
     const testFile: string = `.werft/${cluster}-installer-tests.yaml`;
 
