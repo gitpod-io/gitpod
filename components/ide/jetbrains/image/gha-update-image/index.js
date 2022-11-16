@@ -127,7 +127,7 @@ const IDEs = [
     const ideaArtifact = artifacts.find(
         (artifact) =>
             artifact.groupId === "com.jetbrains.intellij.idea" &&
-            artifact.artifactId === "ideaIU" &&
+            artifact.artifactId === "BUILD" &&
             artifact.version.startsWith(currentMajorVersion) &&
             artifact.version.endsWith("-EAP-CANDIDATE-SNAPSHOT"),
     );
