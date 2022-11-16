@@ -181,7 +181,7 @@ import { MessageBusIntegration } from "./messagebus-integration";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import * as grpc from "@grpc/grpc-js";
 import { CachingBlobServiceClientProvider } from "../util/content-service-sugar";
-import { CostCenter } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
+import { CostCenterJSON } from "@gitpod/gitpod-protocol/lib/usage";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -3128,7 +3128,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
 
-    async getCostCenter(ctx: TraceContext, attributionId: string): Promise<CostCenter | undefined> {
+    async getCostCenter(ctx: TraceContext, attributionId: string): Promise<CostCenterJSON | undefined> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
 

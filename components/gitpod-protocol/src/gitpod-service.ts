@@ -59,10 +59,9 @@ import {
 import { RemotePageMessage, RemoteTrackMessage, RemoteIdentifyMessage } from "./analytics";
 import { IDEServer } from "./ide-protocol";
 import { InstallationAdminSettings, TelemetryData } from "./installation-admin-protocol";
-import { ListUsageRequest, ListUsageResponse } from "./usage";
+import { ListUsageRequest, ListUsageResponse, CostCenterJSON } from "./usage";
 import { SupportedWorkspaceClass } from "./workspace-class";
 import { BillingMode } from "./billing-mode";
-import { CostCenter } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
@@ -281,7 +280,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     createStripeCustomerIfNeeded(attributionId: string, currency: string): Promise<void>;
     subscribeToStripe(attributionId: string, setupIntentId: string, usageLimit: number): Promise<number | undefined>;
     getStripePortalUrl(attributionId: string): Promise<string>;
-    getCostCenter(attributionId: string): Promise<CostCenter | undefined>;
+    getCostCenter(attributionId: string): Promise<CostCenterJSON | undefined>;
     setUsageLimit(attributionId: string, usageLimit: number): Promise<void>;
 
     listUsage(req: ListUsageRequest): Promise<ListUsageResponse>;

@@ -69,3 +69,17 @@ export interface InvoiceUsageData {
     startDate: string;
     endDate: string;
 }
+
+export interface CostCenterJSON {
+    attributionId: string;
+    spendingLimit: number;
+    billingStrategy: CostCenter_BillingStrategy;
+    nextBillingTime?: string;
+    billingCycleStart?: string;
+}
+
+export enum CostCenter_BillingStrategy {
+    BILLING_STRATEGY_STRIPE = "BILLING_STRATEGY_STRIPE",
+    BILLING_STRATEGY_OTHER = "BILLING_STRATEGY_OTHER",
+    UNRECOGNIZED = "UNRECOGNIZED",
+}
