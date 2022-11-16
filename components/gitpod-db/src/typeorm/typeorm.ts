@@ -30,7 +30,7 @@ export class TypeORM {
             type: "mysql",
             synchronize: false,
             migrationsRun: false,
-            logging: false,
+            logging: ["error"],
             connectTimeout: 20000,
             timezone: "utc",
             charset: "utf8mb4",
