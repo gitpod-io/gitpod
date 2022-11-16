@@ -81,13 +81,7 @@ export default function Notifications() {
     return (
         <div>
             <PageWithSettingsSubMenu title="Notifications" subtitle="Choose when to be notified.">
-                <h3>Email Notification Preferences</h3>
-                <CheckBox
-                    title="Account Notifications [required]"
-                    desc="Receive essential emails about changes to your account"
-                    checked={true}
-                    disabled={true}
-                />
+                <h3>Email Notifications</h3>
                 <CheckBox
                     title="Onboarding guide"
                     desc="In the first weeks after you sign up, we'll guide you through the product, so you can get the most out of it"
