@@ -12,10 +12,9 @@ import (
 
 	"github.com/google/uuid"
 
-	common_db "github.com/gitpod-io/gitpod/common-go/db"
+	"github.com/gitpod-io/gitpod/common-go/db"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -195,8 +194,8 @@ func dbCostCenterToAPI(c db.CostCenter) *v1.CostCenter {
 		AttributionId:     string(c.ID),
 		SpendingLimit:     c.SpendingLimit,
 		BillingStrategy:   convertBillingStrategyToAPI(c.BillingStrategy),
-		NextBillingTime:   common_db.VarcharTimeToTimestamppb(c.NextBillingTime),
-		BillingCycleStart: common_db.VarcharTimeToTimestamppb(c.BillingCycleStart),
+		NextBillingTime:   db.VarcharTimeToTimestamppb(c.NextBillingTime),
+		BillingCycleStart: db.VarcharTimeToTimestamppb(c.BillingCycleStart),
 	}
 }
 
@@ -383,7 +382,7 @@ func newUsageFromInstance(instance db.WorkspaceInstanceForUsage, pricer *Workspa
 		AttributionID:       instance.UsageAttributionID,
 		Description:         usageDescriptionFromController,
 		CreditCents:         db.NewCreditCents(pricer.CreditsUsedByInstance(&instance, now)),
-		EffectiveTime:       common_db.NewVarCharTime(effectiveTime),
+		EffectiveTime:       db.NewVarCharTime(effectiveTime),
 		Kind:                db.WorkspaceInstanceUsageKind,
 		WorkspaceInstanceID: &instance.ID,
 		Draft:               draft,
@@ -391,11 +390,11 @@ func newUsageFromInstance(instance db.WorkspaceInstanceForUsage, pricer *Workspa
 
 	startedTime := ""
 	if instance.StartedTime.IsSet() {
-		startedTime = common_db.TimeToISO8601(instance.StartedTime.Time())
+		startedTime = db.TimeToISO8601(instance.StartedTime.Time())
 	}
 	endTime := ""
 	if instance.StoppingTime.IsSet() {
-		endTime = common_db.TimeToISO8601(instance.StoppingTime.Time())
+		endTime = db.TimeToISO8601(instance.StoppingTime.Time())
 	}
 	err := usage.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
 		WorkspaceId:    instance.WorkspaceID,

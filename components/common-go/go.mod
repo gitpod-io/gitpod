@@ -36,7 +36,9 @@ require (
 
 require (
 	github.com/go-sql-driver/mysql v1.6.0
+	github.com/google/uuid v1.1.2
 	github.com/relvacode/iso8601 v1.1.0
+	gorm.io/datatypes v1.0.7
 	gorm.io/driver/mysql v1.4.4
 	gorm.io/gorm v1.24.1
 )
@@ -66,7 +68,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
-	go.uber.org/atomic v1.4.0 // indirect
+	go.uber.org/atomic v1.6.0 // indirect
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20201019141844-1ed22bb0c154 // indirect

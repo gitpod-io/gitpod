@@ -95,7 +95,7 @@ require (
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	go.opencensus.io v0.23.0 // indirect
-	go.uber.org/atomic v1.4.0 // indirect
+	go.uber.org/atomic v1.6.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af // indirect

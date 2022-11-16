@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
+	"github.com/gitpod-io/gitpod/common-go/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/server"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 

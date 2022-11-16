@@ -75,7 +75,7 @@ require (
 	github.com/uber/jaeger-client-go v2.29.1+incompatible // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	go.opencensus.io v0.23.0 // indirect
-	go.uber.org/atomic v1.4.0 // indirect
+	go.uber.org/atomic v1.6.0 // indirect
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
 	golang.org/x/net v0.0.0-20220909164309-bea034e7d591 // indirect
 	golang.org/x/text v0.3.7 // indirect

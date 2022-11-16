@@ -15,7 +15,6 @@ require (
 	github.com/stripe/stripe-go/v72 v72.114.0
 	google.golang.org/grpc v1.49.0
 	google.golang.org/protobuf v1.28.1
-	gorm.io/datatypes v1.0.6
 	gorm.io/gorm v1.24.1
 )
 
@@ -49,6 +48,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/genproto v0.0.0-20201019141844-1ed22bb0c154 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gorm.io/datatypes v1.0.7 // indirect
 	gorm.io/driver/mysql v1.4.4 // indirect
 )
 

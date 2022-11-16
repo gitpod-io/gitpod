@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"time"
 
-	common_db "github.com/gitpod-io/gitpod/common-go/db"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -22,7 +21,7 @@ type TeamMembership struct {
 	Role           TeamMembershipRole `gorm:"column:role;type:varchar;size:255;" json:"role"`
 	SubscriptionID uuid.UUID          `gorm:"column:subscriptionId;type:char;size:36;" json:"subscriptionId"`
 
-	CreationTime common_db.VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
+	CreationTime VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
 	// Read-only (-> property).
 	LastModified time.Time `gorm:"->:column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
 

@@ -12,10 +12,9 @@ import (
 	"math"
 	"time"
 
-	common_db "github.com/gitpod-io/gitpod/common-go/db"
+	"github.com/gitpod-io/gitpod/common-go/db"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"github.com/google/uuid"
 	stripe_api "github.com/stripe/stripe-go/v72"
@@ -155,7 +154,7 @@ func (s *BillingService) CreateStripeCustomer(ctx context.Context, req *v1.Creat
 	err = db.CreateStripeCustomer(ctx, s.conn, db.StripeCustomer{
 		StripeCustomerID: customer.ID,
 		AttributionID:    attributionID,
-		CreationTime:     common_db.NewVarCharTime(time.Unix(customer.Created, 0)),
+		CreationTime:     db.NewVarCharTime(time.Unix(customer.Created, 0)),
 	})
 	if err != nil {
 		log.WithField("attribution_id", attributionID).WithField("stripe_customer_id", customer.ID).WithError(err).Error("Failed to store Stripe Customer in the database.")
@@ -319,7 +318,7 @@ func (s *BillingService) FinalizeInvoice(ctx context.Context, in *v1.FinalizeInv
 		Description:   fmt.Sprintf("Invoice %s finalized in Stripe", invoice.ID),
 		// Apply negative value of credits to reduce accrued credit usage
 		CreditCents:   db.NewCreditCents(float64(-creditsOnInvoice)),
-		EffectiveTime: common_db.NewVarCharTime(finalizedAt),
+		EffectiveTime: db.NewVarCharTime(finalizedAt),
 		Kind:          db.InvoiceUsageKind,
 		Draft:         false,
 		Metadata:      nil,
@@ -370,7 +369,7 @@ func (s *BillingService) storeStripeCustomer(ctx context.Context, cus *stripe_ap
 		StripeCustomerID: cus.ID,
 		AttributionID:    attributionID,
 		// We use the original Stripe supplied creation timestamp, this ensures that we stay true to our ordering of customer creation records.
-		CreationTime: common_db.NewVarCharTime(time.Unix(cus.Created, 0)),
+		CreationTime: db.NewVarCharTime(time.Unix(cus.Created, 0)),
 	})
 	if err != nil {
 		return nil, err

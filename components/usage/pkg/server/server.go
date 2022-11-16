@@ -18,11 +18,10 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
-	common_db "github.com/gitpod-io/gitpod/common-go/db"
+	"github.com/gitpod-io/gitpod/common-go/db"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"github.com/gitpod-io/gitpod/usage/pkg/apiv1"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"gorm.io/gorm"
 )
@@ -51,7 +50,7 @@ type Config struct {
 func Start(cfg Config, version string) error {
 	log.WithField("config", cfg).Info("Starting usage component.")
 
-	conn, err := common_db.Connect(common_db.ConnectionParams{
+	conn, err := db.Connect(db.ConnectionParams{
 		User:     os.Getenv("DB_USERNAME"),
 		Password: os.Getenv("DB_PASSWORD"),
 		Host:     net.JoinHostPort(os.Getenv("DB_HOST"), os.Getenv("DB_PORT")),

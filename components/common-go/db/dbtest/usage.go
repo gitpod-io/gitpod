@@ -8,8 +8,7 @@ import (
 	"context"
 	"testing"
 
-	common_db "github.com/gitpod-io/gitpod/common-go/db"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
+	"github.com/gitpod-io/gitpod/common-go/db"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
@@ -25,7 +24,7 @@ func NewUsage(t *testing.T, record db.Usage) db.Usage {
 		AttributionID:       db.NewUserAttributionID(uuid.New().String()),
 		Description:         "some description",
 		CreditCents:         42,
-		EffectiveTime:       common_db.VarcharTime{},
+		EffectiveTime:       db.VarcharTime{},
 		Kind:                db.WorkspaceInstanceUsageKind,
 		WorkspaceInstanceID: &workspaceInstanceId,
 	}

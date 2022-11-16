@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"time"
 
-	common_db "github.com/gitpod-io/gitpod/common-go/db"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
@@ -28,13 +27,13 @@ const (
 )
 
 type CostCenter struct {
-	ID                AttributionID         `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
-	CreationTime      common_db.VarcharTime `gorm:"primary_key;column:creationTime;type:varchar;size:255;" json:"creationTime"`
-	SpendingLimit     int32                 `gorm:"column:spendingLimit;type:int;default:0;" json:"spendingLimit"`
-	BillingStrategy   BillingStrategy       `gorm:"column:billingStrategy;type:varchar;size:255;" json:"billingStrategy"`
-	BillingCycleStart common_db.VarcharTime `gorm:"column:billingCycleStart;type:varchar;size:255;" json:"billingCycleStart"`
-	NextBillingTime   common_db.VarcharTime `gorm:"column:nextBillingTime;type:varchar;size:255;" json:"nextBillingTime"`
-	LastModified      time.Time             `gorm:"->;column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
+	ID                AttributionID   `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
+	CreationTime      VarcharTime     `gorm:"primary_key;column:creationTime;type:varchar;size:255;" json:"creationTime"`
+	SpendingLimit     int32           `gorm:"column:spendingLimit;type:int;default:0;" json:"spendingLimit"`
+	BillingStrategy   BillingStrategy `gorm:"column:billingStrategy;type:varchar;size:255;" json:"billingStrategy"`
+	BillingCycleStart VarcharTime     `gorm:"column:billingCycleStart;type:varchar;size:255;" json:"billingCycleStart"`
+	NextBillingTime   VarcharTime     `gorm:"column:nextBillingTime;type:varchar;size:255;" json:"nextBillingTime"`
+	LastModified      time.Time       `gorm:"->;column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
 }
 
 // TableName sets the insert table name for this struct type
@@ -84,11 +83,11 @@ func (c *CostCenterManager) GetOrCreateCostCenter(ctx context.Context, attributi
 			}
 			result = CostCenter{
 				ID:                attributionID,
-				CreationTime:      common_db.NewVarCharTime(now),
+				CreationTime:      NewVarCharTime(now),
 				BillingStrategy:   CostCenter_Other,
 				SpendingLimit:     defaultSpendingLimit,
-				BillingCycleStart: common_db.NewVarCharTime(now),
-				NextBillingTime:   common_db.NewVarCharTime(now.AddDate(0, 1, 0)),
+				BillingCycleStart: NewVarCharTime(now),
+				NextBillingTime:   NewVarCharTime(now.AddDate(0, 1, 0)),
 			}
 			err := c.conn.Save(&result).Error
 			if err != nil {
@@ -147,7 +146,7 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCent
 	now := time.Now()
 
 	// we always update the creationTime
-	newCC.CreationTime = common_db.NewVarCharTime(now)
+	newCC.CreationTime = NewVarCharTime(now)
 	// we don't allow setting billingCycleStart or nextBillingTime from outside
 	newCC.BillingCycleStart = existingCC.BillingCycleStart
 	newCC.NextBillingTime = existingCC.NextBillingTime
@@ -173,9 +172,9 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCent
 		// Downgrading from stripe
 		if existingCC.BillingStrategy == CostCenter_Stripe && newCC.BillingStrategy == CostCenter_Other {
 			newCC.SpendingLimit = c.cfg.ForUsers
-			newCC.BillingCycleStart = common_db.NewVarCharTime(now)
+			newCC.BillingCycleStart = NewVarCharTime(now)
 			// see you next month
-			newCC.NextBillingTime = common_db.NewVarCharTime(now.AddDate(0, 1, 0))
+			newCC.NextBillingTime = NewVarCharTime(now.AddDate(0, 1, 0))
 		}
 
 		// Upgrading to Stripe
@@ -185,9 +184,9 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCent
 				return CostCenter{}, err
 			}
 
-			newCC.BillingCycleStart = common_db.NewVarCharTime(now)
+			newCC.BillingCycleStart = NewVarCharTime(now)
 			// set an informative nextBillingTime, even though we don't manage Stripe billing cycle
-			newCC.NextBillingTime = common_db.NewVarCharTime(now.AddDate(0, 1, 0))
+			newCC.NextBillingTime = NewVarCharTime(now.AddDate(0, 1, 0))
 		}
 	} else if isTeam {
 		// Billing strategy is Other, and it remains unchanged
@@ -201,9 +200,9 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCent
 		// Downgrading from stripe
 		if existingCC.BillingStrategy == CostCenter_Stripe && newCC.BillingStrategy == CostCenter_Other {
 			newCC.SpendingLimit = c.cfg.ForTeams
-			newCC.BillingCycleStart = common_db.NewVarCharTime(now)
+			newCC.BillingCycleStart = NewVarCharTime(now)
 			// see you next month
-			newCC.NextBillingTime = common_db.NewVarCharTime(now.AddDate(0, 1, 0))
+			newCC.NextBillingTime = NewVarCharTime(now.AddDate(0, 1, 0))
 		}
 
 		// Upgrading to Stripe
@@ -213,9 +212,9 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCent
 				return CostCenter{}, err
 			}
 
-			newCC.BillingCycleStart = common_db.NewVarCharTime(now)
+			newCC.BillingCycleStart = NewVarCharTime(now)
 			// set an informative nextBillingTime, even though we don't manage Stripe billing cycle
-			newCC.NextBillingTime = common_db.NewVarCharTime(now.AddDate(0, 1, 0))
+			newCC.NextBillingTime = NewVarCharTime(now.AddDate(0, 1, 0))
 		}
 	} else {
 		return CostCenter{}, status.Errorf(codes.InvalidArgument, "Unknown attribution entity %s", string(attributionID))
@@ -260,7 +259,7 @@ func (c *CostCenterManager) NewInvoiceUsageRecord(ctx context.Context, attributi
 		AttributionID: attributionID,
 		Description:   "Credits",
 		CreditCents:   creditCents * -1,
-		EffectiveTime: common_db.NewVarCharTime(now),
+		EffectiveTime: NewVarCharTime(now),
 		Kind:          InvoiceUsageKind,
 		Draft:         false,
 	}, nil
@@ -283,7 +282,7 @@ func (c *CostCenterManager) ListLatestCostCentersWithBillingTimeBefore(ctx conte
 		Joins("INNER JOIN (?) AS expiredCC on cc.id = expiredCC.id AND cc.creationTime = expiredCC.creationTime", subquery).
 		Where("cc.billingStrategy = ?", strategy).
 		Where("nextBillingTime != ?", "").
-		Where("nextBillingTime < ?", common_db.TimeToISO8601(billingTimeBefore)).
+		Where("nextBillingTime < ?", TimeToISO8601(billingTimeBefore)).
 		FindInBatches(&batch, 1000, func(tx *gorm.DB, iteration int) error {
 			results = append(results, batch...)
 			return nil
@@ -336,9 +335,9 @@ func (c *CostCenterManager) ResetUsage(ctx context.Context, cc CostCenter) (Cost
 		ID:                cc.ID,
 		SpendingLimit:     spendingLimit,
 		BillingStrategy:   cc.BillingStrategy,
-		BillingCycleStart: common_db.NewVarCharTime(now),
-		NextBillingTime:   common_db.NewVarCharTime(nextBillingTime),
-		CreationTime:      common_db.NewVarCharTime(now),
+		BillingCycleStart: NewVarCharTime(now),
+		NextBillingTime:   NewVarCharTime(nextBillingTime),
+		CreationTime:      NewVarCharTime(now),
 	}
 	err = c.conn.Save(&newCostCenter).Error
 	if err != nil {

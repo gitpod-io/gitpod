@@ -7,5 +7,13 @@ packages:
     type: go
     srcs:
       - "**"
+    deps:
+      - :init-testdb
     config:
       packaging: library
+
+  - name: init-testdb
+    type: generic
+    deps:
+      - components/gitpod-db:dbtest-init
+    ephemeral: true

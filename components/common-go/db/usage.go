@@ -11,7 +11,6 @@ import (
 	"math"
 	"time"
 
-	common_db "github.com/gitpod-io/gitpod/common-go/db"
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -37,15 +36,15 @@ func (cc CreditCents) ToCredits() float64 {
 }
 
 type Usage struct {
-	ID                  uuid.UUID             `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
-	AttributionID       AttributionID         `gorm:"column:attributionId;type:varchar;size:255;" json:"attributionId"`
-	Description         string                `gorm:"column:description;type:varchar;size:255;" json:"description"`
-	CreditCents         CreditCents           `gorm:"column:creditCents;type:bigint;" json:"creditCents"`
-	EffectiveTime       common_db.VarcharTime `gorm:"column:effectiveTime;type:varchar;size:255;" json:"effectiveTime"`
-	Kind                UsageKind             `gorm:"column:kind;type:char;size:10;" json:"kind"`
-	WorkspaceInstanceID *uuid.UUID            `gorm:"column:workspaceInstanceId;type:char;size:36;" json:"workspaceInstanceId"`
-	Draft               bool                  `gorm:"column:draft;type:boolean;" json:"draft"`
-	Metadata            datatypes.JSON        `gorm:"column:metadata;type:text;size:65535" json:"metadata"`
+	ID                  uuid.UUID      `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
+	AttributionID       AttributionID  `gorm:"column:attributionId;type:varchar;size:255;" json:"attributionId"`
+	Description         string         `gorm:"column:description;type:varchar;size:255;" json:"description"`
+	CreditCents         CreditCents    `gorm:"column:creditCents;type:bigint;" json:"creditCents"`
+	EffectiveTime       VarcharTime    `gorm:"column:effectiveTime;type:varchar;size:255;" json:"effectiveTime"`
+	Kind                UsageKind      `gorm:"column:kind;type:char;size:10;" json:"kind"`
+	WorkspaceInstanceID *uuid.UUID     `gorm:"column:workspaceInstanceId;type:char;size:36;" json:"workspaceInstanceId"`
+	Draft               bool           `gorm:"column:draft;type:boolean;" json:"draft"`
+	Metadata            datatypes.JSON `gorm:"column:metadata;type:text;size:65535" json:"metadata"`
 }
 
 func (u *Usage) SetMetadataWithWorkspaceInstance(data WorkspaceInstanceUsageData) error {
@@ -139,7 +138,7 @@ func FindUsage(ctx context.Context, conn *gorm.DB, params *FindUsageParams) ([]U
 
 	db := conn.WithContext(ctx).
 		Where("attributionId = ?", params.AttributionId).
-		Where("effectiveTime >= ? AND effectiveTime < ?", common_db.TimeToISO8601(params.From), common_db.TimeToISO8601(params.To)).
+		Where("effectiveTime >= ? AND effectiveTime < ?", TimeToISO8601(params.From), TimeToISO8601(params.To)).
 		Where("kind = ?", WorkspaceInstanceUsageKind)
 	if params.ExcludeDrafts {
 		db = db.Where("draft = ?", false)
@@ -179,7 +178,7 @@ func GetUsageSummary(ctx context.Context, conn *gorm.DB, params GetUsageSummaryP
 	query1 := db.Table((&Usage{}).TableName()).
 		Select("sum(creditCents) as CreditCentsUsed, count(*) as NumberOfRecords").
 		Where("attributionId = ?", params.AttributionId).
-		Where("effectiveTime >= ? AND effectiveTime < ?", common_db.TimeToISO8601(params.From), common_db.TimeToISO8601(params.To)).
+		Where("effectiveTime >= ? AND effectiveTime < ?", TimeToISO8601(params.From), TimeToISO8601(params.To)).
 		Where("kind = ?", WorkspaceInstanceUsageKind)
 	if params.ExcludeDrafts {
 		query1 = query1.Where("draft = ?", false)

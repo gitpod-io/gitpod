@@ -9,7 +9,7 @@ packages:
       - components/common-go:lib
       - components/usage-api/go:lib
       - components/content-service-api/go:lib
-      - :init-testdb
+      - components/common-go:init-testdb
     env:
       - CGO_ENABLED=0
       - GOOS=linux
@@ -30,12 +30,6 @@ packages:
     config:
       packaging: library
       dontTest: true
-
-  - name: init-testdb
-    type: generic
-    deps:
-      - components/gitpod-db:dbtest-init
-    ephemeral: true
 
   - name: docker
     type: docker

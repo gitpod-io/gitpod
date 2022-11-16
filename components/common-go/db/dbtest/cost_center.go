@@ -8,8 +8,7 @@ import (
 	"testing"
 	"time"
 
-	common_db "github.com/gitpod-io/gitpod/common-go/db"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
+	"github.com/gitpod-io/gitpod/common-go/db"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
@@ -20,11 +19,11 @@ func NewCostCenter(t *testing.T, record db.CostCenter) db.CostCenter {
 
 	result := db.CostCenter{
 		ID:                db.NewUserAttributionID(uuid.New().String()),
-		CreationTime:      common_db.NewVarCharTime(time.Now()),
+		CreationTime:      db.NewVarCharTime(time.Now()),
 		SpendingLimit:     100,
 		BillingStrategy:   db.CostCenter_Stripe,
-		BillingCycleStart: common_db.NewVarCharTime(time.Now()),
-		NextBillingTime:   common_db.NewVarCharTime(time.Now().Add(10 * time.Hour)),
+		BillingCycleStart: db.NewVarCharTime(time.Now()),
+		NextBillingTime:   db.NewVarCharTime(time.Now().Add(10 * time.Hour)),
 	}
 
 	if record.ID != "" {

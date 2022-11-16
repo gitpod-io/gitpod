@@ -9,8 +9,7 @@ import (
 	"testing"
 	"time"
 
-	common_db "github.com/gitpod-io/gitpod/common-go/db"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
+	"github.com/gitpod-io/gitpod/common-go/db"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
@@ -22,7 +21,7 @@ func NewStripeCustomer(t *testing.T, customer db.StripeCustomer) db.StripeCustom
 	result := db.StripeCustomer{
 		StripeCustomerID: fmt.Sprintf("cus_%s", uuid.New().String()),
 		AttributionID:    db.NewUserAttributionID(uuid.New().String()),
-		CreationTime:     common_db.NewVarCharTime(time.Now()),
+		CreationTime:     db.NewVarCharTime(time.Now()),
 	}
 
 	if customer.StripeCustomerID != "" {

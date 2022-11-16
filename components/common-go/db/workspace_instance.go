@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	common_db "github.com/gitpod-io/gitpod/common-go/db"
 	"github.com/gitpod-io/gitpod/common-go/log"
 
 	"github.com/google/uuid"
@@ -31,12 +30,12 @@ type WorkspaceInstance struct {
 	UsageAttributionID AttributionID  `gorm:"column:usageAttributionId;type:varchar;size:60;" json:"usageAttributionId"`
 	WorkspaceClass     string         `gorm:"column:workspaceClass;type:varchar;size:255;" json:"workspaceClass"`
 
-	CreationTime common_db.VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
-	StartedTime  common_db.VarcharTime `gorm:"column:startedTime;type:varchar;size:255;" json:"startedTime"`
-	DeployedTime common_db.VarcharTime `gorm:"column:deployedTime;type:varchar;size:255;" json:"deployedTime"`
-	StoppedTime  common_db.VarcharTime `gorm:"column:stoppedTime;type:varchar;size:255;" json:"stoppedTime"`
-	LastModified time.Time             `gorm:"column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
-	StoppingTime common_db.VarcharTime `gorm:"column:stoppingTime;type:varchar;size:255;" json:"stoppingTime"`
+	CreationTime VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
+	StartedTime  VarcharTime `gorm:"column:startedTime;type:varchar;size:255;" json:"startedTime"`
+	DeployedTime VarcharTime `gorm:"column:deployedTime;type:varchar;size:255;" json:"deployedTime"`
+	StoppedTime  VarcharTime `gorm:"column:stoppedTime;type:varchar;size:255;" json:"stoppedTime"`
+	LastModified time.Time   `gorm:"column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
+	StoppingTime VarcharTime `gorm:"column:stoppingTime;type:varchar;size:255;" json:"stoppingTime"`
 
 	LastHeartbeat string         `gorm:"column:lastHeartbeat;type:varchar;size:255;" json:"lastHeartbeat"`
 	StatusOld     sql.NullString `gorm:"column:status_old;type:varchar;size:255;" json:"status_old"`
@@ -60,8 +59,8 @@ func FindStoppedWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, fr
 	var instancesInBatch []WorkspaceInstanceForUsage
 
 	tx := queryWorkspaceInstanceForUsage(ctx, conn).
-		Where("wsi.stoppingTime >= ?", common_db.TimeToISO8601(from)).
-		Where("wsi.stoppingTime < ?", common_db.TimeToISO8601(to)).
+		Where("wsi.stoppingTime >= ?", TimeToISO8601(from)).
+		Where("wsi.stoppingTime < ?", TimeToISO8601(to)).
 		Where("wsi.stoppingTime != ?", "").
 		Where("wsi.usageAttributionId != ?", "").
 		FindInBatches(&instancesInBatch, 1000, func(_ *gorm.DB, _ int) error {
@@ -84,7 +83,7 @@ func FindRunningWorkspaceInstances(ctx context.Context, conn *gorm.DB) ([]Worksp
 		Where("wsi.stoppingTime = ?", "").
 		Where("wsi.usageAttributionId != ?", "").
 		// We cannot guarantee data quality before this date
-		Where("wsi.startedTime > ?", common_db.TimeToISO8601(time.Date(2022, 8, 1, 0, 0, 0, 0, time.UTC))).
+		Where("wsi.startedTime > ?", TimeToISO8601(time.Date(2022, 8, 1, 0, 0, 0, 0, time.UTC))).
 		FindInBatches(&instancesInBatch, 1000, func(_ *gorm.DB, _ int) error {
 			instances = append(instances, instancesInBatch...)
 			return nil
@@ -220,8 +219,8 @@ type WorkspaceInstanceForUsage struct {
 	UserName           string         `gorm:"column:userName;type:varchar;size:255;" json:"userName"`
 	UserAvatarURL      string         `gorm:"column:userAvatarURL;type:varchar;size:255;" json:"userAvatarURL"`
 
-	StartedTime  common_db.VarcharTime `gorm:"column:startedTime;type:varchar;size:255;" json:"startedTime"`
-	StoppingTime common_db.VarcharTime `gorm:"column:stoppingTime;type:varchar;size:255;" json:"stoppingTime"`
+	StartedTime  VarcharTime `gorm:"column:startedTime;type:varchar;size:255;" json:"startedTime"`
+	StoppingTime VarcharTime `gorm:"column:stoppingTime;type:varchar;size:255;" json:"stoppingTime"`
 }
 
 // WorkspaceRuntimeSeconds computes how long this WorkspaceInstance has been running.
@@ -238,10 +237,10 @@ func (i *WorkspaceInstanceForUsage) WorkspaceRuntimeSeconds(stopTimeIfInstanceIs
 		log.
 			WithField("instance_id", i.ID).
 			WithField("workspace_id", i.WorkspaceID).
-			WithField("started_time", common_db.TimeToISO8601(i.StartedTime.Time())).
+			WithField("started_time", TimeToISO8601(i.StartedTime.Time())).
 			WithField("started_time_set", i.StartedTime.IsSet()).
 			WithField("stopping_time_set", i.StartedTime.IsSet()).
-			WithField("stopping_time", common_db.TimeToISO8601(i.StartedTime.Time())).
+			WithField("stopping_time", TimeToISO8601(i.StartedTime.Time())).
 			WithField("stop_time_if_instance_still_running", stopTimeIfInstanceIsStillRunning).
 			Errorf("Instance %s had stop time before start time. Using startedTime as stop time.", i.ID)
 

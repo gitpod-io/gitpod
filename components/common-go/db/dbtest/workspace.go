@@ -6,12 +6,13 @@ package dbtest
 
 import (
 	"database/sql"
+	"testing"
+
+	"github.com/gitpod-io/gitpod/common-go/db"
 	"github.com/gitpod-io/gitpod/common-go/namegen"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
-	"testing"
 )
 
 const (

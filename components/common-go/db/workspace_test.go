@@ -8,16 +8,15 @@ import (
 	"context"
 	"testing"
 
-	common_db "github.com/gitpod-io/gitpod/common-go/db"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
-	"github.com/gitpod-io/gitpod/usage/pkg/db/dbtest"
+	"github.com/gitpod-io/gitpod/common-go/db"
+	"github.com/gitpod-io/gitpod/common-go/db/dbtest"
 	"github.com/stretchr/testify/require"
 )
 
-func stringToVarchar(t *testing.T, s string) common_db.VarcharTime {
+func stringToVarchar(t *testing.T, s string) db.VarcharTime {
 	t.Helper()
 
-	converted, err := common_db.NewVarCharTimeFromStr(s)
+	converted, err := db.NewVarCharTimeFromStr(s)
 	require.NoError(t, err)
 	return converted
 }

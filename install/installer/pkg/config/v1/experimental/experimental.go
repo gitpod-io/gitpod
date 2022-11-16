@@ -14,8 +14,8 @@ import (
 	"time"
 
 	agentSmith "github.com/gitpod-io/gitpod/agent-smith/pkg/config"
+	"github.com/gitpod-io/gitpod/common-go/db"
 	"github.com/gitpod-io/gitpod/common-go/grpc"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"

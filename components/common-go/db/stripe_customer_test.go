@@ -9,9 +9,8 @@ import (
 	"testing"
 	"time"
 
-	common_db "github.com/gitpod-io/gitpod/common-go/db"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
-	"github.com/gitpod-io/gitpod/usage/pkg/db/dbtest"
+	"github.com/gitpod-io/gitpod/common-go/db"
+	"github.com/gitpod-io/gitpod/common-go/db/dbtest"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +21,7 @@ func TestCreateStripeCustomer(t *testing.T) {
 	customer := db.StripeCustomer{
 		StripeCustomerID: "cus_1234",
 		AttributionID:    db.NewUserAttributionID(uuid.New().String()),
-		CreationTime:     common_db.NewVarCharTime(time.Now()),
+		CreationTime:     db.NewVarCharTime(time.Now()),
 	}
 	t.Cleanup(func() {
 		require.NoError(t, conn.Delete(&customer).Error)
@@ -61,11 +60,11 @@ func TestGetStripeCustomerByAttributionID_ReturnsLatestRecord(t *testing.T) {
 	attributionID := db.NewTeamAttributionID(uuid.New().String())
 	first := dbtest.NewStripeCustomer(t, db.StripeCustomer{
 		AttributionID: attributionID,
-		CreationTime:  common_db.NewVarCharTime(now.Add(-1 * time.Hour)),
+		CreationTime:  db.NewVarCharTime(now.Add(-1 * time.Hour)),
 	})
 	second := dbtest.NewStripeCustomer(t, db.StripeCustomer{
 		AttributionID: attributionID,
-		CreationTime:  common_db.NewVarCharTime(now),
+		CreationTime:  db.NewVarCharTime(now),
 	})
 	dbtest.CreateStripeCustomers(t, conn, first, second)
 

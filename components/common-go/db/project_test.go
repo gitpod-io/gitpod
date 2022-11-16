@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
-	"github.com/gitpod-io/gitpod/usage/pkg/db/dbtest"
+	"github.com/gitpod-io/gitpod/common-go/db"
+	"github.com/gitpod-io/gitpod/common-go/db/dbtest"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
