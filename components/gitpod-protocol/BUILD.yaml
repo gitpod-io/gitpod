@@ -5,7 +5,6 @@ packages:
       - :lib
       - components/gitpod-protocol/go:lib
       - components/gitpod-protocol/java:lib
-      - components/usage-api/typescript:lib
   - name: lib
     type: yarn
     srcs:
@@ -14,8 +13,6 @@ packages:
       - package.json
       - mocha.opts
       - "data/*.json"
-    deps:
-      - components/usage-api/typescript:lib
     config:
       packaging: library
       yarnLock: ${coreYarnLockBase}/yarn.lock

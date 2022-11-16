@@ -73,7 +73,6 @@ import { AccountStatementProvider } from "../user/account-statement-provider";
 import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/payment-protocol";
 import { ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
 import {
-    CostCenter,
     CostCenter_BillingStrategy,
     ListUsageRequest_Ordering,
     UsageServiceClient,
@@ -120,6 +119,7 @@ import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-ap
 import { IncrementalPrebuildsService } from "../prebuilds/incremental-prebuilds-service";
 import { ConfigProvider } from "../../../src/workspace/config-provider";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { CostCenterJSON } from "@gitpod/gitpod-protocol/src/usage";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -2264,7 +2264,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return url;
     }
 
-    async getCostCenter(ctx: TraceContext, attributionId: string): Promise<CostCenter | undefined> {
+    async getCostCenter(ctx: TraceContext, attributionId: string): Promise<CostCenterJSON | undefined> {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
@@ -2275,7 +2275,15 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         await this.guardCostCenterAccess(ctx, user.id, attrId, "get");
 
         const { costCenter } = await this.usageService.getCostCenter({ attributionId });
-        return costCenter;
+        return costCenter
+            ? {
+                  ...costCenter,
+                  billingCycleStart: costCenter.billingCycleStart
+                      ? costCenter.billingCycleStart.toISOString()
+                      : undefined,
+                  nextBillingTime: costCenter.nextBillingTime ? costCenter.nextBillingTime.toISOString() : undefined,
+              }
+            : undefined;
     }
 
     async setUsageLimit(ctx: TraceContext, attributionId: string, usageLimit: number): Promise<void> {

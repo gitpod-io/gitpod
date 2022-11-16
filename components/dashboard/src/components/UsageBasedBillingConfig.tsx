@@ -52,11 +52,8 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
         setStripeSubscriptionId(undefined);
         setIsLoadingStripeSubscription(true);
         try {
-            const [subscriptionId, costCenter] = await Promise.all([
-                getGitpodService().server.findStripeSubscriptionId(attributionId),
-                getGitpodService().server.getCostCenter(attributionId),
-            ]);
-            setStripeSubscriptionId(subscriptionId);
+            getGitpodService().server.findStripeSubscriptionId(attributionId).then(setStripeSubscriptionId);
+            const costCenter = await getGitpodService().server.getCostCenter(attributionId);
             setUsageLimit(costCenter?.spendingLimit);
             setBillingCycleFrom(dayjs(costCenter?.billingCycleStart || now.startOf("month")).utc(true));
             setBillingCycleTo(dayjs(costCenter?.nextBillingTime || now.endOf("month")).utc(true));
