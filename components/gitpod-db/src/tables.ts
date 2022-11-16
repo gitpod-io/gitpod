@@ -334,6 +334,12 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             timeColumn: "_lastModified",
             deletionColumn: "deleted",
         },
+        {
+            name: "d_b_personal_access_token",
+            primaryKeys: ["id"],
+            timeColumn: "_lastModified",
+            deletionColumn: "deleted",
+        },
     ];
 
     public getSortedTables(): TableDescription[] {
