@@ -6,14 +6,17 @@ package server
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 
 	"github.com/bufbuild/connect-go"
+	common_db "github.com/gitpod-io/gitpod/common-go/db"
 	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"gorm.io/gorm"
 
 	"github.com/gitpod-io/gitpod/components/public-api/go/config"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
@@ -39,6 +42,16 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	connPool, err := proxy.NewConnectionPool(gitpodAPI, 3000)
 	if err != nil {
 		return fmt.Errorf("failed to setup connection pool: %w", err)
+	}
+
+	dbConn, err := common_db.Connect(common_db.ConnectionParams{
+		User:     os.Getenv("DB_USERNAME"),
+		Password: os.Getenv("DB_PASSWORD"),
+		Host:     net.JoinHostPort(os.Getenv("DB_HOST"), os.Getenv("DB_PORT")),
+		Database: "gitpod",
+	})
+	if err != nil {
+		return fmt.Errorf("failed to establish database connection: %w", err)
 	}
 
 	expClient := experiments.NewClient()
@@ -73,7 +86,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 
 	srv.HTTPMux().Handle("/stripe/invoices/webhook", handlers.ContentTypeHandler(stripeWebhookHandler, "application/json"))
 
-	if registerErr := register(srv, connPool, expClient); registerErr != nil {
+	if registerErr := register(srv, connPool, expClient, dbConn); registerErr != nil {
 		return fmt.Errorf("failed to register services: %w", registerErr)
 	}
 
@@ -84,7 +97,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	return nil
 }
 
-func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool, expClient experiments.Client) error {
+func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool, expClient experiments.Client, dbConn *gorm.DB) error {
 	proxy.RegisterMetrics(srv.MetricsRegistry())
 
 	connectMetrics := NewConnectMetrics()
@@ -107,7 +120,7 @@ func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool, expCl
 	teamsRoute, teamsServiceHandler := v1connect.NewTeamsServiceHandler(apiv1.NewTeamsService(connPool), handlerOptions...)
 	srv.HTTPMux().Handle(teamsRoute, teamsServiceHandler)
 
-	tokensRoute, tokensServiceHandler := v1connect.NewTokensServiceHandler(apiv1.NewTokensService(connPool, expClient), handlerOptions...)
+	tokensRoute, tokensServiceHandler := v1connect.NewTokensServiceHandler(apiv1.NewTokensService(connPool, expClient, dbConn), handlerOptions...)
 	srv.HTTPMux().Handle(tokensRoute, tokensServiceHandler)
 
 	userRoute, userServiceHandler := v1connect.NewUserServiceHandler(apiv1.NewUserService(connPool), handlerOptions...)

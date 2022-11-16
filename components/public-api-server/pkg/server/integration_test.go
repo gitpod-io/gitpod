@@ -31,7 +31,7 @@ func TestPublicAPIServer_v1_WorkspaceService(t *testing.T) {
 
 	connPool := proxy.ServerConnectionPool(&proxy.NoConnectionPool{ServerAPI: gitpodAPI})
 
-	require.NoError(t, register(srv, connPool, experiments.NewAlwaysReturningDefaultValueClient()))
+	require.NoError(t, register(srv, connPool, experiments.NewAlwaysReturningDefaultValueClient(), nil))
 	baseserver.StartServerForTests(t, srv)
 
 	workspaceClient := v1connect.NewWorkspacesServiceClient(http.DefaultClient, srv.HTTPAddress(), connect.WithInterceptors(auth.NewClientInterceptor("some-token")))
@@ -60,7 +60,7 @@ func TestConnectWorkspaceService_RequiresAuth(t *testing.T) {
 
 	connPool := proxy.ServerConnectionPool(&proxy.NoConnectionPool{ServerAPI: gitpodAPI})
 
-	require.NoError(t, register(srv, connPool, experiments.NewAlwaysReturningDefaultValueClient()))
+	require.NoError(t, register(srv, connPool, experiments.NewAlwaysReturningDefaultValueClient(), nil))
 
 	baseserver.StartServerForTests(t, srv)
 

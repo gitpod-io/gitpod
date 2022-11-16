@@ -286,7 +286,7 @@ func setupTokensService(t *testing.T, expClient experiments.Client) (*protocol.M
 
 	serverMock := protocol.NewMockAPIInterface(ctrl)
 
-	svc := NewTokensService(&FakeServerConnPool{api: serverMock}, expClient)
+	svc := NewTokensService(&FakeServerConnPool{api: serverMock}, expClient, nil)
 
 	_, handler := v1connect.NewTokensServiceHandler(svc, connect.WithInterceptors(auth.NewServerInterceptor()))
 
