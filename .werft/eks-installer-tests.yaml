@@ -65,7 +65,7 @@ pod:
       secretName: self-hosted-github-oauth
   containers:
   - name: nightly-test
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aa-upd-docker-img.1
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aa-upd-leeway-v0.5.1.0
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
