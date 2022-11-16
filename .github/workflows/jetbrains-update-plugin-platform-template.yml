@@ -70,7 +70,7 @@ jobs:
                   git diff
             - name: Create Pull Request for Gateway Plugin
               id: create-gateway-pr
-              if: ${{ inputs.pluginId == 'gateway-plugin' && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
+              if: ${{ contains(inputs.pluginId, 'gateway-plugin') && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
               uses: peter-evans/create-pull-request@v4
               with:
                   title: "[JetBrains] Update Platform Version from ${{ inputs.pluginName }}"
@@ -79,7 +79,7 @@ jobs:
                       This PR updates the Platform Version from ${{ inputs.pluginName }} to the latest version.
 
                       ## How to test
-                      1. Ensure you have the [latest JetBrains Gateway](https://www.jetbrains.com/remote-development/gateway/) installed.
+                      1. Ensure you have the Gateway installed from [JetBrains Toolbox App](https://www.jetbrains.com/toolbox-app/) and have it up-to-date.
                       2. Download the plugin build related to this branch in [Dev Versions](https://plugins.jetbrains.com/plugin/18438-gitpod-gateway/versions/dev), and [install it on the Gateway](https://www.jetbrains.com/help/idea/managing-plugins.html#install_plugin_from_disk).
                       3. Create a new workspace from the Gateway (it's ok to use the pre-selected IDE and Repository) and confirm if JetBrains Client can connect to it.
 
@@ -101,14 +101,14 @@ jobs:
                   token: ${{ secrets.roboquatRepoPat }}
                   committer: Robo Quat <roboquat@gitpod.io>
                   author: Robo Quat <roboquat@gitpod.io>
-            - name: Approve Pull Request for Gateway Plugin
-              if: ${{ steps.create-gateway-pr.outputs.pull-request-number }}
+            - name: Approve Pull Request for Gateway Plugin (EAP)
+              if: ${{ inputs.pluginId == 'latest-gateway-plugin' && steps.create-gateway-pr.outputs.pull-request-number }}
               uses: hmarr/auto-approve-action@v3
               with:
                   pull-request-number: ${{ steps.create-gateway-pr.outputs.pull-request-number }}
             - name: Create Pull Request for Backend Plugin
               id: create-backend-pr
-              if: ${{ inputs.pluginId == 'backend-plugin' && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
+              if: ${{ contains(inputs.pluginId, 'backend-plugin') && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
               uses: peter-evans/create-pull-request@v4
               with:
                   title: "[JetBrains] Update Platform Version from ${{ inputs.pluginName }}"
