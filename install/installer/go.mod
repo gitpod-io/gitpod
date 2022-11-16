@@ -1,4 +1,4 @@
-module github.com/gitpod-io/gitpod/installer
+module github.com/gitpod-io/gitpod/install/installer
 
 go 1.19
 
