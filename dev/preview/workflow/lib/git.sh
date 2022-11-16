@@ -12,3 +12,7 @@ function git:is-on-main {
     else return 1
     fi
 }
+
+function git:branch-exists-remotely {
+    git ls-remote --exit-code --heads origin "$(git:branch-name)" > /dev/null
+}
