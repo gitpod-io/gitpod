@@ -1,0 +1,13 @@
+gitpod-io/monitoring-central:
+  - source: operations/observability/mixins/cross-teams/dashboards/
+    dest: charts/grafana/dashboards/general/
+  - source: operations/observability/mixins/IDE/dashboards/
+    dest: charts/grafana/dashboards/ide/
+  - source: operations/observability/mixins/meta/dashboards/
+    dest: charts/grafana/dashboards/webapp/
+  - source: operations/observability/mixins/platform/dashboards/
+    dest: charts/grafana/dashboards/platform/
+  - source: operations/observability/mixins/self-hosted/dashboards/
+    dest: charts/grafana/dashboards/deployment-operations-experience/
+  - source: operations/observability/mixins/workspace/dashboards/
+    dest: charts/grafana/dashboards/workspace/
