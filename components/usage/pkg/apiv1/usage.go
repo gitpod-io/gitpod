@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -452,4 +453,49 @@ func NewUsageService(conn *gorm.DB, pricer *WorkspacePricer, costCenterManager *
 		},
 		pricer: pricer,
 	}
+}
+
+func (s *UsageService) AddUsageCreditNote(ctx context.Context, req *v1.AddUsageCreditNoteRequest) (*v1.AddUsageCreditNoteResponse, error) {
+	log.Log.
+		WithField("attribution_id", req.AttributionId).
+		WithField("credits", req.Credits).
+		WithField("user", req.UserId).
+		WithField("note", req.Note).
+		Info("Adding usage credit note.")
+
+	attributionId, err := db.ParseAttributionID(req.AttributionId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "AttributionID '%s' couldn't be parsed (error: %s).", req.AttributionId, err)
+	}
+
+	note := strings.TrimSpace(req.Note)
+	if note == "" {
+		return nil, status.Error(codes.InvalidArgument, "The note must not be empty.")
+	}
+
+	userId, err := uuid.Parse(req.UserId)
+	if err != nil {
+		return nil, fmt.Errorf("The user id is not a valid UUID. %w", err)
+	}
+
+	usage := db.Usage{
+		ID:            uuid.New(),
+		AttributionID: attributionId,
+		Description:   note,
+		CreditCents:   db.NewCreditCents(float64(req.Credits * -1)),
+		EffectiveTime: common_db.NewVarCharTime(time.Now()),
+		Kind:          db.CreditNoteKind,
+		Draft:         false,
+	}
+
+	err = usage.SetCreditNoteMetaData(db.CreditNoteMetaData{UserId: userId.String()})
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.InsertUsage(ctx, s.conn, usage)
+	if err != nil {
+		return nil, err
+	}
+	return &v1.AddUsageCreditNoteResponse{}, nil
 }

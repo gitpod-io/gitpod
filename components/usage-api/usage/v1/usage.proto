@@ -25,6 +25,9 @@ service UsageService {
 
     // GetBalance returns the current credits balance for the given attributionId
     rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse) {}
+
+    // AddUsageCreditNote adds a usage credit note to the given cost center with the effective date of now
+    rpc AddUsageCreditNote(AddUsageCreditNoteRequest) returns (AddUsageCreditNoteResponse) {}
 }
 
 message ReconcileUsageRequest {
@@ -135,3 +138,15 @@ message CostCenter {
 message ResetUsageRequest {}
 
 message ResetUsageResponse {}
+
+message AddUsageCreditNoteRequest {
+    string attribution_id = 1;
+    // the amount of credits to add to the given account
+    int32 credits = 2;
+    // a human readable note for the reason this credit note exists
+    string note = 3;
+    // the id of the user (admin) who created the note
+    string user_id = 4;
+}
+
+message AddUsageCreditNoteResponse {}

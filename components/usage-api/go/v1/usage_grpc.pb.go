@@ -38,6 +38,8 @@ type UsageServiceClient interface {
 	ListUsage(ctx context.Context, in *ListUsageRequest, opts ...grpc.CallOption) (*ListUsageResponse, error)
 	// GetBalance returns the current credits balance for the given attributionId
 	GetBalance(ctx context.Context, in *GetBalanceRequest, opts ...grpc.CallOption) (*GetBalanceResponse, error)
+	// AddUsageCreditNote adds a usage credit note to the given cost center with the effective date of now
+	AddUsageCreditNote(ctx context.Context, in *AddUsageCreditNoteRequest, opts ...grpc.CallOption) (*AddUsageCreditNoteResponse, error)
 }
 
 type usageServiceClient struct {
@@ -102,6 +104,15 @@ func (c *usageServiceClient) GetBalance(ctx context.Context, in *GetBalanceReque
 	return out, nil
 }
 
+func (c *usageServiceClient) AddUsageCreditNote(ctx context.Context, in *AddUsageCreditNoteRequest, opts ...grpc.CallOption) (*AddUsageCreditNoteResponse, error) {
+	out := new(AddUsageCreditNoteResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/AddUsageCreditNote", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UsageServiceServer is the server API for UsageService service.
 // All implementations must embed UnimplementedUsageServiceServer
 // for forward compatibility
@@ -118,6 +129,8 @@ type UsageServiceServer interface {
 	ListUsage(context.Context, *ListUsageRequest) (*ListUsageResponse, error)
 	// GetBalance returns the current credits balance for the given attributionId
 	GetBalance(context.Context, *GetBalanceRequest) (*GetBalanceResponse, error)
+	// AddUsageCreditNote adds a usage credit note to the given cost center with the effective date of now
+	AddUsageCreditNote(context.Context, *AddUsageCreditNoteRequest) (*AddUsageCreditNoteResponse, error)
 	mustEmbedUnimplementedUsageServiceServer()
 }
 
@@ -142,6 +155,9 @@ func (UnimplementedUsageServiceServer) ListUsage(context.Context, *ListUsageRequ
 }
 func (UnimplementedUsageServiceServer) GetBalance(context.Context, *GetBalanceRequest) (*GetBalanceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBalance not implemented")
+}
+func (UnimplementedUsageServiceServer) AddUsageCreditNote(context.Context, *AddUsageCreditNoteRequest) (*AddUsageCreditNoteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddUsageCreditNote not implemented")
 }
 func (UnimplementedUsageServiceServer) mustEmbedUnimplementedUsageServiceServer() {}
 
@@ -264,6 +280,24 @@ func _UsageService_GetBalance_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UsageService_AddUsageCreditNote_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddUsageCreditNoteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsageServiceServer).AddUsageCreditNote(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.UsageService/AddUsageCreditNote",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsageServiceServer).AddUsageCreditNote(ctx, req.(*AddUsageCreditNoteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UsageService_ServiceDesc is the grpc.ServiceDesc for UsageService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -294,6 +328,10 @@ var UsageService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetBalance",
 			Handler:    _UsageService_GetBalance_Handler,
+		},
+		{
+			MethodName: "AddUsageCreditNote",
+			Handler:    _UsageService_AddUsageCreditNote_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

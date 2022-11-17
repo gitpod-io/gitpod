@@ -155,70 +155,39 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCent
 	isTeam := attributionID.IsEntity(AttributionEntity_Team)
 	isUser := attributionID.IsEntity(AttributionEntity_User)
 
+	var defaultSpendingLimit int32
 	if isUser {
+		defaultSpendingLimit = c.cfg.ForUsers
 		// New billing strategy is Stripe
 		if newCC.BillingStrategy == CostCenter_Stripe {
 			if newCC.SpendingLimit < c.cfg.MinForUsersOnStripe {
 				return CostCenter{}, status.Errorf(codes.FailedPrecondition, "individual users cannot lower their spending below %d", c.cfg.ForUsers)
 			}
 		}
-
-		// Billing strategy remains unchanged (Other)
-		if newCC.BillingStrategy == CostCenter_Other && existingCC.BillingStrategy == CostCenter_Other {
-			if newCC.SpendingLimit != existingCC.SpendingLimit {
-				return CostCenter{}, status.Errorf(codes.FailedPrecondition, "individual users on a free plan cannot adjust their spending limit")
-			}
-		}
-
-		// Downgrading from stripe
-		if existingCC.BillingStrategy == CostCenter_Stripe && newCC.BillingStrategy == CostCenter_Other {
-			newCC.SpendingLimit = c.cfg.ForUsers
-			newCC.BillingCycleStart = common_db.NewVarCharTime(now)
-			// see you next month
-			newCC.NextBillingTime = common_db.NewVarCharTime(now.AddDate(0, 1, 0))
-		}
-
-		// Upgrading to Stripe
-		if existingCC.BillingStrategy == CostCenter_Other && newCC.BillingStrategy == CostCenter_Stripe {
-			err := c.BalanceOutUsage(ctx, attributionID)
-			if err != nil {
-				return CostCenter{}, err
-			}
-
-			newCC.BillingCycleStart = common_db.NewVarCharTime(now)
-			// set an informative nextBillingTime, even though we don't manage Stripe billing cycle
-			newCC.NextBillingTime = common_db.NewVarCharTime(now.AddDate(0, 1, 0))
-		}
 	} else if isTeam {
-		// Billing strategy is Other, and it remains unchanged
-		if existingCC.BillingStrategy == CostCenter_Other && newCC.BillingStrategy == CostCenter_Other {
-			// It is impossible for a team without Stripe billing to change their spending limit
-			if newCC.SpendingLimit != c.cfg.ForTeams {
-				return CostCenter{}, status.Errorf(codes.FailedPrecondition, "teams without a subscription cannot change their spending limit")
-			}
-		}
-
-		// Downgrading from stripe
-		if existingCC.BillingStrategy == CostCenter_Stripe && newCC.BillingStrategy == CostCenter_Other {
-			newCC.SpendingLimit = c.cfg.ForTeams
-			newCC.BillingCycleStart = common_db.NewVarCharTime(now)
-			// see you next month
-			newCC.NextBillingTime = common_db.NewVarCharTime(now.AddDate(0, 1, 0))
-		}
-
-		// Upgrading to Stripe
-		if existingCC.BillingStrategy == CostCenter_Other && newCC.BillingStrategy == CostCenter_Stripe {
-			err := c.BalanceOutUsage(ctx, attributionID)
-			if err != nil {
-				return CostCenter{}, err
-			}
-
-			newCC.BillingCycleStart = common_db.NewVarCharTime(now)
-			// set an informative nextBillingTime, even though we don't manage Stripe billing cycle
-			newCC.NextBillingTime = common_db.NewVarCharTime(now.AddDate(0, 1, 0))
-		}
+		defaultSpendingLimit = c.cfg.ForTeams
 	} else {
 		return CostCenter{}, status.Errorf(codes.InvalidArgument, "Unknown attribution entity %s", string(attributionID))
+	}
+
+	// Downgrading from stripe
+	if existingCC.BillingStrategy == CostCenter_Stripe && newCC.BillingStrategy == CostCenter_Other {
+		newCC.SpendingLimit = defaultSpendingLimit
+		newCC.BillingCycleStart = common_db.NewVarCharTime(now)
+		// see you next month
+		newCC.NextBillingTime = common_db.NewVarCharTime(now.AddDate(0, 1, 0))
+	}
+
+	// Upgrading to Stripe
+	if existingCC.BillingStrategy == CostCenter_Other && newCC.BillingStrategy == CostCenter_Stripe {
+		err := c.BalanceOutUsage(ctx, attributionID)
+		if err != nil {
+			return CostCenter{}, err
+		}
+
+		newCC.BillingCycleStart = common_db.NewVarCharTime(now)
+		// set an informative nextBillingTime, even though we don't manage Stripe billing cycle
+		newCC.NextBillingTime = common_db.NewVarCharTime(now.AddDate(0, 1, 0))
 	}
 
 	log.WithField("cost_center", newCC).Info("saving cost center.")

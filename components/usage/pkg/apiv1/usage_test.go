@@ -341,3 +341,45 @@ func TestListUsage(t *testing.T) {
 	}
 
 }
+
+func TestAddUSageCreditNote(t *testing.T) {
+	conn := dbtest.ConnectForTests(t)
+
+	attributionID := db.NewTeamAttributionID(uuid.New().String())
+
+	usageService := newUsageService(t, conn)
+
+	tests := []struct {
+		credits int32
+		userId  string
+		note    string
+		// expectations
+		expectedError bool
+	}{
+		{300, uuid.New().String(), "Something", false},
+		{300, "bad-userid", "Something", true},
+		{300, uuid.New().String(), "    " /* no note */, true},
+		{-300, uuid.New().String(), "Negative Balance", false},
+	}
+
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("Running test no %d", i+1), func(t *testing.T) {
+			_, err := usageService.AddUsageCreditNote(context.Background(), &v1.AddUsageCreditNoteRequest{
+				AttributionId: string(attributionID),
+				Credits:       test.credits,
+				Note:          test.note,
+				UserId:        test.userId,
+			})
+			if test.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				balance, err := db.GetBalance(context.Background(), conn, attributionID)
+				require.NoError(t, err)
+				require.Equal(t, int32(balance.ToCredits()), test.credits*-1)
+			}
+			require.NoError(t, conn.Where("attributionId = ?", attributionID).Delete(&db.Usage{}).Error)
+		})
+	}
+
+}
