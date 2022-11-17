@@ -52,12 +52,20 @@ export default function () {
         <div className="flex flex-col w-96 mt-24 mx-auto items-center">
             <h1>New Team</h1>
             <p className="text-gray-500 text-center text-base">
-                Teams allow you to <strong>manage multiple projects</strong>, <strong>group workspaces</strong>, and{" "}
-                <strong>collaborate with your team</strong>.
+                <a href="https://www.gitpod.io/docs/configure/teams" className="gp-link">
+                    Teams
+                </a>{" "}
+                allow you to manage related{" "}
+                <a href="https://www.gitpod.io/docs/configure/projects" className="gp-link">
+                    projects
+                </a>{" "}
+                and collaborate with other members.
             </p>
             <form className="mt-16 w-full" onSubmit={createTeam}>
-                <div className="border rounded-xl p-6 border-gray-100 dark:border-gray-800">
-                    <h3 className="text-center text-xl mb-6">What's your team's name?</h3>
+                <div className="rounded-xl p-6 bg-gray-50 dark:bg-gray-800">
+                    <h3 className="text-left text-lg">You're creating a new team</h3>
+                    <p className="text-gray-500">After creating a team, you can invite others to join.</p>
+                    <br />
                     <h4>Team Name</h4>
                     <input
                         autoFocus
@@ -78,6 +86,7 @@ export default function () {
                     </button>
                 </div>
             </form>
+
             <p className="text-center w-full mt-12 text-gray-500">
                 <strong>Teams &amp; Projects</strong> are currently in Beta.{" "}
                 <a
