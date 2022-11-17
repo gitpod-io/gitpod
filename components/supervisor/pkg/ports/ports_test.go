@@ -622,6 +622,26 @@ func TestPortsUpdateState(t *testing.T) {
 				},
 			},
 		},
+		{
+			// Please make sure this test pass for code browser resolveExternalPort
+			// see also https://github.com/gitpod-io/openvscode-server/blob/5ab7644a8bbf37d28e23212bc6f1529cafd8bf7b/extensions/gitpod-web/src/extension.ts#L310-L339
+			Desc: "expose port without served, port should be responded for use case of openvscode-server",
+			Changes: []Change{
+				{
+					Exposed: []ExposedPort{{LocalPort: 3000, Public: false, URL: "foobar"}},
+				},
+			},
+			// this will not exposed because test manager didn't implement it properly
+			// ExpectedExposure: []ExposedPort{
+			// 	{LocalPort: 3000},
+			// },
+			ExpectedUpdates: UpdateExpectation{
+				{},
+				{
+					{LocalPort: 3000, OnOpen: api.PortsStatus_notify_private, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}},
+				},
+			},
+		},
 	}
 
 	log.Log.Logger.SetLevel(logrus.FatalLevel)
@@ -873,9 +893,13 @@ func TestPortsConcurrentSubscribe(t *testing.T) {
 }
 
 func TestManager_getStatus(t *testing.T) {
+	type portState struct {
+		port      uint32
+		notServed bool
+	}
 	type fields struct {
 		orderInYaml []any
-		state       []uint32
+		state       []portState
 	}
 	tests := []struct {
 		name   string
@@ -887,7 +911,7 @@ func TestManager_getStatus(t *testing.T) {
 			fields: fields{
 				// The port number (e.g. 1337) or range (e.g. 3000-3999) to expose.
 				orderInYaml: []any{1002, 1000, "3000-3999", 1001},
-				state:       []uint32{1000, 1001, 1002, 3003, 3001, 3002, 4002, 4000, 5000, 5005},
+				state:       []portState{{port: 1000}, {port: 1001}, {port: 1002}, {port: 3003}, {port: 3001}, {port: 3002}, {port: 4002}, {port: 4000}, {port: 5000}, {port: 5005}},
 			},
 			want: []uint32{1002, 1000, 3001, 3002, 3003, 1001, 4000, 4002, 5000, 5005},
 		},
@@ -895,7 +919,7 @@ func TestManager_getStatus(t *testing.T) {
 			name: "order for ranged ports and inside ranged order by number ASC",
 			fields: fields{
 				orderInYaml: []any{1002, "3000-3999", 1009, "4000-4999"},
-				state:       []uint32{5000, 1000, 1009, 4000, 4001, 3000, 3009},
+				state:       []portState{{port: 5000}, {port: 1000}, {port: 1009}, {port: 4000}, {port: 4001}, {port: 3000}, {port: 3009}},
 			},
 			want: []uint32{3000, 3009, 1009, 4000, 4001, 1000, 5000},
 		},
@@ -903,11 +927,20 @@ func TestManager_getStatus(t *testing.T) {
 			name: "served ports order by number ASC",
 			fields: fields{
 				orderInYaml: []any{},
-				state:       []uint32{4000, 4003, 4007, 4001, 4006},
+				state:       []portState{{port: 4000}, {port: 4003}, {port: 4007}, {port: 4001}, {port: 4006}},
 			},
 			want: []uint32{4000, 4001, 4003, 4006, 4007},
 		},
-
+		{
+			// Please make sure this test pass for code browser resolveExternalPort
+			// see also https://github.com/gitpod-io/openvscode-server/blob/5ab7644a8bbf37d28e23212bc6f1529cafd8bf7b/extensions/gitpod-web/src/extension.ts#L310-L339
+			name: "expose not served ports should respond their status",
+			fields: fields{
+				orderInYaml: []any{},
+				state:       []portState{{port: 4000, notServed: true}},
+			},
+			want: []uint32{4000},
+		},
 		// It will not works because we do not `Run` ports Manger
 		// As ports Manger will autoExpose those ports (but not ranged port) in yaml
 		// and they will exists in state
@@ -923,11 +956,11 @@ func TestManager_getStatus(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			state := make(map[uint32]*managedPort)
-			for _, port := range tt.fields.state {
-				state[port] = &managedPort{
-					Served:             true,
-					LocalhostPort:      port,
-					TunneledTargetPort: port,
+			for _, s := range tt.fields.state {
+				state[s.port] = &managedPort{
+					Served:             !s.notServed,
+					LocalhostPort:      s.port,
+					TunneledTargetPort: s.port,
 					TunneledClients:    map[string]uint32{},
 				}
 			}
