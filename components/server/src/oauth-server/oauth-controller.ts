@@ -137,11 +137,13 @@ export class OAuthController {
 
             const user = this.getValidUser(req, res);
             if (!user) {
+                res.sendStatus(400);
                 return;
             }
 
             // Check for approval of this client
             if (!this.hasApproval(user, clientID.toString(), req, res)) {
+                res.sendStatus(400);
                 return;
             }
 
@@ -161,7 +163,12 @@ export class OAuthController {
                 const oauthResponse = await authorizationServer.completeAuthorizationRequest(authRequest);
                 return handleExpressResponse(res, oauthResponse);
             } catch (e) {
-                handleExpressError(e, res);
+                try {
+                    handleExpressError(e, res);
+                } catch (error) {
+                    log.error(`Authorization request handling failed.`, error, { request });
+                    res.sendStatus(500);
+                }
             }
         });
 
@@ -171,8 +178,12 @@ export class OAuthController {
                 const oauthResponse = await authorizationServer.respondToAccessTokenRequest(req, response);
                 return handleExpressResponse(res, oauthResponse);
             } catch (e) {
-                handleExpressError(e, res);
-                return;
+                try {
+                    handleExpressError(e, res);
+                } catch (error) {
+                    log.error(`Access token request handling failed.`, error);
+                    res.sendStatus(500);
+                }
             }
         });
 
