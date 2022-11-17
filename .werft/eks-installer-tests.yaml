@@ -65,7 +65,7 @@ pod:
       secretName: self-hosted-github-oauth
   containers:
   - name: nightly-test
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-dont-include-previewctl-in-image.12
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-remove-adc.9
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
