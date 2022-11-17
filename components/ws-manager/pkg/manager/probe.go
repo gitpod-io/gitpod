@@ -42,7 +42,7 @@ type WorkspaceReadyProbe struct {
 
 // NewWorkspaceReadyProbe creates a new workspace probe
 func NewWorkspaceReadyProbe(workspaceID string, workspaceURL url.URL) WorkspaceReadyProbe {
-	workspaceURL.Path += "/_supervisor/v1/status/ide/wait/true"
+	workspaceURL.Path += "/_supervisor/v1/status/ide"
 	readyURL := workspaceURL.String()
 
 	return WorkspaceReadyProbe{
