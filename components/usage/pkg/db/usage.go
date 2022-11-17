@@ -23,6 +23,7 @@ type UsageKind string
 const (
 	WorkspaceInstanceUsageKind UsageKind = "workspaceinstance"
 	InvoiceUsageKind           UsageKind = "invoice"
+	CreditNoteKind             UsageKind = "creditnote"
 )
 
 func NewCreditCents(n float64) CreditCents {
@@ -58,6 +59,16 @@ func (u *Usage) SetMetadataWithWorkspaceInstance(data WorkspaceInstanceUsageData
 	return nil
 }
 
+func (u *Usage) SetCreditNoteMetaData(data CreditNoteMetaData) error {
+	b, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("failed to serialize credit note meta data into json: %w", err)
+	}
+
+	u.Metadata = b
+	return nil
+}
+
 func (u *Usage) GetMetadataAsWorkspaceInstanceData() (WorkspaceInstanceUsageData, error) {
 	var data WorkspaceInstanceUsageData
 	err := json.Unmarshal(u.Metadata, &data)
@@ -80,6 +91,10 @@ type WorkspaceInstanceUsageData struct {
 	UserID         uuid.UUID     `json:"userId"`
 	UserName       string        `json:"userName"`
 	UserAvatarURL  string        `json:"userAvatarURL"`
+}
+
+type CreditNoteMetaData struct {
+	UserId string `json:userId`
 }
 
 type FindUsageResult struct {

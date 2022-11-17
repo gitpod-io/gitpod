@@ -249,6 +249,16 @@ export interface ResetUsageRequest {
 export interface ResetUsageResponse {
 }
 
+export interface AddUsageCreditNoteRequest {
+  attributionId: string;
+  credits: number;
+  note: string;
+  userId: string;
+}
+
+export interface AddUsageCreditNoteResponse {
+}
+
 function createBaseReconcileUsageRequest(): ReconcileUsageRequest {
   return { from: undefined, to: undefined };
 }
@@ -1244,6 +1254,121 @@ export const ResetUsageResponse = {
   },
 };
 
+function createBaseAddUsageCreditNoteRequest(): AddUsageCreditNoteRequest {
+  return { attributionId: "", credits: 0, note: "", userId: "" };
+}
+
+export const AddUsageCreditNoteRequest = {
+  encode(message: AddUsageCreditNoteRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.attributionId !== "") {
+      writer.uint32(10).string(message.attributionId);
+    }
+    if (message.credits !== 0) {
+      writer.uint32(16).int32(message.credits);
+    }
+    if (message.note !== "") {
+      writer.uint32(26).string(message.note);
+    }
+    if (message.userId !== "") {
+      writer.uint32(34).string(message.userId);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): AddUsageCreditNoteRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAddUsageCreditNoteRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.attributionId = reader.string();
+          break;
+        case 2:
+          message.credits = reader.int32();
+          break;
+        case 3:
+          message.note = reader.string();
+          break;
+        case 4:
+          message.userId = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AddUsageCreditNoteRequest {
+    return {
+      attributionId: isSet(object.attributionId) ? String(object.attributionId) : "",
+      credits: isSet(object.credits) ? Number(object.credits) : 0,
+      note: isSet(object.note) ? String(object.note) : "",
+      userId: isSet(object.userId) ? String(object.userId) : "",
+    };
+  },
+
+  toJSON(message: AddUsageCreditNoteRequest): unknown {
+    const obj: any = {};
+    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
+    message.credits !== undefined && (obj.credits = Math.round(message.credits));
+    message.note !== undefined && (obj.note = message.note);
+    message.userId !== undefined && (obj.userId = message.userId);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<AddUsageCreditNoteRequest>): AddUsageCreditNoteRequest {
+    const message = createBaseAddUsageCreditNoteRequest();
+    message.attributionId = object.attributionId ?? "";
+    message.credits = object.credits ?? 0;
+    message.note = object.note ?? "";
+    message.userId = object.userId ?? "";
+    return message;
+  },
+};
+
+function createBaseAddUsageCreditNoteResponse(): AddUsageCreditNoteResponse {
+  return {};
+}
+
+export const AddUsageCreditNoteResponse = {
+  encode(_: AddUsageCreditNoteResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): AddUsageCreditNoteResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAddUsageCreditNoteResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): AddUsageCreditNoteResponse {
+    return {};
+  },
+
+  toJSON(_: AddUsageCreditNoteResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial(_: DeepPartial<AddUsageCreditNoteResponse>): AddUsageCreditNoteResponse {
+    const message = createBaseAddUsageCreditNoteResponse();
+    return message;
+  },
+};
+
 export type UsageServiceDefinition = typeof UsageServiceDefinition;
 export const UsageServiceDefinition = {
   name: "UsageService",
@@ -1303,6 +1428,15 @@ export const UsageServiceDefinition = {
       responseStream: false,
       options: {},
     },
+    /** AddUsageCreditNote adds a usage credit note to the given cost center with the effective date of now */
+    addUsageCreditNote: {
+      name: "AddUsageCreditNote",
+      requestType: AddUsageCreditNoteRequest,
+      requestStream: false,
+      responseType: AddUsageCreditNoteResponse,
+      responseStream: false,
+      options: {},
+    },
   },
 } as const;
 
@@ -1334,6 +1468,11 @@ export interface UsageServiceServiceImplementation<CallContextExt = {}> {
     request: GetBalanceRequest,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<GetBalanceResponse>>;
+  /** AddUsageCreditNote adds a usage credit note to the given cost center with the effective date of now */
+  addUsageCreditNote(
+    request: AddUsageCreditNoteRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<AddUsageCreditNoteResponse>>;
 }
 
 export interface UsageServiceClient<CallOptionsExt = {}> {
@@ -1364,6 +1503,11 @@ export interface UsageServiceClient<CallOptionsExt = {}> {
     request: DeepPartial<GetBalanceRequest>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<GetBalanceResponse>;
+  /** AddUsageCreditNote adds a usage credit note to the given cost center with the effective date of now */
+  addUsageCreditNote(
+    request: DeepPartial<AddUsageCreditNoteRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<AddUsageCreditNoteResponse>;
 }
 
 export interface DataLoaderOptions {

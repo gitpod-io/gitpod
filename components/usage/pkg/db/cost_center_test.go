@@ -162,18 +162,18 @@ func TestCostCenterManager_UpdateCostCenter(t *testing.T) {
 		require.Equal(t, codes.InvalidArgument, status.Code(err))
 	})
 
-	t.Run("individual user on Other billing strategy cannot change spending limit of 500", func(t *testing.T) {
+	t.Run("individual user on Other billing strategy can change spending limit of 500", func(t *testing.T) {
 		mnr := db.NewCostCenterManager(conn, limits)
 		userAttributionID := db.NewUserAttributionID(uuid.New().String())
 		cleanUp(t, conn, userAttributionID)
 
-		_, err := mnr.UpdateCostCenter(context.Background(), db.CostCenter{
+		newCC, err := mnr.UpdateCostCenter(context.Background(), db.CostCenter{
 			ID:              userAttributionID,
 			BillingStrategy: db.CostCenter_Other,
 			SpendingLimit:   501,
 		})
-		require.Error(t, err)
-		require.Equal(t, codes.FailedPrecondition, status.Code(err))
+		require.NoError(t, err)
+		require.Equal(t, int32(501), newCC.SpendingLimit)
 
 	})
 
@@ -217,7 +217,7 @@ func TestCostCenterManager_UpdateCostCenter(t *testing.T) {
 		}, res)
 	})
 
-	t.Run("team on Other billing strategy get a spending limit of 0, and cannot change it", func(t *testing.T) {
+	t.Run("team on Other billing strategy get a spending limit of 0", func(t *testing.T) {
 		mnr := db.NewCostCenterManager(conn, limits)
 		teamAttributionID := db.NewTeamAttributionID(uuid.New().String())
 		cleanUp(t, conn, teamAttributionID)
@@ -234,14 +234,6 @@ func TestCostCenterManager_UpdateCostCenter(t *testing.T) {
 			SpendingLimit:   limits.ForTeams,
 			BillingStrategy: db.CostCenter_Other,
 		}, res)
-
-		// Prevents updating when spending limit changes
-		_, err = mnr.UpdateCostCenter(context.Background(), db.CostCenter{
-			ID:              teamAttributionID,
-			BillingStrategy: db.CostCenter_Other,
-			SpendingLimit:   1,
-		})
-		require.Error(t, err)
 	})
 
 	t.Run("team on Stripe billing strategy can set arbitrary positive spending limit", func(t *testing.T) {
