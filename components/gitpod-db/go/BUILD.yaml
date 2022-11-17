@@ -6,6 +6,17 @@ packages:
   - name: lib
     type: go
     srcs:
-      - "**"
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    deps:
+      - :init-testdb
+      - components/common-go:lib
     config:
       packaging: library
+
+  - name: init-testdb
+    type: generic
+    deps:
+      - components/gitpod-db:dbtest-init
+    ephemeral: true

@@ -10,6 +10,7 @@ packages:
       - components/public-api/go:lib
       - components/usage-api/go:lib
       - components/gitpod-protocol/go:lib
+      - components/gitpod-db/go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
+	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 )
 
 const (

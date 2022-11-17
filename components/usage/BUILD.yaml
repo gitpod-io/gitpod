@@ -6,10 +6,10 @@ packages:
       - "go.mod"
       - "go.sum"
     deps:
+      - components/gitpod-db/go:lib
       - components/common-go:lib
       - components/usage-api/go:lib
       - components/content-service-api/go:lib
-      - :init-testdb
     env:
       - CGO_ENABLED=0
       - GOOS=linux
@@ -20,6 +20,7 @@ packages:
   - name: lib
     type: go
     deps:
+      - components/gitpod-db/go:lib
       - components/common-go:lib
       - components/usage-api/go:lib
       - components/content-service-api/go:lib
@@ -30,12 +31,6 @@ packages:
     config:
       packaging: library
       dontTest: true
-
-  - name: init-testdb
-    type: generic
-    deps:
-      - components/gitpod-db:dbtest-init
-    ephemeral: true
 
   - name: docker
     type: docker

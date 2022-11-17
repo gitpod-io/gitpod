@@ -17,6 +17,7 @@ packages:
     deps:
       - components/blobserve:lib
       - components/common-go:lib
+      - components/gitpod-db/go:lib
       - components/content-service-api/go:lib
       - components/content-service:lib
       - components/ee/agent-smith:lib
