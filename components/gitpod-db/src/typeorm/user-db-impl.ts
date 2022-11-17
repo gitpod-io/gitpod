@@ -517,6 +517,10 @@ export class TypeORMUserDBImpl implements UserDB {
 
     // OAuthTokenRepository
     async issueToken(client: OAuthClient, scopes: OAuthScope[], user?: OAuthUser): Promise<OAuthToken> {
+        if (!user) {
+            // this would otherwise break persisting of an DBOAuthAuthCodeEntry in AuthCodeRepositoryDB
+            throw new Error("Cannot issue auth code for unknown user.");
+        }
         const expiry = tokenExpiryInFuture.getEndDate();
         return <OAuthToken>{
             accessToken: crypto.randomBytes(30).toString("hex"),
