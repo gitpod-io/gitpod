@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package io.gitpod.jetbrains.remote
+package io.gitpod.jetbrains.remote.stable
 
 import com.intellij.ProjectTopics
 import com.intellij.openapi.diagnostic.thisLogger
@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.CompletableFuture
 
 @Suppress("UnstableApiUsage", "OPT_IN_USAGE")
-class GitpodProjectManager(
+class GitpodAutoJdkService(
         private val project: Project
 ) {
 

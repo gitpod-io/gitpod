@@ -10,5 +10,6 @@
         <applicationService serviceInterface="io.gitpod.jetbrains.remote.GitpodCLIHelper" serviceImplementation="io.gitpod.jetbrains.remote.stable.GitpodCLIHelperImpl"/>
         <projectService serviceImplementation="io.gitpod.jetbrains.remote.stable.GitpodClientProjectGuestSessionTracker" client="guest" preload="true"/>
         <projectService serviceImplementation="io.gitpod.jetbrains.remote.stable.GitpodTerminalGuestService" client="guest" preload="true"/>
+        <projectService serviceImplementation="io.gitpod.jetbrains.remote.stable.GitpodAutoJdkService" preload="true"/>
     </extensions>
 </idea-plugin>
