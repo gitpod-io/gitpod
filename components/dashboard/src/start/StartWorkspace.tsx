@@ -536,7 +536,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                         },
                                         {
                                             title: "Go to Dashboard",
-                                            href: gitpodHostUrl.asDashboard().toString(),
+                                            href: gitpodHostUrl.asWorkspacePage().toString(),
                                             target: "_parent",
                                         },
                                     ]}
@@ -611,7 +611,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                             </div>
                         </div>
                         <div className="mt-10 flex justify-center">
-                            <a target="_parent" href={gitpodHostUrl.asDashboard().toString()}>
+                            <a target="_parent" href={gitpodHostUrl.asWorkspacePage().toString()}>
                                 <button className="secondary">Go to Dashboard</button>
                             </a>
                         </div>
@@ -656,7 +656,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                         </div>
                         <PendingChangesDropdown workspaceInstance={this.state.workspaceInstance} />
                         <div className="mt-10 justify-center flex space-x-2">
-                            <a target="_parent" href={gitpodHostUrl.asDashboard().toString()}>
+                            <a target="_parent" href={gitpodHostUrl.asWorkspacePage().toString()}>
                                 <button className="secondary">Go to Dashboard</button>
                             </a>
                             <a
