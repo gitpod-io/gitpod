@@ -210,8 +210,21 @@ https://{$GITPOD_DOMAIN} {
 	handle @backend_wss {
 		gitpod.sec_websocket_key
 
+		@slow {
+			header "Sec-WebSocket-Protocol" "slow-database"
+		}
+
+		@fast {
+			not header "Sec-WebSocket-Protocol" "slow-database"
+		}
+
 		uri strip_prefix /api
-		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+
+		reverse_proxy @fast server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+			import upstream_headers
+		}
+
+		reverse_proxy @slow slow-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
 			import upstream_headers
 		}
 	}
