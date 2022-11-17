@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	common_db "github.com/gitpod-io/gitpod/common-go/db"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
-	"github.com/gitpod-io/gitpod/usage/pkg/db/dbtest"
+	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
+
+	"github.com/gitpod-io/gitpod/components/gitpod-db/go/dbtest"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -73,28 +73,28 @@ func TestCostCenterManager_GetOrCreateCostCenter_ResetsExpired(t *testing.T) {
 
 	expiredCC := db.CostCenter{
 		ID:                db.NewTeamAttributionID(uuid.New().String()),
-		CreationTime:      common_db.NewVarCharTime(now),
+		CreationTime:      db.NewVarCharTime(now),
 		SpendingLimit:     0,
 		BillingStrategy:   db.CostCenter_Other,
-		NextBillingTime:   common_db.NewVarCharTime(expired),
-		BillingCycleStart: common_db.NewVarCharTime(now),
+		NextBillingTime:   db.NewVarCharTime(expired),
+		BillingCycleStart: db.NewVarCharTime(now),
 	}
 	unexpiredCC := db.CostCenter{
 		ID:                db.NewUserAttributionID(uuid.New().String()),
-		CreationTime:      common_db.NewVarCharTime(now),
+		CreationTime:      db.NewVarCharTime(now),
 		SpendingLimit:     500,
 		BillingStrategy:   db.CostCenter_Other,
-		NextBillingTime:   common_db.NewVarCharTime(unexpired),
-		BillingCycleStart: common_db.NewVarCharTime(now),
+		NextBillingTime:   db.NewVarCharTime(unexpired),
+		BillingCycleStart: db.NewVarCharTime(now),
 	}
 	// Stripe billing strategy should not be reset
 	stripeCC := db.CostCenter{
 		ID:                db.NewUserAttributionID(uuid.New().String()),
-		CreationTime:      common_db.NewVarCharTime(now),
+		CreationTime:      db.NewVarCharTime(now),
 		SpendingLimit:     0,
 		BillingStrategy:   db.CostCenter_Stripe,
-		NextBillingTime:   common_db.VarcharTime{},
-		BillingCycleStart: common_db.NewVarCharTime(now),
+		NextBillingTime:   db.VarcharTime{},
+		BillingCycleStart: db.NewVarCharTime(now),
 	}
 
 	dbtest.CreateCostCenters(t, conn,
@@ -103,13 +103,13 @@ func TestCostCenterManager_GetOrCreateCostCenter_ResetsExpired(t *testing.T) {
 		dbtest.NewCostCenter(t, stripeCC),
 	)
 
-	// expired CostCenter should be reset, so we get a new CreationTime
+	// expired db.CostCenter should be reset, so we get a new CreationTime
 	retrievedExpiredCC, err := mnr.GetOrCreateCostCenter(context.Background(), expiredCC.ID)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		conn.Model(&db.CostCenter{}).Delete(retrievedExpiredCC.ID)
 	})
-	require.Equal(t, common_db.NewVarCharTime(expired).Time().AddDate(0, 1, 0), retrievedExpiredCC.NextBillingTime.Time())
+	require.Equal(t, db.NewVarCharTime(expired).Time().AddDate(0, 1, 0), retrievedExpiredCC.NextBillingTime.Time())
 	require.Equal(t, expiredCC.ID, retrievedExpiredCC.ID)
 	require.Equal(t, expiredCC.BillingStrategy, retrievedExpiredCC.BillingStrategy)
 	require.WithinDuration(t, now, expiredCC.CreationTime.Time(), 3*time.Second, "new cost center creation time must be within 3 seconds of now")
@@ -117,7 +117,7 @@ func TestCostCenterManager_GetOrCreateCostCenter_ResetsExpired(t *testing.T) {
 	// unexpired cost center must not be reset
 	retrievedUnexpiredCC, err := mnr.GetOrCreateCostCenter(context.Background(), unexpiredCC.ID)
 	require.NoError(t, err)
-	require.Equal(t, common_db.NewVarCharTime(unexpired).Time(), retrievedUnexpiredCC.NextBillingTime.Time())
+	require.Equal(t, db.NewVarCharTime(unexpired).Time(), retrievedUnexpiredCC.NextBillingTime.Time())
 	require.Equal(t, unexpiredCC.ID, retrievedUnexpiredCC.ID)
 	require.Equal(t, unexpiredCC.BillingStrategy, retrievedUnexpiredCC.BillingStrategy)
 	require.WithinDuration(t, unexpiredCC.CreationTime.Time(), retrievedUnexpiredCC.CreationTime.Time(), 100*time.Millisecond)
@@ -341,16 +341,16 @@ func TestCostCenter_ListLatestCostCentersWithBillingTimeBefore(t *testing.T) {
 			dbtest.NewCostCenter(t, db.CostCenter{
 				ID:              db.NewTeamAttributionID(attributionID),
 				SpendingLimit:   100,
-				CreationTime:    common_db.NewVarCharTime(firstCreation),
+				CreationTime:    db.NewVarCharTime(firstCreation),
 				BillingStrategy: db.CostCenter_Other,
-				NextBillingTime: common_db.NewVarCharTime(firstCreation),
+				NextBillingTime: db.NewVarCharTime(firstCreation),
 			}),
 			dbtest.NewCostCenter(t, db.CostCenter{
 				ID:              db.NewTeamAttributionID(attributionID),
 				SpendingLimit:   100,
-				CreationTime:    common_db.NewVarCharTime(secondCreation),
+				CreationTime:    db.NewVarCharTime(secondCreation),
 				BillingStrategy: db.CostCenter_Other,
-				NextBillingTime: common_db.NewVarCharTime(secondCreation),
+				NextBillingTime: db.NewVarCharTime(secondCreation),
 			}),
 		}
 
@@ -378,14 +378,14 @@ func TestCostCenter_ListLatestCostCentersWithBillingTimeBefore(t *testing.T) {
 			dbtest.NewCostCenter(t, db.CostCenter{
 				ID:              db.NewTeamAttributionID(attributionID),
 				SpendingLimit:   100,
-				CreationTime:    common_db.NewVarCharTime(firstCreation),
+				CreationTime:    db.NewVarCharTime(firstCreation),
 				BillingStrategy: db.CostCenter_Other,
-				NextBillingTime: common_db.NewVarCharTime(firstCreation),
+				NextBillingTime: db.NewVarCharTime(firstCreation),
 			}),
 			dbtest.NewCostCenter(t, db.CostCenter{
 				ID:              db.NewTeamAttributionID(attributionID),
 				SpendingLimit:   100,
-				CreationTime:    common_db.NewVarCharTime(secondCreation),
+				CreationTime:    db.NewVarCharTime(secondCreation),
 				BillingStrategy: db.CostCenter_Stripe,
 			}),
 		}
@@ -410,7 +410,7 @@ func TestCostCenterManager_ResetUsage(t *testing.T) {
 		})
 		_, err := mnr.ResetUsage(context.Background(), db.CostCenter{
 			ID:              db.NewUserAttributionID(uuid.New().String()),
-			CreationTime:    common_db.NewVarCharTime(time.Now()),
+			CreationTime:    db.NewVarCharTime(time.Now()),
 			SpendingLimit:   500,
 			BillingStrategy: db.CostCenter_Stripe,
 		})
@@ -425,10 +425,10 @@ func TestCostCenterManager_ResetUsage(t *testing.T) {
 		})
 		oldCC := db.CostCenter{
 			ID:              db.NewTeamAttributionID(uuid.New().String()),
-			CreationTime:    common_db.NewVarCharTime(time.Now()),
+			CreationTime:    db.NewVarCharTime(time.Now()),
 			SpendingLimit:   0,
 			BillingStrategy: db.CostCenter_Other,
-			NextBillingTime: common_db.NewVarCharTime(ts),
+			NextBillingTime: db.NewVarCharTime(ts),
 		}
 		newCC, err := mnr.ResetUsage(context.Background(), oldCC)
 		require.NoError(t, err)

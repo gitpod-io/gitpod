@@ -8,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	common_db "github.com/gitpod-io/gitpod/common-go/db"
+	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 )
@@ -28,16 +28,16 @@ func ConnectForTests(t *testing.T) *gorm.DB {
 		return conn
 	}
 
-	// These are static connection details for tests, started by `leeway components/usage:init-testdb`.
+	// These are static connection details for tests, started by `leeway build components/gitpod-db/go:init-testdb`.
 	// We use the same static credentials for CI & local instance of MySQL Server.
 	var err error
-	conn, err = common_db.Connect(common_db.ConnectionParams{
+	conn, err = db.Connect(db.ConnectionParams{
 		User:     "root",
 		Password: "test",
 		Host:     "localhost:23306",
 		Database: "gitpod",
 	})
-	require.NoError(t, err, "Failed to establish connection to DB. In a workspace, run `leeway build components/usage:init-testdb` once to bootstrap the DB.")
+	require.NoError(t, err, "Failed to establish connection to  In a workspace, run `leeway build components/gitpod-db/go:init-testdb` once to bootstrap the ")
 
 	return conn
 }

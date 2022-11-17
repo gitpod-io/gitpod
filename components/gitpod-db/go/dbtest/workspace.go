@@ -6,12 +6,15 @@ package dbtest
 
 import (
 	"database/sql"
+
 	"github.com/gitpod-io/gitpod/common-go/namegen"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
+
+	"testing"
+
+	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
-	"testing"
 )
 
 const (
@@ -20,7 +23,7 @@ const (
 )
 
 // NewWorkspace creates a new stub workspace with default values, unless these are set on the workspace argument
-// Records are not stored, use `db.Create(dbtest.NewWorkspace(t, db.Workspace{})) to store it.
+// Records are not stored, use `Create(dbtest.NewWorkspace(t, Workspace{})) to store it.
 // Only used for tests. Additional default properties may be added in the future.
 func NewWorkspace(t *testing.T, workspace db.Workspace) db.Workspace {
 	t.Helper()

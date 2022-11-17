@@ -6,7 +6,9 @@ package apiv1
 
 import (
 	"testing"
+	"time"
 
+	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
@@ -65,6 +67,52 @@ func TestWorkspacePricer_Default(t *testing.T) {
 			actualCredits := DefaultWorkspacePricer.Credits(defaultWorkspaceClass, tc.Seconds)
 
 			require.True(t, cmp.Equal(tc.ExpectedCredits, actualCredits, cmpopts.EquateApprox(0, 0.0000001)))
+		})
+	}
+}
+
+func TestWorkspaceInstanceForUsage_WorkspaceRuntimeSeconds(t *testing.T) {
+	type Scenario struct {
+		Name                   string
+		Instance               *db.WorkspaceInstanceForUsage
+		StopTimeIfStillRunning time.Time
+		ExpectedCredits        float64
+	}
+
+	for _, s := range []Scenario{
+		{
+			Name: "does not use stop time if still running if the instance stopped",
+			Instance: &db.WorkspaceInstanceForUsage{
+				WorkspaceClass: db.WorkspaceClass_Default,
+				StartedTime:    db.NewVarCharTime(time.Date(2022, 9, 8, 12, 0, 0, 0, time.UTC)),
+				StoppingTime:   db.NewVarCharTime(time.Date(2022, 9, 8, 12, 6, 0, 0, time.UTC)),
+			},
+			// Override is before actual stop time
+			StopTimeIfStillRunning: time.Date(2022, 9, 8, 11, 21, 29, 00, time.UTC),
+			ExpectedCredits:        1,
+		},
+		{
+			Name: "uses stop time when instance is not stopped",
+			Instance: &db.WorkspaceInstanceForUsage{
+				WorkspaceClass: db.WorkspaceClass_Default,
+				StartedTime:    db.NewVarCharTime(time.Date(2022, 9, 8, 12, 0, 0, 0, time.UTC)),
+			},
+			StopTimeIfStillRunning: time.Date(2022, 9, 8, 12, 12, 0, 00, time.UTC),
+			ExpectedCredits:        2,
+		},
+		{
+			Name: "uses creation time when stop time if still running is less than started time",
+			Instance: &db.WorkspaceInstanceForUsage{
+				WorkspaceClass: db.WorkspaceClass_Default,
+				StartedTime:    db.NewVarCharTime(time.Date(2022, 9, 8, 12, 0, 0, 0, time.UTC)),
+			},
+			StopTimeIfStillRunning: time.Date(2022, 9, 8, 11, 0, 0, 00, time.UTC),
+			ExpectedCredits:        0,
+		},
+	} {
+		t.Run(s.Name, func(t *testing.T) {
+			credits := DefaultWorkspacePricer.CreditsUsedByInstance(s.Instance, s.StopTimeIfStillRunning)
+			require.Equal(t, s.ExpectedCredits, credits)
 		})
 	}
 }
