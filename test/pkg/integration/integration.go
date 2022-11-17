@@ -308,7 +308,7 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 	closer = append(closer, func() error {
 		if res != nil {
 			err := res.Call(MethodTestAgentShutdown, new(TestAgentShutdownRequest), new(TestAgentShutdownResponse))
-			if err != nil && strings.Contains(err.Error(), "connection is shut down") {
+			if err != nil && (strings.Contains(err.Error(), "connection is shut down") || strings.Contains(err.Error(), "the client connection is closing")) {
 				return nil
 			}
 
