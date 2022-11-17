@@ -12,15 +12,15 @@
 
 	# configure plugin order
 	# https://caddyserver.com/docs/caddyfile/directives#directive-order
-	order gitpod.cors_origin            before header
-	order gitpod.workspace_download     before redir
-	order gitpod.headless_log_download	before rewrite
-	order gitpod.configcat	            before rewrite
-	order gitpod.sec_websocket_key      before header
+	order gitpod.cors_origin before header
+	order gitpod.workspace_download before redir
+	order gitpod.headless_log_download before rewrite
+	order gitpod.configcat before rewrite
+	order gitpod.sec_websocket_key before header
 
 	servers {
-        protocols h1 h2 h2c
-    }
+		protocols h1 h2 h2c
+	}
 }
 
 (compression) {
@@ -31,15 +31,15 @@
 (security_headers) {
 	header {
 		# enable HSTS
-		Strict-Transport-Security  max-age=31536000
+		Strict-Transport-Security max-age=31536000
 		# disable clients from sniffing the media type
-		X-Content-Type-Options     nosniff
+		X-Content-Type-Options nosniff
 		# Define valid parents that may embed a page
-		Content-Security-Policy    "frame-ancestors 'self' https://*.{$GITPOD_DOMAIN} https://{$GITPOD_DOMAIN}"
+		Content-Security-Policy "frame-ancestors 'self' https://*.{$GITPOD_DOMAIN} https://{$GITPOD_DOMAIN}"
 		# keep referrer data off of HTTP connections
-		Referrer-Policy            no-referrer-when-downgrade
+		Referrer-Policy no-referrer-when-downgrade
 		# Enable cross-site filter (XSS) and tell browser to block detected attacks
-		X-XSS-Protection           "1; mode=block"
+		X-XSS-Protection "1; mode=block"
 
 		defer # delay changes
 	}
@@ -143,10 +143,10 @@
 
 # public-api
 api.{$GITPOD_DOMAIN} {
-    log {
-        level DEBUG
-        output stdout
-    }
+	log {
+		level DEBUG
+		output stdout
+	}
 
 	gitpod.cors_origin {
 		allowed_origins https://{$GITPOD_DOMAIN}
@@ -154,7 +154,6 @@ api.{$GITPOD_DOMAIN} {
 
 	reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002
 }
-
 
 # always redirect to HTTPS
 http:// {
@@ -206,15 +205,15 @@ https://{$GITPOD_DOMAIN} {
 	}
 
 	@backend_wss {
-			path /api/gitpod
+		path /api/gitpod
 	}
 	handle @backend_wss {
-			gitpod.sec_websocket_key
+		gitpod.sec_websocket_key
 
-			uri strip_prefix /api
-			reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-					import upstream_headers
-			}
+		uri strip_prefix /api
+		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+			import upstream_headers
+		}
 	}
 
 	@backend path /api/* /headless-logs/*
@@ -309,7 +308,7 @@ https://*.*.{$GITPOD_DOMAIN} {
 			import workspace_transport
 			import upstream_headers
 
-			header_up X-WSProxy-Host       {http.request.host}
+			header_up X-WSProxy-Host {http.request.host}
 		}
 	}
 
@@ -320,19 +319,19 @@ https://*.*.{$GITPOD_DOMAIN} {
 			import upstream_headers
 
 			header_up X-Gitpod-WorkspaceId {re.host.workspaceID}
-			header_up X-Gitpod-Port        {re.host.workspacePort}
-			header_up X-WSProxy-Host       {http.request.host}
+			header_up X-Gitpod-Port {re.host.workspacePort}
+			header_up X-WSProxy-Host {http.request.host}
 		}
 	}
 
-	@workspace 	header_regexp host Host ^(?P<workspaceID>[a-z0-9][0-9a-z\-]+).ws(?P<location>-[a-z0-9]+)?.{$GITPOD_DOMAIN}
+	@workspace header_regexp host Host ^(?P<workspaceID>[a-z0-9][0-9a-z\-]+).ws(?P<location>-[a-z0-9]+)?.{$GITPOD_DOMAIN}
 	handle @workspace {
 		reverse_proxy https://ws-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9090 {
 			import workspace_transport
 			import upstream_headers
 
 			header_up X-Gitpod-WorkspaceId {re.host.workspaceID}
-			header_up X-WSProxy-Host       {http.request.host}
+			header_up X-WSProxy-Host {http.request.host}
 		}
 	}
 
