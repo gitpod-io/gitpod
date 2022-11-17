@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=1091
+# shellcheck disable=1090
 
 set -euo pipefail
 
@@ -27,8 +28,7 @@ fi
 
 ensure_gcloud_auth
 
-leeway run dev/preview:get-credentials
 leeway run dev/preview:create-preview
 leeway run dev/preview:build
-previewctl install-context --retry 30
+previewctl install-context --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}" --retry 30
 leeway run dev/preview:deploy-gitpod

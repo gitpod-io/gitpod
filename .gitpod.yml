@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-dont-include-previewctl-in-image.12
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-remove-adc.9
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
@@ -34,12 +34,11 @@ ports:
   - port: 8022
     onOpen: ignore
 tasks:
+  # This task takes care of configuring your workspace so it can manage and interact
+  # with preview environments.
   - name: Preview environment configuration
-    init: |
-      leeway run dev/preview/previewctl:install
-    command: |
-      previewctl get-credentials
-      previewctl install-context --watch
+    init: leeway run dev/preview/previewctl:install
+    command: leeway run dev/preview:configure-workspace
   - name: Installer dependencies
     init: |
       (cd install/installer && make deps)

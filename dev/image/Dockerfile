@@ -163,17 +163,10 @@ RUN sudo install-packages \
 
 RUN sudo python3 -m pip uninstall crcmod; sudo python3 -m pip install --no-cache-dir -U crcmod
 
-### gitpod-core specific gcloud/kubectl config
+### gitpod-core specific gcloud config
 # Copy GCloud default config that points to gitpod-dev
 ARG GCLOUD_CONFIG_DIR=/home/gitpod/.config/gcloud
 COPY --chown=gitpod gcloud-default-config $GCLOUD_CONFIG_DIR/configurations/config_default
-
-# Set kubeconfig file for dev cluster, using GCloud Application Default Credentials (ADC) as auth provider
-ARG KUBE_CONFIG_PATH=/home/gitpod/.kube/config
-COPY --chown=gitpod kubeconfig.yaml $KUBE_CONFIG_PATH
-
-# Set Application Default Credentials (ADC) based on user-provided env var
-RUN echo ". /workspace/gitpod/scripts/setup-google-adc.sh" >> ~/.bashrc
 
 ENV DB_HOST=localhost
 
@@ -263,3 +256,7 @@ COPY dev-kubecdl--app/kubecdl dev-gpctl--app/gpctl /usr/bin/
 RUN bash -c "echo . \<\(gpctl completion bash\) >> ~/.bashrc"
 
 ENV PATH=$PATH:/workspace/bin
+
+# Setting the environment variable here so that it will be accessible to all tasks and
+# terminal sessions in Gitpod workspaces.
+ENV PREVIEW_ENV_DEV_SA_KEY_PATH=/home/gitpod/.config/gcloud/preview-environment-dev-sa.json
