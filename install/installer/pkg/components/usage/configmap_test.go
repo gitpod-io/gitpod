@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/db"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
-	"github.com/gitpod-io/gitpod/usage/pkg/db"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 )
