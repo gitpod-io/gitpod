@@ -45,6 +45,10 @@ export class AuthCodeRepositoryDB implements OAuthAuthCodeRepository {
         return authCode;
     }
     public issueAuthCode(client: OAuthClient, user: OAuthUser | undefined, scopes: OAuthScope[]): OAuthAuthCode {
+        if (!user) {
+            // this would otherwise break persisting of an DBOAuthAuthCodeEntry down below
+            throw new Error("Cannot issue auth code for unknown user.");
+        }
         const code = crypto.randomBytes(30).toString("hex");
         // NOTE: caller (@jmondi/oauth2-server) is responsible for adding the remaining items, PKCE params, redirect URL, etc
         return {
@@ -56,10 +60,11 @@ export class AuthCodeRepositoryDB implements OAuthAuthCodeRepository {
         };
     }
     public async persist(authCode: DBOAuthAuthCodeEntry): Promise<void> {
+        // authCode is created in issueAuthCode 👆
         try {
             const authCodeRepo = await this.getOauthAuthCodeRepo();
             authCode.id = uuidv4();
-            authCodeRepo.save(authCode);
+            await authCodeRepo.save(authCode);
         } catch (error) {
             console.error("Error while persisting an DBOAuthAuthCodeEntry.", error, { error });
         }
