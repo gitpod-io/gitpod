@@ -129,7 +129,6 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 		return nil, nil, err
 	}
 
-	t.Log("obtaining a lock to create a workspace")
 	parallelLimiter <- struct{}{}
 	defer func() {
 		if err != nil && stopWs == nil {
@@ -137,7 +136,6 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 			<-parallelLimiter
 		}
 	}()
-	t.Log("got the lock of parallelLimiter")
 
 	var workspaceImage string
 	if options.BaseImage != "" {
@@ -337,12 +335,10 @@ func LaunchWorkspaceFromContextURL(t *testing.T, ctx context.Context, contextURL
 		}
 	}()
 
-	t.Log("prepare for a connection with gitpod server")
 	server, err := api.GitpodServer(append(defaultServerOpts, serverOpts...)...)
 	if err != nil {
 		return nil, nil, xerrors.Errorf("cannot start server: %w", err)
 	}
-	t.Log("established a connection with gitpod server")
 
 	cctx, ccancel := context.WithTimeout(context.Background(), perCallTimeout)
 	defer ccancel()
@@ -426,7 +422,6 @@ func stopWsF(t *testing.T, instanceID string, workspaceID string, api *Component
 			if already {
 				return
 			} else {
-				t.Log("unlock the parallelLimiter")
 				<-parallelLimiter
 			}
 			already = true
