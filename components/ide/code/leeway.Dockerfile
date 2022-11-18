@@ -89,6 +89,8 @@ RUN cp /vscode-reh-linux-x64/bin/remote-cli/gitpod-code /vscode-reh-linux-x64/bi
 # grant write permissions for built-in extensions
 RUN chmod -R ugo+w /vscode-reh-linux-x64/extensions
 
+RUN grep -rl open-vsx.org /vscode-reh-linux-x64/ | sed "s|/vscode-reh-linux-x64/|/ide/|g" > /vscode-reh-linux-x64/openvsx.file \
+    && grep -rl "{{extensionsGalleryItemUrl}}\|{{trustedDomain}}" /vscode-reh-linux-x64/ | sed "s|/vscode-reh-linux-x64/|/ide/|g" > /vscode-reh-linux-x64/itemurl.file
 
 FROM scratch
 # copy static web resources in first layer to serve from blobserve
