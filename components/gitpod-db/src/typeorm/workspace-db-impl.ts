@@ -909,7 +909,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         });
     }
 
-    public async countUnabortedPrebuildsSince(cloneURL: string, date: Date): Promise<number> {
+    public async countUnabortedPrebuildsPerCloneURLSince(cloneURL: string, date: Date): Promise<number> {
         const abortedState: PrebuiltWorkspaceState = "aborted";
         const repo = await this.getPrebuiltWorkspaceRepo();
 
@@ -917,6 +917,19 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         query = query.where("pws.cloneURL = :cloneURL", { cloneURL });
         query = query.andWhere("pws.creationTime >= :time", { time: date.toISOString() });
         query = query.andWhere("pws.state != :state", { state: abortedState });
+        return query.getCount();
+    }
+
+    public async countUnabortedPrebuildsPerUserSince(userId: string, date: Date): Promise<number> {
+        const abortedState: PrebuiltWorkspaceState = "aborted";
+        const repo = await this.getPrebuiltWorkspaceRepo();
+
+        const query = repo
+            .createQueryBuilder("pws")
+            .innerJoinAndMapOne("pws.workspace", DBWorkspace, "ws", "pws.buildWorkspaceId = ws.id")
+            .where("ws.ownerId = :userId", { userId })
+            .andWhere("pws.creationTime >= :time", { time: date.toISOString() })
+            .andWhere("pws.state != :state", { state: abortedState });
         return query.getCount();
     }
 

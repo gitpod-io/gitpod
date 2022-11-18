@@ -200,6 +200,11 @@ export interface ConfigSerialized {
     prebuildLimiter: { [cloneURL: string]: number } & { "*": number };
 
     /**
+     * Number of prebuilds that can be started in the last 1 minute by a given user.
+     */
+    prebuildPerUserRateLimit?: number;
+
+    /**
      * If a numeric value interpreted as days is set, repositories not beeing opened with Gitpod are
      * considered inactive.
      */

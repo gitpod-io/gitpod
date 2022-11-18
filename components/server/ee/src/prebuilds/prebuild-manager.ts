@@ -240,7 +240,7 @@ export class PrebuildManager {
                 await this.storePrebuildInfo({ span }, project, prebuild, workspace, user, aCommitInfo);
             }
 
-            if (await this.shouldRateLimitPrebuild(span, cloneURL)) {
+            if (await this.shouldRateLimitPrebuild(span, cloneURL, user.id)) {
                 prebuild.state = "aborted";
                 prebuild.error =
                     "Prebuild is rate limited. Please contact Gitpod if you believe this happened in error.";
@@ -388,16 +388,38 @@ export class PrebuildManager {
         }
     }
 
-    private async shouldRateLimitPrebuild(span: opentracing.Span, cloneURL: string): Promise<boolean> {
+    private async shouldRateLimitPrebuild(span: opentracing.Span, cloneURL: string, userId: string): Promise<boolean> {
         const windowStart = secondsBefore(new Date().toISOString(), PREBUILD_LIMITER_WINDOW_SECONDS);
+
+        // per cloneULR rate limit
         const unabortedCount = await this.workspaceDB
             .trace({ span })
-            .countUnabortedPrebuildsSince(cloneURL, new Date(windowStart));
+            .countUnabortedPrebuildsPerCloneURLSince(cloneURL, new Date(windowStart));
         const limit = this.getPrebuildRateLimitForCloneURL(cloneURL);
 
         if (unabortedCount >= limit) {
-            log.debug("Prebuild exceeds rate limit", { limit, unabortedPrebuildsCount: unabortedCount, cloneURL });
+            log.debug({ userId }, "Prebuild exceeds per-cloneURL rate limit", {
+                limit,
+                unabortedPrebuildsCount: unabortedCount,
+                cloneURL,
+            });
             return true;
+        }
+
+        // per user rate limit
+        const perUserRateLimit = this.config.prebuildPerUserRateLimit;
+        if (perUserRateLimit) {
+            const unabortedCountPerUser = await this.workspaceDB
+                .trace({ span })
+                .countUnabortedPrebuildsPerUserSince(userId, new Date(windowStart));
+            if (unabortedCountPerUser >= perUserRateLimit) {
+                log.debug({ userId }, "Prebuild exceeds per-user rate limit", {
+                    limit,
+                    unabortedPrebuildsCount: unabortedCount,
+                    cloneURL,
+                });
+                return true;
+            }
         }
         return false;
     }

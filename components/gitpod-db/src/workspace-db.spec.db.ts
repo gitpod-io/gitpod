@@ -511,7 +511,7 @@ class WorkspaceDBSpec {
     }
 
     @test(timeout(10000))
-    public async testCountUnabortedPrebuildsSince() {
+    public async testCountUnabortedPrebuildsByCloneURLSince() {
         const now = new Date();
         const cloneURL = "https://github.com/gitpod-io/gitpod";
 
@@ -549,7 +549,67 @@ class WorkspaceDBSpec {
         ]);
 
         const minuteAgo = secondsBefore(now.toISOString(), 60);
-        const unabortedCount = await this.db.countUnabortedPrebuildsSince(cloneURL, new Date(minuteAgo));
+        const unabortedCount = await this.db.countUnabortedPrebuildsPerCloneURLSince(cloneURL, new Date(minuteAgo));
+        expect(unabortedCount).to.eq(1);
+    }
+
+    @test(timeout(10000))
+    public async testcountUnabortedPrebuildsByUserSince() {
+        const now = new Date();
+        const cloneURL = "https://github.com/gitpod-io/gitpod";
+        const userId = "some-user";
+
+        const storePrebuiltWorkspaceWithWorkspace = async (pws: PrebuiltWorkspace): Promise<void> => {
+            await this.storePrebuiltWorkspace(pws);
+            await this.db.store({
+                id: pws.buildWorkspaceId,
+                ownerId: userId,
+                creationTime: pws.creationTime,
+                contextURL: pws.cloneURL,
+                type: "prebuild",
+                context: {
+                    title: "context",
+                },
+                description: "description",
+                config: {},
+            });
+        };
+
+        await Promise.all([
+            // Created now, and queued
+            storePrebuiltWorkspaceWithWorkspace({
+                id: "prebuild123",
+                buildWorkspaceId: "apples",
+                creationTime: now.toISOString(),
+                cloneURL: cloneURL,
+                commit: "",
+                state: "queued",
+                statusVersion: 0,
+            }),
+            // now and aborted
+            storePrebuiltWorkspaceWithWorkspace({
+                id: "prebuild456",
+                buildWorkspaceId: "bananas",
+                creationTime: now.toISOString(),
+                cloneURL: cloneURL + "/tree/branch-2",
+                commit: "",
+                state: "aborted",
+                statusVersion: 0,
+            }),
+            // completed over a minute ago
+            storePrebuiltWorkspaceWithWorkspace({
+                id: "prebuild789",
+                buildWorkspaceId: "oranges",
+                creationTime: secondsBefore(now.toISOString(), 62),
+                cloneURL: cloneURL + "/tree/branch-3",
+                commit: "",
+                state: "available",
+                statusVersion: 0,
+            }),
+        ]);
+
+        const minuteAgo = secondsBefore(now.toISOString(), 60);
+        const unabortedCount = await this.db.countUnabortedPrebuildsPerUserSince(userId, new Date(minuteAgo));
         expect(unabortedCount).to.eq(1);
     }
 
