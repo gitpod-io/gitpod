@@ -1,6 +1,15 @@
 # Change Log
 
 ## November 2022
+- [JetBrains] Fixed an issue preventing prebuilt workspaces using Maven Wrapper from properly initializing in IntelliJ IDEA. ([#14656](https://github.com/gitpod-io/gitpod/pull/14656)) - [@akosyakov](https://github.com/akosyakov)
+- fix 'Go to Dashboard' buttons on StartWorkspace ([#14763](https://github.com/gitpod-io/gitpod/pull/14763)) - [@geropl](https://github.com/geropl)
+- Autofix: trailing-spaces ([#14542](https://github.com/gitpod-io/gitpod/pull/14542)) - [@autofix-bot](https://github.com/autofix-bot)
+- Create semgrep.yml ([#14737](https://github.com/gitpod-io/gitpod/pull/14737)) - [@securitymirco](https://github.com/securitymirco)
+- Delete semgrep.yml ([#14736](https://github.com/gitpod-io/gitpod/pull/14736)) - [@securitymirco](https://github.com/securitymirco)
+- Update workspace download menu style ([#14720](https://github.com/gitpod-io/gitpod/pull/14720)) - [@gtsiolis](https://github.com/gtsiolis)
+- [installer]: validate the node labels by kind in config ([#14691](https://github.com/gitpod-io/gitpod/pull/14691)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [JetBrains] Preconfigured global settings on Host. ([#14566](https://github.com/gitpod-io/gitpod/pull/14566)) - [@akosyakov](https://github.com/akosyakov)
+- The processes in the workspace are given up to 3 minutes after receiving SIGTERM. ([#14498](https://github.com/gitpod-io/gitpod/pull/14498)) - [@utam0k](https://github.com/utam0k)
 - Add semgrep.yml to this repository ([#14653](https://github.com/gitpod-io/gitpod/pull/14653)) - [@securitymirco](https://github.com/securitymirco)
 - [supervisor] don't swallow supervisor exit error ([#14650](https://github.com/gitpod-io/gitpod/pull/14650)) - [@mustard-mh](https://github.com/mustard-mh)
 - [Gitpod CLI] Display helper for unknown subcommands ([#14630](https://github.com/gitpod-io/gitpod/pull/14630)) - [@andreafalzetti](https://github.com/andreafalzetti)
