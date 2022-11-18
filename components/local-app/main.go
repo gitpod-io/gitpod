@@ -145,7 +145,10 @@ func main() {
 				Action: func(c *cli.Context) error {
 					fmt.Println("Hello from IDE Team!")
 
-					origin := "https://gitpod.io"
+					origin := c.String("gitpod-host")
+					authRedirectURL := c.String("auth-redirect-url")
+					authTimeout := c.Duration("auth-timeout")
+
 					//
 					tkn, err := auth.GetToken(origin)
 					if err != nil {
@@ -153,7 +156,7 @@ func main() {
 					}
 
 					if tkn == "" {
-						tkn, err = login(auth.LoginOpts{GitpodURL: origin})
+						tkn, err = login(auth.LoginOpts{GitpodURL: origin, RedirectURL: authRedirectURL, AuthTimeout: authTimeout})
 						if err != nil {
 							return err
 						}
