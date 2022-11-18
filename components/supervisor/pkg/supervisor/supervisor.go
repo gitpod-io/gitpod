@@ -812,6 +812,7 @@ func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan
 		runtime.LockOSThread()
 		defer runtime.UnlockOSThread()
 
+		log.Info("start launchIDE")
 		err := cmd.Start()
 		if err != nil {
 			if s == func() *ideStatus { i := statusNeverRan; return &i }() {
@@ -1037,7 +1038,8 @@ func runIDEReadinessProbe(cfg *Config, ideConfig *IDEConfig, ide IDEKind) (deskt
 			break
 		}
 
-		log.WithField("ide", ide.String()).Infof("IDE readiness took %.3f seconds", time.Since(t0).Seconds())
+		duration := time.Since(t0).Seconds()
+		log.WithField("ide", ide.String()).WithField("duration", duration).Infof("IDE readiness took %.3f seconds", duration)
 
 		if ide != DesktopIDE {
 			return
