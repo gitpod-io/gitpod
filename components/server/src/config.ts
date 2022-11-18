@@ -7,7 +7,7 @@
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { AuthProviderParams, normalizeAuthProviderParams } from "./auth/auth-provider";
 
-import { NamedWorkspaceFeatureFlag, StripeConfig } from "@gitpod/gitpod-protocol";
+import { NamedWorkspaceFeatureFlag } from "@gitpod/gitpod-protocol";
 
 import { RateLimiterConfig } from "./auth/rate-limiter";
 import { CodeSyncConfig } from "./code-sync/code-sync-service";
@@ -271,14 +271,6 @@ export namespace ConfigFile {
                 log.error("Could not load Stripe secrets", error);
             }
         }
-        let stripeConfig: StripeConfig | undefined;
-        if (config.enablePayment && config.stripeConfigFile) {
-            try {
-                stripeConfig = JSON.parse(fs.readFileSync(filePathTelepresenceAware(config.stripeConfigFile), "utf-8"));
-            } catch (error) {
-                log.error("Could not load Stripe config", error);
-            }
-        }
         let license = config.license;
         const licenseFile = config.licenseFile;
         if (licenseFile) {
@@ -310,7 +302,6 @@ export namespace ConfigFile {
             builtinAuthProvidersConfigured,
             chargebeeProviderOptions,
             stripeSecrets,
-            stripeConfig,
             twilioConfig,
             license,
             workspaceGarbageCollection: {
