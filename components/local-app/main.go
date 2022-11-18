@@ -24,6 +24,7 @@ import (
 	"github.com/gitpod-io/local-app/pkg/auth"
 	"github.com/gitpod-io/local-app/pkg/bastion"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	"github.com/olekukonko/tablewriter"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/zalando/go-keyring"
@@ -163,11 +164,8 @@ func main() {
 							return err
 						}
 					}
-					// https://gitpod.io => https gitpod.io -> port
 
 					address := fmt.Sprintf("api.%s:443", hostUrl.Host)
-
-					fmt.Println(address)
 
 					opts := []grpc.DialOption{
 						// attach token to requests to auth
@@ -190,7 +188,29 @@ func main() {
 						return err
 					}
 
-					fmt.Println(resp.Result)
+					workspaces := resp.Result
+
+					table := tablewriter.NewWriter(os.Stdout)
+					table.SetHeader([]string{
+						"Status",
+						"Description",
+						"URL",
+						"Created At",
+					})
+					table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
+					table.SetCenterSeparator("|")
+
+					for _, workspace := range workspaces {
+						table.Rich([]string{
+							workspace.Status.Instance.Status.Phase.String(),
+							workspace.Description,
+							workspace.Status.Instance.Status.Url,
+							workspace.Status.Instance.CreatedAt.AsTime().String(),
+						}, []tablewriter.Colors{})
+					}
+
+					table.Render()
+
 					return nil
 				},
 				Flags: []cli.Flag{},
