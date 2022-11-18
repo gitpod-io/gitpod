@@ -30,6 +30,7 @@
         { "path": "dev/gpctl" },
         { "path": "dev/gp-gcloud" },
         { "path": "dev/loadgen" },
+        { "path": "dev/preview/previewctl" },
         { "path": "install/installer" },
         { "path": "install/preview" },
         { "path": "dev/ready-probe-labeler" },
