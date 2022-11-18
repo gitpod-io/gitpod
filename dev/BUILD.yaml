@@ -10,14 +10,12 @@ packages:
       - dev/blowtorch:app
       - dev/gpctl:app
       - dev/loadgen:app
-      - dev/preview/previewctl:cli
       - dev/gp-gcloud:app
   - name: dev-utils
     type: docker
     deps:
       - dev/gpctl:app
       - dev/kubecdl:app
-      - dev/preview/previewctl:cli
       - dev/gp-gcloud:app
     argdeps:
       - imageRepoBase

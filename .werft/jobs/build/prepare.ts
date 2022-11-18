@@ -24,6 +24,7 @@ export async function prepare(werft: Werft, config: JobConfig) {
         werft.log(prepareSlices.CONFIGURE_CORE_DEV, prepareSlices.CONFIGURE_CORE_DEV);
         activateCoreDevServiceAccount();
         configureDocker();
+        installPreviewCTL();
         configureStaticClustersAccess();
         configureGlobalKubernetesContext();
         werft.done(prepareSlices.CONFIGURE_CORE_DEV);
@@ -66,6 +67,10 @@ function configureGlobalKubernetesContext() {
     if (rc != 0) {
         throw new Error("Failed to configure global kubernetes context.");
     }
+}
+
+function installPreviewCTL() {
+    exec(`leeway run dev/preview/previewctl:install`, {slice: "Install previewctl", dontCheckRc: false})
 }
 
 function configureStaticClustersAccess() {

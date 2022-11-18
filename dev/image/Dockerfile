@@ -4,7 +4,7 @@
 
 FROM gitpod/workspace-full:2022-11-09-13-54-49
 
-ENV TRIGGER_REBUILD 24
+ENV TRIGGER_REBUILD 25
 
 USER root
 
@@ -257,8 +257,9 @@ RUN brew install tmux tmuxinator
 
 # Copy our own tools
 ENV NEW_KUBECDL=1
-COPY dev-kubecdl--app/kubecdl dev-gpctl--app/gpctl dev-preview-previewctl--cli/previewctl /usr/bin/
+COPY dev-kubecdl--app/kubecdl dev-gpctl--app/gpctl /usr/bin/
 
 # Configure our tools' autocompletion
-RUN bash -c "echo . \<\(gpctl completion bash\) >> ~/.bashrc" && \
-    bash -c "echo . \<\(previewctl completion bash\) >> ~/.bashrc"
+RUN bash -c "echo . \<\(gpctl completion bash\) >> ~/.bashrc"
+
+ENV PATH=$PATH:/workspace/bin
