@@ -17,8 +17,12 @@ scripts:
     script: |
       set -euo pipefail
 
-      source="$(which previewctl)"
       destination="/workspace/bin/previewctl"
+      # Leeway puts the dependencies at the end of the PATH which means that /workspace/bin takes precedence
+      # on the path. So for `which previewctl` to return the previewctl Leeway just build (/tmp/build/.../previewctl)
+      # we have to delete /workspace/bin/previewctl first.
+      rm -f "$destination"
+      source="$(which previewctl)"
 
       mkdir -p /workspace/bin
 

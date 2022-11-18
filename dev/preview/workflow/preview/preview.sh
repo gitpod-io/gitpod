@@ -29,5 +29,5 @@ ensure_gcloud_auth
 
 leeway run dev/preview:create-preview
 leeway run dev/preview:build
-previewctl install-context
+previewctl install-context --retry 30
 leeway run dev/preview:deploy-gitpod
