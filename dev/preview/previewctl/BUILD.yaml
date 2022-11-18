@@ -9,4 +9,26 @@ packages:
       - CGO_ENABLED=0
     config:
       packaging: app
-      dontTest: false
+scripts:
+  - name: install
+    description: Build and install previewctl into the current environment
+    deps:
+    - :cli
+    script: |
+      set -euo pipefail
+
+      source="$(which previewctl)"
+      destination="/workspace/bin/previewctl"
+
+      mkdir -p /workspace/bin
+
+      echo "Installing $source into $destination"
+      cp "$source" "$destination"
+
+      if ! $(grep 'previewctl completion bash' ~/.bashrc > /dev/null)
+      then
+        echo "Adding bash completions to ~/.bashrc"
+        echo '. <(previewctl completion bash)' >> ~/.bashrc
+      else
+        echo "Bash completions already installed. Skipping."
+      fi

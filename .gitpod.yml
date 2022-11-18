@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.5.2.0
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-dont-include-previewctl-in-image.12
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
@@ -34,14 +34,12 @@ ports:
   - port: 8022
     onOpen: ignore
 tasks:
-  - name: Install Preview Environment kube-context
+  - name: Preview environment configuration
+    init: |
+      leeway run dev/preview/previewctl:install
     command: |
+      previewctl get-credentials
       previewctl install-context --watch
-      exit
-  - name: Add Harvester kubeconfig
-    command: |
-      ./dev/preview/util/download-and-merge-harvester-kubeconfig.sh
-      exit 0
   - name: Installer dependencies
     init: |
       (cd install/installer && make deps)
