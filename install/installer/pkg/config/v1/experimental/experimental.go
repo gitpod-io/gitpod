@@ -241,6 +241,7 @@ type ServerConfig struct {
 	RunDbDeleter                      *bool             `json:"runDbDeleter"`
 	DisableWorkspaceGarbageCollection bool              `json:"disableWorkspaceGarbageCollection"`
 	InactivityPeriodForReposInDays    *int              `json:"inactivityPeriodForReposInDays"`
+	PrebuildPerUserRateLimit          *int              `json:"prebuildPerUserRateLimit"`
 
 	// @deprecated use containerRegistry.privateBaseImageAllowList instead
 	DefaultBaseImageRegistryWhiteList []string `json:"defaultBaseImageRegistryWhitelist"`

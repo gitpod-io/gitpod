@@ -4653,6 +4653,7 @@ data:
       "prebuildLimiter": {
         "*": 50
       },
+      "prebuildPerUserRateLimit": 50,
       "workspaceClasses": [
         {
           "id": "default",
@@ -8996,7 +8997,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 17bfee13a5c7f847a74ec789bd130694b16d1da616636de68ae3f10d4b8aefc9
+        gitpod.io/checksum_config: 79856d9195f58a1e3d74b8194793870bd397dba7079fedf9858c45ac48be9be8
       creationTimestamp: null
       labels:
         app: gitpod

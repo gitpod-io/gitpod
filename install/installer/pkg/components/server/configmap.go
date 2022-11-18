@@ -171,6 +171,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	prebuildPerUserRateLimit := 50
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.PrebuildPerUserRateLimit != nil {
+			prebuildPerUserRateLimit = *cfg.WebApp.Server.PrebuildPerUserRateLimit
+		}
+		return nil
+	})
+
 	// todo(sje): all these values are configurable
 	scfg := ConfigSerialized{
 		Version:               ctx.VersionManifest.Version,
@@ -258,6 +266,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			// default limit for all cloneURLs
 			"*": 50,
 		},
+		PrebuildPerUserRateLimit:       prebuildPerUserRateLimit,
 		WorkspaceClasses:               workspaceClasses,
 		InactivityPeriodForReposInDays: inactivityPeriodForReposInDays,
 	}
