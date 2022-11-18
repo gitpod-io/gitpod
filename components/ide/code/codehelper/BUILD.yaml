@@ -12,6 +12,7 @@ packages:
       - components/gitpod-protocol/go:lib
       - components/supervisor-api/go:lib
       - components/common-go:lib
+      - components/ide/starthelper:lib
     config:
       packaging: app
       buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/code/codehelper.Version=commit-${__git_commit}'"]

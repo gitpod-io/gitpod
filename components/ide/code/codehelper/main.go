@@ -27,6 +27,8 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/util"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
+
+	"github.com/gitpod-io/gitpod/ide/starthelper/pkg/metrics"
 )
 
 var (
@@ -38,15 +40,22 @@ var (
 
 const Code = "/ide/bin/gitpod-code"
 
+var codeMetrics = metrics.NewMetrics("code")
+
 func main() {
-	log.Init(ServiceName, Version, true, false)
+	enableDebug := os.Getenv("SUPERVISOR_DEBUG_ENABLE") == "true"
+
+	log.Init(ServiceName, Version, true, enableDebug)
+	log.Info("codehelper started")
 	startTime := time.Now()
 
+	phaseDone := codeMetrics.Phase("ResolveWsInfo")
 	wsInfo, err := resolveWorkspaceInfo(context.Background())
 	if err != nil || wsInfo == nil {
 		log.WithError(err).WithField("wsInfo", wsInfo).Error("resolve workspace info failed")
 		return
 	}
+	phaseDone()
 
 	// code server args install extension with id
 	args := []string{}
@@ -54,7 +63,7 @@ func main() {
 	// install extension with filepath
 	extPathArgs := []string{}
 
-	if os.Getenv("SUPERVISOR_DEBUG_ENABLE") == "true" {
+	if enableDebug {
 		args = append(args, "--inspect", "--log=trace")
 	}
 
@@ -70,12 +79,14 @@ func main() {
 		log.WithError(err).WithField("wsContextUrl", wsContextUrl).Error("parse ws context url failed")
 	}
 
+	phaseDone = codeMetrics.Phase("GetExtensions")
 	uniqMap := map[string]struct{}{}
 	extensions, err := getExtensions(wsInfo.GetCheckoutLocation())
 	if err != nil {
 		log.WithError(err).Error("get extensions failed")
 	}
 	log.WithField("ext", extensions).Info("get extensions")
+	phaseDone()
 	for _, ext := range extensions {
 		if _, ok := uniqMap[ext.Location]; ok {
 			continue
@@ -98,12 +109,15 @@ func main() {
 		cmd := exec.Command(Code, extPathArgs...)
 		cmd.Stderr = os.Stderr
 		cmd.Stdout = os.Stdout
+		phaseDone = codeMetrics.Phase("InstallPathExtensions")
 		if err := cmd.Run(); err != nil {
 			log.WithError(err).Error("installing extensions by path failed")
 		}
+		phaseDone()
 		log.WithField("cost", time.Now().Local().Sub(startTime).Milliseconds()).Info("extensions with path installed")
 	}
 
+	_ = codeMetrics.Send()
 	// install extensions and run code server with exec
 	args = append(args, os.Args[1:]...)
 	args = append(args, "--do-not-sync")

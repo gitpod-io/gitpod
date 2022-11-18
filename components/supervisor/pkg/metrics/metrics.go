@@ -33,12 +33,14 @@ type GrpcMetricsReporter struct {
 func NewGrpcMetricsReporter(gitpodHost string) *GrpcMetricsReporter {
 	return &GrpcMetricsReporter{
 		Registry: prometheus.NewRegistry(),
+		// TODO: use configmap
 		supportedMetrics: map[string]bool{
-			"grpc_server_handled_total":      true,
-			"grpc_server_msg_received_total": true,
-			"grpc_server_msg_sent_total":     true,
-			"grpc_server_started_total":      true,
-			"grpc_server_handling_seconds":   true,
+			"grpc_server_handled_total":             true,
+			"grpc_server_msg_received_total":        true,
+			"grpc_server_msg_sent_total":            true,
+			"grpc_server_started_total":             true,
+			"grpc_server_handling_seconds":          true,
+			"gitpod_ide_starthelper_phase_duration": true,
 		},
 		values: make(map[string]float64),
 		addCounter: func(name string, labels map[string]string, value uint64) {
