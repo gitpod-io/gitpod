@@ -25,6 +25,7 @@ type installContextCmdOpts struct {
 
 	watch              bool
 	timeout            time.Duration
+	retry              int
 	kubeConfigSavePath string
 	sshPrivateKeyPath  string
 
@@ -106,7 +107,7 @@ func newInstallContextCmd(logger *logrus.Logger) *cobra.Command {
 			if opts.watch {
 				for range time.Tick(15 * time.Second) {
 					// We're using a short timeout here to handle the scenario where someone switches
-					// to a branch that doens't have a preview envrionment. In that case the default
+					// to a branch that doesn't have a preview environment. In that case the default
 					// timeout would mean that we would block for 10 minutes, potentially missing
 					// if the user changes to a new branch that does that a preview.
 					err := install(30 * time.Second)
@@ -115,15 +116,28 @@ func newInstallContextCmd(logger *logrus.Logger) *cobra.Command {
 					}
 				}
 			} else {
-				return install(opts.timeout)
+				sleep := 10 * time.Second
+				remainingRetries := opts.retry
+				for remainingRetries > 0 {
+					remainingRetries -= 1
+					err := install(opts.timeout)
+					if err == nil {
+						logger.Info("Successfully installed kubectx")
+						return nil
+					}
+					logger.WithFields(logrus.Fields{"err": err}).Infof("Failed to install context. Waiting %s before trying again. %d attempts left", sleep, remainingRetries)
+					time.Sleep(sleep)
+				}
+				return errors.New("Failed to install kubectx")
 			}
 
 			return nil
 		},
 	}
 
-	cmd.Flags().BoolVar(&opts.watch, "watch", false, "If watch is enabled, previewctl will keep trying to install the kube-context every 15 seconds.")
+	cmd.Flags().BoolVar(&opts.watch, "watch", false, "If watch is enabled, previewctl will keep trying to install the kube-context every 15 seconds, even when successful.")
 	cmd.Flags().DurationVarP(&opts.timeout, "timeout", "t", 10*time.Minute, "Timeout before considering the installation failed")
+	cmd.Flags().IntVar(&opts.retry, "retry", 1, "If retry is enabled previewctl will retry the specified number of times. This option is ignored if watch is used.")
 	cmd.PersistentFlags().StringVar(&opts.sshPrivateKeyPath, "private-key-path", fmt.Sprintf("%s/.ssh/vm_id_rsa", homedir.HomeDir()), "path to the private key used to authenticate with the VM")
 	cmd.PersistentFlags().StringVar(&opts.getCredentialsOpts.serviceAccountPath, "gcp-service-account", "", "path to the GCP service account to use")
 
