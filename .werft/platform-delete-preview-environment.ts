@@ -94,6 +94,7 @@ async function deletePreviewEnvironment() {
 }
 
 function configureGlobalKubernetesContext() {
+    exec(`leeway run dev/preview/previewctl:install`, {slice: "Install previewctl", dontCheckRc: false})
     const rc = exec(`KUBECONFIG=${GLOBAL_KUBECONFIG_PATH} previewctl get-credentials --gcp-service-account=${GCLOUD_SERVICE_ACCOUNT_PATH}`, { slice: SLICES.CONFIGURE_K8S }).code;
 
     if (rc != 0) {
