@@ -19,7 +19,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
-function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
+function createGitpodService<C extends GitpodClient, S extends GitpodServer>(useSlowDatabase: boolean = false) {
     if (window.top !== window.self && process.env.NODE_ENV === "production") {
         const connection = createWindowMessageConnection("gitpodServer", window.parent, "*");
         const factory = new JsonRpcProxyFactory<S>();
@@ -48,6 +48,7 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
         onListening: (socket) => {
             onReconnect = () => socket.reconnect();
         },
+        subProtocol: useSlowDatabase ? "slow-database" : undefined,
     });
 
     return new GitpodServiceImpl<C, S>(proxy, { onReconnect });
@@ -64,4 +65,13 @@ function getGitpodService(): GitpodService {
     return service;
 }
 
-export { getGitpodService };
+function initGitPodService(useSlowDatabase: boolean) {
+    const w = window as any;
+    const _gp = w._gp || (w._gp = {});
+    if (window.location.search.includes("service=mock")) {
+        _gp.gitpodService = require("./service-mock").gitpodServiceMock;
+    }
+    _gp.gitpodService = createGitpodService(useSlowDatabase);
+}
+
+export { getGitpodService, initGitPodService };
