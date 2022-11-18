@@ -21,6 +21,7 @@ packages:
       - components/supervisor-api/go:lib
       - components/gitpod-protocol/go:lib
       - components/local-app-api/go:lib
+      - components/public-api/go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux
@@ -38,6 +39,7 @@ packages:
       - components/supervisor-api/go:lib
       - components/gitpod-protocol/go:lib
       - components/local-app-api/go:lib
+      - components/public-api/go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux
@@ -55,6 +57,7 @@ packages:
       - components/supervisor-api/go:lib
       - components/gitpod-protocol/go:lib
       - components/local-app-api/go:lib
+      - components/public-api/go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=darwin
@@ -72,6 +75,7 @@ packages:
       - components/supervisor-api/go:lib
       - components/gitpod-protocol/go:lib
       - components/local-app-api/go:lib
+      - components/public-api/go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=darwin
@@ -89,6 +93,7 @@ packages:
       - components/supervisor-api/go:lib
       - components/gitpod-protocol/go:lib
       - components/local-app-api/go:lib
+      - components/public-api/go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=windows
@@ -106,6 +111,7 @@ packages:
       - components/supervisor-api/go:lib
       - components/gitpod-protocol/go:lib
       - components/local-app-api/go:lib
+      - components/public-api/go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=windows
@@ -123,6 +129,7 @@ packages:
       - components/supervisor-api/go:lib
       - components/gitpod-protocol/go:lib
       - components/local-app-api/go:lib
+      - components/public-api/go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=windows

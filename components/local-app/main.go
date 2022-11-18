@@ -18,6 +18,7 @@ import (
 	"regexp"
 	"strings"
 
+	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	appapi "github.com/gitpod-io/gitpod/local-app/api"
 	"github.com/gitpod-io/local-app/pkg/auth"
@@ -143,10 +144,22 @@ func main() {
 				Name: "list-workspaces",
 				Action: func(c *cli.Context) error {
 					fmt.Println("Hello from IDE Team!")
-					tkn, err := auth.GetToken("https://gitpod.io")
+
+					origin := "https://gitpod.io"
+					//
+					tkn, err := auth.GetToken(origin)
 					if err != nil {
-						return nil, err
+						return err
 					}
+
+					if tkn == "" {
+						tkn, err = login(auth.LoginOpts{GitpodURL: origin})
+						if err != nil {
+							return err
+						}
+					}
+
+					address := "api.gitpod.io:443"
 
 					opts := []grpc.DialOption{
 						// attach token to requests to auth
@@ -157,11 +170,19 @@ func main() {
 					}
 					opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
 
-					conn, err := grpc.Dial("api.gitpod.io:443", opts...)
+					conn, err := grpc.Dial(address, opts...)
 					if err != nil {
-						fmt.Errorf("failed to dial %s: %w", publicApiCmdOpts.address, err)
+						fmt.Errorf("failed to dial %s: %w", address, err)
 					}
 
+					service := v1.NewWorkspacesServiceClient(conn)
+
+					resp, err := service.ListWorkspaces(c.Context, &v1.ListWorkspacesRequest{})
+					if err != nil {
+						return err
+					}
+
+					fmt.Println(resp.Result)
 					return nil
 				},
 				Flags: []cli.Flag{},
