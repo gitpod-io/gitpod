@@ -4794,7 +4794,7 @@ data:
       "vsxRegistryUrl": "https://open-vsx.gitpod.example.com",
       "chargebeeProviderOptionsFile": "/chargebee/providerOptions",
       "stripeSecretsFile": "/stripe-secret/apikeys",
-      "stripeConfigFile": "/stripe-config/config",
+      "stripeConfigFile": "",
       "enablePayment": false,
       "workspaceHeartbeat": {
         "intervalSeconds": 60,
@@ -9505,7 +9505,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: d37fd059853d2ddaad2353a075ca1dd6db4ec495074d332ac4331543e8a551a1
+        gitpod.io/checksum_config: 3d98dffb48bebba57afb1ffd2b059e4a1a95bb679d843bee0158e5d4b1814914
       creationTimestamp: null
       labels:
         app: gitpod

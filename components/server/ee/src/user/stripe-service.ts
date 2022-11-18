@@ -9,7 +9,6 @@ import Stripe from "stripe";
 import * as grpc from "@grpc/grpc-js";
 import { Config } from "../../../src/config";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import {
     observeStripeClientRequestsCompleted,
     stripeClientRequestsCompletedDurationSeconds,
@@ -55,36 +54,6 @@ export class StripeService {
         }
     }
 
-    async setDefaultPaymentMethodForCustomer(customerId: string, setupIntentId: string): Promise<void> {
-        const setupIntent = await reportStripeOutcome("intent_retrieve", () => {
-            return this.getStripe().setupIntents.retrieve(setupIntentId);
-        });
-
-        if (typeof setupIntent.payment_method !== "string") {
-            throw new Error("The provided Stripe SetupIntent does not have a valid payment method attached");
-        }
-        const intentPaymentMethod = setupIntent.payment_method as string;
-        // Attach the provided payment method to the customer
-        await reportStripeOutcome("payment_methods_attach", () => {
-            return this.getStripe().paymentMethods.attach(intentPaymentMethod, {
-                customer: customerId,
-            });
-        });
-
-        const paymentMethod = await reportStripeOutcome("payment_methods_get", () => {
-            return this.getStripe().paymentMethods.retrieve(intentPaymentMethod);
-        });
-
-        await reportStripeOutcome("customers_update", () => {
-            return this.getStripe().customers.update(customerId, {
-                invoice_settings: { default_payment_method: intentPaymentMethod },
-                ...(paymentMethod.billing_details.address?.country
-                    ? { address: { line1: "", country: paymentMethod.billing_details.address?.country } }
-                    : {}),
-            });
-        });
-    }
-
     async getPortalUrlForAttributionId(attributionId: string, returnUrl: string): Promise<string> {
         const customerId = await this.findCustomerByAttributionId(attributionId);
         if (!customerId) {
@@ -118,49 +87,6 @@ export class StripeService {
     async cancelSubscription(subscriptionId: string): Promise<void> {
         await reportStripeOutcome("subscriptions_cancel", () => {
             return this.getStripe().subscriptions.del(subscriptionId, { invoice_now: true });
-        });
-    }
-
-    async createSubscriptionForCustomer(customerId: string, attributionId: string): Promise<void> {
-        const customer = await reportStripeOutcome("customers_get", () => {
-            return this.getStripe().customers.retrieve(customerId, { expand: ["tax"] });
-        });
-        if (!customer || customer.deleted) {
-            throw new Error(`Stripe customer '${customerId}' could not be found`);
-        }
-        const attrId = AttributionId.parse(attributionId);
-        if (!attrId) {
-            throw new Error(`Invalid attributionId '${attributionId}'`);
-        }
-        const currency = customer.metadata.preferredCurrency || "USD";
-        let priceIds: { [currency: string]: string } | undefined;
-        if (attrId.kind === "team") {
-            priceIds = this.config.stripeConfig?.teamUsagePriceIds;
-        } else if (attrId.kind === "user") {
-            priceIds = this.config.stripeConfig?.individualUsagePriceIds;
-        } else {
-            throw new Error(`Unsupported attribution kind '${(attrId as any).kind}'`);
-        }
-        const priceId = priceIds && priceIds[currency];
-        if (!priceId) {
-            throw new Error(
-                `No Stripe Price ID configured for attribution kind '${attrId.kind}' and currency '${currency}'`,
-            );
-        }
-        const isAutomaticTaxSupported = customer.tax?.automatic_tax === "supported";
-        if (!isAutomaticTaxSupported) {
-            log.warn("Automatic Stripe tax is not supported for this customer", {
-                customerId,
-                taxInformation: customer.tax,
-            });
-        }
-
-        await reportStripeOutcome("subscriptions_create", () => {
-            return this.getStripe().subscriptions.create({
-                customer: customer.id,
-                items: [{ price: priceId }],
-                automatic_tax: { enabled: isAutomaticTaxSupported },
-            });
         });
     }
 }
