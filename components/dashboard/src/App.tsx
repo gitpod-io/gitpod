@@ -12,7 +12,7 @@ import { Login } from "./Login";
 import { UserContext } from "./user-context";
 import { getSelectedTeamSlug, TeamsContext } from "./teams/teams-context";
 import { ThemeContext } from "./theme-context";
-import { getGitpodService } from "./service/service";
+import { getGitpodService, initGitPodService } from "./service/service";
 import { shouldSeeWhatsNew, WhatsNew } from "./whatsnew/WhatsNew";
 import gitpodIcon from "./icons/gitpod.svg";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -159,13 +159,17 @@ function App() {
     const { user, setUser, refreshUserBillingMode } = useContext(UserContext);
     const { teams, setTeams } = useContext(TeamsContext);
     const { setIsDark } = useContext(ThemeContext);
-    const { usePublicApiTeamsService } = useContext(FeatureFlagContext);
+    const { usePublicApiTeamsService, useSlowDatabase } = useContext(FeatureFlagContext);
 
     const [loading, setLoading] = useState<boolean>(true);
     const [isWhatsNewShown, setWhatsNewShown] = useState(false);
     const [showUserIdePreference, setShowUserIdePreference] = useState(false);
     const [isSetupRequired, setSetupRequired] = useState(false);
     const history = useHistory();
+
+    useEffect(() => {
+        initGitPodService(useSlowDatabase);
+    }, [useSlowDatabase]);
 
     useEffect(() => {
         (async () => {
