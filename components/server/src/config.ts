@@ -27,7 +27,6 @@ export type Config = Omit<
     workspaceDefaults: WorkspaceDefaults;
     chargebeeProviderOptions?: ChargebeeProviderOptions;
     stripeSecrets?: { publishableKey: string; secretKey: string };
-    stripeConfig?: StripeConfig;
     builtinAuthProvidersConfigured: boolean;
     inactivityPeriodForReposInDays?: number;
 };

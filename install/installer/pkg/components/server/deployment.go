@@ -250,29 +250,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	})
 
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.StripeConfig != "" {
-			stripeConfig := cfg.WebApp.Server.StripeConfig
-
-			volumes = append(volumes,
-				corev1.Volume{
-					Name: "stripe-config",
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{Name: stripeConfig},
-						},
-					},
-				})
-
-			volumeMounts = append(volumeMounts, corev1.VolumeMount{
-				Name:      "stripe-config",
-				MountPath: stripeConfigMountPath,
-				ReadOnly:  true,
-			})
-		}
-		return nil
-	})
-
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.GithubApp != nil {
 			volumes = append(volumes,
 				corev1.Volume{

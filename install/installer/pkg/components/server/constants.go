@@ -16,7 +16,6 @@ const (
 	licenseFilePath       = "/gitpod/license"
 	chargebeeMountPath    = "/chargebee"
 	stripeSecretMountPath = "/stripe-secret"
-	stripeConfigMountPath = "/stripe-config"
 	githubAppCertSecret   = "github-app-cert-secret"
 	InstallationAdminPort = common.ServerInstallationAdminPort
 	InstallationAdminName = "install-admin"

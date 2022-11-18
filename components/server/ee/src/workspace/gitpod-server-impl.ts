@@ -118,7 +118,6 @@ import { UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb"
 import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 import { IncrementalPrebuildsService } from "../prebuilds/incremental-prebuilds-service";
 import { ConfigProvider } from "../../../src/workspace/config-provider";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { CostCenterJSON } from "@gitpod/gitpod-protocol/src/usage";
 
 @injectable()
@@ -2197,21 +2196,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 throw new Error(`No Stripe customer profile for '${attributionId}'`);
             }
 
-            const createStripeSubscriptionOnUsage = await getExperimentsClientForBackend().getValueAsync(
-                "createStripeSubscriptionOnUsage",
-                false,
-                {
-                    user: user,
-                    teamId: team ? team.id : undefined,
-                },
-            );
-
-            if (createStripeSubscriptionOnUsage) {
-                await this.billingService.createStripeSubscription({ attributionId, setupIntentId, usageLimit });
-            } else {
-                await this.stripeService.setDefaultPaymentMethodForCustomer(customerId, setupIntentId);
-                await this.stripeService.createSubscriptionForCustomer(customerId, attributionId);
-            }
+            await this.billingService.createStripeSubscription({ attributionId, setupIntentId, usageLimit });
 
             // Creating a cost center for this customer
             const { costCenter } = await this.usageService.setCostCenter({
