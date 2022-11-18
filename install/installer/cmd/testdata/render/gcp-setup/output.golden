@@ -4202,6 +4202,37 @@ data:
               15,
               30
             ]
+          },
+          {
+            "name": "gitpod_ide_starthelper_phase_duration",
+            "help": "Duration of different phase during code startup",
+            "labels": [
+              {
+                "name": "ide",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "phase",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              }
+            ],
+            "buckets": [
+              0.01,
+              0.1,
+              0.2,
+              0.5,
+              2,
+              5,
+              10,
+              30,
+              60
+            ]
           }
         ],
         "aggregatedHistogramMetrics": [
@@ -8148,7 +8179,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: a15b2b182f09debb86b167e728add4f9d341bc9706bc4e330e1d4a5c9d4deee9
+        gitpod.io/checksum_config: bd6f3895a316fc7ebb20f8d40e8a9e0919714132ea38f6e69be6fbd62eb7e2cc
       creationTimestamp: null
       labels:
         app: gitpod

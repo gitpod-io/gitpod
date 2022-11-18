@@ -211,6 +211,20 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 			Buckets: []float64{0.1, 0.5, 1, 5, 10, 15, 30},
+		}, {
+			Name: "gitpod_ide_starthelper_phase_duration",
+			Help: "Duration of different phase during code startup",
+			Labels: []config.LabelAllowList{
+				{
+					Name:        "ide",
+					AllowValues: []string{"*"},
+				},
+				{
+					Name:        "phase",
+					AllowValues: []string{"*"},
+				},
+			},
+			Buckets: []float64{0.01, 0.1, 0.2, 0.5, 2, 5, 10, 30, 60},
 		},
 	}
 
