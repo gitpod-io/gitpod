@@ -25,6 +25,7 @@ require (
 	google.golang.org/grpc v1.49.0
 	google.golang.org/protobuf v1.28.1
 	nhooyr.io/websocket v1.8.7 // indirect
+	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-00010101000000-000000000000
 )
 
 require (
@@ -52,3 +53,5 @@ replace github.com/gitpod-io/gitpod/gitpod-protocol => ../gitpod-protocol/go // 
 replace github.com/gitpod-io/gitpod/local-app/api => ../local-app-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/supervisor/api => ../supervisor-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/public-api/go => ../public-api/go // leeway

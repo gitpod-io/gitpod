@@ -5,6 +5,7 @@
 package main
 
 import (
+	"fmt"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -18,6 +19,7 @@ import (
 
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	appapi "github.com/gitpod-io/gitpod/local-app/api"
+	publicApi "github.com/gitpod-io/gitpod/public-api/go"
 	"github.com/gitpod-io/local-app/pkg/auth"
 	"github.com/gitpod-io/local-app/pkg/bastion"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
@@ -134,6 +136,14 @@ func main() {
 						Value: sshConfig,
 					},
 				},
+			},
+			{
+				Name: "list-workspaces",
+				Action: func(c *cli.Context) error {
+					fmt.Println("Hello from IDE Team!")
+					return nil
+				},
+				Flags: []cli.Flag{},
 			},
 		},
 	}
