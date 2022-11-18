@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/local-app/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
@@ -25,7 +26,6 @@ require (
 	google.golang.org/grpc v1.49.0
 	google.golang.org/protobuf v1.28.1
 	nhooyr.io/websocket v1.8.7 // indirect
-	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-00010101000000-000000000000
 )
 
 require (
@@ -54,4 +54,4 @@ replace github.com/gitpod-io/gitpod/local-app/api => ../local-app-api/go // leew
 
 replace github.com/gitpod-io/gitpod/supervisor/api => ../supervisor-api/go // leeway
 
-replace github.com/gitpod-io/gitpod/public-api/go => ../public-api/go // leeway
+replace github.com/gitpod-io/gitpod/components/public-api/go => ../public-api/go // leeway

@@ -5,6 +5,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"path/filepath"
 	"strconv"
@@ -19,7 +20,6 @@ import (
 
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	appapi "github.com/gitpod-io/gitpod/local-app/api"
-	publicApi "github.com/gitpod-io/gitpod/public-api/go"
 	"github.com/gitpod-io/local-app/pkg/auth"
 	"github.com/gitpod-io/local-app/pkg/bastion"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
@@ -27,6 +27,8 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/zalando/go-keyring"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/metadata"
 )
 
 var (
@@ -141,6 +143,25 @@ func main() {
 				Name: "list-workspaces",
 				Action: func(c *cli.Context) error {
 					fmt.Println("Hello from IDE Team!")
+					tkn, err := auth.GetToken("https://gitpod.io")
+					if err != nil {
+						return nil, err
+					}
+
+					opts := []grpc.DialOption{
+						// attach token to requests to auth
+						grpc.WithUnaryInterceptor(func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+							withAuth := metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+tkn)
+							return invoker(withAuth, method, req, reply, cc, opts...)
+						}),
+					}
+					opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
+
+					conn, err := grpc.Dial("api.gitpod.io:443", opts...)
+					if err != nil {
+						fmt.Errorf("failed to dial %s: %w", publicApiCmdOpts.address, err)
+					}
+
 					return nil
 				},
 				Flags: []cli.Flag{},
