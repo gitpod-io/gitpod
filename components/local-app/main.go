@@ -141,15 +141,17 @@ func main() {
 				},
 			},
 			{
-				Name: "list-workspaces",
+				Name:   "list-workspaces",
+				Hidden: true,
 				Action: func(c *cli.Context) error {
-					fmt.Println("Hello from IDE Team!")
-
 					origin := c.String("gitpod-host")
 					authRedirectURL := c.String("auth-redirect-url")
 					authTimeout := c.Duration("auth-timeout")
+					hostUrl, err := url.Parse(origin)
+					if err != nil {
+						return err
+					}
 
-					//
 					tkn, err := auth.GetToken(origin)
 					if err != nil {
 						return err
@@ -161,8 +163,11 @@ func main() {
 							return err
 						}
 					}
+					// https://gitpod.io => https gitpod.io -> port
 
-					address := "api.gitpod.io:443"
+					address := fmt.Sprintf("api.%s:443", hostUrl.Host)
+
+					fmt.Println(address)
 
 					opts := []grpc.DialOption{
 						// attach token to requests to auth
