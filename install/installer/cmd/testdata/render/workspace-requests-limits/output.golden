@@ -9673,6 +9673,42 @@ spec:
         terminationMessagePolicy: FallbackToLogsOnError
       dnsPolicy: ClusterFirst
       enableServiceLinks: false
+      initContainers:
+      - args:
+        - -v
+        - database
+        env:
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              key: host
+              name: mysql
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              key: port
+              name: mysql
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: mysql
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: mysql
+        - name: DB_ENCRYPTION_KEYS
+          valueFrom:
+            secretKeyRef:
+              key: encryptionKeys
+              name: mysql
+        image: eu.gcr.io/gitpod-core-dev/build/service-waiter:test
+        name: database-waiter
+        resources: {}
+        securityContext:
+          privileged: false
+          runAsUser: 31001
       restartPolicy: Always
       serviceAccountName: public-api-server
       terminationGracePeriodSeconds: 30
