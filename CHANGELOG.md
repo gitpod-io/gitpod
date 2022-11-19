@@ -1,6 +1,8 @@
 # Change Log
 
 ## November 2022
+- JetBrains: Add Rider and CLion IDEs in Beta ([#14524](https://github.com/gitpod-io/gitpod/pull/14524)) - [@andreafalzetti](https://github.com/andreafalzetti)
+- Show not-served ports in gp-cli `ports` command, browser Ports view and desktop ExposedPorts view ([#14761](https://github.com/gitpod-io/gitpod/pull/14761)) - [@mustard-mh](https://github.com/mustard-mh)
 - [JetBrains] Fixed an issue preventing prebuilt workspaces using Maven Wrapper from properly initializing in IntelliJ IDEA. ([#14656](https://github.com/gitpod-io/gitpod/pull/14656)) - [@akosyakov](https://github.com/akosyakov)
 - fix 'Go to Dashboard' buttons on StartWorkspace ([#14763](https://github.com/gitpod-io/gitpod/pull/14763)) - [@geropl](https://github.com/geropl)
 - Autofix: trailing-spaces ([#14542](https://github.com/gitpod-io/gitpod/pull/14542)) - [@autofix-bot](https://github.com/autofix-bot)
