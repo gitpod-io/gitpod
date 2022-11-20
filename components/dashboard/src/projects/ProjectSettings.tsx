@@ -158,14 +158,15 @@ export default function () {
                     </div>
                 </div>
             </div>
-
+            {BillingMode.canSetWorkspaceClass(teamBillingMode) && (
+                <SelectWorkspaceClass
+                    workspaceClass={project.settings?.workspaceClasses?.regular}
+                    enabled={BillingMode.canSetWorkspaceClass(teamBillingMode)}
+                    setWorkspaceClass={setWorkspaceClass}
+                />
+            )}
             {showPersistentVolumeClaimUI && (
                 <>
-                    <SelectWorkspaceClass
-                        workspaceClass={project.settings?.workspaceClasses?.regular}
-                        enabled={BillingMode.canSetWorkspaceClass(teamBillingMode)}
-                        setWorkspaceClass={setWorkspaceClass}
-                    />
                     {!BillingMode.canSetWorkspaceClass(teamBillingMode) && <h3 className="mt-12">Workspaces</h3>}
                     <CheckBox
                         title={
