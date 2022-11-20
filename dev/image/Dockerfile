@@ -252,6 +252,9 @@ RUN sudo apt-add-repository -y ppa:fish-shell/release-3 && \
     sudo apt update && \
     sudo apt install -y fish
 
+# Install tmux + tmuxinator
+RUN brew install tmux tmuxinator
+
 # Copy our own tools
 ENV NEW_KUBECDL=1
 COPY dev-kubecdl--app/kubecdl dev-gpctl--app/gpctl dev-preview-previewctl--cli/previewctl /usr/bin/
