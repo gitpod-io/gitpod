@@ -256,15 +256,13 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                             <div className="flex-grow">
                                 <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Current Period</div>
                                 <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                    <span className="font-semibold">{`${billingCycleFrom.format("MMMM YYYY")}`}</span> (
                                     <span title={billingCycleFrom.toDate().toUTCString().replace("GMT", "UTC")}>
-                                        {billingCycleFrom.format("MMM D")}
+                                        {billingCycleFrom.format("MMM D, YYYY")}
                                     </span>{" "}
-                                    -{" "}
+                                    &ndash;{" "}
                                     <span title={billingCycleTo.toDate().toUTCString().replace("GMT", "UTC")}>
-                                        {billingCycleTo.format("MMM D")}
+                                        {billingCycleTo.format("MMM D, YYYY")}
                                     </span>
-                                    )
                                 </div>
                             </div>
                             <div>
