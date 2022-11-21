@@ -34,12 +34,12 @@ spec:
       for: 30m
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceStuckOnStopping.md
-        summary: 5 or more workspaces are stuck on stopping in cluster {{ $labels.cluster }}.
+        summary: 15 or more workspaces are stuck on stopping in cluster {{ $labels.cluster }}.
         description: '{{ printf "%.2f" $value }} {{ $labels.workspace_type }} workspaces are stuck on stopping for more than 20 minutes.'
       expr: |
         sum(
           gitpod_ws_manager_workspace_phase_total{type="REGULAR", phase="STOPPING", cluster!~"ephemeral.*"}
-        ) without(phase) > 5
+        ) without(phase) > 15
 
     - alert: GitpodWorkspaceHighFailureRate
       labels:
