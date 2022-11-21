@@ -31,8 +31,6 @@ type PersonalAccessToken struct {
 	_ bool `gorm:"column:deleted;type:tinyint;default:0;" json:"deleted"`
 }
 
-type Scopes []string
-
 // TableName sets the insert table name for this struct type
 func (d *PersonalAccessToken) TableName() string {
 	return "d_b_personal_access_token"
@@ -77,13 +75,49 @@ func CreateToken(ctx context.Context, conn *gorm.DB, req PersonalAccessToken) (P
 		LastModified:   time.Now().UTC(),
 	}
 
-	db := conn.WithContext(ctx).Create(req)
-	if db.Error != nil {
+	tx := conn.WithContext(ctx).Create(req)
+	if tx.Error != nil {
 		return PersonalAccessToken{}, fmt.Errorf("Failed to create token for user %s", req.UserID)
 	}
 
 	return token, nil
 }
+
+func ListPersonalAccessTokensForUser(ctx context.Context, conn *gorm.DB, userID uuid.UUID, pagination Pagination) (*PaginatedResult[PersonalAccessToken], error) {
+	if userID == uuid.Nil {
+		return nil, fmt.Errorf("user ID is a required argument to list personal access tokens for user, got nil")
+	}
+
+	var results []PersonalAccessToken
+
+	tx := conn.
+		WithContext(ctx).
+		Table((&PersonalAccessToken{}).TableName()).
+		Where("userId = ?", userID).
+		Order("createdAt").
+		Scopes(Paginate(pagination)).
+		Find(&results)
+	if tx.Error != nil {
+		return nil, fmt.Errorf("failed to list personal access tokens for user %s: %w", userID.String(), tx.Error)
+	}
+
+	var count int64
+	tx = conn.
+		WithContext(ctx).
+		Table((&PersonalAccessToken{}).TableName()).
+		Where("userId = ?", userID).
+		Count(&count)
+	if tx.Error != nil {
+		return nil, fmt.Errorf("failed to count total number of personal access tokens for user %s: %w", userID.String(), tx.Error)
+	}
+
+	return &PaginatedResult[PersonalAccessToken]{
+		Results: results,
+		Total:   count,
+	}, nil
+}
+
+type Scopes []string
 
 // Scan() and Value() allow having a list of strings as a type for Scopes
 func (s *Scopes) Scan(src any) error {
@@ -91,9 +125,16 @@ func (s *Scopes) Scan(src any) error {
 	if !ok {
 		return errors.New("src value cannot cast to []byte")
 	}
+
+	if len(bytes) == 0 {
+		*s = nil
+		return nil
+	}
+
 	*s = strings.Split(string(bytes), ",")
 	return nil
 }
+
 func (s Scopes) Value() (driver.Value, error) {
 	if len(s) == 0 {
 		return "", nil

@@ -11,6 +11,7 @@ packages:
       - components/usage-api/go:lib
       - components/gitpod-protocol/go:lib
       - components/gitpod-db/go:lib
+      - components/gitpod-db/go:init-testdb
     env:
       - CGO_ENABLED=0
       - GOOS=linux

@@ -9,10 +9,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	connect "github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/experiments/experimentstest"
+	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
+	"github.com/gitpod-io/gitpod/components/gitpod-db/go/dbtest"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
@@ -20,6 +23,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 )
 
 var (
@@ -39,7 +43,7 @@ func TestTokensService_CreatePersonalAccessTokenWithoutFeatureFlag(t *testing.T)
 	user := newUser(&protocol.User{})
 
 	t.Run("permission denied when feature flag is not enabled", func(t *testing.T) {
-		serverMock, client := setupTokensService(t, withTokenFeatureDisabled)
+		serverMock, _, client := setupTokensService(t, withTokenFeatureDisabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
@@ -50,7 +54,7 @@ func TestTokensService_CreatePersonalAccessTokenWithoutFeatureFlag(t *testing.T)
 	})
 
 	t.Run("unimplemented when feature flag enabled", func(t *testing.T) {
-		serverMock, client := setupTokensService(t, withTokenFeatureEnabled)
+		serverMock, _, client := setupTokensService(t, withTokenFeatureEnabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
@@ -63,7 +67,7 @@ func TestTokensService_GetPersonalAccessToken(t *testing.T) {
 	user := newUser(&protocol.User{})
 
 	t.Run("permission denied when feature flag is disabled", func(t *testing.T) {
-		serverMock, client := setupTokensService(t, withTokenFeatureDisabled)
+		serverMock, _, client := setupTokensService(t, withTokenFeatureDisabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
@@ -76,7 +80,7 @@ func TestTokensService_GetPersonalAccessToken(t *testing.T) {
 	})
 
 	t.Run("invalid argument when Token ID is empty", func(t *testing.T) {
-		_, client := setupTokensService(t, withTokenFeatureEnabled)
+		_, _, client := setupTokensService(t, withTokenFeatureEnabled)
 
 		_, err := client.GetPersonalAccessToken(context.Background(), connect.NewRequest(&v1.GetPersonalAccessTokenRequest{}))
 
@@ -84,7 +88,7 @@ func TestTokensService_GetPersonalAccessToken(t *testing.T) {
 	})
 
 	t.Run("invalid argument when Token ID is not a valid UUID", func(t *testing.T) {
-		_, client := setupTokensService(t, withTokenFeatureEnabled)
+		_, _, client := setupTokensService(t, withTokenFeatureEnabled)
 
 		_, err := client.GetPersonalAccessToken(context.Background(), connect.NewRequest(&v1.GetPersonalAccessTokenRequest{
 			Id: "foo-bar",
@@ -94,7 +98,7 @@ func TestTokensService_GetPersonalAccessToken(t *testing.T) {
 	})
 
 	t.Run("unimplemented when feature flag enabled", func(t *testing.T) {
-		serverMock, client := setupTokensService(t, withTokenFeatureEnabled)
+		serverMock, _, client := setupTokensService(t, withTokenFeatureEnabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
@@ -110,7 +114,7 @@ func TestTokensService_ListPersonalAccessTokens(t *testing.T) {
 	user := newUser(&protocol.User{})
 
 	t.Run("permission denied when feature flag is disabled", func(t *testing.T) {
-		serverMock, client := setupTokensService(t, withTokenFeatureDisabled)
+		serverMock, _, client := setupTokensService(t, withTokenFeatureDisabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
@@ -120,14 +124,98 @@ func TestTokensService_ListPersonalAccessTokens(t *testing.T) {
 		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
 	})
 
-	t.Run("unimplemented when feature flag enabled", func(t *testing.T) {
-		serverMock, client := setupTokensService(t, withTokenFeatureEnabled)
+	t.Run("no tokens returns empty list", func(t *testing.T) {
+		serverMock, _, client := setupTokensService(t, withTokenFeatureEnabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
-		_, err := client.ListPersonalAccessTokens(context.Background(), connect.NewRequest(&v1.ListPersonalAccessTokensRequest{}))
+		response, err := client.ListPersonalAccessTokens(context.Background(), connect.NewRequest(&v1.ListPersonalAccessTokensRequest{}))
+		require.NoError(t, err)
 
-		require.Equal(t, connect.CodeUnimplemented, connect.CodeOf(err))
+		requireEqualProto(t, &v1.ListPersonalAccessTokensResponse{
+			Tokens:       nil,
+			TotalResults: 0,
+		}, response.Msg)
+	})
+
+	t.Run("lists first page of results, when no pagination preference specified", func(t *testing.T) {
+		serverMock, dbConn, client := setupTokensService(t, withTokenFeatureEnabled)
+
+		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
+
+		now := time.Now().UTC().Round(time.Millisecond)
+		tokens := dbtest.CreatePersonalAccessTokenRecords(t, dbConn,
+			dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{
+				UserID:    uuid.MustParse(user.ID),
+				CreatedAt: now.Add(-1 * time.Minute),
+			}),
+			dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{
+				UserID:    uuid.MustParse(user.ID),
+				CreatedAt: now,
+			}),
+		)
+
+		response, err := client.ListPersonalAccessTokens(context.Background(), connect.NewRequest(&v1.ListPersonalAccessTokensRequest{}))
+		require.NoError(t, err)
+
+		requireEqualProto(t, &v1.ListPersonalAccessTokensResponse{
+			Tokens:       personalAccessTokensToAPI(tokens),
+			TotalResults: 2,
+		}, response.Msg)
+	})
+
+	t.Run("paginating through results", func(t *testing.T) {
+		now := time.Now().UTC().Round(time.Millisecond)
+		serverMock, dbConn, client := setupTokensService(t, withTokenFeatureEnabled)
+
+		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil).Times(3)
+
+		var toCreate []db.PersonalAccessToken
+		total := 5
+		for i := 5; i > 0; i-- {
+			toCreate = append(toCreate, dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{
+				UserID:    uuid.MustParse(user.ID),
+				CreatedAt: now.Add(time.Duration(-1*i) * time.Minute),
+			}))
+		}
+
+		tokens := dbtest.CreatePersonalAccessTokenRecords(t, dbConn, toCreate...)
+
+		firstPage, err := client.ListPersonalAccessTokens(context.Background(), connect.NewRequest(&v1.ListPersonalAccessTokensRequest{
+			Pagination: &v1.Pagination{
+				PageSize: 2,
+				Page:     1,
+			},
+		}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.ListPersonalAccessTokensResponse{
+			Tokens:       personalAccessTokensToAPI(tokens[0:2]),
+			TotalResults: int64(total),
+		}, firstPage.Msg)
+
+		secondPage, err := client.ListPersonalAccessTokens(context.Background(), connect.NewRequest(&v1.ListPersonalAccessTokensRequest{
+			Pagination: &v1.Pagination{
+				PageSize: 2,
+				Page:     2,
+			},
+		}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.ListPersonalAccessTokensResponse{
+			Tokens:       personalAccessTokensToAPI(tokens[2:4]),
+			TotalResults: int64(total),
+		}, secondPage.Msg)
+
+		thirdPage, err := client.ListPersonalAccessTokens(context.Background(), connect.NewRequest(&v1.ListPersonalAccessTokensRequest{
+			Pagination: &v1.Pagination{
+				PageSize: 2,
+				Page:     3,
+			},
+		}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.ListPersonalAccessTokensResponse{
+			Tokens:       personalAccessTokensToAPI([]db.PersonalAccessToken{tokens[4]}),
+			TotalResults: int64(total),
+		}, thirdPage.Msg)
 	})
 }
 
@@ -135,7 +223,7 @@ func TestTokensService_RegeneratePersonalAccessToken(t *testing.T) {
 	user := newUser(&protocol.User{})
 
 	t.Run("permission denied when feature flag is disabled", func(t *testing.T) {
-		serverMock, client := setupTokensService(t, withTokenFeatureDisabled)
+		serverMock, _, client := setupTokensService(t, withTokenFeatureDisabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
@@ -148,7 +236,7 @@ func TestTokensService_RegeneratePersonalAccessToken(t *testing.T) {
 	})
 
 	t.Run("invalid argument when Token ID is empty", func(t *testing.T) {
-		_, client := setupTokensService(t, withTokenFeatureEnabled)
+		_, _, client := setupTokensService(t, withTokenFeatureEnabled)
 
 		_, err := client.RegeneratePersonalAccessToken(context.Background(), connect.NewRequest(&v1.RegeneratePersonalAccessTokenRequest{}))
 
@@ -156,7 +244,7 @@ func TestTokensService_RegeneratePersonalAccessToken(t *testing.T) {
 	})
 
 	t.Run("invalid argument when Token ID is not a valid UUID", func(t *testing.T) {
-		_, client := setupTokensService(t, withTokenFeatureEnabled)
+		_, _, client := setupTokensService(t, withTokenFeatureEnabled)
 
 		_, err := client.RegeneratePersonalAccessToken(context.Background(), connect.NewRequest(&v1.RegeneratePersonalAccessTokenRequest{
 			Id: "foo-bar",
@@ -166,7 +254,7 @@ func TestTokensService_RegeneratePersonalAccessToken(t *testing.T) {
 	})
 
 	t.Run("unimplemented when feature flag enabled", func(t *testing.T) {
-		serverMock, client := setupTokensService(t, withTokenFeatureEnabled)
+		serverMock, _, client := setupTokensService(t, withTokenFeatureEnabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
@@ -182,7 +270,7 @@ func TestTokensService_UpdatePersonalAccessToken(t *testing.T) {
 	user := newUser(&protocol.User{})
 
 	t.Run("permission denied when feature flag is disabled", func(t *testing.T) {
-		serverMock, client := setupTokensService(t, withTokenFeatureDisabled)
+		serverMock, _, client := setupTokensService(t, withTokenFeatureDisabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
@@ -197,7 +285,7 @@ func TestTokensService_UpdatePersonalAccessToken(t *testing.T) {
 	})
 
 	t.Run("invalid argument when Token ID is empty", func(t *testing.T) {
-		_, client := setupTokensService(t, withTokenFeatureEnabled)
+		_, _, client := setupTokensService(t, withTokenFeatureEnabled)
 
 		_, err := client.UpdatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.UpdatePersonalAccessTokenRequest{}))
 
@@ -205,7 +293,7 @@ func TestTokensService_UpdatePersonalAccessToken(t *testing.T) {
 	})
 
 	t.Run("invalid argument when Token ID is not a valid UUID", func(t *testing.T) {
-		_, client := setupTokensService(t, withTokenFeatureEnabled)
+		_, _, client := setupTokensService(t, withTokenFeatureEnabled)
 
 		_, err := client.UpdatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.UpdatePersonalAccessTokenRequest{
 			Token: &v1.PersonalAccessToken{
@@ -217,7 +305,7 @@ func TestTokensService_UpdatePersonalAccessToken(t *testing.T) {
 	})
 
 	t.Run("unimplemented when feature flag enabled", func(t *testing.T) {
-		serverMock, client := setupTokensService(t, withTokenFeatureEnabled)
+		serverMock, _, client := setupTokensService(t, withTokenFeatureEnabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
@@ -235,7 +323,7 @@ func TestTokensService_DeletePersonalAccessToken(t *testing.T) {
 	user := newUser(&protocol.User{})
 
 	t.Run("permission denied when feature flag is disabled", func(t *testing.T) {
-		serverMock, client := setupTokensService(t, withTokenFeatureDisabled)
+		serverMock, _, client := setupTokensService(t, withTokenFeatureDisabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
@@ -248,7 +336,7 @@ func TestTokensService_DeletePersonalAccessToken(t *testing.T) {
 	})
 
 	t.Run("invalid argument when Token ID is empty", func(t *testing.T) {
-		_, client := setupTokensService(t, withTokenFeatureEnabled)
+		_, _, client := setupTokensService(t, withTokenFeatureEnabled)
 
 		_, err := client.DeletePersonalAccessToken(context.Background(), connect.NewRequest(&v1.DeletePersonalAccessTokenRequest{}))
 
@@ -256,7 +344,7 @@ func TestTokensService_DeletePersonalAccessToken(t *testing.T) {
 	})
 
 	t.Run("invalid argument when Token ID is not a valid UUID", func(t *testing.T) {
-		_, client := setupTokensService(t, withTokenFeatureEnabled)
+		_, _, client := setupTokensService(t, withTokenFeatureEnabled)
 
 		_, err := client.DeletePersonalAccessToken(context.Background(), connect.NewRequest(&v1.DeletePersonalAccessTokenRequest{
 			Id: "foo-bar",
@@ -266,7 +354,7 @@ func TestTokensService_DeletePersonalAccessToken(t *testing.T) {
 	})
 
 	t.Run("unimplemented when feature flag enabled", func(t *testing.T) {
-		serverMock, client := setupTokensService(t, withTokenFeatureEnabled)
+		serverMock, _, client := setupTokensService(t, withTokenFeatureEnabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
@@ -278,15 +366,17 @@ func TestTokensService_DeletePersonalAccessToken(t *testing.T) {
 	})
 }
 
-func setupTokensService(t *testing.T, expClient experiments.Client) (*protocol.MockAPIInterface, v1connect.TokensServiceClient) {
+func setupTokensService(t *testing.T, expClient experiments.Client) (*protocol.MockAPIInterface, *gorm.DB, v1connect.TokensServiceClient) {
 	t.Helper()
+
+	dbConn := dbtest.ConnectForTests(t)
 
 	ctrl := gomock.NewController(t)
 	t.Cleanup(ctrl.Finish)
 
 	serverMock := protocol.NewMockAPIInterface(ctrl)
 
-	svc := NewTokensService(&FakeServerConnPool{api: serverMock}, expClient, nil)
+	svc := NewTokensService(&FakeServerConnPool{api: serverMock}, expClient, dbConn)
 
 	_, handler := v1connect.NewTokensServiceHandler(svc, connect.WithInterceptors(auth.NewServerInterceptor()))
 
@@ -297,5 +387,5 @@ func setupTokensService(t *testing.T, expClient experiments.Client) (*protocol.M
 		auth.NewClientInterceptor("auth-token"),
 	))
 
-	return serverMock, client
+	return serverMock, dbConn, client
 }
