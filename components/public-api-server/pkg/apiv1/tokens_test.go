@@ -370,13 +370,14 @@ func setupTokensService(t *testing.T, expClient experiments.Client) (*protocol.M
 	t.Helper()
 
 	dbConn := dbtest.ConnectForTests(t)
+	signer := auth.NewHS256Signer([]byte("my-secret"))
 
 	ctrl := gomock.NewController(t)
 	t.Cleanup(ctrl.Finish)
 
 	serverMock := protocol.NewMockAPIInterface(ctrl)
 
-	svc := NewTokensService(&FakeServerConnPool{api: serverMock}, expClient, dbConn)
+	svc := NewTokensService(&FakeServerConnPool{api: serverMock}, expClient, dbConn, signer)
 
 	_, handler := v1connect.NewTokensServiceHandler(svc, connect.WithInterceptors(auth.NewServerInterceptor()))
 

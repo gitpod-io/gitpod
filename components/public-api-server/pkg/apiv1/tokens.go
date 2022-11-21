@@ -24,11 +24,12 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewTokensService(connPool proxy.ServerConnectionPool, expClient experiments.Client, dbConn *gorm.DB) *TokensService {
+func NewTokensService(connPool proxy.ServerConnectionPool, expClient experiments.Client, dbConn *gorm.DB, signer auth.Signer) *TokensService {
 	return &TokensService{
 		connectionPool: connPool,
 		expClient:      expClient,
 		dbConn:         dbConn,
+		signer:         signer,
 	}
 }
 
@@ -36,6 +37,7 @@ type TokensService struct {
 	connectionPool proxy.ServerConnectionPool
 	expClient      experiments.Client
 	dbConn         *gorm.DB
+	signer         auth.Signer
 
 	v1connect.UnimplementedTokensServiceHandler
 }
