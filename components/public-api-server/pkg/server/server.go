@@ -75,7 +75,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 
 	var stripeWebhookHandler http.Handler = webhooks.NewNoopWebhookHandler()
 	if cfg.StripeWebhookSigningSecretPath != "" {
-		stripeWebhookSecret, err := readStripeWebhookSecret(cfg.StripeWebhookSigningSecretPath)
+		stripeWebhookSecret, err := readSecretFromFile(cfg.StripeWebhookSigningSecretPath)
 		if err != nil {
 			return fmt.Errorf("failed to read stripe secret: %w", err)
 		}
@@ -84,9 +84,21 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 		log.Info("No stripe webhook secret is configured, endpoints will return NotImplemented")
 	}
 
+	var signer auth.Signer
+	if cfg.PersonalAccessTokenSigningKeyPath != "" {
+		personalACcessTokenSigningKey, err := readSecretFromFile(cfg.PersonalAccessTokenSigningKeyPath)
+		if err != nil {
+			return fmt.Errorf("failed to read personal access token signing key: %w", err)
+		}
+
+		signer = auth.NewHS256Signer([]byte(personalACcessTokenSigningKey))
+	} else {
+		log.Info("No Personal Access Token signign key specified, PersonalAccessToken service will be disabled.")
+	}
+
 	srv.HTTPMux().Handle("/stripe/invoices/webhook", handlers.ContentTypeHandler(stripeWebhookHandler, "application/json"))
 
-	if registerErr := register(srv, connPool, expClient, dbConn); registerErr != nil {
+	if registerErr := register(srv, connPool, expClient, dbConn, signer); registerErr != nil {
 		return fmt.Errorf("failed to register services: %w", registerErr)
 	}
 
@@ -97,7 +109,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	return nil
 }
 
-func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool, expClient experiments.Client, dbConn *gorm.DB) error {
+func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool, expClient experiments.Client, dbConn *gorm.DB, signer auth.Signer) error {
 	proxy.RegisterMetrics(srv.MetricsRegistry())
 
 	connectMetrics := NewConnectMetrics()
@@ -120,8 +132,10 @@ func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool, expCl
 	teamsRoute, teamsServiceHandler := v1connect.NewTeamsServiceHandler(apiv1.NewTeamsService(connPool), handlerOptions...)
 	srv.HTTPMux().Handle(teamsRoute, teamsServiceHandler)
 
-	tokensRoute, tokensServiceHandler := v1connect.NewTokensServiceHandler(apiv1.NewTokensService(connPool, expClient, dbConn), handlerOptions...)
-	srv.HTTPMux().Handle(tokensRoute, tokensServiceHandler)
+	if signer != nil {
+		tokensRoute, tokensServiceHandler := v1connect.NewTokensServiceHandler(apiv1.NewTokensService(connPool, expClient, dbConn, signer), handlerOptions...)
+		srv.HTTPMux().Handle(tokensRoute, tokensServiceHandler)
+	}
 
 	userRoute, userServiceHandler := v1connect.NewUserServiceHandler(apiv1.NewUserService(connPool), handlerOptions...)
 	srv.HTTPMux().Handle(userRoute, userServiceHandler)
@@ -132,10 +146,10 @@ func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool, expCl
 	return nil
 }
 
-func readStripeWebhookSecret(path string) (string, error) {
+func readSecretFromFile(path string) (string, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {
-		return "", fmt.Errorf("failed to read stripe webhook secret: %w", err)
+		return "", fmt.Errorf("failed to read secret from file: %w", err)
 	}
 
 	return strings.TrimSpace(string(b)), nil
