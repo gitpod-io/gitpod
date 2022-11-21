@@ -58,7 +58,7 @@ RUN cd /usr/bin && curl -fsSL https://github.com/praetorian-inc/gokart/releases/
 
 # leeway
 ENV LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE=8388608
-RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.5.1/leeway_0.5.1_Linux_x86_64.tar.gz | tar xz
+RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.5.2/leeway_0.5.2_Linux_x86_64.tar.gz | tar xz
 
 # evans (gRPC client)
 RUN cd /usr/bin && curl -fsSL https://github.com/ktr0731/evans/releases/download/v0.10.6/evans_linux_amd64.tar.gz | tar xz evans
