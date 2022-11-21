@@ -13,12 +13,14 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 )
 
@@ -78,12 +80,25 @@ func (s *TokensService) ListPersonalAccessTokens(ctx context.Context, req *conne
 		return nil, err
 	}
 
-	_, err = s.getUser(ctx, conn)
+	user, err := s.getUser(ctx, conn)
 	if err != nil {
 		return nil, err
 	}
 
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gitpod.experimental.v1.TokensService.ListPersonalAccessTokens is not implemented"))
+	userID, err := uuid.Parse(user.ID)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to parse user ID as UUID"))
+	}
+
+	result, err := db.ListPersonalAccessTokensForUser(ctx, s.dbConn, userID, paginationToDB(req.Msg.GetPagination()))
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to list Personal Access Tokens for User %s", userID.String()))
+	}
+
+	return connect.NewResponse(&v1.ListPersonalAccessTokensResponse{
+		Tokens:       personalAccessTokensToAPI(result.Results),
+		TotalResults: result.Total,
+	}), nil
 }
 
 func (s *TokensService) RegeneratePersonalAccessToken(ctx context.Context, req *connect.Request[v1.RegeneratePersonalAccessTokenRequest]) (*connect.Response[v1.RegeneratePersonalAccessTokenResponse], error) {
@@ -186,4 +201,27 @@ func validateTokenID(id string) (uuid.UUID, error) {
 	}
 
 	return tokenID, nil
+}
+
+func personalAccessTokensToAPI(ts []db.PersonalAccessToken) []*v1.PersonalAccessToken {
+	var tokens []*v1.PersonalAccessToken
+	for _, t := range ts {
+		tokens = append(tokens, personalAccessTokenToAPI(t, ""))
+	}
+
+	return tokens
+}
+
+func personalAccessTokenToAPI(t db.PersonalAccessToken, value string) *v1.PersonalAccessToken {
+	return &v1.PersonalAccessToken{
+		Id: t.ID.String(),
+		// value is only present when the token is first created, or regenerated. It's empty for all subsequent requests.
+		Value:          value,
+		Hash:           t.Hash,
+		Name:           t.Name,
+		Description:    t.Description,
+		Scopes:         t.Scopes,
+		ExpirationTime: timestamppb.New(t.ExpirationTime),
+		CreatedAt:      timestamppb.New(t.CreatedAt),
+	}
 }
