@@ -32,9 +32,5 @@ export USER=gitpod
 # shellcheck disable=SC1090,SC1091
 [ -s ~/.nvm/nvm-lazy.sh ] && source /home/gitpod/.nvm/nvm-lazy.sh
 
-# Replace OpenVSX URL
-grep -rl open-vsx.org /ide | xargs sed -i "s|https://open-vsx.org|$VSX_REGISTRY_URL|g"
-grep -rl "{{extensionsGalleryItemUrl}}\|{{trustedDomain}}" /ide | xargs sed -i "s|{{extensionsGalleryItemUrl}}|https://open-vsx.org/vscode/item|g;s|{{trustedDomain}}|https://open-vsx.org|g"
-
 cd /ide || exit
 exec /ide/codehelper "$@"
