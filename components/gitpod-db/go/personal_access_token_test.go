@@ -19,24 +19,38 @@ import (
 func TestPersonalAccessToken_Get(t *testing.T) {
 	conn := dbtest.ConnectForTests(t)
 
-	token := db.PersonalAccessToken{
-		ID:             uuid.New(),
-		UserID:         uuid.New(),
-		Hash:           "some-secure-hash",
-		Name:           "some-name",
-		Description:    "some-description",
-		Scopes:         []string{"read", "write"},
-		ExpirationTime: time.Now().Add(5),
-		CreatedAt:      time.Now(),
-		LastModified:   time.Now(),
-	}
+	firstUserId := uuid.New()
+	secondUserId := uuid.New()
 
-	tx := conn.Create(token)
-	require.NoError(t, tx.Error)
+	token := dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{UserID: firstUserId})
+	token2 := dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{UserID: secondUserId})
 
-	result, err := db.GetToken(context.Background(), conn, token.ID)
-	require.NoError(t, err)
-	require.Equal(t, token.ID, result.ID)
+	tokenEntries := []db.PersonalAccessToken{token, token2}
+
+	dbtest.CreatePersonalAccessTokenRecords(t, conn, tokenEntries...)
+
+	t.Run("not matching user", func(t *testing.T) {
+		_, err := db.GetPersonalAccessTokenForUser(context.Background(), conn, token.ID, token2.UserID)
+		require.Error(t, err, db.ErrorNotFound)
+	})
+
+	t.Run("not matching token", func(t *testing.T) {
+		_, err := db.GetPersonalAccessTokenForUser(context.Background(), conn, token2.ID, token.UserID)
+		require.Error(t, err, db.ErrorNotFound)
+	})
+
+	t.Run("both token and user don't exist in the DB", func(t *testing.T) {
+		_, err := db.GetPersonalAccessTokenForUser(context.Background(), conn, uuid.New(), uuid.New())
+		require.Error(t, err, db.ErrorNotFound)
+	})
+
+	t.Run("valid", func(t *testing.T) {
+		returned, err := db.GetPersonalAccessTokenForUser(context.Background(), conn, token.ID, token.UserID)
+		require.NoError(t, err)
+		require.Equal(t, token.ID, returned.ID)
+		require.Equal(t, token.UserID, returned.UserID)
+	})
+
 }
 
 func TestPersonalAccessToken_Create(t *testing.T) {
