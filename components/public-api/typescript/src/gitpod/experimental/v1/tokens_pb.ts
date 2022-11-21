@@ -10,7 +10,8 @@
 /* @ts-nocheck */
 
 import type {BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage} from "@bufbuild/protobuf";
-import {FieldMask, Message, proto3, Timestamp} from "@bufbuild/protobuf";
+import {FieldMask, Message, proto3, protoInt64, Timestamp} from "@bufbuild/protobuf";
+import {Pagination} from "./pagination_pb.js";
 
 /**
  * PersonalAccessToken represents details of an access token for personal use.
@@ -270,6 +271,13 @@ export class GetPersonalAccessTokenResponse extends Message<GetPersonalAccessTok
  * @generated from message gitpod.experimental.v1.ListPersonalAccessTokensRequest
  */
 export class ListPersonalAccessTokensRequest extends Message<ListPersonalAccessTokensRequest> {
+  /**
+   * Page information
+   *
+   * @generated from field: gitpod.experimental.v1.Pagination pagination = 1;
+   */
+  pagination?: Pagination;
+
   constructor(data?: PartialMessage<ListPersonalAccessTokensRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -278,6 +286,7 @@ export class ListPersonalAccessTokensRequest extends Message<ListPersonalAccessT
   static readonly runtime = proto3;
   static readonly typeName = "gitpod.experimental.v1.ListPersonalAccessTokensRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "pagination", kind: "message", T: Pagination },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListPersonalAccessTokensRequest {
@@ -306,6 +315,11 @@ export class ListPersonalAccessTokensResponse extends Message<ListPersonalAccess
    */
   tokens: PersonalAccessToken[] = [];
 
+  /**
+   * @generated from field: int64 total_results = 2;
+   */
+  totalResults = protoInt64.zero;
+
   constructor(data?: PartialMessage<ListPersonalAccessTokensResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -315,6 +329,7 @@ export class ListPersonalAccessTokensResponse extends Message<ListPersonalAccess
   static readonly typeName = "gitpod.experimental.v1.ListPersonalAccessTokensResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "tokens", kind: "message", T: PersonalAccessToken, repeated: true },
+    { no: 2, name: "total_results", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListPersonalAccessTokensResponse {

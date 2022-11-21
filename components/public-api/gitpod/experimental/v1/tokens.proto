@@ -6,6 +6,7 @@ option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experi
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/field_mask.proto";
+import "gitpod/experimental/v1/pagination.proto";
 
 // PersonalAccessToken represents details of an access token for personal use.
 message PersonalAccessToken {
@@ -81,10 +82,14 @@ message GetPersonalAccessTokenResponse {
 }
 
 message ListPersonalAccessTokensRequest {
+    // Page information
+    Pagination pagination = 1;
 }
 
 message ListPersonalAccessTokensResponse {
     repeated PersonalAccessToken tokens = 1;
+
+    int64 total_results = 2;
 }
 
 message RegeneratePersonalAccessTokenRequest {
