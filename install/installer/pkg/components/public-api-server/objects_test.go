@@ -28,7 +28,8 @@ func renderContextWithPublicAPI(t *testing.T) *common.RenderContext {
 		Experimental: &experimental.Config{
 			WebApp: &experimental.WebAppConfig{
 				PublicAPI: &experimental.PublicAPIConfig{
-					StripeSecretName: "stripe-webhook-secret",
+					StripeSecretName:                        "stripe-webhook-secret",
+					PersonalAccessTokenSigningKeySecretName: "personal-access-token-signing-key",
 				},
 			},
 		},

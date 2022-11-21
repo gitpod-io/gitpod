@@ -2660,7 +2660,7 @@ data:
     kind: Deployment
     metadata:
       annotations:
-        gitpod.io/checksum_config: 2d64dca8ac18437c4ba1d80fd2112af408f1e5fb2ca0294f422f03bcbad647bb
+        gitpod.io/checksum_config: 74ab9c5d2ac7f57832d1df15f9764c3abfc450f45beb9a31d8aefb9bcf1aaea8
       creationTimestamp: null
       labels:
         app: gitpod
@@ -4880,6 +4880,7 @@ data:
       "gitpodServiceUrl": "wss://gitpod.example.com",
       "billingServiceAddress": "usage.default.svc.cluster.local:9001",
       "stripeWebhookSigningSecretPath": "",
+      "personalAccessTokenSigningKeyPath": "",
       "server": {
         "services": {
           "grpc": {
@@ -10633,7 +10634,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    gitpod.io/checksum_config: 2d64dca8ac18437c4ba1d80fd2112af408f1e5fb2ca0294f422f03bcbad647bb
+    gitpod.io/checksum_config: 74ab9c5d2ac7f57832d1df15f9764c3abfc450f45beb9a31d8aefb9bcf1aaea8
   creationTimestamp: null
   labels:
     app: gitpod
