@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"io"
@@ -36,7 +37,10 @@ var (
 	Version = ""
 )
 
-const Code = "/ide/bin/gitpod-code"
+const (
+	Code                = "/ide/bin/gitpod-code"
+	ProductJsonLocation = "/ide/product.json"
+)
 
 func main() {
 	enableDebug := os.Getenv("SUPERVISOR_DEBUG_ENABLE") == "true"
@@ -44,6 +48,10 @@ func main() {
 	log.Init(ServiceName, Version, true, enableDebug)
 	log.Info("codehelper started")
 	startTime := time.Now()
+
+	if err := replaceOpenVSXUrl(); err != nil {
+		log.WithError(err).Error("failed to replace OpenVSX URL")
+	}
 
 	phaseDone := phaseLogging("ResolveWsInfo")
 	wsInfo, err := resolveWorkspaceInfo(context.Background())
@@ -257,4 +265,23 @@ func phaseLogging(phase string) context.CancelFunc {
 		log.WithField("phase", phase).WithField("duration", duration).Info("phase end")
 	}()
 	return cancel
+}
+
+func replaceOpenVSXUrl() error {
+	phase := phaseLogging("ReplaceOpenVSXUrl")
+	defer phase()
+	b, err := os.ReadFile(ProductJsonLocation)
+	if err != nil {
+		return errors.New("failed to read product.json: " + err.Error())
+	}
+	registryUrl := os.Getenv("VSX_REGISTRY_URL")
+	if registryUrl != "" {
+		b = bytes.ReplaceAll(b, []byte("https://open-vsx.org"), []byte(registryUrl))
+	}
+	b = bytes.ReplaceAll(b, []byte("{{extensionsGalleryItemUrl}}"), []byte("https://open-vsx.org/vscode/item"))
+	b = bytes.ReplaceAll(b, []byte("{{trustedDomain}}"), []byte("https://open-vsx.org"))
+	if err := os.WriteFile(ProductJsonLocation, b, 0644); err != nil {
+		return errors.New("failed to write product.json: " + err.Error())
+	}
+	return nil
 }
