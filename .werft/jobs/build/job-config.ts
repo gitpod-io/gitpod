@@ -25,6 +25,7 @@ export interface JobConfig {
     publishToKots: boolean;
     replicatedChannel: string;
     storage: string;
+    storageClass: string;
     version: string;
     withContrib: boolean;
     withIntegrationTests: WithIntegrationTests;
@@ -105,6 +106,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const recreatePreview = "recreate-preview" in buildConfig
     const recreateVm = mainBuild || "recreate-vm" in buildConfig;
     const withSlowDatabase = "with-slow-database" in buildConfig && !mainBuild;
+    const storageClass = buildConfig["storage-class"] || "";
 
     const analytics = parseAnalytics(werft, sliceId, buildConfig["analytics"])
     const withIntegrationTests = parseWithIntegrationTests(werft, sliceId, buildConfig["with-integration-tests"]);
@@ -164,6 +166,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         replicatedVersion,
         repository,
         storage,
+        storageClass,
         version,
         withContrib,
         withIntegrationTests,
