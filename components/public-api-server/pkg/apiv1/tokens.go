@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bufbuild/connect-go"
+	connect "github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
@@ -113,13 +113,22 @@ func (s *TokensService) GetPersonalAccessToken(ctx context.Context, req *connect
 		return nil, err
 	}
 
-	_, _, err = s.getUser(ctx, conn)
+	_, userId, err := s.getUser(ctx, conn)
 	if err != nil {
+		if errors.Is(err, db.ErrorNotFound) {
+			return nil, connect.NewError(connect.CodeNotFound, err)
+		}
 		return nil, err
 	}
 
 	log.Infof("Handling GetPersonalAccessToken request for Token ID '%s'", tokenID.String())
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gitpod.experimental.v1.TokensService.GetPersonalAccessToken is not implemented"))
+
+	token, err := db.GetPersonalAccessTokenForUser(ctx, s.dbConn, tokenID, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&v1.GetPersonalAccessTokenResponse{Token: personalAccessTokenToAPI(token, "")}), nil
 }
 
 func (s *TokensService) ListPersonalAccessTokens(ctx context.Context, req *connect.Request[v1.ListPersonalAccessTokensRequest]) (*connect.Response[v1.ListPersonalAccessTokensResponse], error) {

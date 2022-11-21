@@ -36,14 +36,17 @@ func (d *PersonalAccessToken) TableName() string {
 	return "d_b_personal_access_token"
 }
 
-func GetToken(ctx context.Context, conn *gorm.DB, id uuid.UUID) (PersonalAccessToken, error) {
+func GetPersonalAccessTokenForUser(ctx context.Context, conn *gorm.DB, tokenID uuid.UUID, userID uuid.UUID) (PersonalAccessToken, error) {
 	var token PersonalAccessToken
 
 	db := conn.WithContext(ctx)
 
-	db = db.Where("id = ?", id).First(&token)
+	db = db.Where("id = ?", tokenID).Where("userId = ?", userID).Where("deleted = ?", 0).First(&token)
 	if db.Error != nil {
-		return PersonalAccessToken{}, fmt.Errorf("Failed to retrieve token: %w", db.Error)
+		if errors.Is(db.Error, gorm.ErrRecordNotFound) {
+			return PersonalAccessToken{}, fmt.Errorf("Token with ID %s does not exist: %w", tokenID, ErrorNotFound)
+		}
+		return PersonalAccessToken{}, fmt.Errorf("Failed to retrieve token: %v", db.Error)
 	}
 
 	return token, nil
@@ -95,6 +98,7 @@ func ListPersonalAccessTokensForUser(ctx context.Context, conn *gorm.DB, userID 
 		WithContext(ctx).
 		Table((&PersonalAccessToken{}).TableName()).
 		Where("userId = ?", userID).
+		Where("deleted = ?", 0).
 		Order("createdAt").
 		Scopes(Paginate(pagination)).
 		Find(&results)

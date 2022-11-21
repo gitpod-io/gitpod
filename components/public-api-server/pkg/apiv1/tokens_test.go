@@ -6,6 +6,7 @@ package apiv1
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -127,7 +128,7 @@ func TestTokensService_CreatePersonalAccessTokenWithoutFeatureFlag(t *testing.T)
 		require.NoError(t, err)
 
 		// token must exist in the DB, with the User ID of the requestor
-		storedInDB, err := db.GetToken(context.Background(), dbConn, uuid.MustParse(created.GetId()))
+		storedInDB, err := db.GetPersonalAccessTokenForUser(context.Background(), dbConn, uuid.MustParse(created.GetId()), uuid.MustParse(user.ID))
 		require.NoError(t, err)
 		require.Equal(t, user.ID, storedInDB.UserID.String())
 	})
@@ -135,18 +136,31 @@ func TestTokensService_CreatePersonalAccessTokenWithoutFeatureFlag(t *testing.T)
 
 func TestTokensService_GetPersonalAccessToken(t *testing.T) {
 	user := newUser(&protocol.User{})
+	user2 := newUser(&protocol.User{})
 
-	t.Run("permission denied when feature flag is disabled", func(t *testing.T) {
-		serverMock, _, client := setupTokensService(t, withTokenFeatureDisabled)
+	t.Run("get correct token", func(t *testing.T) {
+		serverMock, dbConn, client := setupTokensService(t, withTokenFeatureEnabled)
+
+		tokens := dbtest.CreatePersonalAccessTokenRecords(t, dbConn,
+			dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{
+				UserID: uuid.MustParse(user.ID),
+			}),
+			dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{
+				UserID: uuid.MustParse(user2.ID),
+			}),
+		)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
-		_, err := client.GetPersonalAccessToken(context.Background(), connect.NewRequest(&v1.GetPersonalAccessTokenRequest{
-			Id: uuid.New().String(),
+		response, err := client.GetPersonalAccessToken(context.Background(), connect.NewRequest(&v1.GetPersonalAccessTokenRequest{
+			Id: tokens[0].ID.String(),
 		}))
 
-		require.Error(t, err, "This feature is currently in beta. If you would like to be part of the beta, please contact us.")
-		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
+		require.NoError(t, err)
+
+		requireEqualProto(t, &v1.GetPersonalAccessTokenResponse{
+			Token: personalAccessTokenToAPI(tokens[0], ""),
+		}, response.Msg)
 	})
 
 	t.Run("invalid argument when Token ID is empty", func(t *testing.T) {
@@ -167,16 +181,43 @@ func TestTokensService_GetPersonalAccessToken(t *testing.T) {
 		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
-	t.Run("unimplemented when feature flag enabled", func(t *testing.T) {
-		serverMock, _, client := setupTokensService(t, withTokenFeatureEnabled)
+	t.Run("responds with not found when token is not found", func(t *testing.T) {
+		serverMock, dbConn, client := setupTokensService(t, withTokenFeatureEnabled)
+
+		someTokenId := uuid.New().String()
+
+		dbtest.CreatePersonalAccessTokenRecords(t, dbConn,
+			dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{
+				UserID: uuid.MustParse(user.ID),
+			}),
+		)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
 		_, err := client.GetPersonalAccessToken(context.Background(), connect.NewRequest(&v1.GetPersonalAccessTokenRequest{
-			Id: uuid.New().String(),
+			Id: someTokenId,
 		}))
 
-		require.Equal(t, connect.CodeUnimplemented, connect.CodeOf(err))
+		require.Error(t, err, fmt.Errorf("Token with ID %s does not exist: not found", someTokenId))
+	})
+
+	t.Run("permission denied when feature flag disabled", func(t *testing.T) {
+		serverMock, dbConn, client := setupTokensService(t, withTokenFeatureDisabled)
+
+		tokens := dbtest.CreatePersonalAccessTokenRecords(t, dbConn,
+			dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{
+				UserID: uuid.MustParse(user.ID),
+			}),
+		)
+
+		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
+
+		_, err := client.GetPersonalAccessToken(context.Background(), connect.NewRequest(&v1.GetPersonalAccessTokenRequest{
+			Id: tokens[0].ID.String(),
+		}))
+
+		require.Error(t, err, "This feature is currently in beta. If you would like to be part of the beta, please contact us.")
+		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
 	})
 }
 
