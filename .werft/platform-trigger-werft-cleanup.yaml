@@ -22,7 +22,7 @@ pod:
         secretName: gcp-sa-gitpod-dev-deployer
   containers:
     - name: build
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:af-dev-install-tmux-tmuxinator.3
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.5.2.0
       workingDir: /workspace
       imagePullPolicy: IfNotPresent
       volumeMounts:
