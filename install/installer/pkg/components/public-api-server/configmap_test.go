@@ -30,10 +30,17 @@ func TestConfigMap(t *testing.T) {
 		return nil
 	})
 
+	var personalAccessTokenSigningKeyPath string
+	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		_, _, personalAccessTokenSigningKeyPath, _ = getPersonalAccessTokenSigningKey(ucfg)
+		return nil
+	})
+
 	expectedConfiguration := config.Configuration{
-		GitpodServiceURL:               "wss://test.domain.everything.awesome.is",
-		BillingServiceAddress:          fmt.Sprintf("usage.%s.svc.cluster.local:9001", ctx.Namespace),
-		StripeWebhookSigningSecretPath: stripeSecretPath,
+		GitpodServiceURL:                  "wss://test.domain.everything.awesome.is",
+		BillingServiceAddress:             fmt.Sprintf("usage.%s.svc.cluster.local:9001", ctx.Namespace),
+		StripeWebhookSigningSecretPath:    stripeSecretPath,
+		PersonalAccessTokenSigningKeyPath: personalAccessTokenSigningKeyPath,
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{

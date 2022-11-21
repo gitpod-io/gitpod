@@ -28,16 +28,23 @@ const (
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	var stripeSecretPath string
+	var personalAccessTokenSigningKeyPath string
 
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		_, _, stripeSecretPath, _ = getStripeConfig(cfg)
 		return nil
 	})
 
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		_, _, personalAccessTokenSigningKeyPath, _ = getPersonalAccessTokenSigningKey(cfg)
+		return nil
+	})
+
 	cfg := config.Configuration{
-		GitpodServiceURL:               fmt.Sprintf("wss://%s", ctx.Config.Domain),
-		StripeWebhookSigningSecretPath: stripeSecretPath,
-		BillingServiceAddress:          net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", usage.Component, ctx.Namespace), strconv.Itoa(usage.GRPCServicePort)),
+		GitpodServiceURL:                  fmt.Sprintf("wss://%s", ctx.Config.Domain),
+		StripeWebhookSigningSecretPath:    stripeSecretPath,
+		PersonalAccessTokenSigningKeyPath: personalAccessTokenSigningKeyPath,
+		BillingServiceAddress:             net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", usage.Component, ctx.Namespace), strconv.Itoa(usage.GRPCServicePort)),
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{
@@ -97,6 +104,38 @@ func getStripeConfig(cfg *experimental.Config) (corev1.Volume, corev1.VolumeMoun
 		Name:      "stripe-secret",
 		MountPath: stripeSecretMountPath,
 		SubPath:   "stripe-webhook-secret",
+		ReadOnly:  true,
+	}
+
+	return volume, mount, path, true
+}
+
+func getPersonalAccessTokenSigningKey(cfg *experimental.Config) (corev1.Volume, corev1.VolumeMount, string, bool) {
+	var volume corev1.Volume
+	var mount corev1.VolumeMount
+	var path string
+
+	if cfg == nil || cfg.WebApp == nil || cfg.WebApp.PublicAPI == nil || cfg.WebApp.PublicAPI.PersonalAccessTokenSigningKeySecretName == "" {
+		return volume, mount, path, false
+	}
+
+	personalAccessTokenSecretname := cfg.WebApp.PublicAPI.PersonalAccessTokenSigningKeySecretName
+	path = personalAccessTokenSigningKeyMountPath
+
+	volume = corev1.Volume{
+		Name: "personal-access-token-signing-key",
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: personalAccessTokenSecretname,
+				Optional:   pointer.Bool(true),
+			},
+		},
+	}
+
+	mount = corev1.VolumeMount{
+		Name:      "personal-access-token-signing-key",
+		MountPath: personalAccessTokenSigningKeyMountPath,
+		SubPath:   "signing-key",
 		ReadOnly:  true,
 	}
 

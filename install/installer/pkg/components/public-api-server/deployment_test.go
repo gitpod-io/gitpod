@@ -64,5 +64,14 @@ func TestDeployment_ServerArguments(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "personal-access-token-signing-key",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: "personal-access-token-signing-key",
+					Optional:   pointer.Bool(true),
+				},
+			},
+		},
 	}, dpl.Spec.Template.Spec.Volumes, "must bind config as a volume")
 }
