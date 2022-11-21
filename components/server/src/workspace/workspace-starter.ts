@@ -232,11 +232,9 @@ export async function getWorkspaceClassForInstance(
                 }
             }
 
-            if (workspace.type == "prebuild") {
+            if (workspace.type === "prebuild") {
                 if (project?.settings?.workspaceClasses?.prebuild) {
                     workspaceClass = project?.settings?.workspaceClasses?.prebuild;
-                } else if (user.additionalData?.workspaceClasses?.prebuild) {
-                    workspaceClass = user.additionalData?.workspaceClasses?.prebuild;
                 }
             }
 
