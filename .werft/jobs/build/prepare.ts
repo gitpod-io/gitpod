@@ -106,11 +106,13 @@ async function createVM(werft: Werft, config: JobConfig) {
         "GOOGLE_BACKEND_CREDENTIALS": GCLOUD_SERVICE_ACCOUNT_PATH,
         "GOOGLE_APPLICATION_CREDENTIALS": GCLOUD_SERVICE_ACCOUNT_PATH,
         "TF_VAR_cert_issuer": config.certIssuer,
-        "TF_VAR_kubeconfig_path": GLOBAL_KUBECONFIG_PATH,
         "TF_VAR_preview_name": config.previewEnvironment.destname,
         "TF_VAR_vm_cpu": `${cpu}`,
         "TF_VAR_vm_memory": `${memory}Gi`,
-        "TF_VAR_vm_storage_class": "longhorn-gitpod-k3s-202209251218-onereplica"
+    }
+
+    if (config.storageClass.length > 0){
+        environment["TF_VAR_vm_storage_class"] = config.storageClass
     }
 
     const variables = Object
