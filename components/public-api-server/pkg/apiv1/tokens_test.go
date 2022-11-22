@@ -23,6 +23,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 )
 
@@ -37,6 +38,8 @@ var (
 			return experiment == experiments.PersonalAccessTokensEnabledFlag
 		},
 	}
+
+	signer = auth.NewHS256Signer([]byte("my-secret"))
 )
 
 func TestTokensService_CreatePersonalAccessTokenWithoutFeatureFlag(t *testing.T) {
@@ -47,19 +50,86 @@ func TestTokensService_CreatePersonalAccessTokenWithoutFeatureFlag(t *testing.T)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
-		_, err := client.CreatePersonalAccessToken(context.Background(), &connect.Request[v1.CreatePersonalAccessTokenRequest]{})
+		_, err := client.CreatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.CreatePersonalAccessTokenRequest{
+			Token: &v1.PersonalAccessToken{
+				Name:           "my-token",
+				ExpirationTime: timestamppb.Now(),
+			},
+		}))
 
 		require.Error(t, err, "This feature is currently in beta. If you would like to be part of the beta, please contact us.")
 		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
 	})
 
-	t.Run("unimplemented when feature flag enabled", func(t *testing.T) {
-		serverMock, _, client := setupTokensService(t, withTokenFeatureEnabled)
+	t.Run("invalid argument when name is not specified", func(t *testing.T) {
+		_, _, client := setupTokensService(t, withTokenFeatureDisabled)
+
+		_, err := client.CreatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.CreatePersonalAccessTokenRequest{
+			Token: &v1.PersonalAccessToken{},
+		}))
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("invalid argument when expiration time is unspecified", func(t *testing.T) {
+		_, _, client := setupTokensService(t, withTokenFeatureDisabled)
+
+		_, err := client.CreatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.CreatePersonalAccessTokenRequest{
+			Token: &v1.PersonalAccessToken{
+				Name: "my-token",
+			},
+		}))
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("invalid argument when expiration time is invalid", func(t *testing.T) {
+		_, _, client := setupTokensService(t, withTokenFeatureDisabled)
+
+		_, err := client.CreatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.CreatePersonalAccessTokenRequest{
+			Token: &v1.PersonalAccessToken{
+				Name: "my-token",
+				ExpirationTime: &timestamppb.Timestamp{
+					Seconds: 253402300799 + 1,
+				},
+			},
+		}))
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("crates personal access token", func(t *testing.T) {
+		serverMock, dbConn, client := setupTokensService(t, withTokenFeatureEnabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
-		_, err := client.CreatePersonalAccessToken(context.Background(), &connect.Request[v1.CreatePersonalAccessTokenRequest]{})
-		require.Equal(t, connect.CodeUnimplemented, connect.CodeOf(err))
+		token := &v1.PersonalAccessToken{
+			Name:           "my-token",
+			Description:    "my description",
+			ExpirationTime: timestamppb.Now(),
+		}
+
+		response, err := client.CreatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.CreatePersonalAccessTokenRequest{
+			Token: token,
+		}))
+		require.NoError(t, err)
+
+		created := response.Msg.GetToken()
+		t.Cleanup(func() {
+			require.NoError(t, dbConn.Where("id = ?", created.GetId()).Delete(&db.PersonalAccessToken{}).Error)
+		})
+
+		require.NotEmpty(t, created.GetId())
+		require.Equal(t, token.Name, created.GetName())
+		require.Equal(t, token.Description, created.GetDescription())
+		require.Equal(t, token.Scopes, created.GetScopes())
+		requireEqualProto(t, token.GetExpirationTime(), created.GetExpirationTime())
+
+		// Returned token must be parseable
+		_, err = auth.ParsePersonalAccessToken(created.GetValue(), signer)
+		require.NoError(t, err)
+
+		// token must exist in the DB, with the User ID of the requestor
+		storedInDB, err := db.GetToken(context.Background(), dbConn, uuid.MustParse(created.GetId()))
+		require.NoError(t, err)
+		require.Equal(t, user.ID, storedInDB.UserID.String())
 	})
 }
 
@@ -370,7 +440,6 @@ func setupTokensService(t *testing.T, expClient experiments.Client) (*protocol.M
 	t.Helper()
 
 	dbConn := dbtest.ConnectForTests(t)
-	signer := auth.NewHS256Signer([]byte("my-secret"))
 
 	ctrl := gomock.NewController(t)
 	t.Cleanup(ctrl.Finish)

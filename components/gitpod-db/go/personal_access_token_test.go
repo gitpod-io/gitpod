@@ -54,7 +54,7 @@ func TestPersonalAccessToken_Create(t *testing.T) {
 		LastModified:   time.Now(),
 	}
 
-	result, err := db.CreateToken(context.Background(), conn, request)
+	result, err := db.CreatePersonalAccessToken(context.Background(), conn, request)
 	require.NoError(t, err)
 
 	require.Equal(t, request.ID, result.ID)
