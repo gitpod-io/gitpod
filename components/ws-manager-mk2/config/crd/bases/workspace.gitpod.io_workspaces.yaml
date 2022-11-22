@@ -183,7 +183,6 @@ spec:
                       web:
                         type: string
                     required:
-                    - refs
                     - supervisor
                     - web
                     type: object

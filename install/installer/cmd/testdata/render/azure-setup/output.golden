@@ -774,7 +774,7 @@ metadata:
 spec:
   maxUnavailable: 1
   selector:
-    matchLabels: 
+    matchLabels:
       app.kubernetes.io/name: rabbitmq
       app.kubernetes.io/instance: rabbitmq
 ---
@@ -5465,6 +5465,10 @@ data:
               "minBytesAvail": 21474836480
             }
           ]
+        },
+        "workspaceController": {
+          "enabled": false,
+          "workingAreaSuffix": ""
         }
       },
       "service": {
@@ -5800,6 +5804,22 @@ rules:
   - delete
   - update
   - patch
+- apiGroups:
+  - workspace.gitpod.io
+  resources:
+  - workspaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - workspace.gitpod.io
+  resources:
+  - workspaces/status
+  verbs:
+  - get
+  - patch
+  - update
 ---
 # rbac.authorization.k8s.io/v1/ClusterRole ws-manager
 apiVersion: rbac.authorization.k8s.io/v1
@@ -7095,7 +7115,7 @@ spec:
       port: 9419
       targetPort: metrics
       nodePort: null
-  selector: 
+  selector:
     app.kubernetes.io/name: rabbitmq
     app.kubernetes.io/instance: rabbitmq
 ---
@@ -7129,7 +7149,7 @@ spec:
     - name: http-stats
       port: 15672
       targetPort: stats
-  selector: 
+  selector:
     app.kubernetes.io/name: rabbitmq
     app.kubernetes.io/instance: rabbitmq
   publishNotReadyAddresses: true
@@ -8058,7 +8078,7 @@ spec:
         prometheus.io/port: '9419'
         prometheus.io/scrape: "true"
     spec:
-      
+
       serviceAccountName: rabbitmq
       affinity:
         nodeAffinity:
@@ -8067,7 +8087,7 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_meta
                 operator: Exists
-        
+
       securityContext:
         fsGroup: 1001
       terminationGracePeriodSeconds: 120
@@ -9415,11 +9435,11 @@ spec:
       annotations:
         checksum/credentials-secret: dc0c118ec7ab833ae492735c24173ba43d98921c390f862db14fadbb0b26ac94
     spec:
-      
+
       serviceAccountName: minio
       affinity:
         podAffinity:
-          
+
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
             - podAffinityTerm:
@@ -9430,7 +9450,7 @@ spec:
                 topologyKey: kubernetes.io/hostname
               weight: 1
         nodeAffinity:
-          
+
       securityContext:
         fsGroup: 1001
       containers:
