@@ -174,14 +174,16 @@ spec:
                 properties:
                   ide:
                     properties:
-                      desktop:
-                        type: string
+                      refs:
+                        items:
+                          type: string
+                        type: array
                       supervisor:
                         type: string
                       web:
                         type: string
                     required:
-                    - desktop
+                    - refs
                     - supervisor
                     - web
                     type: object
