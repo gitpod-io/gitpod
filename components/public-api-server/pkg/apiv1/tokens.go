@@ -274,7 +274,6 @@ func personalAccessTokenToAPI(t db.PersonalAccessToken, value string) *v1.Person
 		Id: t.ID.String(),
 		// value is only present when the token is first created, or regenerated. It's empty for all subsequent requests.
 		Value:          value,
-		Hash:           t.Hash,
 		Name:           t.Name,
 		Description:    t.Description,
 		Scopes:         t.Scopes,

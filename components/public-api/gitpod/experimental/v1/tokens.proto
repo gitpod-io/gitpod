@@ -16,32 +16,26 @@ message PersonalAccessToken {
 
     // value is the secret value of the token
     // The value property is only populated when the PersonalAccessToken is first created, and never again.
-    // If you you want to compare your existing token, use the hash property
     // Read only.
     string value = 2;
 
-    // hash is the SHA-512 hash of the token value
-    // You can use the hash to compare a token you hold against the one we keep on record by doing `echo -n $TOKEN | sha256sum`.
-    // Read only.
-    string hash = 3;
-
     // name is the name of the token for humans, set by the user
-    string name = 4;
+    string name = 3;
 
     // description is the description of the token set by the user
-    string description = 5;
+    string description = 4;
 
     // expiration_time is the time when the token expires
     // Read only.
-    google.protobuf.Timestamp expiration_time = 6;
+    google.protobuf.Timestamp expiration_time = 5;
 
     // scopes are the permission scopes attached to this token.
     // By default, no scopes are attached and therefore no access is granted to this token.
     // Specifying '*' grants all permissions the owner of the token has.
-    repeated string scopes = 7;
+    repeated string scopes = 6;
 
     // created_time is the time when the token was first created.
-    google.protobuf.Timestamp created_at = 8;
+    google.protobuf.Timestamp created_at = 7;
 }
 
 service TokensService {
