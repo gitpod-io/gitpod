@@ -477,6 +477,61 @@ func TestTokensService_DeletePersonalAccessToken(t *testing.T) {
 	})
 }
 
+func TestTokensService_Workflow(t *testing.T) {
+	ctx := context.Background()
+	now := time.Now().UTC().Round(time.Millisecond)
+	user := newUser(&protocol.User{})
+	serverMock, _, client := setupTokensService(t, withTokenFeatureEnabled)
+
+	serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil).AnyTimes()
+
+	// Create 1 token
+	createdTokenResponse, err := client.CreatePersonalAccessToken(ctx, connect.NewRequest(&v1.CreatePersonalAccessTokenRequest{
+		Token: &v1.PersonalAccessToken{
+			Name:           "my-first-token",
+			ExpirationTime: timestamppb.New(now.Add(1 * time.Hour)),
+		},
+	}))
+	require.NoError(t, err)
+
+	_, err = client.GetPersonalAccessToken(ctx, connect.NewRequest(&v1.GetPersonalAccessTokenRequest{
+		Id: createdTokenResponse.Msg.Token.GetId(),
+	}))
+	require.NoError(t, err, "must retrieve the token we created")
+
+	response, err := client.ListPersonalAccessTokens(ctx, connect.NewRequest(&v1.ListPersonalAccessTokensRequest{}))
+	require.NoError(t, err)
+	require.Len(t, response.Msg.Tokens, 1, "must retrieve one token which we created earlier")
+
+	// Create a second token
+	secondTokenResponse, err := client.CreatePersonalAccessToken(ctx, connect.NewRequest(&v1.CreatePersonalAccessTokenRequest{
+		Token: &v1.PersonalAccessToken{
+			Name:           "my-second-token",
+			ExpirationTime: timestamppb.New(now.Add(1 * time.Hour)),
+		},
+	}))
+	require.NoError(t, err)
+
+	response, err = client.ListPersonalAccessTokens(ctx, connect.NewRequest(&v1.ListPersonalAccessTokensRequest{}))
+	require.NoError(t, err)
+	require.Len(t, response.Msg.Tokens, 2, "must retrieve both tokens we created")
+
+	_, err = client.RegeneratePersonalAccessToken(ctx, connect.NewRequest(&v1.RegeneratePersonalAccessTokenRequest{
+		Id:             secondTokenResponse.Msg.GetToken().GetId(),
+		ExpirationTime: timestamppb.New(now.Add(2 * time.Hour)),
+	}))
+	require.Error(t, err, "currently unimplemented")
+
+	response, err = client.ListPersonalAccessTokens(ctx, connect.NewRequest(&v1.ListPersonalAccessTokensRequest{}))
+	require.NoError(t, err)
+	require.Len(t, response.Msg.Tokens, 2, "must retrieve both tokens")
+
+	_, err = client.DeletePersonalAccessToken(ctx, connect.NewRequest(&v1.DeletePersonalAccessTokenRequest{
+		Id: secondTokenResponse.Msg.GetToken().GetId(),
+	}))
+	require.Error(t, err, "currently unimplemented")
+}
+
 func setupTokensService(t *testing.T, expClient experiments.Client) (*protocol.MockAPIInterface, *gorm.DB, v1connect.TokensServiceClient) {
 	t.Helper()
 
