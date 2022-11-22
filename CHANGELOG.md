@@ -1,6 +1,11 @@
 # Change Log
 
 ## November 2022
+- Revert removing the workspace download feature ([#14828](https://github.com/gitpod-io/gitpod/pull/14828)) - [@gtsiolis](https://github.com/gtsiolis)
+- Update usage period date format ([#14827](https://github.com/gitpod-io/gitpod/pull/14827)) - [@gtsiolis](https://github.com/gtsiolis)
+- Update JetBrains IDE images to most recent stable version. ([#14817](https://github.com/gitpod-io/gitpod/pull/14817)) - [@roboquat](https://github.com/roboquat)
+- [installer]: create a WebApp and IDE installation "kind" ([#14510](https://github.com/gitpod-io/gitpod/pull/14510)) - [@mrsimonemms](https://github.com/mrsimonemms)
+- [openVSXProxy] Mark the usage of PVC optional ([#14603](https://github.com/gitpod-io/gitpod/pull/14603)) - [@Pothulapati](https://github.com/Pothulapati)
 - Update JetBrains IDE images to most recent stable version. ([#14787](https://github.com/gitpod-io/gitpod/pull/14787)) - [@felladrin](https://github.com/felladrin)
 - JetBrains: Add Rider and CLion IDEs in Beta ([#14524](https://github.com/gitpod-io/gitpod/pull/14524)) - [@andreafalzetti](https://github.com/andreafalzetti)
 - Show not-served ports in gp-cli `ports` command, browser Ports view and desktop ExposedPorts view ([#14761](https://github.com/gitpod-io/gitpod/pull/14761)) - [@mustard-mh](https://github.com/mustard-mh)
