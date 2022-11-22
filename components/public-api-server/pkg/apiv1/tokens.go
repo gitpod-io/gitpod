@@ -43,17 +43,63 @@ type TokensService struct {
 }
 
 func (s *TokensService) CreatePersonalAccessToken(ctx context.Context, req *connect.Request[v1.CreatePersonalAccessTokenRequest]) (*connect.Response[v1.CreatePersonalAccessTokenResponse], error) {
+	tokenReq := req.Msg.GetToken()
+
+	name := strings.TrimSpace(tokenReq.GetName())
+	if name == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("Token Name is a required parameter."))
+	}
+
+	description := strings.TrimSpace(tokenReq.GetDescription())
+
+	expiry := tokenReq.GetExpirationTime()
+	if !expiry.IsValid() {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("Received invalid Expiration Time, it is a required parameter."))
+	}
+
+	// TODO: Parse and validate scopes before storing
+	// Until we do that, we store empty scopes.
+	var scopes []string
+
 	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = s.getUser(ctx, conn)
+	_, userID, err := s.getUser(ctx, conn)
 	if err != nil {
 		return nil, err
 	}
 
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gitpod.experimental.v1.TokensService.CreatePersonalAccessToken is not implemented"))
+	pat, err := auth.GeneratePersonalAccessToken(s.signer)
+	if err != nil {
+		log.WithError(err).Errorf("Failed to generate personal access token for user %s", userID.String())
+		return nil, connect.NewError(connect.CodeInternal, errors.New("Failed to generate personal access token."))
+	}
+
+	hash, err := pat.ValueHash()
+	if err != nil {
+		log.WithError(err).Errorf("Failed to generate personal access token value hash for user %s", userID.String())
+		return nil, connect.NewError(connect.CodeInternal, errors.New("Failed to compute personal access token hash."))
+	}
+
+	token, err := db.CreatePersonalAccessToken(ctx, s.dbConn, db.PersonalAccessToken{
+		ID:             uuid.New(),
+		UserID:         userID,
+		Hash:           hash,
+		Name:           name,
+		Description:    description,
+		Scopes:         scopes,
+		ExpirationTime: expiry.AsTime().UTC(),
+	})
+	if err != nil {
+		log.WithError(err).Errorf("Failed to store personal access token for user %s", userID.String())
+		return nil, connect.NewError(connect.CodeInternal, errors.New("Failed to store personal access token."))
+	}
+
+	return connect.NewResponse(&v1.CreatePersonalAccessTokenResponse{
+		Token: personalAccessTokenToAPI(token, pat.String()),
+	}), nil
 }
 
 func (s *TokensService) GetPersonalAccessToken(ctx context.Context, req *connect.Request[v1.GetPersonalAccessTokenRequest]) (*connect.Response[v1.GetPersonalAccessTokenResponse], error) {
@@ -67,7 +113,7 @@ func (s *TokensService) GetPersonalAccessToken(ctx context.Context, req *connect
 		return nil, err
 	}
 
-	_, err = s.getUser(ctx, conn)
+	_, _, err = s.getUser(ctx, conn)
 	if err != nil {
 		return nil, err
 	}
@@ -82,14 +128,9 @@ func (s *TokensService) ListPersonalAccessTokens(ctx context.Context, req *conne
 		return nil, err
 	}
 
-	user, err := s.getUser(ctx, conn)
+	_, userID, err := s.getUser(ctx, conn)
 	if err != nil {
 		return nil, err
-	}
-
-	userID, err := uuid.Parse(user.ID)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to parse user ID as UUID"))
 	}
 
 	result, err := db.ListPersonalAccessTokensForUser(ctx, s.dbConn, userID, paginationToDB(req.Msg.GetPagination()))
@@ -114,7 +155,7 @@ func (s *TokensService) RegeneratePersonalAccessToken(ctx context.Context, req *
 		return nil, err
 	}
 
-	_, err = s.getUser(ctx, conn)
+	_, _, err = s.getUser(ctx, conn)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +175,7 @@ func (s *TokensService) UpdatePersonalAccessToken(ctx context.Context, req *conn
 		return nil, err
 	}
 
-	_, err = s.getUser(ctx, conn)
+	_, _, err = s.getUser(ctx, conn)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +195,7 @@ func (s *TokensService) DeletePersonalAccessToken(ctx context.Context, req *conn
 		return nil, err
 	}
 
-	_, err = s.getUser(ctx, conn)
+	_, _, err = s.getUser(ctx, conn)
 	if err != nil {
 		return nil, err
 	}
@@ -163,17 +204,22 @@ func (s *TokensService) DeletePersonalAccessToken(ctx context.Context, req *conn
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gitpod.experimental.v1.TokensService.DeletePersonalAccessToken is not implemented"))
 }
 
-func (s *TokensService) getUser(ctx context.Context, conn protocol.APIInterface) (*protocol.User, error) {
+func (s *TokensService) getUser(ctx context.Context, conn protocol.APIInterface) (*protocol.User, uuid.UUID, error) {
 	user, err := conn.GetLoggedInUser(ctx)
 	if err != nil {
-		return nil, proxy.ConvertError(err)
+		return nil, uuid.Nil, proxy.ConvertError(err)
 	}
 
 	if !experiments.IsPersonalAccessTokensEnabled(ctx, s.expClient, experiments.Attributes{UserID: user.ID}) {
-		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("This feature is currently in beta. If you would like to be part of the beta, please contact us."))
+		return nil, uuid.Nil, connect.NewError(connect.CodePermissionDenied, errors.New("This feature is currently in beta. If you would like to be part of the beta, please contact us."))
 	}
 
-	return user, nil
+	userID, err := uuid.Parse(user.ID)
+	if err != nil {
+		return nil, uuid.Nil, connect.NewError(connect.CodeInternal, errors.New("Failed to parse user ID as UUID. Please contact support."))
+	}
+
+	return user, userID, nil
 }
 
 func getConnection(ctx context.Context, pool proxy.ServerConnectionPool) (protocol.APIInterface, error) {

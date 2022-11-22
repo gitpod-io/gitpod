@@ -49,7 +49,7 @@ func GetToken(ctx context.Context, conn *gorm.DB, id uuid.UUID) (PersonalAccessT
 	return token, nil
 }
 
-func CreateToken(ctx context.Context, conn *gorm.DB, req PersonalAccessToken) (PersonalAccessToken, error) {
+func CreatePersonalAccessToken(ctx context.Context, conn *gorm.DB, req PersonalAccessToken) (PersonalAccessToken, error) {
 	if req.UserID == uuid.Nil {
 		return PersonalAccessToken{}, fmt.Errorf("Invalid or empty userID")
 	}
@@ -63,6 +63,7 @@ func CreateToken(ctx context.Context, conn *gorm.DB, req PersonalAccessToken) (P
 		return PersonalAccessToken{}, fmt.Errorf("Expiration time required")
 	}
 
+	now := time.Now().UTC()
 	token := PersonalAccessToken{
 		ID:             req.ID,
 		UserID:         req.UserID,
@@ -71,13 +72,13 @@ func CreateToken(ctx context.Context, conn *gorm.DB, req PersonalAccessToken) (P
 		Description:    req.Description,
 		Scopes:         req.Scopes,
 		ExpirationTime: req.ExpirationTime,
-		CreatedAt:      time.Now().UTC(),
-		LastModified:   time.Now().UTC(),
+		CreatedAt:      now,
+		LastModified:   now,
 	}
 
 	tx := conn.WithContext(ctx).Create(req)
 	if tx.Error != nil {
-		return PersonalAccessToken{}, fmt.Errorf("Failed to create token for user %s", req.UserID)
+		return PersonalAccessToken{}, fmt.Errorf("Failed to create personal access token for user %s", req.UserID)
 	}
 
 	return token, nil

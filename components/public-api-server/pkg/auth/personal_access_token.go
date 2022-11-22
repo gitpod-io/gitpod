@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 const PersonalAccessTokenPrefix = "gitpod_pat_"
@@ -40,6 +42,16 @@ func (t *PersonalAccessToken) String() string {
 
 func (t *PersonalAccessToken) Value() string {
 	return t.value
+}
+
+func (t *PersonalAccessToken) ValueHash() (string, error) {
+	const bcryptCost = 16
+	hash, err := bcrypt.GenerateFromPassword([]byte(t.value), bcryptCost)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate personal access token value hash: %w", err)
+	}
+
+	return string(hash), nil
 }
 
 func GeneratePersonalAccessToken(signer Signer) (PersonalAccessToken, error) {

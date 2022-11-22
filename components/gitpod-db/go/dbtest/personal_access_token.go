@@ -82,7 +82,7 @@ func CreatePersonalAccessTokenRecords(t *testing.T, conn *gorm.DB, entries ...db
 		records = append(records, record)
 		ids = append(ids, record.ID.String())
 
-		_, err := db.CreateToken(context.Background(), conn, tokenEntry)
+		_, err := db.CreatePersonalAccessToken(context.Background(), conn, tokenEntry)
 		require.NoError(t, err)
 	}
 
