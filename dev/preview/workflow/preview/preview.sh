@@ -3,11 +3,13 @@
 
 set -euo pipefail
 
-ROOT="$(realpath "$(dirname "$0")")/../../../../"
+SCRIPT_PATH=$(realpath "$(dirname "$0")")
 
-source "${ROOT}/dev/preview/workflow/lib/ensure-gcloud-auth.sh"
-source "${ROOT}/dev/preview/workflow/lib/common.sh"
-source "${ROOT}/dev/preview/workflow/lib/git.sh"
+# shellcheck source=../lib/common.sh
+source "$(realpath "${SCRIPT_PATH}/../lib/common.sh")"
+
+import "ensure-gcloud-auth.sh"
+import "git.sh"
 
 # Don't prompt user before terraform apply
 export TF_INPUT=0
@@ -19,7 +21,8 @@ if git:is-on-main; then
 fi
 
 if ! git:branch-exists-remotely; then
-    log_warn "Your branch doesn't exist on GitHub. Your preview environment might get garbage collected at any time. To avoid this please push your branch."
+    log_warn "Your branch doesn't exist on GitHub. Your preview environment WILL get garbage collected after AT MOST 1h. To avoid this please push your branch."
+    ask "I've read 👆 and I understand the implications."
 fi
 
 ensure_gcloud_auth
