@@ -105,6 +105,7 @@ export IJ_HOST_CONFIG_BASE_DIR=/workspace/.config/JetBrains-latest
 export IJ_HOST_SYSTEM_BASE_DIR=/workspace/.cache/JetBrains-latest
 
 echo 'running ${key} backend in warmup mode...'
+SLN_FILE=$(find /workspace -name "*.sln" -print -quit)
 /tmp/backend-latest/bin/remote-dev-server.sh warmup "$GITPOD_REPO_ROOT"
 
 echo 'removing latest ${key} backend...'
