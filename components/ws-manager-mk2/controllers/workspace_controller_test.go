@@ -25,7 +25,7 @@ var _ = Describe("WorkspaceController", func() {
 	Context("When starting workspaces", func() {
 		It("Should create Pods", func() {
 			const (
-				WorkspaceName      = "test-cronjob"
+				WorkspaceName      = "test-workspace"
 				WorkspaceNamespace = "default"
 
 				timeout  = time.Second * 10
@@ -55,6 +55,9 @@ var _ = Describe("WorkspaceController", func() {
 					Image: workspacev1.WorkspaceImages{
 						Workspace: workspacev1.WorkspaceImage{
 							Ref: ptr.String("alpine:latest"),
+						},
+						IDE: workspacev1.IDEImages{
+							Refs: []string{},
 						},
 					},
 					Ports:       []workspacev1.PortSpec{},
