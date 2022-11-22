@@ -6,7 +6,7 @@
 
 import { DBWithTracing, MaybeWorkspaceInstance, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { WorkspaceClassesConfig } from "./workspace-classes";
-import { PrebuiltWorkspace, User, Workspace, WorkspaceInstance, WorkspaceType } from "@gitpod/gitpod-protocol";
+import { PrebuiltWorkspace, User, Workspace, WorkspaceType } from "@gitpod/gitpod-protocol";
 import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import * as chai from "chai";
 import { migrationIDESettings, chooseIDE, getWorkspaceClassForInstance } from "./workspace-starter";
@@ -319,12 +319,11 @@ describe("workspace-starter", function () {
 });
 
 async function execute(builder: WorkspaceClassTestBuilder, expectedClass: string) {
-    let [ctx, workspace, previousInstance, user, entitlementService, config, workspaceDb] = builder.build();
+    let [ctx, workspace, user, entitlementService, config, workspaceDb] = builder.build();
 
     let actualClass = await getWorkspaceClassForInstance(
         ctx,
         workspace,
-        previousInstance,
         user,
         undefined,
         entitlementService,
@@ -385,7 +384,6 @@ class WorkspaceClassTestBuilder {
     public build(): [
         TraceContext,
         Workspace,
-        WorkspaceInstance,
         User,
         EntitlementService,
         WorkspaceClassesConfig,
@@ -401,10 +399,6 @@ class WorkspaceClassTestBuilder {
             basedOnPrebuildId: this.basedOnPrebuild,
             type: this.workspaceType,
         } as Workspace;
-
-        const previousInstance: WorkspaceInstance = {
-            workspaceClass: this.previousInstanceClass,
-        } as WorkspaceInstance;
 
         let user: User = {
             id: "string",
@@ -461,7 +455,7 @@ class WorkspaceClassTestBuilder {
             new MockTracingManager(),
         );
 
-        return [ctx, workspace, previousInstance, user, entitlementService, config, workspaceDbWithTracing];
+        return [ctx, workspace, user, entitlementService, config, workspaceDbWithTracing];
     }
 }
 

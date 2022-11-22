@@ -204,7 +204,6 @@ export const chooseIDE = (
 export async function getWorkspaceClassForInstance(
     ctx: TraceContext,
     workspace: Workspace,
-    previousInstance: WorkspaceInstance | undefined,
     user: User,
     project: Project | undefined,
     entitlementService: EntitlementService,
@@ -214,38 +213,25 @@ export async function getWorkspaceClassForInstance(
     const span = TraceContext.startSpan("getWorkspaceClassForInstance", ctx);
     try {
         let workspaceClass = "";
-        if (!previousInstance?.workspaceClass) {
-            if (workspace.type == "regular") {
-                const prebuildClass = await WorkspaceClasses.getFromPrebuild(ctx, workspace, workspaceDb.trace(ctx));
-                if (prebuildClass) {
-                    const userClass = await WorkspaceClasses.getConfiguredOrUpgradeFromLegacy(
-                        user,
-                        project,
-                        config,
-                        entitlementService,
-                    );
-                    workspaceClass = WorkspaceClasses.selectClassForRegular(prebuildClass, userClass, config);
-                } else if (project?.settings?.workspaceClasses?.regular) {
-                    workspaceClass = project?.settings?.workspaceClasses?.regular;
-                } else if (user.additionalData?.workspaceClasses?.regular) {
-                    workspaceClass = user.additionalData?.workspaceClasses?.regular;
-                }
+        if (workspace.type === "regular") {
+            if (project?.settings?.workspaceClasses?.regular) {
+                workspaceClass = project?.settings?.workspaceClasses?.regular;
+            } else if (user.additionalData?.workspaceClasses?.regular) {
+                workspaceClass = user.additionalData?.workspaceClasses?.regular;
             }
+        }
 
-            if (workspace.type === "prebuild") {
-                if (project?.settings?.workspaceClasses?.prebuild) {
-                    workspaceClass = project?.settings?.workspaceClasses?.prebuild;
-                }
+        if (workspace.type === "prebuild") {
+            if (project?.settings?.workspaceClasses?.prebuild) {
+                workspaceClass = project?.settings?.workspaceClasses?.prebuild;
             }
+        }
 
-            if (!workspaceClass) {
-                workspaceClass = WorkspaceClasses.getDefaultId(config);
-                if (await entitlementService.userGetsMoreResources(user)) {
-                    workspaceClass = WorkspaceClasses.getMoreResourcesIdOrDefault(config);
-                }
+        if (!workspaceClass) {
+            workspaceClass = WorkspaceClasses.getDefaultId(config);
+            if (await entitlementService.userGetsMoreResources(user)) {
+                workspaceClass = WorkspaceClasses.getMoreResourcesIdOrDefault(config);
             }
-        } else {
-            workspaceClass = WorkspaceClasses.getPreviousOrDefault(config, previousInstance.workspaceClass);
         }
 
         return workspaceClass;
@@ -928,7 +914,6 @@ export class WorkspaceStarter {
                 workspaceClass = await getWorkspaceClassForInstance(
                     ctx,
                     workspace,
-                    previousInstance,
                     user,
                     project,
                     this.entitlementService,
@@ -943,22 +928,6 @@ export class WorkspaceStarter {
                 }
 
                 featureFlags = featureFlags.concat(["workspace_class_limiting"]);
-            } else {
-                // todo: remove this once pvc has been rolled out
-                const prebuildClass = await WorkspaceClasses.getFromPrebuild(
-                    ctx,
-                    workspace,
-                    this.workspaceDb.trace(ctx),
-                );
-                if (prebuildClass?.endsWith("-pvc")) {
-                    workspaceClass = prebuildClass;
-                    // ####
-                } else {
-                    workspaceClass = "default";
-                    if (await this.entitlementService.userGetsMoreResources(user)) {
-                        workspaceClass = "gitpodio-internal-xl";
-                    }
-                }
             }
 
             if (!!featureFlags) {

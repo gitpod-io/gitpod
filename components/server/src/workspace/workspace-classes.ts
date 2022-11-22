@@ -4,10 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { Project, User, Workspace } from "@gitpod/gitpod-protocol";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { User } from "@gitpod/gitpod-protocol/lib/protocol";
+import { Project } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { EntitlementService } from "../billing/entitlement-service";
 
 export type WorkspaceClassesConfig = [WorkspaceClassConfig];
@@ -68,46 +66,6 @@ export namespace WorkspaceClasses {
         return workspaceClasses.filter((c) => !c.deprecated).find((c) => c.isDefault)!.id;
     }
 
-    /**
-     * Checks that the given workspaceClass is:
-     *  - still configured
-     *  - not deprecated
-     * If any of that is the case, it returns the default class
-     *
-     * @param workspaceClasses
-     * @param previousWorkspaceClass
-     */
-    export function getPreviousOrDefault(
-        workspaceClasses: WorkspaceClassesConfig,
-        previousWorkspaceClass: string | undefined,
-    ): string {
-        if (!previousWorkspaceClass) {
-            return getDefaultId(workspaceClasses);
-        }
-
-        // todo: remove this once pvc has been rolled out
-        if (previousWorkspaceClass.endsWith("-pvc")) {
-            return previousWorkspaceClass;
-        }
-
-        const config = workspaceClasses.find((c) => c.id === previousWorkspaceClass);
-        if (!config) {
-            log.error(
-                `Found previous instance with workspace class '${previousWorkspaceClass}' which is no longer configured! Falling back to default class.`,
-                { workspaceClasses },
-            );
-            return getDefaultId(workspaceClasses);
-        }
-        if (config.deprecated) {
-            log.info(
-                `Found previous instance with workspace class '${previousWorkspaceClass}' which is deprecated. Falling back to default class.`,
-                { workspaceClasses },
-            );
-            return getDefaultId(workspaceClasses);
-        }
-        return config.id;
-    }
-
     export function validate(workspaceClasses: WorkspaceClassesConfig): void {
         const defaultClasses = workspaceClasses
             .filter((c) => !c.deprecated)
@@ -118,37 +76,6 @@ export namespace WorkspaceClasses {
             throw new Error(
                 "Exactly one default workspace class needs to be configured:" + JSON.stringify(defaultClasses),
             );
-        }
-    }
-
-    /**
-     * Gets the workspace class of the prebuild
-     * If the class is not supported anymore undefined will be returned
-     * @param ctx
-     * @param workspace
-     * @param db
-     * @param classes
-     */
-    export async function getFromPrebuild(
-        ctx: TraceContext,
-        workspace: Workspace,
-        db: WorkspaceDB,
-    ): Promise<string | undefined> {
-        const span = TraceContext.startSpan("getFromPrebuild", ctx);
-        try {
-            if (!workspace.basedOnPrebuildId) {
-                return undefined;
-            }
-
-            const prebuild = await db.findPrebuildByID(workspace.basedOnPrebuildId);
-            if (!prebuild) {
-                return undefined;
-            }
-
-            const buildWorkspaceInstance = await db.findCurrentInstance(prebuild.buildWorkspaceId);
-            return buildWorkspaceInstance?.workspaceClass;
-        } finally {
-            span.finish();
         }
     }
 
