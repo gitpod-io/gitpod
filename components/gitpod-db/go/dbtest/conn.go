@@ -37,7 +37,7 @@ func ConnectForTests(t *testing.T) *gorm.DB {
 		Host:     "localhost:23306",
 		Database: "gitpod",
 	})
-	require.NoError(t, err, "Failed to establish connection to  In a workspace, run `leeway build components/gitpod-db/go:init-testdb` once to bootstrap the ")
+	require.NoError(t, err, "Failed to establish connection to  In a workspace, run `leeway build components/gitpod-db/go:init-testdb` once to bootstrap the db")
 
 	return conn
 }

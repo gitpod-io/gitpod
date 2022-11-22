@@ -74,6 +74,51 @@ func TestPersonalAccessToken_Create(t *testing.T) {
 	require.Equal(t, request.ID, result.ID)
 }
 
+func TestPersonalAccessToken_UpdateHash(t *testing.T) {
+	conn := dbtest.ConnectForTests(t)
+
+	firstUserId := uuid.New()
+	secondUserId := uuid.New()
+
+	token := dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{UserID: firstUserId})
+	token2 := dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{UserID: secondUserId})
+
+	tokenEntries := []db.PersonalAccessToken{token, token2}
+
+	dbtest.CreatePersonalAccessTokenRecords(t, conn, tokenEntries...)
+
+	var newHash = "another-secure-hash"
+	var newExpirationTime = time.Now().Add(24 * time.Hour).UTC().Truncate(time.Millisecond)
+
+	t.Run("not matching user", func(t *testing.T) {
+		_, err := db.UpdatePersonalAccessTokenHash(context.Background(), conn, token.ID, token2.UserID, newHash, newExpirationTime)
+		require.Error(t, err, db.ErrorNotFound)
+	})
+
+	t.Run("not matching token", func(t *testing.T) {
+		_, err := db.UpdatePersonalAccessTokenHash(context.Background(), conn, token2.ID, token.UserID, newHash, newExpirationTime)
+		require.Error(t, err, db.ErrorNotFound)
+	})
+
+	t.Run("both token and user don't exist in the DB", func(t *testing.T) {
+		_, err := db.UpdatePersonalAccessTokenHash(context.Background(), conn, uuid.New(), uuid.New(), newHash, newExpirationTime)
+		require.Error(t, err, db.ErrorNotFound)
+	})
+
+	t.Run("valid", func(t *testing.T) {
+		returned, err := db.UpdatePersonalAccessTokenHash(context.Background(), conn, token.ID, token.UserID, newHash, newExpirationTime)
+		require.NoError(t, err)
+		require.Equal(t, token.ID, returned.ID)
+		require.Equal(t, token.UserID, returned.UserID)
+		require.Equal(t, newHash, returned.Hash)
+		require.Equal(t, token.Name, returned.Name)
+		require.Equal(t, token.Description, returned.Description)
+		require.Equal(t, token.Scopes, returned.Scopes)
+		require.Equal(t, newExpirationTime, returned.ExpirationTime)
+		require.Equal(t, token.CreatedAt, returned.CreatedAt)
+	})
+}
+
 func TestListPersonalAccessTokensForUser(t *testing.T) {
 	ctx := context.Background()
 	conn := dbtest.ConnectForTests(t)
