@@ -52,14 +52,17 @@ func main() {
 	if err := replaceOpenVSXUrl(); err != nil {
 		log.WithError(err).Error("failed to replace OpenVSX URL")
 	}
+	log.Info("wait until content available")
 
 	phaseDone := phaseLogging("ResolveWsInfo")
-	wsInfo, err := resolveWorkspaceInfo(context.Background())
-	if err != nil || wsInfo == nil {
-		log.WithError(err).WithField("wsInfo", wsInfo).Error("resolve workspace info failed")
+	// wait until content ready
+	contentStatus, wsInfo, err := resolveWorkspaceInfo(context.Background())
+	if err != nil || wsInfo == nil || contentStatus == nil || !contentStatus.Available {
+		log.WithError(err).WithField("wsInfo", wsInfo).WithField("cstate", contentStatus).Error("resolve workspace info failed")
 		return
 	}
 	phaseDone()
+	log.WithField("cost", time.Now().Local().Sub(startTime).Milliseconds()).Info("content available")
 
 	// code server args install extension with id
 	args := []string{}
@@ -131,8 +134,8 @@ func main() {
 	}
 }
 
-func resolveWorkspaceInfo(ctx context.Context) (*supervisor.WorkspaceInfoResponse, error) {
-	resolve := func(ctx context.Context) (wsInfo *supervisor.WorkspaceInfoResponse, err error) {
+func resolveWorkspaceInfo(ctx context.Context) (*supervisor.ContentStatusResponse, *supervisor.WorkspaceInfoResponse, error) {
+	resolve := func(ctx context.Context) (contentStatus *supervisor.ContentStatusResponse, wsInfo *supervisor.WorkspaceInfoResponse, err error) {
 		supervisorConn, err := grpc.Dial(util.GetSupervisorAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			err = errors.New("dial supervisor failed: " + err.Error())
@@ -143,18 +146,22 @@ func resolveWorkspaceInfo(ctx context.Context) (*supervisor.WorkspaceInfoRespons
 			err = errors.New("get workspace info failed: " + err.Error())
 			return
 		}
+		contentStatus, err = supervisor.NewStatusServiceClient(supervisorConn).ContentStatus(ctx, &supervisor.ContentStatusRequest{Wait: true})
+		if err != nil {
+			err = errors.New("get content available failed: " + err.Error())
+		}
 		return
 	}
 	// try resolve workspace info 10 times
 	for attempt := 0; attempt < 10; attempt++ {
-		if wsInfo, err := resolve(ctx); err != nil {
+		if contentStatus, wsInfo, err := resolve(ctx); err != nil {
 			log.WithError(err).Error("resolve workspace info failed")
 			time.Sleep(1 * time.Second)
 		} else {
-			return wsInfo, err
+			return contentStatus, wsInfo, err
 		}
 	}
-	return nil, errors.New("failed with attempt 10 times")
+	return nil, nil, errors.New("failed with attempt 10 times")
 }
 
 type Extension struct {
