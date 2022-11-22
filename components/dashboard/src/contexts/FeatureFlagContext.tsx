@@ -53,7 +53,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 showUseLastSuccessfulPrebuild: { defaultValue: false, setter: setShowUseLastSuccessfulPrebuild },
                 publicApiExperimentalTeamsService: { defaultValue: false, setter: setUsePublicApiTeamsService },
                 personalAccessTokensEnabled: { defaultValue: false, setter: setPersonalAccessTokensEnabled },
-                useSlowDatabase: { defaultValue: false, setter: setUseSlowDatabase },
+                slow_database: { defaultValue: false, setter: setUseSlowDatabase },
             };
             for (const [flagName, config] of Object.entries(featureFlags)) {
                 if (teams) {
