@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	userIDAttribute         = "user_id"
 	projectIDAttribute      = "project_id"
 	teamIDAttribute         = "team_id"
 	teamNameAttribute       = "team_name"
@@ -55,6 +56,10 @@ func (c *configCatClient) GetStringValue(_ context.Context, experimentName strin
 
 func attributesToUser(attributes Attributes) *configcat.UserData {
 	custom := make(map[string]string)
+
+	if attributes.UserID != "" {
+		custom[userIDAttribute] = attributes.UserID
+	}
 
 	if attributes.TeamID != "" {
 		custom[teamIDAttribute] = attributes.TeamID
