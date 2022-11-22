@@ -30,7 +30,6 @@ export class PersonalAccessToken extends Message<PersonalAccessToken> {
   /**
    * value is the secret value of the token
    * The value property is only populated when the PersonalAccessToken is first created, and never again.
-   * If you you want to compare your existing token, use the hash property
    * Read only.
    *
    * @generated from field: string value = 2;
@@ -38,25 +37,16 @@ export class PersonalAccessToken extends Message<PersonalAccessToken> {
   value = "";
 
   /**
-   * hash is the SHA-512 hash of the token value
-   * You can use the hash to compare a token you hold against the one we keep on record by doing `echo -n $TOKEN | sha256sum`.
-   * Read only.
-   *
-   * @generated from field: string hash = 3;
-   */
-  hash = "";
-
-  /**
    * name is the name of the token for humans, set by the user
    *
-   * @generated from field: string name = 4;
+   * @generated from field: string name = 3;
    */
   name = "";
 
   /**
    * description is the description of the token set by the user
    *
-   * @generated from field: string description = 5;
+   * @generated from field: string description = 4;
    */
   description = "";
 
@@ -64,7 +54,7 @@ export class PersonalAccessToken extends Message<PersonalAccessToken> {
    * expiration_time is the time when the token expires
    * Read only.
    *
-   * @generated from field: google.protobuf.Timestamp expiration_time = 6;
+   * @generated from field: google.protobuf.Timestamp expiration_time = 5;
    */
   expirationTime?: Timestamp;
 
@@ -73,14 +63,14 @@ export class PersonalAccessToken extends Message<PersonalAccessToken> {
    * By default, no scopes are attached and therefore no access is granted to this token.
    * Specifying '*' grants all permissions the owner of the token has.
    *
-   * @generated from field: repeated string scopes = 7;
+   * @generated from field: repeated string scopes = 6;
    */
   scopes: string[] = [];
 
   /**
    * created_time is the time when the token was first created.
    *
-   * @generated from field: google.protobuf.Timestamp created_at = 8;
+   * @generated from field: google.protobuf.Timestamp created_at = 7;
    */
   createdAt?: Timestamp;
 
@@ -94,12 +84,11 @@ export class PersonalAccessToken extends Message<PersonalAccessToken> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "value", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "hash", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 4, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 5, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 6, name: "expiration_time", kind: "message", T: Timestamp },
-    { no: 7, name: "scopes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 8, name: "created_at", kind: "message", T: Timestamp },
+    { no: 3, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "expiration_time", kind: "message", T: Timestamp },
+    { no: 6, name: "scopes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 7, name: "created_at", kind: "message", T: Timestamp },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PersonalAccessToken {
