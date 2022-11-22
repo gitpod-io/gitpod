@@ -135,7 +135,7 @@ func getPersonalAccessTokenSigningKey(cfg *experimental.Config) (corev1.Volume, 
 	mount = corev1.VolumeMount{
 		Name:      "personal-access-token-signing-key",
 		MountPath: personalAccessTokenSigningKeyMountPath,
-		SubPath:   "signing-key",
+		SubPath:   "personal-access-token-signing-key",
 		ReadOnly:  true,
 	}
 
