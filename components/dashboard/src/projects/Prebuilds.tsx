@@ -266,16 +266,18 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                                         </div>
                                     </ItemField>
                                     <ItemField className="flex w-3/12">
-                                        <a href={p.info.changeUrl} className="cursor-pointer">
-                                            <div className="flex space-x-2 truncate">
-                                                <span
-                                                    className="font-medium text-gray-500 dark:text-gray-50 truncate"
-                                                    title={p.info.branch}
-                                                >
-                                                    {p.info.branch}
-                                                </span>
-                                            </div>
-                                        </a>
+                                        <div className="truncate">
+                                            <a href={p.info.changeUrl} className="cursor-pointer">
+                                                <div className="flex space-x-2 truncate">
+                                                    <span
+                                                        className="font-medium text-gray-500 dark:text-gray-50 truncate"
+                                                        title={p.info.branch}
+                                                    >
+                                                        {p.info.branch}
+                                                    </span>
+                                                </div>
+                                            </a>
+                                        </div>
                                         <span className="flex-grow" />
                                     </ItemField>
                                 </Item>
