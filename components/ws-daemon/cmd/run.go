@@ -15,12 +15,14 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/bombsimon/logrusr/v2"
 	"github.com/heptiolabs/healthcheck"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
@@ -44,6 +46,8 @@ var runCmd = &cobra.Command{
 		}
 
 		createLVMDevices()
+
+		ctrl.SetLogger(logrusr.New(log.Log))
 
 		health := healthcheck.NewHandler()
 		srv, err := baseserver.New(grpcServerName,

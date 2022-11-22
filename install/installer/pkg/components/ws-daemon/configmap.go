@@ -66,6 +66,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	// default runtime mapping
 	runtimeMapping[ctx.Config.Workspace.Runtime.ContainerDRuntimeDir] = "/mnt/node0"
 
+	var wscontroller daemon.WorkspaceControllerConfig
+
 	ctx.WithExperimental(func(ucfg *experimental.Config) error {
 		if ucfg.Workspace == nil {
 			return nil
@@ -99,6 +101,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		}
 
 		procLimit = ucfg.Workspace.ProcLimit
+
+		wscontroller.Enabled = ucfg.Workspace.UseWsmanagerMk2
+		wscontroller.WorkingAreaSuffix = "-mk2"
 
 		return nil
 	})
@@ -168,6 +173,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					MinBytesAvail: 21474836480,
 				}},
 			},
+			WorkspaceController: wscontroller,
 		},
 		Service: baseserver.ServerConfiguration{
 			Address: fmt.Sprintf("0.0.0.0:%d", ServicePort),
