@@ -14,7 +14,7 @@ export TF_CLI_ARGS_plan="${TF_CLI_ARGS_plan} -lock-timeout=5m"
 export TF_CLI_ARGS_apply="${TF_CLI_ARGS_apply} -lock-timeout=5m"
 
 if [ -n "${DESTROY-}" ]; then
-    export TF_CLI_ARGS_plan="${TF_CLI_ARGS_plan} -destroy"
+  export TF_CLI_ARGS_plan="${TF_CLI_ARGS_plan} -destroy"
 fi
 
 function check_workspace() {
@@ -58,6 +58,7 @@ function terraform_init() {
   terraform init
   if [ -n "${WORKSPACE-}" ]; then
     set_workspace "${WORKSPACE}"
+    check_workspace "${WORKSPACE}"
   fi
 
   popd || return "${ERROR_CHANGE_DIR}"
@@ -78,6 +79,7 @@ function terraform_plan() {
 
   # check if we should be in a workspace, and bail otherwise
   if [ -n "${WORKSPACE-}" ]; then
+    set_workspace "${WORKSPACE}"
     check_workspace "${WORKSPACE}"
   fi
 
@@ -104,11 +106,6 @@ function terraform_apply() {
 
   pushd "${target_dir}" || return "${ERROR_CHANGE_DIR}"
 
-  # check if we should be in a workspace, and bail otherwise
-  if [ -n "${WORKSPACE-}" ]; then
-    check_workspace "${WORKSPACE}"
-  fi
-
   if [ -z "${plan_location-}" ]; then
     log_error "Must provide PLAN_LOCATION for apply"
     return "${ERROR_NO_PLAN}"
@@ -116,6 +113,7 @@ function terraform_apply() {
 
   # check if we should be in a workspace, and bail otherwise
   if [ -n "${WORKSPACE-}" ]; then
+    set_workspace "${WORKSPACE}"
     check_workspace "${WORKSPACE}"
   fi
 
