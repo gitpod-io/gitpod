@@ -45,7 +45,7 @@ func (t *PersonalAccessToken) Value() string {
 }
 
 func (t *PersonalAccessToken) ValueHash() (string, error) {
-	const bcryptCost = 16
+	const bcryptCost = 10
 	hash, err := bcrypt.GenerateFromPassword([]byte(t.value), bcryptCost)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate personal access token value hash: %w", err)
