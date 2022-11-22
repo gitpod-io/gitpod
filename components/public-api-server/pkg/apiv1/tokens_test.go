@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
+
 	connect "github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/experiments/experimentstest"
@@ -514,10 +516,16 @@ func TestTokensService_UpdatePersonalAccessToken(t *testing.T) {
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
 
-		_, err := client.UpdatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.UpdatePersonalAccessTokenRequest{
-			Token: &v1.PersonalAccessToken{
-				Id: uuid.New().String(),
-			},
+		token := &v1.PersonalAccessToken{
+			Id:   uuid.New().String(),
+			Name: "foo-bar",
+		}
+		mask, err := fieldmaskpb.New(token, "name")
+		require.NoError(t, err)
+
+		_, err = client.UpdatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.UpdatePersonalAccessTokenRequest{
+			Token:      token,
+			UpdateMask: mask,
 		}))
 
 		require.Error(t, err, "This feature is currently in beta. If you would like to be part of the beta, please contact us.")
@@ -544,18 +552,81 @@ func TestTokensService_UpdatePersonalAccessToken(t *testing.T) {
 		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
-	t.Run("unimplemented when feature flag enabled", func(t *testing.T) {
+	t.Run("default updates both name and scopes, when no mask specified", func(t *testing.T) {
 		serverMock, _, client := setupTokensService(t, withTokenFeatureEnabled)
+
+		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil).Times(2)
+
+		createResponse, err := client.CreatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.CreatePersonalAccessTokenRequest{
+			Token: &v1.PersonalAccessToken{
+				Name:           "first",
+				ExpirationTime: timestamppb.Now(),
+			},
+		}))
+		require.NoError(t, err)
+
+		updateResponse, err := client.UpdatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.UpdatePersonalAccessTokenRequest{
+			Token: &v1.PersonalAccessToken{
+				Id:     createResponse.Msg.GetToken().GetId(),
+				Name:   "second",
+				Scopes: []string{allFunctionsScope, defaultResourceScope},
+			},
+		}))
+		require.NoError(t, err)
+		require.Equal(t, "second", updateResponse.Msg.GetToken().GetName())
+		require.Equal(t, []string{allFunctionsScope, defaultResourceScope}, updateResponse.Msg.GetToken().GetScopes())
+	})
+
+	t.Run("updates only name, when mask specifies name", func(t *testing.T) {
+		serverMock, dbConn, client := setupTokensService(t, withTokenFeatureEnabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
-		_, err := client.UpdatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.UpdatePersonalAccessTokenRequest{
+		created := dbtest.CreatePersonalAccessTokenRecords(t, dbConn, dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{
+			Name:   "first",
+			UserID: uuid.MustParse(user.ID),
+			Scopes: db.Scopes{allFunctionsScope, defaultResourceScope},
+		}))[0]
+
+		updateResponse, err := client.UpdatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.UpdatePersonalAccessTokenRequest{
 			Token: &v1.PersonalAccessToken{
-				Id: uuid.New().String(),
+				Id:     created.ID.String(),
+				Name:   "second",
+				Scopes: []string{allFunctionsScope, defaultResourceScope},
+			},
+			UpdateMask: &fieldmaskpb.FieldMask{
+				Paths: []string{"name"},
 			},
 		}))
+		require.NoError(t, err)
+		require.Equal(t, "second", updateResponse.Msg.GetToken().GetName())
+		require.Equal(t, []string(created.Scopes), updateResponse.Msg.GetToken().GetScopes())
+	})
 
-		require.Equal(t, connect.CodeUnimplemented, connect.CodeOf(err))
+	t.Run("updates only scopes, when mask specifies scopes", func(t *testing.T) {
+		serverMock, dbConn, client := setupTokensService(t, withTokenFeatureEnabled)
+
+		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
+
+		created := dbtest.CreatePersonalAccessTokenRecords(t, dbConn, dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{
+			Name:   "first",
+			UserID: uuid.MustParse(user.ID),
+			Scopes: db.Scopes{allFunctionsScope, defaultResourceScope},
+		}))[0]
+
+		updateResponse, err := client.UpdatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.UpdatePersonalAccessTokenRequest{
+			Token: &v1.PersonalAccessToken{
+				Id:     created.ID.String(),
+				Name:   "second",
+				Scopes: []string{allFunctionsScope, defaultResourceScope},
+			},
+			UpdateMask: &fieldmaskpb.FieldMask{
+				Paths: []string{"scopes"},
+			},
+		}))
+		require.NoError(t, err)
+		require.Equal(t, "first", updateResponse.Msg.GetToken().GetName())
+		require.Equal(t, []string{allFunctionsScope, defaultResourceScope}, updateResponse.Msg.GetToken().GetScopes())
 	})
 }
 
