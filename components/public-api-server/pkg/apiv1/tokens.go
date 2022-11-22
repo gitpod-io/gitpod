@@ -12,6 +12,8 @@ import (
 	"sort"
 	"strings"
 
+	"google.golang.org/protobuf/proto"
+
 	connect "github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -23,6 +25,7 @@ import (
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 )
@@ -198,9 +201,29 @@ func (s *TokensService) RegeneratePersonalAccessToken(ctx context.Context, req *
 }
 
 func (s *TokensService) UpdatePersonalAccessToken(ctx context.Context, req *connect.Request[v1.UpdatePersonalAccessTokenRequest]) (*connect.Response[v1.UpdatePersonalAccessTokenResponse], error) {
-	tokenID, err := validateTokenID(req.Msg.GetToken().GetId())
+	const (
+		nameField   = "name"
+		scopesField = "scopes"
+	)
+	var (
+		updatableMask = fieldmaskpb.FieldMask{Paths: []string{nameField, scopesField}}
+	)
+
+	tokenReq := req.Msg.GetToken()
+
+	tokenID, err := validateTokenID(tokenReq.GetId())
 	if err != nil {
 		return nil, err
+	}
+
+	mask, err := validateFieldMask(req.Msg.GetUpdateMask(), tokenReq)
+	if err != nil {
+		return nil, err
+	}
+
+	// If no mask fields are specified, we treat the request as updating all updatable fields
+	if len(mask.GetPaths()) == 0 {
+		mask = &updatableMask
 	}
 
 	conn, err := getConnection(ctx, s.connectionPool)
@@ -208,13 +231,45 @@ func (s *TokensService) UpdatePersonalAccessToken(ctx context.Context, req *conn
 		return nil, err
 	}
 
-	_, _, err = s.getUser(ctx, conn)
+	_, userID, err := s.getUser(ctx, conn)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Infof("Handling UpdatePersonalAccessToken request for Token ID '%s'", tokenID.String())
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gitpod.experimental.v1.TokensService.UpdatePersonalAccessToken is not implemented"))
+	toUpdate := fieldmaskpb.Intersect(mask, &updatableMask)
+	updateOpts := db.UpdatePersonalAccessTokenOpts{
+		TokenID: tokenID,
+		UserID:  userID,
+	}
+
+	for _, path := range toUpdate.GetPaths() {
+		switch path {
+		case nameField:
+			name, err := validatePersonalAccessTokenName(tokenReq.GetName())
+			if err != nil {
+				return nil, err
+			}
+
+			updateOpts.Name = &name
+		case scopesField:
+			scopes, err := validateScopes(tokenReq.GetScopes())
+			if err != nil {
+				return nil, err
+			}
+			dbScopes := db.Scopes(scopes)
+			updateOpts.Scopes = &dbScopes
+		}
+	}
+
+	token, err := db.UpdatePersonalAccessTokenForUser(ctx, s.dbConn, updateOpts)
+	if err != nil {
+		log.WithError(err).Error("Failed to update PAT for user")
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to update token (ID %s) for user (ID %s).", tokenID.String(), userID.String()))
+	}
+
+	return connect.NewResponse(&v1.UpdatePersonalAccessTokenResponse{
+		Token: personalAccessTokenToAPI(token, ""),
+	}), nil
 }
 
 func (s *TokensService) DeletePersonalAccessToken(ctx context.Context, req *connect.Request[v1.DeletePersonalAccessTokenRequest]) (*connect.Response[v1.DeletePersonalAccessTokenResponse], error) {
@@ -373,4 +428,17 @@ func validateScopes(scopes []string) ([]string, error) {
 	}
 
 	return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Tokens can currently only have no scopes (empty), or all scopes represented as [%s, %s]", allFunctionsScope, defaultResourceScope))
+}
+
+func validateFieldMask(mask *fieldmaskpb.FieldMask, message proto.Message) (*fieldmaskpb.FieldMask, error) {
+	if mask == nil {
+		return &fieldmaskpb.FieldMask{}, nil
+	}
+
+	mask.Normalize()
+	if !mask.IsValid(message) {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("Invalid field mask specified."))
+	}
+
+	return mask, nil
 }

@@ -238,3 +238,71 @@ func TestListPersonalAccessTokensForUser_PaginateThroughResults(t *testing.T) {
 	require.Len(t, batch3.Results, 1)
 	require.EqualValues(t, batch3.Total, total)
 }
+
+func TestUpdatePersonalAccessTokenForUser(t *testing.T) {
+
+	newName := "second"
+	newScopes := db.Scopes([]string{})
+
+	t.Run("not found when record does not exist", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+
+		_, err := db.UpdatePersonalAccessTokenForUser(context.Background(), conn, db.UpdatePersonalAccessTokenOpts{
+			TokenID: uuid.New(),
+			UserID:  uuid.New(),
+			Name:    &newName,
+		})
+		require.Error(t, err)
+		require.ErrorIs(t, err, db.ErrorNotFound)
+	})
+
+	t.Run("no update when all options are nil", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+
+		created := dbtest.CreatePersonalAccessTokenRecords(t, conn, dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{
+			Name: "first",
+		}))[0]
+
+		udpated, err := db.UpdatePersonalAccessTokenForUser(context.Background(), conn, db.UpdatePersonalAccessTokenOpts{
+			TokenID: created.ID,
+			UserID:  created.UserID,
+		})
+		require.NoError(t, err)
+		require.Equal(t, created, udpated)
+	})
+
+	t.Run("updates name when it is not nil", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+
+		created := dbtest.CreatePersonalAccessTokenRecords(t, conn, dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{
+			Name: "first",
+		}))[0]
+
+		udpated, err := db.UpdatePersonalAccessTokenForUser(context.Background(), conn, db.UpdatePersonalAccessTokenOpts{
+			TokenID: created.ID,
+			UserID:  created.UserID,
+			Name:    &newName,
+		})
+		require.NoError(t, err)
+		require.Equal(t, newName, udpated.Name)
+		require.Equal(t, created.Scopes, udpated.Scopes)
+	})
+
+	t.Run("updates scopes when it is not nil", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+
+		created := dbtest.CreatePersonalAccessTokenRecords(t, conn, dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{
+			Name:   "first",
+			Scopes: db.Scopes([]string{"foo"}),
+		}))[0]
+
+		udpated, err := db.UpdatePersonalAccessTokenForUser(context.Background(), conn, db.UpdatePersonalAccessTokenOpts{
+			TokenID: created.ID,
+			UserID:  created.UserID,
+			Scopes:  &newScopes,
+		})
+		require.NoError(t, err)
+		require.Equal(t, created.Name, udpated.Name)
+		require.Len(t, udpated.Scopes, len(newScopes))
+	})
+}

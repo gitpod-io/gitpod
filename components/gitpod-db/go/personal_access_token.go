@@ -180,6 +180,56 @@ func ListPersonalAccessTokensForUser(ctx context.Context, conn *gorm.DB, userID 
 	}, nil
 }
 
+type UpdatePersonalAccessTokenOpts struct {
+	TokenID uuid.UUID
+	UserID  uuid.UUID
+	Name    *string
+	Scopes  *Scopes
+}
+
+func UpdatePersonalAccessTokenForUser(ctx context.Context, conn *gorm.DB, opts UpdatePersonalAccessTokenOpts) (PersonalAccessToken, error) {
+	if opts.TokenID == uuid.Nil {
+		return PersonalAccessToken{}, errors.New("Token ID is required to udpate personal access token for user")
+	}
+	if opts.UserID == uuid.Nil {
+		return PersonalAccessToken{}, errors.New("User ID is required to udpate personal access token for user")
+	}
+
+	var cols []string
+	update := PersonalAccessToken{}
+	if opts.Name != nil {
+		cols = append(cols, "name")
+		update.Name = *opts.Name
+	}
+
+	if opts.Scopes != nil {
+		cols = append(cols, "scopes")
+		update.Scopes = *opts.Scopes
+	}
+
+	if len(cols) == 0 {
+		return GetPersonalAccessTokenForUser(ctx, conn, opts.TokenID, opts.UserID)
+	}
+
+	tx := conn.
+		WithContext(ctx).
+		Table((&PersonalAccessToken{}).TableName()).
+		Where("id = ?", opts.TokenID).
+		Where("userId = ?", opts.UserID).
+		Where("deleted = ?", 0).
+		Select(cols).
+		Updates(update)
+	if tx.Error != nil {
+		return PersonalAccessToken{}, fmt.Errorf("failed to update personal access token: %w", tx.Error)
+	}
+
+	if tx.RowsAffected == 0 {
+		return PersonalAccessToken{}, fmt.Errorf("token (ID: %s) for user (ID: %s) does not exist: %w", opts.TokenID, opts.UserID, ErrorNotFound)
+	}
+
+	return GetPersonalAccessTokenForUser(ctx, conn, opts.TokenID, opts.UserID)
+}
+
 type Scopes []string
 
 // Scan() and Value() allow having a list of strings as a type for Scopes
