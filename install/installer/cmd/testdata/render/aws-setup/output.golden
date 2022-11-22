@@ -5164,6 +5164,10 @@ data:
               "minBytesAvail": 21474836480
             }
           ]
+        },
+        "workspaceController": {
+          "enabled": false,
+          "workingAreaSuffix": ""
         }
       },
       "service": {
@@ -5494,6 +5498,22 @@ rules:
   - delete
   - update
   - patch
+- apiGroups:
+  - workspace.gitpod.io
+  resources:
+  - workspaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - workspace.gitpod.io
+  resources:
+  - workspaces/status
+  verbs:
+  - get
+  - patch
+  - update
 ---
 # rbac.authorization.k8s.io/v1/ClusterRole ws-manager
 apiVersion: rbac.authorization.k8s.io/v1
@@ -7378,7 +7398,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 7c6a9adef1549c1cec440988670ae8f96809e39e3764e499121f1369afdb33bc
+        gitpod.io/checksum_config: 209ba718c2c8f6d1e16d72b299c6a545a3ceb91ab356c1e81d9d4acb732d19c4
         seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
       creationTimestamp: null
       labels:

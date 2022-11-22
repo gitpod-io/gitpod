@@ -145,3 +145,29 @@ func GetWorkspaceType(pod *corev1.Pod) string {
 	}
 	return val
 }
+
+// AddUniqueCondition adds a condition if it doesn't exist already
+func AddUniqueCondition(conds []metav1.Condition, cond metav1.Condition) []metav1.Condition {
+	if cond.Reason == "" {
+		cond.Reason = "unknown"
+	}
+
+	for i, c := range conds {
+		if c.Type == cond.Type {
+			conds[i] = cond
+			return conds
+		}
+	}
+
+	return append(conds, cond)
+}
+
+// GetCondition returns a condition from a list. If not present, it returns nil.
+func GetCondition(conds []metav1.Condition, tpe string) *metav1.Condition {
+	for _, c := range conds {
+		if c.Type == tpe {
+			return &c
+		}
+	}
+	return nil
+}

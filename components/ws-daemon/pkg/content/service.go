@@ -68,7 +68,7 @@ type WorkspaceService struct {
 type WorkspaceExistenceCheck func(instanceID string) bool
 
 // NewWorkspaceService creates a new workspce initialization service, starts housekeeping and the Prometheus integration
-func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace string, runtime container.Runtime, wec WorkspaceExistenceCheck, uidmapper *iws.Uidmapper, cgroupMountPoint string, reg prometheus.Registerer) (res *WorkspaceService, err error) {
+func NewWorkspaceService(ctx context.Context, cfg Config, runtime container.Runtime, wec WorkspaceExistenceCheck, uidmapper *iws.Uidmapper, cgroupMountPoint string, reg prometheus.Registerer) (res *WorkspaceService, err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "NewWorkspaceService")
 	defer tracing.FinishSpan(span, &err)
@@ -85,7 +85,7 @@ func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace st
 	}
 
 	// read all session json files
-	store, err := session.NewStore(ctx, cfg.WorkingArea, workspaceLifecycleHooks(cfg, kubernetesNamespace, wec, uidmapper, xfs, cgroupMountPoint))
+	store, err := session.NewStore(ctx, cfg.WorkingArea, WorkspaceLifecycleHooks(cfg, wec, uidmapper, xfs, cgroupMountPoint))
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create session store: %w", err)
 	}
@@ -239,7 +239,7 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 				return nil, status.Error(codes.Internal, "no presigned storage available")
 			}
 
-			remoteContent, err = collectRemoteContent(ctx, rs, ps, workspace.Owner, req.Initializer)
+			remoteContent, err = CollectRemoteContent(ctx, rs, ps, workspace.Owner, req.Initializer)
 			if err != nil && errors.Is(err, errCannotFindSnapshot) {
 				log.WithError(err).Error("cannot find snapshot")
 				return nil, status.Error(codes.NotFound, "cannot find snapshot")

@@ -10,18 +10,24 @@ import (
 	"os"
 	"time"
 
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cgroup"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/controller"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/diskguard"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
@@ -30,12 +36,27 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/netlimit"
 )
 
+var (
+	scheme = runtime.NewScheme()
+	// setupLog = ctrl.Log.WithName("setup")
+)
+
+func init() {
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(workspacev1.AddToScheme(scheme))
+}
+
 // NewDaemon produces a new daemon
 func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
-	clientset, err := newClientSet(config.Runtime.Kubeconfig)
+	restCfg, err := newClientConfig(config.Runtime.Kubeconfig)
 	if err != nil {
 		return nil, err
 	}
+	clientset, err := kubernetes.NewForConfig(restCfg)
+	if err != nil {
+		return nil, err
+	}
+
 	containerRuntime, err := container.FromConfig(config.Runtime.Container)
 	if err != nil {
 		return nil, err
@@ -130,6 +151,38 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		return nil
 	}))
 
+	mgr, err := ctrl.NewManager(restCfg, ctrl.Options{
+		Scheme:    scheme,
+		Port:      9443,
+		Namespace: config.Runtime.KubernetesNamespace,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if config.WorkspaceController.Enabled {
+		log.Info("enabling workspace CRD controller")
+
+		contentCfg := config.Content
+		contentCfg.WorkingArea += config.WorkspaceController.WorkingAreaSuffix
+		contentCfg.WorkingAreaNode += config.WorkspaceController.WorkingAreaSuffix
+
+		wsctrl, err := controller.NewWorkspaceController(mgr.GetClient(), controller.WorkspaceControllerOpts{
+			NodeName:         nodename,
+			ContentConfig:    contentCfg,
+			UIDMapperConfig:  config.Uidmapper,
+			ContainerRuntime: containerRuntime,
+			CGroupMountPoint: config.CPULimit.CGroupBasePath,
+		})
+		if err != nil {
+			return nil, err
+		}
+		err = wsctrl.SetupWithManager(mgr)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename, listener...)
 	if err != nil {
 		return nil, err
@@ -138,7 +191,6 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	contentService, err := content.NewWorkspaceService(
 		context.Background(),
 		config.Content,
-		config.Runtime.KubernetesNamespace,
 		containerRuntime,
 		dsptch.WorkspaceExistsOnNode,
 		&iws.Uidmapper{Config: config.Uidmapper, Runtime: containerRuntime},
@@ -164,29 +216,16 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		diskGuards:     dsk,
 		hosts:          hsts,
 		configReloader: configReloader,
+		mgr:            mgr,
 	}, nil
 }
 
-func newClientSet(kubeconfig string) (res *kubernetes.Clientset, err error) {
-	defer func() {
-		if err != nil {
-			err = xerrors.Errorf("cannot create clientset: %w", err)
-		}
-	}()
-
+func newClientConfig(kubeconfig string) (*rest.Config, error) {
 	if kubeconfig != "" {
-		res, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-		if err != nil {
-			return nil, err
-		}
-		return kubernetes.NewForConfig(res)
+		return clientcmd.BuildConfigFromFlags("", kubeconfig)
 	}
 
-	k8s, err := rest.InClusterConfig()
-	if err != nil {
-		return nil, err
-	}
-	return kubernetes.NewForConfig(k8s)
+	return rest.InClusterConfig()
 }
 
 // Daemon connects all the individual bits and bobs that make up the workspace daemon
@@ -198,6 +237,9 @@ type Daemon struct {
 	diskGuards     []*diskguard.Guard
 	hosts          hosts.Controller
 	configReloader ConfigReloader
+	mgr            ctrl.Manager
+
+	cancel context.CancelFunc
 }
 
 func (d *Daemon) ReloadConfig(ctx context.Context, cfg *Config) error {
@@ -218,6 +260,15 @@ func (d *Daemon) Start() error {
 
 	go d.hosts.Start()
 
+	var ctx context.Context
+	ctx, d.cancel = context.WithCancel(context.Background())
+	go func() {
+		err := d.mgr.Start(ctx)
+		if err != nil {
+			log.WithError(err).Fatal("cannot start controller")
+		}
+	}()
+
 	return nil
 }
 
@@ -229,6 +280,8 @@ func (d *Daemon) Register(srv *grpc.Server) {
 // Stop gracefully shuts down the daemon. Once stopped, it
 // cannot be started again.
 func (d *Daemon) Stop() error {
+	d.cancel()
+
 	var errs []error
 	errs = append(errs, d.dispatch.Close())
 	errs = append(errs, d.content.Close())
