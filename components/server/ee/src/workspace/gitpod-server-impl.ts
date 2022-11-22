@@ -71,8 +71,9 @@ import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositor
 import { EligibilityService } from "../user/eligibility-service";
 import { AccountStatementProvider } from "../user/account-statement-provider";
 import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/payment-protocol";
-import { ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
+import { CostCenterJSON, ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
 import {
+    CostCenter,
     CostCenter_BillingStrategy,
     ListUsageRequest_Ordering,
     UsageServiceClient,
@@ -122,7 +123,6 @@ import {
 } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 import { IncrementalPrebuildsService } from "../prebuilds/incremental-prebuilds-service";
 import { ConfigProvider } from "../../../src/workspace/config-provider";
-import { CostCenterJSON } from "@gitpod/gitpod-protocol/src/usage";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -2282,6 +2282,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         await this.guardCostCenterAccess(ctx, user.id, attrId, "get");
 
         const { costCenter } = await this.usageService.getCostCenter({ attributionId });
+        return this.translateCostCenter(costCenter);
+    }
+
+    private translateCostCenter(costCenter?: CostCenter): CostCenterJSON | undefined {
         return costCenter
             ? {
                   ...costCenter,
@@ -2302,7 +2306,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         if (typeof usageLimit !== "number" || usageLimit < 0) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, `Unexpected usageLimit value: ${usageLimit}`);
         }
-
         const user = this.checkAndBlockUser("setUsageLimit");
         await this.guardCostCenterAccess(ctx, user.id, attrId, "update");
 
@@ -2377,6 +2380,31 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async listUsage(ctx: TraceContext, req: ListUsageRequest): Promise<ListUsageResponse> {
+        const attributionId = AttributionId.parse(req.attributionId);
+        if (!attributionId) {
+            throw new ResponseError(ErrorCodes.INVALID_COST_CENTER, "Bad attribution ID", {
+                attributionId: req.attributionId,
+            });
+        }
+        const user = this.checkAndBlockUser("listUsage");
+        await this.guardCostCenterAccess(ctx, user.id, attributionId, "get");
+        return this.internalListUsage(ctx, req);
+    }
+
+    async getUsageBalance(ctx: TraceContext, attributionId: string): Promise<number> {
+        const user = this.checkAndBlockUser("listUsage");
+        const parsedAttributionId = AttributionId.parse(attributionId);
+        if (!parsedAttributionId) {
+            throw new ResponseError(ErrorCodes.INVALID_COST_CENTER, "Bad attribution ID", {
+                attributionId,
+            });
+        }
+        await this.guardCostCenterAccess(ctx, user.id, parsedAttributionId, "get");
+        const result = await this.usageService.getBalance({ attributionId });
+        return result.credits;
+    }
+
+    private async internalListUsage(ctx: TraceContext, req: ListUsageRequest): Promise<ListUsageResponse> {
         const { from, to } = req;
         const attributionId = AttributionId.parse(req.attributionId);
         if (!attributionId) {
@@ -2385,9 +2413,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             });
         }
         traceAPIParams(ctx, { attributionId });
-        const user = this.checkAndBlockUser("listUsage");
-        await this.guardCostCenterAccess(ctx, user.id, attributionId, "get");
-
         const response = await this.usageService.listUsage({
             attributionId: AttributionId.render(attributionId),
             from: from ? new Date(from) : undefined,
@@ -2744,5 +2769,85 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             ),
         );
         return project;
+    }
+
+    async adminGetCostCenter(ctx: TraceContext, attributionId: string): Promise<CostCenterJSON | undefined> {
+        const attrId = AttributionId.parse(attributionId);
+        if (attrId === undefined) {
+            log.error(`Invalid attribution id: ${attributionId}`);
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+        }
+
+        const user = this.checkAndBlockUser("adminGetCostCenter");
+        await this.guardAdminAccess("adminGetCostCenter", { id: user.id }, Permission.ADMIN_USERS);
+
+        const { costCenter } = await this.usageService.getCostCenter({ attributionId });
+        return this.translateCostCenter(costCenter);
+    }
+
+    async adminSetUsageLimit(ctx: TraceContext, attributionId: string, usageLimit: number): Promise<void> {
+        const attrId = AttributionId.parse(attributionId);
+        if (attrId === undefined) {
+            log.error(`Invalid attribution id: ${attributionId}`);
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+        }
+        if (typeof usageLimit !== "number" || usageLimit < 0) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Unexpected usageLimit value: ${usageLimit}`);
+        }
+        const user = this.checkAndBlockUser("adminSetUsageLimit");
+        await this.guardAdminAccess("adminSetUsageLimit", { id: user.id }, Permission.ADMIN_USERS);
+
+        const response = await this.usageService.getCostCenter({ attributionId });
+
+        // backward compatibility for cost centers that were created before introduction of BillingStrategy
+        if (!response.costCenter) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, `Coudln't find cost center with id ${attributionId}`);
+        }
+        const stripeSubscriptionId = await this.findStripeSubscriptionId(ctx, attributionId);
+        if (stripeSubscriptionId != undefined) {
+            response.costCenter.billingStrategy = CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
+        }
+
+        await this.usageService.setCostCenter({
+            costCenter: {
+                attributionId,
+                spendingLimit: usageLimit,
+                billingStrategy: response.costCenter.billingStrategy,
+            },
+        });
+
+        this.messageBus.notifyOnSubscriptionUpdate(ctx, attrId).catch((e) => log.error(e));
+    }
+
+    async adminListUsage(ctx: TraceContext, req: ListUsageRequest): Promise<ListUsageResponse> {
+        traceAPIParams(ctx, { req });
+        const user = this.checkAndBlockUser("adminListUsage");
+        await this.guardAdminAccess("adminListUsage", { id: user.id }, Permission.ADMIN_USERS);
+        return this.internalListUsage(ctx, req);
+    }
+
+    async adminGetUsageBalance(ctx: TraceContext, attributionId: string): Promise<number> {
+        traceAPIParams(ctx, { attributionId });
+        const user = this.checkAndBlockUser("adminGetUsageBalance");
+        await this.guardAdminAccess("adminGetUsageBalance", { id: user.id }, Permission.ADMIN_USERS);
+        const result = await this.usageService.getBalance({ attributionId });
+        return result.credits;
+    }
+
+    async adminAddUsageCreditNote(
+        ctx: TraceContext,
+        attributionId: string,
+        credits: number,
+        description: string,
+    ): Promise<void> {
+        traceAPIParams(ctx, { attributionId, credits, note: description });
+        const user = this.checkAndBlockUser("adminAddUsageCreditNote");
+        await this.guardAdminAccess("adminAddUsageCreditNote", { id: user.id }, Permission.ADMIN_USERS);
+        await this.usageService.addUsageCreditNote({
+            attributionId,
+            credits,
+            description,
+            userId: user.id,
+        });
     }
 }

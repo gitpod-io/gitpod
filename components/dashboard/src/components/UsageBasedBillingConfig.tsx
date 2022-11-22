@@ -10,7 +10,6 @@ import { Link } from "react-router-dom";
 import { Appearance, loadStripe, Stripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { Ordering } from "@gitpod/gitpod-protocol/lib/usage";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { ReactComponent as Check } from "../images/check-circle.svg";
 import { ThemeContext } from "../theme-context";
@@ -37,8 +36,8 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
     const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | undefined>();
     const [isLoadingStripeSubscription, setIsLoadingStripeSubscription] = useState<boolean>(true);
-    const [currentUsage, setCurrentUsage] = useState<number | undefined>();
-    const [usageLimit, setUsageLimit] = useState<number | undefined>();
+    const [currentUsage, setCurrentUsage] = useState<number>(0);
+    const [usageLimit, setUsageLimit] = useState<number>(0);
     const [stripePortalUrl, setStripePortalUrl] = useState<string | undefined>();
     const [pollStripeSubscriptionTimeout, setPollStripeSubscriptionTimeout] = useState<NodeJS.Timeout | undefined>();
     const [pendingStripeSubscription, setPendingStripeSubscription] = useState<PendingStripeSubscription | undefined>();
@@ -55,7 +54,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
         try {
             getGitpodService().server.findStripeSubscriptionId(attributionId).then(setStripeSubscriptionId);
             const costCenter = await getGitpodService().server.getCostCenter(attributionId);
-            setUsageLimit(costCenter?.spendingLimit);
+            setUsageLimit(costCenter?.spendingLimit || 0);
             setBillingCycleFrom(dayjs(costCenter?.billingCycleStart || now.startOf("month")).utc(true));
             setBillingCycleTo(dayjs(costCenter?.nextBillingTime || now.endOf("month")).utc(true));
         } catch (error) {
@@ -175,15 +174,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
         if (!attributionId) {
             return;
         }
-        (async () => {
-            const response = await getGitpodService().server.listUsage({
-                attributionId,
-                order: Ordering.ORDERING_DESCENDING,
-                from: billingCycleFrom.toDate().getTime(),
-                to: Date.now(),
-            });
-            setCurrentUsage(response.creditsUsed);
-        })();
+        getGitpodService().server.getUsageBalance(attributionId).then(setCurrentUsage);
     }, [attributionId, billingCycleFrom]);
 
     const showSpinner = !attributionId || isLoadingStripeSubscription || !!pendingStripeSubscription;
@@ -208,6 +199,10 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
         }
     };
 
+    const used = currentUsage >= 0 ? currentUsage : 0;
+    const totalAvailable = usageLimit + (currentUsage < 0 ? currentUsage * -1 : 0);
+    const percentage = Math.min(Math.max(Math.round((100 * used) / totalAvailable), 0), 100);
+
     return (
         <div className="mb-16">
             <h2 className="text-gray-500">Manage usage-based billing, usage limit, and payment method.</h2>
@@ -227,13 +222,8 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                     <div className="flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
                         <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Balance Used</div>
                         <div className="mt-1 text-xl font-semibold flex-grow">
-                            <span className="text-gray-900 dark:text-gray-100">
-                                {typeof currentUsage === "number" ? Math.round(currentUsage) : "?"}
-                            </span>
-                            <span className="text-gray-400 dark:text-gray-500">
-                                {" "}
-                                / {usageLimit} Credit{usageLimit === 1 ? "" : "s"}
-                            </span>
+                            <span className="text-gray-900 dark:text-gray-100">{used}</span>
+                            <span className="text-gray-400 dark:text-gray-500"> / {totalAvailable} Credits</span>
                         </div>
                         <div className="mt-4 text-sm flex">
                             <span className="flex-grow">
@@ -244,9 +234,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                 )}
                             </span>
                             {typeof currentUsage === "number" && typeof usageLimit === "number" && usageLimit > 0 && (
-                                <span className="text-gray-400 dark:text-gray-500">
-                                    {Math.round((100 * currentUsage) / usageLimit)}% used
-                                </span>
+                                <span className="text-gray-400 dark:text-gray-500">{percentage}% used</span>
                             )}
                         </div>
                         <div className="mt-2 flex">

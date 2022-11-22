@@ -251,8 +251,11 @@ export interface ResetUsageResponse {
 
 export interface AddUsageCreditNoteRequest {
   attributionId: string;
+  /** the amount of credits to add to the given account */
   credits: number;
-  note: string;
+  /** a human readable description for the reason this credit note exists */
+  description: string;
+  /** the id of the user (admin) who created the note */
   userId: string;
 }
 
@@ -1255,7 +1258,7 @@ export const ResetUsageResponse = {
 };
 
 function createBaseAddUsageCreditNoteRequest(): AddUsageCreditNoteRequest {
-  return { attributionId: "", credits: 0, note: "", userId: "" };
+  return { attributionId: "", credits: 0, description: "", userId: "" };
 }
 
 export const AddUsageCreditNoteRequest = {
@@ -1266,8 +1269,8 @@ export const AddUsageCreditNoteRequest = {
     if (message.credits !== 0) {
       writer.uint32(16).int32(message.credits);
     }
-    if (message.note !== "") {
-      writer.uint32(26).string(message.note);
+    if (message.description !== "") {
+      writer.uint32(26).string(message.description);
     }
     if (message.userId !== "") {
       writer.uint32(34).string(message.userId);
@@ -1289,7 +1292,7 @@ export const AddUsageCreditNoteRequest = {
           message.credits = reader.int32();
           break;
         case 3:
-          message.note = reader.string();
+          message.description = reader.string();
           break;
         case 4:
           message.userId = reader.string();
@@ -1306,7 +1309,7 @@ export const AddUsageCreditNoteRequest = {
     return {
       attributionId: isSet(object.attributionId) ? String(object.attributionId) : "",
       credits: isSet(object.credits) ? Number(object.credits) : 0,
-      note: isSet(object.note) ? String(object.note) : "",
+      description: isSet(object.description) ? String(object.description) : "",
       userId: isSet(object.userId) ? String(object.userId) : "",
     };
   },
@@ -1315,7 +1318,7 @@ export const AddUsageCreditNoteRequest = {
     const obj: any = {};
     message.attributionId !== undefined && (obj.attributionId = message.attributionId);
     message.credits !== undefined && (obj.credits = Math.round(message.credits));
-    message.note !== undefined && (obj.note = message.note);
+    message.description !== undefined && (obj.description = message.description);
     message.userId !== undefined && (obj.userId = message.userId);
     return obj;
   },
@@ -1324,7 +1327,7 @@ export const AddUsageCreditNoteRequest = {
     const message = createBaseAddUsageCreditNoteRequest();
     message.attributionId = object.attributionId ?? "";
     message.credits = object.credits ?? 0;
-    message.note = object.note ?? "";
+    message.description = object.description ?? "";
     message.userId = object.userId ?? "";
     return message;
   },

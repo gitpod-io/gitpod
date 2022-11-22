@@ -26,12 +26,19 @@ import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import CaretDown from "../icons/CaretDown.svg";
 import ContextMenu from "../components/ContextMenu";
+import { CostCenterJSON, CostCenter_BillingStrategy } from "@gitpod/gitpod-protocol/lib/usage";
 
 export default function UserDetail(p: { user: User }) {
     const [activity, setActivity] = useState(false);
     const [user, setUser] = useState(p.user);
     const [billingMode, setBillingMode] = useState<BillingMode | undefined>(undefined);
     const [accountStatement, setAccountStatement] = useState<AccountStatement>();
+    const [costCenter, setCostCenter] = useState<CostCenterJSON>();
+    const [usageBalance, setUsageBalance] = useState<number>(0);
+    const [usageLimit, setUsageLimit] = useState<number>();
+    const [editSpendingLimit, setEditSpendingLimit] = useState<boolean>(false);
+    const [creditNote, setCreditNote] = useState<{ credits: number; note?: string }>({ credits: 0 });
+    const [editAddCreditNote, setEditAddCreditNote] = useState<boolean>(false);
     const [isStudent, setIsStudent] = useState<boolean>();
     const [editFeatureFlags, setEditFeatureFlags] = useState(false);
     const [editRoles, setEditRoles] = useState(false);
@@ -40,21 +47,28 @@ export default function UserDetail(p: { user: User }) {
     const isProfessionalOpenSource =
         accountStatement && accountStatement.subscriptions.some((s) => s.planId === Plans.FREE_OPEN_SOURCE.chargebeeId);
 
-    useEffect(() => {
-        setUser(p.user);
+    const initialize = () => {
+        setUser(user);
         getGitpodService()
-            .server.adminGetAccountStatement(p.user.id)
-            .then((as) => setAccountStatement(as))
+            .server.adminGetAccountStatement(user.id)
+            .then(setAccountStatement)
             .catch((e) => {
                 console.error(e);
             });
-        getGitpodService()
-            .server.adminIsStudent(p.user.id)
-            .then((isStud) => setIsStudent(isStud));
-        getGitpodService()
-            .server.adminGetBillingMode(AttributionId.render({ kind: "user", userId: p.user.id }))
-            .then((bm) => setBillingMode(bm));
-    }, [p.user]);
+        getGitpodService().server.adminIsStudent(user.id).then(setIsStudent);
+        const attributionId = AttributionId.render(AttributionId.create(user));
+        getGitpodService().server.adminGetBillingMode(attributionId).then(setBillingMode);
+        getGitpodService().server.adminGetCostCenter(attributionId).then(setCostCenter);
+        getGitpodService().server.adminGetUsageBalance(attributionId).then(setUsageBalance);
+    };
+    useEffect(initialize, [user]);
+
+    useEffect(() => {
+        if (!costCenter) {
+            return;
+        }
+        setUsageLimit(costCenter.spendingLimit);
+    }, [costCenter, user]);
 
     const email = User.getPrimaryEmail(p.user);
     const emailDomain = email ? email.split("@")[email.split("@").length - 1] : undefined;
@@ -208,7 +222,47 @@ export default function UserDetail(p: { user: User }) {
                 );
                 break;
             case "usage-based":
-                // TODO(gpl) Add info about Stripe plan, etc.
+                properties.push(
+                    <Property name="Stripe Subscription" actions={[]}>
+                        <span>
+                            {costCenter?.billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE
+                                ? "Active"
+                                : "Inactive"}
+                        </span>
+                    </Property>,
+                );
+                properties.push(
+                    <Property name="Current Cycle" actions={[]}>
+                        <span>
+                            {dayjs(costCenter?.billingCycleStart).format("MMM D")} -{" "}
+                            {dayjs(costCenter?.nextBillingTime).format("MMM D")}
+                        </span>
+                    </Property>,
+                );
+                properties.push(
+                    <Property
+                        name="Available Credits"
+                        actions={[
+                            {
+                                label: "Add Credits",
+                                onClick: () => setEditAddCreditNote(true),
+                            },
+                        ]}
+                    >
+                        <span>{usageBalance * -1 + (costCenter?.spendingLimit || 0)} Credits</span>
+                    </Property>,
+                    <Property
+                        name="Usage Limit"
+                        actions={[
+                            {
+                                label: "Change Usage Limit",
+                                onClick: () => setEditSpendingLimit(true),
+                            },
+                        ]}
+                    >
+                        <span>{costCenter?.spendingLimit} Credits</span>
+                    </Property>,
+                );
                 break;
             default:
                 break;
@@ -290,8 +344,91 @@ export default function UserDetail(p: { user: User }) {
                         {renderUserBillingProperties()}
                     </div>
                 </div>
+
                 <WorkspaceSearch user={user} />
             </PageWithAdminSubMenu>
+            <Modal
+                visible={editSpendingLimit}
+                onClose={() => setEditSpendingLimit(false)}
+                title="Change Usage Limit"
+                onEnter={() => false}
+                buttons={[
+                    <button
+                        disabled={usageLimit === costCenter?.spendingLimit}
+                        onClick={async () => {
+                            if (usageLimit !== undefined) {
+                                await getGitpodService().server.adminSetUsageLimit(
+                                    AttributionId.render(AttributionId.create(user)),
+                                    usageLimit || 0,
+                                );
+                                setUsageLimit(undefined);
+                                initialize();
+                                setEditSpendingLimit(false);
+                            }
+                        }}
+                    >
+                        Change
+                    </button>,
+                ]}
+            >
+                <p className="pb-4 text-gray-500 text-base">Change the usage limit in credits per month.</p>
+                <label>Credits</label>
+                <div className="flex flex-col">
+                    <input
+                        type="number"
+                        min={Math.max(usageBalance, 0)}
+                        max={500000}
+                        title="Change Usage Limit"
+                        value={usageLimit}
+                        onChange={(event) => setUsageLimit(Number.parseInt(event.target.value))}
+                    />
+                </div>
+            </Modal>
+            <Modal
+                onEnter={() => false}
+                visible={editAddCreditNote}
+                onClose={() => setEditAddCreditNote(false)}
+                title="Add Credits"
+                buttons={[
+                    <button
+                        disabled={creditNote.credits === 0 || !creditNote.note}
+                        onClick={async () => {
+                            if (creditNote.credits !== 0 && !!creditNote.note) {
+                                await getGitpodService().server.adminAddUsageCreditNote(
+                                    AttributionId.render(AttributionId.create(user)),
+                                    creditNote.credits,
+                                    creditNote.note,
+                                );
+                                setEditAddCreditNote(false);
+                                setCreditNote({ credits: 0 });
+                                initialize();
+                            }
+                        }}
+                    >
+                        Add Credits
+                    </button>,
+                ]}
+            >
+                <p>Adds or subtracts the amount of credits from this account.</p>
+                <div className="flex flex-col">
+                    <label className="mt-4">Credits</label>
+                    <input
+                        type="number"
+                        min={-50000}
+                        max={50000}
+                        title="Credits"
+                        value={creditNote.credits}
+                        onChange={(event) =>
+                            setCreditNote({ credits: Number.parseInt(event.target.value), note: creditNote.note })
+                        }
+                    />
+                    <label className="mt-4">Note</label>
+                    <textarea
+                        title="Note"
+                        onChange={(event) => setCreditNote({ credits: creditNote.credits, note: event.target.value })}
+                    />
+                </div>
+            </Modal>
             <Modal
                 visible={editFeatureFlags}
                 onClose={() => setEditFeatureFlags(false)}
@@ -341,7 +478,7 @@ function renderBillingModeProperty(billingMode?: BillingMode): JSX.Element {
         }
     }
     return (
-        <Property name="BillingMode">
+        <Property name="Billing Mode">
             <>
                 {text}
                 {blockingTeamNames.length > 0 && (

@@ -13,6 +13,7 @@ import { RoleOrPermission } from "./permission";
 import { AccountStatement } from "./accounting-protocol";
 import { InstallationAdminSettings } from "./installation-admin-protocol";
 import { BillingMode } from "./billing-mode";
+import { CostCenterJSON, ListUsageRequest, ListUsageResponse } from "./usage";
 
 export interface AdminServer {
     adminGetUsers(req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>>;
@@ -54,6 +55,13 @@ export interface AdminServer {
 
     adminGetSettings(): Promise<InstallationAdminSettings>;
     adminUpdateSettings(settings: InstallationAdminSettings): Promise<void>;
+
+    adminGetCostCenter(attributionId: string): Promise<CostCenterJSON | undefined>;
+    adminSetUsageLimit(attributionId: string, usageLimit: number): Promise<void>;
+
+    adminListUsage(req: ListUsageRequest): Promise<ListUsageResponse>;
+    adminAddUsageCreditNote(attributionId: string, credits: number, note: string): Promise<void>;
+    adminGetUsageBalance(attributionId: string): Promise<number>;
 }
 
 export interface AdminGetListRequest<T> {

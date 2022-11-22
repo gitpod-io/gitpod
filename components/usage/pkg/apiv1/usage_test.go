@@ -349,9 +349,9 @@ func TestAddUSageCreditNote(t *testing.T) {
 	usageService := newUsageService(t, conn)
 
 	tests := []struct {
-		credits int32
-		userId  string
-		note    string
+		credits     int32
+		userId      string
+		description string
 		// expectations
 		expectedError bool
 	}{
@@ -366,7 +366,7 @@ func TestAddUSageCreditNote(t *testing.T) {
 			_, err := usageService.AddUsageCreditNote(context.Background(), &v1.AddUsageCreditNoteRequest{
 				AttributionId: string(attributionID),
 				Credits:       test.credits,
-				Note:          test.note,
+				Description:   test.description,
 				UserId:        test.userId,
 			})
 			if test.expectedError {

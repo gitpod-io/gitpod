@@ -129,6 +129,7 @@ const defaultFunctions: FunctionsConfig = {
     waitForSnapshot: { group: "default", points: 1 },
     getSnapshots: { group: "default", points: 1 },
     guessGitTokenScopes: { group: "default", points: 1 },
+    getUsageBalance: { group: "default", points: 1 },
 
     adminGetUsers: { group: "default", points: 1 },
     adminGetUser: { group: "default", points: 1 },
@@ -157,6 +158,11 @@ const defaultFunctions: FunctionsConfig = {
     adminCreateBlockedRepository: { group: "default", points: 1 },
     adminDeleteBlockedRepository: { group: "default", points: 1 },
     adminGetBillingMode: { group: "default", points: 1 },
+    adminGetCostCenter: { group: "default", points: 1 },
+    adminSetUsageLimit: { group: "default", points: 1 },
+    adminListUsage: { group: "default", points: 1 },
+    adminAddUsageCreditNote: { group: "default", points: 1 },
+    adminGetUsageBalance: { group: "default", points: 1 },
 
     validateLicense: { group: "default", points: 1 },
     getLicenseInfo: { group: "default", points: 1 },

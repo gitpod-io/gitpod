@@ -143,8 +143,8 @@ message AddUsageCreditNoteRequest {
     string attribution_id = 1;
     // the amount of credits to add to the given account
     int32 credits = 2;
-    // a human readable note for the reason this credit note exists
-    string note = 3;
+    // a human readable description for the reason this credit note exists
+    string description = 3;
     // the id of the user (admin) who created the note
     string user_id = 4;
 }
