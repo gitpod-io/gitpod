@@ -7,6 +7,53 @@ packages:
     config:
       commands:
         - ["echo", "done"]
+
+  #
+  # The following ephemeral packages are used to control parallelism
+  #
+
+  - name: parallel-create-and-build
+    type: generic
+    ephemeral: true
+    deps:
+    - :create-preview
+    - :build
+
+  - name: parallel-deploy-all
+    type: generic
+    ephemeral: true
+    deps:
+    - :deploy-gitpod
+    - :deploy-monitoring-satellite
+
+  - name: "create-preview"
+    type: "generic"
+    ephemeral: true
+    config:
+      commands:
+        - ["leeway", "run", "dev/preview:create-preview"]
+
+  - name: "build"
+    type: "generic"
+    ephemeral: true
+    config:
+      commands:
+        - ["leeway", "run", "dev/preview:build"]
+
+  - name: "deploy-gitpod"
+    type: "generic"
+    ephemeral: true
+    config:
+      commands:
+        - ["leeway", "run", "dev/preview:deploy-gitpod"]
+
+  - name: "deploy-monitoring-satellite"
+    type: "generic"
+    ephemeral: true
+    config:
+      commands:
+        - ["leeway", "run", "dev/preview:deploy-monitoring-satellite"]
+
 scripts:
   - name: build
     description: Build all packages needed to deploy Gitpod to preview environments

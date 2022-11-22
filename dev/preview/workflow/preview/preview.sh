@@ -27,7 +27,6 @@ fi
 
 ensure_gcloud_auth
 
-leeway run dev/preview:create-preview
-leeway run dev/preview:build
+leeway build dev/preview:parallel-create-and-build
 previewctl install-context
-leeway run dev/preview:deploy-gitpod
+leeway build dev/preview:parallel-deploy-all
