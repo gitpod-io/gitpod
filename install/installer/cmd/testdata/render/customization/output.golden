@@ -5150,6 +5150,29 @@ data:
               240,
               600
             ]
+          },
+          {
+            "name": "supervisor_ide_ready_duration_total",
+            "help": "the IDE startup time",
+            "labels": [
+              {
+                "name": "kind",
+                "allowValues": [
+                  "web",
+                  "desktop"
+                ],
+                "defaultValue": ""
+              }
+            ],
+            "buckets": [
+              0.1,
+              0.5,
+              1,
+              5,
+              10,
+              30,
+              60
+            ]
           }
         ],
         "errorReporting": {
@@ -9622,7 +9645,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: 74ecbbd8492d8fefde88122798e66f4d886da1cc357b33e62d71b3d80dcc2234
+        gitpod.io/checksum_config: a86be094967f68c2cb830ffe532cbaa418d55ecf09d62c71cd4adbfb1fb01367
         hello: world
       creationTimestamp: null
       labels:

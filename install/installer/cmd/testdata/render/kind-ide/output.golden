@@ -2239,6 +2239,29 @@ data:
               240,
               600
             ]
+          },
+          {
+            "name": "supervisor_ide_ready_duration_total",
+            "help": "the IDE startup time",
+            "labels": [
+              {
+                "name": "kind",
+                "allowValues": [
+                  "web",
+                  "desktop"
+                ],
+                "defaultValue": ""
+              }
+            ],
+            "buckets": [
+              0.1,
+              0.5,
+              1,
+              5,
+              10,
+              30,
+              60
+            ]
           }
         ],
         "errorReporting": {
@@ -3252,7 +3275,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: a15b2b182f09debb86b167e728add4f9d341bc9706bc4e330e1d4a5c9d4deee9
+        gitpod.io/checksum_config: ee8bacd56cf031371f35cc00beaddb6698b9a59e06a3ba85700a6357cf19b568
       creationTimestamp: null
       labels:
         app: gitpod
