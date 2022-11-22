@@ -35,7 +35,7 @@ func podsecuritypolicies(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 				Spec: v1beta1.PodSecurityPolicySpec{
 					Privileged:               false,
-					AllowPrivilegeEscalation: pointer.Bool(true),
+					AllowPrivilegeEscalation: pointer.Bool(false),
 					AllowedCapabilities:      []corev1.Capability{"AUDIT_WRITE", "FSETID", "KILL", "NET_BIND_SERVICE", "SYS_PTRACE"},
 					Volumes:                  []v1beta1.FSType{v1beta1.ConfigMap, v1beta1.Projected, v1beta1.Secret, v1beta1.HostPath},
 					HostNetwork:              false,
