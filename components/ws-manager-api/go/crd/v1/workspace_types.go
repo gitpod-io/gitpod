@@ -71,7 +71,7 @@ type WorkspaceImage struct {
 
 type IDEImages struct {
 	Web        string   `json:"web"`
-	Refs       []string `json:"refs"`
+	Refs       []string `json:"refs,omitempty"`
 	Supervisor string   `json:"supervisor"`
 }
 
@@ -130,7 +130,7 @@ type WorkspaceStatus struct {
 	Runtime *WorkspaceRuntimeStatus `json:"runtime,omitempty"`
 }
 
-// +kubebuilder:validation:Enum=Deployed;Failed;Timeout;UserActivity;HeadlessTaskFailed;StoppedByRequest;EverReady;BackupComplete;BackupFailure
+// +kubebuilder:validation:Enum=Deployed;Failed;Timeout;UserActivity;HeadlessTaskFailed;StoppedByRequest;EverReady;ContentReady;BackupComplete;BackupFailure
 type WorkspaceCondition string
 
 const (
@@ -155,6 +155,9 @@ const (
 
 	// EverReady becomes true if the workspace was ever ready to be used
 	WorkspaceConditionEverReady WorkspaceCondition = "EverReady"
+
+	// ContentReady is true once the content initialisation is complete
+	WorkspaceConditionContentReady WorkspaceCondition = "ContentReady"
 
 	// BackupComplete is true once the backup has happened
 	WorkspaceConditionBackupComplete WorkspaceCondition = "BackupComplete"
