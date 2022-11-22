@@ -40,16 +40,18 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 			},
 			LookForFile: []string{"init-ran", "before-ran", "command-ran"},
 		},
-		{
-			Name: "pvc",
-			Task: []gitpod.TasksItems{
-				{Init: fmt.Sprintf("touch %s/init-ran; exit", wsLoc)},
-				{Before: fmt.Sprintf("touch %s/before-ran; exit", wsLoc)},
-				{Command: fmt.Sprintf("touch %s/command-ran; exit", wsLoc)},
+		/*
+			{
+				Name: "pvc",
+				Task: []gitpod.TasksItems{
+					{Init: fmt.Sprintf("touch %s/init-ran; exit", wsLoc)},
+					{Before: fmt.Sprintf("touch %s/before-ran; exit", wsLoc)},
+					{Command: fmt.Sprintf("touch %s/command-ran; exit", wsLoc)},
+				},
+				LookForFile: []string{"init-ran", "before-ran", "command-ran"},
+				FF:          []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM},
 			},
-			LookForFile: []string{"init-ran", "before-ran", "command-ran"},
-			FF:          []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM},
-		},
+		*/
 	}
 
 	f := features.New("ws-manager").

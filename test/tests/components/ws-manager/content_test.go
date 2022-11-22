@@ -39,20 +39,22 @@ func TestBackup(t *testing.T) {
 					WorkspaceRoot:    "/workspace/empty",
 					CheckoutLocation: "empty",
 				},
-				{
-					Name:             "pvc",
-					ContextURL:       "https://github.com/gitpod-io/empty",
-					WorkspaceRoot:    "/workspace/empty",
-					CheckoutLocation: "empty",
-					FF:               []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM},
-				},
-				{
-					Name:             "pvc-non-gitpodified",
-					ContextURL:       "https://github.com/gitpod-io/non-gitpodified-repo",
-					WorkspaceRoot:    "/workspace/non-gitpodified-repo",
-					CheckoutLocation: "non-gitpodified-repo",
-					FF:               []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM},
-				},
+				/*
+					{
+						Name:             "pvc",
+						ContextURL:       "https://github.com/gitpod-io/empty",
+						WorkspaceRoot:    "/workspace/empty",
+						CheckoutLocation: "empty",
+						FF:               []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM},
+					},
+					{
+						Name:             "pvc-non-gitpodified",
+						ContextURL:       "https://github.com/gitpod-io/non-gitpodified-repo",
+						WorkspaceRoot:    "/workspace/non-gitpodified-repo",
+						CheckoutLocation: "non-gitpodified-repo",
+						FF:               []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM},
+					},
+				*/
 			}
 			for _, test := range tests {
 				t.Run(test.Name, func(t *testing.T) {
@@ -203,6 +205,7 @@ func TestBackup(t *testing.T) {
 }
 
 // TestExistingWorkspaceEnablePVC tests enable PVC feature flag on the existing workspace
+/*
 func TestExistingWorkspaceEnablePVC(t *testing.T) {
 	f := features.New("backup").
 		WithLabel("component", "ws-manager").
@@ -356,6 +359,7 @@ func TestExistingWorkspaceEnablePVC(t *testing.T) {
 
 	testEnv.Test(t, f)
 }
+*/
 
 // TestMissingBackup ensures workspaces fail if they should have a backup but don't have one
 func TestMissingBackup(t *testing.T) {
@@ -399,7 +403,7 @@ func TestMissingBackup(t *testing.T) {
 			}{
 				{Name: "classic"},
 				{Name: "fwb", FF: []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_FULL_WORKSPACE_BACKUP}},
-				{Name: "pvc", FF: []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM}},
+				// {Name: "pvc", FF: []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM}},
 			}
 			for _, test := range tests {
 				t.Run(test.Name+"_backup_init", func(t *testing.T) {

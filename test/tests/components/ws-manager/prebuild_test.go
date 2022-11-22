@@ -51,16 +51,18 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 						{Init: "echo \"some output\" > someFile; sleep 10; exit 0;"},
 					},
 				},
-				{
-					Name:             "pvc",
-					ContextURL:       "https://github.com/gitpod-io/empty",
-					CheckoutLocation: "empty",
-					WorkspaceRoot:    "/workspace/empty",
-					Task: []gitpod.TasksItems{
-						{Init: "echo \"some output\" > someFile; sleep 10; exit 0;"},
+				/*
+					{
+						Name:             "pvc",
+						ContextURL:       "https://github.com/gitpod-io/empty",
+						CheckoutLocation: "empty",
+						WorkspaceRoot:    "/workspace/empty",
+						Task: []gitpod.TasksItems{
+							{Init: "echo \"some output\" > someFile; sleep 10; exit 0;"},
+						},
+						FF: []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM},
 					},
-					FF: []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM},
-				},
+				*/
 			}
 			for _, test := range tests {
 				t.Run(test.Name, func(t *testing.T) {
@@ -235,13 +237,15 @@ func TestOpenWorkspaceFromPrebuildSerialOnly(t *testing.T) {
 					CheckoutLocation: "empty",
 					WorkspaceRoot:    "/workspace/empty",
 				},
-				{
-					Name:             "pvc",
-					ContextURL:       "https://github.com/gitpod-io/empty",
-					CheckoutLocation: "empty",
-					WorkspaceRoot:    "/workspace/empty",
-					FF:               []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM},
-				},
+				/*
+					{
+						Name:             "pvc",
+						ContextURL:       "https://github.com/gitpod-io/empty",
+						CheckoutLocation: "empty",
+						WorkspaceRoot:    "/workspace/empty",
+						FF:               []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM},
+					},
+				*/
 			}
 
 			for _, test := range tests {
@@ -676,6 +680,7 @@ func TestOpenWorkspaceFromOutdatedPrebuild(t *testing.T) {
 // - create a prebuild with large workspace class (30Gi disk) separately
 // - create the workspace from prebuild with small workspace class (20Gi disk) separately
 // - make sure the workspace can't start
+/*
 func TestPrebuildAndRegularWorkspaceDifferentWorkspaceClass(t *testing.T) {
 	f := features.New("prebuild").
 		WithLabel("component", "ws-manager").
@@ -843,6 +848,7 @@ func TestPrebuildAndRegularWorkspaceDifferentWorkspaceClass(t *testing.T) {
 
 	testEnv.Test(t, f)
 }
+*/
 
 // checkSnapshot checks the volume snapshot information is valid or not
 func checkSnapshot(t *testing.T, vsInfo *wsmanapi.VolumeSnapshotInfo, isPVCEnable bool) {
