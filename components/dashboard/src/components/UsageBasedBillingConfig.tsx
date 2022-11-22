@@ -199,9 +199,8 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
         }
     };
 
-    const used = currentUsage >= 0 ? currentUsage : 0;
-    const totalAvailable = usageLimit + (currentUsage < 0 ? currentUsage * -1 : 0);
-    const percentage = Math.min(Math.max(Math.round((100 * used) / totalAvailable), 0), 100);
+    const balance = currentUsage * -1 + usageLimit;
+    const percentage = Math.max(Math.round((balance * 100) / usageLimit), 0);
 
     return (
         <div className="mb-16">
@@ -214,31 +213,35 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                 )}
                 {showSpinner && (
                     <div className="flex flex-col mt-4 h-52 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
-                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Balance Used</div>
+                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Balance</div>
                         <Spinner className="m-2 h-5 w-5 animate-spin" />
                     </div>
                 )}
                 {showBalance && (
                     <div className="flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
-                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Balance Used</div>
+                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Balance</div>
                         <div className="mt-1 text-xl font-semibold flex-grow">
-                            <span className="text-gray-900 dark:text-gray-100">{used}</span>
-                            <span className="text-gray-400 dark:text-gray-500"> / {totalAvailable} Credits</span>
+                            <span className="text-gray-900 dark:text-gray-100">{balance}</span>
+                            <span className="text-gray-400 dark:text-gray-500"> Credits</span>
                         </div>
-                        <div className="mt-4 text-sm flex">
+                        <div className="mt-4 text-sm flex text-gray-400 dark:text-gray-500">
                             <span className="flex-grow">
+                                <span>Monthly limit: {usageLimit} Credits</span>
                                 {showManageBilling && (
-                                    <button className="gp-link" onClick={() => setShowUpdateLimitModal(true)}>
-                                        Manage Usage Limit
-                                    </button>
+                                    <>
+                                        <span>&nbsp;&middot;&nbsp;</span>
+                                        <span className="gp-link" onClick={() => setShowUpdateLimitModal(true)}>
+                                            Update limit
+                                        </span>
+                                    </>
                                 )}
                             </span>
                             {typeof currentUsage === "number" && typeof usageLimit === "number" && usageLimit > 0 && (
-                                <span className="text-gray-400 dark:text-gray-500">{percentage}% used</span>
+                                <span>{percentage}% remaining</span>
                             )}
                         </div>
                         <div className="mt-2 flex">
-                            <progress className="h-2 flex-grow rounded-xl" value={currentUsage} max={usageLimit} />
+                            <progress className="h-2 flex-grow rounded-xl" value={percentage} max={100} />
                         </div>
                         <div className="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 -m-4 p-4 mt-4 rounded-b-xl flex">
                             <div className="flex-grow">
