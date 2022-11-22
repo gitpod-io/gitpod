@@ -142,9 +142,9 @@ const (
 func (s IDEKind) String() string {
 	switch s {
 	case WebIDE:
-		return "IDE"
+		return "web"
 	case DesktopIDE:
-		return "Desktop IDE"
+		return "desktop"
 	}
 	return "unknown"
 }
@@ -253,6 +253,7 @@ func Run(options ...RunOption) {
 	topService := NewTopService()
 	topService.Observe(ctx)
 
+	supervisorMetrics := metrics.NewMetrics()
 	var metricsReporter *metrics.GrpcMetricsReporter
 	if opts.RunGP {
 		cstate.MarkContentReady(csapi.WorkspaceInitFromOther)
@@ -265,6 +266,7 @@ func Run(options ...RunOption) {
 			log.WithError(err).Error("supervisor: grpc metrics: failed to parse gitpod host")
 		} else {
 			metricsReporter = metrics.NewGrpcMetricsReporter(gitpodHost)
+			supervisorMetrics.Register(metricsReporter.Registry)
 		}
 	}
 
@@ -317,10 +319,10 @@ func Run(options ...RunOption) {
 
 	var ideWG sync.WaitGroup
 	ideWG.Add(1)
-	go startAndWatchIDE(ctx, cfg, &cfg.IDE, childProcEnvvars, &ideWG, cstate, ideReady, WebIDE)
+	go startAndWatchIDE(ctx, cfg, &cfg.IDE, childProcEnvvars, &ideWG, cstate, ideReady, WebIDE, supervisorMetrics)
 	if cfg.DesktopIDE != nil {
 		ideWG.Add(1)
-		go startAndWatchIDE(ctx, cfg, cfg.DesktopIDE, childProcEnvvars, &ideWG, cstate, desktopIdeReady, DesktopIDE)
+		go startAndWatchIDE(ctx, cfg, cfg.DesktopIDE, childProcEnvvars, &ideWG, cstate, desktopIdeReady, DesktopIDE, supervisorMetrics)
 	}
 
 	var (
@@ -737,7 +739,7 @@ var (
 	errSignalTerminated = errors.New("signal: terminated")
 )
 
-func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, childProcEnvvars []string, wg *sync.WaitGroup, cstate *InMemoryContentState, ideReady *ideReadyState, ide IDEKind) {
+func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, childProcEnvvars []string, wg *sync.WaitGroup, cstate *InMemoryContentState, ideReady *ideReadyState, ide IDEKind, metrics *metrics.SupervisorMetrics) {
 	defer wg.Done()
 	defer log.WithField("ide", ide.String()).Debug("startAndWatchIDE shutdown")
 
@@ -754,6 +756,7 @@ func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, ch
 	var (
 		cmd        *exec.Cmd
 		ideStopped chan struct{}
+		firstStart bool = true
 	)
 supervisorLoop:
 	for {
@@ -762,8 +765,26 @@ supervisorLoop:
 		}
 
 		ideStopped = make(chan struct{}, 1)
+		startTime := time.Now()
 		cmd = prepareIDELaunch(cfg, ideConfig, childProcEnvvars)
 		launchIDE(cfg, ideConfig, cmd, ideStopped, ideReady, &ideStatus, ide)
+
+		if firstStart {
+			firstStart = false
+			go func() {
+				select {
+				case <-ideReady.Wait():
+					cost := time.Since(startTime).Seconds()
+					his, err := metrics.IDEReadyDurationTotal.GetMetricWithLabelValues(ide.String())
+					if err != nil {
+						log.WithError(err).Error("cannot get metrics for IDEReadyDurationTotal")
+						return
+					}
+					his.Observe(cost)
+				case <-ctx.Done():
+				}
+			}()
+		}
 
 		select {
 		case <-ideStopped:
