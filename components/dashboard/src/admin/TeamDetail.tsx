@@ -15,14 +15,22 @@ import Label from "./Label";
 import Property from "./Property";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
+import { CostCenterJSON, CostCenter_BillingStrategy } from "@gitpod/gitpod-protocol/lib/usage";
+import Modal from "../components/Modal";
 
 export default function TeamDetail(props: { team: Team }) {
     const { team } = props;
     const [teamMembers, setTeamMembers] = useState<TeamMemberInfo[] | undefined>(undefined);
     const [billingMode, setBillingMode] = useState<BillingMode | undefined>(undefined);
     const [searchText, setSearchText] = useState<string>("");
+    const [costCenter, setCostCenter] = useState<CostCenterJSON>();
+    const [usageBalance, setUsageBalance] = useState<number>(0);
+    const [usageLimit, setUsageLimit] = useState<number>();
+    const [editSpendingLimit, setEditSpendingLimit] = useState<boolean>(false);
+    const [creditNote, setCreditNote] = useState<{ credits: number; note?: string }>({ credits: 0 });
+    const [editAddCreditNote, setEditAddCreditNote] = useState<boolean>(false);
 
-    useEffect(() => {
+    const initialize = () => {
         (async () => {
             const members = await getGitpodService().server.adminGetTeamMembers(team.id);
             if (members.length > 0) {
@@ -30,9 +38,22 @@ export default function TeamDetail(props: { team: Team }) {
             }
         })();
         getGitpodService()
-            .server.adminGetBillingMode(AttributionId.render({ kind: "team", teamId: props.team.id }))
+            .server.adminGetBillingMode(AttributionId.render({ kind: "team", teamId: team.id }))
             .then((bm) => setBillingMode(bm));
-    }, [team]);
+        const attributionId = AttributionId.render(AttributionId.create(team));
+        getGitpodService().server.adminGetBillingMode(attributionId).then(setBillingMode);
+        getGitpodService().server.adminGetCostCenter(attributionId).then(setCostCenter);
+        getGitpodService().server.adminGetUsageBalance(attributionId).then(setUsageBalance);
+    };
+
+    useEffect(initialize, [team]);
+
+    useEffect(() => {
+        if (!costCenter) {
+            return;
+        }
+        setUsageLimit(costCenter.spendingLimit);
+    }, [costCenter]);
 
     const filteredMembers = teamMembers?.filter((m) => {
         const memberSearchText = `${m.fullName || ""}${m.primaryEmail || ""}`.toLocaleLowerCase();
@@ -64,8 +85,53 @@ export default function TeamDetail(props: { team: Team }) {
                 </div>
             </div>
             <div className="flex mt-6">
-                {!team.markedDeleted && teamMembers && <Property name="Members">{teamMembers.length}</Property>}
-                {!team.markedDeleted && <Property name="BillingMode">{billingMode?.mode || "---"}</Property>}
+                {!team.markedDeleted && <Property name="Members">{teamMembers?.length || "?"}</Property>}
+                {!team.markedDeleted && <Property name="Billing Mode">{billingMode?.mode || "---"}</Property>}
+                {costCenter && (
+                    <Property name="Stripe Subscription" actions={[]}>
+                        <span>
+                            {costCenter?.billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE
+                                ? "Active"
+                                : "Inactive"}
+                        </span>
+                    </Property>
+                )}
+            </div>
+            <div className="flex mt-6">
+                {costCenter && (
+                    <Property name="Current Cycle" actions={[]}>
+                        <span>
+                            {dayjs(costCenter?.billingCycleStart).format("MMM D")} -{" "}
+                            {dayjs(costCenter?.nextBillingTime).format("MMM D")}
+                        </span>
+                    </Property>
+                )}
+                {costCenter && (
+                    <Property
+                        name="Available Credits"
+                        actions={[
+                            {
+                                label: "Add Credits",
+                                onClick: () => setEditAddCreditNote(true),
+                            },
+                        ]}
+                    >
+                        <span>{usageBalance * -1 + (costCenter?.spendingLimit || 0)} Credits</span>
+                    </Property>
+                )}
+                {costCenter && (
+                    <Property
+                        name="Usage Limit"
+                        actions={[
+                            {
+                                label: "Change Usage Limit",
+                                onClick: () => setEditSpendingLimit(true),
+                            },
+                        ]}
+                    >
+                        <span>{costCenter?.spendingLimit} Credits</span>
+                    </Property>
+                )}
             </div>
             <div className="flex mt-4">
                 <div className="flex">
@@ -151,6 +217,91 @@ export default function TeamDetail(props: { team: Team }) {
                     ))
                 )}
             </ItemsList>
+            <Modal
+                visible={editSpendingLimit}
+                onClose={() => setEditSpendingLimit(false)}
+                title="Change Usage Limit"
+                onEnter={() => false}
+                buttons={[
+                    <button
+                        disabled={usageLimit === costCenter?.spendingLimit}
+                        onClick={async () => {
+                            if (usageLimit !== undefined) {
+                                await getGitpodService().server.adminSetUsageLimit(
+                                    AttributionId.render(AttributionId.create(team)),
+                                    usageLimit || 0,
+                                );
+                                setUsageLimit(undefined);
+                                initialize();
+                                setEditSpendingLimit(false);
+                            }
+                        }}
+                    >
+                        Change
+                    </button>,
+                ]}
+            >
+                <p className="pb-4 text-gray-500 text-base">Change the usage limit in credits per month.</p>
+                <label>Credits</label>
+                <div className="flex flex-col">
+                    <input
+                        type="number"
+                        className="w-full"
+                        min={Math.max(usageBalance, 0)}
+                        max={500000}
+                        title="Change Usage Limit"
+                        value={usageLimit}
+                        onChange={(event) => setUsageLimit(Number.parseInt(event.target.value))}
+                    />
+                </div>
+            </Modal>
+            <Modal
+                onEnter={() => false}
+                visible={editAddCreditNote}
+                onClose={() => setEditAddCreditNote(false)}
+                title="Add Credits"
+                buttons={[
+                    <button
+                        disabled={creditNote.credits === 0 || !creditNote.note}
+                        onClick={async () => {
+                            if (creditNote.credits !== 0 && !!creditNote.note) {
+                                await getGitpodService().server.adminAddUsageCreditNote(
+                                    AttributionId.render(AttributionId.create(team)),
+                                    creditNote.credits,
+                                    creditNote.note,
+                                );
+                                setEditAddCreditNote(false);
+                                setCreditNote({ credits: 0 });
+                                initialize();
+                            }
+                        }}
+                    >
+                        Add Credits
+                    </button>,
+                ]}
+            >
+                <p>Adds or subtracts the amount of credits from this account.</p>
+                <div className="flex flex-col">
+                    <label className="mt-4">Credits</label>
+                    <input
+                        className="w-full"
+                        type="number"
+                        min={-50000}
+                        max={50000}
+                        title="Credits"
+                        value={creditNote.credits}
+                        onChange={(event) =>
+                            setCreditNote({ credits: Number.parseInt(event.target.value), note: creditNote.note })
+                        }
+                    />
+                    <label className="mt-4">Note</label>
+                    <textarea
+                        className="w-full"
+                        title="Note"
+                        onChange={(event) => setCreditNote({ credits: creditNote.credits, note: event.target.value })}
+                    />
+                </div>
+            </Modal>
         </>
     );
 }

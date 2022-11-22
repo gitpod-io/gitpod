@@ -459,7 +459,7 @@ func (s *UsageService) AddUsageCreditNote(ctx context.Context, req *v1.AddUsageC
 		WithField("attribution_id", req.AttributionId).
 		WithField("credits", req.Credits).
 		WithField("user", req.UserId).
-		WithField("note", req.Note).
+		WithField("note", req.Description).
 		Info("Adding usage credit note.")
 
 	attributionId, err := db.ParseAttributionID(req.AttributionId)
@@ -467,9 +467,9 @@ func (s *UsageService) AddUsageCreditNote(ctx context.Context, req *v1.AddUsageC
 		return nil, status.Errorf(codes.InvalidArgument, "AttributionID '%s' couldn't be parsed (error: %s).", req.AttributionId, err)
 	}
 
-	note := strings.TrimSpace(req.Note)
-	if note == "" {
-		return nil, status.Error(codes.InvalidArgument, "The note must not be empty.")
+	description := strings.TrimSpace(req.Description)
+	if description == "" {
+		return nil, status.Error(codes.InvalidArgument, "The description must not be empty.")
 	}
 
 	userId, err := uuid.Parse(req.UserId)
@@ -480,7 +480,7 @@ func (s *UsageService) AddUsageCreditNote(ctx context.Context, req *v1.AddUsageC
 	usage := db.Usage{
 		ID:            uuid.New(),
 		AttributionID: attributionId,
-		Description:   note,
+		Description:   description,
 		CreditCents:   db.NewCreditCents(float64(req.Credits * -1)),
 		EffectiveTime: db.NewVarCharTime(time.Now()),
 		Kind:          db.CreditNoteKind,
