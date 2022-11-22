@@ -22,15 +22,21 @@ import (
 type Config struct {
 	Runtime RuntimeConfig `json:"runtime"`
 
-	Content        content.Config           `json:"content"`
-	Uidmapper      iws.UidmapperConfig      `json:"uidmapper"`
-	CPULimit       cpulimit.Config          `json:"cpulimit"`
-	IOLimit        IOLimitConfig            `json:"ioLimit"`
-	ProcLimit      int64                    `json:"procLimit"`
-	NetLimit       netlimit.Config          `json:"netlimit"`
-	OOMScores      cgroup.OOMScoreAdjConfig `json:"oomScores"`
-	Hosts          hosts.Config             `json:"hosts"`
-	DiskSpaceGuard diskguard.Config         `json:"disk"`
+	Content             content.Config            `json:"content"`
+	Uidmapper           iws.UidmapperConfig       `json:"uidmapper"`
+	CPULimit            cpulimit.Config           `json:"cpulimit"`
+	IOLimit             IOLimitConfig             `json:"ioLimit"`
+	ProcLimit           int64                     `json:"procLimit"`
+	NetLimit            netlimit.Config           `json:"netlimit"`
+	OOMScores           cgroup.OOMScoreAdjConfig  `json:"oomScores"`
+	Hosts               hosts.Config              `json:"hosts"`
+	DiskSpaceGuard      diskguard.Config          `json:"disk"`
+	WorkspaceController WorkspaceControllerConfig `json:"workspaceController"`
+}
+
+type WorkspaceControllerConfig struct {
+	Enabled           bool   `json:"enabled"`
+	WorkingAreaSuffix string `json:"workingAreaSuffix"`
 }
 
 type RuntimeConfig struct {
