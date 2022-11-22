@@ -332,6 +332,7 @@ func TestTokensService_ListPersonalAccessTokens(t *testing.T) {
 
 func TestTokensService_RegeneratePersonalAccessToken(t *testing.T) {
 	user := newUser(&protocol.User{})
+	user2 := newUser(&protocol.User{})
 
 	t.Run("permission denied when feature flag is disabled", func(t *testing.T) {
 		serverMock, _, client := setupTokensService(t, withTokenFeatureDisabled)
@@ -339,7 +340,8 @@ func TestTokensService_RegeneratePersonalAccessToken(t *testing.T) {
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
 		_, err := client.RegeneratePersonalAccessToken(context.Background(), connect.NewRequest(&v1.RegeneratePersonalAccessTokenRequest{
-			Id: uuid.New().String(),
+			Id:             uuid.New().String(),
+			ExpirationTime: timestamppb.Now(),
 		}))
 
 		require.Error(t, err, "This feature is currently in beta. If you would like to be part of the beta, please contact us.")
@@ -364,16 +366,63 @@ func TestTokensService_RegeneratePersonalAccessToken(t *testing.T) {
 		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
-	t.Run("unimplemented when feature flag enabled", func(t *testing.T) {
-		serverMock, _, client := setupTokensService(t, withTokenFeatureEnabled)
+	t.Run("responds with not found when token is not found", func(t *testing.T) {
+		serverMock, dbConn, client := setupTokensService(t, withTokenFeatureEnabled)
+
+		someTokenId := uuid.New().String()
+
+		dbtest.CreatePersonalAccessTokenRecords(t, dbConn,
+			dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{
+				UserID: uuid.MustParse(user.ID),
+			}),
+			dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{
+				UserID: uuid.MustParse(user2.ID),
+			}),
+		)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
+		newTimestamp := timestamppb.New(time.Date(2023, 1, 2, 15, 4, 5, 0, time.UTC))
 		_, err := client.RegeneratePersonalAccessToken(context.Background(), connect.NewRequest(&v1.RegeneratePersonalAccessTokenRequest{
-			Id: uuid.New().String(),
+			Id:             someTokenId,
+			ExpirationTime: newTimestamp,
 		}))
+		require.Error(t, err, fmt.Errorf("Token with ID %s does not exist: not found", someTokenId))
+	})
 
-		require.Equal(t, connect.CodeUnimplemented, connect.CodeOf(err))
+	t.Run("regenerate correct token", func(t *testing.T) {
+		serverMock, dbConn, client := setupTokensService(t, withTokenFeatureEnabled)
+
+		tokens := dbtest.CreatePersonalAccessTokenRecords(t, dbConn,
+			dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{
+				UserID: uuid.MustParse(user.ID),
+			}),
+			dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{
+				UserID: uuid.MustParse(user2.ID),
+			}),
+		)
+
+		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil).MaxTimes(2)
+
+		origResponse, err := client.GetPersonalAccessToken(context.Background(), connect.NewRequest(&v1.GetPersonalAccessTokenRequest{
+			Id: tokens[0].ID.String(),
+		}))
+		require.NoError(t, err)
+
+		newTimestamp := timestamppb.New(time.Now().Add(24 * time.Hour).UTC().Truncate(time.Millisecond))
+		response, err := client.RegeneratePersonalAccessToken(context.Background(), connect.NewRequest(&v1.RegeneratePersonalAccessTokenRequest{
+			Id:             tokens[0].ID.String(),
+			ExpirationTime: newTimestamp,
+		}))
+		require.NoError(t, err)
+
+		require.Equal(t, origResponse.Msg.Token.Id, response.Msg.Token.Id)
+		require.NotEqual(t, "", response.Msg.Token.Value)
+		require.Equal(t, origResponse.Msg.Token.Name, response.Msg.Token.Name)
+		require.Equal(t, origResponse.Msg.Token.Description, response.Msg.Token.Description)
+		require.Equal(t, origResponse.Msg.Token.Scopes, response.Msg.Token.Scopes)
+		require.Equal(t, newTimestamp.AsTime(), response.Msg.Token.ExpirationTime.AsTime())
+		require.Equal(t, origResponse.Msg.Token.CreatedAt, response.Msg.Token.CreatedAt)
 	})
 }
 
