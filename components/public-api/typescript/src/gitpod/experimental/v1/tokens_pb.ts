@@ -44,17 +44,10 @@ export class PersonalAccessToken extends Message<PersonalAccessToken> {
   name = "";
 
   /**
-   * description is the description of the token set by the user
-   *
-   * @generated from field: string description = 4;
-   */
-  description = "";
-
-  /**
    * expiration_time is the time when the token expires
    * Read only.
    *
-   * @generated from field: google.protobuf.Timestamp expiration_time = 5;
+   * @generated from field: google.protobuf.Timestamp expiration_time = 4;
    */
   expirationTime?: Timestamp;
 
@@ -63,14 +56,14 @@ export class PersonalAccessToken extends Message<PersonalAccessToken> {
    * By default, no scopes are attached and therefore no access is granted to this token.
    * Specifying '*' grants all permissions the owner of the token has.
    *
-   * @generated from field: repeated string scopes = 6;
+   * @generated from field: repeated string scopes = 5;
    */
   scopes: string[] = [];
 
   /**
    * created_time is the time when the token was first created.
    *
-   * @generated from field: google.protobuf.Timestamp created_at = 7;
+   * @generated from field: google.protobuf.Timestamp created_at = 6;
    */
   createdAt?: Timestamp;
 
@@ -85,10 +78,9 @@ export class PersonalAccessToken extends Message<PersonalAccessToken> {
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "value", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 4, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 5, name: "expiration_time", kind: "message", T: Timestamp },
-    { no: 6, name: "scopes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 7, name: "created_at", kind: "message", T: Timestamp },
+    { no: 4, name: "expiration_time", kind: "message", T: Timestamp },
+    { no: 5, name: "scopes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 6, name: "created_at", kind: "message", T: Timestamp },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PersonalAccessToken {

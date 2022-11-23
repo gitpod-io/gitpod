@@ -50,8 +50,6 @@ func (s *TokensService) CreatePersonalAccessToken(ctx context.Context, req *conn
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("Token Name is a required parameter."))
 	}
 
-	description := strings.TrimSpace(tokenReq.GetDescription())
-
 	expiry := tokenReq.GetExpirationTime()
 	if !expiry.IsValid() {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("Received invalid Expiration Time, it is a required parameter."))
@@ -88,7 +86,6 @@ func (s *TokensService) CreatePersonalAccessToken(ctx context.Context, req *conn
 		UserID:         userID,
 		Hash:           hash,
 		Name:           name,
-		Description:    description,
 		Scopes:         scopes,
 		ExpirationTime: expiry.AsTime().UTC(),
 	})
@@ -326,7 +323,6 @@ func personalAccessTokenToAPI(t db.PersonalAccessToken, value string) *v1.Person
 		// value is only present when the token is first created, or regenerated. It's empty for all subsequent requests.
 		Value:          value,
 		Name:           t.Name,
-		Description:    t.Description,
 		Scopes:         t.Scopes,
 		ExpirationTime: timestamppb.New(t.ExpirationTime),
 		CreatedAt:      timestamppb.New(t.CreatedAt),

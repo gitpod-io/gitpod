@@ -21,7 +21,6 @@ type PersonalAccessToken struct {
 	UserID         uuid.UUID `gorm:"column:userId;type:varchar;size:255;" json:"userId"`
 	Hash           string    `gorm:"column:hash;type:varchar;size:255;" json:"hash"`
 	Name           string    `gorm:"column:name;type:varchar;size:255;" json:"name"`
-	Description    string    `gorm:"column:description;type:varchar;size:255;" json:"description"`
 	Scopes         Scopes    `gorm:"column:scopes;type:text;size:65535;" json:"scopes"`
 	ExpirationTime time.Time `gorm:"column:expirationTime;type:timestamp;" json:"expirationTime"`
 	CreatedAt      time.Time `gorm:"column:createdAt;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"createdAt"`
@@ -72,7 +71,6 @@ func CreatePersonalAccessToken(ctx context.Context, conn *gorm.DB, req PersonalA
 		UserID:         req.UserID,
 		Hash:           req.Hash,
 		Name:           req.Name,
-		Description:    req.Description,
 		Scopes:         req.Scopes,
 		ExpirationTime: req.ExpirationTime,
 		CreatedAt:      now,

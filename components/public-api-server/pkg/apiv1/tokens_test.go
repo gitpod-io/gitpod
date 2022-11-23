@@ -106,7 +106,6 @@ func TestTokensService_CreatePersonalAccessTokenWithoutFeatureFlag(t *testing.T)
 
 		token := &v1.PersonalAccessToken{
 			Name:           "my-token",
-			Description:    "my description",
 			ExpirationTime: timestamppb.Now(),
 		}
 
@@ -122,7 +121,6 @@ func TestTokensService_CreatePersonalAccessTokenWithoutFeatureFlag(t *testing.T)
 
 		require.NotEmpty(t, created.GetId())
 		require.Equal(t, token.Name, created.GetName())
-		require.Equal(t, token.Description, created.GetDescription())
 		require.Equal(t, token.Scopes, created.GetScopes())
 		requireEqualProto(t, token.GetExpirationTime(), created.GetExpirationTime())
 
@@ -425,7 +423,6 @@ func TestTokensService_RegeneratePersonalAccessToken(t *testing.T) {
 		require.Equal(t, origResponse.Msg.Token.Id, response.Msg.Token.Id)
 		require.NotEqual(t, "", response.Msg.Token.Value)
 		require.Equal(t, origResponse.Msg.Token.Name, response.Msg.Token.Name)
-		require.Equal(t, origResponse.Msg.Token.Description, response.Msg.Token.Description)
 		require.Equal(t, origResponse.Msg.Token.Scopes, response.Msg.Token.Scopes)
 		require.Equal(t, newTimestamp.AsTime(), response.Msg.Token.ExpirationTime.AsTime())
 		require.Equal(t, origResponse.Msg.Token.CreatedAt, response.Msg.Token.CreatedAt)
