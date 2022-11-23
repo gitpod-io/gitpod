@@ -67,7 +67,7 @@ func TestTokensService_CreatePersonalAccessTokenWithoutFeatureFlag(t *testing.T)
 	})
 
 	t.Run("invalid argument when name is not specified", func(t *testing.T) {
-		_, _, client := setupTokensService(t, withTokenFeatureDisabled)
+		_, _, client := setupTokensService(t, withTokenFeatureEnabled)
 
 		_, err := client.CreatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.CreatePersonalAccessTokenRequest{
 			Token: &v1.PersonalAccessToken{},
@@ -91,7 +91,7 @@ func TestTokensService_CreatePersonalAccessTokenWithoutFeatureFlag(t *testing.T)
 	})
 
 	t.Run("invalid argument when expiration time is unspecified", func(t *testing.T) {
-		_, _, client := setupTokensService(t, withTokenFeatureDisabled)
+		_, _, client := setupTokensService(t, withTokenFeatureEnabled)
 
 		_, err := client.CreatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.CreatePersonalAccessTokenRequest{
 			Token: &v1.PersonalAccessToken{
@@ -102,7 +102,7 @@ func TestTokensService_CreatePersonalAccessTokenWithoutFeatureFlag(t *testing.T)
 	})
 
 	t.Run("invalid argument when expiration time is invalid", func(t *testing.T) {
-		_, _, client := setupTokensService(t, withTokenFeatureDisabled)
+		_, _, client := setupTokensService(t, withTokenFeatureEnabled)
 
 		_, err := client.CreatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.CreatePersonalAccessTokenRequest{
 			Token: &v1.PersonalAccessToken{
@@ -110,6 +110,19 @@ func TestTokensService_CreatePersonalAccessTokenWithoutFeatureFlag(t *testing.T)
 				ExpirationTime: &timestamppb.Timestamp{
 					Seconds: 253402300799 + 1,
 				},
+			},
+		}))
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("invalid argument when disallowed scopes used", func(t *testing.T) {
+		_, _, client := setupTokensService(t, withTokenFeatureEnabled)
+
+		_, err := client.CreatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.CreatePersonalAccessTokenRequest{
+			Token: &v1.PersonalAccessToken{
+				Name:           "my-token",
+				ExpirationTime: timestamppb.Now(),
+				Scopes:         []string{"random:scope"},
 			},
 		}))
 		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
@@ -148,6 +161,53 @@ func TestTokensService_CreatePersonalAccessTokenWithoutFeatureFlag(t *testing.T)
 		storedInDB, err := db.GetPersonalAccessTokenForUser(context.Background(), dbConn, uuid.MustParse(created.GetId()), uuid.MustParse(user.ID))
 		require.NoError(t, err)
 		require.Equal(t, user.ID, storedInDB.UserID.String())
+	})
+
+	t.Run("crates personal access token with no scopes when none provided", func(t *testing.T) {
+		serverMock, dbConn, client := setupTokensService(t, withTokenFeatureEnabled)
+
+		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
+
+		token := &v1.PersonalAccessToken{
+			Name:           "my-token",
+			ExpirationTime: timestamppb.Now(),
+		}
+
+		response, err := client.CreatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.CreatePersonalAccessTokenRequest{
+			Token: token,
+		}))
+		require.NoError(t, err)
+
+		created := response.Msg.GetToken()
+		t.Cleanup(func() {
+			require.NoError(t, dbConn.Where("id = ?", created.GetId()).Delete(&db.PersonalAccessToken{}).Error)
+		})
+
+		require.Len(t, created.GetScopes(), 0, "must have no scopes, none were provided in the request")
+	})
+
+	t.Run("crates personal access token with full access when correct scopes provided", func(t *testing.T) {
+		serverMock, dbConn, client := setupTokensService(t, withTokenFeatureEnabled)
+
+		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
+
+		token := &v1.PersonalAccessToken{
+			Name:           "my-token",
+			ExpirationTime: timestamppb.Now(),
+			Scopes:         []string{"resource:default", "function:*"},
+		}
+
+		response, err := client.CreatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.CreatePersonalAccessTokenRequest{
+			Token: token,
+		}))
+		require.NoError(t, err)
+
+		created := response.Msg.GetToken()
+		t.Cleanup(func() {
+			require.NoError(t, dbConn.Where("id = ?", created.GetId()).Delete(&db.PersonalAccessToken{}).Error)
+		})
+
+		require.Equal(t, []string{allFunctionsScope, defaultResourceScope}, created.GetScopes())
 	})
 }
 
@@ -615,6 +675,62 @@ func TestTokensService_Workflow(t *testing.T) {
 		Id: secondTokenResponse.Msg.GetToken().GetId(),
 	}))
 	require.NoError(t, err)
+}
+
+func TestValidateScopes(t *testing.T) {
+	for _, s := range []struct {
+		Name            string
+		RequestedScopes []string
+		Error           bool
+	}{
+		{
+			Name:            "no scopes are permitted",
+			RequestedScopes: nil,
+		},
+		{
+			Name:            "empty scopes are permitted",
+			RequestedScopes: []string{},
+		},
+		{
+			Name:            "all scopes are permitted",
+			RequestedScopes: []string{"function:*", "resource:default"},
+		},
+		{
+			Name:            "all scopes (unsorted) are permitted",
+			RequestedScopes: []string{"resource:default", "function:*"},
+		},
+		{
+			Name:            "only all function scope is not permitted",
+			RequestedScopes: []string{"function:*"},
+			Error:           true,
+		},
+		{
+			Name:            "only all default resource scope is not permitted",
+			RequestedScopes: []string{"resource:default"},
+			Error:           true,
+		},
+		{
+			Name:            "unknown scope is rejected",
+			RequestedScopes: []string{"unknown"},
+			Error:           true,
+		},
+		{
+			Name:            "unknown scope, with all scopes, is rejected",
+			RequestedScopes: []string{"unknown", "function:*", "resource:default"},
+			Error:           true,
+		},
+	} {
+		t.Run(s.Name, func(t *testing.T) {
+			_, err := validateScopes(s.RequestedScopes)
+
+			if s.Error {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+
+	}
 }
 
 func setupTokensService(t *testing.T, expClient experiments.Client) (*protocol.MockAPIInterface, *gorm.DB, v1connect.TokensServiceClient) {

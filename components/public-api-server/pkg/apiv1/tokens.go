@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	connect "github.com/bufbuild/connect-go"
@@ -20,6 +21,7 @@ import (
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
+	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
@@ -56,9 +58,10 @@ func (s *TokensService) CreatePersonalAccessToken(ctx context.Context, req *conn
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("Received invalid Expiration Time, it is a required parameter."))
 	}
 
-	// TODO: Parse and validate scopes before storing
-	// Until we do that, we store empty scopes.
-	var scopes []string
+	scopes, err := validateScopes(tokenReq.GetScopes())
+	if err != nil {
+		return nil, err
+	}
 
 	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
@@ -346,4 +349,28 @@ func validatePersonalAccessTokenName(name string) (string, error) {
 	}
 
 	return trimmed, nil
+}
+
+const (
+	allFunctionsScope    = "function:*"
+	defaultResourceScope = "resource:default"
+)
+
+func validateScopes(scopes []string) ([]string, error) {
+	// Currently we do not have support for fine grained permissions, and therefore do not support fine-grained scopes.
+	// Therefore, for now we operate in one of the following modes:
+	// * Token has no scopes - represented as the empty list of scopes
+	// * Token explicitly has access to everything the user has access to, represented as ["function:*", "resource:default"]
+	if len(scopes) == 0 {
+		return nil, nil
+	}
+
+	sort.Strings(scopes)
+	allScopesSorted := []string{allFunctionsScope, defaultResourceScope}
+
+	if cmp.Equal(scopes, allScopesSorted) {
+		return scopes, nil
+	}
+
+	return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Tokens can currently only have no scopes (empty), or all scopes represented as [%s, %s]", allFunctionsScope, defaultResourceScope))
 }
