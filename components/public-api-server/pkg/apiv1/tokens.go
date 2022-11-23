@@ -227,13 +227,18 @@ func (s *TokensService) DeletePersonalAccessToken(ctx context.Context, req *conn
 		return nil, err
 	}
 
-	_, _, err = s.getUser(ctx, conn)
+	_, userID, err := s.getUser(ctx, conn)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Infof("Handling DeletePersonalAccessToken request for Token ID '%s'", tokenID.String())
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gitpod.experimental.v1.TokensService.DeletePersonalAccessToken is not implemented"))
+	_, err = db.DeletePersonalAccessTokenForUser(ctx, s.dbConn, tokenID, userID)
+	if err != nil {
+		log.WithError(err).Errorf("failed to delete personal access token (ID: %s) for user %s", tokenID.String(), userID.String())
+		return nil, connect.NewError(connect.CodeInternal, errors.New("Failed to delete personal access token."))
+	}
+
+	return connect.NewResponse(&v1.DeletePersonalAccessTokenResponse{}), nil
 }
 
 func (s *TokensService) getUser(ctx context.Context, conn protocol.APIInterface) (*protocol.User, uuid.UUID, error) {

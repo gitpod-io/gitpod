@@ -119,6 +119,46 @@ func TestPersonalAccessToken_UpdateHash(t *testing.T) {
 	})
 }
 
+func TestPersonalAccessToken_Delete(t *testing.T) {
+	conn := dbtest.ConnectForTests(t)
+
+	firstUserId := uuid.New()
+	secondUserId := uuid.New()
+
+	token := dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{UserID: firstUserId})
+	token2 := dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{UserID: secondUserId})
+
+	tokenEntries := []db.PersonalAccessToken{token, token2}
+
+	dbtest.CreatePersonalAccessTokenRecords(t, conn, tokenEntries...)
+
+	t.Run("not matching user", func(t *testing.T) {
+		count, err := db.DeletePersonalAccessTokenForUser(context.Background(), conn, token.ID, token2.UserID)
+		require.Error(t, err, db.ErrorNotFound)
+		require.Equal(t, int64(0), count)
+	})
+
+	t.Run("not matching token", func(t *testing.T) {
+		count, err := db.DeletePersonalAccessTokenForUser(context.Background(), conn, token2.ID, token.UserID)
+		require.Error(t, err, db.ErrorNotFound)
+		require.Equal(t, int64(0), count)
+	})
+
+	t.Run("both token and user don't exist in the DB", func(t *testing.T) {
+		count, err := db.DeletePersonalAccessTokenForUser(context.Background(), conn, uuid.New(), uuid.New())
+		require.Error(t, err, db.ErrorNotFound)
+		require.Equal(t, int64(0), count)
+	})
+
+	t.Run("valid", func(t *testing.T) {
+		count, err := db.DeletePersonalAccessTokenForUser(context.Background(), conn, token.ID, token.UserID)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), count)
+		_, err = db.GetPersonalAccessTokenForUser(context.Background(), conn, token.ID, token.UserID)
+		require.Error(t, err, db.ErrorNotFound)
+	})
+}
+
 func TestListPersonalAccessTokensForUser(t *testing.T) {
 	ctx := context.Background()
 	conn := dbtest.ConnectForTests(t)

@@ -513,16 +513,31 @@ func TestTokensService_DeletePersonalAccessToken(t *testing.T) {
 		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
-	t.Run("unimplemented when feature flag enabled", func(t *testing.T) {
-		serverMock, _, client := setupTokensService(t, withTokenFeatureEnabled)
+	t.Run("delete token", func(t *testing.T) {
+		serverMock, dbConn, client := setupTokensService(t, withTokenFeatureEnabled)
 
-		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
+		tokens := dbtest.CreatePersonalAccessTokenRecords(t, dbConn,
+			dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{
+				UserID: uuid.MustParse(user.ID),
+			}),
+		)
 
-		_, err := client.DeletePersonalAccessToken(context.Background(), connect.NewRequest(&v1.DeletePersonalAccessTokenRequest{
-			Id: uuid.New().String(),
+		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil).Times(3)
+
+		_, err := client.GetPersonalAccessToken(context.Background(), connect.NewRequest(&v1.GetPersonalAccessTokenRequest{
+			Id: tokens[0].ID.String(),
 		}))
+		require.NoError(t, err)
 
-		require.Equal(t, connect.CodeUnimplemented, connect.CodeOf(err))
+		_, err = client.DeletePersonalAccessToken(context.Background(), connect.NewRequest(&v1.DeletePersonalAccessTokenRequest{
+			Id: tokens[0].ID.String(),
+		}))
+		require.NoError(t, err)
+
+		_, err = client.GetPersonalAccessToken(context.Background(), connect.NewRequest(&v1.GetPersonalAccessTokenRequest{
+			Id: tokens[0].ID.String(),
+		}))
+		require.Error(t, err, fmt.Errorf("Token with ID %s does not exist: not found", tokens[0].ID.String()))
 	})
 }
 
@@ -578,7 +593,7 @@ func TestTokensService_Workflow(t *testing.T) {
 	_, err = client.DeletePersonalAccessToken(ctx, connect.NewRequest(&v1.DeletePersonalAccessTokenRequest{
 		Id: secondTokenResponse.Msg.GetToken().GetId(),
 	}))
-	require.Error(t, err, "currently unimplemented")
+	require.NoError(t, err)
 }
 
 func setupTokensService(t *testing.T, expClient experiments.Client) (*protocol.MockAPIInterface, *gorm.DB, v1connect.TokensServiceClient) {
