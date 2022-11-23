@@ -72,7 +72,7 @@ func TestDotfiles(t *testing.T) {
 						"scope": ["function:getToken", "function:openPort", "function:getOpenPorts", "function:guessGitTokenScopes", "getWorkspace", "resource:token::*::get"],
 						"expiryDate": "2022-10-26T10:38:05.232Z",
 						"reuse": 4
-					}]`, tokenId, getHostUrl(ctx, t, cfg.Client())),
+					}]`, tokenId, getHostUrl(ctx, t, cfg.Client(), cfg.Namespace())),
 				},
 			)
 
@@ -129,9 +129,9 @@ func TestDotfiles(t *testing.T) {
 	testEnv.Test(t, f)
 }
 
-func getHostUrl(ctx context.Context, t *testing.T, k8sClient klient.Client) string {
+func getHostUrl(ctx context.Context, t *testing.T, k8sClient klient.Client, namespace string) string {
 	var configmap corev1.ConfigMap
-	if err := k8sClient.Resources().Get(ctx, "server-config", "default", &configmap); err != nil {
+	if err := k8sClient.Resources().Get(ctx, "server-config", namespace, &configmap); err != nil {
 		t.Fatal(err)
 	}
 
