@@ -38,17 +38,32 @@ function ListAccessTokensView() {
     }, []);
 
     return (
-        <div>
-            <ul>
-                {tokens.map((t: PersonalAccessToken) => {
-                    return (
-                        <li>
-                            {t.id} - {t.name} - {t.value}
-                        </li>
-                    );
-                })}
-            </ul>
-        </div>
+        <>
+            <div className="flex items-start sm:justify-between mb-2">
+                <div>
+                    <h3>Personal Access Tokens</h3>
+                    <h2 className="text-gray-500">Create or regenerate active personal access tokens.</h2>
+                </div>
+            </div>
+            <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full py-28 flex flex-col items-center">
+                <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Personal Access Tokens (PAT)</h3>
+                <p className="text-center pb-6 text-gray-500 text-base w-96">
+                    Generate a personal access token (PAT) for applications that need access to the Gitpod API.{" "}
+                </p>
+                <button>New Personal Access Token</button>
+            </div>
+            {tokens.length > 0 && (
+                <ul>
+                    {tokens.map((t: PersonalAccessToken) => {
+                        return (
+                            <li>
+                                {t.id} - {t.name} - {t.value}
+                            </li>
+                        );
+                    })}
+                </ul>
+            )}
+        </>
     );
 }
 
