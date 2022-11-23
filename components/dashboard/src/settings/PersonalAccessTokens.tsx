@@ -20,10 +20,7 @@ function PersonalAccessTokens() {
 
     return (
         <div>
-            <PageWithSettingsSubMenu
-                title="Preferences"
-                subtitle="Manage your Personal Access Tokens to access the Gitpod API."
-            >
+            <PageWithSettingsSubMenu title="Access Tokens" subtitle="Manage your personal access tokens.">
                 <ListAccessTokensView />
             </PageWithSettingsSubMenu>
         </div>
