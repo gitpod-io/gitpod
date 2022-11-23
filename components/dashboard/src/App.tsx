@@ -37,6 +37,7 @@ import {
     settingsPathSSHKeys,
     usagePathMain,
     settingsPathPersonalAccessTokens,
+    settingsPathPersonalAccessTokenCreate,
 } from "./settings/settings.routes";
 import {
     projectsPathInstallGitHubApp,
@@ -55,7 +56,7 @@ import { BlockedRepositories } from "./admin/BlockedRepositories";
 import { AppNotifications } from "./AppNotifications";
 import { publicApiTeamsToProtocol, teamsService } from "./service/public-api";
 import { FeatureFlagContext } from "./contexts/FeatureFlagContext";
-import PersonalAccessTokens from "./settings/PersonalAccessTokens";
+import PersonalAccessTokens, { PersonalAccessTokenCreateView } from "./settings/PersonalAccessTokens";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "./workspaces/Workspaces"));
@@ -404,6 +405,11 @@ function App() {
                     <Route path={settingsPathVariables} exact component={EnvironmentVariables} />
                     <Route path={settingsPathSSHKeys} exact component={SSHKeys} />
                     <Route path={settingsPathPersonalAccessTokens} exact component={PersonalAccessTokens} />
+                    <Route
+                        path={settingsPathPersonalAccessTokenCreate}
+                        exact
+                        component={PersonalAccessTokenCreateView}
+                    />
                     <Route path={settingsPathPreferences} exact component={Preferences} />
                     <Route path={projectsPathInstallGitHubApp} exact component={InstallGitHubApp} />
                     <Route path="/from-referrer" exact component={FromReferrer} />

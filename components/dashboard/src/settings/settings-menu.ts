@@ -17,6 +17,7 @@ import {
     settingsPathVariables,
     settingsPathSSHKeys,
     settingsPathPersonalAccessTokens,
+    settingsPathPersonalAccessTokenCreate,
 } from "./settings.routes";
 
 export default function getSettingsMenu(params: {
@@ -37,7 +38,7 @@ export default function getSettingsMenu(params: {
             ? [
                   {
                       title: "Access Tokens",
-                      link: [settingsPathPersonalAccessTokens],
+                      link: [settingsPathPersonalAccessTokens, settingsPathPersonalAccessTokenCreate],
                   },
               ]
             : []),

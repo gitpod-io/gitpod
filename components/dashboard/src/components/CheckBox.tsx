@@ -10,6 +10,7 @@ function CheckBox(props: {
     desc: string | React.ReactNode;
     checked: boolean;
     disabled?: boolean;
+    className?: string;
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
     const inputProps: React.InputHTMLAttributes<HTMLInputElement> = {
@@ -20,11 +21,12 @@ function CheckBox(props: {
     if (props.name) {
         inputProps.name = props.name;
     }
+    const className = props.className ?? "mt-4";
 
     const checkboxId = `checkbox-${props.title}-${String(Math.random())}`;
 
     return (
-        <div className="flex mt-4 max-w-2xl">
+        <div className={"flex max-w-2xl" + className}>
             <input
                 className={
                     "h-4 w-4 focus:ring-0 mt-1 rounded cursor-pointer bg-transparent border-2 dark:filter-invert border-gray-800 dark:border-gray-900 focus:border-gray-900 dark:focus:border-gray-800 " +

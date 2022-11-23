@@ -79,3 +79,15 @@ export function inResource(pathname: string, resources: string[]): boolean {
     // E.g. "api/userspace/resource" path is a part of resource "api/userspace"
     return resources.map((res) => trimmedResource.startsWith(trimResource(res))).some(Boolean);
 }
+
+export function copyToClipboard(text: string) {
+    const el = document.createElement("textarea");
+    el.value = text;
+    document.body.appendChild(el);
+    el.select();
+    try {
+        document.execCommand("copy");
+    } finally {
+        document.body.removeChild(el);
+    }
+}
