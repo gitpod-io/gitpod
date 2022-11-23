@@ -569,7 +569,7 @@ func TestTokensService_Workflow(t *testing.T) {
 		Id:             secondTokenResponse.Msg.GetToken().GetId(),
 		ExpirationTime: timestamppb.New(now.Add(2 * time.Hour)),
 	}))
-	require.Error(t, err, "currently unimplemented")
+	require.NoError(t, err)
 
 	response, err = client.ListPersonalAccessTokens(ctx, connect.NewRequest(&v1.ListPersonalAccessTokensRequest{}))
 	require.NoError(t, err)
