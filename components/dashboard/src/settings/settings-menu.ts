@@ -36,7 +36,7 @@ export default function getSettingsMenu(params: {
         ...(params.enablePersonalAccessTokens
             ? [
                   {
-                      title: "Personal Access Tokens",
+                      title: "Access Tokens",
                       link: [settingsPathPersonalAccessTokens],
                   },
               ]

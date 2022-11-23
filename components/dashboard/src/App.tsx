@@ -401,9 +401,9 @@ function App() {
                     <Route path={settingsPathNotifications} exact component={Notifications} />
                     <Route path={settingsPathBilling} exact component={Billing} />
                     <Route path={settingsPathPlans} exact component={Plans} />
-                    <Route path={settingsPathPersonalAccessTokens} exact component={PersonalAccessTokens} />
                     <Route path={settingsPathVariables} exact component={EnvironmentVariables} />
                     <Route path={settingsPathSSHKeys} exact component={SSHKeys} />
+                    <Route path={settingsPathPersonalAccessTokens} exact component={PersonalAccessTokens} />
                     <Route path={settingsPathPreferences} exact component={Preferences} />
                     <Route path={projectsPathInstallGitHubApp} exact component={InstallGitHubApp} />
                     <Route path="/from-referrer" exact component={FromReferrer} />
