@@ -50,6 +50,7 @@ import { WsConnectionHandler } from "./express/ws-connection-handler";
 import { InstallationAdminController } from "./installation-admin/installation-admin-controller";
 import { WebhookEventGarbageCollector } from "./projects/webhook-event-garbage-collector";
 import { LivenessController } from "./liveness/liveness-controller";
+import { FeatureFlagController } from "./feature-flag/featureflag-controller";
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -67,6 +68,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(LocalMessageBroker) protected readonly localMessageBroker: LocalMessageBroker;
     @inject(WorkspaceDownloadService) protected readonly workspaceDownloadService: WorkspaceDownloadService;
     @inject(LivenessController) protected readonly livenessController: LivenessController;
+    @inject(FeatureFlagController) protected readonly featureFlagController: FeatureFlagController;
     @inject(MonitoringEndpointsApp) protected readonly monitoringEndpointsApp: MonitoringEndpointsApp;
     @inject(CodeSyncService) private readonly codeSyncService: CodeSyncService;
     @inject(HeadlessLogController) protected readonly headlessLogController: HeadlessLogController;
@@ -306,6 +308,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             res.send(this.config.version);
         });
         app.use(this.oauthController.oauthRouter);
+        app.use("/feature-flags", this.featureFlagController.apiRouter);
     }
 
     public async start(port: number) {
