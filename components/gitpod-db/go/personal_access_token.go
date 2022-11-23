@@ -119,6 +119,34 @@ func UpdatePersonalAccessTokenHash(ctx context.Context, conn *gorm.DB, tokenID u
 	return GetPersonalAccessTokenForUser(ctx, conn, tokenID, userID)
 }
 
+func DeletePersonalAccessTokenForUser(ctx context.Context, conn *gorm.DB, tokenID uuid.UUID, userID uuid.UUID) (int64, error) {
+	if tokenID == uuid.Nil {
+		return 0, fmt.Errorf("Invalid or empty tokenID")
+	}
+
+	if userID == uuid.Nil {
+		return 0, fmt.Errorf("Invalid or empty userID")
+	}
+
+	db := conn.WithContext(ctx)
+
+	db = db.
+		Table((&PersonalAccessToken{}).TableName()).
+		Where("id = ?", tokenID).
+		Where("userId = ?", userID).
+		Where("deleted = ?", 0).
+		Update("deleted", 1)
+	if db.Error != nil {
+		return 0, fmt.Errorf("failed to delete token (ID: %s): %v", tokenID.String(), db.Error)
+	}
+
+	if db.RowsAffected == 0 {
+		return 0, fmt.Errorf("token (ID: %s) for user (ID: %s) does not exist: %w", tokenID, userID, ErrorNotFound)
+	}
+
+	return db.RowsAffected, nil
+}
+
 func ListPersonalAccessTokensForUser(ctx context.Context, conn *gorm.DB, userID uuid.UUID, pagination Pagination) (*PaginatedResult[PersonalAccessToken], error) {
 	if userID == uuid.Nil {
 		return nil, fmt.Errorf("user ID is a required argument to list personal access tokens for user, got nil")
