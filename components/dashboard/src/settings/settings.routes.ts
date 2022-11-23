@@ -20,5 +20,6 @@ export const settingsPathTeamsNew = [settingsPathTeams, "new"].join("/");
 
 export const settingsPathVariables = "/variables";
 export const settingsPathPersonalAccessTokens = "/personal-tokens";
+export const settingsPathPersonalAccessTokenCreate = "/personal-tokens/create";
 
 export const settingsPathSSHKeys = "/keys";

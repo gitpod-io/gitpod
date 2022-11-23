@@ -6,49 +6,11 @@
 
 import { useEffect, useState } from "react";
 import Modal from "../components/Modal";
-import Tooltip from "../components/Tooltip";
-import copy from "../images/copy.svg";
 import Alert from "../components/Alert";
 import TabMenuItem from "../components/TabMenuItem";
 import { settingsPathSSHKeys } from "../settings/settings.routes";
 import { getGitpodService } from "../service/service";
-
-function InputWithCopy(props: { value: string; tip?: string; className?: string }) {
-    const [copied, setCopied] = useState<boolean>(false);
-    const copyToClipboard = (text: string) => {
-        const el = document.createElement("textarea");
-        el.value = text;
-        document.body.appendChild(el);
-        el.select();
-        try {
-            document.execCommand("copy");
-        } finally {
-            document.body.removeChild(el);
-        }
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-    const tip = props.tip ?? "Click to copy";
-    return (
-        <div className={`w-full relative ${props.className ?? ""}`}>
-            <input
-                disabled={true}
-                readOnly={true}
-                autoFocus
-                className="w-full pr-8 overscroll-none"
-                type="text"
-                value={props.value}
-            />
-            <div className="cursor-pointer" onClick={() => copyToClipboard(props.value)}>
-                <div className="absolute top-1/3 right-3">
-                    <Tooltip content={copied ? "Copied" : tip}>
-                        <img src={copy} alt="copy icon" title={tip} />
-                    </Tooltip>
-                </div>
-            </div>
-        </div>
-    );
-}
+import { InputWithCopy } from "../components/InputWithCopy";
 
 interface SSHProps {
     workspaceId: string;
