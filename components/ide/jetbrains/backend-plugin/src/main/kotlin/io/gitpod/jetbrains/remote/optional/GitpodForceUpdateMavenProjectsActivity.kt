@@ -11,12 +11,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class GitpodForceUpdateMavenProjectsActivity : StartupActivity.RequiredForSmartMode {
     override fun runActivity(project: Project) {
-        val mavenProjectManager = MavenProjectsManager.getInstance(project)
-
-        if (!mavenProjectManager.isMavenizedProject) return
-
-        mavenProjectManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
-
-        thisLogger().warn("gitpod: Forced the update of Maven Project.")
+        MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
+        thisLogger().warn("gitpod: Forced the update of Maven projects.")
     }
 }

@@ -18,6 +18,7 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.application
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.await
@@ -81,18 +82,24 @@ class GitpodProjectManager(
     private fun configureSdk(sdk: Sdk) {
         application.invokeLaterOnWriteThread {
             application.runWriteAction {
+                var shouldRefreshFileSystem = false
                 val projectRootManager = ProjectRootManager.getInstance(project)
                 if (projectRootManager.projectSdk == null) {
                     projectRootManager.projectSdk = sdk
+                    shouldRefreshFileSystem = true
                     thisLogger().warn("gitpod: '${project.name}' project: SDK was auto preconfigured: $sdk")
                 }
-            }
-        }
-        for (module in ModuleManager.getInstance(project).modules) {
-            ModuleRootModificationUtil.updateModel(module) { m ->
-                if (m.sdk == null) {
-                    m.sdk = sdk
-                    thisLogger().warn("gitpod: '${module.name}' module: SDK was auto preconfigured: $sdk")
+                for (module in ModuleManager.getInstance(project).modules) {
+                    ModuleRootModificationUtil.updateModel(module) { m ->
+                        if (m.sdk == null) {
+                            m.sdk = sdk
+                            shouldRefreshFileSystem = true
+                            thisLogger().warn("gitpod: '${module.name}' module: SDK was auto preconfigured: $sdk")
+                        }
+                    }
+                }
+                if (shouldRefreshFileSystem) {
+                    VirtualFileManager.getInstance().syncRefresh()
                 }
             }
         }
