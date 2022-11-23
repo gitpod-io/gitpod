@@ -289,9 +289,9 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       yq r /tmp/"$NAME"-"$KIND"-overrides.yaml 'data.[config.json]' \
       | jq ".service.address = $WS_DAEMON_PORT" \
       | jq ".daemon.cpulimit.enabled = true" \
-      | jq ".daemon.cpulimit.totalBandwidth = 12" \
-      | jq ".daemon.cpulimit.limit = 2" \
-      | jq ".daemon.cpulimit.burstLimit = 6" > /tmp/"$NAME"-"$KIND"-overrides.json
+      | jq ".daemon.cpulimit.totalBandwidth = \"12\"" \
+      | jq ".daemon.cpulimit.limit = \"2\"" \
+      | jq ".daemon.cpulimit.burstLimit = \"6\"" > /tmp/"$NAME"-"$KIND"-overrides.json
       # Give the port a colon prefix, ("5678" to ":5678")
       # jq would not have it, hence the usage of sed to do the transformation
       PORT_NUM_FORMAT_EXPR="s/\"address\": $WS_DAEMON_PORT/\"address\": \":$WS_DAEMON_PORT\"/"
