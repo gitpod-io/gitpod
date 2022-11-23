@@ -26,7 +26,7 @@ func NewPersonalAccessToken(t *testing.T, record db.PersonalAccessToken) db.Pers
 		UserID:         uuid.New(),
 		Hash:           "some-secure-hash",
 		Name:           "some-name",
-		Scopes:         []string{"read", "write"},
+		Scopes:         []string{"resource:default", "function:*"},
 		ExpirationTime: now.Add(5 * time.Hour),
 		CreatedAt:      now,
 		LastModified:   now,
