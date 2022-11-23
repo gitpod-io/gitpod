@@ -1,6 +1,7 @@
 # Change Log
 
 ## November 2022
+- Truncate branch name on prebuilds page ([#14853](https://github.com/gitpod-io/gitpod/pull/14853)) - [@gtsiolis](https://github.com/gtsiolis)
 - Revert removing the workspace download feature ([#14828](https://github.com/gitpod-io/gitpod/pull/14828)) - [@gtsiolis](https://github.com/gtsiolis)
 - Update usage period date format ([#14827](https://github.com/gitpod-io/gitpod/pull/14827)) - [@gtsiolis](https://github.com/gtsiolis)
 - Update JetBrains IDE images to most recent stable version. ([#14817](https://github.com/gitpod-io/gitpod/pull/14817)) - [@roboquat](https://github.com/roboquat)
