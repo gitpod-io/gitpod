@@ -1,12 +1,12 @@
-#!/bin/bash
+#!/bin/sh
 # Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-set -euo pipefail
+set -euo
 
 # kill background jobs when the script exits
-trap "jobs -p | xargs -r kill" SIGINT SIGTERM EXIT
+trap "jobs -p | xargs -r kill" INT TERM EXIT
 
 # instead put them into /ide-desktop/backend/bin/idea64.vmoptions
 # otherwise JB will complain to a user on each startup
