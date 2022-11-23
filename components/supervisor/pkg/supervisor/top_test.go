@@ -24,17 +24,11 @@ func TestTopServiceHappyPath(t *testing.T) {
 	if topService.data == nil {
 		t.Errorf("topService data should not be nil")
 	}
-	if topService.data.Memory.Used == 0 {
-		t.Errorf("Used Memory should not be zero")
+	if topService.data.Memory == nil {
+		t.Errorf("Memory should not be nil")
 	}
-	if topService.data.Memory.Limit == 0 {
-		t.Errorf("Total Memory should not be zero")
-	}
-	if topService.data.Cpu.Used == 0 {
-		t.Errorf("Used CPU should not be zero")
-	}
-	if topService.data.Cpu.Limit == 0 {
-		t.Errorf("Total CPU should not be zero")
+	if topService.data.Cpu == nil {
+		t.Errorf("CPU should not be nil")
 	}
 }
 
