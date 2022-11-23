@@ -869,12 +869,6 @@ func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan
 
 func prepareIDELaunch(cfg *Config, ideConfig *IDEConfig, childProcEnvvars []string) *exec.Cmd {
 	args := ideConfig.EntrypointArgs
-
-	// Add default args for IDE (not desktop IDE) to be backwards compatible
-	if ideConfig.Entrypoint == "/ide/startup.sh" && len(args) == 0 {
-		args = append(args, "--port", "{IDEPORT}")
-	}
-
 	for i := range args {
 		args[i] = strings.ReplaceAll(args[i], "{IDEPORT}", strconv.Itoa(cfg.IDEPort))
 		args[i] = strings.ReplaceAll(args[i], "{DESKTOPIDEPORT}", strconv.Itoa(desktopIDEPort))

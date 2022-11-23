@@ -1,5 +1,5 @@
 {
-    "entrypoint": "/ide/startup.sh",
+    "entrypoint": "/ide/codehelper",
     "entrypointArgs": [ "--port", "{IDEPORT}", "--host", "0.0.0.0", "--without-connection-token", "--server-data-dir", "/workspace/.vscode-remote" ],
     "readinessProbe": {
         "type": "http",

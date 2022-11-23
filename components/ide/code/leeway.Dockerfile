@@ -94,7 +94,7 @@ FROM scratch
 # copy static web resources in first layer to serve from blobserve
 COPY --from=code_builder --chown=33333:33333 /vscode-web/ /ide/
 COPY --from=code_builder --chown=33333:33333 /vscode-reh-linux-x64/ /ide/
-COPY --chown=33333:33333 startup.sh supervisor-ide-config.json components-ide-code-codehelper--app/codehelper /ide/
+COPY --chown=33333:33333 supervisor-ide-config.json components-ide-code-codehelper--app/codehelper /ide/
 
 ENV GITPOD_ENV_APPEND_PATH=/ide/bin/remote-cli:
 
