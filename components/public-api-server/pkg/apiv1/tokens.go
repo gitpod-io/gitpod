@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 
 	connect "github.com/bufbuild/connect-go"
@@ -45,9 +46,9 @@ type TokensService struct {
 func (s *TokensService) CreatePersonalAccessToken(ctx context.Context, req *connect.Request[v1.CreatePersonalAccessTokenRequest]) (*connect.Response[v1.CreatePersonalAccessTokenResponse], error) {
 	tokenReq := req.Msg.GetToken()
 
-	name := strings.TrimSpace(tokenReq.GetName())
-	if name == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("Token Name is a required parameter."))
+	name, err := validatePersonalAccessTokenName(tokenReq.GetName())
+	if err != nil {
+		return nil, err
 	}
 
 	expiry := tokenReq.GetExpirationTime()
@@ -327,4 +328,22 @@ func personalAccessTokenToAPI(t db.PersonalAccessToken, value string) *v1.Person
 		ExpirationTime: timestamppb.New(t.ExpirationTime),
 		CreatedAt:      timestamppb.New(t.CreatedAt),
 	}
+}
+
+var (
+	// alpha-numeric characters, dashes, underscore, spaces, between 3 and 63 chars
+	personalAccessTokenNameRegex = regexp.MustCompile(`^[a-zA-Z0-9-_ ]{3,63}$`)
+)
+
+func validatePersonalAccessTokenName(name string) (string, error) {
+	trimmed := strings.TrimSpace(name)
+	if trimmed == "" {
+		return "", connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Token Name is a required parameter, but got empty."))
+	}
+
+	if !personalAccessTokenNameRegex.MatchString(trimmed) {
+		return "", connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Token Name is required to match regexp %s.", personalAccessTokenNameRegex.String()))
+	}
+
+	return trimmed, nil
 }

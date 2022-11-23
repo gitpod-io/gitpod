@@ -39,7 +39,8 @@ type PersonalAccessToken struct {
 	// The value property is only populated when the PersonalAccessToken is first created, and never again.
 	// Read only.
 	Value string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
-	// name is the name of the token for humans, set by the user
+	// name is the name of the token for humans, set by the user.
+	// Must match regexp ^[a-zA-Z0-9-_ ]{3,63}$
 	Name string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	// expiration_time is the time when the token expires
 	// Read only.

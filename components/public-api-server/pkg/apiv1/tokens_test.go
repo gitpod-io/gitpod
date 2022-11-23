@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -72,6 +73,21 @@ func TestTokensService_CreatePersonalAccessTokenWithoutFeatureFlag(t *testing.T)
 			Token: &v1.PersonalAccessToken{},
 		}))
 		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("invalid argument when name does not match required regex", func(t *testing.T) {
+		_, _, client := setupTokensService(t, withTokenFeatureDisabled)
+
+		names := []string{"a", "ab", strings.Repeat("a", 64), "!#$!%"}
+
+		for _, name := range names {
+			_, err := client.CreatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.CreatePersonalAccessTokenRequest{
+				Token: &v1.PersonalAccessToken{
+					Name: name,
+				},
+			}))
+			require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+		}
 	})
 
 	t.Run("invalid argument when expiration time is unspecified", func(t *testing.T) {
