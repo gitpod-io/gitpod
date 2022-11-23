@@ -41,6 +41,8 @@ var (
 	}
 
 	signer = auth.NewHS256Signer([]byte("my-secret"))
+
+	teams = []*protocol.Team{newTeam(&protocol.Team{})}
 )
 
 func TestTokensService_CreatePersonalAccessTokenWithoutFeatureFlag(t *testing.T) {
@@ -50,6 +52,7 @@ func TestTokensService_CreatePersonalAccessTokenWithoutFeatureFlag(t *testing.T)
 		serverMock, _, client := setupTokensService(t, withTokenFeatureDisabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
+		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
 
 		_, err := client.CreatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.CreatePersonalAccessTokenRequest{
 			Token: &v1.PersonalAccessToken{
@@ -211,6 +214,7 @@ func TestTokensService_GetPersonalAccessToken(t *testing.T) {
 		)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
+		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
 
 		_, err := client.GetPersonalAccessToken(context.Background(), connect.NewRequest(&v1.GetPersonalAccessTokenRequest{
 			Id: tokens[0].ID.String(),
@@ -228,6 +232,7 @@ func TestTokensService_ListPersonalAccessTokens(t *testing.T) {
 		serverMock, _, client := setupTokensService(t, withTokenFeatureDisabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
+		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
 
 		_, err := client.ListPersonalAccessTokens(context.Background(), connect.NewRequest(&v1.ListPersonalAccessTokensRequest{}))
 
@@ -338,6 +343,7 @@ func TestTokensService_RegeneratePersonalAccessToken(t *testing.T) {
 		serverMock, _, client := setupTokensService(t, withTokenFeatureDisabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
+		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
 
 		_, err := client.RegeneratePersonalAccessToken(context.Background(), connect.NewRequest(&v1.RegeneratePersonalAccessTokenRequest{
 			Id:             uuid.New().String(),
@@ -433,6 +439,7 @@ func TestTokensService_UpdatePersonalAccessToken(t *testing.T) {
 		serverMock, _, client := setupTokensService(t, withTokenFeatureDisabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
+		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
 
 		_, err := client.UpdatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.UpdatePersonalAccessTokenRequest{
 			Token: &v1.PersonalAccessToken{
@@ -486,6 +493,7 @@ func TestTokensService_DeletePersonalAccessToken(t *testing.T) {
 		serverMock, _, client := setupTokensService(t, withTokenFeatureDisabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
+		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
 
 		_, err := client.DeletePersonalAccessToken(context.Background(), connect.NewRequest(&v1.DeletePersonalAccessTokenRequest{
 			Id: uuid.New().String(),
