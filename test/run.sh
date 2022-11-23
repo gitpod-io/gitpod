@@ -55,7 +55,7 @@ esac
 
 args=()
 args+=( "-kubeconfig=${KUBECONFIG:-/home/gitpod/.kube/config}" )
-args+=( "-namespace=default" )
+args+=( "-namespace=${NAMESPACE:-default}" )
 args+=( "-timeout=60m" )
 args+=( "-p=2" )
 
