@@ -5,4 +5,4 @@
 FROM scratch
 ARG SUPERVISOR_IDE_CONFIG
 COPY --chown=33333:33333 ${SUPERVISOR_IDE_CONFIG} /ide-desktop/supervisor-ide-config.json
-COPY --chown=33333:33333 startup.sh components-ide-code-desktop-status--app/status /ide-desktop/
+COPY --chown=33333:33333 components-ide-code-desktop-status--app/status /ide-desktop/
