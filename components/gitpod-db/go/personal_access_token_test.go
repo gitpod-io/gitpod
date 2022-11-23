@@ -61,7 +61,6 @@ func TestPersonalAccessToken_Create(t *testing.T) {
 		UserID:         uuid.New(),
 		Hash:           "another-secure-hash",
 		Name:           "another-name",
-		Description:    "another-description",
 		Scopes:         []string{"read", "write"},
 		ExpirationTime: time.Now().Add(5),
 		CreatedAt:      time.Now(),
@@ -112,7 +111,6 @@ func TestPersonalAccessToken_UpdateHash(t *testing.T) {
 		require.Equal(t, token.UserID, returned.UserID)
 		require.Equal(t, newHash, returned.Hash)
 		require.Equal(t, token.Name, returned.Name)
-		require.Equal(t, token.Description, returned.Description)
 		require.Equal(t, token.Scopes, returned.Scopes)
 		require.Equal(t, newExpirationTime, returned.ExpirationTime)
 		require.Equal(t, token.CreatedAt, returned.CreatedAt)

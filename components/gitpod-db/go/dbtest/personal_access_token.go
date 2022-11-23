@@ -26,7 +26,6 @@ func NewPersonalAccessToken(t *testing.T, record db.PersonalAccessToken) db.Pers
 		UserID:         uuid.New(),
 		Hash:           "some-secure-hash",
 		Name:           "some-name",
-		Description:    "some-description",
 		Scopes:         []string{"read", "write"},
 		ExpirationTime: now.Add(5 * time.Hour),
 		CreatedAt:      now,
@@ -47,10 +46,6 @@ func NewPersonalAccessToken(t *testing.T, record db.PersonalAccessToken) db.Pers
 
 	if record.Name != "" {
 		result.Name = record.Name
-	}
-
-	if record.Description != "" {
-		result.Description = record.Description
 	}
 
 	if len(record.Scopes) == 0 {

@@ -22,20 +22,17 @@ message PersonalAccessToken {
     // name is the name of the token for humans, set by the user
     string name = 3;
 
-    // description is the description of the token set by the user
-    string description = 4;
-
     // expiration_time is the time when the token expires
     // Read only.
-    google.protobuf.Timestamp expiration_time = 5;
+    google.protobuf.Timestamp expiration_time = 4;
 
     // scopes are the permission scopes attached to this token.
     // By default, no scopes are attached and therefore no access is granted to this token.
     // Specifying '*' grants all permissions the owner of the token has.
-    repeated string scopes = 6;
+    repeated string scopes = 5;
 
     // created_time is the time when the token was first created.
-    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp created_at = 6;
 }
 
 service TokensService {
