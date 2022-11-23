@@ -37,7 +37,8 @@ export class PersonalAccessToken extends Message<PersonalAccessToken> {
   value = "";
 
   /**
-   * name is the name of the token for humans, set by the user
+   * name is the name of the token for humans, set by the user.
+   * Must match regexp ^[a-zA-Z0-9-_ ]{3,63}$
    *
    * @generated from field: string name = 3;
    */
