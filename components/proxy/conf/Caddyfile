@@ -235,10 +235,30 @@ https://{$GITPOD_DOMAIN} {
 			base_domain {$GITPOD_DOMAIN}
 		}
 
-		# note: no compression, as that breaks streaming for headless logs
+		forward_auth server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+			uri /feature-flags/slow-database
+			copy_headers X-Gitpod-Slow-Database
+		}
+
+		@slow {
+			header X-Gitpod-Slow-Database "true"
+		}
+
+		@fast {
+			not header X-Gitpod-Slow-Database "true"
+		}
 
 		uri strip_prefix /api
-		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+
+		reverse_proxy @fast server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+			import upstream_headers
+			import upstream_connection
+
+			# required for smooth streaming of terminal logs
+			flush_interval -1
+		}
+
+		reverse_proxy @slow slow-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
 			import upstream_headers
 			import upstream_connection
 
