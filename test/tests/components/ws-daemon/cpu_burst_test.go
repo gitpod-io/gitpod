@@ -26,8 +26,8 @@ import (
 type DaemonConfig struct {
 	CpuLimitConfig struct {
 		Enabled    bool  `json:"enabled"`
-		Limit      int64 `json:"limit"`
-		BurstLimit int64 `json:"burstLimit"`
+		Limit      int64 `json:"limit,string"`
+		BurstLimit int64 `json:"burstLimit,string"`
 	} `json:"cpuLimit"`
 }
 
