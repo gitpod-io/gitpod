@@ -206,7 +206,9 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	clog.Info("StartWorkspace")
 	reqs, _ := protojson.Marshal(req)
 	safeReqs, _ := log.RedactJSON(reqs)
-	clog.WithField("req", string(safeReqs)).Debug("StartWorkspace request received")
+	safeReqsLog := make(map[string]interface{})
+	_ = json.Unmarshal(safeReqs, &safeReqsLog)
+	clog.WithFields(safeReqsLog).Debug("StartWorkspace request received")
 
 	// Make sure the objects we're about to create do not exist already
 	switch req.Type {
@@ -1386,12 +1388,16 @@ func (m *Manager) onChange(ctx context.Context, status *api.WorkspaceStatus) {
 	if status.Conditions.Failed != "" {
 		status, _ := protojson.Marshal(status)
 		safeStatus, _ := log.RedactJSON(status)
-		clog.WithField("status", string(safeStatus)).Error("workspace failed")
+		safeStatusLog := make(map[string]interface{})
+		_ = json.Unmarshal(safeStatus, &safeStatusLog)
+		clog.WithFields(safeStatusLog).Error("workspace failed")
 	}
 	if status.Phase == 0 {
 		status, _ := protojson.Marshal(status)
 		safeStatus, _ := log.RedactJSON(status)
-		clog.WithField("status", string(safeStatus)).Error("workspace in UNKNOWN phase")
+		safeStatusLog := make(map[string]interface{})
+		_ = json.Unmarshal(safeStatus, &safeStatusLog)
+		clog.WithFields(safeStatusLog).Error("workspace in UNKNOWN phase")
 	}
 }
 
