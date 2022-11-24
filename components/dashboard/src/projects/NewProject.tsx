@@ -21,7 +21,12 @@ import { trackEvent } from "../Analytics";
 import exclamation from "../images/exclamation.svg";
 import ErrorMessage from "../components/ErrorMessage";
 import Spinner from "../icons/Spinner.svg";
-import { publicApiTeamsToProtocol, publicApiTeamToProtocol, teamsService } from "../service/public-api";
+import {
+    publicApiTeamMembersToProtocol,
+    publicApiTeamsToProtocol,
+    publicApiTeamToProtocol,
+    teamsService,
+} from "../service/public-api";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { ConnectError } from "@bufbuild/connect-web";
 
@@ -29,6 +34,7 @@ export default function NewProject() {
     const location = useLocation();
     const { teams } = useContext(TeamsContext);
     const { user, setUser } = useContext(UserContext);
+    const { usePublicApiTeamsService } = useContext(FeatureFlagContext);
 
     const [selectedProviderHost, setSelectedProviderHost] = useState<string | undefined>();
     const [reposInAccounts, setReposInAccounts] = useState<ProviderRepository[]>([]);
@@ -113,7 +119,11 @@ export default function NewProject() {
             await Promise.all(
                 teams.map(async (team) => {
                     try {
-                        members[team.id] = await getGitpodService().server.getTeamMembers(team.id);
+                        members[team.id] = usePublicApiTeamsService
+                            ? await publicApiTeamMembersToProtocol(
+                                  (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
+                              )
+                            : await getGitpodService().server.getTeamMembers(team.id);
                     } catch (error) {
                         console.error("Could not get members of team", team, error);
                     }
