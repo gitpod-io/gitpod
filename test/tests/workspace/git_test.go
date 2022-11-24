@@ -136,7 +136,7 @@ func TestGitActions(t *testing.T) {
 				FF   string
 			}{
 				{Name: "classic"},
-				{Name: "pvc", FF: "persistent_volume_claim"},
+				// {Name: "pvc", FF: "persistent_volume_claim"},
 			}
 
 			for _, ff := range ffs {
