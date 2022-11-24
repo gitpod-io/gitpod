@@ -38,6 +38,7 @@ import {
     usagePathMain,
     settingsPathPersonalAccessTokens,
     settingsPathPersonalAccessTokenCreate,
+    settingsPathPersonalAccessTokenEdit,
 } from "./settings/settings.routes";
 import {
     projectsPathInstallGitHubApp,
@@ -407,6 +408,11 @@ function App() {
                     <Route path={settingsPathPersonalAccessTokens} exact component={PersonalAccessTokens} />
                     <Route
                         path={settingsPathPersonalAccessTokenCreate}
+                        exact
+                        component={PersonalAccessTokenCreateView}
+                    />
+                    <Route
+                        path={settingsPathPersonalAccessTokenEdit + "/:tokenId"}
                         exact
                         component={PersonalAccessTokenCreateView}
                     />
