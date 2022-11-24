@@ -20,12 +20,17 @@ import ContextMenu from "../components/ContextMenu";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { prebuildStatusIcon } from "./Prebuilds";
 import Alert from "../components/Alert";
+import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
+import { listAllProjects } from "../service/public-api";
+import { UserContext } from "../user-context";
 
 export default function () {
     const location = useLocation();
     const history = useHistory();
 
     const { teams } = useContext(TeamsContext);
+    const { user } = useContext(UserContext);
+    const { usePublicApiProjectsService } = useContext(FeatureFlagContext);
     const team = getCurrentTeam(location, teams);
     const [projects, setProjects] = useState<Project[]>([]);
     const [lastPrebuilds, setLastPrebuilds] = useState<Map<string, PrebuildWithStatus>>(new Map());
@@ -42,9 +47,17 @@ export default function () {
         if (!teams) {
             return;
         }
-        const infos = !!team
-            ? await getGitpodService().server.getTeamProjects(team.id)
-            : await getGitpodService().server.getUserProjects();
+
+        let infos: Project[];
+        if (!!team) {
+            infos = usePublicApiProjectsService
+                ? await listAllProjects({ teamId: team.id })
+                : await getGitpodService().server.getTeamProjects(team.id);
+        } else {
+            infos = usePublicApiProjectsService
+                ? await listAllProjects({ userId: user?.id })
+                : await getGitpodService().server.getUserProjects();
+        }
         setProjects(infos);
 
         const map = new Map();

@@ -5,7 +5,7 @@
  */
 
 import dayjs from "dayjs";
-import { PrebuildWithStatus } from "@gitpod/gitpod-protocol";
+import { PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { useHistory, useLocation, useRouteMatch } from "react-router";
 import Header from "../components/Header";
@@ -14,12 +14,17 @@ import Spinner from "../icons/Spinner.svg";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
 import { shortCommitMessage } from "./render-utils";
+import { listAllProjects } from "../service/public-api";
+import { UserContext } from "../user-context";
+import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 
 export default function () {
     const history = useHistory();
     const location = useLocation();
 
     const { teams } = useContext(TeamsContext);
+    const { user } = useContext(UserContext);
+    const { usePublicApiProjectsService } = useContext(FeatureFlagContext);
     const team = getCurrentTeam(location, teams);
 
     const match = useRouteMatch<{ team: string; project: string; prebuildId: string }>(
@@ -37,9 +42,16 @@ export default function () {
             return;
         }
         (async () => {
-            const projects = !!team
-                ? await getGitpodService().server.getTeamProjects(team.id)
-                : await getGitpodService().server.getUserProjects();
+            let projects: Project[];
+            if (!!team) {
+                projects = usePublicApiProjectsService
+                    ? await listAllProjects({ teamId: team.id })
+                    : await getGitpodService().server.getTeamProjects(team.id);
+            } else {
+                projects = usePublicApiProjectsService
+                    ? await listAllProjects({ userId: user?.id })
+                    : await getGitpodService().server.getUserProjects();
+            }
 
             const project =
                 projectSlug && projects.find((p) => (!!p.slug ? p.slug === projectSlug : p.name === projectSlug));
