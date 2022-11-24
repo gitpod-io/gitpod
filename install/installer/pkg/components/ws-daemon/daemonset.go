@@ -290,6 +290,9 @@ fi
 					common.ProxyEnv(&ctx.Config),
 				)),
 				ImagePullPolicy: corev1.PullIfNotPresent,
+				SecurityContext: &corev1.SecurityContext{
+					AllowPrivilegeEscalation: pointer.Bool(false),
+				},
 				Lifecycle: &corev1.Lifecycle{
 					PreStop: &corev1.LifecycleHandler{
 						Exec: &corev1.ExecAction{

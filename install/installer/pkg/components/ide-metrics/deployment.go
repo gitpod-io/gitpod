@@ -108,7 +108,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Name:          PortName,
 							}},
 							SecurityContext: &corev1.SecurityContext{
-								Privileged: pointer.Bool(false),
+								Privileged:               pointer.Bool(false),
+								AllowPrivilegeEscalation: pointer.Bool(false),
 							},
 							Env:          env,
 							VolumeMounts: volumeMounts,

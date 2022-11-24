@@ -68,6 +68,9 @@ func cronjob(ctx *common.RenderContext) ([]runtime.Object, error) {
 										Args: []string{
 											"send",
 										},
+										SecurityContext: &v1.SecurityContext{
+											AllowPrivilegeEscalation: pointer.Bool(false),
+										},
 										Env: []v1.EnvVar{
 											{
 												Name:  "GITPOD_INSTALLATION_VERSION",

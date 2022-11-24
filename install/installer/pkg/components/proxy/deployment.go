@@ -156,6 +156,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						RestartPolicy:                 "Always",
 						TerminationGracePeriodSeconds: pointer.Int64(30),
 						SecurityContext: &corev1.PodSecurityContext{
+
 							RunAsNonRoot: pointer.Bool(false),
 						},
 						Volumes: volumes,
@@ -228,7 +229,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Protocol:      *common.TCPProtocol,
 							}, prometheusPort},
 							SecurityContext: &corev1.SecurityContext{
-								Privileged: pointer.Bool(false),
+								Privileged:               pointer.Bool(false),
+								AllowPrivilegeEscalation: pointer.Bool(false),
 							},
 							ReadinessProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{

@@ -414,8 +414,9 @@ func DatabaseWaiterContainer(ctx *RenderContext) *corev1.Container {
 			"database",
 		},
 		SecurityContext: &corev1.SecurityContext{
-			Privileged: pointer.Bool(false),
-			RunAsUser:  pointer.Int64(31001),
+			Privileged:               pointer.Bool(false),
+			AllowPrivilegeEscalation: pointer.Bool(false),
+			RunAsUser:                pointer.Int64(31001),
 		},
 		Env: MergeEnv(
 			DatabaseEnv(&ctx.Config),
@@ -433,8 +434,9 @@ func MessageBusWaiterContainer(ctx *RenderContext) *corev1.Container {
 			"messagebus",
 		},
 		SecurityContext: &corev1.SecurityContext{
-			Privileged: pointer.Bool(false),
-			RunAsUser:  pointer.Int64(31001),
+			Privileged:               pointer.Bool(false),
+			AllowPrivilegeEscalation: pointer.Bool(false),
+			RunAsUser:                pointer.Int64(31001),
 		},
 		Env: MergeEnv(
 			MessageBusEnv(&ctx.Config),
@@ -478,9 +480,10 @@ func KubeRBACProxyContainerWithConfig(ctx *RenderContext) *corev1.Container {
 		}},
 		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 		SecurityContext: &corev1.SecurityContext{
-			RunAsUser:    pointer.Int64(65532),
-			RunAsGroup:   pointer.Int64(65532),
-			RunAsNonRoot: pointer.Bool(true),
+			AllowPrivilegeEscalation: pointer.Bool(false),
+			RunAsUser:                pointer.Int64(65532),
+			RunAsGroup:               pointer.Int64(65532),
+			RunAsNonRoot:             pointer.Bool(true),
 		},
 	}
 }

@@ -230,8 +230,9 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							HostPort:      ServicePort,
 						}},
 						SecurityContext: &corev1.SecurityContext{
-							Privileged: pointer.Bool(false),
-							RunAsUser:  pointer.Int64(1000),
+							Privileged:               pointer.Bool(false),
+							AllowPrivilegeEscalation: pointer.Bool(false),
+							RunAsUser:                pointer.Int64(1000),
 						},
 						Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 							common.DefaultEnv(&ctx.Config),

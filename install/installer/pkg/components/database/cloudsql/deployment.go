@@ -67,8 +67,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Containers: []corev1.Container{{
 							Name: "cloud-sql-proxy",
 							SecurityContext: &corev1.SecurityContext{
-								Privileged:   pointer.Bool(false),
-								RunAsNonRoot: pointer.Bool(false),
+								Privileged:               pointer.Bool(false),
+								RunAsNonRoot:             pointer.Bool(false),
+								AllowPrivilegeEscalation: pointer.Bool(false),
 							},
 							Image: ctx.ImageName(ImageRepo, ImageName, ImageVersion),
 							Command: []string{

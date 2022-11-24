@@ -58,6 +58,9 @@ func job(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Env: common.MergeEnv(
 							common.DatabaseEnv(&ctx.Config),
 						),
+						SecurityContext: &corev1.SecurityContext{
+							AllowPrivilegeEscalation: pointer.Bool(false),
+						},
 						Command: []string{
 							"sh",
 							"-c",
