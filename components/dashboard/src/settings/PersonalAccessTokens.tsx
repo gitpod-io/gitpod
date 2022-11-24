@@ -18,6 +18,7 @@ import { Timestamp } from "@bufbuild/protobuf";
 import Alert from "../components/Alert";
 import { InputWithCopy } from "../components/InputWithCopy";
 import { copyToClipboard } from "../utils";
+import TokenEntry from "./TokenEntry";
 
 function PersonalAccessTokens() {
     const { enablePersonalAccessTokens } = useContext(FeatureFlagContext);
@@ -197,14 +198,16 @@ function ListAccessTokensView() {
 
     return (
         <>
-            <div className="flex items-center sm:justify-between mb-2">
+            <div className="flex items-center sm:justify-between mb-4">
                 <div>
                     <h3>Personal Access Tokens</h3>
                     <h2 className="text-gray-500">Create or regenerate active personal access tokens.</h2>
                 </div>
-                <Link to={settingsPathPersonalAccessTokenCreate}>
-                    <button>New Personal Access Token</button>
-                </Link>
+                {tokens.length > 0 && (
+                    <Link to={settingsPathPersonalAccessTokenCreate}>
+                        <button>New Personal Access Token</button>
+                    </Link>
+                )}
             </div>
             <>
                 {tokenInfo && (
@@ -251,16 +254,30 @@ function ListAccessTokensView() {
                     </>
                 )}
             </>
-            {tokens.length > 0 && (
-                <ul>
+            {tokens.length === 0 ? (
+                <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full py-28 flex flex-col items-center">
+                    <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">
+                        No Personal Access Tokens (PAT)
+                    </h3>
+                    <p className="text-center pb-6 text-gray-500 text-base w-96">
+                        Generate a personal access token (PAT) for applications that need access to the Gitpod API.{" "}
+                    </p>
+                    <Link to={settingsPathPersonalAccessTokenCreate}>
+                        <button>New Personal Access Token</button>
+                    </Link>
+                </div>
+            ) : (
+                <>
+                    <div className="px-6 py-3 flex justify-between space-x-2 text-sm text-gray-400 mb-2 bg-gray-100 rounded-xl">
+                        <h2 className="w-3/12">Token Name</h2>
+                        <h2 className="w-3/12">Permissions</h2>
+                        <h2 className="w-3/12">Expires</h2>
+                        <div className="w-3/12"></div>
+                    </div>
                     {tokens.map((t: PersonalAccessToken) => {
-                        return (
-                            <li>
-                                {t.id} - {t.name} - {t.value}
-                            </li>
-                        );
+                        return <TokenEntry token={t} />;
                     })}
-                </ul>
+                </>
             )}
         </>
     );
