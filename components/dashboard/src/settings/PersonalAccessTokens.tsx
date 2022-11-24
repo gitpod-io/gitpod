@@ -64,11 +64,9 @@ function ListAccessTokensView() {
                         <div className="w-5/12">Permissions</div>
                         <div className="w-5/12">Created</div>
                     </div>
-                    <ul>
-                        {tokens.map((t: PersonalAccessToken) => (
-                            <TokenEntry token={t} />
-                        ))}
-                    </ul>
+                    {tokens.map((t: PersonalAccessToken) => (
+                        <TokenEntry token={t} />
+                    ))}
                 </>
             )}
         </>
