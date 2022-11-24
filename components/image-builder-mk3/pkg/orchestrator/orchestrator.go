@@ -151,7 +151,9 @@ func (o *Orchestrator) ResolveBaseImage(ctx context.Context, req *protocol.Resol
 
 	reqs, _ := protojson.Marshal(req)
 	safeReqs, _ := log.RedactJSON(reqs)
-	log.WithField("req", string(safeReqs)).Debug("ResolveBaseImage")
+	safeReqsLog := make(map[string]interface{})
+	_ = json.Unmarshal(safeReqs, &safeReqsLog)
+	log.WithFields(safeReqsLog).Debug("ResolveBaseImage")
 
 	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
 
@@ -173,7 +175,9 @@ func (o *Orchestrator) ResolveWorkspaceImage(ctx context.Context, req *protocol.
 
 	reqs, _ := protojson.Marshal(req)
 	safeReqs, _ := log.RedactJSON(reqs)
-	log.WithField("req", string(safeReqs)).Debug("ResolveWorkspaceImage")
+	safeReqsLog := make(map[string]interface{})
+	_ = json.Unmarshal(safeReqs, &safeReqsLog)
+	log.WithFields(safeReqsLog).Debug("ResolveWorkspaceImage")
 
 	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
 	baseref, err := o.getBaseImageRef(ctx, req.Source, reqauth)
