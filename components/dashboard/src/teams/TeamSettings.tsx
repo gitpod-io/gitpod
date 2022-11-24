@@ -11,7 +11,7 @@ import { Redirect, useLocation } from "react-router";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
-import { teamsService } from "../service/public-api";
+import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import { getCurrentTeam, TeamsContext } from "./teams-context";
@@ -51,7 +51,12 @@ export default function TeamSettings() {
     useEffect(() => {
         (async () => {
             if (!team) return;
-            const members = await getGitpodService().server.getTeamMembers(team.id);
+            const members = usePublicApiTeamsService
+                ? await publicApiTeamMembersToProtocol(
+                      (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
+                  )
+                : await getGitpodService().server.getTeamMembers(team.id);
+
             const currentUserInTeam = members.find((member) => member.userId === user?.id);
             setIsUserOwner(currentUserInTeam?.role === "owner");
 
