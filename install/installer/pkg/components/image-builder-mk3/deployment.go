@@ -109,6 +109,22 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		volumes = append(volumes, *vol)
 		volumeMounts = append(volumeMounts, *mnt)
 	}
+	if ctx.Config.Kind == config.InstallationWorkspace {
+		// Only enable TLS in workspace clusters. This check can be removed
+		// once image-builder-mk3 has been removed from application clusters
+		// (https://github.com/gitpod-io/gitpod/issues/7845).
+		volumes = append(volumes, corev1.Volume{
+			Name: VolumeTLSCerts,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{SecretName: TLSSecretName},
+			},
+		})
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      VolumeTLSCerts,
+			MountPath: "/certs",
+			ReadOnly:  true,
+		})
+	}
 
 	var nodeAffinity = cluster.AffinityLabelMeta
 	if ctx.Config.Kind == config.InstallationWorkspace {
