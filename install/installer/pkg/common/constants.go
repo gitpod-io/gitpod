@@ -48,6 +48,8 @@ const (
 	WSProxyComponent            = "ws-proxy"
 	ImageBuilderComponent       = "image-builder-mk3"
 	ImageBuilderRPCPort         = 8080
+	ImageBuilderTLSSecret       = "image-builder-mk3-tls"
+	ImageBuilderVolumeTLSCerts  = "image-builder-mk3-tls-certs"
 	DebugNodePort               = 9229
 	DBCaCertEnvVarName          = "DB_CA_CERT"
 	DBCaFileName                = "ca.crt"

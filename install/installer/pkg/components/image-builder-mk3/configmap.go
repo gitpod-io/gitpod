@@ -6,9 +6,10 @@ package image_builder_mk3
 
 import (
 	"fmt"
-	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"strings"
 	"time"
+
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/image-builder/api/config"
@@ -16,6 +17,7 @@ import (
 	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
+	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -59,6 +61,18 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		workspaceImage = ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, ""), workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion)
 	}
 
+	var tls *baseserver.TLSConfiguration
+	if ctx.Config.Kind == configv1.InstallationWorkspace {
+		// Only enable TLS in workspace clusters. This check can be removed
+		// once image-builder-mk3 has been removed from application clusters
+		// (https://github.com/gitpod-io/gitpod/issues/7845).
+		tls = &baseserver.TLSConfiguration{
+			CAPath:   "/certs/ca.crt",
+			CertPath: "/certs/tls.crt",
+			KeyPath:  "/certs/tls.key",
+		}
+	}
+
 	imgcfg := config.ServiceConfig{
 		Orchestrator: orchestrator,
 		RefCache: config.RefCacheConfig{
@@ -71,6 +85,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{
 					Address: fmt.Sprintf("0.0.0.0:%d", RPCPort),
+					TLS:     tls,
 				},
 			},
 		},

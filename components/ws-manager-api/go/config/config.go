@@ -55,6 +55,11 @@ type ServiceConfiguration struct {
 	} `json:"rpcServer"`
 	ImageBuilderProxy struct {
 		TargetAddr string `json:"targetAddr"`
+		TLS        struct {
+			CA          string `json:"ca"`
+			Certificate string `json:"crt"`
+			PrivateKey  string `json:"key"`
+		} `json:"tls"`
 	} `json:"imageBuilderProxy"`
 
 	PProf struct {

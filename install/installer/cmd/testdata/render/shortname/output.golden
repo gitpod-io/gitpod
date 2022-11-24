@@ -695,6 +695,7 @@ spec:
   - server
   - ws-manager-bridge
   - ws-proxy
+  - image-builder-mk3
   - ws-manager
   duration: 2160h0m0s
   issuerRef:
@@ -5921,7 +5922,12 @@ data:
         "ratelimits": {}
       },
       "imageBuilderProxy": {
-        "targetAddr": "image-builder-mk3.default.svc.cluster.local:8080"
+        "targetAddr": "image-builder-mk3.default.svc.cluster.local:8080",
+        "tls": {
+          "ca": "",
+          "crt": "",
+          "key": ""
+        }
       },
       "pprof": {
         "addr": "127.0.0.1:6060"
@@ -10863,7 +10869,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 3926ffab614564bb99699778fe8bccf6fff1cb3564511873377364d6be83d24e
+        gitpod.io/checksum_config: b1913e713ab1ed0f8a96ed0e9b4c655902e55087aba7f44268d34d0c111ad9c7
       creationTimestamp: null
       labels:
         app: gitpod

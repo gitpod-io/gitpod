@@ -347,6 +347,34 @@ spec:
       component: cluster
 status: {}
 ---
+# cert-manager.io/v1/Certificate image-builder-mk3-tls
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: image-builder-mk3
+  name: image-builder-mk3-tls
+  namespace: default
+spec:
+  dnsNames:
+  - image-builder-mk3.default.svc
+  - image-builder-mk3.default.svc.cluster.local
+  - image-builder-mk3
+  - image-builder-mk3-dev
+  duration: 2160h0m0s
+  issuerRef:
+    group: cert-manager.io
+    kind: Issuer
+    name: ca-issuer
+  secretName: image-builder-mk3-tls
+  secretTemplate:
+    labels:
+      app: gitpod
+      component: image-builder-mk3
+status: {}
+---
 # cert-manager.io/v1/Certificate ws-daemon-tls
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -391,6 +419,7 @@ spec:
   - server
   - ws-manager-bridge
   - ws-proxy
+  - image-builder-mk3
   - ws-manager
   duration: 2160h0m0s
   issuerRef:
@@ -1569,6 +1598,16 @@ data:
       name: image-builder-mk3
       namespace: default
     ---
+    apiVersion: cert-manager.io/v1
+    kind: Certificate
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: image-builder-mk3
+      name: image-builder-mk3-tls
+      namespace: default
+    ---
     apiVersion: v1
     kind: Secret
     metadata:
@@ -1677,7 +1716,12 @@ data:
       "server": {
         "services": {
           "grpc": {
-            "address": "0.0.0.0:8080"
+            "address": "0.0.0.0:8080",
+            "tls": {
+              "caPath": "/certs/ca.crt",
+              "certPath": "/certs/tls.crt",
+              "keyPath": "/certs/tls.key"
+            }
           }
         }
       }
@@ -2031,7 +2075,12 @@ data:
         "ratelimits": {}
       },
       "imageBuilderProxy": {
-        "targetAddr": "image-builder-mk3.default.svc.cluster.local:8080"
+        "targetAddr": "image-builder-mk3.default.svc.cluster.local:8080",
+        "tls": {
+          "ca": "/image-builder-mk3-tls-certs/ca.crt",
+          "crt": "/image-builder-mk3-tls-certs/tls.crt",
+          "key": "/image-builder-mk3-tls-certs/tls.key"
+        }
       },
       "pprof": {
         "addr": "127.0.0.1:6060"
@@ -3475,7 +3524,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: af26ec864db5be86adfb79b972614487639aa67ad16de869e23e22e468f0bed8
+        gitpod.io/checksum_config: 17379f665f26a7fe1e7ad830348985a5af3e35ba52bf2d8073bbdadb67c0aaeb
       creationTimestamp: null
       labels:
         app: gitpod
@@ -3537,6 +3586,9 @@ spec:
           readOnly: true
         - mountPath: /config/pull-secret
           name: pull-secret
+        - mountPath: /certs
+          name: image-builder-mk3-tls-certs
+          readOnly: true
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -3599,6 +3651,9 @@ spec:
         name: gitpod-ca-certificate
       - emptyDir: {}
         name: cacerts
+      - name: image-builder-mk3-tls-certs
+        secret:
+          secretName: image-builder-mk3-tls
 status: {}
 ---
 # apps/v1/Deployment registry
@@ -3710,7 +3765,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: cd4b2686fe34e3488f453e58aabb2197bd886fb64b6e6fc3ab840694d09b6391
+        gitpod.io/checksum_config: 8e17df1f6904718d97532e9779c3342f517ed6366049cd670c4ca158e272c1ec
       creationTimestamp: null
       labels:
         app: gitpod
@@ -3777,6 +3832,9 @@ spec:
         - mountPath: /certs
           name: tls-certs
           readOnly: true
+        - mountPath: /image-builder-mk3-tls-certs
+          name: image-builder-mk3-tls-certs
+          readOnly: true
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -3819,6 +3877,9 @@ spec:
       - name: tls-certs
         secret:
           secretName: ws-manager-tls
+      - name: image-builder-mk3-tls-certs
+        secret:
+          secretName: image-builder-mk3-tls
 status: {}
 ---
 # apps/v1/Deployment ws-proxy
