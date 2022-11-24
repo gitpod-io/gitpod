@@ -45,6 +45,8 @@ pod:
         - mountPath: /mnt/secrets/github-token-gitpod-bot
           name: github-token-gitpod-bot
       env:
+        - name: LEEWAY_WORKSPACE_ROOT
+          value: /workspace
         - name: HONEYCOMB_DATASET
           value: "werft"
         - name: HONEYCOMB_API_KEY

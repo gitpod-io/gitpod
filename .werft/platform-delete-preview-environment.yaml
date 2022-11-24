@@ -39,6 +39,8 @@ pod:
         - name: harvester-k3s-dockerhub-pull-account
           mountPath: /mnt/secrets/harvester-k3s-dockerhub-pull-account
       env:
+        - name: LEEWAY_WORKSPACE_ROOT
+          value: /workspace
         - name: HONEYCOMB_DATASET
           value: "werft"
         - name: HONEYCOMB_API_KEY
