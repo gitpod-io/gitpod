@@ -6,9 +6,10 @@
 
 import { PersonalAccessToken } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_pb";
 import { useContext, useEffect, useState } from "react";
-import { Redirect, useHistory, useLocation } from "react-router";
+import { Redirect, useHistory, useLocation, useParams } from "react-router";
 import { Link } from "react-router-dom";
 import CheckBox from "../components/CheckBox";
+import Modal from "../components/Modal";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { personalAccessTokensService } from "../service/public-api";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
@@ -42,16 +43,108 @@ interface EditPATData {
     expirationDate: Date;
 }
 
+interface TokenModalProps {
+    token: PersonalAccessToken;
+    title: string;
+    description: string;
+    descriptionImportant: string;
+    actionDescription: string;
+    children?: React.ReactNode;
+    onSave?: () => void;
+    onClose?: () => void;
+}
+
+enum Method {
+    Create = "CREATED",
+    Regerenrate = "REGENERATED",
+}
+
+export function ShowTokenModal(props: TokenModalProps) {
+    const onEnter = () => {
+        if (props.onSave) {
+            props.onSave();
+        }
+        return true;
+    };
+
+    return (
+        <Modal
+            title={props.title}
+            buttons={[
+                <button
+                    className="secondary"
+                    onClick={() => {
+                        props.onClose && props.onClose();
+                    }}
+                >
+                    Cancel
+                </button>,
+                <button className="danger" onClick={props.onSave}>
+                    {props.actionDescription}
+                </button>,
+            ]}
+            visible={true}
+            onClose={() => {
+                props.onClose && props.onClose();
+            }}
+            onEnter={onEnter}
+        >
+            <div className="text-gray-500 dark:text-gray-400 text-md">
+                <span>{props.description}</span> <span className="font-semibold">{props.descriptionImportant}</span>
+            </div>
+            <div className="p-4 mt-2 rounded-xl bg-gray-50 dark:bg-gray-800">
+                <div className="font-semibold text-gray-700 dark:text-gray-200">{props.token.name}</div>
+                <div className="font-medium text-gray-400 dark:text-gray-300">
+                    Expires on{" "}
+                    {Intl.DateTimeFormat("en-US", { dateStyle: "long" }).format(props.token.expirationTime?.toDate())}
+                </div>
+            </div>
+            {props.children ? <div className="p-4">{props.children}</div> : <></>}
+        </Modal>
+    );
+}
+
 export function PersonalAccessTokenCreateView() {
     const { enablePersonalAccessTokens } = useContext(FeatureFlagContext);
 
-    const history = useHistory();
+    const params = useParams();
+    const history = useHistory<TokenInfo>();
+
+    const [editTokenID, setEditTokenID] = useState<null | string>(null);
     const [errorMsg, setErrorMsg] = useState("");
     const [value, setValue] = useState<EditPATData>({
         name: "",
         expirationDays: 30,
         expirationDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     });
+
+    const [showModal, setShowModal] = useState<boolean>(false);
+    const [modalData, setModalData] = useState<PersonalAccessToken>();
+
+    function backToListView(tokenInfo?: TokenInfo) {
+        history.push({
+            pathname: settingsPathPersonalAccessTokens,
+            state: tokenInfo,
+        });
+    }
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const { tokenId } = params as { tokenId: string };
+                if (!tokenId) {
+                    return;
+                }
+                setEditTokenID(tokenId);
+                const resp = await personalAccessTokensService.getPersonalAccessToken({ id: tokenId });
+                const token = resp.token;
+                value.name = token!.name;
+                setModalData(token!);
+            } catch (e) {
+                setErrorMsg(e.message);
+            }
+        })();
+    }, []);
 
     const update = (change: Partial<EditPATData>) => {
         if (change.expirationDays) {
@@ -61,26 +154,45 @@ export function PersonalAccessTokenCreateView() {
         setValue({ ...value, ...change });
     };
 
-    const createToken = async () => {
+    const regenerate = async () => {
+        if (!editTokenID) {
+            return;
+        }
+        try {
+            const resp = await personalAccessTokensService.regeneratePersonalAccessToken({
+                id: editTokenID,
+                expirationTime: Timestamp.fromDate(value.expirationDate),
+            });
+            backToListView({ method: Method.Regerenrate, data: resp.token! });
+        } catch (e) {
+            setErrorMsg(e.message);
+        }
+    };
+
+    const handleConfirm = async () => {
         if (value.name.length < 3) {
             setErrorMsg("Token Name should have at least three characters.");
             return;
         }
         try {
-            const resp = await personalAccessTokensService.createPersonalAccessToken({
-                token: {
-                    name: value.name,
-                    expirationTime: Timestamp.fromDate(value.expirationDate),
-                    scopes: ["function:*", "resource:default"],
-                },
-            });
-            history.push({
-                pathname: settingsPathPersonalAccessTokens,
-                state: {
-                    method: "CREATED",
-                    data: resp.token,
-                },
-            });
+            const resp = editTokenID
+                ? await personalAccessTokensService.updatePersonalAccessToken({
+                      token: {
+                          id: editTokenID,
+                          name: value.name,
+                          scopes: ["function:*", "resource:default"],
+                      },
+                      updateMask: { paths: ["name", "scopes"] },
+                  })
+                : await personalAccessTokensService.createPersonalAccessToken({
+                      token: {
+                          name: value.name,
+                          expirationTime: Timestamp.fromDate(value.expirationDate),
+                          scopes: ["function:*", "resource:default"],
+                      },
+                  });
+
+            backToListView(editTokenID ? undefined : { method: Method.Create, data: resp.token! });
         } catch (e) {
             setErrorMsg(e.message);
         }
@@ -93,7 +205,7 @@ export function PersonalAccessTokenCreateView() {
     return (
         <div>
             <PageWithSettingsSubMenu title="Access Tokens" subtitle="Manage your personal access tokens.">
-                <div className="mb-4">
+                <div className="mb-4 flex gap-2">
                     <Link to={settingsPathPersonalAccessTokens}>
                         <button className="secondary">
                             <div className="flex place-content-center">
@@ -102,6 +214,14 @@ export function PersonalAccessTokenCreateView() {
                             </div>
                         </button>
                     </Link>
+                    {editTokenID && (
+                        <button
+                            className="danger bg-red-50 dark:bg-red-600 text-red-600 dark:text-red-50"
+                            onClick={() => setShowModal(true)}
+                        >
+                            Regenerate
+                        </button>
+                    )}
                 </div>
                 <>
                     {errorMsg.length > 0 && (
@@ -110,10 +230,58 @@ export function PersonalAccessTokenCreateView() {
                         </Alert>
                     )}
                 </>
+                <>
+                    {showModal && (
+                        <ShowTokenModal
+                            token={modalData!}
+                            title="Regenerate Token"
+                            description="Are you sure you want to regenerate this personal access token?"
+                            descriptionImportant="Any applications using this token will no longer be able to access the Gitpod API."
+                            actionDescription="Regenerate Token"
+                            onSave={() => {
+                                regenerate();
+                            }}
+                            onClose={() => {
+                                setShowModal(false);
+                            }}
+                        >
+                            <div>
+                                <h4>Expiration Date</h4>
+                                <select
+                                    name="expiration"
+                                    value={value.expirationDays}
+                                    onChange={(e) => {
+                                        update({ expirationDays: Number(e.target.value) });
+                                    }}
+                                >
+                                    <option value="30">30 Days</option>
+                                    <option value="90">90 Days</option>
+                                    <option value="180">180 Days</option>
+                                </select>
+                                <p className="text-gray-500 dark:text-gray-400 mt-2">
+                                    The token will expire on{" "}
+                                    {Intl.DateTimeFormat("en-US", { dateStyle: "long" }).format(value.expirationDate)}.
+                                </p>
+                            </div>
+                        </ShowTokenModal>
+                    )}
+                </>
                 <div className="max-w-md mb-6">
                     <div className="flex flex-col mb-4">
-                        <h3>New Personal Access Token</h3>
-                        <h2 className="text-gray-500">Create a new personal access token.</h2>
+                        <h3>{editTokenID ? "Edit" : "New"} Personal Access Token</h3>
+                        {editTokenID ? (
+                            <>
+                                <h2 className="text-gray-500 dark:text-gray-400 dark:text-gray-400">
+                                    Update token name, expiration date, permissions, or regenerate token.
+                                </h2>
+                            </>
+                        ) : (
+                            <>
+                                <h2 className="text-gray-500 dark:text-gray-400">
+                                    Create a new personal access token.
+                                </h2>
+                            </>
+                        )}
                     </div>
                     <div className="flex flex-col gap-4">
                         <div>
@@ -127,28 +295,30 @@ export function PersonalAccessTokenCreateView() {
                                 type="text"
                                 placeholder="Token Name"
                             />
-                            <p className="text-gray-500 mt-2">
+                            <p className="text-gray-500 dark:text-gray-400 mt-2">
                                 The application name using the token or the purpose of the token.
                             </p>
                         </div>
-                        <div>
-                            <h4>Expiration Date</h4>
-                            <select
-                                name="expiration"
-                                value={value.expirationDays}
-                                onChange={(e) => {
-                                    update({ expirationDays: Number(e.target.value) });
-                                }}
-                            >
-                                <option value="30">30 Days</option>
-                                <option value="90">90 Days</option>
-                                <option value="180">180 Days</option>
-                            </select>
-                            <p className="text-gray-500 mt-2">
-                                The token will expire on{" "}
-                                {Intl.DateTimeFormat("en-US", { dateStyle: "long" }).format(value.expirationDate)}.
-                            </p>
-                        </div>
+                        {!editTokenID && (
+                            <div>
+                                <h4>Expiration Date</h4>
+                                <select
+                                    name="expiration"
+                                    value={value.expirationDays}
+                                    onChange={(e) => {
+                                        update({ expirationDays: Number(e.target.value) });
+                                    }}
+                                >
+                                    <option value="30">30 Days</option>
+                                    <option value="90">90 Days</option>
+                                    <option value="180">180 Days</option>
+                                </select>
+                                <p className="text-gray-500 dark:text-gray-400 mt-2">
+                                    The token will expire on{" "}
+                                    {Intl.DateTimeFormat("en-US", { dateStyle: "long" }).format(value.expirationDate)}.
+                                </p>
+                            </div>
+                        )}
                         <div>
                             <h4>Permission</h4>
                             <CheckBox
@@ -161,14 +331,23 @@ export function PersonalAccessTokenCreateView() {
                         </div>
                     </div>
                 </div>
-                <button onClick={createToken}>Create Personal Access Token</button>
+                <div className="flex gap-2">
+                    {editTokenID && (
+                        <Link to={settingsPathPersonalAccessTokens}>
+                            <button className="secondary" onClick={handleConfirm}>
+                                Cancel
+                            </button>
+                        </Link>
+                    )}
+                    <button onClick={handleConfirm}>{editTokenID ? "Update" : "Create"} Personal Access Token</button>
+                </div>
             </PageWithSettingsSubMenu>
         </div>
     );
 }
 
 interface TokenInfo {
-    method: string;
+    method: Method;
     data: PersonalAccessToken;
 }
 
@@ -178,11 +357,13 @@ function ListAccessTokensView() {
     const [tokens, setTokens] = useState<PersonalAccessToken[]>([]);
     const [tokenInfo, setTokenInfo] = useState<TokenInfo>();
 
+    async function loadTokens() {
+        const response = await personalAccessTokensService.listPersonalAccessTokens({});
+        setTokens(response.tokens);
+    }
+
     useEffect(() => {
-        (async () => {
-            const response = await personalAccessTokensService.listPersonalAccessTokens({});
-            setTokens(response.tokens);
-        })();
+        loadTokens();
     }, []);
 
     useEffect(() => {
@@ -194,6 +375,13 @@ function ListAccessTokensView() {
 
     const handleCopyToken = () => {
         copyToClipboard(tokenInfo!.data.value);
+    };
+
+    const handleDeleteToken = (tokenId: string) => {
+        if (tokenId === tokenInfo?.data.id) {
+            setTokenInfo(undefined);
+        }
+        loadTokens();
     };
 
     return (
@@ -212,15 +400,22 @@ function ListAccessTokensView() {
             <>
                 {tokenInfo && (
                     <>
-                        <div className="p-4 mb-4 divide-y rounded-xl bg-gray-100 dark:bg-gray-700">
+                        <div className="p-4 mb-4 divide-y rounded-xl bg-gray-50 dark:bg-gray-800">
                             <div className="pb-2">
-                                <div className="font-semibold text-gray-700 dark:text-gray-200">
-                                    {tokenInfo.data.name}{" "}
-                                    <span className="px-2 py-1 rounded-full text-sm text-green-600 bg-green-100">
+                                <div className="flex gap-2 content-center font-semibold text-gray-700 dark:text-gray-200">
+                                    <span className="ml-1">{tokenInfo.data.name}</span>
+                                    <span
+                                        className={
+                                            "font-medium px-1 py-1 rounded-full text-xs" +
+                                            (tokenInfo.method === Method.Create
+                                                ? " text-green-600 bg-green-100"
+                                                : " text-blue-600 bg-blue-100")
+                                        }
+                                    >
                                         {tokenInfo.method.toUpperCase()}
                                     </span>
                                 </div>
-                                <div className="font-semibold text-gray-400 dark:text-gray-300">
+                                <div className="font-medium text-gray-400 dark:text-gray-300">
                                     <span>
                                         Expires on{" "}
                                         {Intl.DateTimeFormat("en-US", { dateStyle: "long" }).format(
@@ -237,13 +432,15 @@ function ListAccessTokensView() {
                                 </div>
                             </div>
                             <div className="pt-2">
-                                <div className="text-gray-600 font-semibold">Your New Personal Access Token</div>
+                                <div className="font-semibold text-gray-600 dark:text-gray-200">
+                                    Your New Personal Access Token
+                                </div>
                                 <InputWithCopy
                                     className="my-2 max-w-md"
                                     value={tokenInfo.data.value}
                                     tip="Copy Token"
                                 />
-                                <div className="mb-2 text-gray-500 font-medium text-sm">
+                                <div className="mb-2 font-medium text-sm text-gray-500 dark:text-gray-300">
                                     Make sure to copy your personal access token — you won't be able to access it again.
                                 </div>
                                 <button className="secondary" onClick={handleCopyToken}>
@@ -268,14 +465,14 @@ function ListAccessTokensView() {
                 </div>
             ) : (
                 <>
-                    <div className="px-6 py-3 flex justify-between space-x-2 text-sm text-gray-400 mb-2 bg-gray-100 rounded-xl">
+                    <div className="px-6 py-3 flex justify-between space-x-2 text-sm text-gray-400 mb-2 bg-gray-100 dark:bg-gray-800 rounded-xl">
                         <h2 className="w-3/12">Token Name</h2>
                         <h2 className="w-3/12">Permissions</h2>
                         <h2 className="w-3/12">Expires</h2>
                         <div className="w-3/12"></div>
                     </div>
                     {tokens.map((t: PersonalAccessToken) => {
-                        return <TokenEntry token={t} />;
+                        return <TokenEntry token={t} onDelete={handleDeleteToken} />;
                     })}
                 </>
             )}
