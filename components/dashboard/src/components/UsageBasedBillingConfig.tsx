@@ -298,7 +298,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                     <div className="flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
                         <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Current Plan</div>
                         <div className="mt-1 text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">
-                            {usageLimit > 500 ? "Professional Open Source" : "Free"}
+                            {usageLimit > 500 ? "Open Source" : "Free"}
                         </div>
                         <div className="mt-4 flex space-x-1 text-gray-400 dark:text-gray-500">
                             <Check className="m-0.5 w-5 h-5 text-orange-500" />
