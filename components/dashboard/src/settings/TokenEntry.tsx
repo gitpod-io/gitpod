@@ -4,16 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-interface PersonalAccessTokensEntry {
-    id: string;
-    value?: string;
-    name: string;
-    expirationTime: number;
-    scopes: string[];
-    createdAt: number;
-}
+import { PersonalAccessToken } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_pb";
 
-function TokenEntry(t: { token: PersonalAccessTokensEntry }) {
+function TokenEntry(t: { token: PersonalAccessToken }) {
     if (!t) {
         return <></>;
     }
