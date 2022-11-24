@@ -13,7 +13,7 @@ FAILURE_COUNT=0
 RUN_COUNT=0 # Prevent multiple cleanup runs
 DO_CLEANUP=0
 REVISION=""
-declare -A FAILURE_TESTS
+FAILURE_TESTS=""
 declare SIGNAL # used to record signal caught by trap
 
 BRANCH_TIMEOUT_SEC=10800
@@ -44,12 +44,7 @@ function cleanup ()
         title=":x: *Workspace integration test fail*"
         title=$title"\n_Repo:_ ${context_repo}\n_Revision:_ ${REVISION}\n_Build:_ ${context_name}"
 
-        errs=""
-        for TEST_NAME in ${!FAILURE_TESTS[*]}; do
-          title=$title"\n_Tests_: ${TEST_NAME}"
-          errs+="${FAILURE_TESTS["${TEST_NAME}"]}"
-        done
-        errs=$(echo "${errs}" | head)
+        errs=$(echo "${FAILURE_TESTS}" | head)
         BODY="{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\":werft: Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"\`\`\`\\n${errs}\\n\`\`\`\"}}]}"
     else
         title=":white_check_mark: *Workspace integration test pass*"
@@ -188,13 +183,14 @@ werft log slice "running integration test"
 export INTEGRATION_TEST_USERNAME="$USERNAME"
 export INTEGRATION_TEST_USER_TOKEN="$USER_TOKEN"
 set +e
-KUBECONFIG=/home/gitpod/.kube/config GOOGLE_APPLICATION_CREDENTIALS=/home/gitpod/.config/gcloud/legacy_credentials/cd-gitpod-deployer@gitpod-core-dev.iam.gserviceaccount.com/adc.json ./run.sh workspace
+KUBECONFIG=/home/gitpod/.kube/config GOOGLE_APPLICATION_CREDENTIALS=/home/gitpod/.config/gcloud/legacy_credentials/cd-gitpod-deployer@gitpod-core-dev.iam.gserviceaccount.com/adc.json ./run.sh workspace | tee test-result.log
 RC=${PIPESTATUS[0]}
 set -e
 RUN_COUNT=1
 FAILURE_COUNT="$RC"
 
 if [ "${RC}" -ne "0" ]; then
+    FAILURE_TESTS=$(grep "\-\-\- FAIL: " test-result.log)
     werft log slice "running integration test" --fail "${RC}"
 else
     werft log slice "running integration test" --done
