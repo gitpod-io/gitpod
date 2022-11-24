@@ -10,6 +10,7 @@ import { Redirect } from "react-router";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { personalAccessTokensService } from "../service/public-api";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
+import TokenEntry from "./TokenEntry";
 
 function PersonalAccessTokens() {
     const { enablePersonalAccessTokens } = useContext(FeatureFlagContext);
@@ -45,23 +46,30 @@ function ListAccessTokensView() {
                     <h2 className="text-gray-500">Create or regenerate active personal access tokens.</h2>
                 </div>
             </div>
-            <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full py-28 flex flex-col items-center">
-                <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Personal Access Tokens (PAT)</h3>
-                <p className="text-center pb-6 text-gray-500 text-base w-96">
-                    Generate a personal access token (PAT) for applications that need access to the Gitpod API.{" "}
-                </p>
-                <button>New Personal Access Token</button>
-            </div>
-            {tokens.length > 0 && (
-                <ul>
-                    {tokens.map((t: PersonalAccessToken) => {
-                        return (
-                            <li>
-                                {t.id} - {t.name} - {t.value}
-                            </li>
-                        );
-                    })}
-                </ul>
+            {tokens.length === 0 ? (
+                <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full py-28 flex flex-col items-center">
+                    <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">
+                        No Personal Access Tokens (PAT)
+                    </h3>
+                    <p className="text-center pb-6 text-gray-500 text-base w-96">
+                        Generate a personal access token (PAT) for applications that need access to the Gitpod API.{" "}
+                    </p>
+                    <button>New Personal Access Token</button>
+                </div>
+            ) : (
+                <>
+                    <div className="px-6 py-3 flex justify-between space-x-2 text-sm text-gray-400 mb-2">
+                        <div className="w-1/12"></div>
+                        <div className="w-6/12">Token Name</div>
+                        <div className="w-5/12">Permissions</div>
+                        <div className="w-5/12">Created</div>
+                    </div>
+                    <ul>
+                        {tokens.map((t: PersonalAccessToken) => (
+                            <TokenEntry token={t} />
+                        ))}
+                    </ul>
+                </>
             )}
         </>
     );
