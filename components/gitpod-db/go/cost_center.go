@@ -267,22 +267,6 @@ func (c *CostCenterManager) ResetUsage(ctx context.Context, cc CostCenter) (Cost
 		return CostCenter{}, fmt.Errorf("cannot reset usage for Billing Strategy %s for Cost Center ID: %s", cc.BillingStrategy, cc.ID)
 	}
 
-	entity, _ := cc.ID.Values()
-
-	// We do not carry over the spending limit from the existing CostCenter.
-	// At the moment, we don't have a use case for it. Getting the spending limit from configured values
-	// ensures that we progressively update the spending limit to configured values rather than having to
-	// perform bulk DB queries when the defaults do change.
-	var spendingLimit int32
-	switch entity {
-	case AttributionEntity_Team:
-		spendingLimit = c.cfg.ForTeams
-	case AttributionEntity_User:
-		spendingLimit = c.cfg.ForUsers
-	default:
-		return CostCenter{}, fmt.Errorf("cannot reset usage for unknown attribution entity ID: %s", cc.ID)
-	}
-
 	now := time.Now().UTC()
 
 	// Default to 1 month from now, if there's no nextBillingTime set on the record.
@@ -300,7 +284,7 @@ func (c *CostCenterManager) ResetUsage(ctx context.Context, cc CostCenter) (Cost
 	// All fields on the new cost center remain the same, except for BillingCycleStart, NextBillingTime, and CreationTime
 	newCostCenter := CostCenter{
 		ID:                cc.ID,
-		SpendingLimit:     spendingLimit,
+		SpendingLimit:     cc.SpendingLimit,
 		BillingStrategy:   cc.BillingStrategy,
 		BillingCycleStart: NewVarCharTime(now),
 		NextBillingTime:   NewVarCharTime(nextBillingTime),
