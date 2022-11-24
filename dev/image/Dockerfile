@@ -177,7 +177,6 @@ RUN echo ". /workspace/gitpod/scripts/setup-google-adc.sh" >> ~/.bashrc
 
 ENV DB_HOST=localhost
 
-ENV LEEWAY_WORKSPACE_ROOT=/workspace/gitpod
 ENV LEEWAY_REMOTE_CACHE_BUCKET=gitpod-core-leeway-cache-branch
 
 # awscliv2
