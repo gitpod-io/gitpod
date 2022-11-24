@@ -99,7 +99,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								ContainerPort: HttpContainerPort,
 							}},
 							SecurityContext: &corev1.SecurityContext{
-								Privileged: pointer.Bool(false),
+								Privileged:               pointer.Bool(false),
+								AllowPrivilegeEscalation: pointer.Bool(false),
 							},
 							Env:          common.CustomizeEnvvar(ctx, Component, common.MergeEnv(common.DefaultEnv(&ctx.Config))),
 							VolumeMounts: volumeMounts,
@@ -114,6 +115,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								"--latency=280",
 								"--jitter=25",
 								"--wait=true",
+							},
+							SecurityContext: &corev1.SecurityContext{
+								AllowPrivilegeEscalation: pointer.Bool(false),
 							},
 						},
 							*common.KubeRBACProxyContainerWithConfig(ctx),

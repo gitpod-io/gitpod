@@ -167,8 +167,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Name:          RPCPortName,
 						}},
 						SecurityContext: &corev1.SecurityContext{
-							Privileged: pointer.Bool(false),
-							RunAsUser:  pointer.Int64(33333),
+							Privileged:               pointer.Bool(false),
+							AllowPrivilegeEscalation: pointer.Bool(false),
+							RunAsUser:                pointer.Int64(33333),
 						},
 						VolumeMounts: volumeMounts,
 					},
