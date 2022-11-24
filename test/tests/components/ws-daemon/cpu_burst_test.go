@@ -106,7 +106,7 @@ func TestCpuBurst(t *testing.T) {
 		}
 
 		if resp.CpuQuota != daemonConfig.CpuLimitConfig.Limit {
-			t.Fatalf("expected cpu quota of %v, but was %v", daemonConfig.CpuLimitConfig.Limit, resp.CpuQuota)
+			t.Fatalf("expected cpu limit quota of %v, but was %v", daemonConfig.CpuLimitConfig.Limit, resp.CpuQuota)
 		}
 
 		workspaceClient, workspaceCloser, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(),
@@ -147,7 +147,7 @@ func TestCpuBurst(t *testing.T) {
 		}
 
 		if resp.CpuQuota != daemonConfig.CpuLimitConfig.BurstLimit {
-			t.Fatalf("expected cpu quota of %v, but was %v", daemonConfig.CpuLimitConfig.BurstLimit, resp.CpuQuota)
+			t.Fatalf("expected cpu burst limit quota of %v, but was %v", daemonConfig.CpuLimitConfig.BurstLimit, resp.CpuQuota)
 		}
 		return ctx
 	}).Feature()
