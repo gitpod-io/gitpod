@@ -90,7 +90,7 @@ func TestCpuBurst(t *testing.T) {
 
 		containerId := getWorkspaceContainerId(&pod)
 		var resp daemon.GetWorkspaceResourcesResponse
-		for i := 0; i < 6; i++ {
+		for i := 0; i < 10; i++ {
 			err = daemonClient.Call("DaemonAgent.GetWorkspaceResources", daemon.GetWorkspaceResourcesRequest{
 				ContainerId: containerId,
 			}, &resp)
