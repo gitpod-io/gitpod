@@ -24,7 +24,7 @@ JETBRAINS_TESTS="$THIS_DIR/tests/ide/jetbrains"
 VSCODE_TESTS="$THIS_DIR/tests/ide/vscode"
 SSH_TESTS="$THIS_DIR/tests/ide/ssh"
 IDE_TEST_LIST="$SSH_TESTS $VSCODE_TESTS $JETBRAINS_TESTS"
-WORKSPACE_TEST_LIST="$THIS_DIR/tests/components/ws-manager $THIS_DIR/tests/components/image-builder $THIS_DIR/tests/components/content-service $THIS_DIR/tests/components/ws-daemon $THIS_DIR/tests/workspace "
+WORKSPACE_TEST_LIST="$THIS_DIR/tests/components/ws-manager $THIS_DIR/tests/components/image-builder $THIS_DIR/tests/components/content-service $THIS_DIR/tests/components/ws-daemon $THIS_DIR/tests/workspace"
 
 case $TEST_SUITE in
   "webapp")
@@ -76,40 +76,43 @@ werft log slice "test-setup" --done
 [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
 
 if [ "$TEST_SUITE" == "workspace" ]; then
-  TEST_NAME="workspace"
-  LOG_FILE="${LOGS_DIR}/${TEST_NAME}.log"
+  for TEST_PATH in ${TEST_LIST}
+  do
+    TEST_NAME=$(basename "${TEST_PATH}")
+    LOG_FILE="${LOGS_DIR}/${TEST_SUITE}.log"
 
-  cd "$THIS_DIR"
-  echo "running integration for ${TEST_NAME} - log file at ${LOG_FILE}" | werft log slice "test-${TEST_NAME}-parallel"
+    echo "running integration for ${TEST_NAME} - log file at ${LOG_FILE}" | werft log slice "test-${TEST_SUITE}-parallel"
+    set +e
+    cd "${TEST_PATH}"
+    # shellcheck disable=SC2086
+    go test -v $TEST_LIST "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1 | tee "${LOG_FILE}" | werft log slice "test-${TEST_SUITE}-parallel"
+    RC=${PIPESTATUS[0]}
+    set -e
+    cd -
 
-  set +e
-  # shellcheck disable=SC2086
-  go test -v $TEST_LIST "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1 | tee "${LOG_FILE}" | werft log slice "test-${TEST_NAME}-parallel"
-  RC=${PIPESTATUS[0]}
-  set -e
+    if [ "${RC}" -ne "0" ]; then
+      FAILURE_COUNT=$((FAILURE_COUNT+1))
+      werft log slice "test-${TEST_SUITE}-parallel" --fail "${RC}"
+    else
+      werft log slice "test-${TEST_SUITE}-parallel" --done
+    fi
 
-  if [ "${RC}" -ne "0" ]; then
-    FAILURE_COUNT=$((FAILURE_COUNT+1))
-    werft log slice "test-${TEST_NAME}-parallel" --fail "${RC}"
-  else
-    werft log slice "test-${TEST_NAME}-parallel" --done
-  fi
+    echo "running integration for ${TEST_NAME} - log file at ${LOG_FILE}" | werft log slice "test-${TEST_SUITE}-serial-only"
+    cd "${TEST_PATH}"
+    set +e
+    # shellcheck disable=SC2086
+    go test -v $TEST_LIST "${args[@]}" -run '.*SerialOnly$' -p 1 2>&1 | tee "${LOG_FILE}" | werft log slice "test-${TEST_SUITE}-serial-only"
+    RC=${PIPESTATUS[0]}
+    set -e
+    cd -
 
-  echo "running integration for ${TEST_NAME} - log file at ${LOG_FILE}" | werft log slice "test-${TEST_NAME}-serial-only"
-  set +e
-  # shellcheck disable=SC2086
-  go test -v $TEST_LIST "${args[@]}" -run '.*SerialOnly$' -p 1 2>&1 | tee "${LOG_FILE}" | werft log slice "test-${TEST_NAME}-serial-only"
-  RC=${PIPESTATUS[0]}
-  set -e
-
-  if [ "${RC}" -ne "0" ]; then
-    FAILURE_COUNT=$((FAILURE_COUNT+1))
-    werft log slice "test-${TEST_NAME}-serial-only" --fail "${RC}"
-  else
-    werft log slice "test-${TEST_NAME}-serial-only" --done
-  fi
-
-  cd -
+    if [ "${RC}" -ne "0" ]; then
+      FAILURE_COUNT=$((FAILURE_COUNT+1))
+      werft log slice "test-${TEST_SUITE}-serial-only" --fail "${RC}"
+    else
+      werft log slice "test-${TEST_SUITE}-serial-only" --done
+    fi
+  done
 else
   for TEST_PATH in ${TEST_LIST}
   do
