@@ -384,6 +384,11 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.configcat.baseUrl "
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.configcat.pollInterval "1m"
 
 #
+# configurePublicAPI
+#
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.publicApi.personalAccessTokenSigningKeySecretName "personal-access-token-signing-key"
+
+#
 # configureDefaultTemplate
 #
 yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers[+].name' "workspace"
@@ -490,6 +495,16 @@ for manifest in "$ROOT"/.werft/jobs/build/payment/*.yaml; do
 done
 
 #
+# configurePublicAPI
+#
+
+rm -f /tmp/public-api
+for manifest in "$ROOT"/.werft/jobs/build/public-api/*.yaml; do
+  cat "$manifest" >> /tmp/public-api
+  echo "---" >> /tmp/public-api
+done
+
+#
 # Run post-process script
 #
 
@@ -501,6 +516,7 @@ WITH_VM=true "$ROOT/.werft/jobs/build/installer/post-process.sh" "${PREVIEW_NAME
 rm -f /tmp/payment
 rm -f /tmp/defaultFeatureFlags
 rm -f /tmp/license
+rm -f /tmp/public-api
 
 # ===============
 # Install
