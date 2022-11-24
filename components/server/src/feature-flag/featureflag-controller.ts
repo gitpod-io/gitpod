@@ -24,7 +24,7 @@ export class FeatureFlagController {
     protected addSlowDatabaseFeatureFlagHandler(router: express.Router) {
         router.get("/slow-database", async (req, res) => {
             if (!User.is(req.user)) {
-                res.sendStatus(401);
+                res.sendStatus(200);
                 return;
             }
 
@@ -37,7 +37,7 @@ export class FeatureFlagController {
                 res.end();
             } catch (error) {
                 log.error(`failed to retrieve value of 'slow_database' feature flag: ${error.message}`);
-                res.status(500);
+                res.status(200);
                 res.end();
             }
         });
