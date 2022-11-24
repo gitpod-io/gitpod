@@ -1540,7 +1540,7 @@ func (gp *APIoverJSONRPC) CreateProject(ctx context.Context, options *CreateProj
 		return
 	}
 	_params := []interface{}{options}
-	err = gp.C.Call(ctx, string(FunctionCreateProject), _params, nil)
+	err = gp.C.Call(ctx, string(FunctionCreateProject), _params, &res)
 	return
 }
 
@@ -1560,7 +1560,7 @@ func (gp *APIoverJSONRPC) GetUserProjects(ctx context.Context) (res []*Project, 
 		return
 	}
 	_params := []interface{}{}
-	err = gp.C.Call(ctx, string(FunctionGetUserProjects), _params, nil)
+	err = gp.C.Call(ctx, string(FunctionGetUserProjects), _params, &res)
 	return
 }
 
@@ -1570,7 +1570,7 @@ func (gp *APIoverJSONRPC) GetTeamProjects(ctx context.Context, teamID string) (r
 		return
 	}
 	_params := []interface{}{teamID}
-	err = gp.C.Call(ctx, string(FunctionGetTeamProjects), _params, nil)
+	err = gp.C.Call(ctx, string(FunctionGetTeamProjects), _params, &res)
 	return
 }
 

@@ -20,12 +20,14 @@ const FeatureFlagContext = createContext<{
     isUsageBasedBillingEnabled: boolean;
     showUseLastSuccessfulPrebuild: boolean;
     usePublicApiTeamsService: boolean;
+    usePublicApiProjectsService: boolean;
     enablePersonalAccessTokens: boolean;
 }>({
     showUsageView: false,
     isUsageBasedBillingEnabled: false,
     showUseLastSuccessfulPrebuild: false,
     usePublicApiTeamsService: false,
+    usePublicApiProjectsService: false,
     enablePersonalAccessTokens: false,
 });
 
@@ -39,6 +41,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const [isUsageBasedBillingEnabled, setIsUsageBasedBillingEnabled] = useState<boolean>(false);
     const [showUseLastSuccessfulPrebuild, setShowUseLastSuccessfulPrebuild] = useState<boolean>(false);
     const [usePublicApiTeamsService, setUsePublicApiTeamsService] = useState<boolean>(false);
+    const [usePublicApiProjectsService, setUsePublicApiProjectsService] = useState<boolean>(false);
     const [enablePersonalAccessTokens, setPersonalAccessTokensEnabled] = useState<boolean>(false);
 
     useEffect(() => {
@@ -49,6 +52,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 isUsageBasedBillingEnabled: { defaultValue: false, setter: setIsUsageBasedBillingEnabled },
                 showUseLastSuccessfulPrebuild: { defaultValue: false, setter: setShowUseLastSuccessfulPrebuild },
                 publicApiExperimentalTeamsService: { defaultValue: false, setter: setUsePublicApiTeamsService },
+                publicApiExperimentalProjectsService: { defaultValue: false, setter: setUsePublicApiProjectsService },
                 personalAccessTokensEnabled: { defaultValue: false, setter: setPersonalAccessTokensEnabled },
             };
 
@@ -94,6 +98,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 showUseLastSuccessfulPrebuild,
                 usePublicApiTeamsService,
                 enablePersonalAccessTokens,
+                usePublicApiProjectsService,
             }}
         >
             {children}

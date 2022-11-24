@@ -28,6 +28,7 @@ import { inResource, isGitpodIo } from "./utils";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { FeatureFlagContext } from "./contexts/FeatureFlagContext";
 import { publicApiTeamMembersToProtocol, teamsService } from "./service/public-api";
+import { listAllProjects } from "./service/public-api";
 
 interface Entry {
     title: string;
@@ -37,7 +38,7 @@ interface Entry {
 
 export default function Menu() {
     const { user } = useContext(UserContext);
-    const { showUsageView, usePublicApiTeamsService } = useContext(FeatureFlagContext);
+    const { showUsageView, usePublicApiTeamsService, usePublicApiProjectsService } = useContext(FeatureFlagContext);
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
@@ -154,9 +155,16 @@ export default function Menu() {
             return;
         }
         (async () => {
-            const projects = !!team
-                ? await getGitpodService().server.getTeamProjects(team.id)
-                : await getGitpodService().server.getUserProjects();
+            let projects: Project[];
+            if (!!team) {
+                projects = usePublicApiProjectsService
+                    ? await listAllProjects({ teamId: team.id })
+                    : await getGitpodService().server.getTeamProjects(team.id);
+            } else {
+                projects = usePublicApiProjectsService
+                    ? await listAllProjects({ userId: user?.id })
+                    : await getGitpodService().server.getUserProjects();
+            }
 
             // Find project matching with slug, otherwise with name
             const project =
