@@ -10,6 +10,7 @@ import { Redirect } from "react-router";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { personalAccessTokensService } from "../service/public-api";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
+import TokenEntry from "./TokenEntry";
 
 function PersonalAccessTokens() {
     const { enablePersonalAccessTokens } = useContext(FeatureFlagContext);
@@ -56,15 +57,19 @@ function ListAccessTokensView() {
                     <button>New Personal Access Token</button>
                 </div>
             ) : (
-                <ul>
-                    {tokens.map((t: PersonalAccessToken) => {
-                        return (
-                            <li>
-                                {t.id} - {t.name} - {t.value}
-                            </li>
-                        );
-                    })}
-                </ul>
+                <>
+                    <div className="px-6 py-3 flex justify-between space-x-2 text-sm text-gray-400 mb-2">
+                        <div className="w-1/12"></div>
+                        <div className="w-6/12">Token Name</div>
+                        <div className="w-5/12">Permissions</div>
+                        <div className="w-5/12">Created</div>
+                    </div>
+                    <ul>
+                        {tokens.map((t: PersonalAccessToken) => (
+                            <TokenEntry token={t} />
+                        ))}
+                    </ul>
+                </>
             )}
         </>
     );
