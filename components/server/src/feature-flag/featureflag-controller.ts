@@ -24,6 +24,7 @@ export class FeatureFlagController {
     protected addSlowDatabaseFeatureFlagHandler(router: express.Router) {
         router.get("/slow-database", async (req, res) => {
             if (!User.is(req.user)) {
+                res.setHeader("X-Gitpod-Slow-Database", "false");
                 res.sendStatus(200);
                 return;
             }
@@ -37,6 +38,7 @@ export class FeatureFlagController {
                 res.end();
             } catch (error) {
                 log.error(`failed to retrieve value of 'slow_database' feature flag: ${error.message}`);
+                res.setHeader("X-Gitpod-Slow-Database", "false");
                 res.status(200);
                 res.end();
             }
