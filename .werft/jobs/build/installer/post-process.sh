@@ -40,6 +40,13 @@ if [[ -f "/tmp/payment" ]] ; then
    printf \\n'---'\\n >> k8s.yaml
    cat "/tmp/payment" >> k8s.yaml
 fi
+# if public-api is configured: Append the YAML objects
+if [[ -f "/tmp/public-api" ]] ; then
+   echo "found /tmp/public-api, appending to k8s.yaml now"
+   # do not make any assumptions about new lines
+   printf \\n'---'\\n >> k8s.yaml
+   cat "/tmp/public-api" >> k8s.yaml
+fi
 
 # count YAML like lines in the k8s manifest file
 MATCHES="$(grep -c -- --- k8s.yaml)"
