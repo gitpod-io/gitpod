@@ -1,5 +1,5 @@
 {
-    "entrypoint": "/ide-desktop/startup.sh",
+    "entrypoint": "/ide-desktop/status",
     "entrypointArgs": [ "{DESKTOPIDEPORT}", "clion", "Open in CLion" ],
     "readinessProbe": {
         "type": "http",

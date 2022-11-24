@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -24,6 +25,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/hashicorp/go-version"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
@@ -49,59 +51,41 @@ const BackendPath = "/ide-desktop/backend"
 const ProductInfoPath = BackendPath + "/product-info.json"
 
 type LaunchContext struct {
-	alias             string
+	startTime time.Time
+
+	port  string
+	alias string
+	label string
+
+	info           *ProductInfo
+	backendVersion *version.Version
+	wsInfo         *supervisor.WorkspaceInfoResponse
+
+	vmOptionsFile     string
 	projectDir        string
 	configDir         string
 	systemDir         string
 	projectConfigDir  string
 	projectContextDir string
 	riderSolutionFile string
-	wsInfo            *supervisor.WorkspaceInfoResponse
-}
 
-// TODO(andreafalzetti): remove dir scanning once this is implemented https://youtrack.jetbrains.com/issue/GTW-2402/Rider-Open-Project-dialog-not-displaying-in-remote-dev
-func findRiderSolutionFile(root string) (string, error) {
-	slnRegEx := regexp.MustCompile(`^.+\.sln$`)
-	projRegEx := regexp.MustCompile(`^.+\.csproj$`)
-
-	var slnFiles []string
-	var csprojFiles []string
-
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		} else if slnRegEx.MatchString(info.Name()) {
-			slnFiles = append(slnFiles, path)
-		} else if projRegEx.MatchString(info.Name()) {
-			csprojFiles = append(csprojFiles, path)
-		}
-		return nil
-	})
-
-	if err != nil {
-		return "", err
-	}
-
-	if len(slnFiles) > 0 {
-		return slnFiles[0], nil
-	} else if len(csprojFiles) > 0 {
-		return csprojFiles[0], nil
-	}
-
-	return root, nil
-}
-
-func resolveProjectContextDir(launchCtx *LaunchContext) string {
-	if launchCtx.alias == "rider" {
-		return launchCtx.riderSolutionFile
-	}
-
-	return launchCtx.projectDir
+	env []string
 }
 
 // JB startup entrypoint
 func main() {
 	log.Init(ServiceName, Version, true, false)
+
+	if len(os.Args) == 3 && os.Args[1] == "env" && os.Args[2] != "" {
+		var mark = os.Args[2]
+		content, err := json.Marshal(os.Environ())
+		if err != nil {
+			log.WithError(err).Fatal()
+		}
+		fmt.Printf("%s%s%s", mark, content, mark)
+		return
+	}
+
 	log.Info(ServiceName + ": " + Version)
 	startTime := time.Now()
 
@@ -133,81 +117,28 @@ func main() {
 		return
 	}
 
-	projectDir := wsInfo.GetCheckoutLocation()
-	gitpodConfig, err := parseGitpodConfig(projectDir)
-	if err != nil {
-		log.WithError(err).Error("failed to parse .gitpod.yml")
-	}
-
-	// configure vmoptions
-	idePrefix := alias
-	if alias == "intellij" {
-		idePrefix = "idea"
-	}
-	// [idea64|goland64|pycharm64|phpstorm64].vmoptions
-	vmOptionsPath := fmt.Sprintf("/ide-desktop/backend/bin/%s64.vmoptions", idePrefix)
-	err = configureVMOptions(gitpodConfig, alias, vmOptionsPath)
-	if err != nil {
-		log.WithError(err).Error("failed to configure vmoptions")
-	}
-
-	qualifier := os.Getenv("JETBRAINS_BACKEND_QUALIFIER")
-	if qualifier == "stable" {
-		qualifier = ""
-	} else {
-		qualifier = "-" + qualifier
-	}
-
-	var riderSolutionFile string
-	if alias == "rider" {
-		riderSolutionFile, err = findRiderSolutionFile(projectDir)
-		if err != nil {
-			log.WithError(err).Error("failed to find a rider solution file")
-		}
-	}
-
-	configDir := fmt.Sprintf("/workspace/.config/JetBrains%s", qualifier)
 	launchCtx := &LaunchContext{
-		alias:             alias,
-		wsInfo:            wsInfo,
-		projectDir:        projectDir,
-		projectContextDir: projectDir,
-		configDir:         configDir,
-		systemDir:         fmt.Sprintf("/workspace/.cache/JetBrains%s", qualifier),
-		riderSolutionFile: riderSolutionFile,
+		startTime: startTime,
+
+		port:  port,
+		alias: alias,
+		label: label,
+
+		info:           info,
+		backendVersion: backendVersion,
+		wsInfo:         wsInfo,
 	}
+	// we should start serving immediately and postpone launch
+	// in order to enable a JB Gateway to connect as soon as possible
+	go launch(launchCtx)
+	// IMPORTANT: don't put startup logic in serve!!!
+	serve(launchCtx)
+}
 
-	launchCtx.projectContextDir = resolveProjectContextDir(launchCtx)
-	launchCtx.projectConfigDir = fmt.Sprintf("%s/RemoteDev-%s/%s", configDir, info.ProductCode, strings.ReplaceAll(launchCtx.projectContextDir, "/", "_"))
-
-	// sync initial options
-	err = syncOptions(launchCtx)
-	if err != nil {
-		log.WithError(err).Error("failed to sync initial options")
-	}
-
-	// install project plugins
-	version_2022_1, _ := version.NewVersion("2022.1")
-	if version_2022_1.LessThanOrEqual(backendVersion) {
-		err = installPlugins(gitpodConfig, launchCtx)
-		installPluginsCost := time.Now().Local().Sub(startTime).Milliseconds()
-		if err != nil {
-			log.WithError(err).WithField("cost", installPluginsCost).Error("installing repo plugins: done")
-		} else {
-			log.WithField("cost", installPluginsCost).Info("installing repo plugins: done")
-		}
-	}
-
-	// install gitpod plugin
-	err = linkRemotePlugin()
-	if err != nil {
-		log.WithError(err).Error("failed to install gitpod-remote plugin")
-	}
-	go run(launchCtx)
-
+func serve(launchCtx *LaunchContext) {
 	debugAgentPrefix := "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:"
 	http.HandleFunc("/debug", func(w http.ResponseWriter, r *http.Request) {
-		options, err := readVMOptions(vmOptionsPath)
+		options, err := readVMOptions(launchCtx.vmOptionsFile)
 		if err != nil {
 			log.WithError(err).Error("failed to configure debug agent")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -243,7 +174,7 @@ func main() {
 		options = deduplicateVMOption(options, debugOptions, func(l, r string) bool {
 			return strings.HasPrefix(l, debugAgentPrefix) && strings.HasPrefix(r, debugAgentPrefix)
 		})
-		err = writeVMOptions(vmOptionsPath, options)
+		err = writeVMOptions(launchCtx.vmOptionsFile, options)
 		if err != nil {
 			log.WithError(err).Error("failed to configure debug agent")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -274,7 +205,7 @@ func main() {
 		if backendPort == "" {
 			backendPort = defaultBackendPort
 		}
-		jsonLink, err := resolveGatewayLink(backendPort, wsInfo)
+		jsonLink, err := resolveGatewayLink(backendPort, launchCtx.wsInfo)
 		if err != nil {
 			log.WithError(err).Error("cannot resolve gateway link")
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
@@ -287,7 +218,7 @@ func main() {
 		if backendPort == "" {
 			backendPort = defaultBackendPort
 		}
-		gatewayLink, err := resolveGatewayLink(backendPort, wsInfo)
+		gatewayLink, err := resolveGatewayLink(backendPort, launchCtx.wsInfo)
 		if err != nil {
 			log.WithError(err).Error("cannot resolve gateway link")
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
@@ -295,15 +226,15 @@ func main() {
 		}
 		response := make(map[string]string)
 		response["link"] = gatewayLink
-		response["label"] = label
+		response["label"] = launchCtx.label
 		response["clientID"] = "jetbrains-gateway"
-		response["kind"] = alias
+		response["kind"] = launchCtx.alias
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(response)
 	})
 
-	fmt.Printf("Starting status proxy for desktop IDE at port %s\n", port)
-	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), nil); err != nil {
+	fmt.Printf("Starting status proxy for desktop IDE at port %s\n", launchCtx.port)
+	if err := http.ListenAndServe(fmt.Sprintf(":%s", launchCtx.port), nil); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -415,6 +346,76 @@ func resolveWorkspaceInfo(ctx context.Context) (*supervisor.WorkspaceInfoRespons
 	return nil, errors.New("failed with attempt 10 times")
 }
 
+func launch(launchCtx *LaunchContext) {
+	projectDir := launchCtx.wsInfo.GetCheckoutLocation()
+	gitpodConfig, err := parseGitpodConfig(projectDir)
+	if err != nil {
+		log.WithError(err).Error("failed to parse .gitpod.yml")
+	}
+
+	// configure vmoptions
+	idePrefix := launchCtx.alias
+	if launchCtx.alias == "intellij" {
+		idePrefix = "idea"
+	}
+	// [idea64|goland64|pycharm64|phpstorm64].vmoptions
+	launchCtx.vmOptionsFile = fmt.Sprintf("/ide-desktop/backend/bin/%s64.vmoptions", idePrefix)
+	err = configureVMOptions(gitpodConfig, launchCtx.alias, launchCtx.vmOptionsFile)
+	if err != nil {
+		log.WithError(err).Error("failed to configure vmoptions")
+	}
+
+	qualifier := os.Getenv("JETBRAINS_BACKEND_QUALIFIER")
+	if qualifier == "stable" {
+		qualifier = ""
+	} else {
+		qualifier = "-" + qualifier
+	}
+
+	var riderSolutionFile string
+	if launchCtx.alias == "rider" {
+		riderSolutionFile, err = findRiderSolutionFile(projectDir)
+		if err != nil {
+			log.WithError(err).Error("failed to find a rider solution file")
+		}
+	}
+
+	configDir := fmt.Sprintf("/workspace/.config/JetBrains%s", qualifier)
+	launchCtx.projectDir = projectDir
+	launchCtx.configDir = configDir
+	launchCtx.systemDir = fmt.Sprintf("/workspace/.cache/JetBrains%s", qualifier)
+	launchCtx.riderSolutionFile = riderSolutionFile
+	launchCtx.projectContextDir = resolveProjectContextDir(launchCtx)
+	launchCtx.projectConfigDir = fmt.Sprintf("%s/RemoteDev-%s/%s", configDir, launchCtx.info.ProductCode, strings.ReplaceAll(launchCtx.projectContextDir, "/", "_"))
+
+	// sync initial options
+	err = syncOptions(launchCtx)
+	if err != nil {
+		log.WithError(err).Error("failed to sync initial options")
+	}
+
+	// install project plugins
+	version_2022_1, _ := version.NewVersion("2022.1")
+	if version_2022_1.LessThanOrEqual(launchCtx.backendVersion) {
+		err = installPlugins(gitpodConfig, launchCtx)
+		installPluginsCost := time.Now().Local().Sub(launchCtx.startTime).Milliseconds()
+		if err != nil {
+			log.WithError(err).WithField("cost", installPluginsCost).Error("installing repo plugins: done")
+		} else {
+			log.WithField("cost", installPluginsCost).Info("installing repo plugins: done")
+		}
+	}
+
+	// install gitpod plugin
+	err = linkRemotePlugin()
+	if err != nil {
+		log.WithError(err).Error("failed to install gitpod-remote plugin")
+	}
+
+	// run backend
+	run(launchCtx)
+}
+
 func run(launchCtx *LaunchContext) {
 	var args []string
 	args = append(args, "run")
@@ -443,16 +444,56 @@ func run(launchCtx *LaunchContext) {
 	os.Exit(cmd.ProcessState.ExitCode())
 }
 
-func remoteDevServerCmd(args []string, productContext *LaunchContext) *exec.Cmd {
+// resolveUserEnvs emulats the interactive login shell to ensure that all user defined shell scripts are loaded
+func resolveUserEnvs() (userEnvs []string, err error) {
+	shell := os.Getenv("SHELL")
+	if shell == "" {
+		shell = "/bin/bash"
+	}
+	mark, err := uuid.NewRandom()
+	if err != nil {
+		return
+	}
+	envCmd := exec.Command(shell, []string{"-ilc", "/ide-desktop/status env " + mark.String()}...)
+	envCmd.Stderr = os.Stderr
+	output, err := envCmd.Output()
+	if err != nil {
+		return
+	}
+	markByte := []byte(mark.String())
+	start := bytes.Index(output, markByte) + len(markByte)
+	end := bytes.LastIndex(output, markByte)
+	err = json.Unmarshal(output[start:end], &userEnvs)
+	return
+}
+
+func remoteDevServerCmd(args []string, launchCtx *LaunchContext) *exec.Cmd {
+	if launchCtx.env == nil {
+		userEnvs, err := resolveUserEnvs()
+		if err == nil {
+			launchCtx.env = append(launchCtx.env, userEnvs...)
+		} else {
+			log.WithError(err).Error("failed to resolve user env vars")
+			launchCtx.env = os.Environ()
+		}
+
+		// Set default config and system directories under /workspace to preserve between restarts
+		launchCtx.env = append(launchCtx.env,
+			// Set default config and system directories under /workspace to preserve between restarts
+			fmt.Sprintf("IJ_HOST_CONFIG_BASE_DIR=%s", launchCtx.configDir),
+			fmt.Sprintf("IJ_HOST_SYSTEM_BASE_DIR=%s", launchCtx.systemDir),
+		)
+
+		// instead put them into /ide-desktop/backend/bin/idea64.vmoptions
+		// otherwise JB will complain to a user on each startup
+		// by default remote dev already set -Xmx2048m, see /ide-desktop/backend/plugins/remote-dev-server/bin/launcher.sh
+		launchCtx.env = append(launchCtx.env, "JAVA_TOOL_OPTIONS=")
+
+		log.WithField("env", launchCtx.env).Debug("resolved launch env")
+	}
+
 	cmd := exec.Command(BackendPath+"/bin/remote-dev-server.sh", args...)
-	cmd.Env = os.Environ()
-
-	// Set default config and system directories under /workspace to preserve between restarts
-	cmd.Env = append(cmd.Env,
-		fmt.Sprintf("IJ_HOST_CONFIG_BASE_DIR=%s", productContext.configDir),
-		fmt.Sprintf("IJ_HOST_SYSTEM_BASE_DIR=%s", productContext.systemDir),
-	)
-
+	cmd.Env = launchCtx.env
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	return cmd
@@ -730,4 +771,44 @@ func linkRemotePlugin() error {
 		return nil
 	}
 	return os.Symlink("/ide-desktop-plugins/gitpod-remote", remotePluginDir)
+}
+
+// TODO(andreafalzetti): remove dir scanning once this is implemented https://youtrack.jetbrains.com/issue/GTW-2402/Rider-Open-Project-dialog-not-displaying-in-remote-dev
+func findRiderSolutionFile(root string) (string, error) {
+	slnRegEx := regexp.MustCompile(`^.+\.sln$`)
+	projRegEx := regexp.MustCompile(`^.+\.csproj$`)
+
+	var slnFiles []string
+	var csprojFiles []string
+
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		} else if slnRegEx.MatchString(info.Name()) {
+			slnFiles = append(slnFiles, path)
+		} else if projRegEx.MatchString(info.Name()) {
+			csprojFiles = append(csprojFiles, path)
+		}
+		return nil
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	if len(slnFiles) > 0 {
+		return slnFiles[0], nil
+	} else if len(csprojFiles) > 0 {
+		return csprojFiles[0], nil
+	}
+
+	return root, nil
+}
+
+func resolveProjectContextDir(launchCtx *LaunchContext) string {
+	if launchCtx.alias == "rider" {
+		return launchCtx.riderSolutionFile
+	}
+
+	return launchCtx.projectDir
 }
