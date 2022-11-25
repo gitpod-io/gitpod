@@ -57,7 +57,7 @@ import { BlockedRepositories } from "./admin/BlockedRepositories";
 import { AppNotifications } from "./AppNotifications";
 import { publicApiTeamsToProtocol, teamsService } from "./service/public-api";
 import { FeatureFlagContext } from "./contexts/FeatureFlagContext";
-import PersonalAccessTokens, { PersonalAccessTokenCreateView } from "./settings/PersonalAccessTokens";
+import { PersonalAccessTokenCreateView } from "./settings/PersonalAccessTokens";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "./workspaces/Workspaces"));
@@ -70,6 +70,7 @@ const EnvironmentVariables = React.lazy(() => import(/* webpackPrefetch: true */
 const SSHKeys = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/SSHKeys"));
 const Integrations = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Integrations"));
 const Preferences = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Preferences"));
+const PersonalAccessTokens = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/PersonalAccessTokens"));
 const Open = React.lazy(() => import(/* webpackPrefetch: true */ "./start/Open"));
 const StartWorkspace = React.lazy(() => import(/* webpackPrefetch: true */ "./start/StartWorkspace"));
 const CreateWorkspace = React.lazy(() => import(/* webpackPrefetch: true */ "./start/CreateWorkspace"));
