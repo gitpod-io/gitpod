@@ -76,43 +76,40 @@ werft log slice "test-setup" --done
 [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
 
 if [ "$TEST_SUITE" == "workspace" ]; then
-  for TEST_PATH in ${TEST_LIST}
-  do
-    TEST_NAME=$(basename "${TEST_PATH}")
-    LOG_FILE="${LOGS_DIR}/${TEST_SUITE}.log"
+  TEST_NAME="workspace"
+  LOG_FILE="${LOGS_DIR}/${TEST_NAME}.log"
 
-    echo "running integration for ${TEST_NAME} - log file at ${LOG_FILE}" | werft log slice "test-${TEST_SUITE}-parallel"
-    set +e
-    cd "${TEST_PATH}"
-    # shellcheck disable=SC2086
-    go test -v $TEST_LIST "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1 | tee "${LOG_FILE}" | werft log slice "test-${TEST_SUITE}-parallel"
-    RC=${PIPESTATUS[0]}
-    set -e
-    cd -
+  cd "$THIS_DIR"
+  echo "running integration for ${TEST_NAME} - log file at ${LOG_FILE}" | werft log slice "test-${TEST_NAME}-parallel"
 
-    if [ "${RC}" -ne "0" ]; then
-      FAILURE_COUNT=$((FAILURE_COUNT+1))
-      werft log slice "test-${TEST_SUITE}-parallel" --fail "${RC}"
-    else
-      werft log slice "test-${TEST_SUITE}-parallel" --done
-    fi
+  set +e
+  # shellcheck disable=SC2086
+  go test -v $TEST_LIST "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1 | tee "${LOG_FILE}" | werft log slice "test-${TEST_NAME}-parallel"
+  RC=${PIPESTATUS[0]}
+  set -e
 
-    echo "running integration for ${TEST_NAME} - log file at ${LOG_FILE}" | werft log slice "test-${TEST_SUITE}-serial-only"
-    cd "${TEST_PATH}"
-    set +e
-    # shellcheck disable=SC2086
-    go test -v $TEST_LIST "${args[@]}" -run '.*SerialOnly$' -p 1 2>&1 | tee "${LOG_FILE}" | werft log slice "test-${TEST_SUITE}-serial-only"
-    RC=${PIPESTATUS[0]}
-    set -e
-    cd -
+  if [ "${RC}" -ne "0" ]; then
+    FAILURE_COUNT=$((FAILURE_COUNT+1))
+    werft log slice "test-${TEST_NAME}-parallel" --fail "${RC}"
+  else
+    werft log slice "test-${TEST_NAME}-parallel" --done
+  fi
 
-    if [ "${RC}" -ne "0" ]; then
-      FAILURE_COUNT=$((FAILURE_COUNT+1))
-      werft log slice "test-${TEST_SUITE}-serial-only" --fail "${RC}"
-    else
-      werft log slice "test-${TEST_SUITE}-serial-only" --done
-    fi
-  done
+  echo "running integration for ${TEST_NAME} - log file at ${LOG_FILE}" | werft log slice "test-${TEST_NAME}-serial-only"
+  set +e
+  # shellcheck disable=SC2086
+  go test -v $TEST_LIST "${args[@]}" -run '.*SerialOnly$' -p 1 2>&1 | tee "${LOG_FILE}" | werft log slice "test-${TEST_NAME}-serial-only"
+  RC=${PIPESTATUS[0]}
+  set -e
+
+  if [ "${RC}" -ne "0" ]; then
+    FAILURE_COUNT=$((FAILURE_COUNT+1))
+    werft log slice "test-${TEST_NAME}-serial-only" --fail "${RC}"
+  else
+    werft log slice "test-${TEST_NAME}-serial-only" --done
+  fi
+
+  cd -
 else
   for TEST_PATH in ${TEST_LIST}
   do
