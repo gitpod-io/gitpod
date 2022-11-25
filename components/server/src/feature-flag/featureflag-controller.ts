@@ -23,22 +23,20 @@ export class FeatureFlagController {
 
     protected addSlowDatabaseFeatureFlagHandler(router: express.Router) {
         router.get("/slow-database", async (req, res) => {
-            if (!User.is(req.user)) {
-                res.setHeader("X-Gitpod-Slow-Database", "false");
-                res.sendStatus(200);
-                return;
-            }
-
             try {
+                if (!User.is(req.user)) {
+                    res.setHeader("X-Gitpod-Slow-Database", "false");
+                    return;
+                }
+
                 const flagValue = await getExperimentsClientForBackend().getValueAsync("slow_database", false, {
                     user: req.user,
                 });
                 res.setHeader("X-Gitpod-Slow-Database", flagValue.toString());
-                res.status(200);
-                res.end();
             } catch (error) {
                 log.error(`failed to retrieve value of 'slow_database' feature flag: ${error.message}`);
                 res.setHeader("X-Gitpod-Slow-Database", "false");
+            } finally {
                 res.status(200);
                 res.end();
             }
