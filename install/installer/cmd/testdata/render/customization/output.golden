@@ -11524,6 +11524,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   annotations:
+    argocd.argoproj.io/hook: PreSync
     gitpod.io: hello
     hello: world
   creationTimestamp: null
@@ -11538,6 +11539,7 @@ spec:
   template:
     metadata:
       annotations:
+        argocd.argoproj.io/hook: PreSync
         gitpod.io: hello
         hello: world
       creationTimestamp: null

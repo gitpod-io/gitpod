@@ -26,6 +26,9 @@ func job(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaBatchJob),
 	}
 
+	// set as a pre-hook
+	objectMeta.Annotations["argocd.argoproj.io/hook"] = "PreSync"
+
 	return []runtime.Object{&batchv1.Job{
 		TypeMeta:   common.TypeMetaBatchJob,
 		ObjectMeta: objectMeta,
