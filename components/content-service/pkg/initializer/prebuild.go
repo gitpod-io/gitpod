@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/opentracing/opentracing-go"
 	tracelog "github.com/opentracing/opentracing-go/log"
@@ -33,10 +34,15 @@ type PrebuildInitializer struct {
 }
 
 // Run runs the prebuild initializer
-func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (src csapi.WorkspaceInitSource, err error) {
+func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (src csapi.WorkspaceInitSource, stats csapi.InitializerMetrics, err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "PrebuildInitializer")
 	defer tracing.FinishSpan(span, &err)
+	startTime := time.Now()
+	initialSize, diskErr := getDiskUsage()
+	if diskErr != nil {
+		log.WithError(err).Error("could not get disk usage")
+	}
 
 	var spandata []tracelog.Field
 	if p.Prebuild == nil {
@@ -62,19 +68,24 @@ func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 			location = p.Prebuild.Location
 			log      = log.WithField("location", p.Prebuild.Location)
 		)
-		_, err = p.Prebuild.Run(ctx, mappings)
+		_, s, err := p.Prebuild.Run(ctx, mappings)
+		if err == nil {
+			stats = append(stats, s...)
+		}
+
 		if err != nil {
 			log.WithError(err).Warnf("prebuilt init was unable to restore snapshot %s. Resorting the regular Git init", snapshot)
 
 			if err := clearWorkspace(location); err != nil {
-				return csapi.WorkspaceInitFromOther, xerrors.Errorf("prebuild initializer: %w", err)
+				return csapi.WorkspaceInitFromOther, nil, xerrors.Errorf("prebuild initializer: %w", err)
 			}
 
 			for _, gi := range p.Git {
-				_, err = gi.Run(ctx, mappings)
+				_, s, err := gi.Run(ctx, mappings)
 				if err != nil {
-					return csapi.WorkspaceInitFromOther, xerrors.Errorf("prebuild initializer: Git fallback: %w", err)
+					return csapi.WorkspaceInitFromOther, nil, xerrors.Errorf("prebuild initializer: Git fallback: %w", err)
 				}
+				stats = append(stats, s...)
 			}
 		}
 	}
@@ -89,7 +100,7 @@ func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 
 		commitChanged, err := runGitInit(ctx, gi)
 		if err != nil {
-			return src, err
+			return src, nil, err
 		}
 		if commitChanged {
 			// head commit has changed, so it's an outdated prebuild, which we treat as other
@@ -97,6 +108,20 @@ func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 		}
 	}
 	log.Debug("Initialized workspace with prebuilt snapshot")
+
+	if diskErr == nil {
+		currentSize, err := getDiskUsage()
+		if err != nil {
+			log.WithError(err).Error("could not get disk usage")
+		}
+
+		stats = append(stats, csapi.InitializerMetric{
+			Type:     "prebuild",
+			Duration: time.Since(startTime),
+			Size:     currentSize - initialSize,
+		})
+	}
+
 	return
 }
 

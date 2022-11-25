@@ -334,7 +334,7 @@ func RunInitializerChild() (err error) {
 		return err
 	}
 
-	initSource, err := wsinit.InitializeWorkspace(ctx, dst, rs,
+	initSource, stats, err := wsinit.InitializeWorkspace(ctx, dst, rs,
 		wsinit.WithInitializer(initializer),
 		wsinit.WithMappings(initmsg.IDMappings),
 		wsinit.WithChown(initmsg.UID, initmsg.GID),
@@ -352,7 +352,7 @@ func RunInitializerChild() (err error) {
 	}
 
 	// Place the ready file to make Theia "open its gates"
-	err = wsinit.PlaceWorkspaceReadyFile(ctx, dst, initSource, initmsg.UID, initmsg.GID)
+	err = wsinit.PlaceWorkspaceReadyFile(ctx, dst, initSource, stats, initmsg.UID, initmsg.GID)
 	if err != nil {
 		return err
 	}
