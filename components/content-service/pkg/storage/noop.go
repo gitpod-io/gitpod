@@ -97,7 +97,7 @@ func (s *PresignedNoopStorage) DeleteObject(ctx context.Context, bucket string, 
 }
 
 // DeleteBucket deletes a bucket
-func (s *PresignedNoopStorage) DeleteBucket(ctx context.Context, bucket string) error {
+func (s *PresignedNoopStorage) DeleteBucket(ctx context.Context, userID, bucket string) error {
 	return nil
 }
 
@@ -107,7 +107,7 @@ func (*PresignedNoopStorage) Bucket(string) string {
 }
 
 // BlobObject returns a blob's object name
-func (*PresignedNoopStorage) BlobObject(name string) (string, error) {
+func (*PresignedNoopStorage) BlobObject(userID, name string) (string, error) {
 	return "", nil
 }
 

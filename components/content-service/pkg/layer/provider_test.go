@@ -214,7 +214,7 @@ func (*testStorage) Bucket(userID string) string {
 	return "bucket-" + userID
 }
 
-func (*testStorage) BlobObject(name string) (string, error) {
+func (*testStorage) BlobObject(userID, name string) (string, error) {
 	return "blobs/" + name, nil
 }
 
@@ -242,7 +242,7 @@ func (s *testStorage) DeleteObject(ctx context.Context, bucket string, query *st
 	return nil
 }
 
-func (s *testStorage) DeleteBucket(ctx context.Context, bucket string) error {
+func (s *testStorage) DeleteBucket(ctx context.Context, userID, bucket string) error {
 	return nil
 }
 

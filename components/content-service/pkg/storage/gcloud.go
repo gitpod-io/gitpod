@@ -528,7 +528,7 @@ func (p *PresignedGCPStorage) Bucket(owner string) string {
 }
 
 // BlobObject returns a blob's object name
-func (p *PresignedGCPStorage) BlobObject(name string) (string, error) {
+func (p *PresignedGCPStorage) BlobObject(userID, name string) (string, error) {
 	return blobObjectName(name)
 }
 
@@ -728,7 +728,7 @@ func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, q
 }
 
 // DeleteBucket deletes a bucket
-func (p *PresignedGCPStorage) DeleteBucket(ctx context.Context, bucket string) (err error) {
+func (p *PresignedGCPStorage) DeleteBucket(ctx context.Context, userID, bucket string) (err error) {
 	client, err := newGCPClient(ctx, p.config)
 	if err != nil {
 		return err
