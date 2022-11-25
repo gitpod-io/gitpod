@@ -75,6 +75,7 @@ func (ws *fileDownloadInitializer) Run(ctx context.Context, mappings []archive.I
 		}}
 	}
 
+	src = csapi.WorkspaceInitFromOther
 	return
 }
 
