@@ -38,7 +38,7 @@ scripts:
     description: Delete an existing preview environment
     script: |
       export DESTROY=true
-      export TF_VAR_kubeconfig_path="${TF_VAR_kubeconfig_path:-/home/gitpod/.kube/config}"
+      export TF_VAR_kubeconfig_path="${TF_VAR_kubeconfig_path:-$HOME/.kube/config}"
       export TF_VAR_preview_name="${TF_VAR_preview_name:-$(previewctl get-name)}"
       ./workflow/preview/deploy-harvester.sh
 

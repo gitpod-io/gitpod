@@ -34,10 +34,6 @@ pod:
           readOnly: true
         - name: harvester-kubeconfig
           mountPath: /mnt/secrets/harvester-kubeconfig
-        - name: harvester-vm-ssh-keys
-          mountPath: /mnt/secrets/harvester-vm-ssh-keys
-        - name: harvester-k3s-dockerhub-pull-account
-          mountPath: /mnt/secrets/harvester-k3s-dockerhub-pull-account
       env:
         - name: LEEWAY_WORKSPACE_ROOT
           value: /workspace
@@ -56,11 +52,6 @@ pod:
           set -Eeuo pipefail
 
           sudo chown -R gitpod:gitpod /workspace
-          mkdir /workspace/.ssh
-          cp /mnt/secrets/harvester-vm-ssh-keys/id_rsa /workspace/.ssh/id_rsa_harvester_vm
-          cp /mnt/secrets/harvester-vm-ssh-keys/id_rsa.pub /workspace/.ssh/id_rsa_harvester_vm.pub
-          sudo chmod 600 /workspace/.ssh/id_rsa_harvester_vm
-          sudo chmod 644 /workspace/.ssh/id_rsa_harvester_vm.pub
 
           (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
           printf '{{ toJson . }}' > context.json
