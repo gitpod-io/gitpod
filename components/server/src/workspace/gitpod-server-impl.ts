@@ -181,6 +181,7 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import * as grpc from "@grpc/grpc-js";
 import { CachingBlobServiceClientProvider } from "../util/content-service-sugar";
 import { CostCenterJSON } from "@gitpod/gitpod-protocol/lib/usage";
+import { createCookielessId, maskIp } from "../analytics";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -2868,7 +2869,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         //         handles potentially broken or malicious input, we better err on the side of caution.
 
         const userId = this.user?.id;
-        const anonymousId = event.anonymousId;
+        const { ip, userAgent } = this.clientHeaderFields;
+        const anonymousId = event.anonymousId || createCookielessId(ip, userAgent);
         const msg = {
             event: event.event,
             messageId: event.messageId,
@@ -2893,7 +2895,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     public async trackLocation(ctx: TraceContext, event: RemotePageMessage): Promise<void> {
         const userId = this.user?.id;
-        const anonymousId = event.anonymousId;
+        const { ip, userAgent } = this.clientHeaderFields;
+        const anonymousId = event.anonymousId || createCookielessId(ip, userAgent);
         let msg = {
             messageId: event.messageId,
             context: {},
@@ -2903,8 +2906,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         //only page if at least one identifier is known
         if (userId) {
             msg.context = {
-                ip: this.clientHeaderFields?.ip,
-                userAgent: this.clientHeaderFields?.userAgent,
+                ip: maskIp(ip),
+                userAgent: userAgent,
             };
             this.analytics.page({
                 userId: userId,
@@ -2924,10 +2927,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         //Identify calls collect user informmation. If the user is unknown, we don't make a call (privacy preservation)
         const user = this.checkUser("identifyUser");
-
+        const { ip, userAgent } = this.clientHeaderFields;
         const identifyMessage: IdentifyMessage = {
             userId: user.id,
-            anonymousId: event.anonymousId,
+            anonymousId: event.anonymousId || createCookielessId(ip, userAgent),
             traits: event.traits,
             context: event.context,
         };
