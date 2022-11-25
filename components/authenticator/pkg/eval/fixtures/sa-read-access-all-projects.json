@@ -1,0 +1,51 @@
+{
+    "resources": [
+        "res:team=gitpod/prj=leeway/ws=foobar",
+        "res:team=webapp/prj=server/prebuild=bla",
+        "res:repo=foobar/prebuild=not-in-prj"
+    ],
+    "policies": {
+        "res:sa=admin-account": [
+            {
+                "description": "SA can access read all projects",
+                "resources": [
+                    "res:team=*/prj=*",
+                    "res:team=*/prj=*/ws=*",
+                    "res:team=*/prj=*/prebuild=*"
+                ],
+                "effect": "allow",
+                "actions": [
+                    "project.Read",
+                    "workspace.Read",
+                    "prebuild.Read"
+                ]
+            }
+        ]
+    },
+    "queries": [
+        {
+            "subject": "res:sa=admin-account",
+            "action": "workspace.Read",
+            "resource": "ws=foobar",
+            "expectation": true
+        },
+        {
+            "subject": "res:sa=admin-account",
+            "action": "prebuild.Read",
+            "resource": "prebuild=bla",
+            "expectation": true
+        },
+        {
+            "subject": "res:sa=admin-account",
+            "action": "prebuild.Read",
+            "resource": "prebuild=not-in-prj",
+            "expectation": false
+        },
+        {
+            "subject": "res:sa=admin-account",
+            "action": "project.Read",
+            "resource": "prj=leeway",
+            "expectation": true
+        }
+    ]
+}

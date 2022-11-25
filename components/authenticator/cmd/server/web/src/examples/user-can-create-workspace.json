@@ -1,0 +1,34 @@
+{
+    "resources": [
+        "res:user=chris",
+        "res:team=gitpod/prj=leeway"
+    ],
+    "policies": [
+            {
+                "subject": "res:user=chris",
+                "description": "can create workspaces",
+                "resources": [
+                    "res:user=chris",
+                    "res:team=gitpod/prj=*"
+                ],
+                "effect": "EFFECT_ALLOW",
+                "actions": [
+                    "workspace.Create"
+                ]
+            }
+        ],
+    "queries": [
+        {
+            "subject": "res:user=chris",
+            "action": "workspace.Create",
+            "resource": "user=chris",
+            "expectation": true
+        },
+        {
+            "subject": "res:user=chris",
+            "action": "workspace.Create",
+            "resource": "prj=leeway",
+            "expectation": true
+        }
+    ]
+}

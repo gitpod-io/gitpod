@@ -1,0 +1,49 @@
+{
+  "name": "jsonforms-react-seed",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@emotion/react": "^11.5.0",
+    "@emotion/styled": "^11.3.0",
+    "@jsonforms/core": "^3.0.0",
+    "@jsonforms/material-renderers": "^3.0.0",
+    "@jsonforms/react": "^3.0.0",
+    "@mui/icons-material": "^5.0.0",
+    "@mui/lab": "^5.0.0-alpha.58",
+    "@mui/material": "^5.0.0",
+    "@mui/styles": "^5.2.3",
+    "@mui/x-date-pickers": "^5.0.0-beta.5",
+    "@types/node": "^14.14.14",
+    "@types/react": "^17.0.0",
+    "@types/react-dom": "^17.0.0",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "typescript": "^4.1.3"
+  },
+  "devDependencies": {
+    "@types/jest": "^28.1.6",
+    "cypress": "^6.1.0",
+    "react-scripts": "^5.0.1",
+    "start-server-and-test": "^1.11.6"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run --config video=false",
+    "cypress:ci": "BROWSER=none start-server-and-test start http://localhost:3000 cypress:run"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
+}

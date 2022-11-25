@@ -1,0 +1,55 @@
+{
+    "resources": [
+        "res:team=gitpod/prj=leeway/ws=foobar",
+        "res:team=gitpod/prj=leeway/prebuild=1234",
+        "res:team=webapp/prj=server/prebuild=bla",
+        "res:repo=aHR0cHM6Ly9naXRodWIuY29tL2dpdHBvZC1pby9sZWV3YXkK/prebuild=1234"
+    ],
+    "policies": {
+        "res:user=chris": [
+            {
+                "description": "Leeway prebuild access",
+                "resources": [
+                    "res:team=gitpod/prj=leeway",
+                    "res:team=gitpod/prj=leeway/prebuild=*"
+                ],
+                "effect": "allow",
+                "actions": [
+                    "prebuild.Read"
+                ]
+            }
+        ],
+        "res:user=milan": [
+            {
+                "description": "Read access to all prebuilds on the repo",
+                "resources": [
+                    "res:repo=aHR0cHM6Ly9naXRodWIuY29tL2dpdHBvZC1pby9sZWV3YXkK/prebuild=*"
+                ],
+                "effect": "allow",
+                "actions": [
+                    "prebuild.Read"
+                ]
+            }
+        ]
+    },
+    "queries": [
+        {
+            "subject": "res:user=chris",
+            "action": "prebuild.Read",
+            "resource": "prebuild=1234",
+            "expectation": true
+        },
+        {
+            "subject": "res:user=chris",
+            "action": "prebuild.Read",
+            "resource": "prebuild=bla",
+            "expectation": false
+        },
+        {
+            "subject": "res:user=milan",
+            "action": "prebuild.Read",
+            "resource": "prebuild=1234",
+            "expectation": true
+        }
+    ]
+}

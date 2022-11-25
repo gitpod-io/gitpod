@@ -1,0 +1,45 @@
+{
+    "resources": [
+        "res:user=chris/ws=foobar",
+        "res:team=gitpod/prj=leeway/ws=foobar",
+        "res:user=milan/ws=someother"
+    ],
+    "policies": [
+            {
+                "subject": "res:user=*",
+                "description": "users can share all their workspaces",
+                "resources": [
+                    "res:$subject/ws=*"
+                ],
+                "effect": "EFFECT_ALLOW",
+                "actions": [
+                    "workspace.Share"
+                ]
+            },
+            {
+                "subject": "res:user=*",
+                "description": "users can't share any workspace in the leeway project",
+                "resources": [
+                    "res:team=*/prj=leeway/ws=*"
+                ],
+                "effect": "EFFECT_DENY",
+                "actions": [
+                    "workspace.Share"
+                ]
+            }
+        ],
+    "queries": [
+        {
+            "subject": "res:user=chris",
+            "action": "workspace.Share",
+            "resource": "ws=foobar",
+            "expectation": false
+        },
+        {
+            "subject": "res:user=milan",
+            "action": "workspace.Share",
+            "resource": "ws=someother",
+            "expectation": true
+        }
+    ]
+}

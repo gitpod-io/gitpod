@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package authenticator.v1;
+
+option go_package = "github.com/gitpod-io/gitpod/authenticator/api/authenticator/v1";
+
+service GraphService {
+  rpc AddEdge(AddEdgeRequest) returns (AddEdgeResponse) {}
+}
+
+service PolicyService {
+  rpc AddPolicy(AddPolicyRequest) returns (AddPolicyResponse) {}
+  rpc IsAllowed(IsAllowedRequest) returns (IsAllowedResponse) {}
+}
+
+service EvalService {
+  rpc CleanSlateEval(CleanSlateEvalRequest) returns (CleanSlateEvalResponse) {}
+}
+
+message CleanSlateEvalRequest {
+  repeated string resources = 1;
+  repeated Policy policies = 2;
+  repeated Query queries = 3;
+}
+
+message Query {
+  string subject = 1;
+  string action = 2;
+  string resource = 3;
+  bool expectation = 4;
+}
+
+message CleanSlateEvalResponse {
+    message EvalResult {
+        string description = 1;
+        bool correct = 2;
+    }
+    repeated EvalResult results = 1;
+}
+
+message AddEdgeRequest { string resource_fqdn = 1; }
+message AddEdgeResponse {}
+
+message AddPolicyRequest {
+  string subject = 1;
+  repeated Policy policy = 2;
+}
+message AddPolicyResponse {}
+
+message IsAllowedRequest {
+  string subject = 1;
+  string action = 2;
+  string resource = 3;
+}
+message IsAllowedResponse { bool allowed = 1; }
+
+message Policy {
+  string subject = 1;
+  Effect effect = 2;
+  repeated string resources = 3;
+  repeated string actions = 4;
+  string description = 5;
+}
+
+enum Effect {
+  EFFECT_UNSPECIFIED = 0;
+  EFFECT_DENY = 1;
+  EFFECT_ALLOW = 2;
+}

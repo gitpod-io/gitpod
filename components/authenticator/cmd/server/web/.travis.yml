@@ -1,0 +1,20 @@
+language: node_js
+
+node_js:
+  - 10
+
+addons:
+  apt:
+    packages:
+      - libgconf-2-4
+
+cache:
+  npm: true
+  directories:
+    - ~/.cache
+
+install:
+  - npm ci
+
+script:
+  - npm run cypress:ci

@@ -1,0 +1,44 @@
+{
+    "resources": [
+        "res:team=gitpod/prj=leeway/ws=foobar",
+        "res:team=gitpod/prj=leeway/prebuild=1234",
+        "res:team=webapp/prj=server/prebuild=bla",
+        "res:repo=aHR0cHM6Ly9naXRodWIuY29tL2dpdHBvZC1pby9sZWV3YXkK/prebuild=1234",
+        "res:user=chris/ws=foobar",
+        "res:user=milan/ws=someother"
+    ],
+    "policies": {
+        "res:sa=root": [
+            {
+                "description": "allow everything",
+                "resources": [
+                    "*"
+                ],
+                "effect": "allow",
+                "actions": [
+                    "*"
+                ]
+            }
+        ]
+    },
+    "queries": [
+        {
+            "subject": "res:sa=root",
+            "action": "prebuild.Read",
+            "resource": "prebuild=1234",
+            "expectation": true
+        },
+        {
+            "subject": "res:sa=root",
+            "action": "workspace.Access",
+            "resource": "ws=foobar",
+            "expectation": true
+        },
+        {
+            "subject": "res:sa=root",
+            "action": "prebuild.Read",
+            "resource": "prebuild=1234",
+            "expectation": true
+        }
+    ]
+}

@@ -1,0 +1,24 @@
+{
+    "resources": [
+        "res:user=chris/ws=foobar",
+        "res:team=gitpod/prj=leeway/prebuild=8e0bbcdf-a926-4670-8c40-b718f035b2ae"
+    ],
+    "policies": {
+        "res:sa=foo": [
+            {
+                "resources": [
+                    "res:team=*/prj=leeway"
+                ],
+                "effect": "allow",
+                "actions": [
+                    "prebuilds.List"
+                ]
+            }
+        ]
+    },
+    "queries": [
+        {"subject": "res:sa=foo", "action": "prebuilds.List", "resource": "prj=leeway", "expectation": true},
+        {"subject": "res:sa=foo", "action": "prebuilds.List", "resource": "prebuild=8e0bbcdf-a926-4670-8c40-b718f035b2ae", "expectation": false},
+        {"subject": "res:sa=foo", "action": "prebuilds.User", "resource": "prebuild=8e0bbcdf-a926-4670-8c40-b718f035b2ae", "expectation": false}
+    ]
+}

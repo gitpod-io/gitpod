@@ -1,0 +1,23 @@
+version: v1
+plugins:
+  - name: go
+    out: authenticator/v1
+    opt:
+     - module=github.com/gitpod-io/gitpod/authenticator/api/authenticator/v1
+  - name: go-grpc
+    out: authenticator/v1
+    opt:
+      - module=github.com/gitpod-io/gitpod/authenticator/api/authenticator/v1
+  - name: connect-go
+    out: authenticator/v1
+    opt:
+     - module=github.com/gitpod-io/gitpod/authenticator/api/authenticator/v1
+
+  # - name: es
+  #   out: typescript/src
+  #   opt: target=ts
+  #   path: typescript/node_modules/.bin/protoc-gen-es
+  # - name: connect-web
+  #   out: typescript/src
+  #   opt: target=ts
+  #   path: typescript/node_modules/.bin/protoc-gen-connect-web
