@@ -14,9 +14,9 @@ import (
 	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 )
 
-type InitializerFunc func(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, error)
+type InitializerFunc func(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, csapi.InitializerMetrics, error)
 
-func (f InitializerFunc) Run(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, error) {
+func (f InitializerFunc) Run(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, csapi.InitializerMetrics, error) {
 	return f(ctx, mappings)
 }
 
@@ -24,9 +24,9 @@ type RecordingInitializer struct {
 	CallCount int
 }
 
-func (f *RecordingInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, error) {
+func (f *RecordingInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, csapi.InitializerMetrics, error) {
 	f.CallCount++
-	return csapi.WorkspaceInitFromOther, nil
+	return csapi.WorkspaceInitFromOther, nil, nil
 }
 
 func TestCompositeInitializer(t *testing.T) {
@@ -73,8 +73,8 @@ func TestCompositeInitializer(t *testing.T) {
 			Name: "error propagation",
 			Children: []initializer.Initializer{
 				&RecordingInitializer{},
-				InitializerFunc(func(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, error) {
-					return csapi.WorkspaceInitFromOther, fmt.Errorf("error happened here")
+				InitializerFunc(func(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, csapi.InitializerMetrics, error) {
+					return csapi.WorkspaceInitFromOther, nil, fmt.Errorf("error happened here")
 				}),
 				&RecordingInitializer{},
 			},
@@ -94,7 +94,7 @@ func TestCompositeInitializer(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			comp := initializer.CompositeInitializer(test.Children)
-			src, err := comp.Run(context.Background(), nil)
+			src, _, err := comp.Run(context.Background(), nil)
 			test.Eval(t, src, err, test.Children)
 		})
 	}
