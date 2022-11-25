@@ -40,22 +40,22 @@ if [[ "${VERSION:-}" == "" ]]; then
   log_info "VERSION is not set - using value from /tmp/local-dev-version which is $VERSION"
 fi
 
-INSTALLER_BINARY_PATH="$(mktemp "/tmp/XXXXXX.installer")}"
 INSTALLER_CONFIG_PATH="${INSTALLER_CONFIG_PATH:-$(mktemp "/tmp/XXXXXX.gitpod.config.yaml")}"
 INSTALLER_RENDER_PATH="k8s.yaml" # k8s.yaml is hardcoded in post-prcess.sh - we can fix that later.
 
-function installer {
-  if [[ ! -f ${INSTALLER_BINARY_PATH} ]]; then
-    docker run \
-      --entrypoint sh \
-      --rm \
-      --pull=always \
-      "eu.gcr.io/gitpod-core-dev/build/installer:${VERSION}" -c "cat /app/installer" \
-    > "${INSTALLER_BINARY_PATH}"
-    chmod +x "${INSTALLER_BINARY_PATH}"
-  fi
-  "${INSTALLER_BINARY_PATH}" "$@"
-}
+# 1. Read versions from the file system. We rely on `leeway dev/preview:deploy-dependencies` to create this file for us
+# Or from the docker file if it doesn't exist
+# shellcheck disable=SC2050,SC2057
+if [ ! test -f "/tmp/versions.yaml" ]; then
+  docker run --rm "eu.gcr.io/gitpod-core-dev/build/versions:$VERSION" cat /versions.yaml > /tmp/versions.yaml
+fi
+
+if ! command -v installer;then
+    INSTALLER_TMP_ZIP=$(mktemp "/tmp/XXXXXX.installer.tar.gz")
+    leeway build install/installer:raw-app --dont-test --save "${INSTALLER_TMP_ZIP}"
+    tar -xzvf "${INSTALLER_TMP_ZIP}" ./installer && sudo mv ./installer /usr/local/bin/
+    rm "${INSTALLER_TMP_ZIP}"
+fi
 
 function copyCachedCertificate {
   CERTS_NAMESPACE="certs"
@@ -204,7 +204,7 @@ installFluentBit
 # Init
 # ========
 
-installer config init --overwrite --config "$INSTALLER_CONFIG_PATH"
+installer --debug-version-file="/tmp/versions.yaml" config init --overwrite --config "$INSTALLER_CONFIG_PATH"
 
 # =============
 # Modify config
@@ -436,14 +436,14 @@ log_success "Generated config at $INSTALLER_CONFIG_PATH"
 # ========
 
 log_info "Validating config"
-installer validate config --config "$INSTALLER_CONFIG_PATH"
+installer --debug-version-file="/tmp/versions.yaml" validate config --config "$INSTALLER_CONFIG_PATH"
 
 # ========
 # Render
 # ========
 
 log_info "Rendering manifests"
-installer render \
+installer --debug-version-file="/tmp/versions.yaml" render \
   --use-experimental-config \
   --namespace "${PREVIEW_NAMESPACE}" \
   --config "${INSTALLER_CONFIG_PATH}" > "${INSTALLER_RENDER_PATH}"
@@ -478,9 +478,6 @@ done
 #
 # configurePayment
 #
-
-# 1. Read versions from docker image
-docker run --rm "eu.gcr.io/gitpod-core-dev/build/versions:$VERSION" cat /versions.yaml > /tmp/versions.yaml
 SERVICE_WAITER_VERSION="$(yq r /tmp/versions.yaml 'components.serviceWaiter.version')"
 PAYMENT_ENDPOINT_VERSION="$(yq r /tmp/versions.yaml 'components.paymentEndpoint.version')"
 
