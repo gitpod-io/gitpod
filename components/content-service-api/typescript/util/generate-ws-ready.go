@@ -20,6 +20,13 @@ func main() {
 		panic(err)
 	}
 
+	im, err := bel.Extract(api.InitializerMetric{})
+	if err != nil {
+		panic(err)
+	}
+
+	ts = append(ts, im...)
+
 	err = bel.Render(ts)
 	if err != nil {
 		panic(err)

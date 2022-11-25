@@ -4,6 +4,8 @@
 
 package api
 
+import "time"
+
 //go:generate sh generate.sh
 
 // WorkspaceInitSource describes from which source a workspace was initialized
@@ -22,5 +24,20 @@ const (
 
 // WorkspaceReadyMessage describes the content of a workspace-ready file in a workspace
 type WorkspaceReadyMessage struct {
-	Source WorkspaceInitSource `json:"source"`
+	Source  WorkspaceInitSource `json:"source"`
+	Metrics InitializerMetrics  `json:"metrics"`
 }
+
+// InitializerStats contains statistics about the initialization
+type InitializerMetric struct {
+	// Type of the initializer
+	Type string `json:"type"`
+
+	// Duration of the initialization
+	Duration time.Duration `json:"duration"`
+
+	// Size of the data that was initialized in bytes
+	Size uint64 `json:"size"`
+}
+
+type InitializerMetrics []InitializerMetric
