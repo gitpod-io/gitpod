@@ -55,9 +55,11 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 personalAccessTokensEnabled: { defaultValue: false, setter: setPersonalAccessTokensEnabled },
                 slow_database: { defaultValue: false, setter: setUseSlowDatabase },
             };
+
             for (const [flagName, config] of Object.entries(featureFlags)) {
-                if (teams) {
-                    for (const team of teams) {
+                const value = async () => {
+                    // First check if the flag is non-default for any of the teams
+                    for (const team of teams || []) {
                         const flagValue = await getExperimentsClient().getValueAsync(flagName, config.defaultValue, {
                             user,
                             projectId: project?.id,
@@ -65,21 +67,25 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                             teamName: team?.name,
                         });
 
-                        // We got an explicit override value from ConfigCat
                         if (flagValue !== config.defaultValue) {
-                            config.setter(flagValue);
-                            return;
+                            // We got a non-default value, this must be configured by ConfigCat
+                            return flagValue;
                         }
                     }
-                }
 
-                const flagValue = await getExperimentsClient().getValueAsync(flagName, config.defaultValue, {
-                    user,
-                    projectId: project?.id,
-                    teamId: team?.id,
-                    teamName: team?.name,
-                });
-                config.setter(flagValue);
+                    // Second evaluate if the flag is enabled for the user
+                    const valueForUser = await getExperimentsClient().getValueAsync(flagName, config.defaultValue, {
+                        user,
+                        projectId: project?.id,
+                        teamId: team?.id,
+                        teamName: team?.name,
+                    });
+
+                    return valueForUser;
+                };
+
+                const val = await value();
+                config.setter(val);
             }
         })();
     }, [user, teams, team, project]);
