@@ -19,8 +19,8 @@ export const settingsPathTeamsJoin = [settingsPathTeams, "join"].join("/");
 export const settingsPathTeamsNew = [settingsPathTeams, "new"].join("/");
 
 export const settingsPathVariables = "/variables";
-export const settingsPathPersonalAccessTokens = "/personal-tokens";
-export const settingsPathPersonalAccessTokenCreate = "/personal-tokens/create";
-export const settingsPathPersonalAccessTokenEdit = "/personal-tokens/edit";
+export const settingsPathPersonalAccessTokens = "/tokens";
+export const settingsPathPersonalAccessTokenCreate = "/tokens/create";
+export const settingsPathPersonalAccessTokenEdit = "/tokens/edit";
 
 export const settingsPathSSHKeys = "/keys";
