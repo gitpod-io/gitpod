@@ -35,18 +35,6 @@ export default function getSettingsMenu(params: {
             link: [settingsPathNotifications],
         },
         ...renderBillingMenuEntries(params.userBillingMode),
-        ...(params.enablePersonalAccessTokens
-            ? [
-                  {
-                      title: "Access Tokens",
-                      link: [
-                          settingsPathPersonalAccessTokens,
-                          settingsPathPersonalAccessTokenCreate,
-                          settingsPathPersonalAccessTokenEdit,
-                      ],
-                  },
-              ]
-            : []),
         {
             title: "Variables",
             link: [settingsPathVariables],
@@ -59,6 +47,18 @@ export default function getSettingsMenu(params: {
             title: "Integrations",
             link: [settingsPathIntegrations, "/access-control"],
         },
+        ...(params.enablePersonalAccessTokens
+            ? [
+                  {
+                      title: "Access Tokens",
+                      link: [
+                          settingsPathPersonalAccessTokens,
+                          settingsPathPersonalAccessTokenCreate,
+                          settingsPathPersonalAccessTokenEdit,
+                      ],
+                  },
+              ]
+            : []),
         {
             title: "Preferences",
             link: [settingsPathPreferences],
