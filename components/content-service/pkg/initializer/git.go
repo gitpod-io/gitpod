@@ -57,12 +57,17 @@ type GitInitializer struct {
 }
 
 // Run initializes the workspace using Git
-func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (src csapi.WorkspaceInitSource, err error) {
+func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (src csapi.WorkspaceInitSource, stats csapi.InitializerMetrics, err error) {
 	isGitWS := git.IsWorkingCopy(ws.Location)
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "GitInitializer.Run")
 	span.SetTag("isGitWS", isGitWS)
 	defer tracing.FinishSpan(span, &err)
+	start := time.Now()
+	initialSize, diskErr := getDiskUsage()
+	if diskErr != nil {
+		log.WithError(err).Error("could not get disk usage")
+	}
 
 	src = csapi.WorkspaceInitFromOther
 	if isGitWS {
@@ -137,7 +142,7 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 	b.MaxElapsedTime = 5 * time.Minute
 	if err = backoff.RetryNotify(gitClone, b, onGitCloneFailure); err != nil {
 		err = checkGitStatus(err)
-		return src, xerrors.Errorf("git initializer gitClone: %w", err)
+		return src, nil, xerrors.Errorf("git initializer gitClone: %w", err)
 	}
 
 	defer func() {
@@ -161,16 +166,29 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 	}()
 
 	if err := ws.realizeCloneTarget(ctx); err != nil {
-		return src, xerrors.Errorf("git initializer clone: %w", err)
+		return src, nil, xerrors.Errorf("git initializer clone: %w", err)
 	}
 	if err := ws.UpdateRemote(ctx); err != nil {
-		return src, xerrors.Errorf("git initializer updateRemote: %w", err)
+		return src, nil, xerrors.Errorf("git initializer updateRemote: %w", err)
 	}
 	if err := ws.UpdateSubmodules(ctx); err != nil {
 		log.WithError(err).Warn("error while updating submodules - continuing")
 	}
 
 	log.WithField("stage", "init").WithField("location", ws.Location).Debug("Git operations complete")
+
+	if diskErr == nil {
+		currentSize, diskErr := getDiskUsage()
+		if diskErr != nil {
+			log.WithError(err).Error("could not get disk usage")
+		}
+
+		stats = csapi.InitializerMetrics{csapi.InitializerMetric{
+			Type:     "git",
+			Duration: time.Since(start),
+			Size:     currentSize - initialSize,
+		}}
+	}
 	return
 }
 
