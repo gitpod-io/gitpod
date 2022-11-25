@@ -44,6 +44,7 @@ import (
 type metrics struct {
 	BackupWaitingTimeHist       prometheus.Histogram
 	BackupWaitingTimeoutCounter prometheus.Counter
+	InitializerHistogram        prometheus.HistogramVec
 }
 
 // WorkspaceService implements the InitService and WorkspaceService
@@ -108,6 +109,17 @@ func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace st
 		return nil, xerrors.Errorf("cannot register Prometheus counter for backup waiting timeouts: %w", err)
 	}
 
+	initializerHistogram := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "initializer_bytes_second",
+		Help:    "initializer speed in bytes per second",
+		Buckets: prometheus.ExponentialBuckets(1024*1024, 2, 15),
+	}, []string{"kind"})
+
+	err = reg.Register(initializerHistogram)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot register Prometheus counter for initializer speed per second: %w", err)
+	}
+
 	return &WorkspaceService{
 		config:      cfg,
 		store:       store,
@@ -118,6 +130,7 @@ func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace st
 		metrics: &metrics{
 			BackupWaitingTimeHist:       waitingTimeHist,
 			BackupWaitingTimeoutCounter: waitingTimeoutCounter,
+			InitializerHistogram:        *initializerHistogram,
 		},
 		// we permit five concurrent backups at any given time, hence the five in the channel
 		backupWorkspaceLimiter: make(chan struct{}, 5),
@@ -282,6 +295,8 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 			log.WithError(err).WithField("workspaceId", req.Id).Error("cannot initialize workspace")
 			return nil, status.Error(codes.FailedPrecondition, err.Error())
 		}
+
+		s.recordInitializerMetrics(workspace.Location)
 	}
 
 	if req.PersistentVolumeClaim {
@@ -308,6 +323,27 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 	}
 
 	return &api.InitWorkspaceResponse{}, nil
+}
+
+func (s *WorkspaceService) recordInitializerMetrics(path string) {
+	readyFile := filepath.Join(path, wsinit.WorkspaceReadyFile)
+
+	content, err := os.ReadFile(readyFile)
+	if err != nil {
+		log.WithError(err).Errorf("could not find ready file at %v", readyFile)
+		return
+	}
+
+	var ready csapi.WorkspaceReadyMessage
+	err = json.Unmarshal(content, &ready)
+	if err != nil {
+		log.WithError(err).Error("could not unmarshal ready")
+		return
+	}
+
+	for _, m := range ready.Metrics {
+		s.metrics.InitializerHistogram.WithLabelValues(m.Type).Observe(float64(m.Size) / m.Duration.Seconds())
+	}
 }
 
 func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest) session.WorkspaceFactory {
