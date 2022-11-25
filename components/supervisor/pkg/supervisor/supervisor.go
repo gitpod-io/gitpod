@@ -330,7 +330,7 @@ func Run(options ...RunOption) {
 		shutdown = make(chan ShutdownReason, 1)
 	)
 	wg.Add(1)
-	go startContentInit(ctx, cfg, &wg, cstate)
+	go startContentInit(ctx, cfg, &wg, cstate, supervisorMetrics)
 	wg.Add(1)
 	go startAPIEndpoint(ctx, cfg, &wg, apiServices, tunneledPortsService, metricsReporter, apiEndpointOpts...)
 	wg.Add(1)
@@ -1354,7 +1354,7 @@ func startSSHServer(ctx context.Context, cfg *Config, wg *sync.WaitGroup, childP
 	}()
 }
 
-func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst ContentState) {
+func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst ContentState, metrics *metrics.SupervisorMetrics) {
 	defer wg.Done()
 	defer log.Info("supervisor: workspace content available")
 
@@ -1434,6 +1434,8 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 		return
 	}
 
+	recordInitializerMetrics("/workspace", metrics)
+
 	err = os.Remove(fn)
 	if os.IsNotExist(err) {
 		// file is gone - we're good
@@ -1446,6 +1448,27 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 
 	log.WithField("source", src).Info("supervisor: workspace content init finished")
 	cst.MarkContentReady(src)
+}
+
+func recordInitializerMetrics(path string, metrics *metrics.SupervisorMetrics) {
+	readyFile := filepath.Join(path, ".gitpod/ready")
+
+	content, err := os.ReadFile(readyFile)
+	if err != nil {
+		log.WithError(err).Errorf("could not find ready file at %v", readyFile)
+		return
+	}
+
+	var ready csapi.WorkspaceReadyMessage
+	err = json.Unmarshal(content, &ready)
+	if err != nil {
+		log.WithError(err).Error("could not unmarshal ready")
+		return
+	}
+
+	for _, m := range ready.Metrics {
+		metrics.InitializerHistogram.WithLabelValues(m.Type).Observe(float64(m.Size) / m.Duration.Seconds())
+	}
 }
 
 func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *terminal.Mux) {
