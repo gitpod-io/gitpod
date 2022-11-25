@@ -7,6 +7,7 @@ import { User } from "@gitpod/gitpod-protocol";
 import { Request } from "express";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
+import * as crypto from "crypto";
 
 export async function trackLogin(
     user: User,
@@ -17,11 +18,13 @@ export async function trackLogin(
 ) {
     // make new complete identify call for each login
     await fullIdentify(user, request, analytics, subscriptionService);
+    const ip = request.ips[0];
+    const ua = request.headers["user-agent"];
 
     // track the login
     analytics.track({
         userId: user.id,
-        anonymousId: stripCookie(request.cookies.ajs_anonymous_id),
+        anonymousId: getAnonymousId(request) || createCookielessId(ip, ua),
         event: "login",
         properties: {
             loginContext: authHost,
@@ -32,11 +35,13 @@ export async function trackLogin(
 export async function trackSignup(user: User, request: Request, analytics: IAnalyticsWriter) {
     // make new complete identify call for each signup
     await fullIdentify(user, request, analytics);
+    const ip = request.ips[0];
+    const ua = request.headers["user-agent"];
 
     // track the signup
     analytics.track({
         userId: user.id,
-        anonymousId: stripCookie(request.cookies.ajs_anonymous_id),
+        anonymousId: getAnonymousId(request) || createCookielessId(ip, ua),
         event: "signup",
         properties: {
             auth_provider: user.identities[0].authProviderId,
@@ -44,6 +49,26 @@ export async function trackSignup(user: User, request: Request, analytics: IAnal
             blocked: user.blocked,
         },
     });
+}
+
+export function createCookielessId(ip?: string, ua?: string): string | number | undefined {
+    if (!ip || !ua) {
+        return "unidentified-user"; //use placeholder if we cannot resolve IP and user agent
+    }
+    const date = new Date();
+    const today = `${date.getDate()}/${date.getMonth()}/${date.getFullYear()}`;
+    return crypto
+        .createHash("sha512")
+        .update(ip + ua + today)
+        .digest("hex");
+}
+
+export function maskIp(ip?: string) {
+    if (!ip) {
+        return;
+    }
+    const octets = ip.split(".");
+    return octets?.length == 4 ? octets.slice(0, 3).concat(["0"]).join(".") : undefined;
 }
 
 async function fullIdentify(
@@ -54,18 +79,19 @@ async function fullIdentify(
 ) {
     // makes a full identify call for authenticated users
     const coords = request.get("x-glb-client-city-lat-long")?.split(", ");
-    const ip = request.get("x-forwarded-for")?.split(",")[0];
+    const ip = request.ips[0];
+    const ua = request.headers["user-agent"];
     var subscriptionIDs: string[] = [];
     const subscriptions = await subscriptionService?.getNotYetCancelledSubscriptions(user, new Date().toISOString());
     if (subscriptions) {
         subscriptionIDs = subscriptions.filter((sub) => !!sub.planId).map((sub) => sub.planId!);
     }
     analytics.identify({
-        anonymousId: stripCookie(request.cookies.ajs_anonymous_id),
+        anonymousId: getAnonymousId(request) || createCookielessId(ip, ua),
         userId: user.id,
         context: {
             ip: ip ? maskIp(ip) : undefined,
-            userAgent: request.get("User-Agent"),
+            userAgent: ua,
             location: {
                 city: request.get("x-glb-client-city"),
                 country: request.get("x-glb-client-region"),
@@ -87,9 +113,11 @@ async function fullIdentify(
     });
 }
 
-function maskIp(ip: string) {
-    const octets = ip.split(".");
-    return octets?.length == 4 ? octets.slice(0, 3).concat(["0"]).join(".") : undefined;
+function getAnonymousId(request: Request) {
+    if (!(request.cookies["gp-analytical"] === "true")) {
+        return;
+    }
+    return stripCookie(request.cookies.ajs_anonymous_id);
 }
 
 function resolveIdentities(user: User) {

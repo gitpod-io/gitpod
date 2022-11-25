@@ -173,7 +173,15 @@ export const identifyUser = async (traits: Traits) => {
     });
 };
 
-const getAnonymousId = (): string => {
+const getCookieConsent = () => {
+    return Cookies.get("gp-analytical") === "true";
+};
+
+const getAnonymousId = (): string | undefined => {
+    if (!getCookieConsent()) {
+        //we do not want to read or set the id cookie if we don't have consent
+        return;
+    }
     let anonymousId = Cookies.get("ajs_anonymous_id");
     if (anonymousId) {
         return anonymousId.replace(/^"(.+(?="$))"$/, "$1"); //strip enclosing double quotes before returning
