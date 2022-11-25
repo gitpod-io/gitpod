@@ -478,7 +478,7 @@ func (s *presignedMinIOStorage) DeleteObject(ctx context.Context, bucket string,
 }
 
 // DeleteBucket deletes a bucket
-func (s *presignedMinIOStorage) DeleteBucket(ctx context.Context, bucket string) (err error) {
+func (s *presignedMinIOStorage) DeleteBucket(ctx context.Context, userID, bucket string) (err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.DeleteBucket")
 	defer tracing.FinishSpan(span, &err)
 
@@ -531,7 +531,7 @@ func (s *presignedMinIOStorage) Bucket(ownerID string) string {
 }
 
 // BlobObject returns a blob's object name
-func (s *presignedMinIOStorage) BlobObject(name string) (string, error) {
+func (s *presignedMinIOStorage) BlobObject(userID, name string) (string, error) {
 	return blobObjectName(name)
 }
 

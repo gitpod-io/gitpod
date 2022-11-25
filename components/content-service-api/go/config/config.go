@@ -24,6 +24,9 @@ type StorageConfig struct {
 	// MinIOConfig configures the MinIO remote storage
 	MinIOConfig MinIOConfig `json:"minio,omitempty"`
 
+	// S3Config configures the S3 remote storage
+	S3Config *S3Config `json:"s3,omitempty"`
+
 	BlobQuota int64 `json:"blobQuota"`
 }
 
@@ -50,6 +53,10 @@ const (
 
 	// MinIOStorage stores workspaces in a MinIO/S3 storage
 	MinIOStorage RemoteStorageType = "minio"
+
+	// S3Storage stores workspaces in a S3 storage. It assumes the AWS-typical credentials
+	// exist in the environment. See https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/config#LoadDefaultConfig for more details.
+	S3Storage RemoteStorageType = "s3"
 
 	// NullStorage does not synchronize workspaces at all
 	NullStorage RemoteStorageType = ""
@@ -100,6 +107,11 @@ type MinIOConfig struct {
 	ParallelUpload uint   `json:"parallelUpload,omitempty"`
 
 	BucketName string `json:"bucket,omitempty"`
+}
+
+// S3Config configures the S3 remote storage backend
+type S3Config struct {
+	Bucket string `json:"bucket"`
 }
 
 type PProf struct {
