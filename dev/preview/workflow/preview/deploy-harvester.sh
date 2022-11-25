@@ -19,7 +19,7 @@ if [[ -n ${WERFT_SERVICE_HOST+x} ]]; then
   export TF_IN_AUTOMATION=true
 fi
 
-WORKSPACE="${TF_VAR_preview_name:-$WORKSPACE}"
+export TF_WORKSPACE="${TF_VAR_preview_name:-TF_WORKSPACE}"
 TARGET_DIR="${PROJECT_ROOT}/dev/preview/infrastructure/harvester"
 # Setting the TF_DATA_DIR is advisable if we set the PLAN_LOCATION in a different place than the dir with the tf
 TF_DATA_DIR="${TARGET_DIR}"
@@ -54,8 +54,8 @@ case ${PLAN_EXIT_CODE} in
   ;;
 esac
 
-if [ -n "${DESTROY-}" ] && [ -n "${WORKSPACE}" ]; then
+if [ -n "${DESTROY-}" ] && [ -n "${TF_WORKSPACE}" ]; then
   pushd "${TARGET_DIR}"
-  delete_workspace "${WORKSPACE}"
+  delete_workspace "${TF_WORKSPACE}"
   popd
 fi

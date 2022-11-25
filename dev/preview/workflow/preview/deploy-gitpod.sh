@@ -45,9 +45,20 @@ INSTALLER_RENDER_PATH="k8s.yaml" # k8s.yaml is hardcoded in post-prcess.sh - we 
 
 # 1. Read versions from the file system. We rely on `leeway dev/preview:deploy-dependencies` to create this file for us
 # Or from the docker file if it doesn't exist
-# shellcheck disable=SC2050,SC2057
-if [ ! test -f "/tmp/versions.yaml" ]; then
-  docker run --rm "eu.gcr.io/gitpod-core-dev/build/versions:$VERSION" cat /versions.yaml > /tmp/versions.yaml
+# Or just build it and get it from there
+if ! test -f "/tmp/versions.yaml"; then
+  ec=0
+  docker run --rm "eu.gcr.io/gitpod-core-dev/build/versions:$VERSION" cat /versions.yaml > /tmp/versions.yaml || ec=$?
+  if [[ ec -ne 0 ]];then
+      VERSIONS_TMP_ZIP=$(mktemp "/tmp/XXXXXX.installer.tar.gz")
+      leeway build components:all-docker \
+                              --dont-test \
+                              -Dversion="${VERSION}" \
+                              -DSEGMENT_IO_TOKEN="$(kubectl --context=dev -n werft get secret self-hosted -o jsonpath='{.data.segmentIOToken}' | base64 -d)" \
+                              --save "${VERSIONS_TMP_ZIP}"
+      tar -xzvf "${VERSIONS_TMP_ZIP}" ./versions.yaml && sudo mv ./versions.yaml /tmp/versions.yaml
+      rm "${VERSIONS_TMP_ZIP}"
+  fi
 fi
 
 if ! command -v installer;then

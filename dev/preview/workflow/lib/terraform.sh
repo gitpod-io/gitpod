@@ -17,33 +17,21 @@ if [ -n "${DESTROY-}" ]; then
   export TF_CLI_ARGS_plan="${TF_CLI_ARGS_plan} -destroy"
 fi
 
-function check_workspace() {
-  local workspace=$1
-  if [[ $(terraform workspace show) != "${workspace}" ]]; then
-    log_error "Expected to be in [${workspace}]. We are in [$(terraform workspace show)]"
-    return "${ERROR_WRONG_WORKSPACE}"
-  fi
-}
-
-function set_workspace() {
-  local workspace=$1
-  if terraform workspace list | grep -q "${workspace}"; then
-    terraform workspace select "${workspace}"
-  else
-    terraform workspace new "${workspace}"
-  fi
-}
-
 function delete_workspace() {
   local workspace=$1
-  if [[ $(terraform workspace show) == "${workspace}" ]]; then
-    terraform workspace select default
-  fi
-
-  exists=0
+  local exists=0
   terraform workspace list | grep -q "${workspace}" || exists=$?
   if [[ "${exists}" == 0 ]]; then
-    terraform workspace delete "${workspace}"
+    TF_WORKSPACE="default" terraform workspace delete "${workspace}"
+  fi
+}
+
+function create_workspace() {
+  local workspace=$1
+  if terraform workspace list | grep -q "${workspace}"; then
+    return 0
+  else
+    terraform workspace new "${workspace}"
   fi
 }
 
@@ -55,10 +43,10 @@ function terraform_init() {
   fi
   pushd "${target_dir}" || return "${ERROR_CHANGE_DIR}"
 
-  terraform init
-  if [ -n "${WORKSPACE-}" ]; then
-    set_workspace "${WORKSPACE}"
-    check_workspace "${WORKSPACE}"
+  TF_WORKSPACE="default" terraform init
+
+  if [ -n "${TF_WORKSPACE}" ]; then
+    create_workspace "${TF_WORKSPACE}"
   fi
 
   popd || return "${ERROR_CHANGE_DIR}"
@@ -76,12 +64,6 @@ function terraform_plan() {
   local plan_location=${PLAN_LOCATION:-$static_plan}
 
   pushd "${target_dir}" || return "${ERROR_CHANGE_DIR}"
-
-  # check if we should be in a workspace, and bail otherwise
-  if [ -n "${WORKSPACE-}" ]; then
-    set_workspace "${WORKSPACE}"
-    check_workspace "${WORKSPACE}"
-  fi
 
   # -detailed-exitcode will be 0=success no changes/1=failure/2=success changes
   # therefore we capture the output so our function doesn't cause a script to terminate if the caller has `set -e`
@@ -109,12 +91,6 @@ function terraform_apply() {
   if [ -z "${plan_location-}" ]; then
     log_error "Must provide PLAN_LOCATION for apply"
     return "${ERROR_NO_PLAN}"
-  fi
-
-  # check if we should be in a workspace, and bail otherwise
-  if [ -n "${WORKSPACE-}" ]; then
-    set_workspace "${WORKSPACE}"
-    check_workspace "${WORKSPACE}"
   fi
 
   timeout --signal=INT --foreground 10m terraform apply "${plan_location}"
