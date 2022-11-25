@@ -12,6 +12,7 @@ import (
 
 type SupervisorMetrics struct {
 	IDEReadyDurationTotal *prometheus.HistogramVec
+	InitializerHistogram  *prometheus.HistogramVec
 }
 
 func NewMetrics() *SupervisorMetrics {
@@ -21,12 +22,18 @@ func NewMetrics() *SupervisorMetrics {
 			Help:    "the IDE startup time",
 			Buckets: []float64{0.1, 0.5, 1, 5, 10, 30, 60},
 		}, []string{"kind"}),
+		InitializerHistogram: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Name:    "supervisor_initializer_bytes_second",
+			Help:    "initializer speed in bytes per second",
+			Buckets: prometheus.ExponentialBuckets(1024*1024, 2, 12),
+		}, []string{"kind"}),
 	}
 }
 
 func (m *SupervisorMetrics) Register(registry *prometheus.Registry) error {
 	metrics := []prometheus.Collector{
 		m.IDEReadyDurationTotal,
+		m.InitializerHistogram,
 	}
 
 	for _, metric := range metrics {
