@@ -42,7 +42,7 @@ func (cs *ContentService) DeleteUserContent(ctx context.Context, req *api.Delete
 	defer tracing.FinishSpan(span, &err)
 
 	bucket := cs.s.Bucket(req.OwnerId)
-	err = cs.s.DeleteBucket(ctx, bucket)
+	err = cs.s.DeleteBucket(ctx, req.OwnerId, bucket)
 	// TODO
 	if err == storage.ErrNotFound {
 		log.WithFields(log.OWI(req.OwnerId, "", "")).Debug("DeleteUserContent: NotFound")

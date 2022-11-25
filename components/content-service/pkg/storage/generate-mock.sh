@@ -11,6 +11,6 @@ mkdir -p mock
 
 mockgen \
     -package=mock \
-    github.com/gitpod-io/gitpod/content-service/pkg/storage PresignedAccess,DirectAccess > mock/mock.go
+    github.com/gitpod-io/gitpod/content-service/pkg/storage PresignedAccess,DirectAccess,PresignedS3Client,S3Client > mock/mock.go
 
 leeway run components:update-license-header
