@@ -2,11 +2,14 @@ packages:
   - name: "deploy-dependencies"
     type: "generic"
     deps:
-      - install/installer:docker
-      - components:docker-versions
+      - install/installer:raw-app
+      - components:all-docker
+      - dev/version-manifest:app
     config:
       commands:
-        - ["echo", "done"]
+        - [ "sh", "-c", "sudo mv install-installer--raw-app/installer /usr/local/bin" ]
+        - [ "sh", "-c", "cat components--all-docker/versions.yaml > /tmp/versions.yaml" ]
+
 scripts:
   - name: build
     description: Build all packages needed to deploy Gitpod to preview environments

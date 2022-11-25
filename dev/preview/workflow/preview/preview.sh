@@ -27,6 +27,7 @@ fi
 
 ensure_gcloud_auth
 
+leeway run dev/preview:get-credentials
 leeway run dev/preview:create-preview
 leeway run dev/preview:build
 previewctl install-context --retry 30
