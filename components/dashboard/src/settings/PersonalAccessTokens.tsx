@@ -444,7 +444,7 @@ function ListAccessTokensView() {
                                     Make sure to copy your personal access token — you won't be able to access it again.
                                 </div>
                                 <button className="secondary" onClick={handleCopyToken}>
-                                    Copy Token To Clipboard
+                                    Copy Token to Clipboard
                                 </button>
                             </div>
                         </div>
