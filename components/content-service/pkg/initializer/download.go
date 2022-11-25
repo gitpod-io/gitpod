@@ -45,18 +45,37 @@ type fileDownloadInitializer struct {
 }
 
 // Run initializes the workspace
-func (ws *fileDownloadInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (src csapi.WorkspaceInitSource, err error) {
+func (ws *fileDownloadInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (src csapi.WorkspaceInitSource, metrics csapi.InitializerMetrics, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "FileDownloadInitializer.Run")
 	defer tracing.FinishSpan(span, &err)
+	start := time.Now()
+	initialSize, diskErr := getDiskUsage()
+	if diskErr != nil {
+		log.WithError(err).Error("could not get disk usage")
+	}
 
 	for _, info := range ws.FilesInfos {
 		err := ws.downloadFile(ctx, info)
 		if err != nil {
 			tracing.LogError(span, xerrors.Errorf("cannot download file '%s' from '%s': %w", info.Path, info.URL, err))
-			return src, err
+			return src, nil, err
 		}
 	}
-	return csapi.WorkspaceInitFromOther, nil
+
+	if diskErr == nil {
+		currentSize, diskErr := getDiskUsage()
+		if diskErr != nil {
+			log.WithError(err).Error("could not get disk usage")
+		}
+
+		metrics = csapi.InitializerMetrics{csapi.InitializerMetric{
+			Type:     "fileDownload",
+			Duration: time.Since(start),
+			Size:     currentSize - initialSize,
+		}}
+	}
+
+	return
 }
 
 func (ws *fileDownloadInitializer) downloadFile(ctx context.Context, info fileInfo) (err error) {
