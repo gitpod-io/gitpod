@@ -4406,6 +4406,38 @@ data:
               5,
               10
             ]
+          },
+          {
+            "name": "supervisor_initializer_bytes_second",
+            "help": "initializer speed in bytes per second",
+            "labels": [
+              {
+                "name": "kind",
+                "allowValues": [
+                  "fileDownload",
+                  "git",
+                  "composite",
+                  "prebuild",
+                  "snapshot",
+                  "fromBackup"
+                ],
+                "defaultValue": ""
+              }
+            ],
+            "buckets": [
+              1048576,
+              2097152,
+              4194304,
+              8388608,
+              16777216,
+              33554432,
+              67108864,
+              134217728,
+              268435456,
+              536870912,
+              1073741824,
+              2147483648
+            ]
           }
         ],
         "errorReporting": {
@@ -8593,7 +8625,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: c6e6a9f479c4a92c62793e24470b07496121a249ea515fcb72ea9441c954cfb4
+        gitpod.io/checksum_config: ec425744dc9a6e158a25ec5e5749b4c4e5029d04fab8019ff5ea62d6132e08f6
       creationTimestamp: null
       labels:
         app: gitpod
