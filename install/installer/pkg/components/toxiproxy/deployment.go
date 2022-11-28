@@ -106,10 +106,13 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						}, {
 							Name:  "toxic-config",
 							Image: ctx.ImageName(ctx.Config.Repository, ConfigComponent, ctx.VersionManifest.Components.ToxicConfig.Version),
+							// latency and jitter values taken from:
+							// https://geekflare.com/google-cloud-latency/
+							// using the values for the latency between europe-west1 (Belgium) and us-west1 (Oregon)
 							Args: []string{
 								fmt.Sprintf("--proxy=%s", proxyName),
-								"--latency=1000",
-								"--jitter=250",
+								"--latency=280",
+								"--jitter=25",
 								"--wait=true",
 							},
 						},
