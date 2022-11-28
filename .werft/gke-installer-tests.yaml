@@ -158,5 +158,5 @@ pod:
           npm config set update-notifier false
           npx ts-node .werft/installer-tests.ts "STANDARD_GKE_TEST"
 # The bit below makes this a cron job
-plugins:
-  cron: "15 4 * * *"
+# plugins:
+#   cron: "15 4 * * *"
