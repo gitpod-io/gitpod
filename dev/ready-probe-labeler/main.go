@@ -68,16 +68,17 @@ func main() {
 		log.Fatalf("Unexpected error: %v", err)
 	}
 
+	start := time.Now()
+
 	if opts.Shutdown {
 		err = updateLabel(opts.Label, false, nodeName, client)
 		if err != nil {
 			log.Fatalf("Unexpected error removing node label: %v", err)
 		}
+		log.WithField("node", nodeName).WithField("time", time.Since(start).Seconds()).Info("node label updated")
 
 		return
 	}
-
-	start := time.Now()
 
 	err = waitForURLToBeReachable(opts.ProbeURL, opts.Timeout)
 	if err != nil {
