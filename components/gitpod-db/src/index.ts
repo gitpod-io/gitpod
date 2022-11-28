@@ -40,3 +40,5 @@ export * from "./team-db";
 export * from "./installation-admin-db";
 export * from "./webhook-event-db";
 export * from "./typeorm/metrics";
+export * from "./personal-access-token-db";
+export * from "./typeorm/entity/db-personal-access-token";
