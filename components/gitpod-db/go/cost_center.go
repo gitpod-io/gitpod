@@ -104,7 +104,7 @@ func (c *CostCenterManager) GetOrCreateCostCenter(ctx context.Context, attributi
 	// This can happen in the following scenario:
 	//	* User accesses gitpod just after their CostCenter expired, but just before our periodic CostCenter reset kicks in.
 	if result.BillingStrategy == CostCenter_Other && result.IsExpired() {
-		cc, err := c.ResetUsage(ctx, result)
+		cc, err := c.ResetUsage(ctx, result.ID)
 		if err != nil {
 			logger.WithError(err).Error("Failed to reset expired usage.")
 			return CostCenter{}, fmt.Errorf("failed to reset usage for expired cost center ID: %s: %w", result.ID, err)
@@ -262,23 +262,29 @@ func (c *CostCenterManager) ListLatestCostCentersWithBillingTimeBefore(ctx conte
 	return results, nil
 }
 
-func (c *CostCenterManager) ResetUsage(ctx context.Context, cc CostCenter) (CostCenter, error) {
+func (c *CostCenterManager) ResetUsage(ctx context.Context, id AttributionID) (CostCenter, error) {
+	logger := log.WithField("attribution_id", id)
+	now := time.Now().UTC()
+	cc, err := getCostCenter(ctx, c.conn, id)
+	if err != nil {
+		return cc, err
+	}
+	logger = logger.WithField("cost_center", cc)
 	if cc.BillingStrategy != CostCenter_Other {
 		return CostCenter{}, fmt.Errorf("cannot reset usage for Billing Strategy %s for Cost Center ID: %s", cc.BillingStrategy, cc.ID)
 	}
-
-	now := time.Now().UTC()
-
-	// Default to 1 month from now, if there's no nextBillingTime set on the record.
-	nextBillingTime := now.AddDate(0, 1, 0)
-	if cc.NextBillingTime.IsSet() {
-		nextBillingTime = cc.NextBillingTime.Time().AddDate(0, 1, 0)
+	if !cc.IsExpired() {
+		logger.Info("Skipping ResetUsage because next billing cycle is in the future.")
+		return cc, nil
 	}
 
-	// Create a synthetic Invoice Usage record, to reset usage
-	err := c.BalanceOutUsage(ctx, cc.ID)
-	if err != nil {
-		return CostCenter{}, fmt.Errorf("failed to compute invocie usage record for AttributonID: %s: %w", cc.ID, err)
+	logger.Info("Running `ResetUsage`.")
+	// Default to 1 month from now, if there's no nextBillingTime set on the record.
+	billingCycleStart := now
+	nextBillingTime := now.AddDate(0, 1, 0)
+	if cc.NextBillingTime.IsSet() {
+		billingCycleStart = cc.NextBillingTime.Time()
+		nextBillingTime = cc.NextBillingTime.Time().AddDate(0, 1, 0)
 	}
 
 	// All fields on the new cost center remain the same, except for BillingCycleStart, NextBillingTime, and CreationTime
@@ -286,13 +292,19 @@ func (c *CostCenterManager) ResetUsage(ctx context.Context, cc CostCenter) (Cost
 		ID:                cc.ID,
 		SpendingLimit:     cc.SpendingLimit,
 		BillingStrategy:   cc.BillingStrategy,
-		BillingCycleStart: NewVarCharTime(now),
+		BillingCycleStart: NewVarCharTime(billingCycleStart),
 		NextBillingTime:   NewVarCharTime(nextBillingTime),
 		CreationTime:      NewVarCharTime(now),
 	}
 	err = c.conn.Save(&newCostCenter).Error
 	if err != nil {
 		return CostCenter{}, fmt.Errorf("failed to store new cost center for AttribtuonID: %s: %w", cc.ID, err)
+	}
+
+	// Create a synthetic Invoice Usage record, to reset usage
+	err = c.BalanceOutUsage(ctx, cc.ID)
+	if err != nil {
+		return CostCenter{}, fmt.Errorf("failed to compute invocie usage record for AttributonID: %s: %w", cc.ID, err)
 	}
 
 	return newCostCenter, nil
