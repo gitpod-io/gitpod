@@ -35,6 +35,7 @@ import { PeriodicDbDeleter } from "./periodic-deleter";
 import { TermsAcceptanceDB } from "./terms-acceptance-db";
 import { TermsAcceptanceDBImpl } from "./typeorm/terms-acceptance-db-impl";
 import { CodeSyncResourceDB } from "./typeorm/code-sync-resource-db";
+
 import { WorkspaceClusterDBImpl } from "./typeorm/workspace-cluster-db-impl";
 import { WorkspaceClusterDB } from "./workspace-cluster-db";
 import { AuthCodeRepositoryDB } from "./typeorm/auth-code-repository-db";
@@ -54,6 +55,7 @@ import { TeamDB } from "./team-db";
 import { TeamDBImpl } from "./typeorm/team-db-impl";
 import { ProjectDB } from "./project-db";
 import { ProjectDBImpl } from "./typeorm/project-db-impl";
+import { PersonalAccessTokenDB } from "./personal-access-token-db";
 import { EntityManager } from "typeorm";
 import { OssAllowListDB } from "./oss-allowlist-db";
 import { OssAllowListDBImpl } from "./typeorm/oss-allowlist-db-impl";
@@ -65,6 +67,7 @@ import { TypeORMBlockedRepositoryDBImpl } from "./typeorm/blocked-repository-db-
 import { BlockedRepositoryDB } from "./blocked-repository-db";
 import { WebhookEventDB } from "./webhook-event-db";
 import { WebhookEventDBImpl } from "./typeorm/webhook-event-db-impl";
+import { PersonalAccessTokenDBImpl } from "./typeorm/personal-access-token-db-impl";
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
@@ -141,6 +144,9 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
     bind(ProjectDB).toService(ProjectDBImpl);
     bind(WebhookEventDBImpl).toSelf().inSingletonScope();
     bind(WebhookEventDB).toService(WebhookEventDBImpl);
+
+    bind(PersonalAccessTokenDBImpl).toSelf().inSingletonScope();
+    bind(PersonalAccessTokenDB).toService(PersonalAccessTokenDBImpl);
 
     // com concerns
     bind(AccountingDB).to(TypeORMAccountingDBImpl).inSingletonScope();
