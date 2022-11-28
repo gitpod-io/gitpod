@@ -82,16 +82,10 @@ func (s *TokensService) CreatePersonalAccessToken(ctx context.Context, req *conn
 		return nil, connect.NewError(connect.CodeInternal, errors.New("Failed to generate personal access token."))
 	}
 
-	hash, err := pat.ValueHash()
-	if err != nil {
-		log.WithError(err).Errorf("Failed to generate personal access token value hash for user %s", userID.String())
-		return nil, connect.NewError(connect.CodeInternal, errors.New("Failed to compute personal access token hash."))
-	}
-
 	token, err := db.CreatePersonalAccessToken(ctx, s.dbConn, db.PersonalAccessToken{
 		ID:             uuid.New(),
 		UserID:         userID,
-		Hash:           hash,
+		Hash:           pat.ValueHash(),
 		Name:           name,
 		Scopes:         scopes,
 		ExpirationTime: expiry.AsTime().UTC(),
@@ -183,12 +177,7 @@ func (s *TokensService) RegeneratePersonalAccessToken(ctx context.Context, req *
 		return nil, connect.NewError(connect.CodeInternal, errors.New("Failed to regenerate personal access token."))
 	}
 
-	hash, err := pat.ValueHash()
-	if err != nil {
-		log.WithError(err).Errorf("Failed to regenerate personal access token value hash for user %s", userID.String())
-		return nil, connect.NewError(connect.CodeInternal, errors.New("Failed to compute personal access token hash."))
-	}
-
+	hash := pat.ValueHash()
 	token, err := db.UpdatePersonalAccessTokenHash(ctx, s.dbConn, tokenID, userID, hash, expiry.AsTime().UTC())
 	if err != nil {
 		log.WithError(err).Errorf("Failed to store personal access token for user %s", userID.String())
