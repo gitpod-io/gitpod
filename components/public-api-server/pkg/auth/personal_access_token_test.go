@@ -5,7 +5,9 @@
 package auth
 
 import (
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"regexp"
 	"testing"
@@ -18,6 +20,7 @@ func TestGeneratePersonalAccessToken(t *testing.T) {
 
 	pat, err := GeneratePersonalAccessToken(signer)
 	require.NoError(t, err)
+	fmt.Println(pat)
 
 	signature, err := signer.Sign([]byte(pat.value))
 	require.NoError(t, err)
@@ -35,6 +38,16 @@ func TestGeneratePersonalAccessToken(t *testing.T) {
 	parsed, err := ParsePersonalAccessToken(pat.String(), signer)
 	require.NoError(t, err)
 	require.Equal(t, pat, parsed)
+}
+
+func TestPersonalAccessToken_HashValue(t *testing.T) {
+	signer := NewHS256Signer([]byte("my-secret"))
+	pat, err := GeneratePersonalAccessToken(signer)
+	require.NoError(t, err)
+
+	h := sha256.Sum256([]byte(pat.value))
+
+	require.Equal(t, hex.EncodeToString(h[:]), pat.ValueHash(), "hash value must be hex sha-256 hash of value")
 }
 
 func TestParsePersonalAccessToken_Errors(t *testing.T) {

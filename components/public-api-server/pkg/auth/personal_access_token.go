@@ -6,14 +6,14 @@ package auth
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 const PersonalAccessTokenPrefix = "gitpod_pat_"
@@ -44,14 +44,10 @@ func (t *PersonalAccessToken) Value() string {
 	return t.value
 }
 
-func (t *PersonalAccessToken) ValueHash() (string, error) {
-	const bcryptCost = 10
-	hash, err := bcrypt.GenerateFromPassword([]byte(t.value), bcryptCost)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate personal access token value hash: %w", err)
-	}
-
-	return string(hash), nil
+// ValueHash computes the SHA256 hash of the token value
+func (t *PersonalAccessToken) ValueHash() string {
+	hashed := sha256.Sum256([]byte(t.value))
+	return hex.EncodeToString(hashed[:])
 }
 
 func GeneratePersonalAccessToken(signer Signer) (PersonalAccessToken, error) {
