@@ -8,15 +8,11 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"io"
-	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -64,9 +60,6 @@ func main() {
 	// code server args install extension with id
 	args := []string{}
 
-	// install extension with filepath
-	extPathArgs := []string{}
-
 	if enableDebug {
 		args = append(args, "--inspect", "--log=trace")
 	}
@@ -90,36 +83,14 @@ func main() {
 		log.WithError(err).Error("get extensions failed")
 	}
 	log.WithField("ext", extensions).Info("get extensions")
-	phaseDone()
 	for _, ext := range extensions {
-		if _, ok := uniqMap[ext.Location]; ok {
+		if _, ok := uniqMap[ext]; ok {
 			continue
 		}
-		uniqMap[ext.Location] = struct{}{}
-		if !ext.IsUrl {
-			args = append(args, "--install-extension", ext.Location)
-		} else {
-			extPathArgs = append(extPathArgs, "--install-extension", ext.Location)
-		}
+		uniqMap[ext] = struct{}{}
+		args = append(args, "--install-extension", ext)
 	}
-
-	// install path extension first
-	// see https://github.com/microsoft/vscode/issues/143617#issuecomment-1047881213
-	if len(extPathArgs) > 0 {
-		// ensure extensions install in correct dir
-		extPathArgs = append(extPathArgs, os.Args[1:]...)
-		extPathArgs = append(extPathArgs, "--do-not-sync")
-		log.Info("installing extensions by path")
-		cmd := exec.Command(Code, extPathArgs...)
-		cmd.Stderr = os.Stderr
-		cmd.Stdout = os.Stdout
-		phaseDone = phaseLogging("InstallPathExtensions")
-		if err := cmd.Run(); err != nil {
-			log.WithError(err).Error("installing extensions by path failed")
-		}
-		phaseDone()
-		log.WithField("cost", time.Now().Local().Sub(startTime).Milliseconds()).Info("extensions with path installed")
-	}
+	phaseDone()
 
 	// install extensions and run code server with exec
 	args = append(args, os.Args[1:]...)
@@ -157,12 +128,7 @@ func resolveWorkspaceInfo(ctx context.Context) (*supervisor.WorkspaceInfoRespons
 	return nil, errors.New("failed with attempt 10 times")
 }
 
-type Extension struct {
-	IsUrl    bool   `json:"is_url"`
-	Location string `json:"location"`
-}
-
-func getExtensions(repoRoot string) (extensions []Extension, err error) {
+func getExtensions(repoRoot string) (extensions []string, err error) {
 	if repoRoot == "" {
 		err = errors.New("repoRoot is empty")
 		return
@@ -185,74 +151,20 @@ func getExtensions(repoRoot string) (extensions []Extension, err error) {
 	if config == nil || config.Vscode == nil {
 		return
 	}
-	var wg sync.WaitGroup
-	var extensionsMu sync.Mutex
 	for _, ext := range config.Vscode.Extensions {
 		lowerCaseExtension := strings.ToLower(ext)
 		if isUrl(lowerCaseExtension) {
-			wg.Add(1)
-			go func(url string) {
-				defer wg.Done()
-				location, err := downloadExtension(url)
-				if err != nil {
-					log.WithError(err).WithField("url", url).Error("download extension failed")
-					return
-				}
-				extensionsMu.Lock()
-				extensions = append(extensions, Extension{
-					IsUrl:    true,
-					Location: location,
-				})
-				extensionsMu.Unlock()
-			}(ext)
+			extensions = append(extensions, ext)
 		} else {
-			extensionsMu.Lock()
-			extensions = append(extensions, Extension{
-				IsUrl:    false,
-				Location: lowerCaseExtension,
-			})
-			extensionsMu.Unlock()
+			extensions = append(extensions, lowerCaseExtension)
 		}
 	}
-	wg.Wait()
 	return
 }
 
 func isUrl(lowerCaseIdOrUrl string) bool {
 	isUrl, _ := regexp.MatchString(`http[s]?://`, lowerCaseIdOrUrl)
 	return isUrl
-}
-
-func downloadExtension(url string) (location string, err error) {
-	start := time.Now()
-	log.WithField("url", url).Info("start download extension")
-	client := &http.Client{
-		Timeout: 20 * time.Second,
-	}
-	resp, err := client.Get(url)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		err = errors.New("failed to download extension: " + http.StatusText(resp.StatusCode))
-		return
-	}
-	out, err := os.CreateTemp("", "vsix*.vsix")
-	if err != nil {
-		err = errors.New("failed to create tmp vsix file: " + err.Error())
-		return
-	}
-	defer out.Close()
-	if _, err = io.Copy(out, resp.Body); err != nil {
-		err = errors.New("failed to resolve body stream: " + err.Error())
-		return
-	}
-	location = out.Name()
-	log.WithField("url", url).WithField("location", location).
-		WithField("cost", time.Now().Local().Sub(start).Milliseconds()).
-		Info("download extension success")
-	return
 }
 
 func phaseLogging(phase string) context.CancelFunc {
