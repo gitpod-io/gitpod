@@ -16,7 +16,6 @@ export interface ProjectConfig {
 export interface ProjectSettings {
     useIncrementalPrebuilds?: boolean;
     usePersistentVolumeClaim?: boolean;
-    keepOutdatedPrebuildsRunning?: boolean;
     // whether new workspaces can start on older prebuilds and incrementally update
     allowUsingPreviousPrebuilds?: boolean;
     // how many commits in the commit history a prebuild is good (undefined and 0 means every commit is prebuilt)

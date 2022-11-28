@@ -62,12 +62,6 @@ export interface PrebuildWithWorkspace {
     workspace: Workspace;
 }
 
-export interface PrebuildWithWorkspaceAndInstances {
-    prebuild: PrebuiltWorkspace;
-    workspace: Workspace;
-    instances: WorkspaceInstance[];
-}
-
 export type WorkspaceAndOwner = Pick<Workspace, "id" | "ownerId">;
 export type WorkspaceOwnerAndSoftDeleted = Pick<Workspace, "id" | "ownerId" | "softDeleted">;
 
@@ -180,10 +174,6 @@ export interface WorkspaceDB {
 
     storePrebuiltWorkspace(pws: PrebuiltWorkspace): Promise<PrebuiltWorkspace>;
     findPrebuiltWorkspaceByCommit(cloneURL: string, commit: string): Promise<PrebuiltWorkspace | undefined>;
-    findActivePrebuiltWorkspacesByBranch(
-        projectId: string,
-        branch: string,
-    ): Promise<PrebuildWithWorkspaceAndInstances[]>;
     findPrebuildsWithWorkpace(cloneURL: string): Promise<PrebuildWithWorkspace[]>;
     findPrebuildByWorkspaceID(wsid: string): Promise<PrebuiltWorkspace | undefined>;
     findPrebuildByID(pwsid: string): Promise<PrebuiltWorkspace | undefined>;

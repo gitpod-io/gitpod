@@ -48,7 +48,8 @@ message ProjectSettings {
 
 message PrebuildSettings {
     bool enable_incremental_prebuilds = 1;
-    bool keep_outdated_prebuilds_running = 2;
+    // DEPRECATED bool keep_outdated_prebuilds_running = 2;
+    reserved 2;
     bool use_previous_prebuilds = 3;
     int32 prebuild_every_nth = 4;
 }

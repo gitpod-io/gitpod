@@ -97,12 +97,6 @@ export default function () {
                 onChange={({ target }) => updateProjectSettings({ useIncrementalPrebuilds: target.checked })}
             />
             <CheckBox
-                title={<span>Cancel Prebuilds on Outdated Commits </span>}
-                desc={<span>Cancel pending or running prebuilds on the same branch when new commits are pushed.</span>}
-                checked={!project.settings?.keepOutdatedPrebuildsRunning}
-                onChange={({ target }) => updateProjectSettings({ keepOutdatedPrebuildsRunning: !target.checked })}
-            />
-            <CheckBox
                 title={
                     <span>
                         Use Last Successful Prebuild{" "}
@@ -121,8 +115,6 @@ export default function () {
                 onChange={({ target }) =>
                     updateProjectSettings({
                         allowUsingPreviousPrebuilds: target.checked,
-                        // we are disabling prebuild cancellation when incremental workspaces are enabled
-                        keepOutdatedPrebuildsRunning: target.checked || project?.settings?.keepOutdatedPrebuildsRunning,
                     })
                 }
             />

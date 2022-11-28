@@ -31,8 +31,6 @@ import { secondsBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 
 import { inject, injectable } from "inversify";
 import * as opentracing from "opentracing";
-import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
-import { error } from "console";
 import { IncrementalPrebuildsService } from "./incremental-prebuilds-service";
 
 export class WorkspaceRunningError extends Error {
@@ -62,43 +60,6 @@ export class PrebuildManager {
     @inject(Config) protected readonly config: Config;
     @inject(ProjectsService) protected readonly projectService: ProjectsService;
     @inject(IncrementalPrebuildsService) protected readonly incrementalPrebuildsService: IncrementalPrebuildsService;
-
-    async abortPrebuildsForBranch(ctx: TraceContext, project: Project, user: User, branch: string): Promise<void> {
-        const span = TraceContext.startSpan("abortPrebuildsForBranch", ctx);
-        try {
-            const prebuilds = await this.workspaceDB
-                .trace({ span })
-                .findActivePrebuiltWorkspacesByBranch(project.id, branch);
-            const results: Promise<any>[] = [];
-            for (const prebuild of prebuilds) {
-                try {
-                    for (const instance of prebuild.instances) {
-                        log.info(
-                            { userId: user.id, instanceId: instance.id, workspaceId: instance.workspaceId },
-                            "Cancelling Prebuild workspace because a newer commit was pushed to the same branch.",
-                        );
-                        results.push(
-                            this.workspaceStarter.stopWorkspaceInstance(
-                                { span },
-                                instance.id,
-                                instance.region,
-                                "prebuild cancelled because a newer commit was pushed to the same branch",
-                                StopWorkspacePolicy.ABORT,
-                            ),
-                        );
-                    }
-                    prebuild.prebuild.state = "aborted";
-                    prebuild.prebuild.error = "A newer commit was pushed to the same branch.";
-                    results.push(this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild.prebuild));
-                } catch (err) {
-                    error("Cannot cancel prebuild", { prebuildID: prebuild.prebuild.id }, err);
-                }
-            }
-            await Promise.all(results);
-        } finally {
-            span.finish();
-        }
-    }
 
     protected async findNonFailedPrebuiltWorkspace(ctx: TraceContext, cloneURL: string, commitSHA: string) {
         const existingPB = await this.workspaceDB.trace(ctx).findPrebuiltWorkspaceByCommit(cloneURL, commitSHA);
@@ -156,13 +117,6 @@ export class PrebuildManager {
                 // If there is an existing prebuild that isn't failed and it's based on the current config, we return it here instead of triggering a new prebuild.
                 if (isSameConfig) {
                     return { prebuildId: existingPB.id, wsid: existingPB.buildWorkspaceId, done: true };
-                }
-            }
-            if (project && context.ref && !project.settings?.keepOutdatedPrebuildsRunning) {
-                try {
-                    await this.abortPrebuildsForBranch({ span }, project, user, context.ref);
-                } catch (e) {
-                    console.error("Error aborting prebuilds", e);
                 }
             }
 

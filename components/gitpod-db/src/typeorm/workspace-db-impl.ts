@@ -18,7 +18,6 @@ import {
     WorkspaceAndOwner,
     WorkspacePortsAuthData,
     WorkspaceOwnerAndSoftDeleted,
-    PrebuildWithWorkspaceAndInstances,
 } from "../workspace-db";
 import {
     Workspace,
@@ -839,38 +838,6 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
                 "pws.buildWorkspaceId = ws.id and ws.contentDeletedTime = ''",
             )
             .getOne();
-    }
-
-    public async findActivePrebuiltWorkspacesByBranch(
-        projectId: string,
-        branch: string,
-    ): Promise<PrebuildWithWorkspaceAndInstances[]> {
-        if (!branch) {
-            return [];
-        }
-        const repo = await this.getPrebuiltWorkspaceRepo();
-        const result = await repo
-            .createQueryBuilder("pws")
-            .where(
-                "(pws.state = 'queued' OR pws.state = 'building') AND pws.projectId = :projectId AND pws.branch = :branch",
-                { projectId, branch },
-            )
-            .orderBy("pws.creationTime", "DESC")
-            .innerJoinAndMapOne(
-                "pws.workspace",
-                DBWorkspace,
-                "ws",
-                "pws.buildWorkspaceId = ws.id and ws.contentDeletedTime = ''",
-            )
-            .innerJoinAndMapMany("pws.instances", DBWorkspaceInstance, "wsi", "pws.buildWorkspaceId = wsi.workspaceId")
-            .getMany();
-        return result.map((r) => {
-            return {
-                prebuild: r,
-                workspace: (<any>r).workspace,
-                instances: (<any>r).instances,
-            };
-        });
     }
 
     public async findPrebuildByWorkspaceID(wsid: string): Promise<PrebuiltWorkspace | undefined> {
