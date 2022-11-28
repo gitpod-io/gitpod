@@ -184,6 +184,9 @@ type StripeConfig struct {
 	TeamUsagePriceIDs       StripePriceIDs `json:"teamUsagePriceIds"`
 }
 
+type IAMConfig struct {
+}
+
 type WebAppConfig struct {
 	PublicAPI              *PublicAPIConfig       `json:"publicApi,omitempty"`
 	Server                 *ServerConfig          `json:"server,omitempty"`
@@ -197,6 +200,7 @@ type WebAppConfig struct {
 	WorkspaceClasses       []WebAppWorkspaceClass `json:"workspaceClasses"`
 	Stripe                 *StripeConfig          `json:"stripe,omitempty"`
 	SlowDatabase           bool                   `json:"slowDatabase,omitempty"`
+	IAM                    *IAMConfig             `json:"iam,omitempty"`
 }
 
 type WorkspaceDefaults struct {
