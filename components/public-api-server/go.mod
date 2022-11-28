@@ -23,7 +23,6 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/stretchr/testify v1.8.1
 	github.com/stripe/stripe-go/v72 v72.122.0
-	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
 	google.golang.org/grpc v1.50.1
 	google.golang.org/protobuf v1.28.1
 	gorm.io/gorm v1.24.1
