@@ -7,16 +7,17 @@ package io.gitpod.jetbrains.remote.optional
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.application
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class GitpodForceUpdateMavenProjectsActivity : StartupActivity.RequiredForSmartMode {
     override fun runActivity(project: Project) {
-        val mavenProjectManager = MavenProjectsManager.getInstance(project)
-
-        if (!mavenProjectManager.isMavenizedProject) return
-
-        mavenProjectManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
-
-        thisLogger().warn("gitpod: Forced the update of Maven Project.")
+        application.invokeLater {
+            VirtualFileManager.getInstance().asyncRefresh {
+                MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
+                thisLogger().warn("gitpod: Forced the update of Maven projects.")
+            }
+        }
     }
 }
