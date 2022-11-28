@@ -16,7 +16,6 @@ import ReconnectingWebSocket, { Event } from "reconnecting-websocket";
 export interface WebSocketOptions {
     onerror?: (event: Event) => void;
     onListening?: (socket: ReconnectingWebSocket) => void;
-    subProtocol?: string;
 }
 
 export class WebSocketConnectionProvider {
@@ -63,7 +62,7 @@ export class WebSocketConnectionProvider {
      */
     listen(handler: ConnectionHandler, eventHandler: ConnectionEventHandler, options?: WebSocketOptions): WebSocket {
         const url = handler.path;
-        const webSocket = this.createWebSocket(url, options);
+        const webSocket = this.createWebSocket(url);
 
         const logger = this.createLogger();
         if (options && options.onerror) {
@@ -87,8 +86,8 @@ export class WebSocketConnectionProvider {
     /**
      * Creates a web socket for the given url
      */
-    createWebSocket(url: string, options?: WebSocketOptions): WebSocket {
-        return new ReconnectingWebSocket(url, options?.subProtocol, {
+    createWebSocket(url: string): WebSocket {
+        return new ReconnectingWebSocket(url, undefined, {
             maxReconnectionDelay: 10000,
             minReconnectionDelay: 1000,
             reconnectionDelayGrowFactor: 1.3,
