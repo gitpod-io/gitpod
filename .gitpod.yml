@@ -34,6 +34,14 @@ ports:
   - port: 8022
     onOpen: ignore
 tasks:
+  - name: Remove GCP_ADC_FILE
+    command: |
+      if [[ -n "${GCP_ADC_FILE}" ]]; then
+        echo "$GCP_ADC_FILE" > "/home/gitpod/.config/gcloud/application_default_credentials.json"
+        yes | gcloud auth application-default revoke
+        gp env -u GCP_ADC_FILE
+      fi
+      exit 0
   # This task takes care of configuring your workspace so it can manage and interact
   # with preview environments.
   - name: Preview environment configuration
