@@ -8,5 +8,5 @@ import { DBPersonalAccessToken } from "./typeorm/entity/db-personal-access-token
 
 export const PersonalAccessTokenDB = Symbol("PersonalAccessTokenDB");
 export interface PersonalAccessTokenDB {
-    getByHash(hash: string): Promise<DBPersonalAccessToken>;
+    getByHash(hash: string, expiry?: Date): Promise<DBPersonalAccessToken | undefined>;
 }

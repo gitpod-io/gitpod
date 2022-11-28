@@ -22,7 +22,17 @@ export class PersonalAccessTokenDBImpl implements PersonalAccessTokenDB {
         return (await this.getEntityManager()).getRepository<DBPersonalAccessToken>(DBPersonalAccessToken);
     }
 
-    public async getByHash(hash: string): Promise<DBPersonalAccessToken> {
-        throw new Error("unimplemented");
+    public async getByHash(hash: string, expiry?: Date): Promise<DBPersonalAccessToken | undefined> {
+        const expirationTime = expiry ? expiry.getTime() : new Date().getTime();
+
+        const repo = await this.getRepo();
+        const pat = await repo
+            .createQueryBuilder("pat")
+            .where(`pat.hash = :hash`, { hash })
+            .andWhere(`pat.expirationTime > :expirationTime`, { expirationTime })
+            .andWhere(`pat.deleted = false`)
+            .getOne();
+
+        return pat;
     }
 }
