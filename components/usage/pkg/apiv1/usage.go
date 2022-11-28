@@ -250,7 +250,7 @@ func (s *UsageService) ResetUsage(ctx context.Context, req *v1.ResetUsageRequest
 
 	var errors []error
 	for _, cc := range costCentersToUpdate {
-		_, err = s.costCenterManager.ResetUsage(ctx, cc)
+		_, err = s.costCenterManager.ResetUsage(ctx, cc.ID)
 		if err != nil {
 			errors = append(errors, err)
 		}

@@ -408,12 +408,14 @@ func TestCostCenterManager_ResetUsage(t *testing.T) {
 			ForTeams: 0,
 			ForUsers: 500,
 		})
-		_, err := mnr.ResetUsage(context.Background(), db.CostCenter{
+		cc := dbtest.CreateCostCenters(t, conn, db.CostCenter{
 			ID:              db.NewUserAttributionID(uuid.New().String()),
 			CreationTime:    db.NewVarCharTime(time.Now()),
 			SpendingLimit:   500,
 			BillingStrategy: db.CostCenter_Stripe,
-		})
+		})[0]
+
+		_, err := mnr.ResetUsage(context.Background(), cc.ID)
 		require.Error(t, err)
 	})
 
@@ -423,23 +425,20 @@ func TestCostCenterManager_ResetUsage(t *testing.T) {
 			ForTeams: 0,
 			ForUsers: 500,
 		})
-		oldCC := db.CostCenter{
-			ID:              db.NewTeamAttributionID(uuid.New().String()),
-			CreationTime:    db.NewVarCharTime(time.Now()),
-			SpendingLimit:   0,
-			BillingStrategy: db.CostCenter_Other,
-			NextBillingTime: db.NewVarCharTime(ts),
-		}
-		newCC, err := mnr.ResetUsage(context.Background(), oldCC)
+		oldCC := dbtest.CreateCostCenters(t, conn, db.CostCenter{
+			ID:                db.NewTeamAttributionID(uuid.New().String()),
+			CreationTime:      db.NewVarCharTime(time.Now()),
+			SpendingLimit:     10,
+			BillingStrategy:   db.CostCenter_Other,
+			NextBillingTime:   db.NewVarCharTime(ts),
+			BillingCycleStart: db.NewVarCharTime(ts.AddDate(0, -1, 0)),
+		})[0]
+		newCC, err := mnr.ResetUsage(context.Background(), oldCC.ID)
 		require.NoError(t, err)
-		t.Cleanup(func() {
-			conn.Model(&db.CostCenter{}).Delete(newCC)
-		})
-
 		require.Equal(t, oldCC.ID, newCC.ID)
-		require.EqualValues(t, 0, newCC.SpendingLimit)
+		require.EqualValues(t, 10, newCC.SpendingLimit)
 		require.Equal(t, db.CostCenter_Other, newCC.BillingStrategy)
-		require.Equal(t, ts.AddDate(0, 1, 0), newCC.NextBillingTime.Time())
+		require.Equal(t, db.NewVarCharTime(ts.AddDate(0, 1, 0)).Time(), newCC.NextBillingTime.Time())
 
 	})
 
