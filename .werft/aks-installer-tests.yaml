@@ -174,5 +174,5 @@ pod:
           npx ts-node .werft/installer-tests.ts "STANDARD_AKS_TEST"
 
 # The bit below makes this a cron job
-plugins:
-  cron: "15 3 * * *"
+# plugins:
+#   cron: "15 3 * * *"
