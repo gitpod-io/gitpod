@@ -14,5 +14,6 @@
     'gitpod-component-jb.json': (import 'dashboards/components/jb.json'),
     'gitpod-component-browser-overview.json': (import 'dashboards/components/browser-overview.json'),
     'gitpod-component-code-browser.json': (import 'dashboards/components/code-browser.json'),
+    'gitpod-component-ide-startup-time.json': (import 'dashboards/components/ide-startup-time.json'),
   },
 }
