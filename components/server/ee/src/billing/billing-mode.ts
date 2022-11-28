@@ -102,9 +102,17 @@ export class BillingModesImpl implements BillingModes {
             );
         }
 
+        // Stripe: Active personal subsciption?
+        let hasUbbPersonal = false;
+        const billingStrategy = await this.usageService.getCurrentBillingStategy({ kind: "user", userId: user.id });
+        if (billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
+            hasUbbPersonal = true;
+        }
+
         // 1. UBB enabled?
-        if (!isUsageBasedBillingEnabled) {
+        if (!isUsageBasedBillingEnabled && !hasUbbPersonal) {
             // UBB is not enabled: definitely chargebee
+            // EXCEPT we're doing a rollback
             return { mode: "chargebee" };
         }
 
@@ -136,13 +144,6 @@ export class BillingModesImpl implements BillingModes {
                     mode: "chargebee",
                 };
             }
-        }
-
-        // Stripe: Active personal subsciption?
-        let hasUbbPersonal = false;
-        const billingStrategy = await this.usageService.getCurrentBillingStategy({ kind: "user", userId: user.id });
-        if (billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
-            hasUbbPersonal = true;
         }
 
         // 3. Check team memberships/plans
@@ -241,17 +242,18 @@ export class BillingModesImpl implements BillingModes {
             return { mode: "chargebee", teamNames: [team.name], paid: true };
         }
 
-        // 2. UBB enabled at all?
-        if (!isUsageBasedBillingEnabled) {
-            return { mode: "chargebee" };
+        // 2. UBP enabled OR respective BillingStrategy?
+        const billingStrategy = await this.usageService.getCurrentBillingStategy(AttributionId.create(team));
+        if (billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE || isUsageBasedBillingEnabled) {
+            // Now we're usage-based. We only have to figure out whether we have a paid plan yet or not.
+            const result: BillingMode = { mode: "usage-based" };
+            if (billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
+                result.paid = true;
+            }
+            return result;
         }
 
-        // 3. Now we're usage-based. We only have to figure out whether we have a plan yet or not.
-        const result: BillingMode = { mode: "usage-based" };
-        const billingStrategy = await this.usageService.getCurrentBillingStategy(AttributionId.create(team));
-        if (billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
-            result.paid = true;
-        }
-        return result;
+        // 3. Default case if none is enabled: fall back to Chargebee
+        return { mode: "chargebee" };
     }
 }

@@ -487,6 +487,32 @@ class BillingModeSpec {
                     paid: true,
                 },
             },
+            // rollback: make sure users/teams with Stripe subscription stay UBP
+            {
+                name: "team: stripe paid, w/o UBP",
+                subject: team(),
+                config: {
+                    enablePayment: true,
+                    usageBasedPricingEnabled: false,
+                    stripeSubscription: stripeSubscription(),
+                },
+                expectation: {
+                    mode: "usage-based",
+                    paid: true,
+                },
+            },
+            {
+                name: "user: stripe paid, w/o UBP",
+                subject: user(),
+                config: {
+                    enablePayment: true,
+                    usageBasedPricingEnabled: false,
+                    stripeSubscription: stripeSubscription(),
+                },
+                expectation: {
+                    mode: "usage-based",
+                },
+            },
         ];
 
         const onlyTest = tests.find((t) => t.only);
