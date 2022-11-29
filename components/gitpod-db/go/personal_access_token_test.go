@@ -197,6 +197,25 @@ func TestListPersonalAccessTokensForUser(t *testing.T) {
 	require.Len(t, tokensForUserWithNoData.Results, 0)
 }
 
+func TestListPersonalAccessTokens_DeletedTokensAreNotListed(t *testing.T) {
+	conn := dbtest.ConnectForTests(t)
+
+	token := dbtest.CreatePersonalAccessTokenRecords(t, conn,
+		dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{}),
+	)[0]
+
+	_, err := db.DeletePersonalAccessTokenForUser(context.Background(), conn, token.ID, token.UserID)
+	require.NoError(t, err)
+
+	listed, err := db.ListPersonalAccessTokensForUser(context.Background(), conn, token.UserID, db.Pagination{
+		Page:     1,
+		PageSize: 10,
+	})
+	require.NoError(t, err)
+	require.Empty(t, listed.Results)
+	require.EqualValues(t, 0, listed.Total)
+}
+
 func TestListPersonalAccessTokensForUser_PaginateThroughResults(t *testing.T) {
 	ctx := context.Background()
 	conn := dbtest.ConnectForTests(t).Debug()
