@@ -238,7 +238,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		{
 			Name:    "supervisor_ide_ready_duration_total",
 			Help:    "the IDE startup time",
-			Buckets: []float64{0.1, 0.5, 1, 5, 10, 30, 60},
+			Buckets: []float64{0.1, 0.5, 1, 1.5, 2, 2.5, 5, 10},
 			Labels: []config.LabelAllowList{
 				{
 					Name:        "kind",

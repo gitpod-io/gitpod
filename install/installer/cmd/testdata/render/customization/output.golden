@@ -5299,10 +5299,11 @@ data:
               0.1,
               0.5,
               1,
+              1.5,
+              2,
+              2.5,
               5,
-              10,
-              30,
-              60
+              10
             ]
           }
         ],
@@ -10043,7 +10044,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: a86be094967f68c2cb830ffe532cbaa418d55ecf09d62c71cd4adbfb1fb01367
+        gitpod.io/checksum_config: e9a5fbb70b2e87f9ef1bdec7fe426ba6237e7cf60410ab6893abef17f502efa7
         hello: world
       creationTimestamp: null
       labels:
