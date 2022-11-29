@@ -21,7 +21,12 @@ import { WorkspaceClasses, WorkspaceClassesConfig } from "./workspace/workspace-
 export const Config = Symbol("Config");
 export type Config = Omit<
     ConfigSerialized,
-    "hostUrl" | "chargebeeProviderOptionsFile" | "stripeSecretsFile" | "stripeConfigFile" | "licenseFile"
+    | "hostUrl"
+    | "chargebeeProviderOptionsFile"
+    | "stripeSecretsFile"
+    | "stripeConfigFile"
+    | "licenseFile"
+    | "patSigningKeyFile"
 > & {
     hostUrl: GitpodHostUrl;
     workspaceDefaults: WorkspaceDefaults;
@@ -29,6 +34,8 @@ export type Config = Omit<
     stripeSecrets?: { publishableKey: string; secretKey: string };
     builtinAuthProvidersConfigured: boolean;
     inactivityPeriodForReposInDays?: number;
+
+    patSigningKey: string;
 };
 
 export interface WorkspaceDefaults {
@@ -217,6 +224,12 @@ export interface ConfigSerialized {
         accountSID: string;
         authToken: string;
     };
+
+    /**
+     * File containing signing key for Personal Access Tokens
+     * This is the same signing key used by Public API
+     */
+    patSigningKeyFile?: string;
 }
 
 export namespace ConfigFile {
@@ -295,6 +308,15 @@ export namespace ConfigFile {
 
         WorkspaceClasses.validate(config.workspaceClasses);
 
+        let patSigningKey = "";
+        if (config.patSigningKeyFile) {
+            try {
+                patSigningKey = fs.readFileSync(filePathTelepresenceAware(config.patSigningKeyFile), "utf-8");
+            } catch (error) {
+                log.error("Could not load Personal Access Token signing key", error);
+            }
+        }
+
         return {
             ...config,
             hostUrl,
@@ -311,6 +333,7 @@ export namespace ConfigFile {
                     : Date.now(),
             },
             inactivityPeriodForReposInDays,
+            patSigningKey,
         };
     }
 }

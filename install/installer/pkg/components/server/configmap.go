@@ -20,6 +20,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/pointer"
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
@@ -171,6 +172,12 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	var personalAccessTokenSigningKeyPath string
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		_, _, personalAccessTokenSigningKeyPath, _ = getPersonalAccessTokenSigningKey(cfg)
+		return nil
+	})
+
 	// todo(sje): all these values are configurable
 	scfg := ConfigSerialized{
 		Version:               ctx.VersionManifest.Version,
@@ -259,6 +266,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		WorkspaceClasses:               workspaceClasses,
 		InactivityPeriodForReposInDays: inactivityPeriodForReposInDays,
+		PATSigningKeyFile:              personalAccessTokenSigningKeyPath,
 	}
 
 	fc, err := common.ToJSONString(scfg)
@@ -280,4 +288,36 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 		},
 	}, nil
+}
+
+func getPersonalAccessTokenSigningKey(cfg *experimental.Config) (corev1.Volume, corev1.VolumeMount, string, bool) {
+	var volume corev1.Volume
+	var mount corev1.VolumeMount
+	var path string
+
+	if cfg == nil || cfg.WebApp == nil || cfg.WebApp.PublicAPI == nil || cfg.WebApp.PublicAPI.PersonalAccessTokenSigningKeySecretName == "" {
+		return volume, mount, path, false
+	}
+
+	personalAccessTokenSecretname := cfg.WebApp.PublicAPI.PersonalAccessTokenSigningKeySecretName
+	path = personalAccessTokenSigningKeyMountPath
+
+	volume = corev1.Volume{
+		Name: "personal-access-token-signing-key",
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: personalAccessTokenSecretname,
+				Optional:   pointer.Bool(true),
+			},
+		},
+	}
+
+	mount = corev1.VolumeMount{
+		Name:      "personal-access-token-signing-key",
+		MountPath: personalAccessTokenSigningKeyMountPath,
+		SubPath:   "personal-access-token-signing-key",
+		ReadOnly:  true,
+	}
+
+	return volume, mount, path, true
 }
