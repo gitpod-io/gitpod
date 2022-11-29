@@ -527,6 +527,7 @@ func (m *Manager) restoreVolumeSnapshotFromHandle(ctx context.Context, wsType ap
 		},
 	}
 
+	//test
 	err = m.Clientset.Create(ctx, volumeSnapshotContent)
 	if err != nil && !k8serr.IsAlreadyExists(err) {
 		return fmt.Errorf("cannot create volumesnapshotcontent: %v", err)
