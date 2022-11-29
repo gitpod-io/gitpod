@@ -3078,6 +3078,7 @@ spec:
         - /app/ready-probe-labeler
         - --label=gitpod.io/registry-facade_ready_ns_default
         - --probe-url=http://localhost:8086/ready
+        - --with-monitor
         env:
         - name: NODENAME
           valueFrom:
