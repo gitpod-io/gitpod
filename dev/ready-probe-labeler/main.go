@@ -34,10 +34,12 @@ var opts struct {
 	JSONLog    bool
 	Verbose    bool
 	Shutdown   bool
+	Monitor    bool
 	Kubeconfig string
 	Label      string
 	ProbeURL   string
 	Timeout    time.Duration
+	Interval   time.Duration
 }
 
 func main() {
@@ -48,6 +50,8 @@ func main() {
 	pflag.StringVarP(&opts.Kubeconfig, "kubeconfig", "k", "", "Kubeconfig file path")
 	pflag.StringVarP(&opts.ProbeURL, "probe-url", "p", "http://localhost:9501/ready", "URL to test the readiness of a service")
 	pflag.DurationVarP(&opts.Timeout, "timeout", "t", 60*time.Second, "W")
+	pflag.BoolVarP(&opts.Monitor, "with-monitor", "m", false, "If readiness failes, delete the label")
+	pflag.DurationVarP(&opts.Interval, "interval", "i", 2*time.Second, "Interval between readiness checks")
 	pflag.Parse()
 
 	log.Init(ServiceName, Version, opts.JSONLog, opts.Verbose)
@@ -91,6 +95,29 @@ func main() {
 	}
 
 	log.WithField("node", nodeName).WithField("time", time.Since(start).Seconds()).Info("node label updated")
+
+	go func() {
+		if opts.Monitor {
+			ticker := time.NewTicker(opts.Interval)
+			log.Info("start monitoring")
+			for range ticker.C {
+				ctx, cancel := context.WithTimeout(context.Background(), opts.Interval)
+				err = checkReachable(ctx, opts.ProbeURL)
+				if err != nil {
+					err = updateLabel(opts.Label, false, nodeName, client)
+					if err != nil {
+						log.Fatalf("Unexpected error removing node label: %v", err)
+					}
+				} else {
+					err = updateLabel(opts.Label, true, nodeName, client)
+					if err != nil {
+						log.Fatalf("Unexpected error while trying to add the label: %v", err)
+					}
+				}
+				cancel()
+			}
+		}
+	}()
 
 	// wait for termination
 	sigChan := make(chan os.Signal, 1)
@@ -176,23 +203,30 @@ func waitForURLToBeReachable(probeURL string, timeout time.Duration) error {
 		case <-ctx.Done():
 			return xerrors.Errorf("URL %v never returned status code 200", probeURL)
 		case <-ticker.C:
-			req, err := http.NewRequestWithContext(ctx, "GET", probeURL, nil)
+			err := checkReachable(ctx, probeURL)
 			if err != nil {
 				continue
 			}
-
-			client := &http.Client{}
-			resp, err := client.Do(req)
-			if err != nil {
-				continue
-			}
-			defer resp.Body.Close()
-
-			if resp.StatusCode != http.StatusOK {
-				continue
-			}
-
 			return nil
 		}
 	}
+}
+
+func checkReachable(ctx context.Context, probeURL string) error {
+	req, err := http.NewRequestWithContext(ctx, "GET", probeURL, nil)
+	if err != nil {
+		return err
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return xerrors.Errorf("not ready yet: %v", resp.StatusCode)
+	}
+	return nil
 }
