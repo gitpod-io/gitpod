@@ -169,8 +169,8 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCent
 		return CostCenter{}, status.Errorf(codes.InvalidArgument, "Unknown attribution entity %s", string(attributionID))
 	}
 
-	// Downgrading from stripe
-	if existingCC.BillingStrategy == CostCenter_Stripe && newCC.BillingStrategy == CostCenter_Other {
+	// Transitioning into free plan
+	if existingCC.BillingStrategy != CostCenter_Other && newCC.BillingStrategy == CostCenter_Other {
 		newCC.SpendingLimit = defaultSpendingLimit
 		newCC.BillingCycleStart = NewVarCharTime(now)
 		// see you next month
@@ -178,8 +178,8 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCent
 	}
 
 	// Upgrading to Stripe
-	if existingCC.BillingStrategy == CostCenter_Other && newCC.BillingStrategy == CostCenter_Stripe {
-		err := c.BalanceOutUsage(ctx, attributionID)
+	if existingCC.BillingStrategy != CostCenter_Stripe && newCC.BillingStrategy == CostCenter_Stripe {
+		err := c.BalanceOutUsage(ctx, attributionID, 0)
 		if err != nil {
 			return CostCenter{}, err
 		}
@@ -197,9 +197,9 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCent
 	return newCC, nil
 }
 
-func (c *CostCenterManager) BalanceOutUsage(ctx context.Context, attributionID AttributionID) error {
+func (c *CostCenterManager) BalanceOutUsage(ctx context.Context, attributionID AttributionID, maxCreditCentsCovered CreditCents) error {
 	// moving to stripe -> let's run a finalization
-	finalizationUsage, err := c.NewInvoiceUsageRecord(ctx, attributionID)
+	finalizationUsage, err := c.newInvoiceUsageRecord(ctx, attributionID, maxCreditCentsCovered)
 	if err != nil {
 		return err
 	}
@@ -213,7 +213,7 @@ func (c *CostCenterManager) BalanceOutUsage(ctx context.Context, attributionID A
 	return nil
 }
 
-func (c *CostCenterManager) NewInvoiceUsageRecord(ctx context.Context, attributionID AttributionID) (*Usage, error) {
+func (c *CostCenterManager) newInvoiceUsageRecord(ctx context.Context, attributionID AttributionID, maxCreditCentsCovered CreditCents) (*Usage, error) {
 	now := time.Now()
 	creditCents, err := GetBalance(ctx, c.conn, attributionID)
 	if err != nil {
@@ -222,6 +222,9 @@ func (c *CostCenterManager) NewInvoiceUsageRecord(ctx context.Context, attributi
 	if creditCents.ToCredits() <= 0 {
 		// account has no debt, do nothing
 		return nil, nil
+	}
+	if maxCreditCentsCovered != 0 && creditCents > maxCreditCentsCovered {
+		creditCents = maxCreditCentsCovered
 	}
 	return &Usage{
 		ID:            uuid.New(),
@@ -302,7 +305,7 @@ func (c *CostCenterManager) ResetUsage(ctx context.Context, id AttributionID) (C
 	}
 
 	// Create a synthetic Invoice Usage record, to reset usage
-	err = c.BalanceOutUsage(ctx, cc.ID)
+	err = c.BalanceOutUsage(ctx, cc.ID, NewCreditCents(float64(cc.SpendingLimit)))
 	if err != nil {
 		return CostCenter{}, fmt.Errorf("failed to compute invocie usage record for AttributonID: %s: %w", cc.ID, err)
 	}
