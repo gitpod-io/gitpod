@@ -211,7 +211,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
 
     return (
         <div className="mb-16">
-            <h2 className="text-gray-500">Manage usage-based billing, usage limit, and payment method.</h2>
+            <h2 className="text-gray-500">Manage pay-as-you-go billing.</h2>
             <div className="max-w-xl flex flex-col">
                 {errorMessage && (
                     <Alert className="max-w-xl mt-2" closable={false} showIcon={true} type="error">
