@@ -5052,6 +5052,7 @@ data:
       "stripeSecretsFile": "/stripe-secret/apikeys",
       "stripeConfigFile": "",
       "enablePayment": false,
+      "patSigningKeyFile": "",
       "workspaceHeartbeat": {
         "intervalSeconds": 60,
         "timeoutSeconds": 300
@@ -9916,7 +9917,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 3d98dffb48bebba57afb1ffd2b059e4a1a95bb679d843bee0158e5d4b1814914
+        gitpod.io/checksum_config: a94779de77b43b080faf67667aa017f25fc963c43412f8438c49ace3a7b7af2a
       creationTimestamp: null
       labels:
         app: gitpod
