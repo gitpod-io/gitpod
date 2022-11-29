@@ -3,6 +3,8 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
+set -e
+
 if [ "${NO_VERIFY_JB_PLUGIN}" == "true" ]; then
     echo "build.sh: skip verify plugin step"
 else
