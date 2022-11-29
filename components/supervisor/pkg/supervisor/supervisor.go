@@ -291,7 +291,7 @@ func Run(options ...RunOption) {
 		Gid: gitpodGID,
 	}
 
-	taskManager := newTasksManager(cfg, termMuxSrv, cstate, nil)
+	taskManager := newTasksManager(cfg, termMuxSrv, cstate, nil, ideReady, desktopIdeReady)
 
 	apiServices := []RegisterableService{
 		&statusService{
@@ -364,6 +364,7 @@ func Run(options ...RunOption) {
 		go func() {
 			for _, repoRoot := range strings.Split(cfg.RepoRoots, ",") {
 				<-cstate.ContentReady()
+				waitForIde(ctx, ideReady, desktopIdeReady, 1*time.Second)
 
 				start := time.Now()
 				defer func() {
@@ -1668,4 +1669,26 @@ func handleExit(ec *int) {
 	exitCode := *ec
 	log.WithField("exitCode", exitCode).Debug("supervisor exit")
 	os.Exit(exitCode)
+}
+
+func waitForIde(parent context.Context, ideReady *ideReadyState, desktopIdeReady *ideReadyState, timeout time.Duration) {
+	if ideReady == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(parent, timeout)
+	defer cancel()
+	select {
+	case <-ctx.Done():
+		return
+	case <-ideReady.Wait():
+	}
+
+	if desktopIdeReady == nil {
+		return
+	}
+	select {
+	case <-ctx.Done():
+		return
+	case <-desktopIdeReady.Wait():
+	}
 }

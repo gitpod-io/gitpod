@@ -107,9 +107,11 @@ type tasksManager struct {
 	terminalService *terminal.MuxTerminalService
 	contentState    ContentState
 	reporter        headlessTaskProgressReporter
+	ideReady        *ideReadyState
+	desktopIdeReady *ideReadyState
 }
 
-func newTasksManager(config *Config, terminalService *terminal.MuxTerminalService, contentState ContentState, reporter headlessTaskProgressReporter) *tasksManager {
+func newTasksManager(config *Config, terminalService *terminal.MuxTerminalService, contentState ContentState, reporter headlessTaskProgressReporter, ideReady *ideReadyState, desktopIdeReady *ideReadyState) *tasksManager {
 	return &tasksManager{
 		config:          config,
 		terminalService: terminalService,
@@ -118,6 +120,8 @@ func newTasksManager(config *Config, terminalService *terminal.MuxTerminalServic
 		subscriptions:   make(map[*tasksSubscription]struct{}),
 		ready:           make(chan struct{}),
 		storeLocation:   logs.TerminalStoreLocation,
+		ideReady:        ideReady,
+		desktopIdeReady: desktopIdeReady,
 	}
 }
 
@@ -193,6 +197,9 @@ func (tm *tasksManager) init(ctx context.Context) {
 	contentSource, _ := tm.contentState.ContentSource()
 	tm.contentSource = contentSource
 
+	// give 1s window between content and tasks for IDE to startup, i.e. no competition for resources
+	tm.waitForIde(ctx, 1*time.Second)
+
 	for i, config := range *tasks {
 		id := strconv.Itoa(i)
 		presentation := &api.TaskPresentation{}
@@ -223,6 +230,28 @@ func (tm *tasksManager) init(ctx context.Context) {
 			task.successChan <- taskSuccessful
 		}
 		tm.tasks = append(tm.tasks, task)
+	}
+}
+
+func (tm *tasksManager) waitForIde(parent context.Context, timeout time.Duration) {
+	if tm.ideReady == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(parent, timeout)
+	defer cancel()
+	select {
+	case <-ctx.Done():
+		return
+	case <-tm.ideReady.Wait():
+	}
+
+	if tm.desktopIdeReady == nil {
+		return
+	}
+	select {
+	case <-ctx.Done():
+		return
+	case <-tm.desktopIdeReady.Wait():
 	}
 }
 
