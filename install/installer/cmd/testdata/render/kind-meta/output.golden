@@ -3609,10 +3609,11 @@ data:
               0.1,
               0.5,
               1,
+              1.5,
+              2,
+              2.5,
               5,
-              10,
-              30,
-              60
+              10
             ]
           }
         ],
@@ -6245,7 +6246,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: ee8bacd56cf031371f35cc00beaddb6698b9a59e06a3ba85700a6357cf19b568
+        gitpod.io/checksum_config: c6e6a9f479c4a92c62793e24470b07496121a249ea515fcb72ea9441c954cfb4
       creationTimestamp: null
       labels:
         app: gitpod

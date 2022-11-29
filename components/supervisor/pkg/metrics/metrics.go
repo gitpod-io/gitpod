@@ -19,7 +19,7 @@ func NewMetrics() *SupervisorMetrics {
 		IDEReadyDurationTotal: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "supervisor_ide_ready_duration_total",
 			Help:    "the IDE startup time",
-			Buckets: []float64{0.1, 0.5, 1, 5, 10, 30, 60},
+			Buckets: []float64{0.1, 0.5, 1, 1.5, 2, 2.5, 5, 10},
 		}, []string{"kind"}),
 	}
 }
