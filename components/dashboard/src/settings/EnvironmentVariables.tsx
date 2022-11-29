@@ -8,7 +8,7 @@ import { UserEnvVar, UserEnvVarValue } from "@gitpod/gitpod-protocol";
 import { useEffect, useRef, useState } from "react";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { Item, ItemField, ItemFieldContextMenu, ItemsList } from "../components/ItemsList";
-import Modal from "../components/Modal";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { getGitpodService } from "../service/service";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 
@@ -52,8 +52,8 @@ function AddEnvVarModal(p: EnvVarModalProps) {
     return (
         // TODO: Use title and buttons props
         <Modal visible={true} onClose={p.onClose} onEnter={save}>
-            <h3 className="mb-4">{isNew ? "New" : "Edit"} Variable</h3>
-            <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col">
+            <ModalHeader>{isNew ? "New" : "Edit"} Variable</ModalHeader>
+            <ModalBody>
                 {error ? (
                     <div className="bg-gitpod-kumquat-light rounded-md p-3 text-gitpod-red text-sm mb-2">{error}</div>
                 ) : null}
@@ -98,15 +98,15 @@ function AddEnvVarModal(p: EnvVarModalProps) {
                         make it available in more projects.
                     </p>
                 </div>
-            </div>
-            <div className="flex justify-end mt-6">
+            </ModalBody>
+            <ModalFooter>
                 <button className="secondary" onClick={p.onClose}>
                     Cancel
                 </button>
                 <button className="ml-2" onClick={save}>
                     {isNew ? "Add" : "Update"} Variable
                 </button>
-            </div>
+            </ModalFooter>
         </Modal>
     );
 }
