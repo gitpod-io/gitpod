@@ -127,10 +127,14 @@ func Init(service, version string, json, verbose bool) {
 					funcName := s[len(s)-1]
 					return funcName, fmt.Sprintf("%s:%d", path.Base(f.File), f.Line)
 				},
+				TimestampFormat: time.RFC3339Nano,
 			},
 		})
 	} else {
-		Log.Logger.SetFormatter(&logrus.TextFormatter{})
+		Log.Logger.SetFormatter(&logrus.TextFormatter{
+			TimestampFormat: time.RFC3339Nano,
+			FullTimestamp:   true,
+		})
 	}
 
 	// update default log level
