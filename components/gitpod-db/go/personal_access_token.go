@@ -169,6 +169,7 @@ func ListPersonalAccessTokensForUser(ctx context.Context, conn *gorm.DB, userID 
 		WithContext(ctx).
 		Table((&PersonalAccessToken{}).TableName()).
 		Where("userId = ?", userID).
+		Where("deleted = ?", 0).
 		Count(&count)
 	if tx.Error != nil {
 		return nil, fmt.Errorf("failed to count total number of personal access tokens for user %s: %w", userID.String(), tx.Error)
