@@ -1127,7 +1127,7 @@ export interface WithCommitHistory {
 
 export interface StartPrebuildContext extends WorkspaceContext, WithCommitHistory {
     actual: WorkspaceContext;
-    project?: Project;
+    project: Project;
     branch?: string;
 }
 

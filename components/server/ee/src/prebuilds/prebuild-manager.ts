@@ -126,6 +126,11 @@ export class PrebuildManager {
             if (user.blocked) {
                 throw new Error(`Blocked users cannot start prebuilds (${user.name})`);
             }
+            if (!project) {
+                throw new Error(
+                    `Running prebuilds without a project is no longer supported. Please add '${cloneURL}' as a project in a Gitpod team.`,
+                );
+            }
             const existingPB = await this.findNonFailedPrebuiltWorkspace({ span }, cloneURL, commitSHAIdentifier);
 
             // If the existing prebuild is failed, it will be retriggered in the afterwards
