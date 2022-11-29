@@ -72,12 +72,22 @@ func ParseConfig(ctx context.Context, b []byte) (*config.IDEConfig, error) {
 				option.Image = resolved
 			}
 		}
+		if resolvedVersion, err := oci_tool.ResolveIDEVersion(ctx, option.Image); err != nil {
+			log.WithError(err).Error("ide config: cannot get version from image")
+		} else {
+			option.ImageVersion = resolvedVersion
+		}
 		if option.LatestImage != "" {
 			if resolved, err := oci_tool.Resolve(ctx, option.LatestImage); err != nil {
 				log.WithError(err).Error("ide config: cannot resolve latest image digest")
 			} else {
 				log.WithField("ide", id).WithField("image", option.LatestImage).WithField("resolved", resolved).Info("ide config: resolved latest image digest")
 				option.LatestImage = resolved
+			}
+			if resolvedVersion, err := oci_tool.ResolveIDEVersion(ctx, option.LatestImage); err != nil {
+				log.WithError(err).Error("ide config: cannot get version from image")
+			} else {
+				option.LatestImageVersion = resolvedVersion
 			}
 		}
 		cfg.IdeOptions.Options[id] = option

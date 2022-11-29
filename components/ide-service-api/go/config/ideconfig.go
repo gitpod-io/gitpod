@@ -55,6 +55,10 @@ type IDEOption struct {
 	PluginImage string `json:"pluginImage,omitempty"`
 	// PluginLatestImage ref for the latest IDE image, this image ref always resolve to digest.
 	PluginLatestImage string `json:"pluginLatestImage,omitempty"`
+	// ImageVersion the semantic version of the IDE image.
+	ImageVersion string `json:"imageVersion,omitempty"`
+	// LatestImageVersion the semantic version of the latest IDE image.
+	LatestImageVersion string `json:"latestImageVersion,omitempty"`
 }
 
 type IDEClient struct {
