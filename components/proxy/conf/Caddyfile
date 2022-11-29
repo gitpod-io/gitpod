@@ -210,12 +210,21 @@ https://{$GITPOD_DOMAIN} {
 	handle @backend_wss {
 		gitpod.sec_websocket_key
 
+		forward_auth server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+			uri /feature-flags/slow-database
+
+			header_up -Connection
+			header_up -Upgrade
+
+			copy_headers X-Gitpod-Slow-Database
+		}
+
 		@slow {
-			header "Sec-WebSocket-Protocol" "slow-database"
+			header X-Gitpod-Slow-Database "true"
 		}
 
 		@fast {
-			not header "Sec-WebSocket-Protocol" "slow-database"
+			not header X-Gitpod-Slow-Database "true"
 		}
 
 		uri strip_prefix /api
