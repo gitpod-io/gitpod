@@ -311,7 +311,7 @@ export namespace ConfigFile {
         let patSigningKey = "";
         if (config.patSigningKeyFile) {
             try {
-                patSigningKey = fs.readFileSync(filePathTelepresenceAware(config.patSigningKeyFile), "utf-8");
+                patSigningKey = fs.readFileSync(filePathTelepresenceAware(config.patSigningKeyFile), "utf-8").trim();
             } catch (error) {
                 log.error("Could not load Personal Access Token signing key", error);
             }

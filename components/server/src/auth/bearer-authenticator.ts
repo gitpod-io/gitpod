@@ -11,6 +11,7 @@ import * as crypto from "crypto";
 import * as express from "express";
 import { IncomingHttpHeaders } from "http";
 import { inject, injectable } from "inversify";
+import { Config } from "../config";
 import { AllAccessFunctionGuard, ExplicitFunctionAccessGuard, WithFunctionAccessGuard } from "./function-access";
 import { TokenResourceGuard, WithResourceAccessGuard } from "./resource-access";
 
@@ -39,6 +40,7 @@ function createBearerAuthError(message: string): BearerAuthError {
 
 @injectable()
 export class BearerAuth {
+    @inject(Config) protected readonly config: Config;
     @inject(UserDB) protected readonly userDB: UserDB;
     @inject(PersonalAccessTokenDB) protected readonly personalAccessTokenDB: PersonalAccessTokenDB;
 
@@ -102,10 +104,19 @@ export class BearerAuth {
         //  1. Personal Access Tokens which are prefixed with `gitpod_pat_`
         //  2. Old(er) access tokens which do not have any specific prefix.
 
+        // Personal access tokens are only enabled when a signing key is configured.
         if (PersonalAccessToken.validatePrefix(token)) {
+            if (this.config.patSigningKey === "") {
+                throw new Error("Received Personal Access Token for authentication, but no signing key is configured.");
+            }
+
             try {
-                const validated = PersonalAccessToken.validate(token);
-                const hash = validated.hash();
+                const parsed = PersonalAccessToken.parse(token);
+                if (!parsed.validate(this.config.patSigningKey)) {
+                    throw new Error("PAT does not have a valid signature.");
+                }
+
+                const hash = parsed.hash();
 
                 const pat = await this.personalAccessTokenDB.getByHash(hash);
                 if (!pat) {
@@ -157,6 +168,14 @@ export class PersonalAccessToken {
         return crypto.createHash("sha256").update(this.value, "utf8").digest("hex");
     }
 
+    public validate(signingKey: string): boolean {
+        const hs256 = crypto.createHmac("sha256", signingKey);
+        const data = hs256.update(this.value);
+        const signedValue = data.digest("base64url");
+
+        return constantTimeCompare(this.signature, signedValue);
+    }
+
     public static validatePrefix(token: string): boolean {
         return token.startsWith(PersonalAccessToken.PAT_PREFIX);
     }
@@ -178,12 +197,13 @@ export class PersonalAccessToken {
 
         return new PersonalAccessToken(signature, value);
     }
+}
 
-    public static validate(token: string): PersonalAccessToken {
-        const parsed = PersonalAccessToken.parse(token);
-
-        // TODO: Validate signature
-
-        return parsed;
+// https://til.simonwillison.net/node/constant-time-compare-strings
+function constantTimeCompare(a: string, b: string): boolean {
+    try {
+        return crypto.timingSafeEqual(Buffer.from(a, "utf8"), Buffer.from(b, "utf8"));
+    } catch {
+        return false;
     }
 }
