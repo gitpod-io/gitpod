@@ -1,6 +1,8 @@
 # Change Log
 
 ## November 2022
+- Update JetBrains IDE images to most recent stable version. ([#14886](https://github.com/gitpod-io/gitpod/pull/14886)) - [@roboquat](https://github.com/roboquat)
+- JetBrains: Start JB backend with the interactive login shell. ([#14916](https://github.com/gitpod-io/gitpod/pull/14916)) - [@akosyakov](https://github.com/akosyakov)
 - Update access tokens menu order ([#14937](https://github.com/gitpod-io/gitpod/pull/14937)) - [@gtsiolis](https://github.com/gtsiolis)
 - Truncate branch name on prebuilds page ([#14853](https://github.com/gitpod-io/gitpod/pull/14853)) - [@gtsiolis](https://github.com/gtsiolis)
 - Revert removing the workspace download feature ([#14828](https://github.com/gitpod-io/gitpod/pull/14828)) - [@gtsiolis](https://github.com/gtsiolis)
