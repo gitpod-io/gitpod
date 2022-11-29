@@ -13,7 +13,7 @@ import ConfirmationModal from "../components/ConfirmationModal";
 import { ContextMenuEntry } from "../components/ContextMenu";
 import InfoBox from "../components/InfoBox";
 import { Item, ItemField, ItemFieldContextMenu, ItemFieldIcon, ItemsList } from "../components/ItemsList";
-import Modal from "../components/Modal";
+import Modal, { ModalBody, ModalHeader, ModalFooter } from "../components/Modal";
 import copy from "../images/copy.svg";
 import exclamation from "../images/exclamation.svg";
 import { openAuthorizeWindow } from "../provider-utils";
@@ -291,8 +291,8 @@ function GitProviders() {
             {editModal && (
                 // TODO: Use title and buttons props
                 <Modal visible={true} onClose={() => setEditModal(undefined)}>
-                    <h3 className="pb-2">Edit Permissions</h3>
-                    <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
+                    <ModalHeader>Edit Permissions</ModalHeader>
+                    <ModalBody>
                         <div className="text-gray-500">Configure provider permissions.</div>
                         {(editModal.provider.scopes || []).map((scope) => (
                             <div key={`scope-${scope}`}>
@@ -307,15 +307,15 @@ function GitProviders() {
                                 ></CheckBox>
                             </div>
                         ))}
-                    </div>
-                    <div className="flex justify-end mt-6">
+                    </ModalBody>
+                    <ModalFooter>
                         <button
                             onClick={() => updatePermissions()}
                             disabled={equals(editModal.nextScopes, editModal.prevScopes)}
                         >
                             Update Permissions
                         </button>
-                    </div>
+                    </ModalFooter>
                 </Modal>
             )}
 
