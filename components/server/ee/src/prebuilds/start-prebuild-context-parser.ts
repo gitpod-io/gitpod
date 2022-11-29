@@ -4,7 +4,7 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { User, WorkspaceContext, StartPrebuildContext, IssueContext, ContextURL } from "@gitpod/gitpod-protocol";
+import { User, WorkspaceContext, ContextURL } from "@gitpod/gitpod-protocol";
 import { injectable } from "inversify";
 import { IPrefixContextParser } from "../../../src/workspace/context-parser";
 
@@ -19,14 +19,8 @@ export class StartPrebuildContextParser implements IPrefixContextParser {
     }
 
     public async handle(user: User, prefix: string, context: WorkspaceContext): Promise<WorkspaceContext> {
-        if (IssueContext.is(context)) {
-            throw new Error("cannot start prebuilds on an issue context");
-        }
-
-        const result: StartPrebuildContext = {
-            title: `Prebuild of "${context.title}"`,
-            actual: context,
-        };
-        return result;
+        throw new Error(
+            `Running prebuilds without a project is no longer supported. Please add your repository as a project in a Gitpod team.`,
+        );
     }
 }
