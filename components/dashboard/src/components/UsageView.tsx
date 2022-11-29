@@ -268,22 +268,17 @@ function UsageView({ attributionId }: UsageViewProps) {
                                             </div>
                                         </div>
                                         <div className="flex flex-col truncate mt-8 text-sm">
-                                            <div className="text-gray-400 dark:text-gray-500">
-                                                This feature is in{" "}
+                                            <div className="text-gray-400 dark:text-gray-500 text-sm text-left">
+                                                <strong>Usage</strong> feature is in{" "}
                                                 <PillLabel
                                                     type="warn"
                                                     className="font-semibold mt-2 ml-0 py-0.5 px-1 self-center"
                                                 >
-                                                    <span className="text-xs">Early Access</span>
+                                                    <a href="https://www.gitpod.io/docs/references/gitpod-releases">
+                                                        <span className="text-xs">Early Access</span>
+                                                    </a>
                                                 </PillLabel>
                                                 <br />
-                                                <a
-                                                    href="https://www.gitpod.io/docs/references/gitpod-releases"
-                                                    className="gp-link"
-                                                >
-                                                    Learn more
-                                                </a>
-                                                &nbsp;·&nbsp;
                                                 <a
                                                     href="https://github.com/gitpod-io/gitpod/issues/12636"
                                                     className="gp-link"

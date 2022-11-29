@@ -11,6 +11,7 @@ import { TeamsContext } from "./teams-context";
 import { publicApiTeamsToProtocol, publicApiTeamToProtocol, teamsService } from "../service/public-api";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { ConnectError } from "@bufbuild/connect-web";
+import PillLabel from "../components/PillLabel";
 
 export default function () {
     const { setTeams } = useContext(TeamsContext);
@@ -87,17 +88,18 @@ export default function () {
                 </div>
             </form>
 
-            <p className="text-center w-full mt-12 text-gray-500">
-                <strong>Teams &amp; Projects</strong> are currently in Beta.{" "}
-                <a
-                    href="https://github.com/gitpod-io/gitpod/issues/5095"
-                    target="gitpod-feedback-issue"
-                    rel="noopener"
-                    className="gp-link"
-                >
+            <div className="text-gray-400 dark:text-gray-500 text-sm mt-24 text-left">
+                <strong>Teams</strong> feature is in{" "}
+                <PillLabel type="warn" className="font-semibold mt-2 ml-0 py-0.5 px-1 self-center">
+                    <a href="https://www.gitpod.io/docs/references/gitpod-releases">
+                        <span className="text-xs">BETA</span>
+                    </a>
+                </PillLabel>
+                &nbsp;&middot;&nbsp;
+                <a href="https://github.com/gitpod-io/gitpod/issues/5095" className="gp-link">
                     Send feedback
                 </a>
-            </p>
+            </div>
         </div>
     );
 }
