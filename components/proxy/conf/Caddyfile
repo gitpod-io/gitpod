@@ -205,7 +205,7 @@ https://{$GITPOD_DOMAIN} {
 	}
 
 	@backend_wss {
-		path /api/gitpod /api/v1
+		path /api/gitpod
 	}
 	handle @backend_wss {
 		gitpod.sec_websocket_key
