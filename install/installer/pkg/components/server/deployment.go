@@ -292,6 +292,17 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		volume, mount, _, ok := getPersonalAccessTokenSigningKey(cfg)
+		if !ok {
+			return nil
+		}
+
+		volumes = append(volumes, volume)
+		volumeMounts = append(volumeMounts, mount)
+		return nil
+	})
+
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,

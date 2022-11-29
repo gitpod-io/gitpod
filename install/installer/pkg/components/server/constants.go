@@ -9,17 +9,18 @@ import (
 )
 
 const (
-	Component             = common.ServerComponent
-	ContainerPort         = 3000
-	ContainerPortName     = "http"
-	authProviderFilePath  = "/gitpod/auth-providers"
-	licenseFilePath       = "/gitpod/license"
-	chargebeeMountPath    = "/chargebee"
-	stripeSecretMountPath = "/stripe-secret"
-	githubAppCertSecret   = "github-app-cert-secret"
-	InstallationAdminPort = common.ServerInstallationAdminPort
-	InstallationAdminName = "install-admin"
-	DebugPortName         = "debug"
-	DebugNodePortName     = "debugnode"
-	ServicePort           = 3000
+	Component                              = common.ServerComponent
+	ContainerPort                          = 3000
+	ContainerPortName                      = "http"
+	authProviderFilePath                   = "/gitpod/auth-providers"
+	licenseFilePath                        = "/gitpod/license"
+	chargebeeMountPath                     = "/chargebee"
+	stripeSecretMountPath                  = "/stripe-secret"
+	githubAppCertSecret                    = "github-app-cert-secret"
+	InstallationAdminPort                  = common.ServerInstallationAdminPort
+	InstallationAdminName                  = "install-admin"
+	DebugPortName                          = "debug"
+	DebugNodePortName                      = "debugnode"
+	ServicePort                            = 3000
+	personalAccessTokenSigningKeyMountPath = "/secrets/personal-access-token-signing-key"
 )
