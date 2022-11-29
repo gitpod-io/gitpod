@@ -23,8 +23,6 @@ import { GitLabApp } from "./prebuilds/gitlab-app";
 import { BitbucketApp } from "./prebuilds/bitbucket-app";
 import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
 import { IncrementalPrebuildsService } from "./prebuilds/incremental-prebuilds-service";
-import { IPrefixContextParser } from "../../src/workspace/context-parser";
-import { StartPrebuildContextParser } from "./prebuilds/start-prebuild-context-parser";
 import { WorkspaceFactory } from "../../src/workspace/workspace-factory";
 import { WorkspaceFactoryEE } from "./workspace/workspace-factory";
 import { MonitoringEndpointsAppEE } from "./monitoring-endpoint-ee";
@@ -72,7 +70,6 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     rebind(MonitoringEndpointsApp).to(MonitoringEndpointsAppEE).inSingletonScope();
 
     bind(PrebuildManager).toSelf().inSingletonScope();
-    bind(IPrefixContextParser).to(StartPrebuildContextParser).inSingletonScope();
     bind(GithubApp).toSelf().inSingletonScope();
     bind(GitHubAppSupport).toSelf().inSingletonScope();
     bind(GithubAppRules).toSelf().inSingletonScope();
