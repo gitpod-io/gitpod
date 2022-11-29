@@ -23,6 +23,7 @@ import (
 	"github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opentracing/opentracing-go"
+	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -118,7 +119,7 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 		//		 Only if the store fetch fails should we attetmpt to download it.
 		manifest, fetcher, err := bh.downloadManifest(ctx, bh.Spec.BaseRef)
 		if err != nil {
-			return err
+			return xerrors.Errorf("cannnot fetch the manifest: %w", err)
 		}
 
 		var srcs []BlobSource
@@ -153,7 +154,7 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 
 		dontCache, mediaType, url, rc, err := src.GetBlob(ctx, bh.Spec, bh.Digest)
 		if err != nil {
-			return err
+			return xerrors.Errorf("cannnot fetch the blob: %w", err)
 		}
 		if rc != nil {
 			defer rc.Close()
@@ -174,7 +175,7 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "false").Inc()
 			log.WithField("blobSource", src.Name()).WithField("baseRef", bh.Spec.BaseRef).WithError(err).Error("unable to return blob")
-			return err
+			return xerrors.Errorf("unable to return blob: %w", err)
 		}
 
 		bh.Metrics.BlobDownloadSpeedHist.WithLabelValues(src.Name()).Observe(float64(n) / time.Since(t0).Seconds())
