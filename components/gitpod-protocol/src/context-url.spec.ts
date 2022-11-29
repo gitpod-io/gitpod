@@ -41,24 +41,6 @@ export class ContextUrlTest {
         expect(actual?.pathname).to.equal("/gitpod-io/gitpod-test-repo.git");
     }
 
-    @test public parseContextUrl_withPrebuild() {
-        const actual = ContextURL.getNormalizedURL({
-            contextURL: "prebuild/https://github.com/gitpod-io/gitpod-test-repo",
-            context: {},
-        } as WsContextUrl);
-        expect(actual?.host).to.equal("github.com");
-        expect(actual?.pathname).to.equal("/gitpod-io/gitpod-test-repo");
-    }
-
-    @test public parseContextUrl_withPrebuild_withoutSchema() {
-        const actual = ContextURL.getNormalizedURL({
-            contextURL: "prebuild/github.com/gitpod-io/gitpod-test-repo",
-            context: {},
-        } as WsContextUrl);
-        expect(actual?.host).to.equal("github.com");
-        expect(actual?.pathname).to.equal("/gitpod-io/gitpod-test-repo");
-    }
-
     @test public parseContextUrl_badUrl() {
         const actual = ContextURL.getNormalizedURL({ contextURL: "[Object object]", context: {} } as WsContextUrl);
         expect(actual).to.be.undefined;
