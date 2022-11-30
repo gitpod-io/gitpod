@@ -42,8 +42,6 @@
       },
       "id": 14,
       "panels": [],
-      "repeat": "kind",
-      "repeatDirection": "h",
       "targets": [
         {
           "datasource": {
@@ -53,7 +51,7 @@
           "refId": "A"
         }
       ],
-      "title": "IDE Startup time: ${kind} ",
+      "title": "IDE Startup time",
       "type": "row"
     },
     {
@@ -235,7 +233,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(1, sum by(le) (rate(supervisor_ide_ready_duration_total_bucket{kind=~\"${kind}\", cluster=~\"${cluster}\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(1, sum by(le) (rate(supervisor_ide_ready_duration_total_bucket{kind=~\"${kind}\", cluster=~\"${cluster}\"}[$__interval])))",
           "hide": false,
           "legendFormat": "max",
           "range": true,
@@ -247,7 +245,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by(le) (rate(supervisor_ide_ready_duration_total_bucket{kind=~\"${kind}\", cluster=~\"${cluster}\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.99, sum by(le) (rate(supervisor_ide_ready_duration_total_bucket{kind=~\"${kind}\", cluster=~\"${cluster}\"}[$__interval])))",
           "hide": false,
           "legendFormat": "0.99",
           "range": true,
@@ -259,7 +257,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by(le) (rate(supervisor_ide_ready_duration_total_bucket{kind=~\"${kind}\", cluster=~\"${cluster}\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by(le) (rate(supervisor_ide_ready_duration_total_bucket{kind=~\"${kind}\", cluster=~\"${cluster}\"}[$__interval])))",
           "hide": false,
           "legendFormat": "0.95",
           "range": true,
@@ -271,7 +269,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.8, sum by(le) (rate(supervisor_ide_ready_duration_total_bucket{kind=~\"${kind}\", cluster=~\"${cluster}\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.8, sum by(le) (rate(supervisor_ide_ready_duration_total_bucket{kind=~\"${kind}\", cluster=~\"${cluster}\"}[$__interval])))",
           "hide": false,
           "legendFormat": "0.8",
           "range": true,
@@ -283,7 +281,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.5, sum by(le) (rate(supervisor_ide_ready_duration_total_bucket{kind=~\"${kind}\", cluster=~\"${cluster}\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.5, sum by(le) (rate(supervisor_ide_ready_duration_total_bucket{kind=~\"${kind}\", cluster=~\"${cluster}\"}[$__interval])))",
           "hide": false,
           "legendFormat": "median",
           "range": true,
@@ -372,14 +370,14 @@
           "unit": "s"
         }
       },
-      "pluginVersion": "9.2.4",
+      "pluginVersion": "9.2.6",
       "targets": [
         {
           "datasource": {
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(increase(supervisor_ide_ready_duration_total_bucket{kind=~\"${kind}\"}[$__rate_interval])) by (le)",
+          "expr": "sum(increase(supervisor_ide_ready_duration_total_bucket{kind=~\"${kind}\"}[$__interval])) by (le)",
           "format": "heatmap",
           "intervalFactor": 2,
           "legendFormat": "{{le}}",
@@ -434,7 +432,7 @@
       },
       "gridPos": {
         "h": 11,
-        "w": 24,
+        "w": 12,
         "x": 0,
         "y": 28
       },
@@ -483,7 +481,7 @@
           "unit": "s"
         }
       },
-      "pluginVersion": "9.2.4",
+      "pluginVersion": "9.2.6",
       "repeat": "cluster",
       "repeatDirection": "h",
       "targets": [
@@ -492,7 +490,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(increase(supervisor_ide_ready_duration_total_bucket{kind=~\"${kind}\", cluster=~\"${cluster}\"}[$__rate_interval])) by (le)",
+          "expr": "sum(increase(supervisor_ide_ready_duration_total_bucket{kind=~\"${kind}\", cluster=~\"${cluster}\"}[$__interval])) by (le)",
           "format": "heatmap",
           "intervalFactor": 2,
           "legendFormat": "{{le}}",
@@ -573,7 +571,7 @@
       },
       {
         "current": {
-          "selected": false,
+          "selected": true,
           "text": "All",
           "value": "$__all"
         },
