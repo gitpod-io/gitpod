@@ -38,14 +38,25 @@ func (d *PersonalAccessToken) TableName() string {
 func GetPersonalAccessTokenForUser(ctx context.Context, conn *gorm.DB, tokenID uuid.UUID, userID uuid.UUID) (PersonalAccessToken, error) {
 	var token PersonalAccessToken
 
-	db := conn.WithContext(ctx)
+	if tokenID == uuid.Nil {
+		return PersonalAccessToken{}, fmt.Errorf("Token ID is a required argument to get personal access token for user")
+	}
 
-	db = db.Where("id = ?", tokenID).Where("userId = ?", userID).Where("deleted = ?", 0).First(&token)
-	if db.Error != nil {
-		if errors.Is(db.Error, gorm.ErrRecordNotFound) {
+	if userID == uuid.Nil {
+		return PersonalAccessToken{}, fmt.Errorf("User ID is a required argument to get personal access token for user")
+	}
+
+	tx := conn.
+		WithContext(ctx).
+		Where("id = ?", tokenID).
+		Where("userId = ?", userID).
+		Where("deleted = ?", 0).
+		First(&token)
+	if tx.Error != nil {
+		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 			return PersonalAccessToken{}, fmt.Errorf("Token with ID %s does not exist: %w", tokenID, ErrorNotFound)
 		}
-		return PersonalAccessToken{}, fmt.Errorf("Failed to retrieve token: %v", db.Error)
+		return PersonalAccessToken{}, fmt.Errorf("Failed to retrieve token: %v", tx.Error)
 	}
 
 	return token, nil
