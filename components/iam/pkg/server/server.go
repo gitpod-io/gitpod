@@ -6,6 +6,7 @@ package server
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/iam/pkg/config"
@@ -23,6 +24,16 @@ func Start(logger *logrus.Entry, version string, cfg *config.ServiceConfig) erro
 	if err != nil {
 		return fmt.Errorf("failed to initialize iam server: %w", err)
 	}
+
+	srv.HTTPMux().HandleFunc("/tada", func(w http.ResponseWriter, r *http.Request) {
+		//nolint
+		w.Write([]byte("🎉"))
+	})
+
+	srv.HTTPMux().HandleFunc("/oidc", func(w http.ResponseWriter, r *http.Request) {
+		//nolint
+		w.Write([]byte("oidc"))
+	})
 
 	if listenErr := srv.ListenAndServe(); listenErr != nil {
 		return fmt.Errorf("failed to serve iam server: %w", err)
