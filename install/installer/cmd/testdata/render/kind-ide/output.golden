@@ -508,6 +508,9 @@ data:
           "dbSync": {
             "version": "test"
           },
+          "iam": {
+            "version": "test"
+          },
           "ideProxy": {
             "version": "test"
           },

@@ -18,6 +18,8 @@ components:
     version: test
   dbSync:
     version: test
+  iam:
+    version: test
   ideMetrics:
     version: test
   ideService:

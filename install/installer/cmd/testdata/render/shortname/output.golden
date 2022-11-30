@@ -836,6 +836,18 @@ metadata:
   name: gitpod
   namespace: default
 ---
+# v1/ServiceAccount iam
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: iam
+  name: iam
+  namespace: default
+---
 # v1/ServiceAccount ide-metrics
 apiVersion: v1
 automountServiceAccountToken: true
@@ -1528,6 +1540,9 @@ data:
           "dbSync": {
             "version": "test"
           },
+          "iam": {
+            "version": "test"
+          },
           "ideProxy": {
             "version": "test"
           },
@@ -2188,6 +2203,68 @@ data:
         app: gitpod
         component: openvsx-proxy
       name: openvsx-proxy
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: iam
+      name: iam
+      namespace: default
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      annotations:
+        gitpod.io/checksum_config: cb4cc24849de9562a8146bc14338c6a2298f3056b17f1cee5f08c1475327ff57
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: iam
+      name: iam
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: iam
+      name: default-iam-rb-kube-rbac-proxy
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: iam
+      name: iam
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: iam
+      name: iam
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: iam
+        kind: service
+      name: iam
       namespace: default
     ---
     apiVersion: v1
@@ -3625,6 +3702,31 @@ metadata:
   name: gitpod-app
   namespace: default
 
+---
+# v1/ConfigMap iam
+apiVersion: v1
+data:
+  config.json: |-
+    {
+      "server": {
+        "services": {
+          "grpc": {
+            "address": "0.0.0.0:9001"
+          },
+          "http": {
+            "address": "0.0.0.0:9002"
+          }
+        }
+      }
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: iam
+  name: iam
+  namespace: default
 ---
 # v1/ConfigMap ide-config
 apiVersion: v1
@@ -5884,6 +5986,24 @@ subjects:
   name: content-service
   namespace: default
 ---
+# rbac.authorization.k8s.io/v1/ClusterRoleBinding default-iam-rb-kube-rbac-proxy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: iam
+  name: default-iam-rb-kube-rbac-proxy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-kube-rbac-proxy
+subjects:
+- kind: ServiceAccount
+  name: iam
+  namespace: default
+---
 # rbac.authorization.k8s.io/v1/ClusterRoleBinding default-ide-metrics-kube-rbac-proxy
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -6480,6 +6600,24 @@ subjects:
 - kind: ServiceAccount
   name: gitpod
 ---
+# rbac.authorization.k8s.io/v1/RoleBinding iam
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: iam
+  name: iam
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-ns-psp:restricted-root-user
+subjects:
+- kind: ServiceAccount
+  name: iam
+---
 # rbac.authorization.k8s.io/v1/RoleBinding ide-metrics
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -6917,6 +7055,34 @@ spec:
     targetPort: 3306
   selector:
     app.kubernetes.io/name: mysql
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
+# v1/Service iam
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: iam
+    kind: service
+  name: iam
+  namespace: default
+spec:
+  ports:
+  - name: grpc
+    port: 9001
+    protocol: TCP
+    targetPort: 9001
+  - name: http
+    port: 9002
+    protocol: TCP
+    targetPort: 9002
+  selector:
+    app: gitpod
+    component: iam
   type: ClusterIP
 status:
   loadBalancer: {}
@@ -8868,6 +9034,195 @@ spec:
       restartPolicy: Always
       serviceAccountName: dashboard
       terminationGracePeriodSeconds: 30
+status: {}
+---
+# apps/v1/Deployment iam
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    gitpod.io/checksum_config: cb4cc24849de9562a8146bc14338c6a2298f3056b17f1cee5f08c1475327ff57
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: iam
+  name: iam
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitpod
+      component: iam
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: iam
+      name: iam
+      namespace: default
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: gitpod.io/workload_meta
+                operator: Exists
+      containers:
+      - args:
+        - run
+        - --config=/config.json
+        - --json-log=true
+        env:
+        - name: GITPOD_DOMAIN
+          value: gitpod.example.com
+        - name: GITPOD_INSTALLATION_SHORTNAME
+          value: dev
+        - name: GITPOD_REGION
+          value: local
+        - name: HOST_URL
+          value: https://gitpod.example.com
+        - name: KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBE_DOMAIN
+          value: svc.cluster.local
+        - name: LOG_LEVEL
+          value: info
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              key: host
+              name: mysql
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              key: port
+              name: mysql
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: mysql
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: mysql
+        - name: DB_ENCRYPTION_KEYS
+          valueFrom:
+            secretKeyRef:
+              key: encryptionKeys
+              name: mysql
+        image: eu.gcr.io/gitpod-core-dev/build/iam:test
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /live
+            port: 9501
+            scheme: HTTP
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: iam
+        ports:
+        - containerPort: 9001
+          name: grpc
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ready
+            port: 9501
+            scheme: HTTP
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 32Mi
+        securityContext:
+          privileged: false
+        volumeMounts:
+        - mountPath: /config.json
+          name: config
+          readOnly: true
+          subPath: config.json
+      - args:
+        - --logtostderr
+        - --insecure-listen-address=[$(IP)]:9500
+        - --upstream=http://127.0.0.1:9500/
+        env:
+        - name: IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        image: quay.io/brancz/kube-rbac-proxy:v0.12.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 9500
+          name: metrics
+        resources:
+          requests:
+            cpu: 1m
+            memory: 30Mi
+        securityContext:
+          runAsGroup: 65532
+          runAsNonRoot: true
+          runAsUser: 65532
+        terminationMessagePolicy: FallbackToLogsOnError
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: false
+      initContainers:
+      - args:
+        - -v
+        - database
+        env:
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              key: host
+              name: mysql
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              key: port
+              name: mysql
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: mysql
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: mysql
+        - name: DB_ENCRYPTION_KEYS
+          valueFrom:
+            secretKeyRef:
+              key: encryptionKeys
+              name: mysql
+        image: eu.gcr.io/gitpod-core-dev/build/service-waiter:test
+        name: database-waiter
+        resources: {}
+        securityContext:
+          privileged: false
+          runAsUser: 31001
+      restartPolicy: Always
+      serviceAccountName: iam
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          name: iam
+        name: config
 status: {}
 ---
 # apps/v1/Deployment ide-metrics

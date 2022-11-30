@@ -11,6 +11,7 @@ require (
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/iam v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ide-metrics-api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ide-service-api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/image-builder/api v0.0.0-00010101000000-000000000000
@@ -153,7 +154,7 @@ require (
 	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/ipfs/bbloom v0.0.4 // indirect
 	github.com/ipfs/go-block-format v0.0.3 // indirect
 	github.com/ipfs/go-blockservice v0.3.0 // indirect
@@ -325,6 +326,8 @@ require (
 replace github.com/gitpod-io/gitpod/image-builder => ../components/image-builder-mk3 // leeway
 
 replace github.com/gitpod-io/gitpod/agent-smith => ../../components/ee/agent-smith // leeway
+
+replace github.com/gitpod-io/gitpod/iam => ../../components/iam // leeway
 
 replace github.com/gitpod-io/gitpod/blobserve => ../../components/blobserve // leeway
 
