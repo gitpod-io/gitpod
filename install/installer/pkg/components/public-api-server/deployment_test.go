@@ -70,7 +70,6 @@ func TestDeployment_ServerArguments(t *testing.T) {
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
 					SecretName: "personal-access-token-signing-key",
-					Optional:   pointer.Bool(true),
 				},
 			},
 		},

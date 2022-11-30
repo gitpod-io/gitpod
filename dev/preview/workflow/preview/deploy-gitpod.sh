@@ -403,7 +403,8 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.configcat.pollInter
 #
 # configure Personal Access Token signign key
 #
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.publicApi.personalAccessTokenSigningKeySecretName "personal-access-token-signing-key"
+yq w -i "${INSTALLER_CONFIG_PATH}" personalAccessTokenSigningKey.kind "secret"
+yq w -i "${INSTALLER_CONFIG_PATH}" personalAccessTokenSigningKey.name "personal-access-token-signing-key"
 
 #
 # configureDefaultTemplate

@@ -54,6 +54,8 @@ func (v version) Defaults(in interface{}) error {
 	}
 	cfg.Certificate.Kind = ObjectRefSecret
 	cfg.Certificate.Name = "https-certificates"
+	cfg.PersonalAccessTokenSigningKey.Kind = ObjectRefSecret
+	cfg.PersonalAccessTokenSigningKey.Name = "personal-access-token-signing-key"
 	cfg.Database.InCluster = pointer.Bool(true)
 	cfg.Metadata.Region = defaultMetadataRegion
 	cfg.Metadata.InstallationShortname = InstallationShortNameOldDefault // TODO(gpl): we're tied to "default" here because that's what we put into static bridges in the past
@@ -117,6 +119,18 @@ func (v version) CheckDeprecated(rawCfg interface{}) (map[string]interface{}, []
 				}
 			}
 
+			if cfg.Experimental.WebApp.PublicAPI != nil {
+				// personalAccessTokenSigningKey is now configurable from main config
+				PATkey := cfg.Experimental.WebApp.PublicAPI.PersonalAccessTokenSigningKeySecretName
+				if PATkey != "" {
+					// override the value in the main config and warn
+					// This is performed irrespective of whether the value being default or not
+					warnings["experimental.webapp.publicAPI.personalAccessTokenSigningKeySecretName"] = PATkey
+					cfg.PersonalAccessTokenSigningKey.Name = PATkey
+					cfg.PersonalAccessTokenSigningKey.Kind = ObjectRefSecret
+				}
+			}
+
 			// default workspace base image is now configurable from main config
 			if cfg.Experimental.WebApp.Server != nil {
 
@@ -171,6 +185,9 @@ type Config struct {
 	ContainerRegistry ContainerRegistry `json:"containerRegistry" validate:"required"`
 
 	Certificate ObjectRef `json:"certificate" validate:"required"`
+
+	// Name of the kubernetes object to use for signature of Personal Access Tokens
+	PersonalAccessTokenSigningKey ObjectRef `json:"personalAccessTokenSigningKey" validate:"required"`
 
 	HTTPProxy *ObjectRef `json:"httpProxy,omitempty"`
 

@@ -463,6 +463,9 @@ data:
       logLevel: info
     openVSX:
       url: https://open-vsx.org
+    personalAccessTokenSigningKey:
+      kind: secret
+      name: personal-access-token-signing-key
     repository: eu.gcr.io/gitpod-core-dev/build
     workspace:
       maxLifetime: 36h0m0s

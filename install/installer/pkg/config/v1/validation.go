@@ -125,6 +125,7 @@ func (v version) ClusterValidation(rcfg interface{}) cluster.ValidationChecks {
 	var res cluster.ValidationChecks
 	res = append(res, cluster.CheckSecret(cfg.Certificate.Name, cluster.CheckSecretRequiredData("tls.crt", "tls.key")))
 
+	res = append(res, cluster.CheckSecret(cfg.PersonalAccessTokenSigningKey.Name, cluster.CheckSecretRequiredData("personal-access-token-signing-key")))
 	res = append(res, cluster.ValidationCheck{
 		Name:        "affinity labels",
 		Check:       checkAffinityLabels(getAffinityListByKind(cfg.Kind)),

@@ -9,6 +9,7 @@ import (
 	"net"
 	"strconv"
 
+	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"k8s.io/utils/pointer"
 
@@ -35,10 +36,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		_, _, personalAccessTokenSigningKeyPath, _ = getPersonalAccessTokenSigningKey(cfg)
-		return nil
-	})
+	_, _, personalAccessTokenSigningKeyPath, _ = getPersonalAccessTokenSigningKey(ctx.Config)
 
 	cfg := config.Configuration{
 		GitpodServiceURL:                  fmt.Sprintf("wss://%s", ctx.Config.Domain),
@@ -110,24 +108,20 @@ func getStripeConfig(cfg *experimental.Config) (corev1.Volume, corev1.VolumeMoun
 	return volume, mount, path, true
 }
 
-func getPersonalAccessTokenSigningKey(cfg *experimental.Config) (corev1.Volume, corev1.VolumeMount, string, bool) {
+func getPersonalAccessTokenSigningKey(cfg configv1.Config) (corev1.Volume, corev1.VolumeMount, string, bool) {
 	var volume corev1.Volume
 	var mount corev1.VolumeMount
 	var path string
 
-	if cfg == nil || cfg.WebApp == nil || cfg.WebApp.PublicAPI == nil || cfg.WebApp.PublicAPI.PersonalAccessTokenSigningKeySecretName == "" {
+	if cfg.PersonalAccessTokenSigningKey.Name == "" {
 		return volume, mount, path, false
 	}
-
-	personalAccessTokenSecretname := cfg.WebApp.PublicAPI.PersonalAccessTokenSigningKeySecretName
-	path = personalAccessTokenSigningKeyMountPath
 
 	volume = corev1.Volume{
 		Name: "personal-access-token-signing-key",
 		VolumeSource: corev1.VolumeSource{
 			Secret: &corev1.SecretVolumeSource{
-				SecretName: personalAccessTokenSecretname,
-				Optional:   pointer.Bool(true),
+				SecretName: cfg.PersonalAccessTokenSigningKey.Name,
 			},
 		},
 	}
@@ -139,5 +133,5 @@ func getPersonalAccessTokenSigningKey(cfg *experimental.Config) (corev1.Volume, 
 		ReadOnly:  true,
 	}
 
-	return volume, mount, path, true
+	return volume, mount, personalAccessTokenSigningKeyMountPath, true
 }

@@ -821,6 +821,9 @@ data:
       logLevel: info
     openVSX:
       url: https://open-vsx.org
+    personalAccessTokenSigningKey:
+      kind: secret
+      name: personal-access-token-signing-key
     repository: eu.gcr.io/gitpod-core-dev/build
     workspace:
       maxLifetime: 36h0m0s
@@ -1717,7 +1720,7 @@ data:
     kind: Deployment
     metadata:
       annotations:
-        gitpod.io/checksum_config: 74ab9c5d2ac7f57832d1df15f9764c3abfc450f45beb9a31d8aefb9bcf1aaea8
+        gitpod.io/checksum_config: a015e298993da15ad001d800a0e5825e99588a5fd565b8d2ba18e987e1d2cd09
       creationTimestamp: null
       labels:
         app: gitpod
@@ -2275,7 +2278,7 @@ data:
       "gitpodServiceUrl": "wss://gitpod.example.com",
       "billingServiceAddress": "usage.default.svc.cluster.local:9001",
       "stripeWebhookSigningSecretPath": "",
-      "personalAccessTokenSigningKeyPath": "",
+      "personalAccessTokenSigningKeyPath": "/secrets/personal-access-token-signing-key",
       "server": {
         "services": {
           "grpc": {
@@ -4449,7 +4452,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    gitpod.io/checksum_config: 74ab9c5d2ac7f57832d1df15f9764c3abfc450f45beb9a31d8aefb9bcf1aaea8
+    gitpod.io/checksum_config: a015e298993da15ad001d800a0e5825e99588a5fd565b8d2ba18e987e1d2cd09
   creationTimestamp: null
   labels:
     app: gitpod
@@ -4564,6 +4567,10 @@ spec:
           name: config
           readOnly: true
           subPath: config.json
+        - mountPath: /secrets/personal-access-token-signing-key
+          name: personal-access-token-signing-key
+          readOnly: true
+          subPath: personal-access-token-signing-key
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -4634,6 +4641,9 @@ spec:
       - configMap:
           name: public-api-server
         name: config
+      - name: personal-access-token-signing-key
+        secret:
+          secretName: personal-access-token-signing-key
 status: {}
 ---
 # apps/v1/Deployment registry

@@ -31,11 +31,7 @@ func TestConfigMap(t *testing.T) {
 		return nil
 	})
 
-	var personalAccessTokenSigningKeyPath string
-	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
-		_, _, personalAccessTokenSigningKeyPath, _ = getPersonalAccessTokenSigningKey(ucfg)
-		return nil
-	})
+	_, _, personalAccessTokenSigningKeyPath, _ := getPersonalAccessTokenSigningKey(ctx.Config)
 
 	expectedConfiguration := config.Configuration{
 		GitpodServiceURL:                  "wss://test.domain.everything.awesome.is",

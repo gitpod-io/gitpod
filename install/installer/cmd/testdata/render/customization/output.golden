@@ -1690,6 +1690,9 @@ data:
       logLevel: info
     openVSX:
       url: https://open-vsx.org
+    personalAccessTokenSigningKey:
+      kind: secret
+      name: personal-access-token-signing-key
     repository: eu.gcr.io/gitpod-core-dev/build
     workspace:
       maxLifetime: 36h0m0s
@@ -3199,7 +3202,7 @@ data:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: c8ec0a4694c7ee3ab1dc716c894e528f605270c05c212ec9b4d7a28ba100ac8e
+        gitpod.io/checksum_config: 571cabfce7616c9bcb830ca1b3c4d4dcac40a3e29e8bdd75a5d4059cd29e4ebb
         hello: world
       creationTimestamp: null
       labels:
@@ -5841,7 +5844,7 @@ data:
       "gitpodServiceUrl": "wss://gitpod.example.com",
       "billingServiceAddress": "usage.default.svc.cluster.local:9001",
       "stripeWebhookSigningSecretPath": "",
-      "personalAccessTokenSigningKeyPath": "",
+      "personalAccessTokenSigningKeyPath": "/secrets/personal-access-token-signing-key",
       "server": {
         "services": {
           "grpc": {
@@ -11185,7 +11188,7 @@ kind: Deployment
 metadata:
   annotations:
     gitpod.io: hello
-    gitpod.io/checksum_config: c8ec0a4694c7ee3ab1dc716c894e528f605270c05c212ec9b4d7a28ba100ac8e
+    gitpod.io/checksum_config: 571cabfce7616c9bcb830ca1b3c4d4dcac40a3e29e8bdd75a5d4059cd29e4ebb
     hello: world
   creationTimestamp: null
   labels:
@@ -11308,6 +11311,10 @@ spec:
           name: config
           readOnly: true
           subPath: config.json
+        - mountPath: /secrets/personal-access-token-signing-key
+          name: personal-access-token-signing-key
+          readOnly: true
+          subPath: personal-access-token-signing-key
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -11378,6 +11385,9 @@ spec:
       - configMap:
           name: public-api-server
         name: config
+      - name: personal-access-token-signing-key
+        secret:
+          secretName: personal-access-token-signing-key
 status: {}
 ---
 # apps/v1/Deployment registry

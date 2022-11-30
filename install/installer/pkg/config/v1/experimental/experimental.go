@@ -271,7 +271,7 @@ type PublicAPIConfig struct {
 	// Name of the kubernetes secret to use for Stripe secrets
 	StripeSecretName string `json:"stripeSecretName"`
 
-	// Name of the kubernetes secret to use for signature of Personal Access Tokens
+	// @deprecated use personalAccessTokenSigningKey.Name instead
 	PersonalAccessTokenSigningKeySecretName string `json:"personalAccessTokenSigningKeySecretName"`
 }
 

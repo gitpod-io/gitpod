@@ -26,11 +26,13 @@ func TestObjects_RenderedByDefault(t *testing.T) {
 func renderContextWithPublicAPI(t *testing.T) *common.RenderContext {
 	ctx, err := common.NewRenderContext(config.Config{
 		Domain: "test.domain.everything.awesome.is",
+		PersonalAccessTokenSigningKey: config.ObjectRef{
+			Name: "personal-access-token-signing-key",
+		},
 		Experimental: &experimental.Config{
 			WebApp: &experimental.WebAppConfig{
 				PublicAPI: &experimental.PublicAPIConfig{
-					StripeSecretName:                        "stripe-webhook-secret",
-					PersonalAccessTokenSigningKeySecretName: "personal-access-token-signing-key",
+					StripeSecretName: "stripe-webhook-secret",
 				},
 			},
 		},
@@ -51,6 +53,7 @@ func renderContextWithPublicAPI(t *testing.T) *common.RenderContext {
 			},
 		},
 	}, "test-namespace")
+
 	require.NoError(t, err)
 
 	return ctx
