@@ -29,6 +29,16 @@ func TestPersonalAccessToken_Get(t *testing.T) {
 
 	dbtest.CreatePersonalAccessTokenRecords(t, conn, tokenEntries...)
 
+	t.Run("nil token ID is rejected", func(t *testing.T) {
+		_, err := db.GetPersonalAccessTokenForUser(context.Background(), conn, uuid.Nil, token.UserID)
+		require.Error(t, err)
+	})
+
+	t.Run("nil user ID is rejected", func(t *testing.T) {
+		_, err := db.GetPersonalAccessTokenForUser(context.Background(), conn, token.ID, uuid.Nil)
+		require.Error(t, err)
+	})
+
 	t.Run("not matching user", func(t *testing.T) {
 		_, err := db.GetPersonalAccessTokenForUser(context.Background(), conn, token.ID, token2.UserID)
 		require.Error(t, err, db.ErrorNotFound)
