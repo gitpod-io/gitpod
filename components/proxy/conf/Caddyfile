@@ -208,6 +208,10 @@ https://{$GITPOD_DOMAIN} {
 		path /api/gitpod /api/v1
 	}
 	handle @backend_wss {
+		gitpod.cors_origin {
+			base_domain {$GITPOD_DOMAIN}
+		}
+
 		gitpod.sec_websocket_key
 
 		forward_auth server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
