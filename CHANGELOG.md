@@ -1,6 +1,10 @@
 # Change Log
 
 ## November 2022
+- Replace "usage-based" with "pay-as-you-go" in user and team billing pages. ([#15025](https://github.com/gitpod-io/gitpod/pull/15025)) - [@jldec](https://github.com/jldec)
+- Adjust cron job in semgrep.yml ([#15032](https://github.com/gitpod-io/gitpod/pull/15032)) - [@securitymirco](https://github.com/securitymirco)
+- Update beta label on teams, projects, and usage ([#15017](https://github.com/gitpod-io/gitpod/pull/15017)) - [@gtsiolis](https://github.com/gtsiolis)
+- Update new team page layout ([#15016](https://github.com/gitpod-io/gitpod/pull/15016)) - [@gtsiolis](https://github.com/gtsiolis)
 - Update JetBrains IDE images to most recent stable version. ([#14886](https://github.com/gitpod-io/gitpod/pull/14886)) - [@roboquat](https://github.com/roboquat)
 - JetBrains: Start JB backend with the interactive login shell. ([#14916](https://github.com/gitpod-io/gitpod/pull/14916)) - [@akosyakov](https://github.com/akosyakov)
 - Update access tokens menu order ([#14937](https://github.com/gitpod-io/gitpod/pull/14937)) - [@gtsiolis](https://github.com/gtsiolis)
