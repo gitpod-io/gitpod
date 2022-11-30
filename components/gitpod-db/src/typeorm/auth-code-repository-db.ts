@@ -18,6 +18,7 @@ import { inject, injectable } from "inversify";
 import { EntityManager, Repository } from "typeorm";
 import { DBOAuthAuthCodeEntry } from "./entity/db-oauth-auth-code";
 import { TypeORM } from "./typeorm";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 const expiryInFuture = new DateInterval("5m");
 
@@ -66,7 +67,12 @@ export class AuthCodeRepositoryDB implements OAuthAuthCodeRepository {
             authCode.id = uuidv4();
             await authCodeRepo.save(authCode);
         } catch (error) {
-            console.error("Error while persisting an DBOAuthAuthCodeEntry.", error, { error });
+            log.error(
+                { userId: authCode.user?.id || "<not-set>" },
+                "Error while persisting an DBOAuthAuthCodeEntry.",
+                error,
+                { expiresAt: authCode.expiresAt, clientId: authCode.client.id },
+            );
         }
     }
     public async isRevoked(authCodeCode: string): Promise<boolean> {
