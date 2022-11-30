@@ -128,6 +128,16 @@
 	}
 }
 
+(slow_fast_matchers) {
+	@slow {
+		header X-Gitpod-Slow-Database "true"
+	}
+
+	@fast {
+		not header X-Gitpod-Slow-Database "true"
+	}
+}
+
 # Kubernetes health-check
 :8003 {
 	respond /live 200
@@ -223,13 +233,7 @@ https://{$GITPOD_DOMAIN} {
 			copy_headers X-Gitpod-Slow-Database
 		}
 
-		@slow {
-			header X-Gitpod-Slow-Database "true"
-		}
-
-		@fast {
-			not header X-Gitpod-Slow-Database "true"
-		}
+		import slow_fast_matchers
 
 		uri strip_prefix /api
 
@@ -255,13 +259,7 @@ https://{$GITPOD_DOMAIN} {
 			copy_headers X-Gitpod-Slow-Database
 		}
 
-		@slow {
-			header X-Gitpod-Slow-Database "true"
-		}
-
-		@fast {
-			not header X-Gitpod-Slow-Database "true"
-		}
+		import slow_fast_matchers
 
 		uri strip_prefix /api
 
@@ -319,13 +317,7 @@ https://{$GITPOD_DOMAIN} {
 			copy_headers X-Gitpod-Slow-Database
 		}
 
-		@slow {
-			header X-Gitpod-Slow-Database "true"
-		}
-
-		@fast {
-			not header X-Gitpod-Slow-Database "true"
-		}
+		import slow_fast_matchers
 
 		reverse_proxy @fast server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
 			import upstream_headers
