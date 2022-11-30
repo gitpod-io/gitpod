@@ -49,9 +49,9 @@ func (ws *fileDownloadInitializer) Run(ctx context.Context, mappings []archive.I
 	span, ctx := opentracing.StartSpanFromContext(ctx, "FileDownloadInitializer.Run")
 	defer tracing.FinishSpan(span, &err)
 	start := time.Now()
-	initialSize, diskErr := getDiskUsage()
-	if diskErr != nil {
-		log.WithError(err).Error("could not get disk usage")
+	initialSize, fsErr := getFsUsage()
+	if fsErr != nil {
+		log.WithError(fsErr).Error("could not get disk usage")
 	}
 
 	for _, info := range ws.FilesInfos {
@@ -62,10 +62,10 @@ func (ws *fileDownloadInitializer) Run(ctx context.Context, mappings []archive.I
 		}
 	}
 
-	if diskErr == nil {
-		currentSize, diskErr := getDiskUsage()
-		if diskErr != nil {
-			log.WithError(err).Error("could not get disk usage")
+	if fsErr == nil {
+		currentSize, fsErr := getFsUsage()
+		if fsErr != nil {
+			log.WithError(fsErr).Error("could not get disk usage")
 		}
 
 		metrics = csapi.InitializerMetrics{csapi.InitializerMetric{

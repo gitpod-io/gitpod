@@ -64,9 +64,9 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 	span.SetTag("isGitWS", isGitWS)
 	defer tracing.FinishSpan(span, &err)
 	start := time.Now()
-	initialSize, diskErr := getDiskUsage()
-	if diskErr != nil {
-		log.WithError(err).Error("could not get disk usage")
+	initialSize, fsErr := getFsUsage()
+	if fsErr != nil {
+		log.WithError(fsErr).Error("could not get disk usage")
 	}
 
 	src = csapi.WorkspaceInitFromOther
@@ -177,10 +177,10 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 
 	log.WithField("stage", "init").WithField("location", ws.Location).Debug("Git operations complete")
 
-	if diskErr == nil {
-		currentSize, diskErr := getDiskUsage()
-		if diskErr != nil {
-			log.WithError(err).Error("could not get disk usage")
+	if fsErr == nil {
+		currentSize, fsErr := getFsUsage()
+		if fsErr != nil {
+			log.WithError(fsErr).Error("could not get disk usage")
 		}
 
 		stats = csapi.InitializerMetrics{csapi.InitializerMetric{

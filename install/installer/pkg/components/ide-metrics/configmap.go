@@ -10,6 +10,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/ide-metrics-api/config"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/prometheus/client_golang/prometheus"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -249,11 +250,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		{
 			Name:    "supervisor_initializer_bytes_second",
 			Help:    "initializer speed in bytes per second",
-			Buckets: []float64{1048576, 2097152, 4194304, 8388608, 16777216, 33554432, 67108864, 134217728, 268435456, 536870912, 1073741824, 2147483648},
+			Buckets: prometheus.ExponentialBuckets(1024*1024, 2, 12),
 			Labels: []config.LabelAllowList{
 				{
 					Name:        "kind",
-					AllowValues: []string{"fileDownload", "git", "composite", "prebuild", "snapshot", "fromBackup"},
+					AllowValues: []string{"*"},
 				},
 			},
 		},

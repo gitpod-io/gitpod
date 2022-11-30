@@ -44,7 +44,7 @@ import (
 type metrics struct {
 	BackupWaitingTimeHist       prometheus.Histogram
 	BackupWaitingTimeoutCounter prometheus.Counter
-	InitializerHistogram        prometheus.HistogramVec
+	InitializerHistogram        *prometheus.HistogramVec
 }
 
 // WorkspaceService implements the InitService and WorkspaceService
@@ -130,7 +130,7 @@ func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace st
 		metrics: &metrics{
 			BackupWaitingTimeHist:       waitingTimeHist,
 			BackupWaitingTimeoutCounter: waitingTimeoutCounter,
-			InitializerHistogram:        *initializerHistogram,
+			InitializerHistogram:        initializerHistogram,
 		},
 		// we permit five concurrent backups at any given time, hence the five in the channel
 		backupWorkspaceLimiter: make(chan struct{}, 5),
