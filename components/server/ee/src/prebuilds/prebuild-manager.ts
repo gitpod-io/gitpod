@@ -35,6 +35,8 @@ import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
 import { error } from "console";
 import { IncrementalPrebuildsService } from "./incremental-prebuilds-service";
 import { PrebuildRateLimiterConfig } from "../../../src/workspace/prebuild-rate-limiter";
+import { ResponseError } from "vscode-ws-jsonrpc";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 export class WorkspaceRunningError extends Error {
     constructor(msg: string, public instance: WorkspaceInstance) {
@@ -124,10 +126,11 @@ export class PrebuildManager {
 
         try {
             if (user.blocked) {
-                throw new Error(`Blocked users cannot start prebuilds (${user.name})`);
+                throw new ResponseError(ErrorCodes.USER_BLOCKED, `Blocked users cannot start prebuilds (${user.name})`);
             }
             if (!project) {
-                throw new Error(
+                throw new ResponseError(
+                    ErrorCodes.PROJECT_REQUIRED,
                     `Running prebuilds without a project is no longer supported. Please add '${cloneURL}' as a project in a Gitpod team.`,
                 );
             }
