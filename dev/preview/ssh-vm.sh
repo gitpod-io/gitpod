@@ -53,11 +53,6 @@ function set-up-ssh {
     fi
 }
 
-if ! has-harvester-access; then
-    echo Setting up kubeconfig
-    "$THIS_DIR"/util/download-and-merge-harvester-kubeconfig.sh
-fi
-
 set-up-ssh
 
 ssh "$USER"@127.0.0.1 \
