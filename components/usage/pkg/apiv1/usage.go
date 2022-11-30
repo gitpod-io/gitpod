@@ -204,12 +204,18 @@ func convertBillingStrategyToDB(in v1.CostCenter_BillingStrategy) db.BillingStra
 	if in == v1.CostCenter_BILLING_STRATEGY_STRIPE {
 		return db.CostCenter_Stripe
 	}
+	if in == v1.CostCenter_BILLING_STRATEGY_CHARGEBEE_CANCELLATION {
+		return db.CostCenter_ChargebeeCancelled
+	}
 	return db.CostCenter_Other
 }
 
 func convertBillingStrategyToAPI(in db.BillingStrategy) v1.CostCenter_BillingStrategy {
 	if in == db.CostCenter_Stripe {
 		return v1.CostCenter_BILLING_STRATEGY_STRIPE
+	}
+	if in == db.CostCenter_ChargebeeCancelled {
+		return v1.CostCenter_BILLING_STRATEGY_CHARGEBEE_CANCELLATION
 	}
 	return v1.CostCenter_BILLING_STRATEGY_OTHER
 }
@@ -240,7 +246,7 @@ func (s *UsageService) SetCostCenter(ctx context.Context, in *v1.SetCostCenterRe
 
 func (s *UsageService) ResetUsage(ctx context.Context, req *v1.ResetUsageRequest) (*v1.ResetUsageResponse, error) {
 	now := time.Now()
-	costCentersToUpdate, err := s.costCenterManager.ListLatestCostCentersWithBillingTimeBefore(ctx, db.CostCenter_Other, now)
+	costCentersToUpdate, err := s.costCenterManager.ListManagedCostCentersWithBillingTimeBefore(ctx, now)
 	if err != nil {
 		log.WithError(err).Error("Failed to list cost centers to update.")
 		return nil, status.Errorf(codes.Internal, "Failed to identify expired cost centers for Other billing strategy")
