@@ -97,6 +97,17 @@ git remote set-url origin https://oauth2:"${ROBOQUAT_TOKEN}"@github.com/gitpod-i
 
 gc_integration_branches
 
+werft log phase "Configure access" "Configure access"
+mkdir -p /home/gitpod/.ssh
+
+leeway run dev/preview/previewctl:install | werft log slice "install previewctl"
+werft log slice "install previewctl" --done
+
+echo "Configuring dev and harvester access" | werft log slice "configure kubeconfig"
+previewctl get-credentials --gcp-service-account /mnt/secrets/gcp-sa/service-account.json | werft log slice "configure kubeconfig"
+echo "Done" | werft log slice "configure kubeconfig"
+werft log slice "configure kubeconfig" --done
+
 werft log phase "build preview environment" "build preview environment"
 
 REVISION=$(git show -s --format="%h" HEAD)
@@ -169,12 +180,6 @@ fi
 
 echo "build success" | werft log slice "build preview environment"
 werft log slice "build preview environment" --done
-
-werft log phase "kubectx" "kubectx"
-mkdir -p /home/gitpod/.ssh
-/workspace/dev/preview/util/download-and-merge-harvester-kubeconfig.sh | werft log slice "kubectx"
-/workspace/dev/preview/install-k3s-kubeconfig.sh | werft log slice "kubectx"
-werft log slice "kubectx" --done
 
 werft log phase "integration test" "integration test"
 TEST_DIR=$(basename "/workspace/test/")
