@@ -90,3 +90,26 @@ spec:
         description: workspace pods are terminating for too long in cluster {{ $labels.cluster }}.
       expr: |
         sum(time() - kube_pod_deletion_timestamp{namespace="default", pod=~"^ws-.*", cluster!~"ephemeral.*"}) by (pod) > 24 * 60 * 60
+
+    - alert: GitpodImagebuildSuccessRate
+      labels:
+        severity: warning
+        team: workspace
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodImagebuildSuccessRate.md
+        summary: imagebuild success rate is low in cluster {{ $labels.cluster }}.
+        description: imagebuild are failing at too high of a rate in cluster {{ $labels.cluster }}.
+      expr: |
+        (1 - (sum(rate(gitpod_image_builder_builds_done_total{success="false", cluster!~"ephemeral.*"}[4h])) / sum(rate(gitpod_image_builder_builds_done_total{cluster!~"ephemeral.*"}[4h])))) < 0.75
+
+    - alert: GitpodImagebuildSuccessFailing
+      labels:
+        severity: critical
+        team: workspace
+      for: 3h
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodImagebuildSuccessRate.md
+        summary: imagebuild success rate is failing in cluster {{ $labels.cluster }}.
+        description: imagebuild are failing at too high of a rate in cluster {{ $labels.cluster }}.
+      expr: |
+        (1 - (sum(rate(gitpod_image_builder_builds_done_total{success="false", cluster!~"ephemeral.*"}[4h])) / sum(rate(gitpod_image_builder_builds_done_total{cluster!~"ephemeral.*"}[4h])))) < 0.50
