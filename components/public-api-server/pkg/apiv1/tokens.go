@@ -111,17 +111,18 @@ func (s *TokensService) GetPersonalAccessToken(ctx context.Context, req *connect
 		return nil, err
 	}
 
-	_, userId, err := s.getUser(ctx, conn)
+	_, userID, err := s.getUser(ctx, conn)
 	if err != nil {
-		if errors.Is(err, db.ErrorNotFound) {
-			return nil, connect.NewError(connect.CodeNotFound, err)
-		}
 		return nil, err
 	}
 
-	token, err := db.GetPersonalAccessTokenForUser(ctx, s.dbConn, tokenID, userId)
+	token, err := db.GetPersonalAccessTokenForUser(ctx, s.dbConn, tokenID, userID)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, db.ErrorNotFound) {
+			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("Personal Access Token with ID %s for User %s does not exist", tokenID.String(), userID.String()))
+		}
+
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to get Personal Access Token with ID %s", tokenID.String()))
 	}
 
 	return connect.NewResponse(&v1.GetPersonalAccessTokenResponse{Token: personalAccessTokenToAPI(token, "")}), nil
@@ -178,6 +179,10 @@ func (s *TokensService) RegeneratePersonalAccessToken(ctx context.Context, req *
 	hash := pat.ValueHash()
 	token, err := db.UpdatePersonalAccessTokenHash(ctx, s.dbConn, tokenID, userID, hash, expiry.AsTime().UTC())
 	if err != nil {
+		if errors.Is(err, db.ErrorNotFound) {
+			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("Personal Access Token with ID %s for User %s does not exist", tokenID.String(), userID.String()))
+		}
+
 		log.WithError(err).Errorf("Failed to store personal access token for user %s", userID.String())
 		return nil, connect.NewError(connect.CodeInternal, errors.New("Failed to store personal access token."))
 	}
@@ -250,6 +255,10 @@ func (s *TokensService) UpdatePersonalAccessToken(ctx context.Context, req *conn
 
 	token, err := db.UpdatePersonalAccessTokenForUser(ctx, s.dbConn, updateOpts)
 	if err != nil {
+		if errors.Is(err, db.ErrorNotFound) {
+			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("Personal Access Token with ID %s for User %s does not exist", tokenID.String(), userID.String()))
+		}
+
 		log.WithError(err).Error("Failed to update PAT for user")
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to update token (ID %s) for user (ID %s).", tokenID.String(), userID.String()))
 	}
@@ -277,6 +286,10 @@ func (s *TokensService) DeletePersonalAccessToken(ctx context.Context, req *conn
 
 	_, err = db.DeletePersonalAccessTokenForUser(ctx, s.dbConn, tokenID, userID)
 	if err != nil {
+		if errors.Is(err, db.ErrorNotFound) {
+			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("Personal Access Token with ID %s for User %s does not exist", tokenID.String(), userID.String()))
+		}
+
 		log.WithError(err).Errorf("failed to delete personal access token (ID: %s) for user %s", tokenID.String(), userID.String())
 		return nil, connect.NewError(connect.CodeInternal, errors.New("Failed to delete personal access token."))
 	}
