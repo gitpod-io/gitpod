@@ -87,6 +87,35 @@ spec:
     - Ingress
 
 ---
+# networking.k8s.io/v1/NetworkPolicy iam
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: iam
+  name: iam
+  namespace: default
+spec:
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              component: proxy
+      ports:
+        - port: 9001
+          protocol: TCP
+        - port: 9002
+          protocol: TCP
+  podSelector:
+    matchLabels:
+      app: gitpod
+      component: iam
+  policyTypes:
+    - Ingress
+
+---
 # networking.k8s.io/v1/NetworkPolicy ide-metrics
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -2267,6 +2296,16 @@ data:
         app: gitpod
         component: iam
         kind: service
+      name: iam
+      namespace: default
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: iam
       name: iam
       namespace: default
     ---
