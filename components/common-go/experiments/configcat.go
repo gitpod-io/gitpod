@@ -90,5 +90,5 @@ type configCatLogger struct {
 }
 
 func (l *configCatLogger) GetLevel() configcat.LogLevel {
-	return l.Level
+	return configcat.LogLevelError
 }
