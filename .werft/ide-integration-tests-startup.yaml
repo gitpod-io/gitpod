@@ -50,6 +50,8 @@ pod:
           value: "/mnt/secrets/github-token-gitpod-bot/token"
         - name: WERFT_CREDENTIAL_HELPER
           value: "/workspace/dev/preview/werft-credential-helper.sh"
+        - name: LEEWAY_WORKSPACE_ROOT
+          value: /workspace
       volumeMounts:
         - name: gcp-sa
           mountPath: /mnt/secrets/gcp-sa
