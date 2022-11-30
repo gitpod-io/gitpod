@@ -30,7 +30,7 @@ function PersonalAccessTokens() {
 
     return (
         <div>
-            <PageWithSettingsSubMenu title="Access Tokens" subtitle="Manage your personal access tokens.">
+            <PageWithSettingsSubMenu title="Access Tokens" subtitle="Manage your access tokens.">
                 <ListAccessTokensView />
             </PageWithSettingsSubMenu>
         </div>
@@ -171,7 +171,7 @@ export function PersonalAccessTokenCreateView() {
 
     const handleConfirm = async () => {
         if (value.name.length < 3) {
-            setErrorMsg("Token Name should have at least three characters.");
+            setErrorMsg("Token name should have at least three characters.");
             return;
         }
         try {
@@ -204,7 +204,7 @@ export function PersonalAccessTokenCreateView() {
 
     return (
         <div>
-            <PageWithSettingsSubMenu title="Access Tokens" subtitle="Manage your personal access tokens.">
+            <PageWithSettingsSubMenu title="Access Tokens" subtitle="Manage your access tokens.">
                 <div className="mb-4 flex gap-2">
                     <Link to={settingsPathPersonalAccessTokens}>
                         <button className="secondary">
@@ -235,7 +235,7 @@ export function PersonalAccessTokenCreateView() {
                         <ShowTokenModal
                             token={modalData!}
                             title="Regenerate Token"
-                            description="Are you sure you want to regenerate this personal access token?"
+                            description="Are you sure you want to regenerate this access token?"
                             descriptionImportant="Any applications using this token will no longer be able to access the Gitpod API."
                             actionDescription="Regenerate Token"
                             onSave={() => {
@@ -277,9 +277,7 @@ export function PersonalAccessTokenCreateView() {
                             </>
                         ) : (
                             <>
-                                <h2 className="text-gray-500 dark:text-gray-400">
-                                    Create a new personal access token.
-                                </h2>
+                                <h2 className="text-gray-500 dark:text-gray-400">Create a new access token.</h2>
                             </>
                         )}
                     </div>
@@ -390,11 +388,11 @@ function ListAccessTokensView() {
             <div className="flex items-center sm:justify-between mb-4">
                 <div>
                     <h3>Personal Access Tokens</h3>
-                    <h2 className="text-gray-500">Create or regenerate active personal access tokens.</h2>
+                    <h2 className="text-gray-500">Create or regenerate access tokens.</h2>
                 </div>
                 {tokens.length > 0 && (
                     <Link to={settingsPathPersonalAccessTokenCreate}>
-                        <button>New Personal Access Token</button>
+                        <button>New Access Token</button>
                     </Link>
                 )}
             </div>
@@ -434,7 +432,7 @@ function ListAccessTokensView() {
                             </div>
                             <div className="pt-2">
                                 <div className="font-semibold text-gray-600 dark:text-gray-200">
-                                    Your New Personal Access Token
+                                    Your New Access Token
                                 </div>
                                 <InputWithCopy
                                     className="my-2 max-w-md"
@@ -442,7 +440,7 @@ function ListAccessTokensView() {
                                     tip="Copy Token"
                                 />
                                 <div className="mb-2 font-medium text-sm text-gray-500 dark:text-gray-300">
-                                    Make sure to copy your personal access token — you won't be able to access it again.
+                                    Make sure to copy your access token — you won't be able to access it again.
                                 </div>
                                 <button className="secondary" onClick={handleCopyToken}>
                                     Copy Token to Clipboard
@@ -454,14 +452,12 @@ function ListAccessTokensView() {
             </>
             {tokens.length === 0 ? (
                 <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full py-28 flex flex-col items-center">
-                    <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">
-                        No Personal Access Tokens (PAT)
-                    </h3>
+                    <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Access Tokens</h3>
                     <p className="text-center pb-6 text-gray-500 text-base w-96">
-                        Generate a personal access token (PAT) for applications that need access to the Gitpod API.{" "}
+                        Generate an access token for applications that need access to the Gitpod API.{" "}
                     </p>
                     <Link to={settingsPathPersonalAccessTokenCreate}>
-                        <button>New Personal Access Token</button>
+                        <button>New Access Token</button>
                     </Link>
                 </div>
             ) : (
