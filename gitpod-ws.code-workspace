@@ -8,6 +8,7 @@
         { "path": "components/ee/agent-smith" },
         { "path": "components/gitpod-cli" },
         { "path": "components/gitpod-protocol" },
+        { "path": "components/iam" },
         { "path": "components/ide-metrics" },
         { "path": "components/ide-service" },
         { "path": "components/image-builder-bob" },
