@@ -39,9 +39,9 @@ func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 	span, ctx := opentracing.StartSpanFromContext(ctx, "PrebuildInitializer")
 	defer tracing.FinishSpan(span, &err)
 	startTime := time.Now()
-	initialSize, diskErr := getDiskUsage()
-	if diskErr != nil {
-		log.WithError(err).Error("could not get disk usage")
+	initialSize, fsErr := getFsUsage()
+	if fsErr != nil {
+		log.WithError(fsErr).Error("could not get disk usage")
 	}
 
 	var spandata []tracelog.Field
@@ -109,10 +109,10 @@ func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 	}
 	log.Debug("Initialized workspace with prebuilt snapshot")
 
-	if diskErr == nil {
-		currentSize, err := getDiskUsage()
+	if fsErr == nil {
+		currentSize, fsErr := getFsUsage()
 		if err != nil {
-			log.WithError(err).Error("could not get disk usage")
+			log.WithError(fsErr).Error("could not get disk usage")
 		}
 
 		stats = append(stats, csapi.InitializerMetric{

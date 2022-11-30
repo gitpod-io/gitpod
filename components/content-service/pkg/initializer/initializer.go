@@ -67,9 +67,9 @@ func (e CompositeInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 	span, ctx := opentracing.StartSpanFromContext(ctx, "CompositeInitializer.Run")
 	defer tracing.FinishSpan(span, &err)
 	start := time.Now()
-	initialSize, diskErr := getDiskUsage()
-	if diskErr != nil {
-		log.WithError(err).Error("could not get disk usage")
+	initialSize, fsErr := getFsUsage()
+	if fsErr != nil {
+		log.WithError(fsErr).Error("could not get disk usage")
 	}
 
 	total := []csapi.InitializerMetric{}
@@ -81,10 +81,10 @@ func (e CompositeInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 		total = append(total, stats...)
 	}
 
-	if diskErr == nil {
-		currentSize, diskErr := getDiskUsage()
-		if diskErr != nil {
-			log.WithError(err).Error("could not get disk usage")
+	if fsErr == nil {
+		currentSize, fsErr := getFsUsage()
+		if fsErr != nil {
+			log.WithError(fsErr).Error("could not get disk usage")
 		}
 
 		total = append(total, csapi.InitializerMetric{
@@ -215,9 +215,9 @@ func (bi *fromBackupInitializer) Run(ctx context.Context, mappings []archive.IDM
 	}
 
 	start := time.Now()
-	initialSize, diskErr := getDiskUsage()
-	if diskErr != nil {
-		log.WithError(err).Error("could not get disk usage")
+	initialSize, fsErr := getFsUsage()
+	if fsErr != nil {
+		log.WithError(fsErr).Error("could not get disk usage")
 	}
 
 	hasBackup, err := bi.RemoteStorage.Download(ctx, bi.Location, storage.DefaultBackup, mappings)
@@ -231,10 +231,10 @@ func (bi *fromBackupInitializer) Run(ctx context.Context, mappings []archive.IDM
 		return src, nil, xerrors.Errorf("cannot restore backup: %w", err)
 	}
 
-	if diskErr == nil {
-		currentSize, diskErr := getDiskUsage()
-		if diskErr != nil {
-			log.WithError(err).Error("could not get disk usage")
+	if fsErr == nil {
+		currentSize, fsErr := getFsUsage()
+		if fsErr != nil {
+			log.WithError(fsErr).Error("could not get disk usage")
 		}
 
 		stats = csapi.InitializerMetrics{csapi.InitializerMetric{
@@ -574,9 +574,14 @@ func PlaceWorkspaceReadyFile(ctx context.Context, wspath string, initsrc csapi.W
 	return nil
 }
 
-func getDiskUsage() (uint64, error) {
+func getFsUsage() (uint64, error) {
 	var stat syscall.Statfs_t
-	err := syscall.Statfs("/workspace", &stat)
+
+	err := syscall.Statfs("/dst", &stat)
+	if os.IsNotExist(err) {
+		err = syscall.Statfs("/workspace", &stat)
+	}
+
 	if err != nil {
 		return 0, err
 	}

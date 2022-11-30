@@ -33,9 +33,9 @@ func (s *SnapshotInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 	span.SetTag("snapshot", s.Snapshot)
 	defer tracing.FinishSpan(span, &err)
 	start := time.Now()
-	initialSize, diskErr := getDiskUsage()
-	if diskErr != nil {
-		log.WithError(err).Error("could not get disk usage")
+	initialSize, fsErr := getFsUsage()
+	if fsErr != nil {
+		log.WithError(fsErr).Error("could not get disk usage")
 	}
 
 	src = csapi.WorkspaceInitFromBackup
@@ -53,10 +53,10 @@ func (s *SnapshotInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 		return src, nil, xerrors.Errorf("did not find snapshot %s", s.Snapshot)
 	}
 
-	if diskErr == nil {
-		currentSize, diskErr := getDiskUsage()
-		if diskErr == nil {
-			log.WithError(err).Error("could not get disk usage")
+	if fsErr == nil {
+		currentSize, fsErr := getFsUsage()
+		if fsErr == nil {
+			log.WithError(fsErr).Error("could not get disk usage")
 		}
 
 		stats = csapi.InitializerMetrics{csapi.InitializerMetric{

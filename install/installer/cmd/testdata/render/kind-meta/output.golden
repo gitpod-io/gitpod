@@ -3623,12 +3623,7 @@ data:
               {
                 "name": "kind",
                 "allowValues": [
-                  "fileDownload",
-                  "git",
-                  "composite",
-                  "prebuild",
-                  "snapshot",
-                  "fromBackup"
+                  "*"
                 ],
                 "defaultValue": ""
               }
@@ -6282,7 +6277,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: ec425744dc9a6e158a25ec5e5749b4c4e5029d04fab8019ff5ea62d6132e08f6
+        gitpod.io/checksum_config: cc52e275885690e10f10dac466a0ffd1e4a4551efa2ee5dcbb5c4c824d987f95
       creationTimestamp: null
       labels:
         app: gitpod
