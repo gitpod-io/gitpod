@@ -34,6 +34,7 @@ import * as opentracing from "opentracing";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
 import { error } from "console";
 import { IncrementalPrebuildsService } from "./incremental-prebuilds-service";
+import { PrebuildRateLimiterConfig } from "../../../src/workspace/prebuild-rate-limiter";
 
 export class WorkspaceRunningError extends Error {
     constructor(msg: string, public instance: WorkspaceInstance) {
@@ -48,9 +49,6 @@ export interface StartPrebuildParams {
     commitInfo?: CommitInfo;
     forcePrebuild?: boolean;
 }
-
-const PREBUILD_LIMITER_WINDOW_SECONDS = 60;
-const PREBUILD_LIMITER_DEFAULT_LIMIT = 50;
 
 @injectable()
 export class PrebuildManager {
@@ -389,34 +387,22 @@ export class PrebuildManager {
     }
 
     private async shouldRateLimitPrebuild(span: opentracing.Span, cloneURL: string): Promise<boolean> {
-        const windowStart = secondsBefore(new Date().toISOString(), PREBUILD_LIMITER_WINDOW_SECONDS);
+        const rateLimit = PrebuildRateLimiterConfig.getConfigForCloneURL(this.config.prebuildLimiter, cloneURL);
+
+        const windowStart = secondsBefore(new Date().toISOString(), rateLimit.period);
         const unabortedCount = await this.workspaceDB
             .trace({ span })
             .countUnabortedPrebuildsSince(cloneURL, new Date(windowStart));
-        const limit = this.getPrebuildRateLimitForCloneURL(cloneURL);
 
-        if (unabortedCount >= limit) {
-            log.debug("Prebuild exceeds rate limit", { limit, unabortedPrebuildsCount: unabortedCount, cloneURL });
+        if (unabortedCount >= rateLimit.limit) {
+            log.debug("Prebuild exceeds rate limit", {
+                ...rateLimit,
+                unabortedPrebuildsCount: unabortedCount,
+                cloneURL,
+            });
             return true;
         }
         return false;
-    }
-
-    private getPrebuildRateLimitForCloneURL(cloneURL: string): number {
-        // First we use any explicit overrides for a given cloneURL
-        let limit = this.config.prebuildLimiter[cloneURL];
-        if (limit > 0) {
-            return limit;
-        }
-
-        // Find if there is a default value set under the '*' key
-        limit = this.config.prebuildLimiter["*"];
-        if (limit > 0) {
-            return limit;
-        }
-
-        // Last resort default
-        return PREBUILD_LIMITER_DEFAULT_LIMIT;
     }
 
     private async shouldSkipInactiveProject(project: Project): Promise<boolean> {

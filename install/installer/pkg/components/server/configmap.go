@@ -260,9 +260,12 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ChargebeeProviderOptionsFile: fmt.Sprintf("%s/providerOptions", chargebeeMountPath),
 		StripeSecretsFile:            fmt.Sprintf("%s/apikeys", stripeSecretMountPath),
 		InsecureNoDomain:             false,
-		PrebuildLimiter: map[string]int{
+		PrebuildLimiter: PrebuildRateLimiters{
 			// default limit for all cloneURLs
-			"*": 50,
+			"*": PrebuildRateLimiterConfig{
+				Limit:  100,
+				Period: 600,
+			},
 		},
 		WorkspaceClasses:               workspaceClasses,
 		InactivityPeriodForReposInDays: inactivityPeriodForReposInDays,
