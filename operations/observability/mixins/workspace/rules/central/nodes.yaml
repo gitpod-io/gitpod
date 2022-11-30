@@ -29,7 +29,7 @@ spec:
       labels:
         severity: warning
         team: workspace
-      for: 20m
+      for: 60m
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceNodeHighNormalizedLoadAverage.md
         summary: Workspace node's normalized load average is higher than 10 for more than 20 minutes. Check for abuse.
