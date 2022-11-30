@@ -22,6 +22,7 @@ packages:
       - components/content-service:lib
       - components/ee/agent-smith:lib
       - components/gitpod-protocol/go:lib
+      - components/iam:lib
       - components/ide-metrics-api/go:lib
       - components/ide-service-api/go:lib
       - components/image-builder-api/go:lib
