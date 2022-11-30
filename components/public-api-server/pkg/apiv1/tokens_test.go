@@ -6,7 +6,6 @@ package apiv1
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -276,8 +275,8 @@ func TestTokensService_GetPersonalAccessToken(t *testing.T) {
 		_, err := client.GetPersonalAccessToken(context.Background(), connect.NewRequest(&v1.GetPersonalAccessTokenRequest{
 			Id: someTokenId,
 		}))
-
-		require.Error(t, err, fmt.Errorf("Token with ID %s does not exist: not found", someTokenId))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 	})
 
 	t.Run("permission denied when feature flag disabled", func(t *testing.T) {
@@ -469,7 +468,8 @@ func TestTokensService_RegeneratePersonalAccessToken(t *testing.T) {
 			Id:             someTokenId,
 			ExpirationTime: newTimestamp,
 		}))
-		require.Error(t, err, fmt.Errorf("Token with ID %s does not exist: not found", someTokenId))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 	})
 
 	t.Run("regenerate correct token", func(t *testing.T) {
@@ -689,7 +689,8 @@ func TestTokensService_DeletePersonalAccessToken(t *testing.T) {
 		_, err = client.GetPersonalAccessToken(context.Background(), connect.NewRequest(&v1.GetPersonalAccessTokenRequest{
 			Id: tokens[0].ID.String(),
 		}))
-		require.Error(t, err, fmt.Errorf("Token with ID %s does not exist: not found", tokens[0].ID.String()))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 	})
 }
 
