@@ -1802,10 +1802,13 @@ export class WorkspaceStarter {
      * @returns
      */
     protected async getImageBuilderClient(user: User, workspace: Workspace, instance?: WorkspaceInstance) {
-        const isMovedImageBuilder = await getExperimentsClientForBackend().getValueAsync("movedImageBuilder", false, {
-            user,
-            projectId: workspace.projectId,
-        });
+        // If cluster does not contain workspace components, must use workspace image builder client. Otherwise, check experiment value.
+        const isMovedImageBuilder =
+            this.config.withoutWorkspaceComponents ||
+            (await getExperimentsClientForBackend().getValueAsync("movedImageBuilder", true, {
+                user,
+                projectId: workspace.projectId,
+            }));
 
         log.info(
             { userId: user.id, workspaceId: workspace.id, instanceId: instance?.id },

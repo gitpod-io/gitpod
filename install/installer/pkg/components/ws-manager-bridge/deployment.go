@@ -11,6 +11,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -28,6 +29,33 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	} else {
 		hashObj = append(hashObj, objs...)
+	}
+
+	var volumes []corev1.Volume
+	var volumeMounts []corev1.VolumeMount
+
+	addWsManagerTls := true
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.WithoutWorkspaceComponents {
+			// No ws-manager exists in the cluster, so no TLS secret to mount.
+			addWsManagerTls = false
+		}
+		return nil
+	})
+	if addWsManagerTls {
+		volumes = append(volumes, corev1.Volume{
+			Name: "ws-manager-client-tls-certs",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: wsmanager.TLSSecretNameClient,
+				},
+			},
+		})
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "ws-manager-client-tls-certs",
+			MountPath: "/ws-manager-client-tls-certs",
+			ReadOnly:  true,
+		})
 	}
 
 	hashObj = append(hashObj, &corev1.Pod{
@@ -95,21 +123,17 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						DNSPolicy:                     "ClusterFirst",
 						RestartPolicy:                 "Always",
 						TerminationGracePeriodSeconds: pointer.Int64(30),
-						Volumes: []corev1.Volume{{
-							Name: "config",
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-config", Component)},
+						Volumes: append(
+							[]corev1.Volume{{
+								Name: "config",
+								VolumeSource: corev1.VolumeSource{
+									ConfigMap: &corev1.ConfigMapVolumeSource{
+										LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-config", Component)},
+									},
 								},
-							},
-						}, {
-							Name: "ws-manager-client-tls-certs",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: wsmanager.TLSSecretNameClient,
-								},
-							},
-						}},
+							}},
+							volumes...,
+						),
 						InitContainers: []corev1.Container{*common.DatabaseWaiterContainer(ctx), *common.MessageBusWaiterContainer(ctx)},
 						Containers: []corev1.Container{{
 							Name:            Component,
@@ -144,15 +168,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									Name:          baseserver.BuiltinMetricsPortName,
 								},
 							},
-							VolumeMounts: []corev1.VolumeMount{{
-								Name:      "config",
-								MountPath: "/config",
-								ReadOnly:  true,
-							}, {
-								Name:      "ws-manager-client-tls-certs",
-								MountPath: "/ws-manager-client-tls-certs",
-								ReadOnly:  true,
-							}},
+							VolumeMounts: append(
+								[]corev1.VolumeMount{{
+									Name:      "config",
+									MountPath: "/config",
+									ReadOnly:  true,
+								}},
+								volumeMounts...,
+							),
 						}, *common.KubeRBACProxyContainer(ctx)},
 					},
 				},

@@ -36,7 +36,24 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	gitpodInstallationWorkspaceHostSuffix := fmt.Sprintf(".ws%s.%s", installationShortNameSuffix, ctx.Config.Domain)
 	gitpodInstallationWorkspaceHostSuffixRegex := fmt.Sprintf("\\.ws[^\\.]*\\.%s", ctx.Config.Domain)
 
+	wsManagerConfig := &config.WorkspaceManagerConn{
+		Addr: "ws-manager:8080",
+		TLS: struct {
+			CA   string "json:\"ca\""
+			Cert string "json:\"crt\""
+			Key  string "json:\"key\""
+		}{
+			CA:   "/ws-manager-client-tls-certs/ca.crt",
+			Cert: "/ws-manager-client-tls-certs/tls.crt",
+			Key:  "/ws-manager-client-tls-certs/tls.key",
+		},
+	}
+
 	ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		if ucfg.WebApp != nil && ucfg.WebApp.WithoutWorkspaceComponents {
+			// No ws-manager exists in the application cluster, don't try to connect to it.
+			wsManagerConfig = nil
+		}
 		if ucfg.Workspace == nil {
 			return nil
 		}
@@ -102,18 +119,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		PProfAddr:          common.LocalhostAddressFromPort(baseserver.BuiltinDebugPort),
 		PrometheusAddr:     common.LocalhostPrometheusAddr(),
 		ReadinessProbeAddr: fmt.Sprintf(":%v", ReadinessPort),
-		WorkspaceManager: &config.WorkspaceManagerConn{
-			Addr: "ws-manager:8080",
-			TLS: struct {
-				CA   string "json:\"ca\""
-				Cert string "json:\"crt\""
-				Key  string "json:\"key\""
-			}{
-				CA:   "/ws-manager-client-tls-certs/ca.crt",
-				Cert: "/ws-manager-client-tls-certs/tls.crt",
-				Key:  "/ws-manager-client-tls-certs/tls.key",
-			},
-		},
+		WorkspaceManager:   wsManagerConfig,
 	}
 
 	fc, err := common.ToJSONString(wspcfg)

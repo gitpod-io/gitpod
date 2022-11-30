@@ -5350,6 +5350,7 @@ data:
       "stripeConfigFile": "",
       "enablePayment": false,
       "patSigningKeyFile": "",
+      "withoutWorkspaceComponents": false,
       "workspaceHeartbeat": {
         "intervalSeconds": 60,
         "timeoutSeconds": 300
@@ -10579,7 +10580,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: a369165008e0cfac09c1b83051c9c686c06acf116907f80e46cf73b105f55719
+        gitpod.io/checksum_config: 726dafd8c59907accd3250e873f40d6e59d6913f82b7198335bc6c24ae2e7db1
       creationTimestamp: null
       labels:
         app: gitpod
@@ -10712,11 +10713,11 @@ spec:
         - mountPath: /ide-config
           name: ide-config
           readOnly: true
-        - mountPath: /ws-manager-client-tls-certs
-          name: ws-manager-client-tls-certs
-          readOnly: true
         - mountPath: /twilio-config
           name: twilio-secret-volume
+          readOnly: true
+        - mountPath: /ws-manager-client-tls-certs
+          name: ws-manager-client-tls-certs
           readOnly: true
       - args:
         - --logtostderr
@@ -10825,13 +10826,13 @@ spec:
       - configMap:
           name: server-ide-config
         name: ide-config
-      - name: ws-manager-client-tls-certs
-        secret:
-          secretName: ws-manager-client-tls
       - name: twilio-secret-volume
         secret:
           optional: true
           secretName: twilio-secret
+      - name: ws-manager-client-tls-certs
+        secret:
+          secretName: ws-manager-client-tls
 status: {}
 ---
 # apps/v1/Deployment ws-manager
@@ -11312,11 +11313,11 @@ spec:
         - mountPath: /config
           name: config
           readOnly: true
+        - mountPath: /mnt/certificates
+          name: config-certificates
         - mountPath: /ws-manager-client-tls-certs
           name: ws-manager-client-tls-certs
           readOnly: true
-        - mountPath: /mnt/certificates
-          name: config-certificates
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -11358,12 +11359,12 @@ spec:
       - configMap:
           name: ws-proxy
         name: config
-      - name: ws-manager-client-tls-certs
-        secret:
-          secretName: ws-manager-client-tls
       - name: config-certificates
         secret:
           secretName: https-certificates
+      - name: ws-manager-client-tls-certs
+        secret:
+          secretName: ws-manager-client-tls
 status: {}
 ---
 # batch/v1/Job migrations
