@@ -4931,6 +4931,7 @@ data:
       "stripeConfigFile": "",
       "enablePayment": false,
       "patSigningKeyFile": "",
+      "withoutWorkspaceComponents": false,
       "workspaceHeartbeat": {
         "intervalSeconds": 60,
         "timeoutSeconds": 300
@@ -9766,7 +9767,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: b32c163fe13c4dd3dbabb7512d3fea34e61192c7b703a882669b339922630979
+        gitpod.io/checksum_config: 8b2dddff40256f6233f1fcdbf9fcc9f048ff3485aef5a2656f61735559bdefbb
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9899,11 +9900,11 @@ spec:
         - mountPath: /ide-config
           name: ide-config
           readOnly: true
-        - mountPath: /ws-manager-client-tls-certs
-          name: ws-manager-client-tls-certs
-          readOnly: true
         - mountPath: /twilio-config
           name: twilio-secret-volume
+          readOnly: true
+        - mountPath: /ws-manager-client-tls-certs
+          name: ws-manager-client-tls-certs
           readOnly: true
       - args:
         - --logtostderr
@@ -10012,13 +10013,13 @@ spec:
       - configMap:
           name: server-ide-config
         name: ide-config
-      - name: ws-manager-client-tls-certs
-        secret:
-          secretName: ws-manager-client-tls
       - name: twilio-secret-volume
         secret:
           optional: true
           secretName: twilio-secret
+      - name: ws-manager-client-tls-certs
+        secret:
+          secretName: ws-manager-client-tls
 status: {}
 ---
 # apps/v1/Deployment ws-manager
@@ -10499,11 +10500,11 @@ spec:
         - mountPath: /config
           name: config
           readOnly: true
+        - mountPath: /mnt/certificates
+          name: config-certificates
         - mountPath: /ws-manager-client-tls-certs
           name: ws-manager-client-tls-certs
           readOnly: true
-        - mountPath: /mnt/certificates
-          name: config-certificates
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -10545,12 +10546,12 @@ spec:
       - configMap:
           name: ws-proxy
         name: config
-      - name: ws-manager-client-tls-certs
-        secret:
-          secretName: ws-manager-client-tls
       - name: config-certificates
         secret:
           secretName: https-certificates
+      - name: ws-manager-client-tls-certs
+        secret:
+          secretName: ws-manager-client-tls
 status: {}
 ---
 # batch/v1/Job dbinit-session

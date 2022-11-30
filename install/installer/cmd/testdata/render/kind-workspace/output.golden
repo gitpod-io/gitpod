@@ -30,16 +30,7 @@ metadata:
   namespace: default
 spec:
   ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              component: server
-        - podSelector:
-            matchLabels:
-              component: slow-server
-        - podSelector:
-            matchLabels:
-              component: ws-manager
+    - {}
   podSelector:
     matchLabels:
       app: gitpod
@@ -3922,11 +3913,11 @@ spec:
         - mountPath: /config
           name: config
           readOnly: true
+        - mountPath: /mnt/certificates
+          name: config-certificates
         - mountPath: /ws-manager-client-tls-certs
           name: ws-manager-client-tls-certs
           readOnly: true
-        - mountPath: /mnt/certificates
-          name: config-certificates
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -3968,10 +3959,10 @@ spec:
       - configMap:
           name: ws-proxy
         name: config
-      - name: ws-manager-client-tls-certs
-        secret:
-          secretName: ws-manager-client-tls
       - name: config-certificates
         secret:
           secretName: https-certificates
+      - name: ws-manager-client-tls-certs
+        secret:
+          secretName: ws-manager-client-tls
 status: {}
