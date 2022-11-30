@@ -119,8 +119,6 @@ func (s *TokensService) GetPersonalAccessToken(ctx context.Context, req *connect
 		return nil, err
 	}
 
-	log.Infof("Handling GetPersonalAccessToken request for Token ID '%s'", tokenID.String())
-
 	token, err := db.GetPersonalAccessTokenForUser(ctx, s.dbConn, tokenID, userId)
 	if err != nil {
 		return nil, err
