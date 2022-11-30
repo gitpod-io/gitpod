@@ -12,20 +12,20 @@ export class MigrateToUBP1669370193752 implements MigrationInterface {
         queryRunner.query(`
             INSERT INTO d_b_cost_center
                 (id, spendingLimit, creationTime, billingStrategy, billingCycleStart, nextBillingTime)
-            SELECT
-                CONCAT('user:', userId),
-                1000,
-                DATE_FORMAT(now(), '%Y-%m-%dT%TZ'),
-                'other',
-                DATE_FORMAT(now(), '%Y-%m-%dT%TZ'),
-                DATE_FORMAT(DATE_ADD(now(),INTERVAL 1 month), '%Y-%m-%dT%TZ')
-            FROM d_b_subscription
-            WHERE
-                cancellationDate=''
-                AND endDate=''
-                AND deleted=0
-            GROUP BY userid
-            HAVING max(planId) = 'free-open-source'
+                SELECT
+                    CONCAT('user:', userId),
+                    1000,
+                    DATE_FORMAT(now(), '%Y-%m-%dT%TZ'),
+                    'other',
+                    DATE_FORMAT(now(), '%Y-%m-%dT%TZ'),
+                    DATE_FORMAT(DATE_ADD(now(),INTERVAL 1 month), '%Y-%m-%dT%TZ')
+                FROM d_b_subscription
+                WHERE
+                    cancellationDate=''
+                    AND planId = 'free-open-source'
+                    AND endDate=''
+                    AND deleted=0
+                GROUP BY userid;
         `);
     }
 
