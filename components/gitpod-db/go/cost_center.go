@@ -22,8 +22,9 @@ var CostCenterNotFound = errors.New("CostCenter not found")
 type BillingStrategy string
 
 const (
-	CostCenter_Stripe BillingStrategy = "stripe"
-	CostCenter_Other  BillingStrategy = "other"
+	CostCenter_Stripe             BillingStrategy = "stripe"
+	CostCenter_Other              BillingStrategy = "other"
+	CostCenter_ChargebeeCancelled BillingStrategy = "chargebee-cancelled"
 )
 
 type CostCenter struct {
@@ -103,7 +104,7 @@ func (c *CostCenterManager) GetOrCreateCostCenter(ctx context.Context, attributi
 	// we want to reset it immediately.
 	// This can happen in the following scenario:
 	//	* User accesses gitpod just after their CostCenter expired, but just before our periodic CostCenter reset kicks in.
-	if result.BillingStrategy == CostCenter_Other && result.IsExpired() {
+	if result.BillingStrategy != CostCenter_Stripe && result.IsExpired() {
 		cc, err := c.ResetUsage(ctx, result.ID)
 		if err != nil {
 			logger.WithError(err).Error("Failed to reset expired usage.")
@@ -237,7 +238,7 @@ func (c *CostCenterManager) newInvoiceUsageRecord(ctx context.Context, attributi
 	}, nil
 }
 
-func (c *CostCenterManager) ListLatestCostCentersWithBillingTimeBefore(ctx context.Context, strategy BillingStrategy, billingTimeBefore time.Time) ([]CostCenter, error) {
+func (c *CostCenterManager) ListManagedCostCentersWithBillingTimeBefore(ctx context.Context, billingTimeBefore time.Time) ([]CostCenter, error) {
 	db := c.conn.WithContext(ctx)
 
 	var results []CostCenter
@@ -250,7 +251,7 @@ func (c *CostCenterManager) ListLatestCostCentersWithBillingTimeBefore(ctx conte
 	tx := db.Table(fmt.Sprintf("%s as cc", (&CostCenter{}).TableName())).
 		// Join on our set of latest CostCenter records
 		Joins("INNER JOIN (?) AS expiredCC on cc.id = expiredCC.id AND cc.creationTime = expiredCC.creationTime", subquery).
-		Where("cc.billingStrategy = ?", strategy).
+		Where("cc.billingStrategy != ?", CostCenter_Stripe). // Stripe is managed externally
 		Where("nextBillingTime != ?", "").
 		Where("nextBillingTime < ?", TimeToISO8601(billingTimeBefore)).
 		FindInBatches(&batch, 1000, func(tx *gorm.DB, iteration int) error {
@@ -273,7 +274,7 @@ func (c *CostCenterManager) ResetUsage(ctx context.Context, id AttributionID) (C
 		return cc, err
 	}
 	logger = logger.WithField("cost_center", cc)
-	if cc.BillingStrategy != CostCenter_Other {
+	if cc.BillingStrategy == CostCenter_Stripe {
 		return CostCenter{}, fmt.Errorf("cannot reset usage for Billing Strategy %s for Cost Center ID: %s", cc.BillingStrategy, cc.ID)
 	}
 	if !cc.IsExpired() {
@@ -290,11 +291,19 @@ func (c *CostCenterManager) ResetUsage(ctx context.Context, id AttributionID) (C
 		nextBillingTime = cc.NextBillingTime.Time().AddDate(0, 1, 0)
 	}
 
+	futureSpendingLimit := cc.SpendingLimit
+	futurebillingStrategy := cc.BillingStrategy
+	// chargebee cancellations will be switched to free plan (strategy: other)
+	if cc.BillingStrategy == CostCenter_ChargebeeCancelled {
+		futureSpendingLimit = c.cfg.ForTeams
+		futurebillingStrategy = CostCenter_Other
+	}
+
 	// All fields on the new cost center remain the same, except for BillingCycleStart, NextBillingTime, and CreationTime
 	newCostCenter := CostCenter{
 		ID:                cc.ID,
-		SpendingLimit:     cc.SpendingLimit,
-		BillingStrategy:   cc.BillingStrategy,
+		SpendingLimit:     futureSpendingLimit,
+		BillingStrategy:   futurebillingStrategy,
 		BillingCycleStart: NewVarCharTime(billingCycleStart),
 		NextBillingTime:   NewVarCharTime(nextBillingTime),
 		CreationTime:      NewVarCharTime(now),

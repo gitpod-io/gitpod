@@ -127,6 +127,7 @@ message CostCenter {
     enum BillingStrategy {
         BILLING_STRATEGY_STRIPE = 0;
         BILLING_STRATEGY_OTHER = 1;
+        BILLING_STRATEGY_CHARGEBEE_CANCELLATION = 2;
     }
     BillingStrategy billing_strategy = 3;
 

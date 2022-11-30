@@ -201,6 +201,7 @@ export interface CostCenter {
 export enum CostCenter_BillingStrategy {
   BILLING_STRATEGY_STRIPE = "BILLING_STRATEGY_STRIPE",
   BILLING_STRATEGY_OTHER = "BILLING_STRATEGY_OTHER",
+  BILLING_STRATEGY_CHARGEBEE_CANCELLATION = "BILLING_STRATEGY_CHARGEBEE_CANCELLATION",
   UNRECOGNIZED = "UNRECOGNIZED",
 }
 
@@ -212,6 +213,9 @@ export function costCenter_BillingStrategyFromJSON(object: any): CostCenter_Bill
     case 1:
     case "BILLING_STRATEGY_OTHER":
       return CostCenter_BillingStrategy.BILLING_STRATEGY_OTHER;
+    case 2:
+    case "BILLING_STRATEGY_CHARGEBEE_CANCELLATION":
+      return CostCenter_BillingStrategy.BILLING_STRATEGY_CHARGEBEE_CANCELLATION;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -225,6 +229,8 @@ export function costCenter_BillingStrategyToJSON(object: CostCenter_BillingStrat
       return "BILLING_STRATEGY_STRIPE";
     case CostCenter_BillingStrategy.BILLING_STRATEGY_OTHER:
       return "BILLING_STRATEGY_OTHER";
+    case CostCenter_BillingStrategy.BILLING_STRATEGY_CHARGEBEE_CANCELLATION:
+      return "BILLING_STRATEGY_CHARGEBEE_CANCELLATION";
     case CostCenter_BillingStrategy.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
@@ -237,6 +243,8 @@ export function costCenter_BillingStrategyToNumber(object: CostCenter_BillingStr
       return 0;
     case CostCenter_BillingStrategy.BILLING_STRATEGY_OTHER:
       return 1;
+    case CostCenter_BillingStrategy.BILLING_STRATEGY_CHARGEBEE_CANCELLATION:
+      return 2;
     case CostCenter_BillingStrategy.UNRECOGNIZED:
     default:
       return -1;

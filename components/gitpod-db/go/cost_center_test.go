@@ -321,7 +321,7 @@ func TestCostCenter_ListLatestCostCentersWithBillingTimeBefore(t *testing.T) {
 
 		ts := time.Date(2022, 10, 10, 10, 10, 10, 10, time.UTC)
 
-		retrieved, err := mnr.ListLatestCostCentersWithBillingTimeBefore(context.Background(), db.CostCenter_Other, ts.Add(7*24*time.Hour))
+		retrieved, err := mnr.ListManagedCostCentersWithBillingTimeBefore(context.Background(), ts.Add(7*24*time.Hour))
 		require.NoError(t, err)
 		require.Len(t, retrieved, 0)
 	})
@@ -356,7 +356,7 @@ func TestCostCenter_ListLatestCostCentersWithBillingTimeBefore(t *testing.T) {
 
 		dbtest.CreateCostCenters(t, conn, costCenters...)
 
-		retrieved, err := mnr.ListLatestCostCentersWithBillingTimeBefore(context.Background(), db.CostCenter_Other, secondCreation.Add(7*24*time.Hour))
+		retrieved, err := mnr.ListManagedCostCentersWithBillingTimeBefore(context.Background(), secondCreation.Add(7*24*time.Hour))
 		require.NoError(t, err)
 		require.Len(t, retrieved, 1)
 
@@ -392,7 +392,7 @@ func TestCostCenter_ListLatestCostCentersWithBillingTimeBefore(t *testing.T) {
 
 		dbtest.CreateCostCenters(t, conn, costCenters...)
 
-		retrieved, err := mnr.ListLatestCostCentersWithBillingTimeBefore(context.Background(), db.CostCenter_Other, secondCreation.Add(7*24*time.Hour))
+		retrieved, err := mnr.ListManagedCostCentersWithBillingTimeBefore(context.Background(), secondCreation.Add(7*24*time.Hour))
 		require.NoError(t, err)
 		require.Len(t, retrieved, 0)
 	})
