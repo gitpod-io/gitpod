@@ -14,19 +14,17 @@ spec:
 
   - name: workspace-alerts
     rules:
-    - alert: GitpodWorkspaceStuckOnStarting
+    - alert: GitpodWorkspaceStuckOnStopped
       labels:
         severity: warning
         team: workspace
       for: 20m
       annotations:
-        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceStuckOnStarting.md
-        summary: 5 or more workspaces are stuck on starting in cluster {{ $labels.cluster }}.
-        description: '{{ printf "%.2f" $value }} regular workspaces are stuck on starting for more than 20 minutes. Current status: {{ $labels.reason }}'
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceStuckOnStopped.md
+        summary: Workspaces are stuck in STOPPED phase on cluster {{ $labels.cluster }}.
+        description: '{{ printf "%.2f" $value }} regular workspaces are stuck on stopped for more than 20 minutes. Current status: {{ $labels.reason }}'
       expr: |
-        count(
-          kube_pod_container_status_waiting_reason{cluster!~"ephemeral.*"} * on(pod) group_left kube_pod_labels{component="workspace", workspace_type="regular"}
-        ) by (reason, cluster) > 5
+        sum(gitpod_ws_manager_workspace_phase_total{phase="STOPPED", cluster!~"ephemeral.*"}) > 5
 
     - alert: GitpodWorkspaceStuckOnStopping
       labels:
