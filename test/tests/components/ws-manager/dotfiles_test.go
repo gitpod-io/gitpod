@@ -18,6 +18,7 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
@@ -167,6 +168,8 @@ func assertDotfiles(t *testing.T, rsa *integration.RpcClient) error {
 		"bash_aliases": false,
 		"git":          false,
 	}
+
+	log.Infof("dotfiles: %v", ls.Files)
 
 	for _, dir := range ls.Files {
 		delete(dotfiles, dir)
