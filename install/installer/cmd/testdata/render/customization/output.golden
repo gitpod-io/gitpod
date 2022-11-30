@@ -8402,6 +8402,15 @@ spec:
               - /app/ready-probe-labeler
               - --label=gitpod.io/registry-facade_ready_ns_default
               - --shutdown
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ready
+            port: 8086
+          initialDelaySeconds: 5
+          periodSeconds: 2
+          successThreshold: 1
+          timeoutSeconds: 2
         name: node-labeler
         resources: {}
       dnsPolicy: ClusterFirst
