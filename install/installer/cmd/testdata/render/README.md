@@ -11,6 +11,7 @@ These are not unit tests in the strict sense. We do not have an expectated outco
 For most developers, the requirement will be to update the golden files when they write something that changes the output in some way. That is as simple as running:
 
 ```shell
+make deps
 make generateRenderTests
 ```
 
