@@ -2288,7 +2288,10 @@ data:
         "resources": null
       },
       "prebuildLimiter": {
-        "*": 50
+        "*": {
+          "limit": 100,
+          "period": 600
+        }
       },
       "workspaceClasses": [
         {
@@ -4315,7 +4318,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: a94779de77b43b080faf67667aa017f25fc963c43412f8438c49ace3a7b7af2a
+        gitpod.io/checksum_config: a369165008e0cfac09c1b83051c9c686c06acf116907f80e46cf73b105f55719
       creationTimestamp: null
       labels:
         app: gitpod

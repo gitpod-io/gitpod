@@ -242,9 +242,12 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		StripeSecretsFile:            fmt.Sprintf("%s/apikeys", stripeSecretMountPath),
 		StripeConfigFile:             fmt.Sprintf("%s/config", stripeConfigMountPath),
 		InsecureNoDomain:             false,
-		PrebuildLimiter: map[string]int{
+		PrebuildLimiter: server.PrebuildRateLimiters{
 			// default limit for all cloneURLs
-			"*": 50,
+			"*": server.PrebuildRateLimiterConfig{
+				Limit:  100,
+				Period: 600,
+			},
 		},
 		WorkspaceClasses:               workspaceClasses,
 		InactivityPeriodForReposInDays: inactivityPeriodForReposInDays,

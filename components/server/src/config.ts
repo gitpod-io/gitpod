@@ -17,6 +17,7 @@ import * as yaml from "js-yaml";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { filePathTelepresenceAware } from "@gitpod/gitpod-protocol/lib/env";
 import { WorkspaceClasses, WorkspaceClassesConfig } from "./workspace/workspace-classes";
+import { PrebuildRateLimiters } from "./workspace/prebuild-rate-limiter";
 
 export const Config = Symbol("Config");
 export type Config = Omit<
@@ -200,10 +201,10 @@ export interface ConfigSerialized {
     enablePayment?: boolean;
 
     /**
-     * Number of prebuilds that can be started in the last 1 minute.
+     * Number of prebuilds that can be started in a given time period.
      * Key '*' specifies the default rate limit for a cloneURL, unless overriden by a specific cloneURL.
      */
-    prebuildLimiter: { [cloneURL: string]: number } & { "*": number };
+    prebuildLimiter: PrebuildRateLimiters;
 
     /**
      * If a numeric value interpreted as days is set, repositories not beeing opened with Gitpod are
