@@ -35,6 +35,9 @@ export namespace ErrorCodes {
     // 430 Repository not whitelisted (custom status code)
     export const REPOSITORY_NOT_WHITELISTED = 430;
 
+    // 440 Prebuilds now always require a project (custom status code)
+    export const PROJECT_REQUIRED = 440;
+
     // 450 Payment error
     export const PAYMENT_ERROR = 450;
 

@@ -207,6 +207,15 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
                     phase = StartPhase.Stopped;
                     statusMessage = <UsageLimitReachedModal hints={this.state?.error?.data} />;
                     break;
+                case ErrorCodes.PROJECT_REQUIRED:
+                    statusMessage = (
+                        <p className="text-base text-gitpod-red w-96">
+                            <a className="gp-link" href="https://www.gitpod.io/docs/configure/projects">
+                                Learn more about projects
+                            </a>
+                        </p>
+                    );
+                    break;
                 default:
                     statusMessage = (
                         <p className="text-base text-gitpod-red w-96">
