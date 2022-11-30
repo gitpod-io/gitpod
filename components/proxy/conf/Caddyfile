@@ -231,10 +231,12 @@ https://{$GITPOD_DOMAIN} {
 
 		reverse_proxy @fast server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
 			import upstream_headers
+			import upstream_connection
 		}
 
 		reverse_proxy @slow slow-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
 			import upstream_headers
+			import upstream_connection
 		}
 	}
 
