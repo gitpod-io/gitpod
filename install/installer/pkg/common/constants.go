@@ -38,6 +38,7 @@ const (
 	RegistryFacadeServicePort   = 20000
 	RegistryFacadeTLSCertSecret = "builtin-registry-facade-cert"
 	ServerComponent             = "server"
+	SlowServerComponent         = "slow-server"
 	ServerInstallationAdminPort = 9000
 	SystemNodeCritical          = "system-node-critical"
 	PublicApiComponent          = "public-api-server"
