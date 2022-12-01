@@ -280,6 +280,21 @@ https://{$GITPOD_DOMAIN} {
 		}
 	}
 
+	@iam path /iam/*
+	handle @iam {
+
+		gitpod.cors_origin {
+			any_domain true
+		}
+
+		uri strip_prefix /iam
+
+		reverse_proxy iam.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002 {
+			import upstream_headers
+			import upstream_connection
+		}
+	}
+
 	@codesync path /code-sync*
 	handle @codesync {
 		gitpod.cors_origin {
