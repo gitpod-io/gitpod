@@ -9,45 +9,45 @@
  * all other IDE scripts should go afterwards, head element should not have scripts
  */
 import { IDEMetricsServiceClient, MetricsName } from "./ide/ide-metrics-service-client";
-IDEMetricsServiceClient.addCounter(MetricsName.SupervisorFrontendClientTotal).catch(() => {})
+IDEMetricsServiceClient.addCounter(MetricsName.SupervisorFrontendClientTotal).catch(() => {});
 
 //#region supervisor frontend error capture
 function isElement(obj: any): obj is Element {
-    return typeof obj.getAttribute === 'function'
+    return typeof obj.getAttribute === "function";
 }
 
-window.addEventListener('error', (event) => {
+window.addEventListener("error", (event) => {
     const labels: Record<string, string> = {};
-    let resourceSource: string|null|undefined
+    let resourceSource: string | null | undefined;
     if (isElement(event.target)) {
         // We take a look at what is the resource that was attempted to load;
-        resourceSource = event.target.getAttribute('src') || event.target.getAttribute('href')
+        resourceSource = event.target.getAttribute("src") || event.target.getAttribute("href");
         // If the event has a `target`, it means that it wasn't a script error
         if (resourceSource) {
             if (resourceSource.match(new RegExp(/\/build\/ide\/code:.+\/__files__\//g))) {
                 // TODO(ak) reconsider how to hide knowledge of VS Code from supervisor frontend, i.e instrument amd loader instead
-                labels['resource'] = 'vscode-web-workbench';
+                labels["resource"] = "vscode-web-workbench";
             }
-            labels['error'] = 'LoadError';
+            labels["error"] = "LoadError";
         }
     }
     if (event.error) {
         IDEMetricsServiceClient.reportError(event.error).catch(() => {});
-    } else if (labels['error'] == 'LoadError') {
-        let error = new Error("LoadError")
+    } else if (labels["error"] == "LoadError") {
+        let error = new Error("LoadError");
         IDEMetricsServiceClient.reportError(error, {
-            resource: labels['resource'],
-            url: resourceSource ?? ""
+            resource: labels["resource"],
+            url: resourceSource ?? "",
         }).catch(() => {});
     }
     IDEMetricsServiceClient.addCounter(MetricsName.SupervisorFrontendErrorTotal, labels).catch(() => {});
 });
 //#endregion
 
-require('../src/shared/index.css');
+require("../src/shared/index.css");
 
 import { createGitpodService, WorkspaceInstancePhase } from "@gitpod/gitpod-protocol";
-import { DisposableCollection } from '@gitpod/gitpod-protocol/lib/util/disposable';
+import { DisposableCollection } from "@gitpod/gitpod-protocol/lib/util/disposable";
 import * as GitpodServiceClient from "./ide/gitpod-service-client";
 import * as heartBeat from "./ide/heart-beat";
 import * as IDEFrontendService from "./ide/ide-frontend-service-impl";
@@ -58,22 +58,22 @@ import * as LoadingFrame from "./shared/loading-frame";
 import { serverUrl, startUrl } from "./shared/urls";
 
 window.gitpod = {
-    service: createGitpodService(serverUrl.toString())
+    service: createGitpodService(serverUrl.toString()),
 };
 IDEWorker.install();
 IDEWebSocket.install();
 const ideService = IDEFrontendService.create();
 const pendingGitpodServiceClient = GitpodServiceClient.create();
-const loadingIDE = new Promise(resolve => window.addEventListener('DOMContentLoaded', resolve, { once: true }));
+const loadingIDE = new Promise((resolve) => window.addEventListener("DOMContentLoaded", resolve, { once: true }));
 const toStop = new DisposableCollection();
 
 (async () => {
     const gitpodServiceClient = await pendingGitpodServiceClient;
-    IDEMetricsServiceClient.loadWorkspaceInfo(gitpodServiceClient)
+    IDEMetricsServiceClient.loadWorkspaceInfo(gitpodServiceClient);
 
     document.title = gitpodServiceClient.info.workspace.description;
 
-    if (gitpodServiceClient.info.workspace.type !== 'regular') {
+    if (gitpodServiceClient.info.workspace.type !== "regular") {
         return;
     }
 
@@ -81,28 +81,32 @@ const toStop = new DisposableCollection();
     function isWorkspaceInstancePhase(phase: WorkspaceInstancePhase): boolean {
         return gitpodServiceClient.info.latestInstance?.status.phase === phase;
     }
-    if (!isWorkspaceInstancePhase('running')) {
-        await new Promise<void>(resolve => {
+    if (!isWorkspaceInstancePhase("running")) {
+        await new Promise<void>((resolve) => {
             const listener = gitpodServiceClient.onDidChangeInfo(() => {
-                if (isWorkspaceInstancePhase('running')) {
+                if (isWorkspaceInstancePhase("running")) {
                     listener.dispose();
                     resolve();
                 }
             });
         });
     }
-    const supervisorServiceClient = new SupervisorServiceClient(gitpodServiceClient);
-    const [ideStatus] = await Promise.all([supervisorServiceClient.ideReady, supervisorServiceClient.contentReady, loadingIDE]);
-    if (isWorkspaceInstancePhase('stopping') || isWorkspaceInstancePhase('stopped')) {
+    const supervisorServiceClient = SupervisorServiceClient.get(gitpodServiceClient);
+    const [ideStatus] = await Promise.all([
+        supervisorServiceClient.ideReady,
+        supervisorServiceClient.contentReady,
+        loadingIDE,
+    ]);
+    if (isWorkspaceInstancePhase("stopping") || isWorkspaceInstancePhase("stopped")) {
         return;
     }
     toStop.pushAll([
         IDEWebSocket.connectWorkspace(),
         gitpodServiceClient.onDidChangeInfo(() => {
-            if (isWorkspaceInstancePhase('stopping') || isWorkspaceInstancePhase('stopped')) {
+            if (isWorkspaceInstancePhase("stopping") || isWorkspaceInstancePhase("stopped")) {
                 toStop.dispose();
             }
-        })
+        }),
     ]);
     const isDesktopIde = ideStatus && ideStatus.desktop && ideStatus.desktop.link;
     if (!isDesktopIde) {
@@ -112,30 +116,30 @@ const toStop = new DisposableCollection();
 })();
 
 (async () => {
-    document.body.style.visibility = 'hidden';
+    document.body.style.visibility = "hidden";
     const [loading, gitpodServiceClient] = await Promise.all([
         LoadingFrame.load({ gitpodService: window.gitpod.service }),
-        pendingGitpodServiceClient
+        pendingGitpodServiceClient,
     ]);
     const sessionId = await loading.sessionId;
 
-    if (gitpodServiceClient.info.workspace.type !== 'regular') {
+    if (gitpodServiceClient.info.workspace.type !== "regular") {
         return;
     }
 
-    const supervisorServiceClient = new SupervisorServiceClient(gitpodServiceClient);
+    const supervisorServiceClient = SupervisorServiceClient.get(gitpodServiceClient);
 
     let hideDesktopIde = false;
     const serverOrigin = startUrl.url.origin;
     const hideDesktopIdeEventListener = (event: MessageEvent) => {
-        if (event.origin === serverOrigin && event.data.type == 'openBrowserIde') {
-            window.removeEventListener('message', hideDesktopIdeEventListener);
+        if (event.origin === serverOrigin && event.data.type == "openBrowserIde") {
+            window.removeEventListener("message", hideDesktopIdeEventListener);
             hideDesktopIde = true;
             toStop.push(ideService.start());
         }
-    }
-    window.addEventListener('message', hideDesktopIdeEventListener, false);
-    toStop.push({ dispose: () => window.removeEventListener('message', hideDesktopIdeEventListener) });
+    };
+    window.addEventListener("message", hideDesktopIdeEventListener, false);
+    toStop.push({ dispose: () => window.removeEventListener("message", hideDesktopIdeEventListener) });
 
     //#region gitpod browser telemetry
     // TODO(ak) get rid of it
@@ -157,10 +161,10 @@ const toStop = new DisposableCollection();
                 },
             });
         }
-    })
+    });
     //#endregion
 
-    type DesktopIDEStatus = { link: string, label: string, clientID?: string, kind?: String }
+    type DesktopIDEStatus = { link: string; label: string; clientID?: string; kind?: String };
     let isDesktopIde: undefined | boolean = undefined;
     let ideStatus: undefined | { desktop: DesktopIDEStatus } = undefined;
 
@@ -180,7 +184,7 @@ const toStop = new DisposableCollection();
             } else {
                 currentInstanceId = instance.id;
             }
-            if (instance.status.phase === 'running') {
+            if (instance.status.phase === "running") {
                 if (!hideDesktopIde) {
                     if (isDesktopIde == undefined) {
                         return loading.frame;
@@ -194,25 +198,25 @@ const toStop = new DisposableCollection();
                         });
                         if (!desktopRedirected) {
                             desktopRedirected = true;
-                            loading.openDesktopLink(ideStatus.desktop.link)
+                            loading.openDesktopLink(ideStatus.desktop.link);
                         }
                         return loading.frame;
                     }
                 }
-                if (ideService.state === 'ready') {
+                if (ideService.state === "ready") {
                     return document.body;
                 }
             }
         }
         return loading.frame;
-    }
+    };
     const updateCurrentFrame = () => {
         const newCurrent = nextFrame();
         if (current === newCurrent) {
             return;
         }
-        current.style.visibility = 'hidden';
-        newCurrent.style.visibility = 'visible';
+        current.style.visibility = "hidden";
+        newCurrent.style.visibility = "visible";
         if (current === document.body) {
             while (document.body.firstChild && document.body.firstChild !== newCurrent) {
                 document.body.removeChild(document.body.firstChild);
@@ -222,16 +226,19 @@ const toStop = new DisposableCollection();
             }
         }
         current = newCurrent;
-    }
+    };
 
     const updateLoadingState = () => {
         loading.setState({
-            ideFrontendFailureCause: ideService.failureCause?.message
+            ideFrontendFailureCause: ideService.failureCause?.message,
         });
-    }
-    const trackStatusRenderedEvent = (phase: string, properties?: {
-        [prop: string]: any
-    }) => {
+    };
+    const trackStatusRenderedEvent = (
+        phase: string,
+        properties?: {
+            [prop: string]: any;
+        },
+    ) => {
         window.gitpod.service.server.trackEvent({
             event: "status_rendered",
             properties: {
@@ -240,25 +247,25 @@ const toStop = new DisposableCollection();
                 workspaceId: gitpodServiceClient.info.workspace.id,
                 type: gitpodServiceClient.info.workspace.type,
                 phase,
-                ...properties
+                ...properties,
             },
         });
-    }
+    };
     let trackedDesktopIDEReady = false;
     const trackDesktopIDEReady = ({ clientID, kind }: DesktopIDEStatus) => {
         if (trackedDesktopIDEReady) {
             return;
         }
-        trackedDesktopIDEReady = true
-        trackStatusRenderedEvent('desktop-ide-ready', { clientID, kind });
-    }
+        trackedDesktopIDEReady = true;
+        trackStatusRenderedEvent("desktop-ide-ready", { clientID, kind });
+    };
     const trackIDEStatusRenderedEvent = () => {
         let error: string | undefined;
         if (ideService.failureCause) {
             error = `${ideService.failureCause.message}\n${ideService.failureCause.stack}`;
         }
         trackStatusRenderedEvent(`ide-${ideService.state}`, { error });
-    }
+    };
 
     updateCurrentFrame();
     updateLoadingState();
@@ -269,23 +276,25 @@ const toStop = new DisposableCollection();
         updateCurrentFrame();
         trackIDEStatusRenderedEvent();
     });
-    supervisorServiceClient.ideReady.then(newIdeStatus => {
-        ideStatus = newIdeStatus;
-        isDesktopIde = !!ideStatus && !!ideStatus.desktop && !!ideStatus.desktop.link;
-        updateCurrentFrame();
-    }).catch(error => console.error(`Unexpected error from supervisorServiceClient.ideReady: ${error}`));
-    window.addEventListener('unload', () => trackStatusRenderedEvent('window-unload'), { capture: true });
+    supervisorServiceClient.ideReady
+        .then((newIdeStatus) => {
+            ideStatus = newIdeStatus;
+            isDesktopIde = !!ideStatus && !!ideStatus.desktop && !!ideStatus.desktop.link;
+            updateCurrentFrame();
+        })
+        .catch((error) => console.error(`Unexpected error from supervisorServiceClient.ideReady: ${error}`));
+    window.addEventListener("unload", () => trackStatusRenderedEvent("window-unload"), { capture: true });
     //#endregion
 
     //#region heart-beat
     heartBeat.track(window);
     const updateHeartBeat = () => {
-        if (gitpodServiceClient.info.latestInstance?.status.phase === 'running') {
+        if (gitpodServiceClient.info.latestInstance?.status.phase === "running") {
             heartBeat.schedule(gitpodServiceClient.info, sessionId);
         } else {
             heartBeat.cancel();
         }
-    }
+    };
     updateHeartBeat();
     gitpodServiceClient.onDidChangeInfo(() => updateHeartBeat());
     //#endregion
