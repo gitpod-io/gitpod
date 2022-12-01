@@ -285,6 +285,24 @@ func TestUpdatePersonalAccessTokenForUser(t *testing.T) {
 		require.ErrorIs(t, err, db.ErrorNotFound)
 	})
 
+	t.Run("no modified field completes gracefully", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+		name := "first"
+
+		created := dbtest.CreatePersonalAccessTokenRecords(t, conn, dbtest.NewPersonalAccessToken(t, db.PersonalAccessToken{
+			Name: name,
+		}))[0]
+
+		udpated, err := db.UpdatePersonalAccessTokenForUser(context.Background(), conn, db.UpdatePersonalAccessTokenOpts{
+			TokenID: created.ID,
+			UserID:  created.UserID,
+			Name:    &name,
+		})
+		require.NoError(t, err)
+		require.Equal(t, name, udpated.Name)
+		require.Len(t, udpated.Scopes, 0)
+	})
+
 	t.Run("no update when all options are nil", func(t *testing.T) {
 		conn := dbtest.ConnectForTests(t)
 
