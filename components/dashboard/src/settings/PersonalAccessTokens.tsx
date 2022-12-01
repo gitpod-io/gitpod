@@ -148,7 +148,7 @@ function ShowTokenModal(props: TokenModalProps) {
                     Expires on {dayjs(props.token.expirationTime!.toDate()).format("MMM D, YYYY")}
                 </div>
             </div>
-            <>
+            <div className="mt-4">
                 {props.showDateSelector && (
                     <DateSelector
                         title="Expiration Date"
@@ -165,7 +165,7 @@ function ShowTokenModal(props: TokenModalProps) {
                         }
                     />
                 )}
-            </>
+            </div>
         </Modal>
     );
 }
