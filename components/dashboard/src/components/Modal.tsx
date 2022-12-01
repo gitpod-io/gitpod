@@ -15,8 +15,8 @@ export default function Modal(props: {
     specify?: string;
     title?: string;
     hideDivider?: boolean;
-    buttons?: React.ReactChild[] | React.ReactChild;
-    children: React.ReactChild[] | React.ReactChild;
+    buttons?: ReactNode;
+    children: ReactNode;
     visible: boolean;
     closeable?: boolean;
     className?: string;
@@ -133,6 +133,7 @@ export const ModalBody = ({ children, hideDivider = false }: ModalBodyProps) => 
 
     // EnvVar body classes
     // border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col
+    // space-y-4 border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4
 
     // Integrations body classes:
     // border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4
