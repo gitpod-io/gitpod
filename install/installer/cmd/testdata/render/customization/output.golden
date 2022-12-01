@@ -5184,6 +5184,67 @@ data:
                 "defaultValue": ""
               }
             ]
+          },
+          {
+            "name": "grpc_client_started_total",
+            "help": "Total number of RPCs started on the client.",
+            "labels": [
+              {
+                "name": "grpc_method",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "grpc_service",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "grpc_type",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              }
+            ]
+          },
+          {
+            "name": "grpc_client_handled_total",
+            "help": "Total number of RPCs completed by the client, regardless of success or failure.",
+            "labels": [
+              {
+                "name": "grpc_method",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "grpc_service",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "grpc_type",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "grpc_code",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              }
+            ]
           }
         ],
         "histogramMetrics": [
@@ -5334,6 +5395,42 @@ data:
               536870912,
               1073741824,
               2147483648
+            ]
+          },
+          {
+            "name": "grpc_client_handling_seconds",
+            "help": "Histogram of response latency (seconds) of the gRPC until it is finished by the application.",
+            "labels": [
+              {
+                "name": "grpc_type",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "grpc_service",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "grpc_method",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              }
+            ],
+            "buckets": [
+              0.1,
+              0.2,
+              0.5,
+              1,
+              2,
+              5,
+              10
             ]
           }
         ],
@@ -10103,7 +10200,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: a87108c855371364faa6d0202ed2bef9c681928e38f7ff2cf90fe79f78caa73f
+        gitpod.io/checksum_config: b412b24494cba05f0480f767e407b5351094c34472d0966722428f0b23d05ff7
         hello: world
       creationTimestamp: null
       labels:
