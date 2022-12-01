@@ -108,6 +108,11 @@ previewctl get-credentials --gcp-service-account /mnt/secrets/gcp-sa/service-acc
 echo "Done" | werft log slice "configure kubeconfig"
 werft log slice "configure kubeconfig" --done
 
+echo "Installing SSH keys" | werft log slice "ssh keys"
+/workspace/dev/preview/util/install-vm-ssh-keys.sh | werft log slice "ssh keys"
+echo "Done" | werft log slice "ssh keys"
+werft log slice "ssh keys" --done
+
 werft log phase "build preview environment" "build preview environment"
 
 REVISION=$(git show -s --format="%h" HEAD)
@@ -182,7 +187,7 @@ echo "build success" | werft log slice "build preview environment"
 werft log slice "build preview environment" --done
 
 echo "Configuring access to preview environment (k3s)" | werft log slice "configure k3s kubeconfig"
-previewctl install-context --gcp-service-account /mnt/secrets/gcp-sa/service-account.json | werft log slice "configure k3s kubeconfig"
+previewctl install-context --retry 30 --gcp-service-account /mnt/secrets/gcp-sa/service-account.json | werft log slice "configure k3s kubeconfig"
 echo "Done" | werft log slice "configure k3s kubeconfig"
 werft log slice "configure k3s kubeconfig" --done
 
