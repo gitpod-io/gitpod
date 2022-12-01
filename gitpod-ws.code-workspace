@@ -72,6 +72,6 @@
         "gopls": {
             "allowModfileModifications": true
         },
-        "prettier.configPath": ".prettierrc.json"
+        "prettier.configPath": "/workspace/gitpod/.prettierrc.json"
     }
 }
