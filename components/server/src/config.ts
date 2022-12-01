@@ -16,7 +16,7 @@ import * as fs from "fs";
 import * as yaml from "js-yaml";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { filePathTelepresenceAware } from "@gitpod/gitpod-protocol/lib/env";
-import { WorkspaceClasses, WorkspaceClassesConfig } from "./workspace/workspace-classes";
+import { WorkspaceClassesConfig } from "./workspace/workspace-classes";
 import { PrebuildRateLimiters } from "./workspace/prebuild-rate-limiter";
 
 export const Config = Symbol("Config");
@@ -307,7 +307,12 @@ export namespace ConfigFile {
             }
         }
 
-        WorkspaceClasses.validate(config.workspaceClasses);
+        if (config.workspaceClasses.filter((c) => c.isDefault).length !== 1) {
+            log.error(
+                "Exactly one default workspace class needs to be configured: " +
+                    JSON.stringify(config.workspaceClasses),
+            );
+        }
 
         let patSigningKey = "";
         if (config.patSigningKeyFile) {

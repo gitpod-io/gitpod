@@ -174,7 +174,6 @@ import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-
 import { VerificationService } from "../auth/verification-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { EntitlementService } from "../billing/entitlement-service";
-import { WorkspaceClasses } from "./workspace-classes";
 import { formatPhoneNumber } from "../user/phone-numbers";
 import { IDEService } from "../ide-service";
 import { MessageBusIntegration } from "./messagebus-integration";
@@ -2947,25 +2946,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async getSupportedWorkspaceClasses(ctx: TraceContext): Promise<SupportedWorkspaceClass[]> {
-        let user = this.checkAndBlockUser("getSupportedWorkspaceClasses");
-        let selectedClass = await WorkspaceClasses.getConfiguredOrUpgradeFromLegacy(
-            user,
-            undefined,
-            this.config.workspaceClasses,
-            this.entitlementService,
-        );
-
-        let classes = this.config.workspaceClasses
-            .filter((c) => !c.deprecated)
-            .map((c) => ({
-                id: c.id,
-                category: c.category,
-                displayName: c.displayName,
-                description: c.description,
-                powerups: c.powerups,
-                isSelected: selectedClass === c.id,
-            }));
-
+        this.checkAndBlockUser("getSupportedWorkspaceClasses");
+        const classes = this.config.workspaceClasses.map((c) => ({
+            id: c.id,
+            category: c.category,
+            displayName: c.displayName,
+            description: c.description,
+            powerups: c.powerups,
+            isDefault: c.isDefault,
+        }));
         return classes;
     }
 

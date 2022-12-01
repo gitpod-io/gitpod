@@ -139,7 +139,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Description: "Default workspace class",
 			PowerUps:    1,
 			IsDefault:   true,
-			Deprecated:  false,
 		},
 	}
 	ctx.WithExperimental(func(cfg *experimental.Config) error {
@@ -153,7 +152,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Description: cl.Description,
 					PowerUps:    cl.PowerUps,
 					IsDefault:   cl.IsDefault,
-					Deprecated:  cl.Deprecated,
 					Marker:      cl.Marker,
 				}
 
