@@ -14,6 +14,38 @@ import {FieldMask, Message, proto3, protoInt64, Timestamp} from "@bufbuild/proto
 import {Pagination} from "./pagination_pb.js";
 
 /**
+ * PortPolicy defines the accssbility policy of a workspace port is guarded by an authentication in the proxy
+ *
+ * @generated from enum gitpod.experimental.v1.PortPolicy
+ */
+export enum PortPolicy {
+  /**
+   * @generated from enum value: PORT_POLICY_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Private means the port is accessible by the workspace owner only using the workspace port URL
+   *
+   * @generated from enum value: PORT_POLICY_PRIVATE = 1;
+   */
+  PRIVATE = 1,
+
+  /**
+   * Public means the port is accessible by everybody using the workspace port URL
+   *
+   * @generated from enum value: PORT_POLICY_PUBLIC = 2;
+   */
+  PUBLIC = 2,
+}
+// Retrieve enum metadata with: proto3.getEnumType(PortPolicy)
+proto3.util.setEnumType(PortPolicy, "gitpod.experimental.v1.PortPolicy", [
+  { no: 0, name: "PORT_POLICY_UNSPECIFIED" },
+  { no: 1, name: "PORT_POLICY_PRIVATE" },
+  { no: 2, name: "PORT_POLICY_PUBLIC" },
+]);
+
+/**
  * Admission level describes who can access a workspace instance and its ports.
  *
  * @generated from enum gitpod.experimental.v1.AdmissionLevel
@@ -981,6 +1013,13 @@ export class WorkspaceInstanceStatus extends Message<WorkspaceInstanceStatus> {
    */
   admission = AdmissionLevel.UNSPECIFIED;
 
+  /**
+   * ports is the list of exposed ports in the workspace.
+   *
+   * @generated from field: repeated gitpod.experimental.v1.Port ports = 7;
+   */
+  ports: Port[] = [];
+
   constructor(data?: PartialMessage<WorkspaceInstanceStatus>) {
     super();
     proto3.util.initPartial(data, this);
@@ -995,6 +1034,7 @@ export class WorkspaceInstanceStatus extends Message<WorkspaceInstanceStatus> {
     { no: 4, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 6, name: "admission", kind: "enum", T: proto3.getEnumType(AdmissionLevel) },
+    { no: 7, name: "ports", kind: "message", T: Port, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceInstanceStatus {
@@ -1184,6 +1224,61 @@ export class WorkspaceInstanceStatus_Conditions extends Message<WorkspaceInstanc
 }
 
 /**
+ * @generated from message gitpod.experimental.v1.Port
+ */
+export class Port extends Message<Port> {
+  /**
+   * port number
+   *
+   * @generated from field: uint64 port = 1;
+   */
+  port = protoInt64.zero;
+
+  /**
+   * policy of this port
+   *
+   * @generated from field: gitpod.experimental.v1.PortPolicy policy = 2;
+   */
+  policy = PortPolicy.UNSPECIFIED;
+
+  /**
+   * url that can be used to access the port
+   *
+   * @generated from field: string url = 3;
+   */
+  url = "";
+
+  constructor(data?: PartialMessage<Port>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.Port";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "port", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+    { no: 2, name: "policy", kind: "enum", T: proto3.getEnumType(PortPolicy) },
+    { no: 3, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Port {
+    return new Port().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Port {
+    return new Port().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Port {
+    return new Port().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: Port | PlainMessage<Port> | undefined, b: Port | PlainMessage<Port> | undefined): boolean {
+    return proto3.util.equals(Port, a, b);
+  }
+}
+
+/**
  * StartWorkspaceSpec influences the workspace start
  *
  * future per-workspace-start fields, e.g. region
@@ -1215,5 +1310,126 @@ export class StartWorkspaceSpec extends Message<StartWorkspaceSpec> {
 
   static equals(a: StartWorkspaceSpec | PlainMessage<StartWorkspaceSpec> | undefined, b: StartWorkspaceSpec | PlainMessage<StartWorkspaceSpec> | undefined): boolean {
     return proto3.util.equals(StartWorkspaceSpec, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.PortSpec
+ */
+export class PortSpec extends Message<PortSpec> {
+  /**
+   * port number
+   *
+   * @generated from field: uint64 port = 1;
+   */
+  port = protoInt64.zero;
+
+  /**
+   * policy of this port
+   *
+   * @generated from field: gitpod.experimental.v1.PortPolicy policy = 2;
+   */
+  policy = PortPolicy.UNSPECIFIED;
+
+  constructor(data?: PartialMessage<PortSpec>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.PortSpec";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "port", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+    { no: 2, name: "policy", kind: "enum", T: proto3.getEnumType(PortPolicy) },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PortSpec {
+    return new PortSpec().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PortSpec {
+    return new PortSpec().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PortSpec {
+    return new PortSpec().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: PortSpec | PlainMessage<PortSpec> | undefined, b: PortSpec | PlainMessage<PortSpec> | undefined): boolean {
+    return proto3.util.equals(PortSpec, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.UpdatePortRequest
+ */
+export class UpdatePortRequest extends Message<UpdatePortRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: gitpod.experimental.v1.PortSpec port = 2;
+   */
+  port?: PortSpec;
+
+  constructor(data?: PartialMessage<UpdatePortRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.UpdatePortRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "port", kind: "message", T: PortSpec },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdatePortRequest {
+    return new UpdatePortRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdatePortRequest {
+    return new UpdatePortRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdatePortRequest {
+    return new UpdatePortRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdatePortRequest | PlainMessage<UpdatePortRequest> | undefined, b: UpdatePortRequest | PlainMessage<UpdatePortRequest> | undefined): boolean {
+    return proto3.util.equals(UpdatePortRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.UpdatePortResponse
+ */
+export class UpdatePortResponse extends Message<UpdatePortResponse> {
+  constructor(data?: PartialMessage<UpdatePortResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.UpdatePortResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdatePortResponse {
+    return new UpdatePortResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdatePortResponse {
+    return new UpdatePortResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdatePortResponse {
+    return new UpdatePortResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdatePortResponse | PlainMessage<UpdatePortResponse> | undefined, b: UpdatePortResponse | PlainMessage<UpdatePortResponse> | undefined): boolean {
+    return proto3.util.equals(UpdatePortResponse, a, b);
   }
 }

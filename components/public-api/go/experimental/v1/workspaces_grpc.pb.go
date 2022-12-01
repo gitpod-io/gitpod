@@ -40,6 +40,7 @@ type WorkspacesServiceClient interface {
 	//	NOT_FOUND:           the workspace_id is unkown
 	//	FAILED_PRECONDITION: if there's no running instance
 	StopWorkspace(ctx context.Context, in *StopWorkspaceRequest, opts ...grpc.CallOption) (WorkspacesService_StopWorkspaceClient, error)
+	UpdatePort(ctx context.Context, in *UpdatePortRequest, opts ...grpc.CallOption) (*UpdatePortResponse, error)
 }
 
 type workspacesServiceClient struct {
@@ -118,6 +119,15 @@ func (x *workspacesServiceStopWorkspaceClient) Recv() (*StopWorkspaceResponse, e
 	return m, nil
 }
 
+func (c *workspacesServiceClient) UpdatePort(ctx context.Context, in *UpdatePortRequest, opts ...grpc.CallOption) (*UpdatePortResponse, error) {
+	out := new(UpdatePortResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.WorkspacesService/UpdatePort", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkspacesServiceServer is the server API for WorkspacesService service.
 // All implementations must embed UnimplementedWorkspacesServiceServer
 // for forward compatibility
@@ -136,6 +146,7 @@ type WorkspacesServiceServer interface {
 	//	NOT_FOUND:           the workspace_id is unkown
 	//	FAILED_PRECONDITION: if there's no running instance
 	StopWorkspace(*StopWorkspaceRequest, WorkspacesService_StopWorkspaceServer) error
+	UpdatePort(context.Context, *UpdatePortRequest) (*UpdatePortResponse, error)
 	mustEmbedUnimplementedWorkspacesServiceServer()
 }
 
@@ -157,6 +168,9 @@ func (UnimplementedWorkspacesServiceServer) CreateAndStartWorkspace(context.Cont
 }
 func (UnimplementedWorkspacesServiceServer) StopWorkspace(*StopWorkspaceRequest, WorkspacesService_StopWorkspaceServer) error {
 	return status.Errorf(codes.Unimplemented, "method StopWorkspace not implemented")
+}
+func (UnimplementedWorkspacesServiceServer) UpdatePort(context.Context, *UpdatePortRequest) (*UpdatePortResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdatePort not implemented")
 }
 func (UnimplementedWorkspacesServiceServer) mustEmbedUnimplementedWorkspacesServiceServer() {}
 
@@ -264,6 +278,24 @@ func (x *workspacesServiceStopWorkspaceServer) Send(m *StopWorkspaceResponse) er
 	return x.ServerStream.SendMsg(m)
 }
 
+func _WorkspacesService_UpdatePort_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdatePortRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspacesServiceServer).UpdatePort(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.experimental.v1.WorkspacesService/UpdatePort",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspacesServiceServer).UpdatePort(ctx, req.(*UpdatePortRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorkspacesService_ServiceDesc is the grpc.ServiceDesc for WorkspacesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -286,6 +318,10 @@ var WorkspacesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateAndStartWorkspace",
 			Handler:    _WorkspacesService_CreateAndStartWorkspace_Handler,
+		},
+		{
+			MethodName: "UpdatePort",
+			Handler:    _WorkspacesService_UpdatePort_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

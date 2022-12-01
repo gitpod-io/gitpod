@@ -38,7 +38,6 @@ service UserService {
     // GetAuthenticatedUser gets the user info.
     rpc GetAuthenticatedUser(GetAuthenticatedUserRequest) returns (GetAuthenticatedUserResponse) {};
 
-
     // ListSSHKeys lists the public SSH keys.
     rpc ListSSHKeys(ListSSHKeysRequest) returns (ListSSHKeysResponse) {};
 
@@ -50,6 +49,8 @@ service UserService {
 
     // DeleteSSHKey removes a public SSH key.
     rpc DeleteSSHKey(DeleteSSHKeyRequest) returns (DeleteSSHKeyResponse) {}
+
+    rpc GetGitToken(GetGitTokenRequest) returns (GetGitTokenResponse) {}
 }
 
 message GetAuthenticatedUserRequest {
@@ -95,4 +96,35 @@ message DeleteSSHKeyRequest {
 }
 
 message DeleteSSHKeyResponse {
+}
+
+message GetGitTokenRequest {
+    string host = 1;
+}
+
+message GetGitTokenResponse {
+    GitToken token = 1;
+}
+
+message GitToken {
+    // expiry_date is the date when the token will expire
+    string expiry_date = 1;
+
+    // id_token is the unique identifier for the token
+    string id_token = 2;
+
+    // refresh_token is the token used to refresh the git token
+    string refresh_token = 3;
+
+    // scopes is a list of permissions associated with the token
+    repeated string scopes = 4;
+
+    // update_date is the date when the token was last updated
+    string update_date = 5;
+
+    // username is the username associated with the token
+    string username = 6;
+
+    // value is the actual token value for the token
+    string value = 7;
 }

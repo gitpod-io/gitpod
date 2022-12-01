@@ -45,6 +45,7 @@ type WorkspacesServiceClient interface {
 	//	NOT_FOUND:           the workspace_id is unkown
 	//	FAILED_PRECONDITION: if there's no running instance
 	StopWorkspace(context.Context, *connect_go.Request[v1.StopWorkspaceRequest]) (*connect_go.ServerStreamForClient[v1.StopWorkspaceResponse], error)
+	UpdatePort(context.Context, *connect_go.Request[v1.UpdatePortRequest]) (*connect_go.Response[v1.UpdatePortResponse], error)
 }
 
 // NewWorkspacesServiceClient constructs a client for the gitpod.experimental.v1.WorkspacesService
@@ -82,6 +83,11 @@ func NewWorkspacesServiceClient(httpClient connect_go.HTTPClient, baseURL string
 			baseURL+"/gitpod.experimental.v1.WorkspacesService/StopWorkspace",
 			opts...,
 		),
+		updatePort: connect_go.NewClient[v1.UpdatePortRequest, v1.UpdatePortResponse](
+			httpClient,
+			baseURL+"/gitpod.experimental.v1.WorkspacesService/UpdatePort",
+			opts...,
+		),
 	}
 }
 
@@ -92,6 +98,7 @@ type workspacesServiceClient struct {
 	getOwnerToken           *connect_go.Client[v1.GetOwnerTokenRequest, v1.GetOwnerTokenResponse]
 	createAndStartWorkspace *connect_go.Client[v1.CreateAndStartWorkspaceRequest, v1.CreateAndStartWorkspaceResponse]
 	stopWorkspace           *connect_go.Client[v1.StopWorkspaceRequest, v1.StopWorkspaceResponse]
+	updatePort              *connect_go.Client[v1.UpdatePortRequest, v1.UpdatePortResponse]
 }
 
 // ListWorkspaces calls gitpod.experimental.v1.WorkspacesService.ListWorkspaces.
@@ -119,6 +126,11 @@ func (c *workspacesServiceClient) StopWorkspace(ctx context.Context, req *connec
 	return c.stopWorkspace.CallServerStream(ctx, req)
 }
 
+// UpdatePort calls gitpod.experimental.v1.WorkspacesService.UpdatePort.
+func (c *workspacesServiceClient) UpdatePort(ctx context.Context, req *connect_go.Request[v1.UpdatePortRequest]) (*connect_go.Response[v1.UpdatePortResponse], error) {
+	return c.updatePort.CallUnary(ctx, req)
+}
+
 // WorkspacesServiceHandler is an implementation of the gitpod.experimental.v1.WorkspacesService
 // service.
 type WorkspacesServiceHandler interface {
@@ -136,6 +148,7 @@ type WorkspacesServiceHandler interface {
 	//	NOT_FOUND:           the workspace_id is unkown
 	//	FAILED_PRECONDITION: if there's no running instance
 	StopWorkspace(context.Context, *connect_go.Request[v1.StopWorkspaceRequest], *connect_go.ServerStream[v1.StopWorkspaceResponse]) error
+	UpdatePort(context.Context, *connect_go.Request[v1.UpdatePortRequest]) (*connect_go.Response[v1.UpdatePortResponse], error)
 }
 
 // NewWorkspacesServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -170,6 +183,11 @@ func NewWorkspacesServiceHandler(svc WorkspacesServiceHandler, opts ...connect_g
 		svc.StopWorkspace,
 		opts...,
 	))
+	mux.Handle("/gitpod.experimental.v1.WorkspacesService/UpdatePort", connect_go.NewUnaryHandler(
+		"/gitpod.experimental.v1.WorkspacesService/UpdatePort",
+		svc.UpdatePort,
+		opts...,
+	))
 	return "/gitpod.experimental.v1.WorkspacesService/", mux
 }
 
@@ -194,4 +212,8 @@ func (UnimplementedWorkspacesServiceHandler) CreateAndStartWorkspace(context.Con
 
 func (UnimplementedWorkspacesServiceHandler) StopWorkspace(context.Context, *connect_go.Request[v1.StopWorkspaceRequest], *connect_go.ServerStream[v1.StopWorkspaceResponse]) error {
 	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.WorkspacesService.StopWorkspace is not implemented"))
+}
+
+func (UnimplementedWorkspacesServiceHandler) UpdatePort(context.Context, *connect_go.Request[v1.UpdatePortRequest]) (*connect_go.Response[v1.UpdatePortResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.WorkspacesService.UpdatePort is not implemented"))
 }
