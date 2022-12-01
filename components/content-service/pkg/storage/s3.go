@@ -91,7 +91,7 @@ func (rs *PresignedS3Storage) DeleteBucket(ctx context.Context, userID, bucket s
 		return xerrors.Errorf("can only delete from configured bucket; this looks like a bug in Gitpod")
 	}
 
-	return rs.DeleteObject(ctx, rs.Config.Bucket, &DeleteObjectQuery{Prefix: "/" + userID})
+	return rs.DeleteObject(ctx, rs.Config.Bucket, &DeleteObjectQuery{Prefix: userID + "/"})
 }
 
 // DeleteObject implements PresignedAccess
@@ -104,8 +104,8 @@ func (rs *PresignedS3Storage) DeleteObject(ctx context.Context, bucket string, q
 
 	case query.Prefix != "":
 		resp, err := rs.client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
-			Bucket: &rs.Config.Bucket,
-			Prefix: &query.Prefix,
+			Bucket: aws.String(rs.Config.Bucket),
+			Prefix: aws.String(query.Prefix),
 		})
 		if err != nil {
 			return err
@@ -115,6 +115,10 @@ func (rs *PresignedS3Storage) DeleteObject(ctx context.Context, bucket string, q
 				Key: e.Key,
 			})
 		}
+	}
+
+	if len(objects) == 0 {
+		return nil
 	}
 
 	_, err := rs.client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
@@ -160,13 +164,16 @@ func (rs *PresignedS3Storage) InstanceObject(ownerID string, workspaceID string,
 // ObjectExists implements PresignedAccess
 func (rs *PresignedS3Storage) ObjectExists(ctx context.Context, bucket string, path string) (bool, error) {
 	_, err := rs.client.GetObjectAttributes(ctx, &s3.GetObjectAttributesInput{
-		Bucket: &rs.Config.Bucket,
-		Key:    aws.String(path),
+		Bucket:           &rs.Config.Bucket,
+		Key:              aws.String(path),
+		ObjectAttributes: []types.ObjectAttributes{types.ObjectAttributesEtag},
 	})
 
-	if errors.Is(err, &types.NotFound{}) {
+	var nsk *types.NoSuchKey
+	if errors.As(err, &nsk) {
 		return false, nil
 	}
+
 	if err != nil {
 		return false, err
 	}
@@ -176,8 +183,9 @@ func (rs *PresignedS3Storage) ObjectExists(ctx context.Context, bucket string, p
 // ObjectHash implements PresignedAccess
 func (rs *PresignedS3Storage) ObjectHash(ctx context.Context, bucket string, obj string) (string, error) {
 	resp, err := rs.client.GetObjectAttributes(ctx, &s3.GetObjectAttributesInput{
-		Bucket: &rs.Config.Bucket,
-		Key:    aws.String(obj),
+		Bucket:           &rs.Config.Bucket,
+		Key:              aws.String(obj),
+		ObjectAttributes: []types.ObjectAttributes{types.ObjectAttributesEtag},
 	})
 	if err != nil {
 		return "", err
@@ -189,8 +197,9 @@ func (rs *PresignedS3Storage) ObjectHash(ctx context.Context, bucket string, obj
 // SignDownload implements PresignedAccess
 func (rs *PresignedS3Storage) SignDownload(ctx context.Context, bucket string, obj string, options *SignedURLOptions) (info *DownloadInfo, err error) {
 	resp, err := rs.client.GetObjectAttributes(ctx, &s3.GetObjectAttributesInput{
-		Bucket: &rs.Config.Bucket,
-		Key:    aws.String(obj),
+		Bucket:           &rs.Config.Bucket,
+		Key:              aws.String(obj),
+		ObjectAttributes: []types.ObjectAttributes{types.ObjectAttributesObjectSize},
 	})
 	if err != nil {
 		return nil, err
@@ -345,7 +354,7 @@ func (s3st *s3Storage) Upload(ctx context.Context, source string, name string, o
 	}
 
 	if s3st.client == nil {
-		err = xerrors.Errorf("no minio client available - did you call Init()?")
+		err = xerrors.Errorf("no s3 client available - did you call Init()?")
 		return
 	}
 
