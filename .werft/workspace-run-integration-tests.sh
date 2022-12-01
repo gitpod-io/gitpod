@@ -181,6 +181,11 @@ fi
 echo "build success" | werft log slice "build preview environment"
 werft log slice "build preview environment" --done
 
+echo "Configuring access to preview environment (k3s)" | werft log slice "configure k3s kubeconfig"
+previewctl install-context --gcp-service-account /mnt/secrets/gcp-sa/service-account.json | werft log slice "configure k3s kubeconfig"
+echo "Done" | werft log slice "configure k3s kubeconfig"
+werft log slice "configure k3s kubeconfig" --done
+
 werft log phase "integration test" "integration test"
 TEST_DIR=$(basename "/workspace/test/")
 cd "${TEST_DIR}"
