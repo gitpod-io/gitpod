@@ -293,17 +293,13 @@ export type BillingTier = "paid" | "free";
  */
 export const WorkspaceFeatureFlags = {
     full_workspace_backup: undefined,
-    persistent_volume_claim: undefined,
     workspace_class_limiting: undefined,
     workspace_connection_limiting: undefined,
     workspace_psi: undefined,
 };
 export type NamedWorkspaceFeatureFlag = keyof typeof WorkspaceFeatureFlags;
 export namespace NamedWorkspaceFeatureFlag {
-    export const WORKSPACE_PERSISTED_FEATTURE_FLAGS: NamedWorkspaceFeatureFlag[] = [
-        "full_workspace_backup",
-        "persistent_volume_claim",
-    ];
+    export const WORKSPACE_PERSISTED_FEATTURE_FLAGS: NamedWorkspaceFeatureFlag[] = ["full_workspace_backup"];
     export function isWorkspacePersisted(ff: NamedWorkspaceFeatureFlag): boolean {
         return WORKSPACE_PERSISTED_FEATTURE_FLAGS.includes(ff);
     }
@@ -649,18 +645,6 @@ export interface Snapshot {
     bucketId: string;
     state: SnapshotState;
     message?: string;
-}
-
-export interface VolumeSnapshot {
-    id: string;
-    workspaceId: string;
-    creationTime: string;
-    volumeHandle: string;
-}
-
-export interface VolumeSnapshotWithWSType {
-    vs: VolumeSnapshot;
-    wsType: WorkspaceType;
 }
 
 export type SnapshotState = "pending" | "available" | "error";

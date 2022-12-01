@@ -16,13 +16,11 @@ interface FeatureFlagConfig {
 }
 
 const FeatureFlagContext = createContext<{
-    showPersistentVolumeClaimUI: boolean;
     showUsageView: boolean;
     showUseLastSuccessfulPrebuild: boolean;
     usePublicApiTeamsService: boolean;
     enablePersonalAccessTokens: boolean;
 }>({
-    showPersistentVolumeClaimUI: false,
     showUsageView: false,
     showUseLastSuccessfulPrebuild: false,
     usePublicApiTeamsService: false,
@@ -35,7 +33,6 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const { project } = useContext(ProjectContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
-    const [showPersistentVolumeClaimUI, setShowPersistentVolumeClaimUI] = useState<boolean>(false);
     const [showUsageView, setShowUsageView] = useState<boolean>(false);
     const [showUseLastSuccessfulPrebuild, setShowUseLastSuccessfulPrebuild] = useState<boolean>(false);
     const [usePublicApiTeamsService, setUsePublicApiTeamsService] = useState<boolean>(false);
@@ -45,7 +42,6 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
         if (!user) return;
         (async () => {
             const featureFlags: FeatureFlagConfig = {
-                persistent_volume_claim: { defaultValue: true, setter: setShowPersistentVolumeClaimUI },
                 usage_view: { defaultValue: false, setter: setShowUsageView },
                 showUseLastSuccessfulPrebuild: { defaultValue: false, setter: setShowUseLastSuccessfulPrebuild },
                 publicApiExperimentalTeamsService: { defaultValue: false, setter: setUsePublicApiTeamsService },
@@ -89,7 +85,6 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     return (
         <FeatureFlagContext.Provider
             value={{
-                showPersistentVolumeClaimUI,
                 showUsageView,
                 showUseLastSuccessfulPrebuild,
                 usePublicApiTeamsService,

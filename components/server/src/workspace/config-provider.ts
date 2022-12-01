@@ -32,7 +32,6 @@ import { AuthorizationService } from "../user/authorization-service";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { Config } from "../config";
 import { EntitlementService } from "../billing/entitlement-service";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { TeamDB } from "@gitpod/gitpod-db/lib";
 
 const POD_PATH_WORKSPACE_BASE = "/workspace";
@@ -134,16 +133,6 @@ export class ConfigProvider {
                     NamedWorkspaceFeatureFlag.isWorkspacePersisted,
                 );
             }
-            const billingTier = await this.entitlementService.getBillingTier(user);
-            // this allows to control user`s PVC feature flag via ConfigCat
-            const isPVCEnabled = await getExperimentsClientForBackend().getValueAsync("user_pvc", false, {
-                user,
-                billingTier,
-            });
-            if (isPVCEnabled) {
-                config._featureFlags = (config._featureFlags || []).concat(["persistent_volume_claim"]);
-            }
-
             return { config, literalConfig };
         } catch (e) {
             TraceContext.setError({ span }, e);
