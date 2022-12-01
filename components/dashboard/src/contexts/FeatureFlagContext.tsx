@@ -17,11 +17,13 @@ interface FeatureFlagConfig {
 
 const FeatureFlagContext = createContext<{
     showUsageView: boolean;
+    isUsageBasedBillingEnabled: boolean;
     showUseLastSuccessfulPrebuild: boolean;
     usePublicApiTeamsService: boolean;
     enablePersonalAccessTokens: boolean;
 }>({
     showUsageView: false,
+    isUsageBasedBillingEnabled: false,
     showUseLastSuccessfulPrebuild: false,
     usePublicApiTeamsService: false,
     enablePersonalAccessTokens: false,
@@ -34,6 +36,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
     const [showUsageView, setShowUsageView] = useState<boolean>(false);
+    const [isUsageBasedBillingEnabled, setIsUsageBasedBillingEnabled] = useState<boolean>(false);
     const [showUseLastSuccessfulPrebuild, setShowUseLastSuccessfulPrebuild] = useState<boolean>(false);
     const [usePublicApiTeamsService, setUsePublicApiTeamsService] = useState<boolean>(false);
     const [enablePersonalAccessTokens, setPersonalAccessTokensEnabled] = useState<boolean>(false);
@@ -43,6 +46,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
         (async () => {
             const featureFlags: FeatureFlagConfig = {
                 usage_view: { defaultValue: false, setter: setShowUsageView },
+                isUsageBasedBillingEnabled: { defaultValue: false, setter: setIsUsageBasedBillingEnabled },
                 showUseLastSuccessfulPrebuild: { defaultValue: false, setter: setShowUseLastSuccessfulPrebuild },
                 publicApiExperimentalTeamsService: { defaultValue: false, setter: setUsePublicApiTeamsService },
                 personalAccessTokensEnabled: { defaultValue: false, setter: setPersonalAccessTokensEnabled },
@@ -86,6 +90,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
         <FeatureFlagContext.Provider
             value={{
                 showUsageView,
+                isUsageBasedBillingEnabled,
                 showUseLastSuccessfulPrebuild,
                 usePublicApiTeamsService,
                 enablePersonalAccessTokens,

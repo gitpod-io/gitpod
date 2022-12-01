@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import React, { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
 import { getGitpodService } from "../service/service";
 import Alert from "../components/Alert";
@@ -23,8 +23,7 @@ import { poll, PollOptions } from "../utils";
 import { Disposable } from "@gitpod/gitpod-protocol";
 import { PaymentContext } from "../payment-context";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
-import { UserContext } from "../user-context";
-import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
+import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 
 export default function Teams() {
     return (
@@ -45,7 +44,7 @@ interface Slot extends TeamSubscriptionSlotResolved {
 }
 
 function AllTeams() {
-    const { userBillingMode } = useContext(UserContext);
+    const { isUsageBasedBillingEnabled } = useContext(FeatureFlagContext);
     const { currency, isStudent, isChargebeeCustomer, setIsChargebeeCustomer } = useContext(PaymentContext);
 
     const [slots, setSlots] = useState<Slot[]>([]);
@@ -453,8 +452,8 @@ function AllTeams() {
         return pendingSlotsPurchase && pendingSlotsPurchase.tsId === ts.id;
     };
 
-    const renderTeams = () => (
-        <React.Fragment>
+    return (
+        <div>
             <div className="flex flex-row">
                 <div className="flex-grow ">
                     <h3 className="self-center">All Team Plans</h3>
@@ -469,7 +468,11 @@ function AllTeams() {
                     {getActiveSubs().length > 0 && (
                         <button
                             className="self-end my-auto"
-                            disabled={!!pendingPlanPurchase || getAvailableSubTypes().length === 0}
+                            disabled={
+                                !!isUsageBasedBillingEnabled ||
+                                !!pendingPlanPurchase ||
+                                getAvailableSubTypes().length === 0
+                            }
                             onClick={() => showCreateTeamModal()}
                         >
                             Create Team Plan
@@ -501,7 +504,7 @@ function AllTeams() {
                 <AddMembersModal onClose={() => setAddMembersModal(undefined)} onBuy={onBuy} {...addMembersModal} />
             )}
 
-            {getActiveSubs().length === 0 && !pendingPlanPurchase && (
+            {getActiveSubs().length === 0 && !pendingPlanPurchase && !isUsageBasedBillingEnabled && (
                 <div className="w-full flex h-80 mt-2 rounded-xl bg-gray-100 dark:bg-gray-900">
                     <div className="m-auto text-center">
                         <h3 className="self-center text-gray-500 dark:text-gray-400 mb-4">No Active Team Plans</h3>
@@ -600,23 +603,6 @@ function AllTeams() {
                             </div>
                         </div>
                     ))}
-                </div>
-            )}
-        </React.Fragment>
-    );
-
-    // TOOD(gpl) We might want to reduce visibility of those actions similarly to how we guard access to that API, cmp.: https://github.com/gitpod-io/gitpod/blob/db90aefb9f7dc1d062e9cb73241c1fda2eccee4b/components/server/ee/src/workspace/gitpod-server-impl.ts#L2011
-    const showTeamPlans = BillingMode.showTeamSubscriptionUI(userBillingMode);
-    return (
-        <div>
-            {showTeamPlans ? (
-                renderTeams()
-            ) : (
-                <div className="flex flex-row">
-                    <div className="flex-grow ">
-                        <h3 className="self-center">All Team Plans</h3>
-                        <h2>Manage team plans and team members.</h2>
-                    </div>
                 </div>
             )}
         </div>
