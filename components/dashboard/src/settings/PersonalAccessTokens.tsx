@@ -268,7 +268,7 @@ export function PersonalAccessTokenCreateView() {
                 </>
                 <div className="max-w-md mb-6">
                     <div className="flex flex-col mb-4">
-                        <h3>{editTokenID ? "Edit" : "New"} Personal Access Token</h3>
+                        <h3>{editTokenID ? "Edit" : "New"} Access Token</h3>
                         {editTokenID ? (
                             <>
                                 <h2 className="text-gray-500 dark:text-gray-400 dark:text-gray-400">
@@ -338,7 +338,7 @@ export function PersonalAccessTokenCreateView() {
                             </button>
                         </Link>
                     )}
-                    <button onClick={handleConfirm}>{editTokenID ? "Update" : "Create"} Personal Access Token</button>
+                    <button onClick={handleConfirm}>{editTokenID ? "Update" : "Create"} Access Token</button>
                 </div>
             </PageWithSettingsSubMenu>
         </div>
@@ -387,7 +387,7 @@ function ListAccessTokensView() {
         <>
             <div className="flex items-center sm:justify-between mb-4">
                 <div>
-                    <h3>Personal Access Tokens</h3>
+                    <h3>Access Tokens</h3>
                     <h2 className="text-gray-500">Create or regenerate access tokens.</h2>
                 </div>
                 {tokens.length > 0 && (
