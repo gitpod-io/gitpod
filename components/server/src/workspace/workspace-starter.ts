@@ -121,11 +121,10 @@ import {
 import { ContextParser } from "./context-parser-service";
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-imagebuilder-client-provider";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { WorkspaceClasses, WorkspaceClassesConfig } from "./workspace-classes";
+import { WorkspaceClassesConfig } from "./workspace-classes";
 import { EntitlementService } from "../billing/entitlement-service";
 import { BillingModes } from "../../ee/src/billing/billing-mode";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 
@@ -203,51 +202,29 @@ export const chooseIDE = (
 export async function getWorkspaceClassForInstance(
     ctx: TraceContext,
     workspace: Workspace,
-    previousInstance: WorkspaceInstance | undefined,
     user: User,
     project: Project | undefined,
     entitlementService: EntitlementService,
     config: WorkspaceClassesConfig,
-    workspaceDb: DBWithTracing<WorkspaceDB>,
 ): Promise<string> {
     const span = TraceContext.startSpan("getWorkspaceClassForInstance", ctx);
     try {
-        let workspaceClass = "";
-        if (!previousInstance?.workspaceClass) {
-            if (workspace.type == "regular") {
-                const prebuildClass = await WorkspaceClasses.getFromPrebuild(ctx, workspace, workspaceDb.trace(ctx));
-                if (prebuildClass) {
-                    const userClass = await WorkspaceClasses.getConfiguredOrUpgradeFromLegacy(
-                        user,
-                        project,
-                        config,
-                        entitlementService,
-                    );
-                    workspaceClass = WorkspaceClasses.selectClassForRegular(prebuildClass, userClass, config);
-                } else if (project?.settings?.workspaceClasses?.regular) {
-                    workspaceClass = project?.settings?.workspaceClasses?.regular;
-                } else if (user.additionalData?.workspaceClasses?.regular) {
-                    workspaceClass = user.additionalData?.workspaceClasses?.regular;
-                }
-            }
-
-            if (workspace.type === "prebuild") {
-                if (project?.settings?.workspaceClasses?.prebuild) {
-                    workspaceClass = project?.settings?.workspaceClasses?.prebuild;
-                }
-            }
-
-            if (!workspaceClass) {
-                workspaceClass = WorkspaceClasses.getDefaultId(config);
-                if (await entitlementService.userGetsMoreResources(user)) {
-                    workspaceClass = WorkspaceClasses.getMoreResourcesIdOrDefault(config);
-                }
-            }
-        } else {
-            workspaceClass = WorkspaceClasses.getPreviousOrDefault(config, previousInstance.workspaceClass);
+        let workspaceClass: string | undefined;
+        switch (workspace.type) {
+            case "prebuild":
+                workspaceClass = project?.settings?.workspaceClasses?.prebuild;
+                break;
+            case "regular":
+                workspaceClass = project?.settings?.workspaceClasses?.regular;
+                break;
         }
-
-        return workspaceClass;
+        if (!workspaceClass && (await entitlementService.userGetsMoreResources(user))) {
+            workspaceClass = config.find((c) => !!c.marker?.moreResources)?.id;
+        }
+        if (!workspaceClass) {
+            workspaceClass = config.find((c) => !!c.isDefault)?.id;
+        }
+        return workspaceClass!;
     } finally {
         span.finish();
     }
@@ -918,41 +895,16 @@ export class WorkspaceStarter {
             await this.tryEnablePSI(featureFlags, user, billingTier);
 
             const usageAttributionId = await this.userService.getWorkspaceUsageAttributionId(user, workspace.projectId);
-            const billingMode = await this.billingModes.getBillingMode(usageAttributionId, new Date());
+            let workspaceClass = await getWorkspaceClassForInstance(
+                ctx,
+                workspace,
+                user,
+                project,
+                this.entitlementService,
+                this.config.workspaceClasses,
+            );
 
-            let workspaceClass = "";
-            if (BillingMode.canSetWorkspaceClass(billingMode)) {
-                // this is either the first time we start the workspace or the workspace was started
-                // before workspace classes and does not have a class yet
-                workspaceClass = await getWorkspaceClassForInstance(
-                    ctx,
-                    workspace,
-                    previousInstance,
-                    user,
-                    project,
-                    this.entitlementService,
-                    this.config.workspaceClasses,
-                    this.workspaceDb,
-                );
-
-                featureFlags = featureFlags.concat(["workspace_class_limiting"]);
-            } else {
-                // todo: remove this once pvc has been rolled out
-                const prebuildClass = await WorkspaceClasses.getFromPrebuild(
-                    ctx,
-                    workspace,
-                    this.workspaceDb.trace(ctx),
-                );
-                if (prebuildClass?.endsWith("-pvc")) {
-                    workspaceClass = prebuildClass;
-                    // ####
-                } else {
-                    workspaceClass = "default";
-                    if (await this.entitlementService.userGetsMoreResources(user)) {
-                        workspaceClass = "gitpodio-internal-xl";
-                    }
-                }
-            }
+            featureFlags = featureFlags.concat(["workspace_class_limiting"]);
 
             if (!!featureFlags) {
                 // only set feature flags if there actually are any. Otherwise we waste the

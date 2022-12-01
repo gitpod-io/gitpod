@@ -11,15 +11,12 @@ import { ThemeContext } from "../theme-context";
 import { UserContext } from "../user-context";
 import { trackEvent } from "../Analytics";
 import SelectIDE from "./SelectIDE";
-import SelectWorkspaceClass from "./selectClass";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
-import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import { WorkspaceClasses } from "@gitpod/gitpod-protocol";
 
 type Theme = "light" | "dark" | "system";
 
 export default function Preferences() {
-    const { user, userBillingMode } = useContext(UserContext);
+    const { user } = useContext(UserContext);
     const { setIsDark } = useContext(ThemeContext);
 
     const [theme, setTheme] = useState<Theme>(localStorage.theme || "system");
@@ -50,30 +47,12 @@ export default function Preferences() {
         }
     };
 
-    const setWorkspaceClass = async (value: string) => {
-        const additionalData = user?.additionalData || {};
-        const prevWorkspaceClass = additionalData?.workspaceClasses?.regular;
-        const workspaceClasses = (additionalData?.workspaceClasses || {}) as WorkspaceClasses;
-        workspaceClasses.regular = value;
-        workspaceClasses.prebuild = value;
-        additionalData.workspaceClasses = workspaceClasses;
-        if (value !== prevWorkspaceClass) {
-            await getGitpodService().server.updateLoggedInUser({ additionalData });
-        }
-        return prevWorkspaceClass;
-    };
-
     return (
         <div>
             <PageWithSettingsSubMenu title="Preferences" subtitle="Configure user preferences.">
                 <h3>Editor</h3>
                 <p className="text-base text-gray-500 dark:text-gray-400">Choose the editor for opening workspaces.</p>
                 <SelectIDE location="preferences" />
-                <SelectWorkspaceClass
-                    workspaceClass={user?.additionalData?.workspaceClasses?.regular}
-                    enabled={BillingMode.canSetWorkspaceClass(userBillingMode)}
-                    setWorkspaceClass={setWorkspaceClass}
-                />
                 <h3 className="mt-12">Theme</h3>
                 <p className="text-base text-gray-500 dark:text-gray-400">Early bird or night owl? Choose your side.</p>
                 <div className="mt-4 space-x-3 flex">

@@ -37,7 +37,7 @@ export default function SelectWorkspaceClass(props: SelectWorkspaceClassProps) {
             setSupportedClasses(classes);
 
             if (!workspaceClass) {
-                setWorkspaceClass(classes.find((c) => c.isSelected)?.id || "");
+                setWorkspaceClass(classes.find((c) => c.isDefault)?.id || "");
             }
         };
 
