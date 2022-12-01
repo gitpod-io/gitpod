@@ -5,7 +5,7 @@
  */
 
 import { inject, injectable } from "inversify";
-import { WorkspaceSoftDeletion, VolumeSnapshotWithWSType } from "@gitpod/gitpod-protocol";
+import { WorkspaceSoftDeletion } from "@gitpod/gitpod-protocol";
 import {
     WorkspaceDB,
     WorkspaceAndOwner,
@@ -17,9 +17,7 @@ import { StorageClient } from "../storage/storage-client";
 import { Config } from "../config";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
-import { DeleteVolumeSnapshotRequest } from "@gitpod/ws-manager/lib";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { WorkspaceType } from "@gitpod/ws-manager/lib/core_pb";
 
 @injectable()
 export class WorkspaceDeletionService {
@@ -119,23 +117,6 @@ export class WorkspaceDeletionService {
         const span = TraceContext.startSpan("deleteWorkspaceStorage", ctx);
         try {
             await this.storageClient.deleteWorkspaceBackups(ws.ownerId, ws.id, includeSnapshots);
-            let vss = await this.db
-                .trace({ span })
-                .findVolumeSnapshotForGCByWorkspaceId(ws.id, this.config.workspaceGarbageCollection.chunkLimit);
-            // we need full workspace info here to find its type
-            let fullWS = await this.db.trace({ span }).findById(ws.id);
-            if (!fullWS) {
-                throw new Error(`Workspace ${ws.id} not found while deleting its storage`);
-            }
-            let wsType = fullWS.type;
-            let vssType = vss.map((vs) => {
-                let vswst: VolumeSnapshotWithWSType = {
-                    vs,
-                    wsType: wsType,
-                };
-                return vswst;
-            });
-            await Promise.all(vssType.map((vs) => this.garbageCollectVolumeSnapshot({ span }, vs)));
         } catch (err) {
             TraceContext.setError({ span }, err);
             throw err;
@@ -143,86 +124,5 @@ export class WorkspaceDeletionService {
             span.finish();
         }
         return true;
-    }
-
-    /**
-     * Perform deletion of volume snapshot from all clusters and from cloud provider:
-     * ws-manager (workspace) takes care of deleting actual disk snapshots from cloud provider
-     * to reduce load on k8s api server, we try to clean up volume snapshot k8s objects from
-     * all clusters prior to deleting them from cloud provider.
-     *  - throws an error if something went wrong during deletion
-     *  - returns true in case of successful deletion
-     * @param ctx
-     * @param vs
-     */
-    public async garbageCollectVolumeSnapshot(ctx: TraceContext, vs: VolumeSnapshotWithWSType): Promise<boolean> {
-        const span = TraceContext.startSpan("garbageCollectVolumeSnapshot", ctx);
-
-        try {
-            const allClusters = await this.workspaceManagerClientProvider.getAllWorkspaceClusters(
-                this.config.installationShortname,
-            );
-            // we need to do two things here:
-            // 1. we want to delete volume snapshot object from all workspace clusters
-            // 2. we want to delete cloud provider source snapshot
-            let wasDeleted = false;
-            let index = 0;
-
-            let availableClusters = allClusters.filter((c) => c.state === "available");
-            for (let cluster of availableClusters) {
-                const client = await this.workspaceManagerClientProvider.get(
-                    cluster.name,
-                    this.config.installationShortname,
-                );
-                const req = new DeleteVolumeSnapshotRequest();
-                req.setId(vs.vs.id);
-                req.setVolumeHandle(vs.vs.volumeHandle);
-                let type: WorkspaceType = WorkspaceType.REGULAR;
-                switch (vs.wsType) {
-                    case "regular": {
-                        type = WorkspaceType.REGULAR;
-                        break;
-                    }
-                    case "prebuild": {
-                        type = WorkspaceType.PREBUILD;
-                        break;
-                    }
-                    default: {
-                        throw new Error(`wds: deleteVolumeSnapshot unknown workspace type '${vs.wsType}' detected`);
-                        break;
-                    }
-                }
-                req.setWsType(type);
-
-                let softDelete = true;
-                // if we did not delete volume snapshot yet and this is our last cluster, make sure we perform hard delete
-                // meaning we will restore volume snapshot in that cluster, and then delete it, so that it will be removed
-                // from cloud provider as well
-                if (!wasDeleted && index == availableClusters.length - 1) {
-                    softDelete = false;
-                }
-                req.setSoftDelete(softDelete);
-
-                index = index + 1;
-                try {
-                    const deleteResp = await client.deleteVolumeSnapshot(ctx, req);
-                    if (deleteResp.getWasDeleted() === true) {
-                        wasDeleted = true;
-                    }
-                } catch (err) {
-                    log.error("wds: deleteVolumeSnapshot failed", err);
-                }
-            }
-            if (wasDeleted) {
-                await this.db.trace({ span }).deleteVolumeSnapshot(vs.vs.id);
-            }
-
-            return wasDeleted;
-        } catch (err) {
-            TraceContext.setError({ span }, err);
-            throw err;
-        } finally {
-            span.finish();
-        }
     }
 }

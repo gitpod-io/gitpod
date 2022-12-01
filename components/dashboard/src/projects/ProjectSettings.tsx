@@ -13,7 +13,6 @@ import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import PillLabel from "../components/PillLabel";
 import { ProjectContext } from "./project-context";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import SelectWorkspaceClass from "../settings/selectClass";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 
@@ -48,7 +47,6 @@ export function ProjectSettingsPage(props: { project?: Project; children?: React
 }
 
 export default function () {
-    const { showPersistentVolumeClaimUI } = useContext(FeatureFlagContext);
     const { project, setProject } = useContext(ProjectContext);
     const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
     const { teams } = useContext(TeamsContext);
@@ -164,24 +162,6 @@ export default function () {
                     enabled={BillingMode.canSetWorkspaceClass(teamBillingMode)}
                     setWorkspaceClass={setWorkspaceClass}
                 />
-            )}
-            {showPersistentVolumeClaimUI && (
-                <>
-                    {!BillingMode.canSetWorkspaceClass(teamBillingMode) && <h3 className="mt-12">Workspaces</h3>}
-                    <CheckBox
-                        title={
-                            <span>
-                                Enable Persistent Volume Claim{" "}
-                                <PillLabel type="warn" className="font-semibold mt-2 ml-2 py-0.5 px-2 self-center">
-                                    Alpha
-                                </PillLabel>
-                            </span>
-                        }
-                        desc={<span>Experimental feature that is still under development.</span>}
-                        checked={project.settings?.usePersistentVolumeClaim ?? false}
-                        onChange={({ target }) => updateProjectSettings({ usePersistentVolumeClaim: target.checked })}
-                    />
-                </>
             )}
         </ProjectSettingsPage>
     );

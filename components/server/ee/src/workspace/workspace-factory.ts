@@ -31,7 +31,6 @@ import { UserCounter } from "../user/user-counter";
 import { increasePrebuildsStartedCounter } from "../../../src/prometheus-metrics";
 import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 import { EntitlementService } from "../../../src/billing/entitlement-service";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { IncrementalPrebuildsService } from "../prebuilds/incremental-prebuilds-service";
 
 @injectable()
@@ -173,18 +172,6 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
             }
             ws.type = "prebuild";
             ws.projectId = project?.id;
-            // Handle PVC propagation:
-            if (!project?.settings?.usePersistentVolumeClaim) {
-                if (ws.config._featureFlags) {
-                    // If PVC is disabled, we want to make sure that we remove that feature flag (in case the user enabled it!)
-                    // This is necessary to ensure if user has PVC enabled on their account, that they
-                    // will not hijack prebuild with PVC and make everyone who use this prebuild to auto enroll into PVC feature.
-                    ws.config._featureFlags = ws.config._featureFlags.filter((ff) => ff !== "persistent_volume_claim");
-                }
-            } else {
-                // If PVC is enabled, we explicitly want all prebuilds to be stored that way.
-                ws.config._featureFlags = (ws.config._featureFlags || []).concat(["persistent_volume_claim"]);
-            }
             ws = await this.db.trace({ span }).store(ws);
 
             const pws = await this.db.trace({ span }).storePrebuiltWorkspace({
@@ -262,21 +249,6 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                 if (teams.some((t) => t.id === project?.teamId)) {
                     projectId = project.id;
                 }
-            }
-
-            // Special case for PVC: While it's a workspace-persisted feature flag, we support the upgrade path (non-pvc -> pvc), so we apply it here
-            if (user.featureFlags?.permanentWSFeatureFlags?.includes("persistent_volume_claim")) {
-                config._featureFlags = (config._featureFlags || []).concat(["persistent_volume_claim"]);
-            }
-            const billingTier = await this.entitlementService.getBillingTier(user);
-            // this allows to control user`s PVC feature flag via ConfigCat
-            if (
-                await getExperimentsClientForBackend().getValueAsync("user_pvc", false, {
-                    user,
-                    billingTier,
-                })
-            ) {
-                config._featureFlags = (config._featureFlags || []).concat(["persistent_volume_claim"]);
             }
 
             if (OpenPrebuildContext.is(context.originalContext)) {

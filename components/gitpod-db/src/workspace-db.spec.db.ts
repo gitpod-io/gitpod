@@ -17,7 +17,6 @@ import { DBWorkspace } from "./typeorm/entity/db-workspace";
 import { DBPrebuiltWorkspace } from "./typeorm/entity/db-prebuilt-workspace";
 import { DBWorkspaceInstance } from "./typeorm/entity/db-workspace-instance";
 import { secondsBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
-import { DBVolumeSnapshot } from "./typeorm/entity/db-volume-snapshot";
 
 @suite
 class WorkspaceDBSpec {
@@ -185,7 +184,6 @@ class WorkspaceDBSpec {
         await mnr.getRepository(DBWorkspace).delete({});
         await mnr.getRepository(DBWorkspaceInstance).delete({});
         await mnr.getRepository(DBPrebuiltWorkspace).delete({});
-        await mnr.getRepository(DBVolumeSnapshot).delete({});
     }
 
     @test(timeout(10000))
@@ -661,111 +659,6 @@ class WorkspaceDBSpec {
                 pws.id,
             ]);
         }
-    }
-
-    @test(timeout(10000))
-    public async testCanFindVolumeSnapshotById() {
-        await this.threeVolumeSnapshotsForTwoWorkspaces();
-
-        const volSnapshot = await this.db.findVolumeSnapshotById("123");
-
-        expect(volSnapshot?.id).to.eq("123");
-    }
-
-    @test(timeout(10000))
-    public async testCantFindDeletedVolumeSnapshotById() {
-        await this.threeVolumeSnapshotsForTwoWorkspaces();
-
-        const volSnapshot = await this.db.findVolumeSnapshotById("456b");
-
-        expect(volSnapshot).to.be.undefined;
-    }
-
-    @test(timeout(10000))
-    public async testFindVolumeSnapshotWorkspacesForGC() {
-        await this.threeVolumeSnapshotsForTwoWorkspaces();
-
-        const wsIds = await this.db.findVolumeSnapshotWorkspacesForGC(10);
-        expect(wsIds).to.deep.equal(["ws-123"]);
-    }
-
-    @test(timeout(10000))
-    public async findVolumeSnapshotForGCByWorkspaceId() {
-        await this.threeVolumeSnapshotsForTwoWorkspaces();
-
-        const vss = (await this.db.findVolumeSnapshotForGCByWorkspaceId("ws-123", 10)).map((vs) => ({
-            ...vs,
-            creationTime: "", // this is updated by the DB, so we need to blank for the sake of this test
-        }));
-        expect(vss).to.deep.equal([
-            {
-                creationTime: "",
-                deleted: false,
-                id: "456",
-                volumeHandle: "some-handle2",
-                workspaceId: "ws-123",
-            },
-            {
-                creationTime: "",
-                deleted: false,
-                id: "123",
-                volumeHandle: "some-handle",
-                workspaceId: "ws-123",
-            },
-        ]);
-    }
-
-    protected async threeVolumeSnapshotsForTwoWorkspaces() {
-        const connection = await this.typeorm.getConnection();
-        const repo = connection.getRepository(DBVolumeSnapshot);
-
-        const now = new Date(2018, 2, 16, 10, 0, 0).toISOString();
-        const id = "123";
-        const workspaceId = "ws-123";
-        await repo.save({
-            id,
-            creationTime: now,
-            volumeHandle: "some-handle",
-            workspaceId,
-        });
-        const beforeNow = new Date(2018, 2, 16, 11, 5, 10).toISOString();
-        const id2 = "456";
-        await repo.save({
-            id: id2,
-            creationTime: beforeNow,
-            volumeHandle: "some-handle2",
-            workspaceId,
-        });
-
-        const longBeforeNow = new Date(2018, 2, 15, 10, 0, 0).toISOString();
-        const id2b = "456b";
-        await repo.save({
-            id: id2b,
-            creationTime: longBeforeNow,
-            volumeHandle: "some-handle2b",
-            workspaceId,
-            deleted: true,
-        });
-
-        const someOtherTime = new Date(2018, 2, 10, 6, 5).toISOString();
-        const id3 = "789";
-        const workspaceId2 = "ws-789";
-        await repo.save({
-            id: id3,
-            creationTime: someOtherTime,
-            volumeHandle: "some-handle3",
-            workspaceId: workspaceId2,
-        });
-
-        const yetAnotherTime = new Date(2018, 2, 10, 5, 5).toISOString();
-        const id4 = "012";
-        await repo.save({
-            id: id4,
-            creationTime: yetAnotherTime,
-            volumeHandle: "some-handle4",
-            workspaceId: workspaceId2,
-            deleted: true,
-        });
     }
 
     @test(timeout(10000))

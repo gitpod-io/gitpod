@@ -6,7 +6,7 @@
 
 import { injectable, inject } from "inversify";
 import { ConsensusLeaderQorum } from "../consensus/consensus-leader-quorum";
-import { Disposable, VolumeSnapshotWithWSType } from "@gitpod/gitpod-protocol";
+import { Disposable } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { WorkspaceDeletionService } from "./workspace-deletion-service";
 import * as opentracing from "opentracing";
@@ -51,9 +51,6 @@ export class WorkspaceGarbageCollector {
                 log.error("wsgc: error during hard deletion of workspaces", err),
             );
             this.deleteOldPrebuilds().catch((err) => log.error("wsgc: error during prebuild deletion", err));
-            this.deleteOutdatedVolumeSnapshots().catch((err) =>
-                log.error("wsgc: error during volume snapshot gc deletion", err),
-            );
         }
     }
 
@@ -154,48 +151,6 @@ export class WorkspaceGarbageCollector {
 
             log.info(`wsgc: successfully deleted ${deletes.length} prebuilds`);
             span.addTags({ nrOfCollectedPrebuilds: deletes.length });
-        } catch (err) {
-            TraceContext.setError({ span }, err);
-            throw err;
-        } finally {
-            span.finish();
-        }
-    }
-
-    // finds volume snapshots that have been superseded by newer volume snapshot and removes them
-    protected async deleteOutdatedVolumeSnapshots() {
-        const span = opentracing.globalTracer().startSpan("deleteOutdatedVolumeSnapshots");
-        try {
-            const workspaceIds = await this.workspaceDB
-                .trace({ span })
-                .findVolumeSnapshotWorkspacesForGC(this.config.workspaceGarbageCollection.chunkLimit);
-            const volumeSnapshotsWithWSPromises = workspaceIds.map(async (wsId) => {
-                const [vss, ws] = await Promise.all([
-                    this.workspaceDB
-                        .trace({ span })
-                        .findVolumeSnapshotForGCByWorkspaceId(wsId, this.config.workspaceGarbageCollection.chunkLimit),
-                    this.workspaceDB.trace({ span }).findById(wsId),
-                ]);
-                return { wsId, ws, vss };
-            });
-
-            // We're doing the actual deletion in a sync for-loop tp avoid quadratic explosion of requests
-            for await (const { wsId, ws, vss } of volumeSnapshotsWithWSPromises) {
-                if (!ws) {
-                    log.error(`Workspace ${wsId} not found while looking for outdated volume snapshots`);
-                    continue; // Still, continue deleting the others
-                }
-                await Promise.all(
-                    // skip the first volume snapshot, as it is most recent, and then pass the rest into deletion
-                    vss.slice(1).map((vs) => {
-                        let vswst: VolumeSnapshotWithWSType = {
-                            vs,
-                            wsType: ws?.type,
-                        };
-                        return this.deletionService.garbageCollectVolumeSnapshot({ span }, vswst);
-                    }),
-                );
-            }
         } catch (err) {
             TraceContext.setError({ span }, err);
             throw err;

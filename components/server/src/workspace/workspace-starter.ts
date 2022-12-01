@@ -90,7 +90,6 @@ import {
     StartWorkspaceRequest,
     WorkspaceMetadata,
     WorkspaceType,
-    VolumeSnapshotInfo,
     StopWorkspacePolicy,
     StopWorkspaceRequest,
 } from "@gitpod/ws-manager/lib/core_pb";
@@ -936,12 +935,6 @@ export class WorkspaceStarter {
                     this.workspaceDb,
                 );
 
-                if (featureFlags.includes("persistent_volume_claim")) {
-                    if (workspaceClass === "g1-standard" || workspaceClass === "g1-large") {
-                        workspaceClass = workspaceClass + "-pvc";
-                    }
-                }
-
                 featureFlags = featureFlags.concat(["workspace_class_limiting"]);
             } else {
                 // todo: remove this once pvc has been rolled out
@@ -1164,7 +1157,6 @@ export class WorkspaceStarter {
                         workspace.context,
                         user,
                         "",
-                        false,
                     );
                     source = initializer;
                     disp.push(disposable);
@@ -1596,50 +1588,16 @@ export class WorkspaceStarter {
             }
         }
 
-        let volumeSnapshotId = "";
-        // always pick lastValidWorkspaceInstanceId if it is valid, otherwise workspace will be restored from prebuild
-        // even if there was workspace backup available
-        if (lastValidWorkspaceInstanceId != "") {
-            volumeSnapshotId = lastValidWorkspaceInstanceId;
-        } else if (
-            (SnapshotContext.is(workspace.context) || WithPrebuild.is(workspace.context)) &&
-            !!workspace.context.snapshotBucketId
-        ) {
-            volumeSnapshotId = workspace.context.snapshotBucketId;
-        }
-
-        let volumeSnapshotInfo = new VolumeSnapshotInfo();
-        const volumeSnapshots =
-            volumeSnapshotId != ""
-                ? await this.workspaceDb.trace(traceCtx).findVolumeSnapshotById(volumeSnapshotId)
-                : undefined;
-        if (volumeSnapshots !== undefined) {
-            log.info("starting workspace with volume snapshot info", {
-                lastInstanceId: lastValidWorkspaceInstanceId,
-                volSnapshotId: volumeSnapshotId,
-                snapshotId: volumeSnapshots.id,
-                volumeHandle: volumeSnapshots.volumeHandle,
-                workspaceId: workspace.id,
-            });
-            volumeSnapshotInfo.setVolumeSnapshotName(volumeSnapshots.id);
-            volumeSnapshotInfo.setVolumeSnapshotHandle(volumeSnapshots.volumeHandle);
-        }
-
         const initializerPromise = this.createInitializer(
             traceCtx,
             workspace,
             workspace.context,
             user,
             lastValidWorkspaceInstanceId,
-            volumeSnapshots !== undefined,
         );
         const userTimeoutPromise = this.entitlementService.getDefaultWorkspaceTimeout(user, new Date());
 
-        let featureFlags = instance.configuration!.featureFlags || [];
-        if (volumeSnapshots !== undefined) {
-            featureFlags = featureFlags.concat(["persistent_volume_claim"]);
-        }
-
+        const featureFlags = instance.configuration!.featureFlags || [];
         let ideImage: string;
         if (!!instance.configuration?.ideImage) {
             ideImage = instance.configuration?.ideImage;
@@ -1669,7 +1627,6 @@ export class WorkspaceStarter {
             spec.setTimeout(this.userService.workspaceTimeoutToDuration(await userTimeoutPromise));
         }
         spec.setAdmission(admissionLevel);
-        spec.setVolumeSnapshot(volumeSnapshotInfo);
         const sshKeys = await this.userDB.trace(traceCtx).getSSHPublicKeys(user.id);
         spec.setSshPublicKeysList(sshKeys.map((e) => e.key));
         return spec;
@@ -1794,7 +1751,6 @@ export class WorkspaceStarter {
         context: WorkspaceContext,
         user: User,
         lastValidWorkspaceInstanceId: string,
-        hasVolumeSnapshot: boolean,
     ): Promise<{ initializer: WorkspaceInitializer; disposable: Disposable }> {
         let result = new WorkspaceInitializer();
         const disp = new DisposableCollection();
@@ -1804,12 +1760,10 @@ export class WorkspaceStarter {
             if (CommitContext.is(context)) {
                 backup.setCheckoutLocation(context.checkoutLocation || "");
             }
-            backup.setFromVolumeSnapshot(hasVolumeSnapshot);
             result.setBackup(backup);
         } else if (SnapshotContext.is(context)) {
             const snapshot = new SnapshotInitializer();
             snapshot.setSnapshot(context.snapshotBucketId);
-            snapshot.setFromVolumeSnapshot(hasVolumeSnapshot);
             result.setSnapshot(snapshot);
         } else if (WithPrebuild.is(context)) {
             if (!CommitContext.is(context)) {
@@ -1818,7 +1772,6 @@ export class WorkspaceStarter {
 
             const snapshot = new SnapshotInitializer();
             snapshot.setSnapshot(context.snapshotBucketId);
-            snapshot.setFromVolumeSnapshot(hasVolumeSnapshot);
             const { initializer } = await this.createCommitInitializer(traceCtx, workspace, context, user);
             const init = new PrebuildInitializer();
             init.setPrebuild(snapshot);

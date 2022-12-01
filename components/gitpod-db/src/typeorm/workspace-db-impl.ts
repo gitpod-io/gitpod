@@ -27,7 +27,6 @@ import {
     WorkspaceInstanceUser,
     WhitelistedRepository,
     Snapshot,
-    VolumeSnapshot,
     PrebuiltWorkspace,
     RunningWorkspaceInfo,
     PrebuiltWorkspaceUpdatable,
@@ -42,7 +41,6 @@ import { TypeORM } from "./typeorm";
 import { DBWorkspace } from "./entity/db-workspace";
 import { DBWorkspaceInstance } from "./entity/db-workspace-instance";
 import { DBSnapshot } from "./entity/db-snapshot";
-import { DBVolumeSnapshot } from "./entity/db-volume-snapshot";
 import { DBWorkspaceInstanceUser } from "./entity/db-workspace-instance-user";
 import { DBRepositoryWhiteList } from "./entity/db-repository-whitelist";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -87,10 +85,6 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
 
     protected async getSnapshotRepo(): Promise<Repository<DBSnapshot>> {
         return await (await this.getManager()).getRepository<DBSnapshot>(DBSnapshot);
-    }
-
-    protected async getVolumeSnapshotRepo(): Promise<Repository<DBVolumeSnapshot>> {
-        return await (await this.getManager()).getRepository<DBVolumeSnapshot>(DBVolumeSnapshot);
     }
 
     protected async getPrebuiltWorkspaceRepo(): Promise<Repository<DBPrebuiltWorkspace>> {
@@ -754,61 +748,6 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
     public async findSnapshotsByWorkspaceId(workspaceId: string): Promise<Snapshot[]> {
         const snapshots = await this.getSnapshotRepo();
         return snapshots.find({ where: { originalWorkspaceId: workspaceId } });
-    }
-
-    public async findVolumeSnapshotById(volumeSnapshotId: string): Promise<VolumeSnapshot | undefined> {
-        const volumeSnapshots = await this.getVolumeSnapshotRepo();
-        return volumeSnapshots
-            .createQueryBuilder("vs")
-            .where("vs.deleted = 0")
-            .andWhere("vs.id = :id", { id: volumeSnapshotId })
-            .getOne();
-    }
-
-    public async storeVolumeSnapshot(volumeSnapshot: VolumeSnapshot): Promise<VolumeSnapshot> {
-        const volumeSnapshots = await this.getVolumeSnapshotRepo();
-        const dbVolumeSnapshot = volumeSnapshot as DBVolumeSnapshot;
-        return await volumeSnapshots.save(dbVolumeSnapshot);
-    }
-
-    public async deleteVolumeSnapshot(volumeSnapshotId: string): Promise<void> {
-        const volumeSnapshots = await this.getVolumeSnapshotRepo();
-        await volumeSnapshots.update(volumeSnapshotId, { deleted: true });
-    }
-
-    public async updateVolumeSnapshot(
-        volumeSnapshot: DeepPartial<VolumeSnapshot> & Pick<VolumeSnapshot, "id">,
-    ): Promise<void> {
-        const volumeSnapshots = await this.getVolumeSnapshotRepo();
-        await volumeSnapshots.update(volumeSnapshot.id, volumeSnapshot);
-    }
-
-    // finds all workspaces which have more then one volume snapshots
-    // as we only want to keep one latest volume snapshot per workspace
-    public async findVolumeSnapshotWorkspacesForGC(limit: number): Promise<string[]> {
-        const volumeSnapshotRepo = await this.getVolumeSnapshotRepo();
-        const qb = volumeSnapshotRepo
-            .createQueryBuilder("vs")
-            .select("vs.workspaceId", "workspaceId")
-            .where("vs.deleted = 0")
-            .groupBy("vs.workspaceId")
-            .having("COUNT(*) > 1")
-            .limit(limit);
-        const results = (await qb.getRawMany()) as Pick<DBVolumeSnapshot, "workspaceId">[];
-        return results.map((vs) => vs.workspaceId);
-    }
-
-    // returns the list of all volume snapshots for specific workspace id
-    public async findVolumeSnapshotForGCByWorkspaceId(wsId: string, limit: number): Promise<VolumeSnapshot[]> {
-        const volumeSnapshotRepo = await this.getVolumeSnapshotRepo();
-        const results = await volumeSnapshotRepo
-            .createQueryBuilder("vs")
-            .where("vs.workspaceId = :wsId", { wsId })
-            .andWhere("vs.deleted = 0")
-            .orderBy("vs.creationTime", "DESC")
-            .limit(limit)
-            .getMany();
-        return results;
     }
 
     public async storePrebuiltWorkspace(pws: PrebuiltWorkspace): Promise<PrebuiltWorkspace> {

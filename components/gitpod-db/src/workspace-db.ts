@@ -13,7 +13,6 @@ import {
     WorkspaceInstanceUser,
     WhitelistedRepository,
     Snapshot,
-    VolumeSnapshot,
     PrebuiltWorkspace,
     PrebuiltWorkspaceUpdatable,
     RunningWorkspaceInfo,
@@ -170,13 +169,6 @@ export interface WorkspaceDB {
     storeSnapshot(snapshot: Snapshot): Promise<Snapshot>;
     deleteSnapshot(snapshotId: string): Promise<void>;
     updateSnapshot(snapshot: DeepPartial<Snapshot> & Pick<Snapshot, "id">): Promise<void>;
-
-    findVolumeSnapshotById(volumeSnapshotId: string): Promise<VolumeSnapshot | undefined>;
-    storeVolumeSnapshot(snapshot: VolumeSnapshot): Promise<VolumeSnapshot>;
-    deleteVolumeSnapshot(volumeSnapshotId: string): Promise<void>;
-    updateVolumeSnapshot(snapshot: DeepPartial<VolumeSnapshot> & Pick<VolumeSnapshot, "id">): Promise<void>;
-    findVolumeSnapshotWorkspacesForGC(limit: number): Promise<string[]>;
-    findVolumeSnapshotForGCByWorkspaceId(wsId: string, limit: number): Promise<VolumeSnapshot[]>;
 
     storePrebuiltWorkspace(pws: PrebuiltWorkspace): Promise<PrebuiltWorkspace>;
     findPrebuiltWorkspaceByCommit(cloneURL: string, commit: string): Promise<PrebuiltWorkspace | undefined>;
