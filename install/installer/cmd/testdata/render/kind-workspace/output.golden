@@ -36,6 +36,9 @@ spec:
               component: server
         - podSelector:
             matchLabels:
+              component: slow-server
+        - podSelector:
+            matchLabels:
               component: ws-manager
   podSelector:
     matchLabels:
