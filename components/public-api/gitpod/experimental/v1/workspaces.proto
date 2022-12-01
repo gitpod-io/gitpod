@@ -27,6 +27,8 @@ service WorkspacesService {
     //   NOT_FOUND:           the workspace_id is unkown
     //   FAILED_PRECONDITION: if there's no running instance
     rpc StopWorkspace(StopWorkspaceRequest) returns (stream StopWorkspaceResponse) {}
+
+    rpc UpdatePort(UpdatePortRequest) returns (UpdatePortResponse) {}
 }
 
 message ListWorkspacesRequest {
@@ -249,10 +251,35 @@ message WorkspaceInstanceStatus {
     // Admission describes who can access a workspace instance and its ports.
     AdmissionLevel admission = 6;
 
+    // ports is the list of exposed ports in the workspace.
+    repeated Port ports = 7;
+
     // repo details the Git working copy status of the workspace.
     // Note: this is a best-effort field and more often than not will not be present. Its absence does not
     // indicate the absence of a working copy.
     // contentservice.GitStatus repo = 7;
+}
+
+// PortPolicy defines the accssbility policy of a workspace port is guarded by an authentication in the proxy
+enum PortPolicy {
+    PORT_POLICY_UNSPECIFIED = 0;
+
+    // Private means the port is accessible by the workspace owner only using the workspace port URL
+    PORT_POLICY_PRIVATE = 1;
+
+    // Public means the port is accessible by everybody using the workspace port URL
+    PORT_POLICY_PUBLIC = 2;
+}
+
+message Port {
+    // port number
+    uint64 port = 1;
+
+    // policy of this port
+    PortPolicy policy = 2;
+
+    // url that can be used to access the port
+    string url = 3;
 }
 
 // Admission level describes who can access a workspace instance and its ports.
@@ -270,3 +297,18 @@ enum AdmissionLevel {
 message StartWorkspaceSpec {
     // future per-workspace-start fields, e.g. region
 }
+
+message PortSpec {
+    // port number
+    uint64 port = 1;
+
+    // policy of this port
+    PortPolicy policy = 2;
+}
+
+message UpdatePortRequest {
+    string workspace_id = 1;
+    PortSpec port = 2;
+}
+
+message UpdatePortResponse {}

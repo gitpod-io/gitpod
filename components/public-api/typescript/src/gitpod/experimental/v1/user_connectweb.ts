@@ -9,7 +9,7 @@
 /* eslint-disable */
 /* @ts-nocheck */
 
-import {CreateSSHKeyRequest, CreateSSHKeyResponse, DeleteSSHKeyRequest, DeleteSSHKeyResponse, GetAuthenticatedUserRequest, GetAuthenticatedUserResponse, GetSSHKeyRequest, GetSSHKeyResponse, ListSSHKeysRequest, ListSSHKeysResponse} from "./user_pb.js";
+import {CreateSSHKeyRequest, CreateSSHKeyResponse, DeleteSSHKeyRequest, DeleteSSHKeyResponse, GetAuthenticatedUserRequest, GetAuthenticatedUserResponse, GetGitTokenRequest, GetGitTokenResponse, GetSSHKeyRequest, GetSSHKeyResponse, ListSSHKeysRequest, ListSSHKeysResponse} from "./user_pb.js";
 import {MethodKind} from "@bufbuild/protobuf";
 
 /**
@@ -71,6 +71,15 @@ export const UserService = {
       name: "DeleteSSHKey",
       I: DeleteSSHKeyRequest,
       O: DeleteSSHKeyResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc gitpod.experimental.v1.UserService.GetGitToken
+     */
+    getGitToken: {
+      name: "GetGitToken",
+      I: GetGitTokenRequest,
+      O: GetGitTokenResponse,
       kind: MethodKind.Unary,
     },
   }

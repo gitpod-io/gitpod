@@ -36,6 +36,7 @@ type UserServiceClient interface {
 	GetSSHKey(ctx context.Context, in *GetSSHKeyRequest, opts ...grpc.CallOption) (*GetSSHKeyResponse, error)
 	// DeleteSSHKey removes a public SSH key.
 	DeleteSSHKey(ctx context.Context, in *DeleteSSHKeyRequest, opts ...grpc.CallOption) (*DeleteSSHKeyResponse, error)
+	GetGitToken(ctx context.Context, in *GetGitTokenRequest, opts ...grpc.CallOption) (*GetGitTokenResponse, error)
 }
 
 type userServiceClient struct {
@@ -91,6 +92,15 @@ func (c *userServiceClient) DeleteSSHKey(ctx context.Context, in *DeleteSSHKeyRe
 	return out, nil
 }
 
+func (c *userServiceClient) GetGitToken(ctx context.Context, in *GetGitTokenRequest, opts ...grpc.CallOption) (*GetGitTokenResponse, error) {
+	out := new(GetGitTokenResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.UserService/GetGitToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
@@ -105,6 +115,7 @@ type UserServiceServer interface {
 	GetSSHKey(context.Context, *GetSSHKeyRequest) (*GetSSHKeyResponse, error)
 	// DeleteSSHKey removes a public SSH key.
 	DeleteSSHKey(context.Context, *DeleteSSHKeyRequest) (*DeleteSSHKeyResponse, error)
+	GetGitToken(context.Context, *GetGitTokenRequest) (*GetGitTokenResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -126,6 +137,9 @@ func (UnimplementedUserServiceServer) GetSSHKey(context.Context, *GetSSHKeyReque
 }
 func (UnimplementedUserServiceServer) DeleteSSHKey(context.Context, *DeleteSSHKeyRequest) (*DeleteSSHKeyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteSSHKey not implemented")
+}
+func (UnimplementedUserServiceServer) GetGitToken(context.Context, *GetGitTokenRequest) (*GetGitTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetGitToken not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 
@@ -230,6 +244,24 @@ func _UserService_DeleteSSHKey_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_GetGitToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetGitTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetGitToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.experimental.v1.UserService/GetGitToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetGitToken(ctx, req.(*GetGitTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -256,6 +288,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteSSHKey",
 			Handler:    _UserService_DeleteSSHKey_Handler,
+		},
+		{
+			MethodName: "GetGitToken",
+			Handler:    _UserService_GetGitToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

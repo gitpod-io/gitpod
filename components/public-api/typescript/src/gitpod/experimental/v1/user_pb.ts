@@ -505,3 +505,164 @@ export class DeleteSSHKeyResponse extends Message<DeleteSSHKeyResponse> {
     return proto3.util.equals(DeleteSSHKeyResponse, a, b);
   }
 }
+
+/**
+ * @generated from message gitpod.experimental.v1.GetGitTokenRequest
+ */
+export class GetGitTokenRequest extends Message<GetGitTokenRequest> {
+  /**
+   * @generated from field: string host = 1;
+   */
+  host = "";
+
+  constructor(data?: PartialMessage<GetGitTokenRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.GetGitTokenRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "host", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetGitTokenRequest {
+    return new GetGitTokenRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetGitTokenRequest {
+    return new GetGitTokenRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetGitTokenRequest {
+    return new GetGitTokenRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetGitTokenRequest | PlainMessage<GetGitTokenRequest> | undefined, b: GetGitTokenRequest | PlainMessage<GetGitTokenRequest> | undefined): boolean {
+    return proto3.util.equals(GetGitTokenRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.GetGitTokenResponse
+ */
+export class GetGitTokenResponse extends Message<GetGitTokenResponse> {
+  /**
+   * @generated from field: gitpod.experimental.v1.GitToken token = 1;
+   */
+  token?: GitToken;
+
+  constructor(data?: PartialMessage<GetGitTokenResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.GetGitTokenResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "token", kind: "message", T: GitToken },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetGitTokenResponse {
+    return new GetGitTokenResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetGitTokenResponse {
+    return new GetGitTokenResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetGitTokenResponse {
+    return new GetGitTokenResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetGitTokenResponse | PlainMessage<GetGitTokenResponse> | undefined, b: GetGitTokenResponse | PlainMessage<GetGitTokenResponse> | undefined): boolean {
+    return proto3.util.equals(GetGitTokenResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.GitToken
+ */
+export class GitToken extends Message<GitToken> {
+  /**
+   * expiry_date is the date when the token will expire
+   *
+   * @generated from field: string expiry_date = 1;
+   */
+  expiryDate = "";
+
+  /**
+   * id_token is the unique identifier for the token
+   *
+   * @generated from field: string id_token = 2;
+   */
+  idToken = "";
+
+  /**
+   * refresh_token is the token used to refresh the git token
+   *
+   * @generated from field: string refresh_token = 3;
+   */
+  refreshToken = "";
+
+  /**
+   * scopes is a list of permissions associated with the token
+   *
+   * @generated from field: repeated string scopes = 4;
+   */
+  scopes: string[] = [];
+
+  /**
+   * update_date is the date when the token was last updated
+   *
+   * @generated from field: string update_date = 5;
+   */
+  updateDate = "";
+
+  /**
+   * username is the username associated with the token
+   *
+   * @generated from field: string username = 6;
+   */
+  username = "";
+
+  /**
+   * value is the actual token value for the token
+   *
+   * @generated from field: string value = 7;
+   */
+  value = "";
+
+  constructor(data?: PartialMessage<GitToken>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.GitToken";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "expiry_date", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "id_token", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "refresh_token", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "scopes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 5, name: "update_date", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "username", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "value", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GitToken {
+    return new GitToken().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GitToken {
+    return new GitToken().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GitToken {
+    return new GitToken().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GitToken | PlainMessage<GitToken> | undefined, b: GitToken | PlainMessage<GitToken> | undefined): boolean {
+    return proto3.util.equals(GitToken, a, b);
+  }
+}
