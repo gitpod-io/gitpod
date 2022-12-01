@@ -235,10 +235,6 @@ func UpdatePersonalAccessTokenForUser(ctx context.Context, conn *gorm.DB, opts U
 		return PersonalAccessToken{}, fmt.Errorf("failed to update personal access token: %w", tx.Error)
 	}
 
-	if tx.RowsAffected == 0 {
-		return PersonalAccessToken{}, fmt.Errorf("token (ID: %s) for user (ID: %s) does not exist: %w", opts.TokenID, opts.UserID, ErrorNotFound)
-	}
-
 	return GetPersonalAccessTokenForUser(ctx, conn, opts.TokenID, opts.UserID)
 }
 

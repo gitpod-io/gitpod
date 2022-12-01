@@ -552,6 +552,31 @@ func TestTokensService_UpdatePersonalAccessToken(t *testing.T) {
 		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
+	t.Run("allows unmodified udpate", func(t *testing.T) {
+		serverMock, _, client := setupTokensService(t, withTokenFeatureEnabled)
+
+		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil).Times(2)
+
+		createResponse, err := client.CreatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.CreatePersonalAccessTokenRequest{
+			Token: &v1.PersonalAccessToken{
+				Name:           "first",
+				ExpirationTime: timestamppb.Now(),
+			},
+		}))
+		require.NoError(t, err)
+
+		_, err = client.UpdatePersonalAccessToken(context.Background(), connect.NewRequest(&v1.UpdatePersonalAccessTokenRequest{
+			Token: &v1.PersonalAccessToken{
+				Id:   createResponse.Msg.GetToken().GetId(),
+				Name: createResponse.Msg.GetToken().GetName(),
+			},
+			UpdateMask: &fieldmaskpb.FieldMask{
+				Paths: []string{"name", "scopes"},
+			},
+		}))
+		require.NoError(t, err)
+	})
+
 	t.Run("default updates both name and scopes, when no mask specified", func(t *testing.T) {
 		serverMock, _, client := setupTokensService(t, withTokenFeatureEnabled)
 
