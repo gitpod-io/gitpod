@@ -12,6 +12,7 @@ import (
 
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/serverapi"
 )
 
 // GitTokenProvider provides tokens for Git hosting services by asking
@@ -19,11 +20,11 @@ import (
 type GitTokenProvider struct {
 	notificationService *NotificationService
 	workspaceConfig     WorkspaceConfig
-	gitpodAPI           gitpod.APIInterface
+	gitpodAPI           serverapi.APIInterface
 }
 
 // NewGitTokenProvider creates a new instance of gitTokenProvider.
-func NewGitTokenProvider(gitpodAPI gitpod.APIInterface, workspaceConfig WorkspaceConfig, notificationService *NotificationService) *GitTokenProvider {
+func NewGitTokenProvider(gitpodAPI serverapi.APIInterface, workspaceConfig WorkspaceConfig, notificationService *NotificationService) *GitTokenProvider {
 	return &GitTokenProvider{
 		notificationService: notificationService,
 		workspaceConfig:     workspaceConfig,
