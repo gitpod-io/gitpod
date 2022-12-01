@@ -383,6 +383,7 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 		return resp, nil
 	}
 
+	span.SetTag("backupLogs", req.BackupLogs)
 	if req.BackupLogs {
 		if sess.RemoteStorageDisabled {
 			return nil, status.Errorf(codes.FailedPrecondition, "workspace has no remote storage")
@@ -396,6 +397,7 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 		}
 	}
 
+	span.SetTag("backup", req.Backup)
 	if req.Backup {
 		if sess.RemoteStorageDisabled {
 			return nil, status.Errorf(codes.FailedPrecondition, "workspace has no remote storage")
@@ -450,7 +452,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 	span, ctx := opentracing.StartSpanFromContext(ctx, "uploadWorkspaceContent")
 	span.SetTag("workspace", sess.WorkspaceID)
 	span.SetTag("instance", sess.InstanceID)
-	span.SetTag("backup", backupName)
+	span.SetTag("backupName", backupName)
 	span.SetTag("manifest", mfName)
 	span.SetTag("full", sess.FullWorkspaceBackup)
 	span.SetTag("pvc", sess.PersistentVolumeClaim)
