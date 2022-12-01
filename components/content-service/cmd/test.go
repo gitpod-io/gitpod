@@ -225,7 +225,32 @@ var presignedExistsCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		fmt.Printf("%v", exists)
+		fmt.Printf("%v\n", exists)
+
+		return nil
+	},
+}
+
+var presignedDeleteCmd = &cobra.Command{
+	Use:   "delete",
+	Short: "delete",
+}
+
+var presignedDeleteBucketUserId string
+var presignedDeleteBucketCmd = &cobra.Command{
+	Use:   "bucket <bucket>",
+	Short: "bucket",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		presigned, err := createPresignedAccess()
+		if err != nil {
+			return err
+		}
+
+		// TODO: bucket needs to be specified here
+		if err = presigned.DeleteBucket(context.Background(), presignedDeleteBucketUserId, args[0]); err != nil {
+			return err
+		}
 
 		return nil
 	},
@@ -262,7 +287,7 @@ func createPresignedAccess() (storage.PresignedAccess, error) {
 	cfg := &config.StorageConfig{
 		Kind: config.S3Storage,
 		S3Config: &config.S3Config{
-			Bucket: "gitpod-s3",
+			Bucket: "gitpod-s3-delete",
 		},
 	}
 
@@ -295,10 +320,14 @@ func init() {
 	directCmd.AddCommand(directDownloadCmd)
 
 	// presigned
+	presignedDeleteBucketCmd.PersistentFlags().StringVar(&presignedDeleteBucketUserId, "userId", "", "userId")
+	presignedDeleteCmd.AddCommand(presignedDeleteBucketCmd)
+
 	presignedCmd.AddCommand(presignedUploadCmd)
 	presignedCmd.AddCommand(presignedDownloadCmd)
 	presignedCmd.AddCommand(presignedUsageCmd)
 	presignedCmd.AddCommand(presignedExistsCmd)
+	presignedCmd.AddCommand(presignedDeleteCmd)
 
 	// test
 	testCmd.PersistentFlags().StringVar(&options.owner, "owner", "test-owner", "owner")
