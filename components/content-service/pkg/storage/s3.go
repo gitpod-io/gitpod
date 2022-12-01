@@ -165,9 +165,11 @@ func (rs *PresignedS3Storage) ObjectExists(ctx context.Context, bucket string, p
 		ObjectAttributes: []types.ObjectAttributes{types.ObjectAttributesEtag},
 	})
 
-	if errors.Is(err, &types.NotFound{}) {
+	var nsk *types.NoSuchKey
+	if errors.As(err, &nsk) {
 		return false, nil
 	}
+
 	if err != nil {
 		return false, err
 	}
@@ -177,8 +179,9 @@ func (rs *PresignedS3Storage) ObjectExists(ctx context.Context, bucket string, p
 // ObjectHash implements PresignedAccess
 func (rs *PresignedS3Storage) ObjectHash(ctx context.Context, bucket string, obj string) (string, error) {
 	resp, err := rs.client.GetObjectAttributes(ctx, &s3.GetObjectAttributesInput{
-		Bucket: &rs.Config.Bucket,
-		Key:    aws.String(obj),
+		Bucket:           &rs.Config.Bucket,
+		Key:              aws.String(obj),
+		ObjectAttributes: []types.ObjectAttributes{types.ObjectAttributesEtag},
 	})
 	if err != nil {
 		return "", err
