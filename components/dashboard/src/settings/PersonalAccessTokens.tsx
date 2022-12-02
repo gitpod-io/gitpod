@@ -337,7 +337,7 @@ export function PersonalAccessTokenCreateView() {
                 <SpinnerOverlayLoader content="loading access token" loading={loading}>
                     <div className="mb-6">
                         <div className="flex flex-col mb-4">
-                            <h3>{isEditing ? "Edit" : "New"} Personal Access Token</h3>
+                            <h3>{isEditing ? "Edit" : "New"} Access Token</h3>
                             {isEditing ? (
                                 <h2 className="text-gray-500 dark:text-gray-400">
                                     Update token name, expiration date, permissions, or regenerate token.
@@ -410,7 +410,7 @@ export function PersonalAccessTokenCreateView() {
                             </Link>
                         )}
                         <button onClick={handleConfirm} disabled={isEditing && !editToken}>
-                            {isEditing ? "Update" : "Create"} Personal Access Token
+                            {isEditing ? "Update" : "Create"} Access Token
                         </button>
                     </div>
                 </SpinnerOverlayLoader>
@@ -601,11 +601,9 @@ function ListAccessTokensView() {
                 <>
                     {tokens.length === 0 ? (
                         <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full py-28 flex flex-col items-center">
-                            <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">
-                                No Access Tokens (PAT)
-                            </h3>
+                            <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Access Tokens</h3>
                             <p className="text-center pb-6 text-gray-500 text-base w-96">
-                                Generate a access token (PAT) for applications that need access to the Gitpod API.{" "}
+                                Generate a access token for applications that need access to the Gitpod API.{" "}
                             </p>
                             <Link to={settingsPathPersonalAccessTokenCreate}>
                                 <button>New Access Token</button>
@@ -653,10 +651,10 @@ function ListAccessTokensView() {
             {modalData?.action === TokenAction.Delete && (
                 <ShowTokenModal
                     token={modalData.token}
-                    title="Delete Personal Access Token"
-                    description="Are you sure you want to delete this personal access token?"
+                    title="Delete Access Token"
+                    description="Are you sure you want to delete this access token?"
                     descriptionImportant="Any applications using this token will no longer be able to access the Gitpod API."
-                    actionDescription="Delete Personal Access Token"
+                    actionDescription="Delete Access Token"
                     onSave={() => handleDeleteToken(modalData.token.id)}
                     onClose={() => setModalData(undefined)}
                 />
@@ -665,7 +663,7 @@ function ListAccessTokensView() {
                 <ShowTokenModal
                     token={modalData.token}
                     title="Regenerate Token"
-                    description="Are you sure you want to regenerate this personal access token?"
+                    description="Are you sure you want to regenerate this access token?"
                     descriptionImportant="Any applications using this token will no longer be able to access the Gitpod API."
                     actionDescription="Regenerate Token"
                     showDateSelector
