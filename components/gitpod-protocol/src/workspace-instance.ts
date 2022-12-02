@@ -243,10 +243,16 @@ export interface WorkspaceInstanceConfiguration {
     // ideImage is the ref of the IDE image this instance uses.
     ideImage: string;
 
+    // ideImageLayers are images needed for the ide to run,
+    // including ide-desktop, desktop-plugin and so on
+    ideImageLayers?: string[];
+
     // desktopIdeImage is the ref of the desktop IDE image this instance uses.
+    // @deprected: replaced with the ideImageLayers field
     desktopIdeImage?: string;
 
     // desktopIdePluginImage is the ref of the desktop IDE plugin image this instance uses.
+    // @deprected: replaced with the desktopIdePluginImage field
     desktopIdePluginImage?: string;
 
     // supervisorImage is the ref of the supervisor image this instance uses.

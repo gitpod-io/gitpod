@@ -4,10 +4,25 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { JetBrainsConfig, TaskConfig, Workspace } from "@gitpod/gitpod-protocol";
-import { IDEOptions, IDEClient } from "@gitpod/gitpod-protocol/lib/ide-protocol";
-import { IDEServiceClient, IDEServiceDefinition } from "@gitpod/ide-service-api/lib/ide.pb";
+import {
+    IDESettings,
+    JetBrainsConfig,
+    TaskConfig,
+    User,
+    WithReferrerContext,
+    Workspace,
+} from "@gitpod/gitpod-protocol";
+import { IDEOptions, IDEClient, IDEOption } from "@gitpod/gitpod-protocol/lib/ide-protocol";
+import {
+    IDEServiceClient,
+    IDEServiceDefinition,
+    ResolveWorkspaceConfigResponse,
+} from "@gitpod/ide-service-api/lib/ide.pb";
+import * as IdeServiceApi from "@gitpod/ide-service-api/lib/ide.pb";
 import { inject, injectable } from "inversify";
+import { AuthorizationService } from "./user/authorization-service";
+import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { deepEqual } from "assert";
 
 export interface IDEConfig {
     supervisorImage: string;
@@ -18,6 +33,12 @@ export interface IDEConfig {
 export class IDEService {
     @inject(IDEServiceDefinition.name)
     protected readonly ideService: IDEServiceClient;
+
+    @inject(AuthorizationService)
+    protected readonly authService: AuthorizationService;
+
+    @inject(ConfigCatClientFactory)
+    protected readonly configCatClientFactory: ConfigCatClientFactory;
 
     private cacheConfig?: IDEConfig;
 
@@ -37,15 +58,156 @@ export class IDEService {
         }
     }
 
-    resolveGitpodTasks(ws: Workspace): TaskConfig[] {
+    migrateSettings(user: User): IDESettings | undefined {
+        if (!user?.additionalData?.ideSettings || user.additionalData.ideSettings.settingVersion === "2.0") {
+            return undefined;
+        }
+        const newIDESettings: IDESettings = {
+            settingVersion: "2.0",
+        };
+        const ideSettings = user.additionalData.ideSettings;
+        if (ideSettings.useDesktopIde) {
+            if (ideSettings.defaultDesktopIde === "code-desktop") {
+                newIDESettings.defaultIde = "code-desktop";
+            } else if (ideSettings.defaultDesktopIde === "code-desktop-insiders") {
+                newIDESettings.defaultIde = "code-desktop";
+                newIDESettings.useLatestVersion = true;
+            } else {
+                newIDESettings.defaultIde = ideSettings.defaultDesktopIde;
+                newIDESettings.useLatestVersion = ideSettings.useLatestVersion;
+            }
+        } else {
+            const useLatest = ideSettings.defaultIde === "code-latest";
+            newIDESettings.defaultIde = "code";
+            newIDESettings.useLatestVersion = useLatest;
+        }
+        return newIDESettings;
+    }
+
+    async resolveWorkspaceConfig(workspace: Workspace, user: User): Promise<ResolveWorkspaceConfigResponse> {
+        const use = await this.configCatClientFactory().getValueAsync("use_IDEService_ResolveWorkspaceConfig", false, {
+            user,
+        });
+        if (use) {
+            return this.doResolveWorkspaceConfig(workspace, user);
+        }
+
+        const deprecated = await this.resolveDeprecated(workspace, user);
+        // assert against ide-service
+        (async () => {
+            const config = await this.doResolveWorkspaceConfig(workspace, user);
+            const { tasks: configTasks, ...newConfig } = config;
+            const { tasks: deprecatedTasks, ...newDeprecated } = deprecated;
+            // we omit tasks because we're going to rewrite them soon and the deepEqual was failing
+            deepEqual(newConfig, newDeprecated);
+        })().catch((e) => console.error("ide-service: assert workspace config failed:", e));
+        return deprecated;
+    }
+
+    private async doResolveWorkspaceConfig(workspace: Workspace, user: User): Promise<ResolveWorkspaceConfigResponse> {
+        const workspaceType =
+            workspace.type === "prebuild" ? IdeServiceApi.WorkspaceType.PREBUILD : IdeServiceApi.WorkspaceType.REGULAR;
+
+        const req: IdeServiceApi.ResolveWorkspaceConfigRequest = {
+            type: workspaceType,
+            context: JSON.stringify(workspace.context),
+            ideSettings: JSON.stringify(user.additionalData?.ideSettings),
+            workspaceConfig: JSON.stringify(workspace.config),
+        };
+        for (let attempt = 0; attempt < 15; attempt++) {
+            if (attempt != 0) {
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+            }
+            const controller = new AbortController();
+            setTimeout(() => controller.abort(), 1000);
+            try {
+                const resp = await this.ideService.resolveWorkspaceConfig(req, {
+                    signal: controller.signal,
+                });
+                return resp;
+            } catch (e) {
+                console.error("ide-service: failed to resolve workspace config: ", e);
+            }
+        }
+        throw new Error("failed to resolve workspace IDE configuration");
+    }
+
+    resolveGitpodTasks(ws: Workspace, ideConfig: ResolveWorkspaceConfigResponse): TaskConfig[] {
         const tasks: TaskConfig[] = [];
         if (ws.config.tasks) {
             tasks.push(...ws.config.tasks);
         }
+        if (ideConfig.tasks) {
+            try {
+                let ideTasks: TaskConfig[] = JSON.parse(ideConfig.tasks);
+                tasks.push(...ideTasks);
+            } catch (e) {
+                console.error("failed get tasks from ide config:", e);
+            }
+        }
+        return tasks;
+    }
+
+    //#region deprecated
+    private async resolveDeprecated(workspace: Workspace, user: User): Promise<ResolveWorkspaceConfigResponse> {
+        const ideConfig = await this.getIDEConfig();
+
+        const ideChoice = user.additionalData?.ideSettings?.defaultIde;
+        const useLatest = !!user.additionalData?.ideSettings?.useLatestVersion;
+
+        let ideImage: string | undefined;
+        let desktopIdeImage: string | undefined;
+        let desktopIdePluginImage: string | undefined;
+        if (!!ideChoice) {
+            const choose = this.chooseIDE(
+                ideChoice,
+                ideConfig.ideOptions,
+                useLatest,
+                this.authService.hasPermission(user, "ide-settings"),
+            );
+            ideImage = choose.ideImage;
+            desktopIdeImage = choose.desktopIdeImage;
+            desktopIdePluginImage = choose.desktopIdePluginImage;
+        }
+
+        const referrerIde = this.resolveReferrerIDE(workspace, user, ideConfig);
+        if (referrerIde) {
+            desktopIdeImage = useLatest
+                ? referrerIde.option.latestImage ?? referrerIde.option.image
+                : referrerIde.option.image;
+            desktopIdePluginImage = useLatest
+                ? referrerIde.option.pluginLatestImage ?? referrerIde.option.pluginImage
+                : referrerIde.option.pluginImage;
+        }
+
+        const envvars: IdeServiceApi.EnvironmentVariable[] = [];
+        const ideAlias = user.additionalData?.ideSettings?.defaultIde;
+        if (ideAlias && ideConfig.ideOptions.options[ideAlias]) {
+            envvars.push({
+                name: "GITPOD_IDE_ALIAS",
+                value: ideAlias,
+            });
+        }
+
+        if (!!ideImage) {
+            ideImage = ideImage;
+        } else {
+            ideImage = ideConfig.ideOptions.options[ideConfig.ideOptions.defaultIde].image;
+        }
+
+        const ideImageLayers: string[] = [];
+        if (desktopIdeImage) {
+            ideImageLayers.push(desktopIdeImage);
+            if (desktopIdePluginImage) {
+                ideImageLayers.push(desktopIdePluginImage);
+            }
+        }
+
+        const tasks = [];
         // TODO(ak) it is a hack to get users going, we should rather layer JB products on prebuild workspaces and move logic to corresponding images
-        if (ws.type === "prebuild" && ws.config.jetbrains) {
+        if (workspace.type === "prebuild" && workspace.config.jetbrains) {
             let warmUp = "";
-            for (const key in ws.config.jetbrains) {
+            for (const key in workspace.config.jetbrains) {
                 let productCode;
                 if (key === "intellij") {
                     productCode = "IIU";
@@ -64,7 +226,7 @@ export class IDEService {
                 } else if (key === "clion") {
                     productCode = "CL";
                 }
-                const prebuilds = productCode && ws.config.jetbrains[key as keyof JetBrainsConfig]?.prebuilds;
+                const prebuilds = productCode && workspace.config.jetbrains[key as keyof JetBrainsConfig]?.prebuilds;
                 if (prebuilds) {
                     warmUp +=
                         prebuilds.version === "latest"
@@ -118,6 +280,80 @@ rm -rf /tmp/backend-latest
                 });
             }
         }
-        return tasks;
+
+        return {
+            supervisorImage: ideConfig.supervisorImage,
+            webImage: ideImage,
+            refererIde: referrerIde?.id ?? "",
+            ideImageLayers,
+            envvars,
+            tasks: tasks.length === 0 ? "" : JSON.stringify(tasks),
+        };
     }
+
+    private chooseIDE(ideChoice: string, ideOptions: IDEOptions, useLatest: boolean, hasIdeSettingPerm: boolean) {
+        const defaultIDEOption = ideOptions.options[ideOptions.defaultIde];
+        const defaultIdeImage = useLatest
+            ? defaultIDEOption.latestImage ?? defaultIDEOption.image
+            : defaultIDEOption.image;
+        const data: { desktopIdeImage?: string; desktopIdePluginImage?: string; ideImage: string } = {
+            ideImage: defaultIdeImage,
+        };
+        const chooseOption = ideOptions.options[ideChoice] ?? defaultIDEOption;
+        const isDesktopIde = chooseOption.type === "desktop";
+        if (isDesktopIde) {
+            data.desktopIdeImage = useLatest ? chooseOption?.latestImage ?? chooseOption?.image : chooseOption?.image;
+            data.desktopIdePluginImage = useLatest
+                ? chooseOption?.pluginLatestImage ?? chooseOption?.pluginImage
+                : chooseOption?.pluginImage;
+            if (hasIdeSettingPerm) {
+                data.desktopIdeImage = data.desktopIdeImage || ideChoice;
+            }
+        } else {
+            data.ideImage = useLatest ? chooseOption?.latestImage ?? chooseOption?.image : chooseOption?.image;
+            if (hasIdeSettingPerm) {
+                data.ideImage = data.ideImage || ideChoice;
+            }
+        }
+        if (!data.ideImage) {
+            data.ideImage = defaultIdeImage;
+            // throw new Error("cannot choose correct browser ide");
+        }
+        return data;
+    }
+
+    private resolveReferrerIDE(
+        workspace: Workspace,
+        user: User,
+        ideConfig: IDEConfig,
+    ): { id: string; option: IDEOption } | undefined {
+        if (!WithReferrerContext.is(workspace.context)) {
+            return undefined;
+        }
+        const referrer = ideConfig.ideOptions.clients?.[workspace.context.referrer];
+        if (!referrer) {
+            return undefined;
+        }
+
+        const providedIde = workspace.context.referrerIde;
+        const providedOption = providedIde && ideConfig.ideOptions.options[providedIde];
+        if (providedOption && referrer.desktopIDEs?.some((ide) => ide === providedIde)) {
+            return { id: providedIde, option: providedOption };
+        }
+
+        const defaultDesktopIde = user.additionalData?.ideSettings?.defaultDesktopIde;
+        const userOption = defaultDesktopIde && ideConfig.ideOptions.options[defaultDesktopIde];
+        if (userOption && referrer.desktopIDEs?.some((ide) => ide === defaultDesktopIde)) {
+            return { id: defaultDesktopIde, option: userOption };
+        }
+
+        const defaultIde = referrer.defaultDesktopIDE;
+        const defaultOption = defaultIde && ideConfig.ideOptions.options[defaultIde];
+        if (defaultOption) {
+            return { id: defaultIde, option: defaultOption };
+        }
+
+        return undefined;
+    }
+    //#endregion
 }
