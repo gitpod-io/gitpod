@@ -64,7 +64,7 @@ func TestWorkspacePricer_Default(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			actualCredits := DefaultWorkspacePricer.Credits(defaultWorkspaceClass, tc.Seconds)
+			actualCredits := DefaultWorkspacePricer.Credits("default", tc.Seconds)
 
 			require.True(t, cmp.Equal(tc.ExpectedCredits, actualCredits, cmpopts.EquateApprox(0, 0.0000001)))
 		})
