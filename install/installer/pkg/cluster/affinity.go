@@ -8,7 +8,7 @@ package cluster
 const (
 	AffinityLabelMeta               = "gitpod.io/workload_meta"
 	AffinityLabelIDE                = "gitpod.io/workload_ide"
-	AffinityLabelWorkspaceServices  = "gitpod.io/workload_workspace_services"
+	AffinityLabelServices           = "gitpod.io/workload_services"
 	AffinityLabelWorkspacesRegular  = "gitpod.io/workload_workspace_regular"
 	AffinityLabelWorkspacesHeadless = "gitpod.io/workload_workspace_headless"
 )
@@ -16,10 +16,11 @@ const (
 var AffinityListMeta = []string{
 	AffinityLabelMeta,
 	AffinityLabelIDE,
+	AffinityLabelServices,
 }
 
 var AffinityListWorkspace = []string{
-	AffinityLabelWorkspaceServices,
+	AffinityLabelServices,
 	AffinityLabelWorkspacesRegular,
 	AffinityLabelWorkspacesHeadless,
 }
