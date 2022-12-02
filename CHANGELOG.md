@@ -1,6 +1,9 @@
 # Change Log
 
-## November 2022
+## December 2022
+- Update spacing in token regeneration modal ([#15107](https://github.com/gitpod-io/gitpod/pull/15107)) - [@gtsiolis](https://github.com/gtsiolis)
+
+##  November 2022
 - Disable running prebuilds without a project + disable the deprecated '#prebuild/' URL prefix ([#15026](https://github.com/gitpod-io/gitpod/pull/15026)) - [@jankeromnes](https://github.com/jankeromnes)
 - Make PrebuildRateLimiter more configurable ([#14975](https://github.com/gitpod-io/gitpod/pull/14975)) - [@geropl](https://github.com/geropl)
 - Replace "usage-based" with "pay-as-you-go" in user and team billing pages. ([#15025](https://github.com/gitpod-io/gitpod/pull/15025)) - [@jldec](https://github.com/jldec)
