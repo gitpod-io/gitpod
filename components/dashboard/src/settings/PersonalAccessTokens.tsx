@@ -50,7 +50,7 @@ const personalAccessTokenNameRegex = /^[a-zA-Z0-9-_ ]{3,63}$/;
 
 enum TokenAction {
     Create = "CREATED",
-    Regerenrate = "REGENERATED",
+    Regenerate = "REGENERATED",
     Delete = "DELETE",
 }
 
@@ -247,7 +247,7 @@ export function PersonalAccessTokenCreateView() {
                 id: tokenId,
                 expirationTime: Timestamp.fromDate(expirationDate),
             });
-            backToListView({ method: TokenAction.Regerenrate, data: resp.token! });
+            backToListView({ method: TokenAction.Regenerate, data: resp.token! });
         } catch (e) {
             setErrorMsg(e.message);
         }
@@ -522,7 +522,7 @@ function ListAccessTokensView() {
                 id: tokenId,
                 expirationTime: Timestamp.fromDate(expirationDate),
             });
-            setTokenInfo({ method: TokenAction.Regerenrate, data: resp.token! });
+            setTokenInfo({ method: TokenAction.Regenerate, data: resp.token! });
             loadTokens();
             setModalData(undefined);
         } catch (e) {
@@ -534,7 +534,7 @@ function ListAccessTokensView() {
         <>
             <div className="flex items-center sm:justify-between mb-4">
                 <div>
-                    <h3>Personal Access Tokens</h3>
+                    <h3>Access Tokens</h3>
                     <h2 className="text-gray-500">Create or regenerate access tokens.</h2>
                 </div>
                 {tokens.length > 0 && (
@@ -633,7 +633,7 @@ function ListAccessTokensView() {
                                             href: "",
                                             customFontStyle:
                                                 "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
-                                            onClick: () => setModalData({ token: t, action: TokenAction.Regerenrate }),
+                                            onClick: () => setModalData({ token: t, action: TokenAction.Regenerate }),
                                         },
                                         {
                                             title: "Delete",
@@ -661,7 +661,7 @@ function ListAccessTokensView() {
                     onClose={() => setModalData(undefined)}
                 />
             )}
-            {modalData?.action === TokenAction.Regerenrate && (
+            {modalData?.action === TokenAction.Regenerate && (
                 <ShowTokenModal
                     token={modalData.token}
                     title="Regenerate Token"
