@@ -2423,23 +2423,7 @@ data:
   ws-manager-bridge.json: |-
     {
       "installation": "default",
-      "staticBridges": [
-        {
-          "name": "default",
-          "url": "dns:///ws-manager:8080",
-          "tls": {
-            "ca": "/ws-manager-client-tls-certs/ca.crt",
-            "crt": "/ws-manager-client-tls-certs/tls.crt",
-            "key": "/ws-manager-client-tls-certs/tls.key"
-          },
-          "state": "available",
-          "maxScore": 100,
-          "score": 50,
-          "govern": true,
-          "admissionConstraints": null,
-          "applicationCluster": "default"
-        }
-      ],
+      "staticBridges": [],
       "clusterService": {
         "port": 8080,
         "host": "localhost"
@@ -4769,7 +4753,7 @@ spec:
         - name: SHLVL
           value: "1"
         - name: WSMAN_CFG_MANAGERS
-          value: WwogIHsKICAgICJuYW1lIjogImRlZmF1bHQiLAogICAgInVybCI6ICJkbnM6Ly8vd3MtbWFuYWdlcjo4MDgwIiwKICAgICJ0bHMiOiB7CiAgICAgICJjYSI6ICIvd3MtbWFuYWdlci1jbGllbnQtdGxzLWNlcnRzL2NhLmNydCIsCiAgICAgICJjcnQiOiAiL3dzLW1hbmFnZXItY2xpZW50LXRscy1jZXJ0cy90bHMuY3J0IiwKICAgICAgImtleSI6ICIvd3MtbWFuYWdlci1jbGllbnQtdGxzLWNlcnRzL3Rscy5rZXkiCiAgICB9LAogICAgInN0YXRlIjogImF2YWlsYWJsZSIsCiAgICAibWF4U2NvcmUiOiAxMDAsCiAgICAic2NvcmUiOiA1MCwKICAgICJnb3Zlcm4iOiB0cnVlLAogICAgImFkbWlzc2lvbkNvbnN0cmFpbnRzIjogbnVsbCwKICAgICJhcHBsaWNhdGlvbkNsdXN0ZXIiOiAiZGVmYXVsdCIKICB9Cl0=
+          value: W10=
         image: eu.gcr.io/gitpod-core-dev/build/server:test
         imagePullPolicy: IfNotPresent
         livenessProbe:
@@ -4804,9 +4788,6 @@ spec:
           readOnly: true
         - mountPath: /ide-config
           name: ide-config
-          readOnly: true
-        - mountPath: /ws-manager-client-tls-certs
-          name: ws-manager-client-tls-certs
           readOnly: true
         - mountPath: /twilio-config
           name: twilio-secret-volume
@@ -4915,9 +4896,6 @@ spec:
       - configMap:
           name: server-ide-config
         name: ide-config
-      - name: ws-manager-client-tls-certs
-        secret:
-          secretName: ws-manager-client-tls
       - name: twilio-secret-volume
         secret:
           optional: true
@@ -4948,7 +4926,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: c0a3088b82fda02787165a99308e1e0cd9f919c7ba88828f2c98734c22d14c64
+        gitpod.io/checksum_config: 7ceeb2c87fcc68e5af1699d595d3fdd09d02513bc1a1194290bfeaf7f1435693
       creationTimestamp: null
       labels:
         app: gitpod
@@ -5051,9 +5029,6 @@ spec:
         volumeMounts:
         - mountPath: /config
           name: config
-          readOnly: true
-        - mountPath: /ws-manager-client-tls-certs
-          name: ws-manager-client-tls-certs
           readOnly: true
       - args:
         - --logtostderr
@@ -5159,9 +5134,6 @@ spec:
       - configMap:
           name: ws-manager-bridge-config
         name: config
-      - name: ws-manager-client-tls-certs
-        secret:
-          secretName: ws-manager-client-tls
 status: {}
 ---
 # batch/v1/Job migrations

@@ -26,7 +26,7 @@ func TestWorkspaceManagerList_WhenSkipSelfIsSet(t *testing.T) {
 	for _, testCase := range testCases {
 		ctx := renderContextWithConfig(t, testCase.SkipSelf)
 
-		wsclusters := WSManagerList(ctx)
+		wsclusters := InClusterWSManagerList(ctx)
 		if testCase.ExpectWorkspaceClusters {
 			require.NotEmptyf(t, wsclusters, "expected to render workspace clusters when skipSelf=%v", testCase.SkipSelf)
 		} else {

@@ -32,7 +32,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			StoppingPhaseSeconds:  3600,
 		},
 		EmulatePreparingIntervalSeconds: 10,
-		StaticBridges:                   WSManagerList(ctx),
+		StaticBridges:                   InClusterWSManagerList(ctx),
 		ClusterSyncIntervalSeconds:      60,
 	}
 

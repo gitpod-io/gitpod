@@ -71,7 +71,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	// Convert to a JSON string
-	fc, err := common.ToJSONString(wsmanagerbridge.WSManagerList(ctx))
+	fc, err := common.ToJSONString(wsmanagerbridge.InClusterWSManagerList(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal server.WorkspaceManagerList config: %w", err)
 	}
@@ -185,6 +185,22 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				ReadOnly:  true,
 			})
 		}
+	}
+
+	if len(wsmanagerbridge.InClusterWSManagerList(ctx)) > 0 {
+		volumes = append(volumes, corev1.Volume{
+			Name: "ws-manager-client-tls-certs",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: wsmanager.TLSSecretNameClient,
+				},
+			},
+		})
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "ws-manager-client-tls-certs",
+			MountPath: "/ws-manager-client-tls-certs",
+			ReadOnly:  true,
+		})
 	}
 
 	// mount the optional twilio secret
@@ -374,14 +390,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 										},
 									},
 								},
-								{
-									Name: "ws-manager-client-tls-certs",
-									VolumeSource: corev1.VolumeSource{
-										Secret: &corev1.SecretVolumeSource{
-											SecretName: wsmanager.TLSSecretNameClient,
-										},
-									},
-								},
 							},
 							volumes...,
 						),
@@ -444,11 +452,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									{
 										Name:      "ide-config",
 										MountPath: "/ide-config",
-										ReadOnly:  true,
-									},
-									{
-										Name:      "ws-manager-client-tls-certs",
-										MountPath: "/ws-manager-client-tls-certs",
 										ReadOnly:  true,
 									},
 								},
