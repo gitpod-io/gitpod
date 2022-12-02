@@ -204,18 +204,12 @@ func convertBillingStrategyToDB(in v1.CostCenter_BillingStrategy) db.BillingStra
 	if in == v1.CostCenter_BILLING_STRATEGY_STRIPE {
 		return db.CostCenter_Stripe
 	}
-	if in == v1.CostCenter_BILLING_STRATEGY_CHARGEBEE_CANCELLATION {
-		return db.CostCenter_ChargebeeCancelled
-	}
 	return db.CostCenter_Other
 }
 
 func convertBillingStrategyToAPI(in db.BillingStrategy) v1.CostCenter_BillingStrategy {
 	if in == db.CostCenter_Stripe {
 		return v1.CostCenter_BILLING_STRATEGY_STRIPE
-	}
-	if in == db.CostCenter_ChargebeeCancelled {
-		return v1.CostCenter_BILLING_STRATEGY_CHARGEBEE_CANCELLATION
 	}
 	return v1.CostCenter_BILLING_STRATEGY_OTHER
 }
