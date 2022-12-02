@@ -91,7 +91,7 @@ func (rs *PresignedS3Storage) DeleteBucket(ctx context.Context, userID, bucket s
 		return xerrors.Errorf("can only delete from configured bucket; this looks like a bug in Gitpod")
 	}
 
-	return rs.DeleteObject(ctx, rs.Config.Bucket, &DeleteObjectQuery{Prefix: "/" + userID})
+	return rs.DeleteObject(ctx, rs.Config.Bucket, &DeleteObjectQuery{Prefix: userID + "/"})
 }
 
 // DeleteObject implements PresignedAccess
@@ -104,8 +104,8 @@ func (rs *PresignedS3Storage) DeleteObject(ctx context.Context, bucket string, q
 
 	case query.Prefix != "":
 		resp, err := rs.client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
-			Bucket: &rs.Config.Bucket,
-			Prefix: &query.Prefix,
+			Bucket: aws.String(rs.Config.Bucket),
+			Prefix: aws.String(query.Prefix),
 		})
 		if err != nil {
 			return err
@@ -115,6 +115,10 @@ func (rs *PresignedS3Storage) DeleteObject(ctx context.Context, bucket string, q
 				Key: e.Key,
 			})
 		}
+	}
+
+	if len(objects) == 0 {
+		return nil
 	}
 
 	_, err := rs.client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
