@@ -75,12 +75,12 @@ export default function SelectIDE(props: SelectIDEProps) {
     const [ideOptions, setIdeOptions] = useState<IDEOptions | undefined>(undefined);
     useEffect(() => {
         (async () => {
-            const ideopts = await getGitpodService().server.getIDEOptions();
+            const ideOptions = await getGitpodService().server.getIDEOptions();
             // TODO: Compatible with ide-config not deployed, need revert after ide-config deployed
-            delete ideopts.options["code-latest"];
-            delete ideopts.options["code-desktop-insiders"];
+            delete ideOptions.options["code-latest"];
+            delete ideOptions.options["code-desktop-insiders"];
 
-            setIdeOptions(ideopts);
+            setIdeOptions(ideOptions);
         })();
     }, []);
 
@@ -95,8 +95,9 @@ export default function SelectIDE(props: SelectIDEProps) {
                             <div className={`my-4 gap-3 flex flex-wrap max-w-3xl`}>
                                 {allIdeOptions.map(([id, option]) => {
                                     const selected = defaultIde === id;
+                                    const version = useLatestVersion ? option.latestImageVersion : option.imageVersion;
                                     const onSelect = () => actuallySetDefaultIde(id);
-                                    return renderIdeOption(option, selected, onSelect);
+                                    return renderIdeOption(option, selected, version, onSelect);
                                 })}
                             </div>
                             {ideOptions.options[defaultIde]?.notes && (
@@ -176,20 +177,45 @@ function orderedIdeOptions(ideOptions: IDEOptions) {
         });
 }
 
-function renderIdeOption(option: IDEOption, selected: boolean, onSelect: () => void): JSX.Element {
+function renderIdeOption(
+    option: IDEOption,
+    selected: boolean,
+    version: IDEOption["imageVersion"],
+    onSelect: () => void,
+): JSX.Element {
     const label = option.type === "desktop" ? "" : option.type;
     const card = (
-        <SelectableCardSolid className="w-36 h-40" title={option.title} selected={selected} onClick={onSelect}>
+        <SelectableCardSolid className="w-36 h-44" title={option.title} selected={selected} onClick={onSelect}>
             <div className="flex justify-center mt-3">
                 <img className="w-16 filter-grayscale self-center" src={option.logo} alt="logo" />
             </div>
-            {label ? (
+            <div
+                className="mt-2 px-3 py-1 self-center"
+                style={{
+                    minHeight: "1.75rem",
+                }}
+            >
+                {label ? (
+                    <span
+                        className={`font-semibold text-sm ${
+                            selected ? "text-gray-100 dark:text-gray-600" : "text-gray-600 dark:text-gray-500"
+                        } uppercase`}
+                    >
+                        {label}
+                    </span>
+                ) : (
+                    <></>
+                )}
+            </div>
+
+            {version ? (
                 <div
-                    className={`font-semibold text-sm ${
+                    className={`font-semibold text-xs ${
                         selected ? "text-gray-100 dark:text-gray-600" : "text-gray-600 dark:text-gray-500"
-                    } uppercase mt-2 px-3 py-1 self-center`}
+                    } uppercase px-3 self-center`}
+                    title="The IDE's current version on Gitpod"
                 >
-                    {label}
+                    {version}
                 </div>
             ) : (
                 <></>
