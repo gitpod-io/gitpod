@@ -56,7 +56,6 @@ import {
     ImageConfigFile,
     ProjectEnvVar,
     ImageBuildLogInfo,
-    IDESettings,
     WithReferrerContext,
     EnvVarWithValue,
     BillingTier,
@@ -107,8 +106,8 @@ import { ImageSourceProvider } from "./image-source-provider";
 import { MessageBusIntegration } from "./messagebus-integration";
 import * as path from "path";
 import * as grpc from "@grpc/grpc-js";
-import { IDEConfig, IDEService } from "../ide-service";
-import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
+import { IDEService } from "../ide-service";
+import * as IdeServiceApi from "@gitpod/ide-service-api/lib/ide.pb";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { ExtendedUser } from "@gitpod/ws-manager/lib/constraints";
 import {
@@ -136,68 +135,6 @@ export interface StartWorkspaceOptions {
 
 const MAX_INSTANCE_START_RETRIES = 2;
 const INSTANCE_START_RETRY_INTERVAL_SECONDS = 2;
-
-// TODO(ak) move to IDE service
-export const migrationIDESettings = (user: User) => {
-    if (!user?.additionalData?.ideSettings || user.additionalData.ideSettings.settingVersion === "2.0") {
-        return;
-    }
-    const newIDESettings: IDESettings = {
-        settingVersion: "2.0",
-    };
-    const ideSettings = user.additionalData.ideSettings;
-    if (ideSettings.useDesktopIde) {
-        if (ideSettings.defaultDesktopIde === "code-desktop") {
-            newIDESettings.defaultIde = "code-desktop";
-        } else if (ideSettings.defaultDesktopIde === "code-desktop-insiders") {
-            newIDESettings.defaultIde = "code-desktop";
-            newIDESettings.useLatestVersion = true;
-        } else {
-            newIDESettings.defaultIde = ideSettings.defaultDesktopIde;
-            newIDESettings.useLatestVersion = ideSettings.useLatestVersion;
-        }
-    } else {
-        const useLatest = ideSettings.defaultIde === "code-latest";
-        newIDESettings.defaultIde = "code";
-        newIDESettings.useLatestVersion = useLatest;
-    }
-    return newIDESettings;
-};
-
-// TODO(ak) move to IDE service
-export const chooseIDE = (
-    ideChoice: string,
-    ideOptions: IDEOptions,
-    useLatest: boolean,
-    hasIdeSettingPerm: boolean,
-) => {
-    const defaultIDEOption = ideOptions.options[ideOptions.defaultIde];
-    const defaultIdeImage = useLatest ? defaultIDEOption.latestImage ?? defaultIDEOption.image : defaultIDEOption.image;
-    const data: { desktopIdeImage?: string; desktopIdePluginImage?: string; ideImage: string } = {
-        ideImage: defaultIdeImage,
-    };
-    const chooseOption = ideOptions.options[ideChoice] ?? defaultIDEOption;
-    const isDesktopIde = chooseOption.type === "desktop";
-    if (isDesktopIde) {
-        data.desktopIdeImage = useLatest ? chooseOption?.latestImage ?? chooseOption?.image : chooseOption?.image;
-        data.desktopIdePluginImage = useLatest
-            ? chooseOption?.pluginLatestImage ?? chooseOption?.pluginImage
-            : chooseOption?.pluginImage;
-        if (hasIdeSettingPerm) {
-            data.desktopIdeImage = data.desktopIdeImage || ideChoice;
-        }
-    } else {
-        data.ideImage = useLatest ? chooseOption?.latestImage ?? chooseOption?.image : chooseOption?.image;
-        if (hasIdeSettingPerm) {
-            data.ideImage = data.ideImage || ideChoice;
-        }
-    }
-    if (!data.ideImage) {
-        data.ideImage = defaultIdeImage;
-        // throw new Error("cannot choose correct browser ide");
-    }
-    return data;
-};
 
 export async function getWorkspaceClassForInstance(
     ctx: TraceContext,
@@ -332,7 +269,7 @@ export class WorkspaceStarter {
                 }
             }
 
-            const ideConfig = await this.ideService.getIDEConfig();
+            const ideConfig = await this.resolveIDEConfiguration(ctx, workspace, user);
 
             // create and store instance
             let instance = await this.workspaceDb
@@ -413,6 +350,36 @@ export class WorkspaceStarter {
         }
     }
 
+    private async resolveIDEConfiguration(ctx: TraceContext, workspace: Workspace, user: User) {
+        const span = TraceContext.startSpan("resolveIDEConfiguration", ctx);
+        try {
+            const migrated = this.ideService.migrateSettings(user);
+            if (user.additionalData?.ideSettings && migrated) {
+                user.additionalData.ideSettings = migrated;
+            }
+
+            const resp = await this.ideService.resolveWorkspaceConfig(workspace, user);
+            if (!user.additionalData?.ideSettings && resp.refererIde) {
+                // A user does not have IDE settings configured yet configure it with a referrer ide as default.
+                const additionalData = user?.additionalData || {};
+                const settings = additionalData.ideSettings || {};
+                settings.settingVersion = "2.0";
+                settings.defaultIde = resp.refererIde;
+                additionalData.ideSettings = settings;
+                user.additionalData = additionalData;
+                this.userDB
+                    .trace(ctx)
+                    .updateUserPartial(user)
+                    .catch((e: Error) => {
+                        log.error({ userId: user.id }, "cannot configure default desktop ide", e);
+                    });
+            }
+            return resp;
+        } finally {
+            span.finish();
+        }
+    }
+
     public async stopWorkspaceInstance(
         ctx: TraceContext,
         instanceId: string,
@@ -453,7 +420,7 @@ export class WorkspaceStarter {
         workspace: Workspace,
         user: User,
         lastValidWorkspaceInstanceId: string,
-        ideConfig: IDEConfig,
+        ideConfig: IdeServiceApi.ResolveWorkspaceConfigResponse,
         userEnvVars: UserEnvVar[],
         projectEnvVars: ProjectEnvVar[],
         rethrow?: boolean,
@@ -801,27 +768,13 @@ export class WorkspaceStarter {
         user: User,
         project: Project | undefined,
         excludeFeatureFlags: NamedWorkspaceFeatureFlag[],
-        ideConfig: IDEConfig,
+        ideConfig: IdeServiceApi.ResolveWorkspaceConfigResponse,
     ): Promise<WorkspaceInstance> {
         const span = TraceContext.startSpan("newInstance", ctx);
-        //#endregion IDE resolution TODO(ak) move to IDE service
-        // TODO: Compatible with ide-config not deployed, need revert after ide-config deployed
-        delete ideConfig.ideOptions.options["code-latest"];
-        delete ideConfig.ideOptions.options["code-desktop-insiders"];
-
         try {
-            const migrated = migrationIDESettings(user);
-            if (user.additionalData?.ideSettings && migrated) {
-                user.additionalData.ideSettings = migrated;
-            }
-
-            const ideChoice = user.additionalData?.ideSettings?.defaultIde;
-            const useLatest = !!user.additionalData?.ideSettings?.useLatestVersion;
-
-            // TODO(cw): once we allow changing the IDE in the workspace config (i.e. .gitpod.yml), we must
-            //           give that value precedence over the default choice.
             const configuration: WorkspaceInstanceConfiguration = {
-                ideImage: ideConfig.ideOptions.options[ideConfig.ideOptions.defaultIde].image,
+                ideImage: ideConfig.webImage,
+                ideImageLayers: ideConfig.ideImageLayers,
                 supervisorImage: ideConfig.supervisorImage,
                 ideConfig: {
                     // We only check user setting because if code(insider) but desktopIde has no latestImage
@@ -829,44 +782,6 @@ export class WorkspaceStarter {
                     useLatest: user.additionalData?.ideSettings?.useLatestVersion,
                 },
             };
-
-            if (!!ideChoice) {
-                const choose = chooseIDE(
-                    ideChoice,
-                    ideConfig.ideOptions,
-                    useLatest,
-                    this.authService.hasPermission(user, "ide-settings"),
-                );
-                configuration.ideImage = choose.ideImage;
-                configuration.desktopIdeImage = choose.desktopIdeImage;
-                configuration.desktopIdePluginImage = choose.desktopIdePluginImage;
-            }
-
-            const referrerIde = this.resolveReferrerIDE(workspace, user, ideConfig);
-            if (referrerIde) {
-                configuration.desktopIdeImage = useLatest
-                    ? referrerIde.option.latestImage ?? referrerIde.option.image
-                    : referrerIde.option.image;
-                configuration.desktopIdePluginImage = useLatest
-                    ? referrerIde.option.pluginLatestImage ?? referrerIde.option.pluginImage
-                    : referrerIde.option.pluginImage;
-                if (!user.additionalData?.ideSettings) {
-                    // A user does not have IDE settings configured yet configure it with a referrer ide as default.
-                    const additionalData = user?.additionalData || {};
-                    const settings = additionalData.ideSettings || {};
-                    settings.settingVersion = "2.0";
-                    settings.defaultIde = referrerIde.id;
-                    additionalData.ideSettings = settings;
-                    user.additionalData = additionalData;
-                    this.userDB
-                        .trace(ctx)
-                        .updateUserPartial(user)
-                        .catch((e) => {
-                            log.error({ userId: user.id }, "cannot configure default desktop ide", e);
-                        });
-                }
-            }
-            //#endregion
 
             const billingTier = await this.entitlementService.getBillingTier(user);
 
@@ -982,41 +897,6 @@ export class WorkspaceStarter {
         if (psiEnabled && billingTier === "paid") {
             featureFlags.push("workspace_psi");
         }
-    }
-
-    // TODO(ak) move to IDE service
-    protected resolveReferrerIDE(
-        workspace: Workspace,
-        user: User,
-        ideConfig: IDEConfig,
-    ): { id: string; option: IDEOption } | undefined {
-        if (!WithReferrerContext.is(workspace.context)) {
-            return undefined;
-        }
-        const referrer = ideConfig.ideOptions.clients?.[workspace.context.referrer];
-        if (!referrer) {
-            return undefined;
-        }
-
-        const providedIde = workspace.context.referrerIde;
-        const providedOption = providedIde && ideConfig.ideOptions.options[providedIde];
-        if (providedOption && referrer.desktopIDEs?.some((ide) => ide === providedIde)) {
-            return { id: providedIde, option: providedOption };
-        }
-
-        const defaultDesktopIde = user.additionalData?.ideSettings?.defaultDesktopIde;
-        const userOption = defaultDesktopIde && ideConfig.ideOptions.options[defaultDesktopIde];
-        if (userOption && referrer.desktopIDEs?.some((ide) => ide === defaultDesktopIde)) {
-            return { id: defaultDesktopIde, option: userOption };
-        }
-
-        const defaultIde = referrer.defaultDesktopIDE;
-        const defaultOption = defaultIde && ideConfig.ideOptions.options[defaultIde];
-        if (defaultOption) {
-            return { id: defaultIde, option: defaultOption };
-        }
-
-        return undefined;
     }
 
     protected async prepareBuildRequest(
@@ -1358,7 +1238,7 @@ export class WorkspaceStarter {
         workspace: Workspace,
         instance: WorkspaceInstance,
         lastValidWorkspaceInstanceId: string,
-        ideConfig: IDEConfig,
+        ideConfig: IdeServiceApi.ResolveWorkspaceConfigResponse,
         userEnvVars: UserEnvVarValue[],
         projectEnvVars: ProjectEnvVar[],
     ): Promise<StartWorkspaceSpec> {
@@ -1402,14 +1282,6 @@ export class WorkspaceStarter {
             envvars.push(ev);
         });
 
-        const ideAlias = user.additionalData?.ideSettings?.defaultIde;
-        if (ideAlias && ideConfig.ideOptions.options[ideAlias]) {
-            const ideAliasEnv = new EnvironmentVariable();
-            ideAliasEnv.setName("GITPOD_IDE_ALIAS");
-            ideAliasEnv.setValue(ideAlias);
-            envvars.push(ideAliasEnv);
-        }
-
         const contextUrlEnv = new EnvironmentVariable();
         contextUrlEnv.setName("GITPOD_WORKSPACE_CONTEXT_URL");
         // Beware that `workspace.contextURL` is not normalized so it might contain other modifiers
@@ -1431,7 +1303,8 @@ export class WorkspaceStarter {
         }
 
         log.debug("Workspace config", workspace.config);
-        const tasks = this.ideService.resolveGitpodTasks(workspace);
+
+        const tasks = this.ideService.resolveGitpodTasks(workspace, ideConfig);
         if (tasks.length) {
             // The task config is interpreted by supervisor only, there's little point in transforming it into something
             // wsman understands and back into the very same structure.
@@ -1549,27 +1422,29 @@ export class WorkspaceStarter {
         );
         const userTimeoutPromise = this.entitlementService.getDefaultWorkspaceTimeout(user, new Date());
 
-        const featureFlags = instance.configuration!.featureFlags || [];
-        let ideImage: string;
-        if (!!instance.configuration?.ideImage) {
-            ideImage = instance.configuration?.ideImage;
-        } else {
-            ideImage = ideConfig.ideOptions.options[ideConfig.ideOptions.defaultIde].image;
+        let featureFlags = instance.configuration!.featureFlags || [];
+
+        const sysEnvvars: EnvironmentVariable[] = [];
+        for (const e of ideConfig.envvars) {
+            const ev = new EnvironmentVariable();
+            ev.setName(e.name);
+            ev.setValue(e.value);
+            sysEnvvars.push(ev);
         }
 
         const spec = new StartWorkspaceSpec();
         await createGitpodTokenPromise;
         spec.setEnvvarsList(envvars);
+        spec.setSysEnvvarsList(sysEnvvars);
         spec.setGit(this.createGitSpec(workspace, user));
         spec.setPortsList(ports);
         spec.setInitializer((await initializerPromise).initializer);
         const startWorkspaceSpecIDEImage = new IDEImage();
-        startWorkspaceSpecIDEImage.setWebRef(ideImage);
-        startWorkspaceSpecIDEImage.setDesktopRef(instance.configuration?.desktopIdeImage || "");
-        startWorkspaceSpecIDEImage.setDesktopPluginRef(instance.configuration?.desktopIdePluginImage || "");
-        startWorkspaceSpecIDEImage.setSupervisorRef(instance.configuration?.supervisorImage || "");
+        startWorkspaceSpecIDEImage.setWebRef(ideConfig.webImage);
+        startWorkspaceSpecIDEImage.setSupervisorRef(ideConfig.supervisorImage);
         spec.setIdeImage(startWorkspaceSpecIDEImage);
-        spec.setDeprecatedIdeImage(ideImage);
+        spec.setIdeImageLayersList(ideConfig.ideImageLayers);
+        spec.setDeprecatedIdeImage(ideConfig.webImage);
         spec.setWorkspaceImage(instance.workspaceImage);
         spec.setWorkspaceLocation(workspace.config.workspaceLocation || checkoutLocation);
         spec.setFeatureFlagsList(this.toWorkspaceFeatureFlags(featureFlags));
