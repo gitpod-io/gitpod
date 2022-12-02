@@ -69,7 +69,7 @@ interface PermissionDetail {
 
 const AllPermissions: PermissionDetail[] = [
     {
-        name: "Access the user's API",
+        name: "Full Access",
         description: "Grant complete read and write access to the API.",
         // TODO: what if scopes are duplicate? maybe use a key: uniq string; to filter will be better
         scopes: ["function:*", "resource:default"],
