@@ -356,7 +356,7 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 	}
 
 	jbGW, ok := ideConfig.IdeOptions.Clients["jetbrains-gateway"]
-	if ok {
+	if req.Type == api.WorkspaceType_PREBUILD && ok {
 		warmUpTask := ""
 		for _, alias := range jbGW.DesktopIDEs {
 			prebuilds := getPrebuilds(wsConfig, alias)
