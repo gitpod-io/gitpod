@@ -94,16 +94,9 @@ export default function Modal(props: {
                     )}
                     {props.title ? (
                         <>
-                            <h3 className="pb-2">{props.title}</h3>
-                            <div
-                                className={
-                                    "overflow-scroll border-gray-200 dark:border-gray-800 -mx-6 px-6 " +
-                                    (props.hideDivider ? "" : "border-t border-b mt-2 py-4")
-                                }
-                            >
-                                {props.children}
-                            </div>
-                            <div className="flex justify-end mt-6 space-x-2">{props.buttons}</div>
+                            <ModalHeader>{props.title}</ModalHeader>
+                            <ModalBody hideDivider={props.hideDivider}>{props.children}</ModalBody>
+                            <ModalFooter>{props.buttons}</ModalFooter>
                         </>
                     ) : (
                         props.children
@@ -119,7 +112,6 @@ type ModalHeaderProps = {
 };
 
 export const ModalHeader = ({ children }: ModalHeaderProps) => {
-    // TODO: some modals are using mb-4 for spacing, which do we want?
     return <h3 className="pb-2">{children}</h3>;
 };
 
@@ -129,14 +121,6 @@ type ModalBodyProps = {
 };
 
 export const ModalBody = ({ children, hideDivider = false }: ModalBodyProps) => {
-    // TODO: add className propr
-
-    // EnvVar body classes
-    // border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col
-    // space-y-4 border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4
-
-    // Integrations body classes:
-    // border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4
     return (
         <div
             className={cn("overflow-scroll border-gray-200 dark:border-gray-800 -mx-6 px-6 ", {
@@ -152,11 +136,5 @@ type ModalFooterProps = {
     children: ReactNode;
 };
 export const ModalFooter = ({ children }: ModalFooterProps) => {
-    // EnvVars styles
-    // flex justify-end mt-6
-
-    // Integrations styles
-    // flex justify-end mt-6
-    // TODO: verify space-x-2 won't cause issues when there's only 1 button vs. more
     return <div className="flex justify-end mt-6 space-x-2">{children}</div>;
 };
