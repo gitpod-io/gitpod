@@ -234,6 +234,7 @@ func (s *UsageService) SetCostCenter(ctx context.Context, in *v1.SetCostCenterRe
 		ID:              attrID,
 		SpendingLimit:   in.CostCenter.SpendingLimit,
 		BillingStrategy: convertBillingStrategyToDB(in.CostCenter.BillingStrategy),
+		NextBillingTime: db.NewVarCharTime(in.CostCenter.NextBillingTime.AsTime()),
 	}
 	result, err := s.costCenterManager.UpdateCostCenter(ctx, costCenter)
 	if err != nil {

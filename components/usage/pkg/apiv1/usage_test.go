@@ -245,7 +245,14 @@ func TestGetAndSetCostCenter(t *testing.T) {
 		{
 			AttributionId:   string(db.NewTeamAttributionID(uuid.New().String())),
 			SpendingLimit:   0,
+			NextBillingTime: timestamppb.New(time.Now().Add(12 * time.Hour)),
 			BillingStrategy: v1.CostCenter_BILLING_STRATEGY_OTHER,
+		},
+		{
+			AttributionId:   string(db.NewTeamAttributionID(uuid.New().String())),
+			SpendingLimit:   3000,
+			NextBillingTime: timestamppb.New(time.Now().Add(12 * time.Hour)),
+			BillingStrategy: v1.CostCenter_BILLING_STRATEGY_CHARGEBEE_CANCELLATION,
 		},
 	}
 
@@ -259,6 +266,11 @@ func TestGetAndSetCostCenter(t *testing.T) {
 
 		require.Equal(t, costCenter.SpendingLimit, retrieved.CostCenter.SpendingLimit)
 		require.Equal(t, costCenter.BillingStrategy, retrieved.CostCenter.BillingStrategy)
+		if costCenter.BillingStrategy == v1.CostCenter_BILLING_STRATEGY_CHARGEBEE_CANCELLATION {
+			require.Equal(t, costCenter.NextBillingTime.String(), retrieved.CostCenter.NextBillingTime.String())
+		} else {
+			require.NotEqual(t, costCenter.NextBillingTime, retrieved.CostCenter.NextBillingTime)
+		}
 	}
 }
 

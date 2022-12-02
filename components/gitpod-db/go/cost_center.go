@@ -132,7 +132,9 @@ func getCostCenter(ctx context.Context, conn *gorm.DB, attributionId Attribution
 	return costCenter, nil
 }
 
-func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCenter) (CostCenter, error) {
+func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, costCenter CostCenter) (CostCenter, error) {
+	// create a copy
+	newCC := costCenter
 	if newCC.SpendingLimit < 0 {
 		return CostCenter{}, status.Errorf(codes.InvalidArgument, "Spending limit cannot be set below zero.")
 	}
@@ -148,9 +150,12 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCent
 
 	// we always update the creationTime
 	newCC.CreationTime = NewVarCharTime(now)
-	// we don't allow setting billingCycleStart or nextBillingTime from outside
+	// we don't allow setting billingCycleStart from outside
 	newCC.BillingCycleStart = existingCC.BillingCycleStart
-	newCC.NextBillingTime = existingCC.NextBillingTime
+	// setting nextBillingTime is only possible for chargebee cancellation
+	if newCC.BillingStrategy != CostCenter_ChargebeeCancelled {
+		newCC.NextBillingTime = existingCC.NextBillingTime
+	}
 
 	isTeam := attributionID.IsEntity(AttributionEntity_Team)
 	isUser := attributionID.IsEntity(AttributionEntity_User)

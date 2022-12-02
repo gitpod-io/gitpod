@@ -10,6 +10,7 @@ packages:
     deps:
       - components/gitpod-db:lib
       - components/gitpod-protocol:lib
+      - components/usage-api/typescript:lib
     config:
       packaging: offline-mirror
       yarnLock: ${coreYarnLockBase}/../yarn.lock
@@ -24,6 +25,7 @@ packages:
     deps:
       - components/gitpod-db:lib
       - components/gitpod-protocol:lib
+      - components/usage-api/typescript:lib
       - :dbtest
     config:
       packaging: library
@@ -54,6 +56,7 @@ packages:
       - components/gitpod-db:dbtest-init
       - components/gitpod-db:lib
       - components/gitpod-protocol:lib
+      - components/usage-api/typescript:lib
     config:
       packaging: library
       yarnLock: ${coreYarnLockBase}/../yarn.lock
