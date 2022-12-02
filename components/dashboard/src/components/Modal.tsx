@@ -123,7 +123,7 @@ type ModalBodyProps = {
 export const ModalBody = ({ children, hideDivider = false }: ModalBodyProps) => {
     return (
         <div
-            className={cn("overflow-scroll border-gray-200 dark:border-gray-800 -mx-6 px-6 ", {
+            className={cn("overflow-y-auto border-gray-200 dark:border-gray-800 -mx-6 px-6 ", {
                 "border-t border-b mt-2 py-4": !hideDivider,
             })}
         >
