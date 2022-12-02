@@ -44,9 +44,6 @@ export default function UserDetail(p: { user: User }) {
     const [editRoles, setEditRoles] = useState(false);
     const userRef = useRef(user);
 
-    const isProfessionalOpenSource =
-        accountStatement && accountStatement.subscriptions.some((s) => s.planId === Plans.FREE_OPEN_SOURCE.chargebeeId);
-
     const initialize = () => {
         setUser(user);
         getGitpodService()
@@ -193,25 +190,7 @@ export default function UserDetail(p: { user: User }) {
                     </Property>,
                 );
                 properties.push(
-                    <Property
-                        name="Plan"
-                        actions={
-                            accountStatement && [
-                                {
-                                    label: (isProfessionalOpenSource ? "Disable" : "Enable") + " Professional OSS",
-                                    onClick: async () => {
-                                        await getGitpodService().server.adminSetProfessionalOpenSource(
-                                            user.id,
-                                            !isProfessionalOpenSource,
-                                        );
-                                        setAccountStatement(
-                                            await getGitpodService().server.adminGetAccountStatement(user.id),
-                                        );
-                                    },
-                                },
-                            ]
-                        }
-                    >
+                    <Property name="Plan">
                         {accountStatement?.subscriptions
                             ? accountStatement.subscriptions
                                   .filter((s) => !s.deleted && Subscription.isActive(s, new Date().toISOString()))
