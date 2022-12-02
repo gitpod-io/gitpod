@@ -70,7 +70,7 @@ packages:
   - name: dbtest
     type: yarn
     srcs:
-      - "**/*.ts"
+      - "src/**/*.ts"
       - package.json
       - mocha.opts
     deps:

@@ -3,7 +3,6 @@ packages:
     type: yarn
     srcs:
       - "public/**"
-      - "build/**"
       - "src/**/*.ts*"
       - "src/**/*.css"
       - "src/**/*.svg"

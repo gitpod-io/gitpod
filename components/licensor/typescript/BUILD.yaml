@@ -2,7 +2,8 @@ packages:
   - name: lib
     type: yarn
     srcs:
-      - "ee/**/*"
+      - "ee/*.go"
+      - "ee/src/*"
       - "*.gyp"
       - package.json
     deps:

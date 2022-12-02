@@ -2,7 +2,7 @@ packages:
   - name: app
     type: yarn
     srcs:
-      - "**/*.ts"
+      - "src/**/*.ts"
       - package.json
       - mocha.opts
     deps:
@@ -32,7 +32,7 @@ packages:
   - name: dbtest
     type: yarn
     srcs:
-      - "**/*.ts"
+      - "src/**/*.ts"
       - package.json
       - mocha.opts
     deps:

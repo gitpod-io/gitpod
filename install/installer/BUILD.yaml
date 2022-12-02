@@ -13,7 +13,8 @@ packages:
       - "pkg/components/**/*.pem"
       - "pkg/components/**/*.sql"
       - "scripts/*.sh"
-      - "third_party/**/*"
+      - "third_party/charts/*/Chart.yaml"
+      - "third_party/charts/*/values.yaml"
     deps:
       - components/blobserve:lib
       - components/common-go:lib
