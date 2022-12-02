@@ -3,6 +3,7 @@ packages:
     type: go
     deps:
       - components/common-go:lib
+      - components/gitpod-protocol/go:lib
       - components/ide-service-api/go:lib
     srcs:
       - "**/*.go"
@@ -10,6 +11,7 @@ packages:
       - "go.sum"
       - "pkg/server/schema.json"
       - "pkg/server/testdata/**"
+      - "example-ide-config.json"
     env:
       - CGO_ENABLED=0
       - GOOS=linux
