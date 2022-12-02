@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
-          go-version: '1.19'
+          go-version: "1.19"
       - name: Download leeway
         run: cd /usr/local/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.4.1/leeway_0.4.1_Linux_x86_64.tar.gz | tar xz
       - name: Download golangci-lint
@@ -52,18 +52,21 @@ jobs:
         run: |
           curl -sL "https://data.services.jetbrains.com/products/releases?code=${{ inputs.productCode }}&type=eap,rc,release&platform=linux" > releases.json
           IDE_VERSION=$(cat releases.json | jq -r -c 'first(.${{ inputs.productCode }}[] | select(.build | contains("${{ steps.platform-version.outputs.result }}")) | .build)')
+          IDE_BACKEND_VERSION=$(cat releases.json | jq -r '.${{ inputs.productCode }}[0].version')
           rm releases.json
           echo "::set-output name=result::$IDE_VERSION"
+          echo "::set-output name=ideBackendVersion::$IDE_BACKEND_VERSION"
           echo $IDE_VERSION
+          echo $IDE_BACKEND_VERSION
       - name: Leeway build
         if: ${{ steps.ide-version.outputs.result }}
         env:
-          LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE: '8388608'
+          LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE: "8388608"
         run: |
           gcloud auth configure-docker --quiet
           export LEEWAY_WORKSPACE_ROOT=$(pwd)
           cd components/ide/jetbrains/image
-          leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -DbuildNumber=${{ steps.ide-version.outputs.result }} .:${{ inputs.productId }}-latest
+          leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -DbuildNumber=${{ steps.ide-version.outputs.result }} .:${{ inputs.productId }}-latest -DjbBackendVersion=${{ steps.ide-version.outputs.ideBackendVersion }}
       - name: Get previous job's status
         id: lastrun
         uses: filiptronicek/get-last-job-status@main

@@ -10,6 +10,7 @@ RUN mkdir /ide-desktop
 FROM scratch
 ARG JETBRAINS_DOWNLOAD_QUALIFIER
 ARG JETBRAINS_BACKEND_QUALIFIER
+ARG JETBRAINS_BACKEND_VERSION
 ARG SUPERVISOR_IDE_CONFIG
 # ensures right permissions for /ide-desktop
 COPY --from=base_builder --chown=33333:33333 /ide-desktop/ /ide-desktop/
@@ -30,3 +31,5 @@ ENV GITPOD_ENV_SET_GP_OPEN_EDITOR "$GITPOD_ENV_SET_EDITOR"
 ENV GITPOD_ENV_SET_GIT_EDITOR "$GITPOD_ENV_SET_EDITOR --wait"
 ENV GITPOD_ENV_SET_GP_PREVIEW_BROWSER "/ide-desktop/bin/idea-cli preview"
 ENV GITPOD_ENV_SET_GP_EXTERNAL_BROWSER "/ide-desktop/bin/idea-cli preview"
+
+LABEL "io.gitpod.ide.version"=$JETBRAINS_BACKEND_VERSION
