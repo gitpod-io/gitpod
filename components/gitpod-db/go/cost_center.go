@@ -22,9 +22,8 @@ var CostCenterNotFound = errors.New("CostCenter not found")
 type BillingStrategy string
 
 const (
-	CostCenter_Stripe             BillingStrategy = "stripe"
-	CostCenter_Other              BillingStrategy = "other"
-	CostCenter_ChargebeeCancelled BillingStrategy = "chargebee-cancelled"
+	CostCenter_Stripe BillingStrategy = "stripe"
+	CostCenter_Other  BillingStrategy = "other"
 )
 
 type CostCenter struct {
@@ -291,19 +290,11 @@ func (c *CostCenterManager) ResetUsage(ctx context.Context, id AttributionID) (C
 		nextBillingTime = cc.NextBillingTime.Time().AddDate(0, 1, 0)
 	}
 
-	futureSpendingLimit := cc.SpendingLimit
-	futurebillingStrategy := cc.BillingStrategy
-	// chargebee cancellations will be switched to free plan (strategy: other)
-	if cc.BillingStrategy == CostCenter_ChargebeeCancelled {
-		futureSpendingLimit = c.cfg.ForTeams
-		futurebillingStrategy = CostCenter_Other
-	}
-
 	// All fields on the new cost center remain the same, except for BillingCycleStart, NextBillingTime, and CreationTime
 	newCostCenter := CostCenter{
 		ID:                cc.ID,
-		SpendingLimit:     futureSpendingLimit,
-		BillingStrategy:   futurebillingStrategy,
+		SpendingLimit:     cc.SpendingLimit,
+		BillingStrategy:   cc.BillingStrategy,
 		BillingCycleStart: NewVarCharTime(billingCycleStart),
 		NextBillingTime:   NewVarCharTime(nextBillingTime),
 		CreationTime:      NewVarCharTime(now),

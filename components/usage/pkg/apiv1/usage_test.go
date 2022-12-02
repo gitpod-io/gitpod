@@ -341,7 +341,7 @@ func TestListUsage(t *testing.T) {
 
 }
 
-func TestAddUsageCreditNote(t *testing.T) {
+func TestAddUSageCreditNote(t *testing.T) {
 	conn := dbtest.ConnectForTests(t)
 
 	attributionID := db.NewTeamAttributionID(uuid.New().String())
@@ -381,55 +381,4 @@ func TestAddUsageCreditNote(t *testing.T) {
 		})
 	}
 
-}
-
-func TestHandleChargebeeCancellations(t *testing.T) {
-	conn := dbtest.ConnectForTests(t)
-
-	cancellationDate := time.Date(2022, 8, 1, 0, 0, 0, 0, time.UTC)
-
-	attributionID := db.NewTeamAttributionID(uuid.New().String())
-
-	dbtest.CreateUsageRecords(t, conn, dbtest.NewUsage(t, db.Usage{
-		AttributionID: attributionID,
-		EffectiveTime: db.NewVarCharTime(cancellationDate.Add(-6 * time.Hour)),
-		CreditCents:   100,
-		Draft:         false,
-	}), dbtest.NewUsage(t, db.Usage{
-		AttributionID: attributionID,
-		EffectiveTime: db.NewVarCharTime(cancellationDate.Add(-4 * time.Hour)),
-		CreditCents:   200,
-		Draft:         false,
-	}), dbtest.NewUsage(t, db.Usage{
-		AttributionID: attributionID,
-		EffectiveTime: db.NewVarCharTime(cancellationDate.Add(-2 * time.Hour)),
-		CreditCents:   300,
-		Draft:         true,
-	}))
-
-	cc := dbtest.CreateCostCenters(t, conn, db.CostCenter{
-		ID:                attributionID,
-		BillingStrategy:   db.CostCenter_ChargebeeCancelled,
-		SpendingLimit:     1000,
-		BillingCycleStart: db.NewVarCharTime(cancellationDate.Add(-2 * time.Hour)),
-		NextBillingTime:   db.NewVarCharTime(cancellationDate),
-		CreationTime:      db.NewVarCharTime(cancellationDate.Add(-2 * time.Hour)),
-	})[0]
-
-	usageService := newUsageService(t, conn)
-
-	balanceBefore, err := usageService.GetBalance(context.Background(), &v1.GetBalanceRequest{AttributionId: string(cc.ID)})
-	require.NoError(t, err)
-	require.Equal(t, float64(6), balanceBefore.Credits)
-
-	_, err = usageService.ResetUsage(context.Background(), &v1.ResetUsageRequest{})
-	require.NoError(t, err)
-
-	costCenterAfter, err := usageService.GetCostCenter(context.Background(), &v1.GetCostCenterRequest{AttributionId: string(cc.ID)})
-	require.NoError(t, err)
-	require.Equal(t, v1.CostCenter_BILLING_STRATEGY_OTHER, costCenterAfter.CostCenter.BillingStrategy)
-
-	balanceAfter, err := usageService.GetBalance(context.Background(), &v1.GetBalanceRequest{AttributionId: string(cc.ID)})
-	require.NoError(t, err)
-	require.Equal(t, float64(0), balanceAfter.Credits)
 }
