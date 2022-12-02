@@ -87,7 +87,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	podSpec := corev1.PodSpec{
 		PriorityClassName: common.SystemNodeCritical,
-		Affinity:          common.NodeAffinity(cluster.AffinityLabelWorkspaceServices),
+		Affinity:          common.NodeAffinity(cluster.AffinityLabelServices),
 		TopologySpreadConstraints: []corev1.TopologySpreadConstraint{
 			{
 				LabelSelector:     &metav1.LabelSelector{MatchLabels: common.DefaultLabels(Component)},
