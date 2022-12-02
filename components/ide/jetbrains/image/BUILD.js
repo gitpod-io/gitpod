@@ -37,6 +37,16 @@ const ideConfigs = [
     },
 ];
 
+const getIDEVersion = function (qualifier, url) {
+    if (qualifier == "latest") {
+        return args.jbBackendVersion;
+    } else {
+        // https://download.jetbrains.com/idea/ideaIU-2022.2.4.tar.gz
+        const str = url.split("-");
+        return str[str.length - 1].replace(".tar.gz", "");
+    }
+};
+
 const packages = [];
 const generateIDEBuildPackage = function (ideConfig, qualifier) {
     let name = ideConfig.name + (qualifier === "stable" ? "" : "-" + qualifier);
@@ -55,6 +65,7 @@ const generateIDEBuildPackage = function (ideConfig, qualifier) {
                 JETBRAINS_DOWNLOAD_QUALIFIER: name,
                 SUPERVISOR_IDE_CONFIG: `supervisor-ide-config_${ideConfig.name}.json`,
                 JETBRAINS_BACKEND_QUALIFIER: qualifier,
+                JETBRAINS_BACKEND_VERSION: getIDEVersion(qualifier, args[`${ideConfig.name}DownloadUrl`]),
             },
             image: [],
         },

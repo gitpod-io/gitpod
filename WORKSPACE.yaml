@@ -19,6 +19,7 @@ defaultArgs:
   webstormDownloadUrl: "https://download.jetbrains.com/webstorm/WebStorm-2022.2.3.tar.gz"
   riderDownloadUrl: "https://download.jetbrains.com/rider/JetBrains.Rider-2022.2.4.tar.gz"
   clionDownloadUrl: "https://download.jetbrains.com/cpp/CLion-2022.2.4.tar.gz"
+  jbBackendVersion: "latest"
   REPLICATED_API_TOKEN: ""
   REPLICATED_APP: ""
 provenance:
