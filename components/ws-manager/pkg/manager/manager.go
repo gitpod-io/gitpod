@@ -203,6 +203,21 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	tracing.ApplyOWI(span, owi)
 	defer tracing.FinishSpan(span, &err)
 
+	defer func(req *api.StartWorkspaceRequest, err *error) {
+		success := true
+		alreadyExists := false
+		if err != nil && *err != nil {
+			success = false
+			if status.Code(*err) == codes.AlreadyExists {
+				alreadyExists = true
+			}
+		}
+		// do not record metrics for already started workspaces
+		if !alreadyExists {
+			m.metrics.OnWorkspaceStarted(req.Type, req.Spec.Class, success)
+		}
+	}(req, &err)
+
 	clog.Info("StartWorkspace")
 	reqs, _ := protojson.Marshal(req)
 	safeReqs, _ := log.RedactJSON(reqs)
@@ -431,8 +446,6 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		Url:        startContext.WorkspaceURL,
 		OwnerToken: startContext.OwnerToken,
 	}
-
-	m.metrics.OnWorkspaceStarted(req.Type, req.Spec.Class)
 
 	return okResponse, nil
 }

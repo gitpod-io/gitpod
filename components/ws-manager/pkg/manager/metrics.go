@@ -46,6 +46,7 @@ type metrics struct {
 
 	// Counter
 	totalStartsCounterVec                     *prometheus.CounterVec
+	totalStartsFailureCounterVec              *prometheus.CounterVec
 	totalStopsCounterVec                      *prometheus.CounterVec
 	totalBackupCounterVec                     *prometheus.CounterVec
 	totalBackupFailureCounterVec              *prometheus.CounterVec
@@ -107,6 +108,12 @@ func newMetrics(m *Manager) *metrics {
 			Subsystem: metricsWorkspaceSubsystem,
 			Name:      "workspace_starts_total",
 			Help:      "total number of workspaces started",
+		}, []string{"type", "class"}),
+		totalStartsFailureCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      "workspace_starts_failure_total",
+			Help:      "total number of workspaces that failed to start",
 		}, []string{"type", "class"}),
 		totalStopsCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
@@ -213,6 +220,7 @@ func (m *metrics) Register(reg prometheus.Registerer) error {
 		newTimeoutSettingsVec(m.manager),
 		newSubscriberQueueLevelVec(m.manager),
 		m.totalStartsCounterVec,
+		m.totalStartsFailureCounterVec,
 		m.totalStopsCounterVec,
 		m.totalBackupCounterVec,
 		m.totalBackupFailureCounterVec,
@@ -233,15 +241,23 @@ func (m *metrics) Register(reg prometheus.Registerer) error {
 	return nil
 }
 
-func (m *metrics) OnWorkspaceStarted(tpe api.WorkspaceType, class string) {
+func (m *metrics) OnWorkspaceStarted(tpe api.WorkspaceType, class string, success bool) {
 	nme := api.WorkspaceType_name[int32(tpe)]
 	counter, err := m.totalStartsCounterVec.GetMetricWithLabelValues(nme, class)
 	if err != nil {
 		log.WithError(err).WithField("type", tpe).Warn("cannot get counter for workspace start metric")
 		return
 	}
-
 	counter.Inc()
+
+	if !success {
+		counter, err = m.totalStartsFailureCounterVec.GetMetricWithLabelValues(nme, class)
+		if err != nil {
+			log.WithError(err).WithField("type", tpe).Warn("cannot get counter for workspace start failure metric")
+			return
+		}
+		counter.Inc()
+	}
 }
 
 func (m *metrics) OnChange(status *api.WorkspaceStatus) {
