@@ -13,10 +13,12 @@ import (
 	"os"
 	"os/exec"
 	"sync"
+	"syscall"
 	"time"
 
-	"github.com/creack/pty"
+	_pty "github.com/creack/pty"
 	"github.com/google/uuid"
+
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sys/unix"
@@ -25,6 +27,14 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/process"
 	"github.com/gitpod-io/gitpod/supervisor/api"
+)
+
+const (
+	CBAUD   = 0010017 // CBAUD Serial speed settings
+	CBAUDEX = 0010000 // CBAUDX Serial speed settings
+
+	DEFAULT_COLS = 80
+	DEFAULT_ROWS = 24
 )
 
 // NewMux creates a new terminal mux.
@@ -55,20 +65,14 @@ func (m *Mux) Start(cmd *exec.Cmd, options TermOptions) (alias string, err error
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	pty, err := pty.StartWithSize(cmd, options.Size)
-	if err != nil {
-		return "", xerrors.Errorf("cannot start PTY: %w", err)
-	}
-
 	uid, err := uuid.NewRandom()
 	if err != nil {
 		return "", xerrors.Errorf("cannot produce alias: %w", err)
 	}
 	alias = uid.String()
 
-	term, err := newTerm(alias, pty, cmd, options)
+	term, err := newTerm(alias, cmd, options)
 	if err != nil {
-		pty.Close()
 		return "", err
 	}
 	m.aliases = append(m.aliases, alias)
@@ -159,7 +163,7 @@ func (m *Mux) doClose(ctx context.Context, alias string) error {
 // For now we assume an average of five terminals per workspace, which makes this consume 1MiB of RAM.
 const terminalBacklogSize = 256 << 10
 
-func newTerm(alias string, pty *os.File, cmd *exec.Cmd, options TermOptions) (*Term, error) {
+func newTerm(alias string, cmd *exec.Cmd, options TermOptions) (*Term, error) {
 	token, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
@@ -174,6 +178,82 @@ func newTerm(alias string, pty *os.File, cmd *exec.Cmd, options TermOptions) (*T
 	if timeout == 0 {
 		timeout = NoTimeout
 	}
+
+	annotations := options.Annotations
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+
+	size := _pty.Winsize{Cols: DEFAULT_COLS, Rows: DEFAULT_ROWS}
+	if options.Size != nil {
+		if options.Size.Cols != 0 {
+			size.Cols = options.Size.Cols
+		}
+		if options.Size.Rows != 0 {
+			size.Rows = options.Size.Rows
+		}
+	}
+
+	pty, pts, err := _pty.Open()
+	if err != nil {
+		pty.Close()
+		return nil, xerrors.Errorf("cannot start PTY: %w", err)
+	}
+
+	if err := _pty.Setsize(pty, &size); err != nil {
+		pty.Close()
+		return nil, err
+	}
+
+	// Set up terminal (from node-pty)
+	var attr unix.Termios
+	attr.Iflag = unix.ICRNL | unix.IXON | unix.IXANY | unix.IMAXBEL | unix.BRKINT | syscall.IUTF8
+	attr.Oflag = unix.OPOST | unix.ONLCR
+	attr.Cflag = unix.CREAD | unix.CS8 | unix.HUPCL
+	attr.Lflag = unix.ICANON | unix.ISIG | unix.IEXTEN | unix.ECHO | unix.ECHOE | unix.ECHOK | unix.ECHOKE | unix.ECHOCTL
+	attr.Cc[unix.VEOF] = 4
+	attr.Cc[unix.VEOL] = 0xff
+	attr.Cc[unix.VEOL2] = 0xff
+	attr.Cc[unix.VERASE] = 0x7f
+	attr.Cc[unix.VWERASE] = 23
+	attr.Cc[unix.VKILL] = 21
+	attr.Cc[unix.VREPRINT] = 18
+	attr.Cc[unix.VINTR] = 3
+	attr.Cc[unix.VQUIT] = 0x1c
+	attr.Cc[unix.VSUSP] = 26
+	attr.Cc[unix.VSTART] = 17
+	attr.Cc[unix.VSTOP] = 19
+	attr.Cc[unix.VLNEXT] = 22
+	attr.Cc[unix.VDISCARD] = 15
+	attr.Cc[unix.VMIN] = 1
+	attr.Cc[unix.VTIME] = 0
+
+	attr.Ispeed = unix.B38400
+	attr.Ospeed = unix.B38400
+	attr.Cflag &^= CBAUD | CBAUDEX
+	attr.Cflag |= unix.B38400
+
+	err = unix.IoctlSetTermios(int(pts.Fd()), syscall.TCSETS, &attr)
+	if err != nil {
+		pty.Close()
+		return nil, err
+	}
+
+	cmd.Stdout = pts
+	cmd.Stderr = pts
+	cmd.Stdin = pts
+
+	if cmd.SysProcAttr == nil {
+		cmd.SysProcAttr = &syscall.SysProcAttr{}
+	}
+	cmd.SysProcAttr.Setsid = true
+	cmd.SysProcAttr.Setctty = true
+
+	if err := cmd.Start(); err != nil {
+		_ = pty.Close()
+		return nil, err
+	}
+
 	res := &Term{
 		PTY:     pty,
 		Command: cmd,
@@ -184,27 +264,12 @@ func newTerm(alias string, pty *os.File, cmd *exec.Cmd, options TermOptions) (*T
 			logStdout: options.LogToStdout,
 			logLabel:  alias,
 		},
-		annotations:  options.Annotations,
+		annotations:  annotations,
 		defaultTitle: options.Title,
 
 		StarterToken: token.String(),
 
 		waitDone: make(chan struct{}),
-	}
-	if res.annotations == nil {
-		res.annotations = make(map[string]string)
-	}
-
-	rawConn, err := pty.SyscallConn()
-	if err != nil {
-		return nil, err
-	}
-
-	err = rawConn.Control(func(fileFd uintptr) {
-		res.fd = int(fileFd)
-	})
-	if err != nil {
-		return nil, err
 	}
 
 	//nolint:errcheck
@@ -224,7 +289,7 @@ type TermOptions struct {
 	Annotations map[string]string
 
 	// Size describes the terminal size.
-	Size *pty.Winsize
+	Size *_pty.Winsize
 
 	// Title describes the terminal title.
 	Title string
@@ -248,8 +313,6 @@ type Term struct {
 
 	waitErr  error
 	waitDone chan struct{}
-
-	fd int
 }
 
 func (term *Term) GetTitle() (string, api.TerminalTitleSource, error) {
@@ -298,7 +361,7 @@ func (term *Term) UpdateAnnotations(changed map[string]string, deleted []string)
 }
 
 func (term *Term) resolveForegroundCommand() (string, error) {
-	pgrp, err := unix.IoctlGetInt(term.fd, unix.TIOCGPGRP)
+	pgrp, err := unix.IoctlGetInt(int(term.PTY.Fd()), unix.TIOCGPGRP)
 	if err != nil {
 		return "", err
 	}

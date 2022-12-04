@@ -6,7 +6,7 @@ require (
 	github.com/Netflix/go-env v0.0.0-20220526054621-78278af1949d
 	github.com/c9s/goprocinfo v0.0.0-20210130143923-c95fcf8c64a8
 	github.com/cenkalti/backoff/v4 v4.2.0
-	github.com/creack/pty v1.1.11
+	github.com/creack/pty v1.1.18
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-00010101000000-000000000000
