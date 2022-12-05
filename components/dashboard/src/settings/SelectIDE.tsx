@@ -75,12 +75,7 @@ export default function SelectIDE(props: SelectIDEProps) {
     const [ideOptions, setIdeOptions] = useState<IDEOptions | undefined>(undefined);
     useEffect(() => {
         (async () => {
-            const ideOptions = await getGitpodService().server.getIDEOptions();
-            // TODO: Compatible with ide-config not deployed, need revert after ide-config deployed
-            delete ideOptions.options["code-latest"];
-            delete ideOptions.options["code-desktop-insiders"];
-
-            setIdeOptions(ideOptions);
+            setIdeOptions(await getGitpodService().server.getIDEOptions());
         })();
     }, []);
 
