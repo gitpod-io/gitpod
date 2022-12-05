@@ -37,9 +37,9 @@ type OIDCServiceClient interface {
 	GetClientConfig(context.Context, *connect_go.Request[v1.GetClientConfigRequest]) (*connect_go.Response[v1.GetClientConfigResponse], error)
 	// Lists OIDC client configurations.
 	ListClientConfigs(context.Context, *connect_go.Request[v1.ListClientConfigsRequest]) (*connect_go.Response[v1.ListClientConfigsResponse], error)
-	// Updates modifiable properties of an existing OIDC provider configuration.
+	// Updates modifiable properties of an existing OIDC client configuration.
 	UpdateClientConfig(context.Context, *connect_go.Request[v1.UpdateClientConfigRequest]) (*connect_go.Response[v1.UpdateClientConfigResponse], error)
-	// Removes a OIDC provider configuration by ID.
+	// Removes a OIDC client configuration by ID.
 	DeleteClientConfig(context.Context, *connect_go.Request[v1.DeleteClientConfigRequest]) (*connect_go.Response[v1.DeleteClientConfigResponse], error)
 }
 
@@ -123,9 +123,9 @@ type OIDCServiceHandler interface {
 	GetClientConfig(context.Context, *connect_go.Request[v1.GetClientConfigRequest]) (*connect_go.Response[v1.GetClientConfigResponse], error)
 	// Lists OIDC client configurations.
 	ListClientConfigs(context.Context, *connect_go.Request[v1.ListClientConfigsRequest]) (*connect_go.Response[v1.ListClientConfigsResponse], error)
-	// Updates modifiable properties of an existing OIDC provider configuration.
+	// Updates modifiable properties of an existing OIDC client configuration.
 	UpdateClientConfig(context.Context, *connect_go.Request[v1.UpdateClientConfigRequest]) (*connect_go.Response[v1.UpdateClientConfigResponse], error)
-	// Removes a OIDC provider configuration by ID.
+	// Removes a OIDC client configuration by ID.
 	DeleteClientConfig(context.Context, *connect_go.Request[v1.DeleteClientConfigRequest]) (*connect_go.Response[v1.DeleteClientConfigResponse], error)
 }
 
