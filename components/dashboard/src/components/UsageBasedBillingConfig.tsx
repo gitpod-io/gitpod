@@ -185,7 +185,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
     }, [attributionId, billingCycleFrom]);
 
     const showSpinner = !attributionId || isLoadingStripeSubscription || !!pendingStripeSubscription;
-    const showBalance = !showSpinner && !(AttributionId.parse(attributionId)?.kind === "team" && !stripeSubscriptionId);
+    const showBalance = !showSpinner;
     const showUpgradeTeam =
         !showSpinner && AttributionId.parse(attributionId)?.kind === "team" && !stripeSubscriptionId;
     const showUpgradeUser =

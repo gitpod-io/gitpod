@@ -210,12 +210,6 @@ export class UserService {
                     "You're no longer a member of the selected billing team.",
                 );
             }
-            if (await this.isUnbilledTeam(attribution)) {
-                throw new ResponseError(
-                    ErrorCodes.INVALID_COST_CENTER,
-                    "The billing team you've selected does not have billing enabled.",
-                );
-            }
         }
         if (attribution.kind === "user") {
             if (user.id !== attribution.userId) {
@@ -258,11 +252,7 @@ export class UserService {
             } else {
                 attributionId = AttributionId.create(user);
             }
-            if (
-                !!attributionId &&
-                (await this.hasCredits(attributionId)) &&
-                !(await this.isUnbilledTeam(attributionId))
-            ) {
+            if (!!attributionId && (await this.hasCredits(attributionId))) {
                 return attributionId;
             }
         }
@@ -315,14 +305,6 @@ export class UserService {
     protected async hasCredits(attributionId: AttributionId): Promise<boolean> {
         const response = await this.usageService.getCurrentBalance(attributionId);
         return response.usedCredits < response.usageLimit;
-    }
-
-    protected async isUnbilledTeam(attributionId: AttributionId): Promise<boolean> {
-        if (attributionId.kind !== "team") {
-            return false;
-        }
-        const billingStrategy = await this.usageService.getCurrentBillingStategy(attributionId);
-        return billingStrategy !== CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
     }
 
     async setUsageAttribution(user: User, usageAttributionId: string): Promise<void> {
