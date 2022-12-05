@@ -24,6 +24,7 @@ metadata:
 objectStorage:
   inCluster: false
   s3:
+    region: eu-west-2
     endpoint: s3.amazonaws.com
     bucket: s3-bucket
     credentials:

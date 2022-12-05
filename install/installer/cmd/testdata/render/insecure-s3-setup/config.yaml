@@ -10,6 +10,7 @@ objectStorage:
   inCluster: false
   s3:
     endpoint: s3-provider.com
+    region: eu-central-1
     allowInsecureConnection: true
     bucket: s3-bucket
     credentials:
