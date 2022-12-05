@@ -28,7 +28,7 @@ do
   # go
   sed -i "s/\/\ Licensed under the MIT License. See License-MIT.txt in the project root for license information./\/\/ $L1\n\/\/ $L2/" "$line"
   # SQL
-  sed -i "s/-- Licensed under the MIT License. See License-MIT.txt in the project root for license information./-- $L1\n-- $L2/" "$line"
+  sed -i "s/-- Licensed under the MIT License. See License-MIT.txt in the project root for license information./-- $L1 $L2/" "$line"
   # TypeScript
   sed -i "s/* Licensed under the MIT License. See License-MIT.txt in the project root for license information./* $L1\n* $L2/" "$line"
   # ------- Enterprise ------
