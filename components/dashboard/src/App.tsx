@@ -57,7 +57,7 @@ import { BlockedRepositories } from "./admin/BlockedRepositories";
 import { AppNotifications } from "./AppNotifications";
 import { publicApiTeamsToProtocol, teamsService } from "./service/public-api";
 import { FeatureFlagContext } from "./contexts/FeatureFlagContext";
-import { PersonalAccessTokenCreateView } from "./settings/PersonalAccessTokens";
+import PersonalAccessTokenCreateView from "./settings/PersonalAccessTokensCreateView";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "./workspaces/Workspaces"));
