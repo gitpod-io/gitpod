@@ -1350,20 +1350,21 @@ data:
       },
       "storage": {
         "stage": "",
-        "kind": "minio",
+        "kind": "s3",
         "gcloud": {
           "credentialsFile": "",
           "region": "",
           "projectId": ""
         },
         "minio": {
-          "endpoint": "s3-provider.com",
+          "endpoint": "",
           "accessKey": "",
-          "accessKeyFile": "/mnt/secrets/storage/accessKeyId",
+          "accessKeyFile": "",
           "secretKey": "",
-          "secretKeyFile": "/mnt/secrets/storage/secretAccessKey",
-          "region": "local",
-          "parallelUpload": 100,
+          "secretKeyFile": "",
+          "region": ""
+        },
+        "s3": {
           "bucket": "s3-bucket"
         },
         "blobQuota": 5368709120
@@ -1468,6 +1469,7 @@ data:
           kind: secret
           name: s3-storage
         endpoint: s3-provider.com
+        region: eu-central-1
     observability:
       logLevel: info
     openVSX:
@@ -5390,20 +5392,21 @@ data:
           "tempDir": "/tmp",
           "storage": {
             "stage": "",
-            "kind": "minio",
+            "kind": "s3",
             "gcloud": {
               "credentialsFile": "",
               "region": "",
               "projectId": ""
             },
             "minio": {
-              "endpoint": "s3-provider.com",
+              "endpoint": "",
               "accessKey": "",
-              "accessKeyFile": "/mnt/secrets/storage/accessKeyId",
+              "accessKeyFile": "",
               "secretKey": "",
-              "secretKeyFile": "/mnt/secrets/storage/secretAccessKey",
-              "region": "local",
-              "parallelUpload": 100,
+              "secretKeyFile": "",
+              "region": ""
+            },
+            "s3": {
               "bucket": "s3-bucket"
             },
             "blobQuota": 5368709120
@@ -5575,20 +5578,21 @@ data:
       "content": {
         "storage": {
           "stage": "",
-          "kind": "minio",
+          "kind": "s3",
           "gcloud": {
             "credentialsFile": "",
             "region": "",
             "projectId": ""
           },
           "minio": {
-            "endpoint": "s3-provider.com",
+            "endpoint": "",
             "accessKey": "",
-            "accessKeyFile": "/mnt/secrets/storage/accessKeyId",
+            "accessKeyFile": "",
             "secretKey": "",
-            "secretKeyFile": "/mnt/secrets/storage/secretAccessKey",
-            "region": "local",
-            "parallelUpload": 100,
+            "secretKeyFile": "",
+            "region": ""
+          },
+          "s3": {
             "bucket": "s3-bucket"
           },
           "blobQuota": 5368709120
@@ -7857,7 +7861,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: c95be35e9c1c3f3bafde5c5e0cc5e97ab493e5624093809d7fa7680d0190da25
+        gitpod.io/checksum_config: 445e07c866a3c93106bd3bbea8d6e41231d581da4466823f56ba38aec71aa6fa
         seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
       creationTimestamp: null
       labels:
@@ -7902,6 +7906,10 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: AWS_DEFAULT_REGION
+          value: eu-central-1
+        - name: AWS_SHARED_CREDENTIALS_FILE
+          value: /mnt/secrets/storage/credentials
         image: eu.gcr.io/gitpod-core-dev/build/ws-daemon:test
         imagePullPolicy: IfNotPresent
         livenessProbe:
@@ -8792,7 +8800,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 55b82a9f4f41ab5582209c883bcb86b8305411fc9f2489a2f41fd576bfc5ccf9
+        gitpod.io/checksum_config: e52c1225c6df6aa54a748f6d6d11d3dddbde305b3f3214bfd37d4a57d60f1ef4
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8833,6 +8841,10 @@ spec:
           value: "true"
         - name: GRPC_GO_RETRY
           value: "on"
+        - name: AWS_DEFAULT_REGION
+          value: eu-central-1
+        - name: AWS_SHARED_CREDENTIALS_FILE
+          value: /mnt/secrets/storage/credentials
         image: eu.gcr.io/gitpod-core-dev/build/content-service:test
         imagePullPolicy: IfNotPresent
         name: content-service
@@ -10380,7 +10392,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 7aa5b741d1192fb626ba05a2e819c40f92db4b21176f9d60badf08be2dc0e2b8
+        gitpod.io/checksum_config: 11dccda151d3297a0b5fabb44daa9924044b587991f228ec1fdbf11c7f4c7dba
       creationTimestamp: null
       labels:
         app: gitpod

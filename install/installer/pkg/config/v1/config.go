@@ -262,7 +262,8 @@ type ObjectStorageS3 struct {
 	// If no name is configured, the old "one bucket per user" behaviour kicks in.
 	BucketName string `json:"bucket"`
 
-	AllowInsecureConnection bool `json:"allowInsecureConnection"`
+	AllowInsecureConnection bool   `json:"allowInsecureConnection"`
+	Region                  string `json:"region"`
 }
 
 type ObjectStorageCloudStorage struct {
