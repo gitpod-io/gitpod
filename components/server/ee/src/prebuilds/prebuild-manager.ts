@@ -134,34 +134,37 @@ export class PrebuildManager {
                     `Running prebuilds without a project is no longer supported. Please add '${cloneURL}' as a project in a Gitpod team.`,
                 );
             }
-            const existingPB = await this.findNonFailedPrebuiltWorkspace({ span }, cloneURL, commitSHAIdentifier);
 
-            // If the existing prebuild is failed, it will be retriggered in the afterwards
             const config = await this.fetchConfig({ span }, user, context);
-            if (existingPB) {
-                // If the existing prebuild is based on an outdated project config, we also want to retrigger it.
-                const existingPBWS = await this.workspaceDB.trace({ span }).findById(existingPB.buildWorkspaceId);
-                const existingConfig = existingPBWS?.config;
-                log.debug(
-                    `startPrebuild | commits: ${commitSHAIdentifier}, existingPB: ${
-                        existingPB.id
-                    }, existingConfig: ${JSON.stringify(existingConfig)}, newConfig: ${JSON.stringify(config)}}`,
-                );
-                const filterPrebuildTasks = (tasks: TaskConfig[] = []) =>
-                    tasks
-                        .map((task) =>
-                            Object.keys(task)
-                                .filter((key) => ["before", "init", "prebuild"].includes(key))
-                                // @ts-ignore
-                                .reduce((obj, key) => ({ ...obj, [key]: task[key] }), {}),
-                        )
-                        .filter((task) => Object.keys(task).length > 0);
-                const isSameConfig =
-                    JSON.stringify(filterPrebuildTasks(existingConfig?.tasks)) ===
-                    JSON.stringify(filterPrebuildTasks(config?.tasks));
-                // If there is an existing prebuild that isn't failed and it's based on the current config, we return it here instead of triggering a new prebuild.
-                if (isSameConfig) {
-                    return { prebuildId: existingPB.id, wsid: existingPB.buildWorkspaceId, done: true };
+
+            if (!forcePrebuild) {
+                // Check for an existing, successful prebuild, before triggering a new one.
+                const existingPB = await this.findNonFailedPrebuiltWorkspace({ span }, cloneURL, commitSHAIdentifier);
+                if (existingPB) {
+                    // But if the existing prebuild is failed, or based on an outdated config, it will still be retriggered below.
+                    const existingPBWS = await this.workspaceDB.trace({ span }).findById(existingPB.buildWorkspaceId);
+                    const existingConfig = existingPBWS?.config;
+                    log.debug(
+                        `startPrebuild | commits: ${commitSHAIdentifier}, existingPB: ${
+                            existingPB.id
+                        }, existingConfig: ${JSON.stringify(existingConfig)}, newConfig: ${JSON.stringify(config)}}`,
+                    );
+                    const filterPrebuildTasks = (tasks: TaskConfig[] = []) =>
+                        tasks
+                            .map((task) =>
+                                Object.keys(task)
+                                    .filter((key) => ["before", "init", "prebuild"].includes(key))
+                                    // @ts-ignore
+                                    .reduce((obj, key) => ({ ...obj, [key]: task[key] }), {}),
+                            )
+                            .filter((task) => Object.keys(task).length > 0);
+                    const isSameConfig =
+                        JSON.stringify(filterPrebuildTasks(existingConfig?.tasks)) ===
+                        JSON.stringify(filterPrebuildTasks(config?.tasks));
+                    // If there is an existing prebuild that isn't failed and it's based on the current config, we return it here instead of triggering a new prebuild.
+                    if (isSameConfig) {
+                        return { prebuildId: existingPB.id, wsid: existingPB.buildWorkspaceId, done: true };
+                    }
                 }
             }
             if (project && context.ref && !project.settings?.keepOutdatedPrebuildsRunning) {
