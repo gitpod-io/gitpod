@@ -27,11 +27,11 @@ var licenseTemplate = make(map[string]*template.Template)
 
 func init() {
 	// licenseTemplate["apache"] = template.Must(template.New("").Parse(tmplApache))
-	licenseTemplate["mit"] = template.Must(template.New("").Parse(tmplMIT))
+	// licenseTemplate["mit"] = template.Must(template.New("").Parse(tmplMIT))
 	// licenseTemplate["bsd"] = template.Must(template.New("").Parse(tmplBSD))
 	// licenseTemplate["mpl"] = template.Must(template.New("").Parse(tmplMPL))
 	licenseTemplate["agpl"] = template.Must(template.New("").Parse(tmplAGPL))
-	licenseTemplate["gpshf"] = template.Must(template.New("").Parse(tmplGPSHF))
+	// licenseTemplate["gpshf"] = template.Must(template.New("").Parse(tmplGPSHF))
 }
 
 type copyrightData struct {
@@ -85,13 +85,13 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at https://mozilla.org/MPL/2.0/.`
 */
 
-const tmplMIT = `Copyright (c) {{.Year}} {{.Holder}}. All rights reserved.
-Licensed under the MIT License. See License-MIT.txt in the project root for license information.`
+// const tmplMIT = `Copyright (c) {{.Year}} {{.Holder}}. All rights reserved.
+// Licensed under the MIT License. See License-MIT.txt in the project root for license information.`
 
 const tmplAGPL = `Copyright (c) {{.Year}} {{.Holder}}. All rights reserved.
 Licensed under the GNU Affero General Public License (AGPL).
 See License-AGPL.txt in the project root for license information.`
 
-const tmplGPSHF = `Copyright (c) {{.Year}} {{.Holder}}. All rights reserved.
-Licensed under the Gitpod Enterprise Source Code License,
-See License.enterprise.txt in the project root folder.`
+// const tmplGPSHF = `Copyright (c) {{.Year}} {{.Holder}}. All rights reserved.
+// Licensed under the Gitpod Enterprise Source Code License,
+// See License.enterprise.txt in the project root folder.`

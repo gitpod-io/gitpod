@@ -33,17 +33,3 @@ defaultVariant:
   config:
     go:
       lintCommand: ["sh", "-c", "golangci-lint run --disable govet,errcheck,typecheck,staticcheck,structcheck --allow-parallel-runners --timeout 5m"]
-variants:
-  - name: oss
-    srcs:
-      exclude:
-        - "**/ee"
-        - "**/ee/**"
-        - "**/*_ee.*"
-        - "**/*_ee_*.*"
-    env:
-      - GITPOD_OSS_BUILD=true
-    config:
-      go:
-        buildTags:
-          - -tags oss
