@@ -32,9 +32,9 @@ type OIDCServiceClient interface {
 	GetClientConfig(ctx context.Context, in *GetClientConfigRequest, opts ...grpc.CallOption) (*GetClientConfigResponse, error)
 	// Lists OIDC client configurations.
 	ListClientConfigs(ctx context.Context, in *ListClientConfigsRequest, opts ...grpc.CallOption) (*ListClientConfigsResponse, error)
-	// Updates modifiable properties of an existing OIDC provider configuration.
+	// Updates modifiable properties of an existing OIDC client configuration.
 	UpdateClientConfig(ctx context.Context, in *UpdateClientConfigRequest, opts ...grpc.CallOption) (*UpdateClientConfigResponse, error)
-	// Removes a OIDC provider configuration by ID.
+	// Removes a OIDC client configuration by ID.
 	DeleteClientConfig(ctx context.Context, in *DeleteClientConfigRequest, opts ...grpc.CallOption) (*DeleteClientConfigResponse, error)
 }
 
@@ -101,9 +101,9 @@ type OIDCServiceServer interface {
 	GetClientConfig(context.Context, *GetClientConfigRequest) (*GetClientConfigResponse, error)
 	// Lists OIDC client configurations.
 	ListClientConfigs(context.Context, *ListClientConfigsRequest) (*ListClientConfigsResponse, error)
-	// Updates modifiable properties of an existing OIDC provider configuration.
+	// Updates modifiable properties of an existing OIDC client configuration.
 	UpdateClientConfig(context.Context, *UpdateClientConfigRequest) (*UpdateClientConfigResponse, error)
-	// Removes a OIDC provider configuration by ID.
+	// Removes a OIDC client configuration by ID.
 	DeleteClientConfig(context.Context, *DeleteClientConfigRequest) (*DeleteClientConfigResponse, error)
 	mustEmbedUnimplementedOIDCServiceServer()
 }

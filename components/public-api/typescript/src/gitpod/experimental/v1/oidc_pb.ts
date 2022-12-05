@@ -14,12 +14,109 @@ import {Message, proto3, protoInt64, Timestamp} from "@bufbuild/protobuf";
 import {Pagination} from "./pagination_pb.js";
 
 /**
+ * Configuration of an OpenID client.
+ *
+ * For the metadata describing the configuration of OIDC providers, cf.
+ * https://openid.net/specs/openid-connect-discovery-1_0.html
+ *
+ * @generated from message gitpod.experimental.v1.OIDCClientConfig
+ */
+export class OIDCClientConfig extends Message<OIDCClientConfig> {
+  /**
+   * ID is the unique identifier for the OIDC Config.
+   * Read only.
+   *
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from field: gitpod.experimental.v1.OIDCConfig oidc_config = 2;
+   */
+  oidcConfig?: OIDCConfig;
+
+  /**
+   * @generated from field: gitpod.experimental.v1.OAuth2Config oauth2_config = 3;
+   */
+  oauth2Config?: OAuth2Config;
+
+  /**
+   * Optional.
+   *
+   * @generated from field: bool oauth_only = 4;
+   */
+  oauthOnly = false;
+
+  /**
+   * List of the JWS signing algorithms (alg values) supported by the OP for the
+   * ID Token to encode the Claims in a JWT. The algorithm RS256 MUST be
+   * included.
+   * Optional.
+   *
+   * @generated from field: repeated string id_token_signing_alg_values_supported = 5;
+   */
+  idTokenSigningAlgValuesSupported: string[] = [];
+
+  /**
+   * Time when the config was created.
+   * Read-only.
+   *
+   * @generated from field: google.protobuf.Timestamp creation_time = 6;
+   */
+  creationTime?: Timestamp;
+
+  /**
+   * Describes the status of this configuration item.
+   * Read-only.
+   *
+   * @generated from field: gitpod.experimental.v1.OIDCClientConfigStatus status = 7;
+   */
+  status?: OIDCClientConfigStatus;
+
+  constructor(data?: PartialMessage<OIDCClientConfig>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.OIDCClientConfig";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "oidc_config", kind: "message", T: OIDCConfig },
+    { no: 3, name: "oauth2_config", kind: "message", T: OAuth2Config },
+    { no: 4, name: "oauth_only", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 5, name: "id_token_signing_alg_values_supported", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 6, name: "creation_time", kind: "message", T: Timestamp },
+    { no: 7, name: "status", kind: "message", T: OIDCClientConfigStatus },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OIDCClientConfig {
+    return new OIDCClientConfig().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): OIDCClientConfig {
+    return new OIDCClientConfig().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): OIDCClientConfig {
+    return new OIDCClientConfig().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: OIDCClientConfig | PlainMessage<OIDCClientConfig> | undefined, b: OIDCClientConfig | PlainMessage<OIDCClientConfig> | undefined): boolean {
+    return proto3.util.equals(OIDCClientConfig, a, b);
+  }
+}
+
+/**
+ * The OIDC specific part of the client configuration.
+ *
  * @generated from message gitpod.experimental.v1.OIDCConfig
  */
 export class OIDCConfig extends Message<OIDCConfig> {
   /**
    * URL using the https scheme with no query or fragment component that the
-   * OIDC provider asserts as its Issuer Identifier. Required.
+   * OIDC provider asserts as its Issuer Identifier.
+   * Required.
    *
    * @generated from field: string issuer = 1;
    */
@@ -39,6 +136,7 @@ export class OIDCConfig extends Message<OIDCConfig> {
   jwksUrl = "";
 
   /**
+   * Provider specific parameters to control the behavior of the consent screen.
    * Optional.
    *
    * @generated from field: gitpod.experimental.v1.ConsentScreenHints hints = 4;
@@ -46,7 +144,8 @@ export class OIDCConfig extends Message<OIDCConfig> {
   hints?: ConsentScreenHints;
 
   /**
-   * If set, the default claim mapping is overriden.
+   * Optional overrides for key mapping to be applied when extracting claims from id_tokens.
+   * Should only be set, if an override is required.
    * Optional.
    *
    * @generated from field: gitpod.experimental.v1.ClaimMappingOverride override_claim_mapping = 5;
@@ -86,6 +185,8 @@ export class OIDCConfig extends Message<OIDCConfig> {
 }
 
 /**
+ * Provider specific parameters to control the behavior of the consent screen.
+ *
  * @generated from message gitpod.experimental.v1.ConsentScreenHints
  */
 export class ConsentScreenHints extends Message<ConsentScreenHints> {
@@ -143,6 +244,8 @@ export class ConsentScreenHints extends Message<ConsentScreenHints> {
 }
 
 /**
+ * Optional overrides for key mapping to be applied when extracting claims from id_tokens.
+ *
  * @generated from message gitpod.experimental.v1.ClaimMappingOverride
  */
 export class ClaimMappingOverride extends Message<ClaimMappingOverride> {
@@ -198,6 +301,8 @@ export class ClaimMappingOverride extends Message<ClaimMappingOverride> {
 }
 
 /**
+ * The OAuth2 specific part of the client configuration.
+ *
  * @generated from message gitpod.experimental.v1.OAuth2Config
  */
 export class OAuth2Config extends Message<OAuth2Config> {
@@ -209,7 +314,8 @@ export class OAuth2Config extends Message<OAuth2Config> {
   clientId = "";
 
   /**
-   * Required.
+   * Required for creation/updates.
+   * Empty on read.
    *
    * @generated from field: string client_secret = 2;
    */
@@ -238,6 +344,7 @@ export class OAuth2Config extends Message<OAuth2Config> {
 
   /**
    * Source for additional claims for the token.
+   * Additional keys may be used to control the extraction of a profile.
    * Required.
    *
    * @generated from field: string userinfo_endpoint = 6;
@@ -245,6 +352,7 @@ export class OAuth2Config extends Message<OAuth2Config> {
   userinfoEndpoint = "";
 
   /**
+   * Keys of the userinfo result to extract a profile from.
    * Optional.
    *
    * @generated from field: gitpod.experimental.v1.UserInfoKeys userinfo_keys = 7;
@@ -286,6 +394,8 @@ export class OAuth2Config extends Message<OAuth2Config> {
 }
 
 /**
+ * Description of keys of a userinfo result.
+ *
  * @generated from message gitpod.experimental.v1.UserInfoKeys
  */
 export class UserInfoKeys extends Message<UserInfoKeys> {
@@ -333,125 +443,37 @@ export class UserInfoKeys extends Message<UserInfoKeys> {
 }
 
 /**
- * Configuration of an OpenID provider instance.
+ * The status of an OIDC client configuration.
  *
- * For the metadata describing the configuration of OIDC providers, cf.
- * https://openid.net/specs/openid-connect-discovery-1_0.html
  *
- * @generated from message gitpod.experimental.v1.OIDCClientConfig
+ *
+ * @generated from message gitpod.experimental.v1.OIDCClientConfigStatus
  */
-export class OIDCClientConfig extends Message<OIDCClientConfig> {
-  /**
-   * ID is the unique identifier for the OIDC Config.
-   * Read only.
-   *
-   * @generated from field: string id = 1;
-   */
-  id = "";
-
-  /**
-   * @generated from field: gitpod.experimental.v1.OIDCConfig oidc_config = 2;
-   */
-  oidcConfig?: OIDCConfig;
-
-  /**
-   * @generated from field: gitpod.experimental.v1.OAuth2Config oauth2_config = 3;
-   */
-  oauth2Config?: OAuth2Config;
-
-  /**
-   * Optional.
-   *
-   * @generated from field: bool oauth_only = 4;
-   */
-  oauthOnly = false;
-
-  /**
-   * List of the JWS signing algorithms (alg values) supported by the OP for the
-   * ID Token to encode the Claims in a JWT. The algorithm RS256 MUST be
-   * included. Optional.
-   *
-   * @generated from field: repeated string id_token_signing_alg_values_supported = 5;
-   */
-  idTokenSigningAlgValuesSupported: string[] = [];
-
-  /**
-   * Time when the config was created.
-   * Read-only.
-   *
-   * @generated from field: google.protobuf.Timestamp creation_time = 6;
-   */
-  creationTime?: Timestamp;
-
-  /**
-   * Read-only.
-   *
-   * @generated from field: gitpod.experimental.v1.OIDCClientStatus status = 7;
-   */
-  status?: OIDCClientStatus;
-
-  constructor(data?: PartialMessage<OIDCClientConfig>) {
+export class OIDCClientConfigStatus extends Message<OIDCClientConfigStatus> {
+  constructor(data?: PartialMessage<OIDCClientConfigStatus>) {
     super();
     proto3.util.initPartial(data, this);
   }
 
   static readonly runtime = proto3;
-  static readonly typeName = "gitpod.experimental.v1.OIDCClientConfig";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "oidc_config", kind: "message", T: OIDCConfig },
-    { no: 3, name: "oauth2_config", kind: "message", T: OAuth2Config },
-    { no: 4, name: "oauth_only", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 5, name: "id_token_signing_alg_values_supported", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 6, name: "creation_time", kind: "message", T: Timestamp },
-    { no: 7, name: "status", kind: "message", T: OIDCClientStatus },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OIDCClientConfig {
-    return new OIDCClientConfig().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): OIDCClientConfig {
-    return new OIDCClientConfig().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): OIDCClientConfig {
-    return new OIDCClientConfig().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: OIDCClientConfig | PlainMessage<OIDCClientConfig> | undefined, b: OIDCClientConfig | PlainMessage<OIDCClientConfig> | undefined): boolean {
-    return proto3.util.equals(OIDCClientConfig, a, b);
-  }
-}
-
-/**
- * @generated from message gitpod.experimental.v1.OIDCClientStatus
- */
-export class OIDCClientStatus extends Message<OIDCClientStatus> {
-  constructor(data?: PartialMessage<OIDCClientStatus>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime = proto3;
-  static readonly typeName = "gitpod.experimental.v1.OIDCClientStatus";
+  static readonly typeName = "gitpod.experimental.v1.OIDCClientConfigStatus";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
   ]);
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OIDCClientStatus {
-    return new OIDCClientStatus().fromBinary(bytes, options);
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OIDCClientConfigStatus {
+    return new OIDCClientConfigStatus().fromBinary(bytes, options);
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): OIDCClientStatus {
-    return new OIDCClientStatus().fromJson(jsonValue, options);
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): OIDCClientConfigStatus {
+    return new OIDCClientConfigStatus().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): OIDCClientStatus {
-    return new OIDCClientStatus().fromJsonString(jsonString, options);
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): OIDCClientConfigStatus {
+    return new OIDCClientConfigStatus().fromJsonString(jsonString, options);
   }
 
-  static equals(a: OIDCClientStatus | PlainMessage<OIDCClientStatus> | undefined, b: OIDCClientStatus | PlainMessage<OIDCClientStatus> | undefined): boolean {
-    return proto3.util.equals(OIDCClientStatus, a, b);
+  static equals(a: OIDCClientConfigStatus | PlainMessage<OIDCClientConfigStatus> | undefined, b: OIDCClientConfigStatus | PlainMessage<OIDCClientConfigStatus> | undefined): boolean {
+    return proto3.util.equals(OIDCClientConfigStatus, a, b);
   }
 }
 

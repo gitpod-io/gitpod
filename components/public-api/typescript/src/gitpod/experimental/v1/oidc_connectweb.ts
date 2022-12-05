@@ -52,7 +52,7 @@ export const OIDCService = {
       kind: MethodKind.Unary,
     },
     /**
-     * Updates modifiable properties of an existing OIDC provider configuration.
+     * Updates modifiable properties of an existing OIDC client configuration.
      *
      * @generated from rpc gitpod.experimental.v1.OIDCService.UpdateClientConfig
      */
@@ -63,7 +63,7 @@ export const OIDCService = {
       kind: MethodKind.Unary,
     },
     /**
-     * Removes a OIDC provider configuration by ID.
+     * Removes a OIDC client configuration by ID.
      *
      * @generated from rpc gitpod.experimental.v1.OIDCService.DeleteClientConfig
      */
