@@ -14,6 +14,7 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"k8s.io/client-go/util/homedir"
 
 	kube "github.com/gitpod-io/gitpod/previewctl/pkg/k8s"
@@ -139,7 +140,7 @@ func newInstallContextCmd(logger *logrus.Logger) *cobra.Command {
 	cmd.Flags().DurationVarP(&opts.timeout, "timeout", "t", 10*time.Minute, "Timeout before considering the installation failed")
 	cmd.Flags().IntVar(&opts.retry, "retry", 1, "If retry is enabled previewctl will retry the specified number of times. This option is ignored if watch is used.")
 	cmd.PersistentFlags().StringVar(&opts.sshPrivateKeyPath, "private-key-path", fmt.Sprintf("%s/.ssh/vm_id_rsa", homedir.HomeDir()), "path to the private key used to authenticate with the VM")
-	cmd.PersistentFlags().StringVar(&opts.getCredentialsOpts.serviceAccountPath, "gcp-service-account", "", "path to the GCP service account to use")
+	cmd.PersistentFlags().StringVar(&opts.getCredentialsOpts.serviceAccountPath, "gcp-service-account", viper.GetString("PREVIEW_ENV_DEV_SA_KEY_PATH"), "path to the GCP service account to use")
 
 	return cmd
 }

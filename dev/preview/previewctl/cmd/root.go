@@ -7,6 +7,7 @@ package cmd
 import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -30,6 +31,8 @@ func NewRootCmd(logger *logrus.Logger) *cobra.Command {
 		Short: "Your best friend when interacting with Preview Environments :)",
 		Long:  `previewctl is your best friend when interacting with Preview Environments :)`,
 	}
+
+	viper.AutomaticEnv()
 
 	cmd.PersistentFlags().StringVar(&branch, "branch", "", "From which branch's preview previewctl should interact with. By default it will use the result of \"git rev-parse --abbrev-ref HEAD\"")
 	cmd.PersistentFlags().StringVar(&logLevel, "log-level", "info", "The logger's log level")

@@ -3,6 +3,7 @@
 # this script is meant to be sourced
 
 function ensure_gcloud_auth() {
+    leeway run dev/preview:configure-workspace
     if [[ $(gcloud auth list --format=json) == '[]' ]]; then
         echo
         echo "Currently you need to be authenticated with gcloud to run the build"
