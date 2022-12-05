@@ -187,6 +187,11 @@ func (rs *PresignedS3Storage) ObjectHash(ctx context.Context, bucket string, obj
 		Key:              aws.String(obj),
 		ObjectAttributes: []types.ObjectAttributes{types.ObjectAttributesEtag},
 	})
+	var nsk *types.NoSuchKey
+	if errors.As(err, &nsk) {
+		return "", ErrNotFound
+	}
+
 	if err != nil {
 		return "", err
 	}
@@ -201,6 +206,12 @@ func (rs *PresignedS3Storage) SignDownload(ctx context.Context, bucket string, o
 		Key:              aws.String(obj),
 		ObjectAttributes: []types.ObjectAttributes{types.ObjectAttributesObjectSize},
 	})
+
+	var nsk *types.NoSuchKey
+	if errors.As(err, &nsk) {
+		return nil, ErrNotFound
+	}
+
 	if err != nil {
 		return nil, err
 	}
