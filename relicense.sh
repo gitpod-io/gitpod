@@ -1,18 +1,5 @@
 #!/bin/bash
 
-# const tmplMIT = `Copyright (c) {{.Year}} {{.Holder}}. All rights reserved.
-# Licensed under the MIT License. See License-MIT.txt in the project root for license information.`
-
-# const tmplAGPL = `Copyright (c) {{.Year}} {{.Holder}}. All rights reserved.
-# Licensed under the GNU Affero General Public License (AGPL).
-# See License-AGPL.txt in the project root for license information.`
-
-# const tmplGPSHF = `Copyright (c) {{.Year}} {{.Holder}}. All rights reserved.
-# Licensed under the Gitpod Enterprise Source Code License,
-# See License.enterprise.txt in the project root folder.`
-
-
-
 leeway collect files --format-string '{{ range . }}{{ .Name }}{{"\n"}}{{ end }}' | uniq > files.txt
 find . -iname "*.libsonnet" -or  -iname "*.jsonnet" >> files.txt
 
@@ -41,7 +28,3 @@ do
   sed -i "s/\/\ See License.enterprise.txt in the project root folder./\/\ $L2/" "$line"
 
 done
-
-# for f in $(cat files.txt); do
-#     echo "$f"
-# done
