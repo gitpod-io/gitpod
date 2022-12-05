@@ -13,3 +13,4 @@ spec:
       port: metrics
   endpoints:
   - port: metrics
+    interval: 60s
