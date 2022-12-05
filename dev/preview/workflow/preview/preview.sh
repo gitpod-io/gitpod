@@ -17,13 +17,13 @@ export TF_INPUT=0
 export TF_IN_AUTOMATION=true
 
 if git:is-on-main; then
-    log_error "We don't support running dev:preview from the main branch. Please switch to another branch."
-    exit 1
+  log_error "We don't support running dev:preview from the main branch. Please switch to another branch."
+  exit 1
 fi
 
 if ! git:branch-exists-remotely; then
-    log_warn "Your branch doesn't exist on GitHub. Your preview environment WILL get garbage collected after AT MOST 1h. To avoid this please push your branch."
-    ask "I've read 👆 and I understand the implications."
+  log_warn "Your branch doesn't exist on GitHub. Your preview environment WILL get garbage collected after AT MOST 1h. To avoid this please push your branch."
+  ask "I've read 👆 and I understand the implications."
 fi
 
 ensure_gcloud_auth
