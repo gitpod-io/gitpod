@@ -1,0 +1,160 @@
+syntax = "proto3";
+
+package gitpod.experimental.v1;
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1";
+
+import "google/protobuf/timestamp.proto";
+
+import "gitpod/experimental/v1/pagination.proto";
+
+message OIDCConfig {
+  // URL using the https scheme with no query or fragment component that the
+  // OIDC provider asserts as its Issuer Identifier. Required.
+  string issuer = 1;
+
+  // A KeySet that can validate the id_token (JSON web token)
+  // Either one is required.
+  string jwks = 2;
+  string jwks_url = 3;
+
+  // Optional.
+  ConsentScreenHints hints = 4;
+
+  // If set, the default claim mapping is overriden.
+  // Optional.
+  ClaimMappingOverride override_claim_mapping = 5;
+}
+
+message ConsentScreenHints {
+  // Control options for the consent screen.
+  // Optional.
+  string prompt = 1;
+  // A hint to pre-select the tenant from an AD.
+  // Optional.
+  string domain_hint = 2;
+  // Optional.
+  string login_hint = 3;
+}
+
+message ClaimMappingOverride {
+  // Optional.
+  string claim_email_key = 1;
+  // Optional.
+  string claim_groups_key = 2;
+  // Optional.
+  string claim_username_key = 3;
+}
+
+message OAuth2Config {
+  // Required.
+  string client_id = 1;
+  // Required.
+  string client_secret = 2;
+  // Required.
+  string authorization_endpoint = 3;
+  // Required.
+  string token_endpoint = 4;
+  // Required.
+  repeated string scopes_supported = 5;
+
+  // Source for additional claims for the token.
+  // Required.
+  string userinfo_endpoint = 6;
+
+  // Optional.
+  UserInfoKeys userinfo_keys = 7;
+}
+
+message UserInfoKeys {
+  // Optional.
+  string userinfo_id_key = 1;
+  // Optional.
+  string userinfo_name_key = 2;
+}
+
+// Configuration of an OpenID provider instance.
+//
+// For the metadata describing the configuration of OIDC providers, cf.
+// https://openid.net/specs/openid-connect-discovery-1_0.html
+message OIDCClientConfig {
+  // ID is the unique identifier for the OIDC Config.
+  // Read only.
+  string id = 1;
+
+  OIDCConfig oidc_config = 2;
+
+  OAuth2Config oauth2_config = 3;
+  // Optional.
+  bool oauth_only = 4;
+
+  // List of the JWS signing algorithms (alg values) supported by the OP for the
+  // ID Token to encode the Claims in a JWT. The algorithm RS256 MUST be
+  // included. Optional.
+  repeated string id_token_signing_alg_values_supported = 5;
+
+  // Time when the config was created.
+  // Read-only.
+  google.protobuf.Timestamp creation_time = 6;
+
+  // Read-only.
+  OIDCClientStatus status = 7;
+}
+
+message OIDCClientStatus {
+  //
+}
+
+service OIDCService {
+  // Creates a new OIDC client configuration.
+  rpc CreateClientConfig(CreateClientConfigRequest)
+      returns (CreateClientConfigResponse) {};
+
+  // Retrieves an OIDC client configuration by ID.
+  rpc GetClientConfig(GetClientConfigRequest)
+      returns (GetClientConfigResponse) {};
+
+  // Lists OIDC client configurations.
+  rpc ListClientConfigs(ListClientConfigsRequest)
+      returns (ListClientConfigsResponse) {};
+
+  // Updates modifiable properties of an existing OIDC provider configuration.
+  rpc UpdateClientConfig(UpdateClientConfigRequest)
+      returns (UpdateClientConfigResponse) {};
+
+  // Removes a OIDC provider configuration by ID.
+  rpc DeleteClientConfig(DeleteClientConfigRequest)
+      returns (DeleteClientConfigResponse) {};
+}
+
+message CreateClientConfigRequest {
+  OIDCClientConfig config = 1;
+
+  // Optional.
+  bool use_discovery = 2;
+}
+
+message CreateClientConfigResponse { OIDCClientConfig config = 1; }
+
+message GetClientConfigRequest { string id = 1; }
+message GetClientConfigResponse { OIDCClientConfig config = 1; }
+
+message ListClientConfigsRequest {
+
+  // Page information
+  Pagination pagination = 1;
+}
+
+message ListClientConfigsResponse {
+  repeated OIDCClientConfig providers = 1;
+
+  int64 total_results = 2;
+}
+
+message UpdateClientConfigRequest { OIDCClientConfig config = 1; }
+
+message UpdateClientConfigResponse {}
+
+message DeleteClientConfigRequest { string id = 1; }
+
+message DeleteClientConfigResponse {}
