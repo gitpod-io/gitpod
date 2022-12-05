@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
- * Licensed under the Gitpod Enterprise Source Code License,
- * See License.enterprise.txt in the project root folder.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
  */
 
 require("reflect-metadata")
@@ -63,5 +63,3 @@ if(cmd) {
 } else {
     console.error("Unknown command: ", args.cmd);
 }
-
-
