@@ -156,39 +156,42 @@ export default function () {
             <Header title={renderTitle()} subtitle={renderSubtitle()} />
             <div className="app-container mt-8">
                 <PrebuildLogs workspaceId={prebuild?.info?.buildWorkspaceId}>
-                    {["aborted", "timeout", "failed"].includes(prebuild?.status || "") || !!prebuild?.error ? (
-                        <button
-                            className="flex items-center space-x-2"
-                            disabled={isRerunningPrebuild}
-                            onClick={rerunPrebuild}
-                        >
-                            {isRerunningPrebuild && (
-                                <img className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
-                            )}
-                            <span>Rerun Prebuild ({prebuild?.info.branch})</span>
-                        </button>
-                    ) : ["building", "queued"].includes(prebuild?.status || "") ? (
+                    {["building", "queued"].includes(prebuild?.status || "") ? (
                         <button
                             className="danger flex items-center space-x-2"
                             disabled={isCancellingPrebuild}
                             onClick={cancelPrebuild}
                         >
                             {isCancellingPrebuild && (
-                                <img className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
+                                <img alt="" className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
                             )}
                             <span>Cancel Prebuild</span>
                         </button>
-                    ) : prebuild?.status === "available" ? (
-                        <a
-                            className="my-auto"
-                            href={gitpodHostUrl
-                                .withContext(`open-prebuild/${prebuild?.info.id}/${prebuild?.info.changeUrl}`)
-                                .toString()}
-                        >
-                            <button>New Workspace (with this prebuild)</button>
-                        </a>
                     ) : (
-                        <button disabled={true}>New Workspace (with this prebuild)</button>
+                        <>
+                            <button
+                                className="secondary flex items-center space-x-2"
+                                disabled={isRerunningPrebuild}
+                                onClick={rerunPrebuild}
+                            >
+                                {isRerunningPrebuild && (
+                                    <img alt="" className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
+                                )}
+                                <span>Rerun Prebuild ({prebuild?.info.branch})</span>
+                            </button>
+                            {prebuild?.status === "available" ? (
+                                <a
+                                    className="my-auto"
+                                    href={gitpodHostUrl
+                                        .withContext(`open-prebuild/${prebuild?.info.id}/${prebuild?.info.changeUrl}`)
+                                        .toString()}
+                                >
+                                    <button>New Workspace (with this prebuild)</button>
+                                </a>
+                            ) : (
+                                <button disabled={true}>New Workspace (with this prebuild)</button>
+                            )}
+                        </>
                     )}
                 </PrebuildLogs>
             </div>

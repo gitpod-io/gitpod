@@ -388,20 +388,7 @@ export default function () {
                                                 <ItemFieldContextMenu
                                                     className="py-0.5"
                                                     menuEntries={
-                                                        !prebuild ||
-                                                        prebuild.status === "aborted" ||
-                                                        prebuild.status === "failed" ||
-                                                        prebuild.status === "timeout" ||
-                                                        !!prebuild.error
-                                                            ? [
-                                                                  {
-                                                                      title: `${prebuild ? "Rerun" : "Run"} Prebuild (${
-                                                                          branch.name
-                                                                      })`,
-                                                                      onClick: () => triggerPrebuild(branch),
-                                                                  },
-                                                              ]
-                                                            : prebuild.status === "building"
+                                                        prebuild?.status === "queued" || prebuild?.status === "building"
                                                             ? [
                                                                   {
                                                                       title: "Cancel Prebuild",
@@ -411,7 +398,14 @@ export default function () {
                                                                           prebuild && cancelPrebuild(prebuild.info.id),
                                                                   },
                                                               ]
-                                                            : []
+                                                            : [
+                                                                  {
+                                                                      title: `${prebuild ? "Rerun" : "Run"} Prebuild (${
+                                                                          branch.name
+                                                                      })`,
+                                                                      onClick: () => triggerPrebuild(branch),
+                                                                  },
+                                                              ]
                                                     }
                                                 />
                                             </ItemField>

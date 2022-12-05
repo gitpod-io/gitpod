@@ -39,6 +39,7 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
 
     const [isLoadingPrebuilds, setIsLoadingPrebuilds] = useState<boolean>(true);
     const [prebuilds, setPrebuilds] = useState<PrebuildWithStatus[]>([]);
+    const [isRunningPrebuild, setIsRunningPrebuild] = useState<boolean>(false);
 
     useEffect(() => {
         let registration: Disposable;
@@ -139,11 +140,18 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
         return -1;
     };
 
-    const triggerPrebuild = (branchName: string | null) => {
+    const runPrebuild = async (branchName: string | null) => {
         if (!project) {
             return;
         }
-        getGitpodService().server.triggerPrebuild(project.id, branchName);
+        setIsRunningPrebuild(true);
+        try {
+            await getGitpodService().server.triggerPrebuild(project.id, branchName);
+        } catch (error) {
+            console.error("Could not run prebuild", error);
+        } finally {
+            setIsRunningPrebuild(false);
+        }
     };
 
     const formatDate = (date: string | undefined) => {
@@ -182,9 +190,16 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                     <div className="py-3 pl-3">
                         <DropDown prefix="Prebuild Status: " customClasses="w-32" entries={statusFilterEntries()} />
                     </div>
-                    {!isLoadingPrebuilds && prebuilds.length === 0 && !props.isAdminDashboard && (
-                        <button onClick={() => triggerPrebuild(null)} className="ml-2">
-                            Run Prebuild
+                    {!props.isAdminDashboard && (
+                        <button
+                            onClick={() => runPrebuild(null)}
+                            disabled={isRunningPrebuild}
+                            className="ml-2 flex items-center space-x-2"
+                        >
+                            {isRunningPrebuild && (
+                                <img alt="" className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
+                            )}
+                            <span>Run Prebuild</span>
                         </button>
                     )}
                 </div>
