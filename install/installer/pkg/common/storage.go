@@ -46,16 +46,9 @@ func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 
 	if context.Config.ObjectStorage.S3 != nil {
 		res = &storageconfig.StorageConfig{
-			Kind: storageconfig.MinIOStorage,
-			MinIOConfig: storageconfig.MinIOConfig{
-				Endpoint:            context.Config.ObjectStorage.S3.Endpoint,
-				AccessKeyIdFile:     filepath.Join(storageMount, "accessKeyId"),
-				SecretAccessKeyFile: filepath.Join(storageMount, "secretAccessKey"),
-				Secure:              !context.Config.ObjectStorage.S3.AllowInsecureConnection,
-				Region:              context.Config.Metadata.Region,
-				ParallelUpload:      100,
-
-				BucketName: context.Config.ObjectStorage.S3.BucketName,
+			Kind: storageconfig.S3Storage,
+			S3Config: &storageconfig.S3Config{
+				Bucket: context.Config.ObjectStorage.S3.BucketName,
 			},
 		}
 	}
@@ -167,4 +160,42 @@ func NewEmptyDirVolume(name string) *corev1.Volume {
 			EmptyDir: &corev1.EmptyDirVolumeSource{},
 		},
 	}
+}
+
+func AddStorageEnvs(ctx *RenderContext, pod *corev1.PodSpec, container ...string) error {
+	if ctx.Config.ObjectStorage.S3 == nil {
+		return nil
+	}
+
+	if ctx.Config.ObjectStorage.S3.Region == "" {
+		return fmt.Errorf("no valid AWS region set")
+	}
+
+	idx := make(map[string]struct{}, len(container))
+	if len(container) == 0 {
+		for _, c := range pod.Containers {
+			idx[c.Name] = struct{}{}
+		}
+	} else {
+		for _, c := range container {
+			idx[c] = struct{}{}
+		}
+	}
+
+	for i := range pod.Containers {
+		if _, ok := idx[pod.Containers[i].Name]; !ok {
+			continue
+		}
+
+		pod.Containers[i].Env = append(pod.Containers[i].Env, corev1.EnvVar{
+			Name:  "AWS_DEFAULT_REGION",
+			Value: ctx.Config.ObjectStorage.S3.Region,
+		},
+			corev1.EnvVar{
+				Name:  "AWS_SHARED_CREDENTIALS_FILE",
+				Value: filepath.Join(storageMount, "credentials"),
+			})
+	}
+
+	return nil
 }
