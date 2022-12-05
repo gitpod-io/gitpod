@@ -290,10 +290,25 @@ func (s *BillingService) FinalizeInvoice(ctx context.Context, in *v1.FinalizeInv
 		logger.WithError(err).Error("Failed to retrieve invoice from Stripe.")
 		return nil, status.Errorf(codes.NotFound, "Failed to get invoice with ID %s: %s", in.GetInvoiceId(), err.Error())
 	}
-
-	attributionID, err := stripe.GetAttributionID(ctx, invoice.Customer)
+	usage, err := InternalComputeInvoiceUsage(ctx, invoice)
 	if err != nil {
 		return nil, err
+	}
+	err = db.InsertUsage(ctx, s.conn, usage)
+	if err != nil {
+		logger.WithError(err).Errorf("Failed to insert Invoice usage record into the db.")
+		return nil, status.Errorf(codes.Internal, "Failed to insert Invoice into usage records.")
+	}
+
+	logger.WithField("usage_id", usage.ID).Infof("Inserted usage record into database for %f credits against %s attribution", usage.CreditCents.ToCredits(), usage.AttributionID)
+	return &v1.FinalizeInvoiceResponse{}, nil
+}
+
+func InternalComputeInvoiceUsage(ctx context.Context, invoice *stripe_api.Invoice) (db.Usage, error) {
+	logger := log.WithField("invoice_id", invoice.ID)
+	attributionID, err := stripe.GetAttributionID(ctx, invoice.Customer)
+	if err != nil {
+		return db.Usage{}, err
 	}
 	logger = logger.WithField("attributionID", attributionID)
 	finalizedAt := time.Unix(invoice.StatusTransitions.FinalizedAt, 0)
@@ -304,18 +319,16 @@ func (s *BillingService) FinalizeInvoice(ctx context.Context, in *v1.FinalizeInv
 
 	if invoice.Lines == nil || len(invoice.Lines.Data) == 0 {
 		logger.Errorf("Invoice %s did not contain any lines  so we cannot extract quantity to reflect it in usage.", invoice.ID)
-		return nil, status.Errorf(codes.Internal, "Invoice did not contain any lines.")
+		return db.Usage{}, status.Errorf(codes.Internal, "Invoice did not contain any lines.")
 	}
 
 	lines := invoice.Lines.Data
-	if len(lines) != 1 {
-		logger.Error("Invoice did not contain exactly 1 line item, we cannot extract quantity to reflect in usage.")
-		return nil, status.Errorf(codes.Internal, "Invoice did not contain exactly one line item.")
+	var creditsOnInvoice int64
+	for _, line := range lines {
+		creditsOnInvoice += line.Quantity
 	}
 
-	creditsOnInvoice := lines[0].Quantity
-
-	usage := db.Usage{
+	return db.Usage{
 		ID:            uuid.New(),
 		AttributionID: attributionID,
 		Description:   fmt.Sprintf("Invoice %s finalized in Stripe", invoice.ID),
@@ -325,16 +338,7 @@ func (s *BillingService) FinalizeInvoice(ctx context.Context, in *v1.FinalizeInv
 		Kind:          db.InvoiceUsageKind,
 		Draft:         false,
 		Metadata:      nil,
-	}
-	err = db.InsertUsage(ctx, s.conn, usage)
-	if err != nil {
-		logger.WithError(err).Errorf("Failed to insert Invoice usage record into the db.")
-		return nil, status.Errorf(codes.Internal, "Failed to insert Invoice into usage records.")
-	}
-
-	logger.WithField("usage_id", usage.ID).Infof("Inserted usage record into database for %d credits against %s attribution", creditsOnInvoice, attributionID)
-
-	return &v1.FinalizeInvoiceResponse{}, nil
+	}, nil
 }
 
 func (s *BillingService) CancelSubscription(ctx context.Context, in *v1.CancelSubscriptionRequest) (*v1.CancelSubscriptionResponse, error) {
