@@ -201,7 +201,7 @@ func (k *ConfigLoader) setup(ctx context.Context, stopChan, readyChan chan struc
 		})
 	case err := <-errChan:
 		return err
-	case <-time.After(time.Second * 50):
+	case <-time.After(time.Second * 30):
 		return errors.New("timed out waiting for port forward")
 	case <-ctx.Done():
 		k.logger.Debug("context cancelled")

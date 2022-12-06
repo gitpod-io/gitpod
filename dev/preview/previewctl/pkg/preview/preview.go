@@ -24,6 +24,8 @@ type Config struct {
 	name      string
 	namespace string
 
+	status Status
+
 	previewClient   *k8s.Config
 	harvesterClient *k8s.Config
 	configLoader    *k3s.ConfigLoader
@@ -47,9 +49,12 @@ func New(branch string, logger *logrus.Logger) (*Config, error) {
 	}
 
 	return &Config{
-		branch:          branch,
-		namespace:       fmt.Sprintf("preview-%s", branch),
-		name:            branch,
+		branch:    branch,
+		namespace: fmt.Sprintf("preview-%s", branch),
+		name:      branch,
+		status: Status{
+			Name: branch,
+		},
 		harvesterClient: harvesterConfig,
 		logger:          logEntry,
 		vmiCreationTime: nil,

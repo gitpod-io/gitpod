@@ -15,7 +15,7 @@ func newHasAccessCmd(logger *logrus.Logger) *cobra.Command {
 	clusters := []string{}
 	cmd := &cobra.Command{
 		Use:   "has-access",
-		Short: "",
+		Short: "Check if caller has access to the provided list of clusters",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, kc := range clusters {
 				if !hasAccess(context.Background(), logger, kc) {

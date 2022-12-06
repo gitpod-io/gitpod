@@ -32,5 +32,10 @@ func newListPreviewsCmd(logger *logrus.Logger) *cobra.Command {
 		},
 	}
 
+	cmd.AddCommand(
+		newListWorkspacesCmd(logger),
+		newListStaleCmd(logger),
+	)
+
 	return cmd
 }

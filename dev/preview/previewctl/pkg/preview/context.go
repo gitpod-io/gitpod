@@ -6,6 +6,7 @@ package preview
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/cockroachdb/errors"
@@ -24,9 +25,17 @@ type InstallCtxOpts struct {
 
 	KubeSavePath      string
 	SSHPrivateKeyPath string
+
+	KubeconfigWriteMutex *sync.Mutex
 }
 
 func (c *Config) InstallContext(ctx context.Context, opts *InstallCtxOpts) error {
+	if previewCfg, err := k8s.NewFromDefaultConfigWithContext(c.logger.Logger, c.name); err == nil {
+		c.logger.WithFields(logrus.Fields{"preview": c.name}).Debug("Context already exists")
+		c.previewClient = previewCfg
+		return nil
+	}
+
 	// TODO: https://github.com/gitpod-io/ops/issues/6524
 	if c.configLoader == nil {
 		configLoader, err := k3s.New(ctx, k3s.ConfigLoaderOpts{
@@ -70,7 +79,7 @@ func (c *Config) InstallContext(ctx context.Context, opts *InstallCtxOpts) error
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
-			case <-time.Tick(5 * time.Second):
+			case <-time.Tick(10 * time.Second):
 				c.logger.Infof("waiting for context install to succeed")
 				err = c.install(ctx, opts)
 				if err == nil {
@@ -87,11 +96,6 @@ func (c *Config) InstallContext(ctx context.Context, opts *InstallCtxOpts) error
 }
 
 func (c *Config) install(ctx context.Context, opts *InstallCtxOpts) error {
-	if previewCfg, err := k8s.NewFromDefaultConfigWithContext(c.logger.Logger, c.name); err == nil {
-		c.previewClient = previewCfg
-		return nil
-	}
-
 	cfg, err := c.GetPreviewContext(ctx)
 	if err != nil {
 		return err
@@ -102,6 +106,10 @@ func (c *Config) install(ctx context.Context, opts *InstallCtxOpts) error {
 		return err
 	}
 
+	if opts.KubeconfigWriteMutex != nil {
+		opts.KubeconfigWriteMutex.Lock()
+	}
+
 	err = k8s.OutputContext(opts.KubeSavePath, merged)
 	if err != nil {
 		return err
@@ -110,6 +118,10 @@ func (c *Config) install(ctx context.Context, opts *InstallCtxOpts) error {
 	previewCfg, err := k8s.NewFromDefaultConfigWithContext(c.logger.Logger, c.name)
 	if err != nil {
 		return errors.Wrap(err, "couldn't instantiate a k8s config")
+	}
+
+	if opts.KubeconfigWriteMutex != nil {
+		opts.KubeconfigWriteMutex.Unlock()
 	}
 
 	c.previewClient = previewCfg
