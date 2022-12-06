@@ -32,3 +32,7 @@ packages:
       image:
         - ${imageRepoBase}/ide-service:${version}
         - ${imageRepoBase}/ide-service:commit-${__git_commit}
+scripts:
+  - name: gen-golden-files
+    script: |
+      go test -timeout 30s -run ^TestResolveWorkspaceConfig$ github.com/gitpod-io/gitpod/ide-service/pkg/server --force --update

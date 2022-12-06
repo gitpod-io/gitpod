@@ -5,6 +5,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -417,14 +418,18 @@ rm -rf /tmp/backend-latest
 			}
 		}
 		if warmUpTask != "" {
-			warmUpEncoded, err := json.Marshal([]gitpodapi.TaskConfig{{
+			warmUpEncoded := new(bytes.Buffer)
+			enc := json.NewEncoder(warmUpEncoded)
+			enc.SetEscapeHTML(false)
+
+			err := enc.Encode(&[]gitpodapi.TaskConfig{{
 				Init: strings.TrimSpace(warmUpTask),
 			}})
 			if err != nil {
 				log.WithError(err).Error("cannot marshal warm up task")
 			}
 
-			resp.Tasks = string(warmUpEncoded)
+			resp.Tasks = warmUpEncoded.String()
 		}
 	}
 	return
