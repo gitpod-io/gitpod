@@ -7,6 +7,7 @@ package storage
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -345,7 +346,7 @@ func (s3st *s3Storage) ListObjects(ctx context.Context, prefix string) ([]string
 
 // Qualify implements DirectAccess
 func (s3st *s3Storage) Qualify(name string) string {
-	return s3st.objectName(name)
+	return fmt.Sprintf("%s@%s", s3st.objectName(name), s3st.Config.Bucket)
 }
 
 func (s3st *s3Storage) objectName(name string) string {
