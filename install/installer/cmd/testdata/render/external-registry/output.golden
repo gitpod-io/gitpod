@@ -954,6 +954,18 @@ automountServiceAccountToken: true
 secrets:
   - name: messagebus
 ---
+# v1/ServiceAccount registry-credential
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: registry-credential
+  name: registry-credential
+  namespace: default
+---
 # v1/ServiceAccount registry-facade
 apiVersion: v1
 automountServiceAccountToken: true
@@ -1037,6 +1049,38 @@ metadata:
     component: ws-proxy
   name: ws-proxy
   namespace: default
+---
+# v1/Secret aws-ecr-credentials
+apiVersion: v1
+kind: Secret
+metadata:
+  annotations:
+    aws-ecr-updater/region: us-west-1
+    aws-ecr-updater/secret: aws-iam-user-credentials
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    aws-ecr-updater: "true"
+    component: registry-credential
+  name: aws-ecr-credentials
+  namespace: default
+stringData:
+  .dockerconfigjson: '{}'
+type: kubernetes.io/dockerconfigjson
+---
+# v1/Secret aws-iam-user-credentials
+apiVersion: v1
+kind: Secret
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: registry-credential
+  name: aws-iam-user-credentials
+  namespace: default
+stringData:
+  access_key_id: 8-WGqw2oTnsPfUDNSk0Y
+  secret_access_key: DpC.aSAxkWBPu2_bJ_AE
 ---
 # v1/Secret db-password
 apiVersion: v1
@@ -1289,7 +1333,7 @@ data:
           "maxSizeBytes": 1073741824
         }
       },
-      "dockerAuth": "/mnt/pull-secret.json",
+      "dockerAuth": "/mnt/pull-secret/pull-secret.json",
       "pprofAddr": "127.0.0.1:6060",
       "prometheusAddr": "127.0.0.1:9500",
       "readinessProbeAddr": ":8086"
@@ -3268,6 +3312,70 @@ data:
       name: image-builder-mk3
       namespace: default
     ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: registry-credential
+      name: registry-credential
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: registry-credential
+      name: registry-credential
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: registry-credential
+      name: aws-iam-user-credentials
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      annotations:
+        aws-ecr-updater/region: us-west-1
+        aws-ecr-updater/secret: aws-iam-user-credentials
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        aws-ecr-updater: "true"
+        component: registry-credential
+      name: aws-ecr-credentials
+      namespace: default
+    ---
+    apiVersion: batch/v1
+    kind: CronJob
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: registry-credential
+      name: registry-credential
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: registry-credential
+      name: registry-credential
+      namespace: default
+    ---
     apiVersion: v1
     kind: ConfigMap
     metadata:
@@ -4838,7 +4946,7 @@ data:
           }
         },
         "pullSecret": "my-registry-credentials",
-        "pullSecretFile": "/config/pull-secret.json",
+        "pullSecretFile": "/config/pull-secret/pull-secret.json",
         "baseImageRepository": "my-registry.example.com/base-images",
         "workspaceImageRepository": "my-registry.example.com/workspace-images",
         "builderImage": "eu.gcr.io/gitpod-core-dev/build/image-builder-mk3/bob:test"
@@ -5074,7 +5182,7 @@ data:
           "key": "/mnt/certificates/tls.key"
         }
       },
-      "dockerAuth": "/mnt/pull-secret.json",
+      "dockerAuth": "/mnt/pull-secret/pull-secret.json",
       "pprofAddr": "127.0.0.1:6060",
       "prometheusAddr": "127.0.0.1:9500",
       "readinessProbeAddr": ":8086"
@@ -6375,6 +6483,27 @@ rules:
     resources: ["events"]
     verbs: ["create"]
 ---
+# rbac.authorization.k8s.io/v1/Role registry-credential
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: registry-credential
+  name: registry-credential
+  namespace: default
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+---
 # rbac.authorization.k8s.io/v1/Role server
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -6825,6 +6954,24 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: rabbitmq
+---
+# rbac.authorization.k8s.io/v1/RoleBinding registry-credential
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: registry-credential
+  name: registry-credential
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: registry-credential
+subjects:
+- kind: ServiceAccount
+  name: registry-credential
 ---
 # rbac.authorization.k8s.io/v1/RoleBinding server
 apiVersion: rbac.authorization.k8s.io/v1
@@ -7722,7 +7869,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 08acb7a558503fa536bf6d5b21aaf37ba799fb4334edb308400f03753d646264
+        gitpod.io/checksum_config: 627e2d5a5d50e8eb2531bd494ceb9cd26315e43008248fb6825dfc2b5189a3d3
       creationTimestamp: null
       labels:
         app: gitpod
@@ -7810,9 +7957,8 @@ spec:
         - mountPath: /ws-manager-client-tls-certs
           name: ws-manager-client-tls-certs
           readOnly: true
-        - mountPath: /mnt/pull-secret.json
+        - mountPath: /mnt/pull-secret
           name: pull-secret
-          subPath: .dockerconfigjson
         - mountPath: /mnt/certificates
           name: config-certificates
       - args:
@@ -7901,6 +8047,9 @@ spec:
           secretName: ws-manager-client-tls
       - name: pull-secret
         secret:
+          items:
+          - key: .dockerconfigjson
+            path: pull-secret.json
           secretName: my-registry-credentials
       - hostPath:
           path: /
@@ -8736,7 +8885,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 15d99333e20408bb28398cdfffeb658e161608de2b3f3d9fd983a85a796254d5
+        gitpod.io/checksum_config: a46080fdf584e8531ec566bcd7761b7ceca365777f0859476a0a9c68beb99737
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8811,9 +8960,8 @@ spec:
           readOnly: true
         - mountPath: /mnt/cache
           name: cache
-        - mountPath: /mnt/pull-secret.json
+        - mountPath: /mnt/pull-secret
           name: pull-secret
-          subPath: .dockerconfigjson
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -8848,6 +8996,9 @@ spec:
         name: config
       - name: pull-secret
         secret:
+          items:
+          - key: .dockerconfigjson
+            path: pull-secret.json
           secretName: my-registry-credentials
 status: {}
 ---
@@ -9602,7 +9753,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 2b5bc4558a8b47f881af721619dcf4893415ab3914e56abb9f009d093f00f9e9
+        gitpod.io/checksum_config: d21a309ff74da6d1c59c56ab227fbdb81058c31d03d27171d97fb975032589b7
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9662,9 +9813,8 @@ spec:
         - mountPath: /wsman-certs
           name: wsman-tls-certs
           readOnly: true
-        - mountPath: /config/pull-secret.json
+        - mountPath: /config/pull-secret
           name: pull-secret
-          subPath: .dockerconfigjson
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -9719,6 +9869,9 @@ spec:
           secretName: ws-manager-client-tls
       - name: pull-secret
         secret:
+          items:
+          - key: .dockerconfigjson
+            path: pull-secret.json
           secretName: my-registry-credentials
       - emptyDir: {}
         name: gitpod-ca-certificate
@@ -11111,6 +11264,41 @@ spec:
   ttlSecondsAfterFinished: 60
 status: {}
 ---
+# batch/v1/Job registry-credential
+apiVersion: batch/v1
+kind: Job
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: registry-credential
+  name: registry-credential
+  namespace: default
+spec:
+  backoffLimit: 10
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: registry-credential
+      name: registry-credential
+      namespace: default
+    spec:
+      containers:
+      - command:
+        - /aws-iam-credential-rotate
+        - ecr-update
+        image: jenting/aws-iam-credential-rotate
+        imagePullPolicy: IfNotPresent
+        name: registry-credential
+        resources: {}
+        securityContext:
+          allowPrivilegeEscalation: false
+      restartPolicy: OnFailure
+      serviceAccountName: registry-credential
+status: {}
+---
 # batch/v1/CronJob gitpod-telemetry
 apiVersion: batch/v1
 kind: CronJob
@@ -11200,4 +11388,52 @@ spec:
           serviceAccountName: gitpod
   schedule: '@daily'
   successfulJobsHistoryLimit: 3
+status: {}
+---
+# batch/v1/CronJob registry-credential
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: registry-credential
+  name: registry-credential
+  namespace: default
+spec:
+  concurrencyPolicy: Replace
+  failedJobsHistoryLimit: 10
+  jobTemplate:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: registry-credential
+      name: registry-credential
+      namespace: default
+    spec:
+      backoffLimit: 10
+      template:
+        metadata:
+          creationTimestamp: null
+          labels:
+            app: gitpod
+            component: registry-credential
+          name: registry-credential
+          namespace: default
+        spec:
+          containers:
+          - command:
+            - /aws-iam-credential-rotate
+            - ecr-update
+            image: jenting/aws-iam-credential-rotate
+            imagePullPolicy: IfNotPresent
+            name: registry-credential
+            resources: {}
+            securityContext:
+              allowPrivilegeEscalation: false
+          restartPolicy: OnFailure
+          serviceAccountName: registry-credential
+  schedule: '* */6 * * *'
+  successfulJobsHistoryLimit: 1
 status: {}
