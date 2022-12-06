@@ -48,6 +48,9 @@ class GitpodProjectManager(
                     jdkTable.preconfigure()
                     val preconfiguredJdk = ProjectRootManager.getInstance(project).projectSdk
                     val preferredJdkHomePath = JavaHomeFinder.getFinder().findExistingJdks().firstOrNull()
+                    thisLogger().warn("gitpod: JDK Found via ProjectRootManager: ${preconfiguredJdk?.homePath}")
+                    jdkTable.allJdks.forEach { thisLogger().warn("gitpod: JDK Found via ProjectJdkTable: ${it.homePath}") }
+                    JavaHomeFinder.getFinder().findExistingJdks().forEach { thisLogger().warn("gitpod: JDK Found via JavaHomeFinder: $it") }
                     pendingSdk.complete(
                             when {
                                 preconfiguredJdk != null -> preconfiguredJdk
