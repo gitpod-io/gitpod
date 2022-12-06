@@ -11,7 +11,6 @@ import WorkspaceClass from "../components/WorkspaceClass";
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 
 interface SelectWorkspaceClassProps {
-    enabled: boolean;
     workspaceClass?: string;
     setWorkspaceClass: (value: string) => Promise<string | undefined>;
 }
@@ -44,31 +43,21 @@ export default function SelectWorkspaceClass(props: SelectWorkspaceClassProps) {
         fetchClasses().catch(console.error);
     }, []);
 
-    if (!props.enabled) {
-        return <div></div>;
-    } else {
-        return (
-            <div>
-                <h3 className="mt-12">Workspaces</h3>
-                <p className="text-base text-gray-500 dark:text-gray-400">
-                    Choose the workspace machine type for your workspaces.
-                </p>
-                <div className="mt-4 space-x-3 flex">
-                    {supportedClasses.map((c) => {
-                        return (
-                            <WorkspaceClass
-                                additionalStyles="w-80 h-32"
-                                selected={workspaceClass === c.id}
-                                onClick={() => actuallySetWorkspaceClass(c.id)}
-                                category={c.category}
-                                friendlyName={c.displayName}
-                                description={c.description}
-                                powerUps={c.powerups}
-                            />
-                        );
-                    })}
-                </div>
-            </div>
-        );
-    }
+    return (
+        <div className="mt-4 space-x-3 flex">
+            {supportedClasses.map((c) => {
+                return (
+                    <WorkspaceClass
+                        additionalStyles="w-80 h-32"
+                        selected={workspaceClass === c.id}
+                        onClick={() => actuallySetWorkspaceClass(c.id)}
+                        category={c.category}
+                        friendlyName={c.displayName}
+                        description={c.description}
+                        powerUps={c.powerups}
+                    />
+                );
+            })}
+        </div>
+    );
 }
