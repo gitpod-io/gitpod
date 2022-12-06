@@ -8,13 +8,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"net/http"
-	"net/url"
-	"strings"
-
 	"github.com/cockroachdb/errors"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
+	"net/http"
+	"net/url"
 )
 
 type PortForwardOpts struct {
@@ -32,10 +30,14 @@ func (c *Config) PortForward(ctx context.Context, opts PortForwardOpts) error {
 	}
 
 	path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", opts.Namespace, opts.Name)
-	hostIP := strings.TrimLeft(c.config.Host, "https://")
-	serverURL := url.URL{Scheme: "https", Path: path, Host: hostIP}
+	u, err := url.Parse(c.config.Host)
+	if err != nil {
+		return errors.Wrap(err, "couldn't parse k8s host url")
+	}
+	u.Path = path
+	u.Scheme = "https"
 
-	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: roundTripper}, http.MethodPost, &serverURL)
+	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: roundTripper}, http.MethodPost, u)
 
 	out, errOut := new(bytes.Buffer), new(bytes.Buffer)
 	forwarder, err := portforward.New(dialer, opts.Ports, opts.StopChan, opts.ReadyChan, out, errOut)
