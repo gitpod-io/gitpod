@@ -54,6 +54,8 @@ func extractTags(tag string) (result fieldSpec, err error) {
 
 	metadata, err := tagObj.Get("json")
 	if err != nil {
+		// There is no "json" tag in this key - move on
+		err = nil
 		return
 	}
 
