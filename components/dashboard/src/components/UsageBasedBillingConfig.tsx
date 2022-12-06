@@ -207,7 +207,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
     };
 
     const balance = currentUsage * -1 + usageLimit;
-    const percentage = Math.max(Math.round((balance * 100) / usageLimit), 0);
+    const percentage = usageLimit === 0 ? 0 : Math.max(Math.round((balance * 100) / usageLimit), 0);
 
     return (
         <div className="mb-16">
@@ -237,18 +237,18 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                         </div>
                         <div className="mt-4 text-sm flex text-gray-400 dark:text-gray-500">
                             <span className="flex-grow">
-                                <span>Monthly limit: {usageLimit} Credits</span>
-                                {showManageBilling && (
-                                    <>
-                                        <span>&nbsp;&middot;&nbsp;</span>
-                                        <span className="gp-link" onClick={() => setShowUpdateLimitModal(true)}>
-                                            Update limit
-                                        </span>
-                                    </>
-                                )}
+                                {typeof currentUsage === "number" &&
+                                    typeof usageLimit === "number" &&
+                                    usageLimit > 0 && <span>{percentage}% remaining</span>}
                             </span>
-                            {typeof currentUsage === "number" && typeof usageLimit === "number" && usageLimit > 0 && (
-                                <span>{percentage}% remaining</span>
+                            <span>Monthly limit: {usageLimit} Credits</span>
+                            {showManageBilling && (
+                                <>
+                                    <span>&nbsp;&middot;&nbsp;</span>
+                                    <span className="gp-link" onClick={() => setShowUpdateLimitModal(true)}>
+                                        Update limit
+                                    </span>
+                                </>
                             )}
                         </div>
                         <div className="mt-2 flex">
