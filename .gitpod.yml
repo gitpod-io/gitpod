@@ -46,7 +46,7 @@ tasks:
   # with preview environments.
   - name: Preview environment configuration
     init: leeway run dev/preview/previewctl:install
-    command: leeway run dev/preview:configure-workspace
+    command: INSTALL_CONTEXT=true leeway run dev/preview:configure-workspace
   - name: Installer dependencies
     init: |
       (cd install/installer && make deps)
