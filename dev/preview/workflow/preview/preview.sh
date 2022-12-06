@@ -26,9 +26,10 @@ if ! git:branch-exists-remotely; then
   ask "I've read 👆 and I understand the implications."
 fi
 
+leeway run dev/preview:configure-workspace
 ensure_gcloud_auth
 
 leeway run dev/preview:create-preview
 leeway run dev/preview:build
-previewctl install-context --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}" --retry 30
+previewctl install-context --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}" --timeout 10m
 leeway run dev/preview:deploy-gitpod

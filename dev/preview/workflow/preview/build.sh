@@ -12,6 +12,7 @@ source "$(realpath "${SCRIPT_PATH}/../../util/preview-name-from-branch.sh")"
 
 import "ensure-gcloud-auth.sh"
 
+leeway run dev/preview:configure-workspace
 ensure_gcloud_auth
 
 if [[ "${VERSION:-}" == "" ]]; then

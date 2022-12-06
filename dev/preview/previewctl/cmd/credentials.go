@@ -115,6 +115,7 @@ func hasAccess(ctx context.Context, logger *logrus.Logger, contextName string) b
 	config, err := kube.NewFromDefaultConfigWithContext(logger, contextName)
 	if err != nil {
 		if errors.Is(err, kube.ErrContextNotExists) {
+			logger.Error(err)
 			return false
 		}
 

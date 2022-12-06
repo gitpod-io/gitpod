@@ -111,15 +111,15 @@ func (k *ConfigLoader) Load(ctx context.Context) (*api.Config, error) {
 			return nil, err
 		}
 
-		defer func(client pssh.Client) {
+		defer func(k *ConfigLoader) {
 			// closing the stopChan will stop the port-forward
 			close(stopChan)
-			err := client.Close()
+			err := k.Close()
 			if err != nil {
 				k.logger.WithFields(logrus.Fields{"err": err}).Error("failed to close client")
 				return
 			}
-		}(k.client)
+		}(k)
 	}
 
 	return k.getContext(ctx)
@@ -160,7 +160,7 @@ func (k *ConfigLoader) getContext(ctx context.Context) (*api.Config, error) {
 
 func (k *ConfigLoader) setup(ctx context.Context, stopChan, readyChan chan struct{}, errChan chan error) error {
 	// pick a random port, so we avoid clashes if something else port-forwards to 2200
-	randPort := strconv.Itoa(rand.Intn(2299-2201) + 2201)
+	randPort := strconv.Itoa(rand.Intn(29999-22201) + 22201)
 	// we use portForwardReadyChan to signal when we've started the port-forward
 	portForwardReadyChan := make(chan struct{}, 1)
 	go func() {
@@ -222,6 +222,10 @@ func (k *ConfigLoader) connectToHost(ctx context.Context, host, port string) err
 }
 
 func (k *ConfigLoader) Close() error {
+	if k.client == nil {
+		return errors.New("attempting to close a nil client")
+	}
+
 	if err := k.client.Close(); err != nil {
 		return err
 	}
