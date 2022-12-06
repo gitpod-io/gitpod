@@ -21,7 +21,7 @@ import ConfirmationModal from "../components/ConfirmationModal";
 import { prebuildStatusIcon } from "./Prebuilds";
 import Alert from "../components/Alert";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
-import { listAllProjects } from "../service/public-api";
+import { listAllProjects, projectsService } from "../service/public-api";
 import { UserContext } from "../user-context";
 
 export default function () {
@@ -86,7 +86,9 @@ export default function () {
 
     const onRemoveProject = async (p: Project) => {
         setRemoveModalVisible(false);
-        await getGitpodService().server.deleteProject(p.id);
+        usePublicApiProjectsService
+            ? await projectsService.deleteProject({ projectId: p.id })
+            : await getGitpodService().server.deleteProject(p.id);
         await updateProjects();
     };
 
