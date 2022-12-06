@@ -58,7 +58,6 @@ import {
 } from "./team-subscription-protocol";
 import { RemotePageMessage, RemoteTrackMessage, RemoteIdentifyMessage } from "./analytics";
 import { IDEServer } from "./ide-protocol";
-import { InstallationAdminSettings, TelemetryData } from "./installation-admin-protocol";
 import { ListUsageRequest, ListUsageResponse, CostCenterJSON } from "./usage";
 import { SupportedWorkspaceClass } from "./workspace-class";
 import { BillingMode } from "./billing-mode";
@@ -174,11 +173,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getGenericInvite(teamId: string): Promise<TeamMembershipInvite>;
     resetGenericInvite(inviteId: string): Promise<TeamMembershipInvite>;
     deleteTeam(teamId: string): Promise<void>;
-
-    // Admin Settings
-    adminGetSettings(): Promise<InstallationAdminSettings>;
-    adminUpdateSettings(settings: InstallationAdminSettings): Promise<void>;
-    adminGetTelemetryData(): Promise<TelemetryData>;
 
     // Projects
     getProviderRepositoriesForUser(params: GetProviderRepositoriesParams): Promise<ProviderRepository[]>;
