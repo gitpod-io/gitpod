@@ -1,5 +1,5 @@
 # Dashboard
-
+temp
 The dashboard is written in TypeScript and React. For styling it uses TailwindCSS which is a bit nicer than inlining CSS as it supports pseudo classes and a is a little more abstract/reusable.
 
 The `App.tsx` is the entry point for the SPA and it uses React-Router to register all pages.
