@@ -26,7 +26,6 @@ type installContextCmdOpts struct {
 
 	watch              bool
 	timeout            time.Duration
-	retry              int
 	kubeConfigSavePath string
 	sshPrivateKeyPath  string
 
@@ -46,7 +45,7 @@ func newInstallContextCmd(logger *logrus.Logger) *cobra.Command {
 	// Used to ensure that we only install contexts
 	var lastSuccessfulPreviewEnvironment *preview.Config = nil
 
-	install := func(timeout time.Duration) error {
+	install := func(retry bool, timeout time.Duration) error {
 		name, err := preview.GetName(branch)
 		if err != nil {
 			return err
@@ -68,9 +67,9 @@ func newInstallContextCmd(logger *logrus.Logger) *cobra.Command {
 			return nil
 		}
 
-		err = p.InstallContext(ctx, preview.InstallCtxOpts{
-			Wait:              opts.watch,
-			Timeout:           opts.timeout,
+		err = p.InstallContext(ctx, &preview.InstallCtxOpts{
+			Retry:             retry,
+			RetryTimeout:      opts.timeout,
 			KubeSavePath:      opts.kubeConfigSavePath,
 			SSHPrivateKeyPath: opts.sshPrivateKeyPath,
 		})
@@ -111,34 +110,19 @@ func newInstallContextCmd(logger *logrus.Logger) *cobra.Command {
 					// to a branch that doesn't have a preview environment. In that case the default
 					// timeout would mean that we would block for 10 minutes, potentially missing
 					// if the user changes to a new branch that does that a preview.
-					err := install(30 * time.Second)
+					err := install(true, 30*time.Second)
 					if err != nil {
 						logger.WithFields(logrus.Fields{"err": err}).Info("Failed to install context. Trying again soon.")
 					}
 				}
-			} else {
-				sleep := 10 * time.Second
-				remainingRetries := opts.retry
-				for remainingRetries > 0 {
-					remainingRetries -= 1
-					err := install(opts.timeout)
-					if err == nil {
-						logger.Info("Successfully installed kubectx")
-						return nil
-					}
-					logger.WithFields(logrus.Fields{"err": err}).Infof("Failed to install context. Waiting %s before trying again. %d attempts left", sleep, remainingRetries)
-					time.Sleep(sleep)
-				}
-				return errors.New("Failed to install kubectx")
 			}
 
-			return nil
+			return install(true, opts.timeout)
 		},
 	}
 
 	cmd.Flags().BoolVar(&opts.watch, "watch", false, "If watch is enabled, previewctl will keep trying to install the kube-context every 15 seconds, even when successful.")
-	cmd.Flags().DurationVarP(&opts.timeout, "timeout", "t", 10*time.Minute, "Timeout before considering the installation failed")
-	cmd.Flags().IntVar(&opts.retry, "retry", 1, "If retry is enabled previewctl will retry the specified number of times. This option is ignored if watch is used.")
+	cmd.Flags().DurationVarP(&opts.timeout, "timeout", "t", 10*time.Minute, "Timeout before considering the installation failed. It will retry installing the context until successful or the timeout is reached")
 	cmd.PersistentFlags().StringVar(&opts.sshPrivateKeyPath, "private-key-path", fmt.Sprintf("%s/.ssh/vm_id_rsa", homedir.HomeDir()), "path to the private key used to authenticate with the VM")
 	cmd.PersistentFlags().StringVar(&opts.getCredentialsOpts.serviceAccountPath, "gcp-service-account", viper.GetString("PREVIEW_ENV_DEV_SA_KEY_PATH"), "path to the GCP service account to use")
 

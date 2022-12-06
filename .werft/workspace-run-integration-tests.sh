@@ -187,7 +187,7 @@ echo "build success" | werft log slice "build preview environment"
 werft log slice "build preview environment" --done
 
 echo "Configuring access to preview environment (k3s)" | werft log slice "configure k3s kubeconfig"
-previewctl install-context --retry 30 --gcp-service-account /mnt/secrets/gcp-sa/service-account.json | werft log slice "configure k3s kubeconfig"
+previewctl install-context --timeout 10m --gcp-service-account /mnt/secrets/gcp-sa/service-account.json | werft log slice "configure k3s kubeconfig"
 echo "Done" | werft log slice "configure k3s kubeconfig"
 werft log slice "configure k3s kubeconfig" --done
 

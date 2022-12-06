@@ -5,16 +5,11 @@
 package preview_test
 
 import (
-	"fmt"
 	"log"
 	"testing"
 
 	"github.com/gitpod-io/gitpod/previewctl/pkg/preview"
 )
-
-func TestInstallContext(t *testing.T) {
-	fmt.Println("Test not implemented")
-}
 
 func TestGetPreviewName(t *testing.T) {
 	testCases := []struct {
@@ -59,8 +54,4 @@ func TestGetPreviewName(t *testing.T) {
 			log.Fatalf("Test '%s' failed. Expected '%s' but got '%s'", tc.testName, tc.expectedResult, previewName)
 		}
 	}
-}
-
-func TestListAllPreviews(t *testing.T) {
-	fmt.Println("Test not implemented")
 }

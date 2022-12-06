@@ -8,7 +8,7 @@ SCRIPT_PATH=$(realpath "$(dirname "$0")")
 source "$(realpath "${SCRIPT_PATH}/../lib/common.sh")"
 
 auth=$(gcloud config get-value account)
-if { [[ "${auth}" != "(unset)" ]] || [ -n "${auth:-}" ]; } && [ -f "${PREVIEW_ENV_DEV_SA_KEY_PATH}" ]; then
+if { [[ "${auth}" != "(unset)" ]] || [ -n "${auth:-}" ]; } && [ -f "${PREVIEW_ENV_DEV_SA_KEY_PATH}" ] && { previewctl has-access; }; then
   log_info "Access already configured"
   exit 0
 fi
@@ -18,7 +18,10 @@ if [[ -z "${PREVIEW_ENV_DEV_SA_KEY:-}" ]]; then
   exit 0
 fi
 
-echo "${PREVIEW_ENV_DEV_SA_KEY}" >"${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+if [ ! -f "${PREVIEW_ENV_DEV_SA_KEY_PATH}" ]; then
+  echo "${PREVIEW_ENV_DEV_SA_KEY}" >"${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+fi
+
 gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
 
 log_info "Configuring access to kubernetes clusters"
