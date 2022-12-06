@@ -144,6 +144,25 @@ func (s *ProjectsService) ListProjects(ctx context.Context, req *connect.Request
 	}), nil
 }
 
+func (s *ProjectsService) DeleteProject(ctx context.Context, req *connect.Request[v1.DeleteProjectRequest]) (*connect.Response[v1.DeleteProjectResponse], error) {
+	projectID, err := validateProjectID(req.Msg.GetProjectId())
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := s.getConnection(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = conn.DeleteProject(ctx, projectID.String())
+	if err != nil {
+		return nil, proxy.ConvertError(err)
+	}
+
+	return connect.NewResponse(&v1.DeleteProjectResponse{}), nil
+}
+
 func (s *ProjectsService) getConnection(ctx context.Context) (protocol.APIInterface, error) {
 	token, err := auth.TokenFromContext(ctx)
 	if err != nil {
@@ -209,4 +228,19 @@ func workspaceClassesToAPIResponse(s *protocol.WorkspaceClassesSettings) *v1.Wor
 		Regular:  s.Regular,
 		Prebuild: s.Prebuild,
 	}
+}
+
+func validateProjectID(id string) (uuid.UUID, error) {
+	trimmed := strings.TrimSpace(id)
+
+	if trimmed == "" {
+		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Project ID is a required argument."))
+	}
+
+	projectID, err := uuid.Parse(trimmed)
+	if err != nil {
+		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Project ID must be a valid UUID."))
+	}
+
+	return projectID, nil
 }

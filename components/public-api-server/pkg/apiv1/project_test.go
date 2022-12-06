@@ -313,6 +313,43 @@ func TestProjectsService_ListProjects(t *testing.T) {
 	})
 }
 
+func TestProjectsService_DeleteProject(t *testing.T) {
+
+	t.Run("invalid argument when project ID is empty", func(t *testing.T) {
+		_, client := setupProjectsService(t)
+
+		_, err := client.DeleteProject(context.Background(), connect.NewRequest(&v1.DeleteProjectRequest{
+			ProjectId: "",
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("invalid argument when project ID is not a valid uuid", func(t *testing.T) {
+		_, client := setupProjectsService(t)
+
+		_, err := client.DeleteProject(context.Background(), connect.NewRequest(&v1.DeleteProjectRequest{
+			ProjectId: "something",
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("proxies to server", func(t *testing.T) {
+		serverMock, client := setupProjectsService(t)
+
+		projectID := uuid.New().String()
+
+		serverMock.EXPECT().DeleteProject(gomock.Any(), projectID).Return(nil)
+
+		resp, err := client.DeleteProject(context.Background(), connect.NewRequest(&v1.DeleteProjectRequest{
+			ProjectId: projectID,
+		}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.DeleteProjectResponse{}, resp.Msg)
+	})
+}
+
 func setupProjectsService(t *testing.T) (*protocol.MockAPIInterface, v1connect.ProjectsServiceClient) {
 	t.Helper()
 
