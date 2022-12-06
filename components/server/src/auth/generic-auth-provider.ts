@@ -336,7 +336,8 @@ export class GenericAuthProvider implements AuthProvider {
 
         // assert additional infomation is attached to current session
         if (!authFlow) {
-            increaseLoginCounter("failed", this.host);
+            // The auth flow state info is missing in the session: count as client error
+            increaseLoginCounter("failed_client", this.host);
 
             log.error(cxt, `(${strategyName}) No session found during auth callback.`, { clientInfo });
             response.redirect(this.getSorryUrl(`Please allow Cookies in your browser and try to log in again.`));
