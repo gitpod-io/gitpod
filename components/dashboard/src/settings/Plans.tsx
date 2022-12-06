@@ -636,14 +636,16 @@ export default function () {
             <PageWithSettingsSubMenu title="Plans" subtitle="Manage account usage and billing.">
                 {isUsageBasedBillingEnabled && (
                     <Alert type="message" className="mb-4">
-                        Your account has been enabled for usage-based billing. Discover faster workspace classes and
-                        only pay for what you actually use.{" "}
-                        <a className="gp-link" href="https://www.gitpod.io/docs/configure/billing/usage-based-billing">
-                            Learn more
+                        To access{" "}
+                        <a className="gp-link" href="https://www.gitpod.io/docs/configure/workspaces/workspace-classes">
+                            large workspaces
+                        </a>{" "}
+                        and{" "}
+                        <a className="gp-link" href="https://www.gitpod.io/docs/configure/billing/pay-as-you-go">
+                            pay-as-you-go
                         </a>
-                        <br />
-                        <br />
-                        The old monthly plans are deprecated and will be cancelled by End of March 2023.
+                        , first cancel your existing plan. Existing plans will keep working until the end of March,
+                        2023.
                     </Alert>
                 )}
                 <div className="w-full text-center">
