@@ -15,6 +15,8 @@ import PillLabel from "../components/PillLabel";
 import { ProjectContext } from "./project-context";
 import SelectWorkspaceClass from "../settings/selectClass";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
+import Alert from "../components/Alert";
+import { Link } from "react-router-dom";
 
 export function getProjectSettingsMenu(project?: Project, team?: Team) {
     const teamOrUserSlug = !!team ? "t/" + team.slug : "projects";
@@ -48,12 +50,14 @@ export function ProjectSettingsPage(props: { project?: Project; children?: React
 
 export default function () {
     const { project, setProject } = useContext(ProjectContext);
-    const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
+    const [billingMode, setBillingMode] = useState<BillingMode | undefined>(undefined);
     const { teams } = useContext(TeamsContext);
     const team = getCurrentTeam(useLocation(), teams);
     useEffect(() => {
         if (team) {
-            getGitpodService().server.getBillingModeForTeam(team.id).then(setTeamBillingMode);
+            getGitpodService().server.getBillingModeForTeam(team.id).then(setBillingMode);
+        } else {
+            getGitpodService().server.getBillingModeForUser().then(setBillingMode);
         }
     }, [team]);
 
@@ -156,13 +160,43 @@ export default function () {
                     </div>
                 </div>
             </div>
-            {BillingMode.canSetWorkspaceClass(teamBillingMode) && (
-                <SelectWorkspaceClass
-                    workspaceClass={project.settings?.workspaceClasses?.regular}
-                    enabled={BillingMode.canSetWorkspaceClass(teamBillingMode)}
-                    setWorkspaceClass={setWorkspaceClass}
-                />
-            )}
+            <div>
+                <h3 className="mt-12">Workspaces</h3>
+                <p className="text-base text-gray-500 dark:text-gray-400">
+                    Choose the workspace machine type for your workspaces.
+                </p>
+                {BillingMode.canSetWorkspaceClass(billingMode) ? (
+                    <SelectWorkspaceClass
+                        workspaceClass={project.settings?.workspaceClasses?.regular}
+                        setWorkspaceClass={setWorkspaceClass}
+                    />
+                ) : (
+                    <Alert type="message" className="mt-4">
+                        <div className="flex flex-col">
+                            <span>
+                                To access{" "}
+                                <a
+                                    className="gp-link"
+                                    href="https://www.gitpod.io/docs/configure/workspaces/workspace-classes"
+                                >
+                                    large workspaces
+                                </a>{" "}
+                                and{" "}
+                                <a
+                                    className="gp-link"
+                                    href="https://www.gitpod.io/docs/configure/billing/pay-as-you-go"
+                                >
+                                    pay-as-you-go
+                                </a>
+                                , first cancel your existing plan.
+                            </span>
+                            <Link className="mt-2" to={project.teamId ? "../billing" : "/plans"}>
+                                <button>Go to {project.teamId ? "Team" : "Personal"} Billing</button>
+                            </Link>
+                        </div>
+                    </Alert>
+                )}
+            </div>
         </ProjectSettingsPage>
     );
 }
