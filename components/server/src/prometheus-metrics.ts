@@ -30,7 +30,15 @@ const loginCounter = new prometheusClient.Counter({
     labelNames: ["status", "auth_host"],
 });
 
-export function increaseLoginCounter(status: string, auth_host: string) {
+type LoginCounterStatus =
+    // The login attempt failed due to a system error (picked up by alerts)
+    | "failed"
+    // The login attempt succeeded
+    | "succeeded"
+    // The login attempt failed, because the client failed to provide complete session information, for instance.
+    | "failed_client";
+
+export function increaseLoginCounter(status: LoginCounterStatus, auth_host: string) {
     loginCounter.inc({
         status,
         auth_host,
