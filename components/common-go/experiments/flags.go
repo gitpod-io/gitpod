@@ -8,8 +8,13 @@ import "context"
 
 const (
 	PersonalAccessTokensEnabledFlag = "personalAccessTokensEnabled"
+	OIDCServiceEnabledFlag          = "oidcServiceEnabled"
 )
 
 func IsPersonalAccessTokensEnabled(ctx context.Context, client Client, attributes Attributes) bool {
 	return client.GetBoolValue(ctx, PersonalAccessTokensEnabledFlag, false, attributes)
+}
+
+func IsOIDCServiceEnabled(ctx context.Context, client Client, attributes Attributes) bool {
+	return client.GetBoolValue(ctx, OIDCServiceEnabledFlag, false, attributes)
 }
