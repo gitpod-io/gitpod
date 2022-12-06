@@ -135,6 +135,7 @@ func queryWorkspaceInstanceForUsage(ctx context.Context, conn *gorm.DB) *gorm.DB
 			"wsi.usageAttributionId as usageAttributionId, "+
 			"wsi.startedTime as startedTime, "+
 			"wsi.stoppingTime as stoppingTime, "+
+			"wsi.stoppedTime as stoppedTime, "+
 			"ws.ownerId as ownerId, "+
 			"wsi.workspaceId as workspaceId, "+
 			"ws.ownerId as userId, "+
@@ -221,6 +222,7 @@ type WorkspaceInstanceForUsage struct {
 
 	StartedTime  VarcharTime `gorm:"column:startedTime;type:varchar;size:255;" json:"startedTime"`
 	StoppingTime VarcharTime `gorm:"column:stoppingTime;type:varchar;size:255;" json:"stoppingTime"`
+	StoppedTime  VarcharTime `gorm:"column:stoppedTime;type:varchar;size:255;" json:"stoppedTime"`
 }
 
 // WorkspaceRuntimeSeconds computes how long this WorkspaceInstance has been running.
@@ -231,6 +233,8 @@ func (i *WorkspaceInstanceForUsage) WorkspaceRuntimeSeconds(stopTimeIfInstanceIs
 
 	if i.StoppingTime.IsSet() {
 		stop = i.StoppingTime.Time()
+	} else if i.StoppedTime.IsSet() {
+		stop = i.StoppedTime.Time()
 	}
 
 	if stop.Before(start) {
@@ -239,8 +243,10 @@ func (i *WorkspaceInstanceForUsage) WorkspaceRuntimeSeconds(stopTimeIfInstanceIs
 			WithField("workspace_id", i.WorkspaceID).
 			WithField("started_time", TimeToISO8601(i.StartedTime.Time())).
 			WithField("started_time_set", i.StartedTime.IsSet()).
-			WithField("stopping_time_set", i.StartedTime.IsSet()).
-			WithField("stopping_time", TimeToISO8601(i.StartedTime.Time())).
+			WithField("stopping_time_set", i.StoppingTime.IsSet()).
+			WithField("stopping_time", TimeToISO8601(i.StoppingTime.Time())).
+			WithField("stopped_time_set", i.StoppedTime.IsSet()).
+			WithField("stopped_time", TimeToISO8601(i.StoppedTime.Time())).
 			WithField("stop_time_if_instance_still_running", stopTimeIfInstanceIsStillRunning).
 			Errorf("Instance %s had stop time before start time. Using startedTime as stop time.", i.ID)
 

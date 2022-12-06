@@ -368,14 +368,19 @@ func reconcileUsage(instances []db.WorkspaceInstanceForUsage, drafts []db.Usage,
 const usageDescriptionFromController = "Usage collected by automated system."
 
 func newUsageFromInstance(instance db.WorkspaceInstanceForUsage, pricer *WorkspacePricer, now time.Time) (db.Usage, error) {
+	stopTime := instance.StoppingTime
+	if !stopTime.IsSet() {
+		stopTime = instance.StoppedTime
+	}
+
 	draft := true
-	if instance.StoppingTime.IsSet() {
+	if stopTime.IsSet() {
 		draft = false
 	}
 
 	effectiveTime := now
-	if instance.StoppingTime.IsSet() {
-		effectiveTime = instance.StoppingTime.Time()
+	if stopTime.IsSet() {
+		effectiveTime = stopTime.Time()
 	}
 
 	usage := db.Usage{

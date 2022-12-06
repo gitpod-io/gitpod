@@ -109,6 +109,16 @@ func TestWorkspaceInstanceForUsage_WorkspaceRuntimeSeconds(t *testing.T) {
 			StopTimeIfStillRunning: time.Date(2022, 9, 8, 11, 0, 0, 00, time.UTC),
 			ExpectedCredits:        0,
 		},
+		{
+			Name: "an errored instance that has no stopping time.",
+			Instance: &db.WorkspaceInstanceForUsage{
+				WorkspaceClass: db.WorkspaceClass_Default,
+				StartedTime:    db.NewVarCharTime(time.Date(2022, 9, 8, 12, 0, 0, 0, time.UTC)),
+				StoppedTime:    db.NewVarCharTime(time.Date(2022, 9, 8, 12, 0, 0, 0, time.UTC)),
+			},
+			StopTimeIfStillRunning: time.Date(2022, 9, 8, 11, 0, 0, 00, time.UTC),
+			ExpectedCredits:        0,
+		},
 	} {
 		t.Run(s.Name, func(t *testing.T) {
 			credits := DefaultWorkspacePricer.CreditsUsedByInstance(s.Instance, s.StopTimeIfStillRunning)
