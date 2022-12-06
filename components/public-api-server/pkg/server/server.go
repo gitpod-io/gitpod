@@ -146,6 +146,9 @@ func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool, expCl
 	projectsRoute, projectsServiceHandler := v1connect.NewProjectsServiceHandler(apiv1.NewProjectsService(connPool), handlerOptions...)
 	srv.HTTPMux().Handle(projectsRoute, projectsServiceHandler)
 
+	oidcRoute, oidcServiceHandler := v1connect.NewOIDCServiceHandler(apiv1.NewOIDCService(connPool, expClient), handlerOptions...)
+	srv.HTTPMux().Handle(oidcRoute, oidcServiceHandler)
+
 	return nil
 }
 
