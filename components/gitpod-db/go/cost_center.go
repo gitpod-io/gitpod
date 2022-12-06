@@ -131,6 +131,35 @@ func getCostCenter(ctx context.Context, conn *gorm.DB, attributionId Attribution
 	return costCenter, nil
 }
 
+func (c *CostCenterManager) IncrementBillingCycle(ctx context.Context, attributionId AttributionID) (CostCenter, error) {
+	cc, err := getCostCenter(ctx, c.conn, attributionId)
+	if err != nil {
+		return CostCenter{}, err
+	}
+	now := time.Now().UTC()
+	if cc.NextBillingTime.Time().After(now) {
+		return CostCenter{}, status.Errorf(codes.FailedPrecondition, "cannot increment billing cycle before next billing time")
+	}
+	billingCycleStart := NewVarCharTime(now)
+	if cc.NextBillingTime.IsSet() {
+		billingCycleStart = cc.NextBillingTime
+	}
+	// All fields on the new cost center remain the same, except for BillingCycleStart, NextBillingTime, and CreationTime
+	newCostCenter := CostCenter{
+		ID:                cc.ID,
+		SpendingLimit:     cc.SpendingLimit,
+		BillingStrategy:   cc.BillingStrategy,
+		BillingCycleStart: billingCycleStart,
+		NextBillingTime:   NewVarCharTime(billingCycleStart.Time().AddDate(0, 1, 0)),
+		CreationTime:      NewVarCharTime(now),
+	}
+	err = c.conn.Save(&newCostCenter).Error
+	if err != nil {
+		return CostCenter{}, fmt.Errorf("failed to store cost center ID: %s", err)
+	}
+	return newCostCenter, nil
+}
+
 func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCenter) (CostCenter, error) {
 	if newCC.SpendingLimit < 0 {
 		return CostCenter{}, status.Errorf(codes.InvalidArgument, "Spending limit cannot be set below zero.")
@@ -267,7 +296,6 @@ func (c *CostCenterManager) ListManagedCostCentersWithBillingTimeBefore(ctx cont
 
 func (c *CostCenterManager) ResetUsage(ctx context.Context, id AttributionID) (CostCenter, error) {
 	logger := log.WithField("attribution_id", id)
-	now := time.Now().UTC()
 	cc, err := getCostCenter(ctx, c.conn, id)
 	if err != nil {
 		return cc, err
@@ -282,26 +310,9 @@ func (c *CostCenterManager) ResetUsage(ctx context.Context, id AttributionID) (C
 	}
 
 	logger.Info("Running `ResetUsage`.")
-	// Default to 1 month from now, if there's no nextBillingTime set on the record.
-	billingCycleStart := now
-	nextBillingTime := now.AddDate(0, 1, 0)
-	if cc.NextBillingTime.IsSet() {
-		billingCycleStart = cc.NextBillingTime.Time()
-		nextBillingTime = cc.NextBillingTime.Time().AddDate(0, 1, 0)
-	}
-
-	// All fields on the new cost center remain the same, except for BillingCycleStart, NextBillingTime, and CreationTime
-	newCostCenter := CostCenter{
-		ID:                cc.ID,
-		SpendingLimit:     cc.SpendingLimit,
-		BillingStrategy:   cc.BillingStrategy,
-		BillingCycleStart: NewVarCharTime(billingCycleStart),
-		NextBillingTime:   NewVarCharTime(nextBillingTime),
-		CreationTime:      NewVarCharTime(now),
-	}
-	err = c.conn.Save(&newCostCenter).Error
+	cc, err = c.IncrementBillingCycle(ctx, cc.ID)
 	if err != nil {
-		return CostCenter{}, fmt.Errorf("failed to store new cost center for AttribtuonID: %s: %w", cc.ID, err)
+		return CostCenter{}, fmt.Errorf("failed to increment billing cycle for AttributonID: %s: %w", cc.ID, err)
 	}
 
 	// Create a synthetic Invoice Usage record, to reset usage
@@ -310,5 +321,5 @@ func (c *CostCenterManager) ResetUsage(ctx context.Context, id AttributionID) (C
 		return CostCenter{}, fmt.Errorf("failed to compute invocie usage record for AttributonID: %s: %w", cc.ID, err)
 	}
 
-	return newCostCenter, nil
+	return cc, nil
 }
