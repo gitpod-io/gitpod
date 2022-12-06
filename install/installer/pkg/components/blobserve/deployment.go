@@ -92,6 +92,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Name: volumeName,
 							VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{
 								SecretName: secretName,
+								Items:      []corev1.KeyToPath{{Key: ".dockerconfigjson", Path: "pull-secret.json"}},
 							}},
 						}},
 						Containers: []corev1.Container{{
@@ -126,8 +127,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								MountPath: "/mnt/cache",
 							}, {
 								Name:      volumeName,
-								MountPath: "/mnt/pull-secret.json",
-								SubPath:   ".dockerconfigjson",
+								MountPath: "/mnt/pull-secret",
 							}},
 
 							ReadinessProbe: &corev1.Probe{

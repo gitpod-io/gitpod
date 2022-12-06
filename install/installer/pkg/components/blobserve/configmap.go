@@ -101,7 +101,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				MaxSize:  MaxSizeBytes,
 			},
 		},
-		AuthCfg:            "/mnt/pull-secret.json",
+		AuthCfg:            "/mnt/pull-secret/pull-secret.json",
 		PProfAddr:          common.LocalhostAddressFromPort(baseserver.BuiltinDebugPort),
 		PrometheusAddr:     common.LocalhostPrometheusAddr(),
 		ReadinessProbeAddr: fmt.Sprintf(":%v", ReadinessPort),
