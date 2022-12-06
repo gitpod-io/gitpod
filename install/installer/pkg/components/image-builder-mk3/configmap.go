@@ -48,7 +48,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 		},
 		PullSecret:               secretName,
-		PullSecretFile:           PullSecretFile,
+		PullSecretFile:           "/config/pull-secret/pull-secret.json",
 		BaseImageRepository:      fmt.Sprintf("%s/base-images", registryName),
 		BuilderImage:             ctx.ImageName(ctx.Config.Repository, BuilderImage, ctx.VersionManifest.Components.ImageBuilderMk3.BuilderImage.Version),
 		WorkspaceImageRepository: fmt.Sprintf("%s/workspace-images", registryName),
