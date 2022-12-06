@@ -1,6 +1,8 @@
 # Change Log
 
 ## December 2022
+- Fixes an issue with modals not displaying properly on smaller screens. ([#15084](https://github.com/gitpod-io/gitpod/pull/15084)) - [@selfcontained](https://github.com/selfcontained)
+- [installer] manually set `allowPrivilegeEscalation` to false ([#14918](https://github.com/gitpod-io/gitpod/pull/14918)) - [@Pothulapati](https://github.com/Pothulapati)
 - Update spacing in token regeneration modal ([#15107](https://github.com/gitpod-io/gitpod/pull/15107)) - [@gtsiolis](https://github.com/gtsiolis)
 
 ##  November 2022
