@@ -56,11 +56,17 @@ export default function Menu() {
         getGitpodService().server.getBillingModeForUser().then(setUserBillingMode);
     }, []);
 
-    const match = useRouteMatch<{ segment1?: string; segment2?: string; segment3?: string }>(
-        "/(t/)?:segment1/:segment2?/:segment3?",
+    const teamRouteMatch = useRouteMatch<{ segment1?: string; segment2?: string; segment3?: string }>(
+        "/t/:segment1/:segment2?/:segment3?",
     );
+
+    // TODO: Remove it after remove projects under personal accounts
+    const projectsRouteMatch = useRouteMatch<{ segment1?: string; segment2?: string }>(
+        "/projects/:segment1?/:segment2?",
+    );
+
     const projectSlug = (() => {
-        const resource = match?.params?.segment2;
+        const resource = teamRouteMatch?.params?.segment2 || projectsRouteMatch?.params.segment1;
         if (
             resource &&
             ![
@@ -80,7 +86,7 @@ export default function Menu() {
         }
     })();
     const prebuildId = (() => {
-        const resource = projectSlug && match?.params?.segment3;
+        const resource = projectSlug && (teamRouteMatch?.params?.segment3 || projectsRouteMatch?.params.segment2);
         if (
             resource &&
             ![
