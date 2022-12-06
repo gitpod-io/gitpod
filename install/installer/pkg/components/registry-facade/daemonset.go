@@ -264,8 +264,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 								{
 									Name:      name,
-									MountPath: "/mnt/pull-secret.json",
-									SubPath:   ".dockerconfigjson",
+									MountPath: "/mnt/pull-secret",
 								},
 							},
 							volumeMounts...,
@@ -357,6 +356,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						VolumeSource: corev1.VolumeSource{
 							Secret: &corev1.SecretVolumeSource{
 								SecretName: secretName,
+								Items:      []corev1.KeyToPath{{Key: ".dockerconfigjson", Path: "pull-secret.json"}},
 							},
 						},
 					}, {
