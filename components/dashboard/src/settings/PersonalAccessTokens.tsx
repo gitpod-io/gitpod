@@ -21,6 +21,7 @@ import dayjs from "dayjs";
 import { SpinnerLoader } from "../components/Loader";
 import TokenEntry from "./TokenEntry";
 import ShowTokenModal from "./ShowTokenModal";
+import Pagination from "../Pagination/Pagination";
 
 export default function PersonalAccessTokens() {
     const { enablePersonalAccessTokens } = useContext(FeatureFlagContext);
@@ -79,12 +80,18 @@ function ListAccessTokensView() {
     const [tokenInfo, setTokenInfo] = useState<TokenInfo>();
     const [modalData, setModalData] = useState<{ token: PersonalAccessToken; action: TokenAction }>();
     const [errorMsg, setErrorMsg] = useState("");
+    const [totalResults, setTotalResults] = useState<number>();
+    const pageLength = 25;
+    const [currentPage, setCurrentPage] = useState<number>(1);
 
     async function loadTokens() {
         try {
             setLoading(true);
-            const response = await personalAccessTokensService.listPersonalAccessTokens({});
+            const response = await personalAccessTokensService.listPersonalAccessTokens({
+                pagination: { pageSize: pageLength, page: currentPage },
+            });
             setTokens(response.tokens);
+            setTotalResults(Number(response.totalResults));
         } catch (e) {
             setErrorMsg(e.message);
         }
@@ -93,7 +100,7 @@ function ListAccessTokensView() {
 
     useEffect(() => {
         loadTokens();
-    }, []);
+    }, [currentPage]);
 
     useEffect(() => {
         if (location.state) {
@@ -131,6 +138,10 @@ function ListAccessTokensView() {
         } catch (e) {
             setErrorMsg(e.message);
         }
+    };
+
+    const loadPage = (page: number = 1) => {
+        setCurrentPage(page);
     };
 
     return (
@@ -246,6 +257,13 @@ function ListAccessTokensView() {
                                     ]}
                                 />
                             ))}
+                            {totalResults && (
+                                <Pagination
+                                    totalNumberOfPages={Math.ceil(totalResults / pageLength)}
+                                    currentPage={currentPage}
+                                    setPage={loadPage}
+                                />
+                            )}
                         </>
                     )}
                 </>
