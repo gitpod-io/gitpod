@@ -67,6 +67,24 @@ func (s *UserService) ListSSHKeys(ctx context.Context, req *connect.Request[v1.L
 	}), nil
 }
 
+func (s *UserService) GetGitToken(ctx context.Context, req *connect.Request[v1.GetGitTokenRequest]) (*connect.Response[v1.GetGitTokenResponse], error) {
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+
+	token, err := conn.GetToken(ctx, &protocol.GetTokenSearchOptions{Host: req.Msg.Host})
+	if err != nil {
+		return nil, proxy.ConvertError(err)
+	}
+
+	response := gitTokenToAPIResponse(token)
+
+	return connect.NewResponse(&v1.GetGitTokenResponse{
+		Token: response,
+	}), nil
+}
+
 func userToAPIResponse(user *protocol.User) *v1.User {
 	name := user.Name
 	if name == "" {
@@ -87,5 +105,17 @@ func sshKeyToAPIResponse(key *protocol.UserSSHPublicKeyValue) *v1.SSHKey {
 		Name:      key.Name,
 		Key:       key.Key,
 		CreatedAt: parseTimeStamp(key.CreationTime),
+	}
+}
+
+func gitTokenToAPIResponse(token *protocol.Token) *v1.GitToken {
+	return &v1.GitToken{
+		ExpiryDate:   token.ExpiryDate,
+		IdToken:      token.IDToken,
+		RefreshToken: token.RefreshToken,
+		Scopes:       token.Scopes,
+		UpdateDate:   token.UpdateDate,
+		Username:     token.Username,
+		Value:        token.Value,
 	}
 }
