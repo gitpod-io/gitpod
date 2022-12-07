@@ -150,7 +150,7 @@ function ListAccessTokensView() {
                 <div>
                     <h3>
                         Access Tokens{" "}
-                        <PillLabel type="warn" className="font-semibold self-center">
+                        <PillLabel type="warn" className="font-semibold self-center py-0.5 px-1.5">
                             <a href="https://www.gitpod.io/docs/references/gitpod-releases">
                                 <span className="text-xs">BETA</span>
                             </a>
