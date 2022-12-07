@@ -24,7 +24,7 @@ export async function prepare(werft: Werft, config: JobConfig) {
         werft.log(prepareSlices.CONFIGURE_CORE_DEV, prepareSlices.CONFIGURE_CORE_DEV);
         activateCoreDevServiceAccount();
         configureDocker();
-        installPreviewCTL();
+        await installPreviewCTL();
         configureStaticClustersAccess();
         configureGlobalKubernetesContext();
         werft.done(prepareSlices.CONFIGURE_CORE_DEV);
@@ -69,8 +69,15 @@ function configureGlobalKubernetesContext() {
     }
 }
 
-function installPreviewCTL() {
-    exec(`leeway run dev/preview/previewctl:install`, {slice: "Install previewctl", dontCheckRc: false})
+export async function installPreviewCTL() {
+    try {
+        await execStream(`leeway build dev/preview/previewctl:install -Dversion=$(date +%F_T%H-%M-%S) --dont-test`, {
+            slice: "Install previewctl",
+            dontCheckRc: false
+        })
+    }catch (e) {
+        throw new Error("Failed to install previewctl.");
+    }
 }
 
 function configureStaticClustersAccess() {

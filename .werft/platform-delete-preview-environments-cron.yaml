@@ -83,6 +83,7 @@ pod:
           git config --global user.email roboquat@gitpod.io
 
           (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
+          printf '{{ toJson . }}' > context.json
 
           npx ts-node .werft/platform-delete-preview-environments-cron.ts
 plugins:

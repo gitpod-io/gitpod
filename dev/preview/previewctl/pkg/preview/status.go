@@ -38,10 +38,10 @@ func (c *Config) GetStatus(ctx context.Context) (Status, error) {
 		"preview": c.name,
 	})
 
-	// If the VM got created in the last 20 mins, always assume it's active
+	// If the VM got created in the last 120 mins, always assume it's active
 	// clock skew can go to hell
 	c.ensureVMICreationTime()
-	if c.vmiCreationTime.After(time.Now().Add(-20 * time.Minute)) {
+	if c.vmiCreationTime.After(time.Now().Add(-120 * time.Minute)) {
 		logEntry.WithFields(log.Fields{
 			"created": c.vmiCreationTime,
 		}).Debug("VM created in the past 20 mins, assuming active")

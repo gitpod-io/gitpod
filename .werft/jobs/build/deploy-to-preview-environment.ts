@@ -72,8 +72,8 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
     VM.waitForVMReadiness({ name: destname, timeoutSeconds: 60 * 10, slice: vmSlices.VM_READINESS });
     werft.done(vmSlices.VM_READINESS);
 
-    werft.log(vmSlices.KUBECONFIG, "Copying k3s kubeconfig");
-    VM.copyk3sKubeconfigShell({ name: destname, timeoutMS: 1000 * 60 * 6, slice: vmSlices.KUBECONFIG });
+    werft.log(vmSlices.KUBECONFIG, "Installing preview context");
+    await VM.installPreviewContext({ name: destname, slice: vmSlices.KUBECONFIG });
     werft.done(vmSlices.KUBECONFIG);
 
     werft.phase(phases.DEPLOY, "Deploying Gitpod and Observability Stack");
