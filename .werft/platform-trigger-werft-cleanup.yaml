@@ -22,7 +22,7 @@ pod:
         secretName: gcp-sa-gitpod-dev-deployer
   containers:
     - name: build
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-remove-adc.9
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.1.0
       workingDir: /workspace
       imagePullPolicy: IfNotPresent
       volumeMounts:
