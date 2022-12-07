@@ -14,7 +14,7 @@ spec:
   - name: usage
     rules:
     - alert: GitpodUsageReconcileUsageFailures
-      expr: sum(increase(grpc_server_handled_total{grpc_service="usage.v1.UsageService", grpc_method="ReconcileUsage", grpc_code!="OK"}[1m])) > 1
+      expr: sum(increase(grpc_server_handled_total{grpc_service="usage.v1.UsageService", grpc_method="ReconcileUsage", grpc_code!="OK"}[30m])) > 1
       for: 30m
       labels:
         severity: warning
@@ -25,7 +25,7 @@ spec:
         description: We have accumulated {{ printf "%.2f" $value }} failures. This affects how up-to-date usage data is.
 
     - alert: GitpodUsageReconcileInvoicesFailures
-      expr: sum(increase(grpc_server_handled_total{grpc_service="usage.v1.BillingService", grpc_method="ReconcileInvoices", grpc_code!="OK"}[1m])) > 1
+      expr: sum(increase(grpc_server_handled_total{grpc_service="usage.v1.BillingService", grpc_method="ReconcileInvoices", grpc_code!="OK"}[30m])) > 1
       for: 30m
       labels:
         severity: warning
@@ -36,7 +36,7 @@ spec:
         description: We have accumulated {{ printf "%.2f" $value }} failures. This affects how much customers will be billed.
 
     - alert: GitpodUsageBillingServiceFinalizeInvoiceFailures
-      expr: sum(increase(grpc_server_handled_total{grpc_service="usage.v1.BillingService", grpc_method="FinalizeInvoice", grpc_code!="OK"}[1m])) > 1
+      expr: sum(increase(grpc_server_handled_total{grpc_service="usage.v1.BillingService", grpc_method="FinalizeInvoice", grpc_code!="OK"}[30m])) > 1
       for: 30m
       labels:
         severity: warning
@@ -58,7 +58,7 @@ spec:
         description: We have not executed scheduled usage reconciliation for {{ printf "%.2f" $value }} seconds. We expect the data to update every 15 minutes to avoid stale usage records and stale invoices.
 
     - alert: GitpodUsageStripeWebhookFailures
-      expr: sum(increase(gitpod_http_request_duration_seconds_count{handler="/stripe/invoices/webhook", code=~"5.*"}[1m])) > 0
+      expr: sum(increase(gitpod_http_request_duration_seconds_count{handler="/stripe/invoices/webhook", code=~"5.*"}[30m])) > 0
       for: 30m
       labels:
         severity: warning
