@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 // package: supervisor
@@ -16,7 +16,8 @@ interface IInfoServiceService extends grpc.ServiceDefinition<grpc.UntypedService
     workspaceInfo: IInfoServiceService_IWorkspaceInfo;
 }
 
-interface IInfoServiceService_IWorkspaceInfo extends grpc.MethodDefinition<info_pb.WorkspaceInfoRequest, info_pb.WorkspaceInfoResponse> {
+interface IInfoServiceService_IWorkspaceInfo
+    extends grpc.MethodDefinition<info_pb.WorkspaceInfoRequest, info_pb.WorkspaceInfoResponse> {
     path: string; // "/supervisor.InfoService/WorkspaceInfo"
     requestStream: boolean; // false
     responseStream: boolean; // false
@@ -33,14 +34,38 @@ export interface IInfoServiceServer {
 }
 
 export interface IInfoServiceClient {
-    workspaceInfo(request: info_pb.WorkspaceInfoRequest, callback: (error: grpc.ServiceError | null, response: info_pb.WorkspaceInfoResponse) => void): grpc.ClientUnaryCall;
-    workspaceInfo(request: info_pb.WorkspaceInfoRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: info_pb.WorkspaceInfoResponse) => void): grpc.ClientUnaryCall;
-    workspaceInfo(request: info_pb.WorkspaceInfoRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: info_pb.WorkspaceInfoResponse) => void): grpc.ClientUnaryCall;
+    workspaceInfo(
+        request: info_pb.WorkspaceInfoRequest,
+        callback: (error: grpc.ServiceError | null, response: info_pb.WorkspaceInfoResponse) => void,
+    ): grpc.ClientUnaryCall;
+    workspaceInfo(
+        request: info_pb.WorkspaceInfoRequest,
+        metadata: grpc.Metadata,
+        callback: (error: grpc.ServiceError | null, response: info_pb.WorkspaceInfoResponse) => void,
+    ): grpc.ClientUnaryCall;
+    workspaceInfo(
+        request: info_pb.WorkspaceInfoRequest,
+        metadata: grpc.Metadata,
+        options: Partial<grpc.CallOptions>,
+        callback: (error: grpc.ServiceError | null, response: info_pb.WorkspaceInfoResponse) => void,
+    ): grpc.ClientUnaryCall;
 }
 
 export class InfoServiceClient extends grpc.Client implements IInfoServiceClient {
     constructor(address: string, credentials: grpc.ChannelCredentials, options?: object);
-    public workspaceInfo(request: info_pb.WorkspaceInfoRequest, callback: (error: grpc.ServiceError | null, response: info_pb.WorkspaceInfoResponse) => void): grpc.ClientUnaryCall;
-    public workspaceInfo(request: info_pb.WorkspaceInfoRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: info_pb.WorkspaceInfoResponse) => void): grpc.ClientUnaryCall;
-    public workspaceInfo(request: info_pb.WorkspaceInfoRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: info_pb.WorkspaceInfoResponse) => void): grpc.ClientUnaryCall;
+    public workspaceInfo(
+        request: info_pb.WorkspaceInfoRequest,
+        callback: (error: grpc.ServiceError | null, response: info_pb.WorkspaceInfoResponse) => void,
+    ): grpc.ClientUnaryCall;
+    public workspaceInfo(
+        request: info_pb.WorkspaceInfoRequest,
+        metadata: grpc.Metadata,
+        callback: (error: grpc.ServiceError | null, response: info_pb.WorkspaceInfoResponse) => void,
+    ): grpc.ClientUnaryCall;
+    public workspaceInfo(
+        request: info_pb.WorkspaceInfoRequest,
+        metadata: grpc.Metadata,
+        options: Partial<grpc.CallOptions>,
+        callback: (error: grpc.ServiceError | null, response: info_pb.WorkspaceInfoResponse) => void,
+    ): grpc.ClientUnaryCall;
 }

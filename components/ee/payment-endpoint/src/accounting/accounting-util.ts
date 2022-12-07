@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
- * Licensed under the Gitpod Enterprise Source Code License,
- * See License.enterprise.txt in the project root folder.
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { Subscription, AccountEntry, AccountEntryFixedPeriod } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 
-const toInt = (dateStr?: string) => dateStr ? new Date(dateStr).getTime() : Number.MAX_SAFE_INTEGER;
+const toInt = (dateStr?: string) => (dateStr ? new Date(dateStr).getTime() : Number.MAX_SAFE_INTEGER);
 export const orderByEndDateDescThenStartDateDesc = (s1: Subscription, s2: Subscription) => {
     return toInt(s2.endDate) - toInt(s1.endDate) || toInt(s2.startDate) - toInt(s1.startDate);
 };
@@ -30,18 +30,16 @@ export const within = (date: string, period: AccountEntryFixedPeriod) => {
 export const orderCreditFirst = (c1: AccountEntry, c2: AccountEntry) => {
     if (c1.kind === c2.kind) {
         return 0;
-    } else if (c1.kind === 'open') {
+    } else if (c1.kind === "open") {
         return -1;
-    } else if (c2.kind === 'open') {
+    } else if (c2.kind === "open") {
         return 1;
     }
     return 0;
 };
 
 export class SortedArray<T> {
-    constructor(
-        protected readonly array: T[],
-        protected readonly comparator: (t1: T, t2: T) => number) {
+    constructor(protected readonly array: T[], protected readonly comparator: (t1: T, t2: T) => number) {
         this.array.sort(this.comparator);
     }
 

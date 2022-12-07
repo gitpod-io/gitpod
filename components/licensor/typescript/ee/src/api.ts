@@ -1,8 +1,9 @@
 /**
- * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
- * Licensed under the Gitpod Enterprise Source Code License,
- * See License.enterprise.txt in the project root folder.
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
  */
+
 // generated using github.com/32leaves/bel
 // DO NOT MODIFY
 export enum Feature {
@@ -13,10 +14,10 @@ export enum Feature {
     FeatureWorkspaceSharing = "workspace-sharing",
 }
 export interface LicenseData {
-    type: LicenseType
-    payload: LicensePayload
-    plan: LicenseSubscriptionLevel
-    fallbackAllowed: boolean
+    type: LicenseType;
+    payload: LicensePayload;
+    plan: LicenseSubscriptionLevel;
+    fallbackAllowed: boolean;
 }
 
 export enum LicenseLevel {
@@ -24,12 +25,12 @@ export enum LicenseLevel {
     LevelEnterprise = 1,
 }
 export interface LicensePayload {
-    id: string
-    domain: string
-    level: LicenseLevel
-    validUntil: string
-    seats: number
-    customerID?: string
+    id: string;
+    domain: string;
+    level: LicenseLevel;
+    validUntil: string;
+    seats: number;
+    customerID?: string;
 }
 
 export enum LicenseSubscriptionLevel {

@@ -1,7 +1,7 @@
 /**
- * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
- * Licensed under the Gitpod Enterprise Source Code License,
- * See License.enterprise.txt in the project root folder.
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { createConnection, Connection, QueryOptions } from "mysql";
@@ -11,16 +11,16 @@ export type NamedConnection = Connection & { name: string };
 
 export async function connect(db: NamedConnectionConfig): Promise<NamedConnection> {
     const conn = createConnection({
-        ...db as Omit<NamedConnectionConfig, 'name'>,
+        ...(db as Omit<NamedConnectionConfig, "name">),
         multipleStatements: true,
-        charset: 'utf8mb4',
+        charset: "utf8mb4",
 
         // This is VERY IMPORTANT: all our dealings with timestamps have to be in UTC as we're working
         // across different timezones and MySQL converts timestamp values to the connection-local timezone.
-        timezone: 'UTC',
+        timezone: "UTC",
 
         // do NOT convert timestamps to Date objects
-        dateStrings: true
+        dateStrings: true,
     }) as NamedConnection;
     return new Promise<NamedConnection>((resolve, reject) => {
         conn.name = db.name || `${db.host}:${db.port}/${db.database}`;
@@ -45,4 +45,3 @@ export async function query(conn: Connection, sql: string, args?: Omit<QueryOpti
         });
     });
 }
-

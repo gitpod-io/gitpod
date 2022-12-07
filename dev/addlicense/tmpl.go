@@ -90,7 +90,7 @@ Licensed under the MIT License. See License-MIT.txt in the project root for lice
 
 const tmplAGPL = `Copyright (c) {{.Year}} {{.Holder}}. All rights reserved.
 Licensed under the GNU Affero General Public License (AGPL).
-See License-AGPL.txt in the project root for license information.`
+See License.AGPL.txt in the project root for license information.`
 
 const tmplGPSHF = `Copyright (c) {{.Year}} {{.Holder}}. All rights reserved.
 Licensed under the Gitpod Enterprise Source Code License,

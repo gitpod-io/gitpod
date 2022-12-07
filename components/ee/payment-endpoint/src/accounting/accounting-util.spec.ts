@@ -1,16 +1,16 @@
 /**
- * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
- * Licensed under the Gitpod Enterprise Source Code License,
- * See License.enterprise.txt in the project root folder.
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
  */
 
-import * as chai from 'chai';
+import * as chai from "chai";
 const expect = chai.expect;
-import { suite, test } from 'mocha-typescript';
+import { suite, test } from "mocha-typescript";
 
-import { Subscription } from '@gitpod/gitpod-protocol/lib/accounting-protocol';
+import { Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 
-import { orderByEndDateDescThenStartDateDesc, orderByStartDateAscEndDateAsc } from './accounting-util';
+import { orderByEndDateDescThenStartDateDesc, orderByStartDateAscEndDateAsc } from "./accounting-util";
 
 const d1 = new Date(Date.UTC(2000, 0, 1)).toISOString();
 const d2 = new Date(Date.UTC(2000, 0, 2)).toISOString();
@@ -22,11 +22,11 @@ const s2 = { startDate: d2, endDate: d4 } as Subscription;
 const s3 = { startDate: d1, endDate: d4 } as Subscription;
 const s5 = { startDate: d2, endDate: undefined } as Subscription;
 const s6 = { startDate: d1, endDate: undefined } as Subscription;
-const s7 = { startDate: '2018-11-20T15:25:48.000Z', endDate: '2018-11-27T15:25:48.000Z' } as Subscription;
-const s8 = { startDate: '2018-11-27T15:25:48.000Z', endDate: undefined } as Subscription;
+const s7 = { startDate: "2018-11-20T15:25:48.000Z", endDate: "2018-11-27T15:25:48.000Z" } as Subscription;
+const s8 = { startDate: "2018-11-27T15:25:48.000Z", endDate: undefined } as Subscription;
 
-@suite class AccountingUtilSpec {
-
+@suite
+class AccountingUtilSpec {
     @test test_orderByEndDateDescThenStartDateDesc_overlap() {
         expect([s1, s2].sort(orderByEndDateDescThenStartDateDesc)).to.deep.equal([s2, s1]);
         expect([s2, s1].sort(orderByEndDateDescThenStartDateDesc)).to.deep.equal([s2, s1]);
@@ -81,7 +81,6 @@ const s8 = { startDate: '2018-11-27T15:25:48.000Z', endDate: undefined } as Subs
         expect([s1, s5].sort(orderByStartDateAscEndDateAsc)).to.deep.equal([s1, s5]);
         expect([s5, s1].sort(orderByStartDateAscEndDateAsc)).to.deep.equal([s1, s5]);
     }
-
 
     @test test_orderByStartDateAscEndDateAsc_OpenEndDate3() {
         expect([s2, s6].sort(orderByStartDateAscEndDateAsc)).to.deep.equal([s6, s2]);

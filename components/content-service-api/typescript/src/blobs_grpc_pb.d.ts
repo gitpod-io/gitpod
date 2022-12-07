@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 // package: contentservice
@@ -19,7 +19,8 @@ interface IBlobServiceService extends grpc.ServiceDefinition<grpc.UntypedService
     delete: IBlobServiceService_IDelete;
 }
 
-interface IBlobServiceService_IUploadUrl extends grpc.MethodDefinition<blobs_pb.UploadUrlRequest, blobs_pb.UploadUrlResponse> {
+interface IBlobServiceService_IUploadUrl
+    extends grpc.MethodDefinition<blobs_pb.UploadUrlRequest, blobs_pb.UploadUrlResponse> {
     path: "/contentservice.BlobService/UploadUrl";
     requestStream: false;
     responseStream: false;
@@ -28,7 +29,8 @@ interface IBlobServiceService_IUploadUrl extends grpc.MethodDefinition<blobs_pb.
     responseSerialize: grpc.serialize<blobs_pb.UploadUrlResponse>;
     responseDeserialize: grpc.deserialize<blobs_pb.UploadUrlResponse>;
 }
-interface IBlobServiceService_IDownloadUrl extends grpc.MethodDefinition<blobs_pb.DownloadUrlRequest, blobs_pb.DownloadUrlResponse> {
+interface IBlobServiceService_IDownloadUrl
+    extends grpc.MethodDefinition<blobs_pb.DownloadUrlRequest, blobs_pb.DownloadUrlResponse> {
     path: "/contentservice.BlobService/DownloadUrl";
     requestStream: false;
     responseStream: false;
@@ -56,26 +58,98 @@ export interface IBlobServiceServer extends grpc.UntypedServiceImplementation {
 }
 
 export interface IBlobServiceClient {
-    uploadUrl(request: blobs_pb.UploadUrlRequest, callback: (error: grpc.ServiceError | null, response: blobs_pb.UploadUrlResponse) => void): grpc.ClientUnaryCall;
-    uploadUrl(request: blobs_pb.UploadUrlRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: blobs_pb.UploadUrlResponse) => void): grpc.ClientUnaryCall;
-    uploadUrl(request: blobs_pb.UploadUrlRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: blobs_pb.UploadUrlResponse) => void): grpc.ClientUnaryCall;
-    downloadUrl(request: blobs_pb.DownloadUrlRequest, callback: (error: grpc.ServiceError | null, response: blobs_pb.DownloadUrlResponse) => void): grpc.ClientUnaryCall;
-    downloadUrl(request: blobs_pb.DownloadUrlRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: blobs_pb.DownloadUrlResponse) => void): grpc.ClientUnaryCall;
-    downloadUrl(request: blobs_pb.DownloadUrlRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: blobs_pb.DownloadUrlResponse) => void): grpc.ClientUnaryCall;
-    delete(request: blobs_pb.DeleteRequest, callback: (error: grpc.ServiceError | null, response: blobs_pb.DeleteResponse) => void): grpc.ClientUnaryCall;
-    delete(request: blobs_pb.DeleteRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: blobs_pb.DeleteResponse) => void): grpc.ClientUnaryCall;
-    delete(request: blobs_pb.DeleteRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: blobs_pb.DeleteResponse) => void): grpc.ClientUnaryCall;
+    uploadUrl(
+        request: blobs_pb.UploadUrlRequest,
+        callback: (error: grpc.ServiceError | null, response: blobs_pb.UploadUrlResponse) => void,
+    ): grpc.ClientUnaryCall;
+    uploadUrl(
+        request: blobs_pb.UploadUrlRequest,
+        metadata: grpc.Metadata,
+        callback: (error: grpc.ServiceError | null, response: blobs_pb.UploadUrlResponse) => void,
+    ): grpc.ClientUnaryCall;
+    uploadUrl(
+        request: blobs_pb.UploadUrlRequest,
+        metadata: grpc.Metadata,
+        options: Partial<grpc.CallOptions>,
+        callback: (error: grpc.ServiceError | null, response: blobs_pb.UploadUrlResponse) => void,
+    ): grpc.ClientUnaryCall;
+    downloadUrl(
+        request: blobs_pb.DownloadUrlRequest,
+        callback: (error: grpc.ServiceError | null, response: blobs_pb.DownloadUrlResponse) => void,
+    ): grpc.ClientUnaryCall;
+    downloadUrl(
+        request: blobs_pb.DownloadUrlRequest,
+        metadata: grpc.Metadata,
+        callback: (error: grpc.ServiceError | null, response: blobs_pb.DownloadUrlResponse) => void,
+    ): grpc.ClientUnaryCall;
+    downloadUrl(
+        request: blobs_pb.DownloadUrlRequest,
+        metadata: grpc.Metadata,
+        options: Partial<grpc.CallOptions>,
+        callback: (error: grpc.ServiceError | null, response: blobs_pb.DownloadUrlResponse) => void,
+    ): grpc.ClientUnaryCall;
+    delete(
+        request: blobs_pb.DeleteRequest,
+        callback: (error: grpc.ServiceError | null, response: blobs_pb.DeleteResponse) => void,
+    ): grpc.ClientUnaryCall;
+    delete(
+        request: blobs_pb.DeleteRequest,
+        metadata: grpc.Metadata,
+        callback: (error: grpc.ServiceError | null, response: blobs_pb.DeleteResponse) => void,
+    ): grpc.ClientUnaryCall;
+    delete(
+        request: blobs_pb.DeleteRequest,
+        metadata: grpc.Metadata,
+        options: Partial<grpc.CallOptions>,
+        callback: (error: grpc.ServiceError | null, response: blobs_pb.DeleteResponse) => void,
+    ): grpc.ClientUnaryCall;
 }
 
 export class BlobServiceClient extends grpc.Client implements IBlobServiceClient {
     constructor(address: string, credentials: grpc.ChannelCredentials, options?: Partial<grpc.ClientOptions>);
-    public uploadUrl(request: blobs_pb.UploadUrlRequest, callback: (error: grpc.ServiceError | null, response: blobs_pb.UploadUrlResponse) => void): grpc.ClientUnaryCall;
-    public uploadUrl(request: blobs_pb.UploadUrlRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: blobs_pb.UploadUrlResponse) => void): grpc.ClientUnaryCall;
-    public uploadUrl(request: blobs_pb.UploadUrlRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: blobs_pb.UploadUrlResponse) => void): grpc.ClientUnaryCall;
-    public downloadUrl(request: blobs_pb.DownloadUrlRequest, callback: (error: grpc.ServiceError | null, response: blobs_pb.DownloadUrlResponse) => void): grpc.ClientUnaryCall;
-    public downloadUrl(request: blobs_pb.DownloadUrlRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: blobs_pb.DownloadUrlResponse) => void): grpc.ClientUnaryCall;
-    public downloadUrl(request: blobs_pb.DownloadUrlRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: blobs_pb.DownloadUrlResponse) => void): grpc.ClientUnaryCall;
-    public delete(request: blobs_pb.DeleteRequest, callback: (error: grpc.ServiceError | null, response: blobs_pb.DeleteResponse) => void): grpc.ClientUnaryCall;
-    public delete(request: blobs_pb.DeleteRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: blobs_pb.DeleteResponse) => void): grpc.ClientUnaryCall;
-    public delete(request: blobs_pb.DeleteRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: blobs_pb.DeleteResponse) => void): grpc.ClientUnaryCall;
+    public uploadUrl(
+        request: blobs_pb.UploadUrlRequest,
+        callback: (error: grpc.ServiceError | null, response: blobs_pb.UploadUrlResponse) => void,
+    ): grpc.ClientUnaryCall;
+    public uploadUrl(
+        request: blobs_pb.UploadUrlRequest,
+        metadata: grpc.Metadata,
+        callback: (error: grpc.ServiceError | null, response: blobs_pb.UploadUrlResponse) => void,
+    ): grpc.ClientUnaryCall;
+    public uploadUrl(
+        request: blobs_pb.UploadUrlRequest,
+        metadata: grpc.Metadata,
+        options: Partial<grpc.CallOptions>,
+        callback: (error: grpc.ServiceError | null, response: blobs_pb.UploadUrlResponse) => void,
+    ): grpc.ClientUnaryCall;
+    public downloadUrl(
+        request: blobs_pb.DownloadUrlRequest,
+        callback: (error: grpc.ServiceError | null, response: blobs_pb.DownloadUrlResponse) => void,
+    ): grpc.ClientUnaryCall;
+    public downloadUrl(
+        request: blobs_pb.DownloadUrlRequest,
+        metadata: grpc.Metadata,
+        callback: (error: grpc.ServiceError | null, response: blobs_pb.DownloadUrlResponse) => void,
+    ): grpc.ClientUnaryCall;
+    public downloadUrl(
+        request: blobs_pb.DownloadUrlRequest,
+        metadata: grpc.Metadata,
+        options: Partial<grpc.CallOptions>,
+        callback: (error: grpc.ServiceError | null, response: blobs_pb.DownloadUrlResponse) => void,
+    ): grpc.ClientUnaryCall;
+    public delete(
+        request: blobs_pb.DeleteRequest,
+        callback: (error: grpc.ServiceError | null, response: blobs_pb.DeleteResponse) => void,
+    ): grpc.ClientUnaryCall;
+    public delete(
+        request: blobs_pb.DeleteRequest,
+        metadata: grpc.Metadata,
+        callback: (error: grpc.ServiceError | null, response: blobs_pb.DeleteResponse) => void,
+    ): grpc.ClientUnaryCall;
+    public delete(
+        request: blobs_pb.DeleteRequest,
+        metadata: grpc.Metadata,
+        options: Partial<grpc.CallOptions>,
+        callback: (error: grpc.ServiceError | null, response: blobs_pb.DeleteResponse) => void,
+    ): grpc.ClientUnaryCall;
 }

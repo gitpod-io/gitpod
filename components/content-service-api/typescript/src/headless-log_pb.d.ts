@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 // package: contentservice
@@ -25,20 +25,23 @@ export class LogDownloadURLRequest extends jspb.Message {
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): LogDownloadURLRequest.AsObject;
     static toObject(includeInstance: boolean, msg: LogDownloadURLRequest): LogDownloadURLRequest.AsObject;
-    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+    static extensionsBinary: { [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message> };
     static serializeBinaryToWriter(message: LogDownloadURLRequest, writer: jspb.BinaryWriter): void;
     static deserializeBinary(bytes: Uint8Array): LogDownloadURLRequest;
-    static deserializeBinaryFromReader(message: LogDownloadURLRequest, reader: jspb.BinaryReader): LogDownloadURLRequest;
+    static deserializeBinaryFromReader(
+        message: LogDownloadURLRequest,
+        reader: jspb.BinaryReader,
+    ): LogDownloadURLRequest;
 }
 
 export namespace LogDownloadURLRequest {
     export type AsObject = {
-        ownerId: string,
-        workspaceId: string,
-        instanceId: string,
-        taskId: string,
-    }
+        ownerId: string;
+        workspaceId: string;
+        instanceId: string;
+        taskId: string;
+    };
 }
 
 export class LogDownloadURLResponse extends jspb.Message {
@@ -48,17 +51,20 @@ export class LogDownloadURLResponse extends jspb.Message {
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): LogDownloadURLResponse.AsObject;
     static toObject(includeInstance: boolean, msg: LogDownloadURLResponse): LogDownloadURLResponse.AsObject;
-    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+    static extensionsBinary: { [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message> };
     static serializeBinaryToWriter(message: LogDownloadURLResponse, writer: jspb.BinaryWriter): void;
     static deserializeBinary(bytes: Uint8Array): LogDownloadURLResponse;
-    static deserializeBinaryFromReader(message: LogDownloadURLResponse, reader: jspb.BinaryReader): LogDownloadURLResponse;
+    static deserializeBinaryFromReader(
+        message: LogDownloadURLResponse,
+        reader: jspb.BinaryReader,
+    ): LogDownloadURLResponse;
 }
 
 export namespace LogDownloadURLResponse {
     export type AsObject = {
-        url: string,
-    }
+        url: string;
+    };
 }
 
 export class ListLogsRequest extends jspb.Message {
@@ -72,8 +78,8 @@ export class ListLogsRequest extends jspb.Message {
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ListLogsRequest.AsObject;
     static toObject(includeInstance: boolean, msg: ListLogsRequest): ListLogsRequest.AsObject;
-    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+    static extensionsBinary: { [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message> };
     static serializeBinaryToWriter(message: ListLogsRequest, writer: jspb.BinaryWriter): void;
     static deserializeBinary(bytes: Uint8Array): ListLogsRequest;
     static deserializeBinaryFromReader(message: ListLogsRequest, reader: jspb.BinaryReader): ListLogsRequest;
@@ -81,10 +87,10 @@ export class ListLogsRequest extends jspb.Message {
 
 export namespace ListLogsRequest {
     export type AsObject = {
-        ownerId: string,
-        workspaceId: string,
-        instanceId: string,
-    }
+        ownerId: string;
+        workspaceId: string;
+        instanceId: string;
+    };
 }
 
 export class ListLogsResponse extends jspb.Message {
@@ -96,8 +102,8 @@ export class ListLogsResponse extends jspb.Message {
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ListLogsResponse.AsObject;
     static toObject(includeInstance: boolean, msg: ListLogsResponse): ListLogsResponse.AsObject;
-    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+    static extensionsBinary: { [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message> };
     static serializeBinaryToWriter(message: ListLogsResponse, writer: jspb.BinaryWriter): void;
     static deserializeBinary(bytes: Uint8Array): ListLogsResponse;
     static deserializeBinaryFromReader(message: ListLogsResponse, reader: jspb.BinaryReader): ListLogsResponse;
@@ -105,6 +111,6 @@ export class ListLogsResponse extends jspb.Message {
 
 export namespace ListLogsResponse {
     export type AsObject = {
-        taskIdList: Array<string>,
-    }
+        taskIdList: Array<string>;
+    };
 }

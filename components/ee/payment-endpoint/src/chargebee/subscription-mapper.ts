@@ -1,17 +1,17 @@
 /**
- * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
- * Licensed under the Gitpod Enterprise Source Code License,
- * See License.enterprise.txt in the project root folder.
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import { orderByEndDateDescThenStartDateDesc } from "../accounting/accounting-util";
 import { Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
-import { oneMonthLater, secondsBefore } from '@gitpod/gitpod-protocol/lib/util/timeutil';
-import { Chargebee as chargebee } from './/chargebee-types';
+import { oneMonthLater, secondsBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { Chargebee as chargebee } from ".//chargebee-types";
 
-import { getStartDate, getCancelledAt, getUpdatedAt } from './chargebee-subscription-helper';
-import { SubscriptionModel } from '../accounting/subscription-model';
+import { getStartDate, getCancelledAt, getUpdatedAt } from "./chargebee-subscription-helper";
+import { SubscriptionModel } from "../accounting/subscription-model";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 /**
@@ -37,7 +37,6 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
  * @see AccountingProtocol
  */
 export class SubscriptionMapper {
-
     protected model: SubscriptionModel;
 
     /**
@@ -45,28 +44,34 @@ export class SubscriptionMapper {
      * @param gitpodSubscriptions
      * @param chargebeeEvent
      */
-    map(gitpodSubscriptions: Subscription[], chargebeeEvent: chargebee.Event<chargebee.SubscriptionEventV2>): SubscriptionModel {
+    map(
+        gitpodSubscriptions: Subscription[],
+        chargebeeEvent: chargebee.Event<chargebee.SubscriptionEventV2>,
+    ): SubscriptionModel {
         const eventType = chargebeeEvent.event_type;
         const chargebeeSubscription = chargebeeEvent.content.subscription;
 
-        this.model = new SubscriptionModel(chargebeeSubscription.customer_id, gitpodSubscriptions.sort(orderByEndDateDescThenStartDateDesc));
+        this.model = new SubscriptionModel(
+            chargebeeSubscription.customer_id,
+            gitpodSubscriptions.sort(orderByEndDateDescThenStartDateDesc),
+        );
         switch (eventType) {
-            case 'subscription_created':
+            case "subscription_created":
                 this.handleSubscriptionCreated(chargebeeSubscription);
                 break;
-            case 'subscription_changed':
+            case "subscription_changed":
                 this.handleSubscriptionChanged(chargebeeSubscription);
                 break;
-            case 'subscription_cancelled':
+            case "subscription_cancelled":
                 this.handleSubscriptionCancelled(chargebeeSubscription);
                 break;
-            case 'subscription_reactivated':
+            case "subscription_reactivated":
                 this.handleSubscriptionReactivated(chargebeeSubscription);
                 break;
-            case 'subscription_changes_scheduled':
+            case "subscription_changes_scheduled":
                 this.handleSubscriptionChangesScheduled(chargebeeSubscription);
                 break;
-            case 'subscription_scheduled_changes_removed':
+            case "subscription_scheduled_changes_removed":
                 this.handleSubscriptionScheduledChangesRemoved(chargebeeSubscription);
                 break;
             default:
@@ -80,13 +85,15 @@ export class SubscriptionMapper {
      * @param chargebeeSubscription
      */
     protected handleSubscriptionCreated(chargebeeSubscription: chargebee.Subscription) {
-        this.model.add(Subscription.create({
-            userId: chargebeeSubscription.customer_id,
-            startDate: getStartDate(chargebeeSubscription),
-            planId: chargebeeSubscription.plan_id,
-            amount: Plans.getHoursPerMonth(getPlan(chargebeeSubscription)),
-            paymentReference: chargebeeSubscription.id
-        }));
+        this.model.add(
+            Subscription.create({
+                userId: chargebeeSubscription.customer_id,
+                startDate: getStartDate(chargebeeSubscription),
+                planId: chargebeeSubscription.plan_id,
+                amount: Plans.getHoursPerMonth(getPlan(chargebeeSubscription)),
+                paymentReference: chargebeeSubscription.id,
+            }),
+        );
     }
 
     /**
@@ -124,17 +131,22 @@ export class SubscriptionMapper {
                 log.warn("Downgrade without downgradeDate!");
                 dateInLastPeriod = new Date();
             }
-            const { endDate: oldEndDate } = Subscription.calculateCurrentPeriod(oldSubscription.startDate, dateInLastPeriod);
+            const { endDate: oldEndDate } = Subscription.calculateCurrentPeriod(
+                oldSubscription.startDate,
+                dateInLastPeriod,
+            );
             this.model.cancel(oldSubscription, oldEndDate, oldEndDate);
 
             // 2. Create new Gitpod subscription with same paymentReference but new billing period
-            this.model.add(Subscription.create({
-                userId: chargebeeSubscription.customer_id,
-                startDate: oldEndDate,
-                planId: chargebeeSubscription.plan_id,
-                amount: newAmount,
-                paymentReference: chargebeeSubscription.id
-            }));
+            this.model.add(
+                Subscription.create({
+                    userId: chargebeeSubscription.customer_id,
+                    startDate: oldEndDate,
+                    planId: chargebeeSubscription.plan_id,
+                    amount: newAmount,
+                    paymentReference: chargebeeSubscription.id,
+                }),
+            );
         } else if (subscriptionChange === "upgrade") {
             // Upgrade
             oldSubscription.amount = newAmount;
@@ -167,13 +179,15 @@ export class SubscriptionMapper {
      * @param chargebeeSubscription
      */
     protected handleSubscriptionReactivated(chargebeeSubscription: chargebee.Subscription) {
-        this.model.add(Subscription.create({
-            userId: chargebeeSubscription.customer_id,
-            startDate: getStartDate(chargebeeSubscription),
-            planId: chargebeeSubscription.plan_id,
-            amount: Plans.getHoursPerMonth(getPlan(chargebeeSubscription)),
-            paymentReference: chargebeeSubscription.id
-        }));
+        this.model.add(
+            Subscription.create({
+                userId: chargebeeSubscription.customer_id,
+                startDate: getStartDate(chargebeeSubscription),
+                planId: chargebeeSubscription.plan_id,
+                amount: Plans.getHoursPerMonth(getPlan(chargebeeSubscription)),
+                paymentReference: chargebeeSubscription.id,
+            }),
+        );
     }
 
     /**
@@ -183,7 +197,10 @@ export class SubscriptionMapper {
      */
     protected handleSubscriptionChangesScheduled(chargebeeSubscription: chargebee.Subscription) {
         const gitpodSubscription = this.model.findSubscriptionByPaymentReference(chargebeeSubscription.id);
-        const { endDate: downgradeEffectiveDate } = Subscription.calculateCurrentPeriod(gitpodSubscription.startDate, new Date(getUpdatedAt(chargebeeSubscription)));
+        const { endDate: downgradeEffectiveDate } = Subscription.calculateCurrentPeriod(
+            gitpodSubscription.startDate,
+            new Date(getUpdatedAt(chargebeeSubscription)),
+        );
         if (gitpodSubscription.paymentData) {
             gitpodSubscription.paymentData.downgradeDate = downgradeEffectiveDate;
         } else {
@@ -216,7 +233,9 @@ const calculateCurrentTermEnd = (startDate: string, upTo: string): string => {
     const termStartDate = new Date(startDate);
     const upToDate = new Date(upTo);
     if (termStartDate.getTime() >= upToDate.getTime()) {
-        throw new Error(`calculateCurrentTermEnd: termStart (${termStartDate}) must be less than potential term end (${upToDate.getTime()})`);
+        throw new Error(
+            `calculateCurrentTermEnd: termStart (${termStartDate}) must be less than potential term end (${upToDate.getTime()})`,
+        );
     }
     const dayOfMonth = termStartDate.getDate();
     let potentialCurrentTermEnd = termStartDate;
@@ -234,7 +253,7 @@ const getPlan = (chargebeeSubscription: chargebee.Subscription) => {
     return plan;
 };
 
-export const SubscriptionMapperFactory = Symbol('SubscriptionMapperFactory');
+export const SubscriptionMapperFactory = Symbol("SubscriptionMapperFactory");
 export interface SubscriptionMapperFactory {
     newMapper(): SubscriptionMapper;
 }

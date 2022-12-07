@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import * as prom from "prom-client";
@@ -78,7 +78,7 @@ export class PrometheusMetricsExporter {
             // we track db_write because we need to be able to distinguish between outcomes which did affect the system negatively - failed to write,
             // and outcomes by read-only replicas.
             labelNames: ["db_write", "workspace_cluster", "workspace_instance_type", "outcome"],
-            buckets: prom.exponentialBuckets(0.050, 2, 8),
+            buckets: prom.exponentialBuckets(0.05, 2, 8),
         });
 
         this.prebuildsCompletedTotal = new prom.Counter({

@@ -1,13 +1,12 @@
 /**
  * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { inResource } from "./utils";
 
 test("inResource", () => {
-
     // Given root path is a part of resources specified
     expect(inResource("/app", ["new", "app", "teams"])).toBe(true);
 
@@ -25,5 +24,4 @@ test("inResource", () => {
 
     // Both resources containing path with subdirectories
     expect(inResource("/admin/teams/someTeam/somePerson", ["/admin/teams"])).toBe(true);
-
 });
