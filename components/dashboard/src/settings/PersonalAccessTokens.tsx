@@ -149,7 +149,14 @@ function ListAccessTokensView() {
             <div className="flex items-center sm:justify-between mb-4">
                 <div>
                     <h3>Access Tokens</h3>
-                    <h2 className="text-gray-500">Create or regenerate access tokens.</h2>
+                    <h2 className="text-gray-500">
+                        <PillLabel type="warn" className="font-semibold mt-8 ml-0 py-0.5 px-1 self-center">
+                            <a href="https://www.gitpod.io/docs/references/gitpod-releases">
+                                <span className="text-xs">BETA</span>
+                            </a>
+                        </PillLabel>{" "}
+                        Create or regenerate access tokens.
+                    </h2>
                 </div>
                 {tokens.length > 0 && (
                     <Link to={settingsPathPersonalAccessTokenCreate}>
