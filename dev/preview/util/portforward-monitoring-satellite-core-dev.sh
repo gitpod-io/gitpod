@@ -5,9 +5,7 @@
 
 THIS_DIR="$(dirname "$0")"
 
-source "$THIS_DIR/preview-name-from-branch.sh"
-
-PREVIEW_NAME="$(preview-name-from-branch)"
+PREVIEW_NAME="$(previewctl get name)"
 NAMESPACE="staging-${PREVIEW_NAME}"
 
 function log {

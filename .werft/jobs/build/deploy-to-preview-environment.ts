@@ -1,12 +1,10 @@
 import * as fs from "fs";
 import { exec } from "../../util/shell";
 import { MonitoringSatelliteInstaller } from "../../observability/monitoring-satellite";
-
 import { Werft } from "../../util/werft";
 import { Analytics, JobConfig } from "./job-config";
 import * as VM from "../../vm/vm";
 import { Installer } from "./installer/installer";
-import { previewNameFromBranchName } from "../../util/preview";
 
 // used by Installer
 const STACKDRIVER_SERVICEACCOUNT = JSON.parse(
@@ -82,7 +80,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         const sliceID = "Install monitoring satellite";
         const monitoringSatelliteInstaller = new MonitoringSatelliteInstaller({
             branch: jobConfig.observability.branch,
-            previewName: previewNameFromBranchName(jobConfig.repository.branch),
+            previewName: exec(`previewctl get name --branch=${jobConfig.repository.branch}`).stdout.trim(),
             stackdriverServiceAccount: STACKDRIVER_SERVICEACCOUNT,
             werft: werft,
         });

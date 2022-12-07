@@ -2,7 +2,7 @@ import {Werft} from "./util/werft";
 import * as Tracing from "./observability/tracing";
 import {SpanStatusCode} from "@opentelemetry/api";
 import {exec, execStream} from "./util/shell";
-import {configureGlobalKubernetesContext, HarvesterPreviewEnvironment, PreviewEnvironment} from "./util/preview";
+import {configureAccess, HarvesterPreviewEnvironment, PreviewEnvironment} from "./util/preview";
 import {GCLOUD_SERVICE_ACCOUNT_PATH} from "./jobs/build/const";
 import * as fs from "fs";
 
@@ -66,7 +66,7 @@ async function getStalePreviewEnvironments(slice: string): Promise<PreviewEnviro
 }
 
 async function deletePreviewEnvironments() {
-    await configureGlobalKubernetesContext(werft)
+    await configureAccess(werft)
 
     werft.phase("Fetching stale preview environments");
     let stalePreviews: PreviewEnvironment[];

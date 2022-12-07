@@ -69,9 +69,11 @@ export function waitForVMReadiness(options: { name: string; timeoutSeconds: numb
 export async function installPreviewContext(options: { name: string; slice: string }) {
     try {
         await execStream(
-            `previewctl install-context --branch=${options.name} --timeout=10m`,
+            `previewctl install-context --private-key-path=/workspace/.ssh/id_rsa_harvester_vm --gcp-service-account=${GCLOUD_SERVICE_ACCOUNT_PATH} --branch=${options.name} --timeout=10m`,
             {slice: options.slice},
         );
+
+        exec(`mkdir -p $(dirname ${PREVIEW_K3S_KUBECONFIG_PATH})`)
 
         exec(
             `kubectl --context=${options.name} config view --minify --flatten > ${PREVIEW_K3S_KUBECONFIG_PATH}`,
