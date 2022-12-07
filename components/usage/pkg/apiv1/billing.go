@@ -299,12 +299,13 @@ func (s *BillingService) FinalizeInvoice(ctx context.Context, in *v1.FinalizeInv
 		logger.WithError(err).Errorf("Failed to insert Invoice usage record into the db.")
 		return nil, status.Errorf(codes.Internal, "Failed to insert Invoice into usage records.")
 	}
+	logger.WithField("usage_id", usage.ID).Infof("Inserted usage record into database for %f credits against %s attribution", usage.CreditCents.ToCredits(), usage.AttributionID)
+
 	_, err = s.ccManager.IncrementBillingCycle(ctx, usage.AttributionID)
 	if err != nil {
+		// we are just logging at this point, so that we don't see the event again as the usage has been recorded.
 		logger.WithError(err).Errorf("Failed to increment billing cycle.")
-		return nil, status.Errorf(codes.Internal, "Failed to increment billing cycle.")
 	}
-	logger.WithField("usage_id", usage.ID).Infof("Inserted usage record into database for %f credits against %s attribution", usage.CreditCents.ToCredits(), usage.AttributionID)
 	return &v1.FinalizeInvoiceResponse{}, nil
 }
 
