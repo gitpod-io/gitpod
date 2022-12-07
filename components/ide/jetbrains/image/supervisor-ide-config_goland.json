@@ -1,10 +1,14 @@
 {
-    "entrypoint": "/ide-desktop/status",
-    "entrypointArgs": [ "{DESKTOPIDEPORT}", "goland", "Open in GoLand" ],
-    "readinessProbe": {
-        "type": "http",
-        "http": {
-            "path": "/status"
-        }
-      }
+  "entrypoint": "/ide-desktop/goland/status",
+  "entrypointArgs": [
+    "{DESKTOPIDEPORT}",
+    "goland",
+    "Open in GoLand"
+  ],
+  "readinessProbe": {
+    "type": "http",
+    "http": {
+      "path": "/status"
+    }
+  }
 }

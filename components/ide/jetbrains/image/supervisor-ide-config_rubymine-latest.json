@@ -1,9 +1,9 @@
 {
-  "entrypoint": "/ide-desktop/clion/status",
+  "entrypoint": "/ide-desktop/rubymine-latest/status",
   "entrypointArgs": [
     "{DESKTOPIDEPORT}",
-    "clion",
-    "Open in CLion"
+    "rubymine",
+    "Open in RubyMine"
   ],
   "readinessProbe": {
     "type": "http",

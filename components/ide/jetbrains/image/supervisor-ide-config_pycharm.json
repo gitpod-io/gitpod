@@ -1,10 +1,14 @@
 {
-    "entrypoint": "/ide-desktop/status",
-    "entrypointArgs": [ "{DESKTOPIDEPORT}", "pycharm", "Open in PyCharm" ],
-    "readinessProbe": {
-        "type": "http",
-        "http": {
-            "path": "/status"
-        }
-      }
+  "entrypoint": "/ide-desktop/pycharm/status",
+  "entrypointArgs": [
+    "{DESKTOPIDEPORT}",
+    "pycharm",
+    "Open in PyCharm"
+  ],
+  "readinessProbe": {
+    "type": "http",
+    "http": {
+      "path": "/status"
+    }
+  }
 }

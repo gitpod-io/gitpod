@@ -1,9 +1,9 @@
 {
-  "entrypoint": "/ide-desktop/clion/status",
+  "entrypoint": "/ide-desktop/pycharm-latest/status",
   "entrypointArgs": [
     "{DESKTOPIDEPORT}",
-    "clion",
-    "Open in CLion"
+    "pycharm",
+    "Open in PyCharm"
   ],
   "readinessProbe": {
     "type": "http",

@@ -27,6 +27,7 @@ func Execute() {
 
 func getCliApiUrl() *url.URL {
 	var backendPort = 63342
+	// TODO look up under alias + qualifier, i.e. intellij or intellij-latest
 	if _, fileStatError := os.Stat("/ide-desktop/bin/idea-cli-dev"); !errors.Is(fileStatError, os.ErrNotExist) {
 		backendPort = backendPort + 1
 	}

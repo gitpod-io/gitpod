@@ -1,10 +1,14 @@
 {
-    "entrypoint": "/ide-desktop/status",
-    "entrypointArgs": [ "{DESKTOPIDEPORT}", "phpstorm", "Open in PhpStorm" ],
-    "readinessProbe": {
-        "type": "http",
-        "http": {
-            "path": "/status"
-        }
-      }
+  "entrypoint": "/ide-desktop/phpstorm/status",
+  "entrypointArgs": [
+    "{DESKTOPIDEPORT}",
+    "phpstorm",
+    "Open in PhpStorm"
+  ],
+  "readinessProbe": {
+    "type": "http",
+    "http": {
+      "path": "/status"
+    }
+  }
 }

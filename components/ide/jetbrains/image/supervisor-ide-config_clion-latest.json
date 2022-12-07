@@ -1,5 +1,5 @@
 {
-  "entrypoint": "/ide-desktop/clion/status",
+  "entrypoint": "/ide-desktop/clion-latest/status",
   "entrypointArgs": [
     "{DESKTOPIDEPORT}",
     "clion",
