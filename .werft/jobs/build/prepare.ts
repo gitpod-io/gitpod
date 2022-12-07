@@ -1,14 +1,10 @@
-import {exec, execStream} from "../../util/shell";
-import { Werft } from "../../util/werft";
-import {
-    CORE_DEV_KUBECONFIG_PATH,
-    GCLOUD_SERVICE_ACCOUNT_PATH,
-    GLOBAL_KUBECONFIG_PATH,
-    HARVESTER_KUBECONFIG_PATH
-} from "./const";
-import { JobConfig } from "./job-config";
+import {execStream} from "../../util/shell";
+import {Werft} from "../../util/werft";
+import {GCLOUD_SERVICE_ACCOUNT_PATH} from "./const";
+import {JobConfig} from "./job-config";
 import {certReady} from "../../util/certs";
 import {vmExists} from "../../vm/vm";
+import {configureAccess, configureDocker} from "../../util/preview";
 
 const phaseName = "prepare";
 const prepareSlices = {
@@ -22,14 +18,10 @@ export async function prepare(werft: Werft, config: JobConfig) {
     werft.phase(phaseName);
     try {
         werft.log(prepareSlices.CONFIGURE_CORE_DEV, prepareSlices.CONFIGURE_CORE_DEV);
-        activateCoreDevServiceAccount();
+        await configureAccess(werft)
         configureDocker();
-        await installPreviewCTL();
-        configureStaticClustersAccess();
-        configureGlobalKubernetesContext();
         werft.done(prepareSlices.CONFIGURE_CORE_DEV);
-        if (!config.withPreview)
-        {
+        if (!config.withPreview) {
             return
         }
         await decideHarvesterVMCreation(werft, config);
@@ -40,68 +32,9 @@ export async function prepare(werft: Werft, config: JobConfig) {
     werft.done(phaseName);
 }
 
-function activateCoreDevServiceAccount() {
-    const rc = exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`, {
-        slice: prepareSlices.CONFIGURE_CORE_DEV,
-    }).code;
-
-    if (rc != 0) {
-        throw new Error("Failed to activate core-dev service account.");
-    }
-}
-
-function configureDocker() {
-    const rcDocker = exec("gcloud auth configure-docker --quiet", { slice: prepareSlices.CONFIGURE_CORE_DEV }).code;
-    const rcDockerRegistry = exec("gcloud auth configure-docker europe-docker.pkg.dev --quiet", {
-        slice: prepareSlices.CONFIGURE_CORE_DEV,
-    }).code;
-
-    if (rcDocker != 0 || rcDockerRegistry != 0) {
-        throw new Error("Failed to configure docker with gcloud.");
-    }
-}
-
-function configureGlobalKubernetesContext() {
-    const rc = exec(`KUBECONFIG=${GLOBAL_KUBECONFIG_PATH} previewctl get-credentials --gcp-service-account=${GCLOUD_SERVICE_ACCOUNT_PATH}`, { slice: prepareSlices.CONFIGURE_K8S }).code;
-
-    if (rc != 0) {
-        throw new Error("Failed to configure global kubernetes context.");
-    }
-}
-
-export async function installPreviewCTL() {
-    try {
-        await execStream(`leeway build dev/preview/previewctl:install -Dversion=$(date +%F_T%H-%M-%S) --dont-test`, {
-            slice: "Install previewctl",
-            dontCheckRc: false
-        })
-    }catch (e) {
-        throw new Error("Failed to install previewctl.");
-    }
-}
-
-function configureStaticClustersAccess() {
-    const rcCoreDev = exec(
-        `KUBECONFIG=${CORE_DEV_KUBECONFIG_PATH} gcloud container clusters get-credentials core-dev --zone europe-west1-b --project gitpod-core-dev`,
-        { slice: prepareSlices.CONFIGURE_CORE_DEV },
-    ).code;
-    if (rcCoreDev != 0) {
-        throw new Error("Failed to get core-dev kubeconfig credentials.");
-    }
-
-    const rcHarvester = exec(
-        `cp /mnt/secrets/harvester-kubeconfig/harvester-kubeconfig.yml ${HARVESTER_KUBECONFIG_PATH}`,
-        { slice: prepareSlices.CONFIGURE_CORE_DEV },
-    ).code;
-
-    if (rcHarvester != 0) {
-        throw new Error("Failed to get Harvester kubeconfig credentials.");
-    }
-}
-
 async function decideHarvesterVMCreation(werft: Werft, config: JobConfig) {
     // always try to create - usually it will be no-op, but if tf changed for any reason we would reconcile
-    if (config.withPreview && (!vmExists({ name: config.previewEnvironment.destname }) || config.cleanSlateDeployment || config.recreatePreview || config.recreateVm)) {
+    if (config.withPreview && (!vmExists({name: config.previewEnvironment.destname}) || config.cleanSlateDeployment || config.recreatePreview || config.recreateVm)) {
         await createVM(werft, config);
     }
     werft.done(prepareSlices.BOOT_VM);
@@ -123,7 +56,7 @@ async function createVM(werft: Werft, config: JobConfig) {
         "TF_VAR_vm_memory": `${memory}Gi`,
     }
 
-    if (config.storageClass.length > 0){
+    if (config.storageClass.length > 0) {
         environment["TF_VAR_vm_storage_class"] = config.storageClass
     }
 
@@ -133,11 +66,11 @@ async function createVM(werft: Werft, config: JobConfig) {
         .map(([key, value]) => `${key}="${value}"`)
         .join(" ")
 
-    if (config.recreatePreview){
+    if (config.recreatePreview) {
         werft.log(prepareSlices.BOOT_VM, "Recreating environment");
         await execStream(`${variables} \
                                    leeway run dev/preview:delete-preview`, {slice: prepareSlices.BOOT_VM});
-    }else if (config.cleanSlateDeployment || config.recreateVm) {
+    } else if (config.cleanSlateDeployment || config.recreateVm) {
         werft.log(prepareSlices.BOOT_VM, "Cleaning previously created VM");
         // -replace=... forces recreation of the resource
         await execStream(`${variables} \

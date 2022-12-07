@@ -8,15 +8,13 @@ ROOT="${SCRIPT_PATH}/../../../../"
 
 # shellcheck source=../lib/common.sh
 source "$(realpath "${SCRIPT_PATH}/../lib/common.sh")"
-# shellcheck source=../../util/preview-name-from-branch.sh
-source "$(realpath "${SCRIPT_PATH}/../../util/preview-name-from-branch.sh")"
 # shellcheck source=../lib/k8s-util.sh
 source "$(realpath "${SCRIPT_PATH}/../lib/k8s-util.sh")"
 
 DEV_KUBE_PATH="${DEV_KUBE_PATH:-/home/gitpod/.kube/config}"
 DEV_KUBE_CONTEXT="${DEV_KUBE_CONTEXT:-dev}"
 
-PREVIEW_NAME="${PREVIEW_NAME:-$(preview-name-from-branch)}"
+PREVIEW_NAME="${PREVIEW_NAME:-$(previewctl get name)}"
 PREVIEW_K3S_KUBE_PATH="${PREVIEW_K3S_KUBECONFIG_PATH:-/home/gitpod/.kube/config}"
 PREVIEW_K3S_KUBE_CONTEXT="${PREVIEW_K3S_KUBE_CONTEXT:-$PREVIEW_NAME}"
 PREVIEW_NAMESPACE="default"
