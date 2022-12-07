@@ -12,7 +12,7 @@ import (
 	"time"
 
 	fuzz "github.com/AdaLogics/go-fuzz-headers"
-	"github.com/bufbuild/connect-go"
+	connect "github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
@@ -288,6 +288,18 @@ var workspaceTestData = []workspaceTestDataEntry{
 					Message: "has no message",
 					Phase:   "running",
 					Version: 42,
+					ExposedPorts: []*protocol.WorkspaceInstancePort{
+						{
+							Port:       9000,
+							URL:        "https://9000-gitpodio-gitpod-isq6xj458lj.ws-eu53.protocol.io",
+							Visibility: protocol.PortVisibilityPublic,
+						},
+						{
+							Port:       9001,
+							URL:        "https://9001-gitpodio-gitpod-isq6xj458lj.ws-eu53.protocol.io",
+							Visibility: protocol.PortVisibilityPrivate,
+						},
+					},
 				},
 			},
 		},
@@ -319,6 +331,18 @@ var workspaceTestData = []workspaceTestDataEntry{
 						Message:   "has no message",
 						Url:       "https://gitpodio-gitpod-isq6xj458lj.ws-eu53.protocol.io/",
 						Admission: v1.AdmissionLevel_ADMISSION_LEVEL_OWNER_ONLY,
+						Ports: []*v1.Port{
+							{
+								Port:   9000,
+								Policy: v1.PortPolicy_PORT_POLICY_PUBLIC,
+								Url:    "https://9000-gitpodio-gitpod-isq6xj458lj.ws-eu53.protocol.io",
+							},
+							{
+								Port:   9001,
+								Policy: v1.PortPolicy_PORT_POLICY_PRIVATE,
+								Url:    "https://9001-gitpodio-gitpod-isq6xj458lj.ws-eu53.protocol.io",
+							},
+						},
 					},
 				},
 			},

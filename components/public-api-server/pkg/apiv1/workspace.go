@@ -122,6 +122,30 @@ func (s *WorkspaceService) ListWorkspaces(ctx context.Context, req *connect.Requ
 	), nil
 }
 
+func (s *WorkspaceService) UpdatePort(ctx context.Context, req *connect.Request[v1.UpdatePortRequest]) (*connect.Response[v1.UpdatePortResponse], error) {
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+	if req.Msg.Port.Policy == v1.PortPolicy_PORT_POLICY_PRIVATE {
+		_, err = conn.OpenPort(ctx, req.Msg.GetWorkspaceId(), &protocol.WorkspaceInstancePort{
+			Port:       float64(req.Msg.Port.Port),
+			Visibility: protocol.PortVisibilityPrivate,
+		})
+	} else if req.Msg.Port.Policy == v1.PortPolicy_PORT_POLICY_PUBLIC {
+		_, err = conn.OpenPort(ctx, req.Msg.GetWorkspaceId(), &protocol.WorkspaceInstancePort{
+			Port:       float64(req.Msg.Port.Port),
+			Visibility: protocol.PortVisibilityPublic,
+		})
+	}
+	if err != nil {
+		return nil, proxy.ConvertError(err)
+	}
+	return connect.NewResponse(
+		&v1.UpdatePortResponse{},
+	), nil
+}
+
 func getLimitFromPagination(pagination *v1.Pagination) (int, error) {
 	const (
 		defaultLimit = 20
@@ -216,6 +240,20 @@ func convertWorkspaceInstance(input *protocol.WorkspaceInfo) (*v1.WorkspaceInsta
 		firstUserActivity, _ = parseGitpodTimestamp(fua)
 	}
 
+	var ports []*v1.Port
+	for _, p := range wsi.Status.ExposedPorts {
+		port := &v1.Port{
+			Port: uint64(p.Port),
+			Url:  p.URL,
+		}
+		if p.Visibility == protocol.PortVisibilityPublic {
+			port.Policy = v1.PortPolicy_PORT_POLICY_PUBLIC
+		} else {
+			port.Policy = v1.PortPolicy_PORT_POLICY_PRIVATE
+		}
+		ports = append(ports, port)
+	}
+
 	return &v1.WorkspaceInstance{
 		InstanceId:  wsi.ID,
 		WorkspaceId: wsi.WorkspaceID,
@@ -231,6 +269,7 @@ func convertWorkspaceInstance(input *protocol.WorkspaceInfo) (*v1.WorkspaceInsta
 				Timeout:           wsi.Status.Conditions.Timeout,
 				FirstUserActivity: firstUserActivity,
 			},
+			Ports: ports,
 		},
 	}, nil
 }
