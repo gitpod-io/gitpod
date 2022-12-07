@@ -11,6 +11,17 @@ packages:
       - components/common-go:lib
     config:
       packaging: app
+  - name: "install"
+    type: "generic"
+    argdeps:
+      - version
+    deps:
+      - :cli
+    config:
+      commands:
+        - [ "sh", "-c", "mkdir -p /workspace/bin && sudo mv dev-preview-previewctl--cli/previewctl /workspace/bin/previewctl" ]
+        - [ "sh", "-c", "if ! $(grep 'previewctl completion bash' ~/.bashrc > /dev/null); then previewctl completion bash >> ~/.bashrc; fi" ]
+
 scripts:
   - name: install
     description: Build and install previewctl into the current environment

@@ -17,7 +17,9 @@ import (
 )
 
 type listWorkspaceOpts struct {
-	TFDir   string
+	TFDir             string
+	sshPrivateKeyPath string
+
 	logger  *logrus.Logger
 	timeout time.Duration
 }

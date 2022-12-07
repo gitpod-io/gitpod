@@ -13,8 +13,8 @@ if { [[ "${auth}" != "(unset)" ]] || [ -n "${auth:-}" ]; } && [ -f "${PREVIEW_EN
   exit 0
 fi
 
-if [[ -z "${PREVIEW_ENV_DEV_SA_KEY:-}" ]]; then
-  log_warn "PREVIEW_ENV_DEV_SA_KEY is not set. Skipping workspace setup."
+if [[ -z "${PREVIEW_ENV_DEV_SA_KEY:-}" ]] || [[ -z "${PREVIEW_ENV_DEV_SA_KEY_PATH:-}" ]]; then
+  log_warn "Neither PREVIEW_ENV_DEV_SA_KEY, nor PREVIEW_ENV_DEV_SA_KEY_PATH is set. Skipping workspace setup."
   exit 0
 fi
 
