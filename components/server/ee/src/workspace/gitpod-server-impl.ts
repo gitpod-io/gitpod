@@ -2160,12 +2160,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         if (customer) {
             // NOTE: this is a temporary workaround, as long as we're not automatically re-create the customer
             // entity on Stripe to support a switch of currencies, we're taking an exit here.
-            if (customer.currency !== currency) {
+            if (customer.currency && customer.currency !== currency) {
                 throw new ResponseError(
                     ErrorCodes.SUBSCRIPTION_ERROR,
-                    `Your previous subscription was in ${
-                        customer.currency || "unknown"
-                    }. If you'd like to change currencies, please contact our support.`,
+                    `Your previous subscription was in ${customer.currency}. If you'd like to change currencies, please contact our support.`,
                     { hint: "currency", oldValue: customer.currency, value: currency },
                 );
             }
