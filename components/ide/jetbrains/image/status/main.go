@@ -47,9 +47,6 @@ var (
 	Version = ""
 )
 
-const BackendPath = "/ide-desktop/backend"
-const ProductInfoPath = BackendPath + "/product-info.json"
-
 type LaunchContext struct {
 	startTime time.Time
 
@@ -57,6 +54,9 @@ type LaunchContext struct {
 	alias string
 	label string
 
+	qualifier      string
+	productDir     string
+	backendDir     string
 	info           *ProductInfo
 	backendVersion *version.Version
 	wsInfo         *supervisor.WorkspaceInfoResponse
@@ -99,7 +99,16 @@ func main() {
 		label = os.Args[3]
 	}
 
-	info, err := resolveProductInfo()
+	qualifier := os.Getenv("JETBRAINS_BACKEND_QUALIFIER")
+	if qualifier == "stable" {
+		qualifier = ""
+	} else {
+		qualifier = "-" + qualifier
+	}
+	productDir := "/ide-desktop/" + alias + qualifier
+	backendDir := productDir + "/backend"
+
+	info, err := resolveProductInfo(backendDir)
 	if err != nil {
 		log.WithError(err).Error("failed to resolve product info")
 		return
@@ -124,6 +133,9 @@ func main() {
 		alias: alias,
 		label: label,
 
+		qualifier:      qualifier,
+		productDir:     productDir,
+		backendDir:     backendDir,
 		info:           info,
 		backendVersion: backendVersion,
 		wsInfo:         wsInfo,
@@ -359,17 +371,10 @@ func launch(launchCtx *LaunchContext) {
 		idePrefix = "idea"
 	}
 	// [idea64|goland64|pycharm64|phpstorm64].vmoptions
-	launchCtx.vmOptionsFile = fmt.Sprintf("/ide-desktop/backend/bin/%s64.vmoptions", idePrefix)
+	launchCtx.vmOptionsFile = fmt.Sprintf(launchCtx.backendDir+"/bin/%s64.vmoptions", idePrefix)
 	err = configureVMOptions(gitpodConfig, launchCtx.alias, launchCtx.vmOptionsFile)
 	if err != nil {
 		log.WithError(err).Error("failed to configure vmoptions")
-	}
-
-	qualifier := os.Getenv("JETBRAINS_BACKEND_QUALIFIER")
-	if qualifier == "stable" {
-		qualifier = ""
-	} else {
-		qualifier = "-" + qualifier
 	}
 
 	var riderSolutionFile string
@@ -380,10 +385,10 @@ func launch(launchCtx *LaunchContext) {
 		}
 	}
 
-	configDir := fmt.Sprintf("/workspace/.config/JetBrains%s", qualifier)
+	configDir := fmt.Sprintf("/workspace/.config/JetBrains%s", launchCtx.qualifier)
 	launchCtx.projectDir = projectDir
 	launchCtx.configDir = configDir
-	launchCtx.systemDir = fmt.Sprintf("/workspace/.cache/JetBrains%s", qualifier)
+	launchCtx.systemDir = fmt.Sprintf("/workspace/.cache/JetBrains%s", launchCtx.qualifier)
 	launchCtx.riderSolutionFile = riderSolutionFile
 	launchCtx.projectContextDir = resolveProjectContextDir(launchCtx)
 	launchCtx.projectConfigDir = fmt.Sprintf("%s/RemoteDev-%s/%s", configDir, launchCtx.info.ProductCode, strings.ReplaceAll(launchCtx.projectContextDir, "/", "_"))
@@ -407,7 +412,7 @@ func launch(launchCtx *LaunchContext) {
 	}
 
 	// install gitpod plugin
-	err = linkRemotePlugin()
+	err = linkRemotePlugin(launchCtx)
 	if err != nil {
 		log.WithError(err).Error("failed to install gitpod-remote plugin")
 	}
@@ -445,7 +450,7 @@ func run(launchCtx *LaunchContext) {
 }
 
 // resolveUserEnvs emulats the interactive login shell to ensure that all user defined shell scripts are loaded
-func resolveUserEnvs() (userEnvs []string, err error) {
+func resolveUserEnvs(launchCtx *LaunchContext) (userEnvs []string, err error) {
 	shell := os.Getenv("SHELL")
 	if shell == "" {
 		shell = "/bin/bash"
@@ -454,7 +459,7 @@ func resolveUserEnvs() (userEnvs []string, err error) {
 	if err != nil {
 		return
 	}
-	envCmd := exec.Command(shell, []string{"-ilc", "/ide-desktop/status env " + mark.String()}...)
+	envCmd := exec.Command(shell, []string{"-ilc", launchCtx.productDir + "/status env " + mark.String()}...)
 	envCmd.Stderr = os.Stderr
 	output, err := envCmd.Output()
 	if err != nil {
@@ -469,7 +474,7 @@ func resolveUserEnvs() (userEnvs []string, err error) {
 
 func remoteDevServerCmd(args []string, launchCtx *LaunchContext) *exec.Cmd {
 	if launchCtx.env == nil {
-		userEnvs, err := resolveUserEnvs()
+		userEnvs, err := resolveUserEnvs(launchCtx)
 		if err == nil {
 			launchCtx.env = append(launchCtx.env, userEnvs...)
 		} else {
@@ -484,15 +489,15 @@ func remoteDevServerCmd(args []string, launchCtx *LaunchContext) *exec.Cmd {
 			fmt.Sprintf("IJ_HOST_SYSTEM_BASE_DIR=%s", launchCtx.systemDir),
 		)
 
-		// instead put them into /ide-desktop/backend/bin/idea64.vmoptions
+		// instead put them into /ide-desktop/${alias}${qualifier}/backend/bin/idea64.vmoptions
 		// otherwise JB will complain to a user on each startup
-		// by default remote dev already set -Xmx2048m, see /ide-desktop/backend/plugins/remote-dev-server/bin/launcher.sh
+		// by default remote dev already set -Xmx2048m, see /ide-desktop/${alias}${qualifier}/backend/plugins/remote-dev-server/bin/launcher.sh
 		launchCtx.env = append(launchCtx.env, "JAVA_TOOL_OPTIONS=")
 
 		log.WithField("env", launchCtx.env).Debug("resolved launch env")
 	}
 
-	cmd := exec.Command(BackendPath+"/bin/remote-dev-server.sh", args...)
+	cmd := exec.Command(launchCtx.backendDir+"/bin/remote-dev-server.sh", args...)
 	cmd.Env = launchCtx.env
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
@@ -619,8 +624,8 @@ type ProductInfo struct {
 	ProductCode string `json:"productCode"`
 }
 
-func resolveProductInfo() (*ProductInfo, error) {
-	f, err := os.Open(ProductInfoPath)
+func resolveProductInfo(backendDir string) (*ProductInfo, error) {
+	f, err := os.Open(backendDir + "/product-info.json")
 	if err != nil {
 		return nil, err
 	}
@@ -764,12 +769,20 @@ func getProductConfig(config *gitpod.GitpodConfig, alias string) *gitpod.Jetbrai
 	return productConfig
 }
 
-func linkRemotePlugin() error {
-	remotePluginDir := BackendPath + "/plugins/gitpod-remote"
+func linkRemotePlugin(launchCtx *LaunchContext) error {
+	remotePluginDir := launchCtx.backendDir + "/plugins/gitpod-remote"
 	_, err := os.Stat(remotePluginDir)
 	if err == nil || !errors.Is(err, os.ErrNotExist) {
 		return nil
 	}
+
+	// added for backwards compatibility, can be removed in the future
+	sourceDir := "/ide-desktop-plugins/gitpod-remote-" + os.Getenv("JETBRAINS_BACKEND_QUALIFIER")
+	_, err = os.Stat(sourceDir)
+	if err == nil {
+		return os.Symlink(sourceDir, remotePluginDir)
+	}
+
 	return os.Symlink("/ide-desktop-plugins/gitpod-remote", remotePluginDir)
 }
 

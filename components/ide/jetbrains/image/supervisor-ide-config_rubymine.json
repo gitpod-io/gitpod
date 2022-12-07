@@ -1,10 +1,14 @@
 {
-    "entrypoint": "/ide-desktop/status",
-    "entrypointArgs": [ "{DESKTOPIDEPORT}", "rubymine", "Open in RubyMine" ],
-    "readinessProbe": {
-        "type": "http",
-        "http": {
-            "path": "/status"
-        }
-      }
+  "entrypoint": "/ide-desktop/rubymine/status",
+  "entrypointArgs": [
+    "{DESKTOPIDEPORT}",
+    "rubymine",
+    "Open in RubyMine"
+  ],
+  "readinessProbe": {
+    "type": "http",
+    "http": {
+      "path": "/status"
+    }
+  }
 }

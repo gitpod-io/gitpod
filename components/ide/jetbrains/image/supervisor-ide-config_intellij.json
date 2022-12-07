@@ -1,10 +1,14 @@
 {
-    "entrypoint": "/ide-desktop/status",
-    "entrypointArgs": [ "{DESKTOPIDEPORT}", "intellij", "Open in IntelliJ IDEA" ],
-    "readinessProbe": {
-        "type": "http",
-        "http": {
-            "path": "/status"
-        }
-      }
+  "entrypoint": "/ide-desktop/intellij/status",
+  "entrypointArgs": [
+    "{DESKTOPIDEPORT}",
+    "intellij",
+    "Open in IntelliJ IDEA"
+  ],
+  "readinessProbe": {
+    "type": "http",
+    "http": {
+      "path": "/status"
+    }
+  }
 }

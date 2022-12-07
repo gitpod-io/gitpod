@@ -1,9 +1,9 @@
 {
-  "entrypoint": "/ide-desktop/clion/status",
+  "entrypoint": "/ide-desktop/rider-latest/status",
   "entrypointArgs": [
     "{DESKTOPIDEPORT}",
-    "clion",
-    "Open in CLion"
+    "rider",
+    "Open in Rider"
   ],
   "readinessProbe": {
     "type": "http",

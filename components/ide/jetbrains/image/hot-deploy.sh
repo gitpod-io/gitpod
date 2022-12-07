@@ -19,6 +19,9 @@ echo "Product: $product"
 qualifier=${2:-latest}
 echo "Qualifier: $qualifier"
 
+product_code=${3}
+echo "Product Code: $product_code"
+
 if [ "$qualifier" == "stable" ]; then
     component=$product
 else
@@ -31,7 +34,10 @@ echo "Image Version: $version"
 bldfn="/tmp/build-$version.tar.gz"
 
 docker ps &> /dev/null || (echo "You need a working Docker daemon. Maybe set DOCKER_HOST?"; exit 1)
-leeway build -Dversion="$version" -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build ".:$component" --save "$bldfn"
+IDE_VERSIONS_JSON=$(bash "$ROOT_DIR/components/ide/jetbrains/image/resolve-latest-ide-version.sh" "$product_code")
+IDE_BUILD_VERSION=$(echo "$IDE_VERSIONS_JSON" | jq -r .IDE_BUILD_VERSION)
+IDE_VERSION=$(echo "$IDE_VERSIONS_JSON" | jq -r .IDE_VERSION)
+leeway build -Dversion="$version" -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -DbuildNumber="$IDE_BUILD_VERSION" -DjbBackendVersion="$IDE_VERSION" ".:$component" --save "$bldfn"
 dev_image="$(tar xfO "$bldfn" ./imgnames.txt | head -n1)"
 echo "Dev Image: $dev_image"
 

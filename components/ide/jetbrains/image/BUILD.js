@@ -54,7 +54,7 @@ const generateIDEBuildPackage = function (ideConfig, qualifier) {
     let pkg = {
         name,
         type: "docker",
-        srcs: ["startup.sh", `supervisor-ide-config_${ideConfig.name}.json`],
+        srcs: ["startup.sh", `supervisor-ide-config_${name}.json`],
         deps: ["components/ide/jetbrains/image/status:app", `:download-${name}`, "components/ide/jetbrains/cli:app"],
         config: {
             dockerfile: "leeway.Dockerfile",
@@ -63,7 +63,7 @@ const generateIDEBuildPackage = function (ideConfig, qualifier) {
             },
             buildArgs: {
                 JETBRAINS_DOWNLOAD_QUALIFIER: name,
-                SUPERVISOR_IDE_CONFIG: `supervisor-ide-config_${ideConfig.name}.json`,
+                SUPERVISOR_IDE_CONFIG: `supervisor-ide-config_${name}.json`,
                 JETBRAINS_BACKEND_QUALIFIER: qualifier,
                 JETBRAINS_BACKEND_VERSION: getIDEVersion(qualifier, args[`${ideConfig.name}DownloadUrl`]),
             },

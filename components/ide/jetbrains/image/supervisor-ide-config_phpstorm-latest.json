@@ -1,9 +1,9 @@
 {
-  "entrypoint": "/ide-desktop/clion/status",
+  "entrypoint": "/ide-desktop/phpstorm-latest/status",
   "entrypointArgs": [
     "{DESKTOPIDEPORT}",
-    "clion",
-    "Open in CLion"
+    "phpstorm",
+    "Open in PhpStorm"
   ],
   "readinessProbe": {
     "type": "http",
