@@ -14,38 +14,17 @@ packages:
   - name: "install"
     type: "generic"
     argdeps:
-      - version
+      - no-cache
     deps:
       - :cli
     config:
       commands:
         - [ "sh", "-c", "mkdir -p /workspace/bin && sudo mv dev-preview-previewctl--cli/previewctl /workspace/bin/previewctl" ]
-        - [ "sh", "-c", "if ! $(grep 'previewctl completion bash' ~/.bashrc > /dev/null); then previewctl completion bash >> ~/.bashrc; fi" ]
+        - [ "sh", "-c", "if ! $(grep 'previewctl completion bash' ~/.bashrc > /dev/null); then echo '. <(previewctl completion bash)' >> ~/.bashrc; fi" ]
+        - [ "sh", "-c", "if ! $(grep 'previewctl completion zsh' ~/.zshrc > /dev/null); then echo '. <(previewctl completion zsh)' >> ~/.zshrc; fi" ]
 
 scripts:
   - name: install
     description: Build and install previewctl into the current environment
-    deps:
-    - :cli
-    script: |
-      set -euo pipefail
-
-      destination="/workspace/bin/previewctl"
-      # Leeway puts the dependencies at the end of the PATH which means that /workspace/bin takes precedence
-      # on the path. So for `which previewctl` to return the previewctl Leeway just build (/tmp/build/.../previewctl)
-      # we have to delete /workspace/bin/previewctl first.
-      rm -f "$destination"
-      source="$(which previewctl)"
-
-      mkdir -p /workspace/bin
-
-      echo "Installing $source into $destination"
-      cp "$source" "$destination"
-
-      if ! $(grep 'previewctl completion bash' ~/.bashrc > /dev/null)
-      then
-        echo "Adding bash completions to ~/.bashrc"
-        echo '. <(previewctl completion bash)' >> ~/.bashrc
-      else
-        echo "Bash completions already installed. Skipping."
-      fi
+    script:
+      leeway build dev/preview/previewctl:install -Dno-cache=$RANDOM --dont-test --cache=remote-pull

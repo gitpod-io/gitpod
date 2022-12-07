@@ -11,12 +11,14 @@ packages:
       - dev/gpctl:app
       - dev/loadgen:app
       - dev/gp-gcloud:app
+      - dev/preview/previewctl:cli
   - name: dev-utils
     type: docker
     deps:
       - dev/gpctl:app
       - dev/kubecdl:app
       - dev/gp-gcloud:app
+      - dev/preview/previewctl:cli
     argdeps:
       - imageRepoBase
     config:

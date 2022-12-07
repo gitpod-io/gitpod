@@ -122,7 +122,7 @@ export async function configureAccess(werft: Werft) {
 
 export async function installPreviewCTL() {
     try {
-        await execStream(`leeway build dev/preview/previewctl:install -Dversion=$(date +%F_T%H-%M-%S) --dont-test`, {
+        await execStream(`leeway run dev/preview/previewctl:install`, {
             slice: "Install previewctl",
         })
     } catch (e) {
