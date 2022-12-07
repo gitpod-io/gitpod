@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
-// See License-AGPL.txt in the project root for license information.
+// See License.AGPL.txt in the project root for license information.
 
 //go:generate mockgen -package mock github.com/gitpod-io/gitpod/registry-facade/pkg/registry LayerSource > pkg/registry/mock/layersource_mock.go
 

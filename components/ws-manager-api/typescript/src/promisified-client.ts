@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { WorkspaceManagerClient } from "./core_grpc_pb";
@@ -120,7 +120,7 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
                         {
                             // Important!!!!: client timeout must be higher than ws-manager to be able to process any error
                             // https://github.com/gitpod-io/gitpod/blob/main/components/ws-manager/pkg/manager/manager.go#L171
-                            deadline: new Date(new Date().getTime() + 60000*11),
+                            deadline: new Date(new Date().getTime() + 60000 * 11),
                             interceptors: this.interceptor,
                         },
                         (err, resp) => {

@@ -1,6 +1,6 @@
 # Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
-# See License-AGPL.txt in the project root for license information.
+# See License.AGPL.txt in the project root for license information.
 
 packages:
   - name: all
@@ -140,23 +140,10 @@ scripts:
     deps:
       - dev/addlicense:app
     script: |
-      tmpdir=$(mktemp -d)
-      echo "Temp Dir: $tmpdir"
-
-      leeway collect files               --format-string '{{ range . }}{{ .Name }}{{"\n"}}{{ end }}' | uniq > $tmpdir/all
-      leeway collect files --variant oss --format-string '{{ range . }}{{ .Name }}{{"\n"}}{{ end }}' | uniq > $tmpdir/oss
-
-      grep -v -f $tmpdir/oss $tmpdir/all > $tmpdir/ee
-      grep -E "^components\/ee\/" $tmpdir/oss >> $tmpdir/ee
-      grep -v -E "^chart\/" $tmpdir/oss | grep -v -E "^install\/" > $tmpdir/agpl
-      grep -v -f $tmpdir/agpl $tmpdir/oss > $tmpdir/mit
-
       # set `export LICENCE_HEADER_CHECK_ONLY=true` to just check if all headers are there (and exit with status code 1 if not)
       check=$([ "$LICENCE_HEADER_CHECK_ONLY" = true ] && printf "%s" '-check')
 
-      cat $tmpdir/ee   | while read f; do echo "$PWD/../$f"; done | addlicense $check -s -l gpshf . || exit 1
-      cat $tmpdir/agpl | while read f; do echo "$PWD/../$f"; done | addlicense $check -s -l agpl  . || exit 1
-      cat $tmpdir/mit  | while read f; do echo "$PWD/../$f"; done | addlicense $check -s -l mit   . || exit 1
+      leeway collect files --format-string '{{ range . }}{{ .Name }}{{"\n"}}{{ end }}' | sort | uniq | while read f; do echo "$PWD/../$f"; done | addlicense $check -s -l agpl  . || exit 1
   - name: dejson-log-output
     script: |-
       jq -Rr '. as $line |

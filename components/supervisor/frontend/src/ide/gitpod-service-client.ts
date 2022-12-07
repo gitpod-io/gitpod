@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { WorkspaceInfo, Event, User } from "@gitpod/gitpod-protocol";
@@ -28,18 +28,18 @@ export async function create(): Promise<GitpodServiceClient> {
     let resolveAuth: () => void;
     let rejectAuth: (reason?: any) => void;
     const _auth = new Promise<void>((resolve, reject) => {
-        resolveAuth = resolve
-        rejectAuth = reject
+        resolveAuth = resolve;
+        rejectAuth = reject;
     });
     async function auth(workspaceInstanceId: string): Promise<void> {
         try {
             const response = await fetch(wsUrl.asStart().asWorkspaceAuth(workspaceInstanceId).toString(), {
-                credentials: 'include'
+                credentials: "include",
             });
             if (response.ok) {
                 resolveAuth!();
             } else {
-                rejectAuth!(new Error('authentication failed'));
+                rejectAuth!(new Error("authentication failed"));
             }
         } catch (e) {
             rejectAuth!(e);
@@ -62,9 +62,15 @@ export async function create(): Promise<GitpodServiceClient> {
     //#endregion
 
     return {
-        get auth() { return _auth },
-        get info() { return listener.info },
-        get user() { return user },
-        onDidChangeInfo: listener.onDidChange
-    }
+        get auth() {
+            return _auth;
+        },
+        get info() {
+            return listener.info;
+        },
+        get user() {
+            return user;
+        },
+        onDidChangeInfo: listener.onDidChange,
+    };
 }

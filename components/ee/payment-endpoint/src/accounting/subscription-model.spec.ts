@@ -1,46 +1,44 @@
 /**
- * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
- * Licensed under the Gitpod Enterprise Source Code License,
- * See License.enterprise.txt in the project root folder.
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
  */
 
-import { hoursLater, yearsLater } from '@gitpod/gitpod-protocol/lib/util/timeutil';
-import { Subscription } from '@gitpod/gitpod-protocol/lib/accounting-protocol';
-import * as chai from 'chai';
-import { suite, test, only } from 'mocha-typescript';
-import { SubscriptionModel } from './subscription-model';
+import { hoursLater, yearsLater } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
+import * as chai from "chai";
+import { suite, test, only } from "mocha-typescript";
+import { SubscriptionModel } from "./subscription-model";
 
 const expect = chai.expect;
 
-@suite class SubscriptionModelSpec {
+@suite
+class SubscriptionModelSpec {
     @test @only mergedWithFreeSubscriptions_total_overlap() {
-        const userId = '123';
+        const userId = "123";
         const userCreationDate = new Date(Date.UTC(2000, 0, 1)).toISOString();
         const proStartDate = hoursLater(userCreationDate, 2);
         const proOpenSourceSubscription: Subscription = {
-            uid: 's1',
+            uid: "s1",
             userId,
-            planId: 'free-open-source',
+            planId: "free-open-source",
             amount: 11904,
             startDate: proStartDate,
             endDate: yearsLater(proStartDate, 1),
         };
         const cancelledPaidSubscription: Subscription = {
-            uid: 's2',
+            uid: "s2",
             userId,
-            planId: 'professional-new-eur',
+            planId: "professional-new-eur",
             amount: 11904,
             startDate: hoursLater(userCreationDate, 3),
             cancellationDate: hoursLater(userCreationDate, 4), // one hour later
             endDate: hoursLater(userCreationDate, 4),
         };
-        const model = new SubscriptionModel(userId, [
-            proOpenSourceSubscription,
-            cancelledPaidSubscription
-        ]);
+        const model = new SubscriptionModel(userId, [proOpenSourceSubscription, cancelledPaidSubscription]);
         const blendedSubscriptions = model.mergedWithFreeSubscriptions(userCreationDate);
-        const redactedBlendedSubscriptions = blendedSubscriptions.map(s => {
-            s.uid = '[...]';
+        const redactedBlendedSubscriptions = blendedSubscriptions.map((s) => {
+            s.uid = "[...]";
             return s;
         });
         const rendered = JSON.stringify(redactedBlendedSubscriptions, null, 2);
@@ -82,32 +80,29 @@ const expect = chai.expect;
     }
 
     @test @only mergedWithFreeSubscriptions_partial_overlap() {
-        const userId = '123';
+        const userId = "123";
         const userCreationDate = new Date(Date.UTC(2000, 0, 1)).toISOString();
         const proOpenSourceSubscription: Subscription = {
-            uid: 's1',
+            uid: "s1",
             userId,
-            planId: 'free-open-source',
+            planId: "free-open-source",
             amount: 11904,
             startDate: hoursLater(userCreationDate, 2),
             endDate: hoursLater(userCreationDate, 4),
         };
         const cancelledPaidSubscription: Subscription = {
-            uid: 's2',
+            uid: "s2",
             userId,
-            planId: 'professional-new-eur',
+            planId: "professional-new-eur",
             amount: 11904,
             startDate: hoursLater(userCreationDate, 3),
             cancellationDate: hoursLater(userCreationDate, 5),
             endDate: hoursLater(userCreationDate, 5),
         };
-        const model = new SubscriptionModel(userId, [
-            proOpenSourceSubscription,
-            cancelledPaidSubscription
-        ]);
+        const model = new SubscriptionModel(userId, [proOpenSourceSubscription, cancelledPaidSubscription]);
         const blendedSubscriptions = model.mergedWithFreeSubscriptions(userCreationDate);
-        const redactedBlendedSubscriptions = blendedSubscriptions.map(s => {
-            s.uid = '[...]';
+        const redactedBlendedSubscriptions = blendedSubscriptions.map((s) => {
+            s.uid = "[...]";
             return s;
         });
         const rendered = JSON.stringify(redactedBlendedSubscriptions, null, 2);
@@ -149,32 +144,29 @@ const expect = chai.expect;
     }
 
     @test @only mergedWithFreeSubscriptions_no_overlap() {
-        const userId = '123';
+        const userId = "123";
         const userCreationDate = new Date(Date.UTC(2000, 0, 1)).toISOString();
         const proOpenSourceSubscription: Subscription = {
-            uid: 's1',
+            uid: "s1",
             userId,
-            planId: 'free-open-source',
+            planId: "free-open-source",
             amount: 11904,
             startDate: hoursLater(userCreationDate, 2),
             endDate: hoursLater(userCreationDate, 4),
         };
         const cancelledPaidSubscription: Subscription = {
-            uid: 's2',
+            uid: "s2",
             userId,
-            planId: 'professional-new-eur',
+            planId: "professional-new-eur",
             amount: 11904,
             startDate: hoursLater(userCreationDate, 5),
             cancellationDate: hoursLater(userCreationDate, 7),
             endDate: hoursLater(userCreationDate, 7),
         };
-        const model = new SubscriptionModel(userId, [
-            proOpenSourceSubscription,
-            cancelledPaidSubscription
-        ]);
+        const model = new SubscriptionModel(userId, [proOpenSourceSubscription, cancelledPaidSubscription]);
         const blendedSubscriptions = model.mergedWithFreeSubscriptions(userCreationDate);
-        const redactedBlendedSubscriptions = blendedSubscriptions.map(s => {
-            s.uid = '[...]';
+        const redactedBlendedSubscriptions = blendedSubscriptions.map((s) => {
+            s.uid = "[...]";
             return s;
         });
         const rendered = JSON.stringify(redactedBlendedSubscriptions, null, 2);
@@ -225,4 +217,4 @@ const expect = chai.expect;
     }
 }
 
-module.exports = new SubscriptionModelSpec()
+module.exports = new SubscriptionModelSpec();

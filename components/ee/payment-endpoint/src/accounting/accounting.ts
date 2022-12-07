@@ -1,7 +1,7 @@
 /**
- * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
- * Licensed under the Gitpod Enterprise Source Code License,
- * See License.enterprise.txt in the project root folder.
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { hoursToMilliseconds } from "@gitpod/gitpod-protocol/lib/util/timeutil";
@@ -14,7 +14,7 @@ export namespace Accounting {
         0,
         0.083333333333, // 5min
         0.166666666666, // 10min
-        0.5             // 30min
+        0.5, // 30min
     ];
 
     /**

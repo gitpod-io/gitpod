@@ -1,20 +1,20 @@
 /**
- * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
- * Licensed under the Gitpod Enterprise Source Code License,
- * See License.enterprise.txt in the project root folder.
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
  */
 
-import { injectable, inject } from 'inversify';
-import { Application as App } from 'express';
-import * as http from 'http';
+import { injectable, inject } from "inversify";
+import { Application as App } from "express";
+import * as http from "http";
 
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
-import { EndpointController } from './chargebee/endpoint-controller';
-import { GithubEndpointController } from './github/endpoint-controller';
-import { GithubSubscriptionReconciler } from './github/subscription-reconciler';
-import { Config } from './config';
-import { AddressInfo } from 'net';
+import { EndpointController } from "./chargebee/endpoint-controller";
+import { GithubEndpointController } from "./github/endpoint-controller";
+import { GithubSubscriptionReconciler } from "./github/subscription-reconciler";
+import { Config } from "./config";
+import { AddressInfo } from "net";
 
 @injectable()
 export class Server {
@@ -42,15 +42,17 @@ export class Server {
 
     async start(port: number): Promise<void> {
         if (!this.app) {
-            throw new Error('Server not initialized!');
+            throw new Error("Server not initialized!");
         }
 
         const app = this.app;
         await new Promise<void>((resolve, reject) => {
-            const httpServer = app.listen(port, () => {
-                log.info(`Server listening on port: ${(<AddressInfo> httpServer.address()).port}`);
-                resolve();
-            }).on('error', reject);
+            const httpServer = app
+                .listen(port, () => {
+                    log.info(`Server listening on port: ${(<AddressInfo>httpServer.address()).port}`);
+                    resolve();
+                })
+                .on("error", reject);
             this.httpServer = httpServer;
         });
     }
@@ -59,7 +61,7 @@ export class Server {
         const httpServer = this.httpServer;
         if (httpServer) {
             this.httpServer = undefined;
-            await new Promise ((resolve) => httpServer.close(resolve));
+            await new Promise((resolve) => httpServer.close(resolve));
         }
     }
 }

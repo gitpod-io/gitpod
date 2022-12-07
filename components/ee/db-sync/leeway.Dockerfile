@@ -1,6 +1,8 @@
-# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
-# Licensed under the Gitpod Enterprise Source Code License,
-# See License.enterprise.txt in the project root folder.
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+
 
 FROM node:16.13.0-slim as builder
 COPY components-ee-db-sync--app /installer/

@@ -1,14 +1,13 @@
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { injectable } from "inversify";
 
 @injectable()
-export abstract class AbstractComponentEnv {
-}
+export abstract class AbstractComponentEnv {}
 
 export function getEnvVar(name: string, defaultValue?: string): string {
     const value = process.env[name] || defaultValue;

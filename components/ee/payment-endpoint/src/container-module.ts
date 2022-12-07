@@ -1,7 +1,7 @@
 /**
- * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
- * Licensed under the Gitpod Enterprise Source Code License,
- * See License.enterprise.txt in the project root folder.
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { ContainerModule } from "inversify";
@@ -24,19 +24,17 @@ import { GithubEndpointController } from "./github/endpoint-controller";
 import { GithubSubscriptionMapper } from "./github/subscription-mapper";
 import { GithubSubscriptionReconciler } from "./github/subscription-reconciler";
 
-
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
-
     bind(Config).toSelf().inSingletonScope();
     bind(Server).toSelf().inSingletonScope();
 
     bind(EndpointController).toSelf().inSingletonScope();
     bind(SubscriptionHandler).toSelf().inSingletonScope();
-    bind(SubscriptionMapperFactory).toDynamicValue(ctx => {
+    bind(SubscriptionMapperFactory).toDynamicValue((ctx) => {
         return {
             newMapper: () => {
                 return new SubscriptionMapper();
-            }
+            },
         };
     });
     bind(TeamSubscriptionHandler).toSelf().inSingletonScope();
@@ -51,14 +49,15 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(AccountService).to(AccountServiceImpl).inSingletonScope();
 
     bind(ChargebeeProvider).toSelf().inSingletonScope();
-    bind(ChargebeeProviderOptions).toDynamicValue(ctx => {
-        const config = ctx.container.get(Config);
-        return config.chargebeeProviderOptions;
-    }).inSingletonScope();
+    bind(ChargebeeProviderOptions)
+        .toDynamicValue((ctx) => {
+            const config = ctx.container.get(Config);
+            return config.chargebeeProviderOptions;
+        })
+        .inSingletonScope();
     bind(UpgradeHelper).toSelf().inSingletonScope();
 
     bind(GithubEndpointController).toSelf().inSingletonScope();
     bind(GithubSubscriptionMapper).toSelf().inSingletonScope();
     bind(GithubSubscriptionReconciler).toSelf().inSingletonScope();
-
 });

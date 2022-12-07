@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
+ * See License.AGPL.txt in the project root for license information.
  */
 
 // package: contentservice
@@ -17,7 +17,8 @@ interface IContentServiceService extends grpc.ServiceDefinition<grpc.UntypedServ
     deleteUserContent: IContentServiceService_IDeleteUserContent;
 }
 
-interface IContentServiceService_IDeleteUserContent extends grpc.MethodDefinition<content_pb.DeleteUserContentRequest, content_pb.DeleteUserContentResponse> {
+interface IContentServiceService_IDeleteUserContent
+    extends grpc.MethodDefinition<content_pb.DeleteUserContentRequest, content_pb.DeleteUserContentResponse> {
     path: "/contentservice.ContentService/DeleteUserContent";
     requestStream: false;
     responseStream: false;
@@ -34,14 +35,38 @@ export interface IContentServiceServer extends grpc.UntypedServiceImplementation
 }
 
 export interface IContentServiceClient {
-    deleteUserContent(request: content_pb.DeleteUserContentRequest, callback: (error: grpc.ServiceError | null, response: content_pb.DeleteUserContentResponse) => void): grpc.ClientUnaryCall;
-    deleteUserContent(request: content_pb.DeleteUserContentRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: content_pb.DeleteUserContentResponse) => void): grpc.ClientUnaryCall;
-    deleteUserContent(request: content_pb.DeleteUserContentRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: content_pb.DeleteUserContentResponse) => void): grpc.ClientUnaryCall;
+    deleteUserContent(
+        request: content_pb.DeleteUserContentRequest,
+        callback: (error: grpc.ServiceError | null, response: content_pb.DeleteUserContentResponse) => void,
+    ): grpc.ClientUnaryCall;
+    deleteUserContent(
+        request: content_pb.DeleteUserContentRequest,
+        metadata: grpc.Metadata,
+        callback: (error: grpc.ServiceError | null, response: content_pb.DeleteUserContentResponse) => void,
+    ): grpc.ClientUnaryCall;
+    deleteUserContent(
+        request: content_pb.DeleteUserContentRequest,
+        metadata: grpc.Metadata,
+        options: Partial<grpc.CallOptions>,
+        callback: (error: grpc.ServiceError | null, response: content_pb.DeleteUserContentResponse) => void,
+    ): grpc.ClientUnaryCall;
 }
 
 export class ContentServiceClient extends grpc.Client implements IContentServiceClient {
     constructor(address: string, credentials: grpc.ChannelCredentials, options?: Partial<grpc.ClientOptions>);
-    public deleteUserContent(request: content_pb.DeleteUserContentRequest, callback: (error: grpc.ServiceError | null, response: content_pb.DeleteUserContentResponse) => void): grpc.ClientUnaryCall;
-    public deleteUserContent(request: content_pb.DeleteUserContentRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: content_pb.DeleteUserContentResponse) => void): grpc.ClientUnaryCall;
-    public deleteUserContent(request: content_pb.DeleteUserContentRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: content_pb.DeleteUserContentResponse) => void): grpc.ClientUnaryCall;
+    public deleteUserContent(
+        request: content_pb.DeleteUserContentRequest,
+        callback: (error: grpc.ServiceError | null, response: content_pb.DeleteUserContentResponse) => void,
+    ): grpc.ClientUnaryCall;
+    public deleteUserContent(
+        request: content_pb.DeleteUserContentRequest,
+        metadata: grpc.Metadata,
+        callback: (error: grpc.ServiceError | null, response: content_pb.DeleteUserContentResponse) => void,
+    ): grpc.ClientUnaryCall;
+    public deleteUserContent(
+        request: content_pb.DeleteUserContentRequest,
+        metadata: grpc.Metadata,
+        options: Partial<grpc.CallOptions>,
+        callback: (error: grpc.ServiceError | null, response: content_pb.DeleteUserContentResponse) => void,
+    ): grpc.ClientUnaryCall;
 }

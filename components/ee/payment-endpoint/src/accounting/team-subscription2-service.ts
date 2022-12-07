@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
- * Licensed under the Gitpod Enterprise Source Code License,
- * See License.enterprise.txt in the project root folder.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
  */
 
 import { AccountingDB, TeamDB } from "@gitpod/gitpod-db/lib";
@@ -33,12 +33,29 @@ export class TeamSubscription2Service {
         const plan = Plans.getById(ts2.planId)!;
         const { startDate } = Subscription.calculateCurrentPeriod(ts2.startDate, new Date());
         return this.accountingDb.transaction(async (db) => {
-            const subscription = await this.addSubscription(db, userId, ts2.planId, membership.id, startDate, Plans.getHoursPerMonth(plan));
+            const subscription = await this.addSubscription(
+                db,
+                userId,
+                ts2.planId,
+                membership.id,
+                startDate,
+                Plans.getHoursPerMonth(plan),
+            );
             await this.teamDB.setTeamMemberSubscription(userId, ts2.teamId, subscription.uid);
         });
     }
 
-    protected async addSubscription(db: AccountingDB, userId: string, planId: string, teamMembershipId: string, startDate: string, amount: number, firstMonthAmount?: number, endDate?: string, cancelationDate?: string) {
+    protected async addSubscription(
+        db: AccountingDB,
+        userId: string,
+        planId: string,
+        teamMembershipId: string,
+        startDate: string,
+        amount: number,
+        firstMonthAmount?: number,
+        endDate?: string,
+        cancelationDate?: string,
+    ) {
         const model = await this.loadSubscriptionModel(db, userId);
         const subscription = Subscription.create({
             userId,
@@ -48,7 +65,7 @@ export class TeamSubscription2Service {
             endDate,
             cancellationDate: cancelationDate || endDate,
             teamMembershipId,
-            firstMonthAmount
+            firstMonthAmount,
         });
         model.add(subscription);
         await this.subscriptionService.store(db, model);
@@ -66,14 +83,25 @@ export class TeamSubscription2Service {
         }
     }
 
-    async cancelTeamMemberSubscription(ts2: TeamSubscription2, userId: string, teamMemberShipId: string, date: Date): Promise<void> {
+    async cancelTeamMemberSubscription(
+        ts2: TeamSubscription2,
+        userId: string,
+        teamMemberShipId: string,
+        date: Date,
+    ): Promise<void> {
         const { endDate } = Subscription.calculateCurrentPeriod(ts2.startDate, date);
         return this.accountingDb.transaction(async (db) => {
             await this.cancelSubscription(db, userId, ts2.planId, teamMemberShipId, endDate);
         });
     }
 
-    protected async cancelSubscription(db: AccountingDB, userId: string, planId: string, teamMembershipId: string, cancellationDate: string) {
+    protected async cancelSubscription(
+        db: AccountingDB,
+        userId: string,
+        planId: string,
+        teamMembershipId: string,
+        cancellationDate: string,
+    ) {
         const model = await this.loadSubscriptionModel(db, userId);
         const subscription = model.findSubscriptionByTeamMembershipId(teamMembershipId);
         if (!subscription) {
@@ -85,8 +113,7 @@ export class TeamSubscription2Service {
 
     protected async loadSubscriptionModel(db: AccountingDB, userId: string) {
         const subscriptions = await db.findAllSubscriptionsForUser(userId);
-        const subscriptionsFromTS = subscriptions.filter(s => AssignedTeamSubscription2.is(s));
+        const subscriptionsFromTS = subscriptions.filter((s) => AssignedTeamSubscription2.is(s));
         return new SubscriptionModel(userId, subscriptionsFromTS);
     }
-
 }
