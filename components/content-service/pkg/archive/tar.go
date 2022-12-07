@@ -111,7 +111,6 @@ func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOp
 		"tar",
 		"--extract",
 		"--preserve-permissions",
-		"--xattrs", "--xattrs-include=security.capability",
 	)
 	tarcmd.Dir = dst
 	tarcmd.Stdin = teeReader
