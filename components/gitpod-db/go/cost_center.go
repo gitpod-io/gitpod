@@ -138,7 +138,8 @@ func (c *CostCenterManager) IncrementBillingCycle(ctx context.Context, attributi
 	}
 	now := time.Now().UTC()
 	if cc.NextBillingTime.Time().After(now) {
-		return CostCenter{}, status.Errorf(codes.FailedPrecondition, "cannot increment billing cycle before next billing time")
+		log.Infof("Cost center %s is not yet expired. Skipping increment.", attributionId)
+		return cc, nil
 	}
 	billingCycleStart := NewVarCharTime(now)
 	if cc.NextBillingTime.IsSet() {
