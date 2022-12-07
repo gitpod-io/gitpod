@@ -9,6 +9,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 )
 
@@ -82,7 +83,9 @@ func TestRender(t *testing.T) {
 			}
 
 			// Compare
-			require.Equal(t, string(content), got)
+			if diff := cmp.Diff(string(content), got); diff != "" {
+				t.Errorf("non-matching golden file %s (-want +got):\n%s", testCase.Name, diff)
+			}
 		})
 	}
 }
