@@ -5,10 +5,8 @@
 
 THIS_DIR="$(dirname "$0")"
 
-source "$THIS_DIR/preview-name-from-branch.sh"
-
 if [[ -z "${VM_NAME:-}" ]]; then
-    VM_NAME="$(preview-name-from-branch)"
+    VM_NAME="$(previewctl get name)"
 fi
 
 echo "

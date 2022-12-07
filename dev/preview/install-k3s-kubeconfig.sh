@@ -7,8 +7,6 @@ set -euo pipefail
 
 THIS_DIR="$(dirname "$0")"
 
-source "$THIS_DIR/util/preview-name-from-branch.sh"
-
 PRIVATE_KEY=$HOME/.ssh/vm_id_rsa
 PUBLIC_KEY=$HOME/.ssh/vm_id_rsa.pub
 USER="ubuntu"
@@ -30,9 +28,9 @@ done
 
 if [ -z "${VM_NAME:-}" ]; then
   if [[ "${BRANCH}" == "" ]]; then
-      VM_NAME="$(preview-name-from-branch)"
+      VM_NAME="$(previewctl get name)"
   else
-      VM_NAME="$(preview-name-from-branch "$BRANCH")"
+      VM_NAME="$(previewctl get name --branch "$BRANCH")"
   fi
 fi
 

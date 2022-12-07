@@ -44,10 +44,10 @@ func (c *Config) GetStatus(ctx context.Context) (Status, error) {
 	if c.vmiCreationTime.After(time.Now().Add(-120 * time.Minute)) {
 		logEntry.WithFields(log.Fields{
 			"created": c.vmiCreationTime,
-		}).Debug("VM created in the past 20 mins, assuming active")
+		}).Debug("VM created in the past 120 mins, assuming active")
 
 		c.status.Active = true
-		c.status.Reason = fmt.Sprintf("VM created in the past 20 mins, assuming active: [%v]", c.vmiCreationTime.Time)
+		c.status.Reason = fmt.Sprintf("VM created in the past 120 mins, assuming active: [%v]", c.vmiCreationTime.Time)
 		return c.status, nil
 	}
 

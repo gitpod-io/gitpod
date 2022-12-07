@@ -1,13 +1,18 @@
 import {createHash} from "crypto";
 import * as VM from "../vm/vm";
-import {exec} from "./shell";
+import {exec, execStream} from "./shell";
 import {Werft} from "./werft";
-import {installPreviewCTL} from "../jobs/build/prepare";
-import {GCLOUD_SERVICE_ACCOUNT_PATH, GLOBAL_KUBECONFIG_PATH} from "../jobs/build/const";
+import {
+    CORE_DEV_KUBECONFIG_PATH,
+    GCLOUD_SERVICE_ACCOUNT_PATH,
+    GLOBAL_KUBECONFIG_PATH,
+    HARVESTER_KUBECONFIG_PATH
+} from "../jobs/build/const";
 
 const SLICES = {
+    CONFIGURE_DOCKER: "Configuring Docker",
     CONFIGURE_GCP_ACCESS: "Activating service account",
-    CONFIGURE_K8S_ACCESS: "Installing dev/harvester contexts account",
+    CONFIGURE_K8S_ACCESS: "Installing dev/harvester contexts",
     INSTALL_PREVIEWCTL: "Install previewctl",
 };
 
@@ -71,7 +76,7 @@ export class HarvesterPreviewEnvironment {
     }
 }
 
-export async function configureGlobalKubernetesContext(werft: Werft) {
+export async function configureAccess(werft: Werft) {
     werft.phase("Configure access");
     try {
         exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`, {
@@ -82,15 +87,59 @@ export async function configureGlobalKubernetesContext(werft: Werft) {
         werft.fail(SLICES.CONFIGURE_GCP_ACCESS, err);
     }
 
-    await installPreviewCTL()
+    try {
+        await installPreviewCTL()
+    } catch (e) {
+        throw new Error("Failed to install Previewctl")
+    }
 
-    const rc = exec(`KUBECONFIG=${GLOBAL_KUBECONFIG_PATH} previewctl get-credentials --gcp-service-account=${GCLOUD_SERVICE_ACCOUNT_PATH}`, {
-        slice: SLICES.CONFIGURE_K8S_ACCESS
-    }).code;
+    try {
+        exec(`KUBECONFIG=${GLOBAL_KUBECONFIG_PATH} previewctl get-credentials --gcp-service-account=${GCLOUD_SERVICE_ACCOUNT_PATH}`, {
+            slice: SLICES.CONFIGURE_K8S_ACCESS
+        });
 
-    if (rc != 0) {
-        throw new Error("Failed to configure global kubernetes context.");
+        exec(`mkdir -p $(dirname ${HARVESTER_KUBECONFIG_PATH})`)
+
+        exec(
+            `kubectl --context=harvester config view --minify --flatten > ${HARVESTER_KUBECONFIG_PATH}`, {
+                slice: SLICES.CONFIGURE_K8S_ACCESS
+            },
+        )
+
+        exec(
+            `kubectl --context=dev config view --minify --flatten > ${CORE_DEV_KUBECONFIG_PATH}`, {
+                slice: SLICES.CONFIGURE_K8S_ACCESS
+            },
+        )
+        werft.done(SLICES.CONFIGURE_K8S_ACCESS);
+    } catch (e) {
+        werft.fail(SLICES.CONFIGURE_K8S_ACCESS, e);
+        throw new Error("Failed to configure kubernetes contexts");
+    }
+
+    werft.done("Configure access");
+}
+
+export async function installPreviewCTL() {
+    try {
+        await execStream(`leeway build dev/preview/previewctl:install -Dversion=$(date +%F_T%H-%M-%S) --dont-test`, {
+            slice: "Install previewctl",
+        })
+    } catch (e) {
+        throw new Error("Failed to install previewctl.");
     }
 }
+
+export function configureDocker() {
+    const rcDocker = exec("gcloud auth configure-docker --quiet", {slice: SLICES.CONFIGURE_DOCKER}).code;
+    const rcDockerRegistry = exec("gcloud auth configure-docker europe-docker.pkg.dev --quiet", {
+        slice: SLICES.CONFIGURE_DOCKER,
+    }).code;
+
+    if (rcDocker != 0 || rcDockerRegistry != 0) {
+        throw new Error("Failed to configure docker with gcloud.");
+    }
+}
+
 
 export type PreviewEnvironment = HarvesterPreviewEnvironment;

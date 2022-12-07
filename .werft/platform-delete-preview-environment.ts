@@ -1,6 +1,6 @@
 import {Werft} from "./util/werft";
 import * as Tracing from "./observability/tracing";
-import {configureGlobalKubernetesContext, HarvesterPreviewEnvironment} from "./util/preview";
+import {configureAccess, HarvesterPreviewEnvironment} from "./util/preview";
 import {SpanStatusCode} from "@opentelemetry/api";
 import * as fs from "fs";
 
@@ -49,7 +49,7 @@ async function deletePreviewEnvironment() {
     }
     werft.done(SLICES.VALIDATE_CONFIGURATION);
 
-    await configureGlobalKubernetesContext(werft)
+    await configureAccess(werft)
 
     const preview = new HarvesterPreviewEnvironment(werft, previewName);
     if (DRY_RUN) {

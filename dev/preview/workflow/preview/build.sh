@@ -7,8 +7,6 @@ SCRIPT_PATH=$(realpath "$(dirname "$0")")
 
 # shellcheck source=../lib/common.sh
 source "$(realpath "${SCRIPT_PATH}/../lib/common.sh")"
-# shellcheck source=../../util/preview-name-from-branch.sh
-source "$(realpath "${SCRIPT_PATH}/../../util/preview-name-from-branch.sh")"
 
 import "ensure-gcloud-auth.sh"
 
@@ -16,7 +14,7 @@ leeway run dev/preview:configure-workspace
 ensure_gcloud_auth
 
 if [[ "${VERSION:-}" == "" ]]; then
-    VERSION="$(preview-name-from-branch)-dev-$(date +%F_T%H-%M-%S)"
+    VERSION="$(previewctl get name)-dev-$(date +%F_T%H-%M-%S)"
     log_info "VERSION is not set - using $VERSION"
     echo "$VERSION" > /tmp/local-dev-version
 fi
