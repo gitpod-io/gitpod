@@ -33,8 +33,6 @@ imports:
     - gitURL: https://github.com/gitpod-io/observability
       path: monitoring-satellite/manifests/kube-prometheus-rules
     - gitURL: https://github.com/gitpod-io/observability
-      path: monitoring-satellite/manifests/kubescape
-    - gitURL: https://github.com/gitpod-io/observability
       path: monitoring-satellite/manifests/grafana
     - gitURL: https://github.com/gitpod-io/observability
       path: monitoring-satellite/manifests/probers
