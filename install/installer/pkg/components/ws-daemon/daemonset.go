@@ -293,6 +293,19 @@ fi
 				SecurityContext: &corev1.SecurityContext{
 					AllowPrivilegeEscalation: pointer.Bool(false),
 				},
+				LivenessProbe: &corev1.Probe{
+					ProbeHandler: corev1.ProbeHandler{
+						HTTPGet: &corev1.HTTPGetAction{
+							Path: "/ready",
+							Port: intstr.IntOrString{IntVal: ReadinessPort},
+						},
+					},
+					InitialDelaySeconds: 5,
+					PeriodSeconds:       2,
+					TimeoutSeconds:      1,
+					SuccessThreshold:    1,
+					FailureThreshold:    3,
+				},
 				Lifecycle: &corev1.Lifecycle{
 					PreStop: &corev1.LifecycleHandler{
 						Exec: &corev1.ExecAction{
