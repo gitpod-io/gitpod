@@ -7,6 +7,7 @@
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { useEffect } from "react";
 import Alert from "../components/Alert";
+import { UsageLimitReachedModal } from "../components/UsageLimitReachedModal";
 import gitpodIconUA from "../icons/gitpod.svg";
 import { gitpodHostUrl } from "../service/service";
 import { VerifyModal } from "./VerifyModal";
@@ -109,6 +110,9 @@ export function StartPage(props: StartPageProps) {
                     <ProgressBar phase={phase} error={!!error} />
                 )}
                 {error && error.code === ErrorCodes.NEEDS_VERIFICATION && <VerifyModal />}
+                {error && error.code === ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED && (
+                    <UsageLimitReachedModal hints={error?.data} />
+                )}
                 {error && <StartError error={error} />}
                 {props.children}
                 {props.showLatestIdeWarning && (
