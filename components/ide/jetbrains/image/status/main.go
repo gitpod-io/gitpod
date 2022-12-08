@@ -50,9 +50,10 @@ var (
 type LaunchContext struct {
 	startTime time.Time
 
-	port  string
-	alias string
-	label string
+	port   string
+	alias  string
+	label  string
+	warmup bool
 
 	qualifier      string
 	productDir     string
@@ -89,10 +90,27 @@ func main() {
 	log.Info(ServiceName + ": " + Version)
 	startTime := time.Now()
 
-	if len(os.Args) < 3 {
-		log.Fatalf("Usage: %s <port> <kind> [<link label>]\n", os.Args[0])
+	var port string
+	var warmup bool
+
+	if len(os.Args) < 2 {
+		log.Fatalf("Usage: %s (warmup|<port>)\n", os.Args[0])
 	}
-	port := os.Args[1]
+
+	if os.Args[1] == "warmup" {
+		if len(os.Args) < 3 {
+			log.Fatalf("Usage: %s %s <alias>\n", os.Args[0], os.Args[1])
+		}
+
+		warmup = true
+	} else {
+		if len(os.Args) < 3 {
+			log.Fatalf("Usage: %s <port> <kind> [<link label>]\n", os.Args[0])
+		}
+
+		port = os.Args[1]
+	}
+
 	alias := os.Args[2]
 	label := "Open JetBrains IDE"
 	if len(os.Args) > 3 {
@@ -129,9 +147,10 @@ func main() {
 	launchCtx := &LaunchContext{
 		startTime: startTime,
 
-		port:  port,
-		alias: alias,
-		label: label,
+		warmup: warmup,
+		port:   port,
+		alias:  alias,
+		label:  label,
 
 		qualifier:      qualifier,
 		productDir:     productDir,
@@ -139,6 +158,11 @@ func main() {
 		info:           info,
 		backendVersion: backendVersion,
 		wsInfo:         wsInfo,
+	}
+
+	if launchCtx.warmup {
+		launch(launchCtx)
+		return
 	}
 	// we should start serving immediately and postpone launch
 	// in order to enable a JB Gateway to connect as soon as possible
@@ -423,7 +447,11 @@ func launch(launchCtx *LaunchContext) {
 
 func run(launchCtx *LaunchContext) {
 	var args []string
-	args = append(args, "run")
+	if launchCtx.warmup {
+		args = append(args, "warmup")
+	} else {
+		args = append(args, "run")
+	}
 	args = append(args, launchCtx.projectContextDir)
 
 	cmd := remoteDevServerCmd(args, launchCtx)
