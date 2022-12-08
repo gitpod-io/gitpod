@@ -79,9 +79,6 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
                 );
             }
 
-            werft.phase("publish", "publishing Helm chart...");
-            publishHelmChart(werft, "gcr.io/gitpod-io/self-hosted", version);
-
             werft.phase("publish", `preparing GitHub release files...`);
             const releaseFilesTmpDir = exec("mktemp -d", { silent: true }).stdout.trim();
             const releaseTarName = "release.tar.gz";
@@ -111,27 +108,6 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
     }
 
     werft.rootSpan.setAttributes({ "preview.gitpod_built_successfully": true });
-}
-
-/**
- * Publish Charts
- */
-async function publishHelmChart(werft: Werft, imageRepoBase: string, version: string) {
-    werft.phase("publish-charts", "Publish charts");
-    [
-        "gcloud config set project gitpod-io",
-        `leeway build --docker-build-options network=host -Dversion=${version} -DimageRepoBase=${imageRepoBase} --save helm-repo.tar.gz chart:helm`,
-        "tar xzfv helm-repo.tar.gz",
-        "mkdir helm-repo",
-        "cp gitpod*tgz helm-repo/",
-        "gsutil cp gs://charts-gitpod-io-public/index.yaml old-index.yaml",
-        "cp gitpod*.tgz helm-repo/",
-        "helm3 repo index --merge old-index.yaml helm-repo",
-        "gsutil -m rsync -r helm-repo/ gs://charts-gitpod-io-public/",
-    ].forEach((cmd) => {
-        exec(cmd, { slice: "publish-charts" });
-    });
-    werft.done("publish-charts");
 }
 
 function publishKots(werft: Werft, jobConfig: JobConfig) {
