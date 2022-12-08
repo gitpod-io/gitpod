@@ -23,7 +23,6 @@ import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { ReactComponent as UsageIcon } from "../images/usage-default.svg";
 import { toRemoteURL } from "../projects/render-utils";
 import { WorkspaceType } from "@gitpod/gitpod-protocol";
-import PillLabel from "./PillLabel";
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -265,26 +264,6 @@ function UsageView({ attributionId }: UsageViewProps) {
                                             <div className="flex text-lg text-gray-600 font-semibold">
                                                 <CreditsSvg className="my-auto mr-1" />
                                                 <span>{totalCreditsUsed.toLocaleString()} Credits</span>
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-col truncate mt-8 text-sm">
-                                            <div className="text-gray-400 dark:text-gray-500 text-sm text-left">
-                                                <strong>Usage</strong> feature is in{" "}
-                                                <PillLabel
-                                                    type="warn"
-                                                    className="font-semibold mt-2 ml-0 py-0.5 px-1 self-center"
-                                                >
-                                                    <a href="https://www.gitpod.io/docs/references/gitpod-releases">
-                                                        <span className="text-xs">Early Access</span>
-                                                    </a>
-                                                </PillLabel>
-                                                <br />
-                                                <a
-                                                    href="https://github.com/gitpod-io/gitpod/issues/12636"
-                                                    className="gp-link"
-                                                >
-                                                    Send feedback
-                                                </a>
                                             </div>
                                         </div>
                                     </div>
