@@ -44,4 +44,3 @@ imports:
     - path: ${WORKSPACE_ROOT}/operations/observability/mixins/workspace/rules/satellite
     - path: ${WORKSPACE_ROOT}/operations/observability/mixins/meta/rules
     - path: ${WORKSPACE_ROOT}/operations/observability/mixins/IDE/rules
-    - path: ${WORKSPACE_ROOT}/operations/observability/mixins/self-hosted/rules/cardinality-analysis
