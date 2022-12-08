@@ -8,6 +8,7 @@ import { PersonalAccessToken } from "@gitpod/public-api/lib/gitpod/experimental/
 import dayjs from "dayjs";
 import { ContextMenuEntry } from "../components/ContextMenu";
 import { ItemFieldContextMenu } from "../components/ItemsList";
+import Tooltip from "../components/Tooltip";
 import { ReactComponent as ExclamationIcon } from "../images/exclamation.svg";
 import { AllPermissions } from "./PersonalAccessTokens";
 
@@ -19,6 +20,7 @@ interface TokenEntryProps {
 function TokenEntry(props: TokenEntryProps) {
     const expirationDay = dayjs(props.token.expirationTime!.toDate());
     const expired = expirationDay.isBefore(dayjs());
+    const expirationDateString = expirationDay.format("MMM D, YYYY, hh:mm A");
 
     const getScopes = () => {
         if (!props.token.scopes) {
@@ -44,7 +46,11 @@ function TokenEntry(props: TokenEntryProps) {
                 <div className="flex items-center w-3/12 text-gray-400">
                     <span className={"flex items-center gap-1 truncate" + (expired ? " text-orange-600" : "")}>
                         <span>{expirationDay.format("MMM D, YYYY")}</span>
-                        {expired && <ExclamationIcon fill="#D97706" className="h-4 w-4" />}
+                        {expired && (
+                            <Tooltip content={expirationDateString}>
+                                <ExclamationIcon fill="#D97706" className="h-4 w-4" />
+                            </Tooltip>
+                        )}
                     </span>
                 </div>
                 <div className="flex items-center justify-end w-1/12">
