@@ -36,6 +36,9 @@ export interface IClientCallMetrics {
     sent(labels: IGrpcCallMetricsLabels): void;
     received(labels: IGrpcCallMetricsLabels): void;
     handled(labels: IGrpcCallMetricsLabelsWithCode): void;
+    startHandleTimer(
+        labels: IGrpcCallMetricsLabels,
+    ): (labels?: Partial<Record<string, string | number>> | undefined) => number;
 }
 
 export function getGrpcMethodType(requestStream: boolean, responseStream: boolean): GrpcMethodType {

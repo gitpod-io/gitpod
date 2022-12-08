@@ -49,6 +49,8 @@ export function prometheusClientMiddleware(metrics: IClientCallMetrics): ClientM
 
         metrics.started(labels);
 
+        const stopTimer = metrics.startHandleTimer(labels);
+
         let settled = false;
         let status: Status = Status.OK;
 
@@ -87,6 +89,7 @@ export function prometheusClientMiddleware(metrics: IClientCallMetrics): ClientM
             if (!settled) {
                 status = Status.CANCELLED;
             }
+            stopTimer({ grpc_code: Status[status] });
             metrics.handled({ ...labels, code: Status[status] });
         }
     };
