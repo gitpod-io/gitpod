@@ -425,9 +425,26 @@
       },
       "targets": [
         {
+          "current": {
+            "selected": false,
+            "text": "VictoriaMetrics",
+            "value": "VictoriaMetrics"
+          },
+          "hide": 0,
+          "includeAll": false,
+          "multi": false,
+          "name": "datasource",
+          "options": [],
+          "query": "prometheus",
+          "refresh": 1,
+          "regex": "",
+          "skipUrlSync": false,
+          "type": "datasource"
+        },
+        {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(rate(gitpod_server_api_calls_total{cluster=~\"$cluster\", method=~\"ts.*\"}[5m])) by (cluster, method) * 60",

@@ -31,7 +31,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "description": "supervisor frontend error rate [2m], including browser VSCode workbench resources load errors",
       "fieldConfig": {
@@ -116,7 +116,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(rate(gitpod_supervisor_frontend_error_total{cluster=~\"$cluster\"}[2m])) by (error, resource) / sum(rate(gitpod_supervisor_frontend_client_total{cluster=~\"$cluster\"}[2m]))",
@@ -137,6 +137,23 @@
     "list": [
       {
         "current": {
+          "selected": false,
+          "text": "VictoriaMetrics",
+          "value": "VictoriaMetrics"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {
           "selected": true,
           "text": [
             "All"
@@ -147,7 +164,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "P4169E866C3094E38"
+          "uid": "${datasource}"
         },
         "definition": "label_values(up{job=\"ide-metrics\"}, cluster)",
         "hide": 0,

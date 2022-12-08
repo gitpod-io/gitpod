@@ -54,7 +54,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -131,7 +131,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(increase(gitpod_ws_manager_bridge_workspace_instance_update_started_total{cluster=~\"$cluster\", pod=~\"$pod\"}[1m]))",
@@ -142,7 +142,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(increase(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\"}[1m]))",
@@ -235,7 +235,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(increase(gitpod_ws_manager_bridge_workspace_instance_update_started_total{db_write=\"true\", cluster=~\"$cluster\", pod=~\"$pod\"}[10m])) - sum(increase(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_count{db_write=\"true\", cluster=~\"$cluster\", pod=~\"$pod\"}[10m]))",
@@ -328,7 +328,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(increase(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_count{outcome=\"success\", db_write=\"true\"}[1m])) OR 0",
@@ -1594,7 +1594,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "P4169E866C3094E38"
+                "uid": "${datasource}"
               },
               "editorMode": "code",
               "expr": "histogram_quantile(0.5, sum(rate(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_bucket{db_write=\"true\", cluster=~\"$cluster\", pod=~\"$pod\"}[5m])) by (le))",
@@ -2143,7 +2143,7 @@
           "text": "VictoriaMetrics",
           "value": "VictoriaMetrics"
         },
-        "hide": 2,
+        "hide": 0,
         "includeAll": false,
         "multi": false,
         "name": "datasource",

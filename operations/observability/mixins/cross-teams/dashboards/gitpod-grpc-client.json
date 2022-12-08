@@ -45,7 +45,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "description": "Rate of gRPC requests started",
       "fieldConfig": {
@@ -124,7 +124,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(increase(grpc_client_started_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=~\"$type\"}[1m])) by (grpc_service, grpc_method)",
@@ -139,7 +139,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "description": "Rate of requests completed, by status",
       "fieldConfig": {
@@ -218,7 +218,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(increase(grpc_client_handled_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=~\"$type\"}[1m])) by (grpc_service, grpc_method, grpc_code)",
@@ -246,7 +246,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "description": "Rate of errors, by status",
       "fieldConfig": {
@@ -325,7 +325,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(increase(grpc_client_handled_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_code!=\"OK\", grpc_type=~\"$type\"}[1m])) by (grpc_service, grpc_method, grpc_code)",
@@ -353,7 +353,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -432,7 +432,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "histogram_quantile(0.99, \n  sum(rate(grpc_client_handling_seconds_bucket{grpc_type=\"unary\", grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=\"unary\"}[5m])) by (grpc_service, grpc_method, le)\n)",
@@ -460,7 +460,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "description": "Rate of messages received by server",
       "fieldConfig": {
@@ -538,7 +538,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(increase(grpc_client_msg_received_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=~\"$type\"}[1m])) by (grpc_service, grpc_method)",
@@ -553,7 +553,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "description": "Rate of messages sent by server",
       "fieldConfig": {
@@ -631,7 +631,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(increase(grpc_client_msg_sent_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=~\"$type\"}[1m])) by (grpc_service, grpc_method)",
@@ -654,6 +654,23 @@
   "templating": {
     "list": [
       {
+        "current": {
+          "selected": false,
+          "text": "VictoriaMetrics",
+          "value": "VictoriaMetrics"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
         "allValue": ".*",
         "current": {
           "selected": true,
@@ -666,7 +683,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "P4169E866C3094E38"
+          "uid": "${datasource}"
         },
         "definition": "label_values(grpc_client_started_total, grpc_service)",
         "description": "gRPC Service Name",
@@ -699,7 +716,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "P4169E866C3094E38"
+          "uid": "${datasource}"
         },
         "definition": "label_values(grpc_client_started_total{grpc_service=~\"$service\"}, grpc_method)",
         "description": "gRPC Method Name",
@@ -732,7 +749,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "P4169E866C3094E38"
+          "uid": "${datasource}"
         },
         "definition": "label_values(grpc_client_started_total{grpc_service=~\"$service\", grpc_method=~\"$method\"}, grpc_type)",
         "description": "gRPC request type - bidirectional stream, server stream, unary, client_stream",
