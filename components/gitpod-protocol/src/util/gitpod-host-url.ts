@@ -93,6 +93,10 @@ export class GitpodHostUrl {
         return this.with((url) => ({ pathname: "/" }));
     }
 
+    asBilling(): GitpodHostUrl {
+        return this.with((url) => ({ pathname: "/billing" }));
+    }
+
     asLogin(): GitpodHostUrl {
         return this.with((url) => ({ pathname: "/login" }));
     }

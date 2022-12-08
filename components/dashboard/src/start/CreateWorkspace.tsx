@@ -10,7 +10,6 @@ import {
     RunningWorkspacePrebuildStarting,
     ContextURL,
     DisposableCollection,
-    Team,
     GitpodServer,
 } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -26,10 +25,8 @@ import PrebuildLogs from "../components/PrebuildLogs";
 import FeedbackComponent from "../feedback-form/FeedbackComponent";
 import { isGitpodIo } from "../utils";
 import { BillingAccountSelector } from "../components/BillingAccountSelector";
-import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { TeamsContext } from "../teams/teams-context";
-import Alert from "../components/Alert";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
+import { UsageLimitReachedModal } from "../components/UsageLimitReachedModal";
 
 export interface CreateWorkspaceProps {
     contextUrl: string;
@@ -378,50 +375,6 @@ function LimitReachedOutOfHours() {
                 for your workspaces.
             </p>
         </LimitReachedModal>
-    );
-}
-function UsageLimitReachedModal(p: { hints: any }) {
-    const { teams } = useContext(TeamsContext);
-    // const [attributionId, setAttributionId] = useState<AttributionId | undefined>();
-    const [attributedTeam, setAttributedTeam] = useState<Team | undefined>();
-
-    useEffect(() => {
-        const attributionId: AttributionId | undefined = p.hints && p.hints.attributionId;
-        if (attributionId) {
-            // setAttributionId(attributionId);
-            if (attributionId.kind === "team") {
-                const team = teams?.find((t) => t.id === attributionId.teamId);
-                setAttributedTeam(team);
-            }
-        }
-    }, []);
-
-    const attributedTeamName = attributedTeam?.name;
-    return (
-        <Modal visible={true} closeable={false} onClose={() => {}}>
-            <h3 className="flex">
-                <span className="flex-grow">Usage Limit Reached</span>
-            </h3>
-            <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-6">
-                <Alert type="error" className="app-container rounded-md">
-                    You have reached the <strong>usage limit</strong> of your billing account.
-                </Alert>
-                <p className="mt-3 text-base text-gray-600 dark:text-gray-300">
-                    {"Contact a team owner "}
-                    {attributedTeamName && (
-                        <>
-                            of <strong>{attributedTeamName} </strong>
-                        </>
-                    )}
-                    to increase the usage limit, or change your <a href="/billing">billing settings</a>.
-                </p>
-            </div>
-            <div className="flex justify-end mt-6 space-x-2">
-                <a href={gitpodHostUrl.asDashboard().toString()}>
-                    <button className="secondary">Go to Dashboard</button>
-                </a>
-            </div>
-        </Modal>
     );
 }
 
