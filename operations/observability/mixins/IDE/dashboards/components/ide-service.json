@@ -322,7 +322,7 @@
             "uid": "P4169E866C3094E38"
           },
           "editorMode": "code",
-          "expr": "sum(rate(grpc_client_handled_total{grpc_service=\"ide_service_api.IDEService\",grpc_code!=\"OK\"})[2m])/sum(rate(grpc_client_handled_total{grpc_service=\"ide_service_api.IDEService\"})[2m])",
+          "expr": "sum(rate(grpc_client_handled_total{grpc_service=\"ide_service_api.IDEService\",grpc_code!=\"OK\"}[2m]))/sum(rate(grpc_client_handled_total{grpc_service=\"ide_service_api.IDEService\"}[2m]))",
           "legendFormat": "total ratio",
           "range": true,
           "refId": "A"
@@ -419,7 +419,7 @@
             "uid": "P4169E866C3094E38"
           },
           "editorMode": "code",
-          "expr": "sum by (grpc_code) (rate(grpc_client_handled_total{grpc_service=\"ide_service_api.IDEService\",grpc_code!=\"OK\"})[2m])/ignoring(grpc_code) group_left sum(rate(grpc_client_handled_total{grpc_service=\"ide_service_api.IDEService\"})[2m])",
+          "expr": "sum by (grpc_code) (rate(grpc_client_handled_total{grpc_service=\"ide_service_api.IDEService\",grpc_code!=\"OK\"}[2m]))/ignoring(grpc_code) group_left sum(rate(grpc_client_handled_total{grpc_service=\"ide_service_api.IDEService\"}[2m]))",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -722,7 +722,7 @@
             "uid": "P4169E866C3094E38"
           },
           "editorMode": "code",
-          "expr": "sum(rate(grpc_server_handled_total{grpc_service=\"ide_service_api.IDEService\",grpc_code!=\"OK\"})[2m])/sum(rate(grpc_server_handled_total{grpc_service=\"ide_service_api.IDEService\"})[2m])",
+          "expr": "sum(rate(grpc_server_handled_total{grpc_service=\"ide_service_api.IDEService\",grpc_code!=\"OK\"}[2m]))/sum(rate(grpc_server_handled_total{grpc_service=\"ide_service_api.IDEService\"}[2m]))",
           "legendFormat": "total ratio",
           "range": true,
           "refId": "A"
@@ -819,7 +819,7 @@
             "uid": "P4169E866C3094E38"
           },
           "editorMode": "code",
-          "expr": "sum by (grpc_code) (rate(grpc_server_handled_total{grpc_service=\"ide_service_api.IDEService\",grpc_code!=\"OK\"})[2m])/ignoring(grpc_code) group_left sum(rate(grpc_server_handled_total{grpc_service=\"ide_service_api.IDEService\"})[2m])",
+          "expr": "sum by (grpc_code) (rate(grpc_server_handled_total{grpc_service=\"ide_service_api.IDEService\",grpc_code!=\"OK\"}[2m]))/ignoring(grpc_code) group_left sum(rate(grpc_server_handled_total{grpc_service=\"ide_service_api.IDEService\"}[2m]))",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
