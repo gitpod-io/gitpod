@@ -12,7 +12,7 @@ import Tooltip from "../components/Tooltip";
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import CheckBox from "../components/CheckBox";
-import { User } from "@gitpod/gitpod-protocol";
+import { User, makeIdeVersionHumanReadable } from "@gitpod/gitpod-protocol";
 import PillLabel from "../components/PillLabel";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
@@ -94,7 +94,12 @@ export default function SelectIDE(props: SelectIDEProps) {
                                     const selected = defaultIde === id;
                                     const version = useLatestVersion ? option.latestImageVersion : option.imageVersion;
                                     const onSelect = () => actuallySetDefaultIde(id);
-                                    return renderIdeOption(option, selected, version, onSelect);
+                                    return renderIdeOption(
+                                        option,
+                                        selected,
+                                        makeIdeVersionHumanReadable(version),
+                                        onSelect,
+                                    );
                                 })}
                             </div>
                             {ideOptions.options[defaultIde]?.notes && (

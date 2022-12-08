@@ -20,3 +20,4 @@ export * from "./snapshot-url";
 export * from "./oss-allowlist";
 export * from "./installation-admin-protocol";
 export * from "./webhook-event";
+export * from "./ide-protocol";

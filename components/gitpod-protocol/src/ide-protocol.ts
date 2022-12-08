@@ -145,3 +145,27 @@ export interface IDEOption {
      */
     latestImageVersion?: string;
 }
+
+/**
+ * Takes a version string of the form `X.Y.Z-<pre-release-tag>` and returns a human-readable version string
+ * where the pre-release tag is capitalized and separated from the version number by a space.
+ *
+ * @example
+ * makeIdeVersionHumanReadable("1.74.0-insider") // returns "1.74.0 Insider"
+ *
+ * @param [versionString] - The version string to convert to human-readable format
+ * @returns A human-readable version string, or `undefined` if `versionString` is falsy
+ */
+export const makeIdeVersionHumanReadable = (versionString?: string): string | undefined => {
+    if (!versionString) {
+        return undefined;
+    }
+
+    let [version, pre] = versionString.split("-");
+    if (pre) {
+        // Capitalize the string, so that 1.74.0-insider becomes 1.74.0 Insider
+        pre = pre[0].toUpperCase() + pre.slice(1);
+    }
+
+    return [version, pre].join(" ").trim();
+};
