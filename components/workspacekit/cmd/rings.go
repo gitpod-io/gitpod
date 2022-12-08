@@ -22,6 +22,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -78,21 +79,7 @@ var ring0Cmd = &cobra.Command{
 
 		defer log.Info("ring0 stopped")
 
-		ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
-		defer cancel()
-
-		client, err := connectToInWorkspaceDaemonService(ctx)
-		if err != nil {
-			log.WithError(err).Error("cannot connect to daemon from ring0")
-			return
-		}
-
-		prep, err := client.PrepareForUserNS(ctx, &daemonapi.PrepareForUserNSRequest{})
-		if err != nil {
-			log.WithError(err).Fatal("cannot prepare for user namespaces")
-			return
-		}
-		client.Close()
+		var err error
 
 		defer func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -119,10 +106,6 @@ var ring0Cmd = &cobra.Command{
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		cmd.Env = append(os.Environ(),
-			"WORKSPACEKIT_FSSHIFT="+prep.FsShift.String(),
-			fmt.Sprintf("WORKSPACEKIT_NO_WORKSPACE_MOUNT=%v", prep.FullWorkspaceBackup || prep.PersistentVolumeClaim),
-		)
 
 		if err := cmd.Start(); err != nil {
 			log.WithError(err).Error("failed to start ring0")
@@ -210,7 +193,7 @@ var ring1Cmd = &cobra.Command{
 
 		defer log.Info("ring1 stopped")
 
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 		defer cancel()
 
 		mapping := []*daemonapi.WriteIDMappingRequest_Mapping{
@@ -258,11 +241,23 @@ var ring1Cmd = &cobra.Command{
 			log.WithError(err).Fatal("cannot create tempdir")
 		}
 
-		var fsshift api.FSShiftMethod
-		if v, ok := api.FSShiftMethod_value[os.Getenv("WORKSPACEKIT_FSSHIFT")]; !ok {
-			log.WithField("fsshift", os.Getenv("WORKSPACEKIT_FSSHIFT")).Fatal("unknown FS shift method")
-		} else {
-			fsshift = api.FSShiftMethod(v)
+		client, err := connectToInWorkspaceDaemonService(ctx)
+		if err != nil {
+			log.WithError(err).Error("cannot connect to daemon from ring0")
+			return
+		}
+		var closeOnce sync.Once
+		closeClient := func() {
+			closeOnce.Do(func() { client.Close() })
+		}
+		defer closeClient()
+
+		prep, err := client.PrepareForUserNS(ctx, &daemonapi.PrepareForUserNSRequest{
+			UsernsPid: int64(os.Getpid()),
+		})
+		if err != nil {
+			log.WithError(err).Fatal("cannot prepare for user namespaces")
+			return
 		}
 
 		type mnte struct {
@@ -273,8 +268,8 @@ var ring1Cmd = &cobra.Command{
 		}
 
 		var mnts []mnte
-		switch fsshift {
-		case api.FSShiftMethod_FUSE:
+		switch prep.FsShift {
+		case api.FSShiftMethod_FUSE, api.FSShiftMethod_IDMAPPED:
 			mnts = append(mnts,
 				mnte{Target: "/", Source: "/.workspace/mark", Flags: unix.MS_BIND | unix.MS_REC},
 			)
@@ -283,7 +278,7 @@ var ring1Cmd = &cobra.Command{
 				mnte{Target: "/", Source: "/.workspace/mark", FSType: "shiftfs"},
 			)
 		default:
-			log.WithField("fsshift", fsshift).Fatal("unknown FS shift method")
+			log.WithField("fsshift", prep.FsShift).Fatal("unknown FS shift method")
 		}
 
 		procMounts, err := ioutil.ReadFile("/proc/mounts")
@@ -320,7 +315,7 @@ var ring1Cmd = &cobra.Command{
 		// FWB workspaces do not require mounting /workspace
 		// if that is done, the backup will not contain any change in the directory
 		// same applies to persistent volume claims, we cannot mount /workspace folder when PVC is used
-		if os.Getenv("WORKSPACEKIT_NO_WORKSPACE_MOUNT") != "true" {
+		if !prep.PersistentVolumeClaim && !prep.FullWorkspaceBackup {
 			mnts = append(mnts,
 				mnte{Target: "/workspace", Flags: unix.MS_BIND | unix.MS_REC},
 			)
@@ -410,29 +405,21 @@ var ring1Cmd = &cobra.Command{
 			log.WithError(err).Error("cannot create directory for mounting proc")
 			return
 		}
-
-		client, err := connectToInWorkspaceDaemonService(ctx)
-		if err != nil {
-			log.WithError(err).Error("cannot connect to daemon from ring1")
-			return
-		}
 		_, err = client.MountProc(ctx, &daemonapi.MountProcRequest{
 			Target: procLoc,
 			Pid:    int64(cmd.Process.Pid),
 		})
 		if err != nil {
-			client.Close()
 			log.WithError(err).Error("cannot mount proc")
 			return
 		}
 
 		_, err = client.EvacuateCGroup(ctx, &daemonapi.EvacuateCGroupRequest{})
 		if err != nil {
-			client.Close()
 			log.WithError(err).Error("cannot evacuate cgroup")
 			return
 		}
-		client.Close()
+		defer closeClient()
 
 		// We have to wait for ring2 to come back to us and connect to the socket we've passed along.
 		// There's a chance that ring2 crashes or misbehaves, so we don't want to wait forever, hence
@@ -496,7 +483,7 @@ var ring1Cmd = &cobra.Command{
 		_, err = msgutil.MarshalToWriter(ring2Conn, ringSyncMsg{
 			Stage:   1,
 			Rootfs:  ring2Root,
-			FSShift: fsshift,
+			FSShift: prep.FsShift,
 		})
 		if err != nil {
 			log.WithError(err).Error("cannot send ring sync msg to ring2")

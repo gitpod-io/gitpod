@@ -494,7 +494,7 @@ proto.iws.PrepareForUserNSRequest.prototype.toObject = function(opt_includeInsta
  */
 proto.iws.PrepareForUserNSRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-
+    usernsPid: jspb.Message.getFieldWithDefault(msg, 1, 0)
   };
 
   if (includeInstance) {
@@ -531,6 +531,10 @@ proto.iws.PrepareForUserNSRequest.deserializeBinaryFromReader = function(msg, re
     }
     var field = reader.getFieldNumber();
     switch (field) {
+    case 1:
+      var value = /** @type {number} */ (reader.readInt64());
+      msg.setUsernsPid(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -560,6 +564,31 @@ proto.iws.PrepareForUserNSRequest.prototype.serializeBinary = function() {
  */
 proto.iws.PrepareForUserNSRequest.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getUsernsPid();
+  if (f !== 0) {
+    writer.writeInt64(
+      1,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional int64 userns_pid = 1;
+ * @return {number}
+ */
+proto.iws.PrepareForUserNSRequest.prototype.getUsernsPid = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 1, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.iws.PrepareForUserNSRequest} returns this
+ */
+proto.iws.PrepareForUserNSRequest.prototype.setUsernsPid = function(value) {
+  return jspb.Message.setProto3IntField(this, 1, value);
 };
 
 
@@ -3288,7 +3317,8 @@ proto.iws.Memory.prototype.setLimit = function(value) {
  */
 proto.iws.FSShiftMethod = {
   SHIFTFS: 0,
-  FUSE: 1
+  FUSE: 1,
+  IDMAPPED: 2
 };
 
 goog.object.extend(exports, proto.iws);
