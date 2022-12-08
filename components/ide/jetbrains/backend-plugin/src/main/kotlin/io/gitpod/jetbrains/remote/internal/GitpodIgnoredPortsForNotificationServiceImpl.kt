@@ -2,13 +2,12 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
-package io.gitpod.jetbrains.remote.stable
+package io.gitpod.jetbrains.remote.internal
 
-import com.intellij.idea.StartupUtil
+import com.intellij.idea.getServerFutureAsync
 import io.gitpod.jetbrains.remote.GitpodIgnoredPortsForNotificationService
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.future.await
 import org.jetbrains.ide.BuiltInServerManager
 
 @Suppress("OPT_IN_USAGE")
@@ -18,7 +17,7 @@ class GitpodIgnoredPortsForNotificationServiceImpl : GitpodIgnoredPortsForNotifi
     init {
         GlobalScope.launch {
             BuiltInServerManager.getInstance().waitForStart().port.let { ignorePort(it) }
-            StartupUtil.getServerFuture().await().port?.let { ignorePort(it) }
+            getServerFutureAsync().await()?.port?.let { ignorePort(it) }
         }
     }
 

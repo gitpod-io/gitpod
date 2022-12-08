@@ -6,6 +6,7 @@ package io.gitpod.jetbrains.remote
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.CommandLineProcessor
 import com.intellij.openapi.client.ClientSession
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.service
@@ -37,7 +38,6 @@ import java.util.*
 class GitpodCLIService : RestService() {
 
     private val manager = service<GitpodManager>()
-    private val cliHelperService = service<GitpodCLIHelper>()
 
     override fun getServiceName() = SERVICE_NAME
 
@@ -67,7 +67,7 @@ class GitpodCLIService : RestService() {
             val file = parseFilePath(fileStr) ?: return "invalid file"
             val shouldWait = getBooleanParameter("wait", urlDecoder)
             return withClient(request, context) {
-                cliHelperService.open(file, shouldWait)
+                CommandLineProcessor.doOpenFileOrProject(file, shouldWait).future.await()
             }
         }
         if (operation == "preview") {
