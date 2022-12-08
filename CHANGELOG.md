@@ -1,6 +1,7 @@
 # Change Log
 
 ## December 2022
+- Fixed an issue where a stopped workspace could not be restarted ([#15216](https://github.com/gitpod-io/gitpod/pull/15216)) - [@Furisto](https://github.com/Furisto)
 - Added versions of all the suppoerted IDEs to the Preferences page ([#15139](https://github.com/gitpod-io/gitpod/pull/15139)) - [@filiptronicek](https://github.com/filiptronicek)
 - Always allow running new prebuilds, regardless of any previous prebuild state ([#15147](https://github.com/gitpod-io/gitpod/pull/15147)) - [@jankeromnes](https://github.com/jankeromnes)
 - [gitpod.io] Disable upgrades to fixed-price monthly plans (Chargebee) for individuals and teams who have pay-as-you-go enabled (Stripe) ([#15092](https://github.com/gitpod-io/gitpod/pull/15092)) - [@jankeromnes](https://github.com/jankeromnes)
