@@ -161,6 +161,7 @@ func main() {
 	}
 
 	if launchCtx.warmup {
+		waitForTasksToFinish()
 		launch(launchCtx)
 		return
 	}
@@ -852,4 +853,67 @@ func resolveProjectContextDir(launchCtx *LaunchContext) string {
 	}
 
 	return launchCtx.projectDir
+}
+
+func waitForTasksToFinish() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var conn *grpc.ClientConn
+	var err error
+
+	for {
+		conn, err = dial(ctx)
+		if err == nil {
+			err = checkTasks(ctx, conn)
+		}
+
+		if err == nil {
+			return
+		}
+
+		log.WithError(err).Error("launcher: failed to check tasks status")
+
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(1 * time.Second):
+		}
+	}
+}
+
+func checkTasks(ctx context.Context, conn *grpc.ClientConn) error {
+	client := supervisor.NewStatusServiceClient(conn)
+	tasksResponse, err := client.TasksStatus(ctx, &supervisor.TasksStatusRequest{Observe: true})
+	if err != nil {
+		return xerrors.Errorf("failed get tasks status client: %w", err)
+	}
+
+	for {
+		var runningTasksCounter int
+
+		resp, err := tasksResponse.Recv()
+		if err != nil {
+			return err
+		}
+
+		for _, task := range resp.Tasks {
+			if task.State != supervisor.TaskState_closed && task.Presentation.Name != "GITPOD_JB_WARMUP_TASK" {
+				runningTasksCounter++
+			}
+		}
+		if runningTasksCounter == 0 {
+			break
+		}
+	}
+
+	return nil
+}
+
+func dial(ctx context.Context) (*grpc.ClientConn, error) {
+	supervisorConn, err := grpc.DialContext(ctx, util.GetSupervisorAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		err = xerrors.Errorf("failed connecting to supervisor: %w", err)
+	}
+	return supervisorConn, err
 }
