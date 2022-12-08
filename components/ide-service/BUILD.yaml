@@ -35,4 +35,4 @@ packages:
 scripts:
   - name: gen-golden-files
     script: |
-      go test -timeout 30s -run ^TestResolveWorkspaceConfig$ github.com/gitpod-io/gitpod/ide-service/pkg/server --force --update
+      go test -timeout 30s -run ./... github.com/gitpod-io/gitpod/ide-service/pkg/server --force --update
