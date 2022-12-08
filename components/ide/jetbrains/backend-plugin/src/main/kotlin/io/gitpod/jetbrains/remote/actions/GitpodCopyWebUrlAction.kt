@@ -2,36 +2,30 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
-package io.gitpod.jetbrains.remote.latest
+package io.gitpod.jetbrains.remote.actions
 
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
-import com.jetbrains.rd.platform.codeWithMe.portForwarding.ClientPortState
+import com.jetbrains.rd.platform.codeWithMe.portForwarding.PerClientPortForwardingManager
 import com.jetbrains.rd.platform.codeWithMe.portForwarding.PortConfiguration
 import com.jetbrains.rd.platform.codeWithMe.portForwarding.PortForwardingDataKeys
-import org.apache.http.client.utils.URIBuilder
+import io.gitpod.jetbrains.remote.internal.GitpodPortForwardingServiceImpl
 import java.awt.datatransfer.StringSelection
 
 @Suppress("ComponentNotRegistered", "UnstableApiUsage")
-class GitpodCopyUrlAction : AnAction() {
+class GitpodCopyWebUrlAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
-        (e.dataContext.getData(PortForwardingDataKeys.PORT)
-                ?.configuration as PortConfiguration.PerClientTcpForwarding?)
-                ?.clientPortState?.let {
-                    if (it is ClientPortState.Assigned) {
-                        CopyPasteManager.getInstance().setContents(StringSelection(
-                                URIBuilder()
-                                        .setScheme("http")
-                                        .setHost(it.clientInterface)
-                                        .setPort(it.clientPort)
-                                        .build()
-                                        .toString())
-                        )
-                    }
-                }
+        e.dataContext.getData(PortForwardingDataKeys.SUGGESTION)?.getSuggestedHostPort()?.let { hostPort ->
+            (service<PerClientPortForwardingManager>().getPorts(hostPort).firstOrNull {
+                it.labels.contains(GitpodPortForwardingServiceImpl.EXPOSED_PORT_LABEL)
+            }?.configuration as PortConfiguration.UrlExposure?)?.exposedUrl?.let {
+                CopyPasteManager.getInstance().setContents(StringSelection(it))
+            }
+        }
     }
 
     override fun update(e: AnActionEvent) {
