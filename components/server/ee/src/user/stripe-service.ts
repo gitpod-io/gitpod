@@ -79,7 +79,11 @@ export class StripeService {
             });
         });
         if (result.data.length > 1) {
-            throw new Error(`Stripe customer '${customerId}') has more than one subscription!`);
+            log.error(`Stripe customer has more than one subscription!`, {
+                attributionId,
+                customerId,
+                subscriptions: result.data.map((s) => s.id),
+            });
         }
         return result.data[0]?.id;
     }
