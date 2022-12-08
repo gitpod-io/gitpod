@@ -29,7 +29,6 @@ import {
 } from "../service/public-api";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { ConnectError } from "@bufbuild/connect-web";
-import PillLabel from "../components/PillLabel";
 
 export default function NewProject() {
     const location = useLocation();
@@ -482,18 +481,6 @@ export default function NewProject() {
                         </div>
                     </div>
                 )}
-                <div className="text-gray-400 dark:text-gray-500 text-sm mt-24 text-left">
-                    <strong>Projects</strong> feature is in{" "}
-                    <PillLabel type="warn" className="font-semibold mt-2 ml-0 py-0.5 px-1 self-center">
-                        <a href="https://www.gitpod.io/docs/references/gitpod-releases">
-                            <span className="text-xs">BETA</span>
-                        </a>
-                    </PillLabel>
-                    &nbsp;&middot;&nbsp;
-                    <a href="https://github.com/gitpod-io/gitpod/issues/5095" className="gp-link">
-                        Send feedback
-                    </a>
-                </div>
             </>
         );
 
