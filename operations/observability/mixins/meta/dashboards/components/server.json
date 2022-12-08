@@ -562,7 +562,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(rate(gitpod_server_api_calls_total{cluster=~\"$cluster\", pod=~\"$pod\", method=~\"$method\", statusCode=\"429\"}[5m])) by (method)",
@@ -811,7 +811,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(\n  rate(container_cpu_usage_seconds_total{container!=\"POD\", cluster=~\"$cluster\", node=~\"$node\", pod=~\"$pod\"}[1m])\n) by (pod, cluster, node)\n/\nsum(\n  kube_pod_container_resource_limits_cpu_cores{container!=\"POD\", cluster=\"$cluster\", pod=~\"$pod\"}\n) by (pod, cluster, node)\n",
@@ -823,7 +823,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(\nrate(container_cpu_cfs_throttled_seconds_total{container!=\"POD\", cluster=~\"$cluster\", node=~\"$node\", pod=~\"$pod\"}[1m])\n) by (pod)",
@@ -1791,7 +1791,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(rate(gitpod_server_http_requests_total{cluster=~\"$cluster\", statusCode=~\"2..\", route=~\"$http_route\"}[5m])) by (cluster)",
@@ -1803,7 +1803,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "expr": "sum(rate(gitpod_server_http_requests_total{cluster=~\"$cluster\", statusCode=~\"3..\", route=~\"$http_route\"}[5m])) by (cluster)",
           "hide": false,
@@ -1815,7 +1815,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "expr": "sum(rate(gitpod_server_http_requests_total{cluster=~\"$cluster\", statusCode=~\"4..\", route=~\"$http_route\"}[5m])) by (cluster)",
           "hide": false,
@@ -1827,7 +1827,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "expr": "sum(rate(gitpod_server_http_requests_total{cluster=~\"$cluster\", statusCode=~\"5..\", route=~\"$http_route\"}[5m])) by (cluster)",
           "hide": false,
@@ -2259,7 +2259,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "P4169E866C3094E38"
+                "uid": "${datasource}"
               },
               "exemplar": true,
               "expr": "sum(\nrate(container_memory_working_set_bytes{container!=\"POD\", container!=\"\", cluster=~\"$cluster\", node=~\"$node\", pod=~\"$pod\"}[1m])\n) by (pod, cluster, node)\n/\nsum(\n  kube_pod_container_resource_limits{container!=\"POD\", cluster=~\"$cluster\", pod=~\"$pod\", resource=\"memory\"}\n) by (pod, cluster, node)\n",
@@ -3023,13 +3023,13 @@
           "text": "VictoriaMetrics",
           "value": "VictoriaMetrics"
         },
-        "hide": 2,
+        "hide": 0,
         "includeAll": false,
         "multi": false,
         "name": "datasource",
         "options": [],
         "query": "prometheus",
-        "refresh": 2,
+        "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
         "type": "datasource"

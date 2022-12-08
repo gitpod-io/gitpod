@@ -44,7 +44,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "description": "VSCode Web workbench resources load failed ratio",
       "fieldConfig": {
@@ -131,7 +131,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(rate(gitpod_vscode_web_load_total{status='failed'}[2m])) /sum(rate(gitpod_vscode_web_load_total{status='loading'}[2m]))",
@@ -1278,13 +1278,13 @@
           "text": "VictoriaMetrics",
           "value": "VictoriaMetrics"
         },
-        "hide": 2,
+        "hide": 0,
         "includeAll": false,
         "multi": false,
         "name": "datasource",
         "options": [],
         "query": "prometheus",
-        "refresh": 2,
+        "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
         "type": "datasource"

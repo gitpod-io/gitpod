@@ -58,7 +58,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -133,7 +133,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": " sum(problem_gauge) by (node)",
@@ -148,7 +148,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -223,7 +223,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(rate(problem_counter[5m])) by (node)",
@@ -238,7 +238,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -312,7 +312,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(rate(problem_counter[5m]))",
@@ -353,7 +353,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -430,7 +430,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(problem_gauge{type=~\"$problem_type\"})",
@@ -471,7 +471,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -548,7 +548,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "exemplar": true,
           "expr": "sum(rate(problem_counter{reason=~\"$problem_counter_reason\"}[5m]))",
@@ -580,7 +580,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "P4169E866C3094E38"
+          "uid": "${datasource}"
         },
         "definition": "label_values(problem_counter,reason)",
         "hide": 0,
@@ -610,7 +610,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "P4169E866C3094E38"
+          "uid": "${datasource}"
         },
         "definition": "label_values(problem_counter,node)",
         "hide": 0,
@@ -640,7 +640,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "P4169E866C3094E38"
+          "uid": "${datasource}"
         },
         "definition": "label_values(problem_gauge,type)",
         "hide": 0,
@@ -664,7 +664,7 @@
           "text": "VictoriaMetrics",
           "value": "VictoriaMetrics"
         },
-        "hide": 2,
+        "hide": 0,
         "includeAll": false,
         "multi": false,
         "name": "datasource",

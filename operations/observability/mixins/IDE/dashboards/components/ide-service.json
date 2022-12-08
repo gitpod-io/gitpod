@@ -44,7 +44,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -125,7 +125,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(rate(grpc_client_handled_total{grpc_service=\"ide_service_api.IDEService\"}[2m]))",
@@ -140,7 +140,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -221,7 +221,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(rate(grpc_client_handled_total{grpc_service=\"ide_service_api.IDEService\"}[2m])) by (grpc_method)",
@@ -236,7 +236,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -319,7 +319,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(rate(grpc_client_handled_total{grpc_service=\"ide_service_api.IDEService\",grpc_code!=\"OK\"})[2m])/sum(rate(grpc_client_handled_total{grpc_service=\"ide_service_api.IDEService\"})[2m])",
@@ -334,7 +334,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -416,7 +416,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum by (grpc_code) (rate(grpc_client_handled_total{grpc_service=\"ide_service_api.IDEService\",grpc_code!=\"OK\"})[2m])/ignoring(grpc_code) group_left sum(rate(grpc_client_handled_total{grpc_service=\"ide_service_api.IDEService\"})[2m])",
@@ -444,7 +444,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -525,7 +525,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(rate(grpc_server_handled_total{grpc_service=\"ide_service_api.IDEService\"}[2m]))",
@@ -540,7 +540,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -621,7 +621,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(rate(grpc_server_handled_total{grpc_service=\"ide_service_api.IDEService\"}[2m])) by (grpc_method)",
@@ -636,7 +636,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -719,7 +719,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(rate(grpc_server_handled_total{grpc_service=\"ide_service_api.IDEService\",grpc_code!=\"OK\"})[2m])/sum(rate(grpc_server_handled_total{grpc_service=\"ide_service_api.IDEService\"})[2m])",
@@ -734,7 +734,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -816,7 +816,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum by (grpc_code) (rate(grpc_server_handled_total{grpc_service=\"ide_service_api.IDEService\",grpc_code!=\"OK\"})[2m])/ignoring(grpc_code) group_left sum(rate(grpc_server_handled_total{grpc_service=\"ide_service_api.IDEService\"})[2m])",
@@ -831,7 +831,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "P4169E866C3094E38"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -909,7 +909,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "histogram_quantile(1, sum(rate(grpc_server_handling_seconds_bucket{grpc_service=\"ide_service_api.IDEService\"}[1m])) by (le))",
@@ -920,7 +920,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "histogram_quantile(0.99, sum(rate(grpc_server_handling_seconds_bucket{grpc_service=\"ide_service_api.IDEService\"}[1m])) by (le))",
@@ -932,7 +932,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "histogram_quantile(0.95, sum(rate(grpc_server_handling_seconds_bucket{grpc_service=\"ide_service_api.IDEService\"}[1m])) by (le))",
@@ -944,7 +944,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "histogram_quantile(0.80, sum(rate(grpc_server_handling_seconds_bucket{grpc_service=\"ide_service_api.IDEService\"}[1m])) by (le))",
@@ -956,7 +956,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P4169E866C3094E38"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "histogram_quantile(0.50, sum(rate(grpc_server_handling_seconds_bucket{grpc_service=\"ide_service_api.IDEService\"}[1m])) by (le))",
@@ -975,7 +975,25 @@
   "style": "dark",
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "VictoriaMetrics",
+          "value": "VictoriaMetrics"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      }
+    ]
   },
   "time": {
     "from": "now-6h",
