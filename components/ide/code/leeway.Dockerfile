@@ -55,6 +55,7 @@ RUN commitVersion=$(cat package.json | jq -r .version) \
 RUN nameShort=$(jq --raw-output '.nameShort' product.json) && \
     nameLong=$(jq --raw-output '.nameLong' product.json) && \
     if [ "$CODE_QUALITY" = "insider" ]; then \
+        ${CODE_VERSION}=${CODE_VERSION}-insider \
         nameShort="$nameShort - Insiders" \
         nameLong="$nameLong - Insiders" \
     ; fi  && \
@@ -67,6 +68,8 @@ RUN nameShort=$(jq --raw-output '.nameShort' product.json) && \
     cat product.json | jq "${jqCommands}" > product.json.tmp && \
     mv product.json.tmp product.json && \
     jq '{quality,nameLong,nameShort}' product.json
+
+ENV CODE_VERSION=$CODE_VERSION
 
 RUN yarn --cwd extensions compile \
     && yarn gulp vscode-web-min \
