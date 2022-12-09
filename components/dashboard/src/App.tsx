@@ -10,14 +10,11 @@ import { Redirect, Route, Switch } from "react-router";
 
 import { Login } from "./Login";
 import { UserContext } from "./user-context";
-import { getSelectedTeamSlug, TeamsContext } from "./teams/teams-context";
 import { ThemeContext } from "./theme-context";
-import { getGitpodService } from "./service/service";
 import { shouldSeeWhatsNew, WhatsNew } from "./whatsnew/WhatsNew";
 import gitpodIcon from "./icons/gitpod.svg";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { useHistory } from "react-router-dom";
-import { trackButtonOrAnchor, trackPathChange, trackLocation } from "./Analytics";
+import { trackButtonOrAnchor, trackPathChange } from "./Analytics";
 import { ContextURL, User } from "@gitpod/gitpod-protocol";
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
 import { Experiment } from "./experiments";
@@ -46,7 +43,6 @@ import {
     projectsPathMainWithParams,
     projectsPathNew,
 } from "./projects/projects.routes";
-import { refreshSearchData } from "./components/RepositoryFinder";
 import { StartWorkspaceModal } from "./workspaces/StartWorkspaceModal";
 import { parseProps } from "./start/StartWorkspace";
 import SelectIDEModal from "./settings/SelectIDEModal";
@@ -55,9 +51,8 @@ import { isGitpodIo, isLocalPreview } from "./utils";
 import Alert from "./components/Alert";
 import { BlockedRepositories } from "./admin/BlockedRepositories";
 import { AppNotifications } from "./AppNotifications";
-import { publicApiTeamsToProtocol, teamsService } from "./service/public-api";
-import { FeatureFlagContext } from "./contexts/FeatureFlagContext";
 import PersonalAccessTokenCreateView from "./settings/PersonalAccessTokensCreateView";
+import { useUserAndTeamsLoader } from "./hooks/use-user-teams-loader";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "./workspaces/Workspaces"));
@@ -159,58 +154,11 @@ export function getURLHash() {
 }
 
 function App() {
-    const { user, setUser, refreshUserBillingMode } = useContext(UserContext);
-    const { teams, setTeams } = useContext(TeamsContext);
     const { setIsDark } = useContext(ThemeContext);
-    const { usePublicApiTeamsService } = useContext(FeatureFlagContext);
-
-    const [loading, setLoading] = useState<boolean>(true);
     const [isWhatsNewShown, setWhatsNewShown] = useState(false);
     const [showUserIdePreference, setShowUserIdePreference] = useState(false);
-    const [isSetupRequired, setSetupRequired] = useState(false);
     const history = useHistory();
-
-    // Loads user & teams
-    useEffect(() => {
-        (async () => {
-            var user: User | undefined;
-            try {
-                user = await getGitpodService().server.getLoggedInUser();
-                setUser(user);
-
-                const teams = usePublicApiTeamsService
-                    ? publicApiTeamsToProtocol((await teamsService.listTeams({})).teams)
-                    : await getGitpodService().server.getTeams();
-
-                {
-                    // if a team was selected previously and we call the root URL (e.g. "gitpod.io"),
-                    // let's continue with the team page
-                    const hash = getURLHash();
-                    const isRoot = window.location.pathname === "/" && hash === "";
-                    if (isRoot) {
-                        try {
-                            const teamSlug = getSelectedTeamSlug();
-                            if (teams.some((t) => t.slug === teamSlug)) {
-                                history.push(`/t/${teamSlug}`);
-                            }
-                        } catch {}
-                    }
-                }
-                setTeams(teams);
-            } catch (error) {
-                console.error(error);
-                if (error && "code" in error) {
-                    if (error.code === ErrorCodes.SETUP_REQUIRED) {
-                        setSetupRequired(true);
-                    }
-                }
-            } finally {
-                trackLocation(!!user);
-            }
-            setLoading(false);
-            (window as any)._gp.path = window.location.pathname; //store current path to have access to previous when path changes
-        })();
-    }, [history, setTeams, setUser, usePublicApiTeamsService]);
+    const { user, teams, isSetupRequired, loading } = useUserAndTeamsLoader();
 
     // Sets theme
     useEffect(() => {
@@ -283,20 +231,6 @@ function App() {
         return () => window.removeEventListener("click", handleButtonOrAnchorTracking, true);
     }, []);
 
-    useEffect(() => {
-        if (user) {
-            refreshSearchData("", user);
-        }
-    }, [user]);
-
-    useEffect(() => {
-        if (!teams) {
-            return;
-        }
-        // Refresh billing mode (side effect on other components per UserContext!)
-        refreshUserBillingMode();
-    }, [teams]);
-
     // redirect to website for any website slugs
     if (isGitpodIo() && isWebsiteSlug(window.location.pathname)) {
         window.location.host = "www.gitpod.io";
@@ -357,6 +291,7 @@ function App() {
         );
     }
 
+    // TODO: this will re-subscribe for every render, maybe move to a useEffect
     window.addEventListener(
         "hashchange",
         () => {
