@@ -4,30 +4,48 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
+import { Portal } from "react-portal";
+import { usePopper } from "react-popper";
 
 export interface TooltipProps {
-    children: React.ReactChild[] | React.ReactChild;
+    children: ReactNode;
     content: string;
     allowWrap?: boolean;
 }
 
 function Tooltip(props: TooltipProps) {
     const [expanded, setExpanded] = useState(false);
+    const [triggerEl, setTriggerEl] = useState<HTMLElement | null>(null);
+    const [tooltipEl, setTooltipEl] = useState<HTMLElement | null>(null);
+
+    // this calculates the positioning for our tooltip
+    const { styles, attributes, update } = usePopper(triggerEl, tooltipEl, {
+        placement: "top",
+    });
+
+    // If the tooltip contents change, force a recalc on positioning
+    useEffect(() => {
+        update && update();
+    }, [update, props.content]);
 
     return (
         <div onMouseLeave={() => setExpanded(false)} onMouseEnter={() => setExpanded(true)} className="relative">
-            <div>{props.children}</div>
+            <div ref={setTriggerEl}>{props.children}</div>
             {expanded ? (
-                <div
-                    style={{ top: "-0.5rem", left: "50%", transform: "translate(-50%, -100%)" }}
-                    className={
-                        `max-w-md mt-2 z-50 py-1 px-2 bg-gray-900 text-gray-100 text-sm absolute flex flex-col border border-gray-200 dark:border-gray-800 rounded-md truncated ` +
-                        (props.allowWrap ? "whitespace-normal" : "whitespace-nowrap")
-                    }
-                >
-                    {props.content}
-                </div>
+                <Portal>
+                    <div
+                        ref={setTooltipEl}
+                        style={styles.popper}
+                        className={
+                            `max-w-md z-50 py-1 px-2 bg-gray-900 text-gray-100 text-sm absolute flex flex-col border border-gray-200 dark:border-gray-800 rounded-md truncated ` +
+                            (props.allowWrap ? "whitespace-normal" : "whitespace-nowrap")
+                        }
+                        {...attributes.popper}
+                    >
+                        {props.content}
+                    </div>
+                </Portal>
             ) : null}
         </div>
     );
