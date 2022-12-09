@@ -47,7 +47,7 @@ import { StartWorkspaceModal } from "./workspaces/StartWorkspaceModal";
 import { parseProps } from "./start/StartWorkspace";
 import SelectIDEModal from "./settings/SelectIDEModal";
 import { StartPage, StartPhase } from "./start/StartPage";
-import { isGitpodIo, isLocalPreview } from "./utils";
+import { isGitpodIo, isLocalPreview, getURLHash } from "./utils";
 import Alert from "./components/Alert";
 import { BlockedRepositories } from "./admin/BlockedRepositories";
 import { AppNotifications } from "./AppNotifications";
@@ -147,10 +147,6 @@ function AdminRoute({ component }: any) {
             }
         />
     );
-}
-
-export function getURLHash() {
-    return window.location.hash.replace(/^[#/]+/, "");
 }
 
 function App() {

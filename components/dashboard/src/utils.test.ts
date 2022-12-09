@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { inResource } from "./utils";
+import { inResource, getURLHash } from "./utils";
 
 test("inResource", () => {
     // Given root path is a part of resources specified
@@ -24,4 +24,15 @@ test("inResource", () => {
 
     // Both resources containing path with subdirectories
     expect(inResource("/admin/teams/someTeam/somePerson", ["/admin/teams"])).toBe(true);
+});
+
+test("urlHash", () => {
+    global.window = Object.create(window);
+    Object.defineProperty(window, "location", {
+        value: {
+            hash: "#https://example.org/user/repo",
+        },
+    });
+
+    expect(getURLHash()).toBe("https://example.org/user/repo");
 });

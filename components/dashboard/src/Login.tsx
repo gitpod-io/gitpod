@@ -21,7 +21,7 @@ import customize from "./images/welcome/customize.svg";
 import fresh from "./images/welcome/fresh.svg";
 import prebuild from "./images/welcome/prebuild.svg";
 import exclamation from "./images/exclamation.svg";
-import { getURLHash } from "./App";
+import { getURLHash } from "./utils";
 import ErrorMessage from "./components/ErrorMessage";
 import { FeatureFlagContext } from "./contexts/FeatureFlagContext";
 import { publicApiTeamsToProtocol, teamsService } from "./service/public-api";
