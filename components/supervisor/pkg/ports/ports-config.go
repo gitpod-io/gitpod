@@ -99,13 +99,15 @@ type ConfigInterace interface {
 type ConfigService struct {
 	workspaceID   string
 	configService config.ConfigInterface
+	gitpodAPI     gitpod.APIInterface
 }
 
 // NewConfigService creates a new instance of ConfigService.
-func NewConfigService(workspaceID string, configService config.ConfigInterface) *ConfigService {
+func NewConfigService(workspaceID string, configService config.ConfigInterface, gitpodAPI gitpod.APIInterface) *ConfigService {
 	return &ConfigService{
 		workspaceID:   workspaceID,
 		configService: configService,
+		gitpodAPI:     gitpodAPI,
 	}
 }
 
