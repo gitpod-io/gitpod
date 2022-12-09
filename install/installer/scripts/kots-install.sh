@@ -89,7 +89,7 @@ EOF
     echo "Gitpod: Installer version - $(/app/installer version | yq e '.version' -)"
 
     echo "Gitpod: Generate the base Installer config"
-    /app/installer config init
+    /app/installer config init --overwrite
 
     if [ "${INSTALLER_DRY_RUN}" != "true" ]; then
         echo "Gitpod: auto-detecting ShiftFS support on host machine"
