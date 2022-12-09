@@ -228,10 +228,12 @@ func NewDirectAccess(c *config.StorageConfig) (DirectAccess, error) {
 	case config.MinIOStorage:
 		return newDirectMinIOAccess(c.MinIOConfig)
 	case config.S3Storage:
-		cfg, err := awsconfig.LoadDefaultConfig(context.TODO())
+		cfg, err := awsconfig.LoadDefaultConfig(context.TODO(), awsconfig.WithSharedConfigFiles([]string{c.S3Config.CredentialsFile}))
 		if err != nil {
 			return nil, err
 		}
+
+		cfg.Region = c.S3Config.Region
 		return newDirectS3Access(s3.NewFromConfig(cfg), S3Config{
 			Bucket: c.S3Config.Bucket,
 		}), nil

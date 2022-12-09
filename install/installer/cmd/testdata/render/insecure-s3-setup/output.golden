@@ -1365,7 +1365,9 @@ data:
           "region": ""
         },
         "s3": {
-          "bucket": "s3-bucket"
+          "bucket": "s3-bucket",
+          "region": "eu-central-1",
+          "credentialsFile": "/mnt/secrets/storage/credentials"
         },
         "blobQuota": 5368709120
       }
@@ -5407,7 +5409,9 @@ data:
               "region": ""
             },
             "s3": {
-              "bucket": "s3-bucket"
+              "bucket": "s3-bucket",
+              "region": "eu-central-1",
+              "credentialsFile": "/mnt/secrets/storage/credentials"
             },
             "blobQuota": 5368709120
           },
@@ -5593,7 +5597,9 @@ data:
             "region": ""
           },
           "s3": {
-            "bucket": "s3-bucket"
+            "bucket": "s3-bucket",
+            "region": "eu-central-1",
+            "credentialsFile": "/mnt/secrets/storage/credentials"
           },
           "blobQuota": 5368709120
         }
@@ -7861,7 +7867,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 445e07c866a3c93106bd3bbea8d6e41231d581da4466823f56ba38aec71aa6fa
+        gitpod.io/checksum_config: 126c848cf0caf89cf5b9500baf766a3a72b812fa165bd2d86cee28be0426fbbe
         seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
       creationTimestamp: null
       labels:
@@ -7906,10 +7912,6 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        - name: AWS_DEFAULT_REGION
-          value: eu-central-1
-        - name: AWS_SHARED_CREDENTIALS_FILE
-          value: /mnt/secrets/storage/credentials
         image: eu.gcr.io/gitpod-core-dev/build/ws-daemon:test
         imagePullPolicy: IfNotPresent
         livenessProbe:
@@ -8800,7 +8802,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: e52c1225c6df6aa54a748f6d6d11d3dddbde305b3f3214bfd37d4a57d60f1ef4
+        gitpod.io/checksum_config: e196337255fbc1cbd15ec4f2f99a8823060b6e3689477810b545cc285816cec8
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8841,10 +8843,6 @@ spec:
           value: "true"
         - name: GRPC_GO_RETRY
           value: "on"
-        - name: AWS_DEFAULT_REGION
-          value: eu-central-1
-        - name: AWS_SHARED_CREDENTIALS_FILE
-          value: /mnt/secrets/storage/credentials
         image: eu.gcr.io/gitpod-core-dev/build/content-service:test
         imagePullPolicy: IfNotPresent
         name: content-service
@@ -10392,7 +10390,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 11dccda151d3297a0b5fabb44daa9924044b587991f228ec1fdbf11c7f4c7dba
+        gitpod.io/checksum_config: f52af4ab6765b6567690f3d7bcaf09e86295ef1b556219c74138faa4cb857170
       creationTimestamp: null
       labels:
         app: gitpod

@@ -111,7 +111,9 @@ type MinIOConfig struct {
 
 // S3Config configures the S3 remote storage backend
 type S3Config struct {
-	Bucket string `json:"bucket"`
+	Bucket          string `json:"bucket"`
+	Region          string `json:"region"`
+	CredentialsFile string `json:"credentialsFile"`
 }
 
 type PProf struct {

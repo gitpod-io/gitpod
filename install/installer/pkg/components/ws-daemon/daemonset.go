@@ -338,11 +338,6 @@ fi
 		return nil, err
 	}
 
-	err = common.AddStorageEnvs(ctx, &podSpec, Component)
-	if err != nil {
-		return nil, err
-	}
-
 	if vol, mnt, env, ok := common.CustomCACertVolume(ctx); ok {
 		podSpec.Volumes = append(podSpec.Volumes, *vol)
 		pod := podSpec.Containers[0]

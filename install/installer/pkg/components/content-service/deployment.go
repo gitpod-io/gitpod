@@ -88,11 +88,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
-	err = common.AddStorageEnvs(ctx, &podSpec, Component)
-	if err != nil {
-		return nil, err
-	}
-
 	return []runtime.Object{
 		&v1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
