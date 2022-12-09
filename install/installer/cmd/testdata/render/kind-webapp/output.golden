@@ -302,7 +302,7 @@ metadata:
 spec:
   maxUnavailable: 1
   selector:
-    matchLabels: 
+    matchLabels:
       app.kubernetes.io/name: rabbitmq
       app.kubernetes.io/instance: rabbitmq
 ---
@@ -2116,13 +2116,13 @@ data:
     slow_query_log=0
     slow_query_log_file=/opt/bitnami/mysql/logs/mysqld.log
     long_query_time=10.0
-    
+
     [client]
     port=3306
     socket=/opt/bitnami/mysql/tmp/mysql.sock
     default-character-set=UTF8
     plugin_dir=/opt/bitnami/mysql/lib/plugin
-    
+
     [manager]
     port=3306
     socket=/opt/bitnami/mysql/tmp/mysql.sock
@@ -3116,7 +3116,7 @@ spec:
       port: 9419
       targetPort: metrics
       nodePort: null
-  selector: 
+  selector:
     app.kubernetes.io/name: rabbitmq
     app.kubernetes.io/instance: rabbitmq
 ---
@@ -3150,7 +3150,7 @@ spec:
     - name: http-stats
       port: 15672
       targetPort: stats
-  selector: 
+  selector:
     app.kubernetes.io/name: rabbitmq
     app.kubernetes.io/instance: rabbitmq
   publishNotReadyAddresses: true
@@ -3205,7 +3205,7 @@ spec:
       protocol: TCP
       targetPort: mysql
       nodePort: null
-  selector: 
+  selector:
     app.kubernetes.io/name: mysql
     app.kubernetes.io/instance: mysql
     app.kubernetes.io/component: primary
@@ -3232,7 +3232,7 @@ spec:
     - name: mysql
       port: 3306
       targetPort: mysql
-  selector: 
+  selector:
     app.kubernetes.io/name: mysql
     app.kubernetes.io/instance: mysql
     app.kubernetes.io/component: primary
@@ -3398,7 +3398,7 @@ spec:
         prometheus.io/port: '9419'
         prometheus.io/scrape: "true"
     spec:
-      
+
       serviceAccountName: rabbitmq
       affinity:
         nodeAffinity:
@@ -3407,7 +3407,7 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_meta
                 operator: Exists
-        
+
       securityContext:
         fsGroup: 1001
       terminationGracePeriodSeconds: 120
@@ -3577,7 +3577,7 @@ spec:
   replicas: 1
   podManagementPolicy: ""
   selector:
-    matchLabels: 
+    matchLabels:
       app.kubernetes.io/name: mysql
       app.kubernetes.io/instance: mysql
       app.kubernetes.io/component: primary
@@ -3596,7 +3596,7 @@ spec:
         app.kubernetes.io/component: primary
     spec:
       serviceAccountName: db
-      
+
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -3604,7 +3604,7 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_meta
                 operator: Exists
-        
+
       securityContext:
         fsGroup: 1001
       initContainers:
@@ -3685,7 +3685,7 @@ spec:
                       password_aux=$(cat "$MYSQL_ROOT_PASSWORD_FILE")
                   fi
                   mysqladmin status -uroot -p"${password_aux}"
-          resources: 
+          resources:
             limits: {}
             requests:
               memory: 128Mi
@@ -3707,7 +3707,7 @@ spec:
   volumeClaimTemplates:
     - metadata:
         name: data
-        labels: 
+        labels:
           app.kubernetes.io/name: mysql
           app.kubernetes.io/instance: mysql
           app.kubernetes.io/component: primary
@@ -4141,7 +4141,7 @@ spec:
       annotations:
         checksum/credentials-secret: 0a5790906818b3f8eeee0bd3b3e990b3ad02d79bb23c62c0d91a4ca010fb5579
     spec:
-      
+
       serviceAccountName: minio
       affinity:
         nodeAffinity:
@@ -4150,7 +4150,7 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_meta
                 operator: Exists
-        
+
       securityContext:
         fsGroup: 1001
       containers:
