@@ -170,6 +170,7 @@ function App() {
     const [isSetupRequired, setSetupRequired] = useState(false);
     const history = useHistory();
 
+    // Loads user & teams
     useEffect(() => {
         (async () => {
             var user: User | undefined;
@@ -209,8 +210,9 @@ function App() {
             setLoading(false);
             (window as any)._gp.path = window.location.pathname; //store current path to have access to previous when path changes
         })();
-    }, []);
+    }, [history, setTeams, setUser, usePublicApiTeamsService]);
 
+    // Sets theme
     useEffect(() => {
         const updateTheme = () => {
             const isDark =
@@ -236,9 +238,9 @@ function App() {
             }
             window.removeEventListener("storage", updateTheme);
         };
-    }, []);
+    }, [setIsDark]);
 
-    // listen and notify Segment of client-side path updates
+    // Setup experiments
     useEffect(() => {
         if (isGitpodIo()) {
             // Choose which experiments to run for this session/user
@@ -246,6 +248,7 @@ function App() {
         }
     }, []);
 
+    // listen and notify Segment of client-side path updates
     useEffect(() => {
         return history.listen((location: any) => {
             const path = window.location.pathname;
@@ -257,9 +260,12 @@ function App() {
         });
     }, [history]);
 
+    // Track button/anchor clicks
     useEffect(() => {
         const handleButtonOrAnchorTracking = (props: MouseEvent) => {
             var curr = props.target as HTMLElement;
+
+            // TODO: Look at using curr.closest('a,button') instead - determine if divs w/ onClick are being used
             //check if current target or any ancestor up to document is button or anchor
             while (!(curr instanceof Document)) {
                 if (
