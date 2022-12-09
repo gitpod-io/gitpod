@@ -8,7 +8,7 @@ set -e
 if [ "${NO_VERIFY_JB_PLUGIN}" == "true" ]; then
     echo "build.sh: skip verify plugin step"
 else
-    ./gradlew -PsupervisorApiProjectPath=components-supervisor-api-java--lib/ -PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/ -PenvironmentName="$JB_QUALIFIER" runPluginVerifier
+    ./gradlew -PsupervisorApiProjectPath=components-supervisor-api-java--lib/ -PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/ -PenvironmentName="$JB_QUALIFIER" -Dgradle.user.home="/workspace/.gradle-$JB_QUALIFIER" -Pplugin.verifier.home.dir="$HOME/.cache/pluginVerifier-$JB_QUALIFIER" runPluginVerifier
 fi
-./gradlew -PsupervisorApiProjectPath=components-supervisor-api-java--lib/ -PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/ -PenvironmentName="$JB_QUALIFIER" buildPlugin
+./gradlew -PsupervisorApiProjectPath=components-supervisor-api-java--lib/ -PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/ -PenvironmentName="$JB_QUALIFIER" -Dgradle.user.home="/workspace/.gradle-$JB_QUALIFIER" buildPlugin
 unzip ./build/distributions/gitpod-remote.zip -d ./build
