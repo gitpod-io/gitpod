@@ -24,6 +24,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -151,6 +152,16 @@ func (s IDEKind) String() string {
 func Run(options ...RunOption) {
 	exitCode := 0
 	defer handleExit(&exitCode)
+	defer func() {
+		r := recover()
+		if r == nil {
+			return
+		}
+		log.WithField("cause", r).WithField("stack", string(debug.Stack())).Error("panicked")
+		if exitCode == 0 {
+			exitCode = 1
+		}
+	}()
 
 	opts := runOptions{
 		Args: os.Args,
