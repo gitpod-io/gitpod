@@ -52,7 +52,7 @@ import Alert from "./components/Alert";
 import { BlockedRepositories } from "./admin/BlockedRepositories";
 import { AppNotifications } from "./AppNotifications";
 import PersonalAccessTokenCreateView from "./settings/PersonalAccessTokensCreateView";
-import { useUserAndTeamsLoader } from "./hooks/use-user-teams-loader";
+import { useUserAndTeamsLoader } from "./hooks/use-user-and-teams-loader";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "./workspaces/Workspaces"));
