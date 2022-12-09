@@ -35,29 +35,27 @@ function TokenEntry(props: TokenEntryProps) {
     };
 
     return (
-        <>
-            <div className="rounded-xl whitespace-nowrap flex space-x-2 py-4 px-4 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light group">
-                <div className="flex items-center pr-3 w-4/12">
-                    <span className="truncate">{props.token.name || ""}</span>
-                </div>
-                <div className="flex items-center w-4/12 text-gray-400 font-medium">
-                    <span className="truncate whitespace-pre-line">{getScopes()}</span>
-                </div>
-                <div className="flex items-center w-3/12 text-gray-400">
-                    <span className={"flex items-center gap-1 truncate" + (expired ? " text-orange-600" : "")}>
-                        <span>{expirationDay.format("MMM D, YYYY")}</span>
-                        {expired && (
-                            <Tooltip content={expirationDateString}>
-                                <ExclamationIcon fill="#D97706" className="h-4 w-4" />
-                            </Tooltip>
-                        )}
-                    </span>
-                </div>
-                <div className="flex items-center justify-end w-1/12">
-                    <ItemFieldContextMenu menuEntries={props.menuEntries} />
-                </div>
+        <div className="rounded-xl whitespace-nowrap flex space-x-2 py-4 px-4 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light group">
+            <div className="flex items-center pr-3 w-4/12">
+                <span className="truncate">{props.token.name || ""}</span>
             </div>
-        </>
+            <div className="flex items-center w-4/12 text-gray-400 font-medium">
+                <span className="truncate whitespace-pre-line">{getScopes()}</span>
+            </div>
+            <div className="flex items-center w-3/12 text-gray-400">
+                <span className={"flex items-center gap-1 truncate" + (expired ? " text-orange-600" : "")}>
+                    <span>{expirationDay.format("MMM D, YYYY")}</span>
+                    {expired && (
+                        <Tooltip content={expirationDateString}>
+                            <ExclamationIcon fill="#D97706" className="h-4 w-4" />
+                        </Tooltip>
+                    )}
+                </span>
+            </div>
+            <div className="flex items-center justify-end w-1/12">
+                <ItemFieldContextMenu menuEntries={props.menuEntries} />
+            </div>
+        </div>
     );
 }
 
