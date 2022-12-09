@@ -185,6 +185,7 @@ type StripeConfig struct {
 }
 
 type IAMConfig struct {
+	OIDCClientsSecretName string `json:"oidsClientsConfigSecret,omitempty"`
 }
 
 type WebAppConfig struct {
