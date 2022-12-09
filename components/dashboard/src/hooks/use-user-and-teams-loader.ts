@@ -72,7 +72,7 @@ export const useUserAndTeamsLoader = () => {
         }
         // Refresh billing mode (side effect on other components per UserContext!)
         refreshUserBillingMode();
-    }, [refreshUserBillingMode, teams]);
+    }, [teams, refreshUserBillingMode]);
 
     // TODO: Can this check happen when we load the user rather than a separate effect?
     useEffect(() => {
