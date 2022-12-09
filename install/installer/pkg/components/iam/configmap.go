@@ -11,6 +11,7 @@ import (
 	"github.com/gitpod-io/gitpod/iam/pkg/config"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -38,6 +39,16 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 		DatabaseConfigPath: databaseSecretMountPath,
 	}
+
+	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		_, _, path, ok := getOIDCClientsConfig(ucfg)
+		if !ok {
+			return nil
+		}
+
+		cfg.OIDCClientsConfigFile = path
+		return nil
+	})
 
 	fc, err := common.ToJSONString(cfg)
 	if err != nil {

@@ -7,10 +7,12 @@ package iam
 const (
 	Component = "iam"
 
-	GRPCPortName      = "grpc"
-	GRPCContainerPort = 9001
-	GRPCServicePort   = 9001
-	HTTPContainerPort = 9002
-	HTTPServicePort   = 9002
-	HTTPPortName      = "http"
+	GRPCPortName               = "grpc"
+	GRPCContainerPort          = 9001
+	GRPCServicePort            = 9001
+	HTTPContainerPort          = 9002
+	HTTPServicePort            = 9002
+	HTTPPortName               = "http"
+	oidcClientsSecretMountPath = "oidc-clients-secret"
+	oidcClientsSecretFilename  = "config.json"
 )
