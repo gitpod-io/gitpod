@@ -13,7 +13,6 @@ import (
 	backoff "github.com/cenkalti/backoff/v4"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
-	"github.com/gitpod-io/gitpod/supervisor/pkg/serverapi"
 )
 
 // ExposedPort represents an exposed pprt
@@ -60,10 +59,10 @@ func (*NoopExposedPorts) Expose(ctx context.Context, local uint32, public bool) 
 // GitpodExposedPorts uses a connection to the Gitpod server to implement
 // the ExposedPortsInterface.
 type GitpodExposedPorts struct {
-	WorkspaceID   string
-	InstanceID    string
-	WorkspaceUrl  string
-	gitpodService serverapi.APIInterface
+	WorkspaceID  string
+	InstanceID   string
+	WorkspaceUrl string
+	C            gitpod.APIInterface
 
 	localExposedPort   []uint32
 	localExposedNotice chan struct{}
@@ -79,12 +78,12 @@ type exposePortRequest struct {
 }
 
 // NewGitpodExposedPorts creates a new instance of GitpodExposedPorts
-func NewGitpodExposedPorts(workspaceID string, instanceID string, workspaceUrl string, gitpodService serverapi.APIInterface) *GitpodExposedPorts {
+func NewGitpodExposedPorts(workspaceID string, instanceID string, workspaceUrl string, gitpodService gitpod.APIInterface) *GitpodExposedPorts {
 	return &GitpodExposedPorts{
-		WorkspaceID:   workspaceID,
-		InstanceID:    instanceID,
-		WorkspaceUrl:  workspaceUrl,
-		gitpodService: gitpodService,
+		WorkspaceID:  workspaceID,
+		InstanceID:   instanceID,
+		WorkspaceUrl: workspaceUrl,
+		C:            gitpodService,
 
 		// allow clients to submit 30 expose requests without blocking
 		requests:           make(chan *exposePortRequest, 30),
@@ -121,7 +120,7 @@ func (g *GitpodExposedPorts) Observe(ctx context.Context) (<-chan []ExposedPort,
 		defer close(reschan)
 		defer close(errchan)
 
-		updates, err := g.gitpodService.InstanceUpdates(ctx, g.InstanceID, g.WorkspaceID)
+		updates, err := g.C.InstanceUpdates(ctx, g.InstanceID)
 		if err != nil {
 			errchan <- err
 			return
@@ -205,7 +204,7 @@ func (g *GitpodExposedPorts) doExpose(req *exposePortRequest) {
 	exp.Reset()
 	attempt := 0
 	for {
-		_, err = g.gitpodService.OpenPort(req.ctx, g.WorkspaceID, req.port)
+		_, err = g.C.OpenPort(req.ctx, g.WorkspaceID, req.port)
 		if err == nil || req.ctx.Err() != nil || attempt == 5 {
 			return
 		}

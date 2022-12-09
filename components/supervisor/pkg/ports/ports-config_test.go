@@ -94,7 +94,9 @@ func TestPortsConfig(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			service := NewConfigService(workspaceID, configService)
+			gitpodAPI := gitpod.NewMockAPIInterface(ctrl)
+
+			service := NewConfigService(workspaceID, configService, gitpodAPI)
 			updates, errors := service.Observe(context)
 
 			actual := &PortConfigTestExpectations{}
