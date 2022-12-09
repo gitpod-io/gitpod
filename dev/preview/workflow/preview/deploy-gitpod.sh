@@ -446,6 +446,25 @@ yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.chargebeeSecret" 
 yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeSecret" "stripe-api-keys"
 yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeConfig" "stripe-config"
 
+#
+# IAM
+#
+
+# copy secret from werft's space
+kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" -n werft get secret preview-envs-oidc-clients-config-secret -o yaml > preview-envs-oidc-clients-config-secret.secret.yaml
+yq d -i preview-envs-oidc-clients-config-secret.secret.yaml metadata.name
+yq d -i preview-envs-oidc-clients-config-secret.secret.yaml metadata.creationTimestamp
+yq d -i preview-envs-oidc-clients-config-secret.secret.yaml metadata.uid
+yq d -i preview-envs-oidc-clients-config-secret.secret.yaml metadata.resourceVersion
+yq w -i preview-envs-oidc-clients-config-secret.secret.yaml metadata.name "oidc-clients-config-secret"
+yq w -i preview-envs-oidc-clients-config-secret.secret.yaml metadata.namespace "default"
+kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" apply -f preview-envs-oidc-clients-config-secret.secret.yaml
+rm -f preview-envs-oidc-clients-config-secret.secret.yaml
+
+# enable config
+yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.iam.oidsClientsConfigSecret" "oidc-clients-config-secret"
+
+
 log_success "Generated config at $INSTALLER_CONFIG_PATH"
 
 # ========
