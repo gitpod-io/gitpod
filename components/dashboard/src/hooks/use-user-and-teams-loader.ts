@@ -31,7 +31,9 @@ export const useUserAndTeamsLoader = () => {
                 loggedInUser = await getGitpodService().server.getLoggedInUser();
                 setUser(loggedInUser);
 
-                const teams = usePublicApiTeamsService
+                // TODO: atm this feature-flag won't have been set yet, as it's dependant on user/teams
+                // so it will always be false when this runs
+                const loadedTeams = usePublicApiTeamsService
                     ? publicApiTeamsToProtocol((await teamsService.listTeams({})).teams)
                     : await getGitpodService().server.getTeams();
 
@@ -43,13 +45,13 @@ export const useUserAndTeamsLoader = () => {
                     if (isRoot) {
                         try {
                             const teamSlug = getSelectedTeamSlug();
-                            if (teams.some((t) => t.slug === teamSlug)) {
+                            if (loadedTeams.some((t) => t.slug === teamSlug)) {
                                 history.push(`/t/${teamSlug}`);
                             }
                         } catch {}
                     }
                 }
-                setTeams(teams);
+                setTeams(loadedTeams);
             } catch (error) {
                 console.error(error);
                 if (error && "code" in error) {
@@ -63,7 +65,9 @@ export const useUserAndTeamsLoader = () => {
             setLoading(false);
             (window as any)._gp.path = window.location.pathname; //store current path to have access to previous when path changes
         })();
-    }, [history, setTeams, setUser, usePublicApiTeamsService]);
+        // Ensure this only ever runs once
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // TODO: Can this check happen when we load the teams rather than a separate effect?
     useEffect(() => {
