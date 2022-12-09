@@ -18,7 +18,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
-	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	s3manager "github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
@@ -309,13 +308,6 @@ func (*s3Storage) EnsureExists(ctx context.Context) error {
 
 // Init implements DirectAccess
 func (s3st *s3Storage) Init(ctx context.Context, owner string, workspace string, instance string) error {
-	cfg, err := awsconfig.LoadDefaultConfig(ctx)
-	if err != nil {
-		return err
-	}
-
-	s3st.client = s3.NewFromConfig(cfg)
-
 	s3st.OwnerID = owner
 	s3st.WorkspaceID = workspace
 	s3st.InstanceID = instance
@@ -328,17 +320,25 @@ func (s3st *s3Storage) ListObjects(ctx context.Context, prefix string) ([]string
 		return nil, xerrors.Errorf("prefix must start with the owner ID")
 	}
 
-	objs, err := s3st.client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
+	var res []string
+	listParams := &s3.ListObjectsV2Input{
 		Bucket: aws.String(s3st.Config.Bucket),
 		Prefix: aws.String(prefix),
-	})
-	if err != nil {
-		return nil, xerrors.Errorf("cannot list objects: %w", err)
 	}
+	fetchObjects := true
+	for fetchObjects {
+		objs, err := s3st.client.ListObjectsV2(ctx, listParams)
 
-	res := make([]string, len(objs.Contents))
-	for i := range objs.Contents {
-		res[i] = *objs.Contents[i].Key
+		if err != nil {
+			return nil, xerrors.Errorf("cannot list objects: %w", err)
+		}
+
+		for _, o := range objs.Contents {
+			res = append(res, *o.Key)
+		}
+
+		listParams.ContinuationToken = objs.NextContinuationToken
+		fetchObjects = objs.IsTruncated
 	}
 
 	return res, nil

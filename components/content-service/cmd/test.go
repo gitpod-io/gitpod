@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -269,7 +269,9 @@ func createDirectAccess() (direct storage.DirectAccess, err error) {
 		cfg = &config.StorageConfig{
 			Kind: config.S3Storage,
 			S3Config: &config.S3Config{
-				Bucket: "gitpod-s3",
+				Bucket:          "gitpod-s3",
+				Region:          "eu-central-1",
+				CredentialsFile: "./credentials",
 			},
 		}
 	}
@@ -305,7 +307,9 @@ func createPresignedAccess() (presigned storage.PresignedAccess, err error) {
 		cfg = &config.StorageConfig{
 			Kind: config.S3Storage,
 			S3Config: &config.S3Config{
-				Bucket: "gitpod-s3",
+				Bucket:          "gitpod-s3",
+				Region:          "eu-central-1",
+				CredentialsFile: "./credentials",
 			},
 		}
 	}
