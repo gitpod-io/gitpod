@@ -91,3 +91,7 @@ export function copyToClipboard(text: string) {
         document.body.removeChild(el);
     }
 }
+
+export function getURLHash() {
+    return window.location.hash.replace(/^[#/]+/, "");
+}

@@ -15,6 +15,7 @@ import { publicApiTeamsToProtocol, teamsService } from "../service/public-api";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { trackLocation } from "../Analytics";
 import { refreshSearchData } from "../components/RepositoryFinder";
+import { getURLHash } from "../utils";
 
 export const useUserAndTeamsLoader = () => {
     const [loading, setLoading] = useState<boolean>(true);
@@ -87,8 +88,3 @@ export const useUserAndTeamsLoader = () => {
 
     return { user, teams, loading, isSetupRequired };
 };
-
-// look at moving this to a shared location
-export function getURLHash() {
-    return window.location.hash.replace(/^[#/]+/, "");
-}
