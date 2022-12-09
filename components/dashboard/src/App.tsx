@@ -186,7 +186,9 @@ function App() {
             }
             window.removeEventListener("storage", updateTheme);
         };
-    }, [setIsDark]);
+        // TODO: Add setIsDark to dep list after updating context to wrap setter w/ useCallback
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Setup experiments
     useEffect(() => {
