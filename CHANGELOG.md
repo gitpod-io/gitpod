@@ -1,6 +1,11 @@
 # Change Log
 
 ## December 2022
+- Expired Personal Access Tokens exclamation indicator now has a tooltip w/ the full expiration date so you can see exactly when it expired. ([#15253](https://github.com/gitpod-io/gitpod/pull/15253)) - [@selfcontained](https://github.com/selfcontained)
+- Update JetBrains IDE images to most recent stable version. ([#15270](https://github.com/gitpod-io/gitpod/pull/15270)) - [@roboquat](https://github.com/roboquat)
+- Support AWS S3 as storage backend ([#14970](https://github.com/gitpod-io/gitpod/pull/14970)) - [@Furisto](https://github.com/Furisto), [@csweichel](https://github.com/csweichel)
+- [installer]: make the kots install overwrite the config if exists ([#15263](https://github.com/gitpod-io/gitpod/pull/15263)) - [@mrsimonemms](https://github.com/mrsimonemms)
+- Update Stable JetBrains IDE images to 2022.3 ([#15240](https://github.com/gitpod-io/gitpod/pull/15240)) - [@felladrin](https://github.com/felladrin)
 - Quote Gitpod prices as excluding VAT. ([#15255](https://github.com/gitpod-io/gitpod/pull/15255)) - [@jldec](https://github.com/jldec)
 - Remove beta and early access labels for Teams, Projects, and Billing ([#15247](https://github.com/gitpod-io/gitpod/pull/15247)) - [@gtsiolis](https://github.com/gtsiolis)
 - Make code available as AGPL ([#15241](https://github.com/gitpod-io/gitpod/pull/15241)) - [@csweichel](https://github.com/csweichel)
