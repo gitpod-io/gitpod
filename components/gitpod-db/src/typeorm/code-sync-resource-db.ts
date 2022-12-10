@@ -271,13 +271,13 @@ export class CodeSyncResourceDB {
             .getMany();
     }
 
-    async getCollections(userId: string): Promise<string[]> {
+    async getCollections(userId: string): Promise<{ id: string }[]> {
         const connection = await this.typeORM.getConnection();
         const result = await connection.manager
             .createQueryBuilder(DBCodeSyncCollection, "collection")
             .where("collection.userId = :userId AND collection.deleted = 0", { userId })
             .getMany();
-        return result.map((r) => r.collection);
+        return result.map((r) => ({ id: r.collection }));
     }
 
     async isCollection(userId: string, collection: string): Promise<boolean> {
