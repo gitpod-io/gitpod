@@ -177,7 +177,7 @@ export class CodeSyncResourceDBSpec {
 
     @test()
     async createDeleteCollection(): Promise<void> {
-        const currentCollections1 = await this.db.getCollections(this.userId);
+        const currentCollections1 = (await this.db.getCollections(this.userId)).map(({ id }) => id);
         expect(currentCollections1).to.be.empty;
 
         const collections: string[] = [];
@@ -186,7 +186,7 @@ export class CodeSyncResourceDBSpec {
         }
         expect(collections.length).to.be.equal(5);
 
-        const currentCollections2 = await this.db.getCollections(this.userId);
+        const currentCollections2 = (await this.db.getCollections(this.userId)).map(({ id }) => id);
         expect(currentCollections2.sort()).to.deep.equal(collections.slice().sort());
 
         await this.db.deleteCollection(this.userId, collections[0], async () => {});
@@ -194,12 +194,12 @@ export class CodeSyncResourceDBSpec {
         collections.shift();
         collections.shift();
 
-        const currentCollections3 = await this.db.getCollections(this.userId);
+        const currentCollections3 = (await this.db.getCollections(this.userId)).map(({ id }) => id);
         expect(currentCollections3.sort()).to.deep.equal(collections.slice().sort());
 
         await this.db.deleteCollection(this.userId, undefined, async () => {});
 
-        const currentCollections4 = await this.db.getCollections(this.userId);
+        const currentCollections4 = (await this.db.getCollections(this.userId)).map(({ id }) => id);
         expect(currentCollections4).to.be.empty;
     }
 
