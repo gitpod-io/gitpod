@@ -255,8 +255,8 @@ export type IDESettings = {
 };
 
 export interface WorkspaceClasses {
-    regular: string;
-    prebuild: string;
+    regular?: string;
+    prebuild?: string;
 }
 
 export interface UserPlatform {
