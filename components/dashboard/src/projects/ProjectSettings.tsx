@@ -76,13 +76,53 @@ export default function () {
             return value;
         }
         const before = project.settings?.workspaceClasses?.regular;
-        updateProjectSettings({ workspaceClasses: { prebuild: value, regular: value } });
+        updateProjectSettings({ workspaceClasses: { ...project.settings?.workspaceClasses, regular: value } });
+        return before;
+    };
+
+    const setWorkspaceClassForPrebuild = async (value: string) => {
+        if (!project) {
+            return value;
+        }
+        const before = project.settings?.workspaceClasses?.prebuild;
+        updateProjectSettings({ workspaceClasses: { ...project.settings?.workspaceClasses, prebuild: value } });
         return before;
     };
 
     return (
         <ProjectSettingsPage project={project}>
             <h3>Prebuilds</h3>
+            <p className="text-base text-gray-500 dark:text-gray-400">
+                Choose the workspace machine type for your prebuilds.
+            </p>
+            {BillingMode.canSetWorkspaceClass(billingMode) ? (
+                <SelectWorkspaceClass
+                    workspaceClass={project.settings?.workspaceClasses?.prebuild}
+                    setWorkspaceClass={setWorkspaceClassForPrebuild}
+                />
+            ) : (
+                <Alert type="message" className="mt-4">
+                    <div className="flex flex-col">
+                        <span>
+                            To access{" "}
+                            <a
+                                className="gp-link"
+                                href="https://www.gitpod.io/docs/configure/workspaces/workspace-classes"
+                            >
+                                large workspaces
+                            </a>{" "}
+                            and{" "}
+                            <a className="gp-link" href="https://www.gitpod.io/docs/configure/billing/pay-as-you-go">
+                                pay-as-you-go
+                            </a>
+                            , first cancel your existing plan.
+                        </span>
+                        <Link className="mt-2" to={project.teamId ? "../billing" : "/plans"}>
+                            <button>Go to {project.teamId ? "Team" : "Personal"} Billing</button>
+                        </Link>
+                    </div>
+                </Alert>
+            )}
             <CheckBox
                 title={<span>Enable Incremental Prebuilds </span>}
                 desc={
