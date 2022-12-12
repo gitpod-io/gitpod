@@ -437,6 +437,7 @@ export class WorkspaceStarter {
                 workspace,
                 instance,
                 additionalAuth,
+                ideConfig,
                 forceRebuild,
                 forceRebuild,
             );
@@ -1068,6 +1069,7 @@ export class WorkspaceStarter {
         workspace: Workspace,
         instance: WorkspaceInstance,
         additionalAuth: Map<string, string>,
+        ideConfig: IdeServiceApi.ResolveWorkspaceConfigResponse,
         ignoreBaseImageresolvedAndRebuildBase: boolean = false,
         forceRebuild: boolean = false,
     ): Promise<WorkspaceInstance> {
@@ -1090,6 +1092,7 @@ export class WorkspaceStarter {
             req.setAuth(auth);
             req.setForceRebuild(forceRebuild);
             req.setTriggeredBy(user.id);
+            req.setSupervisorRef(ideConfig.supervisorImage);
 
             // Make sure we persist logInfo as soon as we retrieve it
             const imageBuildLogInfo = new Deferred<ImageBuildLogInfo>();
@@ -1154,7 +1157,16 @@ export class WorkspaceStarter {
                 ) {
                     // we've attempted to add the base layer for a workspace whoose base image has gone missing.
                     // Ignore the previously built (now missing) base image and force a rebuild.
-                    return this.buildWorkspaceImage(ctx, user, workspace, instance, additionalAuth, true, forceRebuild);
+                    return this.buildWorkspaceImage(
+                        ctx,
+                        user,
+                        workspace,
+                        instance,
+                        additionalAuth,
+                        ideConfig,
+                        true,
+                        forceRebuild,
+                    );
                 } else {
                     throw err;
                 }
