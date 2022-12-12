@@ -7,6 +7,7 @@ packages:
       - "go.sum"
     deps:
       - components/common-go:lib
+      - components/iam-api/go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux
