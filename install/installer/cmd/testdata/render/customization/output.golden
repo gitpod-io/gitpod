@@ -11801,7 +11801,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: gitpod.io/workload_workspace_services
+              - key: gitpod.io/workload_services
                 operator: Exists
       containers:
       - args:
@@ -12198,7 +12198,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: gitpod.io/workload_workspace_services
+              - key: gitpod.io/workload_services
                 operator: Exists
       containers:
       - args:
