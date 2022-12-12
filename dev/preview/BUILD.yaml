@@ -25,7 +25,7 @@ scripts:
     script: |
       export GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-$PREVIEW_ENV_DEV_SA_KEY_PATH}"
       export GOOGLE_BACKEND_CREDENTIALS="${GOOGLE_BACKEND_CREDENTIALS:-$PREVIEW_ENV_DEV_SA_KEY_PATH}"
-      export TF_VAR_cert_issuer="${TF_VAR_cert_issuer:-zerossl-issuer-gitpod-core-dev}"
+      export TF_VAR_cert_issuer="${TF_VAR_cert_issuer:-letsencrypt-issuer-gitpod-core-dev}"
       export TF_VAR_dev_kube_path="${TF_VAR_dev_kube_path:-/home/gitpod/.kube/config}"
       export TF_VAR_dev_kube_context="${TF_VAR_dev_kube_context:-dev}"
       export TF_VAR_harvester_kube_path="${TF_VAR_harvester_kube_path:-$HOME/.kube/config}"
