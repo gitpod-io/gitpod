@@ -53,7 +53,7 @@ function WorkspaceClass(props: WorkspaceClassProps) {
                 </div>
                 <div className="text-xl my-1 flex-row flex align-middle">
                     <svg
-                        viewBox={"0 -4 " + 2 * (props.powerUps || 1) + " 2"}
+                        viewBox={"0 -4 " + 2.5 * (props.powerUps || 1) + " 2"}
                         xmlns="http://www.w3.org/2000/svg"
                         className="h-3 my-1 mr-1"
                     >
