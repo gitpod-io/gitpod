@@ -19,25 +19,16 @@ type RemoveProjectModalProps = {
 
 export const RemoveProjectModal: FunctionComponent<RemoveProjectModalProps> = ({ project, onClose, onRemoved }) => {
     const { usePublicApiProjectsService } = useFeatureFlags();
-
     const [disabled, setDisabled] = useState(false);
 
     const removeProject = useCallback(async () => {
-        setDisabled(true);
-        setDisabled(false);
-        onRemoved();
-    }, [onRemoved]);
-
-    const removeProject2 = useCallback(async () => {
         setDisabled(true);
         usePublicApiProjectsService
             ? await projectsService.deleteProject({ projectId: project.id })
             : await getGitpodService().server.deleteProject(project.id);
         setDisabled(false);
         onRemoved();
-        // onClose();
     }, [onRemoved, project.id, usePublicApiProjectsService]);
-    console.log("derp", removeProject2);
 
     return (
         <ConfirmationModal

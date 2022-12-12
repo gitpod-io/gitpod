@@ -65,38 +65,52 @@ export default function () {
         }
     }, [team]);
 
-    if (!project) return null;
+    const updateProjectSettings = useCallback(
+        (settings: ProjectSettings) => {
+            if (!project) return;
 
-    const updateProjectSettings = (settings: ProjectSettings) => {
-        if (!project) return;
+            const newSettings = { ...project.settings, ...settings };
+            getGitpodService().server.updateProjectPartial({ id: project.id, settings: newSettings });
+            setProject({ ...project, settings: newSettings });
+        },
+        [project, setProject],
+    );
 
-        const newSettings = { ...project.settings, ...settings };
-        getGitpodService().server.updateProjectPartial({ id: project.id, settings: newSettings });
-        setProject({ ...project, settings: newSettings });
-    };
+    const setWorkspaceClass = useCallback(
+        async (value: string) => {
+            if (!project) {
+                return value;
+            }
+            const before = project.settings?.workspaceClasses?.regular;
+            updateProjectSettings({ workspaceClasses: { ...project.settings?.workspaceClasses, regular: value } });
+            return before;
+        },
+        [project, updateProjectSettings],
+    );
 
-    const setWorkspaceClass = async (value: string) => {
-        if (!project) {
-            return value;
-        }
-        const before = project.settings?.workspaceClasses?.regular;
-        updateProjectSettings({ workspaceClasses: { ...project.settings?.workspaceClasses, regular: value } });
-        return before;
-    };
-
-    const setWorkspaceClassForPrebuild = async (value: string) => {
-        if (!project) {
-            return value;
-        }
-        const before = project.settings?.workspaceClasses?.prebuild;
-        updateProjectSettings({ workspaceClasses: { ...project.settings?.workspaceClasses, prebuild: value } });
-        return before;
-    };
+    const setWorkspaceClassForPrebuild = useCallback(
+        async (value: string) => {
+            if (!project) {
+                return value;
+            }
+            const before = project.settings?.workspaceClasses?.prebuild;
+            updateProjectSettings({ workspaceClasses: { ...project.settings?.workspaceClasses, prebuild: value } });
+            return before;
+        },
+        [project, updateProjectSettings],
+    );
 
     const onProjectRemoved = useCallback(() => {
-        // TODO: will this be relative and just pop off the /settings?
-        history.push("");
-    }, [history]);
+        // if there's a current team, navigate to team projects
+        if (team) {
+            history.push(`/t/${team.slug}/projects`);
+        } else {
+            history.push("/projects");
+        }
+    }, [history, team]);
+
+    // TODO: Render a generic error screen for when an entity isn't found
+    if (!project) return null;
 
     return (
         <ProjectSettingsPage project={project}>
@@ -248,11 +262,11 @@ export default function () {
             </div>
             <div className="">
                 <h3 className="mt-12">Delete Project</h3>
-                <p className="text-base text-gray-500 dark:text-gray-400">
+                <p className="text-base text-gray-500 dark:text-gray-400 pb-4">
                     Removing the project from this team will also remove team members access to it.
                 </p>
                 <button className="danger secondary" onClick={() => setShowRemoveModal(true)}>
-                    Delete Team
+                    Delete Project
                 </button>
             </div>
             {showRemoveModal && (
