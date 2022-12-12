@@ -19,7 +19,7 @@ if [[ -n ${WERFT_SERVICE_HOST+x} ]]; then
   export TF_IN_AUTOMATION=true
 fi
 
-export TF_WORKSPACE="${TF_VAR_preview_name:-TF_WORKSPACE}"
+export TF_WORKSPACE="${TF_VAR_preview_name:-$TF_WORKSPACE}"
 TARGET_DIR="${PROJECT_ROOT}/dev/preview/infrastructure/harvester"
 # Setting the TF_DATA_DIR is advisable if we set the PLAN_LOCATION in a different place than the dir with the tf
 TF_DATA_DIR="${TARGET_DIR}"
@@ -47,7 +47,7 @@ case ${PLAN_EXIT_CODE} in
   ;;
 2)
   # If we don't require tf input, ask for the plan
-  if [[ -z ${TF_IN_AUTOMATION+x} ]];then
+  if [[ -z ${TF_IN_AUTOMATION+x} ]]; then
     ask "Do you want to apply the plan?"
   fi
   terraform_apply
