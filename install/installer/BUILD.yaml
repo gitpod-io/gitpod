@@ -28,6 +28,7 @@ packages:
       - components/image-builder-api/go:lib
       - components/openvsx-proxy:lib
       - components/public-api/go:lib
+      - components/registry-credential:lib
       - components/registry-facade-api/go:lib
       - components/registry-facade:lib
       - components/ws-daemon-api/go:lib

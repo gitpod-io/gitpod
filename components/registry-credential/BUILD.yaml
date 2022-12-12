@@ -1,4 +1,14 @@
 packages:
+  - name: lib
+    type: go
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    config:
+      packaging: library
+    deps:
+      - components/common-go:lib
   - name: app
     type: go
     srcs:
