@@ -991,18 +991,6 @@ automountServiceAccountToken: true
 secrets:
   - name: messagebus
 ---
-# v1/ServiceAccount registry-credential
-apiVersion: v1
-automountServiceAccountToken: true
-kind: ServiceAccount
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: registry-credential
-  name: registry-credential
-  namespace: default
----
 # v1/ServiceAccount registry-facade
 apiVersion: v1
 automountServiceAccountToken: true
@@ -1086,38 +1074,6 @@ metadata:
     component: ws-proxy
   name: ws-proxy
   namespace: default
----
-# v1/Secret aws-ecr-credentials
-apiVersion: v1
-kind: Secret
-metadata:
-  annotations:
-    aws-ecr-updater/region: us-west-1
-    aws-ecr-updater/secret: aws-iam-user-credentials
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    aws-ecr-updater: "true"
-    component: registry-credential
-  name: aws-ecr-credentials
-  namespace: default
-stringData:
-  .dockerconfigjson: '{}'
-type: kubernetes.io/dockerconfigjson
----
-# v1/Secret aws-iam-user-credentials
-apiVersion: v1
-kind: Secret
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: registry-credential
-  name: aws-iam-user-credentials
-  namespace: default
-stringData:
-  access_key_id: 8-WGqw2oTnsPfUDNSk0Y
-  secret_access_key: DpC.aSAxkWBPu2_bJ_AE
 ---
 # v1/Secret builtin-registry-auth
 apiVersion: v1
@@ -3418,70 +3374,6 @@ data:
         app: gitpod
         component: image-builder-mk3
       name: image-builder-mk3
-      namespace: default
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: Role
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: registry-credential
-      name: registry-credential
-      namespace: default
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: RoleBinding
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: registry-credential
-      name: registry-credential
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: registry-credential
-      name: aws-iam-user-credentials
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      annotations:
-        aws-ecr-updater/region: us-west-1
-        aws-ecr-updater/secret: aws-iam-user-credentials
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        aws-ecr-updater: "true"
-        component: registry-credential
-      name: aws-ecr-credentials
-      namespace: default
-    ---
-    apiVersion: batch/v1
-    kind: CronJob
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: registry-credential
-      name: registry-credential
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: registry-credential
-      name: registry-credential
       namespace: default
     ---
     apiVersion: v1
@@ -6594,27 +6486,6 @@ rules:
     resources: ["events"]
     verbs: ["create"]
 ---
-# rbac.authorization.k8s.io/v1/Role registry-credential
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: registry-credential
-  name: registry-credential
-  namespace: default
-rules:
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - get
-  - list
-  - watch
-  - update
----
 # rbac.authorization.k8s.io/v1/Role server
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -7083,24 +6954,6 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: rabbitmq
----
-# rbac.authorization.k8s.io/v1/RoleBinding registry-credential
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: registry-credential
-  name: registry-credential
-  namespace: default
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: registry-credential
-subjects:
-- kind: ServiceAccount
-  name: registry-credential
 ---
 # rbac.authorization.k8s.io/v1/RoleBinding server
 apiVersion: rbac.authorization.k8s.io/v1
@@ -11493,40 +11346,6 @@ spec:
   ttlSecondsAfterFinished: 60
 status: {}
 ---
-# batch/v1/Job registry-credential
-apiVersion: batch/v1
-kind: Job
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: registry-credential
-  name: registry-credential
-  namespace: default
-spec:
-  backoffLimit: 10
-  template:
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: registry-credential
-      name: registry-credential
-      namespace: default
-    spec:
-      containers:
-      - args:
-        - ecr-update
-        image: eu.gcr.io/gitpod-core-dev/build/registry-credential:test
-        imagePullPolicy: IfNotPresent
-        name: registry-credential
-        resources: {}
-        securityContext:
-          allowPrivilegeEscalation: false
-      restartPolicy: OnFailure
-      serviceAccountName: registry-credential
-status: {}
----
 # batch/v1/CronJob gitpod-telemetry
 apiVersion: batch/v1
 kind: CronJob
@@ -11616,51 +11435,4 @@ spec:
           serviceAccountName: gitpod
   schedule: '@daily'
   successfulJobsHistoryLimit: 3
-status: {}
----
-# batch/v1/CronJob registry-credential
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: registry-credential
-  name: registry-credential
-  namespace: default
-spec:
-  concurrencyPolicy: Replace
-  failedJobsHistoryLimit: 10
-  jobTemplate:
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: registry-credential
-      name: registry-credential
-      namespace: default
-    spec:
-      backoffLimit: 10
-      template:
-        metadata:
-          creationTimestamp: null
-          labels:
-            app: gitpod
-            component: registry-credential
-          name: registry-credential
-          namespace: default
-        spec:
-          containers:
-          - args:
-            - ecr-update
-            image: eu.gcr.io/gitpod-core-dev/build/registry-credential:test
-            imagePullPolicy: IfNotPresent
-            name: registry-credential
-            resources: {}
-            securityContext:
-              allowPrivilegeEscalation: false
-          restartPolicy: OnFailure
-          serviceAccountName: registry-credential
-  schedule: '* */6 * * *'
-  successfulJobsHistoryLimit: 1
 status: {}
