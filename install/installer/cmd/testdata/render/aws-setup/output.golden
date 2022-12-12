@@ -573,31 +573,6 @@ spec:
   selfSigned: {}
 status: {}
 ---
-# cert-manager.io/v1/Certificate builtin-registry-certs
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: docker-registry
-  name: builtin-registry-certs
-  namespace: default
-spec:
-  dnsNames:
-  - registry.default.svc.cluster.local
-  duration: 2160h0m0s
-  issuerRef:
-    group: cert-manager.io
-    kind: Issuer
-    name: ca-issuer
-  secretName: builtin-registry-certs
-  secretTemplate:
-    labels:
-      app: gitpod
-      component: docker-registry
-status: {}
----
 # cert-manager.io/v1/Certificate builtin-registry-facade-cert
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -815,18 +790,6 @@ metadata:
   name: dbinit
   namespace: default
 ---
-# v1/ServiceAccount docker-registry
-apiVersion: v1
-automountServiceAccountToken: true
-kind: ServiceAccount
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: docker-registry
-  name: docker-registry
-  namespace: default
----
 # v1/ServiceAccount gitpod
 apiVersion: v1
 automountServiceAccountToken: true
@@ -975,6 +938,18 @@ automountServiceAccountToken: true
 secrets:
   - name: messagebus
 ---
+# v1/ServiceAccount registry-credential
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: registry-credential
+  name: registry-credential
+  namespace: default
+---
 # v1/ServiceAccount registry-facade
 apiVersion: v1
 automountServiceAccountToken: true
@@ -1058,22 +1033,6 @@ metadata:
     component: ws-proxy
   name: ws-proxy
   namespace: default
----
-# v1/Secret builtin-registry-auth
-apiVersion: v1
-data:
-  .dockerconfigjson: eyJhdXRocyI6eyJyZWdpc3RyeS5naXRwb2QuZXhhbXBsZS5jb20iOnsiYXV0aCI6ImVGTmxaRXBwUkdkS1VWRm5ORUpyVnpWNFMzVTZRMWMwUTFKQ2FtazJVakJpUjBjNE1XZDVSWGs9In19fQ==
-  password: Q1c0Q1JCamk2UjBiR0c4MWd5RXk=
-  user: eFNlZEppRGdKUVFnNEJrVzV4S3U=
-kind: Secret
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: docker-registry
-  name: builtin-registry-auth
-  namespace: default
-type: kubernetes.io/dockerconfigjson
 ---
 # v1/Secret load-definition
 # Source: rabbitmq/charts/rabbitmq/templates/secrets.yaml
@@ -1168,24 +1127,6 @@ type: Opaque
 stringData:
   password: uq4KxOLtrA-QsDTfuwQ-
   username: gitpod
----
-# v1/Secret registry-secret
-# Source: docker-registry/charts/docker-registry/templates/secret.yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: registry-secret
-  namespace: default
-  labels:
-    app: docker-registry
-    chart: docker-registry-1.16.0
-    heritage: Helm
-    release: docker-registry
-type: Opaque
-data:
-  haSharedSecret: "ZTI1UHRYNk1MOGdDVzMxbWl3MFQ="
-  proxyUsername: ""
-  proxyPassword: ""
 ---
 # v1/ConfigMap agent-smith
 apiVersion: v1
@@ -1393,7 +1334,15 @@ data:
       kind: secret
       name: https-certificates
     containerRegistry:
-      inCluster: true
+      external:
+        certificate:
+          kind: secret
+          name: aws-ecr-credential
+        credential:
+          kind: secret
+          name: aws-iam-user-credential
+        url: 012345678969.dkr.ecr.eu-west-2.amazonaws.com
+      inCluster: false
       privateBaseImageAllowList: []
       s3storage:
         bucket: s3-container-registry
@@ -1644,46 +1593,6 @@ metadata:
 apiVersion: v1
 data:
   app.yaml: |
-    apiVersion: cert-manager.io/v1
-    kind: Certificate
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: docker-registry
-      name: builtin-registry-certs
-      namespace: default
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: RoleBinding
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: docker-registry
-      name: docker-registry
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: docker-registry
-      name: builtin-registry-auth
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: docker-registry
-      name: docker-registry
-      namespace: default
-    ---
     apiVersion: cert-manager.io/v1
     kind: Issuer
     metadata:
@@ -3277,51 +3186,53 @@ data:
       namespace: default
     ---
     apiVersion: v1
-    kind: Secret
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: docker-registry
-        chart: docker-registry-1.16.0
-        heritage: Helm
-        release: docker-registry
-      name: registry-secret
-      namespace: default
-    ---
-    apiVersion: v1
     kind: ConfigMap
     metadata:
       creationTimestamp: null
       labels:
-        app: docker-registry
-        chart: docker-registry-1.16.0
-        heritage: Helm
-        release: docker-registry
-      name: registry-config
+        app: gitpod
+        component: registry-credential
+      name: registry-credential
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: registry-credential
+      name: registry-credential
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: registry-credential
+      name: registry-credential
+      namespace: default
+    ---
+    apiVersion: batch/v1
+    kind: CronJob
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: registry-credential
+      name: registry-credential
       namespace: default
     ---
     apiVersion: v1
-    kind: Service
+    kind: ServiceAccount
     metadata:
       creationTimestamp: null
       labels:
-        app: docker-registry
-        chart: docker-registry-1.16.0
-        heritage: Helm
-        release: docker-registry
-      name: registry
-      namespace: default
-    ---
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: docker-registry
-        chart: docker-registry-1.16.0
-        heritage: Helm
-        release: docker-registry
-      name: registry
+        app: gitpod
+        component: registry-credential
+      name: registry-credential
       namespace: default
     ---
     apiVersion: networking.k8s.io/v1
@@ -4716,10 +4627,10 @@ data:
             "key": "/wsman-certs/tls.key"
           }
         },
-        "pullSecret": "builtin-registry-auth",
+        "pullSecret": "aws-ecr-credential",
         "pullSecretFile": "/config/pull-secret/pull-secret.json",
-        "baseImageRepository": "registry.gitpod.example.com/base-images",
-        "workspaceImageRepository": "registry.gitpod.example.com/workspace-images",
+        "baseImageRepository": "012345678969.dkr.ecr.eu-west-2.amazonaws.com/base-images",
+        "workspaceImageRepository": "012345678969.dkr.ecr.eu-west-2.amazonaws.com/workspace-images",
         "builderImage": "eu.gcr.io/gitpod-core-dev/build/image-builder-mk3/bob:test"
       },
       "refCache": {
@@ -4776,23 +4687,6 @@ metadata:
 # v1/ConfigMap proxy-config
 apiVersion: v1
 data:
-  vhost.docker-registry: |-
-    https://registry.gitpod.example.com {
-        import enable_log
-        import remove_server_header
-        import ssl_configuration
-
-        basicauth bcrypt "Docker Registry" {
-            xSedJiDgJQQg4BkW5xKu JDJhJDEwJFFTRGRRMHZZY2pIS2JqUC9aMDNnVC5HbEg2Z1dOQm5TL0pySnpYSm5iNy9DeVh0ZUw2cFM2
-        }
-
-        reverse_proxy https://registry.default.svc.cluster.local {
-            flush_interval -1
-            transport http {
-                tls_trusted_ca_certs /etc/caddy/registry-certs/ca.crt
-            }
-        }
-    }
   vhost.empty: '# Placeholder to avoid errors loading files using a glob pattern'
   vhost.ide-proxy: |
     https://ide.gitpod.example.com {
@@ -4886,42 +4780,25 @@ metadata:
   name: public-api-server
   namespace: default
 ---
-# v1/ConfigMap registry-config
-# Source: docker-registry/charts/docker-registry/templates/configmap.yaml
+# v1/ConfigMap registry-credential
 apiVersion: v1
+data:
+  config.json: |-
+    {
+      "namespace": "default",
+      "credentialSecret": "aws-iam-user-credential",
+      "region": "eu-west-2",
+      "publicRegistry": false,
+      "secretToUpdate": "aws-ecr-credential"
+    }
 kind: ConfigMap
 metadata:
-  name: registry-config
-  namespace: default
+  creationTimestamp: null
   labels:
-    app: docker-registry
-    chart: docker-registry-1.16.0
-    heritage: Helm
-    release: docker-registry
-data:
-  config.yml: |-
-    health:
-      storagedriver:
-        enabled: true
-        interval: 10s
-        threshold: 3
-    http:
-      addr: :5000
-      debug:
-        addr: :5001
-        prometheus:
-          enabled: false
-          path: /metrics
-      headers:
-        X-Content-Type-Options:
-        - nosniff
-    log:
-      fields:
-        service: registry
-    storage:
-      cache:
-        blobdescriptor: inmemory
-    version: 0.1
+    app: gitpod
+    component: registry-credential
+  name: registry-credential
+  namespace: default
 ---
 # v1/ConfigMap registry-facade
 apiVersion: v1
@@ -6186,6 +6063,27 @@ rules:
     resources: ["events"]
     verbs: ["create"]
 ---
+# rbac.authorization.k8s.io/v1/Role registry-credential
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: registry-credential
+  name: registry-credential
+  namespace: default
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+---
 # rbac.authorization.k8s.io/v1/Role server
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -6400,24 +6298,6 @@ subjects:
 - kind: ServiceAccount
   name: nobody
   namespace: default
----
-# rbac.authorization.k8s.io/v1/RoleBinding docker-registry
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: docker-registry
-  name: docker-registry
-  namespace: default
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: default-ns-psp:restricted-root-user
-subjects:
-- kind: ServiceAccount
-  name: docker-registry
 ---
 # rbac.authorization.k8s.io/v1/RoleBinding gitpod
 apiVersion: rbac.authorization.k8s.io/v1
@@ -6654,6 +6534,24 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: rabbitmq
+---
+# rbac.authorization.k8s.io/v1/RoleBinding registry-credential
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: registry-credential
+  name: registry-credential
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: registry-credential
+subjects:
+- kind: ServiceAccount
+  name: registry-credential
 ---
 # rbac.authorization.k8s.io/v1/RoleBinding server
 apiVersion: rbac.authorization.k8s.io/v1
@@ -7169,29 +7067,6 @@ spec:
 status:
   loadBalancer: {}
 ---
-# v1/Service registry
-# Source: docker-registry/charts/docker-registry/templates/service.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: registry
-  namespace: default
-  labels:
-    app: docker-registry
-    chart: docker-registry-1.16.0
-    release: docker-registry
-    heritage: Helm
-spec:
-  type: ClusterIP
-  ports:
-    - port: 443
-      protocol: TCP
-      name: https-443
-      targetPort: 5000
-  selector:
-    app: docker-registry
-    release: docker-registry
----
 # v1/Service registry-facade
 apiVersion: v1
 kind: Service
@@ -7471,7 +7346,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 3e487f9543c719b9ee3f5590a0f98cb535b4bf1b301c66de8f00f3aa9d61381d
+        gitpod.io/checksum_config: 627e2d5a5d50e8eb2531bd494ceb9cd26315e43008248fb6825dfc2b5189a3d3
       creationTimestamp: null
       labels:
         app: gitpod
@@ -7652,7 +7527,7 @@ spec:
           items:
           - key: .dockerconfigjson
             path: pull-secret.json
-          secretName: builtin-registry-auth
+          secretName: aws-ecr-credential
       - hostPath:
           path: /
         name: hostfs
@@ -8334,7 +8209,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: cac138904f08d79e5598805683f8dc378bd52c58348489de22949ac38dd8b193
+        gitpod.io/checksum_config: a46080fdf584e8531ec566bcd7761b7ceca365777f0859476a0a9c68beb99737
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8448,7 +8323,7 @@ spec:
           items:
           - key: .dockerconfigjson
             path: pull-secret.json
-          secretName: builtin-registry-auth
+          secretName: aws-ecr-credential
 status: {}
 ---
 # apps/v1/Deployment content-service
@@ -9202,7 +9077,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: af26ec864db5be86adfb79b972614487639aa67ad16de869e23e22e468f0bed8
+        gitpod.io/checksum_config: cc800373849134b29aa04bf2f88b41d073ed09f59d04e65f2b028898453cb0ca
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9321,7 +9196,7 @@ spec:
           items:
           - key: .dockerconfigjson
             path: pull-secret.json
-          secretName: builtin-registry-auth
+          secretName: aws-ecr-credential
       - emptyDir: {}
         name: gitpod-ca-certificate
       - emptyDir: {}
@@ -9352,7 +9227,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: c52c73e63eaa95613a8f4fe77167c754cd48eaf757dd69c2048400311a5ae0a6
+        gitpod.io/checksum_config: e6eea49478778c68ec71eee2aa5d2be8b67ebcfda86107a44d2cc80b88c1ecfe
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9446,10 +9321,6 @@ spec:
           name: vhosts
         - mountPath: /etc/caddy/certificates
           name: config-certificates
-        - mountPath: /etc/caddy/registry-auth
-          name: builtin-registry-auth
-        - mountPath: /etc/caddy/registry-certs
-          name: builtin-registry-certs
       dnsPolicy: ClusterFirst
       enableServiceLinks: false
       initContainers:
@@ -9477,12 +9348,6 @@ spec:
       - name: config-certificates
         secret:
           secretName: https-certificates
-      - name: builtin-registry-auth
-        secret:
-          secretName: builtin-registry-auth
-      - name: builtin-registry-certs
-        secret:
-          secretName: builtin-registry-certs
 status: {}
 ---
 # apps/v1/Deployment public-api-server
@@ -9676,104 +9541,6 @@ spec:
           name: public-api-server
         name: config
 status: {}
----
-# apps/v1/Deployment registry
-# Source: docker-registry/charts/docker-registry/templates/deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: registry
-  namespace: default
-  labels:
-    app: docker-registry
-    chart: docker-registry-1.16.0
-    release: docker-registry
-    heritage: Helm
-spec:
-  selector:
-    matchLabels:
-      app: docker-registry
-      release: docker-registry
-  replicas: 1
-  minReadySeconds: 5
-  template:
-    metadata:
-      labels:
-        app: docker-registry
-        release: docker-registry
-      annotations:
-        checksum/config: 1d22b82e19bbc654e029029c4fb86ad02dc13422dc3ac52f8175ad190e52a0bb
-        gitpod.io/checksum_config: 0ce55d51677cd683df3c7a244542c6aeaaf5dd6dca0f0458e8053a713228f535
-    spec:
-      serviceAccountName: docker-registry
-      securityContext:
-        fsGroup: 1000
-        runAsUser: 1000
-      containers:
-        - name: docker-registry
-          image: "docker.io/library/registry:2.7.1"
-          imagePullPolicy: IfNotPresent
-          command:
-          - /bin/registry
-          - serve
-          - /etc/docker/registry/config.yml
-          ports:
-            - containerPort: 5000
-          livenessProbe:
-            httpGet:
-              scheme: HTTPS
-              path: /
-              port: 5000
-          readinessProbe:
-            httpGet:
-              scheme: HTTPS
-              path: /
-              port: 5000
-          resources:
-            {}
-          env:
-            - name: REGISTRY_HTTP_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: registry-secret
-                  key: haSharedSecret
-            - name: REGISTRY_HTTP_TLS_CERTIFICATE
-              value: /etc/ssl/docker/tls.crt
-            - name: REGISTRY_HTTP_TLS_KEY
-              value: /etc/ssl/docker/tls.key
-            - name: REGISTRY_STORAGE_S3_ACCESSKEY
-              valueFrom:
-                secretKeyRef:
-                  name: container-registry-s3-backend
-                  key: s3AccessKey
-            - name: REGISTRY_STORAGE_S3_SECRETKEY
-              valueFrom:
-                secretKeyRef:
-                  name: container-registry-s3-backend
-                  key: s3SecretKey
-            - name: REGISTRY_STORAGE_S3_REGION
-              value: eu-west-2
-            - name: REGISTRY_STORAGE_S3_REGIONENDPOINT
-              value: registry.amazonaws.com
-            - name: REGISTRY_STORAGE_S3_BUCKET
-              value: s3-container-registry
-            - name: REGISTRY_STORAGE_S3_ENCRYPT
-              value: "true"
-            - name: REGISTRY_STORAGE_S3_SECURE
-              value: "true"
-          volumeMounts:
-            - name: "registry-config"
-              mountPath: "/etc/docker/registry"
-            - mountPath: /etc/ssl/docker
-              name: tls-cert
-              readOnly: true
-      volumes:
-        - name: registry-config
-          configMap:
-            name: registry-config
-        - name: tls-cert
-          secret:
-            secretName: builtin-registry-certs
 ---
 # apps/v1/Deployment server
 apiVersion: apps/v1
@@ -10920,4 +10687,60 @@ spec:
           serviceAccountName: gitpod
   schedule: '@daily'
   successfulJobsHistoryLimit: 3
+status: {}
+---
+# batch/v1/CronJob registry-credential
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: registry-credential
+  name: registry-credential
+  namespace: default
+spec:
+  concurrencyPolicy: Replace
+  failedJobsHistoryLimit: 10
+  jobTemplate:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: registry-credential
+      name: registry-credential
+      namespace: default
+    spec:
+      backoffLimit: 10
+      template:
+        metadata:
+          creationTimestamp: null
+          labels:
+            app: gitpod
+            component: registry-credential
+          name: registry-credential
+          namespace: default
+        spec:
+          containers:
+          - args:
+            - ecr-update
+            - /config/config.json
+            image: eu.gcr.io/gitpod-core-dev/build/registry-credential:test
+            imagePullPolicy: IfNotPresent
+            name: registry-credential
+            resources: {}
+            securityContext:
+              allowPrivilegeEscalation: false
+            volumeMounts:
+            - mountPath: /config
+              name: config
+              readOnly: true
+          restartPolicy: OnFailure
+          serviceAccountName: registry-credential
+          volumes:
+          - configMap:
+              name: registry-credential
+            name: config
+  schedule: '* */6 * * *'
+  successfulJobsHistoryLimit: 1
 status: {}

@@ -13,8 +13,8 @@ import (
 )
 
 func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
-	if !isAWSRegistry(ctx) {
-		return []runtime.Object{}, nil
+	if !IsAWSECRURL(ctx) {
+		return nil, nil
 	}
 
 	return []runtime.Object{

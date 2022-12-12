@@ -15,16 +15,17 @@ import (
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	if !isAWSRegistry(ctx) {
-		return []runtime.Object{}, nil
+	if !IsAWSECRURL(ctx) {
+		return nil, nil
 	}
+
+	privateRegistry := isPrivateAWSECRURL(ctx.Config.ContainerRegistry.External.URL)
+	region := getAWSRegion(ctx.Config.ContainerRegistry.External.URL)
 
 	credentialSecretName, err := credentialSecretName(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	region := getAWSRegion(ctx.Config.ContainerRegistry.External.URL)
 
 	secretToUpdateName, err := secretToUpdateName(ctx)
 	if err != nil {
@@ -35,6 +36,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Namespace:        ctx.Namespace,
 		CredentialSecret: credentialSecretName,
 		Region:           region,
+		PublicRegistry:   !privateRegistry,
 		SecretToUpdate:   secretToUpdateName,
 	}
 
@@ -52,28 +54,22 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Labels:    common.DefaultLabels(Component),
 			},
 			Data: map[string]string{
-				"registry-credential.json": string(json),
+				"config.json": string(json),
 			},
 		},
 	}, nil
 }
 
 func secretToUpdateName(ctx *common.RenderContext) (string, error) {
-	var secretName string
-	if ctx.Config.ContainerRegistry.External != nil {
-		secretName = ctx.Config.ContainerRegistry.External.Certificate.Name
-	} else {
+	if ctx.Config.ContainerRegistry.External == nil {
 		return "", fmt.Errorf("%s: invalid container registry config", Component)
 	}
-	return secretName, nil
+	return ctx.Config.ContainerRegistry.External.Certificate.Name, nil
 }
 
 func credentialSecretName(ctx *common.RenderContext) (string, error) {
-	var secretName string
-	if ctx.Config.ContainerRegistry.External != nil {
-		secretName = ctx.Config.ContainerRegistry.External.Credential.Name
-	} else {
+	if ctx.Config.ContainerRegistry.External == nil {
 		return "", fmt.Errorf("%s: invalid container registry config", Component)
 	}
-	return secretName, nil
+	return ctx.Config.ContainerRegistry.External.Credential.Name, nil
 }

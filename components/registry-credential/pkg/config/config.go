@@ -23,6 +23,9 @@ type Configuration struct {
 	// Region describes which public cloud region the container registry locates.
 	Region string `json:"region"`
 
+	// PublicRegistry indicates it's a private or public container registry.
+	PublicRegistry bool `json:"publicRegistry"`
+
 	// SecretToUpdate names a Kubernetes secret which contains a `.dockerconfigjson` entry
 	// carrying the Docker authentication credentials.
 	SecretToUpdate string `json:"secretToUpdate"`

@@ -5,8 +5,9 @@
 package registry_credential
 
 import (
-	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
 )
 
 var Objects = common.CompositeRenderFunc(
@@ -14,9 +15,8 @@ var Objects = common.CompositeRenderFunc(
 	role,
 	rolebinding,
 	cronjob,
-	job,
 	func(ctx *common.RenderContext) ([]runtime.Object, error) {
-		if !isAWSRegistry(ctx) {
+		if !IsAWSECRURL(ctx) {
 			return nil, nil
 		}
 		return common.DefaultServiceAccount(Component)(ctx)

@@ -7,6 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.18.4
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.4
 	github.com/aws/aws-sdk-go-v2/service/ecr v1.17.24
+	github.com/aws/aws-sdk-go-v2/service/ecrpublic v1.13.21
 	github.com/docker/cli v20.10.21+incompatible
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/spf13/cobra v1.4.0

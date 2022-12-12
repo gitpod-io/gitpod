@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
@@ -18,7 +19,7 @@ import (
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	awscred "github.com/aws/aws-sdk-go-v2/credentials"
 	ecr "github.com/aws/aws-sdk-go-v2/service/ecr"
-	ecrType "github.com/aws/aws-sdk-go-v2/service/ecr/types"
+	ecrPublic "github.com/aws/aws-sdk-go-v2/service/ecrpublic"
 	"github.com/docker/cli/cli/config/credentials"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -26,12 +27,12 @@ import (
 )
 
 const (
-	accessKeyIdPropName     = "access_key_id"
-	secretAccessKeyPropName = "secret_access_key"
+	accessKeyIdName     = "access_key_id"
+	secretAccessKeyName = "secret_access_key"
 )
 
 const (
-	ecrUpdaterExpiresAt = "ecr-updater/expires-at"
+	ecrExpiresAtAnnotation = "registry-credential-updater/ecr-expires-at"
 )
 
 // DockerConfigJSON represents ~/.docker/config.json file info
@@ -50,16 +51,20 @@ type DockerConfigEntry struct {
 }
 
 func UpdateCredential(client *kubernetes.Clientset, cfg *config.Configuration) {
+	private := !cfg.PublicRegistry
+	region := cfg.Region
+
+	log := log.WithField("private", private).WithField("region", region)
+
 	credSecret, err := getSecret(client, cfg.Namespace, cfg.CredentialSecret)
 	if err != nil {
 		log.WithError(err).Fatalf("cannot find the credential secret %s/%s", cfg.CredentialSecret, cfg.Namespace)
 	}
 
-	accessKey := string(credSecret.Data[accessKeyIdPropName])
-	secretKey := string(credSecret.Data[secretAccessKeyPropName])
-	region := cfg.Region
+	accessKey := string(credSecret.Data[accessKeyIdName])
+	secretKey := string(credSecret.Data[secretAccessKeyName])
 
-	log.Infof("Prepare to rotate AWS ECR secret %s/%s for region %s", cfg.SecretToUpdate, cfg.Namespace, region)
+	log.Infof("Prepare to rotate AWS ECR secret %s/%s", cfg.SecretToUpdate, cfg.Namespace)
 
 	awsConfig, err := newAWSConfig(region, accessKey, secretKey, "")
 	if err != nil {
@@ -67,12 +72,50 @@ func UpdateCredential(client *kubernetes.Clientset, cfg *config.Configuration) {
 	}
 
 	// Get an authorization token from ECR
-	ecrClient := ecr.NewFromConfig(awsConfig)
-	result, err := ecrClient.GetAuthorizationToken(context.TODO(), &ecr.GetAuthorizationTokenInput{})
-	if err != nil {
-		log.WithError(err).Fatal("unable to get an Authorization token from ECR")
+	var (
+		authorizationToken string
+		expiresAt          time.Time
+		endpoint           string
+	)
+	if private {
+		ecrClient := ecr.NewFromConfig(awsConfig)
+		result, err := ecrClient.GetAuthorizationToken(context.TODO(), &ecr.GetAuthorizationTokenInput{})
+		if err != nil {
+			log.WithError(err).Fatal("unable to get an authorization token with private ECR")
+		}
+		if len(result.AuthorizationData) == 0 {
+			log.Fatal("cannot get the authorization data")
+		}
+
+		authorizationToken = aws.ToString(result.AuthorizationData[0].AuthorizationToken)
+		if authorizationToken == "" {
+			log.Fatal("cannot get the authorization token")
+		}
+
+		endpoint = aws.ToString(result.AuthorizationData[0].ProxyEndpoint)
+		if endpoint == "" {
+			log.Fatal("cannot get proxy endpoint")
+		}
+
+		expiresAt = aws.ToTime(result.AuthorizationData[0].ExpiresAt)
+	} else {
+		ecrClient := ecrPublic.NewFromConfig(awsConfig)
+		result, err := ecrClient.GetAuthorizationToken(context.TODO(), &ecrPublic.GetAuthorizationTokenInput{})
+		if err != nil {
+			log.WithError(err).Fatal("unable to get an authorization token from public ECR")
+		}
+		if result.AuthorizationData == nil {
+			log.Fatal("cannot get the authorization data")
+		}
+
+		authorizationToken = aws.ToString(result.AuthorizationData.AuthorizationToken)
+		if authorizationToken == "" {
+			log.Fatal("cannot get the authorization token")
+		}
+
+		expiresAt = aws.ToTime(result.AuthorizationData.ExpiresAt)
+		endpoint = "public.ecr.aws"
 	}
-	log.Infof("Found %d authorizationData", len(result.AuthorizationData))
 
 	secretToUpdate, err := getSecret(client, cfg.Namespace, cfg.SecretToUpdate)
 	if err != nil {
@@ -101,12 +144,12 @@ func UpdateCredential(client *kubernetes.Clientset, cfg *config.Configuration) {
 		}
 	}
 
-	err = updateSecretFromToken(client, cfg.Namespace, secretToUpdate, result.AuthorizationData[0])
+	err = updateSecretFromToken(client, cfg.Namespace, secretToUpdate, authorizationToken, expiresAt, endpoint)
 	if err != nil {
 		log.WithError(err).Fatalf("Unable to update secret")
 	}
 
-	log.Infof("Secret %s/%s for region %s updated with new ECR credentials", cfg.SecretToUpdate, cfg.Namespace, region)
+	log.Infof("Secret %s/%s updated with new ECR credentials", cfg.SecretToUpdate, cfg.Namespace)
 }
 
 func newAWSConfig(region, accessKeyId, secretAccessKey, session string) (aws.Config, error) {
@@ -134,7 +177,7 @@ func createSecret(client *kubernetes.Clientset, namespace string, secret *corev1
 }
 
 // updateSecretFromToken updates a Kubernetes secret with the given AWS ECR AuthorizationData.
-func updateSecretFromToken(client *kubernetes.Clientset, namespace string, secret *corev1.Secret, authorizationData ecrType.AuthorizationData) error {
+func updateSecretFromToken(client *kubernetes.Clientset, namespace string, secret *corev1.Secret, authorizationToken string, expiresAt time.Time, endpoint string) error {
 	if secret.Data == nil {
 		secret.Data = make(map[string][]byte)
 	}
@@ -148,29 +191,28 @@ func updateSecretFromToken(client *kubernetes.Clientset, namespace string, secre
 		return err
 	}
 
-	json, err := buildDockerJSONConfig(dockerConfigJson, authorizationData)
+	json, err := buildDockerJSONConfig(dockerConfigJson, authorizationToken, expiresAt, endpoint)
 	if err != nil {
 		log.Errorf("Unable to build dockerJsonConfig from AuthorizationData")
 		return err
 	}
 
-	secret.Annotations[ecrUpdaterExpiresAt] = aws.ToTime(authorizationData.ExpiresAt).String()
+	secret.Annotations[ecrExpiresAtAnnotation] = expiresAt.String()
 	secret.Data[".dockerconfigjson"] = json
 	_, err = client.CoreV1().Secrets(namespace).Update(context.TODO(), secret, metav1.UpdateOptions{})
 	return err
 }
 
-func buildDockerJSONConfig(dockerConfigJson DockerConfigJSON, authorizationData ecrType.AuthorizationData) ([]byte, error) {
+func buildDockerJSONConfig(dockerConfigJson DockerConfigJSON, authorizationToken string, expiresAt time.Time, endpoint string) ([]byte, error) {
 	user := "AWS"
-	token := aws.ToString(authorizationData.AuthorizationToken)
-	password := decodePassword(token)
+	password := decodePassword(authorizationToken)
 	password = password[4:]
 
 	if dockerConfigJson.Auths == nil {
 		dockerConfigJson.Auths = make(DockerConfig)
 	}
-	endpoint := credentials.ConvertToHostname(aws.ToString(authorizationData.ProxyEndpoint))
-	dockerConfigJson.Auths[endpoint] = DockerConfigEntry{
+	hostname := credentials.ConvertToHostname(endpoint)
+	dockerConfigJson.Auths[hostname] = DockerConfigEntry{
 		Auth: encodeDockerConfigFieldAuth(user, password),
 	}
 	return json.Marshal(dockerConfigJson)

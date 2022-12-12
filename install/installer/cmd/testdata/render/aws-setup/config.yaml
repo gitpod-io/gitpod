@@ -5,7 +5,15 @@
 apiVersion: v1
 domain: gitpod.example.com
 containerRegistry:
-  inCluster: true
+  inCluster: false
+  external:
+    url: 012345678969.dkr.ecr.eu-west-2.amazonaws.com
+    certificate:
+      kind: secret
+      name: aws-ecr-credential
+    credential:
+      kind: secret
+      name: aws-iam-user-credential
   s3storage:
     region: eu-west-2
     endpoint: registry.amazonaws.com # Invalid endpoint - use to differentiate from objectStorage
