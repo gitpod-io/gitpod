@@ -107,3 +107,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
 };
 
 export { FeatureFlagContext, FeatureFlagContextProvider };
+
+export const useFeatureFlags = () => {
+    return useContext(FeatureFlagContext);
+};
