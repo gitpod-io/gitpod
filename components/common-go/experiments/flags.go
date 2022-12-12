@@ -7,8 +7,10 @@ package experiments
 import "context"
 
 const (
-	PersonalAccessTokensEnabledFlag = "personalAccessTokensEnabled"
-	OIDCServiceEnabledFlag          = "oidcServiceEnabled"
+	PersonalAccessTokensEnabledFlag                = "personalAccessTokensEnabled"
+	OIDCServiceEnabledFlag                         = "oidcServiceEnabled"
+	SupervisorPersistServerAPIChannelWhenStartFlag = "supervisor_persist_serverapi_channel_when_start"
+	SupervisorUsePublicAPIFlag                     = "supervisor_experimental_publicapi"
 )
 
 func IsPersonalAccessTokensEnabled(ctx context.Context, client Client, attributes Attributes) bool {
@@ -17,4 +19,12 @@ func IsPersonalAccessTokensEnabled(ctx context.Context, client Client, attribute
 
 func IsOIDCServiceEnabled(ctx context.Context, client Client, attributes Attributes) bool {
 	return client.GetBoolValue(ctx, OIDCServiceEnabledFlag, false, attributes)
+}
+
+func SupervisorPersistServerAPIChannelWhenStart(ctx context.Context, client Client, attributes Attributes) bool {
+	return client.GetBoolValue(ctx, SupervisorPersistServerAPIChannelWhenStartFlag, true, attributes)
+}
+
+func SupervisorUsePublicAPI(ctx context.Context, client Client, attributes Attributes) bool {
+	return client.GetBoolValue(ctx, SupervisorUsePublicAPIFlag, false, attributes)
 }

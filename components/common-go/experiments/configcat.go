@@ -6,10 +6,8 @@ package experiments
 
 import (
 	"context"
-	"time"
 
 	configcat "github.com/configcat/go-sdk/v7"
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/sirupsen/logrus"
 )
 
@@ -21,14 +19,9 @@ const (
 	vscodeClientIDAttribute = "vscode_client_id"
 )
 
-func newConfigCatClient(sdkKey string) *configCatClient {
+func newConfigCatClient(config configcat.Config) *configCatClient {
 	return &configCatClient{
-		client: configcat.NewCustomClient(configcat.Config{
-			SDKKey:       sdkKey,
-			PollInterval: 3 * time.Minute,
-			HTTPTimeout:  3 * time.Second,
-			Logger:       &configCatLogger{log.Log},
-		}),
+		client: configcat.NewCustomClient(config),
 	}
 }
 
