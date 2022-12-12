@@ -125,7 +125,8 @@ func renderAllKubernetesObject(cfgVersion string, cfg *configv1.Config) ([]strin
 			cfg.ObjectStorage = configv1.ObjectStorage{
 				InCluster: pointer.Bool(false),
 				S3: &configv1.ObjectStorageS3{
-					Endpoint: "endpoint",
+					Endpoint:   "endpoint",
+					BucketName: "some-bucket",
 					Credentials: configv1.ObjectRef{
 						Kind: configv1.ObjectRefSecret,
 						Name: "value",
