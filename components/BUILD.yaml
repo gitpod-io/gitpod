@@ -69,6 +69,7 @@ packages:
       - components/proxy:docker
       - components/registry-facade:docker
       - components/registry-facade/ca-updater:docker
+      - components/registry-credential:docker
       - components/server:docker
       - components/service-waiter:docker
       - components/supervisor:docker
@@ -123,6 +124,7 @@ packages:
       - components/openvsx-proxy:app
       - components/public-api-server:app
       - components/registry-facade:app
+      - components/registry-credential:app
       - components/server:app
       - components/service-waiter:app
       - components/supervisor:app
