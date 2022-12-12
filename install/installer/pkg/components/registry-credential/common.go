@@ -5,24 +5,84 @@
 package registry_credential
 
 import (
+	"net/url"
 	"regexp"
+	"strings"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"k8s.io/utils/pointer"
 )
 
-// isAWSRegistry checks the external container registry URL is a private AWS ECR container registry.
-func isAWSRegistry(ctx *common.RenderContext) bool {
-	if pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) &&
-		ctx.Config.ContainerRegistry.External != nil {
-		// We support private AWS ECR container registry now.
-		re := regexp.MustCompile(`^\d{12}\.dkr\.ecr\.[a-z]{2}-[a-z]+-\d\.amazonaws\.com$`)
-		return re.MatchString(ctx.Config.ContainerRegistry.External.URL)
+// IsAWSECRURL parses the external container registry URL exists and then
+// checks whether the external container registry URL is a AWS ECR container registry.
+func IsAWSECRURL(ctx *common.RenderContext) bool {
+	if ctx.Config.ContainerRegistry.External == nil {
+		return false
+	}
+	return isAWSECRURL(ctx.Config.ContainerRegistry.External.URL)
+}
+
+// isAWSECRURL checks whether the URL is a AWS ECR URL or not.
+func isAWSECRURL(URL string) bool {
+	if isPrivateAWSECRURL(URL) || isPublicAWSECRURL(URL) {
+		return true
 	}
 	return false
 }
 
-// TODO(jenting): parse the AWS region from the container registry URL
+// isPrivateAWSECRURL check if it's a private AWS ECR URL.
+// The private AWS ECR URL with the format aws_account_id.dkr.ecr.region.amazonaws.com.
+func isPrivateAWSECRURL(URL string) bool {
+	u, err := url.Parse(URL)
+	if err != nil {
+		log.WithError(err).Errorf("unable to parse url %s", URL)
+		return false
+	}
+
+	host := u.Host
+	if host == "" {
+		host = URL
+	}
+
+	re, err := regexp.Compile(`^[0-9]+\.dkr\.ecr\.[a-z]+-[a-z]+-[0-9]+\.amazonaws\.com*`)
+	if err != nil {
+		log.WithError(err).Fatal("invalid private regexp pattern")
+		return false
+	}
+	return re.MatchString(host)
+}
+
+// isPublicAWSECRURL check if it's a public AWS ECR URL.
+// The public AWS ECR URL with the format public.ecr.aws/<registry-alias>.
+func isPublicAWSECRURL(URL string) bool {
+	u, err := url.Parse(URL)
+	if err != nil {
+		log.WithError(err).Errorf("unable to parse url %s", URL)
+		return false
+	}
+
+	host := u.Host
+	if host == "" {
+		host = URL
+	}
+
+	re, err := regexp.Compile(`^public\.ecr\.aws*`)
+	if err != nil {
+		log.WithError(err).Fatal("invalid public regexp pattern")
+		return false
+	}
+	return re.MatchString(host)
+}
+
+// getAWSRegion returns the AWS region according to the container registry URL.
 func getAWSRegion(url string) string {
-	return "us-west-1"
+	if isPrivateAWSECRURL(url) {
+		return strings.Split(url, ".")[3]
+	}
+	if isPublicAWSECRURL(url) {
+		// If it's a public registry, force to use us-east-1 region
+		// https://docs.aws.amazon.com/general/latest/gr/ecr-public.html#ecr-public-region
+		return "us-east-1"
+	}
+	return ""
 }

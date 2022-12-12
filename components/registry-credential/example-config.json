@@ -1,5 +1,7 @@
 {
   "namespace": "default",
   "credentialSecret": "",
+  "region": "",
+  "publicRegistry": false,
   "secretToUpdate": ""
 }
