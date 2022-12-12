@@ -5,6 +5,7 @@
 package proxy
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -51,6 +52,10 @@ func categorizeRPCError(err error) *connect.Error {
 		default:
 			return connect.NewError(connect.CodeInternal, fmt.Errorf(rpcErr.Message))
 		}
+	}
+
+	if errors.Is(err, context.Canceled) {
+		return connect.NewError(connect.CodeDeadlineExceeded, fmt.Errorf("Request timed out"))
 	}
 
 	if handshakeErr := new(protocol.ErrBadHandshake); errors.As(err, &handshakeErr) {
