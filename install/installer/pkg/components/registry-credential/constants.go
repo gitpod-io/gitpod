@@ -7,7 +7,5 @@ package registry_credential
 const (
 	Component = "registry-credential"
 
-	SecretNameAWSIAMUserCredentials = "aws-iam-user-credentials"
-
 	CronSchedule = "* */6 * * *"
 )
