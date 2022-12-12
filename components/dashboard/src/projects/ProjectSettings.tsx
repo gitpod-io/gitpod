@@ -260,7 +260,7 @@ export default function () {
                     </Alert>
                 )}
             </div>
-            <div className="">
+            <div>
                 <h3 className="mt-12">Delete Project</h3>
                 <p className="text-base text-gray-500 dark:text-gray-400 pb-4">
                     Removing the project from this team will also remove team members access to it.
