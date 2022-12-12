@@ -113,12 +113,12 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const withPreview = decideWithPreview({werft, sliceID: sliceId, buildConfig, mainBuild, withIntegrationTests})
 
     switch (buildConfig["cert-issuer"]) {
-        case "letsencrypt":
-            buildConfig["cert-issuer"] = "letsencrypt-issuer-gitpod-core-dev"
-            break
         case "zerossl":
-        default:
             buildConfig["cert-issuer"] = "zerossl-issuer-gitpod-core-dev"
+            break
+        case "letsencrypt":
+        default:
+            buildConfig["cert-issuer"] = "letsencrypt-issuer-gitpod-core-dev"
     }
     const certIssuer = buildConfig["cert-issuer"];
 
