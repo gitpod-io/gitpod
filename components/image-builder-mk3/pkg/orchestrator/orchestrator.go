@@ -367,7 +367,8 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 				WorkspaceImage:     o.Config.BuilderImage,
 				DeprecatedIdeImage: o.Config.BuilderImage,
 				IdeImage: &wsmanapi.IDEImage{
-					WebRef: o.Config.BuilderImage,
+					WebRef:        o.Config.BuilderImage,
+					SupervisorRef: req.SupervisorRef,
 				},
 				WorkspaceLocation: contextPath,
 				Envvars: []*wsmanapi.EnvironmentVariable{
