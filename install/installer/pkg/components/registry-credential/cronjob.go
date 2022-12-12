@@ -14,6 +14,10 @@ import (
 )
 
 func cronjob(ctx *common.RenderContext) ([]runtime.Object, error) {
+	if !isAWSRegistry(ctx) {
+		return []runtime.Object{}, nil
+	}
+
 	objectMeta := metav1.ObjectMeta{
 		Name:      Component,
 		Namespace: ctx.Namespace,
@@ -25,7 +29,6 @@ func cronjob(ctx *common.RenderContext) ([]runtime.Object, error) {
 			TypeMeta:   common.TypeMetaBatchCronJob,
 			ObjectMeta: objectMeta,
 			Spec: batchv1.CronJobSpec{
-
 				Schedule:                   CronSchedule,
 				SuccessfulJobsHistoryLimit: pointer.Int32(1),
 				FailedJobsHistoryLimit:     pointer.Int32(10),

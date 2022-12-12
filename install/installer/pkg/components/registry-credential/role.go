@@ -13,6 +13,10 @@ import (
 )
 
 func role(ctx *common.RenderContext) ([]runtime.Object, error) {
+	if !isAWSRegistry(ctx) {
+		return []runtime.Object{}, nil
+	}
+
 	return []runtime.Object{
 		&rbacv1.Role{
 			TypeMeta: common.TypeMetaRole,
