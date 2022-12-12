@@ -32,7 +32,7 @@ func cronjob(ctx *common.RenderContext) ([]runtime.Object, error) {
 				ConcurrencyPolicy:          batchv1.ReplaceConcurrent,
 				JobTemplate: batchv1.JobTemplateSpec{
 					ObjectMeta: objectMeta,
-					Spec:       jobSpec(objectMeta),
+					Spec:       jobSpec(ctx, objectMeta),
 				},
 			},
 		},

@@ -1558,6 +1558,9 @@ data:
           "public-api-server": {
             "version": "test"
           },
+          "registryCredential": {
+            "version": "test"
+          },
           "registryFacade": {
             "version": "test"
           },
@@ -11136,10 +11139,9 @@ spec:
       namespace: default
     spec:
       containers:
-      - command:
-        - /aws-iam-credential-rotate
+      - args:
         - ecr-update
-        image: jenting/aws-iam-credential-rotate
+        image: eu.gcr.io/gitpod-core-dev/build/registry-credential:test
         imagePullPolicy: IfNotPresent
         name: registry-credential
         resources: {}
@@ -11273,10 +11275,9 @@ spec:
           namespace: default
         spec:
           containers:
-          - command:
-            - /aws-iam-credential-rotate
+          - args:
             - ecr-update
-            image: jenting/aws-iam-credential-rotate
+            image: eu.gcr.io/gitpod-core-dev/build/registry-credential:test
             imagePullPolicy: IfNotPresent
             name: registry-credential
             resources: {}
