@@ -26,3 +26,13 @@ packages:
       image:
         - ${imageRepoBase}/registry-credential:${version}
         - ${imageRepoBase}/registry-credential:commit-${__git_commit}
+  - name: lib
+    type: go
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    config:
+      packaging: library
+    deps:
+      - components/common-go:lib
