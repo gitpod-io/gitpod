@@ -6,9 +6,10 @@ package server
 
 import (
 	"fmt"
-
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/iam/pkg/config"
+	"github.com/gitpod-io/gitpod/iam/pkg/oidc"
+	"github.com/go-chi/chi/v5"
 	"github.com/sirupsen/logrus"
 )
 
@@ -24,9 +25,23 @@ func Start(logger *logrus.Entry, version string, cfg *config.ServiceConfig) erro
 		return fmt.Errorf("failed to initialize iam server: %w", err)
 	}
 
+	err = register(srv)
+	if err != nil {
+		return fmt.Errorf("failed to register services to iam server")
+	}
+
 	if listenErr := srv.ListenAndServe(); listenErr != nil {
 		return fmt.Errorf("failed to serve iam server: %w", err)
 	}
 
+	return nil
+}
+
+func register(srv *baseserver.Server) error {
+	router := chi.NewMux()
+	router.Mount("/oidc", oidc.Router())
+
+	// All root requests are handled by our router
+	srv.HTTPMux().Handle("/", router)
 	return nil
 }
