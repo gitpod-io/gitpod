@@ -48,7 +48,7 @@ export default function SelectWorkspaceClass(props: SelectWorkspaceClassProps) {
             {supportedClasses.map((c) => {
                 return (
                     <WorkspaceClass
-                        additionalStyles="w-80 h-32"
+                        additionalStyles="w-80"
                         selected={workspaceClass === c.id}
                         onClick={() => actuallySetWorkspaceClass(c.id)}
                         category={c.category}

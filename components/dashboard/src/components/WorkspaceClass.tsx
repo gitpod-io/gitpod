@@ -51,12 +51,23 @@ function WorkspaceClass(props: WorkspaceClassProps) {
                 >
                     {props.description}
                 </div>
-                <div className="text-xl font-semibold mt-1 mb-4">
-                    <svg viewBox="0 -4 50 50" xmlns="http://www.w3.org/2000/svg">
+                <div className="text-xl my-1 flex-row flex align-middle">
+                    <svg
+                        viewBox={"0 -4 " + 2 * (props.powerUps || 1) + " 2"}
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-3 my-1 mr-1"
+                    >
                         {Array.from(Array(props.powerUps).keys()).map((i) => {
                             return <ellipse cx={0.8 + i * 2.5} cy="-3" rx="0.8" ry="0.8" style={{ fill: "#FFB45B" }} />;
                         })}
                     </svg>
+                    <div
+                        className={`text-sm font-normal truncate w-full ${
+                            props.selected ? "text-gray-300 dark:text-gray-500" : "text-gray-500 dark:text-gray-400"
+                        }`}
+                    >
+                        {(props?.powerUps || 1) * 10} credits/hour
+                    </div>
                 </div>
             </div>
         </div>

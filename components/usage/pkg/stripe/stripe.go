@@ -215,7 +215,7 @@ func (c *Client) GetCustomerByAttributionID(ctx context.Context, attributionID s
 	}
 
 	if len(customers) == 0 {
-		return nil, status.Errorf(codes.NotFound, "no team customer found for attribution_id: %s", attributionID)
+		return nil, status.Errorf(codes.NotFound, "no customer found for attribution_id: %s", attributionID)
 	}
 	if len(customers) > 1 {
 		return nil, status.Errorf(codes.FailedPrecondition, "found multiple customers for attributiuon_id: %s", attributionID)
