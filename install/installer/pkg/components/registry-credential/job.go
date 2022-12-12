@@ -14,7 +14,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 )
 
-func jobSpec(objectMeta metav1.ObjectMeta) batchv1.JobSpec {
+func jobSpec(ctx *common.RenderContext, objectMeta metav1.ObjectMeta) batchv1.JobSpec {
 	return batchv1.JobSpec{
 		BackoffLimit: pointer.Int32(10),
 		Template: v1.PodTemplateSpec{
@@ -25,9 +25,9 @@ func jobSpec(objectMeta metav1.ObjectMeta) batchv1.JobSpec {
 				Containers: []v1.Container{
 					{
 						Name:            Component,
-						Image:           "jenting/aws-iam-credential-rotate",
+						Args:            []string{"ecr-update"},
+						Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.RegistryCredential.Version),
 						ImagePullPolicy: v1.PullIfNotPresent,
-						Command:         []string{"/aws-iam-credential-rotate", "ecr-update"},
 						SecurityContext: &v1.SecurityContext{
 							AllowPrivilegeEscalation: pointer.Bool(false),
 						},
@@ -49,7 +49,7 @@ func job(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&batchv1.Job{
 			TypeMeta:   common.TypeMetaBatchJob,
 			ObjectMeta: objectMeta,
-			Spec:       jobSpec(objectMeta),
+			Spec:       jobSpec(ctx, objectMeta),
 		},
 	}, nil
 }
