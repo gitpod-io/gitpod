@@ -1,0 +1,10 @@
+version: v1
+plugins:
+  - name: go
+    out: go
+    opt:
+      - module=github.com/gitpod-io/gitpod/components/iam-api/go
+  - name: go-grpc
+    out: go
+    opt:
+      - module=github.com/gitpod-io/gitpod/components/iam-api/go
