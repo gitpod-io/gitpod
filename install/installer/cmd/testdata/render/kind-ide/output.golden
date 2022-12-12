@@ -547,6 +547,9 @@ data:
           "public-api-server": {
             "version": "test"
           },
+          "registryCredential": {
+            "version": "test"
+          },
           "registryFacade": {
             "version": "test"
           },

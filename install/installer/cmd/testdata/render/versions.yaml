@@ -50,6 +50,8 @@ components:
     version: test
   public-api-server:
     version: test
+  registryCredential:
+    version: test
   registryFacade:
     version: test
   server:
