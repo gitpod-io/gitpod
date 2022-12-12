@@ -2155,7 +2155,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         try {
             customer = (await this.billingService.getStripeCustomer({ attributionId })).customer;
         } catch (e) {
-            console.error(e);
+            log.error(e);
         }
         if (customer) {
             // NOTE: this is a temporary workaround, as long as we're not automatically re-create the customer
@@ -2171,7 +2171,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             return;
         }
 
-        // otherwise we need to create a new costomer.
+        // otherwise we need to create a new customer.
         try {
             await this.billingService.createStripeCustomer({
                 attributionId,
