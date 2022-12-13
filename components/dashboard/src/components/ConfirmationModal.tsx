@@ -20,7 +20,7 @@ export default function ConfirmationModal(props: {
     onConfirm: () => void;
 }) {
     const children: React.ReactChild[] = [
-        <p key="areYouSure" className="mt-3 mb-3 text-base text-gray-500">
+        <p key="areYouSure" className="mb-3 text-base text-gray-500">
             {props.areYouSureText}
         </p>,
     ];
