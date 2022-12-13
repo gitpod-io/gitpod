@@ -13,7 +13,7 @@ import * as mysql from "mysql";
 
 const retryPeriod = 5000; // [ms]
 const totalAttempts = 30;
-const connCfg = {
+const connCfg: mysql.ConnectionConfig = {
     ...new Config().mysqlConfig,
     timeout: retryPeriod,
 };

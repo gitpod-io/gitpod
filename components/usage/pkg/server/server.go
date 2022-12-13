@@ -55,6 +55,7 @@ func Start(cfg Config, version string) error {
 		Password: os.Getenv("DB_PASSWORD"),
 		Host:     net.JoinHostPort(os.Getenv("DB_HOST"), os.Getenv("DB_PORT")),
 		Database: "gitpod",
+		CaCert:   os.Getenv("DB_CA_CERT"),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to establish database connection: %w", err)

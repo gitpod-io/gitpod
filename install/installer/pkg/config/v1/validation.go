@@ -166,6 +166,11 @@ func (v version) ClusterValidation(rcfg interface{}) cluster.ValidationChecks {
 		res = append(res, cluster.CheckSecret(secretName, cluster.CheckSecretRequiredData("encryptionKeys", "host", "password", "port", "username")))
 	}
 
+	if cfg.Database.SSL != nil && cfg.Database.SSL.CaCert != nil {
+		secretName := cfg.Database.SSL.CaCert.Name
+		res = append(res, cluster.CheckSecret(secretName, cluster.CheckSecretRequiredData("ca.crt")))
+	}
+
 	if cfg.License != nil {
 		secretName := cfg.License.Name
 		licensorKey := "type"

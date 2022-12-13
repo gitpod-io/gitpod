@@ -47,6 +47,10 @@ const (
 	ImageBuilderComponent       = "image-builder-mk3"
 	ImageBuilderRPCPort         = 8080
 	DebugNodePort               = 9229
+	DBCaCertEnvVarName          = "DB_CA_CERT"
+	DBCaFileName                = "ca.crt"
+	DBCaBasePath                = "/db-ssl"
+	DBCaPath                    = DBCaBasePath + "/" + DBCaFileName
 
 	AnnotationConfigChecksum = "gitpod.io/checksum_config"
 )
