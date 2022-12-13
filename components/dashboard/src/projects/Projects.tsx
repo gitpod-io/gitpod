@@ -10,7 +10,7 @@ import Header from "../components/Header";
 import projectsEmpty from "../images/projects-empty.svg";
 import projectsEmptyDark from "../images/projects-empty-dark.svg";
 import { useHistory, useLocation } from "react-router";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { getGitpodService } from "../service/service";
 import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { ThemeContext } from "../theme-context";
@@ -77,22 +77,28 @@ export default function () {
     }, [teams, updateProjects]);
 
     const newProjectUrl = !!team ? `/new?team=${team.slug}` : "/new?user=1";
-    const onNewProject = () => {
+
+    const onNewProject = useCallback(() => {
         history.push(newProjectUrl);
-    };
+    }, [history, newProjectUrl]);
 
-    const filter = (project: Project) => {
-        if (searchFilter && `${project.name}`.toLowerCase().includes(searchFilter.toLowerCase()) === false) {
-            return false;
-        }
-        return true;
-    };
+    // sort/filter projects if anything related changes
+    const sortedFilteredProjects = useMemo(() => {
+        const filter = (project: Project) => {
+            if (searchFilter && `${project.name}`.toLowerCase().includes(searchFilter.toLowerCase()) === false) {
+                return false;
+            }
+            return true;
+        };
 
-    function hasNewerPrebuild(p0: Project, p1: Project): number {
-        return dayjs(lastPrebuilds.get(p1.id)?.info?.startedAt || "1970-01-01").diff(
-            dayjs(lastPrebuilds.get(p0.id)?.info?.startedAt || "1970-01-01"),
-        );
-    }
+        const hasNewerPrebuild = (p0: Project, p1: Project): number => {
+            return dayjs(lastPrebuilds.get(p1.id)?.info?.startedAt || "1970-01-01").diff(
+                dayjs(lastPrebuilds.get(p0.id)?.info?.startedAt || "1970-01-01"),
+            );
+        };
+
+        return projects.filter(filter).sort(hasNewerPrebuild);
+    }, [lastPrebuilds, projects, searchFilter]);
 
     return (
         <>
@@ -171,17 +177,14 @@ export default function () {
                         </button>
                     </div>
                     <div className="mt-4 grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-4 pb-40">
-                        {projects
-                            .filter(filter)
-                            .sort(hasNewerPrebuild)
-                            .map((p) => (
-                                <ProjectListItem
-                                    project={p}
-                                    key={p.id}
-                                    prebuild={lastPrebuilds.get(p.id)}
-                                    onProjectRemoved={updateProjects}
-                                />
-                            ))}
+                        {sortedFilteredProjects.map((p) => (
+                            <ProjectListItem
+                                project={p}
+                                key={p.id}
+                                prebuild={lastPrebuilds.get(p.id)}
+                                onProjectRemoved={updateProjects}
+                            />
+                        ))}
                         {!searchFilter && (
                             <div
                                 key="new-project"
