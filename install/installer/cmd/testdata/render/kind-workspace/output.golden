@@ -3517,7 +3517,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: gitpod.io/workload_workspace_services
+              - key: gitpod.io/workload_services
                 operator: Exists
       containers:
       - args:
@@ -3945,6 +3945,8 @@ spec:
           name: https-proxy
         - containerPort: 9500
           name: metrics
+        - containerPort: 22
+          name: ssh
         readinessProbe:
           failureThreshold: 10
           httpGet:

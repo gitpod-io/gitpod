@@ -11361,6 +11361,8 @@ spec:
           name: https-proxy
         - containerPort: 9500
           name: metrics
+        - containerPort: 22
+          name: ssh
         readinessProbe:
           failureThreshold: 10
           httpGet:
