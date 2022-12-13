@@ -5,6 +5,8 @@
 package db
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"time"
 
@@ -21,12 +23,13 @@ type ConnectionParams struct {
 	Password string
 	Host     string
 	Database string
+	CaCert   string
 }
 
 func Connect(p ConnectionParams) (*gorm.DB, error) {
 	loc, err := time.LoadLocation("UTC")
 	if err != nil {
-		return nil, fmt.Errorf("failed to load UT location: %w", err)
+		return nil, fmt.Errorf("Failed to load UT location: %w", err)
 	}
 	cfg := driver_mysql.Config{
 		User:                 p.User,
@@ -37,6 +40,23 @@ func Connect(p ConnectionParams) (*gorm.DB, error) {
 		Loc:                  loc,
 		AllowNativePasswords: true,
 		ParseTime:            true,
+	}
+
+	if p.CaCert != "" {
+		rootCertPool := x509.NewCertPool()
+		if ok := rootCertPool.AppendCertsFromPEM([]byte(p.CaCert)); !ok {
+			log.Fatal("Failed to append custom DB CA cert.")
+		}
+
+		tlsConfigName := "custom"
+		err = driver_mysql.RegisterTLSConfig(tlsConfigName, &tls.Config{
+			RootCAs:    rootCertPool,
+			MinVersion: tls.VersionTLS12, // semgrep finding: set lower boundary to exclude insecure TLS1.0
+		})
+		if err != nil {
+			return nil, fmt.Errorf("Failed to register custom DB CA cert: %w", err)
+		}
+		cfg.TLSConfig = tlsConfigName
 	}
 
 	// refer to https://github.com/go-sql-driver/mysql#dsn-data-source-name for details

@@ -10,4 +10,5 @@ const (
 	dbSessionsTag   = "5.7.34"
 	initScriptDir   = "files"
 	sqlInitScripts  = "db-init-scripts"
+	caCertMountName = "db-ca-cert"
 )
