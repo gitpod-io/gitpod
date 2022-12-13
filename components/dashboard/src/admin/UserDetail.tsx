@@ -275,7 +275,7 @@ export default function UserDetail(p: { user: User }) {
                         </p>
                     </div>
                     {!user.lastVerificationTime ? (
-                        <button className="secondary danger ml-3" disabled={activity} onClick={verifyUser}>
+                        <button className="secondary ml-3" disabled={activity} onClick={verifyUser}>
                             Verify User
                         </button>
                     ) : null}
