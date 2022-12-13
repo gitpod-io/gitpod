@@ -22,6 +22,8 @@ const (
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
+	_, _, databaseSecretMountPath := common.DatabaseEnvSecret(ctx.Config)
+
 	cfg := config.ServiceConfig{
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
@@ -33,6 +35,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 		},
+
+		DatabaseConfigPath: databaseSecretMountPath,
 	}
 
 	fc, err := common.ToJSONString(cfg)

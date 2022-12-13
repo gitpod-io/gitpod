@@ -2228,7 +2228,7 @@ data:
     kind: Deployment
     metadata:
       annotations:
-        gitpod.io/checksum_config: cb4cc24849de9562a8146bc14338c6a2298f3056b17f1cee5f08c1475327ff57
+        gitpod.io/checksum_config: 7346723d23891c253f282241ed24e225e16dd2ddafa9b7c90d1da928a4923f4b
       creationTimestamp: null
       labels:
         app: gitpod
@@ -3726,7 +3726,8 @@ data:
             "address": "0.0.0.0:9002"
           }
         }
-      }
+      },
+      "databaseConfigPath": "/secrets/database-config"
     }
 kind: ConfigMap
 metadata:
@@ -10022,7 +10023,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    gitpod.io/checksum_config: cb4cc24849de9562a8146bc14338c6a2298f3056b17f1cee5f08c1475327ff57
+    gitpod.io/checksum_config: 7346723d23891c253f282241ed24e225e16dd2ddafa9b7c90d1da928a4923f4b
   creationTimestamp: null
   labels:
     app: gitpod
@@ -10176,6 +10177,9 @@ spec:
           name: config
           readOnly: true
           subPath: config.json
+        - mountPath: /secrets/database-config
+          name: database-config
+          readOnly: true
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -10326,6 +10330,9 @@ spec:
       - configMap:
           name: iam
         name: config
+      - name: database-config
+        secret:
+          secretName: mysql
 status: {}
 ---
 # apps/v1/Deployment ide-metrics
