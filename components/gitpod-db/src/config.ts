@@ -13,13 +13,19 @@ import { ConnectionConfig } from "mysql";
 export class Config {
     get dbConfig(): DatabaseConfig {
         // defaults to be used only in tests
-        const dbSetup = {
+        const dbSetup: DatabaseConfig = {
             host: process.env.DB_HOST || "localhost",
             port: getEnvVarParsed("DB_PORT", Number.parseInt, "3306"),
             username: process.env.DB_USERNAME || "gitpod",
             password: process.env.DB_PASSWORD || "test",
             database: process.env.DB_NAME || "gitpod",
         };
+
+        if (process.env.DB_CA_CERT) {
+            dbSetup.ssl = {
+                ca: process.env.DB_CA_CERT,
+            };
+        }
 
         log.info(`Using DB: ${dbSetup.host}:${dbSetup.port}/${dbSetup.database}`);
 
@@ -28,13 +34,19 @@ export class Config {
 
     get mysqlConfig(): ConnectionConfig {
         const dbConfig = this.dbConfig;
-        return {
+        const mysqlConfig: ConnectionConfig = {
             host: dbConfig.host,
             port: dbConfig.port,
             user: dbConfig.username,
             password: dbConfig.password,
             database: dbConfig.database,
         };
+        if (dbConfig.ssl?.ca) {
+            mysqlConfig.ssl = {
+                ca: dbConfig.ssl.ca,
+            };
+        }
+        return mysqlConfig;
     }
 
     get dbEncryptionKeys(): string {
@@ -48,4 +60,7 @@ export interface DatabaseConfig {
     database?: string;
     username?: string;
     password?: string;
+    ssl?: {
+        ca?: string;
+    };
 }

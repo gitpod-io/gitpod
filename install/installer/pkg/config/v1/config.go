@@ -232,6 +232,7 @@ type Database struct {
 	InCluster *bool             `json:"inCluster,omitempty"`
 	External  *DatabaseExternal `json:"external,omitempty"`
 	CloudSQL  *DatabaseCloudSQL `json:"cloudSQL,omitempty"`
+	SSL       *SSLOptions       `json:"ssl,omitempty"`
 }
 
 type DatabaseExternal struct {
@@ -241,6 +242,10 @@ type DatabaseExternal struct {
 type DatabaseCloudSQL struct {
 	ServiceAccount ObjectRef `json:"serviceAccount"`
 	Instance       string    `json:"instance" validate:"required"`
+}
+
+type SSLOptions struct {
+	CaCert *ObjectRef `json:"caCert,omitempty"`
 }
 
 type ObjectStorage struct {

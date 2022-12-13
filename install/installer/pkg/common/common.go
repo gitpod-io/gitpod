@@ -344,6 +344,17 @@ func DatabaseEnv(cfg *config.Config) (res []corev1.EnvVar) {
 		},
 	)
 
+	if cfg.Database.SSL != nil && cfg.Database.SSL.CaCert != nil {
+		secretRef = corev1.LocalObjectReference{Name: cfg.Database.SSL.CaCert.Name}
+		envvars = append(envvars, corev1.EnvVar{
+			Name: DBCaCertEnvVarName,
+			ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+				LocalObjectReference: secretRef,
+				Key:                  DBCaFileName,
+			}},
+		})
+	}
+
 	return envvars
 }
 
