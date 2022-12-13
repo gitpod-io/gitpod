@@ -260,13 +260,13 @@ export default function () {
                     </Alert>
                 )}
             </div>
-            <div>
-                <h3 className="mt-12">Delete Project</h3>
+            <div className="">
+                <h3 className="mt-12">Remove Project</h3>
                 <p className="text-base text-gray-500 dark:text-gray-400 pb-4">
-                    Removing the project from this team will also remove team members access to it.
+                    Removing this project will also remove all associated data with this project, including workspaces.
                 </p>
                 <button className="danger secondary" onClick={() => setShowRemoveModal(true)}>
-                    Delete Project
+                    Remove Project
                 </button>
             </div>
             {showRemoveModal && (
