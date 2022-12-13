@@ -323,6 +323,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	dbWaiterDbEnv := common.DatabaseEnv(&ctx.Config)
+	for i := range dbWaiterDbEnv {
+		if dbWaiterDbEnv[i].Name == "DB_HOST" {
+			dbWaiterDbEnv[i].ValueFrom = nil
+			dbWaiterDbEnv[i].Value = toxiproxy.Component
+		}
+	}
+
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
@@ -385,7 +393,26 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							},
 							volumes...,
 						),
-						InitContainers: []corev1.Container{*common.DatabaseWaiterContainer(ctx), *common.MessageBusWaiterContainer(ctx)},
+						InitContainers: []corev1.Container{
+							{
+								Name:  "database-waiter",
+								Image: ctx.ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
+								Args: []string{
+									"-v",
+									"database",
+								},
+								SecurityContext: &corev1.SecurityContext{
+									Privileged:               pointer.Bool(false),
+									AllowPrivilegeEscalation: pointer.Bool(false),
+									RunAsUser:                pointer.Int64(31001),
+								},
+								Env: common.MergeEnv(
+									dbWaiterDbEnv,
+									common.ProxyEnv(&ctx.Config),
+								),
+							},
+							*common.MessageBusWaiterContainer(ctx),
+						},
 						Containers: []corev1.Container{{
 							Name:            Component,
 							Image:           ctx.ImageName(ctx.Config.Repository, common.ServerComponent, ctx.VersionManifest.Components.Server.Version),
