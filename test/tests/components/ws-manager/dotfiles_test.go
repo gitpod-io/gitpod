@@ -51,6 +51,7 @@ func TestDotfiles(t *testing.T) {
 			"function:getOpenPorts",
 			"function:guessGitTokenScopes",
 			"function:getWorkspace",
+			"function:trackEvent",
 			"resource:token::*::get",
 		})
 		if err != nil {
@@ -69,7 +70,7 @@ func TestDotfiles(t *testing.T) {
 						"token": "%v",
 						"kind": "gitpod",
 						"host": "%v",
-						"scope": ["function:getToken", "function:openPort", "function:getOpenPorts", "function:guessGitTokenScopes", "getWorkspace", "resource:token::*::get"],
+						"scope": ["function:getToken", "function:openPort", "function:getOpenPorts", "function:guessGitTokenScopes", "function:getWorkspace", "function:trackEvent", "resource:token::*::get"],
 						"expiryDate": "2022-10-26T10:38:05.232Z",
 						"reuse": 4
 					}]`, tokenId, getHostUrl(ctx, t, cfg.Client(), cfg.Namespace())),
