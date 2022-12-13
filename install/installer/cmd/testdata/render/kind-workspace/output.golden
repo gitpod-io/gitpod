@@ -825,6 +825,9 @@ data:
               },
               "jbBackendPluginLatest": {
                 "version": "test"
+              },
+              "jbLauncher": {
+                "version": "test"
               }
             }
           },

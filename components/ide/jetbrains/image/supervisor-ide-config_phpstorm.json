@@ -1,5 +1,5 @@
 {
-  "entrypoint": "/ide-desktop/phpstorm/status",
+  "entrypoint": "/ide-desktop/jb-launcher",
   "entrypointArgs": [
     "{DESKTOPIDEPORT}",
     "phpstorm",

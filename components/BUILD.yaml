@@ -41,6 +41,7 @@ packages:
       - components/ide/code-desktop:docker
       - components/ide/code-desktop:docker-insiders
       - components/ide/code:docker
+      - components/ide/jetbrains/launcher:docker
       - components/ide/jetbrains/backend-plugin:stable
       - components/ide/jetbrains/backend-plugin:latest
       - components/ide/jetbrains/image:goland
@@ -134,6 +135,7 @@ packages:
       - components/ws-manager:app
       - components/ide-metrics:app
       - components/ide-service:app
+      - components/ide/jetbrains/launcher:app
 scripts:
   - name: update-license-header
     description: Updates the license header in all source files

@@ -44,7 +44,7 @@ const ideConfigs = [
     ideConfigs.forEach((ideConfig) => {
         const name = ideConfig.name + (qualifier === "stable" ? "" : "-" + qualifier);
         const template = {
-            entrypoint: `/ide-desktop/${name}/status`,
+            entrypoint: `/ide-desktop/jb-launcher`,
             entrypointArgs: ["{DESKTOPIDEPORT}", ideConfig.name, `Open in ${ideConfig.displayName}`],
             readinessProbe: {
                 type: "http",

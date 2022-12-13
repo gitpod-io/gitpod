@@ -1,5 +1,5 @@
 {
-  "entrypoint": "/ide-desktop/webstorm/status",
+  "entrypoint": "/ide-desktop/jb-launcher",
   "entrypointArgs": [
     "{DESKTOPIDEPORT}",
     "webstorm",

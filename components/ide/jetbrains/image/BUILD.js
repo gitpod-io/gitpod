@@ -55,7 +55,7 @@ const generateIDEBuildPackage = function (ideConfig, qualifier) {
         name,
         type: "docker",
         srcs: ["startup.sh", `supervisor-ide-config_${name}.json`],
-        deps: ["components/ide/jetbrains/image/status:app", `:download-${name}`, "components/ide/jetbrains/cli:app"],
+        deps: [`:download-${name}`, "components/ide/jetbrains/cli:app"],
         config: {
             dockerfile: "leeway.Dockerfile",
             metadata: {
