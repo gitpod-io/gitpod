@@ -1,5 +1,5 @@
 {
-  "entrypoint": "/ide-desktop/rubymine-latest/status",
+  "entrypoint": "/ide-desktop/jb-launcher",
   "entrypointArgs": [
     "{DESKTOPIDEPORT}",
     "rubymine",

@@ -67,6 +67,7 @@ type Components struct {
 			CLionLatestImage                  Versioned `json:"clionLatest"`
 			JetBrainsBackendPluginImage       Versioned `json:"jbBackendPlugin"`
 			JetBrainsBackendPluginLatestImage Versioned `json:"jbBackendPluginLatest"`
+			JetBrainsLauncherImage            Versioned `json:"jbLauncher"`
 		} `json:"desktopIdeImages"`
 	} `json:"workspace"`
 	WSDaemon struct {

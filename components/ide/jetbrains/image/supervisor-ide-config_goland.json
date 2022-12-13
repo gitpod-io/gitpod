@@ -1,5 +1,5 @@
 {
-  "entrypoint": "/ide-desktop/goland/status",
+  "entrypoint": "/ide-desktop/jb-launcher",
   "entrypointArgs": [
     "{DESKTOPIDEPORT}",
     "goland",

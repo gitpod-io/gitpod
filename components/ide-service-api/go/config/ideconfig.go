@@ -52,13 +52,19 @@ type IDEOption struct {
 	// This is useful if this image points to a tag like `nightly` that will be updated regularly. When `resolveImageDigest` is `true`, we make sure that we resolve the tag regularly to the most recent image version.
 	ResolveImageDigest bool `json:"resolveImageDigest,omitempty"`
 	// PluginImage ref for the IDE image, this image ref always resolve to digest.
+	// DEPRECATED use ImageLayers instead
 	PluginImage string `json:"pluginImage,omitempty"`
 	// PluginLatestImage ref for the latest IDE image, this image ref always resolve to digest.
+	// DEPRECATED use LatestImageLayers instead
 	PluginLatestImage string `json:"pluginLatestImage,omitempty"`
 	// ImageVersion the semantic version of the IDE image.
 	ImageVersion string `json:"imageVersion,omitempty"`
 	// LatestImageVersion the semantic version of the latest IDE image.
 	LatestImageVersion string `json:"latestImageVersion,omitempty"`
+	// ImageLayers for additional ide layers and dependencies
+	ImageLayers []string `json:"imageLayers,omitempty"`
+	// LatestImageLayers for latest additional ide layers and dependencies
+	LatestImageLayers []string `json:"latestImageLayers,omitempty"`
 }
 
 type IDEClient struct {

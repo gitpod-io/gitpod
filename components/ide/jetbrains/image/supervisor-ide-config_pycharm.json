@@ -1,5 +1,5 @@
 {
-  "entrypoint": "/ide-desktop/pycharm/status",
+  "entrypoint": "/ide-desktop/jb-launcher",
   "entrypointArgs": [
     "{DESKTOPIDEPORT}",
     "pycharm",

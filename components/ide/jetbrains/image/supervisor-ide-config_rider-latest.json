@@ -1,5 +1,5 @@
 {
-  "entrypoint": "/ide-desktop/rider-latest/status",
+  "entrypoint": "/ide-desktop/jb-launcher",
   "entrypointArgs": [
     "{DESKTOPIDEPORT}",
     "rider",

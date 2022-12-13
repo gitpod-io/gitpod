@@ -1,6 +1,0 @@
-{
-    "type": 1,
-    "context": "{\"ref\":\"jb-proxy-test\",\"refType\":\"branch\",\"isFile\":false,\"path\":\"\",\"title\":\"andreafalzetti/parcel-demo - jb-proxy-test\",\"revision\":\"3e5e8ce8e2133d9b82259f978cfd10e5b68cc9b4\",\"repository\":{\"cloneUrl\":\"https://github.com/andreafalzetti/parcel-demo.git\",\"host\":\"github.com\",\"name\":\"parcel-demo\",\"owner\":\"andreafalzetti\",\"private\":false,\"fork\":{\"parent\":{\"cloneUrl\":\"https://github.com/akosyakov/parcel-demo.git\",\"host\":\"github.com\",\"name\":\"parcel-demo\",\"owner\":\"akosyakov\",\"private\":false}}},\"normalizedContextURL\":\"https://github.com/andreafalzetti/parcel-demo/tree/jb-proxy-test\",\"checkoutLocation\":\"parcel-demo\",\"upstreamRemoteURI\":\"https://github.com/akosyakov/parcel-demo.git\"}",
-    "ide_settings": "{\"settingVersion\":\"2.0\",\"defaultIde\":\"code\",\"useLatestVersion\":false}",
-    "workspace_config": "{\"image\":\"gitpod/workspace-dotnet:latest\",\"tasks\":[{\"command\":\"sudo tinyproxy\\nsudo tail -f /var/log/tinyproxy/tinyproxy.log\\n\"}],\"jetbrains\":{\"intellij\":{\"vmoptions\":\"-Didea.log.debug.categories=#com.intellij.util\",\"plugins\":[\"com.haulmont.jpab\"]}},\"_origin\":\"repo\",\"vscode\":{\"extensions\":[]}}"
-}

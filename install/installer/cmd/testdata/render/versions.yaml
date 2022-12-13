@@ -105,6 +105,8 @@ components:
         version: test
       jbBackendPluginLatest:
         version: test
+      jbLauncher:
+        version: test
       version: test
     dockerUp:
       version: test

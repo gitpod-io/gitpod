@@ -42,7 +42,7 @@ const defaultBackendPort = "63342"
 
 var (
 	// ServiceName is the name we use for tracing/logging.
-	ServiceName = "jetbrains-startup"
+	ServiceName = "jetbrains-launcher"
 	// Version of this service - set during build.
 	Version = ""
 )
@@ -487,7 +487,7 @@ func resolveUserEnvs(launchCtx *LaunchContext) (userEnvs []string, err error) {
 	if err != nil {
 		return
 	}
-	envCmd := exec.Command(shell, []string{"-ilc", launchCtx.productDir + "/status env " + mark.String()}...)
+	envCmd := exec.Command(shell, []string{"-ilc", "/ide-desktop/jb-launcher env " + mark.String()}...)
 	envCmd.Stderr = os.Stderr
 	output, err := envCmd.Output()
 	if err != nil {

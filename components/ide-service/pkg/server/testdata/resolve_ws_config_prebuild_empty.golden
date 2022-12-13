@@ -1,11 +1,5 @@
 {
     "Resp": {
-        "envvars": [
-            {
-                "name": "GITPOD_IDE_ALIAS",
-                "value": "code"
-            }
-        ],
         "supervisor_image": "eu.gcr.io/gitpod-core-dev/build/supervisor:commit-ff38b98b7dde4929159bcaeec68d178898dc2139",
         "web_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9"
     },

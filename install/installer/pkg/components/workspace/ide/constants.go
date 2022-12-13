@@ -18,4 +18,5 @@ const (
 	RiderDesktopIdeImage        = "ide/rider"
 	CLionDesktopIdeImage        = "ide/clion"
 	JetBrainsBackendPluginImage = "ide/jb-backend-plugin"
+	JetBrainsLauncherImage      = "ide/jb-launcher"
 )
