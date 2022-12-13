@@ -38,12 +38,14 @@ type Attributes struct {
 // Otherwise, it returns a client which always returns the default value. This client is used for Self-Hosted installations.
 func NewClient() Client {
 	gitpodHost := os.Getenv("GITPOD_HOST")
+
 	if gitpodHost != "" {
 		return newConfigCatClient(configcat.Config{
 			SDKKey:       "gitpod",
 			BaseURL:      fmt.Sprintf("%s%s", gitpodHost, "/configcat"),
 			PollInterval: 1 * time.Minute,
 			HTTPTimeout:  3 * time.Second,
+			Logger:       &configCatLogger{log.Log},
 		})
 	}
 	sdkKey := os.Getenv("CONFIGCAT_SDK_KEY")
