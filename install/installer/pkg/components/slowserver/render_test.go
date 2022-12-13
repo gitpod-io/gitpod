@@ -60,6 +60,32 @@ func TestServerDeployment_UsesToxiproxyDbHost(t *testing.T) {
 	}
 }
 
+func TestServerDeployment_DbWaiterUsesToxiproxyDbHost(t *testing.T) {
+	ctx := renderContext(t, nil, true)
+
+	objects, err := deployment(ctx)
+	require.NoError(t, err)
+
+	require.Len(t, objects, 1, "must render only one object")
+
+	deployment := objects[0].(*appsv1.Deployment)
+
+	var dbWaiterContainers []v1.Container
+	for _, c := range deployment.Spec.Template.Spec.InitContainers {
+		if c.Name == "database-waiter" {
+			dbWaiterContainers = append(dbWaiterContainers, c)
+		}
+	}
+	require.Equal(t, len(dbWaiterContainers), 1)
+
+	waiterContainer := dbWaiterContainers[0]
+	for _, e := range waiterContainer.Env {
+		if e.Name == "DB_HOST" {
+			require.Equal(t, toxiproxy.Component, e.Value)
+		}
+	}
+}
+
 func TestSlowServerDeployment_UsesServerReplicaCountAndResources(t *testing.T) {
 	resources := map[string]*v1.ResourceRequirements{
 		common.ServerComponent: {
