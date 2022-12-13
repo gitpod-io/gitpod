@@ -29,6 +29,7 @@ export default function () {
     const { user } = useContext(UserContext);
     const { usePublicApiProjectsService } = useContext(FeatureFlagContext);
     const team = getCurrentTeam(location, teams);
+    const [projectsLoaded, setProjectsLoaded] = useState(false);
     const [projects, setProjects] = useState<Project[]>([]);
     const [lastPrebuilds, setLastPrebuilds] = useState<Map<string, PrebuildWithStatus>>(new Map());
 
@@ -52,6 +53,7 @@ export default function () {
                 : await getGitpodService().server.getUserProjects();
         }
         setProjects(infos);
+        setProjectsLoaded(true);
 
         const map = new Map();
         await Promise.all(
@@ -72,6 +74,7 @@ export default function () {
         setLastPrebuilds(map);
     }, [team, teams, usePublicApiProjectsService, user?.id]);
 
+    // Reload projects if the team changes
     useEffect(() => {
         updateProjects();
     }, [teams, updateProjects]);
@@ -113,7 +116,8 @@ export default function () {
                 </div>
             )}
             <Header title="Projects" subtitle="Manage recently added projects." />
-            {projects.length === 0 && (
+            {/* only show if we're not still loading projects to avoid a content flash */}
+            {projectsLoaded && projects.length === 0 && (
                 <div>
                     <img
                         alt="Projects (empty)"
