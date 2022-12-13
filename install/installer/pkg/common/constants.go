@@ -50,6 +50,8 @@ const (
 	DebugNodePort               = 9229
 
 	AnnotationConfigChecksum = "gitpod.io/checksum_config"
+
+	DatabaseConfigMountPath = "/secrets/database-config"
 )
 
 var (

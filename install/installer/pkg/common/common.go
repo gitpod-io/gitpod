@@ -347,6 +347,41 @@ func DatabaseEnv(cfg *config.Config) (res []corev1.EnvVar) {
 	return envvars
 }
 
+func DatabaseEnvSecret(cfg config.Config) (corev1.Volume, corev1.VolumeMount, string) {
+	var secretName string
+
+	if pointer.BoolDeref(cfg.Database.InCluster, false) {
+		secretName = InClusterDbSecret
+	} else if cfg.Database.External != nil && cfg.Database.External.Certificate.Name != "" {
+		// External DB
+		secretName = cfg.Database.External.Certificate.Name
+
+	} else if cfg.Database.CloudSQL != nil && cfg.Database.CloudSQL.ServiceAccount.Name != "" {
+		// GCP
+		secretName = cfg.Database.CloudSQL.ServiceAccount.Name
+
+	} else {
+		panic("invalid database configuration")
+	}
+
+	volume := corev1.Volume{
+		Name: "database-config",
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: secretName,
+			},
+		},
+	}
+
+	mount := corev1.VolumeMount{
+		Name:      "database-config",
+		MountPath: DatabaseConfigMountPath,
+		ReadOnly:  true,
+	}
+
+	return volume, mount, DatabaseConfigMountPath
+}
+
 func ConfigcatEnv(ctx *RenderContext) []corev1.EnvVar {
 	var sdkKey string
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {

@@ -14,7 +14,7 @@ import (
 )
 
 func Start(logger *logrus.Entry, version string, cfg *config.ServiceConfig) error {
-	logger.WithField("config", cfg).Info("starting IAM server.")
+	logger.WithField("config", cfg).Info("Starting IAM server.")
 
 	srv, err := baseserver.New("iam",
 		baseserver.WithLogger(logger),
