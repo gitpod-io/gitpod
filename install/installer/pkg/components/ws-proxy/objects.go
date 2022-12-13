@@ -22,12 +22,12 @@ var Objects = common.CompositeRenderFunc(
 		ports := []common.ServicePort{
 			{
 				Name:          HTTPProxyPortName,
-				ContainerPort: HTTPProxyPort,
+				ContainerPort: HTTPProxyTargetPort,
 				ServicePort:   HTTPProxyPort,
 			},
 			{
 				Name:          HTTPSProxyPortName,
-				ContainerPort: HTTPSProxyPort,
+				ContainerPort: HTTPSProxyTargetPort,
 				ServicePort:   HTTPSProxyPort,
 			},
 			{

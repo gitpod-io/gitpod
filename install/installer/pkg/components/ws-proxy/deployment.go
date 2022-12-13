@@ -129,6 +129,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			}, {
 				Name:          baseserver.BuiltinMetricsPortName,
 				ContainerPort: baseserver.BuiltinMetricsPort,
+			}, {
+				Name:          SSHPortName,
+				ContainerPort: SSHServicePort,
 			}},
 			SecurityContext: &corev1.SecurityContext{
 				Privileged:               pointer.Bool(false),
