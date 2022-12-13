@@ -1,6 +1,9 @@
 # Change Log
 
 ## December 2022
+- [installer]: add required bucket name to mirror kots command ([#15296](https://github.com/gitpod-io/gitpod/pull/15296)) - [@mrsimonemms](https://github.com/mrsimonemms)
+- Allow setting workspace class for prebuilds ([#15288](https://github.com/gitpod-io/gitpod/pull/15288)) - [@svenefftinge](https://github.com/svenefftinge)
+- Do not land workspaces on the node with broken ws-daemon ([#15262](https://github.com/gitpod-io/gitpod/pull/15262)) - [@utam0k](https://github.com/utam0k)
 - Expired Personal Access Tokens exclamation indicator now has a tooltip w/ the full expiration date so you can see exactly when it expired. ([#15253](https://github.com/gitpod-io/gitpod/pull/15253)) - [@selfcontained](https://github.com/selfcontained)
 - Update JetBrains IDE images to most recent stable version. ([#15270](https://github.com/gitpod-io/gitpod/pull/15270)) - [@roboquat](https://github.com/roboquat)
 - Support AWS S3 as storage backend ([#14970](https://github.com/gitpod-io/gitpod/pull/14970)) - [@Furisto](https://github.com/Furisto), [@csweichel](https://github.com/csweichel)
