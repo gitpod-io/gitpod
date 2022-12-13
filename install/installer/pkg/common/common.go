@@ -7,6 +7,7 @@ package common
 import (
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -261,90 +262,62 @@ func MessageBusEnv(_ *config.Config) (res []corev1.EnvVar) {
 }
 
 func DatabaseEnv(cfg *config.Config) (res []corev1.EnvVar) {
-	var (
-		secretRef corev1.LocalObjectReference
-		envvars   []corev1.EnvVar
-	)
-
-	if pointer.BoolDeref(cfg.Database.InCluster, false) {
-		secretRef = corev1.LocalObjectReference{Name: InClusterDbSecret}
-		envvars = append(envvars,
-			corev1.EnvVar{
-				Name: "DB_HOST",
-				ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: secretRef,
-					Key:                  "host",
-				}},
-			},
-			corev1.EnvVar{
-				Name: "DB_PORT",
-				ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: secretRef,
-					Key:                  "port",
-				}},
-			},
-		)
-	} else if cfg.Database.External != nil && cfg.Database.External.Certificate.Name != "" {
-		// External DB
-		secretRef = corev1.LocalObjectReference{Name: cfg.Database.External.Certificate.Name}
-		envvars = append(envvars,
-			corev1.EnvVar{
-				Name: "DB_HOST",
-				ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: secretRef,
-					Key:                  "host",
-				}},
-			},
-			corev1.EnvVar{
-				Name: "DB_PORT",
-				ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: secretRef,
-					Key:                  "port",
-				}},
-			},
-		)
-	} else if cfg.Database.CloudSQL != nil && cfg.Database.CloudSQL.ServiceAccount.Name != "" {
-		// GCP
-		secretRef = corev1.LocalObjectReference{Name: cfg.Database.CloudSQL.ServiceAccount.Name}
-		envvars = append(envvars,
-			corev1.EnvVar{
-				Name:  "DB_HOST",
-				Value: "cloudsqlproxy",
-			},
-			corev1.EnvVar{
-				Name:  "DB_PORT",
-				Value: "3306",
-			},
-		)
-	} else {
+	secretRef, err := getDBSecretKeyRef(cfg)
+	if err != nil {
 		panic("invalid database configuration")
 	}
 
-	envvars = append(envvars,
-		corev1.EnvVar{
+	return []corev1.EnvVar{
+		{
+			Name: "DB_HOST",
+			ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+				LocalObjectReference: secretRef,
+				Key:                  "host",
+			}},
+		},
+		{
+			Name: "DB_PORT",
+			ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+				LocalObjectReference: secretRef,
+				Key:                  "port",
+			}},
+		},
+		{
 			Name: "DB_PASSWORD",
 			ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
 				LocalObjectReference: secretRef,
 				Key:                  "password",
 			}},
 		},
-		corev1.EnvVar{
+		{
 			Name: "DB_USERNAME",
 			ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
 				LocalObjectReference: secretRef,
 				Key:                  "username",
 			}},
 		},
-		corev1.EnvVar{
+		{
 			Name: "DB_ENCRYPTION_KEYS",
 			ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
 				LocalObjectReference: secretRef,
 				Key:                  "encryptionKeys",
 			}},
 		},
-	)
+	}
+}
 
-	return envvars
+func getDBSecretKeyRef(cfg *config.Config) (corev1.LocalObjectReference, error) {
+	if pointer.BoolDeref(cfg.Database.InCluster, false) {
+		return corev1.LocalObjectReference{Name: InClusterDbSecret}, nil
+	} else if cfg.Database.External != nil && cfg.Database.External.Certificate.Name != "" {
+		// External DB
+		return corev1.LocalObjectReference{Name: cfg.Database.External.Certificate.Name}, nil
+	} else if cfg.Database.CloudSQL != nil && cfg.Database.CloudSQL.ServiceAccount.Name != "" {
+		// GCP
+		return corev1.LocalObjectReference{Name: cfg.Database.CloudSQL.ServiceAccount.Name}, nil
+	}
+
+	return corev1.LocalObjectReference{}, errors.New("invalid database configuration")
 }
 
 func ConfigcatEnv(ctx *RenderContext) []corev1.EnvVar {
