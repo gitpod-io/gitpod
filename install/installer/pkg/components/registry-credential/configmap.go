@@ -15,10 +15,6 @@ import (
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	if !IsAWSECRURL(ctx) {
-		return nil, nil
-	}
-
 	privateRegistry := isPrivateAWSECRURL(ctx.Config.ContainerRegistry.External.URL)
 	region := getAWSRegion(ctx.Config.ContainerRegistry.External.URL)
 

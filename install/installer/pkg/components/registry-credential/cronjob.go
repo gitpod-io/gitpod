@@ -15,10 +15,6 @@ import (
 )
 
 func cronjob(ctx *common.RenderContext) ([]runtime.Object, error) {
-	if !IsAWSECRURL(ctx) {
-		return nil, nil
-	}
-
 	objectMeta := metav1.ObjectMeta{
 		Name:      Component,
 		Namespace: ctx.Namespace,

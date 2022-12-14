@@ -15,8 +15,8 @@ kubectx [cluster-name]
 
 ```console
 kubectl create secret generic aws-iam-credential \
-    --from-literal=access_key_id=<AWS_ACCESS_KEY> \
-    --from-literal=secret_access_key=<AWS_SECRET_KEY>
+    --from-literal=accessKeyId=<AWS_ACCESS_KEY> \
+    --from-literal=secretAccessKey=<AWS_SECRET_KEY>
 ```
 
 ### Prepare the configuration

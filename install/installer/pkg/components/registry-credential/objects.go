@@ -10,15 +10,15 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 )
 
-var Objects = common.CompositeRenderFunc(
-	configmap,
-	role,
-	rolebinding,
-	cronjob,
-	func(ctx *common.RenderContext) ([]runtime.Object, error) {
-		if !IsAWSECRURL(ctx) {
-			return nil, nil
-		}
-		return common.DefaultServiceAccount(Component)(ctx)
-	},
-)
+func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
+	if !IsAWSECRURL(ctx) {
+		return nil, nil
+	}
+	return common.CompositeRenderFunc(
+		configmap,
+		role,
+		rolebinding,
+		cronjob,
+		common.DefaultServiceAccount(Component),
+	)(ctx)
+}
