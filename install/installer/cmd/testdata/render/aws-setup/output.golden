@@ -6212,6 +6212,7 @@ rules:
   resources:
   - secrets
   verbs:
+  - create
   - get
   - list
   - watch
