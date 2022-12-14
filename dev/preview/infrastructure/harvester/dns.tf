@@ -1,3 +1,9 @@
+locals {
+  # Not all consumers of the DNS name handle the fully qualified DNS name (with a dot at the end) well
+  # so for those resources, we have this local variable as a convenience. Example: acme_certificate
+  non_fully_qualified_dns_name = trim(data.google_dns_managed_zone.preview-gitpod-dev.dns_name, ".")
+}
+
 data "google_dns_managed_zone" "preview-gitpod-dev" {
   provider = google
   name     = "preview-gitpod-dev-com"
