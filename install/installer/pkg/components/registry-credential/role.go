@@ -30,6 +30,7 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 					APIGroups: []string{""},
 					Resources: []string{"secrets"},
 					Verbs: []string{
+						"create",
 						"get",
 						"list",
 						"watch",
