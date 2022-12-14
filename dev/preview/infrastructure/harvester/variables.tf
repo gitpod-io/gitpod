@@ -50,3 +50,9 @@ variable "cert_issuer" {
   default     = "zerossl-issuer-gitpod-core-dev"
   description = "Certificate issuer"
 }
+
+variable "gcp_project_dns" {
+  type        = string
+  default     = "gitpod-core-dev"
+  description = "The GCP project in which to create DNS records"
+}
