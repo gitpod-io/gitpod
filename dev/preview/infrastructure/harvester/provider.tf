@@ -19,6 +19,10 @@ terraform {
       source  = "hashicorp/google"
       version = ">=4.40.0"
     }
+    acme = {
+      source  = "vancluever/acme"
+      version = "~> 2.0"
+    }
   }
 }
 
@@ -43,4 +47,18 @@ provider "k8s" {
 provider "google" {
   project = "gitpod-core-dev"
   region  = "us-central1"
+}
+
+# provider "acme" {
+#   alias = "letsencrypt"
+#   # https://acme-v02.api.letsencrypt.org/directory
+#   # https://acme-staging-v02.api.letsencrypt.org/directory
+#   server_url = "https://acme-v02.api.letsencrypt.org/directory"
+# }
+
+provider "acme" {
+  # alias = "zerossl"
+  # kubectl get clusterissuer zerossl-issuer-gitpod-core-dev -o yaml
+  # https://acme.zerossl.com/v2/DV90
+  server_url = "https://acme.zerossl.com/v2/DV90"
 }
