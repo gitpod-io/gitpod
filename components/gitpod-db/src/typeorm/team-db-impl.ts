@@ -52,7 +52,7 @@ export class TeamDBImpl implements TeamDB {
         const teamRepo = await this.getTeamRepo();
         const queryBuilder = teamRepo
             .createQueryBuilder("team")
-            .where("team.name LIKE :searchTerm", { searchTerm: `%${searchTerm}%` })
+            .where("team.name LIKE :searchTerm OR team.slug LIKE :searchTerm", { searchTerm: `%${searchTerm}%` })
             .skip(offset)
             .take(limit)
             .orderBy(orderBy, orderDir);
