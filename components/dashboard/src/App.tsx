@@ -13,8 +13,6 @@ import { UserContext } from "./user-context";
 import { ThemeContext } from "./theme-context";
 import { shouldSeeWhatsNew, WhatsNew } from "./whatsnew/WhatsNew";
 import gitpodIcon from "./icons/gitpod.svg";
-import { useHistory } from "react-router-dom";
-import { trackButtonOrAnchor, trackPathChange } from "./Analytics";
 import { ContextURL, User } from "@gitpod/gitpod-protocol";
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
 import { Experiment } from "./experiments";
@@ -53,6 +51,7 @@ import { BlockedRepositories } from "./admin/BlockedRepositories";
 import { AppNotifications } from "./AppNotifications";
 import PersonalAccessTokenCreateView from "./settings/PersonalAccessTokensCreateView";
 import { useUserAndTeamsLoader } from "./hooks/use-user-and-teams-loader";
+import { useAnalyticsTracking } from "./hooks/use-analytics-tracking";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "./workspaces/Workspaces"));
@@ -153,8 +152,10 @@ function App() {
     const { setIsDark } = useContext(ThemeContext);
     const [isWhatsNewShown, setWhatsNewShown] = useState(false);
     const [showUserIdePreference, setShowUserIdePreference] = useState(false);
-    const history = useHistory();
     const { user, teams, isSetupRequired, loading } = useUserAndTeamsLoader();
+
+    // Setup analytics/tracking
+    useAnalyticsTracking();
 
     // Sets theme
     useEffect(() => {
@@ -192,41 +193,6 @@ function App() {
             // Choose which experiments to run for this session/user
             Experiment.set(Experiment.seed(true));
         }
-    }, []);
-
-    // listen and notify Segment of client-side path updates
-    useEffect(() => {
-        return history.listen((location: any) => {
-            const path = window.location.pathname;
-            trackPathChange({
-                prev: (window as any)._gp.path,
-                path: path,
-            });
-            (window as any)._gp.path = path;
-        });
-    }, [history]);
-
-    // Track button/anchor clicks
-    useEffect(() => {
-        const handleButtonOrAnchorTracking = (props: MouseEvent) => {
-            var curr = props.target as HTMLElement;
-
-            // TODO: Look at using curr.closest('a,button') instead - determine if divs w/ onClick are being used
-            //check if current target or any ancestor up to document is button or anchor
-            while (!(curr instanceof Document)) {
-                if (
-                    curr instanceof HTMLButtonElement ||
-                    curr instanceof HTMLAnchorElement ||
-                    (curr instanceof HTMLDivElement && curr.onclick)
-                ) {
-                    trackButtonOrAnchor(curr);
-                    break; //finding first ancestor is sufficient
-                }
-                curr = curr.parentNode as HTMLElement;
-            }
-        };
-        window.addEventListener("click", handleButtonOrAnchorTracking, true);
-        return () => window.removeEventListener("click", handleButtonOrAnchorTracking, true);
     }, []);
 
     // redirect to website for any website slugs
