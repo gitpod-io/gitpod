@@ -12311,6 +12311,14 @@ next-tick@~1.0.0:
   resolved "https://registry.npmjs.org/next-tick/-/next-tick-1.0.0.tgz"
   integrity sha1-yobR/ogoFpsBICCOPchCS524NCw=
 
+nice-grpc-client-middleware-retry@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/nice-grpc-client-middleware-retry/-/nice-grpc-client-middleware-retry-2.0.1.tgz#2b70d606baa6360acf8e216348ee761be20b34b2"
+  integrity sha512-U3oWOkSXw2VnBRUOduMYq6pwJ358HjbbhEzupOypIY9UhCHfyT7CxFs49Fd7v0zdV+EsxxowlkheM1v30vmTxw==
+  dependencies:
+    abort-controller-x "^0.4.0"
+    nice-grpc-common "^2.0.0"
+
 nice-grpc-common@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/nice-grpc-common/-/nice-grpc-common-2.0.0.tgz#36c9b9cdc38d3b4aa8ad7abf120fd4737eff70ea"

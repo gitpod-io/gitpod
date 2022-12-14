@@ -69,6 +69,7 @@
     "lodash.debounce": "^4.0.8",
     "longjohn": "^0.2.12",
     "minio": "^7.0.12",
+    "nice-grpc-client-middleware-retry": "^2.0.1",
     "node-fetch": "^2.6.7",
     "opentracing": "^0.14.4",
     "p-throttle": "^4.1.1",
