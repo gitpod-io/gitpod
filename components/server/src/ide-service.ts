@@ -119,23 +119,12 @@ export class IDEService {
                 await new Promise((resolve) => setTimeout(resolve, 1000));
             }
             try {
-                const resp = await this.tryResolveWorkspaceConfig(req);
-                return resp;
+                return await this.ideService.resolveWorkspaceConfig(req);
             } catch (e) {
                 console.error("ide-service: failed to resolve workspace config: ", e);
             }
         }
         throw new Error("failed to resolve workspace IDE configuration");
-    }
-
-    private tryResolveWorkspaceConfig(
-        req: IdeServiceApi.ResolveWorkspaceConfigRequest,
-    ): Promise<ResolveWorkspaceConfigResponse> {
-        const controller = new AbortController();
-        setTimeout(() => controller.abort(), 5000);
-        return this.ideService.resolveWorkspaceConfig(req, {
-            signal: controller.signal,
-        });
     }
 
     resolveGitpodTasks(ws: Workspace, ideConfig: ResolveWorkspaceConfigResponse): TaskConfig[] {
