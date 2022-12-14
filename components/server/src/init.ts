@@ -107,7 +107,7 @@ log.enableJSONLogging("server", process.env.VERSION, LogrusLogLevel.getFromEnv()
 
 export async function start(container: Container) {
     const tracing = container.get(TracingManager);
-    tracing.setup("server", {
+    tracing.setup(process.env.JAEGER_SERVICE_NAME ?? "server", {
         perOpSampling: {
             createWorkspace: true,
             startWorksace: true,
