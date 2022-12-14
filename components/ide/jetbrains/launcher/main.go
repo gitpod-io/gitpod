@@ -494,8 +494,21 @@ func resolveUserEnvs(launchCtx *LaunchContext) (userEnvs []string, err error) {
 		return
 	}
 	markByte := []byte(mark.String())
-	start := bytes.Index(output, markByte) + len(markByte)
+	start := bytes.Index(output, markByte)
+	if start == -1 {
+		err = fmt.Errorf("no %s in output", mark.String())
+		return
+	}
+	start = start + len(markByte)
+	if start > len(output) {
+		err = fmt.Errorf("no %s in output", mark.String())
+		return
+	}
 	end := bytes.LastIndex(output, markByte)
+	if end == -1 {
+		err = fmt.Errorf("no %s in output", mark.String())
+		return
+	}
 	err = json.Unmarshal(output[start:end], &userEnvs)
 	return
 }
