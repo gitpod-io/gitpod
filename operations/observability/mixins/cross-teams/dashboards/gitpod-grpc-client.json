@@ -127,7 +127,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(grpc_client_started_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=~\"$type\"}[1m])) by (grpc_service, grpc_method)",
+          "expr": "sum(increase(grpc_client_started_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=~\"$type\", job=~\"$job\"}[1m])) by (grpc_service, grpc_method)",
           "legendFormat": "{{grpc_service}}.{{grpc_method}}",
           "range": true,
           "refId": "A"
@@ -221,7 +221,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(grpc_client_handled_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=~\"$type\"}[1m])) by (grpc_service, grpc_method, grpc_code)",
+          "expr": "sum(increase(grpc_client_handled_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=~\"$type\", job=~\"$job\"}[1m])) by (grpc_service, grpc_method, grpc_code)",
           "legendFormat": "{{grpc_service}}.{{grpc_method}} - {{grpc_code}}",
           "range": true,
           "refId": "A"
@@ -328,7 +328,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(grpc_client_handled_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_code!=\"OK\", grpc_type=~\"$type\"}[1m])) by (grpc_service, grpc_method, grpc_code)",
+          "expr": "sum(increase(grpc_client_handled_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_code!=\"OK\", grpc_type=~\"$type\", job=~\"$job\"}[1m])) by (grpc_service, grpc_method, grpc_code)",
           "legendFormat": "{{grpc_service}}.{{grpc_method}} - {{grpc_code}}",
           "range": true,
           "refId": "A"
@@ -435,7 +435,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, \n  sum(rate(grpc_client_handling_seconds_bucket{grpc_type=\"unary\", grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=\"unary\"}[5m])) by (grpc_service, grpc_method, le)\n)",
+          "expr": "histogram_quantile(0.99, \n  sum(rate(grpc_client_handling_seconds_bucket{grpc_type=\"unary\", grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=\"unary\", job=~\"$job\"}[5m])) by (grpc_service, grpc_method, le)\n)",
           "legendFormat": "{{grpc_service}}.{{grpc_method}}",
           "range": true,
           "refId": "A"
@@ -541,7 +541,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(grpc_client_msg_received_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=~\"$type\"}[1m])) by (grpc_service, grpc_method)",
+          "expr": "sum(increase(grpc_client_msg_received_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=~\"$type\", job=~\"$job\"}[1m])) by (grpc_service, grpc_method)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -634,7 +634,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(grpc_client_msg_sent_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=~\"$type\"}[1m])) by (grpc_service, grpc_method)",
+          "expr": "sum(increase(grpc_client_msg_sent_total{grpc_service=~\"$service\", grpc_method=~\"$method\", grpc_type=~\"$type\", job=~\"$job\"}[1m])) by (grpc_service, grpc_method)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -665,6 +665,7 @@
         "name": "datasource",
         "options": [],
         "query": "prometheus",
+        "queryValue": "",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -767,6 +768,37 @@
         "regex": "",
         "skipUrlSync": false,
         "sort": 5,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "label_values(grpc_client_started_total, job)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Job",
+        "multi": true,
+        "name": "job",
+        "options": [],
+        "query": {
+          "query": "label_values(grpc_client_started_total, job)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
         "type": "query"
       }
     ]
