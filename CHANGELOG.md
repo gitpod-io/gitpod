@@ -1,6 +1,7 @@
 # Change Log
 
 ## December 2022
+- Projects can now be deleted from the corresponding Settings page for that project. ([#15316](https://github.com/gitpod-io/gitpod/pull/15316)) - [@selfcontained](https://github.com/selfcontained)
 - [installer]: add required bucket name to mirror kots command ([#15296](https://github.com/gitpod-io/gitpod/pull/15296)) - [@mrsimonemms](https://github.com/mrsimonemms)
 - Allow setting workspace class for prebuilds ([#15288](https://github.com/gitpod-io/gitpod/pull/15288)) - [@svenefftinge](https://github.com/svenefftinge)
 - Do not land workspaces on the node with broken ws-daemon ([#15262](https://github.com/gitpod-io/gitpod/pull/15262)) - [@utam0k](https://github.com/utam0k)
