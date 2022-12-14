@@ -263,7 +263,8 @@ export default function () {
             <div className="">
                 <h3 className="mt-12">Remove Project</h3>
                 <p className="text-base text-gray-500 dark:text-gray-400 pb-4">
-                    Removing this project will also remove all associated data with this project, including workspaces.
+                    This will delete the project and all project-level environment variables you've set for this
+                    project.
                 </p>
                 <button className="danger secondary" onClick={() => setShowRemoveModal(true)}>
                     Remove Project
