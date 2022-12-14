@@ -231,7 +231,10 @@ export default function Menu() {
                 link: `/t/${team.slug}/members`,
             },
         ];
-        if (showUsageView || (teamBillingMode && teamBillingMode.mode === "usage-based")) {
+        if (
+            currentUserInTeam?.role === "owner" &&
+            (showUsageView || (teamBillingMode && teamBillingMode.mode === "usage-based"))
+        ) {
             teamSettingsList.push({
                 title: "Usage",
                 link: `/t/${team.slug}/usage`,
