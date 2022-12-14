@@ -457,6 +457,7 @@ func run(launchCtx *LaunchContext) {
 
 	cmd := remoteDevServerCmd(args, launchCtx)
 	cmd.Env = append(cmd.Env, "JETBRAINS_GITPOD_BACKEND_KIND="+launchCtx.alias)
+	cmd.Env = append(cmd.Env, "JETBRAINS_GITPOD_RUNNING_WARMUP="+strconv.FormatBool(launchCtx.warmup))
 	workspaceUrl, err := url.Parse(launchCtx.wsInfo.WorkspaceUrl)
 	if err == nil {
 		cmd.Env = append(cmd.Env, "JETBRAINS_GITPOD_WORKSPACE_HOST="+workspaceUrl.Hostname())

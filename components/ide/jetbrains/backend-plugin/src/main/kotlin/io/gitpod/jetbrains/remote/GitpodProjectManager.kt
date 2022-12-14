@@ -37,7 +37,7 @@ class GitpodProjectManager(
      * It is a workaround for https://youtrack.jetbrains.com/issue/GTW-88
      */
     private fun configureSdks() {
-        if (application.isHeadlessEnvironment || Registry.get("gitpod.autoJdk.disabled").asBoolean()) {
+        if ((application.isHeadlessEnvironment && !System.getenv("JETBRAINS_GITPOD_RUNNING_WARMUP").toBoolean()) || Registry.get("gitpod.autoJdk.disabled").asBoolean()) {
             return
         }
         val pendingSdk = CompletableFuture<Sdk>()
