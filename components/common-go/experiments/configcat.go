@@ -85,16 +85,3 @@ type configCatLogger struct {
 func (l *configCatLogger) GetLevel() configcat.LogLevel {
 	return configcat.LogLevelError
 }
-
-func (l *configCatLogger) Debugf(format string, args ...interface{}) {
-	l.Debugf(format, args...)
-}
-func (l *configCatLogger) Infof(format string, args ...interface{}) {
-	l.Debugf(format, args...)
-}
-func (l *configCatLogger) Warnf(format string, args ...interface{}) {
-	l.Debugf(format, args...)
-}
-func (l *configCatLogger) Errorf(format string, args ...interface{}) {
-	l.Errorf(format, args...)
-}
