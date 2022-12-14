@@ -10,8 +10,12 @@ option go_package = "github.com/gitpod-io/gitpod/ide-service/api";
 option java_package = "io.gitpod.ideservice.api";
 
 service IDEService {
-    rpc GetConfig(GetConfigRequest) returns (GetConfigResponse) {}
-    rpc ResolveWorkspaceConfig(ResolveWorkspaceConfigRequest) returns (ResolveWorkspaceConfigResponse) {}
+    rpc GetConfig(GetConfigRequest) returns (GetConfigResponse) {
+        option idempotency_level = IDEMPOTENT;
+    }
+    rpc ResolveWorkspaceConfig(ResolveWorkspaceConfigRequest) returns (ResolveWorkspaceConfigResponse) {
+        option idempotency_level = IDEMPOTENT;
+    }
 }
 
 message GetConfigRequest {}
