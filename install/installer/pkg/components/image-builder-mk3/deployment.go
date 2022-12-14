@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
@@ -109,6 +110,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		volumeMounts = append(volumeMounts, *mnt)
 	}
 
+	var nodeAffinity = cluster.AffinityLabelMeta
+	if ctx.Config.Kind == config.InstallationWorkspace {
+		nodeAffinity = cluster.AffinityLabelWorkspaceServices
+	}
+
 	return []runtime.Object{&appsv1.Deployment{
 		TypeMeta: common.TypeMetaDeployment,
 		ObjectMeta: metav1.ObjectMeta{
@@ -133,7 +139,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					}),
 				},
 				Spec: corev1.PodSpec{
-					Affinity:                      common.NodeAffinity(cluster.AffinityLabelMeta),
+					Affinity:                      common.NodeAffinity(nodeAffinity),
 					ServiceAccountName:            Component,
 					EnableServiceLinks:            pointer.Bool(false),
 					DNSPolicy:                     "ClusterFirst",
