@@ -13,10 +13,6 @@ import (
 )
 
 func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
-	if !IsAWSECRURL(ctx) {
-		return nil, nil
-	}
-
 	return []runtime.Object{
 		&rbacv1.RoleBinding{
 			TypeMeta: common.TypeMetaRoleBinding,

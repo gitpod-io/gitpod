@@ -27,8 +27,8 @@ import (
 )
 
 const (
-	accessKeyIdName     = "access_key_id"
-	secretAccessKeyName = "secret_access_key"
+	accessKeyIdName     = "accessKeyId"
+	secretAccessKeyName = "secretAccessKey"
 )
 
 const (

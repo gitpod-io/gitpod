@@ -32,6 +32,7 @@ func isAWSECRURL(URL string) bool {
 
 // isPrivateAWSECRURL check if it's a private AWS ECR URL.
 // The private AWS ECR URL with the format aws_account_id.dkr.ecr.region.amazonaws.com.
+// Reference to https://docs.aws.amazon.com/AmazonECR/latest/userguide/Registries.html
 func isPrivateAWSECRURL(URL string) bool {
 	u, err := url.Parse(URL)
 	if err != nil {
@@ -54,6 +55,7 @@ func isPrivateAWSECRURL(URL string) bool {
 
 // isPublicAWSECRURL check if it's a public AWS ECR URL.
 // The public AWS ECR URL with the format public.ecr.aws/<registry-alias>.
+// Reference to https://github.com/awslabs/amazon-ecr-credential-helper/blob/3b42f427f89a8adec0e42e673e7c94cf80d40b0c/ecr-login/api/client.go#L36
 func isPublicAWSECRURL(URL string) bool {
 	u, err := url.Parse(URL)
 	if err != nil {
