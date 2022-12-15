@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -91,6 +92,11 @@ func (c *CostCenterManager) GetOrCreateCostCenter(ctx context.Context, attributi
 			}
 			err := c.conn.Save(&result).Error
 			if err != nil {
+				if strings.HasPrefix(err.Error(), "Error 1062: Duplicate entry") {
+					// This can happen if we have multiple concurrent requests for the same attributionID.
+					logger.WithError(err).Info("Concurrent save.")
+					return getCostCenter(ctx, c.conn, attributionID)
+				}
 				return CostCenter{}, err
 			}
 			return result, nil
