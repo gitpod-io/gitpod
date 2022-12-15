@@ -302,9 +302,18 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                 </span>
                             </div>
                         </div>
-                        <button className="mt-5 self-end" onClick={() => setShowBillingSetupModal(true)}>
-                            Upgrade Plan
-                        </button>
+                        <div className="flex">
+                            {stripePortalUrl && (
+                                <a className="mt-5" href={stripePortalUrl}>
+                                    <button className="secondary" disabled={!stripePortalUrl}>
+                                        View Past Invoices ↗
+                                    </button>
+                                </a>
+                            )}
+                            <button className="mt-5 self-end" onClick={() => setShowBillingSetupModal(true)}>
+                                Upgrade Plan
+                            </button>
+                        </div>
                     </div>
                 )}
                 {showUpgradeUser && (
@@ -349,7 +358,14 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                     </span>
                                 </div>
                             </div>
-                            <div className="mt-5 flex flex-col">
+                            <div className="mt-5 flex">
+                                {stripePortalUrl && (
+                                    <a className="mt-5" href={stripePortalUrl}>
+                                        <button className="secondary" disabled={!stripePortalUrl}>
+                                            View Past Invoices ↗
+                                        </button>
+                                    </a>
+                                )}
                                 <button className="self-end" onClick={() => setShowBillingSetupModal(true)}>
                                     Upgrade Plan
                                 </button>
