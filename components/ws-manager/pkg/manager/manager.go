@@ -1749,10 +1749,6 @@ func secretInNamespace(client client.Client, namespace, name string) wait.Condit
 			return false, err
 		}
 
-		if &secret != nil {
-			return true, nil
-		}
-
-		return false, nil
+		return true, nil
 	}
 }
