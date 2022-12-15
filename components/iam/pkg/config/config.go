@@ -13,4 +13,6 @@ type ServiceConfig struct {
 	Server *baseserver.Configuration `json:"server"`
 
 	DatabaseConfigPath string `json:"databaseConfigPath"`
+
+	OIDCClientsConfigFile string `json:"oidcClientsConfigFile,omitempty"`
 }
