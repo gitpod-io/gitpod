@@ -43,7 +43,8 @@ func Start(logger *logrus.Entry, version string, cfg *config.ServiceConfig) erro
 	// TODO(at) remove the demo config after start sync'ing with DB
 	err = loadTestConfig(oidcService, cfg)
 	if err != nil {
-		return fmt.Errorf("failed to load test config")
+		logger.Errorf("failed to load test config: " + err.Error())
+		// return fmt.Errorf("failed to load test config: %w", err)
 	}
 
 	if listenErr := srv.ListenAndServe(); listenErr != nil {

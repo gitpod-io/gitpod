@@ -26,7 +26,7 @@ type DemoConfig struct {
 func ReadDemoConfigFromFile(path string) (*DemoConfig, error) {
 	bytes, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read test config: %w", err)
+		return nil, fmt.Errorf("failed to read test config: %q %w", path, err)
 	}
 
 	var config DemoConfig
