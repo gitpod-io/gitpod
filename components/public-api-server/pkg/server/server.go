@@ -103,7 +103,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	}
 
 	if listenErr := srv.ListenAndServe(); listenErr != nil {
-		return fmt.Errorf("failed to serve public api server: %w", err)
+		return fmt.Errorf("failed to serve public api server: %w", listenErr)
 	}
 
 	return nil
