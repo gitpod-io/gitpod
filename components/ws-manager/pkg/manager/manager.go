@@ -354,6 +354,11 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		return nil, xerrors.Errorf("cannot create secret for workspace pod: %w", err)
 	}
 
+	err = waitForSecretInNamespace(m.Clientset, m.Config.Namespace, podName(startContext.Request))
+	if err != nil && !k8serr.IsAlreadyExists(err) {
+		return nil, xerrors.Errorf("timeout waiting for secret required by workspace pod: %w", err)
+	}
+
 	err = m.Clientset.Create(ctx, pod)
 	if err != nil {
 		m, _ := json.Marshal(pod)
@@ -1726,4 +1731,28 @@ func extractExposedPorts(pod *corev1.Pod) *api.ExposedPorts {
 	}
 
 	return &api.ExposedPorts{}
+}
+
+func waitForSecretInNamespace(client client.Client, namespace, name string) error {
+	return wait.Poll(200*time.Millisecond, 1*time.Minute, secretInNamespace(client, namespace, name))
+}
+
+func secretInNamespace(client client.Client, namespace, name string) wait.ConditionFunc {
+	return func() (bool, error) {
+		var secret *corev1.Secret
+		err := client.Get(context.TODO(), types.NamespacedName{Namespace: namespace, Name: name}, secret)
+		if k8serr.IsNotFound(err) {
+			return false, nil
+		}
+
+		if err != nil {
+			return false, err
+		}
+
+		if secret != nil {
+			return true, nil
+		}
+
+		return false, nil
+	}
 }
