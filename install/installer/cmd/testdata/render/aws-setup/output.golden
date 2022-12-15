@@ -10701,8 +10701,8 @@ metadata:
   name: refresh-credential
   namespace: default
 spec:
-  concurrencyPolicy: Replace
-  failedJobsHistoryLimit: 10
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 1
   jobTemplate:
     metadata:
       creationTimestamp: null
