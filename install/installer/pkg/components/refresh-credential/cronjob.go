@@ -63,8 +63,8 @@ func cronjob(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Spec: batchv1.CronJobSpec{
 				Schedule:                   CronSchedule,
 				SuccessfulJobsHistoryLimit: pointer.Int32(1),
-				FailedJobsHistoryLimit:     pointer.Int32(10),
-				ConcurrencyPolicy:          batchv1.ReplaceConcurrent,
+				FailedJobsHistoryLimit:     pointer.Int32(1),
+				ConcurrencyPolicy:          batchv1.ForbidConcurrent,
 				JobTemplate: batchv1.JobTemplateSpec{
 					ObjectMeta: objectMeta,
 					Spec: batchv1.JobSpec{
