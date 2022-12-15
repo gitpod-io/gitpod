@@ -29,14 +29,20 @@ require (
 )
 
 require (
+	github.com/XiaoMi/pegasus-go-client v0.0.0-20210427083443-f3b6b08bc4c2 // indirect
+	github.com/allegro/bigcache v1.2.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
+	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b // indirect
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/configcat/go-sdk/v7 v7.6.0 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	github.com/eko/gocache v1.2.0 // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
+	github.com/go-redis/redis/v8 v8.8.2 // indirect
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
@@ -47,12 +53,17 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
+	github.com/pegasus-kv/thrift v0.13.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/slok/go-http-metrics v0.10.0 // indirect
+	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	go.opentelemetry.io/otel v0.19.0 // indirect
+	go.opentelemetry.io/otel/metric v0.19.0 // indirect
+	go.opentelemetry.io/otel/trace v0.19.0 // indirect
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
 	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
@@ -60,9 +71,12 @@ require (
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/genproto v0.0.0-20201019141844-1ed22bb0c154 // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
+	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/datatypes v1.0.7 // indirect
 	gorm.io/driver/mysql v1.4.4 // indirect
+	k8s.io/apimachinery v0.24.4 // indirect
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway

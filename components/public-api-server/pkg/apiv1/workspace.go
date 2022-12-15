@@ -6,32 +6,60 @@ package apiv1
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	connect "github.com/bufbuild/connect-go"
+	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/cache"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/relvacode/iso8601"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func NewWorkspaceService(serverConnPool proxy.ServerConnectionPool) *WorkspaceService {
+func NewWorkspaceService(serverConnPool proxy.ServerConnectionPool, cacheManager *cache.CacheManager) *WorkspaceService {
 	return &WorkspaceService{
 		connectionPool: serverConnPool,
+		cacheManager:   cacheManager,
 	}
 }
 
 type WorkspaceService struct {
 	connectionPool proxy.ServerConnectionPool
+	cacheManager   *cache.CacheManager
 
 	v1connect.UnimplementedWorkspacesServiceHandler
 }
 
 func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Request[v1.GetWorkspaceRequest]) (*connect.Response[v1.GetWorkspaceResponse], error) {
 	logger := ctxlogrus.Extract(ctx)
+
+	cacheKey, err := cache.CacheKey(req.Spec().Procedure, req.Any())
+	if err != nil {
+		log.WithField("proc", req.Spec().Procedure).WithError(err).Error("failed to generate cache key")
+	}
+
+	log.WithField("proc", req.Spec().Procedure).WithField("msg", req.Any()).Debugf("cache key '%v' ", cacheKey)
+
+	if cacheKey != "" {
+		data, err := s.cacheManager.ReadCache(cacheKey)
+		if err != nil {
+			log.WithField("proc", req.Spec().Procedure).WithError(err).Error("failed reading from cache")
+		} else {
+			resp := &v1.GetWorkspaceResponse{}
+			err := json.Unmarshal(data, resp)
+			if err != nil {
+				log.WithField("proc", req.Spec().Procedure).WithError(err).Error("canot unmarshal cached response")
+			} else {
+				log.WithField("proc", req.Spec().Procedure).Error("served response from cache")
+				return connect.NewResponse(resp), nil
+			}
+		}
+	}
 
 	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
@@ -50,7 +78,7 @@ func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Reques
 		instance = &v1.WorkspaceInstance{}
 	}
 
-	return connect.NewResponse(&v1.GetWorkspaceResponse{
+	resp := &v1.GetWorkspaceResponse{
 		Result: &v1.Workspace{
 			WorkspaceId: workspace.Workspace.ID,
 			OwnerId:     workspace.Workspace.OwnerID,
@@ -67,7 +95,19 @@ func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Reques
 				Instance: instance,
 			},
 		},
-	}), nil
+	}
+
+	buffer, err := json.Marshal(resp)
+	if err != nil {
+		log.WithField("proc", req.Spec().Procedure).WithError(err).Error("cannot marshal response")
+	} else {
+		err = s.cacheManager.StoreCache(cacheKey, buffer)
+		if err != nil {
+			log.WithField("proc", req.Spec().Procedure).WithError(err).Error("cannot store response in cache")
+		}
+	}
+
+	return connect.NewResponse(resp), nil
 }
 
 func (s *WorkspaceService) GetOwnerToken(ctx context.Context, req *connect.Request[v1.GetOwnerTokenRequest]) (*connect.Response[v1.GetOwnerTokenResponse], error) {

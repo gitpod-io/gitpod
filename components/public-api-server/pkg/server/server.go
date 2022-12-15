@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/experiments"
@@ -26,6 +27,7 @@ import (
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/apiv1"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/cache"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/webhooks"
 	"github.com/sirupsen/logrus"
@@ -119,6 +121,11 @@ func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool, expCl
 		return err
 	}
 
+	cacheManager, err := cache.NewCacheManager(time.Duration(time.Hour * 72))
+	if err != nil {
+		return err
+	}
+
 	handlerOptions := []connect.HandlerOption{
 		connect.WithInterceptors(
 			NewMetricsInterceptor(connectMetrics),
@@ -127,7 +134,7 @@ func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool, expCl
 		),
 	}
 
-	workspacesRoute, workspacesServiceHandler := v1connect.NewWorkspacesServiceHandler(apiv1.NewWorkspaceService(connPool), handlerOptions...)
+	workspacesRoute, workspacesServiceHandler := v1connect.NewWorkspacesServiceHandler(apiv1.NewWorkspaceService(connPool, cacheManager), handlerOptions...)
 	srv.HTTPMux().Handle(workspacesRoute, workspacesServiceHandler)
 
 	teamsRoute, teamsServiceHandler := v1connect.NewTeamsServiceHandler(apiv1.NewTeamsService(connPool), handlerOptions...)
