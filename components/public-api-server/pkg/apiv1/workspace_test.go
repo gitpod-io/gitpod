@@ -415,7 +415,7 @@ func setupWorkspacesService(t *testing.T) (*protocol.MockAPIInterface, v1connect
 
 	svc := NewWorkspaceService(&FakeServerConnPool{
 		api: serverMock,
-	})
+	}, nil)
 
 	_, handler := v1connect.NewWorkspacesServiceHandler(svc, connect.WithInterceptors(auth.NewServerInterceptor()))
 

@@ -38,25 +38,28 @@ type WorkspaceService struct {
 func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Request[v1.GetWorkspaceRequest]) (*connect.Response[v1.GetWorkspaceResponse], error) {
 	logger := ctxlogrus.Extract(ctx)
 
-	cacheKey, err := cache.CacheKey(req.Spec().Procedure, req.Any())
-	if err != nil {
-		log.WithField("proc", req.Spec().Procedure).WithError(err).Error("failed to generate cache key")
-	}
-
-	log.WithField("proc", req.Spec().Procedure).WithField("msg", req.Any()).Debugf("cache key '%v' ", cacheKey)
-
-	if cacheKey != "" {
-		data, err := s.cacheManager.ReadCache(cacheKey)
+	var cacheKey string
+	if s.cacheManager != nil {
+		cacheKey, err := cache.CacheKey(req.Spec().Procedure, req.Any())
 		if err != nil {
-			log.WithField("proc", req.Spec().Procedure).WithError(err).Error("failed reading from cache")
-		} else {
-			resp := &v1.GetWorkspaceResponse{}
-			err := json.Unmarshal(data, resp)
+			log.WithField("proc", req.Spec().Procedure).WithError(err).Error("failed to generate cache key")
+		}
+
+		log.WithField("proc", req.Spec().Procedure).WithField("msg", req.Any()).Debugf("cache key '%v' ", cacheKey)
+
+		if cacheKey != "" {
+			data, err := s.cacheManager.ReadCache(cacheKey)
 			if err != nil {
-				log.WithField("proc", req.Spec().Procedure).WithError(err).Error("canot unmarshal cached response")
+				log.WithField("proc", req.Spec().Procedure).WithError(err).Error("failed reading from cache")
 			} else {
-				log.WithField("proc", req.Spec().Procedure).Error("served response from cache")
-				return connect.NewResponse(resp), nil
+				resp := &v1.GetWorkspaceResponse{}
+				err := json.Unmarshal(data, resp)
+				if err != nil {
+					log.WithField("proc", req.Spec().Procedure).WithError(err).Error("canot unmarshal cached response")
+				} else {
+					log.WithField("proc", req.Spec().Procedure).Error("served response from cache")
+					return connect.NewResponse(resp), nil
+				}
 			}
 		}
 	}
@@ -97,13 +100,15 @@ func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Reques
 		},
 	}
 
-	buffer, err := json.Marshal(resp)
-	if err != nil {
-		log.WithField("proc", req.Spec().Procedure).WithError(err).Error("cannot marshal response")
-	} else {
-		err = s.cacheManager.StoreCache(cacheKey, buffer)
+	if s.cacheManager != nil && cacheKey != "" {
+		buffer, err := json.Marshal(resp)
 		if err != nil {
-			log.WithField("proc", req.Spec().Procedure).WithError(err).Error("cannot store response in cache")
+			log.WithField("proc", req.Spec().Procedure).WithError(err).Error("cannot marshal response")
+		} else {
+			err = s.cacheManager.StoreCache(cacheKey, buffer)
+			if err != nil {
+				log.WithField("proc", req.Spec().Procedure).WithError(err).Error("cannot store response in cache")
+			}
 		}
 	}
 
