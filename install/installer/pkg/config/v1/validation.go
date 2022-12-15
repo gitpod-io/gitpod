@@ -150,8 +150,8 @@ func (v version) ClusterValidation(rcfg interface{}) cluster.ValidationChecks {
 		secretName := cfg.ContainerRegistry.External.Certificate.Name
 		res = append(res, cluster.CheckSecret(secretName, cluster.CheckSecretRequiredData(".dockerconfigjson")))
 
-		if cfg.ContainerRegistry.External.Credential != nil {
-			credSecretName := cfg.ContainerRegistry.External.Credential.Name
+		if cfg.ContainerRegistry.External != nil {
+			credSecretName := cfg.ContainerRegistry.External.Credentials.Name
 			res = append(res, cluster.CheckSecret(credSecretName, cluster.CheckSecretRequiredData("accessKeyId", "secretAccessKey")))
 		}
 	}

@@ -1,6 +1,6 @@
 {
   "namespace": "default",
-  "credentialSecret": "",
+  "credentialSecret": "/home/gitpod/.aws/credentials",
   "region": "",
   "publicRegistry": false,
   "secretToUpdate": ""

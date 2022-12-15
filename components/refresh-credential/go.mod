@@ -1,4 +1,4 @@
-module github.com/gitpod-io/gitpod/registry-credential
+module github.com/gitpod-io/gitpod/refresh-credential
 
 go 1.19
 

@@ -12,7 +12,7 @@ packages:
       - GOOS=linux
     config:
       packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/registry-credential/cmd.Version=commit-${__git_commit}'"]
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/refresh-credential/cmd.Version=commit-${__git_commit}'"]
   - name: docker
     type: docker
     deps:
@@ -22,10 +22,10 @@ packages:
     config:
       dockerfile: leeway.Dockerfile
       metadata:
-        helm-component: registryCredential
+        helm-component: refreshCredential
       image:
-        - ${imageRepoBase}/registry-credential:${version}
-        - ${imageRepoBase}/registry-credential:commit-${__git_commit}
+        - ${imageRepoBase}/refresh-credential:${version}
+        - ${imageRepoBase}/refresh-credential:commit-${__git_commit}
   - name: lib
     type: go
     srcs:

@@ -4,7 +4,7 @@
 
 package main
 
-import "github.com/gitpod-io/gitpod/registry-credential/cmd"
+import "github.com/gitpod-io/gitpod/refresh-credential/cmd"
 
 func main() {
 	cmd.Execute()

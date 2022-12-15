@@ -16,7 +16,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-const storageMount = "/mnt/secrets/storage"
+const StorageMount = "/mnt/secrets/storage"
 
 // StorageConfig produces config service configuration from the installer config
 
@@ -39,7 +39,7 @@ func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 			GCloudConfig: storageconfig.GCPConfig{
 				Region:          context.Config.Metadata.Region,
 				Project:         context.Config.ObjectStorage.CloudStorage.Project,
-				CredentialsFile: filepath.Join(storageMount, "service-account.json"),
+				CredentialsFile: filepath.Join(StorageMount, "service-account.json"),
 			},
 		}
 	}
@@ -50,7 +50,7 @@ func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 			S3Config: &storageconfig.S3Config{
 				Region:          context.Config.Metadata.Region,
 				Bucket:          context.Config.ObjectStorage.S3.BucketName,
-				CredentialsFile: filepath.Join(storageMount, "credentials"),
+				CredentialsFile: filepath.Join(StorageMount, "credentials"),
 			},
 		}
 	}
@@ -90,7 +90,7 @@ func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 }
 
 // mountStorage performs the actual storage mount, which is common across all providers
-func mountStorage(pod *corev1.PodSpec, secret string, container ...string) {
+func MountStorage(pod *corev1.PodSpec, secret string, container ...string) {
 	volumeName := "storage-volume"
 
 	pod.Volumes = append(pod.Volumes,
@@ -124,7 +124,7 @@ func mountStorage(pod *corev1.PodSpec, secret string, container ...string) {
 			corev1.VolumeMount{
 				Name:      volumeName,
 				ReadOnly:  true,
-				MountPath: storageMount,
+				MountPath: StorageMount,
 			},
 		)
 	}
@@ -136,13 +136,13 @@ func mountStorage(pod *corev1.PodSpec, secret string, container ...string) {
 // added to all containers.
 func AddStorageMounts(ctx *RenderContext, pod *corev1.PodSpec, container ...string) error {
 	if ctx.Config.ObjectStorage.CloudStorage != nil {
-		mountStorage(pod, ctx.Config.ObjectStorage.CloudStorage.ServiceAccount.Name, container...)
+		MountStorage(pod, ctx.Config.ObjectStorage.CloudStorage.ServiceAccount.Name, container...)
 
 		return nil
 	}
 
 	if ctx.Config.ObjectStorage.S3 != nil {
-		mountStorage(pod, ctx.Config.ObjectStorage.S3.Credentials.Name, container...)
+		MountStorage(pod, ctx.Config.ObjectStorage.S3.Credentials.Name, container...)
 
 		return nil
 	}

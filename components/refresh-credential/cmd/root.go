@@ -14,18 +14,18 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/registry-credential/pkg/config"
-	"github.com/gitpod-io/gitpod/registry-credential/pkg/ecr"
+	"github.com/gitpod-io/gitpod/refresh-credential/pkg/config"
+	"github.com/gitpod-io/gitpod/refresh-credential/pkg/ecr"
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "ecr-update <config.json>",
-	Short: "Update the AWS ECR credential",
+	Use:   "ecr <config.json>",
+	Short: "Refresh the AWS ECR credential",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		cfgFile := args[1]
 		cfg := config.Get(cfgFile)
-		log.WithField("config", cfg).Info("Starting registry-credential")
+		log.WithField("config", cfg).Info("Starting refresh-credential")
 
 		kubeConfig, err := ctrl.GetConfig()
 		if err != nil {
@@ -37,7 +37,7 @@ var rootCmd = &cobra.Command{
 			log.WithError(err).Fatal("constructing Kubernetes client")
 		}
 
-		ecr.UpdateCredential(client, cfg)
+		ecr.RefreshCredential(client, cfg)
 	},
 }
 

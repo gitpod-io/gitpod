@@ -16,9 +16,9 @@ type Configuration struct {
 	// Namespace describes which namespace the below secrets locates.
 	Namespace string `json:"namespace"`
 
-	// CredentialSecret points to a Kubernetes secret which contains the credential to rotate
+	// CredentialsFile points to a Kubernetes secret which contains the credential to refresh
 	// the container registry credential .
-	CredentialSecret string `json:"credentialSecret"`
+	CredentialsFile string `json:"credentialsFile"`
 
 	// Region describes which public cloud region the container registry locates.
 	Region string `json:"region"`

@@ -303,7 +303,7 @@ type ContainerRegistry struct {
 type ContainerRegistryExternal struct {
 	URL         string     `json:"url" validate:"required"`
 	Certificate ObjectRef  `json:"certificate" validate:"required"`
-	Credential  *ObjectRef `json:"credential,omitempty"`
+	Credentials *ObjectRef `json:"credentials,omitempty"`
 }
 
 type S3Storage struct {

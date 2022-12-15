@@ -938,7 +938,7 @@ automountServiceAccountToken: true
 secrets:
   - name: messagebus
 ---
-# v1/ServiceAccount registry-credential
+# v1/ServiceAccount refresh-credential
 apiVersion: v1
 automountServiceAccountToken: true
 kind: ServiceAccount
@@ -946,8 +946,8 @@ metadata:
   creationTimestamp: null
   labels:
     app: gitpod
-    component: registry-credential
-  name: registry-credential
+    component: refresh-credential
+  name: refresh-credential
   namespace: default
 ---
 # v1/ServiceAccount registry-facade
@@ -1338,9 +1338,9 @@ data:
         certificate:
           kind: secret
           name: aws-ecr-credential
-        credential:
+        credentials:
           kind: secret
-          name: aws-iam-user-credential
+          name: aws-storage
         url: 012345678969.dkr.ecr.eu-west-2.amazonaws.com
       inCluster: false
       privateBaseImageAllowList: []
@@ -1463,7 +1463,7 @@ data:
           "public-api-server": {
             "version": "test"
           },
-          "registryCredential": {
+          "refreshCredential": {
             "version": "test"
           },
           "registryFacade": {
@@ -3194,8 +3194,8 @@ data:
       creationTimestamp: null
       labels:
         app: gitpod
-        component: registry-credential
-      name: registry-credential
+        component: refresh-credential
+      name: refresh-credential
       namespace: default
     ---
     apiVersion: rbac.authorization.k8s.io/v1
@@ -3204,8 +3204,8 @@ data:
       creationTimestamp: null
       labels:
         app: gitpod
-        component: registry-credential
-      name: registry-credential
+        component: refresh-credential
+      name: refresh-credential
       namespace: default
     ---
     apiVersion: rbac.authorization.k8s.io/v1
@@ -3214,8 +3214,8 @@ data:
       creationTimestamp: null
       labels:
         app: gitpod
-        component: registry-credential
-      name: registry-credential
+        component: refresh-credential
+      name: refresh-credential
       namespace: default
     ---
     apiVersion: batch/v1
@@ -3224,8 +3224,8 @@ data:
       creationTimestamp: null
       labels:
         app: gitpod
-        component: registry-credential
-      name: registry-credential
+        component: refresh-credential
+      name: refresh-credential
       namespace: default
     ---
     apiVersion: v1
@@ -3234,8 +3234,8 @@ data:
       creationTimestamp: null
       labels:
         app: gitpod
-        component: registry-credential
-      name: registry-credential
+        component: refresh-credential
+      name: refresh-credential
       namespace: default
     ---
     apiVersion: networking.k8s.io/v1
@@ -4848,13 +4848,13 @@ metadata:
   name: public-api-server
   namespace: default
 ---
-# v1/ConfigMap registry-credential
+# v1/ConfigMap refresh-credential
 apiVersion: v1
 data:
   config.json: |-
     {
       "namespace": "default",
-      "credentialSecret": "aws-iam-user-credential",
+      "credentialsFile": "/mnt/secrets/storage/credentials",
       "region": "eu-west-2",
       "publicRegistry": false,
       "secretToUpdate": "aws-ecr-credential"
@@ -4864,8 +4864,8 @@ metadata:
   creationTimestamp: null
   labels:
     app: gitpod
-    component: registry-credential
-  name: registry-credential
+    component: refresh-credential
+  name: refresh-credential
   namespace: default
 ---
 # v1/ConfigMap registry-facade
@@ -6196,15 +6196,15 @@ rules:
     resources: ["events"]
     verbs: ["create"]
 ---
-# rbac.authorization.k8s.io/v1/Role registry-credential
+# rbac.authorization.k8s.io/v1/Role refresh-credential
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   creationTimestamp: null
   labels:
     app: gitpod
-    component: registry-credential
-  name: registry-credential
+    component: refresh-credential
+  name: refresh-credential
   namespace: default
 rules:
 - apiGroups:
@@ -6669,23 +6669,23 @@ subjects:
 - kind: ServiceAccount
   name: rabbitmq
 ---
-# rbac.authorization.k8s.io/v1/RoleBinding registry-credential
+# rbac.authorization.k8s.io/v1/RoleBinding refresh-credential
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   creationTimestamp: null
   labels:
     app: gitpod
-    component: registry-credential
-  name: registry-credential
+    component: refresh-credential
+  name: refresh-credential
   namespace: default
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: registry-credential
+  name: refresh-credential
 subjects:
 - kind: ServiceAccount
-  name: registry-credential
+  name: refresh-credential
 ---
 # rbac.authorization.k8s.io/v1/RoleBinding server
 apiVersion: rbac.authorization.k8s.io/v1
@@ -10829,15 +10829,15 @@ spec:
   successfulJobsHistoryLimit: 3
 status: {}
 ---
-# batch/v1/CronJob registry-credential
+# batch/v1/CronJob refresh-credential
 apiVersion: batch/v1
 kind: CronJob
 metadata:
   creationTimestamp: null
   labels:
     app: gitpod
-    component: registry-credential
-  name: registry-credential
+    component: refresh-credential
+  name: refresh-credential
   namespace: default
 spec:
   concurrencyPolicy: Replace
@@ -10847,8 +10847,8 @@ spec:
       creationTimestamp: null
       labels:
         app: gitpod
-        component: registry-credential
-      name: registry-credential
+        component: refresh-credential
+      name: refresh-credential
       namespace: default
     spec:
       backoffLimit: 10
@@ -10857,17 +10857,17 @@ spec:
           creationTimestamp: null
           labels:
             app: gitpod
-            component: registry-credential
-          name: registry-credential
+            component: refresh-credential
+          name: refresh-credential
           namespace: default
         spec:
           containers:
           - args:
             - ecr-update
             - /config/config.json
-            image: eu.gcr.io/gitpod-core-dev/build/registry-credential:test
+            image: eu.gcr.io/gitpod-core-dev/build/refresh-credential:test
             imagePullPolicy: IfNotPresent
-            name: registry-credential
+            name: refresh-credential
             resources: {}
             securityContext:
               allowPrivilegeEscalation: false
@@ -10875,12 +10875,18 @@ spec:
             - mountPath: /config
               name: config
               readOnly: true
+            - mountPath: /mnt/secrets/storage
+              name: storage-volume
+              readOnly: true
           restartPolicy: OnFailure
-          serviceAccountName: registry-credential
+          serviceAccountName: refresh-credential
           volumes:
           - configMap:
-              name: registry-credential
+              name: refresh-credential
             name: config
+          - name: storage-volume
+            secret:
+              secretName: aws-storage
   schedule: '* */6 * * *'
   successfulJobsHistoryLimit: 1
 status: {}

@@ -9,9 +9,9 @@ RUN  apk upgrade --no-cache \
   && apk add --no-cache ca-certificates
 
 RUN adduser -S -D -H -h /app -u 31001 appuser
-COPY components-registry-credential--app/registry-credential /app/registry-credential
+COPY components-refresh-credential--app/refresh-credential /app/refresh-credential
 RUN chown -R appuser /app
 
 USER appuser
-ENTRYPOINT [ "/app/registry-credential" ]
+ENTRYPOINT [ "/app/refresh-credential" ]
 CMD [ "-v", "help" ]

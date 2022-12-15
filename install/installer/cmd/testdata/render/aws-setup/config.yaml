@@ -11,9 +11,9 @@ containerRegistry:
     certificate:
       kind: secret
       name: aws-ecr-credential
-    credential:
+    credentials:
       kind: secret
-      name: aws-iam-user-credential
+      name: aws-storage
   s3storage:
     region: eu-west-2
     endpoint: registry.amazonaws.com # Invalid endpoint - use to differentiate from objectStorage

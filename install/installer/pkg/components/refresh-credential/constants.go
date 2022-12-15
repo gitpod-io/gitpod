@@ -2,10 +2,10 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package registry_credential
+package refresh_credential
 
 const (
-	Component = "registry-credential"
+	Component = "refresh-credential"
 
 	CronSchedule = "* */6 * * *"
 )
