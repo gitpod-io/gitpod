@@ -498,7 +498,7 @@ func (tm *tasksManager) watch(task *task, term *terminal.Term) {
 		duration := ""
 		if elapsed >= 1*time.Minute {
 			elapsedInMinutes := strconv.Itoa(int(math.Round(elapsed.Minutes())))
-			duration = "🎉 Well done on saving " + elapsedInMinutes + " minute"
+			duration = "⏱️ Well done on saving " + elapsedInMinutes + " minute"
 			if elapsedInMinutes != "1" {
 				duration += "s"
 			}
@@ -539,7 +539,7 @@ func importParentLogAndGetDuration(fn string, out io.Writer) time.Duration {
 	if !scanner.Scan() {
 		return 0
 	}
-	reg, err := regexp.Compile(`🎉 Well done on saving (\d+) minute`)
+	reg, err := regexp.Compile(`⏱️ Well done on saving (\d+) minute`)
 	if err != nil {
 		return 0
 	}
