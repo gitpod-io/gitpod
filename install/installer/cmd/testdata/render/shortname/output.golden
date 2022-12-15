@@ -1582,7 +1582,7 @@ data:
           "public-api-server": {
             "version": "test"
           },
-          "registryCredential": {
+          "refreshCredential": {
             "version": "test"
           },
           "registryFacade": {

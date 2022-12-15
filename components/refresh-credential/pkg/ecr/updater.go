@@ -17,22 +17,16 @@ import (
 
 	aws "github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
-	awscred "github.com/aws/aws-sdk-go-v2/credentials"
 	ecr "github.com/aws/aws-sdk-go-v2/service/ecr"
 	ecrPublic "github.com/aws/aws-sdk-go-v2/service/ecrpublic"
 	"github.com/docker/cli/cli/config/credentials"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/registry-credential/pkg/config"
+	"github.com/gitpod-io/gitpod/refresh-credential/pkg/config"
 )
 
 const (
-	accessKeyIdName     = "accessKeyId"
-	secretAccessKeyName = "secretAccessKey"
-)
-
-const (
-	ecrExpiresAtAnnotation = "registry-credential-updater/ecr-expires-at"
+	ecrExpiresAtAnnotation = "refresh-credential/ecr-expires-at"
 )
 
 // DockerConfigJSON represents ~/.docker/config.json file info
@@ -50,26 +44,21 @@ type DockerConfigEntry struct {
 	Auth string `json:"auth"`
 }
 
-func UpdateCredential(client *kubernetes.Clientset, cfg *config.Configuration) {
+func RefreshCredential(client *kubernetes.Clientset, cfg *config.Configuration) {
 	private := !cfg.PublicRegistry
 	region := cfg.Region
 
 	log := log.WithField("private", private).WithField("region", region)
 
-	credSecret, err := getSecret(client, cfg.Namespace, cfg.CredentialSecret)
-	if err != nil {
-		log.WithError(err).Fatalf("cannot find the credential secret %s/%s", cfg.CredentialSecret, cfg.Namespace)
-	}
-
-	accessKey := string(credSecret.Data[accessKeyIdName])
-	secretKey := string(credSecret.Data[secretAccessKeyName])
-
-	log.Infof("Prepare to rotate AWS ECR secret %s/%s", cfg.SecretToUpdate, cfg.Namespace)
-
-	awsConfig, err := newAWSConfig(region, accessKey, secretKey, "")
+	awsCfg, err := awsconfig.LoadDefaultConfig(context.TODO(),
+		awsconfig.WithRegion(region),
+		awsconfig.WithSharedConfigFiles([]string{cfg.CredentialsFile}),
+	)
 	if err != nil {
 		log.WithError(err).Fatal("unable to new aws config")
 	}
+
+	log.Infof("Prepare to refresh AWS ECR secret %s/%s", cfg.SecretToUpdate, cfg.Namespace)
 
 	// Get an authorization token from ECR
 	var (
@@ -78,7 +67,7 @@ func UpdateCredential(client *kubernetes.Clientset, cfg *config.Configuration) {
 		endpoint           string
 	)
 	if private {
-		ecrClient := ecr.NewFromConfig(awsConfig)
+		ecrClient := ecr.NewFromConfig(awsCfg)
 		result, err := ecrClient.GetAuthorizationToken(context.TODO(), &ecr.GetAuthorizationTokenInput{})
 		if err != nil {
 			log.WithError(err).Fatal("unable to get an authorization token with private ECR")
@@ -99,7 +88,7 @@ func UpdateCredential(client *kubernetes.Clientset, cfg *config.Configuration) {
 
 		expiresAt = aws.ToTime(result.AuthorizationData[0].ExpiresAt)
 	} else {
-		ecrClient := ecrPublic.NewFromConfig(awsConfig)
+		ecrClient := ecrPublic.NewFromConfig(awsCfg)
 		result, err := ecrClient.GetAuthorizationToken(context.TODO(), &ecrPublic.GetAuthorizationTokenInput{})
 		if err != nil {
 			log.WithError(err).Fatal("unable to get an authorization token from public ECR")
@@ -129,7 +118,7 @@ func UpdateCredential(client *kubernetes.Clientset, cfg *config.Configuration) {
 				Namespace: cfg.Namespace,
 				Labels: map[string]string{
 					"app":       "gitpod",
-					"component": "registry-credential",
+					"component": "refresh-credential",
 				},
 			},
 			Type: corev1.SecretTypeDockerConfigJson,
@@ -150,20 +139,6 @@ func UpdateCredential(client *kubernetes.Clientset, cfg *config.Configuration) {
 	}
 
 	log.Infof("Secret %s/%s updated with new ECR credentials", cfg.SecretToUpdate, cfg.Namespace)
-}
-
-func newAWSConfig(region, accessKeyId, secretAccessKey, session string) (aws.Config, error) {
-	return awsconfig.LoadDefaultConfig(
-		context.TODO(),
-		awsconfig.WithRegion(region),
-		awsconfig.WithCredentialsProvider(
-			awscred.NewStaticCredentialsProvider(
-				accessKeyId,
-				secretAccessKey,
-				session,
-			),
-		),
-	)
 }
 
 // getSecret returns the Kubernetes secret.

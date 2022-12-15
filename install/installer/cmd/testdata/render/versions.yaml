@@ -51,7 +51,7 @@ components:
     version: test
   public-api-server:
     version: test
-  registryCredential:
+  refreshCredential:
     version: test
   registryFacade:
     version: test

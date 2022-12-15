@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package registry_credential
+package refresh_credential
 
 import (
 	"k8s.io/apimachinery/pkg/runtime"
