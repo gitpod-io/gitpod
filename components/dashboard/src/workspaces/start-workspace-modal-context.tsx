@@ -5,6 +5,7 @@
  */
 
 import React, { createContext, useEffect, useState } from "react";
+import Snowfall from "react-snowfall";
 
 export const StartWorkspaceModalContext = createContext<{
     isStartWorkspaceModalVisible?: boolean;
@@ -32,6 +33,7 @@ export const StartWorkspaceModalContextProvider: React.FC = ({ children }) => {
     return (
         <StartWorkspaceModalContext.Provider value={{ isStartWorkspaceModalVisible, setIsStartWorkspaceModalVisible }}>
             {children}
+            {isStartWorkspaceModalVisible && <Snowfall />}
         </StartWorkspaceModalContext.Provider>
     );
 };
