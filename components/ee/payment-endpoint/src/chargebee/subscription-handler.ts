@@ -18,6 +18,7 @@ import { formatDate } from "@gitpod/gitpod-protocol/lib/util/date-time";
 import { getUpdatedAt } from "./chargebee-subscription-helper";
 import { UserPaidSubscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { DBSubscriptionAdditionalData } from "@gitpod/gitpod-db/lib/typeorm/entity/db-subscription";
+import { UbpResetOnCancel } from "./ubp-reset-on-cancel";
 
 @injectable()
 export class SubscriptionHandler implements EventHandler<chargebee.SubscriptionEventV2> {
@@ -25,6 +26,7 @@ export class SubscriptionHandler implements EventHandler<chargebee.SubscriptionE
     @inject(AccountingDB) protected readonly db: AccountingDB;
     @inject(SubscriptionMapperFactory) protected readonly mapperFactory: SubscriptionMapperFactory;
     @inject(UpgradeHelper) protected readonly upgradeHelper: UpgradeHelper;
+    @inject(UbpResetOnCancel) protected readonly ubpResetOnCancel: UbpResetOnCancel;
 
     canHandle(event: chargebee.Event<any>): boolean {
         if (event.event_type.startsWith("subscription")) {
@@ -55,6 +57,8 @@ export class SubscriptionHandler implements EventHandler<chargebee.SubscriptionE
 
             if (event.event_type === "subscription_changed") {
                 await this.checkAndChargeForUpgrade(userId, chargebeeSubscription);
+            } else if (event.event_type === "subscription_cancelled") {
+                await this.ubpResetOnCancel.resetUsage(userId);
             }
 
             await this.mapToGitpodSubscription(userId, event);

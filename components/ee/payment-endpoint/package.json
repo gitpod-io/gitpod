@@ -7,6 +7,7 @@
   "dependencies": {
     "@gitpod/gitpod-db": "0.1.5",
     "@gitpod/gitpod-protocol": "0.1.5",
+    "@gitpod/usage-api": "0.1.5",
     "@octokit/rest": "18.5.6",
     "@octokit/webhooks": "9.17.0",
     "body-parser": "^1.19.2",

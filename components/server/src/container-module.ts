@@ -114,6 +114,7 @@ import { prometheusClientMiddleware } from "@gitpod/gitpod-protocol/lib/util/nic
 import { UsageService, UsageServiceImpl } from "./user/usage-service";
 import { OpenPrebuildPrefixContextParser } from "./workspace/open-prebuild-prefix-context-parser";
 import { contentServiceBinder } from "./util/content-service-sugar";
+import { UbpResetOnCancel } from "@gitpod/gitpod-payment-endpoint/lib/chargebee/ubp-reset-on-cancel";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -301,4 +302,5 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(UsageServiceImpl).toSelf().inSingletonScope();
     bind(UsageService).toService(UsageServiceImpl);
+    bind(UbpResetOnCancel).toSelf().inSingletonScope();
 });
