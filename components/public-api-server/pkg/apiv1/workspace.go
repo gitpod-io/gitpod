@@ -38,9 +38,10 @@ type WorkspaceService struct {
 func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Request[v1.GetWorkspaceRequest]) (*connect.Response[v1.GetWorkspaceResponse], error) {
 	logger := ctxlogrus.Extract(ctx)
 
+	var err error
 	var cacheKey string
 	if s.cacheManager != nil {
-		cacheKey, err := cache.CacheKey(req.Spec().Procedure, req.Any())
+		cacheKey, err = cache.CacheKey(req.Spec().Procedure, req.Any())
 		if err != nil {
 			log.WithField("proc", req.Spec().Procedure).WithError(err).Error("failed to generate cache key")
 		}
