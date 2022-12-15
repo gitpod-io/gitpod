@@ -180,7 +180,6 @@ export class TeamSubscriptionService {
             // Cancel assignee's subscription (if present)
             if (state === "assigned") {
                 const assignedSlot = slot as TeamSubscriptionSlotAssigned;
-                await this.ubpResetOnCancel.resetUsage(assignedSlot.assigneeId);
                 await this.cancelSubscription(db, assignedSlot.assigneeId, ts.planId, slot.id, now);
             }
 
