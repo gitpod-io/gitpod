@@ -195,6 +195,20 @@ function App() {
         }
     }, []);
 
+    useEffect(() => {
+        const onHashChange = () => {
+            // Refresh on hash change if the path is '/' (new context URL)
+            if (window.location.pathname === "/") {
+                window.location.reload();
+            }
+        };
+        window.addEventListener("hashchange", onHashChange, false);
+
+        return () => {
+            window.removeEventListener("hashchange", onHashChange);
+        };
+    }, []);
+
     // redirect to website for any website slugs
     if (isGitpodIo() && isWebsiteSlug(window.location.pathname)) {
         window.location.host = "www.gitpod.io";
@@ -254,18 +268,6 @@ function App() {
             </Suspense>
         );
     }
-
-    // TODO: this will re-subscribe for every render, maybe move to a useEffect
-    window.addEventListener(
-        "hashchange",
-        () => {
-            // Refresh on hash change if the path is '/' (new context URL)
-            if (window.location.pathname === "/") {
-                window.location.reload();
-            }
-        },
-        false,
-    );
 
     let toRender: React.ReactElement = (
         <Route>
