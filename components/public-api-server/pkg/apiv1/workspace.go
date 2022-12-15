@@ -45,7 +45,7 @@ func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Reques
 			log.WithField("proc", req.Spec().Procedure).WithError(err).Error("failed to generate cache key")
 		}
 
-		log.WithField("proc", req.Spec().Procedure).WithField("msg", req.Any()).Info("cache key '%v' ", cacheKey)
+		log.WithField("proc", req.Spec().Procedure).WithField("msg", req.Any()).Infof("cache key '%v' ", cacheKey)
 
 		if cacheKey != "" {
 			data, err := s.cacheManager.ReadCache(cacheKey)
