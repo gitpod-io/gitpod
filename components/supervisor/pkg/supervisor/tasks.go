@@ -505,7 +505,7 @@ func (tm *tasksManager) watch(task *task, term *terminal.Term) {
 			duration += "\r\n"
 		}
 
-		endMessage := "\r\n🤙 This task ran as a workspace prebuild\r\n" + duration + "\r\n"
+		endMessage := "\r\n🍊 This task ran as a workspace prebuild\r\n" + duration + "\r\n"
 		_, _ = writer.Write([]byte(endMessage))
 
 		if tm.reporter != nil {
@@ -531,7 +531,7 @@ func importParentLogAndGetDuration(fn string, out io.Writer) time.Duration {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		l := scanner.Text()
-		if strings.Contains(l, "🤙 This task ran as a workspace prebuild") {
+		if strings.Contains(l, "🍊 This task ran as a workspace prebuild") {
 			break
 		}
 		out.Write([]byte(l + "\n"))
