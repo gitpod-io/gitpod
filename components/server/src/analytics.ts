@@ -8,6 +8,7 @@ import { Request } from "express";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
 import * as crypto from "crypto";
+import { clientIp } from "./express-util";
 
 export async function trackLogin(
     user: User,
@@ -18,7 +19,7 @@ export async function trackLogin(
 ) {
     // make new complete identify call for each login
     await fullIdentify(user, request, analytics, subscriptionService);
-    const ip = request.ips[0];
+    const ip = clientIp(request);
     const ua = request.headers["user-agent"];
 
     // track the login
@@ -35,7 +36,7 @@ export async function trackLogin(
 export async function trackSignup(user: User, request: Request, analytics: IAnalyticsWriter) {
     // make new complete identify call for each signup
     await fullIdentify(user, request, analytics);
-    const ip = request.ips[0];
+    const ip = clientIp(request);
     const ua = request.headers["user-agent"];
 
     // track the signup
@@ -79,7 +80,7 @@ async function fullIdentify(
 ) {
     // makes a full identify call for authenticated users
     const coords = request.get("x-glb-client-city-lat-long")?.split(", ");
-    const ip = request.ips[0];
+    const ip = clientIp(request);
     const ua = request.headers["user-agent"];
     var subscriptionIDs: string[] = [];
     const subscriptions = await subscriptionService?.getNotYetCancelledSubscriptions(user, new Date().toISOString());
