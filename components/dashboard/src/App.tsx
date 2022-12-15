@@ -10,7 +10,6 @@ import { Redirect, Route, Switch } from "react-router";
 
 import { Login } from "./Login";
 import { UserContext } from "./user-context";
-import { ThemeContext } from "./theme-context";
 import { shouldSeeWhatsNew, WhatsNew } from "./whatsnew/WhatsNew";
 import gitpodIcon from "./icons/gitpod.svg";
 import { ContextURL, User } from "@gitpod/gitpod-protocol";
@@ -149,43 +148,12 @@ function AdminRoute({ component }: any) {
 }
 
 function App() {
-    const { setIsDark } = useContext(ThemeContext);
     const [isWhatsNewShown, setWhatsNewShown] = useState(false);
     const [showUserIdePreference, setShowUserIdePreference] = useState(false);
     const { user, teams, isSetupRequired, loading } = useUserAndTeamsLoader();
 
     // Setup analytics/tracking
     useAnalyticsTracking();
-
-    // Sets theme
-    useEffect(() => {
-        const updateTheme = () => {
-            const isDark =
-                localStorage.theme === "dark" ||
-                (localStorage.theme !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-            setIsDark(isDark);
-        };
-        updateTheme();
-        const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-        if (mediaQuery instanceof EventTarget) {
-            mediaQuery.addEventListener("change", updateTheme);
-        } else {
-            // backward compatibility for Safari < 14
-            (mediaQuery as MediaQueryList).addListener(updateTheme);
-        }
-        window.addEventListener("storage", updateTheme);
-        return function cleanup() {
-            if (mediaQuery instanceof EventTarget) {
-                mediaQuery.removeEventListener("change", updateTheme);
-            } else {
-                // backward compatibility for Safari < 14
-                (mediaQuery as MediaQueryList).removeListener(updateTheme);
-            }
-            window.removeEventListener("storage", updateTheme);
-        };
-        // TODO: Add setIsDark to dep list after updating context to wrap setter w/ useCallback
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     // Setup experiments
     useEffect(() => {
