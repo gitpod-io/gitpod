@@ -51,13 +51,13 @@ func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Reques
 			data, err := s.cacheManager.ReadCache(cacheKey)
 			if err != nil {
 				log.WithField("proc", req.Spec().Procedure).WithError(err).Error("failed reading from cache")
-			} else {
+			} else if data != nil {
 				resp := &v1.GetWorkspaceResponse{}
 				err := json.Unmarshal(data, resp)
 				if err != nil {
 					log.WithField("proc", req.Spec().Procedure).WithError(err).Error("canot unmarshal cached response")
 				} else {
-					log.WithField("proc", req.Spec().Procedure).Error("served response from cache")
+					log.WithField("proc", req.Spec().Procedure).Info("served response from cache")
 					return connect.NewResponse(resp), nil
 				}
 			}
