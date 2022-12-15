@@ -60,7 +60,7 @@ func newListStaleCmd(logger *logrus.Logger) *cobra.Command {
 	}
 
 	cmd.PersistentFlags().StringVar(&opts.TFDir, "tf-dir", "dev/preview/infrastructure/harvester", "TF working directory")
-	cmd.Flags().DurationVarP(&opts.timeout, "timeout", "t", 6*time.Minute, "Duration to wait for a preview enviroment contexts' to get installed")
+	cmd.Flags().DurationVarP(&opts.timeout, "timeout", "t", 10*time.Minute, "Duration to wait for a preview enviroment contexts' to get installed")
 	cmd.PersistentFlags().StringVar(&opts.sshPrivateKeyPath, "private-key-path", fmt.Sprintf("%s/.ssh/vm_id_rsa", homedir.HomeDir()), "path to the private key used to authenticate with the VM")
 
 	return cmd
@@ -94,7 +94,7 @@ func (o *listWorkspaceOpts) listWorskpaceStatus(ctx context.Context) ([]preview.
 			Active: false,
 		}
 
-		if _, ok := branchlessWorkspaces[ws]; ok {
+		if _, ok := branchlessWorkspaces[ws]; ok && !strings.HasPrefix(ws, "platform-") {
 			status.Reason = "branch doesn't exist, or last commit older than 3 days"
 			statuses = append(statuses, status)
 			continue
