@@ -13,6 +13,7 @@ import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import CheckBox from "../components/CheckBox";
 import { User } from "@gitpod/gitpod-protocol";
+import PillLabel from "../components/PillLabel";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 interface SelectIDEProps {
@@ -105,24 +106,21 @@ export default function SelectIDE(props: SelectIDEProps) {
                                 </InfoBox>
                             )}
 
-                            <p className="text-left w-full text-gray-500 dark:text-gray-400">
-                                The <strong>JetBrains desktop IDEs</strong> are currently in beta.{" "}
+                            <p className="text-left w-full text-gray-400 dark:text-gray-500">
+                                <strong>JetBrains </strong> integration is currently in{" "}
+                                <PillLabel type="warn" className="font-semibold mt-2 ml-0 py-0.5 px-1 self-center">
+                                    <a href="https://www.gitpod.io/docs/references/gitpod-releases">
+                                        <span className="text-xs">Beta</span>
+                                    </a>
+                                </PillLabel>
+                                &nbsp;&middot;&nbsp;
                                 <a
                                     href="https://github.com/gitpod-io/gitpod/issues/6576"
-                                    target="gitpod-feedback-issue"
-                                    rel="noopener"
-                                    className="gp-link"
-                                >
-                                    Send feedback
-                                </a>{" "}
-                                ·{" "}
-                                <a
-                                    href="https://www.gitpod.io/docs/integrations/jetbrains"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="gp-link"
                                 >
-                                    Documentation
+                                    Send feedback
                                 </a>
                             </p>
                         </>
