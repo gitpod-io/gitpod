@@ -6,23 +6,27 @@
 
 import { ContainerModule } from "inversify";
 
-import { ChargebeeProvider, ChargebeeProviderOptions } from "./chargebee/chargebee-provider";
-import { EndpointController } from "./chargebee/endpoint-controller";
-import { SubscriptionService } from "./accounting/subscription-service";
-import { Config } from "./config";
-import { Server } from "./server";
-import { SubscriptionHandler } from "./chargebee/subscription-handler";
-import { SubscriptionMapperFactory, SubscriptionMapper } from "./chargebee/subscription-mapper";
-import { TeamSubscriptionHandler } from "./chargebee/team-subscription-handler";
-import { CompositeEventHandler, EventHandler } from "./chargebee/chargebee-event-handler";
-import { UpgradeHelper } from "./chargebee/upgrade-helper";
-import { TeamSubscriptionService } from "./accounting/team-subscription-service";
-import { TeamSubscription2Service } from "./accounting/team-subscription2-service";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { UsageServiceClient, UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
+import { createChannel, createClient } from "nice-grpc";
 import { AccountService } from "./accounting/account-service";
 import { AccountServiceImpl } from "./accounting/account-service-impl";
+import { SubscriptionService } from "./accounting/subscription-service";
+import { TeamSubscriptionService } from "./accounting/team-subscription-service";
+import { TeamSubscription2Service } from "./accounting/team-subscription2-service";
+import { CompositeEventHandler, EventHandler } from "./chargebee/chargebee-event-handler";
+import { ChargebeeProvider, ChargebeeProviderOptions } from "./chargebee/chargebee-provider";
+import { EndpointController } from "./chargebee/endpoint-controller";
+import { SubscriptionHandler } from "./chargebee/subscription-handler";
+import { SubscriptionMapper, SubscriptionMapperFactory } from "./chargebee/subscription-mapper";
+import { TeamSubscriptionHandler } from "./chargebee/team-subscription-handler";
+import { UbpResetOnCancel } from "./chargebee/ubp-reset-on-cancel";
+import { UpgradeHelper } from "./chargebee/upgrade-helper";
+import { Config } from "./config";
 import { GithubEndpointController } from "./github/endpoint-controller";
 import { GithubSubscriptionMapper } from "./github/subscription-mapper";
 import { GithubSubscriptionReconciler } from "./github/subscription-reconciler";
+import { Server } from "./server";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toSelf().inSingletonScope();
@@ -38,7 +42,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
         };
     });
     bind(TeamSubscriptionHandler).toSelf().inSingletonScope();
-
     bind(CompositeEventHandler).toSelf().inSingletonScope();
     bind(EventHandler).to(SubscriptionHandler).inSingletonScope();
     bind(EventHandler).to(TeamSubscriptionHandler).inSingletonScope();
@@ -60,4 +63,13 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(GithubEndpointController).toSelf().inSingletonScope();
     bind(GithubSubscriptionMapper).toSelf().inSingletonScope();
     bind(GithubSubscriptionReconciler).toSelf().inSingletonScope();
+
+    bind<UsageServiceClient>(UsageServiceDefinition.name)
+        .toDynamicValue((ctx) => {
+            const config = ctx.container.get<Config>(Config);
+            log.info("Connecting to usage service at", { addr: config.usageServiceAddr });
+            return createClient(UsageServiceDefinition, createChannel(config.usageServiceAddr));
+        })
+        .inSingletonScope();
+    bind(UbpResetOnCancel).toSelf().inSingletonScope();
 });

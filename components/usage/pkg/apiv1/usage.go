@@ -477,11 +477,6 @@ func (s *UsageService) AddUsageCreditNote(ctx context.Context, req *v1.AddUsageC
 		return nil, status.Error(codes.InvalidArgument, "The description must not be empty.")
 	}
 
-	userId, err := uuid.Parse(req.UserId)
-	if err != nil {
-		return nil, fmt.Errorf("The user id is not a valid UUID. %w", err)
-	}
-
 	usage := db.Usage{
 		ID:            uuid.New(),
 		AttributionID: attributionId,
@@ -492,9 +487,15 @@ func (s *UsageService) AddUsageCreditNote(ctx context.Context, req *v1.AddUsageC
 		Draft:         false,
 	}
 
-	err = usage.SetCreditNoteMetaData(db.CreditNoteMetaData{UserId: userId.String()})
-	if err != nil {
-		return nil, err
+	if req.UserId != "" {
+		userId, err := uuid.Parse(req.UserId)
+		if err != nil {
+			return nil, fmt.Errorf("The user id is not a valid UUID. %w", err)
+		}
+		err = usage.SetCreditNoteMetaData(db.CreditNoteMetaData{UserId: userId.String()})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err = db.InsertUsage(ctx, s.conn, usage)

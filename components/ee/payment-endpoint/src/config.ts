@@ -41,6 +41,8 @@ export GITPOD_GITHUB_APP_MKT_NAME=gitpod-draft-development-app
     readonly maxTeamSlotsOnCreation: number = !!process.env.TS_MAX_SLOTS_ON_CREATION
         ? parseInt(process.env.TS_MAX_SLOTS_ON_CREATION)
         : 1000;
+
+    readonly usageServiceAddr: string = process.env.GITPOD_USAGE_SERVICE_ADDR || "usage.default.svc.cluster.local:9001";
 }
 
 export interface ChargebeeWebhook {

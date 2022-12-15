@@ -9,6 +9,7 @@ import { AssignedTeamSubscription2, Subscription } from "@gitpod/gitpod-protocol
 import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import { TeamSubscription2 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
 import { inject, injectable } from "inversify";
+import { UbpResetOnCancel } from "../chargebee/ubp-reset-on-cancel";
 import { SubscriptionModel } from "./subscription-model";
 import { SubscriptionService } from "./subscription-service";
 
@@ -17,6 +18,7 @@ export class TeamSubscription2Service {
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(AccountingDB) protected readonly accountingDb: AccountingDB;
     @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
+    @inject(UbpResetOnCancel) protected readonly ubpResetOnCancel: UbpResetOnCancel;
 
     async addAllTeamMemberSubscriptions(ts2: TeamSubscription2): Promise<void> {
         const members = await this.teamDB.findMembersByTeam(ts2.teamId);
@@ -102,6 +104,7 @@ export class TeamSubscription2Service {
         teamMembershipId: string,
         cancellationDate: string,
     ) {
+        await this.ubpResetOnCancel.resetUsage(userId);
         const model = await this.loadSubscriptionModel(db, userId);
         const subscription = model.findSubscriptionByTeamMembershipId(teamMembershipId);
         if (!subscription) {

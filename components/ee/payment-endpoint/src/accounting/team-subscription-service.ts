@@ -27,6 +27,7 @@ import { SubscriptionModel } from "./subscription-model";
 import { SubscriptionService } from "./subscription-service";
 import { AccountService } from "./account-service";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { UbpResetOnCancel } from "../chargebee/ubp-reset-on-cancel";
 
 type TS = string | TeamSubscription;
 
@@ -36,6 +37,7 @@ export class TeamSubscriptionService {
     @inject(AccountingDB) protected readonly accountingDb: AccountingDB;
     @inject(AccountService) protected readonly accountService: AccountService;
     @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
+    @inject(UbpResetOnCancel) protected readonly ubpResetOnCancel: UbpResetOnCancel;
 
     /**
      * Adds new, free slots to the given TeamSubscription
@@ -178,6 +180,7 @@ export class TeamSubscriptionService {
             // Cancel assignee's subscription (if present)
             if (state === "assigned") {
                 const assignedSlot = slot as TeamSubscriptionSlotAssigned;
+                await this.ubpResetOnCancel.resetUsage(assignedSlot.assigneeId);
                 await this.cancelSubscription(db, assignedSlot.assigneeId, ts.planId, slot.id, now);
             }
 
@@ -453,6 +456,7 @@ export class TeamSubscriptionService {
             throw new Error(`Cannot find subscription for Team Subscription Slot ${slotId}!`);
         }
         model.cancel(subscription, cancellationDate, cancellationDate);
+        await this.ubpResetOnCancel.resetUsage(assigneeId);
         await this.subscriptionService.store(db, model);
     }
 
