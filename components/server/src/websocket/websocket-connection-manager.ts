@@ -35,7 +35,7 @@ import {
     WithResourceAccessGuard,
     RepositoryResourceGuard,
 } from "../auth/resource-access";
-import { takeFirst } from "../express-util";
+import { clientIp, takeFirst } from "../express-util";
 import {
     increaseApiCallCounter,
     increaseApiConnectionClosedCounter,
@@ -47,6 +47,7 @@ import { GitpodServerImpl } from "../workspace/gitpod-server-impl";
 import * as opentracing from "opentracing";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
+import { maskIp } from "../analytics";
 
 export type GitpodServiceFactory = () => GitpodServerImpl;
 
@@ -237,11 +238,15 @@ export class WebsocketConnectionManager implements ConnectionHandler {
         }
 
         const clientHeaderFields: ClientHeaderFields = {
-            ip: takeFirst(expressReq.ips),
+            ip: clientIp(expressReq),
             userAgent: expressReq.headers["user-agent"],
             dnt: takeFirst(expressReq.headers.dnt),
             clientRegion: takeFirst(expressReq.headers["x-glb-client-region"]),
         };
+        // TODO(gpl): remove once we validated the current approach works
+        log.debug("masked wss client IP", {
+            maskedClientIp: maskIp(clientHeaderFields.ip),
+        });
 
         gitpodServer.initialize(
             client,
