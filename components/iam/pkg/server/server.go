@@ -6,6 +6,7 @@ package server
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/iam/pkg/config"
 	"github.com/gitpod-io/gitpod/iam/pkg/oidc"
@@ -31,7 +32,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.ServiceConfig) erro
 	}
 
 	if listenErr := srv.ListenAndServe(); listenErr != nil {
-		return fmt.Errorf("failed to serve iam server: %w", err)
+		return fmt.Errorf("failed to serve iam server: %w", listenErr)
 	}
 
 	return nil
