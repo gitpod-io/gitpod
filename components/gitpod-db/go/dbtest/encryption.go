@@ -26,3 +26,27 @@ func GetTestCipher(t *testing.T) (*db.AES256CBC, db.CipherMetadata) {
 	require.NoError(t, err)
 	return cipher, metadata
 }
+
+func CipherSet(t *testing.T) *db.CipherSet {
+	t.Helper()
+
+	configs := []db.CipherConfig{
+		{
+			Name:     "default",
+			Version:  1,
+			Primary:  true,
+			Material: "ZMaTPrF7s9gkLbY45zP59O0LTpLvDd/cgqPE9Ptghh8=",
+		},
+		{
+			Name:     "secondary",
+			Version:  1,
+			Primary:  false,
+			Material: "A3iUCT27LVbN67Fa+yfcMmLgNFdUWEl22JcdoER44gA=",
+		},
+	}
+
+	set, err := db.NewCipherSet(configs)
+	require.NoError(t, err)
+
+	return set
+}
