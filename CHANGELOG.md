@@ -3,7 +3,7 @@
 ## November 2022
 - Update access tokens menu order ([#14937](https://github.com/gitpod-io/gitpod/pull/14937)) - [@gtsiolis](https://github.com/gtsiolis)
 - Truncate branch name on prebuilds page ([#14853](https://github.com/gitpod-io/gitpod/pull/14853)) - [@gtsiolis](https://github.com/gtsiolis)
-- Revert removing the workspace download feature ([#14828](https://github.com/gitpod-io/gitpod/pull/14828)) - [@gtsiolis](https://github.com/gtsiolis)
+- Revert removing the workspace download feature ([#14828](https://github.com/gitpod-io/gitpod/pull/14828)) - [@gtsiolis](https://github.com/gtsiolis)s
 - Update usage period date format ([#14827](https://github.com/gitpod-io/gitpod/pull/14827)) - [@gtsiolis](https://github.com/gtsiolis)
 - Update JetBrains IDE images to most recent stable version. ([#14817](https://github.com/gitpod-io/gitpod/pull/14817)) - [@roboquat](https://github.com/roboquat)
 - [installer]: create a WebApp and IDE installation "kind" ([#14510](https://github.com/gitpod-io/gitpod/pull/14510)) - [@mrsimonemms](https://github.com/mrsimonemms)
