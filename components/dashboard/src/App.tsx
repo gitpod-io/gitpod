@@ -53,6 +53,7 @@ import { useUserAndTeamsLoader } from "./hooks/use-user-and-teams-loader";
 import { useAnalyticsTracking } from "./hooks/use-analytics-tracking";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
+const SSOSetup = React.lazy(() => import(/* webpackPrefetch: true */ "./sso-setup/SSOSetup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "./workspaces/Workspaces"));
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Account"));
 const Notifications = React.lazy(() => import(/* webpackPrefetch: true */ "./settings/Notifications"));
@@ -268,6 +269,7 @@ function App() {
                     <Route path={projectsPathNew} exact component={NewProject} />
                     <Route path="/open" exact component={Open} />
                     <Route path="/setup" exact component={Setup} />
+                    <Route path="/sso-setup" exact component={SSOSetup} />
                     <Route path={workspacesPathMain} exact component={Workspaces} />
                     <Route path={settingsPathAccount} exact component={Account} />
                     <Route path={usagePathMain} exact component={Usage} />
