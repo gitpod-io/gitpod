@@ -14,9 +14,17 @@ import (
 	"fmt"
 )
 
-type Cipher interface {
+type Encryptor interface {
 	Encrypt(data []byte) (EncryptedData, error)
+}
+
+type Decryptor interface {
 	Decrypt(data EncryptedData) ([]byte, error)
+}
+
+type Cipher interface {
+	Encryptor
+	Decryptor
 }
 
 func NewAES256CBCCipher(secret string, metadata CipherMetadata) (*AES256CBC, error) {
@@ -37,7 +45,7 @@ type AES256CBC struct {
 }
 
 func (c *AES256CBC) Encrypt(data []byte) (EncryptedData, error) {
-	iv, err := generateInitializationVector(16)
+	iv, err := GenerateInitializationVector(16)
 	if err != nil {
 		return EncryptedData{}, err
 	}
@@ -109,7 +117,7 @@ type EncryptedData struct {
 	Metadata CipherMetadata `json:"keyMetadata"`
 }
 
-func generateInitializationVector(size int) ([]byte, error) {
+func GenerateInitializationVector(size int) ([]byte, error) {
 	buf := make([]byte, size)
 	_, err := rand.Read(buf)
 	if err != nil {

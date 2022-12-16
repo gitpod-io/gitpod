@@ -17,11 +17,15 @@ import (
 func NewOIDCClientConfig(t *testing.T, record db.OIDCClientConfig) db.OIDCClientConfig {
 	t.Helper()
 
+	cipher, _ := GetTestCipher(t)
+	encrypted, err := db.EncryptJSON(cipher, db.OIDCSpec{})
+	require.NoError(t, err)
+
 	now := time.Now().UTC().Truncate(time.Millisecond)
 	result := db.OIDCClientConfig{
 		ID:           uuid.New(),
 		Issuer:       "issuer",
-		Data:         []byte("{}"),
+		Data:         encrypted,
 		LastModified: now,
 	}
 
