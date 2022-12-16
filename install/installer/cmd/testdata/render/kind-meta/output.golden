@@ -2088,7 +2088,7 @@ data:
     kind: Service
     metadata:
       annotations:
-        cloud.google.com/neg: '{"exposed_ports": {"80":{},"443": {}}}'
+        cloud.google.com/neg: '{"exposed_ports": {"80":{},"443": {},"444": {}}}'
         external-dns.alpha.kubernetes.io/hostname: gitpod.example.com,*.gitpod.example.com,*.ws.gitpod.example.com
       creationTimestamp: null
       labels:
@@ -5694,7 +5694,7 @@ apiVersion: v1
 kind: Service
 metadata:
   annotations:
-    cloud.google.com/neg: '{"exposed_ports": {"80":{},"443": {}}}'
+    cloud.google.com/neg: '{"exposed_ports": {"80":{},"443": {},"444": {}}}'
     external-dns.alpha.kubernetes.io/hostname: gitpod.example.com,*.gitpod.example.com,*.ws.gitpod.example.com
   creationTimestamp: null
   labels:
