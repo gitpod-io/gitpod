@@ -616,7 +616,11 @@ func updateVMOptions(
 		return isEqual || isXmx || isXms || isXss || isXXOptions
 	}
 	// Gitpod's default customization
-	gitpodVMOptions := []string{"-Dgtw.disable.exit.dialog=true"}
+	var gitpodVMOptions []string
+	gitpodVMOptions = append(gitpodVMOptions, "-Dgtw.disable.exit.dialog=true")
+	if alias == "intellij" {
+		gitpodVMOptions = append(gitpodVMOptions, "-Djdk.configure.existing=true")
+	}
 	vmoptions := deduplicateVMOption(ideaVMOptionsLines, gitpodVMOptions, filterFunc)
 
 	// user-defined vmoptions (EnvVar)

@@ -37,7 +37,6 @@
 
         <httpRequestHandler implementation="io.gitpod.jetbrains.remote.GitpodCLIService"/>
 
-        <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodProjectManager" preload="true"/>
         <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodClientProjectSessionTracker"
                         client="controller" preload="true"/>
         <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodTerminalService" client="controller"
@@ -50,8 +49,8 @@
         <gateway.customization.metrics id="gitpodMetricsProvider"
                                        implementation="io.gitpod.jetbrains.remote.GitpodMetricProvider"/>
 
-        <registryKey key="gitpod.autoJdk.disabled" defaultValue="false"
-                     description="Disable auto-detection of JDK for the project and its modules"
+        <registryKey key="gitpod.forceUpdateMavenProjects.disabled" defaultValue="false"
+                     description="Disable the forced update of Maven projects when IDE opens."
                      restartRequired="true"/>
     </extensions>
 
