@@ -782,7 +782,7 @@ export class UserController {
 
     private createGitpodServer(user: User, resourceGuard: ResourceAccessGuard) {
         const server = this.serverFactory();
-        server.initialize(undefined, user, resourceGuard, ClientMetadata.from(user.id), undefined, {});
+        server.initialize(undefined, user, resourceGuard, ClientMetadata.from(user.id), undefined, {}, false);
         return server;
     }
 }

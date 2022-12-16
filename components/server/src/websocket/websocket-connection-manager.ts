@@ -56,6 +56,8 @@ const EVENT_CONNECTION_CLOSED = "EVENT_CONNECTION_CLOSED";
 const EVENT_CLIENT_CONTEXT_CREATED = "EVENT_CLIENT_CONTEXT_CREATED";
 const EVENT_CLIENT_CONTEXT_CLOSED = "EVENT_CLIENT_CONTEXT_CLOSED";
 
+const GITPOD_ADMIN_PORT_MARKER_HEADER = "X-GITPOD-ADMIN-PORT";
+
 /** TODO(gpl) Refine this list */
 export type WebsocketClientType =
     | "browser"
@@ -248,6 +250,9 @@ export class WebsocketConnectionManager implements ConnectionHandler {
             maskedClientIp: maskIp(clientHeaderFields.ip),
         });
 
+        // We assume that our proxy infrastructure only allows this header to be sent on the "admin port" (see proxy config for reference)
+        const servedFromAdminPort = expressReq.headers[GITPOD_ADMIN_PORT_MARKER_HEADER] === "true";
+
         gitpodServer.initialize(
             client,
             user,
@@ -255,6 +260,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
             clientContext.clientMetadata,
             connectionCtx,
             clientHeaderFields,
+            servedFromAdminPort,
         );
         client.onDidCloseConnection(() => {
             try {

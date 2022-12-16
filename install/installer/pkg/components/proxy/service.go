@@ -66,6 +66,11 @@ func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ServicePort:   ContainerHTTPSPort,
 		},
 		{
+			Name:          ContainerAdminName,
+			ContainerPort: ContainerAdminPort,
+			ServicePort:   ContainerAdminPort,
+		},
+		{
 			Name:          baseserver.BuiltinMetricsPortName,
 			ContainerPort: baseserver.BuiltinMetricsPort,
 			ServicePort:   baseserver.BuiltinMetricsPort,

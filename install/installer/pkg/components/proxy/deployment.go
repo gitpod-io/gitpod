@@ -224,6 +224,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								ContainerPort: ContainerHTTPSPort,
 								Name:          "https",
 							}, {
+								ContainerPort: ContainerAdminPort,
+								Name:          "admin-port",
+							}, {
 								ContainerPort: ContainerSSHPort,
 								Name:          ContainerSSHName,
 								Protocol:      *common.TCPProtocol,

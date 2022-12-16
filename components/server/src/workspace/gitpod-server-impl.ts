@@ -261,6 +261,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     protected clientHeaderFields: ClientHeaderFields;
     protected resourceAccessGuard: ResourceAccessGuard;
     protected client: GitpodApiClient | undefined;
+    protected readonly servedFromAdminPort = false;
 
     protected user: User | undefined;
 
@@ -277,6 +278,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         clientMetadata: ClientMetadata,
         connectionCtx: TraceContext | undefined,
         clientHeaderFields: ClientHeaderFields,
+        servedFromAdminPort: boolean | undefined,
     ): void {
         if (client) {
             this.disposables.push(Disposable.create(() => (this.client = undefined)));
@@ -287,6 +289,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         this.clientHeaderFields = clientHeaderFields;
         (this.clientMetadata as any) = clientMetadata;
         this.connectionCtx = connectionCtx;
+        (this.servedFromAdminPort as any) = servedFromAdminPort;
 
         log.debug({ userId: this.user?.id }, `clientRegion: ${clientHeaderFields.clientRegion}`);
         log.debug({ userId: this.user?.id }, "initializeClient");
@@ -804,6 +807,25 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             log.warn({ userId: this.user?.id }, "unauthorised admin access", { authorised: false, method, params });
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
         }
+
+        const requireAdditionalAuthForAdmin = await getExperimentsClientForBackend().getValueAsync(
+            "requireAdditionalAuthForAdmin",
+            false,
+            {
+                user,
+            },
+        );
+        if (requireAdditionalAuthForAdmin) {
+            if (!this.servedFromAdminPort) {
+                log.warn({ userId: this.user?.id }, "unauthorized admin access: not on admin port", {
+                    authorised: false,
+                    method,
+                    params,
+                });
+                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
+            }
+        }
+
         log.info({ userId: this.user?.id }, "admin access", { authorised: true, method, params });
     }
 

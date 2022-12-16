@@ -12,6 +12,8 @@ const (
 	ContainerHTTPName     = common.ProxyContainerHTTPName
 	ContainerHTTPSPort    = common.ProxyContainerHTTPSPort
 	ContainerHTTPSName    = common.ProxyContainerHTTPSName
+	ContainerAdminPort    = common.ProxyContainerAdminPort
+	ContainerAdminName    = common.ProxyContainerAdminName
 	ContainerSSHPort      = 22
 	ContainerSSHName      = "ssh"
 	InitContainerImage    = "library/alpine"

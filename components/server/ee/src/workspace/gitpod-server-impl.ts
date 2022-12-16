@@ -181,8 +181,17 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         clientMetadata: ClientMetadata,
         connectionCtx: TraceContext | undefined,
         clientHeaderFields: ClientHeaderFields,
+        servedFromAdminPort: boolean | undefined,
     ): void {
-        super.initialize(client, user, accessGuard, clientMetadata, connectionCtx, clientHeaderFields);
+        super.initialize(
+            client,
+            user,
+            accessGuard,
+            clientMetadata,
+            connectionCtx,
+            clientHeaderFields,
+            servedFromAdminPort,
+        );
 
         this.listenToCreditAlerts();
         this.listenForPrebuildUpdates().catch((err) => log.error("error registering for prebuild updates", err));

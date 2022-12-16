@@ -32,6 +32,8 @@ const (
 	ProxyContainerHTTPName      = "http"
 	ProxyContainerHTTPSPort     = 443
 	ProxyContainerHTTPSName     = "https"
+	ProxyContainerAdminPort     = 444
+	ProxyContainerAdminName     = "admin-port"
 	RegistryAuthSecret          = "builtin-registry-auth"
 	RegistryTLSCertSecret       = "builtin-registry-certs"
 	RegistryFacadeComponent     = "registry-facade"
