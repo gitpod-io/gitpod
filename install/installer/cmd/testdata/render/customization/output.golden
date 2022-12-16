@@ -8346,6 +8346,10 @@ spec:
     port: 443
     protocol: TCP
     targetPort: 443
+  - name: admin-port
+    port: 444
+    protocol: TCP
+    targetPort: 444
   - name: metrics
     port: 9500
     protocol: TCP
@@ -11052,6 +11056,8 @@ spec:
           name: http
         - containerPort: 443
           name: https
+        - containerPort: 444
+          name: admin-port
         - containerPort: 22
           name: ssh
           protocol: TCP
