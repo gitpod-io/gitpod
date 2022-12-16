@@ -293,11 +293,8 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                 <span>
                                     {currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard workspace
                                     usage, excluding VAT.{" "}
-                                    <a
-                                        className="gp-link"
-                                        href="https://www.gitpod.io/docs/configure/billing/usage-based-billing"
-                                    >
-                                        Learn more about credits
+                                    <a className="gp-link" href="https://www.gitpod.io/pricing#cost-estimator">
+                                        Estimate costs
                                     </a>
                                 </span>
                             </div>
@@ -319,11 +316,8 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                 <span className="font-bold text-gray-500 dark:text-gray-400">{usageLimit} credits</span>
                                 <span>
                                     {usageLimit / 10} hours of Standard workspace usage.{" "}
-                                    <a
-                                        className="gp-link"
-                                        href="https://www.gitpod.io/docs/configure/billing/usage-based-billing"
-                                    >
-                                        Learn more about credits
+                                    <a className="gp-link" href="https://www.gitpod.io/pricing#cost-estimator">
+                                        Estimate costs
                                     </a>
                                 </span>
                             </div>
