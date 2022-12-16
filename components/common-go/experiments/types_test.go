@@ -5,11 +5,13 @@
 package experiments
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewClient_WithoutEnvSet(t *testing.T) {
+	t.Setenv("GITPOD_HOST", "")
 	client := NewClient()
 	require.IsType(t, &alwaysReturningDefaultValueClient{}, client)
 }
