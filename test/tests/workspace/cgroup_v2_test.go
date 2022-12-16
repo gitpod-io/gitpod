@@ -19,12 +19,14 @@ import (
 
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
+	"github.com/gitpod-io/gitpod/test/pkg/report"
 )
 
 func TestCgroupV2(t *testing.T) {
 	f := features.New("cgroup v2").
 		WithLabel("component", "workspace").
 		Assess("it should create a new cgroup when cgroup v2 is enabled", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			report.SetupReport(t, report.FeatureResourceLimit, "this is the test for cgroup v2")
 			t.Parallel()
 
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)

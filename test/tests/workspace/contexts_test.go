@@ -6,6 +6,7 @@ package workspace
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -14,6 +15,7 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
+	"github.com/gitpod-io/gitpod/test/pkg/report"
 )
 
 type ContextTest struct {
@@ -144,6 +146,7 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 			for _, ff := range ffs {
 				for _, test := range tests {
 					t.Run(test.ContextURL+"_"+ff.Name, func(t *testing.T) {
+						report.SetupReport(t, report.FeatureContentInit, fmt.Sprintf("Test to open %v", test.ContextURL))
 						if test.Skip {
 							t.SkipNow()
 						}

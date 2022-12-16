@@ -15,6 +15,7 @@ import (
 
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
+	"github.com/gitpod-io/gitpod/test/pkg/report"
 )
 
 func TestWorkspaceInstrumentation(t *testing.T) {
@@ -38,6 +39,8 @@ func TestWorkspaceInstrumentation(t *testing.T) {
 		Assess("it can instrument a workspace", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			for _, test := range tests {
 				t.Run(test.ContextURL, func(t *testing.T) {
+					report.SetupReport(t, report.FeatureExample, "this is the example test for instrumenting a workspace")
+
 					t.Parallel()
 
 					ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*len(tests))*time.Minute)
