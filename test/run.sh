@@ -4,18 +4,40 @@
 #
 # Usage:
 #
-#   run.sh [suite]
+#   run.sh --suite [suite] --report [report_file]
 #
 # Examples
 #
-#   run.sh          This will run all test suites
-#   run.sh ide      This will run just the 'ide' test suite
+#   run.sh                        This will run all test suites
+#   run.sh -s ide                 This will run just the 'ide' test suite
+#   run.sh -s ide -r report.csv   This will run just the 'ide' test suite with the report for the quality assurance
 #
 
 set -euo pipefail
 
+REPORT=""
+TEST_SUITE=all
+opt=""
+optarg=""
+while getopts rs-: opt; do
+  optarg="${!OPTIND}"
+  [[ "$opt" = - ]] && opt="-$OPTARG"
+
+  case "-$opt" in
+    -r|--report)
+      REPORT=${optarg}
+      shift
+      ;;
+    -s|--suit)
+      TEST_SUITE=${optarg}
+      shift
+      ;;
+    *) ;;
+  esac
+done
+shift $((OPTIND - 1))
+
 THIS_DIR="$(dirname "$0")"
-TEST_SUITE=${1:-'all'}
 FAILURE_COUNT=0
 LOGS_DIR=$(mktemp -d)
 
@@ -24,7 +46,8 @@ JETBRAINS_TESTS="$THIS_DIR/tests/ide/jetbrains"
 VSCODE_TESTS="$THIS_DIR/tests/ide/vscode"
 SSH_TESTS="$THIS_DIR/tests/ide/ssh"
 IDE_TEST_LIST="$SSH_TESTS $VSCODE_TESTS $JETBRAINS_TESTS"
-WORKSPACE_TEST_LIST="$THIS_DIR/tests/components/ws-manager $THIS_DIR/tests/components/image-builder $THIS_DIR/tests/components/content-service $THIS_DIR/tests/components/ws-daemon $THIS_DIR/tests/workspace"
+# WORKSPACE_TEST_LIST="$THIS_DIR/tests/components/ws-manager $THIS_DIR/tests/components/image-builder $THIS_DIR/tests/components/content-service $THIS_DIR/tests/components/ws-daemon $THIS_DIR/tests/workspace"
+WORKSPACE_TEST_LIST="$THIS_DIR/tests/workspace"
 
 case $TEST_SUITE in
   "webapp")
@@ -54,6 +77,9 @@ case $TEST_SUITE in
 esac
 
 args=()
+if [ "${REPORT}" != "" ]; then
+  args+=( "--json" )
+fi
 args+=( "-kubeconfig=${KUBECONFIG:-/home/gitpod/.kube/config}" )
 args+=( "-namespace=${NAMESPACE:-default}" )
 args+=( "-timeout=60m" )
@@ -98,7 +124,7 @@ if [ "$TEST_SUITE" == "workspace" ]; then
   echo "running integration for ${TEST_NAME} - log file at ${LOG_FILE}" | werft log slice "test-${TEST_NAME}-serial-only"
   set +e
   # shellcheck disable=SC2086
-  go test -v $TEST_LIST "${args[@]}" -run '.*SerialOnly$' -p 1 2>&1 | tee "${LOG_FILE}" | werft log slice "test-${TEST_NAME}-serial-only"
+  go test -v $TEST_LIST "${args[@]}" -run '.*SerialOnly$' -p 1 2>&1 | tee -a "${LOG_FILE}" | werft log slice "test-${TEST_NAME}-serial-only"
   RC=${PIPESTATUS[0]}
   set -e
 
@@ -110,6 +136,9 @@ if [ "$TEST_SUITE" == "workspace" ]; then
   fi
 
   cd -
+  if [ "${REPORT}" != "" ]; then
+     ./report.sh "${LOG_FILE}" > "$REPORT"
+  fi
 else
   for TEST_PATH in ${TEST_LIST}
   do
