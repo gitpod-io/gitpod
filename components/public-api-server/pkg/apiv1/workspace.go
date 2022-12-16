@@ -51,7 +51,7 @@ func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Reques
 		return nil, proxy.ConvertError(err)
 	}
 
-	instance, err := convertWorkspaceInstance(workspace)
+	instance, err := convertWorkspaceInstance(workspace.LatestInstance, workspace.Workspace.Shareable)
 	if err != nil {
 		logger.WithError(err).Error("Failed to convert workspace instance.")
 		instance = &v1.WorkspaceInstance{}
@@ -75,6 +75,52 @@ func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Reques
 			},
 		},
 	}), nil
+}
+
+func (s *WorkspaceService) StreamWorkspaceStatus(ctx context.Context, req *connect.Request[v1.StreamWorkspaceStatusRequest], stream *connect.ServerStream[v1.StreamWorkspaceStatusResponse]) error {
+	workspaceID, err := validateWorkspaceID(req.Msg.GetWorkspaceId())
+	if err != nil {
+		return err
+	}
+
+	logger := ctxlogrus.Extract(ctx).WithField("workspace_id", workspaceID)
+
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return err
+	}
+
+	workspace, err := conn.GetWorkspace(ctx, workspaceID)
+	if err != nil {
+		logger.WithError(err).Error("Failed to get workspace.")
+		return proxy.ConvertError(err)
+	}
+
+	if workspace.LatestInstance == nil {
+		logger.WithError(err).Error("Failed to get latest instance.")
+		return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("instance not found"))
+	}
+
+	ch, err := conn.InstanceUpdates(ctx, workspace.LatestInstance.ID)
+	if err != nil {
+		logger.WithError(err).Error("Failed to get workspace instance updates.")
+		return proxy.ConvertError(err)
+	}
+
+	for update := range ch {
+		instance, err := convertWorkspaceInstance(update, workspace.Workspace.Shareable)
+		if err != nil {
+			logger.WithError(err).Error("Failed to convert workspace instance.")
+			return proxy.ConvertError(err)
+		}
+		_ = stream.Send(&v1.StreamWorkspaceStatusResponse{
+			Result: &v1.WorkspaceStatus{
+				Instance: instance,
+			},
+		})
+	}
+
+	return nil
 }
 
 func (s *WorkspaceService) GetOwnerToken(ctx context.Context, req *connect.Request[v1.GetOwnerTokenRequest]) (*connect.Response[v1.GetOwnerTokenResponse], error) {
@@ -230,7 +276,7 @@ func getLimitFromPagination(pagination *v1.Pagination) (int, error) {
 
 // convertWorkspaceInfo convers a "protocol workspace" to a "public API workspace". Returns gRPC errors if things go wrong.
 func convertWorkspaceInfo(input *protocol.WorkspaceInfo) (*v1.Workspace, error) {
-	instance, err := convertWorkspaceInstance(input)
+	instance, err := convertWorkspaceInstance(input.LatestInstance, input.Workspace.Shareable)
 	if err != nil {
 		return nil, err
 	}
@@ -252,8 +298,7 @@ func convertWorkspaceInfo(input *protocol.WorkspaceInfo) (*v1.Workspace, error) 
 	}, nil
 }
 
-func convertWorkspaceInstance(input *protocol.WorkspaceInfo) (*v1.WorkspaceInstance, error) {
-	wsi := input.LatestInstance
+func convertWorkspaceInstance(wsi *protocol.WorkspaceInstance, shareable bool) (*v1.WorkspaceInstance, error) {
 	if wsi == nil {
 		return nil, nil
 	}
@@ -292,7 +337,7 @@ func convertWorkspaceInstance(input *protocol.WorkspaceInfo) (*v1.WorkspaceInsta
 	}
 
 	var admissionLevel v1.AdmissionLevel
-	if input.Workspace.Shareable {
+	if shareable {
 		admissionLevel = v1.AdmissionLevel_ADMISSION_LEVEL_EVERYONE
 	} else {
 		admissionLevel = v1.AdmissionLevel_ADMISSION_LEVEL_OWNER_ONLY

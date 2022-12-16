@@ -30,6 +30,8 @@ type WorkspacesServiceClient interface {
 	ListWorkspaces(ctx context.Context, in *ListWorkspacesRequest, opts ...grpc.CallOption) (*ListWorkspacesResponse, error)
 	// GetWorkspace returns a single workspace.
 	GetWorkspace(ctx context.Context, in *GetWorkspaceRequest, opts ...grpc.CallOption) (*GetWorkspaceResponse, error)
+	// StreamWorkspaceStatus returns workspace status once it changed.
+	StreamWorkspaceStatus(ctx context.Context, in *StreamWorkspaceStatusRequest, opts ...grpc.CallOption) (WorkspacesService_StreamWorkspaceStatusClient, error)
 	// GetOwnerToken returns an owner token.
 	GetOwnerToken(ctx context.Context, in *GetOwnerTokenRequest, opts ...grpc.CallOption) (*GetOwnerTokenResponse, error)
 	// CreateAndStartWorkspace creates a new workspace and starts it.
@@ -71,6 +73,38 @@ func (c *workspacesServiceClient) GetWorkspace(ctx context.Context, in *GetWorks
 		return nil, err
 	}
 	return out, nil
+}
+
+func (c *workspacesServiceClient) StreamWorkspaceStatus(ctx context.Context, in *StreamWorkspaceStatusRequest, opts ...grpc.CallOption) (WorkspacesService_StreamWorkspaceStatusClient, error) {
+	stream, err := c.cc.NewStream(ctx, &WorkspacesService_ServiceDesc.Streams[0], "/gitpod.experimental.v1.WorkspacesService/StreamWorkspaceStatus", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &workspacesServiceStreamWorkspaceStatusClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type WorkspacesService_StreamWorkspaceStatusClient interface {
+	Recv() (*StreamWorkspaceStatusResponse, error)
+	grpc.ClientStream
+}
+
+type workspacesServiceStreamWorkspaceStatusClient struct {
+	grpc.ClientStream
+}
+
+func (x *workspacesServiceStreamWorkspaceStatusClient) Recv() (*StreamWorkspaceStatusResponse, error) {
+	m := new(StreamWorkspaceStatusResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func (c *workspacesServiceClient) GetOwnerToken(ctx context.Context, in *GetOwnerTokenRequest, opts ...grpc.CallOption) (*GetOwnerTokenResponse, error) {
@@ -126,6 +160,8 @@ type WorkspacesServiceServer interface {
 	ListWorkspaces(context.Context, *ListWorkspacesRequest) (*ListWorkspacesResponse, error)
 	// GetWorkspace returns a single workspace.
 	GetWorkspace(context.Context, *GetWorkspaceRequest) (*GetWorkspaceResponse, error)
+	// StreamWorkspaceStatus returns workspace status once it changed.
+	StreamWorkspaceStatus(*StreamWorkspaceStatusRequest, WorkspacesService_StreamWorkspaceStatusServer) error
 	// GetOwnerToken returns an owner token.
 	GetOwnerToken(context.Context, *GetOwnerTokenRequest) (*GetOwnerTokenResponse, error)
 	// CreateAndStartWorkspace creates a new workspace and starts it.
@@ -153,6 +189,9 @@ func (UnimplementedWorkspacesServiceServer) ListWorkspaces(context.Context, *Lis
 }
 func (UnimplementedWorkspacesServiceServer) GetWorkspace(context.Context, *GetWorkspaceRequest) (*GetWorkspaceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetWorkspace not implemented")
+}
+func (UnimplementedWorkspacesServiceServer) StreamWorkspaceStatus(*StreamWorkspaceStatusRequest, WorkspacesService_StreamWorkspaceStatusServer) error {
+	return status.Errorf(codes.Unimplemented, "method StreamWorkspaceStatus not implemented")
 }
 func (UnimplementedWorkspacesServiceServer) GetOwnerToken(context.Context, *GetOwnerTokenRequest) (*GetOwnerTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOwnerToken not implemented")
@@ -216,6 +255,27 @@ func _WorkspacesService_GetWorkspace_Handler(srv interface{}, ctx context.Contex
 		return srv.(WorkspacesServiceServer).GetWorkspace(ctx, req.(*GetWorkspaceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkspacesService_StreamWorkspaceStatus_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(StreamWorkspaceStatusRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(WorkspacesServiceServer).StreamWorkspaceStatus(m, &workspacesServiceStreamWorkspaceStatusServer{stream})
+}
+
+type WorkspacesService_StreamWorkspaceStatusServer interface {
+	Send(*StreamWorkspaceStatusResponse) error
+	grpc.ServerStream
+}
+
+type workspacesServiceStreamWorkspaceStatusServer struct {
+	grpc.ServerStream
+}
+
+func (x *workspacesServiceStreamWorkspaceStatusServer) Send(m *StreamWorkspaceStatusResponse) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 func _WorkspacesService_GetOwnerToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -344,6 +404,12 @@ var WorkspacesService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _WorkspacesService_UpdatePort_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "StreamWorkspaceStatus",
+			Handler:       _WorkspacesService_StreamWorkspaceStatus_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "gitpod/experimental/v1/workspaces.proto",
 }

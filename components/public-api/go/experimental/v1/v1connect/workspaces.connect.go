@@ -35,6 +35,8 @@ type WorkspacesServiceClient interface {
 	ListWorkspaces(context.Context, *connect_go.Request[v1.ListWorkspacesRequest]) (*connect_go.Response[v1.ListWorkspacesResponse], error)
 	// GetWorkspace returns a single workspace.
 	GetWorkspace(context.Context, *connect_go.Request[v1.GetWorkspaceRequest]) (*connect_go.Response[v1.GetWorkspaceResponse], error)
+	// StreamWorkspaceStatus returns workspace status once it changed.
+	StreamWorkspaceStatus(context.Context, *connect_go.Request[v1.StreamWorkspaceStatusRequest]) (*connect_go.ServerStreamForClient[v1.StreamWorkspaceStatusResponse], error)
 	// GetOwnerToken returns an owner token.
 	GetOwnerToken(context.Context, *connect_go.Request[v1.GetOwnerTokenRequest]) (*connect_go.Response[v1.GetOwnerTokenResponse], error)
 	// CreateAndStartWorkspace creates a new workspace and starts it.
@@ -72,6 +74,11 @@ func NewWorkspacesServiceClient(httpClient connect_go.HTTPClient, baseURL string
 			baseURL+"/gitpod.experimental.v1.WorkspacesService/GetWorkspace",
 			opts...,
 		),
+		streamWorkspaceStatus: connect_go.NewClient[v1.StreamWorkspaceStatusRequest, v1.StreamWorkspaceStatusResponse](
+			httpClient,
+			baseURL+"/gitpod.experimental.v1.WorkspacesService/StreamWorkspaceStatus",
+			opts...,
+		),
 		getOwnerToken: connect_go.NewClient[v1.GetOwnerTokenRequest, v1.GetOwnerTokenResponse](
 			httpClient,
 			baseURL+"/gitpod.experimental.v1.WorkspacesService/GetOwnerToken",
@@ -104,6 +111,7 @@ func NewWorkspacesServiceClient(httpClient connect_go.HTTPClient, baseURL string
 type workspacesServiceClient struct {
 	listWorkspaces          *connect_go.Client[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse]
 	getWorkspace            *connect_go.Client[v1.GetWorkspaceRequest, v1.GetWorkspaceResponse]
+	streamWorkspaceStatus   *connect_go.Client[v1.StreamWorkspaceStatusRequest, v1.StreamWorkspaceStatusResponse]
 	getOwnerToken           *connect_go.Client[v1.GetOwnerTokenRequest, v1.GetOwnerTokenResponse]
 	createAndStartWorkspace *connect_go.Client[v1.CreateAndStartWorkspaceRequest, v1.CreateAndStartWorkspaceResponse]
 	stopWorkspace           *connect_go.Client[v1.StopWorkspaceRequest, v1.StopWorkspaceResponse]
@@ -119,6 +127,11 @@ func (c *workspacesServiceClient) ListWorkspaces(ctx context.Context, req *conne
 // GetWorkspace calls gitpod.experimental.v1.WorkspacesService.GetWorkspace.
 func (c *workspacesServiceClient) GetWorkspace(ctx context.Context, req *connect_go.Request[v1.GetWorkspaceRequest]) (*connect_go.Response[v1.GetWorkspaceResponse], error) {
 	return c.getWorkspace.CallUnary(ctx, req)
+}
+
+// StreamWorkspaceStatus calls gitpod.experimental.v1.WorkspacesService.StreamWorkspaceStatus.
+func (c *workspacesServiceClient) StreamWorkspaceStatus(ctx context.Context, req *connect_go.Request[v1.StreamWorkspaceStatusRequest]) (*connect_go.ServerStreamForClient[v1.StreamWorkspaceStatusResponse], error) {
+	return c.streamWorkspaceStatus.CallServerStream(ctx, req)
 }
 
 // GetOwnerToken calls gitpod.experimental.v1.WorkspacesService.GetOwnerToken.
@@ -153,6 +166,8 @@ type WorkspacesServiceHandler interface {
 	ListWorkspaces(context.Context, *connect_go.Request[v1.ListWorkspacesRequest]) (*connect_go.Response[v1.ListWorkspacesResponse], error)
 	// GetWorkspace returns a single workspace.
 	GetWorkspace(context.Context, *connect_go.Request[v1.GetWorkspaceRequest]) (*connect_go.Response[v1.GetWorkspaceResponse], error)
+	// StreamWorkspaceStatus returns workspace status once it changed.
+	StreamWorkspaceStatus(context.Context, *connect_go.Request[v1.StreamWorkspaceStatusRequest], *connect_go.ServerStream[v1.StreamWorkspaceStatusResponse]) error
 	// GetOwnerToken returns an owner token.
 	GetOwnerToken(context.Context, *connect_go.Request[v1.GetOwnerTokenRequest]) (*connect_go.Response[v1.GetOwnerTokenResponse], error)
 	// CreateAndStartWorkspace creates a new workspace and starts it.
@@ -185,6 +200,11 @@ func NewWorkspacesServiceHandler(svc WorkspacesServiceHandler, opts ...connect_g
 	mux.Handle("/gitpod.experimental.v1.WorkspacesService/GetWorkspace", connect_go.NewUnaryHandler(
 		"/gitpod.experimental.v1.WorkspacesService/GetWorkspace",
 		svc.GetWorkspace,
+		opts...,
+	))
+	mux.Handle("/gitpod.experimental.v1.WorkspacesService/StreamWorkspaceStatus", connect_go.NewServerStreamHandler(
+		"/gitpod.experimental.v1.WorkspacesService/StreamWorkspaceStatus",
+		svc.StreamWorkspaceStatus,
 		opts...,
 	))
 	mux.Handle("/gitpod.experimental.v1.WorkspacesService/GetOwnerToken", connect_go.NewUnaryHandler(
@@ -224,6 +244,10 @@ func (UnimplementedWorkspacesServiceHandler) ListWorkspaces(context.Context, *co
 
 func (UnimplementedWorkspacesServiceHandler) GetWorkspace(context.Context, *connect_go.Request[v1.GetWorkspaceRequest]) (*connect_go.Response[v1.GetWorkspaceResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.WorkspacesService.GetWorkspace is not implemented"))
+}
+
+func (UnimplementedWorkspacesServiceHandler) StreamWorkspaceStatus(context.Context, *connect_go.Request[v1.StreamWorkspaceStatusRequest], *connect_go.ServerStream[v1.StreamWorkspaceStatusResponse]) error {
+	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.WorkspacesService.StreamWorkspaceStatus is not implemented"))
 }
 
 func (UnimplementedWorkspacesServiceHandler) GetOwnerToken(context.Context, *connect_go.Request[v1.GetOwnerTokenRequest]) (*connect_go.Response[v1.GetOwnerTokenResponse], error) {

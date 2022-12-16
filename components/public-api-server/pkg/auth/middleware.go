@@ -11,25 +11,50 @@ import (
 	"github.com/bufbuild/connect-go"
 )
 
-// NewServerInterceptor creates a server-side interceptor which validates that an incoming request contains a Bearer Authorization header
-func NewServerInterceptor() connect.UnaryInterceptorFunc {
-	interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
-		return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+type AuthInterceptor struct {
+	accessToken string
+}
 
-			if req.Spec().IsClient {
-				return next(ctx, req)
-			}
+func (a *AuthInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
+	return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+		if req.Spec().IsClient {
+			ctx = TokenToContext(ctx, NewAccessToken(a.accessToken))
 
-			token, err := tokenFromRequest(ctx, req)
-			if err != nil {
-				return nil, err
-			}
+			req.Header().Add(authorizationHeaderKey, bearerPrefix+a.accessToken)
+			return next(ctx, req)
+		}
 
-			return next(TokenToContext(ctx, token), req)
-		})
+		token, err := tokenFromRequest(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+
+		return next(TokenToContext(ctx, token), req)
+	})
+}
+
+func (a *AuthInterceptor) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
+	return func(ctx context.Context, s connect.Spec) connect.StreamingClientConn {
+		ctx = TokenToContext(ctx, NewAccessToken(a.accessToken))
+		conn := next(ctx, s)
+		conn.RequestHeader().Add(authorizationHeaderKey, bearerPrefix+a.accessToken)
+		return conn
 	}
+}
 
-	return connect.UnaryInterceptorFunc(interceptor)
+func (a *AuthInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
+	return func(ctx context.Context, conn connect.StreamingHandlerConn) error {
+		token, err := tokenFromConn(ctx, conn)
+		if err != nil {
+			return err
+		}
+		return next(TokenToContext(ctx, token), conn)
+	}
+}
+
+// NewServerInterceptor creates a server-side interceptor which validates that an incoming request contains a Bearer Authorization header
+func NewServerInterceptor() connect.Interceptor {
+	return &AuthInterceptor{}
 }
 
 func tokenFromRequest(ctx context.Context, req connect.AnyRequest) (Token, error) {
@@ -48,21 +73,25 @@ func tokenFromRequest(ctx context.Context, req connect.AnyRequest) (Token, error
 	return Token{}, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No access token or cookie credentials available on request."))
 }
 
-// NewClientInterceptor creates a client-side interceptor which injects token as a Bearer Authorization header
-func NewClientInterceptor(accessToken string) connect.UnaryInterceptorFunc {
-	interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
-		return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+func tokenFromConn(ctx context.Context, conn connect.StreamingHandlerConn) (Token, error) {
+	headers := conn.RequestHeader()
 
-			if !req.Spec().IsClient {
-				return next(ctx, req)
-			}
-
-			ctx = TokenToContext(ctx, NewAccessToken(accessToken))
-
-			req.Header().Add(authorizationHeaderKey, bearerPrefix+accessToken)
-			return next(ctx, req)
-		})
+	bearerToken, err := BearerTokenFromHeaders(headers)
+	if err == nil {
+		return NewAccessToken(bearerToken), nil
 	}
 
-	return connect.UnaryInterceptorFunc(interceptor)
+	cookie := conn.RequestHeader().Get("Cookie")
+	if cookie != "" {
+		return NewCookieToken(cookie), nil
+	}
+
+	return Token{}, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No access token or cookie credentials available on request."))
+}
+
+// NewClientInterceptor creates a client-side interceptor which injects token as a Bearer Authorization header
+func NewClientInterceptor(accessToken string) connect.Interceptor {
+	return &AuthInterceptor{
+		accessToken: accessToken,
+	}
 }
