@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, { createContext, useCallback, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 export const ThemeContext = createContext<{
     isDark?: boolean;
@@ -63,4 +63,8 @@ export const ThemeContextProvider: React.FC = ({ children }) => {
     }, [actuallySetIsDark]);
 
     return <ThemeContext.Provider value={{ isDark, setIsDark: actuallySetIsDark }}>{children}</ThemeContext.Provider>;
+};
+
+export const useTheme = () => {
+    return useContext(ThemeContext);
 };
