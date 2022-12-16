@@ -19,7 +19,7 @@ import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import EventEmitter from "events";
 import * as queryString from "query-string";
-import React, { Suspense, useEffect, useState } from "react";
+import React, { FunctionComponent, Suspense, useEffect, useState } from "react";
 import { v4 } from "uuid";
 import Arrow from "../components/Arrow";
 import ContextMenu from "../components/ContextMenu";
@@ -29,10 +29,13 @@ import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
 import Alert from "../components/Alert";
+import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 
 const sessionId = v4();
 
 const WorkspaceLogs = React.lazy(() => import("../components/WorkspaceLogs"));
+
+const GitpodSnowfall = React.lazy(() => import("../components/GitpodSnowfall"));
 
 export interface StartWorkspaceProps {
     workspaceId: string;
@@ -98,7 +101,7 @@ export interface StartWorkspaceState {
     ownerToken?: string;
 }
 
-export default class StartWorkspace extends React.Component<StartWorkspaceProps, StartWorkspaceState> {
+class StartWorkspace extends React.Component<StartWorkspaceProps, StartWorkspaceState> {
     constructor(props: StartWorkspaceProps) {
         super(props);
         this.state = {};
@@ -742,3 +745,16 @@ function ImageBuildView(props: ImageBuildViewProps) {
         </StartPage>
     );
 }
+
+const StartWorkspaceWrapped: FunctionComponent<StartWorkspaceProps> = (props) => {
+    const { showSnowfall } = useFeatureFlags();
+
+    return (
+        <>
+            {showSnowfall && <GitpodSnowfall />}
+            <StartWorkspace {...props} />
+        </>
+    );
+};
+
+export default StartWorkspaceWrapped;

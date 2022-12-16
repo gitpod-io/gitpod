@@ -22,6 +22,7 @@ const FeatureFlagContext = createContext<{
     usePublicApiTeamsService: boolean;
     usePublicApiProjectsService: boolean;
     enablePersonalAccessTokens: boolean;
+    showSnowfall: boolean;
 }>({
     showUsageView: false,
     isUsageBasedBillingEnabled: false,
@@ -29,6 +30,7 @@ const FeatureFlagContext = createContext<{
     usePublicApiTeamsService: false,
     usePublicApiProjectsService: false,
     enablePersonalAccessTokens: false,
+    showSnowfall: false,
 });
 
 const FeatureFlagContextProvider: React.FC = ({ children }) => {
@@ -43,6 +45,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const [usePublicApiTeamsService, setUsePublicApiTeamsService] = useState<boolean>(false);
     const [usePublicApiProjectsService, setUsePublicApiProjectsService] = useState<boolean>(false);
     const [enablePersonalAccessTokens, setPersonalAccessTokensEnabled] = useState<boolean>(false);
+    const [showSnowfall, setShowSnowfall] = useState<boolean>(false);
 
     useEffect(() => {
         if (!user) return;
@@ -54,6 +57,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 publicApiExperimentalTeamsService: { defaultValue: false, setter: setUsePublicApiTeamsService },
                 publicApiExperimentalProjectsService: { defaultValue: false, setter: setUsePublicApiProjectsService },
                 personalAccessTokensEnabled: { defaultValue: false, setter: setPersonalAccessTokensEnabled },
+                showSnowfall: { defaultValue: false, setter: setShowSnowfall },
             };
 
             for (const [flagName, config] of Object.entries(featureFlags)) {
@@ -99,6 +103,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 usePublicApiTeamsService,
                 enablePersonalAccessTokens,
                 usePublicApiProjectsService,
+                showSnowfall,
             }}
         >
             {children}
