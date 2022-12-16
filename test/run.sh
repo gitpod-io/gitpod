@@ -46,8 +46,7 @@ JETBRAINS_TESTS="$THIS_DIR/tests/ide/jetbrains"
 VSCODE_TESTS="$THIS_DIR/tests/ide/vscode"
 SSH_TESTS="$THIS_DIR/tests/ide/ssh"
 IDE_TEST_LIST="$SSH_TESTS $VSCODE_TESTS $JETBRAINS_TESTS"
-# WORKSPACE_TEST_LIST="$THIS_DIR/tests/components/ws-manager $THIS_DIR/tests/components/image-builder $THIS_DIR/tests/components/content-service $THIS_DIR/tests/components/ws-daemon $THIS_DIR/tests/workspace"
-WORKSPACE_TEST_LIST="$THIS_DIR/tests/workspace"
+WORKSPACE_TEST_LIST="$THIS_DIR/tests/components/ws-manager $THIS_DIR/tests/components/image-builder $THIS_DIR/tests/components/content-service $THIS_DIR/tests/components/ws-daemon $THIS_DIR/tests/workspace"
 
 case $TEST_SUITE in
   "webapp")

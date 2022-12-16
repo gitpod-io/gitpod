@@ -198,7 +198,7 @@ werft log slice "running integration test"
 export INTEGRATION_TEST_USERNAME="$USERNAME"
 export INTEGRATION_TEST_USER_TOKEN="$USER_TOKEN"
 set +e
-KUBECONFIG=/home/gitpod/.kube/config GOOGLE_APPLICATION_CREDENTIALS=/home/gitpod/.config/gcloud/legacy_credentials/cd-gitpod-deployer@gitpod-core-dev.iam.gserviceaccount.com/adc.json ./run.sh workspace | tee test-result.log
+KUBECONFIG=/home/gitpod/.kube/config GOOGLE_APPLICATION_CREDENTIALS=/home/gitpod/.config/gcloud/legacy_credentials/cd-gitpod-deployer@gitpod-core-dev.iam.gserviceaccount.com/adc.json ./run.sh -s workspace | tee test-result.log
 RC=${PIPESTATUS[0]}
 set -e
 RUN_COUNT=1
