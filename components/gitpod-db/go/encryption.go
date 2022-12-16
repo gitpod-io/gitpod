@@ -10,8 +10,10 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 )
 
 type Encryptor interface {
@@ -135,4 +137,109 @@ func pad(ciphertext []byte, blockSize int) []byte {
 func trim(encrypt []byte) []byte {
 	padding := encrypt[len(encrypt)-1]
 	return encrypt[:len(encrypt)-int(padding)]
+}
+
+type CipherConfig struct {
+	Name    string `json:"name"`
+	Version int    `json:"version"`
+	Primary bool   `json:"primary"`
+	// Material is the secret key, it is base64 encoded
+	Material string `json:"material"`
+}
+
+func NewCipherSetFromKeysInFile(pathToKeys string) (*CipherSet, error) {
+	b, err := os.ReadFile(pathToKeys)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file: %w", err)
+	}
+
+	var cfg []CipherConfig
+	err = json.Unmarshal(b, &cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarhsal cipher config: %w", err)
+	}
+
+	return NewCipherSet(cfg)
+}
+
+func NewCipherSet(configs []CipherConfig) (*CipherSet, error) {
+	if len(configs) == 0 {
+		return nil, errors.New("no cipher config specified, at least one cipher config required")
+	}
+
+	primaries := findPrimaryConfigs(configs)
+	if len(primaries) == 0 {
+		return nil, errors.New("no primaries cipher config specified, exactly one primaries config is required")
+	}
+	if len(primaries) >= 2 {
+		return nil, errors.New("more than one primaries cipher config specified, exactly one is requires")
+	}
+
+	primary := primaries[0]
+	primaryCipher, err := cipherConfigToAES256CBC(primary)
+	if err != nil {
+		return nil, fmt.Errorf("failed to construct primary cipher: %w", err)
+	}
+
+	var ciphers []*AES256CBC
+	for _, c := range configs {
+		ciph, err := cipherConfigToAES256CBC(c)
+		if err != nil {
+			return nil, fmt.Errorf("failed to construct non-primary cipher for config named %s: %w", c.Name, err)
+		}
+
+		ciphers = append(ciphers, ciph)
+	}
+
+	return &CipherSet{
+		ciphers: ciphers,
+		primary: primaryCipher,
+	}, nil
+}
+
+type CipherSet struct {
+	ciphers []*AES256CBC
+	primary *AES256CBC
+}
+
+func (cs *CipherSet) Encrypt(data []byte) (EncryptedData, error) {
+	// We only encrypt using the primary cipher
+	return cs.primary.Encrypt(data)
+}
+
+func (cs *CipherSet) Decrypt(data EncryptedData) ([]byte, error) {
+	// We attempt to decrypt using all ciphers. based on matching metadata. This ensures that ciphers can be rotated over time.
+	metadata := data.Metadata
+	for _, c := range cs.ciphers {
+		if c.metadata == metadata {
+			return c.Decrypt(data)
+		}
+	}
+
+	return nil, fmt.Errorf("no cipher matching metadata (%s, %d) configured", metadata.Name, metadata.Version)
+}
+
+func findPrimaryConfigs(cfgs []CipherConfig) []CipherConfig {
+	var primary []CipherConfig
+	for _, c := range cfgs {
+		if c.Primary {
+			primary = append(primary, c)
+		}
+	}
+	return primary
+}
+
+func cipherConfigToAES256CBC(cfg CipherConfig) (*AES256CBC, error) {
+	keyDecoded, err := base64.StdEncoding.DecodeString(cfg.Material)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode ciph config material from base64: %w", err)
+	}
+	ciph, err := NewAES256CBCCipher(string(keyDecoded), CipherMetadata{
+		Name:    cfg.Name,
+		Version: cfg.Version,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to construct AES 256 CBC ciph: %w", err)
+	}
+	return ciph, nil
 }
