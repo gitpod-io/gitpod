@@ -60,6 +60,8 @@ import {
     EnvVarWithValue,
     BillingTier,
     Project,
+    GitpodServer,
+    IDESettings,
 } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -127,9 +129,8 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 
-export interface StartWorkspaceOptions {
+export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     rethrow?: boolean;
-    forceDefaultImage?: boolean;
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
 }
 
@@ -139,21 +140,31 @@ const INSTANCE_START_RETRY_INTERVAL_SECONDS = 2;
 export async function getWorkspaceClassForInstance(
     ctx: TraceContext,
     workspace: Workspace,
+    previousInstance: WorkspaceInstance | undefined,
     user: User,
     project: Project | undefined,
+    workspaceClassOverride: string | undefined,
     entitlementService: EntitlementService,
     config: WorkspaceClassesConfig,
 ): Promise<string> {
     const span = TraceContext.startSpan("getWorkspaceClassForInstance", ctx);
     try {
         let workspaceClass: string | undefined;
-        switch (workspace.type) {
-            case "prebuild":
-                workspaceClass = project?.settings?.workspaceClasses?.prebuild;
-                break;
-            case "regular":
-                workspaceClass = project?.settings?.workspaceClasses?.regular;
-                break;
+        if (workspaceClassOverride) {
+            workspaceClass = workspaceClassOverride;
+        }
+        if (!workspaceClass && previousInstance) {
+            workspaceClass = previousInstance.workspaceClass;
+        }
+        if (!workspaceClass) {
+            switch (workspace.type) {
+                case "prebuild":
+                    workspaceClass = project?.settings?.workspaceClasses?.prebuild;
+                    break;
+                case "regular":
+                    workspaceClass = project?.settings?.workspaceClasses?.regular;
+                    break;
+            }
         }
         if (!workspaceClass && (await entitlementService.userGetsMoreResources(user))) {
             workspaceClass = config.find((c) => !!c.marker?.moreResources)?.id;
@@ -269,7 +280,7 @@ export class WorkspaceStarter {
                 }
             }
 
-            const ideConfig = await this.resolveIDEConfiguration(ctx, workspace, user);
+            const ideConfig = await this.resolveIDEConfiguration(ctx, workspace, user, options.ideSettings);
 
             // create and store instance
             let instance = await this.workspaceDb
@@ -283,6 +294,7 @@ export class WorkspaceStarter {
                         project,
                         options.excludeFeatureFlags || [],
                         ideConfig,
+                        options.workspaceClass,
                     ),
                 );
             span.log({ newInstance: instance.id });
@@ -350,7 +362,12 @@ export class WorkspaceStarter {
         }
     }
 
-    private async resolveIDEConfiguration(ctx: TraceContext, workspace: Workspace, user: User) {
+    private async resolveIDEConfiguration(
+        ctx: TraceContext,
+        workspace: Workspace,
+        user: User,
+        userSelectedIdeSettings?: IDESettings,
+    ) {
         const span = TraceContext.startSpan("resolveIDEConfiguration", ctx);
         try {
             const migrated = this.ideService.migrateSettings(user);
@@ -358,7 +375,7 @@ export class WorkspaceStarter {
                 user.additionalData.ideSettings = migrated;
             }
 
-            const resp = await this.ideService.resolveWorkspaceConfig(workspace, user);
+            const resp = await this.ideService.resolveWorkspaceConfig(workspace, user, userSelectedIdeSettings);
             if (!user.additionalData?.ideSettings && resp.refererIde) {
                 // A user does not have IDE settings configured yet configure it with a referrer ide as default.
                 const additionalData = user?.additionalData || {};
@@ -770,6 +787,7 @@ export class WorkspaceStarter {
         project: Project | undefined,
         excludeFeatureFlags: NamedWorkspaceFeatureFlag[],
         ideConfig: IdeServiceApi.ResolveWorkspaceConfigResponse,
+        workspaceClassOverride?: string,
     ): Promise<WorkspaceInstance> {
         const span = TraceContext.startSpan("newInstance", ctx);
         try {
@@ -814,8 +832,10 @@ export class WorkspaceStarter {
             let workspaceClass = await getWorkspaceClassForInstance(
                 ctx,
                 workspace,
+                previousInstance,
                 user,
                 project,
+                workspaceClassOverride,
                 this.entitlementService,
                 this.config.workspaceClasses,
             );

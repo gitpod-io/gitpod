@@ -26,6 +26,7 @@ import {
     PrebuiltWorkspace,
     UserSSHPublicKeyValue,
     SSHPublicKeyValue,
+    IDESettings,
 } from "./protocol";
 import {
     Team,
@@ -414,16 +415,20 @@ export namespace GitpodServer {
     export interface GetAccountStatementOptions {
         date?: string;
     }
-    export interface CreateWorkspaceOptions {
+    export interface CreateWorkspaceOptions extends StartWorkspaceOptions {
         contextUrl: string;
+
         // whether running workspaces on the same context should be ignored. If false (default) users will be asked.
         ignoreRunningWorkspaceOnSameCommit?: boolean;
         ignoreRunningPrebuild?: boolean;
         allowUsingPreviousPrebuilds?: boolean;
         forceDefaultConfig?: boolean;
     }
+
     export interface StartWorkspaceOptions {
-        forceDefaultImage: boolean;
+        forceDefaultImage?: boolean;
+        workspaceClass?: string;
+        ideSettings?: IDESettings;
     }
     export interface TakeSnapshotOptions {
         workspaceId: string;
