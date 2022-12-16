@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
-	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	"time"
 )
@@ -19,7 +18,7 @@ type OIDCClientConfig struct {
 
 	Issuer string `gorm:"column:issuer;type:char;size:255;" json:"issuer"`
 
-	Data datatypes.JSON `gorm:"column:data;type:text;size:65535" json:"data"`
+	Data EncryptedJSON[OIDCSpec] `gorm:"column:data;type:text;size:65535" json:"data"`
 
 	LastModified time.Time `gorm:"column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
 	// deleted is reserved for use by db-sync.
@@ -28,6 +27,9 @@ type OIDCClientConfig struct {
 
 func (c *OIDCClientConfig) TableName() string {
 	return "d_b_oidc_client_config"
+}
+
+type OIDCSpec struct {
 }
 
 func CreateOIDCCLientConfig(ctx context.Context, conn *gorm.DB, cfg OIDCClientConfig) (OIDCClientConfig, error) {

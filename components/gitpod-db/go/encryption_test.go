@@ -2,25 +2,26 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
-package db
+package db_test
 
 import (
 	"encoding/base64"
 	"fmt"
+	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
+	"github.com/gitpod-io/gitpod/components/gitpod-db/go/dbtest"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
 func TestAES256CBCCipher_Encrypt_Decrypt(t *testing.T) {
-	secret, err := generateInitializationVector(32)
-	require.NoError(t, err)
+	secret := "testtesttesttesttesttesttesttest"
 
-	metadata := CipherMetadata{
+	metadata := db.CipherMetadata{
 		Name:    "general",
 		Version: 1,
 	}
 
-	cipher, err := NewAES256CBCCipher(string(secret), metadata)
+	cipher, err := db.NewAES256CBCCipher(secret, metadata)
 	require.NoError(t, err)
 
 	data := []byte(`{ "foo": "bar", "another": "one" }`)
@@ -45,25 +46,14 @@ func TestAES256CBCCipher_Encrypt_Decrypt(t *testing.T) {
 }
 
 func TestAES256CBCCipher_EncryptedByServer(t *testing.T) {
-	// This is a test key also used in server tests - see components/gitpod-protocol/src/encryption/encryption-engine.spec.ts
-	key, err := base64.StdEncoding.DecodeString("ZMaTPrF7s9gkLbY45zP59O0LTpLvDd/cgqPE9Ptghh8=")
-	require.NoError(t, err)
-
-	metadata := CipherMetadata{
-		Name:    "general",
-		Version: 1,
-	}
-	encrypted := EncryptedData{
-
+	cipher, metadata := dbtest.GetTestCipher(t)
+	encrypted := db.EncryptedData{
 		EncodedData: "YpgOY8ZNV64oG1DXiuCUXKy0thVySbN7uXTQxtC2j2A=",
-		Params: KeyParams{
+		Params: db.KeyParams{
 			InitializationVector: "vpTOAFN5v4kOPsAHBKk+eg==",
 		},
 		Metadata: metadata,
 	}
-
-	cipher, err := NewAES256CBCCipher(string(key), metadata)
-	require.NoError(t, err)
 
 	decrypted, err := cipher.Decrypt(encrypted)
 	fmt.Println(err)
