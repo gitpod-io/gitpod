@@ -176,42 +176,40 @@ function renderIdeOption(
     version: IDEOption["imageVersion"],
     onSelect: () => void,
 ): JSX.Element {
-    const label = option.type === "desktop" ? "" : option.type;
+    const shouldShowOptionType = option.type !== "desktop" || option.title === "VS Code"; // Force show of "Desktop" in the list for VS Code Desktop
     const card = (
         <SelectableCardSolid className="w-36 h-44" title={option.title} selected={selected} onClick={onSelect}>
-            <div className="flex justify-center mt-3">
-                <img className="w-16 filter-grayscale self-center" src={option.logo} alt="logo" />
-            </div>
-            <div
-                className="mt-2 px-3 py-1 self-center"
-                style={{
-                    minHeight: "1.75rem",
-                }}
-            >
-                {label ? (
-                    <span
-                        className={`font-semibold text-sm ${
-                            selected ? "text-gray-100 dark:text-gray-600" : "text-gray-600 dark:text-gray-500"
-                        } uppercase`}
-                    >
-                        {label}
-                    </span>
-                ) : (
-                    <></>
-                )}
-            </div>
-
             {version ? (
-                <div
-                    className={`font-semibold text-xs ${
-                        selected ? "text-gray-100 dark:text-gray-600" : "text-gray-600 dark:text-gray-500"
-                    } uppercase px-3 self-center`}
+                <span
+                    className={`font-normal font-mono text-xs ${
+                        selected
+                            ? "text-gray-100 dark:text-gray-600"
+                            : "text-gray-400 contrast-more:text-gray-600 dark:text-gray-500"
+                    } pl-1 self-start`}
                     title="The IDE's current version on Gitpod"
                 >
                     {version}
-                </div>
+                </span>
             ) : (
-                <></>
+                <span
+                    style={{
+                        minHeight: "1rem",
+                    }}
+                ></span>
+            )}
+            <div className="flex justify-center mt-3 mb-2">
+                <img className="w-16 filter-grayscale self-center" src={option.logo} alt="logo" />
+            </div>
+            {shouldShowOptionType ? (
+                <PillLabel type="warn" className="place-self-start py-0.5 my-2 flex">
+                    <span className="text-xs capitalize">{option.type}</span>
+                </PillLabel>
+            ) : (
+                option.label && (
+                    <PillLabel type="neutral" className="place-self-start py-0.5 my-2 flex">
+                        <span className="text-xs normal-case font-medium">{option.label}</span>
+                    </PillLabel>
+                )
             )}
         </SelectableCardSolid>
     );
