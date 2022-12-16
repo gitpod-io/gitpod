@@ -7,9 +7,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { getGitpodService } from "../service/service";
 
-export const useUser = () => {
+export const useCurrentUser = () => {
     return useQuery({
-        queryKey: ["user"],
+        queryKey: ["users", "current"],
         queryFn: async () => {
             return await getGitpodService().server.getLoggedInUser();
         },

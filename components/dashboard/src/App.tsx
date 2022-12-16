@@ -4,12 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, { Suspense, useContext, useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import Menu from "./Menu";
 import { Redirect, Route, Switch } from "react-router";
 
 import { Login } from "./Login";
-import { UserContext } from "./user-context";
 import { shouldSeeWhatsNew, WhatsNew } from "./whatsnew/WhatsNew";
 import gitpodIcon from "./icons/gitpod.svg";
 import { ContextURL, User } from "@gitpod/gitpod-protocol";
@@ -51,7 +50,7 @@ import { AppNotifications } from "./AppNotifications";
 import PersonalAccessTokenCreateView from "./settings/PersonalAccessTokensCreateView";
 import { useUserAndTeamsLoader } from "./hooks/use-user-and-teams-loader";
 import { useAnalyticsTracking } from "./hooks/use-analytics-tracking";
-import { useUser } from "./queries/user";
+import { useCurrentUser } from "./queries/users";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "./workspaces/Workspaces"));
@@ -131,7 +130,7 @@ function isWebsiteSlug(pathName: string) {
 function AdminRoute({ component }: any) {
     // const { user } = useContext(UserContext);
 
-    const { isLoading, data: user } = useUser();
+    const { isLoading, data: user } = useCurrentUser();
 
     if (isLoading) {
         return null;
