@@ -349,6 +349,120 @@ func TestWorkspaceService_ListWorkspaces(t *testing.T) {
 	}
 }
 
+func TestWorkspaceService_StreamWorkspaceStatus(t *testing.T) {
+	const (
+		workspaceID = "easycz-seer-xl8o1zacpyw"
+		instanceID  = "f2effcfd-3ddb-4187-b584-256e88a42442"
+		ownerToken  = "some-owner-token"
+	)
+
+	t.Run("not found when workspace does not exist", func(t *testing.T) {
+		serverMock, client := setupWorkspacesService(t)
+
+		serverMock.EXPECT().GetWorkspace(gomock.Any(), workspaceID).Return(nil, &jsonrpc2.Error{
+			Code:    404,
+			Message: "not found",
+		})
+
+		resp, _ := client.StreamWorkspaceStatus(context.Background(), connect.NewRequest(&v1.StreamWorkspaceStatusRequest{
+			WorkspaceId: workspaceID,
+		}))
+
+		resp.Receive()
+
+		require.Error(t, resp.Err())
+		require.Equal(t, connect.CodeNotFound, connect.CodeOf(resp.Err()))
+	})
+
+	t.Run("returns a workspace status", func(t *testing.T) {
+		serverMock, client := setupWorkspacesService(t)
+
+		serverMock.EXPECT().GetWorkspace(gomock.Any(), workspaceID).Return(&workspaceTestData[0].Protocol, nil)
+		serverMock.EXPECT().InstanceUpdates(gomock.Any(), instanceID).DoAndReturn(func(ctx context.Context, instanceID string) (<-chan *protocol.WorkspaceInstance, error) {
+			ch := make(chan *protocol.WorkspaceInstance)
+			go func() {
+				ch <- workspaceTestData[0].Protocol.LatestInstance
+			}()
+			go func() {
+				<-ctx.Done()
+				close(ch)
+			}()
+			return ch, nil
+		})
+
+		ctx, cancel := context.WithCancel(context.Background())
+		resp, err := client.StreamWorkspaceStatus(ctx, connect.NewRequest(&v1.StreamWorkspaceStatusRequest{
+			WorkspaceId: workspaceID,
+		}))
+
+		require.NoError(t, err)
+
+		resp.Receive()
+		cancel()
+
+		requireEqualProto(t, workspaceTestData[0].API.Status, resp.Msg().Result)
+	})
+}
+
+func TestClientServerStreamInterceptor(t *testing.T) {
+	testInterceptor := &TestInterceptor{
+		expectedToken: "auth-token",
+		t:             t,
+	}
+
+	ctrl := gomock.NewController(t)
+	t.Cleanup(ctrl.Finish)
+
+	serverMock := protocol.NewMockAPIInterface(ctrl)
+
+	svc := NewWorkspaceService(&FakeServerConnPool{
+		api: serverMock,
+	})
+
+	_, handler := v1connect.NewWorkspacesServiceHandler(svc, connect.WithInterceptors(auth.NewServerInterceptor(), testInterceptor))
+
+	srv := httptest.NewServer(handler)
+	t.Cleanup(srv.Close)
+
+	client := v1connect.NewWorkspacesServiceClient(http.DefaultClient, srv.URL, connect.WithInterceptors(
+		auth.NewClientInterceptor("auth-token"),
+		testInterceptor,
+	))
+
+	resp, _ := client.StreamWorkspaceStatus(context.Background(), connect.NewRequest(&v1.StreamWorkspaceStatusRequest{
+		WorkspaceId: "",
+	}))
+
+	resp.Close()
+}
+
+type TestInterceptor struct {
+	expectedToken string
+	t             *testing.T
+}
+
+func (ti *TestInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
+	return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+		return next(ctx, req)
+	}
+}
+
+func (ti *TestInterceptor) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
+	return func(ctx context.Context, spec connect.Spec) connect.StreamingClientConn {
+		token, _ := auth.TokenFromContext(ctx)
+		require.Equal(ti.t, ti.expectedToken, token.Value)
+		return next(ctx, spec)
+	}
+}
+
+func (ti *TestInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
+	return func(ctx context.Context, conn connect.StreamingHandlerConn) error {
+		token, _ := auth.TokenFromContext(ctx)
+		require.Equal(ti.t, ti.expectedToken, token.Value)
+		return next(ctx, conn)
+	}
+}
+
 type workspaceTestDataEntry struct {
 	Name     string
 	Protocol protocol.WorkspaceInfo
