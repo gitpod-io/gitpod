@@ -27,7 +27,7 @@ export default function License() {
             return; // temporarily disable to avoid hight CPU on the DB
         }
         (async () => {
-            const data = await getGitpodService().server.adminGetLicense();
+            const data = await getGitpodService(true).server.adminGetLicense();
             setLicense(data);
         })();
     }, []);

@@ -46,7 +46,7 @@ export function BlockedRepositoriesList(props: Props) {
     const search = async () => {
         setSearching(true);
         try {
-            const result = await getGitpodService().server.adminGetBlockedRepositories({
+            const result = await getGitpodService(true).server.adminGetBlockedRepositories({
                 limit: 100,
                 orderBy: "urlRegexp",
                 offset: 0,
@@ -72,7 +72,7 @@ export function BlockedRepositoriesList(props: Props) {
     };
 
     const save = async (blockedRepository: NewBlockedRepository) => {
-        await getGitpodService().server.adminCreateBlockedRepository(
+        await getGitpodService(true).server.adminCreateBlockedRepository(
             blockedRepository.urlRegexp,
             blockedRepository.blockUser,
         );
@@ -87,7 +87,7 @@ export function BlockedRepositoriesList(props: Props) {
     };
 
     const deleteBlockedRepository = async (blockedRepository: ExistingBlockedRepository) => {
-        await getGitpodService().server.adminDeleteBlockedRepository(blockedRepository.id);
+        await getGitpodService(true).server.adminDeleteBlockedRepository(blockedRepository.id);
         search();
     };
 

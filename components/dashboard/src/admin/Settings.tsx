@@ -23,16 +23,16 @@ export default function Settings() {
             return; // temporarily disable to avoid hight CPU on the DB
         }
         (async () => {
-            const data = await getGitpodService().server.adminGetTelemetryData();
+            const data = await getGitpodService(true).server.adminGetTelemetryData();
             setTelemetryData(data);
 
-            const setting = await getGitpodService().server.adminGetSettings();
+            const setting = await getGitpodService(true).server.adminGetSettings();
             setAdminSettings(setting);
         })();
     }, []);
 
     const actuallySetTelemetryPrefs = async (value: InstallationAdminSettings) => {
-        await getGitpodService().server.adminUpdateSettings(value);
+        await getGitpodService(true).server.adminUpdateSettings(value);
         setAdminSettings(value);
     };
 

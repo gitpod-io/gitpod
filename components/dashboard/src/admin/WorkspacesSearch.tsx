@@ -55,7 +55,7 @@ export function WorkspaceSearch(props: Props) {
             if (user) {
                 setCurrentWorkspaceState(user);
             } else {
-                getGitpodService()
+                getGitpodService(true)
                     .server.adminGetWorkspace(workspaceId)
                     .then((ws) => setCurrentWorkspaceState(ws))
                     .catch((e) => console.error(e));
@@ -95,7 +95,7 @@ export function WorkspaceSearch(props: Props) {
                 return;
             }
 
-            const result = await getGitpodService().server.adminGetWorkspaces({
+            const result = await getGitpodService(true).server.adminGetWorkspaces({
                 limit: pageLength,
                 orderBy: "instanceCreationTime",
                 offset: (page - 1) * pageLength,

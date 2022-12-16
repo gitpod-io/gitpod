@@ -40,7 +40,7 @@ export function TeamsSearch() {
             if (foundTeam) {
                 setCurrentTeam(foundTeam);
             } else {
-                getGitpodService()
+                getGitpodService(true)
                     .server.adminGetTeamById(teamId)
                     .then((team) => setCurrentTeam(team))
                     .catch((e) => console.error(e));
@@ -57,7 +57,7 @@ export function TeamsSearch() {
     const search = async (page: number = 1) => {
         setSearching(true);
         try {
-            const result = await getGitpodService().server.adminGetTeams({
+            const result = await getGitpodService(true).server.adminGetTeams({
                 searchTerm,
                 limit: pageLength,
                 orderBy: "creationTime",

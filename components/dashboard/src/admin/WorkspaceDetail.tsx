@@ -19,13 +19,13 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
     const [activity, setActivity] = useState(false);
     const [user, setUser] = useState<User>();
     useEffect(() => {
-        getGitpodService().server.adminGetUser(props.workspace.ownerId).then(setUser);
+        getGitpodService(true).server.adminGetUser(props.workspace.ownerId).then(setUser);
     }, [props.workspace]);
 
     const stopWorkspace = async () => {
         try {
             setActivity(true);
-            await getGitpodService().server.adminForceStopWorkspace(workspace.workspaceId);
+            await getGitpodService(true).server.adminForceStopWorkspace(workspace.workspaceId);
             // let's reload in a sec
             setTimeout(reload, 2000);
         } finally {
@@ -36,7 +36,7 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
     const reload = async () => {
         try {
             setActivity(true);
-            const ws = await getGitpodService().server.adminGetWorkspace(workspace.workspaceId);
+            const ws = await getGitpodService(true).server.adminGetWorkspace(workspace.workspaceId);
             setWorkspace(ws);
         } finally {
             setActivity(false);
@@ -120,7 +120,7 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                                           {
                                               label: "Restore & Pin",
                                               onClick: async () => {
-                                                  await getGitpodService().server.adminRestoreSoftDeletedWorkspace(
+                                                  await getGitpodService(true).server.adminRestoreSoftDeletedWorkspace(
                                                       workspace.workspaceId,
                                                   );
                                                   await reload();

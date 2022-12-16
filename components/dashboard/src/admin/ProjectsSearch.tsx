@@ -40,7 +40,7 @@ export function ProjectsSearch() {
             if (currentProject) {
                 setCurrentProject(currentProject);
             } else {
-                getGitpodService()
+                getGitpodService(true)
                     .server.adminGetProjectById(projectId)
                     .then((project) => setCurrentProject(project))
                     .catch((e) => console.error(e));
@@ -54,13 +54,13 @@ export function ProjectsSearch() {
         (async () => {
             if (currentProject) {
                 if (currentProject.userId) {
-                    const owner = await getGitpodService().server.adminGetUser(currentProject.userId);
+                    const owner = await getGitpodService(true).server.adminGetUser(currentProject.userId);
                     if (owner) {
                         setCurrentProjectOwner(owner?.name);
                     }
                 }
                 if (currentProject.teamId) {
-                    const owner = await getGitpodService().server.adminGetTeamById(currentProject.teamId);
+                    const owner = await getGitpodService(true).server.adminGetTeamById(currentProject.teamId);
                     if (owner) {
                         setCurrentProjectOwner(owner?.name);
                     }
@@ -76,7 +76,7 @@ export function ProjectsSearch() {
     const search = async (page: number = 1) => {
         setSearching(true);
         try {
-            const result = await getGitpodService().server.adminGetProjectsBySearchTerm({
+            const result = await getGitpodService(true).server.adminGetProjectsBySearchTerm({
                 searchTerm,
                 limit: pageLength,
                 orderBy: "creationTime",

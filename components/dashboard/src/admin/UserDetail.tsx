@@ -46,17 +46,17 @@ export default function UserDetail(p: { user: User }) {
 
     const initialize = () => {
         setUser(user);
-        getGitpodService()
+        getGitpodService(true)
             .server.adminGetAccountStatement(user.id)
             .then(setAccountStatement)
             .catch((e) => {
                 console.error(e);
             });
-        getGitpodService().server.adminIsStudent(user.id).then(setIsStudent);
+        getGitpodService(true).server.adminIsStudent(user.id).then(setIsStudent);
         const attributionId = AttributionId.render(AttributionId.create(user));
-        getGitpodService().server.adminGetBillingMode(attributionId).then(setBillingMode);
-        getGitpodService().server.adminGetCostCenter(attributionId).then(setCostCenter);
-        getGitpodService().server.adminGetUsageBalance(attributionId).then(setUsageBalance);
+        getGitpodService(true).server.adminGetBillingMode(attributionId).then(setBillingMode);
+        getGitpodService(true).server.adminGetCostCenter(attributionId).then(setCostCenter);
+        getGitpodService(true).server.adminGetUsageBalance(attributionId).then(setUsageBalance);
     };
     useEffect(initialize, [user]);
 
@@ -86,8 +86,8 @@ export default function UserDetail(p: { user: User }) {
         }
 
         await updateUser(async (u) => {
-            await getGitpodService().server.adminAddStudentEmailDomain(u.id, emailDomain);
-            await getGitpodService()
+            await getGitpodService(true).server.adminAddStudentEmailDomain(u.id, emailDomain);
+            await getGitpodService(true)
                 .server.adminIsStudent(u.id)
                 .then((isStud) => setIsStudent(isStud));
             return u;
@@ -96,14 +96,14 @@ export default function UserDetail(p: { user: User }) {
 
     const verifyUser = async () => {
         await updateUser(async (u) => {
-            return await getGitpodService().server.adminVerifyUser(u.id);
+            return await getGitpodService(true).server.adminVerifyUser(u.id);
         });
     };
 
     const toggleBlockUser = async () => {
         await updateUser(async (u) => {
             u.blocked = !u.blocked;
-            await getGitpodService().server.adminBlockUser({
+            await getGitpodService(true).server.adminBlockUser({
                 blocked: u.blocked,
                 id: u.id,
             });
@@ -114,7 +114,7 @@ export default function UserDetail(p: { user: User }) {
     const deleteUser = async () => {
         await updateUser(async (u) => {
             u.markedDeleted = !u.markedDeleted;
-            await getGitpodService().server.adminDeleteUser(u.id);
+            await getGitpodService(true).server.adminDeleteUser(u.id);
             return u;
         });
     };
@@ -177,9 +177,9 @@ export default function UserDetail(p: { user: User }) {
                                 {
                                     label: "Grant 20 Extra Hours",
                                     onClick: async () => {
-                                        await getGitpodService().server.adminGrantExtraHours(user.id, 20);
+                                        await getGitpodService(true).server.adminGrantExtraHours(user.id, 20);
                                         setAccountStatement(
-                                            await getGitpodService().server.adminGetAccountStatement(user.id),
+                                            await getGitpodService(true).server.adminGetAccountStatement(user.id),
                                         );
                                     },
                                 },
@@ -336,7 +336,7 @@ export default function UserDetail(p: { user: User }) {
                         disabled={usageLimit === costCenter?.spendingLimit}
                         onClick={async () => {
                             if (usageLimit !== undefined) {
-                                await getGitpodService().server.adminSetUsageLimit(
+                                await getGitpodService(true).server.adminSetUsageLimit(
                                     AttributionId.render(AttributionId.create(user)),
                                     usageLimit || 0,
                                 );
@@ -373,7 +373,7 @@ export default function UserDetail(p: { user: User }) {
                         disabled={creditNote.credits === 0 || !creditNote.note}
                         onClick={async () => {
                             if (creditNote.credits !== 0 && !!creditNote.note) {
-                                await getGitpodService().server.adminAddUsageCreditNote(
+                                await getGitpodService(true).server.adminAddUsageCreditNote(
                                     AttributionId.render(AttributionId.create(user)),
                                     creditNote.credits,
                                     creditNote.note,
@@ -502,7 +502,7 @@ function getFlags(user: User, updateUser: UpdateUserFunction): Entry[] {
                 checked,
                 onClick: async () => {
                     await updateUser(async (u) => {
-                        return await getGitpodService().server.adminModifyPermanentWorkspaceFeatureFlag({
+                        return await getGitpodService(true).server.adminModifyPermanentWorkspaceFeatureFlag({
                             id: user.id,
                             changes: [
                                 {
@@ -525,7 +525,7 @@ function getRopEntries(user: User, updateUser: UpdateUserFunction): Entry[] {
             checked,
             onClick: async () => {
                 await updateUser(async (u) => {
-                    return await getGitpodService().server.adminModifyRoleOrPermission({
+                    return await getGitpodService(true).server.adminModifyRoleOrPermission({
                         id: user.id,
                         rpp: [
                             {

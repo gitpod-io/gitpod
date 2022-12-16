@@ -19,7 +19,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
-function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
+function createGitpodService<C extends GitpodClient, S extends GitpodServer>(adminAPI?: boolean) {
     if (window.top !== window.self && process.env.NODE_ENV === "production") {
         const connection = createWindowMessageConnection("gitpodServer", window.parent, "*");
         const factory = new JsonRpcProxyFactory<S>();
@@ -32,6 +32,14 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
         });
     }
     let host = gitpodHostUrl.asWebsocket().with({ pathname: GitpodServerPath }).withApi();
+    if (adminAPI) {
+        host = host.with((u) => {
+            return {
+                port: "444",
+                pathname: "/admin-port" + u.pathname,
+            };
+        });
+    }
 
     const connectionProvider = new WebSocketConnectionProvider();
     let numberOfErrors = 0;
@@ -53,13 +61,18 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
     return new GitpodServiceImpl<C, S>(proxy, { onReconnect });
 }
 
-function getGitpodService(): GitpodService {
+function getGitpodService(adminApi?: boolean): GitpodService {
     const w = window as any;
     const _gp = w._gp || (w._gp = {});
     if (window.location.search.includes("service=mock")) {
         const service = _gp.gitpodService || (_gp.gitpodService = require("./service-mock").gitpodServiceMock);
         return service;
     }
+
+    if (adminApi) {
+        return _gp.gitpodAdminService || (_gp.gitpodAdminService = createGitpodService(true));
+    }
+
     const service = _gp.gitpodService || (_gp.gitpodService = createGitpodService());
     return service;
 }

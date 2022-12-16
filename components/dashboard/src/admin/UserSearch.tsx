@@ -30,7 +30,7 @@ export default function UserSearch() {
             if (user) {
                 setCurrentUserState(user);
             } else {
-                getGitpodService()
+                getGitpodService(true)
                     .server.adminGetUser(userId)
                     .then((user) => setCurrentUserState(user))
                     .catch((e) => console.error(e));
@@ -47,7 +47,7 @@ export default function UserSearch() {
     const search = async (page: number = 1) => {
         setSearching(true);
         try {
-            const result = await getGitpodService().server.adminGetUsers({
+            const result = await getGitpodService(true).server.adminGetUsers({
                 searchTerm,
                 limit: pageLength,
                 orderBy: "creationDate",
