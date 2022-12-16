@@ -1899,7 +1899,9 @@ type WorkspaceInstanceStatus struct {
 
 // StartWorkspaceOptions is the StartWorkspaceOptions message type
 type StartWorkspaceOptions struct {
-	ForceDefaultImage bool `json:"forceDefaultImage,omitempty"`
+	ForceDefaultImage bool         `json:"forceDefaultImage,omitempty"`
+	WorkspaceClass    string       `json:"workspaceClass,omitempty"`
+	IdeSettings       *IDESettings `json:"ideSettings,omitempty"`
 }
 
 // GetWorkspaceTimeoutResult is the GetWorkspaceTimeoutResult message type
