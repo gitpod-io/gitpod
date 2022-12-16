@@ -210,7 +210,7 @@ https://{$GITPOD_DOMAIN}:444 {
 		uri strip_prefix /admin-port
 
 		# because these paths are only served from this port, when handling those downstream we can assume there's a tight coupling between a) the port and b) that route
-		header_up X-GITPOD-ADMIN-PORT true
+		header_up X-GITPOD-ADMIN-PORT "true"
 
 		import wss_api
 	}

@@ -95,7 +95,7 @@ func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 			}
 
 			service.Annotations["external-dns.alpha.kubernetes.io/hostname"] = fmt.Sprintf("%s,*.%s,*.ws%s.%s", ctx.Config.Domain, ctx.Config.Domain, installationShortNameSuffix, ctx.Config.Domain)
-			service.Annotations["cloud.google.com/neg"] = `{"exposed_ports": {"80":{},"443": {}}}`
+			service.Annotations["cloud.google.com/neg"] = `{"exposed_ports": {"80":{},"443": {},"444": {}}}`
 		}
 
 		for k, v := range annotations {

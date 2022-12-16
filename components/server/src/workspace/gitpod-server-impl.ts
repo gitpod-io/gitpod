@@ -809,7 +809,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         const requireAdditionalAuthForAdmin = await getExperimentsClientForBackend().getValueAsync(
-            "requireAdditionalAuthForAdmin",
+            "admin_additional_auth",
             false,
             {
                 user,
