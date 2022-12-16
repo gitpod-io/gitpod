@@ -19,6 +19,12 @@ resource "kubernetes_service" "dev-svc" {
       port        = 443
       target_port = 4430
     }
+    port {
+      name        = "admin-port"
+      protocol    = "TCP"
+      port        = 444
+      target_port = 4440
+    }
     selector = {
       "gitpod.io/lbName" = var.preview_name
     }
@@ -58,6 +64,12 @@ resource "kubernetes_service" "harvester-svc" {
       protocol    = "TCP"
       port        = 443
       target_port = 443
+    }
+    port {
+      name        = "admin-port"
+      protocol    = "TCP"
+      port        = 444
+      target_port = 444
     }
     port {
       name        = "kube-api"

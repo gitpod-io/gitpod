@@ -35,6 +35,7 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>(adm
     if (adminAPI) {
         host = host.with((u) => {
             return {
+                protocol: "wss:",
                 port: "444",
                 pathname: "/admin-port" + u.pathname,
             };

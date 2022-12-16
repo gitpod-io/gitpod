@@ -9,6 +9,9 @@
 	default_sni {$GITPOD_DOMAIN}
 
 	# debug
+	log {
+		level debug
+	}
 
 	# configure plugin order
 	# https://caddyserver.com/docs/caddyfile/directives#directive-order
@@ -138,37 +141,6 @@
 	}
 }
 
-(wss_api) {
-	gitpod.cors_origin {
-		base_domain {$GITPOD_DOMAIN}
-	}
-
-	gitpod.sec_websocket_key
-
-	forward_auth server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-		uri /feature-flags/slow-database
-
-		header_up -Connection
-		header_up -Upgrade
-
-		copy_headers X-Gitpod-Slow-Database
-	}
-
-	import slow_fast_matchers
-
-	uri strip_prefix /api
-
-	reverse_proxy @fast server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-		import upstream_headers
-		import upstream_connection
-	}
-
-	reverse_proxy @slow slow-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-		import upstream_headers
-		import upstream_connection
-	}
-}
-
 # Kubernetes health-check
 :8003 {
 	respond /live 200
@@ -209,10 +181,40 @@ https://{$GITPOD_DOMAIN}:444 {
 	handle @backend_wss {
 		uri strip_prefix /admin-port
 
-		# because these paths are only served from this port, when handling those downstream we can assume there's a tight coupling between a) the port and b) that route
-		header_up X-GITPOD-ADMIN-PORT "true"
+		gitpod.cors_origin {
+			base_domain {$GITPOD_DOMAIN}
+		}
 
-		import wss_api
+		gitpod.sec_websocket_key
+
+		forward_auth server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+			uri /feature-flags/slow-database
+
+			header_up -Connection
+			header_up -Upgrade
+
+			copy_headers X-Gitpod-Slow-Database
+		}
+
+		import slow_fast_matchers
+
+		uri strip_prefix /api
+
+		reverse_proxy @fast server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+			import upstream_headers
+			import upstream_connection
+
+			# Because these paths are only served from this port, when handling those downstream we can assume there's a tight coupling between a) the port and b) that route
+			header_up X-GITPOD-ADMIN-PORT "true"
+		}
+
+		reverse_proxy @slow slow-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+			import upstream_headers
+			import upstream_connection
+
+			# Because these paths are only served from this port, when handling those downstream we can assume there's a tight coupling between a) the port and b) that route
+			header_up X-GITPOD-ADMIN-PORT "true"
+		}
 	}
 }
 
@@ -221,9 +223,6 @@ https://{$GITPOD_DOMAIN} {
 	import remove_server_header
 	import ssl_configuration
 	import security_headers
-
-	# IMPORTANT: Remove this header for all routes (see :444 handler above)
-	header_up -X-GITPOD-ADMIN-PORT
 
 	@workspace_download path /workspace-download*
 	handle @workspace_download {
@@ -267,7 +266,40 @@ https://{$GITPOD_DOMAIN} {
 		path /api/gitpod /api/v1
 	}
 	handle @backend_wss {
-		import wss_api
+		gitpod.cors_origin {
+			base_domain {$GITPOD_DOMAIN}
+		}
+
+		gitpod.sec_websocket_key
+
+		forward_auth server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+			uri /feature-flags/slow-database
+
+			header_up -Connection
+			header_up -Upgrade
+
+			copy_headers X-Gitpod-Slow-Database
+		}
+
+		import slow_fast_matchers
+
+		uri strip_prefix /api
+
+		reverse_proxy @fast server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+			import upstream_headers
+			import upstream_connection
+
+			# Make sure we do not trust this connection
+			header_up -X-GITPOD-ADMIN-PORT
+		}
+
+		reverse_proxy @slow slow-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+			import upstream_headers
+			import upstream_connection
+
+			# Make sure we do not trust this connection
+			header_up -X-GITPOD-ADMIN-PORT
+		}
 	}
 
 	@backend path /api/* /headless-logs/*

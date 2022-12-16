@@ -50,6 +50,7 @@ resource "kubernetes_deployment" "dev-loadbalancer" {
             "--pod-running-timeout=2m",
             "svc/proxy",
             "4430:443",
+            "4440:444",
             "2200:22",
           ]
 

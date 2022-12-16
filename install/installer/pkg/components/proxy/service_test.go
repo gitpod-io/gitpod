@@ -115,7 +115,7 @@ func TestServiceAnnotations(t *testing.T) {
 
 func loadBalancerAnnotations(ctx *common.RenderContext, annotations map[string]string) map[string]string {
 	annotations["external-dns.alpha.kubernetes.io/hostname"] = fmt.Sprintf("%s,*.%s,*.ws.%s", ctx.Config.Domain, ctx.Config.Domain, ctx.Config.Domain)
-	annotations["cloud.google.com/neg"] = `{"exposed_ports": {"80":{},"443": {}}}`
+	annotations["cloud.google.com/neg"] = `{"exposed_ports": {"80":{},"443": {},"444": {}}}`
 
 	return annotations
 }
