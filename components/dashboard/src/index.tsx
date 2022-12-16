@@ -22,33 +22,38 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import utc from "dayjs/plugin/utc";
 
 import "./index.css";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 dayjs.extend(relativeTime);
 dayjs.extend(utc);
 
+const queryClient = new QueryClient();
+
 ReactDOM.render(
     <React.StrictMode>
-        <UserContextProvider>
-            <AdminContextProvider>
-                <PaymentContextProvider>
-                    <LicenseContextProvider>
-                        <TeamsContextProvider>
-                            <ProjectContextProvider>
-                                <ThemeContextProvider>
-                                    <StartWorkspaceModalContextProvider>
-                                        <BrowserRouter>
-                                            <FeatureFlagContextProvider>
-                                                <App />
-                                            </FeatureFlagContextProvider>
-                                        </BrowserRouter>
-                                    </StartWorkspaceModalContextProvider>
-                                </ThemeContextProvider>
-                            </ProjectContextProvider>
-                        </TeamsContextProvider>
-                    </LicenseContextProvider>
-                </PaymentContextProvider>
-            </AdminContextProvider>
-        </UserContextProvider>
+        <QueryClientProvider client={queryClient}>
+            <UserContextProvider>
+                <AdminContextProvider>
+                    <PaymentContextProvider>
+                        <LicenseContextProvider>
+                            <TeamsContextProvider>
+                                <ProjectContextProvider>
+                                    <ThemeContextProvider>
+                                        <StartWorkspaceModalContextProvider>
+                                            <BrowserRouter>
+                                                <FeatureFlagContextProvider>
+                                                    <App />
+                                                </FeatureFlagContextProvider>
+                                            </BrowserRouter>
+                                        </StartWorkspaceModalContextProvider>
+                                    </ThemeContextProvider>
+                                </ProjectContextProvider>
+                            </TeamsContextProvider>
+                        </LicenseContextProvider>
+                    </PaymentContextProvider>
+                </AdminContextProvider>
+            </UserContextProvider>
+        </QueryClientProvider>
     </React.StrictMode>,
     document.getElementById("root"),
 );

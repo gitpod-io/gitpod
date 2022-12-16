@@ -51,6 +51,7 @@ import { AppNotifications } from "./AppNotifications";
 import PersonalAccessTokenCreateView from "./settings/PersonalAccessTokensCreateView";
 import { useUserAndTeamsLoader } from "./hooks/use-user-and-teams-loader";
 import { useAnalyticsTracking } from "./hooks/use-analytics-tracking";
+import { useUser } from "./queries/user";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "./workspaces/Workspaces"));
@@ -128,7 +129,14 @@ function isWebsiteSlug(pathName: string) {
 // A wrapper for <Route> that redirects to the workspaces screen if the user isn't a admin.
 // This wrapper only accepts the component property
 function AdminRoute({ component }: any) {
-    const { user } = useContext(UserContext);
+    // const { user } = useContext(UserContext);
+
+    const { isLoading, data: user } = useUser();
+
+    if (isLoading) {
+        return null;
+    }
+
     return (
         <Route
             render={({ location }: any) =>
