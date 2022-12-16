@@ -1,6 +1,11 @@
 # Change Log
 
 ## December 2022
+- Allow specifying CA certificate to configure SSL secured database connections ([#15320](https://github.com/gitpod-io/gitpod/pull/15320)) - [@geropl](https://github.com/geropl)
+- Replace prebuild duration message emoji ([#15364](https://github.com/gitpod-io/gitpod/pull/15364)) - [@gtsiolis](https://github.com/gtsiolis)
+- Replace prebuild message emoji ([#15367](https://github.com/gitpod-io/gitpod/pull/15367)) - [@gtsiolis](https://github.com/gtsiolis)
+- Support AWS ECR container registry ([#15313](https://github.com/gitpod-io/gitpod/pull/15313)) - [@jenting](https://github.com/jenting), [@mrsimonemms](https://github.com/mrsimonemms)
+- Show team usage tab only for team owners ([#15350](https://github.com/gitpod-io/gitpod/pull/15350)) - [@gtsiolis](https://github.com/gtsiolis)
 - Projects can now be deleted from the corresponding Settings page for that project. ([#15316](https://github.com/gitpod-io/gitpod/pull/15316)) - [@selfcontained](https://github.com/selfcontained)
 - [installer]: add required bucket name to mirror kots command ([#15296](https://github.com/gitpod-io/gitpod/pull/15296)) - [@mrsimonemms](https://github.com/mrsimonemms)
 - Allow setting workspace class for prebuilds ([#15288](https://github.com/gitpod-io/gitpod/pull/15288)) - [@svenefftinge](https://github.com/svenefftinge)
