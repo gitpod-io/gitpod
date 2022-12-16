@@ -58,7 +58,10 @@ If you want to run an entire test suite, the easiest is to use `./test/run.sh`:
 ./test/run.sh
 
 # This will run only the webapp test suite
-./test/run.sh webapp
+./test/run.sh -s webapp
+
+# This will run only the webapp test suite with the report
+./test/run.sh -s webapp -r report.csv
 ```
 
 If you're iterating on a single test, the easiest is to use `go test` directly.
