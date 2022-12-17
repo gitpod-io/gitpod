@@ -8,6 +8,7 @@ import EventEmitter from "events";
 import { useContext, useEffect, useRef } from "react";
 import { Terminal, ITerminalOptions, ITheme } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
+import { CanvasAddon } from "xterm-addon-canvas";
 import "xterm/css/xterm.css";
 import { ThemeContext } from "../theme-context";
 
@@ -30,6 +31,7 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
     const xTermParentRef = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<Terminal>();
     const fitAddon = new FitAddon();
+    const canvasAddon = new CanvasAddon();
     const { isDark } = useContext(ThemeContext);
 
     useEffect(() => {
@@ -46,6 +48,7 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
         const terminal = new Terminal(options);
         terminalRef.current = terminal;
         terminal.loadAddon(fitAddon);
+        terminal.loadAddon(canvasAddon);
         terminal.open(xTermParentRef.current);
         props.logsEmitter.on("logs", (logs) => {
             if (terminal && logs) {
@@ -82,7 +85,7 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
         if (!terminalRef.current) {
             return;
         }
-        terminalRef.current.setOption("theme", isDark ? darkTheme : lightTheme);
+        terminalRef.current.options.theme = isDark ? darkTheme : lightTheme;
     }, [terminalRef.current, isDark]);
 
     return (
