@@ -3,15 +3,14 @@
     "rootDir": "src",
     "outDir": "lib",
     "module": "commonjs",
-    "target": "es6",
+    "target": "es2021",
     "lib": [
-      "es6",
-      "dom"
+      "es2021",
+      "DOM"
     ],
     "strict": true,
     "skipLibCheck": true,
     "sourceMap": true,
-    "downlevelIteration": true,
     "useUnknownInCatchVariables": false
   },
   "include": [

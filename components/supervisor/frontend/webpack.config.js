@@ -8,14 +8,16 @@
 
 const path = require("path");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
+const webpack = require("webpack");
 
+/**@type {import('webpack').Configuration}*/
 module.exports = {
+    target: "web",
     entry: {
         main: path.resolve(__dirname, "lib/index.js"),
     },
     output: {
         filename: "[name].js",
-        chunkFilename: "[name].js",
         path: path.resolve(__dirname, "dist"),
     },
     module: {
@@ -29,39 +31,30 @@ module.exports = {
                 enforce: "pre",
                 loader: "source-map-loader",
             },
-            {
-                test: /\.js$/,
-                // include only es6 dependencies to transpile them to es5 classes
-                include: /vscode-ws-jsonrpc|vscode-jsonrpc|vscode-languageserver-protocol|vscode-languageserver-types/,
-                use: {
-                    loader: "babel-loader",
-                    options: {
-                        presets: ["@babel/preset-env"],
-                        plugins: [
-                            // reuse runtime babel lib instead of generating it in each js file
-                            "@babel/plugin-transform-runtime",
-                            // ensure that classes are transpiled
-                            "@babel/plugin-transform-classes",
-                        ],
-                        // see https://github.com/babel/babel/issues/8900#issuecomment-431240426
-                        sourceType: "unambiguous",
-                        cacheDirectory: true,
-                    },
-                },
-            },
         ],
     },
-    node: {
-        fs: "empty",
-        child_process: "empty",
-        net: "empty",
-        crypto: "empty",
-        tls: "empty",
+    resolve: {
+        fallback: {
+            crypto: false,
+            fs: false,
+            child_process: false,
+            tls: false,
+            net: false,
+            os: require.resolve("os-browserify/browser"),
+            path: require.resolve("path-browserify"),
+            url: false,
+            util: false,
+            process: false,
+        },
     },
     devtool: "source-map",
     plugins: [
         new CopyWebpackPlugin({
             patterns: [{ from: "public", to: "." }],
+        }),
+        new webpack.ProvidePlugin({
+            Buffer: ["buffer", "Buffer"],
+            setImmediate: ["timers-browserify", "setImmediate"],
         }),
     ],
 };

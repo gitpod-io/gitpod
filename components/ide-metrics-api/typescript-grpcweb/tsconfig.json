@@ -1,10 +1,9 @@
 {
     "compilerOptions": {
         "module": "commonjs",
-        "target": "es6",
+        "target": "es2021",
         "lib": [
-            "es6",
-            "ES2020.Promise"
+            "es2021",
         ],
         "outDir": "lib",
         "sourceMap": true,

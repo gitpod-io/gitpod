@@ -3,8 +3,7 @@
         "experimentalDecorators": true,
         "outDir": "lib",
         "lib": [
-            "es6",
-            "esnext.asynciterable"
+            "es2021",
         ],
         "noImplicitReturns": true,
         "noImplicitThis": true,
@@ -17,11 +16,9 @@
         "noEmitOnError": false,
         "emitDecoratorMetadata": true,
         "strictPropertyInitialization": false,
-        "downlevelIteration": true,
         "module": "commonjs",
         "moduleResolution": "node",
-        "target": "es6",
-        "jsx": "react",
+        "target": "es2021",
         "sourceMap": true,
         "declaration": true,
         "declarationMap": true,

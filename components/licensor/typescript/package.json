@@ -19,6 +19,7 @@
   },
   "typings": "./src/index.d.ts",
   "dependencies": {
+    "@types/node": "^16.11.0",
     "inversify": "^5.0.1"
   }
 }

@@ -6,15 +6,11 @@
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
         "strictPropertyInitialization": false,
-        "downlevelIteration": true,
         "module": "commonjs",
         "moduleResolution": "node",
-        "target": "es6",
-        "jsx": "react",
+        "target": "es2021",
         "lib": [
-            "es6",
-            "dom",
-            "esnext.asynciterable"
+            "es2021"
         ],
         "sourceMap": true,
         "declaration": true,
