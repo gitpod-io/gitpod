@@ -1,6 +1,7 @@
 # Change Log
 
 ## December 2022
+- Update beta notice for the JetBrains integration ([#15371](https://github.com/gitpod-io/gitpod/pull/15371)) - [@gtsiolis](https://github.com/gtsiolis)
 - Allow specifying CA certificate to configure SSL secured database connections ([#15320](https://github.com/gitpod-io/gitpod/pull/15320)) - [@geropl](https://github.com/geropl)
 - Replace prebuild duration message emoji ([#15364](https://github.com/gitpod-io/gitpod/pull/15364)) - [@gtsiolis](https://github.com/gtsiolis)
 - Replace prebuild message emoji ([#15367](https://github.com/gitpod-io/gitpod/pull/15367)) - [@gtsiolis](https://github.com/gtsiolis)
