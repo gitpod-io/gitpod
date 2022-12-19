@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -52,12 +53,28 @@ func TestGetStartParams(t *testing.T) {
 	require.NotNil(t, params.AuthCodeURL)
 	require.Contains(t, params.AuthCodeURL, issuerG)
 	require.Contains(t, params.AuthCodeURL, clientID)
-	require.Contains(t, params.AuthCodeURL, params.Nonce)
-	require.Contains(t, params.AuthCodeURL, params.State)
+	require.Contains(t, params.AuthCodeURL, url.QueryEscape(params.Nonce))
+	require.Contains(t, params.AuthCodeURL, url.QueryEscape(params.State))
 }
 
 func TestGetClientConfigFromRequest(t *testing.T) {
 	issuer := newFakeIdP(t)
+
+	const (
+		clientID = "google-1"
+	)
+
+	state, err := encodeStateParam(StateParam{
+		ClientId:    clientID,
+		RedirectURL: "",
+	})
+	require.NoError(t, err, "failed encode state param")
+
+	state_unknown, err := encodeStateParam(StateParam{
+		ClientId:    "UNKNOWN",
+		RedirectURL: "",
+	})
+	require.NoError(t, err, "failed encode state param")
 
 	testCases := []struct {
 		Location      string
@@ -72,18 +89,33 @@ func TestGetClientConfigFromRequest(t *testing.T) {
 		{
 			Location:      "/start?issuer=" + issuer,
 			ExpectedError: false,
-			ExpectedId:    "google-1",
+			ExpectedId:    clientID,
 		},
 		{
 			Location:      "/start?issuer=UNKNOWN",
 			ExpectedError: true,
 			ExpectedId:    "",
 		},
+		{
+			Location:      "/callback?state=BAD",
+			ExpectedError: true,
+			ExpectedId:    "",
+		},
+		{
+			Location:      "/callback?state=" + state_unknown,
+			ExpectedError: true,
+			ExpectedId:    "",
+		},
+		{
+			Location:      "/callback?state=" + state,
+			ExpectedError: false,
+			ExpectedId:    clientID,
+		},
 	}
 
 	service := NewOIDCService()
-	err := service.AddClientConfig(&OIDCClientConfig{
-		ID:           "google-1",
+	err = service.AddClientConfig(&OIDCClientConfig{
+		ID:           clientID,
 		Issuer:       issuer,
 		OIDCConfig:   &oidc.Config{},
 		OAuth2Config: &oauth2.Config{},

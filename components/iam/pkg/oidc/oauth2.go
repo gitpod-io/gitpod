@@ -13,8 +13,16 @@ import (
 )
 
 type OAuth2Result struct {
+	ClientID    string
 	OAuth2Token *oauth2.Token
-	Redirect    string
+	RedirectURL string
+}
+
+type StateParam struct {
+	// Internal client ID
+	ClientId string `json:"clientId"`
+
+	RedirectURL string `json:"redirectUrl"`
 }
 
 type keyOAuth2Result struct{}
@@ -23,7 +31,7 @@ func OAuth2Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		log.Trace("at oauth2 middleware")
 		ctx := r.Context()
-		config, ok := ctx.Value(keyOIDCClientConfig{}).(OIDCClientConfig)
+		config, ok := ctx.Value(keyOIDCClientConfig{}).(*OIDCClientConfig)
 		if !ok {
 			http.Error(rw, "config not found", http.StatusInternalServerError)
 			return
@@ -47,6 +55,12 @@ func OAuth2Middleware(next http.Handler) http.Handler {
 			return
 		}
 
+		state, err := decodeStateParam(stateParam)
+		if err != nil {
+			http.Error(rw, "bad state param", http.StatusBadRequest)
+			return
+		}
+
 		code := r.URL.Query().Get("code")
 		if code == "" {
 			http.Error(rw, "code param not found", http.StatusBadRequest)
@@ -61,6 +75,8 @@ func OAuth2Middleware(next http.Handler) http.Handler {
 
 		ctx = context.WithValue(ctx, keyOAuth2Result{}, OAuth2Result{
 			OAuth2Token: oauth2Token,
+			RedirectURL: state.RedirectURL,
+			ClientID:    state.ClientId,
 		})
 		next.ServeHTTP(rw, r.WithContext(ctx))
 	})

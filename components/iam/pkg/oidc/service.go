@@ -5,15 +5,17 @@
 package oidc
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/go-chi/chi/v5"
 	"golang.org/x/oauth2"
 )
@@ -67,13 +69,18 @@ func (service *OIDCService) AddClientConfig(config *OIDCClientConfig) error {
 }
 
 func (service *OIDCService) GetStartParams(config *OIDCClientConfig) (*OIDCStartParams, error) {
-	// TODO(at) state should be a JWT encoding a redirect location
-	// Using a random string to get the flow running.
-	state, err := randString(32)
+	// state is supposed to a) be present on client request as cookie header
+	// and b) to be mirrored by the IdP on callback requests.
+	stateParam := StateParam{
+		ClientId:    config.ID,
+		RedirectURL: config.OAuth2Config.RedirectURL,
+	}
+	state, err := encodeStateParam(stateParam)
 	if err != nil {
-		return nil, errors.New("failed to create state")
+		return nil, errors.New("failed to encode state")
 	}
 
+	// number used once
 	nonce, err := randString(32)
 	if err != nil {
 		return nil, errors.New("failed to create nonce")
@@ -89,6 +96,25 @@ func (service *OIDCService) GetStartParams(config *OIDCClientConfig) (*OIDCStart
 	}, nil
 }
 
+// TODO(at) state should be a JWT encoding a redirect location
+// For now, just use base64
+func encodeStateParam(state StateParam) (string, error) {
+	var buf bytes.Buffer
+	encoder := base64.NewEncoder(base64.StdEncoding, &buf)
+	err := json.NewEncoder(encoder).Encode(state)
+	if err != nil {
+		return "", err
+	}
+	encoder.Close()
+	return buf.String(), nil
+}
+
+func decodeStateParam(encoded string) (StateParam, error) {
+	var result StateParam
+	err := json.NewDecoder(base64.NewDecoder(base64.StdEncoding, strings.NewReader(encoded))).Decode(&result)
+	return result, err
+}
+
 func randString(size int) (string, error) {
 	b := make([]byte, size)
 	if _, err := io.ReadFull(rand.Reader, b); err != nil {
@@ -99,18 +125,30 @@ func randString(size int) (string, error) {
 
 func (service *OIDCService) GetClientConfigFromRequest(r *http.Request) (*OIDCClientConfig, error) {
 	issuerParam := r.URL.Query().Get("issuer")
-	if issuerParam == "" {
-		return nil, errors.New("issuer param not specified")
+	stateParam := r.URL.Query().Get("state")
+	if issuerParam == "" && stateParam == "" {
+		return nil, errors.New("missing request parameters")
 	}
-	log.WithField("issuerParam", issuerParam).Trace("GetClientConfigFromRequest")
-	log.WithField("issuer", issuerParam).Trace("at GetClientConfigFromRequest")
 
-	for id, value := range service.configsById {
-		log.WithField("issuer", value.Issuer).WithField("id", id).Trace("GetClientConfigFromRequest (candidate)")
-		if value.Issuer == issuerParam {
-			return value, nil
+	if issuerParam != "" {
+		for _, value := range service.configsById {
+			if value.Issuer == issuerParam {
+				return value, nil
+			}
 		}
 	}
+
+	if stateParam != "" {
+		state, err := decodeStateParam(stateParam)
+		if err != nil {
+			return nil, errors.New("bad state param")
+		}
+		config := service.configsById[state.ClientId]
+		if config != nil {
+			return config, nil
+		}
+	}
+
 	return nil, errors.New("failed to find OIDC config for request")
 }
 
