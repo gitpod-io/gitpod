@@ -93,16 +93,10 @@ type AppRoutesProps = {
     teams?: Team[];
 };
 export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) => {
-    const [isWhatsNewShown, setWhatsNewShown] = useState(false);
+    const [isWhatsNewShown, setWhatsNewShown] = useState(shouldSeeWhatsNew(user));
     const [showUserIdePreference, setShowUserIdePreference] = useState(false);
 
     const hash = getURLHash();
-
-    // TODO: See if we can remove this - https://gitpod.slack.com/archives/C02EN94AEPL/p1671227864607069
-    const shouldWhatsNewShown = shouldSeeWhatsNew(user);
-    if (shouldWhatsNewShown !== isWhatsNewShown) {
-        setWhatsNewShown(shouldWhatsNewShown);
-    }
 
     // Prefix with `/#referrer` will specify an IDE for workspace
     // We don't need to show IDE preference in this case
