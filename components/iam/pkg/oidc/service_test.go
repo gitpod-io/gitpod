@@ -10,7 +10,6 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -72,7 +71,7 @@ func TestGetClientConfigFromRequest(t *testing.T) {
 			ExpectedId:    "",
 		},
 		{
-			Location:      "/start?issuer=" + url.QueryEscape(issuer),
+			Location:      "/start?issuer=" + issuer,
 			ExpectedError: false,
 			ExpectedId:    "google-1",
 		},

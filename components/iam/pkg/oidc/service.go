@@ -11,7 +11,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"net/url"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -104,15 +103,11 @@ func (service *OIDCService) GetClientConfigFromRequest(r *http.Request) (*OIDCCl
 		return nil, errors.New("issuer param not specified")
 	}
 	log.WithField("issuerParam", issuerParam).Trace("GetClientConfigFromRequest")
-	issuer, err := url.QueryUnescape(issuerParam)
-	if err != nil {
-		return nil, errors.New("bad issuer param")
-	}
-	log.WithField("issuer", issuer).Trace("at GetClientConfigFromRequest")
+	log.WithField("issuer", issuerParam).Trace("at GetClientConfigFromRequest")
 
 	for id, value := range service.configsById {
 		log.WithField("issuer", value.Issuer).WithField("id", id).Trace("GetClientConfigFromRequest (candidate)")
-		if value.Issuer == issuer {
+		if value.Issuer == issuerParam {
 			return value, nil
 		}
 	}
