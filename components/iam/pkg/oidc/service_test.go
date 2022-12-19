@@ -25,8 +25,8 @@ func TestGetStartParams(t *testing.T) {
 		issuerG  = "https://accounts.google.com"
 		clientID = "client-id-123"
 	)
-	service := NewOIDCService()
-	config := &OIDCClientConfig{
+	service := NewService()
+	config := &ClientConfig{
 		ID:         "google-1",
 		Issuer:     issuerG,
 		OIDCConfig: &oidc.Config{},
@@ -83,8 +83,8 @@ func TestGetClientConfigFromRequest(t *testing.T) {
 		},
 	}
 
-	service := NewOIDCService()
-	err = service.AddClientConfig(&OIDCClientConfig{
+	service := NewService()
+	err = service.AddClientConfig(&ClientConfig{
 		ID:           "google-1",
 		Issuer:       issuer,
 		OIDCConfig:   &oidc.Config{},
@@ -112,8 +112,8 @@ func TestAuthenticate_nonce_check(t *testing.T) {
 	issuer, err := setupFakeIdP(t)
 	require.NoError(t, err)
 
-	service := NewOIDCService()
-	err = service.AddClientConfig(&OIDCClientConfig{
+	service := NewService()
+	err = service.AddClientConfig(&ClientConfig{
 		ID:     "google-1",
 		Issuer: issuer,
 		OIDCConfig: &oidc.Config{

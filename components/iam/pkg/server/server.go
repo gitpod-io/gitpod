@@ -28,7 +28,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.ServiceConfig) erro
 		return fmt.Errorf("failed to initialize IAM server: %w", err)
 	}
 
-	oidcService := oidc.NewOIDCService()
+	oidcService := oidc.NewService()
 	err = register(srv, oidcService)
 	if err != nil {
 		return fmt.Errorf("failed to register services to iam server")
@@ -52,7 +52,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.ServiceConfig) erro
 	return nil
 }
 
-func register(srv *baseserver.Server, oidcSvc *oidc.OIDCService) error {
+func register(srv *baseserver.Server, oidcSvc *oidc.Service) error {
 	root := chi.NewRouter()
 
 	root.Mount("/oidc", oidc.Router(oidcSvc))
@@ -63,13 +63,13 @@ func register(srv *baseserver.Server, oidcSvc *oidc.OIDCService) error {
 }
 
 // TODO(at) remove the demo config after start sync'ing with DB
-func loadTestConfig(clientsConfigFilePath string) (*oidc.OIDCClientConfig, error) {
+func loadTestConfig(clientsConfigFilePath string) (*oidc.ClientConfig, error) {
 	testConfig, err := oidc.ReadDemoConfigFromFile(clientsConfigFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read test config: %w", err)
 	}
 
-	return &oidc.OIDCClientConfig{
+	return &oidc.ClientConfig{
 		Issuer: testConfig.Issuer,
 		ID:     "R4ND0M1D",
 		OAuth2Config: &oauth2.Config{
