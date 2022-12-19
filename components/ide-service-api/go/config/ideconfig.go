@@ -12,6 +12,7 @@ const (
 )
 
 type IDEConfig struct {
+	GpRunImage      string     `json:"gpRunImage"`
 	SupervisorImage string     `json:"supervisorImage"`
 	IdeOptions      IDEOptions `json:"ideOptions"`
 }

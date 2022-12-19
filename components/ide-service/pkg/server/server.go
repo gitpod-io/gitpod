@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
+	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/watch"
 	gitpodapi "github.com/gitpod-io/gitpod/gitpod-protocol"
@@ -35,6 +36,7 @@ type IDEServiceServer struct {
 	parsedIDEConfigContent string
 	ideConfig              *config.IDEConfig
 	ideConfigFileName      string
+	experiemntsClient      experiments.Client
 
 	api.UnimplementedIDEServiceServer
 }
@@ -85,6 +87,7 @@ func New(cfg *config.ServiceConfiguration) *IDEServiceServer {
 	s := &IDEServiceServer{
 		config:            cfg,
 		ideConfigFileName: fn,
+		experiemntsClient: experiments.NewClient(),
 	}
 	return s
 }
@@ -337,6 +340,19 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 		if desktopImageLayer != "" {
 			resp.IdeImageLayers = append(resp.IdeImageLayers, desktopImageLayer)
 			resp.IdeImageLayers = append(resp.IdeImageLayers, userImageLayers...)
+		}
+
+		if ideConfig.GpRunImage != "" {
+			featureFlagAttrs := experiments.Attributes{
+				UserID:    req.User.Id,
+				UserEmail: req.User.GetEmail(),
+			}
+			useRunGp := s.experiemntsClient.GetBoolValue(ctx, "ide_service_experimental_rungp", false, featureFlagAttrs)
+			log.WithField("featureFlagAttrs", featureFlagAttrs).WithField("useRunGp", useRunGp).Debug("calling configcat to check ide_service_experimental_rungp")
+			if useRunGp {
+				resp.IdeImageLayers = append(resp.IdeImageLayers, ideConfig.GpRunImage)
+				log.Debug("adding gp-run layer")
+			}
 		}
 	}
 

@@ -123,6 +123,7 @@ export class IDEService {
             workspaceConfig: JSON.stringify(workspace.config),
             user: {
                 id: user.id,
+                email: User.getPrimaryEmail(user),
             },
         };
         for (let attempt = 0; attempt < 15; attempt++) {

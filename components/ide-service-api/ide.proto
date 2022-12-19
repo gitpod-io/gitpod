@@ -38,6 +38,7 @@ enum WorkspaceType {
 
 message User {
     string id = 1;
+    optional string email = 2;
 }
 
 message ResolveWorkspaceConfigRequest {
