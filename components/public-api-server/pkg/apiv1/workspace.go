@@ -7,8 +7,9 @@ package apiv1
 import (
 	"context"
 	"fmt"
-
 	connect "github.com/bufbuild/connect-go"
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/namegen"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
@@ -31,14 +32,19 @@ type WorkspaceService struct {
 }
 
 func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Request[v1.GetWorkspaceRequest]) (*connect.Response[v1.GetWorkspaceResponse], error) {
-	logger := ctxlogrus.Extract(ctx)
+	workspaceID, err := validateWorkspaceID(req.Msg.GetWorkspaceId())
+	if err != nil {
+		return nil, err
+	}
+
+	logger := ctxlogrus.Extract(ctx).WithField("workspace_id", workspaceID)
 
 	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
 		return nil, err
 	}
 
-	workspace, err := conn.GetWorkspace(ctx, req.Msg.GetWorkspaceId())
+	workspace, err := conn.GetWorkspace(ctx, workspaceID)
 	if err != nil {
 		logger.WithError(err).Error("Failed to get workspace.")
 		return nil, proxy.ConvertError(err)
@@ -71,13 +77,18 @@ func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Reques
 }
 
 func (s *WorkspaceService) GetOwnerToken(ctx context.Context, req *connect.Request[v1.GetOwnerTokenRequest]) (*connect.Response[v1.GetOwnerTokenResponse], error) {
-	logger := ctxlogrus.Extract(ctx)
+	workspaceID, err := validateWorkspaceID(req.Msg.GetWorkspaceId())
+	if err != nil {
+		return nil, err
+	}
+
+	logger := ctxlogrus.Extract(ctx).WithField("workspace_id", workspaceID)
 	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
 		return nil, err
 	}
 
-	ownerToken, err := conn.GetOwnerToken(ctx, req.Msg.GetWorkspaceId())
+	ownerToken, err := conn.GetOwnerToken(ctx, workspaceID)
 
 	if err != nil {
 		logger.WithError(err).Error("Failed to get owner token.")
@@ -123,24 +134,35 @@ func (s *WorkspaceService) ListWorkspaces(ctx context.Context, req *connect.Requ
 }
 
 func (s *WorkspaceService) UpdatePort(ctx context.Context, req *connect.Request[v1.UpdatePortRequest]) (*connect.Response[v1.UpdatePortResponse], error) {
+	workspaceID, err := validateWorkspaceID(req.Msg.GetWorkspaceId())
+	if err != nil {
+		return nil, err
+	}
+
 	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
 		return nil, err
 	}
-	if req.Msg.Port.Policy == v1.PortPolicy_PORT_POLICY_PRIVATE {
-		_, err = conn.OpenPort(ctx, req.Msg.GetWorkspaceId(), &protocol.WorkspaceInstancePort{
+
+	switch req.Msg.GetPort().GetPolicy() {
+	case v1.PortPolicy_PORT_POLICY_PRIVATE:
+		_, err = conn.OpenPort(ctx, workspaceID, &protocol.WorkspaceInstancePort{
 			Port:       float64(req.Msg.Port.Port),
 			Visibility: protocol.PortVisibilityPrivate,
 		})
-	} else if req.Msg.Port.Policy == v1.PortPolicy_PORT_POLICY_PUBLIC {
-		_, err = conn.OpenPort(ctx, req.Msg.GetWorkspaceId(), &protocol.WorkspaceInstancePort{
+	case v1.PortPolicy_PORT_POLICY_PUBLIC:
+		_, err = conn.OpenPort(ctx, workspaceID, &protocol.WorkspaceInstancePort{
 			Port:       float64(req.Msg.Port.Port),
 			Visibility: protocol.PortVisibilityPublic,
 		})
+	default:
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Unknown port policy specified."))
 	}
 	if err != nil {
+		log.WithField("workspace_id", workspaceID).Error("Failed to update port")
 		return nil, proxy.ConvertError(err)
 	}
+
 	return connect.NewResponse(
 		&v1.UpdatePortResponse{},
 	), nil
@@ -280,4 +302,17 @@ func parseGitpodTimestamp(input string) (*timestamppb.Timestamp, error) {
 		return nil, err
 	}
 	return timestamppb.New(parsed), nil
+}
+
+func validateWorkspaceID(id string) (string, error) {
+	if id == "" {
+		return "", connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Empty workspace id specified"))
+	}
+
+	err := namegen.ValidateWorkspaceID(id)
+	if err != nil {
+		return "", connect.NewError(connect.CodeInvalidArgument, err)
+	}
+
+	return id, nil
 }

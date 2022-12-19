@@ -6,13 +6,16 @@ package namegen
 
 import (
 	"crypto/rand"
+	"errors"
+	"fmt"
 	"math/big"
 	"regexp"
 	"strings"
 )
 
-// WorkspaceIDPattern generates a new workspace ID by randomly choosing
-var WorkspaceIDPattern = regexp.MustCompile(`^[a-z]{3,12}-[a-z]{2,16}-[a-z0-9]{8}$`)
+// WorkspaceIDPattern is the expected Worksapce ID pattern
+// gitpod-protocol/src/util/generate-workspace-id.ts is authoritative over the generation
+var WorkspaceIDPattern = regexp.MustCompile(`^[a-z]{3,12}-[a-z]{2,16}-[a-z0-9]{11}$`)
 
 func GenerateWorkspaceID() (string, error) {
 	s1, err := chooseRandomly(colors, 1)
@@ -23,12 +26,24 @@ func GenerateWorkspaceID() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	s3, err := chooseRandomly(characters, 8)
+	s3, err := chooseRandomly(characters, 11)
 	if err != nil {
 		return "", err
 	}
 
 	return strings.Join([]string{s1, s2, s3}, "-"), nil
+}
+
+var (
+	InvalidWorkspaceID = errors.New("workspace id does not match required format")
+)
+
+func ValidateWorkspaceID(id string) error {
+	if !WorkspaceIDPattern.MatchString(id) {
+		return fmt.Errorf("id '%s' does not match workspace ID regex '%s': %w", id, WorkspaceIDPattern.String(), InvalidWorkspaceID)
+	}
+
+	return nil
 }
 
 func chooseRandomly(options []string, length int) (res string, err error) {
