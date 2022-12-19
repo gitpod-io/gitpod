@@ -26,7 +26,7 @@ service WorkspacesService {
     // Errors:
     //   NOT_FOUND:           the workspace_id is unkown
     //   FAILED_PRECONDITION: if there's no running instance
-    rpc StopWorkspace(StopWorkspaceRequest) returns (stream StopWorkspaceResponse) {}
+    rpc StopWorkspace(StopWorkspaceRequest) returns (StopWorkspaceResponse) {}
 
     rpc UpdatePort(UpdatePortRequest) returns (UpdatePortResponse) {}
 }
@@ -81,10 +81,9 @@ message StartWorkspaceResponse {
 }
 
 message StopWorkspaceRequest {
-    string idempotency_token = 1;
-
-    string workspace_id = 2;
+    string workspace_id = 1;
 }
+
 message StopWorkspaceResponse {}
 
 ////////////////////////////////
