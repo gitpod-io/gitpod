@@ -93,19 +93,13 @@ export class IDEService {
             user,
         });
         if (use) {
-            return this.doResolveWorkspaceConfig(
-                workspace,
-                userSelectedIdeSettings || user.additionalData?.ideSettings,
-            );
+            return this.doResolveWorkspaceConfig(workspace, user, userSelectedIdeSettings);
         }
 
         const deprecated = await this.resolveDeprecated(workspace, user);
         // assert against ide-service
         (async () => {
-            const config = await this.doResolveWorkspaceConfig(
-                workspace,
-                userSelectedIdeSettings || user.additionalData?.ideSettings,
-            );
+            const config = await this.doResolveWorkspaceConfig(workspace, user, userSelectedIdeSettings);
             const { tasks: configTasks, ...newConfig } = config;
             const { tasks: deprecatedTasks, ...newDeprecated } = deprecated;
             // we omit tasks because we're going to rewrite them soon and the deepEqual was failing
@@ -116,6 +110,7 @@ export class IDEService {
 
     private async doResolveWorkspaceConfig(
         workspace: Workspace,
+        user: User,
         userSelectedIdeSettings?: IDESettings,
     ): Promise<ResolveWorkspaceConfigResponse> {
         const workspaceType =
@@ -124,8 +119,11 @@ export class IDEService {
         const req: IdeServiceApi.ResolveWorkspaceConfigRequest = {
             type: workspaceType,
             context: JSON.stringify(workspace.context),
-            ideSettings: JSON.stringify(userSelectedIdeSettings),
+            ideSettings: JSON.stringify(userSelectedIdeSettings || user.additionalData?.ideSettings),
             workspaceConfig: JSON.stringify(workspace.config),
+            user: {
+                id: user.id,
+            },
         };
         for (let attempt = 0; attempt < 15; attempt++) {
             if (attempt != 0) {

@@ -36,12 +36,16 @@ enum WorkspaceType {
     PREBUILD = 1;
 }
 
+message User {
+    string id = 1;
+}
 
 message ResolveWorkspaceConfigRequest {
     WorkspaceType type = 1;
     string context = 2;
     string ide_settings = 3;
     string workspace_config = 4;
+    User user = 5;
 }
 
 message ResolveWorkspaceConfigResponse {

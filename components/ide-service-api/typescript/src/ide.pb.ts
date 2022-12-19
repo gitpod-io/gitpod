@@ -71,11 +71,16 @@ export interface EnvironmentVariable {
   value: string;
 }
 
+export interface User {
+  id: string;
+}
+
 export interface ResolveWorkspaceConfigRequest {
   type: WorkspaceType;
   context: string;
   ideSettings: string;
   workspaceConfig: string;
+  user: User | undefined;
 }
 
 export interface ResolveWorkspaceConfigResponse {
@@ -232,8 +237,55 @@ export const EnvironmentVariable = {
   },
 };
 
+function createBaseUser(): User {
+  return { id: "" };
+}
+
+export const User = {
+  encode(message: User, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): User {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUser();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.id = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): User {
+    return { id: isSet(object.id) ? String(object.id) : "" };
+  },
+
+  toJSON(message: User): unknown {
+    const obj: any = {};
+    message.id !== undefined && (obj.id = message.id);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<User>): User {
+    const message = createBaseUser();
+    message.id = object.id ?? "";
+    return message;
+  },
+};
+
 function createBaseResolveWorkspaceConfigRequest(): ResolveWorkspaceConfigRequest {
-  return { type: WorkspaceType.REGULAR, context: "", ideSettings: "", workspaceConfig: "" };
+  return { type: WorkspaceType.REGULAR, context: "", ideSettings: "", workspaceConfig: "", user: undefined };
 }
 
 export const ResolveWorkspaceConfigRequest = {
@@ -249,6 +301,9 @@ export const ResolveWorkspaceConfigRequest = {
     }
     if (message.workspaceConfig !== "") {
       writer.uint32(34).string(message.workspaceConfig);
+    }
+    if (message.user !== undefined) {
+      User.encode(message.user, writer.uint32(42).fork()).ldelim();
     }
     return writer;
   },
@@ -272,6 +327,9 @@ export const ResolveWorkspaceConfigRequest = {
         case 4:
           message.workspaceConfig = reader.string();
           break;
+        case 5:
+          message.user = User.decode(reader, reader.uint32());
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -286,6 +344,7 @@ export const ResolveWorkspaceConfigRequest = {
       context: isSet(object.context) ? String(object.context) : "",
       ideSettings: isSet(object.ideSettings) ? String(object.ideSettings) : "",
       workspaceConfig: isSet(object.workspaceConfig) ? String(object.workspaceConfig) : "",
+      user: isSet(object.user) ? User.fromJSON(object.user) : undefined,
     };
   },
 
@@ -295,6 +354,7 @@ export const ResolveWorkspaceConfigRequest = {
     message.context !== undefined && (obj.context = message.context);
     message.ideSettings !== undefined && (obj.ideSettings = message.ideSettings);
     message.workspaceConfig !== undefined && (obj.workspaceConfig = message.workspaceConfig);
+    message.user !== undefined && (obj.user = message.user ? User.toJSON(message.user) : undefined);
     return obj;
   },
 
@@ -304,6 +364,7 @@ export const ResolveWorkspaceConfigRequest = {
     message.context = object.context ?? "";
     message.ideSettings = object.ideSettings ?? "";
     message.workspaceConfig = object.workspaceConfig ?? "";
+    message.user = (object.user !== undefined && object.user !== null) ? User.fromPartial(object.user) : undefined;
     return message;
   },
 };
