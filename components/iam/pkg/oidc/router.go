@@ -44,13 +44,13 @@ func (oidcService *OIDCService) getStartHandler() http.HandlerFunc {
 		log.Trace("at start handler")
 
 		ctx := r.Context()
-		config, ok := ctx.Value(keyOIDCClientConfig{}).(OIDCClientConfig)
+		config, ok := ctx.Value(keyOIDCClientConfig{}).(*OIDCClientConfig)
 		if !ok {
 			http.Error(rw, "config not found", http.StatusInternalServerError)
 			return
 		}
 
-		startParams, err := oidcService.GetStartParams(&config)
+		startParams, err := oidcService.GetStartParams(config)
 		if err != nil {
 			http.Error(rw, "failed to start auth flow", http.StatusInternalServerError)
 			return
@@ -99,7 +99,7 @@ func (oidcService *OIDCService) getCallbackHandler() http.HandlerFunc {
 		log.Trace("at callback handler")
 
 		ctx := r.Context()
-		config, ok := ctx.Value(keyOIDCClientConfig{}).(OIDCClientConfig)
+		config, ok := ctx.Value(keyOIDCClientConfig{}).(*OIDCClientConfig)
 		if !ok {
 			http.Error(rw, "config not found", http.StatusInternalServerError)
 			return

@@ -57,8 +57,7 @@ func TestGetStartParams(t *testing.T) {
 }
 
 func TestGetClientConfigFromRequest(t *testing.T) {
-	issuer, err := setupFakeIdP(t)
-	require.NoError(t, err)
+	issuer := newFakeIdP(t)
 
 	testCases := []struct {
 		Location      string
@@ -83,7 +82,7 @@ func TestGetClientConfigFromRequest(t *testing.T) {
 	}
 
 	service := NewOIDCService()
-	err = service.AddClientConfig(&OIDCClientConfig{
+	err := service.AddClientConfig(&OIDCClientConfig{
 		ID:           "google-1",
 		Issuer:       issuer,
 		OIDCConfig:   &oidc.Config{},
@@ -108,11 +107,10 @@ func TestGetClientConfigFromRequest(t *testing.T) {
 }
 
 func TestAuthenticate_nonce_check(t *testing.T) {
-	issuer, err := setupFakeIdP(t)
-	require.NoError(t, err)
+	issuer := newFakeIdP(t)
 
 	service := NewOIDCService()
-	err = service.AddClientConfig(&OIDCClientConfig{
+	err := service.AddClientConfig(&OIDCClientConfig{
 		ID:     "google-1",
 		Issuer: issuer,
 		OIDCConfig: &oidc.Config{
@@ -141,7 +139,7 @@ func TestAuthenticate_nonce_check(t *testing.T) {
 	require.NotNil(t, result)
 }
 
-func setupFakeIdP(t *testing.T) (string, error) {
+func newFakeIdP(t *testing.T) string {
 	router := chi.NewRouter()
 	ts := httptest.NewServer(router)
 	url := ts.URL
@@ -152,6 +150,12 @@ func setupFakeIdP(t *testing.T) (string, error) {
 			"keys": [
 			]
 		  }`))
+		if err != nil {
+			log.Fatal(err)
+		}
+	})
+	router.Get("/o/oauth2/v2/auth", func(w http.ResponseWriter, r *http.Request) {
+		_, err := w.Write([]byte(r.URL.RawQuery))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -216,10 +220,11 @@ func setupFakeIdP(t *testing.T) (string, error) {
 			]
 		   }`, url)))
 		if err != nil {
-			log.Fatal(err)
+			t.Error((err))
+			t.FailNow()
 		}
 	})
 
 	t.Cleanup(ts.Close)
-	return url, nil
+	return url
 }
