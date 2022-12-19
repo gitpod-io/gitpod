@@ -163,7 +163,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
-	var imageBuilderTls struct {
+	var imageBuilderTLS struct {
 		CA          string `json:"ca"`
 		Certificate string `json:"crt"`
 		PrivateKey  string `json:"key"`
@@ -172,7 +172,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		// Image builder TLS is only enabled in workspace clusters. This check
 		// can be removed once image-builder-mk3 has been removed from application clusters
 		// (https://github.com/gitpod-io/gitpod/issues/7845).
-		imageBuilderTls = struct {
+		imageBuilderTLS = struct {
 			CA          string `json:"ca"`
 			Certificate string `json:"crt"`
 			PrivateKey  string `json:"key"`
@@ -260,7 +260,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			} `json:"tls"`
 		}{
 			TargetAddr: fmt.Sprintf("%s.%s.svc.cluster.local:%d", common.ImageBuilderComponent, ctx.Namespace, common.ImageBuilderRPCPort),
-			TLS:        imageBuilderTls,
+			TLS:        imageBuilderTLS,
 		},
 		PProf: struct {
 			Addr string `json:"addr"`
