@@ -16,7 +16,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func Router(oidcService *OIDCService) *chi.Mux {
+func Router(oidcService *Service) *chi.Mux {
 	router := chi.NewRouter()
 
 	router.Route("/start", func(r chi.Router) {
@@ -39,18 +39,18 @@ const (
 	nonceCookieName = "nonce"
 )
 
-func (oidcService *OIDCService) getStartHandler() http.HandlerFunc {
+func (s *Service) getStartHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		log.Trace("at start handler")
 
 		ctx := r.Context()
-		config, ok := ctx.Value(keyOIDCClientConfig{}).(OIDCClientConfig)
+		config, ok := ctx.Value(keyOIDCClientConfig{}).(ClientConfig)
 		if !ok {
 			http.Error(rw, "config not found", http.StatusInternalServerError)
 			return
 		}
 
-		startParams, err := oidcService.GetStartParams(&config)
+		startParams, err := s.GetStartParams(&config)
 		if err != nil {
 			http.Error(rw, "failed to start auth flow", http.StatusInternalServerError)
 			return
@@ -75,12 +75,12 @@ func newCallbackCookie(r *http.Request, name string, value string) *http.Cookie 
 }
 
 // The config middleware is responsible to retrieve the client config suitable for request
-func (oidcService *OIDCService) clientConfigMiddleware() func(http.Handler) http.Handler {
+func (s *Service) clientConfigMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 			log.Trace("at config middleware")
 
-			config, err := oidcService.GetClientConfigFromRequest(r)
+			config, err := s.GetClientConfigFromRequest(r)
 			if err != nil {
 				log.Warn("client config not found: " + err.Error())
 				http.Error(rw, "config not found", http.StatusNotFound)
@@ -94,12 +94,12 @@ func (oidcService *OIDCService) clientConfigMiddleware() func(http.Handler) http
 }
 
 // The OIDC callback handler depends on the state produced in the OAuth2 middleware
-func (oidcService *OIDCService) getCallbackHandler() http.HandlerFunc {
+func (s *Service) getCallbackHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		log.Trace("at callback handler")
 
 		ctx := r.Context()
-		config, ok := ctx.Value(keyOIDCClientConfig{}).(OIDCClientConfig)
+		config, ok := ctx.Value(keyOIDCClientConfig{}).(ClientConfig)
 		if !ok {
 			http.Error(rw, "config not found", http.StatusInternalServerError)
 			return
@@ -117,7 +117,7 @@ func (oidcService *OIDCService) getCallbackHandler() http.HandlerFunc {
 			return
 		}
 
-		result, err := oidcService.Authenticate(ctx, &oauth2Result,
+		result, err := s.Authenticate(ctx, &oauth2Result,
 			config.Issuer, nonceCookie.Value)
 		if err != nil {
 			http.Error(rw, "OIDC authentication failed", http.StatusInternalServerError)
