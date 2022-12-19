@@ -120,6 +120,7 @@ func (oidcService *OIDCService) getCallbackHandler() http.HandlerFunc {
 		result, err := oidcService.Authenticate(ctx, &oauth2Result,
 			config.Issuer, nonceCookie.Value)
 		if err != nil {
+			log.Warn("OIDC authentication failed: " + err.Error())
 			http.Error(rw, "OIDC authentication failed", http.StatusInternalServerError)
 			return
 		}

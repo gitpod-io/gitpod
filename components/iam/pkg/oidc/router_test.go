@@ -28,7 +28,7 @@ func TestRoute_start(t *testing.T) {
 	idpUrl := newFakeIdP(t)
 
 	// setup test server with client routes
-	baseUrl := newTestServer(t, idpUrl)
+	baseUrl, _ := newTestServer(t, idpUrl)
 
 	// go to /start
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -49,17 +49,60 @@ func TestRoute_start(t *testing.T) {
 	require.NotEqual(t, "config not found", string(body))
 }
 
-func newTestServer(t *testing.T, issuer string) string {
+func TestRoute_callback(t *testing.T) {
+	log.Log.Logger.SetLevel(logrus.TraceLevel)
+
+	// setup fake OIDC service
+	idpUrl := newFakeIdP(t)
+
+	// setup test server with client routes
+	baseUrl, stateParam := newTestServer(t, idpUrl)
+	state, err := encodeStateParam(*stateParam)
+	require.NoError(t, err)
+
+	// hit the /callback endpoint
+	client := &http.Client{Timeout: 10 * time.Second}
+	req := httptest.NewRequest("GET", baseUrl+"/oidc/callback?code=123&state="+state, nil)
+	req.RequestURI = ""
+	req.AddCookie(&http.Cookie{
+		Name: "state", Value: state, MaxAge: 60,
+	})
+	req.AddCookie(&http.Cookie{
+		Name: "nonce", Value: "111", MaxAge: 60,
+	})
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	t.Log(string(body))
+	require.Equal(t, 200, resp.StatusCode)
+	require.NotEqual(t, "config not found", string(body))
+}
+
+func newTestServer(t *testing.T, issuer string) (url string, state *StateParam) {
 	router := chi.NewRouter()
 
 	oidcService := NewOIDCService()
 	router.Mount("/oidc", Router(oidcService))
 
 	ts := httptest.NewServer(router)
-	url := ts.URL
+	url = ts.URL
+
+	clientConfigId := "R4ND0M1D"
+	stateParam := &StateParam{
+		ClientConfigID: clientConfigId,
+		RedirectURL:    "",
+	}
 
 	oidcConfig := &goidc.Config{
-		ClientID: "123",
+		ClientID:                   "123",
+		SkipClientIDCheck:          true,
+		SkipIssuerCheck:            true,
+		SkipExpiryCheck:            true,
+		InsecureSkipSignatureCheck: true,
 	}
 	oauth2Config := &oauth2.Config{
 		ClientID:     "123",
@@ -69,15 +112,12 @@ func newTestServer(t *testing.T, issuer string) string {
 	}
 	clientConfig := &OIDCClientConfig{
 		Issuer:       issuer,
-		ID:           "R4ND0M1D",
+		ID:           clientConfigId,
 		OAuth2Config: oauth2Config,
 		OIDCConfig:   oidcConfig,
 	}
 	err := oidcService.AddClientConfig(clientConfig)
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
+	require.NoError(t, err)
 
-	return url
+	return url, stateParam
 }

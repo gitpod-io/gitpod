@@ -72,8 +72,8 @@ func (service *OIDCService) GetStartParams(config *OIDCClientConfig) (*OIDCStart
 	// state is supposed to a) be present on client request as cookie header
 	// and b) to be mirrored by the IdP on callback requests.
 	stateParam := StateParam{
-		ClientId:    config.ID,
-		RedirectURL: config.OAuth2Config.RedirectURL,
+		ClientConfigID: config.ID,
+		RedirectURL:    config.OAuth2Config.RedirectURL,
 	}
 	state, err := encodeStateParam(stateParam)
 	if err != nil {
@@ -143,7 +143,7 @@ func (service *OIDCService) GetClientConfigFromRequest(r *http.Request) (*OIDCCl
 		if err != nil {
 			return nil, errors.New("bad state param")
 		}
-		config := service.configsById[state.ClientId]
+		config := service.configsById[state.ClientConfigID]
 		if config != nil {
 			return config, nil
 		}

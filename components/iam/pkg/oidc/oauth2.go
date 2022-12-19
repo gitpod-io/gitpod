@@ -20,7 +20,7 @@ type OAuth2Result struct {
 
 type StateParam struct {
 	// Internal client ID
-	ClientId string `json:"clientId"`
+	ClientConfigID string `json:"clientId"`
 
 	RedirectURL string `json:"redirectUrl"`
 }
@@ -76,7 +76,7 @@ func OAuth2Middleware(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, keyOAuth2Result{}, OAuth2Result{
 			OAuth2Token: oauth2Token,
 			RedirectURL: state.RedirectURL,
-			ClientID:    state.ClientId,
+			ClientID:    state.ClientConfigID,
 		})
 		next.ServeHTTP(rw, r.WithContext(ctx))
 	})
