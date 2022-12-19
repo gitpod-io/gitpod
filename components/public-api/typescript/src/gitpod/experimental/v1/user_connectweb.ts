@@ -9,91 +9,78 @@
 /* eslint-disable */
 /* @ts-nocheck */
 
-import {
-    CreateSSHKeyRequest,
-    CreateSSHKeyResponse,
-    DeleteSSHKeyRequest,
-    DeleteSSHKeyResponse,
-    GetAuthenticatedUserRequest,
-    GetAuthenticatedUserResponse,
-    GetGitTokenRequest,
-    GetGitTokenResponse,
-    GetSSHKeyRequest,
-    GetSSHKeyResponse,
-    ListSSHKeysRequest,
-    ListSSHKeysResponse,
-} from "./user_pb.js";
-import { MethodKind } from "@bufbuild/protobuf";
+import {CreateSSHKeyRequest, CreateSSHKeyResponse, DeleteSSHKeyRequest, DeleteSSHKeyResponse, GetAuthenticatedUserRequest, GetAuthenticatedUserResponse, GetGitTokenRequest, GetGitTokenResponse, GetSSHKeyRequest, GetSSHKeyResponse, ListSSHKeysRequest, ListSSHKeysResponse} from "./user_pb.js";
+import {MethodKind} from "@bufbuild/protobuf";
 
 /**
  * @generated from service gitpod.experimental.v1.UserService
  */
 export const UserService = {
-    typeName: "gitpod.experimental.v1.UserService",
-    methods: {
-        /**
-         * GetAuthenticatedUser gets the user info.
-         *
-         * @generated from rpc gitpod.experimental.v1.UserService.GetAuthenticatedUser
-         */
-        getAuthenticatedUser: {
-            name: "GetAuthenticatedUser",
-            I: GetAuthenticatedUserRequest,
-            O: GetAuthenticatedUserResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * ListSSHKeys lists the public SSH keys.
-         *
-         * @generated from rpc gitpod.experimental.v1.UserService.ListSSHKeys
-         */
-        listSSHKeys: {
-            name: "ListSSHKeys",
-            I: ListSSHKeysRequest,
-            O: ListSSHKeysResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * CreateSSHKey adds a public SSH key.
-         *
-         * @generated from rpc gitpod.experimental.v1.UserService.CreateSSHKey
-         */
-        createSSHKey: {
-            name: "CreateSSHKey",
-            I: CreateSSHKeyRequest,
-            O: CreateSSHKeyResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * GetSSHKey retrieves an ssh key by ID.
-         *
-         * @generated from rpc gitpod.experimental.v1.UserService.GetSSHKey
-         */
-        getSSHKey: {
-            name: "GetSSHKey",
-            I: GetSSHKeyRequest,
-            O: GetSSHKeyResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * DeleteSSHKey removes a public SSH key.
-         *
-         * @generated from rpc gitpod.experimental.v1.UserService.DeleteSSHKey
-         */
-        deleteSSHKey: {
-            name: "DeleteSSHKey",
-            I: DeleteSSHKeyRequest,
-            O: DeleteSSHKeyResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * @generated from rpc gitpod.experimental.v1.UserService.GetGitToken
-         */
-        getGitToken: {
-            name: "GetGitToken",
-            I: GetGitTokenRequest,
-            O: GetGitTokenResponse,
-            kind: MethodKind.Unary,
-        },
+  typeName: "gitpod.experimental.v1.UserService",
+  methods: {
+    /**
+     * GetAuthenticatedUser gets the user info.
+     *
+     * @generated from rpc gitpod.experimental.v1.UserService.GetAuthenticatedUser
+     */
+    getAuthenticatedUser: {
+      name: "GetAuthenticatedUser",
+      I: GetAuthenticatedUserRequest,
+      O: GetAuthenticatedUserResponse,
+      kind: MethodKind.Unary,
     },
+    /**
+     * ListSSHKeys lists the public SSH keys.
+     *
+     * @generated from rpc gitpod.experimental.v1.UserService.ListSSHKeys
+     */
+    listSSHKeys: {
+      name: "ListSSHKeys",
+      I: ListSSHKeysRequest,
+      O: ListSSHKeysResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * CreateSSHKey adds a public SSH key.
+     *
+     * @generated from rpc gitpod.experimental.v1.UserService.CreateSSHKey
+     */
+    createSSHKey: {
+      name: "CreateSSHKey",
+      I: CreateSSHKeyRequest,
+      O: CreateSSHKeyResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetSSHKey retrieves an ssh key by ID.
+     *
+     * @generated from rpc gitpod.experimental.v1.UserService.GetSSHKey
+     */
+    getSSHKey: {
+      name: "GetSSHKey",
+      I: GetSSHKeyRequest,
+      O: GetSSHKeyResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * DeleteSSHKey removes a public SSH key.
+     *
+     * @generated from rpc gitpod.experimental.v1.UserService.DeleteSSHKey
+     */
+    deleteSSHKey: {
+      name: "DeleteSSHKey",
+      I: DeleteSSHKeyRequest,
+      O: DeleteSSHKeyResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc gitpod.experimental.v1.UserService.GetGitToken
+     */
+    getGitToken: {
+      name: "GetGitToken",
+      I: GetGitTokenRequest,
+      O: GetGitTokenResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;

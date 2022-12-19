@@ -9,67 +9,58 @@
 /* eslint-disable */
 /* @ts-nocheck */
 
-import {
-    CreateProjectRequest,
-    CreateProjectResponse,
-    DeleteProjectRequest,
-    DeleteProjectResponse,
-    GetProjectRequest,
-    GetProjectResponse,
-    ListProjectsRequest,
-    ListProjectsResponse,
-} from "./projects_pb.js";
-import { MethodKind } from "@bufbuild/protobuf";
+import {CreateProjectRequest, CreateProjectResponse, DeleteProjectRequest, DeleteProjectResponse, GetProjectRequest, GetProjectResponse, ListProjectsRequest, ListProjectsResponse} from "./projects_pb.js";
+import {MethodKind} from "@bufbuild/protobuf";
 
 /**
  * @generated from service gitpod.experimental.v1.ProjectsService
  */
 export const ProjectsService = {
-    typeName: "gitpod.experimental.v1.ProjectsService",
-    methods: {
-        /**
-         * Creates a new project.
-         *
-         * @generated from rpc gitpod.experimental.v1.ProjectsService.CreateProject
-         */
-        createProject: {
-            name: "CreateProject",
-            I: CreateProjectRequest,
-            O: CreateProjectResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * Retrieves a project.
-         *
-         * @generated from rpc gitpod.experimental.v1.ProjectsService.GetProject
-         */
-        getProject: {
-            name: "GetProject",
-            I: GetProjectRequest,
-            O: GetProjectResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * Lists projects.
-         *
-         * @generated from rpc gitpod.experimental.v1.ProjectsService.ListProjects
-         */
-        listProjects: {
-            name: "ListProjects",
-            I: ListProjectsRequest,
-            O: ListProjectsResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * Deletes a project.
-         *
-         * @generated from rpc gitpod.experimental.v1.ProjectsService.DeleteProject
-         */
-        deleteProject: {
-            name: "DeleteProject",
-            I: DeleteProjectRequest,
-            O: DeleteProjectResponse,
-            kind: MethodKind.Unary,
-        },
+  typeName: "gitpod.experimental.v1.ProjectsService",
+  methods: {
+    /**
+     * Creates a new project.
+     *
+     * @generated from rpc gitpod.experimental.v1.ProjectsService.CreateProject
+     */
+    createProject: {
+      name: "CreateProject",
+      I: CreateProjectRequest,
+      O: CreateProjectResponse,
+      kind: MethodKind.Unary,
     },
+    /**
+     * Retrieves a project.
+     *
+     * @generated from rpc gitpod.experimental.v1.ProjectsService.GetProject
+     */
+    getProject: {
+      name: "GetProject",
+      I: GetProjectRequest,
+      O: GetProjectResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Lists projects.
+     *
+     * @generated from rpc gitpod.experimental.v1.ProjectsService.ListProjects
+     */
+    listProjects: {
+      name: "ListProjects",
+      I: ListProjectsRequest,
+      O: ListProjectsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Deletes a project.
+     *
+     * @generated from rpc gitpod.experimental.v1.ProjectsService.DeleteProject
+     */
+    deleteProject: {
+      name: "DeleteProject",
+      I: DeleteProjectRequest,
+      O: DeleteProjectResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;

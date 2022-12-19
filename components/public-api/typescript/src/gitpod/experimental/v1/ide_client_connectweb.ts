@@ -9,41 +9,36 @@
 /* eslint-disable */
 /* @ts-nocheck */
 
-import {
-    SendDidCloseRequest,
-    SendDidCloseResponse,
-    SendHeartbeatRequest,
-    SendHeartbeatResponse,
-} from "./ide_client_pb.js";
-import { MethodKind } from "@bufbuild/protobuf";
+import {SendDidCloseRequest, SendDidCloseResponse, SendHeartbeatRequest, SendHeartbeatResponse} from "./ide_client_pb.js";
+import {MethodKind} from "@bufbuild/protobuf";
 
 /**
  * @generated from service gitpod.experimental.v1.IDEClientService
  */
 export const IDEClientService = {
-    typeName: "gitpod.experimental.v1.IDEClientService",
-    methods: {
-        /**
-         * SendHeartbeat sends a clientheartbeat signal for a running workspace.
-         *
-         * @generated from rpc gitpod.experimental.v1.IDEClientService.SendHeartbeat
-         */
-        sendHeartbeat: {
-            name: "SendHeartbeat",
-            I: SendHeartbeatRequest,
-            O: SendHeartbeatResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * SendDidClose sends a client close signal for a running workspace.
-         *
-         * @generated from rpc gitpod.experimental.v1.IDEClientService.SendDidClose
-         */
-        sendDidClose: {
-            name: "SendDidClose",
-            I: SendDidCloseRequest,
-            O: SendDidCloseResponse,
-            kind: MethodKind.Unary,
-        },
+  typeName: "gitpod.experimental.v1.IDEClientService",
+  methods: {
+    /**
+     * SendHeartbeat sends a clientheartbeat signal for a running workspace.
+     *
+     * @generated from rpc gitpod.experimental.v1.IDEClientService.SendHeartbeat
+     */
+    sendHeartbeat: {
+      name: "SendHeartbeat",
+      I: SendHeartbeatRequest,
+      O: SendHeartbeatResponse,
+      kind: MethodKind.Unary,
     },
+    /**
+     * SendDidClose sends a client close signal for a running workspace.
+     *
+     * @generated from rpc gitpod.experimental.v1.IDEClientService.SendDidClose
+     */
+    sendDidClose: {
+      name: "SendDidClose",
+      I: SendDidCloseRequest,
+      O: SendDidCloseResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;

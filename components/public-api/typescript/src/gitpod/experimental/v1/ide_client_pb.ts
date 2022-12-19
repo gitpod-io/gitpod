@@ -9,158 +9,141 @@
 /* eslint-disable */
 /* @ts-nocheck */
 
-import type {
-    BinaryReadOptions,
-    FieldList,
-    JsonReadOptions,
-    JsonValue,
-    PartialMessage,
-    PlainMessage,
-} from "@bufbuild/protobuf";
-import { Message, proto3 } from "@bufbuild/protobuf";
+import type {BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage} from "@bufbuild/protobuf";
+import {Message, proto3} from "@bufbuild/protobuf";
 
 /**
  * @generated from message gitpod.experimental.v1.SendHeartbeatRequest
  */
 export class SendHeartbeatRequest extends Message<SendHeartbeatRequest> {
-    /**
-     * @generated from field: string workspace_id = 1;
-     */
-    workspaceId = "";
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
 
-    constructor(data?: PartialMessage<SendHeartbeatRequest>) {
-        super();
-        proto3.util.initPartial(data, this);
-    }
+  constructor(data?: PartialMessage<SendHeartbeatRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
 
-    static readonly runtime = proto3;
-    static readonly typeName = "gitpod.experimental.v1.SendHeartbeatRequest";
-    static readonly fields: FieldList = proto3.util.newFieldList(() => [
-        { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    ]);
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.SendHeartbeatRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
 
-    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SendHeartbeatRequest {
-        return new SendHeartbeatRequest().fromBinary(bytes, options);
-    }
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SendHeartbeatRequest {
+    return new SendHeartbeatRequest().fromBinary(bytes, options);
+  }
 
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SendHeartbeatRequest {
-        return new SendHeartbeatRequest().fromJson(jsonValue, options);
-    }
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SendHeartbeatRequest {
+    return new SendHeartbeatRequest().fromJson(jsonValue, options);
+  }
 
-    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SendHeartbeatRequest {
-        return new SendHeartbeatRequest().fromJsonString(jsonString, options);
-    }
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SendHeartbeatRequest {
+    return new SendHeartbeatRequest().fromJsonString(jsonString, options);
+  }
 
-    static equals(
-        a: SendHeartbeatRequest | PlainMessage<SendHeartbeatRequest> | undefined,
-        b: SendHeartbeatRequest | PlainMessage<SendHeartbeatRequest> | undefined,
-    ): boolean {
-        return proto3.util.equals(SendHeartbeatRequest, a, b);
-    }
+  static equals(a: SendHeartbeatRequest | PlainMessage<SendHeartbeatRequest> | undefined, b: SendHeartbeatRequest | PlainMessage<SendHeartbeatRequest> | undefined): boolean {
+    return proto3.util.equals(SendHeartbeatRequest, a, b);
+  }
 }
 
 /**
  * @generated from message gitpod.experimental.v1.SendHeartbeatResponse
  */
 export class SendHeartbeatResponse extends Message<SendHeartbeatResponse> {
-    constructor(data?: PartialMessage<SendHeartbeatResponse>) {
-        super();
-        proto3.util.initPartial(data, this);
-    }
+  constructor(data?: PartialMessage<SendHeartbeatResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
 
-    static readonly runtime = proto3;
-    static readonly typeName = "gitpod.experimental.v1.SendHeartbeatResponse";
-    static readonly fields: FieldList = proto3.util.newFieldList(() => []);
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.SendHeartbeatResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
 
-    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SendHeartbeatResponse {
-        return new SendHeartbeatResponse().fromBinary(bytes, options);
-    }
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SendHeartbeatResponse {
+    return new SendHeartbeatResponse().fromBinary(bytes, options);
+  }
 
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SendHeartbeatResponse {
-        return new SendHeartbeatResponse().fromJson(jsonValue, options);
-    }
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SendHeartbeatResponse {
+    return new SendHeartbeatResponse().fromJson(jsonValue, options);
+  }
 
-    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SendHeartbeatResponse {
-        return new SendHeartbeatResponse().fromJsonString(jsonString, options);
-    }
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SendHeartbeatResponse {
+    return new SendHeartbeatResponse().fromJsonString(jsonString, options);
+  }
 
-    static equals(
-        a: SendHeartbeatResponse | PlainMessage<SendHeartbeatResponse> | undefined,
-        b: SendHeartbeatResponse | PlainMessage<SendHeartbeatResponse> | undefined,
-    ): boolean {
-        return proto3.util.equals(SendHeartbeatResponse, a, b);
-    }
+  static equals(a: SendHeartbeatResponse | PlainMessage<SendHeartbeatResponse> | undefined, b: SendHeartbeatResponse | PlainMessage<SendHeartbeatResponse> | undefined): boolean {
+    return proto3.util.equals(SendHeartbeatResponse, a, b);
+  }
 }
 
 /**
  * @generated from message gitpod.experimental.v1.SendDidCloseRequest
  */
 export class SendDidCloseRequest extends Message<SendDidCloseRequest> {
-    /**
-     * @generated from field: string workspace_id = 1;
-     */
-    workspaceId = "";
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
 
-    constructor(data?: PartialMessage<SendDidCloseRequest>) {
-        super();
-        proto3.util.initPartial(data, this);
-    }
+  constructor(data?: PartialMessage<SendDidCloseRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
 
-    static readonly runtime = proto3;
-    static readonly typeName = "gitpod.experimental.v1.SendDidCloseRequest";
-    static readonly fields: FieldList = proto3.util.newFieldList(() => [
-        { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    ]);
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.SendDidCloseRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
 
-    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SendDidCloseRequest {
-        return new SendDidCloseRequest().fromBinary(bytes, options);
-    }
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SendDidCloseRequest {
+    return new SendDidCloseRequest().fromBinary(bytes, options);
+  }
 
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SendDidCloseRequest {
-        return new SendDidCloseRequest().fromJson(jsonValue, options);
-    }
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SendDidCloseRequest {
+    return new SendDidCloseRequest().fromJson(jsonValue, options);
+  }
 
-    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SendDidCloseRequest {
-        return new SendDidCloseRequest().fromJsonString(jsonString, options);
-    }
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SendDidCloseRequest {
+    return new SendDidCloseRequest().fromJsonString(jsonString, options);
+  }
 
-    static equals(
-        a: SendDidCloseRequest | PlainMessage<SendDidCloseRequest> | undefined,
-        b: SendDidCloseRequest | PlainMessage<SendDidCloseRequest> | undefined,
-    ): boolean {
-        return proto3.util.equals(SendDidCloseRequest, a, b);
-    }
+  static equals(a: SendDidCloseRequest | PlainMessage<SendDidCloseRequest> | undefined, b: SendDidCloseRequest | PlainMessage<SendDidCloseRequest> | undefined): boolean {
+    return proto3.util.equals(SendDidCloseRequest, a, b);
+  }
 }
 
 /**
  * @generated from message gitpod.experimental.v1.SendDidCloseResponse
  */
 export class SendDidCloseResponse extends Message<SendDidCloseResponse> {
-    constructor(data?: PartialMessage<SendDidCloseResponse>) {
-        super();
-        proto3.util.initPartial(data, this);
-    }
+  constructor(data?: PartialMessage<SendDidCloseResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
 
-    static readonly runtime = proto3;
-    static readonly typeName = "gitpod.experimental.v1.SendDidCloseResponse";
-    static readonly fields: FieldList = proto3.util.newFieldList(() => []);
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.SendDidCloseResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
 
-    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SendDidCloseResponse {
-        return new SendDidCloseResponse().fromBinary(bytes, options);
-    }
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SendDidCloseResponse {
+    return new SendDidCloseResponse().fromBinary(bytes, options);
+  }
 
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SendDidCloseResponse {
-        return new SendDidCloseResponse().fromJson(jsonValue, options);
-    }
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SendDidCloseResponse {
+    return new SendDidCloseResponse().fromJson(jsonValue, options);
+  }
 
-    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SendDidCloseResponse {
-        return new SendDidCloseResponse().fromJsonString(jsonString, options);
-    }
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SendDidCloseResponse {
+    return new SendDidCloseResponse().fromJsonString(jsonString, options);
+  }
 
-    static equals(
-        a: SendDidCloseResponse | PlainMessage<SendDidCloseResponse> | undefined,
-        b: SendDidCloseResponse | PlainMessage<SendDidCloseResponse> | undefined,
-    ): boolean {
-        return proto3.util.equals(SendDidCloseResponse, a, b);
-    }
+  static equals(a: SendDidCloseResponse | PlainMessage<SendDidCloseResponse> | undefined, b: SendDidCloseResponse | PlainMessage<SendDidCloseResponse> | undefined): boolean {
+    return proto3.util.equals(SendDidCloseResponse, a, b);
+  }
 }

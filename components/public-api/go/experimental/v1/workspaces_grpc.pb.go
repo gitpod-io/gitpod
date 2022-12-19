@@ -39,7 +39,7 @@ type WorkspacesServiceClient interface {
 	//
 	//	NOT_FOUND:           the workspace_id is unkown
 	//	FAILED_PRECONDITION: if there's no running instance
-	StopWorkspace(ctx context.Context, in *StopWorkspaceRequest, opts ...grpc.CallOption) (WorkspacesService_StopWorkspaceClient, error)
+	StopWorkspace(ctx context.Context, in *StopWorkspaceRequest, opts ...grpc.CallOption) (*StopWorkspaceResponse, error)
 	UpdatePort(ctx context.Context, in *UpdatePortRequest, opts ...grpc.CallOption) (*UpdatePortResponse, error)
 }
 
@@ -87,36 +87,13 @@ func (c *workspacesServiceClient) CreateAndStartWorkspace(ctx context.Context, i
 	return out, nil
 }
 
-func (c *workspacesServiceClient) StopWorkspace(ctx context.Context, in *StopWorkspaceRequest, opts ...grpc.CallOption) (WorkspacesService_StopWorkspaceClient, error) {
-	stream, err := c.cc.NewStream(ctx, &WorkspacesService_ServiceDesc.Streams[0], "/gitpod.experimental.v1.WorkspacesService/StopWorkspace", opts...)
+func (c *workspacesServiceClient) StopWorkspace(ctx context.Context, in *StopWorkspaceRequest, opts ...grpc.CallOption) (*StopWorkspaceResponse, error) {
+	out := new(StopWorkspaceResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.WorkspacesService/StopWorkspace", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &workspacesServiceStopWorkspaceClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type WorkspacesService_StopWorkspaceClient interface {
-	Recv() (*StopWorkspaceResponse, error)
-	grpc.ClientStream
-}
-
-type workspacesServiceStopWorkspaceClient struct {
-	grpc.ClientStream
-}
-
-func (x *workspacesServiceStopWorkspaceClient) Recv() (*StopWorkspaceResponse, error) {
-	m := new(StopWorkspaceResponse)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
+	return out, nil
 }
 
 func (c *workspacesServiceClient) UpdatePort(ctx context.Context, in *UpdatePortRequest, opts ...grpc.CallOption) (*UpdatePortResponse, error) {
@@ -145,7 +122,7 @@ type WorkspacesServiceServer interface {
 	//
 	//	NOT_FOUND:           the workspace_id is unkown
 	//	FAILED_PRECONDITION: if there's no running instance
-	StopWorkspace(*StopWorkspaceRequest, WorkspacesService_StopWorkspaceServer) error
+	StopWorkspace(context.Context, *StopWorkspaceRequest) (*StopWorkspaceResponse, error)
 	UpdatePort(context.Context, *UpdatePortRequest) (*UpdatePortResponse, error)
 	mustEmbedUnimplementedWorkspacesServiceServer()
 }
@@ -166,8 +143,8 @@ func (UnimplementedWorkspacesServiceServer) GetOwnerToken(context.Context, *GetO
 func (UnimplementedWorkspacesServiceServer) CreateAndStartWorkspace(context.Context, *CreateAndStartWorkspaceRequest) (*CreateAndStartWorkspaceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateAndStartWorkspace not implemented")
 }
-func (UnimplementedWorkspacesServiceServer) StopWorkspace(*StopWorkspaceRequest, WorkspacesService_StopWorkspaceServer) error {
-	return status.Errorf(codes.Unimplemented, "method StopWorkspace not implemented")
+func (UnimplementedWorkspacesServiceServer) StopWorkspace(context.Context, *StopWorkspaceRequest) (*StopWorkspaceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StopWorkspace not implemented")
 }
 func (UnimplementedWorkspacesServiceServer) UpdatePort(context.Context, *UpdatePortRequest) (*UpdatePortResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdatePort not implemented")
@@ -257,25 +234,22 @@ func _WorkspacesService_CreateAndStartWorkspace_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
-func _WorkspacesService_StopWorkspace_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(StopWorkspaceRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
+func _WorkspacesService_StopWorkspace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StopWorkspaceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
 	}
-	return srv.(WorkspacesServiceServer).StopWorkspace(m, &workspacesServiceStopWorkspaceServer{stream})
-}
-
-type WorkspacesService_StopWorkspaceServer interface {
-	Send(*StopWorkspaceResponse) error
-	grpc.ServerStream
-}
-
-type workspacesServiceStopWorkspaceServer struct {
-	grpc.ServerStream
-}
-
-func (x *workspacesServiceStopWorkspaceServer) Send(m *StopWorkspaceResponse) error {
-	return x.ServerStream.SendMsg(m)
+	if interceptor == nil {
+		return srv.(WorkspacesServiceServer).StopWorkspace(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.experimental.v1.WorkspacesService/StopWorkspace",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspacesServiceServer).StopWorkspace(ctx, req.(*StopWorkspaceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _WorkspacesService_UpdatePort_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -320,16 +294,14 @@ var WorkspacesService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _WorkspacesService_CreateAndStartWorkspace_Handler,
 		},
 		{
+			MethodName: "StopWorkspace",
+			Handler:    _WorkspacesService_StopWorkspace_Handler,
+		},
+		{
 			MethodName: "UpdatePort",
 			Handler:    _WorkspacesService_UpdatePort_Handler,
 		},
 	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "StopWorkspace",
-			Handler:       _WorkspacesService_StopWorkspace_Handler,
-			ServerStreams: true,
-		},
-	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "gitpod/experimental/v1/workspaces.proto",
 }
