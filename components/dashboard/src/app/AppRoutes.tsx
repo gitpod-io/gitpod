@@ -12,7 +12,6 @@ import { getURLHash, isGitpodIo, isLocalPreview } from "../utils";
 import { shouldSeeWhatsNew, WhatsNew } from "../whatsnew/WhatsNew";
 import { Redirect, Route, Switch } from "react-router";
 import Menu from "../Menu";
-import Alert from "../components/Alert";
 import { parseProps } from "../start/StartWorkspace";
 import { AppNotifications } from "../AppNotifications";
 import { AdminRoute } from "./AdminRoute";
@@ -46,6 +45,9 @@ import { workspacesPathMain } from "../workspaces/workspaces.routes";
 // TODO: Can we bundle-split/lazy load these like other pages?
 import { BlockedRepositories } from "../admin/BlockedRepositories";
 import PersonalAccessTokenCreateView from "../settings/PersonalAccessTokensCreateView";
+import { LocalPreviewAlert } from "./LocalPreviewAlert";
+import OAuthClientApproval from "../OauthClientApproval";
+import { Blocked } from "./Blocked";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
@@ -109,6 +111,15 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
         setShowUserIdePreference(shouldUserIdePreferenceShown);
     }
 
+    // TODO: Add a Route for this instead of inspecting location manually
+    if (window.location.pathname.startsWith("/blocked")) {
+        return <Blocked />;
+    }
+
+    if (window.location.pathname.startsWith("/oauth-approval")) {
+        return <OAuthClientApproval />;
+    }
+
     if (isWhatsNewShown) {
         return <WhatsNew onClose={() => setWhatsNewShown(false)} />;
     }
@@ -132,7 +143,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
         return <StartWorkspace {...parseProps(hash, window.location.search)} />;
     }
 
-    // Not sure what this does
+    // TODO: Add some context to what this logic is for
     if (/^(github|gitlab)\.com\/.+?/i.test(window.location.pathname)) {
         let url = new URL(window.location.href);
         url.hash = url.pathname;
@@ -145,28 +156,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
         <Route>
             <div className="container">
                 <Menu />
-                {isLocalPreview() && (
-                    <div className="app-container mt-2">
-                        <Alert type="warning" className="app-container rounded-md">
-                            You are using a <b>local preview</b> installation, intended for exploring the product on a
-                            single machine without requiring a Kubernetes cluster.{" "}
-                            <a
-                                className="gp-link hover:text-gray-600"
-                                href="https://www.gitpod.io/community-license?utm_source=local-preview"
-                            >
-                                Request a community license
-                            </a>{" "}
-                            or{" "}
-                            <a
-                                className="gp-link hover:text-gray-600"
-                                href="https://www.gitpod.io/contact/sales?utm_source=local-preview"
-                            >
-                                contact sales
-                            </a>{" "}
-                            to get a professional license for running Gitpod in production.
-                        </Alert>
-                    </div>
-                )}
+                {isLocalPreview() && <LocalPreviewAlert />}
                 <AppNotifications />
                 <Switch>
                     <Route path={projectsPathNew} exact component={NewProject} />

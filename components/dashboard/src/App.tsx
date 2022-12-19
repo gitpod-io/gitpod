@@ -11,9 +11,9 @@ import { Experiment } from "./experiments";
 import { isGitpodIo, getURLHash } from "./utils";
 import { useUserAndTeamsLoader } from "./hooks/use-user-and-teams-loader";
 import { useAnalyticsTracking } from "./hooks/use-analytics-tracking";
-import { LoggedInApp } from "./app/LoggedInApp";
 import { AppLoading } from "./app/AppLoading";
 import { isWebsiteSlug } from "./app/is-website-slug";
+import { AppRoutes } from "./app/AppRoutes";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 
@@ -58,6 +58,7 @@ const App: FunctionComponent = () => {
         return <AppLoading />;
     }
 
+    // TODO: Add some context to what this logic is for, does it have to happen every render, or just page load?
     if (isGitpodIo() && window.location.pathname === "/" && window.location.hash === "" && !user) {
         // If there's no gp cookie, bounce to www site
         if (!GitpodCookie.isPresent(document.cookie)) {
@@ -97,7 +98,11 @@ const App: FunctionComponent = () => {
     }
 
     // If we made it here, we have a logged in user w/ their teams. Yay.
-    return <LoggedInApp user={user} teams={teams} />;
+    return (
+        <Suspense fallback={<AppLoading />}>
+            <AppRoutes user={user} teams={teams} />
+        </Suspense>
+    );
 };
 
 export default App;
