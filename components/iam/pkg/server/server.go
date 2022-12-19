@@ -30,20 +30,21 @@ func Start(logger *logrus.Entry, version string, cfg *config.ServiceConfig) erro
 		return fmt.Errorf("failed to initialize IAM server: %w", err)
 	}
 
-	// All root requests are handled by our router
-	rootHandler, err := registerRootRouter(srv)
+	oidcService := oidc.NewOIDCService()
+	err = register(srv, oidcService)
 	if err != nil {
 		return fmt.Errorf("failed to register services to iam server")
 	}
 
-	// Requests to /oidc/* are handled by oidc.Router
-	oidcService := oidc.NewOIDCService()
-	rootHandler.Mount("/oidc", oidc.Router(oidcService))
-
 	// TODO(at) remove the demo config after start sync'ing with DB
-	err = loadTestConfig(oidcService, cfg)
+	clientConfig, err := loadTestConfig(cfg.OIDCClientsConfigFile)
 	if err != nil {
 		return fmt.Errorf("failed to load test config")
+	}
+
+	err = oidcService.AddClientConfig(clientConfig)
+	if err != nil {
+		return fmt.Errorf("failed to add client config to oidc service: %w", err)
 	}
 
 	if listenErr := srv.ListenAndServe(); listenErr != nil {
@@ -53,34 +54,34 @@ func Start(logger *logrus.Entry, version string, cfg *config.ServiceConfig) erro
 	return nil
 }
 
-func registerRootRouter(srv *baseserver.Server) (*chi.Mux, error) {
-	rootHandler := chi.NewRouter()
+func register(srv *baseserver.Server, oidcSvc *oidc.OIDCService) error {
+	root := chi.NewRouter()
 
-	srv.HTTPMux().Handle("/", rootHandler)
-	return rootHandler, nil
+	root.Mount("/oidc", oidc.Router(oidcSvc))
+
+	// All root requests are handled by our router
+	srv.HTTPMux().Handle("/", root)
+	return nil
 }
 
 // TODO(at) remove the demo config after start sync'ing with DB
-func loadTestConfig(oidcService *oidc.OIDCService, cfg *config.ServiceConfig) error {
-	testConfig, err := oidc.ReadDemoConfigFromFile(cfg.OIDCClientsConfigFile)
+func loadTestConfig(clientsConfigFilePath string) (*oidc.OIDCClientConfig, error) {
+	testConfig, err := oidc.ReadDemoConfigFromFile(clientsConfigFilePath)
 	if err != nil {
-		return fmt.Errorf("failed to read test config: %w", err)
+		return nil, fmt.Errorf("failed to read test config: %w", err)
 	}
-	oidcConfig := &goidc.Config{
-		ClientID: testConfig.ClientID,
-	}
-	oauth2Config := &oauth2.Config{
-		ClientID:     testConfig.ClientID,
-		ClientSecret: testConfig.ClientSecret,
-		RedirectURL:  testConfig.RedirectURL,
-		Scopes:       []string{goidc.ScopeOpenID, "profile", "email"},
-	}
-	clientConfig := &oidc.OIDCClientConfig{
-		Issuer:       testConfig.Issuer,
-		ID:           "R4ND0M1D",
-		OAuth2Config: oauth2Config,
-		OIDCConfig:   oidcConfig,
-	}
-	err = oidcService.AddClientConfig(clientConfig)
-	return err
+
+	return &oidc.OIDCClientConfig{
+		Issuer: testConfig.Issuer,
+		ID:     "R4ND0M1D",
+		OAuth2Config: &oauth2.Config{
+			ClientID:     testConfig.ClientID,
+			ClientSecret: testConfig.ClientSecret,
+			RedirectURL:  testConfig.RedirectURL,
+			Scopes:       []string{goidc.ScopeOpenID, "profile", "email"},
+		},
+		OIDCConfig: &goidc.Config{
+			ClientID: testConfig.ClientID,
+		},
+	}, nil
 }
