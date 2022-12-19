@@ -6,6 +6,7 @@ package apiv1
 
 import (
 	"context"
+	"github.com/gitpod-io/gitpod/common-go/namegen"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -26,72 +27,60 @@ import (
 )
 
 func TestWorkspaceService_GetWorkspace(t *testing.T) {
-	const (
-		bearerToken      = "bearer-token-for-tests"
-		foundWorkspaceID = "easycz-seer-xl8o1zacpyw"
-	)
 
-	type Expectation struct {
-		Code     connect.Code
-		Response *v1.GetWorkspaceResponse
-	}
+	workspaceID := workspaceTestData[0].Protocol.Workspace.ID
 
-	scenarios := []struct {
-		name        string
-		WorkspaceID string
-		Workspaces  map[string]protocol.WorkspaceInfo
-		Expect      Expectation
-	}{
-		{
-			name:        "returns a workspace when workspace is found by ID",
-			WorkspaceID: foundWorkspaceID,
-			Workspaces: map[string]protocol.WorkspaceInfo{
-				foundWorkspaceID: workspaceTestData[0].Protocol,
-			},
-			Expect: Expectation{
-				Response: &v1.GetWorkspaceResponse{
-					Result: workspaceTestData[0].API,
-				},
-			},
-		},
-		{
-			name:        "not found when workspace is not found by ID",
-			WorkspaceID: "some-not-found-workspace-id",
-			Expect: Expectation{
-				Code: connect.CodeNotFound,
-			},
-		},
-	}
+	t.Run("invalid argument when workspace ID is missing", func(t *testing.T) {
+		_, client := setupWorkspacesService(t)
 
-	for _, test := range scenarios {
-		t.Run(test.name, func(t *testing.T) {
-			serverMock, client := setupWorkspacesService(t)
+		_, err := client.GetWorkspace(context.Background(), connect.NewRequest(&v1.GetWorkspaceRequest{
+			WorkspaceId: "",
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
 
-			serverMock.EXPECT().GetWorkspace(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, id string) (res *protocol.WorkspaceInfo, err error) {
-				w, ok := test.Workspaces[id]
-				if !ok {
-					return nil, &jsonrpc2.Error{
-						Code:    404,
-						Message: "not found",
-					}
-				}
-				return &w, nil
-			})
+	t.Run("invalid argument when workspace ID does not validate", func(t *testing.T) {
+		_, client := setupWorkspacesService(t)
 
-			resp, err := client.GetWorkspace(context.Background(), connect.NewRequest(&v1.GetWorkspaceRequest{
-				WorkspaceId: test.WorkspaceID,
-			}))
-			requireErrorCode(t, test.Expect.Code, err)
-			if test.Expect.Response != nil {
-				requireEqualProto(t, test.Expect.Response, resp.Msg)
-			}
+		_, err := client.GetWorkspace(context.Background(), connect.NewRequest(&v1.GetWorkspaceRequest{
+			WorkspaceId: "some-random-not-valid-workspace-id",
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("not found when workspace does not exist", func(t *testing.T) {
+		serverMock, client := setupWorkspacesService(t)
+
+		serverMock.EXPECT().GetWorkspace(gomock.Any(), workspaceID).Return(nil, &jsonrpc2.Error{
+			Code:    404,
+			Message: "not found",
 		})
-	}
+
+		_, err := client.GetWorkspace(context.Background(), connect.NewRequest(&v1.GetWorkspaceRequest{
+			WorkspaceId: workspaceID,
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
+	})
+
+	t.Run("returns a workspace when it exists", func(t *testing.T) {
+		serverMock, client := setupWorkspacesService(t)
+
+		serverMock.EXPECT().GetWorkspace(gomock.Any(), workspaceID).Return(&workspaceTestData[0].Protocol, nil)
+
+		resp, err := client.GetWorkspace(context.Background(), connect.NewRequest(&v1.GetWorkspaceRequest{
+			WorkspaceId: workspaceID,
+		}))
+		require.NoError(t, err)
+
+		requireEqualProto(t, workspaceTestData[0].API, resp.Msg.GetResult())
+	})
 }
 
 func TestWorkspaceService_GetOwnerToken(t *testing.T) {
 	const (
-		bearerToken      = "bearer-token-for-tests"
 		foundWorkspaceID = "easycz-seer-xl8o1zacpyw"
 		ownerToken       = "some-owner-token"
 	)
@@ -118,7 +107,7 @@ func TestWorkspaceService_GetOwnerToken(t *testing.T) {
 		},
 		{
 			name:        "not found when workspace is not found by ID",
-			WorkspaceID: "some-not-found-workspace-id",
+			WorkspaceID: mustGenerateWorkspaceID(t),
 			Expect: Expectation{
 				Code: connect.CodeNotFound,
 			},
@@ -445,4 +434,13 @@ func requireErrorCode(t *testing.T, expected connect.Code, err error) {
 
 	actual := connect.CodeOf(err)
 	require.Equal(t, expected, actual, "expected code %s, but got %s from error %v", expected.String(), actual.String(), err)
+}
+
+func mustGenerateWorkspaceID(t *testing.T) string {
+	t.Helper()
+
+	wsid, err := namegen.GenerateWorkspaceID()
+	require.NoError(t, err)
+
+	return wsid
 }
