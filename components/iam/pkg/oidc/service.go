@@ -103,13 +103,15 @@ func (service *OIDCService) GetClientConfigFromRequest(r *http.Request) (*OIDCCl
 	if issuerParam == "" {
 		return nil, errors.New("issuer param not specified")
 	}
+	log.WithField("issuerParam", issuerParam).Trace("GetClientConfigFromRequest")
 	issuer, err := url.QueryUnescape(issuerParam)
 	if err != nil {
 		return nil, errors.New("bad issuer param")
 	}
 	log.WithField("issuer", issuer).Trace("at GetClientConfigFromRequest")
 
-	for _, value := range service.configsById {
+	for id, value := range service.configsById {
+		log.WithField("issuer", value.Issuer).WithField("id", id).Trace("GetClientConfigFromRequest (candidate)")
 		if value.Issuer == issuer {
 			return value, nil
 		}
