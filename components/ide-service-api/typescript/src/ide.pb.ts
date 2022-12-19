@@ -73,6 +73,7 @@ export interface EnvironmentVariable {
 
 export interface User {
   id: string;
+  email?: string | undefined;
 }
 
 export interface ResolveWorkspaceConfigRequest {
@@ -238,13 +239,16 @@ export const EnvironmentVariable = {
 };
 
 function createBaseUser(): User {
-  return { id: "" };
+  return { id: "", email: undefined };
 }
 
 export const User = {
   encode(message: User, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.id !== "") {
       writer.uint32(10).string(message.id);
+    }
+    if (message.email !== undefined) {
+      writer.uint32(18).string(message.email);
     }
     return writer;
   },
@@ -259,6 +263,9 @@ export const User = {
         case 1:
           message.id = reader.string();
           break;
+        case 2:
+          message.email = reader.string();
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -268,18 +275,23 @@ export const User = {
   },
 
   fromJSON(object: any): User {
-    return { id: isSet(object.id) ? String(object.id) : "" };
+    return {
+      id: isSet(object.id) ? String(object.id) : "",
+      email: isSet(object.email) ? String(object.email) : undefined,
+    };
   },
 
   toJSON(message: User): unknown {
     const obj: any = {};
     message.id !== undefined && (obj.id = message.id);
+    message.email !== undefined && (obj.email = message.email);
     return obj;
   },
 
   fromPartial(object: DeepPartial<User>): User {
     const message = createBaseUser();
     message.id = object.id ?? "";
+    message.email = object.email ?? undefined;
     return message;
   },
 };

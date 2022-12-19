@@ -93,6 +93,16 @@ func ParseConfig(ctx context.Context, b []byte) (*config.IDEConfig, error) {
 		cfg.IdeOptions.Options[id] = option
 	}
 
+	if cfg.GpRunImage != "" {
+		if resolved, err := oci_tool.Resolve(ctx, cfg.GpRunImage); err != nil {
+			log.WithError(err).Error("ide config: cannot resolve latest image digest")
+			cfg.GpRunImage = ""
+		} else {
+			log.WithField("image", cfg.GpRunImage).WithField("resolved", resolved).Info("ide config: resolved latest image digest")
+			cfg.GpRunImage = resolved
+		}
+	}
+
 	return &cfg, nil
 }
 

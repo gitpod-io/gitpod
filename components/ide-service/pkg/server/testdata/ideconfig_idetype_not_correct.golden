@@ -1,5 +1,6 @@
 {
     "Config": {
+        "gpRunImage": "",
         "supervisorImage": "",
         "ideOptions": {
             "options": null,

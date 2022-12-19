@@ -1263,6 +1263,7 @@ apiVersion: v1
 data:
   config.json: |-
     {
+      "gpRunImage": "registry.hub.docker.com/gitpod/gp-run:latest",
       "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:test",
       "ideOptions": {
         "options": {
@@ -2582,6 +2583,7 @@ apiVersion: v1
 data:
   config.json: |-
     {
+      "gpRunImage": "registry.hub.docker.com/gitpod/gp-run:latest",
       "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:test",
       "ideOptions": {
         "options": {

@@ -37,7 +37,12 @@ type Attributes struct {
 // If the environment contains CONFIGCAT_SDK_KEY value, it vill be used to construct a ConfigCat client.
 // Otherwise, it returns a client which always returns the default value. This client is used for Self-Hosted installations.
 func NewClient() Client {
+	// TODO: get rid fo GITPOD_HOST is implementaion detail of supervisor, it is a subject to change
+	// gitpodHost should be provided as an option instead
 	gitpodHost := os.Getenv("GITPOD_HOST")
+	if gitpodHost == "" {
+		gitpodHost = os.Getenv("HOST_URL")
+	}
 	if gitpodHost != "" {
 		return newConfigCatClient(configcat.Config{
 			SDKKey:       "gitpod",
