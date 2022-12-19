@@ -41,13 +41,13 @@ import {
     projectsPathNew,
 } from "../projects/projects.routes";
 import { workspacesPathMain } from "../workspaces/workspaces.routes";
+import { LocalPreviewAlert } from "./LocalPreviewAlert";
+import OAuthClientApproval from "../OauthClientApproval";
+import { Blocked } from "./Blocked";
 
 // TODO: Can we bundle-split/lazy load these like other pages?
 import { BlockedRepositories } from "../admin/BlockedRepositories";
 import PersonalAccessTokenCreateView from "../settings/PersonalAccessTokensCreateView";
-import { LocalPreviewAlert } from "./LocalPreviewAlert";
-import OAuthClientApproval from "../OauthClientApproval";
-import { Blocked } from "./Blocked";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
@@ -93,17 +93,15 @@ type AppRoutesProps = {
     teams?: Team[];
 };
 export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) => {
-    const [isWhatsNewShown, setWhatsNewShown] = useState(shouldSeeWhatsNew(user));
-    const [showUserIdePreference, setShowUserIdePreference] = useState(false);
-
     const hash = getURLHash();
+
+    const [isWhatsNewShown, setWhatsNewShown] = useState(shouldSeeWhatsNew(user));
 
     // Prefix with `/#referrer` will specify an IDE for workspace
     // We don't need to show IDE preference in this case
-    const shouldUserIdePreferenceShown = User.isOnboardingUser(user) && !hash.startsWith(ContextURL.REFERRER_PREFIX);
-    if (shouldUserIdePreferenceShown !== showUserIdePreference) {
-        setShowUserIdePreference(shouldUserIdePreferenceShown);
-    }
+    const [showUserIdePreference, setShowUserIdePreference] = useState(
+        User.isOnboardingUser(user) && !hash.startsWith(ContextURL.REFERRER_PREFIX),
+    );
 
     // TODO: Add a Route for this instead of inspecting location manually
     if (window.location.pathname.startsWith("/blocked")) {
