@@ -2,12 +2,11 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
-package io.gitpod.jetbrains.gateway.stable
+package io.gitpod.jetbrains.gateway
 
 import com.jetbrains.gateway.api.GatewayConnector
 import com.jetbrains.gateway.api.GatewayConnectorDocumentationPage
 import com.jetbrains.rd.util.lifetime.Lifetime
-import io.gitpod.jetbrains.gateway.GitpodRecentConnections
 import io.gitpod.jetbrains.icons.GitpodIcons
 import java.awt.Component
 

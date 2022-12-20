@@ -27,6 +27,7 @@
     </extensions>
 
     <extensions defaultExtensionNs="com.jetbrains">
+        <gatewayConnector implementation="io.gitpod.jetbrains.gateway.GitpodConnector"/>
         <gatewayConnectionProvider implementation="io.gitpod.jetbrains.gateway.GitpodConnectionProvider"/>
     </extensions>
 

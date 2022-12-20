@@ -5,6 +5,5 @@
 -->
 <idea-plugin>
     <extensions defaultExtensionNs="com.jetbrains">
-        <gatewayConnector implementation="io.gitpod.jetbrains.gateway.latest.GitpodConnector"/>
     </extensions>
 </idea-plugin>
