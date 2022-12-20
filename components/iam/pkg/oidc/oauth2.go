@@ -8,7 +8,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"golang.org/x/oauth2"
 )
 
@@ -29,7 +28,6 @@ type keyOAuth2Result struct{}
 
 func OAuth2Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		log.Trace("at oauth2 middleware")
 		ctx := r.Context()
 		config, ok := ctx.Value(keyOIDCClientConfig{}).(*OIDCClientConfig)
 		if !ok {

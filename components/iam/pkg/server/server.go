@@ -37,7 +37,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.ServiceConfig) erro
 	}
 
 	// Requests to /oidc/* are handled by oidc.Router
-	oidcService := oidc.NewOIDCService()
+	oidcService := oidc.NewService()
 	rootHandler.Mount("/oidc", oidc.Router(oidcService))
 
 	// TODO(at) remove the demo config after start sync'ing with DB
@@ -62,7 +62,7 @@ func registerRootRouter(srv *baseserver.Server) (*chi.Mux, error) {
 }
 
 // TODO(at) remove the demo config after start sync'ing with DB
-func loadTestConfig(oidcService *oidc.OIDCService, cfg *config.ServiceConfig) error {
+func loadTestConfig(oidcService *oidc.Service, cfg *config.ServiceConfig) error {
 	testConfig, err := oidc.ReadDemoConfigFromFile(cfg.OIDCClientsConfigFile)
 	if err != nil {
 		return fmt.Errorf("failed to read test config: %w", err)
