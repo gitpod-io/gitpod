@@ -8,7 +8,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"golang.org/x/oauth2"
 )
 
@@ -60,7 +59,7 @@ func OAuth2Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		oauth2Token, err := config.OAuth2Config.Exchange(ctx, code)
+		oauth2Token, err := config.OAuth2Config.Exchange(r.Context(), code)
 		if err != nil {
 			http.Error(rw, "failed to exchange token: "+err.Error(), http.StatusInternalServerError)
 			return
