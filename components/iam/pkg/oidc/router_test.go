@@ -12,18 +12,13 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
 	goidc "github.com/coreos/go-oidc/v3/oidc"
-
-	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 func TestRoute_start(t *testing.T) {
-	log.Log.Logger.SetLevel(logrus.TraceLevel)
-
 	// setup fake OIDC service
 	idpUrl := newFakeIdP(t)
 
@@ -48,8 +43,6 @@ func TestRoute_start(t *testing.T) {
 }
 
 func TestRoute_callback(t *testing.T) {
-	log.Log.Logger.SetLevel(logrus.TraceLevel)
-
 	// setup fake OIDC service
 	idpUrl := newFakeIdP(t)
 
