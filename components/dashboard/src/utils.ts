@@ -95,3 +95,32 @@ export function copyToClipboard(text: string) {
 export function getURLHash() {
     return window.location.hash.replace(/^[#/]+/, "");
 }
+
+export function isWebsiteSlug(pathName: string) {
+    const slugs = [
+        "about",
+        "blog",
+        "careers",
+        "cde",
+        "changelog",
+        "chat",
+        "code-of-conduct",
+        "contact",
+        "docs",
+        "features",
+        "for",
+        "gitpod-vs-github-codespaces",
+        "imprint",
+        "media-kit",
+        "memes",
+        "pricing",
+        "privacy",
+        "security",
+        "screencasts",
+        "self-hosted",
+        "support",
+        "terms",
+        "values",
+    ];
+    return slugs.some((slug) => pathName.startsWith("/" + slug + "/") || pathName === "/" + slug);
+}
