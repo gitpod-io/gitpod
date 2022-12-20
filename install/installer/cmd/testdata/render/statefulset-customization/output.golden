@@ -3459,7 +3459,7 @@ data:
         app.kubernetes.io/instance: mysql
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: mysql
-        helm.sh/chart: mysql-9.1.2
+        helm.sh/chart: mysql-9.4.5
       name: mysql
       namespace: default
     ---
@@ -3472,7 +3472,7 @@ data:
         app.kubernetes.io/instance: mysql
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: mysql
-        helm.sh/chart: mysql-9.1.2
+        helm.sh/chart: mysql-9.4.5
       name: mysql-headless
       namespace: default
     ---
@@ -3485,7 +3485,7 @@ data:
         app.kubernetes.io/instance: mysql
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: mysql
-        helm.sh/chart: mysql-9.1.2
+        helm.sh/chart: mysql-9.4.5
       name: mysql
       namespace: default
     ---
@@ -3498,7 +3498,7 @@ data:
         app.kubernetes.io/instance: mysql
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: mysql
-        helm.sh/chart: mysql-9.1.2
+        helm.sh/chart: mysql-9.4.5
       name: mysql
       namespace: default
     ---
@@ -5057,7 +5057,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: mysql
-    helm.sh/chart: mysql-9.1.2
+    helm.sh/chart: mysql-9.4.5
     app.kubernetes.io/instance: mysql
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/component: primary
@@ -5074,7 +5074,7 @@ data:
     datadir=/bitnami/mysql/data
     tmpdir=/opt/bitnami/mysql/tmp
     max_allowed_packet=16M
-    bind-address=0.0.0.0
+    bind-address=*
     pid-file=/opt/bitnami/mysql/tmp/mysqld.pid
     log-error=/opt/bitnami/mysql/logs/mysqld.log
     character-set-server=UTF8
@@ -7584,7 +7584,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: mysql
-    helm.sh/chart: mysql-9.1.2
+    helm.sh/chart: mysql-9.4.5
     app.kubernetes.io/instance: mysql
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/component: primary
@@ -7612,11 +7612,10 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: mysql
-    helm.sh/chart: mysql-9.1.2
+    helm.sh/chart: mysql-9.4.5
     app.kubernetes.io/instance: mysql
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/component: primary
-  annotations:
 spec:
   type: ClusterIP
   clusterIP: None
@@ -8717,7 +8716,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: mysql
-    helm.sh/chart: mysql-9.1.2
+    helm.sh/chart: mysql-9.4.5
     app.kubernetes.io/instance: mysql
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/component: primary
@@ -8735,10 +8734,10 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/configuration: 11b8361c0fbf695cec6ec7f47ed4118ad3c7d71a391ca246df129803d3e205a5
+        checksum/configuration: 0c1e0d4282c8f8f820f3c9d1d79b3f423c4676afac2e3a6de555f8553f146eb4
       labels:
         app.kubernetes.io/name: mysql
-        helm.sh/chart: mysql-9.1.2
+        helm.sh/chart: mysql-9.4.5
         app.kubernetes.io/instance: mysql
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/component: primary
@@ -8757,7 +8756,7 @@ spec:
         fsGroup: 1001
       initContainers:
         - name: volume-permissions
-          image: docker.io/bitnami/bitnami-shell:10-debian-10-r431
+          image: /docker.io/bitnami/bitnami-shell:11-debian-11-r60
           imagePullPolicy: "IfNotPresent"
           command:
             - /bin/bash
@@ -8773,7 +8772,7 @@ spec:
               mountPath: /bitnami/mysql
       containers:
         - name: mysql
-          image: docker.io/bitnami/mysql:5.7.34-debian-10-r55
+          image: /docker.io/bitnami/mysql:5.7.34-debian-10-r55
           imagePullPolicy: "IfNotPresent"
           securityContext:
             runAsNonRoot: true

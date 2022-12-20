@@ -8,5 +8,5 @@ name: mysql
 version: 1.0.0
 dependencies:
   - name: mysql
-    version: 9.1.2
+    version: 9.4.5
     repository: https://charts.bitnami.com/bitnami
