@@ -60,7 +60,7 @@ func (s *Service) getStartHandler() http.HandlerFunc {
 			return
 		}
 
-		startParams, err := s.GetStartParams(&config)
+		startParams, err := s.GetStartParams(config)
 		if err != nil {
 			http.Error(rw, "failed to start auth flow", http.StatusInternalServerError)
 			return
@@ -122,7 +122,7 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 			return
 		}
 
-		result, err := s.Authenticate(ctx, &oauth2Result,
+		result, err := s.Authenticate(r.Context(), oauth2Result,
 			config.Issuer, nonceCookie.Value)
 		if err != nil {
 			http.Error(rw, "OIDC authentication failed", http.StatusInternalServerError)
