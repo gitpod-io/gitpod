@@ -6,12 +6,10 @@ package oidc
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"golang.org/x/oauth2"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -126,29 +124,9 @@ func (oidcService *OIDCService) getCallbackHandler() http.HandlerFunc {
 		}
 
 		// TODO(at) given the result of OIDC authN, let's proceed with the redirect
+		log.WithField("id_token", result.IDToken)
 
-		// For testing purposes, let's print out redacted results
-		oauth2Result.OAuth2Token.AccessToken = "*** REDACTED ***"
-
-		var claims map[string]interface{}
-		err = result.IDToken.Claims(&claims)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		resp := struct {
-			OAuth2Token *oauth2.Token
-			Claims      map[string]interface{}
-		}{oauth2Result.OAuth2Token, claims}
-
-		data, err := json.MarshalIndent(resp, "", "    ")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		_, err = rw.Write(data)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-		}
+		redirectURL := oauth2Result.RedirectURL
+		http.Redirect(rw, r, redirectURL, http.StatusTemporaryRedirect)
 	}
 }

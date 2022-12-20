@@ -28,23 +28,21 @@ func TestRoute_start(t *testing.T) {
 	idpUrl := newFakeIdP(t)
 
 	// setup test server with client routes
-	baseUrl, _ := newTestServer(t, idpUrl)
+	baseUrl, _ := newTestServer(t, testServerParams{
+		issuer:         idpUrl,
+		redirectURL:    "",
+		clientConfigID: "R4ND0M1D",
+	})
 
 	// go to /start
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Get(baseUrl + "/oidc/start?issuer=" + idpUrl)
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
+	require.NoError(t, err)
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-	t.Log(string(body))
+	require.NoError(t, err)
+
 	require.Equal(t, 200, resp.StatusCode)
 	require.NotEqual(t, "config not found", string(body))
 }
@@ -56,14 +54,23 @@ func TestRoute_callback(t *testing.T) {
 	idpUrl := newFakeIdP(t)
 
 	// setup test server with client routes
-	baseUrl, stateParam := newTestServer(t, idpUrl)
+	baseUrl, stateParam := newTestServer(t, testServerParams{
+		issuer:         idpUrl,
+		redirectURL:    "/relative/url/to/some/page",
+		clientConfigID: "R4ND0M1D",
+	})
 	state, err := encodeStateParam(*stateParam)
 	require.NoError(t, err)
 
 	// hit the /callback endpoint
-	client := &http.Client{Timeout: 10 * time.Second}
-	req := httptest.NewRequest("GET", baseUrl+"/oidc/callback?code=123&state="+state, nil)
-	req.RequestURI = ""
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	req, err := http.NewRequest("GET", baseUrl+"/oidc/callback?code=123&state="+state, nil)
+	require.NoError(t, err)
 	req.AddCookie(&http.Cookie{
 		Name: "state", Value: state, MaxAge: 60,
 	})
@@ -74,45 +81,51 @@ func TestRoute_callback(t *testing.T) {
 	require.NoError(t, err)
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
 	require.NoError(t, err)
+	require.Equal(t, http.StatusTemporaryRedirect, resp.StatusCode, "callback should response with redirect (307)")
 
-	t.Log(string(body))
-	require.Equal(t, 200, resp.StatusCode)
-	require.NotEqual(t, "config not found", string(body))
+	url, err := resp.Location()
+	require.NoError(t, err)
+	require.Equal(t, "/relative/url/to/some/page", url.Path, "callback redirects properly")
+
 }
 
-func newTestServer(t *testing.T, issuer string) (url string, state *StateParam) {
-	router := chi.NewRouter()
+type testServerParams struct {
+	issuer         string
+	redirectURL    string
+	clientConfigID string
+	clientID       string
+}
 
+func newTestServer(t *testing.T, params testServerParams) (url string, state *StateParam) {
+	router := chi.NewRouter()
 	oidcService := NewOIDCService()
 	router.Mount("/oidc", Router(oidcService))
 
 	ts := httptest.NewServer(router)
 	url = ts.URL
 
-	clientConfigId := "R4ND0M1D"
 	stateParam := &StateParam{
-		ClientConfigID: clientConfigId,
-		RedirectURL:    "",
+		ClientConfigID: params.clientConfigID,
+		RedirectURL:    params.redirectURL,
 	}
 
 	oidcConfig := &goidc.Config{
-		ClientID:                   "123",
+		ClientID:                   params.clientConfigID,
 		SkipClientIDCheck:          true,
 		SkipIssuerCheck:            true,
 		SkipExpiryCheck:            true,
 		InsecureSkipSignatureCheck: true,
 	}
 	oauth2Config := &oauth2.Config{
-		ClientID:     "123",
+		ClientID:     params.clientID,
 		ClientSecret: "secret",
 		RedirectURL:  url + "/callback",
 		Scopes:       []string{goidc.ScopeOpenID, "profile", "email"},
 	}
 	clientConfig := &OIDCClientConfig{
-		Issuer:       issuer,
-		ID:           clientConfigId,
+		Issuer:       params.issuer,
+		ID:           params.clientConfigID,
 		OAuth2Config: oauth2Config,
 		OIDCConfig:   oidcConfig,
 	}
