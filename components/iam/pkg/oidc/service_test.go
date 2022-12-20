@@ -66,13 +66,13 @@ func TestGetClientConfigFromRequest(t *testing.T) {
 
 	state, err := encodeStateParam(StateParam{
 		ClientConfigID: clientID,
-		RedirectURL:    "",
+		ReturnToURL:    "",
 	})
 	require.NoError(t, err, "failed encode state param")
 
 	state_unknown, err := encodeStateParam(StateParam{
 		ClientConfigID: "UNKNOWN",
-		RedirectURL:    "",
+		ReturnToURL:    "",
 	})
 	require.NoError(t, err, "failed encode state param")
 
@@ -156,16 +156,17 @@ func TestAuthenticate_nonce_check(t *testing.T) {
 	require.NoError(t, err, "failed to initialize test")
 
 	token := oauth2.Token{}
-	rawIDToken := `eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkN1bXF1YXQgRG9wdGlnIiwibm9uY2UiOiIxMTEiLCJpYXQiOjE1MTYyMzkwMjJ9.NfbRZns-Sefhw6MT4ULWMj_7bX0vScklaZA2ObCYkStYlo2SvNu5Be79-5Lwcy4GY95vY_dFvLIKrZjfqv_duURSKLUbtH8VxskhcrW4sPAK2R5lzz62a6d_OnVydjNJRZf754TQZILAzMm81tEDNAJSDQjaTFl7t8Bp0iYapNyyH9ZoBrGAPaZkXHYoq4lNH88gCZj5JMRIbrZbsvhOuR3CAzbAMplOmKIWxhFVnHdm6aq6HRjz0ra6Y7yh0R9jEF3vWl2w5D3aN4XESPNBbyB3CHKQ5TG0WkbgdUpv1wwzbPfz4aFHOt--qLy7ZK0TOrS-A7YLFFsJKtoPGRjAPA`
 	extra := map[string]interface{}{
-		"id_token": rawIDToken,
+		"id_token": `eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkN1bXF1YXQgRG9wdGlnIiwibm9uY2UiOiIxMTEiLCJpYXQiOjE1MTYyMzkwMjJ9.NfbRZns-Sefhw6MT4ULWMj_7bX0vScklaZA2ObCYkStYlo2SvNu5Be79-5Lwcy4GY95vY_dFvLIKrZjfqv_duURSKLUbtH8VxskhcrW4sPAK2R5lzz62a6d_OnVydjNJRZf754TQZILAzMm81tEDNAJSDQjaTFl7t8Bp0iYapNyyH9ZoBrGAPaZkXHYoq4lNH88gCZj5JMRIbrZbsvhOuR3CAzbAMplOmKIWxhFVnHdm6aq6HRjz0ra6Y7yh0R9jEF3vWl2w5D3aN4XESPNBbyB3CHKQ5TG0WkbgdUpv1wwzbPfz4aFHOt--qLy7ZK0TOrS-A7YLFFsJKtoPGRjAPA`,
 	}
 
-	nonceCookieValue := "111"
-	oauth2Result := &OAuth2Result{
-		OAuth2Token: token.WithExtra(extra),
-	}
-	result, err := service.Authenticate(context.Background(), oauth2Result, issuer, nonceCookieValue)
+	result, err := service.Authenticate(context.Background(), AuthenticateParams{
+		OAuth2Result: &OAuth2Result{
+			OAuth2Token: token.WithExtra(extra),
+		},
+		NonceCookieValue: "111",
+		Issuer:           issuer,
+	})
 
 	require.NoError(t, err, "failed to authenticate")
 	require.NotNil(t, result)

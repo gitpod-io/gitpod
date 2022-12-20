@@ -10,7 +10,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -54,7 +54,7 @@ func (s *Service) AddClientConfig(config *ClientConfig) error {
 	if s.providerByIssuer[config.Issuer] == nil {
 		provider, err := oidc.NewProvider(context.Background(), config.Issuer)
 		if err != nil {
-			return errors.New("OIDC discovery failed: " + err.Error())
+			return fmt.Errorf("OIDC discovery failed: %w", err)
 		}
 		s.providerByIssuer[config.Issuer] = provider
 		s.verifierByIssuer[config.Issuer] = provider.Verifier(config.VerifierConfig)
@@ -70,17 +70,19 @@ func (s *Service) GetStartParams(config *ClientConfig) (*StartParams, error) {
 	// and b) to be mirrored by the IdP on callback requests.
 	stateParam := StateParam{
 		ClientConfigID: config.ID,
-		RedirectURL:    config.OAuth2Config.RedirectURL,
+
+		// TODO(at) read a relative URL from `returnTo` query param of the start request
+		ReturnToURL: "/",
 	}
 	state, err := encodeStateParam(stateParam)
 	if err != nil {
-		return nil, errors.New("failed to encode state")
+		return nil, fmt.Errorf("failed to encode state")
 	}
 
 	// number used once
 	nonce, err := randString(32)
 	if err != nil {
-		return nil, errors.New("failed to create nonce")
+		return nil, fmt.Errorf("failed to create nonce")
 	}
 
 	// Nonce is the single option passed on to configure the consent page ATM.
@@ -124,7 +126,7 @@ func (s *Service) GetClientConfigFromRequest(r *http.Request) (*ClientConfig, er
 	issuerParam := r.URL.Query().Get("issuer")
 	stateParam := r.URL.Query().Get("state")
 	if issuerParam == "" && stateParam == "" {
-		return nil, errors.New("missing request parameters")
+		return nil, fmt.Errorf("missing request parameters")
 	}
 
 	if issuerParam != "" {
@@ -138,7 +140,7 @@ func (s *Service) GetClientConfigFromRequest(r *http.Request) (*ClientConfig, er
 	if stateParam != "" {
 		state, err := decodeStateParam(stateParam)
 		if err != nil {
-			return nil, errors.New("bad state param")
+			return nil, fmt.Errorf("bad state param")
 		}
 		config := s.configsById[state.ClientConfigID]
 		if config != nil {
@@ -146,27 +148,33 @@ func (s *Service) GetClientConfigFromRequest(r *http.Request) (*ClientConfig, er
 		}
 	}
 
-	return nil, errors.New("failed to find OIDC config for request")
+	return nil, fmt.Errorf("failed to find OIDC config for request")
 }
 
-func (s *Service) Authenticate(ctx context.Context, oauth2Result *OAuth2Result, issuer string, nonceCookieValue string) (*AuthFlowResult, error) {
-	rawIDToken, ok := oauth2Result.OAuth2Token.Extra("id_token").(string)
+type AuthenticateParams struct {
+	OAuth2Result     *OAuth2Result
+	Issuer           string
+	NonceCookieValue string
+}
+
+func (s *Service) Authenticate(ctx context.Context, params AuthenticateParams) (*AuthFlowResult, error) {
+	rawIDToken, ok := params.OAuth2Result.OAuth2Token.Extra("id_token").(string)
 	if !ok {
-		return nil, errors.New("id_token not found")
+		return nil, fmt.Errorf("id_token not found")
 	}
 
-	verifier := s.verifierByIssuer[issuer]
+	verifier := s.verifierByIssuer[params.Issuer]
 	if verifier == nil {
-		return nil, errors.New("verifier not found")
+		return nil, fmt.Errorf("verifier not found")
 	}
 
 	idToken, err := verifier.Verify(ctx, rawIDToken)
 	if err != nil {
-		return nil, errors.New("failed to verify id_token: " + err.Error())
+		return nil, fmt.Errorf("failed to verify id_token: %w", err)
 	}
 
-	if idToken.Nonce != nonceCookieValue {
-		return nil, errors.New("nonce mismatch")
+	if idToken.Nonce != params.NonceCookieValue {
+		return nil, fmt.Errorf("nonce mismatch")
 	}
 	return &AuthFlowResult{
 		IDToken: idToken,

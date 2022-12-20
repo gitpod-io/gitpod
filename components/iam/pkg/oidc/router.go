@@ -37,11 +37,19 @@ const (
 	nonceCookieName = "nonce"
 )
 
+func AttachClientConfigToContext(parentContext context.Context, config *ClientConfig) context.Context {
+	childContext := context.WithValue(parentContext, keyOIDCClientConfig{}, config)
+	return childContext
+}
+
+func GetClientConfigFromContext(ctx context.Context) *ClientConfig {
+	return ctx.Value(keyOIDCClientConfig{}).(*ClientConfig)
+}
+
 func (s *Service) getStartHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		config, ok := ctx.Value(keyOIDCClientConfig{}).(*ClientConfig)
-		if !ok {
+		config := GetClientConfigFromContext(r.Context())
+		if config == nil {
 			http.Error(rw, "config not found", http.StatusInternalServerError)
 			return
 		}
@@ -81,7 +89,7 @@ func (s *Service) clientConfigMiddleware() func(http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), keyOIDCClientConfig{}, config)
+			ctx := AttachClientConfigToContext(r.Context(), config)
 			next.ServeHTTP(rw, r.WithContext(ctx))
 		})
 	}
@@ -90,14 +98,13 @@ func (s *Service) clientConfigMiddleware() func(http.Handler) http.Handler {
 // The OIDC callback handler depends on the state produced in the OAuth2 middleware
 func (s *Service) getCallbackHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		config, ok := ctx.Value(keyOIDCClientConfig{}).(*ClientConfig)
-		if !ok {
+		config := GetClientConfigFromContext(r.Context())
+		if config == nil {
 			http.Error(rw, "config not found", http.StatusInternalServerError)
 			return
 		}
-		oauth2Result, ok := ctx.Value(keyOAuth2Result{}).(OAuth2Result)
-		if !ok {
+		oauth2Result := GetOAuth2ResultFromContext(r.Context())
+		if oauth2Result == nil {
 			http.Error(rw, "OIDC precondition failure", http.StatusInternalServerError)
 			return
 		}
@@ -108,9 +115,11 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 			http.Error(rw, "nonce not found", http.StatusBadRequest)
 			return
 		}
-
-		result, err := s.Authenticate(ctx, &oauth2Result,
-			config.Issuer, nonceCookie.Value)
+		result, err := s.Authenticate(r.Context(), AuthenticateParams{
+			OAuth2Result:     oauth2Result,
+			Issuer:           config.Issuer,
+			NonceCookieValue: nonceCookie.Value,
+		})
 		if err != nil {
 			log.Warn("OIDC authentication failed: " + err.Error())
 			http.Error(rw, "OIDC authentication failed", http.StatusInternalServerError)
@@ -118,9 +127,9 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 		}
 
 		// TODO(at) given the result of OIDC authN, let's proceed with the redirect
-		log.WithField("id_token", result.IDToken)
+		log.WithField("id_token", result.IDToken).Trace("user verification was successful")
 
-		redirectURL := oauth2Result.RedirectURL
-		http.Redirect(rw, r, redirectURL, http.StatusTemporaryRedirect)
+		returnToURL := oauth2Result.ReturnToURL
+		http.Redirect(rw, r, returnToURL, http.StatusTemporaryRedirect)
 	}
 }

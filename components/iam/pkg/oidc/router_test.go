@@ -30,7 +30,7 @@ func TestRoute_start(t *testing.T) {
 	// setup test server with client routes
 	baseUrl, _ := newTestServer(t, testServerParams{
 		issuer:         idpUrl,
-		redirectURL:    "",
+		returnToURL:    "",
 		clientConfigID: "R4ND0M1D",
 	})
 
@@ -56,7 +56,7 @@ func TestRoute_callback(t *testing.T) {
 	// setup test server with client routes
 	baseUrl, stateParam := newTestServer(t, testServerParams{
 		issuer:         idpUrl,
-		redirectURL:    "/relative/url/to/some/page",
+		returnToURL:    "/relative/url/to/some/page",
 		clientConfigID: "R4ND0M1D",
 	})
 	state, err := encodeStateParam(*stateParam)
@@ -92,7 +92,7 @@ func TestRoute_callback(t *testing.T) {
 
 type testServerParams struct {
 	issuer         string
-	redirectURL    string
+	returnToURL    string
 	clientConfigID string
 	clientID       string
 }
@@ -107,7 +107,7 @@ func newTestServer(t *testing.T, params testServerParams) (url string, state *St
 
 	stateParam := &StateParam{
 		ClientConfigID: params.clientConfigID,
-		RedirectURL:    params.redirectURL,
+		ReturnToURL:    params.returnToURL,
 	}
 
 	oidcConfig := &goidc.Config{

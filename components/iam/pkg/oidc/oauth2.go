@@ -14,23 +14,31 @@ import (
 type OAuth2Result struct {
 	ClientID    string
 	OAuth2Token *oauth2.Token
-	RedirectURL string
+	ReturnToURL string
 }
 
 type StateParam struct {
 	// Internal client ID
 	ClientConfigID string `json:"clientId"`
 
-	RedirectURL string `json:"redirectUrl"`
+	ReturnToURL string `json:"returnTo"`
 }
 
 type keyOAuth2Result struct{}
 
+func AttachOAuth2ResultToContext(parentContext context.Context, result *OAuth2Result) context.Context {
+	childContext := context.WithValue(parentContext, keyOAuth2Result{}, result)
+	return childContext
+}
+
+func GetOAuth2ResultFromContext(ctx context.Context) *OAuth2Result {
+	return ctx.Value(keyOAuth2Result{}).(*OAuth2Result)
+}
+
 func OAuth2Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		config, ok := ctx.Value(keyOIDCClientConfig{}).(*ClientConfig)
-		if !ok {
+		config := GetClientConfigFromContext(r.Context())
+		if config == nil {
 			http.Error(rw, "config not found", http.StatusInternalServerError)
 			return
 		}
@@ -65,15 +73,15 @@ func OAuth2Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		oauth2Token, err := config.OAuth2Config.Exchange(ctx, code)
+		oauth2Token, err := config.OAuth2Config.Exchange(r.Context(), code)
 		if err != nil {
 			http.Error(rw, "failed to exchange token: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		ctx = context.WithValue(ctx, keyOAuth2Result{}, OAuth2Result{
+		ctx := AttachOAuth2ResultToContext(r.Context(), &OAuth2Result{
 			OAuth2Token: oauth2Token,
-			RedirectURL: state.RedirectURL,
+			ReturnToURL: state.ReturnToURL,
 			ClientID:    state.ClientConfigID,
 		})
 		next.ServeHTTP(rw, r.WithContext(ctx))
