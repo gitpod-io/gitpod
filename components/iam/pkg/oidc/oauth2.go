@@ -19,12 +19,19 @@ type OAuth2Result struct {
 
 type keyOAuth2Result struct{}
 
+func AttachOAuth2ResultToContext(parentContext context.Context, result *OAuth2Result) context.Context {
+	childContext := context.WithValue(parentContext, keyOAuth2Result{}, result)
+	return childContext
+}
+
+func GetOAuth2ResultFromContext(ctx context.Context) *OAuth2Result {
+	return ctx.Value(keyOAuth2Result{}).(*OAuth2Result)
+}
+
 func OAuth2Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		log.Trace("at oauth2 middleware")
-		ctx := r.Context()
-		config, ok := ctx.Value(keyOIDCClientConfig{}).(ClientConfig)
-		if !ok {
+		config := GetClientConfigFromContext(r.Context())
+		if config == nil {
 			http.Error(rw, "config not found", http.StatusInternalServerError)
 			return
 		}
@@ -59,7 +66,7 @@ func OAuth2Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(ctx, keyOAuth2Result{}, OAuth2Result{
+		ctx := AttachOAuth2ResultToContext(r.Context(), &OAuth2Result{
 			OAuth2Token: oauth2Token,
 		})
 		next.ServeHTTP(rw, r.WithContext(ctx))
