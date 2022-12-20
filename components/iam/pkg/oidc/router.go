@@ -6,12 +6,10 @@ package oidc
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"golang.org/x/oauth2"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -117,38 +115,21 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 			http.Error(rw, "nonce not found", http.StatusBadRequest)
 			return
 		}
-
-		result, err := s.Authenticate(r.Context(), oauth2Result,
-			config.Issuer, nonceCookie.Value)
+		result, err := s.Authenticate(r.Context(), AuthenticateParams{
+			OAuth2Result:     oauth2Result,
+			Issuer:           config.Issuer,
+			NonceCookieValue: nonceCookie.Value,
+		})
 		if err != nil {
+			log.Warn("OIDC authentication failed: " + err.Error())
 			http.Error(rw, "OIDC authentication failed", http.StatusInternalServerError)
 			return
 		}
 
 		// TODO(at) given the result of OIDC authN, let's proceed with the redirect
+		log.WithField("id_token", result.IDToken).Trace("user verification was successful")
 
-		// For testing purposes, let's print out redacted results
-		oauth2Result.OAuth2Token.AccessToken = "*** REDACTED ***"
-
-		var claims map[string]interface{}
-		err = result.IDToken.Claims(&claims)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		resp := struct {
-			OAuth2Token *oauth2.Token
-			Claims      map[string]interface{}
-		}{oauth2Result.OAuth2Token, claims}
-
-		data, err := json.MarshalIndent(resp, "", "    ")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		_, err = rw.Write(data)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-		}
+		returnToURL := oauth2Result.ReturnToURL
+		http.Redirect(rw, r, returnToURL, http.StatusTemporaryRedirect)
 	}
 }

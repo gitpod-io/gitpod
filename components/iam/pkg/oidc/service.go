@@ -151,13 +151,19 @@ func (s *Service) GetClientConfigFromRequest(r *http.Request) (*ClientConfig, er
 	return nil, fmt.Errorf("failed to find OIDC config for request")
 }
 
-func (s *Service) Authenticate(ctx context.Context, oauth2Result *OAuth2Result, issuer string, nonceCookieValue string) (*AuthFlowResult, error) {
-	rawIDToken, ok := oauth2Result.OAuth2Token.Extra("id_token").(string)
+type AuthenticateParams struct {
+	OAuth2Result     *OAuth2Result
+	Issuer           string
+	NonceCookieValue string
+}
+
+func (s *Service) Authenticate(ctx context.Context, params AuthenticateParams) (*AuthFlowResult, error) {
+	rawIDToken, ok := params.OAuth2Result.OAuth2Token.Extra("id_token").(string)
 	if !ok {
 		return nil, fmt.Errorf("id_token not found")
 	}
 
-	verifier := s.verifierByIssuer[issuer]
+	verifier := s.verifierByIssuer[params.Issuer]
 	if verifier == nil {
 		return nil, fmt.Errorf("verifier not found")
 	}
@@ -167,7 +173,7 @@ func (s *Service) Authenticate(ctx context.Context, oauth2Result *OAuth2Result, 
 		return nil, fmt.Errorf("failed to verify id_token: %w", err)
 	}
 
-	if idToken.Nonce != nonceCookieValue {
+	if idToken.Nonce != params.NonceCookieValue {
 		return nil, fmt.Errorf("nonce mismatch")
 	}
 	return &AuthFlowResult{

@@ -12,7 +12,9 @@ import (
 )
 
 type OAuth2Result struct {
+	ClientID    string
 	OAuth2Token *oauth2.Token
+	ReturnToURL string
 }
 
 type StateParam struct {
@@ -79,6 +81,8 @@ func OAuth2Middleware(next http.Handler) http.Handler {
 
 		ctx := AttachOAuth2ResultToContext(r.Context(), &OAuth2Result{
 			OAuth2Token: oauth2Token,
+			ReturnToURL: state.ReturnToURL,
+			ClientID:    state.ClientConfigID,
 		})
 		next.ServeHTTP(rw, r.WithContext(ctx))
 	})
