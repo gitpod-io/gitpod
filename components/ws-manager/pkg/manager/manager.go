@@ -1410,7 +1410,7 @@ func (m *Manager) onChange(ctx context.Context, status *api.WorkspaceStatus) {
 		_ = json.Unmarshal(safeStatus, &safeStatusLog)
 		clog.WithFields(safeStatusLog).Error("workspace failed")
 	}
-	if status.Phase == 0 {
+	if status.Phase == api.WorkspacePhase_UNKNOWN {
 		status, _ := protojson.Marshal(status)
 		safeStatus, _ := log.RedactJSON(status)
 		safeStatusLog := make(map[string]interface{})
