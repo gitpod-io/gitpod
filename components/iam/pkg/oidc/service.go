@@ -25,10 +25,10 @@ type Service struct {
 }
 
 type ClientConfig struct {
-	ID           string
-	Issuer       string
-	OAuth2Config *oauth2.Config
-	OIDCConfig   *oidc.Config
+	ID             string
+	Issuer         string
+	OAuth2Config   *oauth2.Config
+	VerifierConfig *oidc.Config
 }
 
 type StartParams struct {
@@ -37,7 +37,7 @@ type StartParams struct {
 	AuthCodeURL string
 }
 
-type AuthResult struct {
+type AuthFlowResult struct {
 	IDToken *oidc.IDToken
 }
 
@@ -56,7 +56,7 @@ func (s *Service) AddClientConfig(config *ClientConfig) error {
 			return errors.New("OIDC discovery failed: " + err.Error())
 		}
 		s.providerByIssuer[config.Issuer] = provider
-		s.verifierByIssuer[config.Issuer] = provider.Verifier(config.OIDCConfig)
+		s.verifierByIssuer[config.Issuer] = provider.Verifier(config.VerifierConfig)
 	}
 
 	config.OAuth2Config.Endpoint = s.providerByIssuer[config.Issuer].Endpoint()
@@ -133,7 +133,7 @@ func (s *Service) Authenticate(ctx context.Context, oauth2Result *OAuth2Result, 
 	if idToken.Nonce != nonceCookieValue {
 		return nil, errors.New("nonce mismatch")
 	}
-	return &AuthResult{
+	return &AuthFlowResult{
 		IDToken: idToken,
 	}, nil
 }

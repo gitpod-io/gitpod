@@ -16,17 +16,17 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func Router(oidcService *Service) *chi.Mux {
+func Router(s *Service) *chi.Mux {
 	router := chi.NewRouter()
 
 	router.Route("/start", func(r chi.Router) {
-		r.Use(oidcService.clientConfigMiddleware())
-		r.Get("/", oidcService.getStartHandler())
+		r.Use(s.clientConfigMiddleware())
+		r.Get("/", s.getStartHandler())
 	})
 	router.Route("/callback", func(r chi.Router) {
-		r.Use(oidcService.clientConfigMiddleware())
+		r.Use(s.clientConfigMiddleware())
 		r.Use(OAuth2Middleware)
-		r.Get("/", oidcService.getCallbackHandler())
+		r.Get("/", s.getCallbackHandler())
 	})
 
 	return router
