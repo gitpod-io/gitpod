@@ -9,6 +9,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -53,7 +54,7 @@ func (s *Service) AddClientConfig(config *ClientConfig) error {
 	if s.providerByIssuer[config.Issuer] == nil {
 		provider, err := oidc.NewProvider(context.Background(), config.Issuer)
 		if err != nil {
-			return errors.New("OIDC discovery failed: " + err.Error())
+			return fmt.Errorf("OIDC discovery failed: %w", err)
 		}
 		s.providerByIssuer[config.Issuer] = provider
 		s.verifierByIssuer[config.Issuer] = provider.Verifier(config.VerifierConfig)
@@ -69,12 +70,12 @@ func (s *Service) GetStartParams(config *ClientConfig) (*StartParams, error) {
 	// Using a random string to get the flow running.
 	state, err := randString(32)
 	if err != nil {
-		return nil, errors.New("failed to create state")
+		return nil, fmt.Errorf("failed to encode state")
 	}
 
 	nonce, err := randString(32)
 	if err != nil {
-		return nil, errors.New("failed to create nonce")
+		return nil, fmt.Errorf("failed to create nonce")
 	}
 
 	// Nonce is the single option passed on to configure the consent page ATM.
@@ -117,21 +118,21 @@ func (s *Service) GetClientConfigFromRequest(r *http.Request) (*ClientConfig, er
 func (s *Service) Authenticate(ctx context.Context, oauth2Result *OAuth2Result, issuer string, nonceCookieValue string) (*AuthFlowResult, error) {
 	rawIDToken, ok := oauth2Result.OAuth2Token.Extra("id_token").(string)
 	if !ok {
-		return nil, errors.New("id_token not found")
+		return nil, fmt.Errorf("id_token not found")
 	}
 
 	verifier := s.verifierByIssuer[issuer]
 	if verifier == nil {
-		return nil, errors.New("verifier not found")
+		return nil, fmt.Errorf("verifier not found")
 	}
 
 	idToken, err := verifier.Verify(ctx, rawIDToken)
 	if err != nil {
-		return nil, errors.New("failed to verify id_token: " + err.Error())
+		return nil, fmt.Errorf("failed to verify id_token: %w", err)
 	}
 
 	if idToken.Nonce != nonceCookieValue {
-		return nil, errors.New("nonce mismatch")
+		return nil, fmt.Errorf("nonce mismatch")
 	}
 	return &AuthFlowResult{
 		IDToken: idToken,
