@@ -5,11 +5,13 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sync"
 	"syscall"
 	"time"
 
@@ -28,6 +30,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
+	"github.com/gitpod-io/gitpod/common-go/watch"
 )
 
 var jsonLog bool
@@ -44,30 +47,21 @@ var runCmd = &cobra.Command{
 			log.WithError(err).WithField("filename", args[0]).Fatal("cannot load config")
 		}
 
-		var dockerCfg *configfile.ConfigFile
+		var (
+			dockerCfg   *configfile.ConfigFile
+			dockerCfgMu sync.RWMutex
+		)
 		if cfg.AuthCfg != "" {
-			authCfg := cfg.AuthCfg
-			if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
-				authCfg = filepath.Join(tproot, authCfg)
-			}
-			fr, err := os.OpenFile(authCfg, os.O_RDONLY, 0)
-			if err != nil {
-				log.WithError(err).Fatal("cannot read docker auth config")
-			}
-
-			dockerCfg = configfile.New(authCfg)
-			err = dockerCfg.LoadFromReader(fr)
-			fr.Close()
-			if err != nil {
-				log.WithError(err).Fatal("cannot read docker config")
-			}
-			log.WithField("fn", authCfg).Info("using authentication for backing registries")
+			dockerCfg = loadDockerCfg(cfg.AuthCfg)
 		}
 
 		reg := prometheus.NewRegistry()
 
 		resolverProvider := func() remotes.Resolver {
 			var resolverOpts docker.ResolverOptions
+
+			dockerCfgMu.RLock()
+			defer dockerCfgMu.RUnlock()
 			if dockerCfg != nil {
 				resolverOpts.Hosts = docker.ConfigureDefaultRegistries(
 					docker.WithAuthorizer(authorizerFromDockerConfig(dockerCfg)),
@@ -136,6 +130,19 @@ var runCmd = &cobra.Command{
 			}()
 		}
 
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		err = watch.File(ctx, cfg.AuthCfg, func() {
+			dockerCfgMu.Lock()
+			defer dockerCfgMu.Unlock()
+
+			dockerCfg = loadDockerCfg(cfg.AuthCfg)
+		})
+		if err != nil {
+			log.WithError(err).Fatal("cannot start watch of Docker auth configuration file")
+		}
+
 		log.Info("🏪 blobserve is up and running")
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
@@ -145,6 +152,26 @@ var runCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(runCmd)
+}
+
+func loadDockerCfg(fn string) *configfile.ConfigFile {
+	if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
+		fn = filepath.Join(tproot, fn)
+	}
+	fr, err := os.OpenFile(fn, os.O_RDONLY, 0)
+	if err != nil {
+		log.WithError(err).Fatal("cannot read docker auth config")
+	}
+
+	dockerCfg := configfile.New(fn)
+	err = dockerCfg.LoadFromReader(fr)
+	fr.Close()
+	if err != nil {
+		log.WithError(err).Fatal("cannot read docker config")
+	}
+	log.WithField("fn", fn).Info("using authentication for backing registries")
+
+	return dockerCfg
 }
 
 // FromDockerConfig turns docker client config into docker registry hosts
