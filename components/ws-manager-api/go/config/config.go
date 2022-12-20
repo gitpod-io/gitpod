@@ -110,8 +110,8 @@ type Configuration struct {
 	EventTraceLog string `json:"eventTraceLog,omitempty"`
 	// ReconnectionInterval configures the time we wait until we reconnect to the various other services
 	ReconnectionInterval util.Duration `json:"reconnectionInterval"`
-	// DryRun prevents us from ever stopping a pod. It is considered equivalent to a listener mode
-	DryRun bool `json:"dryRun,omitempty"`
+	// MaintenanceMode prevents to start workspace, stop workspace, and take snapshot
+	MaintenanceMode bool `json:"maintenanceMode,omitempty"`
 	// WorkspaceDaemon configures our connection to the workspace sync daemons runnin on the nodes
 	WorkspaceDaemon WorkspaceDaemonConfiguration `json:"wsdaemon"`
 	// RegistryFacadeHost is the host (possibly including port) on which the registry facade resolves
