@@ -13,6 +13,8 @@ import (
 )
 
 type Gitpod struct {
+	cfg *options
+
 	Workspaces           gitpod_experimental_v1connect.WorkspacesServiceClient
 	Teams                gitpod_experimental_v1connect.TeamsServiceClient
 	Projects             gitpod_experimental_v1connect.ProjectsServiceClient
@@ -44,6 +46,7 @@ func New(options ...Option) (*Gitpod, error) {
 	workspaces := gitpod_experimental_v1connect.NewWorkspacesServiceClient(client, url, serviceOpts...)
 
 	return &Gitpod{
+		cfg:                  opts,
 		Teams:                teams,
 		Projects:             projects,
 		PersonalAccessTokens: tokens,
@@ -63,6 +66,13 @@ func WithURL(url string) Option {
 func WithCredentials(token string) Option {
 	return func(opts *options) error {
 		opts.credentials = token
+		return nil
+	}
+}
+
+func WithHTTPClient(client *http.Client) Option {
+	return func(opts *options) error {
+		opts.client = client
 		return nil
 	}
 }
