@@ -13,7 +13,13 @@ import (
 
 type OAuth2Result struct {
 	OAuth2Token *oauth2.Token
-	Redirect    string
+}
+
+type StateParam struct {
+	// Internal client ID
+	ClientConfigID string `json:"clientId"`
+
+	ReturnToURL string `json:"returnTo"`
 }
 
 type keyOAuth2Result struct{}
@@ -54,6 +60,12 @@ func OAuth2Middleware(next http.Handler) http.Handler {
 		// on mismatch, obviously there is a client side error
 		if stateParam != stateCookie.Value {
 			http.Error(rw, "state did not match", http.StatusBadRequest)
+			return
+		}
+
+		state, err := decodeStateParam(stateParam)
+		if err != nil {
+			http.Error(rw, "bad state param", http.StatusBadRequest)
 			return
 		}
 
