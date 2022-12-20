@@ -9,4 +9,4 @@ version: 1.0.0
 dependencies:
   - name: minio
     version: 11.6.3
-    repository: https://charts.bitnami.com/bitnami
+    repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami

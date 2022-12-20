@@ -9,4 +9,4 @@ version: 1.0.0
 dependencies:
   - name: rabbitmq
     version: 10.1.1
-    repository: https://charts.bitnami.com/bitnami
+    repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
