@@ -76,11 +76,11 @@ func loadTestConfig(oidcService *oidc.Service, cfg *config.ServiceConfig) error 
 		RedirectURL:  testConfig.RedirectURL,
 		Scopes:       []string{goidc.ScopeOpenID, "profile", "email"},
 	}
-	clientConfig := &oidc.OIDCClientConfig{
-		Issuer:       testConfig.Issuer,
-		ID:           "R4ND0M1D",
-		OAuth2Config: oauth2Config,
-		OIDCConfig:   oidcConfig,
+	clientConfig := &oidc.ClientConfig{
+		Issuer:         testConfig.Issuer,
+		ID:             "R4ND0M1D",
+		OAuth2Config:   oauth2Config,
+		VerifierConfig: oidcConfig,
 	}
 	err = oidcService.AddClientConfig(clientConfig)
 	return err

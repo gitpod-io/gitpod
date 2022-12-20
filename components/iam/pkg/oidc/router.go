@@ -40,7 +40,7 @@ const (
 func (s *Service) getStartHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		config, ok := ctx.Value(keyOIDCClientConfig{}).(*OIDCClientConfig)
+		config, ok := ctx.Value(keyOIDCClientConfig{}).(*ClientConfig)
 		if !ok {
 			http.Error(rw, "config not found", http.StatusInternalServerError)
 			return
@@ -91,7 +91,7 @@ func (s *Service) clientConfigMiddleware() func(http.Handler) http.Handler {
 func (s *Service) getCallbackHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		config, ok := ctx.Value(keyOIDCClientConfig{}).(*OIDCClientConfig)
+		config, ok := ctx.Value(keyOIDCClientConfig{}).(*ClientConfig)
 		if !ok {
 			http.Error(rw, "config not found", http.StatusInternalServerError)
 			return

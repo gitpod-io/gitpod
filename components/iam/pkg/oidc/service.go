@@ -23,44 +23,44 @@ import (
 type Service struct {
 	Handler chi.Router
 
-	configsById      map[string]*OIDCClientConfig
+	configsById      map[string]*ClientConfig
 	verifierByIssuer map[string]*oidc.IDTokenVerifier
 	providerByIssuer map[string]*oidc.Provider
 }
 
-type OIDCClientConfig struct {
-	ID           string
-	Issuer       string
-	OAuth2Config *oauth2.Config
-	OIDCConfig   *oidc.Config
+type ClientConfig struct {
+	ID             string
+	Issuer         string
+	OAuth2Config   *oauth2.Config
+	VerifierConfig *oidc.Config
 }
 
-type OIDCStartParams struct {
+type StartParams struct {
 	State       string
 	Nonce       string
 	AuthCodeURL string
 }
 
-type OIDCAuthResult struct {
+type AuthFlowResult struct {
 	IDToken *oidc.IDToken
 }
 
 func NewService() *Service {
 	var s Service
-	s.configsById = make(map[string]*OIDCClientConfig)
+	s.configsById = make(map[string]*ClientConfig)
 	s.verifierByIssuer = make(map[string]*oidc.IDTokenVerifier)
 	s.providerByIssuer = make(map[string]*oidc.Provider)
 	return &s
 }
 
-func (s *Service) AddClientConfig(config *OIDCClientConfig) error {
+func (s *Service) AddClientConfig(config *ClientConfig) error {
 	if s.providerByIssuer[config.Issuer] == nil {
 		provider, err := oidc.NewProvider(context.Background(), config.Issuer)
 		if err != nil {
 			return errors.New("OIDC discovery failed: " + err.Error())
 		}
 		s.providerByIssuer[config.Issuer] = provider
-		s.verifierByIssuer[config.Issuer] = provider.Verifier(config.OIDCConfig)
+		s.verifierByIssuer[config.Issuer] = provider.Verifier(config.VerifierConfig)
 	}
 
 	config.OAuth2Config.Endpoint = s.providerByIssuer[config.Issuer].Endpoint()
@@ -68,7 +68,7 @@ func (s *Service) AddClientConfig(config *OIDCClientConfig) error {
 	return nil
 }
 
-func (s *Service) GetStartParams(config *OIDCClientConfig) (*OIDCStartParams, error) {
+func (s *Service) GetStartParams(config *ClientConfig) (*StartParams, error) {
 	// state is supposed to a) be present on client request as cookie header
 	// and b) to be mirrored by the IdP on callback requests.
 	stateParam := StateParam{
@@ -89,7 +89,7 @@ func (s *Service) GetStartParams(config *OIDCClientConfig) (*OIDCStartParams, er
 	// Nonce is the single option passed on to configure the consent page ATM.
 	authCodeURL := config.OAuth2Config.AuthCodeURL(state, oidc.Nonce(nonce))
 
-	return &OIDCStartParams{
+	return &StartParams{
 		AuthCodeURL: authCodeURL,
 		State:       state,
 		Nonce:       nonce,
@@ -123,7 +123,7 @@ func randString(size int) (string, error) {
 	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
-func (s *Service) GetClientConfigFromRequest(r *http.Request) (*OIDCClientConfig, error) {
+func (s *Service) GetClientConfigFromRequest(r *http.Request) (*ClientConfig, error) {
 	issuerParam := r.URL.Query().Get("issuer")
 	stateParam := r.URL.Query().Get("state")
 	if issuerParam == "" && stateParam == "" {
@@ -152,7 +152,7 @@ func (s *Service) GetClientConfigFromRequest(r *http.Request) (*OIDCClientConfig
 	return nil, errors.New("failed to find OIDC config for request")
 }
 
-func (s *Service) Authenticate(ctx context.Context, oauth2Result *OAuth2Result, issuer string, nonceCookieValue string) (*OIDCAuthResult, error) {
+func (s *Service) Authenticate(ctx context.Context, oauth2Result *OAuth2Result, issuer string, nonceCookieValue string) (*AuthFlowResult, error) {
 	rawIDToken, ok := oauth2Result.OAuth2Token.Extra("id_token").(string)
 	if !ok {
 		return nil, errors.New("id_token not found")
@@ -171,7 +171,7 @@ func (s *Service) Authenticate(ctx context.Context, oauth2Result *OAuth2Result, 
 	if idToken.Nonce != nonceCookieValue {
 		return nil, errors.New("nonce mismatch")
 	}
-	return &OIDCAuthResult{
+	return &AuthFlowResult{
 		IDToken: idToken,
 	}, nil
 }

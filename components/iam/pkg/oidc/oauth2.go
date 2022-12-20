@@ -29,7 +29,7 @@ type keyOAuth2Result struct{}
 func OAuth2Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		config, ok := ctx.Value(keyOIDCClientConfig{}).(*OIDCClientConfig)
+		config, ok := ctx.Value(keyOIDCClientConfig{}).(*ClientConfig)
 		if !ok {
 			http.Error(rw, "config not found", http.StatusInternalServerError)
 			return

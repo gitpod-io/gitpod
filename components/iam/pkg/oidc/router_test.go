@@ -123,11 +123,11 @@ func newTestServer(t *testing.T, params testServerParams) (url string, state *St
 		RedirectURL:  url + "/callback",
 		Scopes:       []string{goidc.ScopeOpenID, "profile", "email"},
 	}
-	clientConfig := &OIDCClientConfig{
-		Issuer:       params.issuer,
-		ID:           params.clientConfigID,
-		OAuth2Config: oauth2Config,
-		OIDCConfig:   oidcConfig,
+	clientConfig := &ClientConfig{
+		Issuer:         params.issuer,
+		ID:             params.clientConfigID,
+		OAuth2Config:   oauth2Config,
+		VerifierConfig: oidcConfig,
 	}
 	err := oidcService.AddClientConfig(clientConfig)
 	require.NoError(t, err)
