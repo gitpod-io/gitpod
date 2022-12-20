@@ -53,13 +53,28 @@ func TestGetStartParams(t *testing.T) {
 	require.NotNil(t, params.AuthCodeURL)
 	require.Contains(t, params.AuthCodeURL, issuerG)
 	require.Contains(t, params.AuthCodeURL, clientID)
-	require.Contains(t, params.AuthCodeURL, params.Nonce)
-	require.Contains(t, params.AuthCodeURL, params.State)
+	require.Contains(t, params.AuthCodeURL, url.QueryEscape(params.Nonce))
+	require.Contains(t, params.AuthCodeURL, url.QueryEscape(params.State))
 }
 
 func TestGetClientConfigFromRequest(t *testing.T) {
-	issuer, err := setupFakeIdP(t)
-	require.NoError(t, err)
+	issuer := newFakeIdP(t)
+
+	const (
+		clientID = "google-1"
+	)
+
+	state, err := encodeStateParam(StateParam{
+		ClientConfigID: clientID,
+		ReturnToURL:    "",
+	})
+	require.NoError(t, err, "failed encode state param")
+
+	state_unknown, err := encodeStateParam(StateParam{
+		ClientConfigID: "UNKNOWN",
+		ReturnToURL:    "",
+	})
+	require.NoError(t, err, "failed encode state param")
 
 	testCases := []struct {
 		Location      string
@@ -72,20 +87,35 @@ func TestGetClientConfigFromRequest(t *testing.T) {
 			ExpectedId:    "",
 		},
 		{
-			Location:      "/start?issuer=" + url.QueryEscape(issuer),
+			Location:      "/start?issuer=" + issuer,
 			ExpectedError: false,
-			ExpectedId:    "google-1",
+			ExpectedId:    clientID,
 		},
 		{
 			Location:      "/start?issuer=UNKNOWN",
 			ExpectedError: true,
 			ExpectedId:    "",
 		},
+		{
+			Location:      "/callback?state=BAD",
+			ExpectedError: true,
+			ExpectedId:    "",
+		},
+		{
+			Location:      "/callback?state=" + state_unknown,
+			ExpectedError: true,
+			ExpectedId:    "",
+		},
+		{
+			Location:      "/callback?state=" + state,
+			ExpectedError: false,
+			ExpectedId:    clientID,
+		},
 	}
 
 	service := NewService()
 	err = service.AddClientConfig(&ClientConfig{
-		ID:             "google-1",
+		ID:             clientID,
 		Issuer:         issuer,
 		VerifierConfig: &oidc.Config{},
 		OAuth2Config:   &oauth2.Config{},
@@ -109,11 +139,10 @@ func TestGetClientConfigFromRequest(t *testing.T) {
 }
 
 func TestAuthenticate_nonce_check(t *testing.T) {
-	issuer, err := setupFakeIdP(t)
-	require.NoError(t, err)
+	issuer := newFakeIdP(t)
 
 	service := NewService()
-	err = service.AddClientConfig(&ClientConfig{
+	err := service.AddClientConfig(&ClientConfig{
 		ID:     "google-1",
 		Issuer: issuer,
 		VerifierConfig: &oidc.Config{
@@ -127,22 +156,23 @@ func TestAuthenticate_nonce_check(t *testing.T) {
 	require.NoError(t, err, "failed to initialize test")
 
 	token := oauth2.Token{}
-	rawIDToken := `eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkN1bXF1YXQgRG9wdGlnIiwibm9uY2UiOiIxMTEiLCJpYXQiOjE1MTYyMzkwMjJ9.NfbRZns-Sefhw6MT4ULWMj_7bX0vScklaZA2ObCYkStYlo2SvNu5Be79-5Lwcy4GY95vY_dFvLIKrZjfqv_duURSKLUbtH8VxskhcrW4sPAK2R5lzz62a6d_OnVydjNJRZf754TQZILAzMm81tEDNAJSDQjaTFl7t8Bp0iYapNyyH9ZoBrGAPaZkXHYoq4lNH88gCZj5JMRIbrZbsvhOuR3CAzbAMplOmKIWxhFVnHdm6aq6HRjz0ra6Y7yh0R9jEF3vWl2w5D3aN4XESPNBbyB3CHKQ5TG0WkbgdUpv1wwzbPfz4aFHOt--qLy7ZK0TOrS-A7YLFFsJKtoPGRjAPA`
 	extra := map[string]interface{}{
-		"id_token": rawIDToken,
+		"id_token": `eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkN1bXF1YXQgRG9wdGlnIiwibm9uY2UiOiIxMTEiLCJpYXQiOjE1MTYyMzkwMjJ9.NfbRZns-Sefhw6MT4ULWMj_7bX0vScklaZA2ObCYkStYlo2SvNu5Be79-5Lwcy4GY95vY_dFvLIKrZjfqv_duURSKLUbtH8VxskhcrW4sPAK2R5lzz62a6d_OnVydjNJRZf754TQZILAzMm81tEDNAJSDQjaTFl7t8Bp0iYapNyyH9ZoBrGAPaZkXHYoq4lNH88gCZj5JMRIbrZbsvhOuR3CAzbAMplOmKIWxhFVnHdm6aq6HRjz0ra6Y7yh0R9jEF3vWl2w5D3aN4XESPNBbyB3CHKQ5TG0WkbgdUpv1wwzbPfz4aFHOt--qLy7ZK0TOrS-A7YLFFsJKtoPGRjAPA`,
 	}
 
-	nonceCookieValue := "111"
-	oauth2Result := &OAuth2Result{
-		OAuth2Token: token.WithExtra(extra),
-	}
-	result, err := service.Authenticate(context.Background(), oauth2Result, issuer, nonceCookieValue)
+	result, err := service.Authenticate(context.Background(), AuthenticateParams{
+		OAuth2Result: &OAuth2Result{
+			OAuth2Token: token.WithExtra(extra),
+		},
+		NonceCookieValue: "111",
+		Issuer:           issuer,
+	})
 
 	require.NoError(t, err, "failed to authenticate")
 	require.NotNil(t, result)
 }
 
-func setupFakeIdP(t *testing.T) (string, error) {
+func newFakeIdP(t *testing.T) string {
 	router := chi.NewRouter()
 	ts := httptest.NewServer(router)
 	url := ts.URL
@@ -157,7 +187,24 @@ func setupFakeIdP(t *testing.T) (string, error) {
 			log.Fatal(err)
 		}
 	})
+	router.Get("/o/oauth2/v2/auth", func(w http.ResponseWriter, r *http.Request) {
+		_, err := w.Write([]byte(r.URL.RawQuery))
+		if err != nil {
+			log.Fatal(err)
+		}
+	})
+	router.Post("/token", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+		_, err := w.Write([]byte(`{
+			"access_token": "no-token-set",
+			"id_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkN1bXF1YXQgRG9wdGlnIiwibm9uY2UiOiIxMTEiLCJpYXQiOjE1MTYyMzkwMjJ9.NfbRZns-Sefhw6MT4ULWMj_7bX0vScklaZA2ObCYkStYlo2SvNu5Be79-5Lwcy4GY95vY_dFvLIKrZjfqv_duURSKLUbtH8VxskhcrW4sPAK2R5lzz62a6d_OnVydjNJRZf754TQZILAzMm81tEDNAJSDQjaTFl7t8Bp0iYapNyyH9ZoBrGAPaZkXHYoq4lNH88gCZj5JMRIbrZbsvhOuR3CAzbAMplOmKIWxhFVnHdm6aq6HRjz0ra6Y7yh0R9jEF3vWl2w5D3aN4XESPNBbyB3CHKQ5TG0WkbgdUpv1wwzbPfz4aFHOt--qLy7ZK0TOrS-A7YLFFsJKtoPGRjAPA"
+		}`))
+		if err != nil {
+			log.Fatal(err)
+		}
+	})
 	router.Get("/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
 		_, err := w.Write([]byte(fmt.Sprintf(`{
 			"issuer": "%[1]s",
 			"authorization_endpoint": "%[1]s/o/oauth2/v2/auth",
@@ -217,10 +264,11 @@ func setupFakeIdP(t *testing.T) (string, error) {
 			]
 		   }`, url)))
 		if err != nil {
-			log.Fatal(err)
+			t.Error((err))
+			t.FailNow()
 		}
 	})
 
 	t.Cleanup(ts.Close)
-	return url, nil
+	return url
 }
