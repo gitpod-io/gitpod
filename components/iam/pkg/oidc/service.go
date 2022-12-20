@@ -16,13 +16,10 @@ import (
 	"strings"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/go-chi/chi/v5"
 	"golang.org/x/oauth2"
 )
 
 type Service struct {
-	Handler chi.Router
-
 	configsById      map[string]*ClientConfig
 	verifierByIssuer map[string]*oidc.IDTokenVerifier
 	providerByIssuer map[string]*oidc.Provider
