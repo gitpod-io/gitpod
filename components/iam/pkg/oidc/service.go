@@ -114,7 +114,7 @@ func (s *Service) GetClientConfigFromRequest(r *http.Request) (*ClientConfig, er
 	return nil, errors.New("failed to find OIDC config for request")
 }
 
-func (s *Service) Authenticate(ctx context.Context, oauth2Result *OAuth2Result, issuer string, nonceCookieValue string) (*AuthResult, error) {
+func (s *Service) Authenticate(ctx context.Context, oauth2Result *OAuth2Result, issuer string, nonceCookieValue string) (*AuthFlowResult, error) {
 	rawIDToken, ok := oauth2Result.OAuth2Token.Extra("id_token").(string)
 	if !ok {
 		return nil, errors.New("id_token not found")
