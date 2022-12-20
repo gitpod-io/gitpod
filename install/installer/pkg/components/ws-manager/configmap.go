@@ -188,7 +188,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Namespace:      ctx.Namespace,
 			SchedulerName:  schedulerName,
 			SeccompProfile: fmt.Sprintf("workspace_default_%s.json", ctx.VersionManifest.Version),
-			DryRun:         false,
 			WorkspaceDaemon: config.WorkspaceDaemonConfiguration{
 				Port: 8080,
 				TLS: struct {

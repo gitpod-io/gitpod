@@ -26,6 +26,10 @@ import (
 
 // TakeSnapshot creates a copy of the workspace content and stores it so that another workspace can be created from it.
 func (m *Manager) TakeSnapshot(ctx context.Context, req *api.TakeSnapshotRequest) (res *api.TakeSnapshotResponse, err error) {
+	if m.Config.MaintenanceMode {
+		return &api.TakeSnapshotResponse{}, status.Error(codes.FailedPrecondition, "under maintenance mode")
+	}
+
 	span, ctx := tracing.FromContext(ctx, "TakeSnapshot")
 	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
 	defer tracing.FinishSpan(span, &err)
