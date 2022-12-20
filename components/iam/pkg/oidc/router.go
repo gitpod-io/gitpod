@@ -76,7 +76,7 @@ func newCallbackCookie(r *http.Request, name string, value string) *http.Cookie 
 		Name:     name,
 		Value:    value,
 		MaxAge:   int(10 * time.Minute.Seconds()),
-		Secure:   r.TLS != nil,
+		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 		HttpOnly: true,
 	}
