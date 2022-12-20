@@ -179,7 +179,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-10.1.19
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 spec:
@@ -721,7 +721,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-10.1.19
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 spec:
@@ -948,7 +948,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-10.1.19
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 automountServiceAccountToken: true
@@ -1048,7 +1048,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-10.1.19
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 type: Opaque
@@ -1064,7 +1064,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-10.1.19
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 type: Opaque
@@ -1095,7 +1095,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-10.1.19
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 type: Opaque
@@ -1144,7 +1144,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-10.1.19
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 type: Opaque
@@ -3251,7 +3251,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-10.1.19
       name: messagebus
       namespace: default
     ---
@@ -3263,7 +3263,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-10.1.19
       name: messagebus
       namespace: default
     ---
@@ -3275,7 +3275,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-10.1.19
       name: rabbitmq
       namespace: default
     ---
@@ -3287,7 +3287,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-10.1.19
       name: messagebus-config
       namespace: default
     ---
@@ -3299,7 +3299,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-10.1.19
       name: messagebus
       namespace: default
     ---
@@ -3311,7 +3311,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-10.1.19
       name: load-definition
       namespace: default
     ---
@@ -3323,7 +3323,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-10.1.19
       name: rabbitmq
       namespace: default
     ---
@@ -3335,7 +3335,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-10.1.19
       name: messagebus-endpoint-reader
       namespace: default
     ---
@@ -3347,7 +3347,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-10.1.19
       name: messagebus-endpoint-reader
       namespace: default
     ---
@@ -3359,7 +3359,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-10.1.19
       name: messagebus-headless
       namespace: default
     ---
@@ -3371,7 +3371,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-10.1.19
       name: messagebus
       namespace: default
     ---
@@ -3383,7 +3383,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-10.1.19
       name: messagebus
       namespace: default
     ---
@@ -6167,7 +6167,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-10.1.19
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 rules:
@@ -6510,7 +6510,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-10.1.19
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 subjects:
@@ -6982,7 +6982,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-10.1.19
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 spec:
@@ -7026,7 +7026,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-10.1.19
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 spec:
@@ -7946,7 +7946,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-10.1.19
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 spec:
@@ -7963,12 +7963,12 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-10.1.19
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
       annotations:
-        checksum/config: 2ca9db593e4ca6cdd01f7a65cce1ae90d0d45ecdf0049edfaa4ec72302fcbe8f
-        checksum/secret: c231bbb08185305defa8c4da0f3ee0f5e7a16795362a2133f74e53eb9a40453d
+        checksum/config: ccb825978bbf430cbaaf1b4d7c01a8fe2a1a98c853eccc8f52d744f86a426f73
+        checksum/secret: f868bf6193d744bac3cf4076eb14da2cf788e6e9092e106acc57aa6a4cc7148c
         prometheus.io/port: '9419'
         prometheus.io/scrape: "true"
     spec:
@@ -7988,7 +7988,7 @@ spec:
       initContainers:
       containers:
         - name: rabbitmq
-          image: docker.io/bitnami/rabbitmq:3.10.2-debian-10-r7
+          image: docker.io/bitnami/rabbitmq:3.10.7-debian-11-r4
           imagePullPolicy: "IfNotPresent"
           securityContext:
             runAsNonRoot: true
@@ -8084,9 +8084,9 @@ spec:
             timeoutSeconds: 20
             exec:
               command:
-                - /bin/bash
+                - sh
                 - -ec
-                - rabbitmq-diagnostics -q ping
+                - test "$(curl -f --user gitpod:$RABBITMQ_PASSWORD 127.0.0.1:15672/api/healthchecks/node)" = '{"status":"ok"}'
           readinessProbe:
             failureThreshold: 3
             initialDelaySeconds: 10
@@ -8095,9 +8095,9 @@ spec:
             timeoutSeconds: 20
             exec:
               command:
-                - /bin/bash
+                - sh
                 - -ec
-                - rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_local_alarms
+                - curl -f --user gitpod:$RABBITMQ_PASSWORD 127.0.0.1:15672/api/health/checks/local-alarms
           resources:
             limits: {}
             requests: {}
