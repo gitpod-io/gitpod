@@ -27,9 +27,9 @@ func TestGetStartParams(t *testing.T) {
 	)
 	service := NewService()
 	config := &ClientConfig{
-		ID:         "google-1",
-		Issuer:     issuerG,
-		OIDCConfig: &oidc.Config{},
+		ID:             "google-1",
+		Issuer:         issuerG,
+		VerifierConfig: &oidc.Config{},
 		OAuth2Config: &oauth2.Config{
 			ClientID: clientID,
 			Endpoint: oauth2.Endpoint{
@@ -85,10 +85,10 @@ func TestGetClientConfigFromRequest(t *testing.T) {
 
 	service := NewService()
 	err = service.AddClientConfig(&ClientConfig{
-		ID:           "google-1",
-		Issuer:       issuer,
-		OIDCConfig:   &oidc.Config{},
-		OAuth2Config: &oauth2.Config{},
+		ID:             "google-1",
+		Issuer:         issuer,
+		VerifierConfig: &oidc.Config{},
+		OAuth2Config:   &oauth2.Config{},
 	})
 	require.NoError(t, err, "failed to initialize test")
 
@@ -116,7 +116,7 @@ func TestAuthenticate_nonce_check(t *testing.T) {
 	err = service.AddClientConfig(&ClientConfig{
 		ID:     "google-1",
 		Issuer: issuer,
-		OIDCConfig: &oidc.Config{
+		VerifierConfig: &oidc.Config{
 			SkipClientIDCheck:          true,
 			SkipIssuerCheck:            true,
 			SkipExpiryCheck:            true,
