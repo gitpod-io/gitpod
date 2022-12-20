@@ -108,6 +108,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
         return <Blocked />;
     }
 
+    // TODO: Add a Route for this instead of inspecting location manually
     if (window.location.pathname.startsWith("/oauth-approval")) {
         return <OAuthClientApproval />;
     }
@@ -116,6 +117,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
         return <WhatsNew onClose={() => setWhatsNewShown(false)} />;
     }
 
+    // TODO: Try and encapsulate this in a route for "/" (check for hash in route component, render or redirect accordingly)
     const isCreation = window.location.pathname === "/" && hash !== "";
     if (isCreation) {
         if (showUserIdePreference) {
@@ -125,6 +127,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                 </StartPage>
             );
         } else {
+            // return <div>create workspace yay {hash}</div>;
             return <CreateWorkspace contextUrl={hash} />;
         }
     }
