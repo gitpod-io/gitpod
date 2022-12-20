@@ -31,6 +31,7 @@ import (
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
+	"github.com/gitpod-io/gitpod/common-go/watch"
 	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
 	imgbldr "github.com/gitpod-io/gitpod/image-builder/api"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager"
@@ -117,6 +118,14 @@ var runCmd = &cobra.Command{
 			log.WithError(err).Fatal("cannot create manager")
 		}
 		defer mgmt.Close()
+
+		err = watch.File(context.Background(), cfgFile, func() {
+			cfg := getConfig()
+			mgmt.Config = cfg.Manager
+		})
+		if err != nil {
+			log.WithError(err).Fatal("cannot start watch of configuration file")
+		}
 
 		if cfg.Prometheus.Addr != "" {
 			err = mgmt.RegisterMetrics(metrics.Registry)
