@@ -51,6 +51,7 @@ message PrebuildSettings {
     bool keep_outdated_prebuilds_running = 2;
     bool use_previous_prebuilds = 3;
     int32 prebuild_every_nth = 4;
+    bool disable_prebuilds = 5;
 }
 
 message WorkspaceSettings {

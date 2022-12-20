@@ -22,6 +22,7 @@ export interface ProjectSettings {
     prebuildEveryNthCommit?: number;
     // preferred workspace classes
     workspaceClasses?: WorkspaceClasses;
+    disablePrebuilds?: boolean;
 }
 
 export interface Project {

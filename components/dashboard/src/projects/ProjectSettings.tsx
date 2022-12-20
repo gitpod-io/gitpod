@@ -147,6 +147,12 @@ export default function () {
                 </Alert>
             )}
             <CheckBox
+                title={<span>Enable Prebuilds </span>}
+                desc={<span>Enable Prebuilds</span>}
+                checked={!project.settings?.disablePrebuilds}
+                onChange={({ target }) => updateProjectSettings({ disablePrebuilds: !target.checked })}
+            />
+            <CheckBox
                 title={<span>Enable Incremental Prebuilds </span>}
                 desc={
                     <span>

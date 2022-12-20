@@ -207,6 +207,7 @@ type PrebuildSettings struct {
 	KeepOutdatedPrebuildsRunning bool  `protobuf:"varint,2,opt,name=keep_outdated_prebuilds_running,json=keepOutdatedPrebuildsRunning,proto3" json:"keep_outdated_prebuilds_running,omitempty"`
 	UsePreviousPrebuilds         bool  `protobuf:"varint,3,opt,name=use_previous_prebuilds,json=usePreviousPrebuilds,proto3" json:"use_previous_prebuilds,omitempty"`
 	PrebuildEveryNth             int32 `protobuf:"varint,4,opt,name=prebuild_every_nth,json=prebuildEveryNth,proto3" json:"prebuild_every_nth,omitempty"`
+	DisablePrebuilds             bool  `protobuf:"varint,1,opt,name=disable_prebuilds,json=disablePrebuilds,proto3" json:"disable_prebuilds,omitempty"`
 }
 
 func (x *PrebuildSettings) Reset() {

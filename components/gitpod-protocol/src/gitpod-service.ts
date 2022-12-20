@@ -38,6 +38,7 @@ import {
     StartPrebuildResult,
     PartialProject,
     PrebuildEvent,
+    ProjectSettings,
 } from "./teams-projects-protocol";
 import { JsonRpcProxy, JsonRpcServer } from "./messaging/proxy-factory";
 import { Disposable, CancellationTokenSource } from "vscode-jsonrpc";
@@ -319,6 +320,7 @@ export interface CreateProjectParams {
     teamId?: string;
     userId?: string;
     appInstallationId: string;
+    settings?: ProjectSettings;
 }
 export interface FindPrebuildsParams {
     projectId: string;

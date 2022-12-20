@@ -134,6 +134,12 @@ export class PrebuildManager {
                     `Running prebuilds without a project is no longer supported. Please add '${cloneURL}' as a project in a Gitpod team.`,
                 );
             }
+            if (project.settings?.disablePrebuilds) {
+                throw new ResponseError(
+                    ErrorCodes.BAD_REQUEST,
+                    `Prebuilds for project '${project.name}' have been disabled in the Gitpod project settings`,
+                );
+            }
 
             const config = await this.fetchConfig({ span }, user, context);
 

@@ -124,7 +124,7 @@ export class ProjectsService {
     }
 
     async createProject(
-        { name, slug, cloneUrl, teamId, userId, appInstallationId }: CreateProjectParams,
+        { name, slug, cloneUrl, teamId, userId, appInstallationId, settings }: CreateProjectParams,
         installer: User,
     ): Promise<Project> {
         const projects = await this.getProjectsByCloneUrls([cloneUrl]);
@@ -145,6 +145,7 @@ export class ProjectsService {
             cloneUrl,
             ...(!!userId ? { userId } : { teamId }),
             appInstallationId,
+            settings,
         });
         await this.projectDB.storeProject(project);
         await this.onDidCreateProject(project, installer);

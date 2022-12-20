@@ -393,6 +393,7 @@ func newProject(p *protocol.Project) *protocol.Project {
 				Regular:  "default",
 				Prebuild: "default",
 			},
+			DisablePrebuilds: false,
 		},
 		CreationTime: "2022-09-09T09:09:09.000Z",
 	}

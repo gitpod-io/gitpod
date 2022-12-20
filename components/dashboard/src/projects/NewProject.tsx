@@ -29,6 +29,7 @@ import {
 } from "../service/public-api";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { ConnectError } from "@bufbuild/connect-web";
+import CheckBox from "../components/CheckBox";
 
 export default function NewProject() {
     const location = useLocation();
@@ -43,6 +44,7 @@ export default function NewProject() {
     const [showGitProviders, setShowGitProviders] = useState<boolean>(false);
     const [selectedRepo, setSelectedRepo] = useState<ProviderRepository | undefined>(undefined);
     const [selectedTeamOrUser, setSelectedTeamOrUser] = useState<Team | User | undefined>(undefined);
+    const [enablePrebuilds, setEnablePrebuilds] = useState<boolean>(true);
 
     const [showNewTeam, setShowNewTeam] = useState<boolean>(false);
     const [loaded, setLoaded] = useState<boolean>(false);
@@ -169,10 +171,10 @@ export default function NewProject() {
     }, [selectedProviderHost]);
 
     useEffect(() => {
-        if (project) {
+        if (project && enablePrebuilds) {
             getGitpodService().server.triggerPrebuild(project.id, null);
         }
-    }, [project]);
+    }, [enablePrebuilds, project]);
 
     const isGitHub = () => selectedProviderHost === "github.com";
 
@@ -241,6 +243,9 @@ export default function NewProject() {
                 cloneUrl: repo.cloneUrl,
                 ...(User.is(teamOrUser) ? { userId: teamOrUser.id } : { teamId: teamOrUser.id }),
                 appInstallationId: String(repo.installationId),
+                settings: {
+                    disablePrebuilds: !enablePrebuilds,
+                },
             });
 
             setProject(project);
@@ -605,6 +610,13 @@ export default function NewProject() {
                     {selectedRepo && !selectedTeamOrUser && renderSelectTeam()}
 
                     {selectedRepo && selectedTeamOrUser && <div></div>}
+
+                    <CheckBox
+                        title={<span>Enable Prebuilds </span>}
+                        desc={<span></span>}
+                        checked={enablePrebuilds}
+                        onChange={({ target }) => setEnablePrebuilds(target.checked)}
+                    />
                 </>
             </div>
         );

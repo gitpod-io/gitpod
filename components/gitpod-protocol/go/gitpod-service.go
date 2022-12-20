@@ -2323,6 +2323,7 @@ type ProjectSettings struct {
 	AllowUsingPreviousPrebuilds  bool                      `json:"allowUsingPreviousPrebuilds,omitempty"`
 	PrebuildEveryNthCommit       int                       `json:"prebuildEveryNthCommit,omitempty"`
 	WorkspaceClasses             *WorkspaceClassesSettings `json:"workspaceClasses,omitempty"`
+	DisablePrebuilds             bool                      `json:"disablePrebuilds,omitempty"`
 }
 
 type WorkspaceClassesSettings struct {

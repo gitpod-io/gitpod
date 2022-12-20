@@ -211,6 +211,7 @@ func projectSettingsToAPIResponse(s *protocol.ProjectSettings) *v1.ProjectSettin
 			KeepOutdatedPrebuildsRunning: s.KeepOutdatedPrebuildsRunning,
 			UsePreviousPrebuilds:         s.AllowUsingPreviousPrebuilds,
 			PrebuildEveryNth:             int32(s.PrebuildEveryNthCommit),
+			DisablePrebuilds:             s.DisablePrebuilds,
 		},
 		Workspace: &v1.WorkspaceSettings{
 			EnablePersistentVolumeClaim: s.UsePersistentVolumeClaim,

@@ -106,6 +106,7 @@ export function projectToProtocol(project: Project): ProtocolProject {
             keepOutdatedPrebuildsRunning: project.settings?.prebuild?.keepOutdatedPrebuildsRunning,
             prebuildEveryNthCommit: project.settings?.prebuild?.prebuildEveryNth,
             useIncrementalPrebuilds: project.settings?.prebuild?.enableIncrementalPrebuilds,
+            disablePrebuilds: project.settings?.prebuild?.disablePrebuilds,
             workspaceClasses: {
                 prebuild: project.settings?.workspace?.workspaceClass?.prebuild || "",
                 regular: project.settings?.workspace?.workspaceClass?.regular || "",
