@@ -300,6 +300,14 @@ func (m *metrics) OnChange(status *api.WorkspaceStatus) {
 		hist.Observe(time.Since(t).Seconds())
 
 	case api.WorkspacePhase_STOPPED:
+		previousStatus, ok := m.phaseState[status.Id]
+		if !ok {
+			return
+		}
+		if previousStatus == api.WorkspacePhase_STOPPED {
+			return
+		}
+
 		var reason string
 		if strings.Contains(status.Message, string(activityClosed)) {
 			reason = "tab-closed"
