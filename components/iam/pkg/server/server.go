@@ -6,6 +6,9 @@ package server
 
 import (
 	"fmt"
+	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
+	"net"
+	"os"
 
 	goidc "github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
@@ -19,6 +22,17 @@ import (
 
 func Start(logger *logrus.Entry, version string, cfg *config.ServiceConfig) error {
 	logger.WithField("config", cfg).Info("Starting IAM server.")
+
+	_, err := db.Connect(db.ConnectionParams{
+		User:     os.Getenv("DB_USERNAME"),
+		Password: os.Getenv("DB_PASSWORD"),
+		Host:     net.JoinHostPort(os.Getenv("DB_HOST"), os.Getenv("DB_PORT")),
+		Database: "gitpod",
+		CaCert:   os.Getenv("DB_CA_CERT"),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to establish database connection: %w", err)
+	}
 
 	srv, err := baseserver.New("iam",
 		baseserver.WithLogger(logger),
