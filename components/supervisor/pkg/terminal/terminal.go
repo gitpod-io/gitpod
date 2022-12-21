@@ -12,6 +12,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -131,21 +132,12 @@ func (m *Mux) doClose(ctx context.Context, alias string) error {
 
 	log := log.WithField("alias", alias)
 	log.Info("closing terminal")
-	if term.Command.Process != nil {
-		err := process.TerminateSync(ctx, term.Command.Process.Pid)
-		if err != nil {
-			log.WithError(err).Infof("cannot terminate process %s.", fmt.Sprint(term.Command.Args))
-		}
+
+	err := term.Close(ctx)
+	if err != nil {
+		log.WithError(err).Warn("Error while closing pseudo-terminal")
 	}
 
-	err := term.Stdout.Close()
-	if err != nil {
-		log.WithError(err).Warn("cannot close connection to terminal clients")
-	}
-	err = term.PTY.Close()
-	if err != nil {
-		log.WithError(err).Warn("cannot close pseudo-terminal")
-	}
 	i := 0
 	for i < len(m.aliases) && m.aliases[i] != alias {
 		i++
@@ -196,11 +188,13 @@ func newTerm(alias string, cmd *exec.Cmd, options TermOptions) (*Term, error) {
 
 	pty, pts, err := _pty.Open()
 	if err != nil {
+		pts.Close()
 		pty.Close()
 		return nil, xerrors.Errorf("cannot start PTY: %w", err)
 	}
 
 	if err := _pty.Setsize(pty, &size); err != nil {
+		pts.Close()
 		pty.Close()
 		return nil, err
 	}
@@ -235,6 +229,7 @@ func newTerm(alias string, cmd *exec.Cmd, options TermOptions) (*Term, error) {
 
 	err = unix.IoctlSetTermios(int(pts.Fd()), syscall.TCSETS, &attr)
 	if err != nil {
+		pts.Close()
 		pty.Close()
 		return nil, err
 	}
@@ -250,12 +245,14 @@ func newTerm(alias string, cmd *exec.Cmd, options TermOptions) (*Term, error) {
 	cmd.SysProcAttr.Setctty = true
 
 	if err := cmd.Start(); err != nil {
-		_ = pty.Close()
+		pts.Close()
+		pty.Close()
 		return nil, err
 	}
 
 	res := &Term{
 		PTY:     pty,
+		pts:     pts,
 		Command: cmd,
 		Stdout: &multiWriter{
 			timeout:   timeout,
@@ -300,11 +297,15 @@ type TermOptions struct {
 
 // Term is a pseudo-terminal.
 type Term struct {
-	PTY          *os.File
+	PTY *os.File
+	pts *os.File
+
 	Command      *exec.Cmd
 	StarterToken string
 
-	mu           sync.RWMutex
+	mu     sync.RWMutex
+	closed bool
+
 	annotations  map[string]string
 	defaultTitle string
 	title        string
@@ -384,6 +385,53 @@ func (term *Term) resolveForegroundCommand() (string, error) {
 func (term *Term) Wait() (*os.ProcessState, error) {
 	<-term.waitDone
 	return term.Command.ProcessState, term.waitErr
+}
+
+func (term *Term) Close(ctx context.Context) error {
+	term.mu.Lock()
+	defer term.mu.Unlock()
+
+	if term.closed {
+		return nil
+	}
+
+	term.closed = true
+
+	var commandErr error
+	if term.Command.Process != nil {
+		commandErr = process.TerminateSync(ctx, term.Command.Process.Pid)
+	}
+
+	writeErr := term.Stdout.Close()
+
+	slaveErr := errors.New("Slave FD nil")
+	if term.pts != nil {
+		slaveErr = term.pts.Close()
+	}
+	masterErr := errors.New("Master FD nil")
+	if term.PTY != nil {
+		masterErr = term.PTY.Close()
+	}
+
+	var errs []string
+	if commandErr != nil {
+		errs = append(errs, "Process: cannot terminate process: "+commandErr.Error())
+	}
+	if writeErr != nil {
+		errs = append(errs, "Multiwriter: "+writeErr.Error())
+	}
+	if slaveErr != nil {
+		errs = append(errs, "Slave: "+slaveErr.Error())
+	}
+	if masterErr != nil {
+		errs = append(errs, "Master: "+masterErr.Error())
+	}
+
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, " "))
+	}
+
+	return nil
 }
 
 // multiWriter is like io.MultiWriter, except that we can listener at runtime.
