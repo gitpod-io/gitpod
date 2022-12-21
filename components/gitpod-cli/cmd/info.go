@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	supervisor_helper "github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor-helper"
-	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
+	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
@@ -31,13 +31,13 @@ var infoCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
 		defer cancel()
 
-		conn, err := supervisor_helper.Dial(ctx)
+		client, err := supervisor.New(ctx)
 		if err != nil {
 			log.Fatal(err)
 		}
-		defer conn.Close()
+		defer client.Close()
 
-		wsInfo, err := supervisor_helper.FetchInfo(ctx, conn)
+		wsInfo, err := client.Info.WorkspaceInfo(ctx, &api.WorkspaceInfoRequest{})
 
 		data := &infoData{
 			WorkspaceId:    wsInfo.WorkspaceId,
@@ -62,11 +62,11 @@ var infoCmd = &cobra.Command{
 }
 
 type infoData struct {
-	WorkspaceId    string                                           `json:"workspace_id"`
-	InstanceId     string                                           `json:"instance_id"`
-	WorkspaceClass *supervisor.WorkspaceInfoResponse_WorkspaceClass `json:"workspace_class"`
-	WorkspaceUrl   string                                           `json:"workspace_url"`
-	ClusterHost    string                                           `json:"cluster_host"`
+	WorkspaceId    string                                    `json:"workspace_id"`
+	InstanceId     string                                    `json:"instance_id"`
+	WorkspaceClass *api.WorkspaceInfoResponse_WorkspaceClass `json:"workspace_class"`
+	WorkspaceUrl   string                                    `json:"workspace_url"`
+	ClusterHost    string                                    `json:"cluster_host"`
 }
 
 func outputInfo(info *infoData) {

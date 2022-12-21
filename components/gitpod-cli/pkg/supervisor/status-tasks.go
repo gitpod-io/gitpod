@@ -2,22 +2,17 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
-package supervisor_helper
+package supervisor
 
 import (
 	"context"
 
-	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
+	"github.com/gitpod-io/gitpod/supervisor/api"
 	"golang.org/x/xerrors"
 )
 
-func GetTasksList(ctx context.Context) ([]*supervisor.TaskStatus, error) {
-	conn, err := Dial(ctx)
-	if err != nil {
-		return nil, err
-	}
-	client := supervisor.NewStatusServiceClient(conn)
-	respClient, err := client.TasksStatus(ctx, &supervisor.TasksStatusRequest{Observe: false})
+func (client *SupervisorClient) GetTasksList(ctx context.Context) ([]*api.TaskStatus, error) {
+	respClient, err := client.Status.TasksStatus(ctx, &api.TasksStatusRequest{Observe: false})
 	if err != nil {
 		return nil, xerrors.Errorf("failed get tasks status client: %w", err)
 	}
@@ -28,12 +23,12 @@ func GetTasksList(ctx context.Context) ([]*supervisor.TaskStatus, error) {
 	return resp.GetTasks(), nil
 }
 
-func GetTasksListByState(ctx context.Context, filterState supervisor.TaskState) ([]*supervisor.TaskStatus, error) {
-	tasks, err := GetTasksList(ctx)
+func (client *SupervisorClient) GetTasksListByState(ctx context.Context, filterState api.TaskState) ([]*api.TaskStatus, error) {
+	tasks, err := client.GetTasksList(ctx)
 	if err != nil {
 		return nil, err
 	}
-	var filteredTasks []*supervisor.TaskStatus
+	var filteredTasks []*api.TaskStatus
 	for _, task := range tasks {
 		if task.State == filterState {
 			filteredTasks = append(filteredTasks, task)

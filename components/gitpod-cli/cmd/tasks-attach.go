@@ -11,8 +11,8 @@ import (
 	"os"
 	"time"
 
-	supervisor_helper "github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor-helper"
-	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
+	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
@@ -30,6 +30,12 @@ var attachTaskCmd = &cobra.Command{
 	Short: "Attach to a workspace task",
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		client, err := supervisor.New(context.Background())
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer client.Close()
+
 		var terminalAlias string
 
 		if len(args) > 0 {
@@ -37,8 +43,7 @@ var attachTaskCmd = &cobra.Command{
 		} else {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
-
-			tasks, err := supervisor_helper.GetTasksListByState(ctx, supervisor.TaskState_running)
+			tasks, err := client.GetTasksListByState(ctx, api.TaskState_running)
 			if err != nil {
 				log.Fatalf("cannot get task list: %s", err)
 			}
@@ -83,12 +88,7 @@ var attachTaskCmd = &cobra.Command{
 			terminalAlias = tasks[taskIndex].Terminal
 		}
 
-		terminalClient, err := supervisor_helper.GetTerminalServiceClient(context.Background())
-		if err != nil {
-			log.Fatalf("cannot get terminal service: %s", err)
-		}
-
-		terminal, err := terminalClient.Get(context.Background(), &supervisor.GetTerminalRequest{Alias: terminalAlias})
+		terminal, err := client.Terminal.Get(context.Background(), &api.GetTerminalRequest{Alias: terminalAlias})
 		if err != nil {
 			if e, ok := status.FromError(err); ok {
 				switch e.Code() {
@@ -112,7 +112,7 @@ var attachTaskCmd = &cobra.Command{
 		interactive, _ := cmd.Flags().GetBool("interactive")
 		forceResize, _ := cmd.Flags().GetBool("force-resize")
 
-		supervisor_helper.AttachToTerminal(context.Background(), terminalClient, terminalAlias, supervisor_helper.AttachToTerminalOpts{
+		client.AttachToTerminal(context.Background(), terminalAlias, supervisor.AttachToTerminalOpts{
 			ForceResize: forceResize,
 			Interactive: interactive,
 		})
