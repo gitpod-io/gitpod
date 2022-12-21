@@ -85,6 +85,9 @@ type StaticConfig struct {
 
 	// SSHPort is the port we run the SSH server on
 	SSHPort int `json:"sshPort"`
+
+	// RunEndpointPort is the port where to serve the run API endpoint on
+	RunEndpointPort *int `json:"runEndpointPort,omitempty"`
 }
 
 // Validate validates this configuration.

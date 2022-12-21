@@ -216,7 +216,7 @@ func TestTaskManager(t *testing.T) {
 			}
 
 			var (
-				terminalService = terminal.NewMuxTerminalService(terminal.NewMux())
+				terminalService = terminal.NewMuxTerminalService(terminal.NewMux(), nil)
 				contentState    = NewInMemoryContentState("")
 				reporter        = testHeadlessTaskProgressReporter{}
 				taskManager     = newTasksManager(&Config{
@@ -224,7 +224,7 @@ func TestTaskManager(t *testing.T) {
 						GitpodTasks:    gitpodTasks,
 						GitpodHeadless: strconv.FormatBool(test.Headless),
 					},
-				}, terminalService, contentState, &reporter, nil, nil)
+				}, terminalService, contentState, &reporter, nil, nil, false)
 			)
 			taskManager.storeLocation = storeLocation
 			contentState.MarkContentReady(test.Source)

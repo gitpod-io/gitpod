@@ -872,3 +872,13 @@ func defaultRoutableIP() string {
 
 	return addresses[0].(*net.IPNet).IP.String()
 }
+
+func (pm *Manager) IsServed(port uint32) bool {
+	served := pm.served
+	for _, served := range served {
+		if served.Port == port {
+			return true
+		}
+	}
+	return false
+}

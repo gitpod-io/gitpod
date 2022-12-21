@@ -3,5 +3,6 @@
   "desktopIdeConfigLocation": "/ide-desktop/supervisor-ide-config.json",
   "frontendLocation": "/.supervisor/frontend/",
   "apiEndpointPort": 22999,
-  "sshPort": 23001
+  "sshPort": 23001,
+  "runEndpointPort": 25000
 }

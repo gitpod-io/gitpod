@@ -23,16 +23,18 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/supervisor/api"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/run"
 )
 
 // NewMuxTerminalService creates a new terminal service.
-func NewMuxTerminalService(m *Mux) *MuxTerminalService {
+func NewMuxTerminalService(m *Mux, runClient *run.Client) *MuxTerminalService {
 	shell := os.Getenv("SHELL")
 	if shell == "" {
 		shell = "/bin/bash"
 	}
 	return &MuxTerminalService{
 		Mux:            m,
+		runClient:      runClient,
 		DefaultWorkdir: "/workspace",
 		DefaultShell:   shell,
 		Env:            os.Environ(),
@@ -41,7 +43,8 @@ func NewMuxTerminalService(m *Mux) *MuxTerminalService {
 
 // MuxTerminalService implements the terminal service API using a terminal Mux.
 type MuxTerminalService struct {
-	Mux *Mux
+	Mux       *Mux
+	runClient *run.Client
 
 	DefaultWorkdir string
 	// DefaultWorkdirProvider allows dynamically to compute workdir
@@ -133,6 +136,13 @@ func (srv *MuxTerminalService) OpenWithOptions(ctx context.Context, req *api.Ope
 
 // Close closes a terminal for the given alias.
 func (srv *MuxTerminalService) Shutdown(ctx context.Context, req *api.ShutdownTerminalRequest) (*api.ShutdownTerminalResponse, error) {
+	if srv.runClient.Available() {
+		resp, err := srv.runClient.Terminal.Shutdown(ctx, req)
+		if err == nil {
+			return resp, err
+		}
+	}
+
 	err := srv.Mux.CloseTerminal(ctx, req.Alias)
 	if err == ErrNotFound {
 		return nil, status.Error(codes.NotFound, err.Error())
@@ -145,10 +155,17 @@ func (srv *MuxTerminalService) Shutdown(ctx context.Context, req *api.ShutdownTe
 
 // List lists all open terminals.
 func (srv *MuxTerminalService) List(ctx context.Context, req *api.ListTerminalsRequest) (*api.ListTerminalsResponse, error) {
+	var res []*api.Terminal
+	if srv.runClient.Available() {
+		resp, err := srv.runClient.Terminal.List(ctx, req)
+		if err == nil {
+			res = append(res, resp.Terminals...)
+		}
+	}
+
 	srv.Mux.mu.RLock()
 	defer srv.Mux.mu.RUnlock()
 
-	res := make([]*api.Terminal, 0, len(srv.Mux.terms))
 	for _, alias := range srv.Mux.aliases {
 		term, ok := srv.get(alias)
 		if !ok {
@@ -164,6 +181,13 @@ func (srv *MuxTerminalService) List(ctx context.Context, req *api.ListTerminalsR
 
 // Get returns an open terminal info.
 func (srv *MuxTerminalService) Get(ctx context.Context, req *api.GetTerminalRequest) (*api.Terminal, error) {
+	if srv.runClient.Available() {
+		resp, err := srv.runClient.Terminal.Get(ctx, req)
+		if err == nil {
+			return resp, err
+		}
+	}
+
 	srv.Mux.mu.RLock()
 	defer srv.Mux.mu.RUnlock()
 	term, ok := srv.get(req.Alias)
@@ -212,6 +236,22 @@ func (srv *MuxTerminalService) get(alias string) (*api.Terminal, bool) {
 
 // Listen listens to a terminal.
 func (srv *MuxTerminalService) Listen(req *api.ListenTerminalRequest, resp api.TerminalService_ListenServer) error {
+	if srv.runClient.Available() {
+		client, err := srv.runClient.Terminal.Listen(resp.Context(), req)
+		if err == nil {
+			for {
+				clientResp, err := client.Recv()
+				if err != nil {
+					return err
+				}
+				err = resp.Send(clientResp)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	srv.Mux.mu.RLock()
 	term, ok := srv.Mux.terms[req.Alias]
 	srv.Mux.mu.RUnlock()
@@ -291,6 +331,13 @@ func (srv *MuxTerminalService) Listen(req *api.ListenTerminalRequest, resp api.T
 
 // Write writes to a terminal.
 func (srv *MuxTerminalService) Write(ctx context.Context, req *api.WriteTerminalRequest) (*api.WriteTerminalResponse, error) {
+	if srv.runClient.Available() {
+		resp, err := srv.runClient.Terminal.Write(ctx, req)
+		if err == nil {
+			return resp, err
+		}
+	}
+
 	srv.Mux.mu.RLock()
 	term, ok := srv.Mux.terms[req.Alias]
 	srv.Mux.mu.RUnlock()
@@ -307,6 +354,13 @@ func (srv *MuxTerminalService) Write(ctx context.Context, req *api.WriteTerminal
 
 // SetSize sets the terminal's size.
 func (srv *MuxTerminalService) SetSize(ctx context.Context, req *api.SetTerminalSizeRequest) (*api.SetTerminalSizeResponse, error) {
+	if srv.runClient.Available() {
+		resp, err := srv.runClient.Terminal.SetSize(ctx, req)
+		if err == nil {
+			return resp, err
+		}
+	}
+
 	srv.Mux.mu.RLock()
 	term, ok := srv.Mux.terms[req.Alias]
 	srv.Mux.mu.RUnlock()
@@ -335,6 +389,13 @@ func (srv *MuxTerminalService) SetSize(ctx context.Context, req *api.SetTerminal
 
 // SetTitle sets the terminal's title.
 func (srv *MuxTerminalService) SetTitle(ctx context.Context, req *api.SetTerminalTitleRequest) (*api.SetTerminalTitleResponse, error) {
+	if srv.runClient.Available() {
+		resp, err := srv.runClient.Terminal.SetTitle(ctx, req)
+		if err == nil {
+			return resp, err
+		}
+	}
+
 	srv.Mux.mu.RLock()
 	term, ok := srv.Mux.terms[req.Alias]
 	srv.Mux.mu.RUnlock()
@@ -347,6 +408,13 @@ func (srv *MuxTerminalService) SetTitle(ctx context.Context, req *api.SetTermina
 
 // UpdateAnnotations sets the terminal's title.
 func (srv *MuxTerminalService) UpdateAnnotations(ctx context.Context, req *api.UpdateTerminalAnnotationsRequest) (*api.UpdateTerminalAnnotationsResponse, error) {
+	if srv.runClient.Available() {
+		resp, err := srv.runClient.Terminal.UpdateAnnotations(ctx, req)
+		if err == nil {
+			return resp, err
+		}
+	}
+
 	srv.Mux.mu.RLock()
 	term, ok := srv.Mux.terms[req.Alias]
 	srv.Mux.mu.RUnlock()

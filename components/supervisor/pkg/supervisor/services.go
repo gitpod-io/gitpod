@@ -26,6 +26,7 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/run"
 )
 
 // RegisterableService can register a service.
@@ -98,6 +99,7 @@ type statusService struct {
 	ideReady        *ideReadyState
 	desktopIdeReady *ideReadyState
 	topService      *TopService
+	runClient       *run.Client
 
 	api.UnimplementedStatusServiceServer
 }
@@ -244,10 +246,37 @@ func (s *statusService) TasksStatus(req *api.TasksStatusRequest, srv api.StatusS
 	case <-s.Tasks.ready:
 	}
 
+	var (
+		runStream api.StatusService_TasksStatusClient
+		err       error
+	)
+	if s.runClient.Available() {
+		runStream, err = s.runClient.Status.TasksStatus(srv.Context(), req)
+		if err != nil {
+			log.WithError(err).Error("failed to stream run tasks state")
+		}
+	}
+
+	var runTasks []*api.TaskStatus
+	var subTasks []*api.TaskStatus
+	doSend := func() error {
+		var tasks []*api.TaskStatus
+		tasks = append(tasks, runTasks...)
+		tasks = append(tasks, subTasks...)
+		return srv.Send(&api.TasksStatusResponse{Tasks: tasks})
+	}
+
 	if !req.Observe {
-		return srv.Send(&api.TasksStatusResponse{
-			Tasks: s.Tasks.Status(),
-		})
+		if runStream != nil {
+			resp, err := runStream.Recv()
+			if err != nil {
+				log.WithError(err).Error("failed to receive run tasks state")
+			} else {
+				runTasks = resp.Tasks
+			}
+		}
+		subTasks = s.Tasks.Status()
+		return doSend()
 	}
 
 	sub := s.Tasks.Subscribe()
@@ -256,15 +285,37 @@ func (s *statusService) TasksStatus(req *api.TasksStatusRequest, srv api.StatusS
 	}
 	defer sub.Close()
 
+	respChan := make(chan []*api.TaskStatus, 5)
+	if runStream != nil {
+		go func() {
+			for {
+				resp, err := runStream.Recv()
+				if err != nil {
+					return
+				}
+				respChan <- resp.GetTasks()
+			}
+		}()
+	}
 	for {
 		select {
 		case <-srv.Context().Done():
 			return nil
+		case update := <-respChan:
+			if update == nil {
+				return nil
+			}
+			runTasks = update
+			err := doSend()
+			if err != nil {
+				return err
+			}
 		case update := <-sub.Updates():
 			if update == nil {
 				return nil
 			}
-			err := srv.Send(&api.TasksStatusResponse{Tasks: update})
+			subTasks = update
+			err := doSend()
 			if err != nil {
 				return err
 			}

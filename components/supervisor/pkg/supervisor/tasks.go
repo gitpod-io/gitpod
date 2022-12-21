@@ -109,9 +109,10 @@ type tasksManager struct {
 	reporter        headlessTaskProgressReporter
 	ideReady        *ideReadyState
 	desktopIdeReady *ideReadyState
+	runGP           bool
 }
 
-func newTasksManager(config *Config, terminalService *terminal.MuxTerminalService, contentState ContentState, reporter headlessTaskProgressReporter, ideReady *ideReadyState, desktopIdeReady *ideReadyState) *tasksManager {
+func newTasksManager(config *Config, terminalService *terminal.MuxTerminalService, contentState ContentState, reporter headlessTaskProgressReporter, ideReady *ideReadyState, desktopIdeReady *ideReadyState, runGP bool) *tasksManager {
 	return &tasksManager{
 		config:          config,
 		terminalService: terminalService,
@@ -122,6 +123,7 @@ func newTasksManager(config *Config, terminalService *terminal.MuxTerminalServic
 		storeLocation:   logs.TerminalStoreLocation,
 		ideReady:        ideReady,
 		desktopIdeReady: desktopIdeReady,
+		runGP:           runGP,
 	}
 }
 
@@ -203,11 +205,19 @@ func (tm *tasksManager) init(ctx context.Context) {
 	for i, config := range *tasks {
 		id := strconv.Itoa(i)
 		presentation := &api.TaskPresentation{}
+
+		var name string
 		if config.Name != nil {
-			presentation.Name = *config.Name
-		} else {
-			presentation.Name = "Gitpod Task " + strconv.Itoa(i+1)
+			name = *config.Name
 		}
+		if name == "" {
+			name = "Gitpod Task " + strconv.Itoa(i+1)
+		}
+		if tm.runGP {
+			name = "Run: " + name
+		}
+		presentation.Name = name
+
 		if config.OpenIn != nil {
 			presentation.OpenIn = *config.OpenIn
 		}
