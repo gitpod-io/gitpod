@@ -29,6 +29,8 @@ import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
 import Alert from "../components/Alert";
+import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
+import { workspacesService } from "../service/public-api";
 
 const sessionId = v4();
 
@@ -99,6 +101,8 @@ export interface StartWorkspaceState {
 }
 
 export default class StartWorkspace extends React.Component<StartWorkspaceProps, StartWorkspaceState> {
+    static contextType = FeatureFlagContext;
+
     constructor(props: StartWorkspaceProps) {
         super(props);
         this.state = {};
@@ -523,7 +527,11 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                         {
                                             title: "Stop Workspace",
                                             onClick: () =>
-                                                getGitpodService().server.stopWorkspace(this.props.workspaceId),
+                                                this.context.usePublicApiWorkspacesService
+                                                    ? workspacesService.stopWorkspace({
+                                                          workspaceId: this.props.workspaceId,
+                                                      })
+                                                    : getGitpodService().server.stopWorkspace(this.props.workspaceId),
                                         },
                                         {
                                             title: "Connect via SSH",

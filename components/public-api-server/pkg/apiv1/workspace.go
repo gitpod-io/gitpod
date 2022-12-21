@@ -168,6 +168,26 @@ func (s *WorkspaceService) UpdatePort(ctx context.Context, req *connect.Request[
 	), nil
 }
 
+func (s *WorkspaceService) StopWorkspace(ctx context.Context, req *connect.Request[v1.StopWorkspaceRequest]) (*connect.Response[v1.StopWorkspaceResponse], error) {
+	workspaceID, err := validateWorkspaceID(req.Msg.GetWorkspaceId())
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+
+	err = conn.StopWorkspace(ctx, workspaceID)
+	if err != nil {
+		log.WithField("workspace_id", workspaceID).WithError(err).Error("Failed to stop workspace.")
+		return nil, proxy.ConvertError(err)
+	}
+
+	return connect.NewResponse(&v1.StopWorkspaceResponse{}), nil
+}
+
 func getLimitFromPagination(pagination *v1.Pagination) (int, error) {
 	const (
 		defaultLimit = 20

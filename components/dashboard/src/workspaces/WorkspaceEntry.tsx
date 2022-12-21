@@ -37,7 +37,7 @@ interface Props {
     desc: WorkspaceInfo;
     model: WorkspaceModel;
     isAdmin?: boolean;
-    stopWorkspace: (ws: string) => Promise<void>;
+    stopWorkspace: (ws: string) => Promise<any>;
 }
 
 export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
