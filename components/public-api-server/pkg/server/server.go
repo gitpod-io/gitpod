@@ -6,7 +6,6 @@ package server
 
 import (
 	"fmt"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -44,13 +43,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 		return fmt.Errorf("failed to setup connection pool: %w", err)
 	}
 
-	dbConn, err := db.Connect(db.ConnectionParams{
-		User:     os.Getenv("DB_USERNAME"),
-		Password: os.Getenv("DB_PASSWORD"),
-		Host:     net.JoinHostPort(os.Getenv("DB_HOST"), os.Getenv("DB_PORT")),
-		Database: "gitpod",
-		CaCert:   os.Getenv("DB_CA_CERT"),
-	})
+	dbConn, err := db.Connect(db.ConnectionParamsFromEnv())
 	if err != nil {
 		return fmt.Errorf("failed to establish database connection: %w", err)
 	}
