@@ -1,6 +1,8 @@
 # Change Log
 
 ## December 2022
+- The Admin Teams search will also search by team slug in addition to team name. ([#15338](https://github.com/gitpod-io/gitpod/pull/15338)) - [@selfcontained](https://github.com/selfcontained)
+- [installer] Update third_party charts to use full index ([#15432](https://github.com/gitpod-io/gitpod/pull/15432)) - [@Pothulapati](https://github.com/Pothulapati)
 - Update beta notice for the JetBrains integration ([#15371](https://github.com/gitpod-io/gitpod/pull/15371)) - [@gtsiolis](https://github.com/gtsiolis)
 - Allow specifying CA certificate to configure SSL secured database connections ([#15320](https://github.com/gitpod-io/gitpod/pull/15320)) - [@geropl](https://github.com/geropl)
 - Replace prebuild duration message emoji ([#15364](https://github.com/gitpod-io/gitpod/pull/15364)) - [@gtsiolis](https://github.com/gtsiolis)
