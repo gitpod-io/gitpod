@@ -11,7 +11,7 @@ defaultArgs:
   codeVersion: 1.74.1
   codeQuality: stable
   noVerifyJBPlugin: false
-  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2022.3.tar.gz"
+  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2022.3.1.tar.gz"
   golandDownloadUrl: "https://download.jetbrains.com/go/goland-2022.3.tar.gz"
   pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2022.3.tar.gz"
   phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2022.3.tar.gz"
