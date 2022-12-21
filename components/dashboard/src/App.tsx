@@ -5,6 +5,7 @@
  */
 
 import React, { FunctionComponent, Suspense, useEffect } from "react";
+import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
 import { Login } from "./Login";
 import { Experiment } from "./experiments";
 import { isGitpodIo } from "./utils";
@@ -41,6 +42,16 @@ const App: FunctionComponent = () => {
                 <Setup />
             </Suspense>
         );
+    }
+
+    // Redirects to www site if it's the root, no user, and no gp cookie present (has logged in recently)
+    // Should come after the <Setup/> check
+    if (isGitpodIo() && window.location.pathname === "/" && window.location.hash === "" && !user) {
+        // If there's no gp cookie, bounce to www site
+        if (!GitpodCookie.isPresent(document.cookie)) {
+            window.location.href = `https://www.gitpod.io`;
+            return <div></div>;
+        }
     }
 
     // At this point if there's no user, they should Login

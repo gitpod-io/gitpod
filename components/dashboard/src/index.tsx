@@ -7,7 +7,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import App from "./App";
-import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
 import { UserContextProvider } from "./user-context";
 import { AdminContextProvider } from "./admin-context";
 import { PaymentContextProvider } from "./payment-context";
@@ -35,15 +34,6 @@ const bootApp = () => {
         if (isWebsiteSlug(window.location.pathname)) {
             window.location.host = "www.gitpod.io";
             return;
-        }
-
-        // Redirect to www website if it's the root url and no cookie
-        if (window.location.pathname === "/" && window.location.hash === "") {
-            // If there's no gp cookie, bounce to www site
-            if (!GitpodCookie.isPresent(document.cookie)) {
-                window.location.href = `https://www.gitpod.io`;
-                return;
-            }
         }
     }
 
