@@ -8,6 +8,8 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"net"
+	"os"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -24,6 +26,16 @@ type ConnectionParams struct {
 	Host     string
 	Database string
 	CaCert   string
+}
+
+func ConnectionParamsFromEnv() ConnectionParams {
+	return ConnectionParams{
+		User:     os.Getenv("DB_USERNAME"),
+		Password: os.Getenv("DB_PASSWORD"),
+		Host:     net.JoinHostPort(os.Getenv("DB_HOST"), os.Getenv("DB_PORT")),
+		Database: "gitpod",
+		CaCert:   os.Getenv("DB_CA_CERT"),
+	}
 }
 
 func Connect(p ConnectionParams) (*gorm.DB, error) {
