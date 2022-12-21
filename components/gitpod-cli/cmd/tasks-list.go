@@ -33,11 +33,14 @@ var listTasksCmd = &cobra.Command{
 		}
 		defer client.Close()
 
-		tasks, err := client.GetTasksList(ctx)
-		if err != nil {
-			log.Fatalf("cannot get task list: %s", err)
+		runClient, err := supervisor.New(context.Background(), supervisor.SupervisorClientOption{
+			Address: "localhost:25000",
+		})
+		if err == nil {
+			defer runClient.Close()
 		}
 
+		tasks := client.GetAllTaskTerminals(ctx, runClient)
 		if len(tasks) == 0 {
 			fmt.Println("No tasks detected")
 			return
@@ -67,12 +70,8 @@ var listTasksCmd = &cobra.Command{
 			isCurrent := false
 
 			if task.State == api.TaskState_running {
-				terminal, err := client.Terminal.Get(context.Background(), &api.GetTerminalRequest{Alias: task.Terminal})
-				if err != nil {
-					panic(err)
-				}
-
-				if ppid == terminal.Pid {
+				terminal, err := task.Client.Terminal.Get(context.Background(), &api.GetTerminalRequest{Alias: task.Alias})
+				if err == nil && ppid == terminal.Pid {
 					isCurrent = true
 				}
 			}
@@ -81,7 +80,7 @@ var listTasksCmd = &cobra.Command{
 				colors = []tablewriter.Colors{{mapCurrentToColor[isCurrent]}, {}, {mapStatusToColor[task.State]}}
 			}
 
-			table.Rich([]string{task.Terminal, task.Presentation.Name, task.State.String()}, colors)
+			table.Rich([]string{task.Alias, task.Name, task.State.String()}, colors)
 		}
 
 		table.Render()

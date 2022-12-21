@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
 	"github.com/gitpod-io/gitpod/supervisor/api"
@@ -36,19 +35,24 @@ var attachTaskCmd = &cobra.Command{
 		}
 		defer client.Close()
 
-		var terminalAlias string
+		runClient, err := supervisor.New(context.Background(), supervisor.SupervisorClientOption{
+			Address: "localhost:25000",
+		})
+		if err == nil {
+			defer runClient.Close()
+		}
+
+		var taskTerm *supervisor.TaskTerminal
 
 		if len(args) > 0 {
-			terminalAlias = args[0]
-		} else {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-			tasks, err := client.GetTasksListByState(ctx, api.TaskState_running)
-			if err != nil {
-				log.Fatalf("cannot get task list: %s", err)
+			taskTerm = client.GetRunningTaskTerminalsByAlias(context.Background(), args[0], runClient)
+			if taskTerm == nil {
+				fmt.Printf("The selected task was not found or already stopped: %s.\nMake sure to use the correct task ID.\nUse 'gp tasks list' to obtain the task id or run 'gp tasks stop' to select the desired task\n", args[0])
+				return
 			}
-
-			if len(tasks) == 0 {
+		} else {
+			terminals := client.GetRunningTaskTerminals(context.Background(), runClient)
+			if len(terminals) == 0 {
 				fmt.Println("There are no running tasks")
 				return
 			}
@@ -56,12 +60,12 @@ var attachTaskCmd = &cobra.Command{
 			var taskNames []string
 			var taskIndex int
 
-			if len(tasks) == 1 {
+			if len(terminals) == 1 {
 				taskIndex = 0
 			} else {
 
-				for _, task := range tasks {
-					taskNames = append(taskNames, task.Presentation.Name)
+				for _, task := range terminals {
+					taskNames = append(taskNames, task.Name)
 				}
 
 				prompt := promptui.Select{
@@ -85,15 +89,15 @@ var attachTaskCmd = &cobra.Command{
 				taskIndex = selectedIndex
 			}
 
-			terminalAlias = tasks[taskIndex].Terminal
+			taskTerm = terminals[taskIndex]
 		}
 
-		terminal, err := client.Terminal.Get(context.Background(), &api.GetTerminalRequest{Alias: terminalAlias})
+		terminal, err := taskTerm.Client.Terminal.Get(context.Background(), &api.GetTerminalRequest{Alias: taskTerm.Alias})
 		if err != nil {
 			if e, ok := status.FromError(err); ok {
 				switch e.Code() {
 				case codes.NotFound:
-					fmt.Println("Terminal is inactive:", terminalAlias)
+					fmt.Println("Terminal is inactive:", taskTerm.Alias)
 				default:
 					fmt.Println(e.Code(), e.Message())
 				}
@@ -105,14 +109,14 @@ var attachTaskCmd = &cobra.Command{
 		ppid := int64(os.Getppid())
 
 		if ppid == terminal.Pid {
-			fmt.Println("You are already in terminal:", terminalAlias)
+			fmt.Println("You are already in terminal:", taskTerm.Alias)
 			return
 		}
 
 		interactive, _ := cmd.Flags().GetBool("interactive")
 		forceResize, _ := cmd.Flags().GetBool("force-resize")
 
-		client.AttachToTerminal(context.Background(), terminalAlias, supervisor.AttachToTerminalOpts{
+		taskTerm.Client.AttachToTerminal(context.Background(), taskTerm.Alias, supervisor.AttachToTerminalOpts{
 			ForceResize: forceResize,
 			Interactive: interactive,
 		})
