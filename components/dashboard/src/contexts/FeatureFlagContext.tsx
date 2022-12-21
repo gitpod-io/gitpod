@@ -21,6 +21,7 @@ const FeatureFlagContext = createContext<{
     showUseLastSuccessfulPrebuild: boolean;
     usePublicApiTeamsService: boolean;
     usePublicApiProjectsService: boolean;
+    usePublicApiWorkspacesService: boolean;
     enablePersonalAccessTokens: boolean;
 }>({
     showUsageView: false,
@@ -28,6 +29,7 @@ const FeatureFlagContext = createContext<{
     showUseLastSuccessfulPrebuild: false,
     usePublicApiTeamsService: false,
     usePublicApiProjectsService: false,
+    usePublicApiWorkspacesService: false,
     enablePersonalAccessTokens: false,
 });
 
@@ -43,6 +45,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const [usePublicApiTeamsService, setUsePublicApiTeamsService] = useState<boolean>(false);
     const [usePublicApiProjectsService, setUsePublicApiProjectsService] = useState<boolean>(false);
     const [enablePersonalAccessTokens, setPersonalAccessTokensEnabled] = useState<boolean>(false);
+    const [usePublicApiWorkspacesService, setUsePublicApiWorkspacesService] = useState<boolean>(false);
 
     useEffect(() => {
         if (!user) return;
@@ -54,6 +57,10 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 publicApiExperimentalTeamsService: { defaultValue: false, setter: setUsePublicApiTeamsService },
                 publicApiExperimentalProjectsService: { defaultValue: false, setter: setUsePublicApiProjectsService },
                 personalAccessTokensEnabled: { defaultValue: false, setter: setPersonalAccessTokensEnabled },
+                publicApiExperimentalWorkspaceService: {
+                    defaultValue: false,
+                    setter: setUsePublicApiWorkspacesService,
+                },
             };
 
             for (const [flagName, config] of Object.entries(featureFlags)) {
@@ -99,6 +106,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 usePublicApiTeamsService,
                 enablePersonalAccessTokens,
                 usePublicApiProjectsService,
+                usePublicApiWorkspacesService,
             }}
         >
             {children}
