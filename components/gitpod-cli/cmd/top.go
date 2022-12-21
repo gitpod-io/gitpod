@@ -13,9 +13,8 @@ import (
 	"sync"
 	"time"
 
-	supervisor_helper "github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor-helper"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
 	"github.com/gitpod-io/gitpod/supervisor/api"
-	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 
@@ -29,8 +28,8 @@ var topCmdOpts struct {
 }
 
 type topData struct {
-	Resources      *supervisor.ResourcesStatusResponse              `json:"resources"`
-	WorkspaceClass *supervisor.WorkspaceInfoResponse_WorkspaceClass `json:"workspace_class"`
+	Resources      *api.ResourcesStatusResponse              `json:"resources"`
+	WorkspaceClass *api.WorkspaceInfoResponse_WorkspaceClass `json:"workspace_class"`
 }
 
 var topCmd = &cobra.Command{
@@ -40,12 +39,11 @@ var topCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		conn, err := supervisor_helper.Dial(ctx)
+		client, err := supervisor.New(ctx)
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		defer conn.Close()
+		defer client.Close()
 
 		data := &topData{}
 
@@ -53,7 +51,7 @@ var topCmd = &cobra.Command{
 		wg.Add(2)
 
 		go func() {
-			workspaceResources, err := supervisor_helper.GetWorkspaceResources(ctx, conn)
+			workspaceResources, err := client.Status.ResourcesStatus(ctx, &api.ResourcesStatuRequest{})
 			if err != nil {
 				log.Fatalf("cannot get workspace resources: %s", err)
 			}
@@ -62,7 +60,7 @@ var topCmd = &cobra.Command{
 		}()
 
 		go func() {
-			if wsInfo, err := supervisor.NewInfoServiceClient(conn).WorkspaceInfo(ctx, &supervisor.WorkspaceInfoRequest{}); err == nil {
+			if wsInfo, err := client.Info.WorkspaceInfo(ctx, &api.WorkspaceInfoRequest{}); err == nil {
 				data.WorkspaceClass = wsInfo.WorkspaceClass
 			}
 			wg.Done()
@@ -79,14 +77,14 @@ var topCmd = &cobra.Command{
 	},
 }
 
-func formatWorkspaceClass(workspaceClass *supervisor.WorkspaceInfoResponse_WorkspaceClass) string {
+func formatWorkspaceClass(workspaceClass *api.WorkspaceInfoResponse_WorkspaceClass) string {
 	if workspaceClass == nil || workspaceClass.DisplayName == "" {
 		return ""
 	}
 	return fmt.Sprintf("%s: %s", workspaceClass.DisplayName, workspaceClass.Description)
 }
 
-func outputTable(workspaceResources *supervisor.ResourcesStatusResponse, workspaceClass *supervisor.WorkspaceInfoResponse_WorkspaceClass) {
+func outputTable(workspaceResources *api.ResourcesStatusResponse, workspaceClass *api.WorkspaceInfoResponse_WorkspaceClass) {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetBorder(false)
 	table.SetColWidth(50)

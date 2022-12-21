@@ -10,9 +10,9 @@ import (
 	"os"
 	"time"
 
-	supervisor_helper "github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor-helper"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
-	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
+	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/spf13/cobra"
 
 	"github.com/olekukonko/tablewriter"
@@ -25,10 +25,17 @@ var listPortsCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		ports, portsListError := supervisor_helper.GetPortsList(ctx)
+		client, portsListError := supervisor.New(ctx)
+		if portsListError != nil {
+			utils.LogError(ctx, portsListError, "Could not get the ports list.", client)
+			return
+		}
+		defer client.Close()
+
+		ports, portsListError := client.GetPortsList(ctx)
 
 		if portsListError != nil {
-			utils.LogError(ctx, portsListError, "Could not get the ports list.")
+			utils.LogError(ctx, portsListError, "Could not get the ports list.", client)
 			return
 		}
 
@@ -55,7 +62,7 @@ var listPortsCmd = &cobra.Command{
 			if !port.Served {
 				status = "not served"
 			} else if !accessible {
-				if port.AutoExposure == supervisor.PortAutoExposure_failed {
+				if port.AutoExposure == api.PortAutoExposure_failed {
 					status = "failed to expose"
 					statusColor = tablewriter.FgRedColor
 				} else {
@@ -63,20 +70,20 @@ var listPortsCmd = &cobra.Command{
 					statusColor = tablewriter.FgYellowColor
 				}
 			} else if port.Exposed != nil {
-				if port.Exposed.Visibility == supervisor.PortVisibility_public {
+				if port.Exposed.Visibility == api.PortVisibility_public {
 					status = "open (public)"
 					statusColor = tablewriter.FgHiGreenColor
 				}
-				if port.Exposed.Visibility == supervisor.PortVisibility_private {
+				if port.Exposed.Visibility == api.PortVisibility_private {
 					status = "open (private)"
 					statusColor = tablewriter.FgHiCyanColor
 				}
 			} else if port.Tunneled != nil {
-				if port.Tunneled.Visibility == supervisor.TunnelVisiblity(supervisor.TunnelVisiblity_value["network"]) {
+				if port.Tunneled.Visibility == api.TunnelVisiblity(api.TunnelVisiblity_value["network"]) {
 					status = "open on all interfaces"
 					statusColor = tablewriter.FgHiGreenColor
 				}
-				if port.Tunneled.Visibility == supervisor.TunnelVisiblity(supervisor.TunnelVisiblity_value["host"]) {
+				if port.Tunneled.Visibility == api.TunnelVisiblity(api.TunnelVisiblity_value["host"]) {
 					status = "open on localhost"
 					statusColor = tablewriter.FgHiGreenColor
 				}

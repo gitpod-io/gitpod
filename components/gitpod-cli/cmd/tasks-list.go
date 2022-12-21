@@ -11,10 +11,9 @@ import (
 	"os"
 	"time"
 
-	supervisor_helper "github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor-helper"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 	"github.com/gitpod-io/gitpod/supervisor/api"
-	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/spf13/cobra"
 
 	"github.com/olekukonko/tablewriter"
@@ -28,7 +27,13 @@ var listTasksCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		tasks, err := supervisor_helper.GetTasksList(ctx)
+		client, err := supervisor.New(ctx)
+		if err != nil {
+			log.Fatalf("cannot get task list: %s", err)
+		}
+		defer client.Close()
+
+		tasks, err := client.GetTasksList(ctx)
 		if err != nil {
 			log.Fatalf("cannot get task list: %s", err)
 		}
@@ -62,12 +67,7 @@ var listTasksCmd = &cobra.Command{
 			isCurrent := false
 
 			if task.State == api.TaskState_running {
-				terminalClient, err := supervisor_helper.GetTerminalServiceClient(context.Background())
-				if err != nil {
-					log.Fatalf("cannot get terminal service: %s", err)
-				}
-
-				terminal, err := terminalClient.Get(context.Background(), &supervisor.GetTerminalRequest{Alias: task.Terminal})
+				terminal, err := client.Terminal.Get(context.Background(), &api.GetTerminalRequest{Alias: task.Terminal})
 				if err != nil {
 					panic(err)
 				}

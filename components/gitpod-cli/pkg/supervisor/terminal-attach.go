@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
-package supervisor_helper
+package supervisor
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"syscall"
 
 	"github.com/creack/pty"
-	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
+	"github.com/gitpod-io/gitpod/supervisor/api"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/term"
 )
@@ -23,9 +23,9 @@ type AttachToTerminalOpts struct {
 	Token       string
 }
 
-func AttachToTerminal(ctx context.Context, client supervisor.TerminalServiceClient, alias string, opts AttachToTerminalOpts) {
+func (client *SupervisorClient) AttachToTerminal(ctx context.Context, alias string, opts AttachToTerminalOpts) {
 	// Copy to stdout/stderr
-	listen, err := client.Listen(ctx, &supervisor.ListenTerminalRequest{
+	listen, err := client.Terminal.Listen(ctx, &api.ListenTerminalRequest{
 		Alias: alias,
 	})
 	if err != nil {
@@ -66,9 +66,9 @@ func AttachToTerminal(ctx context.Context, client supervisor.TerminalServiceClie
 					continue
 				}
 
-				req := &supervisor.SetTerminalSizeRequest{
+				req := &api.SetTerminalSizeRequest{
 					Alias: alias,
-					Size: &supervisor.TerminalSize{
+					Size: &api.TerminalSize{
 						Cols:     uint32(size.Cols),
 						Rows:     uint32(size.Rows),
 						WidthPx:  uint32(size.X),
@@ -78,14 +78,14 @@ func AttachToTerminal(ctx context.Context, client supervisor.TerminalServiceClie
 
 				var expectResize bool
 				if opts.ForceResize {
-					req.Priority = &supervisor.SetTerminalSizeRequest_Force{Force: true}
+					req.Priority = &api.SetTerminalSizeRequest_Force{Force: true}
 					expectResize = true
 				} else if opts.Token != "" {
-					req.Priority = &supervisor.SetTerminalSizeRequest_Token{Token: opts.Token}
+					req.Priority = &api.SetTerminalSizeRequest_Token{Token: opts.Token}
 					expectResize = true
 				}
 
-				_, err = client.SetSize(ctx, req)
+				_, err = client.Terminal.SetSize(ctx, req)
 				if err != nil && expectResize {
 					log.WithError(err).Error("cannot set terminal size")
 					continue
@@ -100,7 +100,7 @@ func AttachToTerminal(ctx context.Context, client supervisor.TerminalServiceClie
 			for {
 				n, err := os.Stdin.Read(buf)
 				if n > 0 {
-					_, serr := client.Write(ctx, &supervisor.WriteTerminalRequest{Alias: alias, Stdin: buf[:n]})
+					_, serr := client.Terminal.Write(ctx, &api.WriteTerminalRequest{Alias: alias, Stdin: buf[:n]})
 					if serr != nil {
 						errchan <- err
 						return
@@ -126,13 +126,4 @@ func AttachToTerminal(ctx context.Context, client supervisor.TerminalServiceClie
 		}
 	case <-stopch:
 	}
-}
-
-func GetTerminalServiceClient(ctx context.Context) (supervisor.TerminalServiceClient, error) {
-	conn, err := Dial(ctx)
-	if err != nil {
-		return nil, err
-	}
-	terminalClient := supervisor.NewTerminalServiceClient(conn)
-	return terminalClient, nil
 }

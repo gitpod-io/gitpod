@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 
-	supervisorClient "github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor-helper"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
 	"github.com/google/shlex"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
@@ -34,10 +34,14 @@ var previewCmd = &cobra.Command{
 		// TODO(ak) use NotificationService.NotifyActive supervisor API instead
 
 		ctx := context.Background()
-		err := supervisorClient.WaitForIDEReady(ctx)
+
+		client, err := supervisor.New(ctx)
 		if err != nil {
 			log.Fatal(err)
 		}
+		defer client.Close()
+		client.WaitForIDEReady(ctx)
+
 		url := replaceLocalhostInURL(args[0])
 		if previewCmdOpts.External {
 			if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {

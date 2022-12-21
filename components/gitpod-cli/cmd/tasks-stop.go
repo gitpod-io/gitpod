@@ -10,9 +10,8 @@ import (
 	"log"
 	"time"
 
-	supervisor_helper "github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor-helper"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
 	"github.com/gitpod-io/gitpod/supervisor/api"
-	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 )
@@ -33,12 +32,11 @@ var stopTaskCmd = &cobra.Command{
 			cancel          context.CancelFunc
 		)
 
-		terminalClient, err := supervisor_helper.GetTerminalServiceClient(context.Background())
-
+		client, err := supervisor.New(context.Background())
 		if err != nil {
-			log.Fatalf("cannot get terminal service: %s", err)
-			return
+			log.Fatalf("annot get task list: %s", err)
 		}
+		defer client.Close()
 
 		ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -49,7 +47,7 @@ var stopTaskCmd = &cobra.Command{
 			ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 
-			tasks, err := supervisor_helper.GetTasksListByState(ctx, supervisor.TaskState_running)
+			tasks, err := client.GetTasksListByState(ctx, api.TaskState_running)
 
 			if err != nil {
 				log.Fatalf("cannot get task list: %s", err)
@@ -65,7 +63,7 @@ var stopTaskCmd = &cobra.Command{
 				terminalAliases = append(terminalAliases, task.Terminal)
 			}
 		} else if len(args) > 0 {
-			_, err := terminalClient.Get(ctx, &api.GetTerminalRequest{
+			_, err := client.Terminal.Get(ctx, &api.GetTerminalRequest{
 				Alias: args[0],
 			})
 
@@ -76,7 +74,7 @@ var stopTaskCmd = &cobra.Command{
 
 			terminalAliases = append(terminalAliases, args[0])
 		} else {
-			tasks, err := supervisor_helper.GetTasksListByState(ctx, supervisor.TaskState_running)
+			tasks, err := client.GetTasksListByState(ctx, api.TaskState_running)
 			if err != nil {
 				log.Fatalf("cannot get task list: %s", err)
 			}
@@ -120,7 +118,7 @@ var stopTaskCmd = &cobra.Command{
 		}
 
 		for _, terminalAlias := range terminalAliases {
-			_, err := terminalClient.Shutdown(context.Background(), &supervisor.ShutdownTerminalRequest{Alias: terminalAlias})
+			_, err := client.Terminal.Shutdown(context.Background(), &api.ShutdownTerminalRequest{Alias: terminalAlias})
 			if err != nil {
 				log.Fatalf("cannot stop task: %s", err)
 				return

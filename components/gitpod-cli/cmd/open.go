@@ -10,7 +10,7 @@ import (
 	"os"
 	"os/exec"
 
-	supervisorClient "github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor-helper"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
 
 	"github.com/google/shlex"
 	"github.com/spf13/cobra"
@@ -26,10 +26,14 @@ var openCmd = &cobra.Command{
 		// TODO(ak) use NotificationService.NotifyActive supervisor API instead
 
 		ctx := context.Background()
-		err := supervisorClient.WaitForIDEReady(ctx)
+
+		client, err := supervisor.New(ctx)
 		if err != nil {
 			log.Fatal(err)
 		}
+		defer client.Close()
+
+		client.WaitForIDEReady(ctx)
 
 		wait, _ := cmd.Flags().GetBool("wait")
 
