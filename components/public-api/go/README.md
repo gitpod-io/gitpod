@@ -7,31 +7,34 @@ go get -u github.com/gitpod-io/gitpod/components/public-api/go
 ```
 
 ```golang
-
 import (
-    "github.com/bufbuild/connect-go"
+    "context"
+    "fmt"
+    "os"
+    "time"
 
-    gitpod_experimental_v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
-    gitpod_experimental_v1connect "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
+    "github.com/bufbuild/connect-go"
+    "github.com/gitpod-io/gitpod/components/public-api/go/client"
+    v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 )
 
-// Define an interceptor to attach credentials onto outgoing requests
-interceptor := connect.UnaryInterceptorFunc(func(next connect.UnaryFunc) connect.UnaryFunc {
-    return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-      if req.Spec().IsClient {
-        // Send a token with client requests.
-        req.Header().Set("Authorization", "Bearer your-access-token")
-      }
+func ExampleListTeams() {
+    token := "gitpod_pat_example.personal-access-token"
 
-      return next(ctx, req)
-    })
-  })
+    gitpod, err := client.New(client.WithCredentials(token))
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Failed to construct gitpod client %v", err)
+        return
+    }
 
-// Construct a new client to interact with Gitpod
-client := gitpod_experimental_v1connect.NewTeamsServiceClient(http.DefaultClient, "https://api.gitpod.io", connect.WithInterceptors(
-    inteceptor,
-))
+    response, err := gitpod.Teams.ListTeams(context.Background(), connect.NewRequest(&v1.ListTeamsRequest{}))
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Failed to list teams %v", err)
+        return
+    }
 
-// Use the client to retreive teams
-response, err := client.ListTeams(context.Background(), gitpod_experimental_v1connect.NewRequest(&gitpod_experimental_v1.ListTeamsRequest{}))
+    fmt.Fprintf(os.Stdout, "Retrieved teams %v", response.Msg.GetTeams())
+}
 ```
+
+For more examples, see [examples](./examples) directory.
