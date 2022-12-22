@@ -39,6 +39,11 @@ var Objects = common.CompositeRenderFunc(
 			ServicePort:   InstallationAdminPort,
 		},
 		{
+			Name:          IAMSessionPortName,
+			ContainerPort: IAMSessionPort,
+			ServicePort:   IAMSessionPort,
+		},
+		{
 			Name:          DebugPortName,
 			ContainerPort: baseserver.BuiltinDebugPort,
 			ServicePort:   baseserver.BuiltinDebugPort,

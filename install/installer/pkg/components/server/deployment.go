@@ -421,6 +421,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Name:          InstallationAdminName,
 								ContainerPort: InstallationAdminPort,
 							}, {
+								Name:          IAMSessionPortName,
+								ContainerPort: IAMSessionPort,
+							}, {
 								Name:          DebugPortName,
 								ContainerPort: baseserver.BuiltinDebugPort,
 							}, {
