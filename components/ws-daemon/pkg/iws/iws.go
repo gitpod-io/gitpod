@@ -87,27 +87,26 @@ var (
 // ServeWorkspace establishes the IWS server for a workspace
 func ServeWorkspace(uidmapper *Uidmapper, fsshift api.FSShiftMethod, cgroupMountPoint string) func(ctx context.Context, ws *session.Workspace) error {
 	return func(ctx context.Context, ws *session.Workspace) (err error) {
+		span, _ := opentracing.StartSpanFromContext(ctx, "iws.ServeWorkspace")
+		defer tracing.FinishSpan(span, &err)
 		if _, running := ws.NonPersistentAttrs[session.AttrWorkspaceServer]; running {
+			span.SetTag("alreadyRunning", true)
 			return nil
 		}
 
-		//nolint:ineffassign
-		span, ctx := opentracing.StartSpanFromContext(ctx, "iws.ServeWorkspace")
-		defer tracing.FinishSpan(span, &err)
-
-		helper := &InWorkspaceServiceServer{
+		iws := &InWorkspaceServiceServer{
 			Uidmapper:        uidmapper,
 			Session:          ws,
 			FSShift:          fsshift,
 			CGroupMountPoint: cgroupMountPoint,
 		}
-		err = helper.Start()
+		err = iws.Start()
 		if err != nil {
 			return xerrors.Errorf("cannot start in-workspace-helper server: %w", err)
 		}
 
 		log.WithFields(ws.OWI()).Debug("established IWS server")
-		ws.NonPersistentAttrs[session.AttrWorkspaceServer] = helper.Stop
+		ws.NonPersistentAttrs[session.AttrWorkspaceServer] = iws.Stop
 
 		return nil
 	}
@@ -116,7 +115,7 @@ func ServeWorkspace(uidmapper *Uidmapper, fsshift api.FSShiftMethod, cgroupMount
 // StopServingWorkspace stops a previously started workspace server
 func StopServingWorkspace(ctx context.Context, ws *session.Workspace) (err error) {
 	//nolint:ineffassign
-	span, ctx := opentracing.StartSpanFromContext(ctx, "iws.StopServingWorkspace")
+	span, _ := opentracing.StartSpanFromContext(ctx, "iws.StopServingWorkspace")
 	defer tracing.FinishSpan(span, &err)
 
 	rawStop, ok := ws.NonPersistentAttrs[session.AttrWorkspaceServer]

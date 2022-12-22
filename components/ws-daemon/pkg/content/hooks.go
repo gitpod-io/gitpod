@@ -11,12 +11,14 @@ import (
 	"os"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/quota"
+	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
 )
 
@@ -50,7 +52,10 @@ func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceEx
 
 // hookSetupRemoteStorage configures the remote storage for a workspace
 func hookSetupRemoteStorage(cfg Config) session.WorkspaceLivecycleHook {
-	return func(ctx context.Context, ws *session.Workspace) error {
+	return func(ctx context.Context, ws *session.Workspace) (err error) {
+		span, ctx := opentracing.StartSpanFromContext(ctx, "hook.SetupRemoteStorage")
+		defer tracing.FinishSpan(span, &err)
+
 		if _, ok := ws.NonPersistentAttrs[session.AttrRemoteStorage]; !ws.RemoteStorageDisabled && !ok {
 			remoteStorage, err := storage.NewDirectAccess(&cfg.Storage)
 			if err != nil {
@@ -75,7 +80,10 @@ func hookSetupRemoteStorage(cfg Config) session.WorkspaceLivecycleHook {
 }
 
 // hookSetupWorkspaceLocation recreates the workspace location
-func hookSetupWorkspaceLocation(ctx context.Context, ws *session.Workspace) error {
+func hookSetupWorkspaceLocation(ctx context.Context, ws *session.Workspace) (err error) {
+	//nolint:ineffassign
+	span, _ := opentracing.StartSpanFromContext(ctx, "hook.SetupWorkspaceLocation")
+	defer tracing.FinishSpan(span, &err)
 	location := ws.Location
 
 	// 1. Clean out the workspace directory
@@ -90,7 +98,7 @@ func hookSetupWorkspaceLocation(ctx context.Context, ws *session.Workspace) erro
 	}
 
 	// Chown the workspace directory
-	err := os.Chown(location, initializer.GitpodUID, initializer.GitpodGID)
+	err = os.Chown(location, initializer.GitpodUID, initializer.GitpodGID)
 	if err != nil {
 		return xerrors.Errorf("cannot create workspace: %w", err)
 	}
@@ -99,7 +107,10 @@ func hookSetupWorkspaceLocation(ctx context.Context, ws *session.Workspace) erro
 
 // hookInstallQuota enforces filesystem quota on the workspace location (if the filesystem supports it)
 func hookInstallQuota(xfs *quota.XFS, isHard bool) session.WorkspaceLivecycleHook {
-	return func(ctx context.Context, ws *session.Workspace) error {
+	return func(ctx context.Context, ws *session.Workspace) (err error) {
+		span, _ := opentracing.StartSpanFromContext(ctx, "hook.InstallQuota")
+		defer tracing.FinishSpan(span, &err)
+
 		if xfs == nil {
 			return nil
 		}
@@ -114,7 +125,6 @@ func hookInstallQuota(xfs *quota.XFS, isHard bool) session.WorkspaceLivecycleHoo
 
 		var (
 			prj int
-			err error
 		)
 		if ws.XFSProjectID != 0 {
 			xfs.RegisterProject(ws.XFSProjectID)
@@ -134,7 +144,10 @@ func hookInstallQuota(xfs *quota.XFS, isHard bool) session.WorkspaceLivecycleHoo
 
 // hookRemoveQuota removes the filesystem quota, freeing up resources if need be
 func hookRemoveQuota(xfs *quota.XFS) session.WorkspaceLivecycleHook {
-	return func(ctx context.Context, ws *session.Workspace) error {
+	return func(ctx context.Context, ws *session.Workspace) (err error) {
+		span, _ := opentracing.StartSpanFromContext(ctx, "hook.RemoveQuota")
+		defer tracing.FinishSpan(span, &err)
+
 		if xfs == nil {
 			return nil
 		}
