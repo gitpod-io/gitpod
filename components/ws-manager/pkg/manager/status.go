@@ -502,7 +502,7 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 			return nil
 		}
 
-		// the pod phase of pending is somtimes slipped because it may not be PENDING at the stage of retrieving information on the workspace pod.
+		// the pod phase of pending is sometimes slipped because it may not be PENDING at the stage of retrieving information on the workspace pod.
 		if !wso.AlreadyInitializing() {
 			result.Phase = api.WorkspacePhase_CREATING
 			result.Message = "pod is running but init has not started yet or is not finished"

@@ -25,6 +25,7 @@
         "gitpod/firstUserActivity": "2020-02-28T10:44:36.995133911Z",
         "gitpod/id": "df376c57-7a0e-4233-976a-7a021e6f088c",
         "gitpod/ready": "true",
+        "gitpod.io/alreadyInitializing": "true",
         "gitpod/servicePrefix": "c372bd58-ef61-4fc0-9083-bd61ef96ad9f",
         "gitpod/url": "https://c372bd58-ef61-4fc0-9083-bd61ef96ad9f.ws-eu01.gitpod-staging.com",
         "gitpod/exposedPorts": "CgUIuQoYAQoFCLgXGAEKBQi5FxgBCgUIoB8YAQoFCI1IGAEKBQiMLhgBCgUIwC8YAQoFCI9OGAEKBQjJZRgBCgUI4TwYAQoFCIRpGAE=",

@@ -27,6 +27,7 @@
           "gitpod/contentInitializer": "[redacted]",
           "gitpod/id": "283522ed-51f1-4838-951b-0f115c0a7aae",
           "gitpod/ready": "true",
+          "gitpod.io/alreadyInitializing": "true",
           "gitpod/servicePrefix": "b246b28e-4776-47d5-961d-10548ffac9a8",
           "gitpod/url": "https://b246b28e-4776-47d5-961d-10548ffac9a8.ws-eu0.gitpod-staging.com",
           "kubernetes.io/psp": "workspace"
