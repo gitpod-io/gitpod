@@ -70,7 +70,7 @@ func NewRouteHandlerConfig(config *Config, opts ...RouteHandlerConfigOpt) (*Rout
 type RouteHandler = func(r *mux.Router, config *RouteHandlerConfig)
 
 // installWorkspaceRoutes configures routing of workspace and IDE requests.
-func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip WorkspaceInfoProvider, hostKeyList []ssh.Signer) {
+func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip WorkspaceInfoProvider, hostKeyList []ssh.Signer) error {
 	r.Use(logHandler)
 
 	// Note: the order of routes defines their priority.
@@ -94,6 +94,9 @@ func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip Worksp
 	})
 	routes.HandleSupervisorFrontendRoute(faviconRouter.NewRoute())
 
+	routes.HandleDirectSupervisorRoute(enableCompression(r).PathPrefix("/_supervisor/frontend").MatcherFunc(func(r *http.Request, rm *mux.RouteMatch) bool {
+		return rm.Vars[debugWorkspaceIdentifier] == "true"
+	}), false)
 	routes.HandleSupervisorFrontendRoute(enableCompression(r).PathPrefix("/_supervisor/frontend"))
 
 	routes.HandleDirectSupervisorRoute(r.PathPrefix("/_supervisor/v1/status/supervisor"), false)
@@ -112,7 +115,14 @@ func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip Worksp
 			h.ServeHTTP(resp, req)
 		})
 	})
+	err := installDebugWorkspaceRoutes(rootRouter.MatcherFunc(func(r *http.Request, rm *mux.RouteMatch) bool {
+		return rm.Vars[debugWorkspaceIdentifier] == "true"
+	}).Subrouter(), routes.Config, routes.InfoProvider)
+	if err != nil {
+		return err
+	}
 	routes.HandleRoot(rootRouter.NewRoute())
+	return nil
 }
 
 func enableCompression(r *mux.Router) *mux.Router {
@@ -250,7 +260,7 @@ func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 	r.Use(ir.Config.CorsHandler)
 	r.Use(ir.workspaceMustExistHandler)
 
-	workspaceIDEPass := ir.Config.WorkspaceAuthHandler(
+	directIDEPass := ir.Config.WorkspaceAuthHandler(
 		proxyPass(ir.Config, ir.InfoProvider, workspacePodResolver),
 	)
 	// always hit the blobserver to ensure that blob is downloaded
@@ -315,7 +325,31 @@ func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 				return image
 			},
 		}
-	}, withHTTPErrorHandler(workspaceIDEPass), withUseTargetHost()))
+	}, withHTTPErrorHandler(directIDEPass), withUseTargetHost()))
+}
+
+func installForeignRoutes(r *mux.Router, config *RouteHandlerConfig, infoProvider WorkspaceInfoProvider) error {
+	installWorkspacePortRoutes(r.MatcherFunc(func(r *http.Request, rm *mux.RouteMatch) bool {
+		workspacePathPrefix := rm.Vars[workspacePathPrefixIdentifier]
+		if workspacePathPrefix == "" || rm.Vars[workspacePortIdentifier] == "" {
+			return false
+		}
+		r.URL.Path = strings.TrimPrefix(r.URL.Path, workspacePathPrefix)
+		return true
+	}).Subrouter(), config, infoProvider)
+	err := installDebugWorkspaceRoutes(r.MatcherFunc(func(r *http.Request, rm *mux.RouteMatch) bool {
+		workspacePathPrefix := rm.Vars[workspacePathPrefixIdentifier]
+		if workspacePathPrefix == "" || rm.Vars[debugWorkspaceIdentifier] != "true" {
+			return false
+		}
+		r.URL.Path = strings.TrimPrefix(r.URL.Path, workspacePathPrefix)
+		return true
+	}).Subrouter(), config, infoProvider)
+	if err != nil {
+		return err
+	}
+	installBlobserveRoutes(r.NewRoute().Subrouter(), config, infoProvider)
+	return nil
 }
 
 const imagePathSeparator = "/__files__"
@@ -341,6 +375,22 @@ func installBlobserveRoutes(r *mux.Router, config *RouteHandlerConfig, infoProvi
 		return &dst, nil
 	}
 	r.NewRoute().Handler(proxyPass(config, infoProvider, targetResolver, withLongTermCaching(), withUseTargetHost()))
+}
+
+// installDebugWorkspaceRoutes configures for debug workspace.
+func installDebugWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, infoProvider WorkspaceInfoProvider) error {
+	showPortNotFoundPage, err := servePortNotFoundPage(config.Config)
+	if err != nil {
+		return err
+	}
+
+	r.Use(logHandler)
+	r.Use(config.CorsHandler)
+	r.Use(config.WorkspaceAuthHandler)
+	// filter all session cookies
+	r.Use(sensitiveCookieHandler(config.Config.GitpodInstallation.HostName))
+	r.NewRoute().HandlerFunc(proxyPass(config, infoProvider, workspacePodResolver, withHTTPErrorHandler(showPortNotFoundPage)))
+	return nil
 }
 
 // installWorkspacePortRoutes configures routing for exposed ports.
@@ -385,8 +435,14 @@ func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig, infoP
 // workspacePodResolver resolves to the workspace pod's url from the given request.
 func workspacePodResolver(config *Config, infoProvider WorkspaceInfoProvider, req *http.Request) (url *url.URL, err error) {
 	coords := getWorkspaceCoords(req)
+	var port string
+	if coords.Debug {
+		port = fmt.Sprint(config.WorkspacePodConfig.IDEDebugPort)
+	} else {
+		port = fmt.Sprint(config.WorkspacePodConfig.TheiaPort)
+	}
 	workspaceInfo := infoProvider.WorkspaceInfo(coords.ID)
-	return buildWorkspacePodURL(workspaceInfo.IPAddress, fmt.Sprint(config.WorkspacePodConfig.TheiaPort))
+	return buildWorkspacePodURL(workspaceInfo.IPAddress, port)
 }
 
 // workspacePodPortResolver resolves to the workspace pods ports.
@@ -399,8 +455,14 @@ func workspacePodPortResolver(config *Config, infoProvider WorkspaceInfoProvider
 // workspacePodSupervisorResolver resolves to the workspace pods Supervisor url from the given request.
 func workspacePodSupervisorResolver(config *Config, infoProvider WorkspaceInfoProvider, req *http.Request) (url *url.URL, err error) {
 	coords := getWorkspaceCoords(req)
+	var port string
+	if coords.Debug {
+		port = fmt.Sprint(config.WorkspacePodConfig.SupervisorDebugPort)
+	} else {
+		port = fmt.Sprint(config.WorkspacePodConfig.SupervisorPort)
+	}
 	workspaceInfo := infoProvider.WorkspaceInfo(coords.ID)
-	return buildWorkspacePodURL(workspaceInfo.IPAddress, fmt.Sprint(config.WorkspacePodConfig.SupervisorPort))
+	return buildWorkspacePodURL(workspaceInfo.IPAddress, port)
 }
 
 func dynamicIDEResolver(config *Config, infoProvider WorkspaceInfoProvider, req *http.Request) (res *url.URL, err error) {

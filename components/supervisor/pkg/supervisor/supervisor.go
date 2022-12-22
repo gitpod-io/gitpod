@@ -31,6 +31,7 @@ import (
 	"syscall"
 	"time"
 
+	grpc_proxy "github.com/adamthesax/grpc-proxy/proxy"
 	"github.com/gorilla/websocket"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
@@ -42,7 +43,10 @@ import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/gitpod-io/gitpod/common-go/analytics"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -181,7 +185,7 @@ func Run(options ...RunOption) {
 
 	// BEWARE: we can only call buildChildProcEnv once, because it might download env vars from a one-time-secret
 	//         URL, which would fail if we tried another time.
-	childProcEnvvars := buildChildProcEnv(cfg, nil)
+	childProcEnvvars := buildChildProcEnv(cfg, nil, opts.RunGP)
 
 	err = AddGitpodUserIfNotExists()
 	if err != nil {
@@ -377,12 +381,10 @@ func Run(options ...RunOption) {
 	}
 
 	wg.Add(1)
-	go startAPIEndpoint(ctx, cfg, &wg, apiServices, tunneledPortsService, metricsReporter, apiEndpointOpts...)
+	go startAPIEndpoint(ctx, cfg, &wg, apiServices, tunneledPortsService, metricsReporter, opts.RunGP, apiEndpointOpts...)
 
-	if !opts.RunGP {
-		wg.Add(1)
-		go startSSHServer(ctx, cfg, &wg, childProcEnvvars)
-	}
+	wg.Add(1)
+	go startSSHServer(ctx, cfg, &wg, childProcEnvvars)
 
 	wg.Add(1)
 	tasksSuccessChan := make(chan taskSuccess, 1)
@@ -925,7 +927,7 @@ func prepareIDELaunch(cfg *Config, ideConfig *IDEConfig, childProcEnvvars []stri
 // of envvars. If envvars is nil, os.Environ() is used.
 //
 // Beware: if config contains an OTS URL the results may differ on subsequent calls.
-func buildChildProcEnv(cfg *Config, envvars []string) []string {
+func buildChildProcEnv(cfg *Config, envvars []string, runGP bool) []string {
 	if envvars == nil {
 		envvars = os.Environ()
 	}
@@ -945,6 +947,7 @@ func buildChildProcEnv(cfg *Config, envvars []string) []string {
 
 		envs[nme] = val
 	}
+
 	envs["SUPERVISOR_ADDR"] = fmt.Sprintf("localhost:%d", cfg.APIEndpointPort)
 
 	if cfg.EnvvarOTS != "" {
@@ -1130,7 +1133,7 @@ func isBlacklistedEnvvar(name string) bool {
 	return false
 }
 
-func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, services []RegisterableService, tunneled *ports.TunneledPortsService, metricsReporter *metrics.GrpcMetricsReporter, opts ...grpc.ServerOption) {
+func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, services []RegisterableService, tunneled *ports.TunneledPortsService, metricsReporter *metrics.GrpcMetricsReporter, runGP bool, opts ...grpc.ServerOption) {
 	defer wg.Done()
 	defer log.Debug("startAPIEndpoint shutdown")
 
@@ -1141,6 +1144,36 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 
 	var unaryInterceptors []grpc.UnaryServerInterceptor
 	var streamInterceptors []grpc.StreamServerInterceptor
+	if cfg.HostAPIEndpointPort != nil {
+		url := fmt.Sprintf("localhost:%d", *cfg.HostAPIEndpointPort)
+		conn, err := grpc.DialContext(ctx, url, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			log.WithError(err).Fatal("cannot access host supervisor")
+		}
+		noProxy := func(fullMethod string) bool {
+			return strings.Contains(fullMethod, "TasksStatus") ||
+				strings.Contains(fullMethod, "TerminalService") ||
+				strings.Contains(fullMethod, "InfoService") ||
+				strings.Contains(fullMethod, "CreateSSHKeyPair")
+		}
+		unaryInterceptors = append(unaryInterceptors, func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+			if noProxy(info.FullMethod) {
+				return handler(ctx, req)
+			}
+			md, _ := metadata.FromIncomingContext(ctx)
+			resp := &emptypb.Empty{}
+			respErr := conn.Invoke(metadata.NewOutgoingContext(ctx, md.Copy()), info.FullMethod, req, resp)
+			return resp, respErr
+		})
+		streamProxy := grpc_proxy.TransparentHandler(grpc_proxy.DefaultDirector(conn))
+		streamInterceptors = append(streamInterceptors, func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+			if noProxy(info.FullMethod) {
+				return handler(srv, ss)
+			}
+			return streamProxy(srv, ss)
+		})
+	}
+
 	if cfg.DebugEnable {
 		unaryInterceptors = append(unaryInterceptors, grpc_logrus.UnaryServerInterceptor(log.Log))
 		streamInterceptors = append(streamInterceptors, grpc_logrus.StreamServerInterceptor(log.Log))
@@ -1155,11 +1188,6 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 		unaryInterceptors = append(unaryInterceptors, grpcMetrics.UnaryServerInterceptor())
 		streamInterceptors = append(streamInterceptors, grpcMetrics.StreamServerInterceptor())
 
-		opts = append(opts,
-			grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptors...)),
-			grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(streamInterceptors...)),
-		)
-
 		err = metricsReporter.Registry.Register(grpcMetrics)
 		if err != nil {
 			log.WithError(err).Error("supervisor: failed to register grpc metrics")
@@ -1167,6 +1195,11 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 			go metricsReporter.Report(ctx)
 		}
 	}
+
+	opts = append(opts,
+		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptors...)),
+		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(streamInterceptors...)),
+	)
 
 	m := cmux.New(l)
 	restMux := grpcruntime.NewServeMux()
@@ -1211,14 +1244,27 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 	routes.Handle("/", httputil.NewSingleHostReverseProxy(ideURL))
 	routes.Handle("/_supervisor/frontend/", http.StripPrefix("/_supervisor/frontend", http.FileServer(http.Dir(cfg.StaticConfig.FrontendLocation))))
 
-	routes.Handle("/_supervisor/v1/", http.StripPrefix("/_supervisor", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.Contains(r.Header.Get("Content-Type"), "application/grpc") ||
-			websocket.IsWebSocketUpgrade(r) {
-			http.StripPrefix("/v1", grpcWebServer).ServeHTTP(w, r)
+	var hostProxy *httputil.ReverseProxy
+	if runGP && cfg.HostAPIEndpointPort != nil {
+		hostProxy = httputil.NewSingleHostReverseProxy(&url.URL{
+			Scheme: "http",
+			Host:   fmt.Sprintf("localhost:%d", *cfg.HostAPIEndpointPort),
+		})
+	}
+	routes.Handle("/_supervisor/v1/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
+			websocket.IsWebSocketUpgrade(r)
+			http.StripPrefix("/_supervisor/v1", grpcWebServer).ServeHTTP(w, r)
+		} else if hostProxy == nil ||
+			strings.HasPrefix(r.URL.Path, "/_supervisor/v1/terminal") ||
+			strings.HasPrefix(r.URL.Path, "/_supervisor/v1/info/workspace") ||
+			strings.HasPrefix(r.URL.Path, "/_supervisor/v1/status/tasks") {
+			http.StripPrefix("/_supervisor", restMux).ServeHTTP(w, r)
 		} else {
-			restMux.ServeHTTP(w, r)
+			hostProxy.ServeHTTP(w, r)
 		}
-	})))
+	}))
+
 	upgrader := websocket.Upgrader{}
 	routes.Handle("/_supervisor/tunnel", http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		wsConn, err := upgrader.Upgrade(rw, r, nil)

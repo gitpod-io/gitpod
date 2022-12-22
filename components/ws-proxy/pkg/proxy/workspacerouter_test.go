@@ -23,6 +23,7 @@ func TestWorkspaceRouter(t *testing.T) {
 		Status             int
 		URL                string
 		AdditionalHitCount int
+		DebugWorkspace     string
 	}
 	tests := []struct {
 		Name         string
@@ -45,6 +46,21 @@ func TestWorkspaceRouter(t *testing.T) {
 				WorkspaceID: "amaranth-smelt-9ba20cc1",
 				Status:      http.StatusOK,
 				URL:         "http://amaranth-smelt-9ba20cc1.ws.gitpod.dev/",
+			},
+		},
+		{
+			Name: "host-based debug workspace access",
+			URL:  "http://debug-amaranth-smelt-9ba20cc1.ws.gitpod.dev/",
+			Headers: map[string]string{
+				forwardedHostnameHeader: "debug-amaranth-smelt-9ba20cc1.ws.gitpod.dev",
+			},
+			Router:       HostBasedRouter(forwardedHostnameHeader, wsHostSuffix, wsHostRegex),
+			WSHostSuffix: wsHostSuffix,
+			Expected: Expectation{
+				DebugWorkspace: "true",
+				WorkspaceID:    "amaranth-smelt-9ba20cc1",
+				Status:         http.StatusOK,
+				URL:            "http://debug-amaranth-smelt-9ba20cc1.ws.gitpod.dev/",
 			},
 		},
 		{
@@ -79,6 +95,7 @@ func TestWorkspaceRouter(t *testing.T) {
 
 				act.WorkspaceID = vars[workspaceIDIdentifier]
 				act.WorkspacePort = vars[workspacePortIdentifier]
+				act.DebugWorkspace = vars[debugWorkspaceIdentifier]
 				act.URL = req.URL.String()
 				act.AdditionalHitCount++
 			}

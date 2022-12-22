@@ -122,6 +122,11 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 		NoClientAuthCallback: func(conn ssh.ConnMetadata) (*ssh.Permissions, error) {
 			args := strings.Split(conn.User(), "#")
 			workspaceId := args[0]
+			var debugWorkspace string
+			if strings.HasPrefix(workspaceId, "debug-") {
+				debugWorkspace = "true"
+				workspaceId = strings.TrimPrefix(workspaceId, "debug-")
+			}
 			wsInfo, err := server.GetWorkspaceInfo(workspaceId)
 			if err != nil {
 				return nil, err
@@ -136,12 +141,18 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 			server.TrackSSHConnection(wsInfo, "auth", nil)
 			return &ssh.Permissions{
 				Extensions: map[string]string{
-					"workspaceId": workspaceId,
+					"workspaceId":    workspaceId,
+					"debugWorkspace": debugWorkspace,
 				},
 			}, nil
 		},
 		PasswordCallback: func(conn ssh.ConnMetadata, password []byte) (perm *ssh.Permissions, err error) {
 			workspaceId, ownerToken := conn.User(), string(password)
+			var debugWorkspace string
+			if strings.HasPrefix(workspaceId, "debug-") {
+				debugWorkspace = "true"
+				workspaceId = strings.TrimPrefix(workspaceId, "debug-")
+			}
 			wsInfo, err := server.GetWorkspaceInfo(workspaceId)
 			if err != nil {
 				return nil, err
@@ -154,12 +165,18 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 			}
 			return &ssh.Permissions{
 				Extensions: map[string]string{
-					"workspaceId": workspaceId,
+					"workspaceId":    workspaceId,
+					"debugWorkspace": debugWorkspace,
 				},
 			}, nil
 		},
 		PublicKeyCallback: func(conn ssh.ConnMetadata, pk ssh.PublicKey) (perm *ssh.Permissions, err error) {
 			workspaceId := conn.User()
+			var debugWorkspace string
+			if strings.HasPrefix(workspaceId, "debug-") {
+				debugWorkspace = "true"
+				workspaceId = strings.TrimPrefix(workspaceId, "debug-")
+			}
 			wsInfo, err := server.GetWorkspaceInfo(workspaceId)
 			if err != nil {
 				return nil, err
@@ -175,7 +192,8 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 			}
 			return &ssh.Permissions{
 				Extensions: map[string]string{
-					"workspaceId": workspaceId,
+					"workspaceId":    workspaceId,
+					"debugWorkspace": debugWorkspace,
 				},
 			}, nil
 		},
@@ -225,13 +243,18 @@ func (s *Server) HandleConn(c net.Conn) {
 		return
 	}
 	workspaceId := clientConn.Permissions.Extensions["workspaceId"]
+	debugWorkspace := clientConn.Permissions.Extensions["debugWorkspace"] == "true"
 	wsInfo := s.workspaceInfoProvider.WorkspaceInfo(workspaceId)
 	if wsInfo == nil {
 		ReportSSHAttemptMetrics(ErrWorkspaceNotFound)
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	key, err := s.GetWorkspaceSSHKey(ctx, wsInfo.IPAddress)
+	supervisorPort := "22999"
+	if debugWorkspace {
+		supervisorPort = "24999"
+	}
+	key, err := s.GetWorkspaceSSHKey(ctx, wsInfo.IPAddress, supervisorPort)
 	if err != nil {
 		cancel()
 		s.TrackSSHConnection(wsInfo, "connect", ErrCreateSSHKey)
@@ -248,7 +271,11 @@ func (s *Server) HandleConn(c net.Conn) {
 		OwnerUserId:         wsInfo.OwnerUserId,
 		WorkspacePrivateKey: key,
 	}
-	remoteAddr := wsInfo.IPAddress + ":23001"
+	sshPort := "23001"
+	if debugWorkspace {
+		sshPort = "25001"
+	}
+	remoteAddr := wsInfo.IPAddress + ":" + sshPort
 	conn, err := net.Dial("tcp", remoteAddr)
 	if err != nil {
 		s.TrackSSHConnection(wsInfo, "connect", ErrConnFailed)
@@ -371,8 +398,8 @@ func (s *Server) VerifyPublicKey(ctx context.Context, wsInfo *p.WorkspaceInfo, p
 	return false, nil
 }
 
-func (s *Server) GetWorkspaceSSHKey(ctx context.Context, workspaceIP string) (ssh.Signer, error) {
-	supervisorConn, err := grpc.Dial(workspaceIP+":22999", grpc.WithTransportCredentials(insecure.NewCredentials()))
+func (s *Server) GetWorkspaceSSHKey(ctx context.Context, workspaceIP string, supervisorPort string) (ssh.Signer, error) {
+	supervisorConn, err := grpc.Dial(workspaceIP+":"+supervisorPort, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, xerrors.Errorf("failed connecting to supervisor: %w", err)
 	}

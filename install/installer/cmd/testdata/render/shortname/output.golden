@@ -1367,6 +1367,10 @@ data:
             ],
             "inlineStatic": [
               {
+                "search": "window.location.origin;",
+                "replacement": "'${ide}';"
+              },
+              {
                 "search": "${window.location.origin}",
                 "replacement": "."
               },
@@ -3792,7 +3796,7 @@ apiVersion: v1
 data:
   config.json: |-
     {
-      "gpRunImage": "registry.hub.docker.com/gitpod/gp-run:latest",
+      "gpRunImage": "registry.hub.docker.com/gitpod/gp-run:ak-test",
       "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:test",
       "ideOptions": {
         "options": {
@@ -5508,7 +5512,7 @@ apiVersion: v1
 data:
   config.json: |-
     {
-      "gpRunImage": "registry.hub.docker.com/gitpod/gp-run:latest",
+      "gpRunImage": "registry.hub.docker.com/gitpod/gp-run:ak-test",
       "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:test",
       "ideOptions": {
         "options": {
@@ -6082,7 +6086,9 @@ data:
         },
         "workspacePodConfig": {
           "theiaPort": 23000,
+          "ideDebugPort": 25000,
           "supervisorPort": 22999,
+          "supervisorDebugPort": 24999,
           "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:test"
         },
         "builtinPages": {
@@ -9083,7 +9089,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 0d9d1c68723466a253996f0a96bf0682ce57b89ebcb4ae1e4a643dd788ef1cab
+        gitpod.io/checksum_config: 4ef10d5efbf848826fd32a67c8ae990b45cdbab8abf649101c143908aceee122
       creationTimestamp: null
       labels:
         app: gitpod
@@ -11308,7 +11314,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 64e51be9e5f633cf09cee6bd25b3c5d0687f9fca3e17e2daf8eeb99e21e0faa7
+        gitpod.io/checksum_config: 1d3e519239eb23a1e2f00e30f73abf47a1a18a74052043e6dc8d1196eed4fd1f
       creationTimestamp: null
       labels:
         app: gitpod

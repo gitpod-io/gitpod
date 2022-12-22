@@ -31,7 +31,8 @@ interface ReportErrorParam {
     properties?: Record<string, string>;
 }
 export class IDEMetricsServiceClient {
-    static workspaceId? = workspaceUrl.workspaceId;
+    static workspaceId = workspaceUrl.workspaceId;
+    static debugWorkspace = workspaceUrl.debugWorkspace;
     static gitpodServiceClient?: GitpodServiceClient;
 
     static get instanceId(): string {
@@ -70,6 +71,7 @@ export class IDEMetricsServiceClient {
         const p = Object.assign({}, properties);
         p.error_name = error.name;
         p.error_message = error.message;
+        p.debug_workspace = String(this.debugWorkspace);
 
         const url = `${MetricsUrl}/reportError`;
         const params: ReportErrorParam = {

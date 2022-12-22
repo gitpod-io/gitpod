@@ -397,6 +397,18 @@ https://*.*.{$GITPOD_DOMAIN} {
 		}
 	}
 
+	# experimental debug workspace route
+	@debug_workspace header_regexp host Host ^debug-(?P<workspaceID>[a-z0-9][0-9a-z\-]+).ws(?P<location>-[a-z0-9]+)?.{$GITPOD_DOMAIN}
+	handle @debug_workspace {
+		reverse_proxy https://ws-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9090 {
+			import workspace_transport
+			import upstream_headers
+
+			header_up X-Gitpod-WorkspaceId {re.host.workspaceID}
+			header_up X-WSProxy-Host {http.request.host}
+		}
+	}
+
 	@workspace header_regexp host Host ^(?P<workspaceID>[a-z0-9][0-9a-z\-]+).ws(?P<location>-[a-z0-9]+)?.{$GITPOD_DOMAIN}
 	handle @workspace {
 		reverse_proxy https://ws-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9090 {

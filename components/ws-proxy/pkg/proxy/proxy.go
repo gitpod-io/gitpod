@@ -97,13 +97,19 @@ func (p *WorkspaceProxy) Handler() (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	ideRouter, portRouter, blobserveRouter := p.WorkspaceRouter(r, p.WorkspaceInfoProvider)
-	installWorkspaceRoutes(ideRouter, handlerConfig, p.WorkspaceInfoProvider, p.SSHHostSigners)
+	ideRouter, portRouter, foreignRouter := p.WorkspaceRouter(r, p.WorkspaceInfoProvider)
+	err = installWorkspaceRoutes(ideRouter, handlerConfig, p.WorkspaceInfoProvider, p.SSHHostSigners)
+	if err != nil {
+		return nil, err
+	}
 	err = installWorkspacePortRoutes(portRouter, handlerConfig, p.WorkspaceInfoProvider)
 	if err != nil {
 		return nil, err
 	}
-	installBlobserveRoutes(blobserveRouter, handlerConfig, p.WorkspaceInfoProvider)
+	err = installForeignRoutes(foreignRouter, handlerConfig, p.WorkspaceInfoProvider)
+	if err != nil {
+		return nil, err
+	}
 	return r, nil
 }
 
