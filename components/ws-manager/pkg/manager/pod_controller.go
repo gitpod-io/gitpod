@@ -33,36 +33,34 @@ type PodReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.0/pkg/reconcile
 func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	go func() {
-		var pod corev1.Pod
-		err := r.Client.Get(context.Background(), req.NamespacedName, &pod)
-		if errors.IsNotFound(err) {
-			// pod is gone - that's ok
-			if pod, ok := r.Pods[req.NamespacedName]; ok {
-				delete(r.Pods, req.NamespacedName)
-				queue := pod.Annotations[workspaceIDAnnotation]
-				if queue == "" {
-					return
-				}
-				r.Monitor.eventpool.Add(queue, watch.Event{
-					Type:   watch.Deleted,
-					Object: &pod,
-				})
+	var pod corev1.Pod
+	err := r.Client.Get(context.Background(), req.NamespacedName, &pod)
+	if errors.IsNotFound(err) {
+		// pod is gone - that's ok
+		if pod, ok := r.Pods[req.NamespacedName]; ok {
+			delete(r.Pods, req.NamespacedName)
+			queue := pod.Annotations[workspaceIDAnnotation]
+			if queue == "" {
+				return ctrl.Result{}, nil
 			}
-			return
+			r.Monitor.eventpool.Add(queue, watch.Event{
+				Type:   watch.Deleted,
+				Object: &pod,
+			})
 		}
-		r.Pods[req.NamespacedName] = pod
+		return ctrl.Result{}, nil
+	}
+	r.Pods[req.NamespacedName] = pod
 
-		queue := pod.Annotations[workspaceIDAnnotation]
-		if queue == "" {
-			return
-		}
+	queue := pod.Annotations[workspaceIDAnnotation]
+	if queue == "" {
+		return ctrl.Result{}, nil
+	}
 
-		r.Monitor.eventpool.Add(queue, watch.Event{
-			Type:   watch.Modified,
-			Object: &pod,
-		})
-	}()
+	r.Monitor.eventpool.Add(queue, watch.Event{
+		Type:   watch.Modified,
+		Object: &pod,
+	})
 
 	return ctrl.Result{}, nil
 }

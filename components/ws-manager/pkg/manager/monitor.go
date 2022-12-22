@@ -317,7 +317,6 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 		// The workspace has been scheduled on the cluster which means that we can start initializing it
 		go func() {
 			err := m.initializeWorkspaceContent(ctx, pod)
-
 			if err != nil {
 				// workspace initialization failed, which means the workspace as a whole failed
 				err = m.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, err.Error()))
@@ -325,6 +324,12 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 					log.WithError(err).Warn("was unable to mark workspace as failed")
 				}
 			}
+
+			err = m.markWorkspace(ctx, workspaceID, addMark(alreadyInitializingAnnotation, util.BooleanTrueString))
+			if err != nil {
+				log.WithError(err).Warn("was unable to mark workspace as already initializing")
+			}
+
 		}()
 
 	case api.WorkspacePhase_INITIALIZING:
