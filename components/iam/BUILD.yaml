@@ -7,7 +7,9 @@ packages:
       - "go.sum"
     deps:
       - components/common-go:lib
+      - components/gitpod-db/go:lib
       - components/iam-api/go:lib
+      - components/gitpod-db/go:init-testdb
     env:
       - CGO_ENABLED=0
       - GOOS=linux
@@ -37,6 +39,9 @@ packages:
       - "go.sum"
     deps:
       - components/common-go:lib
+      - components/gitpod-db/go:lib
+      - components/iam-api/go:lib
+      - components/gitpod-db/go:init-testdb
     env:
       - CGO_ENABLED=0
       - GOOS=linux
