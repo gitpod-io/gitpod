@@ -15,7 +15,8 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 // PodReconciler reconciles a Pod object
@@ -32,34 +33,36 @@ type PodReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.0/pkg/reconcile
 func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	var pod corev1.Pod
-	err := r.Client.Get(context.Background(), req.NamespacedName, &pod)
-	if errors.IsNotFound(err) {
-		// pod is gone - that's ok
-		if pod, ok := r.Pods[req.NamespacedName]; ok {
-			delete(r.Pods, req.NamespacedName)
-			queue := pod.Annotations[workspaceIDAnnotation]
-			if queue == "" {
-				return ctrl.Result{}, nil
+	go func() {
+		var pod corev1.Pod
+		err := r.Client.Get(context.Background(), req.NamespacedName, &pod)
+		if errors.IsNotFound(err) {
+			// pod is gone - that's ok
+			if pod, ok := r.Pods[req.NamespacedName]; ok {
+				delete(r.Pods, req.NamespacedName)
+				queue := pod.Annotations[workspaceIDAnnotation]
+				if queue == "" {
+					return
+				}
+				r.Monitor.eventpool.Add(queue, watch.Event{
+					Type:   watch.Deleted,
+					Object: &pod,
+				})
 			}
-			r.Monitor.eventpool.Add(queue, watch.Event{
-				Type:   watch.Deleted,
-				Object: &pod,
-			})
+			return
 		}
-		return reconcile.Result{}, nil
-	}
-	r.Pods[req.NamespacedName] = pod
+		r.Pods[req.NamespacedName] = pod
 
-	queue := pod.Annotations[workspaceIDAnnotation]
-	if queue == "" {
-		return ctrl.Result{}, nil
-	}
+		queue := pod.Annotations[workspaceIDAnnotation]
+		if queue == "" {
+			return
+		}
 
-	r.Monitor.eventpool.Add(queue, watch.Event{
-		Type:   watch.Modified,
-		Object: &pod,
-	})
+		r.Monitor.eventpool.Add(queue, watch.Event{
+			Type:   watch.Modified,
+			Object: &pod,
+		})
+	}()
 
 	return ctrl.Result{}, nil
 }
@@ -67,6 +70,21 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 // SetupWithManager sets up the controller with the Manager.
 func (r *PodReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
+		WithEventFilter(
+			predicate.Funcs{
+				UpdateFunc: func(e event.UpdateEvent) bool {
+					_, ok := e.ObjectNew.GetAnnotations()[workspaceIDAnnotation]
+					return ok
+				},
+				CreateFunc: func(e event.CreateEvent) bool {
+					_, ok := e.Object.GetAnnotations()[workspaceIDAnnotation]
+					return ok
+				},
+				DeleteFunc: func(e event.DeleteEvent) bool {
+					_, ok := e.Object.GetAnnotations()[workspaceIDAnnotation]
+					return ok
+				},
+			}).
 		For(&corev1.Pod{}).
 		Complete(r)
 }

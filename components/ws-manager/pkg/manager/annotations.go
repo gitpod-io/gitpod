@@ -85,6 +85,9 @@ const (
 
 	// attemptingToCreatePodAnnotation is set when ws-manager is trying to create pod and is removed when pod is successfully scheduled on the node
 	attemptingToCreatePodAnnotation = "gitpod.io/attemptingToCreate"
+
+	// alreadyInitializingAnnotation is set when initializing is done
+	alreadyInitializingAnnotation = "gitpod.io/alreadyInitializing"
 )
 
 // markWorkspaceAsReady adds annotations to a workspace pod
