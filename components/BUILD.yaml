@@ -62,6 +62,8 @@ packages:
       - components/ide/jetbrains/image:clion-latest
       - components/image-builder-bob:docker
       - components/image-builder-mk3:docker
+      - components/ipfs/ipfs-cluster:docker
+      - components/ipfs/kubo:docker
       - components/local-app:docker
       - components/public-api-server:docker
       - components/usage:docker
