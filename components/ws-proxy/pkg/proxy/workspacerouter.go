@@ -28,6 +28,11 @@ const (
 	// This pattern matches v4 UUIDs as well as the new generated workspace ids (e.g. pink-panda-ns35kd21).
 	workspaceIDRegex   = "(?P<" + workspaceIDIdentifier + ">[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-z]{2,16}-[0-9a-z]{2,16}-[0-9a-z]{8,11})"
 	workspacePortRegex = "(?P<" + workspacePortIdentifier + ">[0-9]+)-"
+
+	debugWorkspaceIdentifier = "debugWorkspace"
+	debugWorkspaceRegex      = "(?P<" + debugWorkspaceIdentifier + ">debug-)?"
+
+	workspacePathPrefixIdentifier = "workspacePathPrefix"
 )
 
 // WorkspaceRouter is a function that configures subrouters (one for theia, one for the exposed ports) on the given router
@@ -56,9 +61,9 @@ func HostBasedRouter(header, wsHostSuffix string, wsHostSuffixRegex string) Work
 				}
 				return host
 			}
-			blobserveRouter = r.MatcherFunc(matchBlobserveHostHeader(wsHostSuffix, getHostHeader)).Subrouter()
-			portRouter      = r.MatcherFunc(matchWorkspaceHostHeader(wsHostSuffix, getHostHeader, true)).Subrouter()
-			ideRouter       = r.MatcherFunc(matchWorkspaceHostHeader(allClusterWsHostSuffixRegex, getHostHeader, false)).Subrouter()
+			foreignRouter = r.MatcherFunc(matchForeignHostHeader(wsHostSuffix, getHostHeader)).Subrouter()
+			portRouter    = r.MatcherFunc(matchWorkspaceHostHeader(wsHostSuffix, getHostHeader, true)).Subrouter()
+			ideRouter     = r.MatcherFunc(matchWorkspaceHostHeader(allClusterWsHostSuffixRegex, getHostHeader, false)).Subrouter()
 		)
 
 		r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -66,16 +71,18 @@ func HostBasedRouter(header, wsHostSuffix string, wsHostSuffixRegex string) Work
 			log.Debugf("no match for path %s, host: %s", req.URL.Path, hostname)
 			w.WriteHeader(http.StatusNotFound)
 		})
-		return ideRouter, portRouter, blobserveRouter
+		return ideRouter, portRouter, foreignRouter
 	}
 }
 
 type hostHeaderProvider func(req *http.Request) string
 
 func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProvider, matchPort bool) mux.MatcherFunc {
-	regexPrefix := workspaceIDRegex
+	var regexPrefix string
 	if matchPort {
 		regexPrefix = workspacePortRegex + workspaceIDRegex
+	} else {
+		regexPrefix = debugWorkspaceRegex + workspaceIDRegex
 	}
 
 	r := regexp.MustCompile("^" + regexPrefix + wsHostSuffix)
@@ -86,25 +93,32 @@ func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 			return false
 		}
 
-		var workspaceID, workspacePort string
+		var workspaceID, workspacePort, debugWorkspace string
 		matches := r.FindStringSubmatch(hostname)
+		if len(matches) < 3 {
+			return false
+		}
 		if matchPort {
-			if len(matches) < 3 {
-				return false
-			}
 			// https://3000-coral-dragon-ilr0r6eq.ws-eu10.gitpod.io/index.html
+			// debugWorkspace:
 			// workspaceID: coral-dragon-ilr0r6eq
 			// workspacePort: 3000
 			workspaceID = matches[2]
 			workspacePort = matches[1]
 		} else {
-			if len(matches) < 2 {
-				return false
-			}
-			// https://coral-dragon-ilr0r6eq.ws-eu10.gitpod.io/index.html
+			// https://debug-coral-dragon-ilr0r6eq.ws-eu10.gitpod.io/index.html
+			// debugWorkspace: true
 			// workspaceID: coral-dragon-ilr0r6eq
 			// workspacePort:
-			workspaceID = matches[1]
+			if matches[1] != "" {
+				debugWorkspace = "true"
+			}
+
+			// https://coral-dragon-ilr0r6eq.ws-eu10.gitpod.io/index.html
+			// debugWorkspace:
+			// workspaceID: coral-dragon-ilr0r6eq
+			// workspacePort:
+			workspaceID = matches[2]
 		}
 
 		if workspaceID == "" {
@@ -122,12 +136,18 @@ func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 		if workspacePort != "" {
 			m.Vars[workspacePortIdentifier] = workspacePort
 		}
+		if debugWorkspace != "" {
+			m.Vars[debugWorkspaceIdentifier] = debugWorkspace
+		}
 
 		return true
 	}
 }
 
-func matchBlobserveHostHeader(wsHostSuffix string, headerProvider hostHeaderProvider) mux.MatcherFunc {
+func matchForeignHostHeader(wsHostSuffix string, headerProvider hostHeaderProvider) mux.MatcherFunc {
+	pathPortRegex := regexp.MustCompile("^/" + workspacePortRegex + workspaceIDRegex + "/")
+	pathDebugRegex := regexp.MustCompile("^/" + debugWorkspaceRegex + workspaceIDRegex + "/")
+
 	r := regexp.MustCompile("^(?:v--)?[0-9a-v]+" + wsHostSuffix)
 	return func(req *http.Request, m *mux.RouteMatch) bool {
 		hostname := headerProvider(req)
@@ -136,15 +156,38 @@ func matchBlobserveHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 		}
 
 		matches := r.FindStringSubmatch(hostname)
-		return len(matches) >= 1
+		if len(matches) < 1 {
+			return false
+		}
+		matches = pathPortRegex.FindStringSubmatch(req.URL.Path)
+		if len(matches) < 3 {
+			matches = pathDebugRegex.FindStringSubmatch(req.URL.Path)
+		}
+		if len(matches) < 3 {
+			return true
+		}
+
+		if m.Vars == nil {
+			m.Vars = make(map[string]string)
+		}
+		m.Vars[workspacePathPrefixIdentifier] = strings.TrimRight(matches[0], "/")
+		m.Vars[workspaceIDIdentifier] = matches[2]
+		if matches[1] == "debug-" {
+			m.Vars[debugWorkspaceIdentifier] = "true"
+		} else {
+			m.Vars[workspacePortIdentifier] = matches[1]
+		}
+
+		return true
 	}
 }
 
 func getWorkspaceCoords(req *http.Request) WorkspaceCoords {
 	vars := mux.Vars(req)
 	return WorkspaceCoords{
-		ID:   vars[workspaceIDIdentifier],
-		Port: vars[workspacePortIdentifier],
+		ID:    vars[workspaceIDIdentifier],
+		Port:  vars[workspacePortIdentifier],
+		Debug: vars[debugWorkspaceIdentifier] == "true",
 	}
 }
 

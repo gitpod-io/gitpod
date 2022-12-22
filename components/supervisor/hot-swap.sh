@@ -37,6 +37,7 @@ echo "$component built"
 # upload
 uploadDest="/.supervisor/$component"
 echo "Upload Dest: $uploadDest"
-ssh -F "$sshConfig" "$workspaceId" "sudo chmod 777 $uploadDest && sudo rm $uploadDest"
+ssh -F "$sshConfig" "$workspaceId" "sudo chown -R gitpod:gitpod /.supervisor && rm $uploadDest 2> /dev/null"
+echo "Permissions granted"
 scp -F "$sshConfig" -r "./supervisor" "$workspaceId":"$uploadDest"
 echo "Swap complete"

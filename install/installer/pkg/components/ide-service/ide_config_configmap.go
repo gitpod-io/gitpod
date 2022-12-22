@@ -54,7 +54,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	jbPluginLatestImage := resolveLatestImage(ide.JetBrainsBackendPluginImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginLatestImage)
 	jbLauncherImage := ctx.ImageName(ctx.Config.Repository, ide.JetBrainsLauncherImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsLauncherImage.Version)
 	idecfg := ide_config.IDEConfig{
-		GpRunImage:      ctx.ImageName("registry.hub.docker.com", "gitpod/gp-run", "latest"),
+		GpRunImage:      ctx.ImageName("registry.hub.docker.com", "gitpod/gp-run", "ak-test"),
 		SupervisorImage: ctx.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
 		IdeOptions: ide_config.IDEOptions{
 			Clients: map[string]ide_config.IDEClient{
