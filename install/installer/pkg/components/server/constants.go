@@ -17,6 +17,8 @@ const (
 	chargebeeMountPath                     = "/chargebee"
 	stripeSecretMountPath                  = "/stripe-secret"
 	githubAppCertSecret                    = "github-app-cert-secret"
+	IAMSessionPort                         = common.ServerIAMSessionPort
+	IAMSessionPortName                     = "session"
 	InstallationAdminPort                  = common.ServerInstallationAdminPort
 	InstallationAdminName                  = "install-admin"
 	DebugPortName                          = "debug"

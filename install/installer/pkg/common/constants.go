@@ -39,6 +39,7 @@ const (
 	RegistryFacadeTLSCertSecret = "builtin-registry-facade-cert"
 	ServerComponent             = "server"
 	SlowServerComponent         = "slow-server"
+	ServerIAMSessionPort        = 9876
 	ServerInstallationAdminPort = 9000
 	SystemNodeCritical          = "system-node-critical"
 	PaymentEndpointComponent    = "payment-endpoint"
