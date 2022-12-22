@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/coreos/go-oidc/v3/oidc"
+	goidc "github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
 )
 
@@ -39,6 +40,35 @@ type StartParams struct {
 
 type AuthFlowResult struct {
 	IDToken *oidc.IDToken
+}
+
+func NewServiceWithTestConfig(configPath string) (*Service, error) {
+	testConfig, err := readDemoConfigFromFile(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read test config: %w", err)
+	}
+
+	clientConfig := &ClientConfig{
+		Issuer: testConfig.Issuer,
+		ID:     "R4ND0M1D",
+		OAuth2Config: &oauth2.Config{
+			ClientID:     testConfig.ClientID,
+			ClientSecret: testConfig.ClientSecret,
+			RedirectURL:  testConfig.RedirectURL,
+			Scopes:       []string{goidc.ScopeOpenID, "profile", "email"},
+		},
+		VerifierConfig: &goidc.Config{
+			ClientID: testConfig.ClientID,
+		},
+	}
+
+	s := NewService()
+	err = s.AddClientConfig(clientConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to add client config: %w", err)
+	}
+
+	return s, nil
 }
 
 func NewService() *Service {

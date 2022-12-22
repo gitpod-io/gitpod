@@ -6,32 +6,23 @@ package server
 
 import (
 	"fmt"
-	"net"
-	"os"
 	"path/filepath"
 
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
+	v1 "github.com/gitpod-io/gitpod/components/iam-api/go/v1"
 
-	goidc "github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
-	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/iam/pkg/apiv1"
 	"github.com/gitpod-io/gitpod/iam/pkg/config"
 	"github.com/gitpod-io/gitpod/iam/pkg/oidc"
 	"github.com/go-chi/chi/v5"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/oauth2"
 )
 
 func Start(logger *logrus.Entry, version string, cfg *config.ServiceConfig) error {
 	logger.WithField("config", cfg).Info("Starting IAM server.")
 
-	_, err := db.Connect(db.ConnectionParams{
-		User:     os.Getenv("DB_USERNAME"),
-		Password: os.Getenv("DB_PASSWORD"),
-		Host:     net.JoinHostPort(os.Getenv("DB_HOST"), os.Getenv("DB_PORT")),
-		Database: "gitpod",
-		CaCert:   os.Getenv("DB_CA_CERT"),
-	})
+	_, err := db.Connect(db.ConnectionParamsFromEnv())
 	if err != nil {
 		return fmt.Errorf("failed to establish database connection: %w", err)
 	}
@@ -50,20 +41,18 @@ func Start(logger *logrus.Entry, version string, cfg *config.ServiceConfig) erro
 		return fmt.Errorf("failed to initialize IAM server: %w", err)
 	}
 
-	// All root requests are handled by our router
-	rootHandler, err := registerRootRouter(srv)
+	oidcService, err := oidc.NewServiceWithTestConfig(cfg.OIDCClientsConfigFile)
 	if err != nil {
-		return fmt.Errorf("failed to register services to iam server")
+		return fmt.Errorf("failed to construct oidc service: %w", err)
 	}
+	oidcClientConfigService := apiv1.NewOIDCClientConfigService()
 
-	// Requests to /oidc/* are handled by oidc.Router
-	oidcService := oidc.NewService()
-	rootHandler.Mount("/oidc", oidc.Router(oidcService))
-
-	// TODO(at) remove the demo config after start sync'ing with DB
-	err = loadTestConfig(oidcService, cfg)
+	err = register(srv, &dependencies{
+		oidcClientConfigSvc: oidcClientConfigService,
+		oidcService:         oidcService,
+	})
 	if err != nil {
-		log.Errorf("failed to load test config: %v", err)
+		return fmt.Errorf("failed to register services for iam server: %w", err)
 	}
 
 	if listenErr := srv.ListenAndServe(); listenErr != nil {
@@ -73,33 +62,23 @@ func Start(logger *logrus.Entry, version string, cfg *config.ServiceConfig) erro
 	return nil
 }
 
-func registerRootRouter(srv *baseserver.Server) (*chi.Mux, error) {
-	rootHandler := chi.NewRouter()
+type dependencies struct {
+	oidcClientConfigSvc v1.OIDCServiceServer
 
-	srv.HTTPMux().Handle("/", rootHandler)
-	return rootHandler, nil
+	oidcService *oidc.Service
 }
 
-// TODO(at) remove the demo config after start sync'ing with DB
-func loadTestConfig(s *oidc.Service, cfg *config.ServiceConfig) error {
-	testConfig, err := oidc.ReadDemoConfigFromFile(cfg.OIDCClientsConfigFile)
-	if err != nil {
-		return fmt.Errorf("failed to read test config: %w", err)
-	}
-	oidcConfig := &goidc.Config{
-		ClientID: testConfig.ClientID,
-	}
-	oauth2Config := &oauth2.Config{
-		ClientID:     testConfig.ClientID,
-		ClientSecret: testConfig.ClientSecret,
-		RedirectURL:  testConfig.RedirectURL,
-		Scopes:       []string{goidc.ScopeOpenID, "profile", "email"},
-	}
-	clientConfig := &oidc.ClientConfig{
-		Issuer:         testConfig.Issuer,
-		ID:             "R4ND0M1D",
-		OAuth2Config:   oauth2Config,
-		VerifierConfig: oidcConfig,
-	}
-	return s.AddClientConfig(clientConfig)
+func register(srv *baseserver.Server, deps *dependencies) error {
+	// HTTP
+	rootHandler := chi.NewRouter()
+
+	rootHandler.Mount("/oidc", oidc.Router(deps.oidcService))
+
+	// All root requests are handled by our router
+	srv.HTTPMux().Handle("/", rootHandler)
+
+	// gRPC
+	v1.RegisterOIDCServiceServer(srv.GRPC(), deps.oidcClientConfigSvc)
+
+	return nil
 }

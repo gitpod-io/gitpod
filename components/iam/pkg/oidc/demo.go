@@ -23,7 +23,7 @@ type DemoConfig struct {
 	RedirectURL  string `json:"redirectURL"`
 }
 
-func ReadDemoConfigFromFile(path string) (*DemoConfig, error) {
+func readDemoConfigFromFile(path string) (*DemoConfig, error) {
 	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read test config: %w", err)
