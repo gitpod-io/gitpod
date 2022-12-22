@@ -6,9 +6,11 @@ package server
 
 import (
 	"fmt"
-	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	"net"
 	"os"
+	"path/filepath"
+
+	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 
 	goidc "github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
@@ -32,6 +34,11 @@ func Start(logger *logrus.Entry, version string, cfg *config.ServiceConfig) erro
 	})
 	if err != nil {
 		return fmt.Errorf("failed to establish database connection: %w", err)
+	}
+
+	_, err = db.NewCipherSetFromKeysInFile(filepath.Join(cfg.DatabaseConfigPath, "encryptionKeys"))
+	if err != nil {
+		return fmt.Errorf("failed to read cipherset from file: %w", err)
 	}
 
 	srv, err := baseserver.New("iam",
