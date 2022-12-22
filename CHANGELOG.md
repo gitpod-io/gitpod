@@ -1,6 +1,7 @@
 # Change Log
 
 ## December 2022
+- Update JetBrains IDE images to most recent stable version. ([#15462](https://github.com/gitpod-io/gitpod/pull/15462)) - [@roboquat](https://github.com/roboquat)
 - The Admin Teams search will also search by team slug in addition to team name. ([#15338](https://github.com/gitpod-io/gitpod/pull/15338)) - [@selfcontained](https://github.com/selfcontained)
 - [installer] Update third_party charts to use full index ([#15432](https://github.com/gitpod-io/gitpod/pull/15432)) - [@Pothulapati](https://github.com/Pothulapati)
 - Update beta notice for the JetBrains integration ([#15371](https://github.com/gitpod-io/gitpod/pull/15371)) - [@gtsiolis](https://github.com/gtsiolis)
