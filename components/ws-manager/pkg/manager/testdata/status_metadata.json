@@ -20,6 +20,7 @@
         "gitpod/id": "foobas",
         "gitpod/servicePrefix": "foobas",
         "gitpod/url": "http://10.0.0.114:8082",
+        "gitpod.io/alreadyInitializing": "true",
         "gitpod/exposedPorts": "CgMIkD8="
       }
     },

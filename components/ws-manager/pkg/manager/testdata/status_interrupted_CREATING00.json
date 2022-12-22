@@ -23,6 +23,7 @@
         "gitpod/contentInitializer": "[redacted]",
         "gitpod/id": "4bf2e82d-cdc7-4764-b8ad-6973e3c4a629",
         "gitpod/ready": "true",
+        "gitpod.io/alreadyInitializing": "true",
         "gitpod/servicePrefix": "f75a430d-331d-4977-a4dc-16939c0752e1",
         "gitpod/url": "http://f75a430d-331d-4977-a4dc-16939c0752e1.ws-eu.cw-gh-2720.staging.gitpod.io"
       }

@@ -25,6 +25,7 @@
         "gitpod/customTimeout": "30m",
         "gitpod/id": "0c5a8ef3-052b-44a7-b11c-3542a0928076",
         "gitpod/ready": "true",
+        "gitpod.io/alreadyInitializing": "true",
         "gitpod/servicePrefix": "d6427c17-62b8-4bb5-a974-f97f77b370dc",
         "gitpod/url": "https://d6427c17-62b8-4bb5-a974-f97f77b370dc.ws-eu01.gitpod.io",
         "gitpod/exposedPorts": "CgUIkD8YAQ==",

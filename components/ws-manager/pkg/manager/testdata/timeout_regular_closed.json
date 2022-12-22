@@ -21,6 +21,7 @@
                 "annotations": {
                     "gitpod/id": "foobas",
                     "gitpod/ready": "true",
+                    "gitpod.io/alreadyInitializing": "true",
                     "gitpod/closed": "true",
                     "gitpod/servicePrefix": "foobas",
                     "gitpod/url": "http://10.0.0.114:8082"

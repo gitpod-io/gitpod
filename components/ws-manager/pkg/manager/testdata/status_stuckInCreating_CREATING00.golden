@@ -15,11 +15,12 @@
             "timeout": "30m",
             "ide_image": {}
         },
-        "phase": 4,
+        "phase": 2,
         "conditions": {
             "timeout": "workspace timed out after I've meddled with this test data set",
             "volume_snapshot": {}
         },
+        "message": "pod is running but init has not started yet or is not finished",
         "runtime": {
             "node_name": "gke-production--gitp-workspace-pool-2-a3afc0b4-tmz8",
             "pod_name": "ws-2513d0b4-3c18-4735-b32e-1bbdead24b78",
