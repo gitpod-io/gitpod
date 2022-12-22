@@ -280,16 +280,18 @@ func Run(options ...RunOption) {
 		if !cfg.isHeadless() {
 			go startAnalyze(ctx, cfg, gitpodConfigService, topService, gitpodService)
 		}
-		_, gitpodHost, err := cfg.GitpodAPIEndpoint()
-		if err != nil {
-			log.WithError(err).Error("grpc metrics: failed to parse gitpod host")
-		} else {
-			metricsReporter = metrics.NewGrpcMetricsReporter(gitpodHost)
-			if err := supervisorMetrics.Register(metricsReporter.Registry); err != nil {
-				log.WithError(err).Error("could not register supervisor metrics")
-			}
-			if err := gitpodService.RegisterMetrics(metricsReporter.Registry); err != nil {
-				log.WithError(err).Error("could not register public api metrics")
+		if !strings.Contains("ephemeral", cfg.WorkspaceClusterHost) {
+			_, gitpodHost, err := cfg.GitpodAPIEndpoint()
+			if err != nil {
+				log.WithError(err).Error("grpc metrics: failed to parse gitpod host")
+			} else {
+				metricsReporter = metrics.NewGrpcMetricsReporter(gitpodHost)
+				if err := supervisorMetrics.Register(metricsReporter.Registry); err != nil {
+					log.WithError(err).Error("could not register supervisor metrics")
+				}
+				if err := gitpodService.RegisterMetrics(metricsReporter.Registry); err != nil {
+					log.WithError(err).Error("could not register public api metrics")
+				}
 			}
 		}
 	}
