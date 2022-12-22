@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/streadway/amqp"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 )

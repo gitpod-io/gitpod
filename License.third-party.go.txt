@@ -102,6 +102,7 @@ github.com/prometheus/client_golang                                             
 github.com/prometheus/client_model                                                              Apache License 2.0
 github.com/prometheus/common                                                                    Apache License 2.0
 github.com/prometheus/procfs                                                                    Apache License 2.0
+github.com/rabbitmq/amqp091-go                                                                  BSD 2-Clause "Simplified" License
 github.com/rs/cors                                                                              MIT License
 github.com/rs/xid                                                                               MIT License
 github.com/russross/blackfriday                                                                 Simplified BSD License
@@ -117,7 +118,6 @@ github.com/spf13/cobra                                                          
 github.com/spf13/jwalterweatherman                                                              MIT License
 github.com/spf13/pflag                                                                          BSD 3-Clause "New" or "Revised" License
 github.com/spf13/viper                                                                          MIT License
-github.com/streadway/amqp                                                                       BSD 2-Clause "Simplified" License
 github.com/subosito/gotenv                                                                      MIT License
 github.com/tonistiigi/fsutil                                                                    MIT License
 github.com/tonistiigi/opentelemetry-go-contrib/instrumentation/google.golang.org/grpc/otelgrpc  Apache License 2.0
