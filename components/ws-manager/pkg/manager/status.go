@@ -125,6 +125,22 @@ func (wso *workspaceObjects) WasEverReady() (res bool) {
 	return true
 }
 
+func (wso *workspaceObjects) AlreadyInitializing() (res bool) {
+	check := func(a map[string]string) bool {
+		v, ok := a[alreadyInitializingAnnotation]
+		if !ok {
+			return false
+		}
+		return v == util.BooleanTrueString
+	}
+
+	if wso.Pod != nil {
+		return check(wso.Pod.Annotations)
+	}
+
+	return true
+}
+
 // HostName returns the name of the node this workspace is/was deployed to. If this workspace has never been deployed anywhere, HostName returns an empty string.
 func (wso *workspaceObjects) NodeName() string {
 	if wso.Pod == nil {
@@ -483,6 +499,13 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 			// headless workspaces (except prebuilds) don't expose a public service and thus cannot be asked about their status.
 			// once kubernetes reports the workspace running, so do we.
 			result.Phase = api.WorkspacePhase_RUNNING
+			return nil
+		}
+
+		// the pod phase of pending is somtimes slipped because it may not be PENDING at the stage of retrieving information on the workspace pod.
+		if !wso.AlreadyInitializing() {
+			result.Phase = api.WorkspacePhase_CREATING
+			result.Message = "pod is running but init has not started yet or is not finished"
 			return nil
 		}
 
