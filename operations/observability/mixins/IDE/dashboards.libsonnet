@@ -9,6 +9,7 @@
     // Import raw json files here.
     // Example:
     // 'my-new-dashboard.json': (import 'dashboards/components/new-component.json'),
+    'gitpod-component-blobserve.json': (import 'dashboards/components/blobserve.json'),
     'gitpod-component-openvsx-proxy.json': (import 'dashboards/components/openvsx-proxy.json'),
     'gitpod-component-openvsx-mirror.json': (import 'dashboards/components/openvsx-mirror.json'),
     'gitpod-component-ssh-gateway.json': (import 'dashboards/components/ssh-gateway.json'),
