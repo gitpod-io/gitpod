@@ -1,7 +1,7 @@
 {
   "name": "@gitpod/public-api",
   "version": "0.1.5",
-  "license": "UNLICENSED",
+  "license": "AGPL-3.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
