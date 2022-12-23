@@ -7,11 +7,15 @@ package report
 type Feature string
 
 const (
-	FeatureExample       Feature = "example"
-	FeatureResourceLimit Feature = "resource limit"
-	FeatureContentInit   Feature = "content init"
-	FeatureDocker        Feature = "docker"
-	FeatureDotfiles      Feature = "dotfiles"
-	FeatureMultiRepos    Feature = "multi repos"
-	FeaturePrebuild      Feature = "prebuild"
+	FeatureExample          Feature = "example"
+	FeatureResourceLimit    Feature = "resource limit"
+	FeatureContentInit      Feature = "content init"
+	FeatureContentOperation Feature = "content operations"
+	FeatureDocker           Feature = "docker"
+	FeatureDotfiles         Feature = "dotfiles"
+	FeatureMultiRepos       Feature = "multi repos"
+	FeaturePrebuild         Feature = "prebuild"
+	FeatureGit              Feature = "git"
+	FeatureK3s              Feature = "k3s"
+	FeatureImageBuild       Feature = "image build"
 )

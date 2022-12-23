@@ -15,6 +15,7 @@ import (
 
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
+	"github.com/gitpod-io/gitpod/test/pkg/report"
 )
 
 type GitTest struct {
@@ -142,6 +143,8 @@ func TestGitActions(t *testing.T) {
 			for _, ff := range ffs {
 				for _, test := range tests {
 					t.Run(test.ContextURL+"_"+ff.Name, func(t *testing.T) {
+						report.SetupReport(t, report.FeatureK3s, "test verifies whether git operation is possible")
+
 						t.Parallel()
 						if test.Skip {
 							t.SkipNow()

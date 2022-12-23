@@ -15,6 +15,7 @@ import (
 
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
+	"github.com/gitpod-io/gitpod/test/pkg/report"
 )
 
 const (
@@ -74,6 +75,8 @@ func TestGitHooks(t *testing.T) {
 			for _, ff := range ffs {
 				for _, test := range tests {
 					t.Run(test.ContextURL+"_"+ff.Name, func(t *testing.T) {
+						report.SetupReport(t, report.FeatureGit, "test to verify that git checkout hooks are not executed")
+
 						t.Parallel()
 
 						ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*len(tests)*len(ffs))*time.Minute)
@@ -116,7 +119,7 @@ func TestGitHooks(t *testing.T) {
 						}
 						for _, f := range ls.Files {
 							if f == FILE_CREATED_HOOKS {
-								t.Fatal("Checkout hooks are executed")
+								t.Fatal("checkout hooks are executed")
 							}
 						}
 					})

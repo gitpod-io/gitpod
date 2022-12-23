@@ -21,6 +21,7 @@ import (
 
 	content_service_api "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
+	"github.com/gitpod-io/gitpod/test/pkg/report"
 )
 
 var (
@@ -81,6 +82,8 @@ func TestUploadUrl(t *testing.T) {
 
 			for _, test := range tests {
 				t.Run(test.Name, func(t *testing.T) {
+					report.SetupReport(t, report.FeatureContentOperation, fmt.Sprintf("test to upload the content - %s", test.Name))
+
 					resp, err := bs.UploadUrl(ctx, &content_service_api.UploadUrlRequest{OwnerId: test.InputOwnerID, Name: test.InputName})
 					if err != nil && test.ExpectedErrorCode == codes.OK {
 						t.Fatal(err)
@@ -141,6 +144,8 @@ func TestDownloadUrl(t *testing.T) {
 
 			for _, test := range tests {
 				t.Run(test.Name, func(t *testing.T) {
+					report.SetupReport(t, report.FeatureContentOperation, fmt.Sprintf("test to downlod the content - %s", test.Name))
+
 					resp, err := bs.DownloadUrl(ctx, &content_service_api.DownloadUrlRequest{OwnerId: test.InputOwnerID, Name: test.InputName})
 					if err != nil && test.ExpectedErrorCode == codes.OK {
 						t.Fatal(err)
@@ -172,6 +177,8 @@ func TestUploadDownloadBlob(t *testing.T) {
 	f := features.New("UploadDownloadBlob").
 		WithLabel("component", "server").
 		Assess("it should upload and download blob", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			report.SetupReport(t, report.FeatureContentOperation, "test to delete the content")
+
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 

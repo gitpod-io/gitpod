@@ -21,12 +21,15 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	imgapi "github.com/gitpod-io/gitpod/image-builder/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
+	"github.com/gitpod-io/gitpod/test/pkg/report"
 )
 
 func TestBaseImageBuild(t *testing.T) {
 	f := features.New("database").
 		WithLabel("component", "image-builder").
 		Assess("it should build a base image", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			report.SetupReport(t, report.FeatureImageBuild, "build a new base image")
+
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
@@ -107,6 +110,8 @@ func TestParallelBaseImageBuild(t *testing.T) {
 	f := features.New("image-builder").
 		WithLabel("component", "image-builder").
 		Assess("it should allow parallel build of images", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			report.SetupReport(t, report.FeatureImageBuild, "build the images in parallel")
+
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 

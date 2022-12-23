@@ -15,6 +15,7 @@ import (
 
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
+	"github.com/gitpod-io/gitpod/test/pkg/report"
 )
 
 const (
@@ -26,6 +27,7 @@ func TestK3s(t *testing.T) {
 	f := features.New("k3s").
 		WithLabel("component", "workspace").
 		Assess("it should start a k3s when cgroup v2 enable", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			report.SetupReport(t, report.FeatureGit, "test to verify that k3s is able to run on the workspace")
 			t.Parallel()
 
 			ctx, cancel := context.WithTimeout(context.Background(), TIME_OUT)

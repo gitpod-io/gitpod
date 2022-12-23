@@ -16,6 +16,7 @@ import (
 
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
+	"github.com/gitpod-io/gitpod/test/pkg/report"
 )
 
 const (
@@ -47,6 +48,8 @@ func TestMountProc(t *testing.T) {
 	f := features.New("proc mount").
 		WithLabel("component", "workspace").
 		Assess("load test proc mount", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			report.SetupReport(t, report.FeatureK3s, "laod test for mout proc of system call")
+
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
