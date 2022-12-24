@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-# see https://github.com/gitpod-io/spring-petclinic/blob/master/.gitpod.yml
+# see https://github.com/gitpod-samples/spring-petclinic/blob/master/.gitpod.yml
 tasks:
   - init: ./mvnw package -DskipTests
     command: java -jar target/*.jar

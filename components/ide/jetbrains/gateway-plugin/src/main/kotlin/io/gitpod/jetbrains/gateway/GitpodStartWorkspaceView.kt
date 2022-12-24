@@ -70,7 +70,7 @@ class GitpodStartWorkspaceView(
                 .resizableColumn()
                 .horizontalAlign(HorizontalAlign.FILL)
                 .applyToComponent {
-                    this.text = "https://github.com/gitpod-io/spring-petclinic"
+                    this.text = "https://github.com/gitpod-samples/spring-petclinic"
                 }
             button("New Workspace") {
                 if (contextUrl.component.text.isNotBlank()) {

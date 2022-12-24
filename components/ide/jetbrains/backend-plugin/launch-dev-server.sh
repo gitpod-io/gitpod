@@ -9,7 +9,7 @@ set -o pipefail
 # Default Options
 DEBUG_PORT=44444
 JB_QUALIFIER="latest"
-TEST_REPO=https://github.com/gitpod-io/spring-petclinic
+TEST_REPO=https://github.com/gitpod-samples/spring-petclinic
 RUN_FROM="release"
 
 # Parsing Custom Options

@@ -44,7 +44,7 @@ To use the script, from your gitpod's workspace:
   *********************************************************
   ```
 
-By default, the test-repository is [gitpod-io/spring-petclinic](https://github.com/gitpod-io/spring-petclinic). You can specify a different test repo using the `-r` argument, e.g:
+By default, the test-repository is [gitpod-samples/spring-petclinic](https://github.com/gitpod-samples/spring-petclinic). You can specify a different test repo using the `-r` argument, e.g:
 
 ```bash
 ./launch-dev-server.sh -r https://github.com/gitpod-io/empty
