@@ -1,0 +1,39 @@
+packages:
+  - name: app
+    type: go
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    deps:
+      - components/common-go:lib
+      - components/ws-manager-bridge-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    config:
+      packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/workspace-rollout-job/cmd.Version=commit-${__git_commit}'"]
+  - name: docker
+    type: docker
+    deps:
+      - :app
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspaceRolloutJob
+      image:
+        - ${imageRepoBase}/workspace-rollout-job:${version}
+        - ${imageRepoBase}/workspace-rollout-job:commit-${__git_commit}
+  - name: lib
+    type: go
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    config:
+      packaging: library
+    deps:
+      - components/common-go:lib
