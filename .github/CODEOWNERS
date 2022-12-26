@@ -85,6 +85,7 @@
 /components/supervisor @gitpod-io/engineering-ide
 /components/usage @gitpod-io/engineering-webapp
 /components/usage-api @gitpod-io/engineering-webapp
+/components/workspace-rollout-job @gitpod-io/engineering-delivery-operations-experience @gitpod-io/engineering-workspace
 /components/workspacekit @gitpod-io/engineering-workspace
 /components/ws-daemon-api @aledbf @Furisto
 /components/ws-daemon @gitpod-io/engineering-workspace
