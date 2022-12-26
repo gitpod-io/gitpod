@@ -239,7 +239,7 @@ export default function () {
                         filteredMembers.map((m) => (
                             <Item className="grid grid-cols-3" key={m.userId}>
                                 <ItemField className="flex items-center my-auto">
-                                    <div className="w-14">
+                                    <div className="flex-shrink-0">
                                         {m.avatarUrl && (
                                             <img
                                                 className="rounded-full w-8 h-8"
@@ -248,11 +248,14 @@ export default function () {
                                             />
                                         )}
                                     </div>
-                                    <div>
-                                        <div className="text-base text-gray-900 dark:text-gray-50 font-medium">
+                                    <div className="ml-5 truncate">
+                                        <div
+                                            className="text-base text-gray-900 dark:text-gray-50 font-medium"
+                                            title={m.fullName}
+                                        >
                                             {m.fullName}
                                         </div>
-                                        <p>{m.primaryEmail}</p>
+                                        <p title={m.primaryEmail}>{m.primaryEmail}</p>
                                     </div>
                                 </ItemField>
                                 <ItemField className="my-auto">
