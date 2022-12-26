@@ -460,7 +460,7 @@ export default function Menu() {
                             </ul>
                         </nav>
                         <div
-                            className="ml-3 flex items-center justify-start mb-0 pointer-cursor m-l-auto rounded-full border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700 p-0.5 font-medium"
+                            className="ml-3 flex items-center justify-start mb-0 pointer-cursor m-l-auto rounded-full border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700 p-0.5 font-medium flex-shrink-0"
                             data-analytics='{"label":"Account"}'
                         >
                             <ContextMenu
