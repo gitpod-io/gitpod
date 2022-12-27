@@ -40,14 +40,14 @@ const IDEs = [
         productId: "rubymine",
         productCode: "RM",
         productType: "release",
-        exampleRepo: "https://github.com/gitpod-samples/template-jetbrains-rubymine",
+        exampleRepo: "https://github.com/gitpod-samples/template-ruby-on-rails-postgres",
     },
     {
         productName: "WebStorm",
         productId: "webstorm",
         productCode: "WS",
         productType: "release",
-        exampleRepo: "https://github.com/gitpod-samples/template-jetbrains-webstorm",
+        exampleRepo: "https://github.com/gitpod-samples/template-typescript-react",
     },
     {
         productName: "Rider",
