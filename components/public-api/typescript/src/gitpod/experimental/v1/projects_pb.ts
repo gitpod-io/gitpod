@@ -182,6 +182,11 @@ export class PrebuildSettings extends Message<PrebuildSettings> {
    */
   prebuildEveryNth = 0;
 
+  /**
+   * @generated from field: bool disable_prebuilds = 5;
+   */
+  disablePrebuilds = false;
+
   constructor(data?: PartialMessage<PrebuildSettings>) {
     super();
     proto3.util.initPartial(data, this);
@@ -194,6 +199,7 @@ export class PrebuildSettings extends Message<PrebuildSettings> {
     { no: 2, name: "keep_outdated_prebuilds_running", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 3, name: "use_previous_prebuilds", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 4, name: "prebuild_every_nth", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 5, name: "disable_prebuilds", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PrebuildSettings {
