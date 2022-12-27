@@ -42,6 +42,10 @@ export class IamSessionApp {
     }
 
     protected async doCreateSession(req: express.Request) {
+        // We need an account to sign in, which is done by calling `req.login` below.
+        // As proper account creation/selection will be added in later on, we're creating a
+        // dummy account on each attempt.
+        //
         const user = await this.userService.createUser({
             identity: {
                 authId: "fake-id-" + Date.now(),
