@@ -51,6 +51,7 @@ import { InstallationAdminController } from "./installation-admin/installation-a
 import { WebhookEventGarbageCollector } from "./projects/webhook-event-garbage-collector";
 import { LivenessController } from "./liveness/liveness-controller";
 import { FeatureFlagController } from "./feature-flag/featureflag-controller";
+import { IamSessionApp } from "./iam/iam-session-app";
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -88,6 +89,10 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(OAuthController) protected readonly oauthController: OAuthController;
     @inject(NewsletterSubscriptionController)
     protected readonly newsletterSubscriptionController: NewsletterSubscriptionController;
+
+    @inject(IamSessionApp) protected readonly iamSessionAppCreator: IamSessionApp;
+    protected iamSessionApp?: express.Application;
+    protected iamSessionAppServer?: http.Server;
 
     protected readonly eventEmitter = new EventEmitter();
     protected app?: express.Application;
@@ -251,6 +256,9 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         // Installation Admin - host separately to avoid exposing publicly
         this.installationAdminApp = this.installationAdminController.create();
 
+        // IAM Session App - host separately to avoid exposing publicly
+        this.iamSessionApp = this.iamSessionAppCreator.create();
+
         // Report current websocket connections
         this.installWebsocketConnectionGauge();
         this.installWebsocketClientContextGauge();
@@ -340,11 +348,20 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             });
         }
 
+        if (this.iamSessionApp) {
+            this.iamSessionAppServer = this.iamSessionApp.listen(9876, () => {
+                log.info(
+                    `IAM session server listening on port: ${(<AddressInfo>this.iamSessionAppServer!.address()).port}`,
+                );
+            });
+        }
+
         this.debugApp.start();
     }
 
     public async stop() {
         await this.debugApp.stop();
+        await this.stopServer(this.iamSessionAppServer);
         await this.stopServer(this.monitoringHttpServer);
         await this.stopServer(this.installationAdminHttpServer);
         await this.stopServer(this.httpServer);

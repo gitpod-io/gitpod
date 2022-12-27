@@ -116,6 +116,7 @@ import { OpenPrebuildPrefixContextParser } from "./workspace/open-prebuild-prefi
 import { contentServiceBinder } from "./util/content-service-sugar";
 import { UbpResetOnCancel } from "@gitpod/gitpod-payment-endpoint/lib/chargebee/ubp-reset-on-cancel";
 import { retryMiddleware } from "nice-grpc-client-middleware-retry";
+import { IamSessionApp } from "./iam/iam-session-app";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -313,4 +314,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(UsageServiceImpl).toSelf().inSingletonScope();
     bind(UsageService).toService(UsageServiceImpl);
     bind(UbpResetOnCancel).toSelf().inSingletonScope();
+
+    // IAM Support
+    bind(IamSessionApp).toSelf().inSingletonScope();
 });
