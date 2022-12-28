@@ -14,6 +14,7 @@ import (
 
 	"golang.org/x/xerrors"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -228,13 +229,12 @@ func NewDirectAccess(c *config.StorageConfig) (DirectAccess, error) {
 	case config.MinIOStorage:
 		return newDirectMinIOAccess(c.MinIOConfig)
 	case config.S3Storage:
-		cfg, err := awsconfig.LoadDefaultConfig(context.TODO(), awsconfig.WithSharedConfigFiles([]string{c.S3Config.CredentialsFile}))
+		cfg, err := loadAwsConfig(c.S3Config)
 		if err != nil {
 			return nil, err
 		}
 
-		cfg.Region = c.S3Config.Region
-		return newDirectS3Access(s3.NewFromConfig(cfg), S3Config{
+		return newDirectS3Access(s3.NewFromConfig(*cfg), S3Config{
 			Bucket: c.S3Config.Bucket,
 		}), nil
 	default:
@@ -255,19 +255,36 @@ func NewPresignedAccess(c *config.StorageConfig) (PresignedAccess, error) {
 	case config.MinIOStorage:
 		return newPresignedMinIOAccess(c.MinIOConfig)
 	case config.S3Storage:
-		cfg, err := awsconfig.LoadDefaultConfig(context.TODO(), awsconfig.WithSharedConfigFiles([]string{c.S3Config.CredentialsFile}))
+		cfg, err := loadAwsConfig(c.S3Config)
 		if err != nil {
 			return nil, err
 		}
 
-		cfg.Region = c.S3Config.Region
-		return NewPresignedS3Access(s3.NewFromConfig(cfg), S3Config{
+		return NewPresignedS3Access(s3.NewFromConfig(*cfg), S3Config{
 			Bucket: c.S3Config.Bucket,
 		}), nil
 	default:
 		log.Warnf("falling back to noop presigned storage access. Is this intentional? (storage kind: %s)", c.Kind)
 		return &PresignedNoopStorage{}, nil
 	}
+}
+
+func loadAwsConfig(s3config *config.S3Config) (*aws.Config, error) {
+	var opts []func(*awsconfig.LoadOptions) error
+	if s3config.CredentialsFile != "" {
+		opts = append(opts, awsconfig.WithSharedConfigFiles([]string{s3config.CredentialsFile}))
+	}
+
+	if s3config.Region != "" {
+		opts = append(opts, awsconfig.WithRegion(s3config.Region))
+	}
+
+	cfg, err := awsconfig.LoadDefaultConfig(context.TODO(), opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &cfg, nil
 }
 
 func extractTarbal(ctx context.Context, dest string, src io.Reader, mappings []archive.IDMapping) error {
