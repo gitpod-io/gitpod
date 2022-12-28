@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/go-chi/chi/v5"
@@ -25,7 +26,8 @@ func TestGetStartParams(t *testing.T) {
 		issuerG  = "https://accounts.google.com"
 		clientID = "client-id-123"
 	)
-	service := NewService()
+	sessionServerAddress := newFakeSessionServer(t)
+	service := NewService(sessionServerAddress)
 	config := &ClientConfig{
 		ID:             "google-1",
 		Issuer:         issuerG,
@@ -113,7 +115,8 @@ func TestGetClientConfigFromRequest(t *testing.T) {
 		},
 	}
 
-	service := NewService()
+	sessionServerAddress := newFakeSessionServer(t)
+	service := NewService(sessionServerAddress)
 	err = service.AddClientConfig(&ClientConfig{
 		ID:             clientID,
 		Issuer:         issuer,
@@ -140,8 +143,9 @@ func TestGetClientConfigFromRequest(t *testing.T) {
 
 func TestAuthenticate_nonce_check(t *testing.T) {
 	issuer := newFakeIdP(t)
+	sessionServerAddress := newFakeSessionServer(t)
 
-	service := NewService()
+	service := NewService(sessionServerAddress)
 	err := service.AddClientConfig(&ClientConfig{
 		ID:     "google-1",
 		Issuer: issuer,
@@ -170,6 +174,30 @@ func TestAuthenticate_nonce_check(t *testing.T) {
 
 	require.NoError(t, err, "failed to authenticate")
 	require.NotNil(t, result)
+}
+
+func newFakeSessionServer(t *testing.T) string {
+	router := chi.NewRouter()
+	ts := httptest.NewServer(router)
+	url, err := url.Parse(ts.URL)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	router.Use(middleware.Logger)
+	router.Post("/session", func(w http.ResponseWriter, r *http.Request) {
+		http.SetCookie(w, &http.Cookie{
+			Name:     "test-cookie",
+			Value:    "chocolate-chips",
+			Path:     "/",
+			HttpOnly: true,
+			Expires:  time.Now().AddDate(0, 0, 1),
+		})
+		w.WriteHeader(http.StatusOK)
+	})
+
+	t.Cleanup(ts.Close)
+	return url.Host
 }
 
 func newFakeIdP(t *testing.T) string {

@@ -14,5 +14,7 @@ type ServiceConfig struct {
 
 	DatabaseConfigPath string `json:"databaseConfigPath"`
 
+	SessionServiceAddress string `json:"sessionServiceAddress"`
+
 	OIDCClientsConfigFile string `json:"oidcClientsConfigFile,omitempty"`
 }

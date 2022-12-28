@@ -5,6 +5,7 @@
 package oidc
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/base64"
@@ -20,9 +21,10 @@ import (
 )
 
 type Service struct {
-	configsById      map[string]*ClientConfig
-	verifierByIssuer map[string]*oidc.IDTokenVerifier
-	providerByIssuer map[string]*oidc.Provider
+	configsById           map[string]*ClientConfig
+	verifierByIssuer      map[string]*oidc.IDTokenVerifier
+	providerByIssuer      map[string]*oidc.Provider
+	sessionServiceAddress string
 }
 
 type ClientConfig struct {
@@ -39,10 +41,11 @@ type StartParams struct {
 }
 
 type AuthFlowResult struct {
-	IDToken *oidc.IDToken
+	IDToken *oidc.IDToken          `json:"idToken"`
+	Claims  map[string]interface{} `json:"claims"`
 }
 
-func NewServiceWithTestConfig(configPath string) (*Service, error) {
+func NewServiceWithTestConfig(configPath string, sessionServiceAddress string) (*Service, error) {
 	testConfig, err := readDemoConfigFromFile(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read test config: %w", err)
@@ -62,7 +65,7 @@ func NewServiceWithTestConfig(configPath string) (*Service, error) {
 		},
 	}
 
-	s := NewService()
+	s := NewService(sessionServiceAddress)
 	err = s.AddClientConfig(clientConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to add client config: %w", err)
@@ -71,11 +74,12 @@ func NewServiceWithTestConfig(configPath string) (*Service, error) {
 	return s, nil
 }
 
-func NewService() *Service {
+func NewService(sessionServiceAddress string) *Service {
 	return &Service{
-		configsById:      map[string]*ClientConfig{},
-		verifierByIssuer: map[string]*oidc.IDTokenVerifier{},
-		providerByIssuer: map[string]*oidc.Provider{},
+		configsById:           map[string]*ClientConfig{},
+		verifierByIssuer:      map[string]*oidc.IDTokenVerifier{},
+		providerByIssuer:      map[string]*oidc.Provider{},
+		sessionServiceAddress: sessionServiceAddress,
 	}
 }
 
@@ -199,11 +203,38 @@ func (s *Service) Authenticate(ctx context.Context, params AuthenticateParams) (
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify id_token: %w", err)
 	}
-
+	claims := map[string]interface{}{}
+	err = idToken.Claims(&claims)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal the payload of the ID token: %w", err)
+	}
 	if idToken.Nonce != params.NonceCookieValue {
 		return nil, fmt.Errorf("nonce mismatch")
 	}
 	return &AuthFlowResult{
 		IDToken: idToken,
+		Claims:  claims,
 	}, nil
+}
+
+func (s *Service) CreateSession(ctx context.Context, flowResult *AuthFlowResult) (*http.Cookie, error) {
+	payload, err := json.Marshal(flowResult)
+	if err != nil {
+		return nil, err
+	}
+
+	url := fmt.Sprintf("http://%s/session", s.sessionServiceAddress)
+	res, err := http.Post(url, "application/json", bytes.NewReader(payload))
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode == http.StatusOK {
+		cookies := res.Cookies()
+		if len(cookies) == 1 {
+			return cookies[0], nil
+		}
+		return nil, fmt.Errorf("unexpected count of cookies: %v", len(cookies))
+	}
+	return nil, fmt.Errorf("unexpected status code: %v", res.StatusCode)
 }
