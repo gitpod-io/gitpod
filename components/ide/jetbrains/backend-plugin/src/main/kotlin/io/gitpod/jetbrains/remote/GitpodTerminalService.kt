@@ -4,8 +4,10 @@
 
 package io.gitpod.jetbrains.remote
 
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.application
 import com.jediterm.terminal.ui.TerminalWidget
 import com.jediterm.terminal.ui.TerminalWidgetListener
@@ -267,15 +269,22 @@ class GitpodTerminalService(project: Project) {
             supervisorTerminal: TerminalOuterClass.Terminal,
             shellTerminalWidget: ShellTerminalWidget
     ) {
-        @Suppress("ObjectLiteralToLambda")
-        shellTerminalWidget.addListener(object : TerminalWidgetListener {
-            override fun allSessionsClosed(widget: TerminalWidget) {
-                terminalServiceFutureStub.shutdown(
-                        TerminalOuterClass.ShutdownTerminalRequest.newBuilder()
-                                .setAlias(supervisorTerminal.alias)
-                                .build()
-                )
-            }
-        })
+        val listener = TerminalWidgetListener {
+            terminalServiceFutureStub.shutdown(
+                    TerminalOuterClass.ShutdownTerminalRequest.newBuilder()
+                            .setAlias(supervisorTerminal.alias)
+                            .build()
+            )
+        }
+        Disposer.newDisposable().let { disposable ->
+            application.messageBus.connect(disposable)
+                    .subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
+                        override fun appWillBeClosed(isRestart: Boolean) {
+                            shellTerminalWidget.removeListener(listener)
+                            Disposer.dispose(disposable)
+                        }
+                    })
+        }
+        shellTerminalWidget.addListener(listener)
     }
 }
