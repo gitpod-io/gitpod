@@ -18,11 +18,11 @@ func Router(s *Service) *chi.Mux {
 	router := chi.NewRouter()
 
 	router.Route("/start", func(r chi.Router) {
-		r.Use(s.clientConfigMiddleware())
+		r.Use(s.clientConfigMiddleware(s.GetClientConfigFromStartRequest))
 		r.Get("/", s.getStartHandler())
 	})
 	router.Route("/callback", func(r chi.Router) {
-		r.Use(s.clientConfigMiddleware())
+		r.Use(s.clientConfigMiddleware(s.GetClientConfigFromCallbackRequest))
 		r.Use(OAuth2Middleware)
 		r.Get("/", s.getCallbackHandler())
 	})
@@ -82,11 +82,11 @@ func newCallbackCookie(r *http.Request, name string, value string) *http.Cookie 
 	}
 }
 
-// The config middleware is responsible to retrieve the client config suitable for request
-func (s *Service) clientConfigMiddleware() func(http.Handler) http.Handler {
+// The config middleware stores the provided config in the context of the current request
+func (s *Service) clientConfigMiddleware(provider func(r *http.Request) (*ClientConfig, error)) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-			config, err := s.GetClientConfigFromRequest(r)
+			config, err := provider(r)
 			if err != nil {
 				log.Warn("client config not found: " + err.Error())
 				http.Error(rw, "config not found", http.StatusNotFound)
