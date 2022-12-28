@@ -41,6 +41,10 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                                     {
                                         title: "New Workspace",
                                         href: `/#${project.cloneUrl}`,
+                                    },
+                                    {
+                                        title: "Project Settings",
+                                        link: `/${teamOrUserSlug}/${project.slug ?? project.name}/settings`,
                                         separator: true,
                                     },
                                     {
