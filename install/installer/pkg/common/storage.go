@@ -48,10 +48,13 @@ func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 		res = &storageconfig.StorageConfig{
 			Kind: storageconfig.S3Storage,
 			S3Config: &storageconfig.S3Config{
-				Region:          context.Config.Metadata.Region,
-				Bucket:          context.Config.ObjectStorage.S3.BucketName,
-				CredentialsFile: filepath.Join(StorageMount, "credentials"),
+				Region: context.Config.Metadata.Region,
+				Bucket: context.Config.ObjectStorage.S3.BucketName,
 			},
+		}
+
+		if context.Config.ObjectStorage.S3.Credentials.Kind != "" {
+			res.S3Config.CredentialsFile = filepath.Join(StorageMount, "credentials")
 		}
 	}
 
