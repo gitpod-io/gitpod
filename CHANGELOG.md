@@ -1,6 +1,8 @@
 # Change Log
 
 ## December 2022
+- Update JetBrains IDE images to most recent stable version. ([#15509](https://github.com/gitpod-io/gitpod/pull/15509)) - [@roboquat](https://github.com/roboquat)
+- Customised example repositories on the basis of selected IDE options ([#15503](https://github.com/gitpod-io/gitpod/pull/15503)) - [@Siddhant-K-code](https://github.com/Siddhant-K-code)
 - Update JetBrains IDE images to most recent stable version. ([#15479](https://github.com/gitpod-io/gitpod/pull/15479)) - [@roboquat](https://github.com/roboquat)
 - Update JetBrains IDE images to most recent stable version. ([#15462](https://github.com/gitpod-io/gitpod/pull/15462)) - [@roboquat](https://github.com/roboquat)
 - The Admin Teams search will also search by team slug in addition to team name. ([#15338](https://github.com/gitpod-io/gitpod/pull/15338)) - [@selfcontained](https://github.com/selfcontained)
