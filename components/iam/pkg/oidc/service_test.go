@@ -85,6 +85,16 @@ func TestGetClientConfigFromStartRequest(t *testing.T) {
 			ExpectedError: true,
 			ExpectedId:    "",
 		},
+		{
+			Location:      "/start?id=UNKNOWN",
+			ExpectedError: true,
+			ExpectedId:    "",
+		},
+		{
+			Location:      "/start?id=" + clientID,
+			ExpectedError: false,
+			ExpectedId:    clientID,
+		},
 	}
 
 	sessionServerAddress := newFakeSessionServer(t)

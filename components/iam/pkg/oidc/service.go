@@ -159,17 +159,27 @@ func randString(size int) (string, error) {
 
 func (s *Service) GetClientConfigFromStartRequest(r *http.Request) (*ClientConfig, error) {
 	issuerParam := r.URL.Query().Get("issuer")
-	if issuerParam == "" {
-		return nil, fmt.Errorf("missing issuer parameter")
+	idParam := r.URL.Query().Get("id")
+	if issuerParam == "" && idParam == "" {
+		return nil, fmt.Errorf("missing parameters")
 	}
 
-	for _, value := range s.configsById {
-		if value.Issuer == issuerParam {
-			return value, nil
+	if idParam != "" {
+		config := s.configsById[idParam]
+		if config != nil {
+			return config, nil
+		}
+		return nil, fmt.Errorf("failed to find OIDC config by ID")
+	}
+	if issuerParam != "" {
+		for _, value := range s.configsById {
+			if value.Issuer == issuerParam {
+				return value, nil
+			}
 		}
 	}
 
-	return nil, fmt.Errorf("failed to find OIDC config for start request")
+	return nil, fmt.Errorf("failed to find OIDC config")
 }
 
 func (s *Service) GetClientConfigFromCallbackRequest(r *http.Request) (*ClientConfig, error) {
@@ -187,7 +197,7 @@ func (s *Service) GetClientConfigFromCallbackRequest(r *http.Request) (*ClientCo
 		return config, nil
 	}
 
-	return nil, fmt.Errorf("failed to find OIDC config for request")
+	return nil, fmt.Errorf("failed to find OIDC config on callback")
 }
 
 type AuthenticateParams struct {
