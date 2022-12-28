@@ -76,6 +76,8 @@ func TestRoute_callback(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, http.StatusTemporaryRedirect, resp.StatusCode, "callback should response with redirect (307)")
+	require.NotEmpty(t, resp.Cookies(), "missing cookies on redirect")
+	require.Equal(t, "test-cookie", resp.Cookies()[0].Name, "missing cookie on redirect")
 
 	url, err := resp.Location()
 	require.NoError(t, err)
@@ -92,7 +94,8 @@ type testServerParams struct {
 
 func newTestServer(t *testing.T, params testServerParams) (url string, state *StateParam) {
 	router := chi.NewRouter()
-	oidcService := NewService()
+	sessionServerAddress := newFakeSessionServer(t)
+	oidcService := NewService(sessionServerAddress)
 	router.Mount("/oidc", Router(oidcService))
 
 	ts := httptest.NewServer(router)

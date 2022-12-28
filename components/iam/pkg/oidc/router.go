@@ -130,10 +130,15 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 			return
 		}
 
-		// TODO(at) given the result of OIDC authN, let's proceed with the redirect
 		log.WithField("id_token", result.IDToken).Trace("user verification was successful")
 
-		returnToURL := oauth2Result.ReturnToURL
-		http.Redirect(rw, r, returnToURL, http.StatusTemporaryRedirect)
+		cookie, err := s.CreateSession(r.Context(), result)
+		if err != nil {
+			log.Warn("Failed to create session: " + err.Error())
+			http.Error(rw, "Failed to create session", http.StatusInternalServerError)
+			return
+		}
+		http.SetCookie(rw, cookie)
+		http.Redirect(rw, r, oauth2Result.ReturnToURL, http.StatusTemporaryRedirect)
 	}
 }
