@@ -6,6 +6,8 @@ package iam
 
 import (
 	"fmt"
+	"net"
+	"strconv"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/iam/pkg/config"
@@ -36,6 +38,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 		},
+
+		SessionServiceAddress: net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", common.ServerComponent, ctx.Namespace), strconv.Itoa(common.ServerIAMSessionPort)),
 
 		DatabaseConfigPath: databaseSecretMountPath,
 	}

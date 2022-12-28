@@ -2546,7 +2546,7 @@ data:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: 6c23f5fda26f7744c03f56515d6d5c8815df8861056ae46d07b95e01f9701648
+        gitpod.io/checksum_config: 61b5a062503803fd7264c1d96f9217c4cd0336c204eb03cd0dafa9094b508258
         hello: world
       creationTimestamp: null
       labels:
@@ -4328,7 +4328,8 @@ data:
           }
         }
       },
-      "databaseConfigPath": "/secrets/database-config"
+      "databaseConfigPath": "/secrets/database-config",
+      "sessionServiceAddress": "server.default.svc.cluster.local:9876"
     }
 kind: ConfigMap
 metadata:
@@ -10186,7 +10187,7 @@ kind: Deployment
 metadata:
   annotations:
     gitpod.io: hello
-    gitpod.io/checksum_config: 6c23f5fda26f7744c03f56515d6d5c8815df8861056ae46d07b95e01f9701648
+    gitpod.io/checksum_config: 61b5a062503803fd7264c1d96f9217c4cd0336c204eb03cd0dafa9094b508258
     hello: world
   creationTimestamp: null
   labels:
