@@ -1,4 +1,4 @@
-# Terraform setup for AWS Single-cluster Gitpod reference architecture
+# Terraform setup for AKS Single-cluster Gitpod reference architecture
 
 This directory has terraform configuration necessary to achieve a infrastructure
 corresponding to the Single-cluster reference architecture for Gitpod on Azure.
