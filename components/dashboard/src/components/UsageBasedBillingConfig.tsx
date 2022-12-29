@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useState, useContext, useEffect } from "react";
+import { useState, useContext, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
 import { Appearance, loadStripe, Stripe } from "@stripe/stripe-js";
@@ -47,43 +47,46 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
     const localStorageKey = `pendingStripeSubscriptionFor${attributionId}`;
-    const now = dayjs().utc(true);
+    const now = useMemo(() => dayjs().utc(true), []);
     const [billingCycleFrom, setBillingCycleFrom] = useState<dayjs.Dayjs>(now.startOf("month"));
     const [billingCycleTo, setBillingCycleTo] = useState<dayjs.Dayjs>(now.endOf("month"));
 
-    const refreshSubscriptionDetails = async (attributionId: string) => {
-        setStripeSubscriptionId(undefined);
-        setIsLoadingStripeSubscription(true);
-        try {
-            getGitpodService().server.findStripeSubscriptionId(attributionId).then(setStripeSubscriptionId);
-            const costCenter = await getGitpodService().server.getCostCenter(attributionId);
-            setUsageLimit(costCenter?.spendingLimit || 0);
-            setBillingCycleFrom(dayjs(costCenter?.billingCycleStart || now.startOf("month")).utc(true));
-            setBillingCycleTo(dayjs(costCenter?.nextBillingTime || now.endOf("month")).utc(true));
-        } catch (error) {
-            console.error("Could not get Stripe subscription details.", error);
-            setErrorMessage(`Could not get Stripe subscription details. ${error?.message || String(error)}`);
-        } finally {
-            setIsLoadingStripeSubscription(false);
-        }
-    };
+    const refreshSubscriptionDetails = useCallback(
+        async (attributionId: string) => {
+            setStripeSubscriptionId(undefined);
+            setIsLoadingStripeSubscription(true);
+            try {
+                getGitpodService().server.findStripeSubscriptionId(attributionId).then(setStripeSubscriptionId);
+                const costCenter = await getGitpodService().server.getCostCenter(attributionId);
+                setUsageLimit(costCenter?.spendingLimit || 0);
+                setBillingCycleFrom(dayjs(costCenter?.billingCycleStart || now.startOf("month")).utc(true));
+                setBillingCycleTo(dayjs(costCenter?.nextBillingTime || now.endOf("month")).utc(true));
+            } catch (error) {
+                console.error("Could not get Stripe subscription details.", error);
+                setErrorMessage(`Could not get Stripe subscription details. ${error?.message || String(error)}`);
+            } finally {
+                setIsLoadingStripeSubscription(false);
+            }
+        },
+        [now],
+    );
 
     useEffect(() => {
         if (!attributionId) {
             return;
         }
         refreshSubscriptionDetails(attributionId);
-    }, [attributionId]);
+    }, [attributionId, refreshSubscriptionDetails]);
 
     useEffect(() => {
-        if (!attributionId || !stripeSubscriptionId) {
+        if (!attributionId) {
             return;
         }
         (async () => {
             const portalUrl = await getGitpodService().server.getStripePortalUrl(attributionId);
             setStripePortalUrl(portalUrl);
         })();
-    }, [attributionId, stripeSubscriptionId]);
+    }, [attributionId]);
 
     useEffect(() => {
         if (!attributionId) {
@@ -124,7 +127,14 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                 setErrorMessage(`Could not subscribe to Stripe. ${error?.message || String(error)}`);
             }
         })();
-    }, [attributionId, location.search]);
+    }, [
+        attributionId,
+        localStorageKey,
+        location.pathname,
+        location.search,
+        pollStripeSubscriptionTimeout,
+        usePublicApiTeamsService,
+    ]);
 
     useEffect(() => {
         setPendingStripeSubscription(undefined);
@@ -175,6 +185,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
         stripeSubscriptionId,
         attributionId,
         localStorageKey,
+        refreshSubscriptionDetails,
     ]);
 
     useEffect(() => {
@@ -299,9 +310,16 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                 </span>
                             </div>
                         </div>
-                        <button className="mt-5 self-end" onClick={() => setShowBillingSetupModal(true)}>
-                            Upgrade Plan
-                        </button>
+                        <div className="flex justify-end mt-6 space-x-2">
+                            {stripePortalUrl && (
+                                <a href={stripePortalUrl}>
+                                    <button className="secondary" disabled={!stripePortalUrl}>
+                                        View Past Invoices ↗
+                                    </button>
+                                </a>
+                            )}
+                            <button onClick={() => setShowBillingSetupModal(true)}>Upgrade Plan</button>
+                        </div>
                     </div>
                 )}
                 {showUpgradeUser && (
@@ -343,10 +361,15 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                     </span>
                                 </div>
                             </div>
-                            <div className="mt-5 flex flex-col">
-                                <button className="self-end" onClick={() => setShowBillingSetupModal(true)}>
-                                    Upgrade Plan
-                                </button>
+                            <div className="flex justify-end mt-6 space-x-2">
+                                {stripePortalUrl && (
+                                    <a href={stripePortalUrl}>
+                                        <button className="secondary" disabled={!stripePortalUrl}>
+                                            View Past Invoices ↗
+                                        </button>
+                                    </a>
+                                )}
+                                <button onClick={() => setShowBillingSetupModal(true)}>Upgrade Plan</button>
                             </div>
                         </div>
                     </div>
