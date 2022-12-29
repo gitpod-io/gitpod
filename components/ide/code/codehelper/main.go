@@ -100,7 +100,17 @@ func main() {
 	args = append(args, "--do-not-sync")
 	args = append(args, "--start-server")
 	log.WithField("cost", time.Now().Local().Sub(startTime).Milliseconds()).Info("starting server")
-	if err := syscall.Exec(Code, append([]string{"gitpod-code"}, args...), os.Environ()); err != nil {
+
+	// Excluding NODE_OPTIONS as it can break VS Code
+	env := os.Environ()
+	safeEnv := []string{}
+	for _, v := range env {
+		if !strings.HasPrefix(v, "NODE_OPTIONS=") {
+			safeEnv = append(safeEnv, v)
+		}
+	}
+
+	if err := syscall.Exec(Code, append([]string{"gitpod-code"}, args...), safeEnv); err != nil {
 		log.WithError(err).Error("install ext and start code server failed")
 	}
 }
