@@ -36,6 +36,14 @@ export interface IDEOptions {
     clients?: { [id: string]: IDEClient };
 }
 
+export namespace IDEOptions {
+    export function asArray(options: IDEOptions): (IDEOption & { id: string })[] {
+        return Object.keys(options.options)
+            .map((id) => ({ ...options.options[id], id }))
+            .sort((a, b) => (a.orderKey || "").localeCompare(b.orderKey || ""));
+    }
+}
+
 export interface IDEClient {
     /**
      * The default desktop IDE when the user has not specified one.
