@@ -118,7 +118,6 @@
     input[type="checkbox"] {
         @apply disabled:opacity-50;
     }
-
     progress {
         @apply h-2 rounded;
     }

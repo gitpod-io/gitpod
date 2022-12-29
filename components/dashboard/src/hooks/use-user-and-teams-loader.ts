@@ -31,6 +31,7 @@ export const useUserAndTeamsLoader = () => {
             try {
                 loggedInUser = await getGitpodService().server.getLoggedInUser();
                 setUser(loggedInUser);
+                refreshSearchData();
 
                 // TODO: atm this feature-flag won't have been set yet, as it's dependant on user/teams
                 // so it will always be false when this runs
@@ -78,13 +79,6 @@ export const useUserAndTeamsLoader = () => {
         // Refresh billing mode (side effect on other components per UserContext!)
         refreshUserBillingMode();
     }, [teams, refreshUserBillingMode]);
-
-    // TODO: Can this check happen when we load the user rather than a separate effect?
-    useEffect(() => {
-        if (user) {
-            refreshSearchData("", user);
-        }
-    }, [user]);
 
     return { user, teams, loading, isSetupRequired };
 };
