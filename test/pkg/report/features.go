@@ -18,4 +18,5 @@ const (
 	FeatureGit              Feature = "git"
 	FeatureK3s              Feature = "k3s"
 	FeatureImageBuild       Feature = "image build"
+	FeatureBackup           Feature = "backup"
 )

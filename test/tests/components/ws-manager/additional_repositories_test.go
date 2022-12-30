@@ -17,6 +17,7 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
+	"github.com/gitpod-io/gitpod/test/pkg/report"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
@@ -40,6 +41,7 @@ func TestAdditionalRepositories(t *testing.T) {
 					CloneTaget: "aledbf/test-additional-repositories-with-branches",
 				},
 			}
+			report.SetupReport(t, report.FeatureMultiRepos, "all repositories are available in the workspace")
 
 			for _, test := range tests {
 				t.Run(test.Name, func(t *testing.T) {

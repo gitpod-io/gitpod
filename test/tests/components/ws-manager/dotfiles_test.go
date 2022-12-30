@@ -21,6 +21,7 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
+	"github.com/gitpod-io/gitpod/test/pkg/report"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
@@ -30,6 +31,7 @@ func TestDotfiles(t *testing.T) {
 	integration.SkipWithoutUserToken(t, userToken)
 
 	f := features.New("dotfiles").WithLabel("component", "ws-manager").Assess("ensure dotfiles are loaded", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		report.SetupReport(t, report.FeatureDotfiles, "dotfiles have been installed")
 		t.Parallel()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)

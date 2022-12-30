@@ -19,6 +19,7 @@ import (
 	daemon "github.com/gitpod-io/gitpod/test/pkg/agent/daemon/api"
 	wsapi "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
+	"github.com/gitpod-io/gitpod/test/pkg/report"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -33,6 +34,7 @@ type DaemonConfig struct {
 
 func TestCpuBurst(t *testing.T) {
 	f := features.New("cpulimiting").WithLabel("component", "ws-manager").Assess("check cpu limiting", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		report.SetupReport(t, report.FeatureResourceLimit, "generic cpu limiting is applied")
 		t.Parallel()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 8*time.Minute)

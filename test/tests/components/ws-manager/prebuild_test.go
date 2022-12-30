@@ -24,6 +24,7 @@ import (
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
+	"github.com/gitpod-io/gitpod/test/pkg/report"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 
 	volumesnapshotv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
@@ -64,6 +65,8 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 					},
 				*/
 			}
+			report.SetupReport(t, report.FeaturePrebuild, "can execute prebuild successfully")
+
 			for _, test := range tests {
 				t.Run(test.Name, func(t *testing.T) {
 					t.Parallel()
@@ -138,6 +141,7 @@ func TestPrebuildWorkspaceTaskFail(t *testing.T) {
 	f := features.New("prebuild").
 		WithLabel("component", "server").
 		Assess("it should create a prebuild and fail after running the defined tasks", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			report.SetupReport(t, report.FeaturePrebuild, "errors should be reported")
 			t.Parallel()
 
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -247,6 +251,7 @@ func TestOpenWorkspaceFromPrebuildSerialOnly(t *testing.T) {
 					},
 				*/
 			}
+			report.SetupReport(t, report.FeaturePrebuild, "workspace can be created from prebuild")
 
 			for _, test := range tests {
 				t.Run(test.Name, func(t *testing.T) {
@@ -538,6 +543,7 @@ func TestOpenWorkspaceFromOutdatedPrebuild(t *testing.T) {
 					WorkspaceRoot:           "/workspace/test-incremental-workspace",
 				},
 			}
+			report.SetupReport(t, report.FeaturePrebuild, "workspace can be created from outdated prebuild")
 
 			for _, test := range tests {
 				t.Run(test.Name, func(t *testing.T) {

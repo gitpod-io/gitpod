@@ -18,6 +18,7 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
+	"github.com/gitpod-io/gitpod/test/pkg/report"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
@@ -56,6 +57,8 @@ func TestBackup(t *testing.T) {
 					},
 				*/
 			}
+			report.SetupReport(t, report.FeatureBackup, "workspace can be backed up using object storage")
+
 			for _, test := range tests {
 				t.Run(test.Name, func(t *testing.T) {
 					t.Parallel()
