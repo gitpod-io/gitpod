@@ -83,7 +83,3 @@ vscode:
     - dbaeumer.vscode-eslint
     - esbenp.prettier-vscode
     - akosyakov.gitpod-monitor
-jetbrains:
-  goland:
-    prebuilds:
-      version: stable
