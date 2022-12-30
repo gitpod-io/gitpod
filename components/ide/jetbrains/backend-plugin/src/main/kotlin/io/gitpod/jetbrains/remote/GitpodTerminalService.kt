@@ -4,11 +4,15 @@
 
 package io.gitpod.jetbrains.remote
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.rd.defineNestedLifetime
+import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.util.application
 import com.jediterm.terminal.ui.TerminalWidget
 import com.jediterm.terminal.ui.TerminalWidgetListener
+import com.jetbrains.rd.framework.util.launch
 import com.jetbrains.rdserver.terminal.BackendTerminalManager
 import io.gitpod.supervisor.api.Status
 import io.gitpod.supervisor.api.StatusServiceGrpc
@@ -17,18 +21,18 @@ import io.gitpod.supervisor.api.TerminalServiceGrpc
 import io.grpc.StatusRuntimeException
 import io.grpc.stub.ClientCallStreamObserver
 import io.grpc.stub.ClientResponseObserver
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.guava.await
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.TerminalView
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
-import java.util.concurrent.TimeUnit
 
-class GitpodTerminalService(project: Project) {
-    private companion object {
-        var hasStarted = false
-    }
-
+@Suppress("UnstableApiUsage")
+class GitpodTerminalService(project: Project): Disposable {
+    private val lifetime = defineNestedLifetime()
     private val terminalView = TerminalView.getInstance(project)
     private val backendTerminalManager = BackendTerminalManager.getInstance(project)
     private val terminalServiceFutureStub = TerminalServiceGrpc.newFutureStub(GitpodManager.supervisorChannel)
@@ -39,12 +43,12 @@ class GitpodTerminalService(project: Project) {
         start()
     }
 
+    override fun dispose() = Unit
+
     private fun start() {
-        if (application.isHeadlessEnvironment || hasStarted) return
+        if (application.isHeadlessEnvironment) return
 
-        hasStarted = true
-
-        application.executeOnPooledThread {
+        lifetime.launch {
             val terminals = getSupervisorTerminalsList()
             val tasks = getSupervisorTasksList()
 
@@ -95,7 +99,7 @@ class GitpodTerminalService(project: Project) {
         }
     }
 
-    private tailrec fun getSupervisorTasksList(): List<Status.TaskStatus> {
+    private tailrec suspend fun getSupervisorTasksList(): List<Status.TaskStatus> {
         var tasksList: List<Status.TaskStatus>? = null
 
         try {
@@ -124,7 +128,7 @@ class GitpodTerminalService(project: Project) {
 
             statusServiceStub.tasksStatus(taskStatusRequest, taskStatusResponseObserver)
 
-            tasksList = completableFuture.get()
+            tasksList = completableFuture.await()
         } catch (throwable: Throwable) {
             if (throwable is InterruptedException) {
                 throw throwable
@@ -140,12 +144,12 @@ class GitpodTerminalService(project: Project) {
         return if (tasksList != null) {
             tasksList
         } else {
-            TimeUnit.SECONDS.sleep(1)
+            delay(1000)
             getSupervisorTasksList()
         }
     }
 
-    private tailrec fun getSupervisorTerminalsList(): List<TerminalOuterClass.Terminal> {
+    private tailrec suspend fun getSupervisorTerminalsList(): List<TerminalOuterClass.Terminal> {
         var terminalsList: List<TerminalOuterClass.Terminal>? = null
 
         try {
@@ -153,7 +157,7 @@ class GitpodTerminalService(project: Project) {
 
             val listTerminalsResponseFuture = terminalServiceFutureStub.list(listTerminalsRequest)
 
-            val listTerminalsResponse = listTerminalsResponseFuture.get()
+            val listTerminalsResponse = listTerminalsResponseFuture.await()
 
             terminalsList = listTerminalsResponse.terminalsList
         } catch (throwable: Throwable) {
@@ -171,7 +175,7 @@ class GitpodTerminalService(project: Project) {
         return if (terminalsList != null) {
             terminalsList
         } else {
-            TimeUnit.SECONDS.sleep(1)
+            delay(1000)
             getSupervisorTerminalsList()
         }
     }
@@ -182,6 +186,8 @@ class GitpodTerminalService(project: Project) {
                 "gp tasks attach ${supervisorTerminal.alias}"
         ) ?: return
 
+        closeTerminalWidgetWhenClientGetsClosed(shellTerminalWidget)
+
         exitTaskWhenTerminalWidgetGetsClosed(supervisorTerminal, shellTerminalWidget)
 
         listenForTaskTerminationAndTitleChanges(supervisorTerminal, shellTerminalWidget)
@@ -190,7 +196,7 @@ class GitpodTerminalService(project: Project) {
     private fun listenForTaskTerminationAndTitleChanges(
             supervisorTerminal: TerminalOuterClass.Terminal,
             shellTerminalWidget: ShellTerminalWidget
-    ) = application.executeOnPooledThread {
+    ) = lifetime.launch {
         var hasOpenSessions = true
 
         while (hasOpenSessions) {
@@ -241,7 +247,7 @@ class GitpodTerminalService(project: Project) {
             terminalServiceStub.listen(listenTerminalRequest, listenTerminalResponseObserver)
 
             try {
-                completableFuture.get()
+                completableFuture.await()
             } catch (throwable: Throwable) {
                 if (
                         throwable is StatusRuntimeException ||
@@ -259,7 +265,7 @@ class GitpodTerminalService(project: Project) {
                                 "'${supervisorTerminal.title}' terminal. Trying again in one second.", throwable)
             }
 
-            TimeUnit.SECONDS.sleep(1)
+            delay(1000)
         }
     }
 
@@ -270,12 +276,28 @@ class GitpodTerminalService(project: Project) {
         @Suppress("ObjectLiteralToLambda")
         shellTerminalWidget.addListener(object : TerminalWidgetListener {
             override fun allSessionsClosed(widget: TerminalWidget) {
-                terminalServiceFutureStub.shutdown(
-                        TerminalOuterClass.ShutdownTerminalRequest.newBuilder()
-                                .setAlias(supervisorTerminal.alias)
-                                .build()
-                )
+                lifetime.launch {
+                    delay(5000)
+                    try {
+                        terminalServiceFutureStub.shutdown(
+                                TerminalOuterClass.ShutdownTerminalRequest.newBuilder()
+                                        .setAlias(supervisorTerminal.alias)
+                                        .build()
+                        )
+                    } catch (throwable: Throwable) {
+                        thisLogger().error("gitpod: Got an error while shutting down " +
+                                        "'${supervisorTerminal.title}' terminal.", throwable)
+                    }
+                }
             }
         })
+    }
+
+    private fun closeTerminalWidgetWhenClientGetsClosed(
+            shellTerminalWidget: ShellTerminalWidget
+    ) {
+        lifetime.onTerminationOrNow {
+            shellTerminalWidget.close()
+        }
     }
 }
