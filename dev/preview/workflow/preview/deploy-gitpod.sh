@@ -194,7 +194,7 @@ function installFluentBit {
     helm3 \
       --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
       --kube-context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-      upgrade --install fluent-bit fluent/fluent-bit -n "${PREVIEW_NAMESPACE}" -f "$ROOT/.werft/vm/charts/fluentbit/values.yaml"
+      upgrade --install fluent-bit fluent/fluent-bit --version 0.21.6 -n "${PREVIEW_NAMESPACE}" -f "$ROOT/.werft/vm/charts/fluentbit/values.yaml"
 }
 
 # ====================================
