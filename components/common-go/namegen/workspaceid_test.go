@@ -28,6 +28,8 @@ func TestGenerateWorkspaceID(t *testing.T) {
 func TestValidateWorkspaceID(t *testing.T) {
 	valid := []string{
 		"gitpodio-gitpod-65k8jqq6up4",
+		"testeraccountw-demoskv1-q2pnb88pvuo",
+		"testeraccountwit-empty-g6024jgir2j",
 	}
 	for _, v := range valid {
 		require.NoError(t, namegen.ValidateWorkspaceID(v))
