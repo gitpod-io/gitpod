@@ -1780,12 +1780,12 @@
     "@types/yargs" "^16.0.0"
     chalk "^4.0.0"
 
-"@jmondi/oauth2-server@^2.2.2":
-  version "2.2.2"
-  resolved "https://registry.npmjs.org/@jmondi/oauth2-server/-/oauth2-server-2.2.2.tgz"
-  integrity sha512-U9038EvDQJwc6SUxGjNfP1nhcyIzUuo4MLDBjWEp4ieuoyMYFBlMtmUbXcIEvvlwWQSXneUm7+TcTBcNHKrE8w==
+"@jmondi/oauth2-server@^2.6.1":
+  version "2.6.1"
+  resolved "https://registry.yarnpkg.com/@jmondi/oauth2-server/-/oauth2-server-2.6.1.tgz#5e96883e784538d3f4f85f06477ea0da02435b27"
+  integrity sha512-y05Lr8GymbO5GNfuiPcJGjChbtWshXuhL72GAoBSKKCygw9vCZ7N6UQi0kGKDh+b1GSCX9I8MG0eVusupPXVLA==
   dependencies:
-    jsonwebtoken "^8.5.1"
+    jsonwebtoken "^9.0.0"
     ms "^2.1.3"
     uri-js "^4.4.1"
 
@@ -10773,34 +10773,6 @@ jest-runtime@^26.6.0, jest-runtime@^26.6.3:
   version "26.6.3"
   resolved "https://registry.npmjs.org/jest-runtime/-/jest-runtime-26.6.3.tgz"
   integrity sha512-lrzyR3N8sacTAMeonbqpnSka1dHNux2uk0qqDXVkMv2c/A3wYnvQ4EXuI013Y6+gSKSCxdaczvf4HF0mVXHRdw==
-  dependencies:
-    "@jest/console" "^26.6.2"
-    "@jest/environment" "^26.6.2"
-    "@jest/fake-timers" "^26.6.2"
-    "@jest/globals" "^26.6.2"
-    "@jest/source-map" "^26.6.2"
-    "@jest/test-result" "^26.6.2"
-    "@jest/transform" "^26.6.2"
-    "@jest/types" "^26.6.2"
-    "@types/yargs" "^15.0.0"
-    chalk "^4.0.0"
-    cjs-module-lexer "^0.6.0"
-    collect-v8-coverage "^1.0.0"
-    exit "^0.1.2"
-    glob "^7.1.3"
-    graceful-fs "^4.2.4"
-    jest-config "^26.6.3"
-    jest-haste-map "^26.6.2"
-    jest-message-util "^26.6.2"
-    jest-mock "^26.6.2"
-    jest-regex-util "^26.0.0"
-    jest-resolve "^26.6.2"
-    jest-snapshot "^26.6.2"
-    jest-util "^26.6.2"
-    jest-validate "^26.6.2"
-    slash "^3.0.0"
-    strip-bom "^4.0.0"
-    yargs "^15.4.1"
 
 jest-serializer@^26.6.2:
   version "26.6.2"
@@ -11147,6 +11119,16 @@ jsonwebtoken@^8.5.0, jsonwebtoken@^8.5.1:
     lodash.once "^4.0.0"
     ms "^2.1.1"
     semver "^5.6.0"
+
+jsonwebtoken@^9.0.0:
+  version "9.0.0"
+  resolved "https://registry.yarnpkg.com/jsonwebtoken/-/jsonwebtoken-9.0.0.tgz#d0faf9ba1cc3a56255fe49c0961a67e520c1926d"
+  integrity sha512-tuGfYXxkQGDPnLJ7SibiQgVgeDgfbPq2k2ICcbgqW8WxWLBAxKQM/ZCu/IT8SOSwmaYl4dpTFCW5xZv7YbbWUw==
+  dependencies:
+    jws "^3.2.2"
+    lodash "^4.17.21"
+    ms "^2.1.1"
+    semver "^7.3.8"
 
 jsprim@^2.0.2:
   version "2.0.2"
@@ -15940,6 +15922,13 @@ semver@^7.2.1, semver@^7.3.2, semver@^7.3.4, semver@^7.3.5:
   version "7.3.5"
   resolved "https://registry.npmjs.org/semver/-/semver-7.3.5.tgz"
   integrity sha512-PoeGJYh8HK4BTO/a9Tf6ZG3veo/A7ZVsYrSA6J8ny9nb3B1VrpkuN+z9OE5wfE5p6H4LchYZsegiQgbJD94ZFQ==
+  dependencies:
+    lru-cache "^6.0.0"
+
+semver@^7.3.8:
+  version "7.3.8"
+  resolved "https://registry.yarnpkg.com/semver/-/semver-7.3.8.tgz#07a78feafb3f7b32347d725e33de7e2a2df67798"
+  integrity sha512-NB1ctGL5rlHrPJtFDVIVzTyQylMLu9N9VICA6HSFJo8MCGVTMW6gfpicwKmmK/dAjTOrqu5l63JJOpDSrAis3A==
   dependencies:
     lru-cache "^6.0.0"
 

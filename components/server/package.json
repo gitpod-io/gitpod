@@ -2,7 +2,7 @@
   "private": true,
   "name": "@gitpod/server",
   "version": "0.0.0",
-  "license": "UNLICENSED",
+  "license": "AGPL-3.0",
   "scripts": {
     "start": "node ./dist/src/main.js",
     "start-inspect": "node --inspect=9229 ./dist/src/main.js",
@@ -41,7 +41,7 @@
     "@gitpod/ws-manager": "0.1.5",
     "@google-cloud/storage": "^5.6.0",
     "@improbable-eng/grpc-web-node-http-transport": "^0.14.0",
-    "@jmondi/oauth2-server": "^2.2.2",
+    "@jmondi/oauth2-server": "^2.6.1",
     "@octokit/rest": "18.6.1",
     "@probot/get-private-key": "^1.1.1",
     "@types/jaeger-client": "^3.18.3",
