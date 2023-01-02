@@ -30,6 +30,10 @@ func TestValidateWorkspaceID(t *testing.T) {
 		"gitpodio-gitpod-65k8jqq6up4",
 		"testeraccountw-demoskv1-q2pnb88pvuo",
 		"testeraccountwit-empty-g6024jgir2j",
+		"a-b-g6024jgir2j",
+		"a-bcdefghijklmnopqrstux-g6024jgir2j",
+		"abcdefghijklmnopqrstu-x-g6024jgir2j",
+		"abcdefghijklmnopqrs24-x-g6024jgir2j",
 	}
 	for _, v := range valid {
 		require.NoError(t, namegen.ValidateWorkspaceID(v))
