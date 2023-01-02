@@ -17,11 +17,11 @@ import (
 // gitpod-protocol/src/util/generate-workspace-id.ts is authoritative over the generation
 
 /*
-	 Regex Pattern Description:
-											Repo. Owner  	Repo. Name  	Random
-											2-16 chars   	2-11 chars  	11 chars
+  - Regex Pattern Description:
+    Repo. Owner & Repo. Name  	Random
+    3-23 chars  				11 chars
 */
-var WorkspaceIDPattern = regexp.MustCompile(`^[a-z]{2,16}-[a-z0-9]{2,11}-[a-z0-9]{11}$`)
+var WorkspaceIDPattern = regexp.MustCompile(`^[a-z0-9-]{3,23}-[a-z0-9]{11}$`)
 
 func GenerateWorkspaceID() (string, error) {
 	s1, err := chooseRandomly(colors, 1)
