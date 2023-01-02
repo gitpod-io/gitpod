@@ -110,7 +110,7 @@ type Configuration struct {
 	EventTraceLog string `json:"eventTraceLog,omitempty"`
 	// ReconnectionInterval configures the time we wait until we reconnect to the various other services
 	ReconnectionInterval util.Duration `json:"reconnectionInterval"`
-	// MaintenanceMode prevents to start workspace, stop workspace, and take snapshot
+	// MaintenanceMode prevents start workspace, stop workspace, and take snapshot operations
 	MaintenanceMode bool `json:"maintenanceMode,omitempty"`
 	// WorkspaceDaemon configures our connection to the workspace sync daemons runnin on the nodes
 	WorkspaceDaemon WorkspaceDaemonConfiguration `json:"wsdaemon"`

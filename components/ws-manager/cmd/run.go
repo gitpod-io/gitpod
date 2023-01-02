@@ -124,7 +124,7 @@ var runCmd = &cobra.Command{
 			mgmt.Config = cfg.Manager
 		})
 		if err != nil {
-			log.WithError(err).Fatal("cannot start watch of configuration file")
+			log.WithError(err).WithField("cfgFile", cfgFile).Fatal("cannot start watch of configuration file")
 		}
 
 		if cfg.Prometheus.Addr != "" {
