@@ -5,9 +5,11 @@
 package rollout
 
 import (
+	"context"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/workspace-rollout-job/pkg/prometheus"
 	"github.com/gitpod-io/gitpod/workspace-rollout-job/pkg/wsbridge"
 )
 
@@ -16,6 +18,7 @@ type RollOutJob struct {
 	newCluster    string
 	prometheusURL string
 	currentScore  int32
+	startTime     time.Time
 
 	ticker *time.Ticker
 	revert chan bool
@@ -30,6 +33,7 @@ func New(oldCluster, newCluster, prometheusURL string) *RollOutJob {
 		done:          make(chan bool),
 		revert:        make(chan bool),
 		currentScore:  0,
+		startTime:     time.Now(),
 		// Analyze and move forward every hour
 		ticker: time.NewTicker(1 * time.Second),
 	}
@@ -42,8 +46,13 @@ func (r *RollOutJob) Start() {
 		for {
 			// Check Every 10 seconds
 			time.Sleep(10 * time.Second)
-			// Metrics are not good {
-			if true {
+			// TODO: Interface and Mock this out so that we can test the logic in rollout
+			newRate, err := prometheus.RetrieveErrorRate(context.Background(), r.startTime, r.newCluster)
+			if err != nil {
+				log.Error("Failed to retrieve new cluster error count: ", err)
+			}
+			// Metrics are not good
+			if newRate > 0 {
 				close(r.revert)
 			}
 		}
