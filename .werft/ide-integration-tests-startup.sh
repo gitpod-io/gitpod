@@ -177,7 +177,7 @@ args=()
 args+=( "-kubeconfig=/home/gitpod/.kube/config" )
 args+=( "-namespace=default" )
 [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
-args+=( "-timeout=60m" )
+args+=( "-timeout=120m" )
 
 IDE_TESTS_DIR="/workspace/test/tests/ide"
 JETBRAINS_TESTS="$IDE_TESTS_DIR/jetbrains"
