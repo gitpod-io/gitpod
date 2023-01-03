@@ -1,6 +1,9 @@
 # Change Log
 
-## December 2022
+## January 2023
+- Fix: edge cases on opening workspaces to VS Code Desktop ([#15539](https://github.com/gitpod-io/gitpod/pull/15539)) - [@Siddhant-K-code](https://github.com/Siddhant-K-code)
+
+##  December 2022
 - Update JetBrains IDE images to most recent stable version. ([#15520](https://github.com/gitpod-io/gitpod/pull/15520)) - [@roboquat](https://github.com/roboquat)
 - No failures even if a large number of workspaces are launched at once ([#15475](https://github.com/gitpod-io/gitpod/pull/15475)) - [@utam0k](https://github.com/utam0k)
 - Update JetBrains IDE images to most recent stable version. ([#15509](https://github.com/gitpod-io/gitpod/pull/15509)) - [@roboquat](https://github.com/roboquat)
