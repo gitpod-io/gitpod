@@ -48,7 +48,6 @@ type metrics struct {
 	totalStartsCounterVec                     *prometheus.CounterVec
 	totalStartsFailureCounterVec              *prometheus.CounterVec
 	totalStopsCounterVec                      *prometheus.CounterVec
-	totalStopsFailureCounterVec               *prometheus.CounterVec
 	totalBackupCounterVec                     *prometheus.CounterVec
 	totalBackupFailureCounterVec              *prometheus.CounterVec
 	totalRestoreCounterVec                    *prometheus.CounterVec
@@ -122,12 +121,6 @@ func newMetrics(m *Manager) *metrics {
 			Name:      "workspace_stops_total",
 			Help:      "total number of workspaces stopped",
 		}, []string{"reason", "type", "class"}),
-		totalStopsFailureCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Namespace: metricsNamespace,
-			Subsystem: metricsWorkspaceSubsystem,
-			Name:      "workspace_stops_failure_total",
-			Help:      "total number of workspaces failed to stop",
-		}, []string{"type", "class"}),
 		totalBackupCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
@@ -229,7 +222,6 @@ func (m *metrics) Register(reg prometheus.Registerer) error {
 		m.totalStartsCounterVec,
 		m.totalStartsFailureCounterVec,
 		m.totalStopsCounterVec,
-		m.totalStopsFailureCounterVec,
 		m.totalBackupCounterVec,
 		m.totalBackupFailureCounterVec,
 		m.totalRestoreCounterVec,
@@ -328,14 +320,6 @@ func (m *metrics) OnChange(status *api.WorkspaceStatus) {
 		}
 		counter.Inc()
 
-		if reason == "failed" {
-			counter, err = m.totalStopsFailureCounterVec.GetMetricWithLabelValues(tpe, status.Spec.Class)
-			if err != nil {
-				log.WithError(err).WithField("type", tpe).Warn("cannot get counter for workspace stop failure metric")
-				return
-			}
-			counter.Inc()
-		}
 		removeFromState = true
 	}
 }
