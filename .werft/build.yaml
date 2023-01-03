@@ -70,7 +70,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-hartmann-don-t-store-leeway-15060.0
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.3.4
     workingDir: /workspace
     imagePullPolicy: IfNotPresent
     resources:
