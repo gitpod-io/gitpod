@@ -7,6 +7,7 @@ package apiv1
 import (
 	"context"
 	"fmt"
+
 	connect "github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/namegen"
@@ -186,6 +187,26 @@ func (s *WorkspaceService) StopWorkspace(ctx context.Context, req *connect.Reque
 	}
 
 	return connect.NewResponse(&v1.StopWorkspaceResponse{}), nil
+}
+
+func (s *WorkspaceService) DeleteWorkspace(ctx context.Context, req *connect.Request[v1.DeleteWorkspaceRequest]) (*connect.Response[v1.DeleteWorkspaceResponse], error) {
+	workspaceID, err := validateWorkspaceID(req.Msg.GetWorkspaceId())
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+
+	err = conn.DeleteWorkspace(ctx, workspaceID)
+	if err != nil {
+		log.WithField("workspace_id", workspaceID).WithError(err).Error("Failed to delete workspace.")
+		return nil, proxy.ConvertError(err)
+	}
+
+	return connect.NewResponse(&v1.DeleteWorkspaceResponse{}), nil
 }
 
 func getLimitFromPagination(pagination *v1.Pagination) (int, error) {
