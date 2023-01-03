@@ -22,12 +22,12 @@ import (
 func Start(logger *logrus.Entry, version string, cfg *config.ServiceConfig) error {
 	logger.WithField("config", cfg).Info("Starting IAM server.")
 
-	_, err := db.Connect(db.ConnectionParamsFromEnv())
+	dbConn, err := db.Connect(db.ConnectionParamsFromEnv())
 	if err != nil {
 		return fmt.Errorf("failed to establish database connection: %w", err)
 	}
 
-	_, err = db.NewCipherSetFromKeysInFile(filepath.Join(cfg.DatabaseConfigPath, "encryptionKeys"))
+	cipherSet, err := db.NewCipherSetFromKeysInFile(filepath.Join(cfg.DatabaseConfigPath, "encryptionKeys"))
 	if err != nil {
 		return fmt.Errorf("failed to read cipherset from file: %w", err)
 	}
@@ -45,7 +45,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.ServiceConfig) erro
 	if err != nil {
 		return fmt.Errorf("failed to construct oidc service: %w", err)
 	}
-	oidcClientConfigService := apiv1.NewOIDCClientConfigService()
+	oidcClientConfigService := apiv1.NewOIDCClientConfigService(dbConn, cipherSet)
 
 	err = register(srv, &dependencies{
 		oidcClientConfigSvc: oidcClientConfigService,
