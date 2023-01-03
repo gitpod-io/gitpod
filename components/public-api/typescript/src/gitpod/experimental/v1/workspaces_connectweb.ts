@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
@@ -9,7 +9,7 @@
 /* eslint-disable */
 /* @ts-nocheck */
 
-import {CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, GetOwnerTokenRequest, GetOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspacesRequest, ListWorkspacesResponse, StopWorkspaceRequest, StopWorkspaceResponse, UpdatePortRequest, UpdatePortResponse} from "./workspaces_pb.js";
+import {CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetOwnerTokenRequest, GetOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspacesRequest, ListWorkspacesResponse, StopWorkspaceRequest, StopWorkspaceResponse, UpdatePortRequest, UpdatePortResponse} from "./workspaces_pb.js";
 import {MethodKind} from "@bufbuild/protobuf";
 
 /**
@@ -74,6 +74,19 @@ export const WorkspacesService = {
       name: "StopWorkspace",
       I: StopWorkspaceRequest,
       O: StopWorkspaceResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * DeleteWorkspace deletes a workspace.
+     * When the workspace is running, it will be stopped as well.
+     * Deleted workspaces cannot be started again.
+     *
+     * @generated from rpc gitpod.experimental.v1.WorkspacesService.DeleteWorkspace
+     */
+    deleteWorkspace: {
+      name: "DeleteWorkspace",
+      I: DeleteWorkspaceRequest,
+      O: DeleteWorkspaceResponse,
       kind: MethodKind.Unary,
     },
     /**

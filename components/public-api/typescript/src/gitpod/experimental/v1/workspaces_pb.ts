@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
@@ -567,6 +567,74 @@ export class StopWorkspaceResponse extends Message<StopWorkspaceResponse> {
 
   static equals(a: StopWorkspaceResponse | PlainMessage<StopWorkspaceResponse> | undefined, b: StopWorkspaceResponse | PlainMessage<StopWorkspaceResponse> | undefined): boolean {
     return proto3.util.equals(StopWorkspaceResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.DeleteWorkspaceRequest
+ */
+export class DeleteWorkspaceRequest extends Message<DeleteWorkspaceRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  constructor(data?: PartialMessage<DeleteWorkspaceRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.DeleteWorkspaceRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteWorkspaceRequest {
+    return new DeleteWorkspaceRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeleteWorkspaceRequest {
+    return new DeleteWorkspaceRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeleteWorkspaceRequest {
+    return new DeleteWorkspaceRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: DeleteWorkspaceRequest | PlainMessage<DeleteWorkspaceRequest> | undefined, b: DeleteWorkspaceRequest | PlainMessage<DeleteWorkspaceRequest> | undefined): boolean {
+    return proto3.util.equals(DeleteWorkspaceRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.DeleteWorkspaceResponse
+ */
+export class DeleteWorkspaceResponse extends Message<DeleteWorkspaceResponse> {
+  constructor(data?: PartialMessage<DeleteWorkspaceResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.DeleteWorkspaceResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteWorkspaceResponse {
+    return new DeleteWorkspaceResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeleteWorkspaceResponse {
+    return new DeleteWorkspaceResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeleteWorkspaceResponse {
+    return new DeleteWorkspaceResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: DeleteWorkspaceResponse | PlainMessage<DeleteWorkspaceResponse> | undefined, b: DeleteWorkspaceResponse | PlainMessage<DeleteWorkspaceResponse> | undefined): boolean {
+    return proto3.util.equals(DeleteWorkspaceResponse, a, b);
   }
 }
 

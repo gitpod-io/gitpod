@@ -28,6 +28,11 @@ service WorkspacesService {
     //   FAILED_PRECONDITION: if there's no running instance
     rpc StopWorkspace(StopWorkspaceRequest) returns (StopWorkspaceResponse) {}
 
+    // DeleteWorkspace deletes a workspace.
+    // When the workspace is running, it will be stopped as well.
+    // Deleted workspaces cannot be started again.
+    rpc DeleteWorkspace(DeleteWorkspaceRequest) returns (DeleteWorkspaceResponse) {}
+
     rpc UpdatePort(UpdatePortRequest) returns (UpdatePortResponse) {}
 }
 
@@ -85,6 +90,12 @@ message StopWorkspaceRequest {
 }
 
 message StopWorkspaceResponse {}
+
+message DeleteWorkspaceRequest {
+    string workspace_id = 1;
+}
+
+message DeleteWorkspaceResponse {}
 
 ////////////////////////////////
 // Shared messages come here
