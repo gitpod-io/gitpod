@@ -122,8 +122,6 @@ func (c *Config) dbStatus(ctx context.Context, password, port string) (Status, e
 	clog.Log.Logger.SetLevel(3)
 
 	queries := []string{
-		"SELECT TIMESTAMPDIFF(HOUR, creationTime, NOW()) as timediff FROM d_b_workspace_instance WHERE creationTime > DATE_SUB(NOW(), INTERVAL 48 HOUR) ORDER BY creationTime DESC LIMIT 1",
-		"SELECT TIMESTAMPDIFF(HOUR, creationTime, NOW()) as timediff FROM d_b_workspace_instance WHERE creationTime > DATE_SUB(NOW(), INTERVAL 48 HOUR) ORDER BY creationTime DESC LIMIT 1",
 		"SELECT TIMESTAMPDIFF(HOUR, _lastModified, NOW()) as timediff FROM d_b_user WHERE _lastModified > DATE_SUB(NOW(), INTERVAL 48 HOUR) ORDER BY _lastModified DESC LIMIT 1",
 		"SELECT TIMESTAMPDIFF(HOUR, lastSeen, NOW()) as timediff FROM d_b_workspace_instance_user WHERE lastSeen > DATE_SUB(NOW(), INTERVAL 48 HOUR) ORDER BY lastSeen DESC LIMIT 1",
 	}

@@ -67,7 +67,7 @@ func newListStaleCmd(logger *logrus.Logger) *cobra.Command {
 }
 
 func (o *listWorkspaceOpts) listWorskpaceStatus(ctx context.Context) ([]preview.Status, error) {
-	branches, err := preview.GetRecentBranches(time.Now().AddDate(0, 0, -3))
+	branches, err := preview.GetRecentBranches(time.Now().AddDate(0, 0, -30))
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (o *listWorkspaceOpts) listWorskpaceStatus(ctx context.Context) ([]preview.
 		}
 
 		if _, ok := branchlessWorkspaces[ws]; ok && !strings.HasPrefix(ws, "platform-") {
-			status.Reason = "branch doesn't exist, or last commit older than 3 days"
+			status.Reason = "branch doesn't exist, or last commit older than 30 days"
 			statuses = append(statuses, status)
 			continue
 			// there's (should be) nothing in the default worskpace, and we ignore main
