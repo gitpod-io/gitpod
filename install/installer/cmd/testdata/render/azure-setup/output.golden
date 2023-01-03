@@ -7897,28 +7897,6 @@ spec:
       enableServiceLinks: false
       hostPID: true
       initContainers:
-      - args:
-        - "exec {BASH_XTRACEFD}>&1 # this causes 'set -x' to write to stdout insted
-          of stderr\nset -euExo pipefail\nsystemctl status kube-container-runtime-monitor.service
-          || true\nif [ \"$(systemctl is-active kube-container-runtime-monitor.service)\"
-          == \"active\" ]\nthen\n\techo \"kube-container-runtime-monitor.service is
-          active\"\n\tsystemctl stop kube-container-runtime-monitor.service\n\tsystemctl
-          disable kube-container-runtime-monitor.service\n\tsystemctl status kube-container-runtime-monitor.service
-          || true\nelse\n\techo \"kube-container-runtime-monitor.service is not active,
-          not doing anything\"\nfi\n"
-        command:
-        - /usr/bin/nsenter
-        - -t
-        - "1"
-        - -a
-        - /bin/bash
-        - -c
-        image: docker.io/library/ubuntu:20.04
-        name: disable-kube-health-monitor
-        resources: {}
-        securityContext:
-          privileged: true
-          procMount: Default
       - command:
         - /bin/sh
         - -c

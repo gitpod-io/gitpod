@@ -32,36 +32,6 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	initContainers := []corev1.Container{
 		{
-			Name:  "disable-kube-health-monitor",
-			Image: ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, common.DockerRegistryURL), "library/ubuntu", "20.04"),
-			Command: []string{
-				"/usr/bin/nsenter",
-				"-t",
-				"1",
-				"-a",
-				"/bin/bash",
-				"-c",
-			},
-			Args: []string{`exec {BASH_XTRACEFD}>&1 # this causes 'set -x' to write to stdout insted of stderr
-set -euExo pipefail
-systemctl status kube-container-runtime-monitor.service || true
-if [ "$(systemctl is-active kube-container-runtime-monitor.service)" == "active" ]
-then
-	echo "kube-container-runtime-monitor.service is active"
-	systemctl stop kube-container-runtime-monitor.service
-	systemctl disable kube-container-runtime-monitor.service
-	systemctl status kube-container-runtime-monitor.service || true
-else
-	echo "kube-container-runtime-monitor.service is not active, not doing anything"
-fi
-`},
-			SecurityContext: &corev1.SecurityContext{
-				Privileged: pointer.Bool(true),
-				ProcMount:  func() *corev1.ProcMountType { r := corev1.DefaultProcMount; return &r }(),
-			},
-			Env: common.ProxyEnv(&cfg),
-		},
-		{
 			Name:  "seccomp-profile-installer",
 			Image: ctx.ImageName(cfg.Repository, "seccomp-profile-installer", ctx.VersionManifest.Components.WSDaemon.UserNamespaces.SeccompProfileInstaller.Version),
 			Command: []string{
