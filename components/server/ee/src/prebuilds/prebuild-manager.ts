@@ -131,7 +131,7 @@ export class PrebuildManager {
             if (!project) {
                 throw new ResponseError(
                     ErrorCodes.PROJECT_REQUIRED,
-                    `Running prebuilds without a project is no longer supported. Please add '${cloneURL}' as a project in a Gitpod team.`,
+                    `Running prebuilds without a project is no longer supported. Please add '${cloneURL}' as a project in a team.`,
                 );
             }
 
