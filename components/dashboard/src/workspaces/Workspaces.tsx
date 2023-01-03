@@ -67,7 +67,9 @@ export default function () {
                 visible={!!deleteModalVisible}
                 onClose={() => setDeleteModalVisible(false)}
                 onConfirm={() => {
-                    inactiveWorkspaces.forEach((ws) => workspaceModel?.deleteWorkspace(ws.workspace.id));
+                    inactiveWorkspaces.forEach((ws) =>
+                        workspaceModel?.deleteWorkspace(ws.workspace.id, usePublicApiWorkspacesService),
+                    );
                     setDeleteModalVisible(false);
                 }}
             ></ConfirmationModal>
