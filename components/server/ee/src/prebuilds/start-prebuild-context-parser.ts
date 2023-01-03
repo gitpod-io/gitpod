@@ -23,7 +23,7 @@ export class StartPrebuildContextParser implements IPrefixContextParser {
     public async handle(user: User, prefix: string, context: WorkspaceContext): Promise<WorkspaceContext> {
         throw new ResponseError(
             ErrorCodes.PROJECT_REQUIRED,
-            `Running prebuilds without a project is no longer supported. Please add your repository as a project in a Gitpod team.`,
+            `Running prebuilds without a project is no longer supported. Please add your repository as a project in a team.`,
         );
     }
 }
