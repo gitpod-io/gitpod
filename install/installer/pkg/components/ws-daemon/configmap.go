@@ -149,6 +149,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			IOLimit:   ioLimitConfig,
 			ProcLimit: procLimit,
 			NetLimit:  networkLimitConfig,
+			OOMScores: oomScoreAdjConfig,
 			Hosts: hosts.Config{
 				Enabled:       true,
 				NodeHostsFile: "/mnt/hosts",
