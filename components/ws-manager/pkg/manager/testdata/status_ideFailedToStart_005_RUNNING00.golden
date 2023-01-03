@@ -7,6 +7,9 @@
             "meta_id": "rose-donkey-wfapr095",
             "started_at": {
                 "seconds": 1629308528
+            },
+            "annotations": {
+                "gitpod/never-ready": "true"
             }
         },
         "spec": {

@@ -241,25 +241,6 @@ func (m *metrics) Register(reg prometheus.Registerer) error {
 	return nil
 }
 
-func (m *metrics) OnWorkspaceStarted(tpe api.WorkspaceType, class string, success bool) {
-	nme := api.WorkspaceType_name[int32(tpe)]
-	counter, err := m.totalStartsCounterVec.GetMetricWithLabelValues(nme, class)
-	if err != nil {
-		log.WithError(err).WithField("type", tpe).Warn("cannot get counter for workspace start metric")
-		return
-	}
-	counter.Inc()
-
-	if !success {
-		counter, err = m.totalStartsFailureCounterVec.GetMetricWithLabelValues(nme, class)
-		if err != nil {
-			log.WithError(err).WithField("type", tpe).Warn("cannot get counter for workspace start failure metric")
-			return
-		}
-		counter.Inc()
-	}
-}
-
 func (m *metrics) OnChange(status *api.WorkspaceStatus) {
 	var removeFromState bool
 	tpe := api.WorkspaceType_name[int32(status.Spec.Type)]
@@ -300,6 +281,8 @@ func (m *metrics) OnChange(status *api.WorkspaceStatus) {
 			return
 		}
 
+		removeFromState = true
+
 		var reason string
 		if strings.Contains(status.Message, string(activityClosed)) {
 			reason = "tab-closed"
@@ -313,14 +296,27 @@ func (m *metrics) OnChange(status *api.WorkspaceStatus) {
 			reason = "regular-stop"
 		}
 
-		counter, err := m.totalStopsCounterVec.GetMetricWithLabelValues(reason, tpe, status.Spec.Class)
-		if err != nil {
-			log.WithError(err).WithField("reason", reason).Warn("cannot get counter for workspace stops metric")
-			return
+		// The workspace never ready annotation exists, which means the workspace starts failing.
+		_, isNeverReady := status.Metadata.Annotations[workspaceNeverReadyAnnotation]
+		if isNeverReady {
+			startC, err := m.totalStartsFailureCounterVec.GetMetricWithLabelValues(tpe, status.Spec.Class)
+			if err != nil {
+				log.WithError(err).WithField("type", tpe).Warn("cannot get counter for workspace start failure metric")
+				return
+			}
+			startC.Inc()
 		}
-		counter.Inc()
 
-		removeFromState = true
+		if isNeverReady && reason == "failed" {
+			// we don't increase stop workspace failure metric if the workspace pod is failed and never ready.
+		} else {
+			stopC, err := m.totalStopsCounterVec.GetMetricWithLabelValues(reason, tpe, status.Spec.Class)
+			if err != nil {
+				log.WithError(err).WithField("reason", reason).Warn("cannot get counter for workspace stops metric")
+				return
+			}
+			stopC.Inc()
+		}
 	}
 }
 

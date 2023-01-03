@@ -7,6 +7,9 @@
             "meta_id": "ab451d8b-7a3a-42ec-b173-20a0e49773d4",
             "started_at": {
                 "seconds": 1581948130
+            },
+            "annotations": {
+                "gitpod/never-ready": "true"
             }
         },
         "spec": {

@@ -7,6 +7,9 @@
             "meta_id": "sapphire-alligator-jakcgz44",
             "started_at": {
                 "seconds": 1627410546
+            },
+            "annotations": {
+                "gitpod/never-ready": "true"
             }
         },
         "spec": {

@@ -7,6 +7,9 @@
             "meta_id": "purple-raven-cu9cj532",
             "started_at": {
                 "seconds": 1629350059
+            },
+            "annotations": {
+                "gitpod/never-ready": "true"
             }
         },
         "spec": {

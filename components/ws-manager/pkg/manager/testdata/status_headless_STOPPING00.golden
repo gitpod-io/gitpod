@@ -10,6 +10,7 @@
             },
             "annotations": {
                 "baseref": "eu.gcr.io/gitpod-core-dev/registry/base-images:d04c64d5d108632a1768e4af9c3a8a3e6a87c96d2566fb1b0d1aec2fd630e8bd",
+                "gitpod/never-ready": "true",
                 "ref": "eu.gcr.io/gitpod-core-dev/registry/workspace-images:a277dab62e839192eb320da283d4e8488a2b2f46fceb4677a7d571431e239aa5"
             }
         },

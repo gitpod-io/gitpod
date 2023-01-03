@@ -312,7 +312,8 @@ func getWorkspaceMetadata(pod *corev1.Pod) *api.WorkspaceMetadata {
 	started := timestamppb.New(pod.CreationTimestamp.Time)
 	annotations := make(map[string]string)
 	for k, v := range pod.Annotations {
-		if !strings.HasPrefix(k, workspaceAnnotationPrefix) {
+		if !strings.HasPrefix(k, workspaceAnnotationPrefix) &&
+			!strings.HasPrefix(k, workspaceNeverReadyAnnotation) {
 			continue
 		}
 		annotations[strings.TrimPrefix(k, workspaceAnnotationPrefix)] = v

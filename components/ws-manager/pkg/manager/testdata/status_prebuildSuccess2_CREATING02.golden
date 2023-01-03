@@ -7,6 +7,9 @@
             "meta_id": "green-wombat-62dzneud",
             "started_at": {
                 "seconds": 1622206099
+            },
+            "annotations": {
+                "gitpod/never-ready": "true"
             }
         },
         "spec": {

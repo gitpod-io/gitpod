@@ -7,6 +7,9 @@
             "meta_id": "gitpodio-templategolang-cdhvbek9fyg",
             "started_at": {
                 "seconds": 1653358271
+            },
+            "annotations": {
+                "gitpod/never-ready": "true"
             }
         },
         "spec": {

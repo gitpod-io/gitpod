@@ -7,6 +7,9 @@
             "meta_id": "aqua-chimpanzee-35q6f08k",
             "started_at": {
                 "seconds": 1629374870
+            },
+            "annotations": {
+                "gitpod/never-ready": "true"
             }
         },
         "spec": {
