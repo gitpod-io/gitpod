@@ -235,8 +235,8 @@ func removeLicense(path string, fmode os.FileMode, tmpl *template.Template, data
 
 	lic = bytes.TrimSpace(lic)
 
-	b = bytes.ReplaceAll(b, []byte("Copyright (c) 2021 Gitpod GmbH."), []byte("Copyright (c) 2022 Gitpod GmbH."))
-	b = bytes.ReplaceAll(b, []byte("Copyright (c) 2020 Gitpod GmbH."), []byte("Copyright (c) 2022 Gitpod GmbH."))
+	b = bytes.ReplaceAll(b, []byte("Copyright (c) 2021 Gitpod GmbH."), []byte("Copyright (c) 2023 Gitpod GmbH."))
+	b = bytes.ReplaceAll(b, []byte("Copyright (c) 2020 Gitpod GmbH."), []byte("Copyright (c) 2023 Gitpod GmbH."))
 	b = bytes.ReplaceAll(b, bytes.TrimSpace(lic), nil)
 	if len(b) >= olen {
 		fmt.Println(string(lic))
