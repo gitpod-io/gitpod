@@ -8,9 +8,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"time"
 )
 
 type OIDCClientConfig struct {
@@ -29,7 +30,22 @@ func (c *OIDCClientConfig) TableName() string {
 	return "d_b_oidc_client_config"
 }
 
+// It feels wrong to have to define re-define all of these fields.
+// However, I could not find a Go library which would include json annotations on the structs to guarantee the fields
+// will remain consistent over time (and resilient to rename). If we find one, we can change this.
 type OIDCSpec struct {
+	// ClientID is the application's ID.
+	ClientID string `json:"clientId"`
+
+	// ClientSecret is the application's secret.
+	ClientSecret string `json:"clientSecret"`
+
+	// RedirectURL is the URL to redirect users going through
+	// the OAuth flow, after the resource owner's URLs.
+	RedirectURL string `json:"redirectUrl"`
+
+	// Scope specifies optional requested permissions.
+	Scopes []string `json:"scopes"`
 }
 
 func CreateOIDCCLientConfig(ctx context.Context, conn *gorm.DB, cfg OIDCClientConfig) (OIDCClientConfig, error) {

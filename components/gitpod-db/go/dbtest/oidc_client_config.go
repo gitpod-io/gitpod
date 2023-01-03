@@ -6,12 +6,13 @@ package dbtest
 
 import (
 	"context"
+	"testing"
+	"time"
+
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
-	"testing"
-	"time"
 )
 
 func NewOIDCClientConfig(t *testing.T, record db.OIDCClientConfig) db.OIDCClientConfig {
@@ -59,10 +60,14 @@ func CreateOIDCClientConfigs(t *testing.T, conn *gorm.DB, entries ...db.OIDCClie
 	}
 
 	t.Cleanup(func() {
-		if len(ids) > 0 {
-			require.NoError(t, conn.Where(ids).Delete(&db.OIDCClientConfig{}).Error)
-		}
+		HardDeleteOIDCClientConfigs(t, ids...)
 	})
 
 	return records
+}
+
+func HardDeleteOIDCClientConfigs(t *testing.T, ids ...string) {
+	if len(ids) > 0 {
+		require.NoError(t, conn.Where(ids).Delete(&db.OIDCClientConfig{}).Error)
+	}
 }
