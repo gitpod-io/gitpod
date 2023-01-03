@@ -8,55 +8,59 @@ import (
 	"context"
 	"fmt"
 
+	logrus "github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/ws-manager-bridge/api"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-
-	"github.com/gitpod-io/gitpod/ws-manager-bridge/api"
 )
 
-func GetClustersClient(ctx context.Context) (*grpc.ClientConn, api.ClusterServiceClient, error) {
-	secopt := grpc.WithTransportCredentials(insecure.NewCredentials())
+var (
+	log = logrus.WithField("component", "ws-manager-bridge-client")
+)
 
-	// TODO: Talk directly to the ws-manager-bridge service
-	conn, err := grpc.Dial("localhost:8080", secopt)
-	if err != nil {
-		return nil, nil, err
+// RolloutAction is the interface that wraps the updateScore method.
+type RolloutAction interface {
+	UpdateScore(ctx context.Context, clusterName string, score int32) error
+	GetScore(ctx context.Context, clusterName string) (int32, error)
+}
+
+type WsManagerBridgeClient struct {
+	wsManagerBridgeURL string
+}
+
+func NewWsManagerBridgeClient(wsManagerBridgeURL string) *WsManagerBridgeClient {
+	return &WsManagerBridgeClient{
+		wsManagerBridgeURL: wsManagerBridgeURL,
 	}
-	return conn, api.NewClusterServiceClient(conn), nil
 }
 
 // Checks if the given cluster has the expected score
-func CheckScore(clusterName string, score int32) error {
-	ctx := context.Background()
-	conn, client, err := GetClustersClient(ctx)
+func (c *WsManagerBridgeClient) GetScore(ctx context.Context, clusterName string) (int32, error) {
+
+	conn, client, err := c.getClustersClient(ctx)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer conn.Close()
 
 	clusters, err := client.List(ctx, &api.ListRequest{})
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	for _, cluster := range clusters.Status {
 		if cluster.Name == clusterName {
-			if cluster.Score == score {
-				return nil
-			} else {
-				return fmt.Errorf("cluster %s has score %d, expected %d", clusterName, cluster.Score, score)
-			}
+			return cluster.Score, nil
 		}
 	}
-	return fmt.Errorf("expected cluster %s to be present", clusterName)
+	return 0, fmt.Errorf("expected cluster %s to be present", clusterName)
 
 }
 
 // UpdateScore updates the score on a given cluster
 // while sending relevant alerts
-func UpdateScore(clusterName string, score int32) error {
-	ctx := context.Background()
-	conn, client, err := GetClustersClient(ctx)
+func (c *WsManagerBridgeClient) UpdateScore(ctx context.Context, clusterName string, score int32) error {
+	conn, client, err := c.getClustersClient(ctx)
 	if err != nil {
 		return err
 	}
@@ -68,6 +72,16 @@ func UpdateScore(clusterName string, score int32) error {
 			Score: score,
 		},
 	})
-
+	log.Infof("Updated score as %s:%d", clusterName, score)
 	return nil
+}
+
+func (c *WsManagerBridgeClient) getClustersClient(ctx context.Context) (*grpc.ClientConn, api.ClusterServiceClient, error) {
+	secopt := grpc.WithTransportCredentials(insecure.NewCredentials())
+
+	conn, err := grpc.Dial(c.wsManagerBridgeURL, secopt)
+	if err != nil {
+		return nil, nil, err
+	}
+	return conn, api.NewClusterServiceClient(conn), nil
 }

@@ -5,10 +5,13 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/workspace-rollout-job/pkg/analysis"
 	"github.com/gitpod-io/gitpod/workspace-rollout-job/pkg/rollout"
 	"github.com/gitpod-io/gitpod/workspace-rollout-job/pkg/wsbridge"
 	"github.com/spf13/cobra"
@@ -19,6 +22,7 @@ var rootCmd = &cobra.Command{
 	Short: "Rollout from old to a new cluster while monitoring metrics",
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Info("Starting workspace-rollout-job")
+		ctx := context.Background()
 		var err error
 		old, presence := os.LookupEnv("OLD_CLUSTER")
 		if !presence {
@@ -30,20 +34,22 @@ var rootCmd = &cobra.Command{
 			log.WithError(err).Fatal("cannot get new cluster")
 		}
 
+		wsManagerBridgeClient := wsbridge.NewWsManagerBridgeClient("localhost:8080")
 		// Check if the old cluster has a 100 score.
-		if err = wsbridge.CheckScore(old, 100); err != nil {
+		if score, err := wsManagerBridgeClient.GetScore(ctx, old); err != nil || score != 100 {
 			log.WithError(err).Fatal("init condition does not satisfy")
 		}
 
 		// Check if the new cluster has a 0 zero score.
 		// TODO: Check if the new cluster has no constraints.
-		if err = wsbridge.CheckScore(new, 0); err != nil {
+		if score, err := wsManagerBridgeClient.GetScore(ctx, new); err != nil || score != 0 {
 			log.WithError(err).Fatal("init condition does not satisfy")
 		}
 
-		// Start the rollout process.
-		job := rollout.New(old, new, "http://prometheus:9090")
-		job.Start()
+		// Start the rollout process
+		prometheusAnalyzer := analysis.NewPrometheusAnalyzer("http://localhost:9090")
+		job := rollout.New(old, new, 20*time.Second, 1*time.Second, 10, prometheusAnalyzer, wsManagerBridgeClient)
+		job.Start(ctx)
 	},
 }
 
