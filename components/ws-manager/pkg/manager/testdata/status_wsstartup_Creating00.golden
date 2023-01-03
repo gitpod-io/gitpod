@@ -7,6 +7,9 @@
             "meta_id": "metameta",
             "started_at": {
                 "seconds": 1555618414
+            },
+            "annotations": {
+                "gitpod/never-ready": "true"
             }
         },
         "spec": {

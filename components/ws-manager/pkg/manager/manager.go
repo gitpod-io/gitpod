@@ -208,18 +208,18 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	defer tracing.FinishSpan(span, &err)
 
 	defer func(req *api.StartWorkspaceRequest, err *error) {
-		success := true
-		alreadyExists := false
-		if err != nil && *err != nil {
-			success = false
-			if status.Code(*err) == codes.AlreadyExists {
-				alreadyExists = true
-			}
+		if err != nil && status.Code(*err) == codes.AlreadyExists {
+			// do not record metrics for already started workspaces
+			return
 		}
-		// do not record metrics for already started workspaces
-		if !alreadyExists {
-			m.metrics.OnWorkspaceStarted(req.Type, req.Spec.Class, success)
+
+		tpe := api.WorkspaceType_name[int32(req.Type)]
+		counter, cErr := m.metrics.totalStartsCounterVec.GetMetricWithLabelValues(tpe, req.Spec.Class)
+		if cErr != nil {
+			log.WithError(cErr).WithField("type", tpe).Warn("cannot get counter for workspace start metric")
+			return
 		}
+		counter.Inc()
 	}(req, &err)
 
 	clog.Info("StartWorkspace")

@@ -7,6 +7,9 @@
             "meta_id": "silver-dormouse-is733prg",
             "started_at": {
                 "seconds": 1629371675
+            },
+            "annotations": {
+                "gitpod/never-ready": "true"
             }
         },
         "spec": {
