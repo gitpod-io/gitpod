@@ -9,26 +9,51 @@ import (
 	"testing"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
+	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	"github.com/gitpod-io/gitpod/components/gitpod-db/go/dbtest"
 	v1 "github.com/gitpod-io/gitpod/components/iam-api/go/v1"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
 )
 
 func TestOIDCClientConfig_Create(t *testing.T) {
+	client, dbConn := setupOIDCClientConfigService(t)
 
-	client := setupOIDCClientConfigService(t)
+	config := &v1.OIDCClientConfig{
+		Oauth2Config: &v1.OAuth2Config{
+			ClientId:              "some-client-id",
+			ClientSecret:          "some-client-secret",
+			AuthorizationEndpoint: "http://some-endpoint.here",
+			ScopesSupported:       []string{"my-scope"},
+		},
+		OidcConfig: &v1.OIDCConfig{
+			Issuer: "some-issuer",
+		},
+	}
+	response, err := client.CreateClientConfig(context.Background(), &v1.CreateClientConfigRequest{
+		Config: config,
+	})
+	require.NoError(t, err)
+	require.Equal(t, codes.OK, status.Code(err))
 
-	_, err := client.CreateClientConfig(context.Background(), &v1.CreateClientConfigRequest{})
-	require.Error(t, err)
-	require.Equal(t, codes.Unimplemented, status.Code(err))
+	t.Cleanup(func() {
+		dbtest.HardDeleteOIDCClientConfigs(t, response.Config.Id)
+	})
 
+	retrieved, err := db.GetOIDCClientConfig(context.Background(), dbConn, uuid.MustParse(response.Config.Id))
+	require.NoError(t, err)
+
+	decrypted, err := retrieved.Data.Decrypt(dbtest.CipherSet(t))
+	require.NoError(t, err)
+	require.Equal(t, toDBSpec(config.Oauth2Config, config.OidcConfig), decrypted)
 }
 
-func setupOIDCClientConfigService(t *testing.T) v1.OIDCServiceClient {
+func setupOIDCClientConfigService(t *testing.T) (v1.OIDCServiceClient, *gorm.DB) {
 	t.Helper()
 
 	dbConn := dbtest.ConnectForTests(t)
@@ -52,5 +77,5 @@ func setupOIDCClientConfigService(t *testing.T) v1.OIDCServiceClient {
 	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(t, err)
 
-	return v1.NewOIDCServiceClient(conn)
+	return v1.NewOIDCServiceClient(conn), dbConn
 }
