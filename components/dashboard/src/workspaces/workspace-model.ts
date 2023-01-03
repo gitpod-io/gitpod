@@ -12,6 +12,7 @@ import {
     WorkspaceInstance,
 } from "@gitpod/gitpod-protocol";
 import { hoursBefore, isDateSmallerOrEqual } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { workspacesService } from "../service/public-api";
 import { getGitpodService } from "../service/service";
 
 export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
@@ -93,8 +94,11 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
         }
     }
 
-    async deleteWorkspace(id: string): Promise<void> {
-        await getGitpodService().server.deleteWorkspace(id);
+    async deleteWorkspace(id: string, usePublicAPI: boolean): Promise<void> {
+        usePublicAPI
+            ? await workspacesService.deleteWorkspace({ workspaceId: id })
+            : await getGitpodService().server.deleteWorkspace(id);
+
         this.workspaces.delete(id);
         this.notifyWorkpaces();
     }

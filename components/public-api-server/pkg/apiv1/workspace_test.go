@@ -6,11 +6,12 @@ package apiv1
 
 import (
 	"context"
-	"github.com/gitpod-io/gitpod/common-go/namegen"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/gitpod-io/gitpod/common-go/namegen"
 
 	fuzz "github.com/AdaLogics/go-fuzz-headers"
 	connect "github.com/bufbuild/connect-go"
@@ -129,6 +130,59 @@ func TestWorkspaceService_StopWorkspace(t *testing.T) {
 		require.NoError(t, err)
 
 		requireEqualProto(t, &v1.StopWorkspaceResponse{}, resp.Msg)
+	})
+}
+
+func TestWorkspaceService_DeleteWorkspace(t *testing.T) {
+
+	workspaceID := workspaceTestData[0].Protocol.Workspace.ID
+
+	t.Run("invalid argument when workspace ID is missing", func(t *testing.T) {
+		_, client := setupWorkspacesService(t)
+
+		_, err := client.DeleteWorkspace(context.Background(), connect.NewRequest(&v1.DeleteWorkspaceRequest{
+			WorkspaceId: "",
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("invalid argument when workspace ID does not validate", func(t *testing.T) {
+		_, client := setupWorkspacesService(t)
+
+		_, err := client.DeleteWorkspace(context.Background(), connect.NewRequest(&v1.DeleteWorkspaceRequest{
+			WorkspaceId: "some-random-not-valid-workspace-id",
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("not found when workspace does not exist", func(t *testing.T) {
+		serverMock, client := setupWorkspacesService(t)
+
+		serverMock.EXPECT().DeleteWorkspace(gomock.Any(), workspaceID).Return(&jsonrpc2.Error{
+			Code:    404,
+			Message: "not found",
+		})
+
+		_, err := client.DeleteWorkspace(context.Background(), connect.NewRequest(&v1.DeleteWorkspaceRequest{
+			WorkspaceId: workspaceID,
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
+	})
+
+	t.Run("delegates to server", func(t *testing.T) {
+		serverMock, client := setupWorkspacesService(t)
+
+		serverMock.EXPECT().DeleteWorkspace(gomock.Any(), workspaceID).Return(nil)
+
+		resp, err := client.DeleteWorkspace(context.Background(), connect.NewRequest(&v1.DeleteWorkspaceRequest{
+			WorkspaceId: workspaceID,
+		}))
+		require.NoError(t, err)
+
+		requireEqualProto(t, &v1.DeleteWorkspaceResponse{}, resp.Msg)
 	})
 }
 

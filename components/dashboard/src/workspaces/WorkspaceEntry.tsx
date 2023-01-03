@@ -14,7 +14,7 @@ import {
     ContextURL,
 } from "@gitpod/gitpod-protocol";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
-import { useRef, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import ConfirmationModal from "../components/ConfirmationModal";
 import Modal from "../components/Modal";
 import { ContextMenuEntry } from "../components/ContextMenu";
@@ -25,6 +25,7 @@ import { WorkspaceModel } from "./workspace-model";
 import { getGitpodService } from "../service/service";
 import ConnectToSSHModal from "./ConnectToSSHModal";
 import dayjs from "dayjs";
+import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 
 function getLabel(state: WorkspaceInstancePhase, conditions?: WorkspaceInstanceConditions) {
     if (conditions?.failed) {
@@ -44,6 +45,7 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
     const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
     const [isRenameModalVisible, setRenameModalVisible] = useState(false);
     const [isSSHModalVisible, setSSHModalVisible] = useState(false);
+    const { usePublicApiWorkspacesService } = useContext(FeatureFlagContext);
     const renameInputRef = useRef<HTMLInputElement>(null);
     const [errorMessage, setErrorMessage] = useState("");
     const state: WorkspaceInstancePhase = desc.latestInstance?.status?.phase || "stopped";
@@ -206,7 +208,7 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
                     buttonText="Delete Workspace"
                     visible={isDeleteModalVisible}
                     onClose={() => setDeleteModalVisible(false)}
-                    onConfirm={() => model.deleteWorkspace(ws.id)}
+                    onConfirm={() => model.deleteWorkspace(ws.id, usePublicApiWorkspacesService)}
                 />
             )}
             {/* TODO: Use title and buttons props */}
