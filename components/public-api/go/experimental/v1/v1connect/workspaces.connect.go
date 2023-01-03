@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -45,6 +45,10 @@ type WorkspacesServiceClient interface {
 	//	NOT_FOUND:           the workspace_id is unkown
 	//	FAILED_PRECONDITION: if there's no running instance
 	StopWorkspace(context.Context, *connect_go.Request[v1.StopWorkspaceRequest]) (*connect_go.Response[v1.StopWorkspaceResponse], error)
+	// DeleteWorkspace deletes a workspace.
+	// When the workspace is running, it will be stopped as well.
+	// Deleted workspaces cannot be started again.
+	DeleteWorkspace(context.Context, *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error)
 	UpdatePort(context.Context, *connect_go.Request[v1.UpdatePortRequest]) (*connect_go.Response[v1.UpdatePortResponse], error)
 }
 
@@ -83,6 +87,11 @@ func NewWorkspacesServiceClient(httpClient connect_go.HTTPClient, baseURL string
 			baseURL+"/gitpod.experimental.v1.WorkspacesService/StopWorkspace",
 			opts...,
 		),
+		deleteWorkspace: connect_go.NewClient[v1.DeleteWorkspaceRequest, v1.DeleteWorkspaceResponse](
+			httpClient,
+			baseURL+"/gitpod.experimental.v1.WorkspacesService/DeleteWorkspace",
+			opts...,
+		),
 		updatePort: connect_go.NewClient[v1.UpdatePortRequest, v1.UpdatePortResponse](
 			httpClient,
 			baseURL+"/gitpod.experimental.v1.WorkspacesService/UpdatePort",
@@ -98,6 +107,7 @@ type workspacesServiceClient struct {
 	getOwnerToken           *connect_go.Client[v1.GetOwnerTokenRequest, v1.GetOwnerTokenResponse]
 	createAndStartWorkspace *connect_go.Client[v1.CreateAndStartWorkspaceRequest, v1.CreateAndStartWorkspaceResponse]
 	stopWorkspace           *connect_go.Client[v1.StopWorkspaceRequest, v1.StopWorkspaceResponse]
+	deleteWorkspace         *connect_go.Client[v1.DeleteWorkspaceRequest, v1.DeleteWorkspaceResponse]
 	updatePort              *connect_go.Client[v1.UpdatePortRequest, v1.UpdatePortResponse]
 }
 
@@ -126,6 +136,11 @@ func (c *workspacesServiceClient) StopWorkspace(ctx context.Context, req *connec
 	return c.stopWorkspace.CallUnary(ctx, req)
 }
 
+// DeleteWorkspace calls gitpod.experimental.v1.WorkspacesService.DeleteWorkspace.
+func (c *workspacesServiceClient) DeleteWorkspace(ctx context.Context, req *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error) {
+	return c.deleteWorkspace.CallUnary(ctx, req)
+}
+
 // UpdatePort calls gitpod.experimental.v1.WorkspacesService.UpdatePort.
 func (c *workspacesServiceClient) UpdatePort(ctx context.Context, req *connect_go.Request[v1.UpdatePortRequest]) (*connect_go.Response[v1.UpdatePortResponse], error) {
 	return c.updatePort.CallUnary(ctx, req)
@@ -148,6 +163,10 @@ type WorkspacesServiceHandler interface {
 	//	NOT_FOUND:           the workspace_id is unkown
 	//	FAILED_PRECONDITION: if there's no running instance
 	StopWorkspace(context.Context, *connect_go.Request[v1.StopWorkspaceRequest]) (*connect_go.Response[v1.StopWorkspaceResponse], error)
+	// DeleteWorkspace deletes a workspace.
+	// When the workspace is running, it will be stopped as well.
+	// Deleted workspaces cannot be started again.
+	DeleteWorkspace(context.Context, *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error)
 	UpdatePort(context.Context, *connect_go.Request[v1.UpdatePortRequest]) (*connect_go.Response[v1.UpdatePortResponse], error)
 }
 
@@ -183,6 +202,11 @@ func NewWorkspacesServiceHandler(svc WorkspacesServiceHandler, opts ...connect_g
 		svc.StopWorkspace,
 		opts...,
 	))
+	mux.Handle("/gitpod.experimental.v1.WorkspacesService/DeleteWorkspace", connect_go.NewUnaryHandler(
+		"/gitpod.experimental.v1.WorkspacesService/DeleteWorkspace",
+		svc.DeleteWorkspace,
+		opts...,
+	))
 	mux.Handle("/gitpod.experimental.v1.WorkspacesService/UpdatePort", connect_go.NewUnaryHandler(
 		"/gitpod.experimental.v1.WorkspacesService/UpdatePort",
 		svc.UpdatePort,
@@ -212,6 +236,10 @@ func (UnimplementedWorkspacesServiceHandler) CreateAndStartWorkspace(context.Con
 
 func (UnimplementedWorkspacesServiceHandler) StopWorkspace(context.Context, *connect_go.Request[v1.StopWorkspaceRequest]) (*connect_go.Response[v1.StopWorkspaceResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.WorkspacesService.StopWorkspace is not implemented"))
+}
+
+func (UnimplementedWorkspacesServiceHandler) DeleteWorkspace(context.Context, *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.WorkspacesService.DeleteWorkspace is not implemented"))
 }
 
 func (UnimplementedWorkspacesServiceHandler) UpdatePort(context.Context, *connect_go.Request[v1.UpdatePortRequest]) (*connect_go.Response[v1.UpdatePortResponse], error) {
