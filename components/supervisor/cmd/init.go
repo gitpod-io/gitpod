@@ -38,6 +38,13 @@ var initCmd = &cobra.Command{
 		)
 		signal.Notify(sigInput, os.Interrupt, syscall.SIGTERM)
 
+		// check if git executable exists, supervisor will fail if it doesn't
+		// checking for it here allows to bubble up this error to the user
+		_, err = exec.LookPath("git")
+		if err != nil {
+			log.WithError(err).Fatal("cannot find git executable, make sure it is installed as part of gitpod image")
+		}
+
 		supervisorPath, err := os.Executable()
 		if err != nil {
 			supervisorPath = "/.supervisor/supervisor"

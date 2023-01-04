@@ -192,6 +192,7 @@ func Run(options ...RunOption) {
 		log.WithError(err).Fatal("cannot ensure Gitpod user exists")
 	}
 	symlinkBinaries(cfg)
+
 	configureGit(cfg, childProcEnvvars)
 
 	tokenService := NewInMemoryTokenService()
