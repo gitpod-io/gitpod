@@ -35,6 +35,7 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
     const getElements = useCallback(
         (searchString: string) => {
             const result = [...suggestedContextURLs];
+            searchString = searchString.trim();
             try {
                 // If the searchString is a URL, and it's not present in the proposed results, "artificially" add it here.
                 new URL(searchString);
