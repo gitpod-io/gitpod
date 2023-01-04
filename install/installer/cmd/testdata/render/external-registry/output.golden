@@ -208,7 +208,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-11.3.0
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 spec:
@@ -758,7 +758,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-11.3.0
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 spec:
@@ -921,7 +921,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: minio
-    helm.sh/chart: minio-11.6.3
+    helm.sh/chart: minio-11.10.24
     app.kubernetes.io/instance: minio
     app.kubernetes.io/managed-by: Helm
 automountServiceAccountToken: true
@@ -985,7 +985,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-11.3.0
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 automountServiceAccountToken: true
@@ -1099,7 +1099,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-11.3.0
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 type: Opaque
@@ -1115,7 +1115,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-11.3.0
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 type: Opaque
@@ -1146,13 +1146,13 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-11.3.0
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 type: Opaque
 data:
   rabbitmq.conf: |-
-    IyMgVXNlcm5hbWUgYW5kIHBhc3N3b3JkCiMjCmRlZmF1bHRfdXNlciA9IGdpdHBvZApkZWZhdWx0X3Bhc3MgPSBDSEFOR0VNRQojIyBDbHVzdGVyaW5nCiMjCmNsdXN0ZXJfZm9ybWF0aW9uLnBlZXJfZGlzY292ZXJ5X2JhY2tlbmQgID0gcmFiYml0X3BlZXJfZGlzY292ZXJ5X2s4cwpjbHVzdGVyX2Zvcm1hdGlvbi5rOHMuaG9zdCA9IGt1YmVybmV0ZXMuZGVmYXVsdApjbHVzdGVyX2Zvcm1hdGlvbi5ub2RlX2NsZWFudXAuaW50ZXJ2YWwgPSAxMApjbHVzdGVyX2Zvcm1hdGlvbi5ub2RlX2NsZWFudXAub25seV9sb2dfd2FybmluZyA9IHRydWUKY2x1c3Rlcl9wYXJ0aXRpb25faGFuZGxpbmcgPSBhdXRvaGVhbApsb2FkX2RlZmluaXRpb25zID0gL2FwcC9sb2FkX2RlZmluaXRpb24uanNvbgojIHF1ZXVlIG1hc3RlciBsb2NhdG9yCnF1ZXVlX21hc3Rlcl9sb2NhdG9yID0gbWluLW1hc3RlcnMKIyBlbmFibGUgZ3Vlc3QgdXNlcgpsb29wYmFja191c2Vycy5ndWVzdCA9IGZhbHNlCmxvYWRfZGVmaW5pdGlvbnMgPSAvYXBwL2xvYWRfZGVmaW5pdGlvbi5qc29uCiMgSW5jcmVhc2Ugc3RhdGlzdGljcyBlbWlzc2lvbiBpbnRlcnZhbCBodHRwczovL3d3dy5yYWJiaXRtcS5jb20vbWFuYWdlbWVudC5odG1sI3N0YXRpc3RpY3MtaW50ZXJ2YWwKY29sbGVjdF9zdGF0aXN0aWNzX2ludGVydmFsID0gMTUwMDAKCnNzbF9vcHRpb25zLnZlcmlmeSA9IHZlcmlmeV9wZWVyCmxpc3RlbmVycy5zc2wuZGVmYXVsdCA9IDU2NzEKc3NsX29wdGlvbnMuZmFpbF9pZl9ub19wZWVyX2NlcnQgPSB0cnVlCnNzbF9vcHRpb25zLmNhY2VydGZpbGUgPSAvb3B0L2JpdG5hbWkvcmFiYml0bXEvY2VydHMvY2FfY2VydGlmaWNhdGUucGVtCnNzbF9vcHRpb25zLmNlcnRmaWxlID0gL29wdC9iaXRuYW1pL3JhYmJpdG1xL2NlcnRzL3NlcnZlcl9jZXJ0aWZpY2F0ZS5wZW0Kc3NsX29wdGlvbnMua2V5ZmlsZSA9IC9vcHQvYml0bmFtaS9yYWJiaXRtcS9jZXJ0cy9zZXJ2ZXJfa2V5LnBlbQojIyBQcm9tZXRoZXVzIG1ldHJpY3MKIyMKcHJvbWV0aGV1cy50Y3AucG9ydCA9IDk0MTk=
+    IyMgVXNlcm5hbWUgYW5kIHBhc3N3b3JkCiMjCmRlZmF1bHRfdXNlciA9IGdpdHBvZAojIyBDbHVzdGVyaW5nCiMjCmNsdXN0ZXJfZm9ybWF0aW9uLnBlZXJfZGlzY292ZXJ5X2JhY2tlbmQgID0gcmFiYml0X3BlZXJfZGlzY292ZXJ5X2s4cwpjbHVzdGVyX2Zvcm1hdGlvbi5rOHMuaG9zdCA9IGt1YmVybmV0ZXMuZGVmYXVsdApjbHVzdGVyX2Zvcm1hdGlvbi5ub2RlX2NsZWFudXAuaW50ZXJ2YWwgPSAxMApjbHVzdGVyX2Zvcm1hdGlvbi5ub2RlX2NsZWFudXAub25seV9sb2dfd2FybmluZyA9IHRydWUKY2x1c3Rlcl9wYXJ0aXRpb25faGFuZGxpbmcgPSBhdXRvaGVhbApsb2FkX2RlZmluaXRpb25zID0gL2FwcC9sb2FkX2RlZmluaXRpb24uanNvbgojIHF1ZXVlIG1hc3RlciBsb2NhdG9yCnF1ZXVlX21hc3Rlcl9sb2NhdG9yID0gbWluLW1hc3RlcnMKIyBlbmFibGUgZ3Vlc3QgdXNlcgpsb29wYmFja191c2Vycy5ndWVzdCA9IGZhbHNlCmxvYWRfZGVmaW5pdGlvbnMgPSAvYXBwL2xvYWRfZGVmaW5pdGlvbi5qc29uCiMgSW5jcmVhc2Ugc3RhdGlzdGljcyBlbWlzc2lvbiBpbnRlcnZhbCBodHRwczovL3d3dy5yYWJiaXRtcS5jb20vbWFuYWdlbWVudC5odG1sI3N0YXRpc3RpY3MtaW50ZXJ2YWwKY29sbGVjdF9zdGF0aXN0aWNzX2ludGVydmFsID0gMTUwMDAKCnNzbF9vcHRpb25zLnZlcmlmeSA9IHZlcmlmeV9wZWVyCmxpc3RlbmVycy5zc2wuZGVmYXVsdCA9IDU2NzEKc3NsX29wdGlvbnMuZmFpbF9pZl9ub19wZWVyX2NlcnQgPSB0cnVlCnNzbF9vcHRpb25zLmNhY2VydGZpbGUgPSAvb3B0L2JpdG5hbWkvcmFiYml0bXEvY2VydHMvY2FfY2VydGlmaWNhdGUucGVtCnNzbF9vcHRpb25zLmNlcnRmaWxlID0gL29wdC9iaXRuYW1pL3JhYmJpdG1xL2NlcnRzL3NlcnZlcl9jZXJ0aWZpY2F0ZS5wZW0Kc3NsX29wdGlvbnMua2V5ZmlsZSA9IC9vcHQvYml0bmFtaS9yYWJiaXRtcS9jZXJ0cy9zZXJ2ZXJfa2V5LnBlbQojIyBQcm9tZXRoZXVzIG1ldHJpY3MKIyMKcHJvbWV0aGV1cy50Y3AucG9ydCA9IDk0MTk=
 ---
 # v1/Secret messagebus-erlang-cookie
 apiVersion: v1
@@ -1176,7 +1176,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: minio
-    helm.sh/chart: minio-11.6.3
+    helm.sh/chart: minio-11.10.24
     app.kubernetes.io/instance: minio
     app.kubernetes.io/managed-by: Helm
 type: Opaque
@@ -1212,7 +1212,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-11.3.0
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 type: Opaque
@@ -3328,7 +3328,7 @@ data:
         app.kubernetes.io/instance: mysql
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: mysql
-        helm.sh/chart: mysql-9.1.2
+        helm.sh/chart: mysql-9.4.5
       name: mysql
       namespace: default
     ---
@@ -3341,7 +3341,7 @@ data:
         app.kubernetes.io/instance: mysql
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: mysql
-        helm.sh/chart: mysql-9.1.2
+        helm.sh/chart: mysql-9.4.5
       name: mysql-headless
       namespace: default
     ---
@@ -3354,7 +3354,7 @@ data:
         app.kubernetes.io/instance: mysql
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: mysql
-        helm.sh/chart: mysql-9.1.2
+        helm.sh/chart: mysql-9.4.5
       name: mysql
       namespace: default
     ---
@@ -3367,7 +3367,7 @@ data:
         app.kubernetes.io/instance: mysql
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: mysql
-        helm.sh/chart: mysql-9.1.2
+        helm.sh/chart: mysql-9.4.5
       name: mysql
       namespace: default
     ---
@@ -3379,7 +3379,7 @@ data:
         app.kubernetes.io/instance: minio
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: minio
-        helm.sh/chart: minio-11.6.3
+        helm.sh/chart: minio-11.10.24
       name: minio
       namespace: default
     ---
@@ -3391,7 +3391,7 @@ data:
         app.kubernetes.io/instance: minio
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: minio
-        helm.sh/chart: minio-11.6.3
+        helm.sh/chart: minio-11.10.24
       name: minio
       namespace: default
     ---
@@ -3403,7 +3403,7 @@ data:
         app.kubernetes.io/instance: minio
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: minio
-        helm.sh/chart: minio-11.6.3
+        helm.sh/chart: minio-11.10.24
       name: minio
       namespace: default
     ---
@@ -3415,7 +3415,7 @@ data:
         app.kubernetes.io/instance: minio
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: minio
-        helm.sh/chart: minio-11.6.3
+        helm.sh/chart: minio-11.10.24
       name: minio
       namespace: default
     ---
@@ -3427,7 +3427,7 @@ data:
         app.kubernetes.io/instance: minio
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: minio
-        helm.sh/chart: minio-11.6.3
+        helm.sh/chart: minio-11.10.24
       name: minio
       namespace: default
     ---
@@ -3439,7 +3439,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-11.3.0
       name: messagebus
       namespace: default
     ---
@@ -3451,7 +3451,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-11.3.0
       name: messagebus
       namespace: default
     ---
@@ -3463,7 +3463,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-11.3.0
       name: rabbitmq
       namespace: default
     ---
@@ -3475,7 +3475,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-11.3.0
       name: messagebus-config
       namespace: default
     ---
@@ -3487,7 +3487,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-11.3.0
       name: messagebus
       namespace: default
     ---
@@ -3499,7 +3499,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-11.3.0
       name: load-definition
       namespace: default
     ---
@@ -3511,7 +3511,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-11.3.0
       name: rabbitmq
       namespace: default
     ---
@@ -3523,7 +3523,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-11.3.0
       name: messagebus-endpoint-reader
       namespace: default
     ---
@@ -3535,7 +3535,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-11.3.0
       name: messagebus-endpoint-reader
       namespace: default
     ---
@@ -3547,7 +3547,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-11.3.0
       name: messagebus-headless
       namespace: default
     ---
@@ -3559,7 +3559,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-11.3.0
       name: messagebus
       namespace: default
     ---
@@ -3571,7 +3571,7 @@ data:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-11.3.0
       name: messagebus
       namespace: default
     ---
@@ -4929,7 +4929,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: mysql
-    helm.sh/chart: mysql-9.1.2
+    helm.sh/chart: mysql-9.4.5
     app.kubernetes.io/instance: mysql
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/component: primary
@@ -4946,7 +4946,7 @@ data:
     datadir=/bitnami/mysql/data
     tmpdir=/opt/bitnami/mysql/tmp
     max_allowed_packet=16M
-    bind-address=0.0.0.0
+    bind-address=*
     pid-file=/opt/bitnami/mysql/tmp/mysqld.pid
     log-error=/opt/bitnami/mysql/logs/mysqld.log
     character-set-server=UTF8
@@ -5899,7 +5899,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: minio
-    helm.sh/chart: minio-11.6.3
+    helm.sh/chart: minio-11.10.24
     app.kubernetes.io/instance: minio
     app.kubernetes.io/managed-by: Helm
 spec:
@@ -6426,7 +6426,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-11.3.0
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 rules:
@@ -6769,7 +6769,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-11.3.0
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 subjects:
@@ -7262,7 +7262,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-11.3.0
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 spec:
@@ -7306,7 +7306,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-11.3.0
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 spec:
@@ -7341,7 +7341,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: minio
-    helm.sh/chart: minio-11.6.3
+    helm.sh/chart: minio-11.10.24
     app.kubernetes.io/instance: minio
     app.kubernetes.io/managed-by: Helm
 spec:
@@ -7368,7 +7368,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: mysql
-    helm.sh/chart: mysql-9.1.2
+    helm.sh/chart: mysql-9.4.5
     app.kubernetes.io/instance: mysql
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/component: primary
@@ -7396,11 +7396,10 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: mysql
-    helm.sh/chart: mysql-9.1.2
+    helm.sh/chart: mysql-9.4.5
     app.kubernetes.io/instance: mysql
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/component: primary
-  annotations:
 spec:
   type: ClusterIP
   clusterIP: None
@@ -8285,7 +8284,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-10.1.1
+    helm.sh/chart: rabbitmq-11.3.0
     app.kubernetes.io/instance: rabbitmq
     app.kubernetes.io/managed-by: Helm
 spec:
@@ -8302,12 +8301,12 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-10.1.1
+        helm.sh/chart: rabbitmq-11.3.0
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
       annotations:
-        checksum/config: 2ca9db593e4ca6cdd01f7a65cce1ae90d0d45ecdf0049edfaa4ec72302fcbe8f
-        checksum/secret: c231bbb08185305defa8c4da0f3ee0f5e7a16795362a2133f74e53eb9a40453d
+        checksum/config: d5780a0c58210a2062d54feb61cfb1d5a9c076f95569c4a77076d22c9bad4190
+        checksum/secret: 64c39dd3a8570ed4b0cc71bc0402bc814d016e16f68732938722b12a57c8e82c
         prometheus.io/port: '9419'
         prometheus.io/scrape: "true"
     spec:
@@ -8327,7 +8326,7 @@ spec:
       initContainers:
       containers:
         - name: rabbitmq
-          image: docker.io/bitnami/rabbitmq:3.10.2-debian-10-r7
+          image: docker.io/bitnami/rabbitmq:3.11.5-debian-11-r2
           imagePullPolicy: "IfNotPresent"
           securityContext:
             runAsNonRoot: true
@@ -8462,11 +8461,10 @@ spec:
               - key: tls.key
                 path: server_key.pem
         - name: configuration
-          secret:
-            secretName: messagebus-config
-            items:
-              - key: rabbitmq.conf
-                path: rabbitmq.conf
+          projected:
+            sources:
+              - secret:
+                  name: messagebus-config
         - name: load-definition-volume
           secret:
             secretName: "load-definition"
@@ -8482,7 +8480,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: mysql
-    helm.sh/chart: mysql-9.1.2
+    helm.sh/chart: mysql-9.4.5
     app.kubernetes.io/instance: mysql
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/component: primary
@@ -8500,10 +8498,10 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/configuration: 11b8361c0fbf695cec6ec7f47ed4118ad3c7d71a391ca246df129803d3e205a5
+        checksum/configuration: 0c1e0d4282c8f8f820f3c9d1d79b3f423c4676afac2e3a6de555f8553f146eb4
       labels:
         app.kubernetes.io/name: mysql
-        helm.sh/chart: mysql-9.1.2
+        helm.sh/chart: mysql-9.4.5
         app.kubernetes.io/instance: mysql
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/component: primary
@@ -8522,7 +8520,7 @@ spec:
         fsGroup: 1001
       initContainers:
         - name: volume-permissions
-          image: docker.io/bitnami/bitnami-shell:10-debian-10-r431
+          image: docker.io/bitnami/bitnami-shell:11-debian-11-r60
           imagePullPolicy: "IfNotPresent"
           command:
             - /bin/bash
@@ -9807,7 +9805,7 @@ metadata:
   namespace: "default"
   labels:
     app.kubernetes.io/name: minio
-    helm.sh/chart: minio-11.6.3
+    helm.sh/chart: minio-11.10.24
     app.kubernetes.io/instance: minio
     app.kubernetes.io/managed-by: Helm
 spec:
@@ -9821,11 +9819,11 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: minio
-        helm.sh/chart: minio-11.6.3
+        helm.sh/chart: minio-11.10.24
         app.kubernetes.io/instance: minio
         app.kubernetes.io/managed-by: Helm
       annotations:
-        checksum/credentials-secret: 094325f216720012cacde9f52fd71c7e8b06dd6386492f6980e0f3588f1b1e7c
+        checksum/credentials-secret: 0f3ceb92b9779df4ce0927f6faeb23e9116b85e0eabe095d903e46a2770cde42
     spec:
       
       serviceAccountName: minio
@@ -9841,7 +9839,7 @@ spec:
         fsGroup: 1001
       containers:
         - name: minio
-          image: docker.io/bitnami/minio:2022.5.26-debian-10-r0
+          image: docker.io/bitnami/minio:2022.12.12-debian-11-r0
           imagePullPolicy: "IfNotPresent"
           securityContext:
             runAsNonRoot: true
