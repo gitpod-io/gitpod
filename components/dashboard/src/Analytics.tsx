@@ -8,7 +8,6 @@ import { getGitpodService } from "./service/service";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import Cookies from "js-cookie";
 import { v4 } from "uuid";
-import { Experiment } from "./experiments";
 import { StartWorkspaceError } from "./start/StartPage";
 
 export type Event =
@@ -20,7 +19,7 @@ export type Event =
 type InternalEvent = Event | "path_changed" | "dashboard_clicked";
 
 export type EventProperties = TrackOrgAuthorised | TrackInviteUrlRequested | TrackDotfileRepo | TrackFeedback;
-type InternalEventProperties = TrackUIExperiments & (EventProperties | TrackDashboardClick | TrackPathChanged);
+type InternalEventProperties = EventProperties | TrackDashboardClick | TrackPathChanged;
 
 export interface TrackOrgAuthorised {
     installation_id: string;
@@ -57,10 +56,6 @@ interface TrackPathChanged {
     path: string;
 }
 
-interface TrackUIExperiments {
-    ui_experiments?: {};
-}
-
 interface Traits {
     unsubscribed_onboarding?: boolean;
     unsubscribed_changelog?: boolean;
@@ -73,8 +68,6 @@ export const trackEvent = (event: Event, properties: EventProperties) => {
 };
 
 const trackEventInternal = (event: InternalEvent, properties: InternalEventProperties) => {
-    properties.ui_experiments = Experiment.get();
-
     getGitpodService().server.trackEvent({
         anonymousId: getAnonymousId(),
         event,
@@ -142,7 +135,7 @@ export const trackPathChange = (props: TrackPathChanged) => {
     trackEventInternal("path_changed", props);
 };
 
-type TrackLocationProperties = TrackUIExperiments & {
+type TrackLocationProperties = {
     referrer: string;
     path: string;
     host: string;
@@ -155,7 +148,6 @@ export const trackLocation = async (includePII: boolean) => {
         path: window.location.pathname,
         host: window.location.hostname,
         url: window.location.href,
-        ui_experiments: Experiment.get(),
     };
 
     getGitpodService().server.trackLocation({
