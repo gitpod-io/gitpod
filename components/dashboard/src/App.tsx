@@ -4,10 +4,9 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, { FunctionComponent, Suspense, useEffect } from "react";
+import React, { FunctionComponent, Suspense } from "react";
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
 import { Login } from "./Login";
-import { Experiment } from "./experiments";
 import { isGitpodIo } from "./utils";
 import { useUserAndTeamsLoader } from "./hooks/use-user-and-teams-loader";
 import { useAnalyticsTracking } from "./hooks/use-analytics-tracking";
@@ -22,14 +21,6 @@ const App: FunctionComponent = () => {
 
     // Setup analytics/tracking
     useAnalyticsTracking();
-
-    // Setup experiments
-    useEffect(() => {
-        if (isGitpodIo()) {
-            // Choose which experiments to run for this session/user
-            Experiment.set(Experiment.seed(true));
-        }
-    }, []);
 
     if (loading) {
         return <AppLoading />;
