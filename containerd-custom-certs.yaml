@@ -1,0 +1,89 @@
+---
+apiVersion: v1
+data:
+  systest-ca-pem.crt: AA==
+kind: Secret
+metadata:
+  name: ca-certs
+  namespace: gitpod
+type: Opaque
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-initializer
+  namespace: gitpod
+  labels:
+    app: default-init
+spec:
+  selector:
+    matchLabels:
+      app: default-init
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: node-initializer
+        app: default-init
+    spec:
+      imagePullSecrets:
+        - name: artifact-registry
+      volumes:
+        - name: root-mount
+          hostPath:
+            path: /
+        - name: entrypoint
+          configMap:
+            name: entrypoint
+            defaultMode: 0744
+        - name: ca-certs
+          secret:
+            secretName: ca-certs
+            defaultMode: 420
+      hostNetwork: true
+      hostPID: true
+      initContainers:
+        - image: my-registry/ubuntu:18.04
+          name: node-initializer
+          command: ["/scripts/entrypoint.sh"]
+          env:
+            - name: ROOT_MOUNT_DIR
+              value: /mnt
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+            privileged: true
+          volumeMounts:
+            - name: root-mount
+              mountPath: /mnt
+            - name: entrypoint
+              mountPath: /scripts
+            - name: ca-certs
+              mountPath: /ca-certs
+      containers:
+        - image: "my-registry/pause:2.0"
+          name: pause
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: entrypoint
+  namespace: gitpod
+  labels:
+    app: default-init
+data:
+  entrypoint.sh: |
+    #!/usr/bin/env bash
+
+    set -euo pipefail
+
+    DEBIAN_FRONTEND=noninteractive
+    ROOT_MOUNT_DIR="${ROOT_MOUNT_DIR:-/root}"
+
+    echo "Refresh SSL custom certs"
+    ls -l $ROOT_MOUNT_DIR/usr/local/share/ca-certificates
+    cp /ca-certs/systest-ca-pem.crt $ROOT_MOUNT_DIR/usr/local/share/ca-certificates
+    nsenter --target 1 --mount update-ca-certificates
+    nsenter --target 1 --mount systemctl restart containerd
