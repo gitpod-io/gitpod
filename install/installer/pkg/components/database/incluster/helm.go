@@ -24,6 +24,8 @@ var Helm = common.CompositeHelmFunc(
 			return nil, err
 		}
 
+		imageRegistry := common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL)
+
 		return &common.HelmConfig{
 			Enabled: true,
 			Values: &values.Options{
@@ -34,15 +36,12 @@ var Helm = common.CompositeHelmFunc(
 					helm.KeyValue("mysql.initdbScriptsConfigMap", SQLInitScripts),
 					helm.KeyValue("mysql.serviceAccount.name", Component),
 					helm.ImagePullSecrets("mysql.image.pullSecrets", cfg),
-					helm.KeyValue("mysql.image.registry", ""),
-					helm.KeyValue("mysql.image.repository", cfg.RepoName(common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL), "bitnami/mysql")),
+					helm.KeyValue("mysql.image.registry", imageRegistry),
 					helm.ImagePullSecrets("mysql.metrics.image.pullSecrets", cfg),
-					helm.KeyValue("mysql.metrics.image.registry", ""),
-					helm.KeyValue("mysql.metrics.image.repository", cfg.RepoName(common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL), "bitnami/mysqld-exporter")),
+					helm.KeyValue("mysql.metrics.image.registry", imageRegistry),
 					helm.ImagePullSecrets("mysql.volumePermissions.image.pullSecrets", cfg),
 					helm.KeyValue("mysql.volumePermissions.image.pullPolicy", "IfNotPresent"),
-					helm.KeyValue("mysql.volumePermissions.image.registry", ""),
-					helm.KeyValue("mysql.volumePermissions.image.repository", cfg.RepoName(common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL), "bitnami/bitnami-shell")),
+					helm.KeyValue("mysql.volumePermissions.image.registry", imageRegistry),
 
 					// improve start time
 					helm.KeyValue("mysql.primary.startupProbe.enabled", "false"),
