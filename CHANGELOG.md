@@ -1,6 +1,9 @@
 # Change Log
 
 ## January 2023
+- Allow picking workspace class and editor when opening a workspace from the dashboard ([#15389](https://github.com/gitpod-io/gitpod/pull/15389)) - [@svenefftinge](https://github.com/svenefftinge)
+- Fixed an issue which caused Gitpod Terminals to be terminated when closing JetBrains Client. ([#15527](https://github.com/gitpod-io/gitpod/pull/15527)) - [@felladrin](https://github.com/felladrin)
+- Fixed an issue where oom scores for workspace processes were not applied correctly ([#15553](https://github.com/gitpod-io/gitpod/pull/15553)) - [@Furisto](https://github.com/Furisto)
 - Fix: edge cases on opening workspaces to VS Code Desktop ([#15539](https://github.com/gitpod-io/gitpod/pull/15539)) - [@Siddhant-K-code](https://github.com/Siddhant-K-code)
 
 ##  December 2022
