@@ -583,7 +583,7 @@ metadata:
   namespace: default
   labels:
     app: docker-registry
-    chart: docker-registry-1.16.0
+    chart: docker-registry-2.2.2
     heritage: Helm
     release: docker-registry
 type: Opaque
@@ -1572,7 +1572,7 @@ data:
       creationTimestamp: null
       labels:
         app: docker-registry
-        chart: docker-registry-1.16.0
+        chart: docker-registry-2.2.2
         heritage: Helm
         release: docker-registry
       name: registry-secret
@@ -1584,7 +1584,7 @@ data:
       creationTimestamp: null
       labels:
         app: docker-registry
-        chart: docker-registry-1.16.0
+        chart: docker-registry-2.2.2
         heritage: Helm
         release: docker-registry
       name: registry-config
@@ -1596,7 +1596,7 @@ data:
       creationTimestamp: null
       labels:
         app: registry
-        chart: docker-registry-1.16.0
+        chart: docker-registry-2.2.2
         heritage: Helm
         release: docker-registry
       name: registry
@@ -1608,7 +1608,7 @@ data:
       creationTimestamp: null
       labels:
         app: docker-registry
-        chart: docker-registry-1.16.0
+        chart: docker-registry-2.2.2
         heritage: Helm
         release: docker-registry
       name: registry
@@ -1620,7 +1620,7 @@ data:
       creationTimestamp: null
       labels:
         app: docker-registry
-        chart: docker-registry-1.16.0
+        chart: docker-registry-2.2.2
         heritage: Helm
         release: docker-registry
       name: registry
@@ -1697,7 +1697,7 @@ metadata:
   namespace: default
   labels:
     app: docker-registry
-    chart: docker-registry-1.16.0
+    chart: docker-registry-2.2.2
     heritage: Helm
     release: docker-registry
 data:
@@ -2118,7 +2118,7 @@ metadata:
   namespace: default
   labels:
     app: registry
-    chart: "docker-registry-1.16.0"
+    chart: "docker-registry-2.2.2"
     release: "docker-registry"
     heritage: "Helm"
 spec:
@@ -2705,7 +2705,7 @@ metadata:
   namespace: default
   labels:
     app: docker-registry
-    chart: docker-registry-1.16.0
+    chart: docker-registry-2.2.2
     release: docker-registry
     heritage: Helm
 spec:
@@ -3577,7 +3577,7 @@ metadata:
   namespace: default
   labels:
     app: docker-registry
-    chart: docker-registry-1.16.0
+    chart: docker-registry-2.2.2
     release: docker-registry
     heritage: Helm
 spec:
@@ -3593,8 +3593,15 @@ spec:
         app: docker-registry
         release: docker-registry
       annotations:
+<<<<<<< HEAD
         checksum/config: 1d22b82e19bbc654e029029c4fb86ad02dc13422dc3ac52f8175ad190e52a0bb
         gitpod.io/checksum_config: 0ce55d51677cd683df3c7a244542c6aeaaf5dd6dca0f0458e8053a713228f535
+=======
+        checksum/config: 699dd382179068f3354c330fcce38625e2861d97b962074b4f57005d40497b00
+        checksum/secret: 6fe5d819b2ea20bf72ad31384d4886d6f64dd1f0d237703ac3aff11c1e0737fd
+        
+        gitpod.io/checksum_config: 1c66f4ccdb7f6331da2edaecefcb40f6c1b6315c9277eb0418fef3cc584a28bd
+>>>>>>> a706c90b0 ([installer]: update helm dependencies to latest versions)
     spec:
       serviceAccountName: docker-registry
       securityContext:
@@ -3602,7 +3609,7 @@ spec:
         runAsUser: 1000
       containers:
         - name: docker-registry
-          image: "docker.io/library/registry:2.7.1"
+          image: "docker.io/library/registry:2.8.1"
           imagePullPolicy: IfNotPresent
           command:
           - /bin/registry
@@ -3620,9 +3627,9 @@ spec:
               scheme: HTTPS
               path: /
               port: 5000
-          resources:
+          resources: 
             {}
-          env:
+          env: 
             - name: REGISTRY_HTTP_SECRET
               valueFrom:
                 secretKeyRef:
@@ -3634,21 +3641,21 @@ spec:
               value: /etc/ssl/docker/tls.key
             - name: REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY
               value: "/var/lib/registry"
-          volumeMounts:
-            - name: data
-              mountPath: /var/lib/registry/
+          volumeMounts: 
             - name: "registry-config"
               mountPath: "/etc/docker/registry"
+            - name: data
+              mountPath: /var/lib/registry/
             - mountPath: /etc/ssl/docker
               name: tls-cert
               readOnly: true
-      volumes:
-        - name: data
-          persistentVolumeClaim:
-            claimName: registry
+      volumes: 
         - name: registry-config
           configMap:
             name: registry-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: registry
         - name: tls-cert
           secret:
             secretName: builtin-registry-certs
