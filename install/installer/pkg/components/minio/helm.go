@@ -17,13 +17,13 @@ import (
 
 var Helm = common.CompositeHelmFunc(
 	func(cfg *common.RenderContext) ([]string, error) {
+		imageRegistry := common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL)
+
 		commonHelmValues := []string{
 			helm.ImagePullSecrets("minio.image.pullSecrets", cfg),
-			helm.KeyValue("minio.image.registry", ""),
-			helm.KeyValue("minio.image.repository", cfg.RepoName(common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL), "bitnami/minio")),
+			helm.KeyValue("minio.image.registry", imageRegistry),
 			helm.ImagePullSecrets("minio.volumePermissions.image.pullSecrets", cfg),
-			helm.KeyValue("minio.volumePermissions.image.registry", ""),
-			helm.KeyValue("minio.volumePermissions.image.repository", cfg.RepoName(common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL), "bitnami/bitnami-shell")),
+			helm.KeyValue("minio.volumePermissions.image.registry", imageRegistry),
 		}
 
 		if cfg.Config.ObjectStorage.Resources != nil && cfg.Config.ObjectStorage.Resources.Requests.Memory() != nil {
