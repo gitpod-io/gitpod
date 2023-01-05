@@ -64,8 +64,9 @@ type WorkspaceInfo struct {
 	Auth      *wsapi.WorkspaceAuthentication
 	StartedAt time.Time
 
-	OwnerUserId   string
-	SSHPublicKeys []string
+	OwnerUserId       string
+	SSHPublicKeys     []string
+	IDEResourcesToken string
 }
 
 // RemoteWorkspaceInfoProvider provides (cached) infos about running workspaces that it queries from ws-manager.
@@ -154,18 +155,19 @@ func mapPodToWorkspaceInfo(pod *corev1.Pod) *WorkspaceInfo {
 	workspaceURL := pod.Annotations[kubernetes.WorkspaceURLAnnotation]
 
 	return &WorkspaceInfo{
-		WorkspaceID:     pod.Labels[kubernetes.MetaIDLabel],
-		InstanceID:      pod.Labels[kubernetes.WorkspaceIDLabel],
-		URL:             workspaceURL,
-		IDEImage:        imageSpec.IdeRef,
-		IDEPublicPort:   getPortStr(workspaceURL),
-		SupervisorImage: imageSpec.SupervisorRef,
-		IPAddress:       pod.Status.PodIP,
-		Ports:           extractExposedPorts(pod).Ports,
-		Auth:            &wsapi.WorkspaceAuthentication{Admission: admission, OwnerToken: ownerToken},
-		StartedAt:       pod.CreationTimestamp.Time,
-		OwnerUserId:     pod.Labels[kubernetes.OwnerLabel],
-		SSHPublicKeys:   extractUserSSHPublicKeys(pod),
+		WorkspaceID:       pod.Labels[kubernetes.MetaIDLabel],
+		InstanceID:        pod.Labels[kubernetes.WorkspaceIDLabel],
+		URL:               workspaceURL,
+		IDEImage:          imageSpec.IdeRef,
+		IDEPublicPort:     getPortStr(workspaceURL),
+		SupervisorImage:   imageSpec.SupervisorRef,
+		IPAddress:         pod.Status.PodIP,
+		Ports:             extractExposedPorts(pod).Ports,
+		Auth:              &wsapi.WorkspaceAuthentication{Admission: admission, OwnerToken: ownerToken},
+		StartedAt:         pod.CreationTimestamp.Time,
+		OwnerUserId:       pod.Labels[kubernetes.OwnerLabel],
+		SSHPublicKeys:     extractUserSSHPublicKeys(pod),
+		IDEResourcesToken: pod.Annotations[kubernetes.IDEResourcesTokenAnnotation],
 	}
 }
 

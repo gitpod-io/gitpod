@@ -250,6 +250,25 @@ func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 	r.Use(ir.Config.CorsHandler)
 	r.Use(ir.workspaceMustExistHandler)
 
+	// match with /vscode-remote-resource
+	r.Use(func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+			if !strings.HasSuffix(req.URL.Path, "/vscode-remote-resource") {
+				h.ServeHTTP(resp, req)
+				return
+			}
+			coords := getWorkspaceCoords(req)
+			info := ir.InfoProvider.WorkspaceInfo(coords.ID)
+
+			if info != nil && info.IDEResourcesToken == req.URL.Query().Get("gpSession") {
+				h.ServeHTTP(resp, req)
+				return
+			}
+			log.WithField("wsID", info.InstanceID).Warn("gpSession not matched")
+			resp.WriteHeader(http.StatusForbidden)
+		})
+	})
+
 	workspaceIDEPass := ir.Config.WorkspaceAuthHandler(
 		proxyPass(ir.Config, ir.InfoProvider, workspacePodResolver),
 	)

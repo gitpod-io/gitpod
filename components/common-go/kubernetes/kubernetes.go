@@ -51,6 +51,9 @@ const (
 	// OwnerTokenAnnotation contains the owner token of the workspace.
 	OwnerTokenAnnotation = "gitpod/ownerToken"
 
+	// IDEResourcesTokenAnnotation contains the token for browser code to fetch resources.
+	IDEResourcesTokenAnnotation = "gitpod/ideResourcesToken"
+
 	// WorkspaceAdmissionAnnotation determines the user admission to a workspace, i.e. if it can be accessed by everyone without token.
 	WorkspaceAdmissionAnnotation = "gitpod/admission"
 
