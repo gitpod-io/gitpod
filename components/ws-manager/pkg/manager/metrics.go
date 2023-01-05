@@ -292,6 +292,10 @@ func (m *metrics) OnChange(status *api.WorkspaceStatus) {
 			reason = "aborted"
 		} else if status.Conditions.Failed != "" {
 			reason = "failed"
+
+			if strings.Contains(status.Conditions.Failed, "Pod ephemeral local storage usage exceeds the total limit of containers") {
+				reason = "out-of-space"
+			}
 		} else {
 			reason = "regular-stop"
 		}
