@@ -6,6 +6,7 @@ package apiv1
 
 import (
 	"context"
+	"errors"
 
 	goidc "github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -52,11 +53,35 @@ func (s *OIDCClientConfigService) CreateClientConfig(ctx context.Context, req *v
 	}
 
 	return &v1.CreateClientConfigResponse{
-		Config: &v1.OIDCClientConfig{
-			Id: created.ID.String(),
-			// TODO: Populate remainder of fields
-		},
+		Config: oidcClientConfigToProto(created),
 	}, nil
+}
+
+func (s *OIDCClientConfigService) GetClientConfig(ctx context.Context, req *v1.GetClientConfigRequest) (*v1.GetClientConfigResponse, error) {
+	id, err := validateOIDCSpecID(req.GetId())
+	if err != nil {
+		return nil, err
+	}
+
+	oidcConfig, err := db.GetOIDCClientConfig(ctx, s.dbConn, id)
+	if err != nil {
+		if errors.Is(err, db.ErrorNotFound) {
+			return nil, status.Errorf(codes.NotFound, "no oidc config with ID: %s exists", id.String())
+		}
+	}
+
+	return &v1.GetClientConfigResponse{
+		Config: oidcClientConfigToProto(oidcConfig),
+	}, nil
+}
+
+func validateOIDCSpecID(id string) (uuid.UUID, error) {
+	parsed, err := uuid.Parse(id)
+	if err != nil {
+		return uuid.Nil, status.Errorf(codes.InvalidArgument, "invalid oidc spec ID, must be a UUID")
+	}
+
+	return parsed, nil
 }
 
 func toDBSpec(oauth2Config *v1.OAuth2Config, oidcConfig *v1.OIDCConfig) db.OIDCSpec {
@@ -65,5 +90,12 @@ func toDBSpec(oauth2Config *v1.OAuth2Config, oidcConfig *v1.OIDCConfig) db.OIDCS
 		ClientSecret: oauth2Config.GetClientSecret(),
 		RedirectURL:  oauth2Config.GetAuthorizationEndpoint(),
 		Scopes:       append([]string{goidc.ScopeOpenID, "profile", "email"}, oauth2Config.GetScopesSupported()...),
+	}
+}
+
+func oidcClientConfigToProto(cfg db.OIDCClientConfig) *v1.OIDCClientConfig {
+	return &v1.OIDCClientConfig{
+		Id: cfg.ID.String(),
+		// TODO: Populate remainder of fields
 	}
 }
