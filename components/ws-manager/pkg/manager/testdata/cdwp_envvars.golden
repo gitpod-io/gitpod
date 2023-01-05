@@ -25,6 +25,7 @@
                 "gitpod/admission": "admit_owner_only",
                 "gitpod/contentInitializer": "GmcKZXdvcmtzcGFjZXMvY3J5cHRpYy1pZC1nb2VzLWhlcmcvZmQ2MjgwNGItNGNhYi0xMWU5LTg0M2EtNGU2NDUzNzMwNDhlLnRhckBnaXRwb2QtZGV2LXVzZXItY2hyaXN0ZXN0aW5n",
                 "gitpod/id": "test",
+                "gitpod/ideResourcesToken": "fRr2hdwSq2ppJsBOB7C0566Tr2cxz5rm",
                 "gitpod/imageSpec": "Cghzb21lLXJlZhI0ZXUuZ2NyLmlvL2dpdHBvZC1jb3JlLWRldi9idWlkL3RoZWlhLWlkZTpzb21ldmVyc2lvbjoAOgA=",
                 "gitpod/never-ready": "true",
                 "gitpod/ownerToken": "%7J'[Of/8NDiWE+9F,I6^Jcj_1\u0026}-F8p",
