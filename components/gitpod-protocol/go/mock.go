@@ -491,6 +491,21 @@ func (mr *MockAPIInterfaceMockRecorder) GetOwnerToken(ctx, workspaceID interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOwnerToken", reflect.TypeOf((*MockAPIInterface)(nil).GetOwnerToken), ctx, workspaceID)
 }
 
+// GetIDEResourcesToken mocks base method.
+func (m *MockAPIInterface) GetIDEResourcesToken(ctx context.Context, workspaceID string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetIDEResourcesToken", ctx, workspaceID)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetIDEResourcesToken indicates an expected call of GetIDEResourcesToken.
+func (mr *MockAPIInterfaceMockRecorder) GetIDEResourcesToken(ctx, workspaceID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetIDEResourcesToken", reflect.TypeOf((*MockAPIInterface)(nil).GetIDEResourcesToken), ctx, workspaceID)
+}
+
 // GetPortAuthenticationToken mocks base method.
 func (m *MockAPIInterface) GetPortAuthenticationToken(ctx context.Context, workspaceID string) (*Token, error) {
 	m.ctrl.T.Helper()

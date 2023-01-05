@@ -106,6 +106,9 @@ export interface WorkspaceInstanceStatus {
 
     // ownerToken is the token one needs to access the workspace. Its presence is checked by ws-proxy.
     ownerToken?: string;
+
+    // ideResourcesToken is the token for browser code to fetch remote resources
+    ideResourcesToken?: string;
 }
 
 // WorkspaceInstancePhase describes a high-level state of a workspace instance

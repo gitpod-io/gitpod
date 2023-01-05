@@ -349,6 +349,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         // owner token will set as cookie in the future
         delete res.status.ownerToken;
+        // ide resources token will be response of another api
+        delete res.status.ideResourcesToken;
         // is an operational internal detail
         delete res.status.nodeName;
         // internal operation detail
@@ -667,6 +669,29 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new Error("owner token not found");
         }
         return ownerToken;
+    }
+
+    public async getIDEResourcesToken(ctx: TraceContext, workspaceId: string): Promise<string> {
+        traceAPIParams(ctx, { workspaceId });
+        traceWI(ctx, { workspaceId });
+
+        this.checkAndBlockUser("getIDEResourcesToken");
+
+        const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
+        if (!workspace) {
+            throw new Error("workspace not found");
+        }
+        await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
+
+        const latestInstance = await this.workspaceDb.trace(ctx).findCurrentInstance(workspaceId);
+        await this.guardAccess({ kind: "workspaceInstance", subject: latestInstance, workspace }, "get");
+
+        const token = latestInstance?.status.ideResourcesToken;
+
+        if (!token) {
+            throw new Error("ide resources token not found");
+        }
+        return token;
     }
 
     public async startWorkspace(

@@ -391,6 +391,7 @@ export class WorkspaceManagerBridge implements Disposable {
             await this.prebuildUpdater.updatePrebuiltWorkspace({ span }, userId, status, writeToDB);
 
             if (writeToDB) {
+                // TODO: -----------------
                 await this.workspaceDB.trace(ctx).storeInstance(instance);
 
                 // cleanup

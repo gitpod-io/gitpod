@@ -67,6 +67,7 @@ const defaultFunctions: FunctionsConfig = {
     getWorkspace: { group: "default", points: 1 },
     isWorkspaceOwner: { group: "default", points: 1 },
     getOwnerToken: { group: "default", points: 1 },
+    getIDEResourcesToken: { group: "default", points: 1 },
     createWorkspace: { group: "createWorkspace", points: 1 },
     startWorkspace: { group: "startWorkspace", points: 1 },
     stopWorkspace: { group: "default", points: 1 },
