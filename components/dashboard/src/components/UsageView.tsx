@@ -19,7 +19,7 @@ import Pagination from "../Pagination/Pagination";
 import Header from "../components/Header";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ReactComponent as CreditsSvg } from "../images/credits.svg";
-import { ReactComponent as Spinner } from "../icons/Spinner.svg";
+import Spinner from "../icons/Spinner.svg";
 import { ReactComponent as UsageIcon } from "../images/usage-default.svg";
 import { toRemoteURL } from "../projects/render-utils";
 import { WorkspaceType } from "@gitpod/gitpod-protocol";
@@ -286,11 +286,9 @@ function UsageView({ attributionId }: UsageViewProps) {
                                 </div>
                             )}
                         {isLoading && (
-                            <div className="flex flex-col place-items-center align-center w-full">
-                                <div className="uppercase text-sm text-gray-400 dark:text-gray-500 mb-5">
-                                    Fetching usage...
-                                </div>
-                                <Spinner className="m-2 h-5 w-5 animate-spin" />
+                            <div className="flex items-center justify-center w-full space-x-2 text-gray-400 text-sm pt-16 pb-40">
+                                <img alt="Loading Spinner" className="h-4 w-4 animate-spin" src={Spinner} />
+                                <span>Fetching usage...</span>
                             </div>
                         )}
                         {!isLoading && currentPaginatedResults.length > 0 && (
