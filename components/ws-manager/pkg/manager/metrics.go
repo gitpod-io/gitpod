@@ -6,12 +6,14 @@ package manager
 
 import (
 	"context"
+	"encoding/json"
 	"math"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"google.golang.org/protobuf/encoding/protojson"
 	corev1 "k8s.io/api/core/v1"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
@@ -242,19 +244,37 @@ func (m *metrics) Register(reg prometheus.Registerer) error {
 }
 
 func (m *metrics) OnChange(status *api.WorkspaceStatus) {
-	var removeFromState bool
+	clog := log.WithFields(log.OWI(status.Metadata.Owner, status.Metadata.MetaId, status.Id))
+
+	var removeFromState, skipUpdate bool
 	tpe := api.WorkspaceType_name[int32(status.Spec.Type)]
 	m.mu.Lock()
 	defer func() {
+		if m.phaseState[status.Id] != status.Phase && !skipUpdate {
+			m.phaseState[status.Id] = status.Phase
+
+			if status.Conditions.Failed != "" {
+				status, _ := protojson.Marshal(status)
+				safeStatus, _ := log.RedactJSON(status)
+				safeStatusLog := make(map[string]interface{})
+				_ = json.Unmarshal(safeStatus, &safeStatusLog)
+				clog.WithFields(safeStatusLog).Error("workspace failed")
+			}
+		}
 		if removeFromState {
 			delete(m.phaseState, status.Id)
-		} else {
-			m.phaseState[status.Id] = status.Phase
 		}
 		m.mu.Unlock()
 	}()
 
 	switch status.Phase {
+	case api.WorkspacePhase_UNKNOWN:
+		status, _ := protojson.Marshal(status)
+		safeStatus, _ := log.RedactJSON(status)
+		safeStatusLog := make(map[string]interface{})
+		_ = json.Unmarshal(safeStatus, &safeStatusLog)
+		clog.WithFields(safeStatusLog).Error("workspace in UNKNOWN phase")
+
 	case api.WorkspacePhase_RUNNING:
 		if status.Metadata.StartedAt == nil {
 			return
@@ -273,15 +293,10 @@ func (m *metrics) OnChange(status *api.WorkspaceStatus) {
 		hist.Observe(time.Since(t).Seconds())
 
 	case api.WorkspacePhase_STOPPED:
-		previousStatus, ok := m.phaseState[status.Id]
-		if !ok {
+		if _, ok := m.phaseState[status.Id]; !ok {
+			skipUpdate = true
 			return
 		}
-		if previousStatus == api.WorkspacePhase_STOPPED {
-			return
-		}
-
-		removeFromState = true
 
 		var reason string
 		if strings.Contains(status.Message, string(activityClosed)) {
@@ -321,6 +336,8 @@ func (m *metrics) OnChange(status *api.WorkspaceStatus) {
 			}
 			stopC.Inc()
 		}
+
+		removeFromState = true
 	}
 }
 
