@@ -156,7 +156,26 @@ function ListAccessTokensView() {
                             </a>
                         </PillLabel>
                     </h3>
-                    <h2 className="text-gray-500">Create or regenerate access tokens.</h2>
+                    <h2 className="text-gray-500">
+                        Create or regenerate access tokens.{" "}
+                        <a
+                            className="gp-link"
+                            href="https://www.gitpod.io/docs/configure/user-settings/access-tokens"
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            Learn more
+                        </a>
+                        &nbsp;&middot;&nbsp;
+                        <a
+                            className="gp-link"
+                            href="https://github.com/gitpod-io/gitpod/issues/15433"
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            Send feedback
+                        </a>
+                    </h2>
                 </div>
                 {tokens.length > 0 && (
                     <Link to={settingsPathPersonalAccessTokenCreate}>

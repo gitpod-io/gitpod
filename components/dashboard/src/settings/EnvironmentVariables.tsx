@@ -222,7 +222,17 @@ export default function EnvVars() {
             <div className="flex items-start sm:justify-between mb-2">
                 <div>
                     <h3>Environment Variables</h3>
-                    <h2 className="text-gray-500">Variables are used to store information like passwords.</h2>
+                    <h2 className="text-gray-500">
+                        Variables are used to store information like passwords.{" "}
+                        <a
+                            className="gp-link"
+                            href="https://www.gitpod.io/docs/configure/projects/environment-variables#environment-variables"
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            Learn more
+                        </a>
+                    </h2>
                 </div>
                 {envVars.length !== 0 ? (
                     <div className="mt-3 flex mt-0">
@@ -238,13 +248,7 @@ export default function EnvVars() {
                         <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Environment Variables</h3>
                         <div className="text-center pb-6 text-gray-500">
                             In addition to user-specific environment variables you can also pass variables through a
-                            workspace creation URL.{" "}
-                            <a
-                                className="gp-link"
-                                href="https://www.gitpod.io/docs/environment-variables/#using-the-account-settings"
-                            >
-                                Learn more
-                            </a>
+                            workspace creation URL.
                         </div>
                         <button onClick={add}>New Variable</button>
                     </div>

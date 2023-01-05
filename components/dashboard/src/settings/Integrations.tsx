@@ -320,7 +320,17 @@ function GitProviders() {
             )}
 
             <h3>Git Providers</h3>
-            <h2>Manage permissions for Git providers.</h2>
+            <h2 className="text-gray-500">
+                Manage permissions for Git providers.{" "}
+                <a
+                    className="gp-link"
+                    href="https://www.gitpod.io/docs/configure/authentication"
+                    target="_blank"
+                    rel="noreferrer"
+                >
+                    Learn more
+                </a>
+            </h2>
             <ItemsList className="pt-6">
                 {authProviders &&
                     authProviders.map((ap) => (

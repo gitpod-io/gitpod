@@ -51,7 +51,17 @@ export default function Preferences() {
         <div>
             <PageWithSettingsSubMenu title="Preferences" subtitle="Configure user preferences.">
                 <h3>Editor</h3>
-                <p className="text-base text-gray-500 dark:text-gray-400">Choose the editor for opening workspaces.</p>
+                <p className="text-base text-gray-500 dark:text-gray-400">
+                    Choose the editor for opening workspaces.{" "}
+                    <a
+                        className="gp-link"
+                        href="https://www.gitpod.io/docs/references/ides-and-editors"
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        Learn more
+                    </a>
+                </p>
                 <SelectIDE location="preferences" />
                 <h3 className="mt-12">Theme</h3>
                 <p className="text-base text-gray-500 dark:text-gray-400">Early bird or night owl? Choose your side.</p>

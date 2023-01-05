@@ -96,7 +96,17 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
             {teamsAvailableForAttribution === undefined && <Spinner className="m-2 h-5 w-5 animate-spin" />}
             {teamsAvailableForAttribution && (
                 <div>
-                    <p>Associate usage without a project to the billing account below.</p>
+                    <h2 className="text-gray-500">
+                        Associate usage without a project to the billing account below.{" "}
+                        <a
+                            className="gp-link"
+                            href="https://www.gitpod.io/docs/configure/billing"
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            Learn more
+                        </a>
+                    </h2>
                     <div className="mt-4 max-w-2xl grid grid-cols-3 gap-3">
                         <SelectableCardSolid
                             className="h-18"
