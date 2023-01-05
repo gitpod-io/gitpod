@@ -67,8 +67,7 @@ type licensePayload struct {
 type LicenseLevel int
 
 const (
-	// LevelTeam is the default license level,
-	// which is the free tier
+	// This exists for historical reasons - it is now the same as LevelEnterprise
 	LevelTeam LicenseLevel = 0
 
 	// LevelEnterprise enables enterprise features,
@@ -140,7 +139,7 @@ func (lvl LicenseLevel) allowance() allowance {
 // Fallback license is used when the instance exceeds the number of licenses - it allows limited access
 var fallbackLicense = LicensePayload{
 	ID:    "fallback-license",
-	Level: LevelTeam,
+	Level: LevelEnterprise,
 	Seats: 0,
 	// Domain, ValidUntil are free for all
 }
@@ -149,7 +148,7 @@ var fallbackLicense = LicensePayload{
 var defaultLicense = LicensePayload{
 	ID:    "default-license",
 	Level: LevelEnterprise,
-	Seats: 10,
+	Seats: 0,
 	// Domain, ValidUntil are free for all
 }
 

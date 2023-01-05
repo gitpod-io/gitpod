@@ -2,6 +2,8 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
+// @deprecated
+
 package main
 
 import "github.com/gitpod-io/gitpod/licensor/ee/cmd"
