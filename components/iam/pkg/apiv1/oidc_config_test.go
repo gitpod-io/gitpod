@@ -53,6 +53,55 @@ func TestOIDCClientConfig_Create(t *testing.T) {
 	require.Equal(t, toDBSpec(config.Oauth2Config, config.OidcConfig), decrypted)
 }
 
+func TestOIDCClientConfig_Get(t *testing.T) {
+
+	t.Run("invalid id returns invalid argument", func(t *testing.T) {
+		client, _ := setupOIDCClientConfigService(t)
+
+		_, err := client.GetClientConfig(context.Background(), &v1.GetClientConfigRequest{
+			Id: "not-uuid",
+		})
+		require.Error(t, err)
+		require.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("no client config with ID returns not found", func(t *testing.T) {
+		client, _ := setupOIDCClientConfigService(t)
+
+		_, err := client.GetClientConfig(context.Background(), &v1.GetClientConfigRequest{
+			Id: uuid.New().String(),
+		})
+		require.Error(t, err)
+		require.Equal(t, codes.NotFound, status.Code(err))
+	})
+
+	t.Run("retrieves a config by ID", func(t *testing.T) {
+		client, dbConn := setupOIDCClientConfigService(t)
+
+		config := db.OIDCSpec{
+			ClientID:     "some-client-id",
+			ClientSecret: "some-client-secret",
+		}
+
+		encrypted, err := db.EncryptJSON(dbtest.CipherSet(t), config)
+		require.NoError(t, err)
+
+		created := dbtest.CreateOIDCClientConfigs(t, dbConn,
+			dbtest.NewOIDCClientConfig(t, db.OIDCClientConfig{
+				Data: encrypted,
+			}),
+		)[0]
+
+		response, err := client.GetClientConfig(context.Background(), &v1.GetClientConfigRequest{
+			Id: created.ID.String(),
+		})
+		require.NoError(t, err)
+		require.Equal(t, codes.OK, status.Code(err))
+		require.Equal(t, oidcClientConfigToProto(created), response.Config)
+	})
+
+}
+
 func setupOIDCClientConfigService(t *testing.T) (v1.OIDCServiceClient, *gorm.DB) {
 	t.Helper()
 
