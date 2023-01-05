@@ -157,7 +157,7 @@ func TestSeats(t *testing.T) {
 		{"Gitpod: invalid license", 50, 50, false, false, true, LicenseTypeGitpod, false},
 		{"Gitpod: within default license seats", 0, 7, true, true, false, LicenseTypeGitpod, false},
 		{"Gitpod: within default license seats (edge)", 0, 10, true, true, false, LicenseTypeGitpod, false},
-		{"Gitpod: beyond default license seats", 0, 11, false, true, false, LicenseTypeGitpod, false},
+		{"Gitpod: beyond default license seats", 0, 11, true, true, false, LicenseTypeGitpod, false},
 
 		// correctly missing the default license tests as Replicated always has a license
 		{"Replicated: unlimited seats", 0, 1000, true, false, false, LicenseTypeReplicated, false},
@@ -165,15 +165,15 @@ func TestSeats(t *testing.T) {
 		{"Replicated: within limited seats (edge)", 50, 50, true, false, false, LicenseTypeReplicated, false},
 		{"Replicated: beyond limited seats", 50, 150, false, false, false, LicenseTypeReplicated, false},
 		{"Replicated: beyond limited seats (edge)", 50, 51, false, false, false, LicenseTypeReplicated, false},
-		{"Replicated: invalid license", 50, 50, false, false, true, LicenseTypeReplicated, false},
-		{"Replicated: beyond default license seats", 0, 11, false, true, false, LicenseTypeReplicated, false},
+		{"Replicated: invalid license", 50, 50, true, false, true, LicenseTypeReplicated, false},
+		{"Replicated: beyond default license seats", 0, 11, true, true, false, LicenseTypeReplicated, false},
 
 		{"Replicated: unlimited seats", 0, 1000, true, false, false, LicenseTypeReplicated, true},
 		{"Replicated: within limited seats", 50, 40, true, false, false, LicenseTypeReplicated, true},
 		{"Replicated: within limited seats (edge)", 50, 50, true, false, false, LicenseTypeReplicated, true},
 		{"Replicated: beyond limited seats", 50, 150, false, false, false, LicenseTypeReplicated, true},
 		{"Replicated: beyond limited seats (edge)", 50, 51, false, false, false, LicenseTypeReplicated, true},
-		{"Replicated: invalid license", 50, 50, false, false, true, LicenseTypeReplicated, true},
+		{"Replicated: invalid license", 50, 50, true, false, true, LicenseTypeReplicated, true},
 		{"Replicated: beyond default license seats", 0, 11, false, true, false, LicenseTypeReplicated, true},
 		{"Replicated: invalid license within default seats", 50, 5, true, false, true, LicenseTypeReplicated, false},
 	}
@@ -238,7 +238,13 @@ func TestFeatures(t *testing.T) {
 			FeaturePrebuild,
 		}, LicenseTypeGitpod, seats, nil},
 
-		{"Gitpod (over seats): no license", true, LicenseLevel(0), []Feature{FeatureAdminDashboard}, LicenseTypeGitpod, 11, nil},
+		{"Gitpod (over seats): no license", true, LicenseLevel(0), []Feature{
+			FeatureAdminDashboard,
+			FeatureSetTimeout,
+			FeatureWorkspaceSharing,
+			FeatureSnapshot,
+			FeaturePrebuild,
+		}, LicenseTypeGitpod, 11, nil},
 		{"Gitpod (over seats): invalid license level", false, LicenseLevel(666), []Feature{}, LicenseTypeGitpod, seats + 1, nil},
 		{"Gitpod (over seats): enterprise license", false, LevelEnterprise, []Feature{}, LicenseTypeGitpod, seats + 1, nil},
 
@@ -272,8 +278,20 @@ func TestFeatures(t *testing.T) {
 			FeaturePrebuild,
 		}, LicenseTypeReplicated, seats + 1, &replicatedPaid},
 
-		{"Replicated (over seats - fallback): invalid license level", false, LicenseLevel(666), []Feature{FeatureAdminDashboard}, LicenseTypeReplicated, seats + 1, &replicatedCommunity},
-		{"Replicated (over seats - fallback): enterprise license", false, LevelEnterprise, []Feature{FeatureAdminDashboard}, LicenseTypeReplicated, seats + 1, &replicatedCommunity},
+		{"Replicated (over seats - fallback): invalid license level", false, LicenseLevel(666), []Feature{
+			FeatureAdminDashboard,
+			FeatureSetTimeout,
+			FeatureWorkspaceSharing,
+			FeatureSnapshot,
+			FeaturePrebuild,
+		}, LicenseTypeReplicated, seats + 1, &replicatedCommunity},
+		{"Replicated (over seats - fallback): enterprise license", false, LevelEnterprise, []Feature{
+			FeatureAdminDashboard,
+			FeatureSetTimeout,
+			FeatureWorkspaceSharing,
+			FeatureSnapshot,
+			FeaturePrebuild,
+		}, LicenseTypeReplicated, seats + 1, &replicatedCommunity},
 	}
 
 	for _, test := range tests {
