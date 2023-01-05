@@ -6,7 +6,7 @@
 
 import { useContext, useEffect, useState } from "react";
 import { Team, TeamMemberInfo } from "@gitpod/gitpod-protocol";
-import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { AttributionId, AttributionTarget } from "@gitpod/gitpod-protocol/lib/attribution";
 import { getGitpodService } from "../service/service";
 import { TeamsContext } from "../teams/teams-context";
 import { UserContext } from "../user-context";
@@ -86,6 +86,10 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
 
     let selectedAttributionId = user?.usageAttributionId || AttributionId.render({ kind: "user", userId: user?.id! });
 
+    const isSelected = (kind: AttributionTarget, accountId: string): boolean =>
+        selectedAttributionId ===
+        AttributionId.render(kind === "user" ? { kind, userId: accountId } : { kind, teamId: accountId });
+
     return (
         <>
             {errorMessage && (
@@ -111,27 +115,32 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
                         <SelectableCardSolid
                             className="h-18"
                             title="(myself)"
-                            selected={
-                                !!user &&
-                                selectedAttributionId === AttributionId.render({ kind: "user", userId: user.id })
-                            }
+                            selected={!!user && isSelected("user", user.id)}
                             onClick={() => setUsageAttributionTeam(undefined)}
                         >
                             <div className="flex-grow flex items-end px-1">
-                                <span className="text-sm text-gray-400">Personal Account</span>
+                                <span
+                                    className={`text-sm text-gray-400${
+                                        !!user && isSelected("user", user.id) ? " dark:text-gray-600" : ""
+                                    }`}
+                                >
+                                    Personal Account
+                                </span>
                             </div>
                         </SelectableCardSolid>
                         {teamsAvailableForAttribution.map((t) => (
                             <SelectableCardSolid
                                 className="h-18"
                                 title={t.name}
-                                selected={
-                                    selectedAttributionId === AttributionId.render({ kind: "team", teamId: t.id })
-                                }
+                                selected={isSelected("team", t.id)}
                                 onClick={() => setUsageAttributionTeam(t)}
                             >
                                 <div className="flex-grow flex items-end px-1">
-                                    <span className="text-sm text-gray-400">
+                                    <span
+                                        className={`text-sm text-gray-400${
+                                            isSelected("team", t.id) ? " dark:text-gray-600" : ""
+                                        }`}
+                                    >
                                         {!!membersByTeam[t.id]
                                             ? `${membersByTeam[t.id].length} member${
                                                   membersByTeam[t.id].length === 1 ? "" : "s"
