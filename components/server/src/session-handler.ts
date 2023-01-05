@@ -43,33 +43,12 @@ export class SessionHandlerProvider {
     }
 
     protected getCookieOptions(config: Config): express.CookieOptions {
-        const hostName = config.hostUrl.url.host;
-
-        let domain = hostName;
-        if (config.devBranch) {
-            // Use cookie for base domain to allow cookies being sent via ingress proxy in preview environments
-            //
-            // Otherwise, clients (in this case Chrome) may ignore (as in: save it, but don't send it on consequent requests) the 'Set-Cookie:...' send with a redirect (302, to github oauth)
-            // For details, see:
-            // - RFC draft sameSite: http://httpwg.org/http-extensions/draft-ietf-httpbis-cookie-same-site.html
-            // - https://bugs.chromium.org/p/chromium/issues/detail?id=150066
-            // - google: chromium not sending cookies set with redirect
-
-            const hostParts = hostName.split(".");
-            const baseDomain = hostParts.slice(hostParts.length - 2).join(".");
-            domain = `.${baseDomain}`;
-        }
-        if (this.config.insecureNoDomain) {
-            domain = hostName.split(":")[0];
-        }
-
         return {
             path: "/", // default
             httpOnly: true, // default
             secure: false, // default, TODO SSL! Config proxy
             maxAge: config.session.maxAgeMs, // configured in Helm chart, defaults to 3 days.
             sameSite: "lax", // default: true. "Lax" needed for OAuth.
-            domain: `${domain}`,
         };
     }
 
