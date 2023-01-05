@@ -1116,9 +1116,9 @@ metadata:
 # v1/Secret builtin-registry-auth
 apiVersion: v1
 data:
-  .dockerconfigjson: eyJhdXRocyI6eyJyZWdpc3RyeS5naXRwb2QuZXhhbXBsZS5jb20iOnsiYXV0aCI6ImVGTmxaRXBwUkdkS1VWRm5ORUpyVnpWNFMzVTZRMWMwUTFKQ2FtazJVakJpUjBjNE1XZDVSWGs9In19fQ==
-  password: Q1c0Q1JCamk2UjBiR0c4MWd5RXk=
-  user: eFNlZEppRGdKUVFnNEJrVzV4S3U=
+  .dockerconfigjson: eyJhdXRocyI6eyJyZWdpc3RyeS5naXRwb2QuZXhhbXBsZS5jb20iOnsiYXV0aCI6ImVIZDVRMGRsTlZVd1RrRnFObFZsYVhFM1RqQTZWbE5UYkcxaFMxZFFhaTVRVVhCdFZXWnNWR1E9In19fQ==
+  password: VlNTbG1hS1dQai5QUXBtVWZsVGQ=
+  user: eHd5Q0dlNVUwTkFqNlVlaXE3TjA=
 kind: Secret
 metadata:
   creationTimestamp: null
@@ -1234,8 +1234,8 @@ metadata:
     app.kubernetes.io/managed-by: Helm
 type: Opaque
 data:
-  root-user: "OC1XR3F3Mm9UbnNQZlVETlNrMFk="
-  root-password: "RHBDLmFTQXhrV0JQdTJfYkpfQUU="
+  root-user: "UkJqaTZSMGJHRzgxZ3lFeWUyNVA="
+  root-password: "dFg2TUw4Z0NXMzFtaXcwVDhRTUk="
   key.json: ""
 ---
 # v1/Secret mysql
@@ -1430,9 +1430,9 @@ data:
         },
         "minio": {
           "endpoint": "minio.default.svc.cluster.local:9000",
-          "accessKey": "8-WGqw2oTnsPfUDNSk0Y",
+          "accessKey": "RBji6R0bGG81gyEye25P",
           "accessKeyFile": "",
-          "secretKey": "DpC.aSAxkWBPu2_bJ_AE",
+          "secretKey": "tX6ML8gCW31miw0T8QMI",
           "secretKeyFile": "",
           "region": "local",
           "parallelUpload": 6
@@ -5173,7 +5173,7 @@ data:
         import ssl_configuration
 
         basicauth bcrypt "Docker Registry" {
-            xSedJiDgJQQg4BkW5xKu JDJhJDEwJFFTRGRRMHZZY2pIS2JqUC9aMDNnVC5HbEg2Z1dOQm5TL0pySnpYSm5iNy9DeVh0ZUw2cFM2
+            xwyCGe5U0NAj6Ueiq7N0 JDJhJDEwJFFTRGRRMHZZY2pIS2JqUC9aMDNnVC5CY0M3RDZsVVg0LzBpZmdnTGovT0VVWXoxTG8ud0lX
         }
 
         reverse_proxy https://registry.default.svc.cluster.local {
@@ -5444,7 +5444,7 @@ data:
       },
       "oauthServer": {
         "enabled": true,
-        "jwtSecret": "8QMIxwyCGe5U0NAj6Uei"
+        "jwtSecret": "m30EH-M2-cWMgkgdy7pu"
       },
       "rateLimiter": {
         "groups": {
@@ -5774,9 +5774,9 @@ data:
             },
             "minio": {
               "endpoint": "minio.default.svc.cluster.local:9000",
-              "accessKey": "8-WGqw2oTnsPfUDNSk0Y",
+              "accessKey": "RBji6R0bGG81gyEye25P",
               "accessKeyFile": "",
-              "secretKey": "DpC.aSAxkWBPu2_bJ_AE",
+              "secretKey": "tX6ML8gCW31miw0T8QMI",
               "secretKeyFile": "",
               "region": "local",
               "parallelUpload": 6
@@ -5958,9 +5958,9 @@ data:
           },
           "minio": {
             "endpoint": "minio.default.svc.cluster.local:9000",
-            "accessKey": "8-WGqw2oTnsPfUDNSk0Y",
+            "accessKey": "RBji6R0bGG81gyEye25P",
             "accessKeyFile": "",
-            "secretKey": "DpC.aSAxkWBPu2_bJ_AE",
+            "secretKey": "tX6ML8gCW31miw0T8QMI",
             "secretKeyFile": "",
             "region": "local",
             "parallelUpload": 6
@@ -8071,7 +8071,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 3e487f9543c719b9ee3f5590a0f98cb535b4bf1b301c66de8f00f3aa9d61381d
+        gitpod.io/checksum_config: 3e7db160db71491d8d16b0423783bf99a0dc293dc723960c9308756bdde69d3b
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8288,7 +8288,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: b938c6e286051c22b503c29f5de266741c2045a3ed69be85d7fd9f22a9346254
+        gitpod.io/checksum_config: 2a29ef265c219405bda658cb21613f40ad5e692590d2779476a3ff90917ed6fb
         seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
       creationTimestamp: null
       labels:
@@ -9087,7 +9087,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: cac138904f08d79e5598805683f8dc378bd52c58348489de22949ac38dd8b193
+        gitpod.io/checksum_config: 0d9d1c68723466a253996f0a96bf0682ce57b89ebcb4ae1e4a643dd788ef1cab
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9228,7 +9228,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 20782435cc6d6e080cf720b57dca8d4d5cfe40942fc71c4bfd54934fdc34c766
+        gitpod.io/checksum_config: 21ad538d4c7daef6619e5dda6fd71a49a5e5b551f0fc1365d3b7db1d1f38f9ce
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9955,7 +9955,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: af26ec864db5be86adfb79b972614487639aa67ad16de869e23e22e468f0bed8
+        gitpod.io/checksum_config: 3b0478b4bb4feb7b7a29bc33bf4ec99671df4dcbd9529778de375c72e78df64c
       creationTimestamp: null
       labels:
         app: gitpod
@@ -10108,7 +10108,7 @@ spec:
         app.kubernetes.io/instance: minio
         app.kubernetes.io/managed-by: Helm
       annotations:
-        checksum/credentials-secret: 0a5790906818b3f8eeee0bd3b3e990b3ad02d79bb23c62c0d91a4ca010fb5579
+        checksum/credentials-secret: 094325f216720012cacde9f52fd71c7e8b06dd6386492f6980e0f3588f1b1e7c
     spec:
       
       serviceAccountName: minio
@@ -10216,7 +10216,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: c52c73e63eaa95613a8f4fe77167c754cd48eaf757dd69c2048400311a5ae0a6
+        gitpod.io/checksum_config: a7bd71558cb04a04656bafe7651d4192a9d37be96d2d817f9b6225f63e3a6989
       creationTimestamp: null
       labels:
         app: gitpod
@@ -10567,7 +10567,7 @@ spec:
         release: docker-registry
       annotations:
         checksum/config: 1d22b82e19bbc654e029029c4fb86ad02dc13422dc3ac52f8175ad190e52a0bb
-        gitpod.io/checksum_config: 0ce55d51677cd683df3c7a244542c6aeaaf5dd6dca0f0458e8053a713228f535
+        gitpod.io/checksum_config: 1c66f4ccdb7f6331da2edaecefcb40f6c1b6315c9277eb0418fef3cc584a28bd
     spec:
       serviceAccountName: docker-registry
       securityContext:
@@ -10650,7 +10650,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 726dafd8c59907accd3250e873f40d6e59d6913f82b7198335bc6c24ae2e7db1
+        gitpod.io/checksum_config: f52ae23eddcf2fe15c87ec92cc3d998045c5ff491d52caed0f23a6fccc020134
       creationTimestamp: null
       labels:
         app: gitpod
@@ -10931,7 +10931,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 298563e7c37240295bf1c4e80327389892858aa3339c84b06de7cc454947cafb
+        gitpod.io/checksum_config: 94faf3d35267d731390a04ac48ef44a66d93a2308c6d41b78fb238a7e78ecdf2
       creationTimestamp: null
       labels:
         app: gitpod

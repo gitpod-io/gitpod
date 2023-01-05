@@ -5050,7 +5050,7 @@ data:
       },
       "oauthServer": {
         "enabled": true,
-        "jwtSecret": "8QMIxwyCGe5U0NAj6Uei"
+        "jwtSecret": "m30EH-M2-cWMgkgdy7pu"
       },
       "rateLimiter": {
         "groups": {
@@ -9769,7 +9769,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 8b2dddff40256f6233f1fcdbf9fcc9f048ff3485aef5a2656f61735559bdefbb
+        gitpod.io/checksum_config: 8c05f78bde8894a461a3d382e567b6d00d34026fa916c9e7baf2c1e81e43b239
       creationTimestamp: null
       labels:
         app: gitpod
