@@ -234,7 +234,7 @@ func (c *Client) GetCustomer(ctx context.Context, customerID string) (customer *
 	customer, err = c.sc.Customers.Get(customerID, &stripe.CustomerParams{
 		Params: stripe.Params{
 			Context: ctx,
-			Expand:  []*string{stripe.String("tax")},
+			Expand:  []*string{stripe.String("tax"), stripe.String("subscriptions")},
 		},
 	})
 	if err != nil {

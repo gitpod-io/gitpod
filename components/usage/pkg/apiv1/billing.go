@@ -194,6 +194,12 @@ func (s *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.C
 	if err != nil {
 		return nil, err
 	}
+	// if the customer has a subscription, return error
+	for _, subscription := range stripeCustomer.Subscriptions.Data {
+		if subscription.Status != "canceled" {
+			return nil, status.Errorf(codes.AlreadyExists, "Customer (%s) already has an active subscription (%s)", attributionID, subscription.ID)
+		}
+	}
 
 	priceID, err := getPriceIdentifier(attributionID, stripeCustomer, s)
 	if err != nil {
