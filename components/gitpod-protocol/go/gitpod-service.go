@@ -1336,6 +1336,26 @@ func (gp *APIoverJSONRPC) RegisterGithubApp(ctx context.Context, installationID 
 	return
 }
 
+func (gp *APIoverJSONRPC) Pin(ctx context.Context, options *PinOptions) (err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+
+	params := []interface{}{
+		options,
+		"toggle",
+	}
+
+	var result string
+	err = gp.C.Call(ctx, "updateWorkspaceUserPin", params, &result)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 // TakeSnapshot calls takeSnapshot on the server
 func (gp *APIoverJSONRPC) TakeSnapshot(ctx context.Context, options *TakeSnapshotOptions) (res string, err error) {
 	if gp == nil {
@@ -2014,6 +2034,11 @@ type GenerateNewGitpodTokenOptions struct {
 
 	// Scopes []string `json:"scopes,omitempty"`  float64 is the   float64 message type
 	Type float64 `json:"type,omitempty"`
+}
+
+// PinOptions is the PinOptions message type
+type PinOptions struct {
+	WorkspaceID string `json:"workspaceId,omitempty"`
 }
 
 // TakeSnapshotOptions is the TakeSnapshotOptions message type
