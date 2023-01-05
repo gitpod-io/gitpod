@@ -4617,7 +4617,7 @@ data:
       },
       "oauthServer": {
         "enabled": true,
-        "jwtSecret": "8QMIxwyCGe5U0NAj6Uei"
+        "jwtSecret": "m30EH-M2-cWMgkgdy7pu"
       },
       "rateLimiter": {
         "groups": {
@@ -8995,7 +8995,11 @@ spec:
   template:
     metadata:
       annotations:
+<<<<<<< HEAD
         gitpod.io/checksum_config: 4a901771b5b3705a7421e896ee40c283adfb4544d9064cda701458972bcaec85
+=======
+        gitpod.io/checksum_config: 09e70c56b73dd1d83f59a85cec7dc6dd2cdd18982612e885a72dde8132a61ddf
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms)
       creationTimestamp: null
       labels:
         app: gitpod

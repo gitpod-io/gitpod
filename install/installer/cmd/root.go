@@ -57,7 +57,7 @@ func setSeed() {
 		rand.Seed(rootOpts.SeedValue)
 
 		// crypto/rand is used by the bcrypt package to generate its random values
-		str, err := common.RandomString(64)
+		str, err := common.RandomString(128)
 		if err != nil {
 			panic(err)
 		}

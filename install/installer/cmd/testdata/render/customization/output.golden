@@ -1178,9 +1178,9 @@ metadata:
 # v1/Secret builtin-registry-auth
 apiVersion: v1
 data:
-  .dockerconfigjson: eyJhdXRocyI6eyJyZWdpc3RyeS5naXRwb2QuZXhhbXBsZS5jb20iOnsiYXV0aCI6ImVGTmxaRXBwUkdkS1VWRm5ORUpyVnpWNFMzVTZRMWMwUTFKQ2FtazJVakJpUjBjNE1XZDVSWGs9In19fQ==
-  password: Q1c0Q1JCamk2UjBiR0c4MWd5RXk=
-  user: eFNlZEppRGdKUVFnNEJrVzV4S3U=
+  .dockerconfigjson: eyJhdXRocyI6eyJyZWdpc3RyeS5naXRwb2QuZXhhbXBsZS5jb20iOnsiYXV0aCI6ImVIZDVRMGRsTlZVd1RrRnFObFZsYVhFM1RqQTZWbE5UYkcxaFMxZFFhaTVRVVhCdFZXWnNWR1E9In19fQ==
+  password: VlNTbG1hS1dQai5QUXBtVWZsVGQ=
+  user: eHd5Q0dlNVUwTkFqNlVlaXE3TjA=
 kind: Secret
 metadata:
   creationTimestamp: null
@@ -1296,8 +1296,8 @@ metadata:
     app.kubernetes.io/managed-by: Helm
 type: Opaque
 data:
-  root-user: "OC1XR3F3Mm9UbnNQZlVETlNrMFk="
-  root-password: "RHBDLmFTQXhrV0JQdTJfYkpfQUU="
+  root-user: "UkJqaTZSMGJHRzgxZ3lFeWUyNVA="
+  root-password: "dFg2TUw4Z0NXMzFtaXcwVDhRTUk="
   key.json: ""
 ---
 # v1/Secret mysql
@@ -1502,9 +1502,9 @@ data:
         },
         "minio": {
           "endpoint": "minio.default.svc.cluster.local:9000",
-          "accessKey": "8-WGqw2oTnsPfUDNSk0Y",
+          "accessKey": "RBji6R0bGG81gyEye25P",
           "accessKeyFile": "",
-          "secretKey": "DpC.aSAxkWBPu2_bJ_AE",
+          "secretKey": "tX6ML8gCW31miw0T8QMI",
           "secretKeyFile": "",
           "region": "local",
           "parallelUpload": 6
@@ -5349,7 +5349,7 @@ data:
         import ssl_configuration
 
         basicauth bcrypt "Docker Registry" {
-            xSedJiDgJQQg4BkW5xKu JDJhJDEwJFFTRGRRMHZZY2pIS2JqUC9aMDNnVC5HbEg2Z1dOQm5TL0pySnpYSm5iNy9DeVh0ZUw2cFM2
+            xwyCGe5U0NAj6Ueiq7N0 JDJhJDEwJFFTRGRRMHZZY2pIS2JqUC9aMDNnVC5CY0M3RDZsVVg0LzBpZmdnTGovT0VVWXoxTG8ud0lX
         }
 
         reverse_proxy https://registry.default.svc.cluster.local {
@@ -5632,7 +5632,7 @@ data:
       },
       "oauthServer": {
         "enabled": true,
-        "jwtSecret": "8QMIxwyCGe5U0NAj6Uei"
+        "jwtSecret": "m30EH-M2-cWMgkgdy7pu"
       },
       "rateLimiter": {
         "groups": {
@@ -5902,9 +5902,9 @@ data:
             },
             "minio": {
               "endpoint": "minio.default.svc.cluster.local:9000",
-              "accessKey": "8-WGqw2oTnsPfUDNSk0Y",
+              "accessKey": "RBji6R0bGG81gyEye25P",
               "accessKeyFile": "",
-              "secretKey": "DpC.aSAxkWBPu2_bJ_AE",
+              "secretKey": "tX6ML8gCW31miw0T8QMI",
               "secretKeyFile": "",
               "region": "local",
               "parallelUpload": 6
@@ -6091,9 +6091,9 @@ data:
           },
           "minio": {
             "endpoint": "minio.default.svc.cluster.local:9000",
-            "accessKey": "8-WGqw2oTnsPfUDNSk0Y",
+            "accessKey": "RBji6R0bGG81gyEye25P",
             "accessKeyFile": "",
-            "secretKey": "DpC.aSAxkWBPu2_bJ_AE",
+            "secretKey": "tX6ML8gCW31miw0T8QMI",
             "secretKeyFile": "",
             "region": "local",
             "parallelUpload": 6
@@ -8241,7 +8241,11 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
+<<<<<<< HEAD
         gitpod.io/checksum_config: 9e5f1a3b0ad0175c34b4be5f0d0a1f0b8c2727eab17bd9548976255a54916e64
+=======
+        gitpod.io/checksum_config: c218d6401941c1151e9352d943af91e5702230561bfe7bf6f82f98ec9b1bb4e2
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms)
         hello: world
       creationTimestamp: null
       labels:
@@ -8454,7 +8458,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: c4545c0bedaebc30f469d70ae1a266e68d203b27ae521f8983c90a799f61a49a
+        gitpod.io/checksum_config: 6f1809fca515396f4d65c512e9307756d6e10fff8acca0498d53ad83f7f39b4b
         hello: world
         seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
       creationTimestamp: null
@@ -9253,7 +9257,11 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
+<<<<<<< HEAD
         gitpod.io/checksum_config: 83fa4918a8a3e509e417c17dfe176f340594b9e93560245fcf94fea159f23617
+=======
+        gitpod.io/checksum_config: e74e2e6cf0f4335d2ee5420aa16b09783844ae8c9c8f109ac086d2f10634fb7c
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms)
         hello: world
       creationTimestamp: null
       labels:
@@ -9400,7 +9408,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: efaa4ecb9c874bc91c8f6000604bbbc61f5294f388703b19ec5cdb58c303ea23
+        gitpod.io/checksum_config: 4899f3940fbfcf76586ff108843223228bce2ca11fa39645581c6ecd904d4f7d
         hello: world
       creationTimestamp: null
       labels:
@@ -9970,7 +9978,11 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
+<<<<<<< HEAD
         gitpod.io/checksum_config: bd4f1ac3b1b2e11f92bb14a55bf98ffb4eb011356e6330fde5b37d2f2de95d28
+=======
+        gitpod.io/checksum_config: 4b33ed54c60e126484789929736e0bcbd912e1a5b4a07cf5eebdb45837813aea
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms)
         hello: world
       creationTimestamp: null
       labels:
@@ -10123,10 +10135,14 @@ spec:
         app.kubernetes.io/managed-by: Helm
       annotations:
 <<<<<<< HEAD
+<<<<<<< HEAD
         checksum/credentials-secret: 0a5790906818b3f8eeee0bd3b3e990b3ad02d79bb23c62c0d91a4ca010fb5579
 =======
         checksum/credentials-secret: 0f3ceb92b9779df4ce0927f6faeb23e9116b85e0eabe095d903e46a2770cde42
 >>>>>>> a706c90b0 ([installer]: update helm dependencies to latest versions)
+=======
+        checksum/credentials-secret: 094325f216720012cacde9f52fd71c7e8b06dd6386492f6980e0f3588f1b1e7c
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms)
     spec:
       
       serviceAccountName: minio
@@ -10240,7 +10256,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: 0f81d4cad6198e5d0222f29f92143d4db7e502feae211f06ed3a71978d5be7e6
+        gitpod.io/checksum_config: 7eae00bddbe605f0150e2b3c4c065084f924179153e824d7281f1c169bc7abd0
         hello: world
       creationTimestamp: null
       labels:
@@ -10605,7 +10621,7 @@ spec:
         checksum/secret: 450f59aeda22415409a87a1abd2c033c08ebd5fb54fe24d3c56560e92b0218f6
         
         gitpod.io: hello
-        gitpod.io/checksum_config: 0ce55d51677cd683df3c7a244542c6aeaaf5dd6dca0f0458e8053a713228f535
+        gitpod.io/checksum_config: 1c66f4ccdb7f6331da2edaecefcb40f6c1b6315c9277eb0418fef3cc584a28bd
         hello: world
     spec:
       serviceAccountName: docker-registry
@@ -10695,7 +10711,11 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
+<<<<<<< HEAD
         gitpod.io/checksum_config: 948db83a83779ff24f5a5f9eb7b00e684a5dfcecb3f933dac378dc3d20dad8e2
+=======
+        gitpod.io/checksum_config: d160a1089a804609aa6ad12e87ac23e4c76e29efd39e9ddf44796a71fc4d6b3f
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms)
         hello: world
       creationTimestamp: null
       labels:
@@ -10979,7 +10999,11 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
+<<<<<<< HEAD
         gitpod.io/checksum_config: 465314adb1f2f14db65f3f3feefc5c9baccd3de7b6c049be513e9dcc77faec13
+=======
+        gitpod.io/checksum_config: 73e659a7fb2aa1e8503b572ee8217f6e841db2e3ac8ebb8ca4a0ebf5beff6d9b
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms)
         hello: world
       creationTimestamp: null
       labels:

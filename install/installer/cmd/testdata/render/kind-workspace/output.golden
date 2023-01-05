@@ -561,9 +561,9 @@ metadata:
 # v1/Secret builtin-registry-auth
 apiVersion: v1
 data:
-  .dockerconfigjson: eyJhdXRocyI6eyJyZWdpc3RyeS5naXRwb2QuZXhhbXBsZS5jb20iOnsiYXV0aCI6ImVGTmxaRXBwUkdkS1VWRm5ORUpyVnpWNFMzVTZRMWMwUTFKQ2FtazJVakJpUjBjNE1XZDVSWGs9In19fQ==
-  password: Q1c0Q1JCamk2UjBiR0c4MWd5RXk=
-  user: eFNlZEppRGdKUVFnNEJrVzV4S3U=
+  .dockerconfigjson: eyJhdXRocyI6eyJyZWdpc3RyeS5naXRwb2QuZXhhbXBsZS5jb20iOnsiYXV0aCI6ImVIZDVRMGRsTlZVd1RrRnFObFZsYVhFM1RqQTZWbE5UYkcxaFMxZFFhaTVRVVhCdFZXWnNWR1E9In19fQ==
+  password: VlNTbG1hS1dQai5QUXBtVWZsVGQ=
+  user: eHd5Q0dlNVUwTkFqNlVlaXE3TjA=
 kind: Secret
 metadata:
   creationTimestamp: null
@@ -1824,9 +1824,9 @@ data:
             },
             "minio": {
               "endpoint": "minio.default.svc.cluster.local:9000",
-              "accessKey": "8-WGqw2oTnsPfUDNSk0Y",
+              "accessKey": "RBji6R0bGG81gyEye25P",
               "accessKeyFile": "",
-              "secretKey": "DpC.aSAxkWBPu2_bJ_AE",
+              "secretKey": "tX6ML8gCW31miw0T8QMI",
               "secretKeyFile": "",
               "region": "local",
               "parallelUpload": 6
@@ -2008,9 +2008,9 @@ data:
           },
           "minio": {
             "endpoint": "minio.default.svc.cluster.local:9000",
-            "accessKey": "8-WGqw2oTnsPfUDNSk0Y",
+            "accessKey": "RBji6R0bGG81gyEye25P",
             "accessKeyFile": "",
-            "secretKey": "DpC.aSAxkWBPu2_bJ_AE",
+            "secretKey": "tX6ML8gCW31miw0T8QMI",
             "secretKeyFile": "",
             "region": "local",
             "parallelUpload": 6
@@ -2959,7 +2959,11 @@ spec:
   template:
     metadata:
       annotations:
+<<<<<<< HEAD
         gitpod.io/checksum_config: 1568539df3f78cad79c3dd7b7e3ae3f5cf4fa74ad7263936762f004a8a6af77c
+=======
+        gitpod.io/checksum_config: 3e7db160db71491d8d16b0423783bf99a0dc293dc723960c9308756bdde69d3b
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms)
       creationTimestamp: null
       labels:
         app: gitpod
@@ -3163,7 +3167,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: b938c6e286051c22b503c29f5de266741c2045a3ed69be85d7fd9f22a9346254
+        gitpod.io/checksum_config: 2a29ef265c219405bda658cb21613f40ad5e692590d2779476a3ff90917ed6fb
         seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
       creationTimestamp: null
       labels:
@@ -3446,7 +3450,11 @@ spec:
   template:
     metadata:
       annotations:
+<<<<<<< HEAD
         gitpod.io/checksum_config: 6b82d310231a10f059f0a9efebcf1422f6b2e72eacb55b1ac68f283695b1a167
+=======
+        gitpod.io/checksum_config: 9be6cd6b32a0508817c7d1dadc9d574f14a8946d1c60c135954dab56ca241e29
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms)
       creationTimestamp: null
       labels:
         app: gitpod
@@ -3595,6 +3603,7 @@ spec:
       annotations:
 <<<<<<< HEAD
         checksum/config: 1d22b82e19bbc654e029029c4fb86ad02dc13422dc3ac52f8175ad190e52a0bb
+<<<<<<< HEAD
         gitpod.io/checksum_config: 0ce55d51677cd683df3c7a244542c6aeaaf5dd6dca0f0458e8053a713228f535
 =======
         checksum/config: 699dd382179068f3354c330fcce38625e2861d97b962074b4f57005d40497b00
@@ -3602,6 +3611,9 @@ spec:
         
         gitpod.io/checksum_config: 1c66f4ccdb7f6331da2edaecefcb40f6c1b6315c9277eb0418fef3cc584a28bd
 >>>>>>> a706c90b0 ([installer]: update helm dependencies to latest versions)
+=======
+        gitpod.io/checksum_config: 1c66f4ccdb7f6331da2edaecefcb40f6c1b6315c9277eb0418fef3cc584a28bd
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms)
     spec:
       serviceAccountName: docker-registry
       securityContext:
@@ -3684,7 +3696,11 @@ spec:
   template:
     metadata:
       annotations:
+<<<<<<< HEAD
         gitpod.io/checksum_config: cd4b2686fe34e3488f453e58aabb2197bd886fb64b6e6fc3ab840694d09b6391
+=======
+        gitpod.io/checksum_config: b7a18ab8174f569b7581efcda13a5f2ee2e35bda88559aead6bf593339a2db54
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms)
       creationTimestamp: null
       labels:
         app: gitpod

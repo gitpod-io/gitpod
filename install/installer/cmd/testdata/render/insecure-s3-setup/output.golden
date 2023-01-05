@@ -1066,9 +1066,9 @@ metadata:
 # v1/Secret builtin-registry-auth
 apiVersion: v1
 data:
-  .dockerconfigjson: eyJhdXRocyI6eyJyZWdpc3RyeS5naXRwb2QuZXhhbXBsZS5jb20iOnsiYXV0aCI6ImVGTmxaRXBwUkdkS1VWRm5ORUpyVnpWNFMzVTZRMWMwUTFKQ2FtazJVakJpUjBjNE1XZDVSWGs9In19fQ==
-  password: Q1c0Q1JCamk2UjBiR0c4MWd5RXk=
-  user: eFNlZEppRGdKUVFnNEJrVzV4S3U=
+  .dockerconfigjson: eyJhdXRocyI6eyJyZWdpc3RyeS5naXRwb2QuZXhhbXBsZS5jb20iOnsiYXV0aCI6ImVIZDVRMGRsTlZVd1RrRnFObFZsYVhFM1RqQTZWbE5UYkcxaFMxZFFhaTVRVVhCdFZXWnNWR1E9In19fQ==
+  password: VlNTbG1hS1dQai5QUXBtVWZsVGQ=
+  user: eHd5Q0dlNVUwTkFqNlVlaXE3TjA=
 kind: Secret
 metadata:
   creationTimestamp: null
@@ -1382,11 +1382,19 @@ data:
           "projectId": ""
         },
         "minio": {
+<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
           "endpoint": "s3-provider.com",
           "accessKey": "",
           "accessKeyFile": "/mnt/secrets/storage/accessKeyId",
           "secretKey": "",
           "secretKeyFile": "/mnt/secrets/storage/secretAccessKey",
+=======
+          "endpoint": "minio.default.svc.cluster.local:9000",
+          "accessKey": "RBji6R0bGG81gyEye25P",
+          "accessKeyFile": "",
+          "secretKey": "tX6ML8gCW31miw0T8QMI",
+          "secretKeyFile": "",
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
           "region": "local",
           "parallelUpload": 100,
           "bucket": "s3-bucket"
@@ -4812,7 +4820,7 @@ data:
         import ssl_configuration
 
         basicauth bcrypt "Docker Registry" {
-            xSedJiDgJQQg4BkW5xKu JDJhJDEwJFFTRGRRMHZZY2pIS2JqUC9aMDNnVC5HbEg2Z1dOQm5TL0pySnpYSm5iNy9DeVh0ZUw2cFM2
+            xwyCGe5U0NAj6Ueiq7N0 JDJhJDEwJFFTRGRRMHZZY2pIS2JqUC9aMDNnVC5CY0M3RDZsVVg0LzBpZmdnTGovT0VVWXoxTG8ud0lX
         }
 
         reverse_proxy https://registry.default.svc.cluster.local {
@@ -5080,7 +5088,7 @@ data:
       },
       "oauthServer": {
         "enabled": true,
-        "jwtSecret": "8QMIxwyCGe5U0NAj6Uei"
+        "jwtSecret": "m30EH-M2-cWMgkgdy7pu"
       },
       "rateLimiter": {
         "groups": {
@@ -5339,11 +5347,19 @@ data:
               "projectId": ""
             },
             "minio": {
+<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
               "endpoint": "s3-provider.com",
               "accessKey": "",
               "accessKeyFile": "/mnt/secrets/storage/accessKeyId",
               "secretKey": "",
               "secretKeyFile": "/mnt/secrets/storage/secretAccessKey",
+=======
+              "endpoint": "minio.default.svc.cluster.local:9000",
+              "accessKey": "RBji6R0bGG81gyEye25P",
+              "accessKeyFile": "",
+              "secretKey": "tX6ML8gCW31miw0T8QMI",
+              "secretKeyFile": "",
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
               "region": "local",
               "parallelUpload": 100,
               "bucket": "s3-bucket"
@@ -5524,11 +5540,19 @@ data:
             "projectId": ""
           },
           "minio": {
+<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
             "endpoint": "s3-provider.com",
             "accessKey": "",
             "accessKeyFile": "/mnt/secrets/storage/accessKeyId",
             "secretKey": "",
             "secretKeyFile": "/mnt/secrets/storage/secretAccessKey",
+=======
+            "endpoint": "minio.default.svc.cluster.local:9000",
+            "accessKey": "RBji6R0bGG81gyEye25P",
+            "accessKeyFile": "",
+            "secretKey": "tX6ML8gCW31miw0T8QMI",
+            "secretKeyFile": "",
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
             "region": "local",
             "parallelUpload": 100,
             "bucket": "s3-bucket"
@@ -7570,7 +7594,11 @@ spec:
   template:
     metadata:
       annotations:
+<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
         gitpod.io/checksum_config: 1568539df3f78cad79c3dd7b7e3ae3f5cf4fa74ad7263936762f004a8a6af77c
+=======
+        gitpod.io/checksum_config: c89ca2c9729c189ef1739d1bfc113c8c52bc46f8155c4a9b195ccd4de910a23b
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
       creationTimestamp: null
       labels:
         app: gitpod
@@ -7774,7 +7802,11 @@ spec:
   template:
     metadata:
       annotations:
+<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
         gitpod.io/checksum_config: c95be35e9c1c3f3bafde5c5e0cc5e97ab493e5624093809d7fa7680d0190da25
+=======
+        gitpod.io/checksum_config: 2a29ef265c219405bda658cb21613f40ad5e692590d2779476a3ff90917ed6fb
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
         seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
       creationTimestamp: null
       labels:
@@ -8569,7 +8601,11 @@ spec:
   template:
     metadata:
       annotations:
+<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
         gitpod.io/checksum_config: a93d22be9b0695e0bd3211bfd5e023b09c08a8cea026a41f080346023887bd74
+=======
+        gitpod.io/checksum_config: ca8305ae7d44552aace863e8af17bbdef1c57b0259ee7bdc20a7ab9061d2fb9f
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8707,7 +8743,11 @@ spec:
   template:
     metadata:
       annotations:
+<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
         gitpod.io/checksum_config: 55b82a9f4f41ab5582209c883bcb86b8305411fc9f2489a2f41fd576bfc5ccf9
+=======
+        gitpod.io/checksum_config: 21ad538d4c7daef6619e5dda6fd71a49a5e5b551f0fc1365d3b7db1d1f38f9ce
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9236,7 +9276,11 @@ spec:
   template:
     metadata:
       annotations:
+<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
         gitpod.io/checksum_config: 6b82d310231a10f059f0a9efebcf1422f6b2e72eacb55b1ac68f283695b1a167
+=======
+        gitpod.io/checksum_config: dcca6a2e85fae554d69e6fe11a64ea7cc27c5bb94968d368599896acf6d9e829
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9387,7 +9431,11 @@ spec:
         app.kubernetes.io/instance: minio
         app.kubernetes.io/managed-by: Helm
       annotations:
+<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
         checksum/credentials-secret: 0f3ceb92b9779df4ce0927f6faeb23e9116b85e0eabe095d903e46a2770cde42
+=======
+        checksum/credentials-secret: 094325f216720012cacde9f52fd71c7e8b06dd6386492f6980e0f3588f1b1e7c
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
     spec:
       
       serviceAccountName: minio
@@ -9496,7 +9544,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: c52c73e63eaa95613a8f4fe77167c754cd48eaf757dd69c2048400311a5ae0a6
+        gitpod.io/checksum_config: a7bd71558cb04a04656bafe7651d4192a9d37be96d2d817f9b6225f63e3a6989
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9844,6 +9892,7 @@ spec:
       annotations:
 <<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
         checksum/config: 1d22b82e19bbc654e029029c4fb86ad02dc13422dc3ac52f8175ad190e52a0bb
+<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
         gitpod.io/checksum_config: 0ce55d51677cd683df3c7a244542c6aeaaf5dd6dca0f0458e8053a713228f535
 =======
         checksum/config: 699dd382179068f3354c330fcce38625e2861d97b962074b4f57005d40497b00
@@ -9851,6 +9900,9 @@ spec:
         
         gitpod.io/checksum_config: 1c66f4ccdb7f6331da2edaecefcb40f6c1b6315c9277eb0418fef3cc584a28bd
 >>>>>>> a706c90b0 ([installer]: update helm dependencies to latest versions):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
+=======
+        gitpod.io/checksum_config: 1c66f4ccdb7f6331da2edaecefcb40f6c1b6315c9277eb0418fef3cc584a28bd
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
     spec:
       serviceAccountName: docker-registry
       securityContext:
@@ -9937,7 +9989,11 @@ spec:
   template:
     metadata:
       annotations:
+<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
         gitpod.io/checksum_config: 3d98dffb48bebba57afb1ffd2b059e4a1a95bb679d843bee0158e5d4b1814914
+=======
+        gitpod.io/checksum_config: 4b4c3a473e5569c39bda206c756538858ff6f5495b563c523705666ba3ec4930
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
       creationTimestamp: null
       labels:
         app: gitpod
@@ -10212,7 +10268,11 @@ spec:
   template:
     metadata:
       annotations:
+<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
         gitpod.io/checksum_config: 7aa5b741d1192fb626ba05a2e819c40f92db4b21176f9d60badf08be2dc0e2b8
+=======
+        gitpod.io/checksum_config: 21c3b53bac44cf0f98bc57e43353e3136dc5806409951038c2ba36aea69dd218
+>>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
       creationTimestamp: null
       labels:
         app: gitpod
