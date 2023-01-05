@@ -1167,8 +1167,8 @@ metadata:
     app.kubernetes.io/managed-by: Helm
 type: Opaque
 data:
-  root-user: "OC1XR3F3Mm9UbnNQZlVETlNrMFk="
-  root-password: "RHBDLmFTQXhrV0JQdTJfYkpfQUU="
+  root-user: "UkJqaTZSMGJHRzgxZ3lFeWUyNVA="
+  root-password: "dFg2TUw4Z0NXMzFtaXcwVDhRTUk="
   azure-storage-account-name: ""
   azure-storage-account-key: ""
 ---
@@ -1328,9 +1328,9 @@ data:
         },
         "minio": {
           "endpoint": "minio.default.svc.cluster.local:9000",
-          "accessKey": "8-WGqw2oTnsPfUDNSk0Y",
+          "accessKey": "RBji6R0bGG81gyEye25P",
           "accessKeyFile": "",
-          "secretKey": "DpC.aSAxkWBPu2_bJ_AE",
+          "secretKey": "tX6ML8gCW31miw0T8QMI",
           "secretKeyFile": "",
           "region": "local",
           "parallelUpload": 6
@@ -5034,7 +5034,7 @@ data:
       },
       "oauthServer": {
         "enabled": true,
-        "jwtSecret": "8QMIxwyCGe5U0NAj6Uei"
+        "jwtSecret": "m30EH-M2-cWMgkgdy7pu"
       },
       "rateLimiter": {
         "groups": {
@@ -5364,9 +5364,9 @@ data:
             },
             "minio": {
               "endpoint": "minio.default.svc.cluster.local:9000",
-              "accessKey": "8-WGqw2oTnsPfUDNSk0Y",
+              "accessKey": "RBji6R0bGG81gyEye25P",
               "accessKeyFile": "",
-              "secretKey": "DpC.aSAxkWBPu2_bJ_AE",
+              "secretKey": "tX6ML8gCW31miw0T8QMI",
               "secretKeyFile": "",
               "region": "local",
               "parallelUpload": 6
@@ -5548,9 +5548,9 @@ data:
           },
           "minio": {
             "endpoint": "minio.default.svc.cluster.local:9000",
-            "accessKey": "8-WGqw2oTnsPfUDNSk0Y",
+            "accessKey": "RBji6R0bGG81gyEye25P",
             "accessKeyFile": "",
-            "secretKey": "DpC.aSAxkWBPu2_bJ_AE",
+            "secretKey": "tX6ML8gCW31miw0T8QMI",
             "secretKeyFile": "",
             "region": "local",
             "parallelUpload": 6
@@ -7723,7 +7723,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: b938c6e286051c22b503c29f5de266741c2045a3ed69be85d7fd9f22a9346254
+        gitpod.io/checksum_config: 2a29ef265c219405bda658cb21613f40ad5e692590d2779476a3ff90917ed6fb
         seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
       creationTimestamp: null
       labels:
@@ -8504,7 +8504,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 20782435cc6d6e080cf720b57dca8d4d5cfe40942fc71c4bfd54934fdc34c766
+        gitpod.io/checksum_config: 21ad538d4c7daef6619e5dda6fd71a49a5e5b551f0fc1365d3b7db1d1f38f9ce
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9385,7 +9385,7 @@ spec:
         app.kubernetes.io/instance: minio
         app.kubernetes.io/managed-by: Helm
       annotations:
-        checksum/credentials-secret: c1cd36703ad730b3d641029a684127a2da119d23e4838caa5c0e21553887c478
+        checksum/credentials-secret: 31ca5e20dec5cc79ce6a424f6bad5283e868082022f029ebfaf8c621768eed34
     spec:
       
       serviceAccountName: minio
@@ -9846,7 +9846,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 8b2dddff40256f6233f1fcdbf9fcc9f048ff3485aef5a2656f61735559bdefbb
+        gitpod.io/checksum_config: 8c05f78bde8894a461a3d382e567b6d00d34026fa916c9e7baf2c1e81e43b239
       creationTimestamp: null
       labels:
         app: gitpod
@@ -10127,7 +10127,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 62fb425bd7800391dca7d008cd0c86cab613afef78e188a950e367ed7429ad73
+        gitpod.io/checksum_config: 21c3b53bac44cf0f98bc57e43353e3136dc5806409951038c2ba36aea69dd218
       creationTimestamp: null
       labels:
         app: gitpod
