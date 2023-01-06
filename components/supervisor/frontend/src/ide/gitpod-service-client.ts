@@ -14,7 +14,7 @@ export interface GitpodServiceClient {
     readonly onDidChangeInfo: Event<void>;
 }
 
-export async function create(): Promise<GitpodServiceClient> {
+export async function create(wsAuth: (instanceID: string) => Promise<boolean>): Promise<GitpodServiceClient> {
     const wsUrl = workspaceUrl;
     if (!wsUrl.workspaceId) {
         throw new Error(`Failed to extract a workspace id from '${wsUrl.toString()}'.`);
@@ -33,10 +33,8 @@ export async function create(): Promise<GitpodServiceClient> {
     });
     async function auth(workspaceInstanceId: string): Promise<void> {
         try {
-            const response = await fetch(wsUrl.asStart().asWorkspaceAuth(workspaceInstanceId).toString(), {
-                credentials: "include",
-            });
-            if (response.ok) {
+            const ok = await wsAuth(workspaceInstanceId);
+            if (ok) {
                 resolveAuth!();
             } else {
                 rejectAuth!(new Error("authentication failed"));

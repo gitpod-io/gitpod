@@ -56,6 +56,15 @@ function createIDEFrontendGitpodService<C extends GitpodClient, S extends Gitpod
     const factory = new JsonRpcProxyFactory<C>(server);
     server.registerClient(factory.createProxy());
     connection.onRequest("$reconnectServer", () => server.reconnect());
+    connection.onRequest("$fetchWorkspaceCookie", (t) => {
+        // const url = GitpodHostUrl.fromWorkspaceUrl(window.location.href).asStart().asWorkspaceAuth(t.instanceID).toString();
+        // const response = await fetch(url, {
+        //     credentials: "include",
+        // });
+
+        console.log(t, typeof t, "=================fetchWorkspaceCookie");
+        return false;
+    });
     factory.listen(connection);
 }
 

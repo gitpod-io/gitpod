@@ -46,7 +46,7 @@ window.addEventListener("error", (event) => {
 
 require("../src/shared/index.css");
 
-import { createGitpodService, WorkspaceInstancePhase } from "@gitpod/gitpod-protocol";
+import { WorkspaceInstancePhase } from "@gitpod/gitpod-protocol";
 import { DisposableCollection } from "@gitpod/gitpod-protocol/lib/util/disposable";
 import * as GitpodServiceClient from "./ide/gitpod-service-client";
 import * as heartBeat from "./ide/heart-beat";
@@ -55,11 +55,8 @@ import * as IDEWorker from "./ide/ide-worker";
 import * as IDEWebSocket from "./ide/ide-web-socket";
 import { SupervisorServiceClient } from "./ide/supervisor-service-client";
 import * as LoadingFrame from "./shared/loading-frame";
-import { serverUrl, startUrl } from "./shared/urls";
+import { startUrl } from "./shared/urls";
 
-// window.gitpod = {
-//     service: createGitpodService(serverUrl.toString()),
-// };
 IDEWorker.install();
 IDEWebSocket.install();
 const ideService = IDEFrontendService.create();
@@ -67,7 +64,9 @@ const loadingIDE = new Promise((resolve) => window.addEventListener("DOMContentL
 const toStop = new DisposableCollection();
 
 const loadingFramePromise = LoadingFrame.load();
-const servicePromise = loadingFramePromise.then(({ gitpodService }) => {
+let wsAuthFunc: (instanceID: string) => Promise<boolean>;
+const servicePromise = loadingFramePromise.then(({ gitpodService, wsAuth }) => {
+    wsAuthFunc = wsAuth;
     Object.defineProperty(window.gitpod, "service", {
         get() {
             return gitpodService;
@@ -76,9 +75,11 @@ const servicePromise = loadingFramePromise.then(({ gitpodService }) => {
 });
 const pendingGitpodServiceClient = servicePromise.then(async () => {
     // TODO: get ws cookie
+    // test ----------
     const data = await window.gitpod.service.server.getWorkspaces({ limit: 1 });
     console.log(JSON.stringify(data), "===================hwen.getWorkspaces");
-    return GitpodServiceClient.create();
+    // test ----------
+    return GitpodServiceClient.create(wsAuthFunc);
 });
 
 (async () => {

@@ -7,8 +7,6 @@
 import { createGitpodService, GitpodServer, GitpodServiceImpl } from "@gitpod/gitpod-protocol";
 import { createWindowMessageConnection } from "@gitpod/gitpod-protocol/lib/messaging/browser/window-connection";
 import { JsonRpcProxyFactory } from "@gitpod/gitpod-protocol/lib/messaging/proxy-factory";
-import { createMessageConnection } from "vscode-jsonrpc/lib/main";
-import { ConsoleLogger } from "vscode-ws-jsonrpc";
 import { isSaaSServerGreaterThan } from "../ide/gitpod-server-compatibility";
 import { startUrl } from "./urls";
 
@@ -41,6 +39,7 @@ export function load(): Promise<{
     setState: (state: object) => void;
     openDesktopLink: (link: string) => void;
     gitpodService: ReturnType<typeof createGitpodService>;
+    wsAuth: (instanceID: string) => Promise<boolean>;
 }> {
     return new Promise((resolve) => {
         const frame = document.createElement("iframe");
@@ -60,6 +59,14 @@ export function load(): Promise<{
                     await connection.sendRequest("$reconnectServer");
                 },
             });
+
+            const wsAuth = async (instanceID: string) => {
+                const ok = await connection.sendRequest("$fetchWorkspaceCookie", {
+                    instanceID,
+                });
+                console.log(ok, "=================hwen.fetchWorkspaceCookie response");
+                return false;
+            }
 
             const setState = (state: object) => {
                 frameWindow.postMessage({ type: "setState", state }, serverOrigin);
@@ -84,7 +91,14 @@ export function load(): Promise<{
                     }
                 }
             };
-            resolve({ frame, sessionId, setState, openDesktopLink, gitpodService });
+            resolve({
+                frame,
+                sessionId,
+                setState,
+                openDesktopLink,
+                gitpodService,
+                wsAuth,
+            });
         };
     });
 }
