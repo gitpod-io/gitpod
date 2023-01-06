@@ -47,7 +47,7 @@ variable "harvester_ingress_ip" {
 
 variable "cert_issuer" {
   type        = string
-  default     = "zerossl-issuer-gitpod-core-dev"
+  default     = "letsencrypt-issuer-gitpod-core-dev"
   description = "Certificate issuer"
 }
 
