@@ -934,6 +934,41 @@ func (s *WorkspaceService) BackupWorkspace(ctx context.Context, req *api.BackupW
 	}, nil
 }
 
+// RestartRing1 will trigger ring1 for restart and using different rootfs
+func (s *WorkspaceService) RestartRing1(ctx context.Context, req *api.RestartRing1Request) (res *api.RestartRing1Response, err error) {
+	//nolint:ineffassign
+	span, ctx := opentracing.StartSpanFromContext(ctx, "RestartRing1")
+	span.SetTag("workspace", req.Id)
+	defer tracing.FinishSpan(span, &err)
+
+	if req.Id == "" {
+		return nil, status.Error(codes.InvalidArgument, "ID is required")
+	}
+
+	sess := s.store.Get(req.Id)
+	if sess == nil {
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("cannot find workspace %s during RestartRing1", req.Id))
+	}
+
+	wscontainerID, err := s.runtime.WaitForContainer(ctx, sess.InstanceID)
+	if err != nil {
+		log.WithError(err).WithFields(sess.OWI()).Error("RestartRing1: cannot find workspace container")
+		return nil, status.Errorf(codes.Internal, "cannot find workspace container")
+	}
+
+	containerPID, err := s.runtime.ContainerPID(ctx, wscontainerID)
+	if err != nil {
+		log.WithError(err).WithFields(sess.OWI()).Error("RestartRing1: cannot find workspace container PID")
+		return nil, status.Errorf(codes.Internal, "cannot find workspace containerPID")
+	}
+	signal := syscall.Signal(10)
+	if req.Type == api.RestartRing1Request_INNER_LOOP {
+		signal = syscall.Signal(12)
+	}
+	syscall.Kill(int(containerPID), signal)
+	return &api.RestartRing1Response{}, nil
+}
+
 // Close ends this service and its housekeeping
 func (s *WorkspaceService) Close() error {
 	s.stopService()

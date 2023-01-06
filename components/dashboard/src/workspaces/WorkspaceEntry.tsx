@@ -82,14 +82,30 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
             title: "Stop",
             onClick: () => stopWorkspace(ws.id),
         });
-        menuEntries.splice(1, 0, {
-            title: "Connect via SSH",
-            onClick: async () => {
-                const ot = await getGitpodService().server.getOwnerToken(ws.id);
-                setOwnerToken(ot);
-                setSSHModalVisible(true);
+        menuEntries.splice(
+            1,
+            0,
+            {
+                title: "Connect via SSH",
+                onClick: async () => {
+                    const ot = await getGitpodService().server.getOwnerToken(ws.id);
+                    setOwnerToken(ot);
+                    setSSHModalVisible(true);
+                },
             },
-        });
+            {
+                title: "Restart ring1 (inner loop)",
+                onClick: async () => {
+                    await getGitpodService().server.restartRing1(ws.id, 1);
+                },
+            },
+            {
+                title: "Restart ring1 (origin)",
+                onClick: async () => {
+                    await getGitpodService().server.restartRing1(ws.id, 0);
+                },
+            },
+        );
     }
     menuEntries.push({
         title: "Download",

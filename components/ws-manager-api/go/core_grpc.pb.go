@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -54,6 +54,8 @@ type WorkspaceManagerClient interface {
 	UpdateSSHKey(ctx context.Context, in *UpdateSSHKeyRequest, opts ...grpc.CallOption) (*UpdateSSHKeyResponse, error)
 	// describeCluster provides information about the cluster
 	DescribeCluster(ctx context.Context, in *DescribeClusterRequest, opts ...grpc.CallOption) (*DescribeClusterResponse, error)
+	// RestartRing1 will trigger ring1 for restart and using different rootfs
+	RestartRing1(ctx context.Context, in *RestartRing1Request, opts ...grpc.CallOption) (*RestartRing1Response, error)
 }
 
 type workspaceManagerClient struct {
@@ -213,6 +215,15 @@ func (c *workspaceManagerClient) DescribeCluster(ctx context.Context, in *Descri
 	return out, nil
 }
 
+func (c *workspaceManagerClient) RestartRing1(ctx context.Context, in *RestartRing1Request, opts ...grpc.CallOption) (*RestartRing1Response, error) {
+	out := new(RestartRing1Response)
+	err := c.cc.Invoke(ctx, "/wsman.WorkspaceManager/RestartRing1", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkspaceManagerServer is the server API for WorkspaceManager service.
 // All implementations must embed UnimplementedWorkspaceManagerServer
 // for forward compatibility
@@ -245,6 +256,8 @@ type WorkspaceManagerServer interface {
 	UpdateSSHKey(context.Context, *UpdateSSHKeyRequest) (*UpdateSSHKeyResponse, error)
 	// describeCluster provides information about the cluster
 	DescribeCluster(context.Context, *DescribeClusterRequest) (*DescribeClusterResponse, error)
+	// RestartRing1 will trigger ring1 for restart and using different rootfs
+	RestartRing1(context.Context, *RestartRing1Request) (*RestartRing1Response, error)
 	mustEmbedUnimplementedWorkspaceManagerServer()
 }
 
@@ -293,6 +306,9 @@ func (UnimplementedWorkspaceManagerServer) UpdateSSHKey(context.Context, *Update
 }
 func (UnimplementedWorkspaceManagerServer) DescribeCluster(context.Context, *DescribeClusterRequest) (*DescribeClusterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DescribeCluster not implemented")
+}
+func (UnimplementedWorkspaceManagerServer) RestartRing1(context.Context, *RestartRing1Request) (*RestartRing1Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RestartRing1 not implemented")
 }
 func (UnimplementedWorkspaceManagerServer) mustEmbedUnimplementedWorkspaceManagerServer() {}
 
@@ -562,6 +578,24 @@ func _WorkspaceManager_DescribeCluster_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkspaceManager_RestartRing1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RestartRing1Request)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspaceManagerServer).RestartRing1(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/wsman.WorkspaceManager/RestartRing1",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspaceManagerServer).RestartRing1(ctx, req.(*RestartRing1Request))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorkspaceManager_ServiceDesc is the grpc.ServiceDesc for WorkspaceManager service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -620,6 +654,10 @@ var WorkspaceManager_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DescribeCluster",
 			Handler:    _WorkspaceManager_DescribeCluster_Handler,
+		},
+		{
+			MethodName: "RestartRing1",
+			Handler:    _WorkspaceManager_RestartRing1_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

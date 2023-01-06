@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -892,6 +892,20 @@ func (m *MockAPIInterface) ResetGenericInvite(ctx context.Context, teamID string
 func (mr *MockAPIInterfaceMockRecorder) ResetGenericInvite(ctx, teamID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResetGenericInvite", reflect.TypeOf((*MockAPIInterface)(nil).ResetGenericInvite), ctx, teamID)
+}
+
+// RestartRing1 mocks base method.
+func (m *MockAPIInterface) RestartRing1(ctx context.Context, id string, _type float64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RestartRing1", ctx, id, _type)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RestartRing1 indicates an expected call of RestartRing1.
+func (mr *MockAPIInterfaceMockRecorder) RestartRing1(ctx, id, _type interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RestartRing1", reflect.TypeOf((*MockAPIInterface)(nil).RestartRing1), ctx, id, _type)
 }
 
 // SendHeartBeat mocks base method.

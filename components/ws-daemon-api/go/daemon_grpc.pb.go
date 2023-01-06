@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -40,6 +40,8 @@ type WorkspaceContentServiceClient interface {
 	DisposeWorkspace(ctx context.Context, in *DisposeWorkspaceRequest, opts ...grpc.CallOption) (*DisposeWorkspaceResponse, error)
 	// BackupWorkspace creates a backup of a workspace
 	BackupWorkspace(ctx context.Context, in *BackupWorkspaceRequest, opts ...grpc.CallOption) (*BackupWorkspaceResponse, error)
+	// RestartRing1 will trigger ring1 for restart and using different rootfs
+	RestartRing1(ctx context.Context, in *RestartRing1Request, opts ...grpc.CallOption) (*RestartRing1Response, error)
 }
 
 type workspaceContentServiceClient struct {
@@ -104,6 +106,15 @@ func (c *workspaceContentServiceClient) BackupWorkspace(ctx context.Context, in 
 	return out, nil
 }
 
+func (c *workspaceContentServiceClient) RestartRing1(ctx context.Context, in *RestartRing1Request, opts ...grpc.CallOption) (*RestartRing1Response, error) {
+	out := new(RestartRing1Response)
+	err := c.cc.Invoke(ctx, "/wsdaemon.WorkspaceContentService/RestartRing1", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkspaceContentServiceServer is the server API for WorkspaceContentService service.
 // All implementations must embed UnimplementedWorkspaceContentServiceServer
 // for forward compatibility
@@ -122,6 +133,8 @@ type WorkspaceContentServiceServer interface {
 	DisposeWorkspace(context.Context, *DisposeWorkspaceRequest) (*DisposeWorkspaceResponse, error)
 	// BackupWorkspace creates a backup of a workspace
 	BackupWorkspace(context.Context, *BackupWorkspaceRequest) (*BackupWorkspaceResponse, error)
+	// RestartRing1 will trigger ring1 for restart and using different rootfs
+	RestartRing1(context.Context, *RestartRing1Request) (*RestartRing1Response, error)
 	mustEmbedUnimplementedWorkspaceContentServiceServer()
 }
 
@@ -146,6 +159,9 @@ func (UnimplementedWorkspaceContentServiceServer) DisposeWorkspace(context.Conte
 }
 func (UnimplementedWorkspaceContentServiceServer) BackupWorkspace(context.Context, *BackupWorkspaceRequest) (*BackupWorkspaceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BackupWorkspace not implemented")
+}
+func (UnimplementedWorkspaceContentServiceServer) RestartRing1(context.Context, *RestartRing1Request) (*RestartRing1Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RestartRing1 not implemented")
 }
 func (UnimplementedWorkspaceContentServiceServer) mustEmbedUnimplementedWorkspaceContentServiceServer() {
 }
@@ -269,6 +285,24 @@ func _WorkspaceContentService_BackupWorkspace_Handler(srv interface{}, ctx conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkspaceContentService_RestartRing1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RestartRing1Request)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspaceContentServiceServer).RestartRing1(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/wsdaemon.WorkspaceContentService/RestartRing1",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspaceContentServiceServer).RestartRing1(ctx, req.(*RestartRing1Request))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorkspaceContentService_ServiceDesc is the grpc.ServiceDesc for WorkspaceContentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -299,6 +333,10 @@ var WorkspaceContentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BackupWorkspace",
 			Handler:    _WorkspaceContentService_BackupWorkspace_Handler,
+		},
+		{
+			MethodName: "RestartRing1",
+			Handler:    _WorkspaceContentService_RestartRing1_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

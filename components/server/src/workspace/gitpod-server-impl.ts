@@ -127,6 +127,7 @@ import {
     MarkActiveRequest,
     PortSpec,
     PortVisibility as ProtoPortVisibility,
+    RestartRing1Request,
     StopWorkspacePolicy,
     UpdateSSHKeyRequest,
 } from "@gitpod/ws-manager/lib/core_pb";
@@ -667,6 +668,35 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new Error("owner token not found");
         }
         return ownerToken;
+    }
+
+    public async restartRing1(ctx: TraceContext, workspaceId: string, type: number): Promise<void> {
+        traceAPIParams(ctx, { workspaceId });
+        traceWI(ctx, { workspaceId });
+
+        this.checkAndBlockUser("restartRing1");
+
+        const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
+        if (!workspace) {
+            throw new Error("cannot found workspace");
+        }
+        await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
+
+        const latestInstance = await this.workspaceDb.trace(ctx).findCurrentInstance(workspaceId);
+        await this.guardAccess({ kind: "workspaceInstance", subject: latestInstance, workspace }, "get");
+
+        if (!latestInstance) {
+            throw new Error("cannot found running instance in this workspace");
+        }
+        const req = new RestartRing1Request();
+        req.setId(latestInstance.id);
+        req.setType(type);
+
+        const client = await this.workspaceManagerClientProvider.get(
+            latestInstance.region,
+            this.config.installationShortname,
+        );
+        await client.restartRing1(ctx, req);
     }
 
     public async startWorkspace(

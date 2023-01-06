@@ -291,6 +291,10 @@ func main() {
 						return xerrors.Errorf("cannot get container network device %s: %w", containerIf, err)
 					}
 
+					if oldVeth, err := netlink.LinkByName(vethIf); err == nil && oldVeth != nil {
+						netlink.LinkDel(oldVeth)
+					}
+
 					veth := &netlink.Veth{
 						LinkAttrs: netlink.LinkAttrs{
 							Name:  vethIf,
@@ -300,7 +304,7 @@ func main() {
 						PeerName:      cethIf,
 						PeerNamespace: netlink.NsPid(targetPid),
 					}
-					if err := netlink.LinkAdd(veth); err != nil {
+					if err = netlink.LinkAdd(veth); err != nil {
 						return xerrors.Errorf("link %q-%q netns failed: %v", vethIf, cethIf, err)
 					}
 

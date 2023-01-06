@@ -49,6 +49,9 @@ service WorkspaceManager {
 
     // describeCluster provides information about the cluster
     rpc DescribeCluster(DescribeClusterRequest) returns (DescribeClusterResponse) {}
+
+    // RestartRing1 will trigger ring1 for restart and using different rootfs
+    rpc RestartRing1(RestartRing1Request) returns (RestartRing1Response) {}
 }
 
 // MetadataFilter describes conditions for matching a set of workspaces.
@@ -699,4 +702,18 @@ message DescribeClusterResponse {
 message WorkspaceClass {
     string Id = 1;
     string DisplayName = 2;
+}
+
+message RestartRing1Request {
+    enum Type {
+        NORMAL = 0;
+        INNER_LOOP = 1;
+    }
+    // ID is the identifier of the workspace of which we want to create a backup of
+    string id = 1;
+    Type type = 2;
+}
+
+message RestartRing1Response {
+
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -118,6 +118,26 @@ func (mr *MockWorkspaceContentServiceClientMockRecorder) IsWorkspaceExists(arg0,
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsWorkspaceExists", reflect.TypeOf((*MockWorkspaceContentServiceClient)(nil).IsWorkspaceExists), varargs...)
+}
+
+// RestartRing1 mocks base method.
+func (m *MockWorkspaceContentServiceClient) RestartRing1(arg0 context.Context, arg1 *api.RestartRing1Request, arg2 ...grpc.CallOption) (*api.RestartRing1Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "RestartRing1", varargs...)
+	ret0, _ := ret[0].(*api.RestartRing1Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RestartRing1 indicates an expected call of RestartRing1.
+func (mr *MockWorkspaceContentServiceClientMockRecorder) RestartRing1(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RestartRing1", reflect.TypeOf((*MockWorkspaceContentServiceClient)(nil).RestartRing1), varargs...)
 }
 
 // TakeSnapshot mocks base method.
@@ -242,6 +262,21 @@ func (m *MockWorkspaceContentServiceServer) IsWorkspaceExists(arg0 context.Conte
 func (mr *MockWorkspaceContentServiceServerMockRecorder) IsWorkspaceExists(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsWorkspaceExists", reflect.TypeOf((*MockWorkspaceContentServiceServer)(nil).IsWorkspaceExists), arg0, arg1)
+}
+
+// RestartRing1 mocks base method.
+func (m *MockWorkspaceContentServiceServer) RestartRing1(arg0 context.Context, arg1 *api.RestartRing1Request) (*api.RestartRing1Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RestartRing1", arg0, arg1)
+	ret0, _ := ret[0].(*api.RestartRing1Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RestartRing1 indicates an expected call of RestartRing1.
+func (mr *MockWorkspaceContentServiceServerMockRecorder) RestartRing1(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RestartRing1", reflect.TypeOf((*MockWorkspaceContentServiceServer)(nil).RestartRing1), arg0, arg1)
 }
 
 // TakeSnapshot mocks base method.

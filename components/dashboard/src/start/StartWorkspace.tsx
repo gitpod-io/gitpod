@@ -543,6 +543,18 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                             },
                                         },
                                         {
+                                            title: "Restart ring1 (inner loop)",
+                                            onClick: async () => {
+                                                await getGitpodService().server.restartRing1(this.props.workspaceId, 1);
+                                            },
+                                        },
+                                        {
+                                            title: "Restart ring1 (origin)",
+                                            onClick: async () => {
+                                                await getGitpodService().server.restartRing1(this.props.workspaceId, 0);
+                                            },
+                                        },
+                                        {
                                             title: "Go to Dashboard",
                                             href: gitpodHostUrl.asWorkspacePage().toString(),
                                             target: "_parent",
@@ -563,6 +575,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                         className="gp-link"
                                         target="_blank"
                                         href={gitpodHostUrl.asPreferences().toString()}
+                                        rel="noreferrer"
                                     >
                                         user preferences
                                     </a>

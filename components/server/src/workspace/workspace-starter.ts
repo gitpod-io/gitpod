@@ -1521,6 +1521,7 @@ export class WorkspaceStarter {
             "function:deleteEnvVar",
             "function:getTeams",
             "function:trackEvent",
+            "function:restartRing1",
             "function:getSupportedWorkspaceClasses",
 
             "resource:" +

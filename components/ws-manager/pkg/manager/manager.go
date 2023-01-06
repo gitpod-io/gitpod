@@ -1208,6 +1208,60 @@ func (m *Manager) UpdateSSHKey(ctx context.Context, req *api.UpdateSSHKeyRequest
 	return &api.UpdateSSHKeyResponse{}, err
 }
 
+// RestartRing1 will trigger ring1 for restart and using different rootfs
+func (m *Manager) RestartRing1(ctx context.Context, req *api.RestartRing1Request) (res *api.RestartRing1Response, err error) {
+	if m.Config.MaintenanceMode {
+		return &api.RestartRing1Response{}, status.Error(codes.FailedPrecondition, "under maintenance mode")
+	}
+
+	span, ctx := tracing.FromContext(ctx, "RestartRing1")
+	owi := log.OWI("", "", req.Id)
+	tracing.ApplyOWI(span, owi)
+	defer tracing.FinishSpan(span, &err)
+
+	clog := log.WithFields(owi)
+	clog.Info("RestartRing1")
+
+	pod, err := m.findWorkspacePod(ctx, req.Id)
+	if isKubernetesObjNotFoundError(err) {
+		return nil, status.Errorf(codes.NotFound, "workspace %s does not exist", req.Id)
+	}
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot get workspace status: %q", err)
+	}
+	tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
+	span.LogKV("event", "get pod")
+
+	wso, err := m.getWorkspaceObjects(ctx, pod)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot get workspace status: %q", err)
+	}
+
+	sts, err := m.getWorkspaceStatus(*wso)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot get workspace status: %q", err)
+	}
+
+	if sts.Phase != api.WorkspacePhase_RUNNING {
+		return nil, status.Errorf(codes.FailedPrecondition, "can only restart ring1 of running workspaces")
+	}
+
+	sync, err := m.connectToWorkspaceDaemon(ctx, workspaceObjects{Pod: pod})
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
+	}
+
+	_, err = sync.RestartRing1(ctx, &wsdaemon.RestartRing1Request{
+		Id:   req.Id,
+		Type: wsdaemon.RestartRing1Request_Type(req.Type),
+	})
+	if err != nil {
+		// err is already a grpc error - no need to faff with that
+		return nil, err
+	}
+	return &api.RestartRing1Response{}, nil
+}
+
 func (m *Manager) DescribeCluster(ctx context.Context, req *api.DescribeClusterRequest) (*api.DescribeClusterResponse, error) {
 	span, _ := tracing.FromContext(ctx, "DescribeCluster")
 	defer tracing.FinishSpan(span, nil)

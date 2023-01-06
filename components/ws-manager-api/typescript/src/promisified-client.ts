@@ -30,6 +30,8 @@ import {
     TakeSnapshotResponse,
     UpdateSSHKeyRequest,
     UpdateSSHKeyResponse,
+    RestartRing1Request,
+    RestartRing1Response,
 } from "./core_pb";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
@@ -383,6 +385,31 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
                     const span = TraceContext.startSpan(`/ws-manager/updateSSHPublicKey`, ctx);
                     span.log({ attempt });
                     this.client.updateSSHKey(
+                        request,
+                        withTracing({ span }),
+                        this.getDefaultUnaryOptions(),
+                        (err, resp) => {
+                            span.finish();
+                            if (err) {
+                                TraceContext.setError(ctx, err);
+                                reject(err);
+                            } else {
+                                resolve(resp);
+                            }
+                        },
+                    );
+                }),
+        );
+    }
+
+    public restartRing1(ctx: TraceContext, request: RestartRing1Request): Promise<RestartRing1Response> {
+        // we do not use the default options here as takeSnapshot can take a very long time - much longer than the default deadline allows
+        return this.retryIfUnavailable(
+            (attempt: number) =>
+                new Promise<ControlAdmissionResponse>((resolve, reject) => {
+                    const span = TraceContext.startSpan(`/ws-manager/restartRing1`, ctx);
+                    span.log({ attempt });
+                    this.client.restartRing1(
                         request,
                         withTracing({ span }),
                         this.getDefaultUnaryOptions(),

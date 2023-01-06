@@ -103,6 +103,7 @@ type APIInterface interface {
 	GetTeamProjects(ctx context.Context, teamID string) ([]*Project, error)
 
 	InstanceUpdates(ctx context.Context, instanceID string) (<-chan *WorkspaceInstance, error)
+	RestartRing1(ctx context.Context, id string, _type float64) (err error)
 }
 
 // FunctionName is the name of an RPC function
@@ -221,6 +222,8 @@ const (
 	FunctionTrackEvent FunctionName = "trackEvent"
 	// FunctionGetSupportedWorkspaceClasses is the name of the getSupportedWorkspaceClasses function
 	FunctionGetSupportedWorkspaceClasses FunctionName = "getSupportedWorkspaceClasses"
+
+	FunctionRestartRing1 FunctionName = "restartRing1"
 
 	// Teams
 	// FunctionGetTeam is the name of the getTeam function
@@ -903,6 +906,24 @@ func (gp *APIoverJSONRPC) ControlAdmission(ctx context.Context, id string, level
 	_params = append(_params, level)
 
 	err = gp.C.Call(ctx, "controlAdmission", _params, nil)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+// RestartRing1 calls restartRing1 on the server
+func (gp *APIoverJSONRPC) RestartRing1(ctx context.Context, id string, _type float64) (err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	var _params []interface{}
+
+	_params = append(_params, id, _type)
+
+	err = gp.C.Call(ctx, "restartRing1", _params, nil)
 	if err != nil {
 		return
 	}

@@ -111,26 +111,11 @@ var ring0Cmd = &cobra.Command{
 			}
 		}()
 
-		cmd := exec.Command("/proc/self/exe", "ring1")
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Pdeathsig:  syscall.SIGKILL,
-			Cloneflags: syscall.CLONE_NEWUSER | syscall.CLONE_NEWNS | unix.CLONE_NEWCGROUP,
-		}
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Env = append(os.Environ(),
-			"WORKSPACEKIT_FSSHIFT="+prep.FsShift.String(),
-			fmt.Sprintf("WORKSPACEKIT_NO_WORKSPACE_MOUNT=%v", prep.FullWorkspaceBackup || prep.PersistentVolumeClaim),
-		)
-
-		if err := cmd.Start(); err != nil {
-			log.WithError(err).Error("failed to start ring0")
-			return
-		}
-
 		sigc := make(chan os.Signal, 128)
 		signal.Notify(sigc)
+		shouldRestart := true
+		newWorkspaceBaseLocation := ""
+		var cmd *exec.Cmd
 		go func() {
 			defer func() {
 				// This is a 'just in case' fallback, in case we're racing the cmd.Process and it's become
@@ -143,8 +128,27 @@ var ring0Cmd = &cobra.Command{
 
 			for {
 				sig := <-sigc
+				log.WithField("sig", sig).Info("receive sig")
+				if cmd == nil {
+					continue
+				}
+
+				if syscall.Signal(10) == sig || syscall.Signal(12) == sig {
+					if syscall.Signal(10) == sig {
+						newWorkspaceBaseLocation = ""
+					} else if syscall.Signal(12) == sig {
+						newWorkspaceBaseLocation = "/demo"
+					}
+					shouldRestart = true
+					_ = cmd.Process.Signal(unix.SIGTERM)
+					continue
+				}
+
 				if sig != unix.SIGTERM {
-					_ = cmd.Process.Signal(sig)
+					if cmd != nil && cmd.Process != nil {
+						_ = cmd.Process.Signal(sig)
+
+					}
 					continue
 				}
 
@@ -168,20 +172,49 @@ var ring0Cmd = &cobra.Command{
 			}
 		}()
 
-		err = cmd.Wait()
-		if eerr, ok := err.(*exec.ExitError); ok {
-			state, ok := eerr.ProcessState.Sys().(syscall.WaitStatus)
-			if ok && state.Signal() == syscall.SIGKILL {
-				log.Warn("ring1 was killed")
-				return
+		count := 0
+		for shouldRestart {
+			count++
+			shouldRestart = false
+			cmd = exec.Command("/proc/self/exe", "ring1")
+			cmd.SysProcAttr = &syscall.SysProcAttr{
+				Pdeathsig:  syscall.SIGKILL,
+				Cloneflags: syscall.CLONE_NEWUSER | syscall.CLONE_NEWNS | unix.CLONE_NEWCGROUP,
 			}
-		}
-		if err != nil {
+			cmd.Stdin = os.Stdin
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			cmd.Env = append(os.Environ(),
+				"WORKSPACEKIT_FSSHIFT="+prep.FsShift.String(),
+				fmt.Sprintf("WORKSPACEKIT_NO_WORKSPACE_MOUNT=%v", prep.FullWorkspaceBackup || prep.PersistentVolumeClaim),
+			)
+			if count != 1 {
+				cmd.Env = append(cmd.Env, "WORKSPACEKIT_RELOADED=true")
+			}
+			if newWorkspaceBaseLocation != "" {
+				cmd.Env = append(cmd.Env, "WORKSPACEKIT_ROOTFS="+newWorkspaceBaseLocation)
+			}
+
+			if err := cmd.Start(); err != nil {
+				log.WithError(err).Error("failed to start ring0")
+				continue
+			}
+
+			err = cmd.Wait()
 			if eerr, ok := err.(*exec.ExitError); ok {
-				exitCode = eerr.ExitCode()
+				state, ok := eerr.ProcessState.Sys().(syscall.WaitStatus)
+				if ok && state.Signal() == syscall.SIGKILL {
+					log.Warn("ring1 was killed")
+					continue
+				}
 			}
-			log.WithError(err).Error("unexpected exit")
-			return
+			if err != nil {
+				if eerr, ok := err.(*exec.ExitError); ok {
+					exitCode = eerr.ExitCode()
+				}
+				log.WithError(err).Error("unexpected exit")
+				continue
+			}
 		}
 		exitCode = 0 // once we get here everythings good
 	},
@@ -271,21 +304,28 @@ var ring1Cmd = &cobra.Command{
 			FSType string
 			Flags  uintptr
 		}
+		rootfs := os.Getenv("WORKSPACEKIT_ROOTFS")
 
 		var mnts []mnte
 		switch fsshift {
 		case api.FSShiftMethod_FUSE:
 			mnts = append(mnts,
-				mnte{Target: "/", Source: "/.workspace/mark", Flags: unix.MS_BIND | unix.MS_REC},
+				mnte{Target: "/", Source: "/.workspace/mark" + rootfs, Flags: unix.MS_BIND | unix.MS_REC},
 			)
 		case api.FSShiftMethod_SHIFTFS:
 			mnts = append(mnts,
-				mnte{Target: "/", Source: "/.workspace/mark", FSType: "shiftfs"},
+				mnte{Target: "/", Source: "/.workspace/mark" + rootfs, FSType: "shiftfs"},
 			)
 		default:
 			log.WithField("fsshift", fsshift).Fatal("unknown FS shift method")
 		}
 
+		if rootfs != "" {
+			mnts = append(mnts,
+				mnte{Target: "/ide", Source: "/.workspace/mark/ide", Flags: unix.MS_BIND},
+				mnte{Target: "/.supervisor", Source: "/.workspace/mark/.supervisor", Flags: unix.MS_BIND},
+			)
+		}
 		procMounts, err := ioutil.ReadFile("/proc/mounts")
 		if err != nil {
 			log.WithError(err).Fatal("cannot read /proc/mounts")
@@ -342,7 +382,7 @@ var ring1Cmd = &cobra.Command{
 				"target": dst,
 				"fstype": m.FSType,
 				"flags":  m.Flags,
-			}).Debug("mounting new rootfs")
+			}).Info("mounting new rootfs")
 			err = unix.Mount(m.Source, dst, m.FSType, m.Flags, "")
 			if err != nil {
 				log.WithError(err).WithField("dest", dst).WithField("fsType", m.FSType).Error("cannot establish mount")
