@@ -332,6 +332,8 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                                 <a
                                                     className="gp-link"
                                                     href="https://www.gitpod.io/docs/configure/billing/usage-based-billing"
+                                                    target="_blank"
+                                                    rel="noreferrer"
                                                 >
                                                     Learn more about credits
                                                 </a>

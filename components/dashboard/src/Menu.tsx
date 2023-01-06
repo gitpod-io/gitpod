@@ -485,10 +485,14 @@ export default function Menu() {
                                     {
                                         title: "Docs",
                                         href: "https://www.gitpod.io/docs/",
+                                        target: "_blank",
+                                        rel: "noreferrer",
                                     },
                                     {
                                         title: "Help",
                                         href: "https://www.gitpod.io/support/",
+                                        target: "_blank",
+                                        rel: "noreferrer",
                                         separator: true,
                                     },
                                     {
