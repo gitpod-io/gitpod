@@ -316,7 +316,7 @@ export default function NewProject() {
             : Array.from(reposInAccounts).filter(
                   (r) =>
                       r.account === selectedAccount &&
-                      `${r.name}`.toLowerCase().includes(repoSearchFilter.toLowerCase()),
+                      `${r.name}`.toLowerCase().includes(repoSearchFilter.toLowerCase().trim()),
               );
         const icon = selectedAccount && accounts.get(selectedAccount)?.avatarUrl;
 
