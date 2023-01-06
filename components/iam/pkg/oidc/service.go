@@ -18,6 +18,8 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	goidc "github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 type Service struct {
@@ -46,29 +48,31 @@ type AuthFlowResult struct {
 }
 
 func NewServiceWithTestConfig(configPath string, sessionServiceAddress string) (*Service, error) {
+	s := NewService(sessionServiceAddress)
+
 	testConfig, err := readDemoConfigFromFile(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read test config: %w", err)
 	}
+	if testConfig != nil {
+		clientConfig := &ClientConfig{
+			Issuer: testConfig.Issuer,
+			ID:     "R4ND0M1D",
+			OAuth2Config: &oauth2.Config{
+				ClientID:     testConfig.ClientID,
+				ClientSecret: testConfig.ClientSecret,
+				RedirectURL:  testConfig.RedirectURL,
+				Scopes:       []string{goidc.ScopeOpenID, "profile", "email"},
+			},
+			VerifierConfig: &goidc.Config{
+				ClientID: testConfig.ClientID,
+			},
+		}
 
-	clientConfig := &ClientConfig{
-		Issuer: testConfig.Issuer,
-		ID:     "R4ND0M1D",
-		OAuth2Config: &oauth2.Config{
-			ClientID:     testConfig.ClientID,
-			ClientSecret: testConfig.ClientSecret,
-			RedirectURL:  testConfig.RedirectURL,
-			Scopes:       []string{goidc.ScopeOpenID, "profile", "email"},
-		},
-		VerifierConfig: &goidc.Config{
-			ClientID: testConfig.ClientID,
-		},
-	}
-
-	s := NewService(sessionServiceAddress)
-	err = s.AddClientConfig(clientConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to add client config: %w", err)
+		err = s.AddClientConfig(clientConfig)
+		if err != nil {
+			log.Errorf("failed to add client config: %v", err)
+		}
 	}
 
 	return s, nil
