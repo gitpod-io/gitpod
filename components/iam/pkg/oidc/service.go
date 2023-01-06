@@ -5,6 +5,7 @@
 package oidc
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/base64"
@@ -17,12 +18,15 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	goidc "github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 type Service struct {
-	configsById      map[string]*ClientConfig
-	verifierByIssuer map[string]*oidc.IDTokenVerifier
-	providerByIssuer map[string]*oidc.Provider
+	configsById           map[string]*ClientConfig
+	verifierByIssuer      map[string]*oidc.IDTokenVerifier
+	providerByIssuer      map[string]*oidc.Provider
+	sessionServiceAddress string
 }
 
 type ClientConfig struct {
@@ -39,43 +43,47 @@ type StartParams struct {
 }
 
 type AuthFlowResult struct {
-	IDToken *oidc.IDToken
+	IDToken *oidc.IDToken          `json:"idToken"`
+	Claims  map[string]interface{} `json:"claims"`
 }
 
-func NewServiceWithTestConfig(configPath string) (*Service, error) {
+func NewServiceWithTestConfig(configPath string, sessionServiceAddress string) (*Service, error) {
+	s := NewService(sessionServiceAddress)
+
 	testConfig, err := readDemoConfigFromFile(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read test config: %w", err)
 	}
+	if testConfig != nil {
+		clientConfig := &ClientConfig{
+			Issuer: testConfig.Issuer,
+			ID:     "R4ND0M1D",
+			OAuth2Config: &oauth2.Config{
+				ClientID:     testConfig.ClientID,
+				ClientSecret: testConfig.ClientSecret,
+				RedirectURL:  testConfig.RedirectURL,
+				Scopes:       []string{goidc.ScopeOpenID, "profile", "email"},
+			},
+			VerifierConfig: &goidc.Config{
+				ClientID: testConfig.ClientID,
+			},
+		}
 
-	clientConfig := &ClientConfig{
-		Issuer: testConfig.Issuer,
-		ID:     "R4ND0M1D",
-		OAuth2Config: &oauth2.Config{
-			ClientID:     testConfig.ClientID,
-			ClientSecret: testConfig.ClientSecret,
-			RedirectURL:  testConfig.RedirectURL,
-			Scopes:       []string{goidc.ScopeOpenID, "profile", "email"},
-		},
-		VerifierConfig: &goidc.Config{
-			ClientID: testConfig.ClientID,
-		},
-	}
-
-	s := NewService()
-	err = s.AddClientConfig(clientConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to add client config: %w", err)
+		err = s.AddClientConfig(clientConfig)
+		if err != nil {
+			log.Errorf("failed to add client config: %v", err)
+		}
 	}
 
 	return s, nil
 }
 
-func NewService() *Service {
+func NewService(sessionServiceAddress string) *Service {
 	return &Service{
-		configsById:      map[string]*ClientConfig{},
-		verifierByIssuer: map[string]*oidc.IDTokenVerifier{},
-		providerByIssuer: map[string]*oidc.Provider{},
+		configsById:           map[string]*ClientConfig{},
+		verifierByIssuer:      map[string]*oidc.IDTokenVerifier{},
+		providerByIssuer:      map[string]*oidc.Provider{},
+		sessionServiceAddress: sessionServiceAddress,
 	}
 }
 
@@ -199,11 +207,38 @@ func (s *Service) Authenticate(ctx context.Context, params AuthenticateParams) (
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify id_token: %w", err)
 	}
-
+	claims := map[string]interface{}{}
+	err = idToken.Claims(&claims)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal the payload of the ID token: %w", err)
+	}
 	if idToken.Nonce != params.NonceCookieValue {
 		return nil, fmt.Errorf("nonce mismatch")
 	}
 	return &AuthFlowResult{
 		IDToken: idToken,
+		Claims:  claims,
 	}, nil
+}
+
+func (s *Service) CreateSession(ctx context.Context, flowResult *AuthFlowResult) (*http.Cookie, error) {
+	payload, err := json.Marshal(flowResult)
+	if err != nil {
+		return nil, err
+	}
+
+	url := fmt.Sprintf("http://%s/session", s.sessionServiceAddress)
+	res, err := http.Post(url, "application/json", bytes.NewReader(payload))
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode == http.StatusOK {
+		cookies := res.Cookies()
+		if len(cookies) == 1 {
+			return cookies[0], nil
+		}
+		return nil, fmt.Errorf("unexpected count of cookies: %v", len(cookies))
+	}
+	return nil, fmt.Errorf("unexpected status code: %v", res.StatusCode)
 }

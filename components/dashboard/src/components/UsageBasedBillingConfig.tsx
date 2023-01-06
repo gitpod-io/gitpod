@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useState, useContext, useEffect } from "react";
+import { useState, useContext, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
 import { Appearance, loadStripe, Stripe } from "@stripe/stripe-js";
@@ -42,48 +42,45 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
     const [currentUsage, setCurrentUsage] = useState<number>(0);
     const [usageLimit, setUsageLimit] = useState<number>(0);
     const [stripePortalUrl, setStripePortalUrl] = useState<string | undefined>();
-    const [pollStripeSubscriptionTimeout, setPollStripeSubscriptionTimeout] = useState<NodeJS.Timeout | undefined>();
-    const [pendingStripeSubscription, setPendingStripeSubscription] = useState<PendingStripeSubscription | undefined>();
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
+    const [pendingStripeSubscription, setPendingStripeSubscription] = useState<PendingStripeSubscription | undefined>(
+        undefined,
+    );
 
-    const localStorageKey = `pendingStripeSubscriptionFor${attributionId}`;
-    const now = dayjs().utc(true);
+    const now = useMemo(() => dayjs().utc(true), []);
     const [billingCycleFrom, setBillingCycleFrom] = useState<dayjs.Dayjs>(now.startOf("month"));
     const [billingCycleTo, setBillingCycleTo] = useState<dayjs.Dayjs>(now.endOf("month"));
 
-    const refreshSubscriptionDetails = async (attributionId: string) => {
-        setStripeSubscriptionId(undefined);
-        setIsLoadingStripeSubscription(true);
-        try {
-            getGitpodService().server.findStripeSubscriptionId(attributionId).then(setStripeSubscriptionId);
-            const costCenter = await getGitpodService().server.getCostCenter(attributionId);
-            setUsageLimit(costCenter?.spendingLimit || 0);
-            setBillingCycleFrom(dayjs(costCenter?.billingCycleStart || now.startOf("month")).utc(true));
-            setBillingCycleTo(dayjs(costCenter?.nextBillingTime || now.endOf("month")).utc(true));
-        } catch (error) {
-            console.error("Could not get Stripe subscription details.", error);
-            setErrorMessage(`Could not get Stripe subscription details. ${error?.message || String(error)}`);
-        } finally {
-            setIsLoadingStripeSubscription(false);
-        }
-    };
+    const refreshSubscriptionDetails = useCallback(
+        async (attributionId: string) => {
+            setStripeSubscriptionId(undefined);
+            setIsLoadingStripeSubscription(true);
+            try {
+                getGitpodService().server.getStripePortalUrl(attributionId).then(setStripePortalUrl);
+                getGitpodService().server.getUsageBalance(attributionId).then(setCurrentUsage);
+                const costCenter = await getGitpodService().server.getCostCenter(attributionId);
+                setUsageLimit(costCenter?.spendingLimit || 0);
+                setBillingCycleFrom(dayjs(costCenter?.billingCycleStart || now.startOf("month")).utc(true));
+                setBillingCycleTo(dayjs(costCenter?.nextBillingTime || now.endOf("month")).utc(true));
+                const subscriptionId = await getGitpodService().server.findStripeSubscriptionId(attributionId);
+                setStripeSubscriptionId(subscriptionId);
+                return subscriptionId;
+            } catch (error) {
+                console.error("Could not get Stripe subscription details.", error);
+                setErrorMessage(`Could not get Stripe subscription details. ${error?.message || String(error)}`);
+            } finally {
+                setIsLoadingStripeSubscription(false);
+            }
+        },
+        [now],
+    );
 
     useEffect(() => {
         if (!attributionId) {
             return;
         }
         refreshSubscriptionDetails(attributionId);
-    }, [attributionId]);
-
-    useEffect(() => {
-        if (!attributionId || !stripeSubscriptionId) {
-            return;
-        }
-        (async () => {
-            const portalUrl = await getGitpodService().server.getStripePortalUrl(attributionId);
-            setStripePortalUrl(portalUrl);
-        })();
-    }, [attributionId, stripeSubscriptionId]);
+    }, [attributionId, refreshSubscriptionDetails]);
 
     useEffect(() => {
         if (!attributionId) {
@@ -93,20 +90,19 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
         if (!params.get("setup_intent") || params.get("redirect_status") !== "succeeded") {
             return;
         }
+        const setupIntentId = params.get("setup_intent")!;
+        window.history.replaceState({}, "", location.pathname);
         (async () => {
-            const setupIntentId = params.get("setup_intent")!;
-            window.history.replaceState({}, "", location.pathname);
             const pendingSubscription = { pendingSince: Date.now() };
-            setPendingStripeSubscription(pendingSubscription);
-            window.localStorage.setItem(localStorageKey, JSON.stringify(pendingSubscription));
             try {
+                setPendingStripeSubscription(pendingSubscription);
                 // Pick a good initial value for the Stripe usage limit (base_limit * team_size)
                 // FIXME: Should we ask the customer to confirm or edit this default limit?
                 let limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS;
                 const attrId = AttributionId.parse(attributionId);
                 if (attrId?.kind === "team") {
                     const members = usePublicApiTeamsService
-                        ? await publicApiTeamMembersToProtocol(
+                        ? publicApiTeamMembersToProtocol(
                               (await teamsService.getTeam({ teamId: attrId.teamId })).team?.members || [],
                           )
                         : await getGitpodService().server.getTeamMembers(attrId.teamId);
@@ -116,73 +112,26 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                 if (newLimit) {
                     setUsageLimit(newLimit);
                 }
+
+                //refresh every 5 secs until we get a subscriptionId
+                const interval = setInterval(async () => {
+                    try {
+                        const subscriptionId = await refreshSubscriptionDetails(attributionId);
+                        if (subscriptionId) {
+                            setPendingStripeSubscription(undefined);
+                            clearInterval(interval);
+                        }
+                    } catch (error) {
+                        console.error(error);
+                    }
+                }, 1000);
             } catch (error) {
                 console.error("Could not subscribe to Stripe", error);
-                window.localStorage.removeItem(localStorageKey);
-                clearTimeout(pollStripeSubscriptionTimeout!);
                 setPendingStripeSubscription(undefined);
                 setErrorMessage(`Could not subscribe to Stripe. ${error?.message || String(error)}`);
             }
         })();
-    }, [attributionId, location.search]);
-
-    useEffect(() => {
-        setPendingStripeSubscription(undefined);
-        if (!attributionId) {
-            return;
-        }
-        try {
-            const pendingStripeSubscription = window.localStorage.getItem(localStorageKey);
-            if (!pendingStripeSubscription) {
-                return;
-            }
-            const pending = JSON.parse(pendingStripeSubscription);
-            setPendingStripeSubscription(pending);
-        } catch (error) {
-            console.warn("Could not load pending Stripe subscription", attributionId, error);
-        }
-    }, [attributionId, localStorageKey]);
-
-    useEffect(() => {
-        if (!pendingStripeSubscription || !attributionId) {
-            return;
-        }
-        if (!!stripeSubscriptionId) {
-            // The upgrade was successful!
-            window.localStorage.removeItem(localStorageKey);
-            clearTimeout(pollStripeSubscriptionTimeout!);
-            setPendingStripeSubscription(undefined);
-            return;
-        }
-        if (pendingStripeSubscription.pendingSince + 1000 * 60 * 5 < Date.now()) {
-            // Pending Stripe subscription expires after 5 minutes
-            window.localStorage.removeItem(localStorageKey);
-            clearTimeout(pollStripeSubscriptionTimeout!);
-            setPendingStripeSubscription(undefined);
-            return;
-        }
-        if (!pollStripeSubscriptionTimeout) {
-            // Refresh Stripe subscription in 5 seconds in order to poll for upgrade confirmation
-            const timeout = setTimeout(async () => {
-                await refreshSubscriptionDetails(attributionId);
-                setPollStripeSubscriptionTimeout(undefined);
-            }, 5000);
-            setPollStripeSubscriptionTimeout(timeout);
-        }
-    }, [
-        pendingStripeSubscription,
-        pollStripeSubscriptionTimeout,
-        stripeSubscriptionId,
-        attributionId,
-        localStorageKey,
-    ]);
-
-    useEffect(() => {
-        if (!attributionId) {
-            return;
-        }
-        getGitpodService().server.getUsageBalance(attributionId).then(setCurrentUsage);
-    }, [attributionId, billingCycleFrom]);
+    }, [attributionId, location.pathname, location.search, refreshSubscriptionDetails, usePublicApiTeamsService]);
 
     const showSpinner = !attributionId || isLoadingStripeSubscription || !!pendingStripeSubscription;
     const showBalance = !showSpinner;
@@ -299,9 +248,16 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                 </span>
                             </div>
                         </div>
-                        <button className="mt-5 self-end" onClick={() => setShowBillingSetupModal(true)}>
-                            Upgrade Plan
-                        </button>
+                        <div className="flex justify-end mt-6 space-x-2">
+                            {stripePortalUrl && (
+                                <a href={stripePortalUrl}>
+                                    <button className="secondary" disabled={!stripePortalUrl}>
+                                        View Past Invoices ↗
+                                    </button>
+                                </a>
+                            )}
+                            <button onClick={() => setShowBillingSetupModal(true)}>Upgrade Plan</button>
+                        </div>
                     </div>
                 )}
                 {showUpgradeUser && (
@@ -343,10 +299,15 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                     </span>
                                 </div>
                             </div>
-                            <div className="mt-5 flex flex-col">
-                                <button className="self-end" onClick={() => setShowBillingSetupModal(true)}>
-                                    Upgrade Plan
-                                </button>
+                            <div className="flex justify-end mt-6 space-x-2">
+                                {stripePortalUrl && (
+                                    <a href={stripePortalUrl}>
+                                        <button className="secondary" disabled={!stripePortalUrl}>
+                                            View Past Invoices ↗
+                                        </button>
+                                    </a>
+                                )}
+                                <button onClick={() => setShowBillingSetupModal(true)}>Upgrade Plan</button>
                             </div>
                         </div>
                     </div>
