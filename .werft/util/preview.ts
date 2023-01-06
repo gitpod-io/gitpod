@@ -90,7 +90,7 @@ export async function configureAccess(werft: Werft) {
     try {
         await installPreviewCTL()
     } catch (e) {
-        throw new Error("Failed to install Previewctl")
+        werft.fail(SLICES.INSTALL_PREVIEWCTL, e)
     }
 
     try {
@@ -123,10 +123,10 @@ export async function configureAccess(werft: Werft) {
 export async function installPreviewCTL() {
     try {
         await execStream(`leeway run dev/preview/previewctl:install`, {
-            slice: "Install previewctl",
+            slice: SLICES.INSTALL_PREVIEWCTL,
         })
     } catch (e) {
-        throw new Error("Failed to install previewctl.");
+        throw new Error(`Failed to install previewctl: ${e}`);
     }
 }
 
