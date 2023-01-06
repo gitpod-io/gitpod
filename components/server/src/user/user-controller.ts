@@ -280,13 +280,15 @@ export class UserController {
                     return;
                 }
 
+                const workspaceInstanceDomain = new URL(instance.ideUrl).host;
+
                 res.cookie(name, token, {
                     path: "/",
                     httpOnly: true,
                     secure: true,
                     maxAge: 1000 * 60 * 60 * 24 * 1, // 1 day
-                    sameSite: "lax", // default: true. "Lax" needed for cookie to work in the workspace domain.
-                    domain: `.${this.config.hostUrl.url.host}`,
+                    sameSite: "strict",
+                    domain: workspaceInstanceDomain,
                 });
                 res.sendStatus(200);
             },
