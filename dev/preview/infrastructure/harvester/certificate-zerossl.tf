@@ -3,6 +3,7 @@ locals {
 }
 
 data "google_secret_manager_secret_version" "zerossl_eab" {
+  count  = local.zerossl_enabled ? 1 : 0
   secret = "zerossl-eab"
 }
 
@@ -18,8 +19,8 @@ resource "acme_registration" "zerossl" {
   email_address   = "preview-environment-certificate-throwaway@gitpod.io"
 
   external_account_binding {
-    key_id      = jsondecode(data.google_secret_manager_secret_version.zerossl_eab.secret_data).kid
-    hmac_base64 = jsondecode(data.google_secret_manager_secret_version.zerossl_eab.secret_data).hmac
+    key_id      = jsondecode(data.google_secret_manager_secret_version.zerossl_eab[0].secret_data).kid
+    hmac_base64 = jsondecode(data.google_secret_manager_secret_version.zerossl_eab[0].secret_data).hmac
   }
 }
 
