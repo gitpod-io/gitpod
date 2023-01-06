@@ -14,6 +14,7 @@ interface SelectIDEComponentProps {
     selectedIdeOption?: string;
     useLatest?: boolean;
     onSelectionChange: (ide: string, latest: boolean) => void;
+    setError?: (error?: string) => void;
 }
 
 export default function SelectIDEComponent(props: SelectIDEComponentProps) {
@@ -51,8 +52,20 @@ export default function SelectIDEComponent(props: SelectIDEComponentProps) {
     const internalOnSelectionChange = (id: string) => {
         const { ide, useLatest } = parseId(id);
         props.onSelectionChange(ide, useLatest);
+        if (props.setError) {
+            props.setError(undefined);
+        }
     };
     const ide = props.selectedIdeOption || ideOptions?.defaultIde || "";
+    useEffect(() => {
+        if (!ideOptions) {
+            return;
+        }
+        const option = ideOptions.options[ide];
+        if (!option) {
+            props.setError?.(`The editor '${ide}' is not supported.`);
+        }
+    }, [ide, ideOptions, props]);
     return (
         <DropDown2
             getElements={getElements}
@@ -80,21 +93,24 @@ function capitalize(label?: string) {
 }
 
 function IdeOptionElementSelected({ option, useLatest }: IdeOptionElementProps): JSX.Element {
+    let version: string | undefined, label: string | undefined, title: string;
     if (!option) {
-        return <></>;
+        title = "Select Editor";
+    } else {
+        version = useLatest ? option.latestImageVersion : option.imageVersion;
+        label = option.type;
+        title = option.title;
     }
-    const version = useLatest ? option.latestImageVersion : option.imageVersion;
-    const label = option.type;
 
     return (
-        <div className="flex" title={option.title}>
+        <div className="flex" title={title}>
             <div className="mx-2 my-2">
                 <img className="w-8 filter-grayscale self-center" src={Editor} alt="logo" />
             </div>
             <div className="flex-col ml-1 mt-1 flex-grow">
                 <div className="text-gray-700 dark:text-gray-300 font-semibold">Editor</div>
                 <div className="flex text-xs text-gray-500 dark:text-gray-400">
-                    <div className="font-semibold">{option.title}</div>
+                    <div className="font-semibold">{title}</div>
                     {version && (
                         <>
                             <div className="mx-1">&middot;</div>

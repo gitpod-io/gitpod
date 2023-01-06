@@ -27,7 +27,7 @@ import { isGitpodIo } from "../utils";
 import { BillingAccountSelector } from "../components/BillingAccountSelector";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { UsageLimitReachedModal } from "../components/UsageLimitReachedModal";
-import { StartOptions } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
+import { StartWorkspaceOptions } from "./start-workspace-options";
 
 export interface CreateWorkspaceProps {
     contextUrl: string;
@@ -38,22 +38,6 @@ export interface CreateWorkspaceState {
     error?: StartWorkspaceError;
     selectAccountError?: SelectAccountPayload;
     stillParsing: boolean;
-}
-
-function parseSearchParams(search: string): GitpodServer.StartWorkspaceOptions {
-    const params = new URLSearchParams(search);
-    const options: GitpodServer.StartWorkspaceOptions = {};
-    if (params.has(StartOptions.WORKSPACE_CLASS)) {
-        options.workspaceClass = params.get(StartOptions.WORKSPACE_CLASS)!;
-    }
-    if (params.has(StartOptions.EDITOR)) {
-        const useLatestVersion = params.get(StartOptions.USE_LATEST_EDITOR) === "true";
-        options.ideSettings = {
-            defaultIde: params.get(StartOptions.EDITOR)!,
-            useLatestVersion,
-        };
-    }
-    return options;
 }
 
 export default class CreateWorkspace extends React.Component<CreateWorkspaceProps, CreateWorkspaceState> {
@@ -72,7 +56,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
 
         // add options from search params
         const opts = options || {};
-        Object.assign(opts, parseSearchParams(window.location.search));
+        Object.assign(opts, StartWorkspaceOptions.parseSearchParams(window.location.search));
         // We assume anything longer than 3 seconds is no longer just parsing the context URL (i.e. it's now creating a workspace).
         let timeout = setTimeout(() => this.setState({ stillParsing: false }), 3000);
 

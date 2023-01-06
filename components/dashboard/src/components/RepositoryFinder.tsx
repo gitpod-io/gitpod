@@ -14,7 +14,8 @@ const LOCAL_STORAGE_KEY = "open-in-gitpod-search-data";
 interface RepositoryFinderProps {
     initialValue?: string;
     maxDisplayItems?: number;
-    setSelection: (selection: string) => void;
+    setSelection?: (selection: string) => void;
+    onError?: (error: string) => void;
 }
 
 function stripOffProtocol(url: string): string {
@@ -67,6 +68,27 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
         [suggestedContextURLs],
     );
 
+    const element = (
+        <div className="flex h-12" title="Repository">
+            <div className="mx-2 my-2">
+                <img className="w-8 filter-grayscale self-center" src={Repository} alt="logo" />
+            </div>
+            <div className="flex-col ml-1 mt-1 flex-grow">
+                <div className="flex font-semibold text-gray-700">
+                    <div className="text-gray-700 dark:text-gray-300">Context URL</div>
+                </div>
+                <div className={"flex text-xs text-gray-500 dark:text-gray-400 font-semibold "}>
+                    {displayContextUrl(props.initialValue) || "Select a repository"}
+                </div>
+            </div>
+        </div>
+    );
+
+    if (!props.setSelection) {
+        // readonly display value
+        return <div className="m-2">{element}</div>;
+    }
+
     return (
         <DropDown2
             getElements={getElements}
@@ -74,19 +96,7 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
             onSelectionChange={props.setSelection}
             searchPlaceholder="Paste repository URL or type to find suggestions"
         >
-            <div className="flex h-12" title="Repository">
-                <div className="mx-2 my-2">
-                    <img className="w-8 filter-grayscale self-center" src={Repository} alt="logo" />
-                </div>
-                <div className="flex-col ml-1 mt-1 flex-grow">
-                    <div className="flex font-semibold text-gray-700">
-                        <div className="text-gray-700 dark:text-gray-300">Repository</div>
-                    </div>
-                    <div className={"flex text-xs text-gray-500 dark:text-gray-400 font-semibold "}>
-                        {displayContextUrl(props.initialValue) || "Select a repository"}
-                    </div>
-                </div>
-            </div>
+            {element}
         </DropDown2>
     );
 }

@@ -45,7 +45,7 @@ export default function () {
     const [workspaceModel, setWorkspaceModel] = useState<WorkspaceModel>();
     const [showInactive, setShowInactive] = useState<boolean>();
     const [deleteModalVisible, setDeleteModalVisible] = useState<boolean>();
-    const { setIsStartWorkspaceModalVisible } = useContext(StartWorkspaceModalContext);
+    const { setStartWorkspaceModalProps } = useContext(StartWorkspaceModalContext);
 
     useEffect(() => {
         (async () => {
@@ -138,7 +138,7 @@ export default function () {
                                     ]}
                                 />
                             </div>
-                            <button onClick={() => setIsStartWorkspaceModalVisible(true)} className="ml-2">
+                            <button onClick={() => setStartWorkspaceModalProps({})} className="ml-2">
                                 New Workspace{" "}
                                 <span className="opacity-60 hidden md:inline">{StartWorkspaceModalKeyBinding}</span>
                             </button>
@@ -238,7 +238,7 @@ export default function () {
                                         </a>
                                     </div>
                                     <span>
-                                        <button onClick={() => setIsStartWorkspaceModalVisible(true)}>
+                                        <button onClick={() => setStartWorkspaceModalProps({})}>
                                             New Workspace{" "}
                                             <span className="opacity-60 hidden md:inline">
                                                 {StartWorkspaceModalKeyBinding}

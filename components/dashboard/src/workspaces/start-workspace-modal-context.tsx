@@ -5,22 +5,27 @@
  */
 
 import React, { createContext, useEffect, useState } from "react";
+import { StartWorkspaceModalProps } from "./StartWorkspaceModal";
 
 export const StartWorkspaceModalContext = createContext<{
-    isStartWorkspaceModalVisible?: boolean;
-    setIsStartWorkspaceModalVisible: React.Dispatch<boolean>;
+    startWorkspaceModalProps?: StartWorkspaceModalProps;
+    setStartWorkspaceModalProps: React.Dispatch<StartWorkspaceModalProps | undefined>;
 }>({
-    setIsStartWorkspaceModalVisible: () => null,
+    setStartWorkspaceModalProps: () => null,
 });
 
 export const StartWorkspaceModalContextProvider: React.FC = ({ children }) => {
-    const [isStartWorkspaceModalVisible, setIsStartWorkspaceModalVisible] = useState<boolean>(false);
+    const [startWorkspaceModalProps, setStartWorkspaceModalProps] = useState<StartWorkspaceModalProps | undefined>(
+        undefined,
+    );
 
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
             if ((event.metaKey || event.ctrlKey) && event.key === "o") {
                 event.preventDefault();
-                setIsStartWorkspaceModalVisible(true);
+                setStartWorkspaceModalProps({
+                    onClose: () => setStartWorkspaceModalProps(undefined),
+                });
             }
         };
         window.addEventListener("keydown", onKeyDown);
@@ -30,7 +35,7 @@ export const StartWorkspaceModalContextProvider: React.FC = ({ children }) => {
     }, []);
 
     return (
-        <StartWorkspaceModalContext.Provider value={{ isStartWorkspaceModalVisible, setIsStartWorkspaceModalVisible }}>
+        <StartWorkspaceModalContext.Provider value={{ startWorkspaceModalProps, setStartWorkspaceModalProps }}>
             {children}
         </StartWorkspaceModalContext.Provider>
     );
