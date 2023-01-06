@@ -53,7 +53,7 @@ func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 			},
 		}
 
-		if context.Config.ObjectStorage.S3.Credentials.Kind != "" {
+		if context.Config.ObjectStorage.S3.Credentials != nil && context.Config.ObjectStorage.S3.Credentials.Kind != "" {
 			res.S3Config.CredentialsFile = filepath.Join(StorageMount, "credentials")
 		}
 	}
@@ -144,7 +144,7 @@ func AddStorageMounts(ctx *RenderContext, pod *corev1.PodSpec, container ...stri
 		return nil
 	}
 
-	if ctx.Config.ObjectStorage.S3 != nil {
+	if ctx.Config.ObjectStorage.S3 != nil && ctx.Config.ObjectStorage.S3.Credentials != nil {
 		MountStorage(pod, ctx.Config.ObjectStorage.S3.Credentials.Name, container...)
 
 		return nil

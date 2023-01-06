@@ -260,8 +260,8 @@ type ObjectStorage struct {
 }
 
 type ObjectStorageS3 struct {
-	Endpoint    string    `json:"endpoint" validate:"required"`
-	Credentials ObjectRef `json:"credentials" validate:"required"`
+	Endpoint    string     `json:"endpoint" validate:"required"`
+	Credentials *ObjectRef `json:"credentials"`
 
 	BucketName string `json:"bucket" validate:"required"`
 
@@ -307,15 +307,15 @@ type ContainerRegistry struct {
 
 type ContainerRegistryExternal struct {
 	URL         string     `json:"url" validate:"required"`
-	Certificate ObjectRef  `json:"certificate" validate:"required"`
+	Certificate *ObjectRef `json:"certificate,omitempty"`
 	Credentials *ObjectRef `json:"credentials,omitempty"`
 }
 
 type S3Storage struct {
-	Bucket      string    `json:"bucket" validate:"required"`
-	Region      string    `json:"region" validate:"required"`
-	Endpoint    string    `json:"endpoint" validate:"required"`
-	Certificate ObjectRef `json:"certificate" validate:"required"`
+	Bucket      string     `json:"bucket" validate:"required"`
+	Region      string     `json:"region" validate:"required"`
+	Endpoint    string     `json:"endpoint" validate:"required"`
+	Certificate *ObjectRef `json:"certificate,omitempty"`
 }
 
 type LogLevel string
