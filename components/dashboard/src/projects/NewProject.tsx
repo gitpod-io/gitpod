@@ -30,6 +30,8 @@ import {
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { ConnectError } from "@bufbuild/connect-web";
 
+const LOCAL_STORAGE_KEY = "new-project-search-data";
+
 export default function NewProject() {
     const location = useLocation();
     const { teams } = useContext(TeamsContext);
@@ -54,6 +56,7 @@ export default function NewProject() {
     const [isGitHubWebhooksUnauthorized, setIsGitHubWebhooksUnauthorized] = useState<boolean>();
 
     useEffect(() => {
+        loadSearchData();
         const { server } = getGitpodService();
         Promise.all([
             server.getAuthProviders().then((v) => () => setAuthProviders(v)),
@@ -140,6 +143,7 @@ export default function NewProject() {
     }, [selectedTeamOrUser, selectedRepo]);
 
     useEffect(() => {
+        saveSearchData(reposInAccounts);
         if (reposInAccounts.length === 0) {
             setSelectedAccount(undefined);
         } else {
@@ -838,4 +842,27 @@ async function openReconfigureWindow(params: { account?: string; onSuccess: (p: 
         }
     };
     window.addEventListener("message", eventListener);
+}
+
+function saveSearchData(searchData: ProviderRepository[]): void {
+    try {
+        window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(searchData));
+    } catch (error) {
+        console.warn("Could not save search data into local storage", error);
+    }
+}
+
+function loadSearchData(): ProviderRepository[] {
+    const string = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!string) {
+        return [];
+    }
+    try {
+        const data = JSON.parse(string);
+        console.log("Loaded search data from local storage", data);
+        return data;
+    } catch (error) {
+        console.warn("Could not load search data from local storage", error);
+        return [];
+    }
 }
