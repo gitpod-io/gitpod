@@ -356,6 +356,17 @@ func actOnPodEvent(ctx context.Context, m actingManager, manager *Manager, statu
 			return xerrors.Errorf("cannot add gitpod finalizer: %w", err)
 		}
 
+		// prebuilds and headless pods do not go through WorkspacePhase_INITIALIZING phase and hence we do not call
+		// waitForWorkspaceReady for them, and do not clear up never-ready annotation for them
+		// so if pod has transitioned into running, but still has never ready annotation, we can safely remove it
+		// this fixes an issue with some metrics relying on never ready annotation to catch failures and causing false positives
+		if _, neverReady := pod.Annotations[workspaceNeverReadyAnnotation]; neverReady {
+			err = m.markWorkspace(ctx, workspaceID, deleteMark(workspaceNeverReadyAnnotation))
+			if err != nil {
+				log.WithError(err).Warn("not able to remove never ready annotation")
+			}
+		}
+
 		// In case the pod gets evicted we would not know the hostIP that pod ran on anymore.
 		// In preparation for those cases, we'll add it as an annotation.
 		err = m.markWorkspace(ctx, workspaceID, addMark(nodeNameAnnotation, wso.NodeName()))
