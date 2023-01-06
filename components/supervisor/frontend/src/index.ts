@@ -57,6 +57,9 @@ import { SupervisorServiceClient } from "./ide/supervisor-service-client";
 import * as LoadingFrame from "./shared/loading-frame";
 import { startUrl } from "./shared/urls";
 
+// @ts-ignore
+window.gitpod = {};
+
 IDEWorker.install();
 IDEWebSocket.install();
 const ideService = IDEFrontendService.create();

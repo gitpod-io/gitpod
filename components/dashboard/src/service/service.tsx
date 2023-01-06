@@ -39,14 +39,14 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
         },
     });
 
-    const server = new GitpodServiceImpl<C, S>(proxy, { onReconnect });
+    const service = new GitpodServiceImpl<C, S>(proxy, { onReconnect });
 
-    createIDEFrontendGitpodService(server);
-    return server;
+    createIDEFrontendGitpodService(service);
+    return service;
 }
 
 function createIDEFrontendGitpodService<C extends GitpodClient, S extends GitpodServer>(
-    server: GitpodServiceImpl<C, S>,
+    service: GitpodServiceImpl<C, S>,
 ) {
     if (window.top === window.self || process.env.NODE_ENV !== "production") {
         return;
@@ -55,9 +55,9 @@ function createIDEFrontendGitpodService<C extends GitpodClient, S extends Gitpod
     const frameWindow = window.parent;
     const connection = createWindowMessageConnection("gitpodServer", frameWindow, "*");
     // TODO: add method white list
-    const factory = new JsonRpcProxyFactory<C>(server);
-    server.registerClient(factory.createProxy());
-    connection.onRequest("$reconnectServer", () => server.reconnect());
+    const factory = new JsonRpcProxyFactory<C>(service.server);
+    service.registerClient(factory.createProxy());
+    connection.onRequest("$reconnectServer", () => service.reconnect());
 
     const wsUrl = GitpodHostUrl.fromWorkspaceUrl(window.location.href);
 
@@ -65,7 +65,7 @@ function createIDEFrontendGitpodService<C extends GitpodClient, S extends Gitpod
         if (!wsUrl.workspaceId) {
             throw new Error(`Failed to extract a workspace id from '${wsUrl.toString()}'.`);
         }
-        const listener = await server.listenToInstance(wsUrl.workspaceId);
+        const listener = await service.listenToInstance(wsUrl.workspaceId);
         if (listener.info.latestInstance) {
             wsAuth(listener.info.latestInstance.id);
         } else {

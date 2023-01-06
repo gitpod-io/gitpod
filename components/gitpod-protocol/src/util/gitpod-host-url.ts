@@ -190,6 +190,11 @@ export class GitpodHostUrl {
             return pathSegs[2];
         }
 
+        const cleanHash = this.url.hash.replace(/^#/, "");
+        if (this.url.pathname == "/start/" && cleanHash.match(workspaceIDRegex)) {
+            return cleanHash;
+        }
+
         return undefined;
     }
 
