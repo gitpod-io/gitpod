@@ -58,7 +58,7 @@ resource "kubernetes_secret" "zerossl" {
   }
 
   data = {
-    "tls.crt" = "${lookup(acme_certificate.zerossl[0], "certificate_pem")}"
+    "tls.crt" = "${lookup(acme_certificate.zerossl[0], "certificate_pem")}${lookup(acme_certificate.zerossl[0], "issuer_pem")}"
     "tls.key" = "${lookup(acme_certificate.zerossl[0], "private_key_pem")}"
   }
 
