@@ -16,3 +16,11 @@ SET
 @statementStr = CONCAT('CREATE DATABASE ', @gitpodDB, ' CHARSET utf8mb4');
 PREPARE statement FROM @statementStr;
 EXECUTE statement;
+
+SET
+@statementStr = CONCAT('CREATE DATABASE IF NOT EXISTS ', 'openfga', ' CHARSET utf8mb4');
+PREPARE statement FROM @statementStr;
+EXECUTE statement;
+
+-- Grant privileges
+GRANT ALL ON `openfga`.* TO "__GITPOD_USERNAME__"@"%";

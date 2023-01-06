@@ -62,6 +62,17 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							},
 							Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),
+								common.DatabaseEnv(&ctx.Config),
+								[]corev1.EnvVar{
+									{
+										Name:  "OPENFGA_DATASTORE_ENGINE",
+										Value: "mysql",
+									},
+									{
+										Name:  "OPENFGA_DATASTORE_URI",
+										Value: "$(DB_USERNAME):$(DB_PASSWORD)@tcp($(DB_HOST):$(DB_PORT))/openfga?parseTime=true",
+									},
+								},
 							)),
 							Ports: []corev1.ContainerPort{
 								{

@@ -1,0 +1,20 @@
+model
+  schema 1.1
+
+type user
+type team
+  relations
+    define owner: [user]
+    define member: [user] or owner
+
+    define grant_owner: owner
+    define list_members: owner or member
+    define add_members: owner
+    define remove_members: owner
+    define delete_team: owner
+
+    define project_creator: owner or member
+
+type project
+  relations
+    define maintainer: [user,team#member]

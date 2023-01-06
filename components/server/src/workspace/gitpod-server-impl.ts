@@ -182,6 +182,7 @@ import * as grpc from "@grpc/grpc-js";
 import { CachingBlobServiceClientProvider } from "../util/content-service-sugar";
 import { CostCenterJSON } from "@gitpod/gitpod-protocol/lib/usage";
 import { createCookielessId, maskIp } from "../analytics";
+import * as perms from "../perms";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -2081,6 +2082,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         // Note: this operation is per-user only, hence needs no resource guard
         const user = this.checkAndBlockUser("createTeam");
         const team = await this.teamDB.createTeam(user.id, name);
+
+        await perms.grantTeamOwner(user.id, team.id);
+
         const invite = await this.getGenericInvite(ctx, team.id);
         ctx.span?.setTag("teamId", team.id);
         this.analytics.track({
@@ -2108,6 +2112,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
         ctx.span?.setTag("teamId", invite.teamId);
         const result = await this.teamDB.addMemberToTeam(user.id, invite.teamId);
+        await perms.grantTeamMember(user.id, invite.teamId);
         const team = await this.teamDB.findTeamById(invite.teamId);
         if (result !== "already_member") {
             await this.onTeamMemberAdded(user.id, invite.teamId);
@@ -2148,7 +2153,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         this.checkAndBlockUser("setTeamMemberRole");
         await this.guardTeamOperation(teamId, "update");
+
         await this.teamDB.setTeamMemberRole(userId, teamId, role);
+        if (role === "member") {
+            await perms.grantTeamMember(userId, teamId);
+        } else if (role === "owner") {
+            await perms.grantTeamOwner(userId, teamId);
+        }
     }
 
     public async removeTeamMember(ctx: TraceContext, teamId: string, userId: string): Promise<void> {
@@ -2170,6 +2181,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new Error(`Could not find membership for user '${userId}' in team '${teamId}'`);
         }
         await this.teamDB.removeMemberFromTeam(userId, teamId);
+
+        await perms.removeUserFromTeam(userId, teamId);
+
         await this.onTeamMemberRemoved(userId, teamId, membership.id);
         this.analytics.track({
             userId: user.id,
@@ -2250,9 +2264,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         } else {
             // Anyone who can read a team's information (i.e. any team member) can create a new project.
             await this.guardTeamOperation(params.teamId, "get");
+
+            await perms.canCreateProject(user.id, params.teamId!);
         }
 
-        return this.projectsService.createProject(params, user);
+        const project = await this.projectsService.createProject(params, user);
+        await perms.grantTeamProjectMaintainer(params.teamId!, project.id);
+
+        return project;
     }
 
     public async deleteProject(ctx: TraceContext, projectId: string): Promise<void> {
@@ -2260,6 +2279,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = this.checkUser("deleteProject");
         await this.guardProjectOperation(user, projectId, "delete");
+
+        await perms.canDeleteProject(user.id, projectId);
+
         this.analytics.track({
             userId: user.id,
             event: "project_deleted",
@@ -2305,10 +2327,20 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async getTeamProjects(ctx: TraceContext, teamId: string): Promise<Project[]> {
         traceAPIParams(ctx, { teamId });
 
-        this.checkUser("getTeamProjects");
+        const user = this.checkUser("getTeamProjects");
 
         await this.guardTeamOperation(teamId, "get");
-        return this.projectsService.getTeamProjects(teamId);
+        const projects = await this.projectsService.getTeamProjects(teamId);
+
+        const permitted: Project[] = [];
+        for (var p of projects) {
+            const allowed = await perms.canAccessProject(user.id, p.id);
+            if (allowed) {
+                permitted.push(p);
+            }
+        }
+
+        return permitted;
     }
 
     public async getUserProjects(ctx: TraceContext): Promise<Project[]> {
