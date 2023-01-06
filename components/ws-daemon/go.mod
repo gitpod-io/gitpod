@@ -7,7 +7,7 @@ require (
 	github.com/alecthomas/repr v0.0.0-20200325044227-4184120f674c
 	github.com/c9s/goprocinfo v0.0.0-20210130143923-c95fcf8c64a8
 	github.com/containerd/cgroups v1.0.4
-	github.com/containerd/containerd v1.6.14
+	github.com/containerd/containerd v1.6.15
 	github.com/containerd/typeurl v1.0.2
 	github.com/containers/storage v1.39.0
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
