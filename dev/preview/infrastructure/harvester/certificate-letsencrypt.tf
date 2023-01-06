@@ -48,7 +48,7 @@ resource "kubernetes_secret" "letsencrypt" {
   }
 
   data = {
-    "tls.crt" = "${lookup(acme_certificate.letsencrypt[0], "certificate_pem")}"
+    "tls.crt" = "${lookup(acme_certificate.letsencrypt[0], "certificate_pem")}${lookup(acme_certificate.letsencrypt[0], "issuer_pem")}"
     "tls.key" = "${lookup(acme_certificate.letsencrypt[0], "private_key_pem")}"
   }
 
