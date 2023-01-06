@@ -12,25 +12,24 @@ import {
     GitpodServiceImpl,
 } from "@gitpod/gitpod-protocol";
 import { WebSocketConnectionProvider } from "@gitpod/gitpod-protocol/lib/messaging/browser/connection";
-import { createWindowMessageConnection } from "@gitpod/gitpod-protocol/lib/messaging/browser/window-connection";
+import { WindowMessageReader } from "@gitpod/gitpod-protocol/lib/messaging/browser/window-connection";
+import { createMessageConnection } from "vscode-jsonrpc/lib/main";
+import { Message } from "vscode-jsonrpc/lib/messages";
+import { AbstractMessageWriter, MessageWriter } from "vscode-jsonrpc/lib/messageWriter";
+import { ConsoleLogger } from "vscode-ws-jsonrpc";
 import { JsonRpcProxyFactory } from "@gitpod/gitpod-protocol/lib/messaging/proxy-factory";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
-function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
-    if (window.top !== window.self && process.env.NODE_ENV === "production") {
-        const connection = createWindowMessageConnection("gitpodServer", window.parent, "*");
-        const factory = new JsonRpcProxyFactory<S>();
-        const proxy = factory.createProxy();
-        factory.listen(connection);
-        return new GitpodServiceImpl<C, S>(proxy, {
-            onReconnect: async () => {
-                await connection.sendRequest("$reconnectServer");
-            },
-        });
+export class NoopMessageWriter extends AbstractMessageWriter implements MessageWriter {
+    write(msg: Message): void {
+        console.log(">>>>> NoopMessageWriter");
     }
+}
+
+function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
     let host = gitpodHostUrl.asWebsocket().with({ pathname: GitpodServerPath }).withApi();
 
     const connectionProvider = new WebSocketConnectionProvider();
@@ -50,7 +49,19 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
         },
     });
 
-    return new GitpodServiceImpl<C, S>(proxy, { onReconnect });
+    const gitpodService = new GitpodServiceImpl<C, S>(proxy, { onReconnect });
+
+    if (window.top !== window.self && process.env.NODE_ENV === "production") {
+        const factory = new JsonRpcProxyFactory<GitpodClient>(gitpodService.server);
+        // gitpodService.registerClient(factory.createProxy());
+        const reader = new WindowMessageReader("gitpodServer", "*");
+        const writer = new NoopMessageWriter();
+        const connection = createMessageConnection(reader, writer, new ConsoleLogger());
+        factory.listen(connection);
+        console.log(">>>>> createMessageConnection");
+    }
+
+    return gitpodService;
 }
 
 function getGitpodService(): GitpodService {

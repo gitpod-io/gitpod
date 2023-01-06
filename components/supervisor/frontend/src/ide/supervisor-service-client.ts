@@ -23,7 +23,7 @@ export class SupervisorServiceClient {
 
     readonly supervisorReady = this.checkReady("supervisor");
     readonly ideReady = this.supervisorReady.then(() => this.checkReady("ide"));
-    readonly contentReady = Promise.all([this.supervisorReady, this.gitpodServiceClient.auth]).then(() =>
+    readonly contentReady = Promise.all([this.supervisorReady/* , this.gitpodServiceClient.auth */]).then(() =>
         this.checkReady("content"),
     );
 

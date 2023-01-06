@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { createGitpodService, GitpodClient } from "@gitpod/gitpod-protocol";
+import { GitpodClient, GitpodService, GitpodServer, GitpodServiceImpl } from "@gitpod/gitpod-protocol";
 import {
     WindowMessageReader,
     WindowMessageWriter,
@@ -38,11 +38,12 @@ const setSessionIdListener = (event: MessageEvent) => {
 };
 window.addEventListener("message", setSessionIdListener, false);
 
-export function load({ gitpodService }: { gitpodService: ReturnType<typeof createGitpodService> }): Promise<{
+export function load(): Promise<{
     frame: HTMLIFrameElement;
     sessionId: Promise<string>;
     setState: (state: object) => void;
     openDesktopLink: (link: string) => void;
+    service: GitpodService;
 }> {
     return new Promise((resolve) => {
         const frame = document.createElement("iframe");
@@ -51,18 +52,18 @@ export function load({ gitpodService }: { gitpodService: ReturnType<typeof creat
         frame.className = "gitpod-frame loading";
         document.body.appendChild(frame);
 
-        const factory = new JsonRpcProxyFactory<GitpodClient>(gitpodService.server);
-        gitpodService.registerClient(factory.createProxy());
+        const factory = new JsonRpcProxyFactory<GitpodServer>();
         const reader = new WindowMessageReader("gitpodServer", serverOrigin);
         frame.onload = () => {
             const frameWindow = frame.contentWindow!;
             const writer = new WindowMessageWriter("gitpodServer", frameWindow, serverOrigin);
             const connection = createMessageConnection(reader, writer, new ConsoleLogger());
-            connection.onRequest("$reconnectServer", () => gitpodService.reconnect());
             factory.listen(connection);
+
             const setState = (state: object) => {
                 frameWindow.postMessage({ type: "setState", state }, serverOrigin);
             };
+
             const openDesktopLink = (link: string) => {
                 if (openDesktopLinkSupported) {
                     frameWindow.postMessage({ type: "$openDesktopLink", link }, serverOrigin);
@@ -83,7 +84,14 @@ export function load({ gitpodService }: { gitpodService: ReturnType<typeof creat
                     }
                 }
             };
-            resolve({ frame, sessionId, setState, openDesktopLink });
+
+            resolve({
+                frame,
+                sessionId,
+                setState,
+                openDesktopLink,
+                service: new GitpodServiceImpl<GitpodClient, GitpodServer>(factory.createProxy()),
+            });
         };
     });
 }

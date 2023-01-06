@@ -57,15 +57,24 @@ import { SupervisorServiceClient } from "./ide/supervisor-service-client";
 import * as LoadingFrame from "./shared/loading-frame";
 import { serverUrl, startUrl } from "./shared/urls";
 
-window.gitpod = {
-    service: createGitpodService(serverUrl.toString()),
-};
+// window.gitpod = {
+//     service: createGitpodService(serverUrl.toString()),
+// };
 IDEWorker.install();
 IDEWebSocket.install();
 const ideService = IDEFrontendService.create();
-const pendingGitpodServiceClient = GitpodServiceClient.create();
 const loadingIDE = new Promise((resolve) => window.addEventListener("DOMContentLoaded", resolve, { once: true }));
 const toStop = new DisposableCollection();
+
+const loadingFramePromise = LoadingFrame.load();
+const servicePromise = loadingFramePromise.then(({ service }) => {
+    Object.defineProperty(window.gitpod, "service", {
+        get() {
+            return service;
+        },
+    });
+});
+const pendingGitpodServiceClient = servicePromise.then(() => GitpodServiceClient.create());
 
 (async () => {
     const gitpodServiceClient = await pendingGitpodServiceClient;
@@ -117,10 +126,7 @@ const toStop = new DisposableCollection();
 
 (async () => {
     document.body.style.visibility = "hidden";
-    const [loading, gitpodServiceClient] = await Promise.all([
-        LoadingFrame.load({ gitpodService: window.gitpod.service }),
-        pendingGitpodServiceClient,
-    ]);
+    const [loading, gitpodServiceClient] = await Promise.all([loadingFramePromise, pendingGitpodServiceClient]);
     const sessionId = await loading.sessionId;
 
     if (gitpodServiceClient.info.workspace.type !== "regular") {
@@ -146,21 +152,21 @@ const toStop = new DisposableCollection();
     // it is bad usage of window.postMessage
     // VS Code should use Segment directly here and publish to production/staging untrusted
     // supervisor frontend should not care about IDE specifics
-    window.addEventListener("message", async (event) => {
-        const type = event.data.type;
-        if (type === "vscode_telemetry") {
-            const { event: eventName, properties } = event.data;
-            window.gitpod.service.server.trackEvent({
-                event: eventName,
-                properties: {
-                    sessionId,
-                    instanceId: gitpodServiceClient.info.latestInstance?.id,
-                    workspaceId: gitpodServiceClient.info.workspace.id,
-                    type: gitpodServiceClient.info.workspace.type,
-                    ...properties,
-                },
-            });
-        }
+    window.addEventListener("message", async (_event) => {
+        // const type = event.data.type;
+        // if (type === "vscode_telemetry") {
+        // const { event: eventName, properties } = event.data;
+        // window.gitpod.service.server.trackEvent({
+        //     event: eventName,
+        //     properties: {
+        //         sessionId,
+        //         instanceId: gitpodServiceClient.info.latestInstance?.id,
+        //         workspaceId: gitpodServiceClient.info.workspace.id,
+        //         type: gitpodServiceClient.info.workspace.type,
+        //         ...properties,
+        //     },
+        // });
+        // }
     });
     //#endregion
 
@@ -234,22 +240,22 @@ const toStop = new DisposableCollection();
         });
     };
     const trackStatusRenderedEvent = (
-        phase: string,
-        properties?: {
+        _phase: string,
+        _properties?: {
             [prop: string]: any;
         },
     ) => {
-        window.gitpod.service.server.trackEvent({
-            event: "status_rendered",
-            properties: {
-                sessionId,
-                instanceId: gitpodServiceClient.info.latestInstance?.id,
-                workspaceId: gitpodServiceClient.info.workspace.id,
-                type: gitpodServiceClient.info.workspace.type,
-                phase,
-                ...properties,
-            },
-        });
+        // window.gitpod.service.server.trackEvent({
+        //     event: "status_rendered",
+        //     properties: {
+        //         sessionId,
+        //         instanceId: gitpodServiceClient.info.latestInstance?.id,
+        //         workspaceId: gitpodServiceClient.info.workspace.id,
+        //         type: gitpodServiceClient.info.workspace.type,
+        //         phase,
+        //         ...properties,
+        //     },
+        // });
     };
     let trackedDesktopIDEReady = false;
     const trackDesktopIDEReady = ({ clientID, kind }: DesktopIDEStatus) => {
