@@ -67,14 +67,19 @@ const loadingIDE = new Promise((resolve) => window.addEventListener("DOMContentL
 const toStop = new DisposableCollection();
 
 const loadingFramePromise = LoadingFrame.load();
-const servicePromise = loadingFramePromise.then(({ service }) => {
+const servicePromise = loadingFramePromise.then(({ gitpodService }) => {
     Object.defineProperty(window.gitpod, "service", {
         get() {
-            return service;
+            return gitpodService;
         },
     });
 });
-const pendingGitpodServiceClient = servicePromise.then(() => GitpodServiceClient.create());
+const pendingGitpodServiceClient = servicePromise.then(async () => {
+    // TODO: get ws cookie
+    const data = await window.gitpod.service.server.getWorkspaces({ limit: 1 });
+    console.log(JSON.stringify(data), "===================hwen.getWorkspaces");
+    return GitpodServiceClient.create();
+});
 
 (async () => {
     const gitpodServiceClient = await pendingGitpodServiceClient;
@@ -152,21 +157,21 @@ const pendingGitpodServiceClient = servicePromise.then(() => GitpodServiceClient
     // it is bad usage of window.postMessage
     // VS Code should use Segment directly here and publish to production/staging untrusted
     // supervisor frontend should not care about IDE specifics
-    window.addEventListener("message", async (_event) => {
-        // const type = event.data.type;
-        // if (type === "vscode_telemetry") {
-        // const { event: eventName, properties } = event.data;
-        // window.gitpod.service.server.trackEvent({
-        //     event: eventName,
-        //     properties: {
-        //         sessionId,
-        //         instanceId: gitpodServiceClient.info.latestInstance?.id,
-        //         workspaceId: gitpodServiceClient.info.workspace.id,
-        //         type: gitpodServiceClient.info.workspace.type,
-        //         ...properties,
-        //     },
-        // });
-        // }
+    window.addEventListener("message", async (event) => {
+        const type = event.data.type;
+        if (type === "vscode_telemetry") {
+            const { event: eventName, properties } = event.data;
+            window.gitpod.service.server.trackEvent({
+                event: eventName,
+                properties: {
+                    sessionId,
+                    instanceId: gitpodServiceClient.info.latestInstance?.id,
+                    workspaceId: gitpodServiceClient.info.workspace.id,
+                    type: gitpodServiceClient.info.workspace.type,
+                    ...properties,
+                },
+            });
+        }
     });
     //#endregion
 
@@ -240,22 +245,22 @@ const pendingGitpodServiceClient = servicePromise.then(() => GitpodServiceClient
         });
     };
     const trackStatusRenderedEvent = (
-        _phase: string,
-        _properties?: {
+        phase: string,
+        properties?: {
             [prop: string]: any;
         },
     ) => {
-        // window.gitpod.service.server.trackEvent({
-        //     event: "status_rendered",
-        //     properties: {
-        //         sessionId,
-        //         instanceId: gitpodServiceClient.info.latestInstance?.id,
-        //         workspaceId: gitpodServiceClient.info.workspace.id,
-        //         type: gitpodServiceClient.info.workspace.type,
-        //         phase,
-        //         ...properties,
-        //     },
-        // });
+        window.gitpod.service.server.trackEvent({
+            event: "status_rendered",
+            properties: {
+                sessionId,
+                instanceId: gitpodServiceClient.info.latestInstance?.id,
+                workspaceId: gitpodServiceClient.info.workspace.id,
+                type: gitpodServiceClient.info.workspace.type,
+                phase,
+                ...properties,
+            },
+        });
     };
     let trackedDesktopIDEReady = false;
     const trackDesktopIDEReady = ({ clientID, kind }: DesktopIDEStatus) => {
