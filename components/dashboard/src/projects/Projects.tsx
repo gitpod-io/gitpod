@@ -129,7 +129,12 @@ export default function () {
                     <p className="text-center text-base text-gray-500 mt-4">
                         Add projects to enable and manage Prebuilds.
                         <br />
-                        <a className="gp-link" href="https://www.gitpod.io/docs/prebuilds/">
+                        <a
+                            className="gp-link"
+                            target="_blank"
+                            rel="noreferrer"
+                            href="https://www.gitpod.io/docs/prebuilds/"
+                        >
                             Learn more about Prebuilds
                         </a>
                     </p>

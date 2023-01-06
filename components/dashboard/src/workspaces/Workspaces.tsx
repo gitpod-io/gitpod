@@ -233,7 +233,12 @@ export default function () {
                                     <div className="text-center pb-6 text-gray-500">
                                         Prefix any Git repository URL with {window.location.host}/# or create a new
                                         workspace for a recently used project.{" "}
-                                        <a className="gp-link" href="https://www.gitpod.io/docs/getting-started/">
+                                        <a
+                                            className="gp-link"
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            href="https://www.gitpod.io/docs/getting-started/"
+                                        >
                                             Learn more
                                         </a>
                                     </div>

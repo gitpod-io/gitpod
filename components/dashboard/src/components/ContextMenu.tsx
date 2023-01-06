@@ -28,6 +28,7 @@ export interface ContextMenuEntry {
     link?: string;
     target?: HTMLAttributeAnchorTarget;
     download?: string;
+    rel?: string;
 }
 
 function ContextMenu(props: ContextMenuProps) {
