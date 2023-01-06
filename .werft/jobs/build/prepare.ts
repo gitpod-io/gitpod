@@ -2,7 +2,6 @@ import {execStream} from "../../util/shell";
 import {Werft} from "../../util/werft";
 import {GCLOUD_SERVICE_ACCOUNT_PATH} from "./const";
 import {JobConfig} from "./job-config";
-import {certReady} from "../../util/certs";
 import {vmExists} from "../../vm/vm";
 import {configureAccess, configureDocker} from "../../util/preview";
 
@@ -11,7 +10,6 @@ const prepareSlices = {
     CONFIGURE_K8S: "Configuring k8s access.",
     CONFIGURE_CORE_DEV: "Configuring core-dev access.",
     BOOT_VM: "Booting VM.",
-    WAIT_CERTIFICATES: "Waiting for certificates to be ready for the preview.",
 };
 
 export async function prepare(werft: Werft, config: JobConfig) {
@@ -25,7 +23,6 @@ export async function prepare(werft: Werft, config: JobConfig) {
             return
         }
         await decideHarvesterVMCreation(werft, config);
-        await certReady(werft, config, prepareSlices.WAIT_CERTIFICATES);
     } catch (err) {
         werft.fail(phaseName, err);
     }
