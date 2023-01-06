@@ -5,7 +5,9 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -61,7 +63,8 @@ var initCmd = &cobra.Command{
 			err := runCommand.Wait()
 			if err != nil && !(strings.Contains(err.Error(), "signal: ") || strings.Contains(err.Error(), "no child processes")) {
 				if eerr, ok := err.(*exec.ExitError); ok && eerr.ExitCode() != 0 {
-					log.WithError(err).Fatal("supervisor run error with unexpected exit code")
+					logs := extractFailureFromRun()
+					log.WithError(fmt.Errorf(logs)).Fatal("supervisor run error with unexpected exit code")
 				}
 				log.WithError(err).Error("supervisor run error")
 				return
@@ -194,4 +197,42 @@ func (l *shutdownLoggerImpl) TerminateSync(ctx context.Context, pid int) {
 			l.write(fmt.Sprintf("Terminating main process errored: %s", err))
 		}
 	}
+}
+
+// extractFailureFromLogs attempts to extract the last error message from `supervisor run` command
+func extractFailureFromRun() string {
+	logs, err := os.ReadFile("/dev/termination-log")
+	if err != nil {
+		return ""
+	}
+	var sep = []byte("\n")
+	var msg struct {
+		Error   string `json:"error"`
+		Message string `json:"message"`
+	}
+
+	var nidx int
+	for idx := bytes.LastIndex(logs, sep); idx > 0; idx = nidx {
+		nidx = bytes.LastIndex(logs[:idx], sep)
+		if nidx < 0 {
+			nidx = 0
+		}
+
+		line := logs[nidx:idx]
+		err := json.Unmarshal(line, &msg)
+		if err != nil {
+			continue
+		}
+
+		if msg.Message == "" {
+			continue
+		}
+
+		if msg.Error == "" {
+			return msg.Message
+		}
+
+		return msg.Message + ": " + msg.Error
+	}
+	return string(logs)
 }
