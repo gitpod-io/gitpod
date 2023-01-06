@@ -4,26 +4,31 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { StartOptions } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
-import { useCallback, useContext, useEffect, useState } from "react";
-import { useLocation } from "react-router";
+import { useCallback, useContext, useMemo, useState } from "react";
 import Modal from "../components/Modal";
 import RepositoryFinder from "../components/RepositoryFinder";
 import SelectIDEComponent from "../components/SelectIDEComponent";
 import SelectWorkspaceClassComponent from "../components/SelectWorkspaceClassComponent";
+import { StartWorkspaceOptions } from "../start/start-workspace-options";
 import { UserContext } from "../user-context";
-import { StartWorkspaceModalContext } from "./start-workspace-modal-context";
 
-export function StartWorkspaceModal() {
+export interface StartWorkspaceModalProps {
+    uselatestIde?: boolean;
+    ide?: string;
+    workspaceClass?: string;
+    contextUrl?: string;
+    onClose?: () => void;
+}
+
+export function StartWorkspaceModal(props: StartWorkspaceModalProps) {
     const { user } = useContext(UserContext);
-    const { isStartWorkspaceModalVisible, setIsStartWorkspaceModalVisible } = useContext(StartWorkspaceModalContext);
-    const location = useLocation();
     const [useLatestIde, setUseLatestIde] = useState<boolean | undefined>(
-        !!user?.additionalData?.ideSettings?.useLatestVersion,
+        props.uselatestIde || !!user?.additionalData?.ideSettings?.useLatestVersion,
     );
-    const [selectedIde, setSelectedIde] = useState(user?.additionalData?.ideSettings?.defaultIde);
-    const [selectedWsClass, setSelectedWsClass] = useState<string | undefined>();
-    const [repo, setRepo] = useState<string | undefined>(undefined);
+    const [selectedIde, setSelectedIde] = useState(props.ide || user?.additionalData?.ideSettings?.defaultIde);
+    const [selectedWsClass, setSelectedWsClass] = useState<string | undefined>(props.workspaceClass);
+    const [errorWsClass, setErrorWsClass] = useState<string | undefined>(undefined);
+    const [repo, setRepo] = useState<string | undefined>(props.contextUrl);
     const onSelectEditorChange = useCallback(
         (ide: string, useLatest: boolean) => {
             setSelectedIde(ide);
@@ -31,69 +36,74 @@ export function StartWorkspaceModal() {
         },
         [setSelectedIde, setUseLatestIde],
     );
+    const [errorIde, setErrorIde] = useState<string | undefined>(undefined);
 
     const startWorkspace = useCallback(() => {
-        if (!repo) {
+        if (!repo || errorWsClass || errorIde) {
             return false;
         }
         const url = new URL(window.location.href);
         url.pathname = "";
-        const searchParams = new URLSearchParams();
-        if (selectedWsClass) {
-            searchParams.set(StartOptions.WORKSPACE_CLASS, selectedWsClass);
-        }
-        if (selectedIde) {
-            searchParams.set(StartOptions.EDITOR, selectedIde);
-            searchParams.set(StartOptions.USE_LATEST_EDITOR, useLatestIde ? "true" : "false");
-        }
-        url.search = searchParams.toString();
+        url.search = StartWorkspaceOptions.toSearchParams({
+            workspaceClass: selectedWsClass,
+            ideSettings: {
+                defaultIde: selectedIde,
+                useLatestVersion: useLatestIde,
+            },
+        });
         url.hash = "#" + repo;
         window.location.href = url.toString();
         return true;
-    }, [repo, selectedIde, selectedWsClass, useLatestIde]);
+    }, [repo, selectedIde, selectedWsClass, useLatestIde, errorIde, errorWsClass]);
 
-    // Close the modal on navigation events.
-    useEffect(() => {
-        setIsStartWorkspaceModalVisible(false);
-    }, [location, setIsStartWorkspaceModalVisible]);
-
-    useEffect(() => {
-        // reset state when visibility changes.
-        setSelectedIde(user?.additionalData?.ideSettings?.defaultIde);
-        setUseLatestIde(!!user?.additionalData?.ideSettings?.useLatestVersion);
-        setRepo(undefined);
-    }, [user, setSelectedIde, setUseLatestIde, isStartWorkspaceModalVisible]);
+    const buttons = useMemo(() => {
+        const result = [
+            <button key="cancel" className="secondary" onClick={props.onClose}>
+                Cancel
+            </button>,
+            <button
+                key="start"
+                className=""
+                onClick={startWorkspace}
+                disabled={!repo || repo.length === 0 || !!errorIde || !!errorWsClass}
+            >
+                New Workspace
+            </button>,
+        ];
+        if (!props.onClose) {
+            return result.slice(1, 2);
+        }
+        return result;
+    }, [props.onClose, startWorkspace, repo, errorIde, errorWsClass]);
 
     return (
         <Modal
-            onClose={() => setIsStartWorkspaceModalVisible(false)}
+            onClose={props.onClose || (() => {})}
+            closeable={!!props.onClose}
             onEnter={startWorkspace}
-            visible={!!isStartWorkspaceModalVisible}
+            visible={true}
             title="Open in Gitpod"
-            buttons={[
-                <button key="cancel" className="secondary" onClick={() => setIsStartWorkspaceModalVisible(false)}>
-                    Cancel
-                </button>,
-                <button key="start" className="" onClick={startWorkspace} disabled={!repo || repo.length === 0}>
-                    New Workspace
-                </button>,
-            ]}
+            buttons={buttons}
         >
             <div className="-mx-6 px-6">
-                <div className="text-xs text-gray-500">Select a repository and configure workspace options.</div>
+                <div className="text-xs text-gray-500">Start a new workspace with the following options.</div>
                 <div className="pt-3">
-                    <RepositoryFinder setSelection={setRepo} initialValue={repo} />
+                    <RepositoryFinder setSelection={props.contextUrl ? undefined : setRepo} initialValue={repo} />
                 </div>
                 <div className="pt-3">
+                    {errorIde && <div className="text-red-500 text-sm">{errorIde}</div>}
                     <SelectIDEComponent
                         onSelectionChange={onSelectEditorChange}
+                        setError={setErrorIde}
                         selectedIdeOption={selectedIde}
                         useLatest={useLatestIde}
                     />
                 </div>
                 <div className="pt-3">
+                    {errorWsClass && <div className="text-red-500 text-sm">{errorWsClass}</div>}
                     <SelectWorkspaceClassComponent
                         onSelectionChange={setSelectedWsClass}
+                        setError={setErrorWsClass}
                         selectedWorkspaceClass={selectedWsClass}
                     />
                 </div>

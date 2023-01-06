@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, { FunctionComponent, useState } from "react";
+import React, { FunctionComponent, useContext, useState } from "react";
 import { ContextURL, User, Team } from "@gitpod/gitpod-protocol";
 import SelectIDEModal from "../settings/SelectIDEModal";
 import { StartPage, StartPhase } from "../start/StartPage";
@@ -48,6 +48,8 @@ import { Blocked } from "./Blocked";
 // TODO: Can we bundle-split/lazy load these like other pages?
 import { BlockedRepositories } from "../admin/BlockedRepositories";
 import PersonalAccessTokenCreateView from "../settings/PersonalAccessTokensCreateView";
+import { StartWorkspaceModalContext } from "../workspaces/start-workspace-modal-context";
+import { StartWorkspaceOptions } from "../start/start-workspace-options";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
@@ -94,7 +96,7 @@ type AppRoutesProps = {
 };
 export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) => {
     const hash = getURLHash();
-
+    const { startWorkspaceModalProps, setStartWorkspaceModalProps } = useContext(StartWorkspaceModalContext);
     const [isWhatsNewShown, setWhatsNewShown] = useState(shouldSeeWhatsNew(user));
 
     // Prefix with `/#referrer` will specify an IDE for workspace
@@ -125,6 +127,19 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                 <StartPage phase={StartPhase.Checking}>
                     <SelectIDEModal location="workspace_start" onClose={() => setShowUserIdePreference(false)} />
                 </StartPage>
+            );
+        } else if (new URLSearchParams(window.location.search).has("showOptions")) {
+            const props = StartWorkspaceOptions.parseSearchParams(window.location.search);
+            return (
+                <StartWorkspaceModal
+                    {...{
+                        contextUrl: hash,
+                        ide: props?.ideSettings?.defaultIde,
+                        uselatestIde: props?.ideSettings?.useLatestVersion,
+                        workspaceClass: props.workspaceClass,
+                        onClose: undefined,
+                    }}
+                />
             );
         } else {
             // return <div>create workspace yay {hash}</div>;
@@ -294,7 +309,12 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                         }}
                     ></Route>
                 </Switch>
-                <StartWorkspaceModal />
+                {startWorkspaceModalProps && (
+                    <StartWorkspaceModal
+                        {...startWorkspaceModalProps}
+                        onClose={startWorkspaceModalProps.onClose || (() => setStartWorkspaceModalProps(undefined))}
+                    />
+                )}
             </div>
         </Route>
     );

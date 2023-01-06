@@ -21,12 +21,6 @@ const workspaceIDRegex = RegExp(`^${baseWorkspaceIDRegex}$`);
 // this pattern matches URL prefixes of workspaces
 const workspaceUrlPrefixRegex = RegExp(`^([0-9]{4,6}-)?${baseWorkspaceIDRegex}\\.`);
 
-export namespace StartOptions {
-    export const WORKSPACE_CLASS = "workspaceClass";
-    export const EDITOR = "editor";
-    export const USE_LATEST_EDITOR = "useLatestEditor";
-}
-
 export class GitpodHostUrl {
     readonly url: URL;
 
@@ -127,31 +121,6 @@ export class GitpodHostUrl {
         return this.withoutWorkspacePrefix().with({
             pathname: "/start/",
             hash: "#" + workspaceId,
-        });
-    }
-
-    asCreateWorkspace(
-        contextUrl: string,
-        o?: {
-            workspaceClass?: string;
-            editor?: string;
-            useLatestEditor?: boolean;
-        },
-    ): GitpodHostUrl {
-        const searchParams: URLSearchParams = new URLSearchParams();
-        if (o?.workspaceClass && o?.workspaceClass.length > 0) {
-            searchParams.append(StartOptions.WORKSPACE_CLASS, o.workspaceClass);
-        }
-        if (o?.editor && o?.editor?.length > 0) {
-            searchParams.append(StartOptions.EDITOR, o.editor);
-        }
-        if (o?.useLatestEditor !== undefined) {
-            searchParams.append(StartOptions.USE_LATEST_EDITOR, o.useLatestEditor.toString());
-        }
-        return this.withoutWorkspacePrefix().with({
-            pathname: "/",
-            search: searchParams.toString(),
-            hash: "#" + contextUrl,
         });
     }
 
