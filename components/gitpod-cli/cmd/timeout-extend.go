@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	gitpod "github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpod"
@@ -39,6 +40,7 @@ var extendTimeoutCmd = &cobra.Command{
 			}
 			fail(err.Error())
 		}
+		fmt.Println("Workspace timeout has been extended to three hours.")
 	},
 }
 

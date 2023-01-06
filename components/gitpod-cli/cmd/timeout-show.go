@@ -40,9 +40,9 @@ var showTimeoutCommand = &cobra.Command{
 		// Try to use `DurationRaw` but fall back to `Duration` in case of
 		// old server component versions that don't expose it.
 		if res.DurationRaw != "" {
-			fmt.Println(res.DurationRaw)
+			fmt.Println("Timeout for current workspace is", res.DurationRaw)
 		} else {
-			fmt.Println(res.Duration)
+			fmt.Println("Timeout for current workspace is", res.Duration)
 		}
 	},
 }
