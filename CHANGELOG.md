@@ -1,6 +1,8 @@
 # Change Log
 
 ## January 2023
+- Update Helm dependencies in Installer ([#15568](https://github.com/gitpod-io/gitpod/pull/15568)) - [@mrsimonemms](https://github.com/mrsimonemms)
+- remove outdated UI experiments ([#15569](https://github.com/gitpod-io/gitpod/pull/15569)) - [@geropl](https://github.com/geropl)
 - Allow picking workspace class and editor when opening a workspace from the dashboard ([#15389](https://github.com/gitpod-io/gitpod/pull/15389)) - [@svenefftinge](https://github.com/svenefftinge)
 - Fixed an issue which caused Gitpod Terminals to be terminated when closing JetBrains Client. ([#15527](https://github.com/gitpod-io/gitpod/pull/15527)) - [@felladrin](https://github.com/felladrin)
 - Fixed an issue where oom scores for workspace processes were not applied correctly ([#15553](https://github.com/gitpod-io/gitpod/pull/15553)) - [@Furisto](https://github.com/Furisto)
