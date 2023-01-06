@@ -16,7 +16,7 @@ export async function destroyPreview(options: { name: string }) {
             {slice: "Deleting VM."})
     } catch (err) {
         werft.currentPhaseSpan.setAttribute("preview.deleted_vm", false);
-        werft.fail("Deleting VM.", new Error(`Failed creating VM: ${err}`))
+        werft.fail("Deleting VM.", new Error(`Failed deleting VM: ${err}`))
         return;
     }
 
