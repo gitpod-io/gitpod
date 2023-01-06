@@ -51,19 +51,51 @@ function createIDEFrontendGitpodService<C extends GitpodClient, S extends Gitpod
     if (window.top === window.self || process.env.NODE_ENV !== "production") {
         return;
     }
+    console.log("=================createIDEFrontendGitpodService");
     const frameWindow = window.parent;
     const connection = createWindowMessageConnection("gitpodServer", frameWindow, "*");
+    // TODO: add method white list
     const factory = new JsonRpcProxyFactory<C>(server);
     server.registerClient(factory.createProxy());
     connection.onRequest("$reconnectServer", () => server.reconnect());
-    connection.onRequest("$fetchWorkspaceCookie", (t) => {
-        // const url = GitpodHostUrl.fromWorkspaceUrl(window.location.href).asStart().asWorkspaceAuth(t.instanceID).toString();
-        // const response = await fetch(url, {
-        //     credentials: "include",
-        // });
 
-        console.log(t, typeof t, "=================fetchWorkspaceCookie");
-        return false;
+    const wsUrl = GitpodHostUrl.fromWorkspaceUrl(window.location.href);
+
+    const listenToInstance = async () => {
+        if (!wsUrl.workspaceId) {
+            throw new Error(`Failed to extract a workspace id from '${wsUrl.toString()}'.`);
+        }
+        const listener = await server.listenToInstance(wsUrl.workspaceId);
+        if (listener.info.latestInstance) {
+            wsAuth(listener.info.latestInstance.id);
+        } else {
+            const authListener = listener.onDidChange(() => {
+                if (listener.info.latestInstance) {
+                    authListener.dispose();
+                    pendingWSAuth = wsAuth(listener.info.latestInstance.id);
+                }
+            });
+        }
+    };
+
+    let pendingWSAuth: Promise<boolean> | undefined;
+    const wsAuth = async (instanceID: string) => {
+        const url = wsUrl.asStart().asWorkspaceAuth(instanceID).toString();
+        const response = await fetch(url, {
+            credentials: "include",
+        });
+        alert(`pendingWSAuth- ${instanceID} -${response.ok}`);
+        return response.ok;
+    };
+
+    listenToInstance();
+
+    connection.onRequest("$fetchWorkspaceCookie", async (t) => {
+        alert(JSON.stringify(t, null, 4) + "=========fetchWorkspaceCookie");
+        if (!pendingWSAuth) {
+            pendingWSAuth = wsAuth(t.instanceID);
+        }
+        return await pendingWSAuth;
     });
     factory.listen(connection);
 }

@@ -65,8 +65,8 @@ export function load(): Promise<{
                     instanceID,
                 });
                 console.log(ok, "=================hwen.fetchWorkspaceCookie response");
-                return false;
-            }
+                return ok as boolean;
+            };
 
             const setState = (state: object) => {
                 frameWindow.postMessage({ type: "setState", state }, serverOrigin);
