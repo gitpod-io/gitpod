@@ -77,21 +77,23 @@ func (r *RollOutJob) Start(ctx context.Context) {
 
 			r.currentScore += r.rolloutStep
 			// TODO (ask): Handle them together? so that we don't end up in a mixed state during failure
-			if err := r.RolloutAction.UpdateScore(ctx, r.newCluster, r.currentScore); err != nil {
+			if err := r.UpdateScoreWithMetricUpdate(ctx, r.newCluster, r.currentScore); err != nil {
 				log.Error("Failed to update new cluster score: ", err)
 			}
-			if err := r.RolloutAction.UpdateScore(ctx, r.oldCluster, 100-r.currentScore); err != nil {
+
+			if err := r.UpdateScoreWithMetricUpdate(ctx, r.oldCluster, 100-r.currentScore); err != nil {
 				log.Error("Failed to update old cluster score: ", err)
 			}
 
 			log.Infof("Updated cluster scores: %s: %d, %s: %d", r.oldCluster, 100-r.currentScore, r.newCluster, r.currentScore)
 		case <-r.revert:
 			log.Info("Reverting the rollout")
-			if err := r.RolloutAction.UpdateScore(ctx, r.oldCluster, 100); err != nil {
-				log.Error("Failed to update old cluster score: ", err)
+
+			if err := r.UpdateScoreWithMetricUpdate(ctx, r.oldCluster, 100); err != nil {
+				log.Error("Failed to update new cluster score: ", err)
 			}
 
-			if err := r.RolloutAction.UpdateScore(ctx, r.newCluster, 0); err != nil {
+			if err := r.UpdateScoreWithMetricUpdate(ctx, r.newCluster, 0); err != nil {
 				log.Error("Failed to update new cluster score: ", err)
 			}
 
@@ -102,6 +104,14 @@ func (r *RollOutJob) Start(ctx context.Context) {
 			return
 		}
 	}
+}
+
+func (r *RollOutJob) UpdateScoreWithMetricUpdate(ctx context.Context, cluster string, score int32) error {
+	if err := r.RolloutAction.UpdateScore(ctx, cluster, score); err != nil {
+		return err
+	}
+	clusterScores.WithLabelValues(cluster).Set(float64(score))
+	return nil
 }
 
 func (r *RollOutJob) Stop() {
