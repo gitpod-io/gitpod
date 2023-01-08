@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/workspace-rollout-job/pkg/analysis"
 	"github.com/gitpod-io/gitpod/workspace-rollout-job/pkg/rollout"
@@ -33,6 +34,26 @@ var rootCmd = &cobra.Command{
 		if !presence {
 			log.WithError(err).Fatal("cannot get new cluster")
 		}
+
+		version := "v0.1.0"
+		serverOpts := []baseserver.Option{
+			baseserver.WithVersion(version),
+		}
+
+		srv, err := baseserver.New("workspace-rollout-job", serverOpts...)
+		if err != nil {
+			log.Fatalf("failed to initialize server: %w", err)
+			return
+		}
+
+		// Run in a separate routine as this is not the main purpose
+		go srv.ListenAndServe()
+		if err != nil {
+			log.Fatalf("failed to listen and serve: %w", err)
+			return
+		}
+
+		rollout.RegisterMetrics(srv.MetricsRegistry())
 
 		wsManagerBridgeClient := wsbridge.NewWsManagerBridgeClient("localhost:8080")
 		// Check if the old cluster has a 100 score.

@@ -25,3 +25,5 @@ Now, Run the job:
 ```bash
 OLD_CLUSTER="<xyz>" NEW_CLUSTER="<abc>" go run .
 ```
+
+Rollout progress can either be monitored through logs or by metrics at `localhost:9500/metrics`
