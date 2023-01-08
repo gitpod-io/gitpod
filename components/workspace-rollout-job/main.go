@@ -4,7 +4,9 @@
 
 package main
 
-import "github.com/gitpod-io/gitpod/workspace-rollout-job/cmd"
+import (
+	"github.com/gitpod-io/gitpod/workspace-rollout-job/cmd"
+)
 
 func main() {
 	cmd.Execute()
