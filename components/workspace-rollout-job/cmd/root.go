@@ -42,14 +42,14 @@ var rootCmd = &cobra.Command{
 
 		srv, err := baseserver.New("workspace-rollout-job", serverOpts...)
 		if err != nil {
-			log.Fatalf("failed to initialize server: %w", err)
+			log.WithError(err).Fatal("failed to initialize server")
 			return
 		}
 
 		// Run in a separate routine as this is not the main purpose
 		go srv.ListenAndServe()
 		if err != nil {
-			log.Fatalf("failed to listen and serve: %w", err)
+			log.WithError(err).Fatal("failed to listen and serve")
 			return
 		}
 

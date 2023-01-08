@@ -57,8 +57,6 @@ func TestRollout_Successful(t *testing.T) {
 	rolloutJob := New("ws-1", "ws-2", 1*time.Second, 1*time.Second, 25, &MockAnalyzer{}, rolloutAction)
 	rolloutJob.Start(context.Background())
 
-	// Wait for the rollout to finish
-	time.Sleep(5 * time.Second)
 	newClusterScore, err := rolloutAction.GetScore(context.Background(), "ws-2")
 	assert.NoError(t, err)
 	assert.Equal(t, int32(100), newClusterScore)
@@ -73,8 +71,6 @@ func TestRollout_InitialFailure(t *testing.T) {
 	rolloutJob := New("ws-1", "ws-2", 1*time.Second, 1*time.Second, 25, &FailureMockAnalyzer{}, rolloutAction)
 	rolloutJob.Start(context.Background())
 
-	// Wait for the rollout to finish
-	time.Sleep(5 * time.Second)
 	newClusterScore, err := rolloutAction.GetScore(context.Background(), "ws-2")
 	assert.NoError(t, err)
 	assert.Equal(t, int32(0), newClusterScore)
@@ -90,8 +86,6 @@ func TestRollout_MidpointFailure(t *testing.T) {
 	rolloutJob := New("ws-1", "ws-2", 1*time.Second, 1*time.Second, 25, &FailureMockAnalyzer{FailureStep: 2}, rolloutAction)
 	rolloutJob.Start(context.Background())
 
-	// Wait for the rollout to finish
-	time.Sleep(5 * time.Second)
 	newClusterScore, err := rolloutAction.GetScore(context.Background(), "ws-2")
 	assert.NoError(t, err)
 	assert.Equal(t, int32(0), newClusterScore)
