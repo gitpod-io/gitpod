@@ -12,10 +12,9 @@ import {
     GitpodService,
     GitpodServiceImpl,
     User,
+    WorkspaceInfo,
 } from "@gitpod/gitpod-protocol";
 import { WebSocketConnectionProvider } from "@gitpod/gitpod-protocol/lib/messaging/browser/connection";
-import { createWindowMessageConnection } from "@gitpod/gitpod-protocol/lib/messaging/browser/window-connection";
-import { JsonRpcProxyFactory } from "@gitpod/gitpod-protocol/lib/messaging/proxy-factory";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/frontend-dashboard-service";
@@ -24,17 +23,6 @@ import { RemoteTrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
 function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
-    if (window.top !== window.self && process.env.NODE_ENV === "production") {
-        const connection = createWindowMessageConnection("gitpodServer", window.parent, "*");
-        const factory = new JsonRpcProxyFactory<S>();
-        const proxy = factory.createProxy();
-        factory.listen(connection);
-        return new GitpodServiceImpl<C, S>(proxy, {
-            onReconnect: async () => {
-                await connection.sendRequest("$reconnectServer");
-            },
-        });
-    }
     let host = gitpodHostUrl.asWebsocket().with({ pathname: GitpodServerPath }).withApi();
 
     const connectionProvider = new WebSocketConnectionProvider();
@@ -55,15 +43,10 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
     });
 
     const service = new GitpodServiceImpl<C, S>(proxy, { onReconnect });
-
-    if (window.top !== window.self && process.env.NODE_ENV === "production") {
-        getIDEFrontendService(service);
-    }
-
     return service;
 }
 
-function getGitpodService(): GitpodService {
+export function getGitpodService(): GitpodService {
     const w = window as any;
     const _gp = w._gp || (w._gp = {});
     if (window.location.search.includes("service=mock")) {
@@ -75,14 +58,14 @@ function getGitpodService(): GitpodService {
 }
 
 let ideFrontendService: IDEFrontendService | undefined;
-function getIDEFrontendService(service: GitpodService) {
+export function getIDEFrontendService(service: GitpodService, sessionId: string) {
     if (!ideFrontendService) {
-        ideFrontendService = new IDEFrontendService(service, window.parent);
+        ideFrontendService = new IDEFrontendService(service, sessionId, window.parent);
     }
     return ideFrontendService;
 }
 
-class IDEFrontendService implements IDEFrontendDashboardService.IServer {
+export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
     private workspaceID: string;
     private instanceID: string | undefined;
     private user: User | undefined;
@@ -92,62 +75,70 @@ class IDEFrontendService implements IDEFrontendDashboardService.IServer {
     private readonly onDidChangeEmitter = new Emitter<IDEFrontendDashboardService.SetStateData>();
     readonly onSetState = this.onDidChangeEmitter.event;
 
-    constructor(private service: GitpodService, private clientWindow: Window) {
+    constructor(private service: GitpodService, private sessionId: string, private clientWindow: Window) {
+        // we will need hash here
+        const gitpodHostUrl = new GitpodHostUrl(new URL(window.location.toString()));
         if (!gitpodHostUrl.workspaceId) {
             throw new Error("no workspace id");
         }
         this.workspaceID = gitpodHostUrl.workspaceId;
-        console.log("=============workspaceID", this.workspaceID);
-        this.processInfo();
-        this.processInstanceUpdate();
+        this.processServerInfo();
         window.addEventListener("message", (event: MessageEvent) => {
-            console.log("=============dashboard on message", event);
             if (IDEFrontendDashboardService.isTrackEventData(event.data)) {
+                console.log("=============dashboard isTrackEventData", event.data);
                 this.trackEvent(event.data.msg);
             }
             if (IDEFrontendDashboardService.isHeartbeatEventData(event.data)) {
+                console.log("=============dashboard isHeartbeatEventData", event.data);
                 this.activeHeartbeat();
             }
             if (IDEFrontendDashboardService.isSetStateEventData(event.data)) {
+                console.log("=============dashboard isSetStateEventData", event.data);
                 this.onDidChangeEmitter.fire(event.data.state);
             }
         });
+        window.addEventListener("unload", () => {
+            if (!this.instanceID) {
+                return;
+            }
+
+            const data = { sessionId: this.sessionId };
+            const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+            const url = gitpodHostUrl.withApi({ pathname: `/auth/workspacePageClose/${this.instanceID}` }).toString();
+            navigator.sendBeacon(url, blob);
+        });
     }
 
-    async processInfo() {
+    private async processServerInfo() {
         this.user = await this.service.server.getLoggedInUser();
-        console.log("=============dashboard getUser", this.user.id);
-        if (this.latestStatus) {
-            this.latestStatus.loggedUserId = this.user.id;
-            this.sendStatusUpdate(this.latestStatus);
-        }
         const workspace = await this.service.server.getWorkspace(this.workspaceID);
         this.instanceID = workspace.latestInstance?.id;
-        console.log("=============dashboard instanceID", this.instanceID);
         if (this.instanceID) {
             this.auth();
         }
-    }
 
-    async processInstanceUpdate() {
         const listener = await this.service.listenToInstance(this.workspaceID);
         listener.onDidChange(() => {
-            const status: IDEFrontendDashboardService.Status = {
-                loggedUserId: this.user!.id,
-                workspaceID: this.workspaceID,
-                instanceId: listener.info.latestInstance?.id,
-                ideUrl: listener.info.latestInstance?.ideUrl,
-                statusPhase: listener.info.latestInstance?.status.phase,
-                workspaceDescription: listener.info.workspace.description,
-                workspaceType: listener.info.workspace.type,
-            };
+            const status = this.getWorkspaceStatus(listener.info);
             this.latestStatus = status;
+            this.sendStatusUpdate(this.latestStatus);
             if (this.instanceID !== status.instanceId) {
+                this.instanceID = status.instanceId;
                 this.auth();
             }
-            this.instanceID = status.instanceId;
-            this.sendStatusUpdate(this.latestStatus);
         });
+    }
+
+    getWorkspaceStatus(workspace: WorkspaceInfo): IDEFrontendDashboardService.Status {
+        return {
+            loggedUserId: this.user!.id,
+            workspaceID: this.workspaceID,
+            instanceId: workspace.latestInstance?.id,
+            ideUrl: workspace.latestInstance?.ideUrl,
+            statusPhase: workspace.latestInstance?.status.phase,
+            workspaceDescription: workspace.workspace.description,
+            workspaceType: workspace.workspace.type,
+        };
     }
 
     // implements
@@ -156,31 +147,33 @@ class IDEFrontendService implements IDEFrontendDashboardService.IServer {
         if (!this.instanceID) {
             return;
         }
-        const url = gitpodHostUrl.asStart().asWorkspaceAuth(this.instanceID).toString();
-        console.log("=============dashboard auth url", url);
+        const url = gitpodHostUrl.asWorkspaceAuth(this.instanceID).toString();
         await fetch(url, {
             credentials: "include",
         });
     }
 
     trackEvent(msg: RemoteTrackMessage): void {
-        console.log(">>>>>>>>> on trackEvent");
+        console.log("=========== dashboard on trackEvent");
         msg.properties = {
             ...msg.properties,
+            sessionId: this.sessionId,
             instanceId: this.latestStatus?.instanceId,
             workspaceId: this.workspaceID,
             type: this.latestStatus?.workspaceType,
         };
         this.service.server.trackEvent(msg);
     }
+
     activeHeartbeat(): void {
-        console.log(">>>>>>>>> on activeHeartbeat");
+        console.log("=========== dashboard on activeHeartbeat");
         if (this.instanceID) {
             this.service.server.sendHeartBeat({ instanceId: this.instanceID });
         }
     }
+
     sendStatusUpdate(status: IDEFrontendDashboardService.Status): void {
-        console.log("<<<<<<<<< send sendStatusUpdate");
+        console.log("=========== dashboard send sendStatusUpdate");
         this.clientWindow.postMessage(
             {
                 type: "ide-status-update",
@@ -189,24 +182,12 @@ class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             "*",
         );
     }
+
     relocate(url: string): void {
-        console.log("<<<<<<<<< send relocate");
+        console.log("=========== dashboard send relocate");
         this.clientWindow.postMessage(
             { type: "ide-relocate", url } as IDEFrontendDashboardService.RelocateEventData,
             "*",
         );
     }
-
-    setSessionID(sessionID: string): void {
-        console.log("<<<<<<<<< send setSessionID");
-        this.clientWindow.postMessage(
-            {
-                type: "ide-set-session-id",
-                sessionID,
-            } as IDEFrontendDashboardService.SetSessionIDEventData,
-            "*",
-        );
-    }
 }
-
-export { getGitpodService, getIDEFrontendService };

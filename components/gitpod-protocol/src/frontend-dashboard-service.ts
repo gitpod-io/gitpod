@@ -12,13 +12,10 @@ export namespace IDEFrontendDashboardService {
     /**
      * IClient is the client side which is using in supervisor frontend
      */
-    export interface IClient extends IClientOn, IClientSend {
-        sessionID: Promise<string>;
-    }
+    export interface IClient extends IClientOn, IClientSend {}
     interface IClientOn {
         onStatusUpdate: Event<Status>;
         relocate(url: string): void;
-        setSessionID(sessionID: string): void;
     }
     interface IClientSend {
         trackEvent(msg: RemoteTrackMessage): void;
@@ -40,12 +37,10 @@ export namespace IDEFrontendDashboardService {
     interface IServerSend {
         sendStatusUpdate(status: Status): void;
         relocate(url: string): void;
-        setSessionID(sessionID: string): void;
     }
 
     export interface Status {
         workspaceID: string;
-        sessionID?: string;
         loggedUserId: string;
 
         instanceId?: string;
@@ -87,11 +82,6 @@ export namespace IDEFrontendDashboardService {
         url: string;
     }
 
-    export interface SetSessionIDEventData {
-        type: "ide-set-session-id";
-        sessionID: string;
-    }
-
     export interface SetStateEventData {
         type: "ide-set-state";
         state: SetStateData;
@@ -111,10 +101,6 @@ export namespace IDEFrontendDashboardService {
 
     export function isRelocateEventData(obj: any): obj is RelocateEventData {
         return obj != null && typeof obj === "object" && obj.type === "ide-relocate";
-    }
-
-    export function isSetSessionIDEventData(obj: any): obj is SetSessionIDEventData {
-        return obj != null && typeof obj === "object" && obj.type === "ide-set-session-id";
     }
 
     export function isSetStateEventData(obj: any): obj is SetStateEventData {

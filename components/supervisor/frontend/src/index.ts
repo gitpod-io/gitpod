@@ -64,15 +64,18 @@ const loadingIDE = new Promise((resolve) => window.addEventListener("DOMContentL
 const toStop = new DisposableCollection();
 
 document.body.style.visibility = "hidden";
-LoadingFrame.load().then((loading) => {
+LoadingFrame.load().then(async (loading) => {
     const frontendDashboardServiceClient = loading.frontendDashboardServiceClient;
+    await frontendDashboardServiceClient.initialize();
+
+    if (frontendDashboardServiceClient.latestStatus.workspaceType !== "regular") {
+        return;
+    }
+
+    document.title = frontendDashboardServiceClient.latestStatus.workspaceDescription ?? "gitpod";
+    window.gitpod.loggedUserID = frontendDashboardServiceClient.latestStatus.loggedUserId;
+
     (async () => {
-        const sessionId = await frontendDashboardServiceClient.sessionID;
-
-        if (frontendDashboardServiceClient.latestStatus?.workspaceType !== "regular") {
-            return;
-        }
-
         const supervisorServiceClient = SupervisorServiceClient.get();
 
         let hideDesktopIde = false;
@@ -98,10 +101,7 @@ LoadingFrame.load().then((loading) => {
                 const { event: eventName, properties } = event.data;
                 frontendDashboardServiceClient.trackEvent({
                     event: eventName,
-                    properties: {
-                        sessionId,
-                        ...properties,
-                    },
+                    properties,
                 });
             }
         });
@@ -188,7 +188,6 @@ LoadingFrame.load().then((loading) => {
             frontendDashboardServiceClient.trackEvent({
                 event: "status_rendered",
                 properties: {
-                    sessionId,
                     phase,
                     ...properties,
                 },
@@ -233,7 +232,7 @@ LoadingFrame.load().then((loading) => {
         heartBeat.track(window);
         const updateHeartBeat = () => {
             if (frontendDashboardServiceClient.latestStatus?.statusPhase === "running") {
-                heartBeat.schedule(frontendDashboardServiceClient, sessionId);
+                heartBeat.schedule(frontendDashboardServiceClient);
             } else {
                 heartBeat.cancel();
             }
@@ -244,14 +243,6 @@ LoadingFrame.load().then((loading) => {
     })();
 
     (async () => {
-        document.title = frontendDashboardServiceClient.latestStatus?.workspaceDescription ?? "gitpod";
-
-        if (frontendDashboardServiceClient.latestStatus?.workspaceType !== "regular") {
-            return;
-        }
-
-        window.gitpod.loggedUserID = frontendDashboardServiceClient.latestStatus.loggedUserId;
-
         //#region ide lifecycle
         function isWorkspaceInstancePhase(phase: WorkspaceInstancePhase): boolean {
             return frontendDashboardServiceClient.latestStatus?.statusPhase === phase;

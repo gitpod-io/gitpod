@@ -8,51 +8,54 @@ import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/fronten
 import { RemoteTrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
 import { Emitter } from "@gitpod/gitpod-protocol/lib/util/event";
 
-let resolveSessionId: (sessionId: string) => void;
-
 export class FrontendDashboardServiceClient implements IDEFrontendDashboardService.IClient {
-    public latestStatus?: IDEFrontendDashboardService.Status;
-    public sessionID: Promise<string>;
+    public latestStatus!: IDEFrontendDashboardService.Status;
 
     private readonly onDidChangeEmitter = new Emitter<IDEFrontendDashboardService.Status>();
     readonly onStatusUpdate = this.onDidChangeEmitter.event;
 
+    private resolveInit!: () => void;
+    private initPromise = new Promise<void>((resolve) => (this.resolveInit = resolve));
+
     constructor(private serverWindow: Window) {
-        this.sessionID = new Promise<string>((resolve) => (resolveSessionId = resolve));
+        console.log("===========new.FrontendDashboardServiceClient", serverWindow);
         window.addEventListener("message", (event: MessageEvent) => {
             if (IDEFrontendDashboardService.isStatusUpdateEventData(event.data)) {
+                console.log("=============supervisor isStatusUpdateEventData", event.data);
                 this.latestStatus = event.data.status;
+                this.resolveInit();
                 this.onDidChangeEmitter.fire(this.latestStatus);
             }
             if (IDEFrontendDashboardService.isRelocateEventData(event.data)) {
+                console.log("=============supervisor isRelocateEventData", event.data);
                 this.relocate(event.data.url);
             }
-            if (IDEFrontendDashboardService.isSetSessionIDEventData(event.data)) {
-                this.setSessionID(event.data.sessionID);
-            }
         });
+    }
+
+    initialize(): Promise<void> {
+        return this.initPromise;
     }
 
     relocate(url: string): void {
         window.location.href = url;
     }
-    setSessionID(sessionID: string): void {
-        resolveSessionId(sessionID);
-    }
 
     trackEvent(msg: RemoteTrackMessage): void {
+        console.log("=========== supervisor send trackEvent");
         this.serverWindow.postMessage(
             { type: "ide-track-event", msg } as IDEFrontendDashboardService.TrackEventData,
             "*",
         );
-        throw new Error("Method not implemented.");
     }
+
     activeHeartbeat(): void {
+        console.log("=========== supervisor send activeHeartbeat");
         this.serverWindow.postMessage({ type: "ide-heartbeat" } as IDEFrontendDashboardService.HeartbeatEventData, "*");
-        throw new Error("Method not implemented.");
     }
 
     setState(state: IDEFrontendDashboardService.SetStateData): void {
+        console.log("=========== supervisor send setState");
         this.serverWindow.postMessage(
             { type: "ide-set-state", state } as IDEFrontendDashboardService.SetStateData,
             "*",

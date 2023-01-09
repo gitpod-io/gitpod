@@ -5,8 +5,6 @@
  */
 
 import { DisposableCollection, Disposable } from "@gitpod/gitpod-protocol/lib/util/disposable";
-import { isSaaSServerGreaterThan, isSaaS } from "./gitpod-server-compatibility";
-import { serverUrl } from "../shared/urls";
 import { FrontendDashboardServiceClient } from "../shared/frontend-dashboard-service";
 
 let lastActivity = 0;
@@ -18,14 +16,8 @@ export const track = (w: Window) => {
     w.document.addEventListener("keydown", updateLastActivitiy, { capture: true });
 };
 
-let pageCloseCompatibile: boolean = false;
-// TODO(ak) remove
-isSaaSServerGreaterThan("main.4124").then((r) => {
-    pageCloseCompatibile = r;
-});
-
 let toCancel: DisposableCollection | undefined;
-export function schedule(frontendDashboardServiceClient: FrontendDashboardServiceClient, sessionId: string): void {
+export function schedule(frontendDashboardServiceClient: FrontendDashboardServiceClient): void {
     if (toCancel) {
         return;
     }
@@ -37,7 +29,6 @@ export function schedule(frontendDashboardServiceClient: FrontendDashboardServic
                 frontendDashboardServiceClient.trackEvent({
                     event: "ide_close_signal",
                     properties: {
-                        sessionId,
                         clientKind: "supervisor-frontend",
                     },
                 });
@@ -47,31 +38,6 @@ export function schedule(frontendDashboardServiceClient: FrontendDashboardServic
         }
     };
     sendHeartBeat();
-
-    const beaconWorkspacePageClose = () => {
-        const instanceId = frontendDashboardServiceClient.latestStatus?.instanceId;
-        if (!instanceId) {
-            return;
-        }
-        const data = { sessionId };
-        const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
-        const url = serverUrl.withApi({ pathname: `/auth/workspacePageClose/${instanceId}` }).toString();
-        navigator.sendBeacon(url, blob);
-    };
-
-    const workspacePageCloseCompatible = () => {
-        if (isSaaS && !pageCloseCompatibile) {
-            sendHeartBeat(true);
-            return;
-        }
-        beaconWorkspacePageClose();
-    };
-
-    const unloadListener = () => {
-        workspacePageCloseCompatible();
-    };
-    window.addEventListener("unload", unloadListener);
-    toCancel.push(Disposable.create(() => window.removeEventListener("unload", unloadListener)));
 
     let activityInterval = 30000;
     const intervalHandle = setInterval(() => {
