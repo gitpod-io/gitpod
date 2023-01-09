@@ -463,6 +463,7 @@ if [[ "${GITPOD_WSMANAGER_MK2}" == "true" ]]; then
   yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.workspace.useWsmanagerMk2" "true"
 fi
 
+
 #
 # chargebee
 #
