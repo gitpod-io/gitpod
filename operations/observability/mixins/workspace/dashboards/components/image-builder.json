@@ -1,32 +1,4 @@
 {
-  "__inputs": [],
-  "__elements": {},
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "9.3.1"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph (old)",
-      "version": ""
-    },
-    {
-      "type": "datasource",
-      "id": "prometheus",
-      "name": "Prometheus",
-      "version": "1.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "timeseries",
-      "name": "Time series",
-      "version": ""
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -52,10 +24,134 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": null,
   "links": [],
   "liveNow": false,
   "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 68,
+      "panels": [],
+      "title": "Image build rate (per cluster)",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "P4169E866C3094E38"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 0,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "reqps"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Success: false"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 1
+      },
+      "id": 70,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "repeat": "cluster",
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P4169E866C3094E38"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(gitpod_image_builder_builds_done_total{cluster=~\"$cluster\"}[$__rate_interval])) by (success)",
+          "legendFormat": "Success: {{success}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "$cluster",
+      "type": "timeseries"
+    },
     {
       "collapsed": false,
       "datasource": {
@@ -66,7 +162,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 9
       },
       "id": 34,
       "panels": [],
@@ -104,7 +200,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 1
+        "y": 10
       },
       "hiddenSeries": false,
       "id": 36,
@@ -126,7 +222,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.3.1",
+      "pluginVersion": "9.3.2",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -203,7 +299,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 1
+        "y": 10
       },
       "hiddenSeries": false,
       "id": 38,
@@ -225,7 +321,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.3.1",
+      "pluginVersion": "9.3.2",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -315,7 +411,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 10
+        "y": 19
       },
       "hiddenSeries": false,
       "id": 40,
@@ -338,7 +434,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.3.1",
+      "pluginVersion": "9.3.2",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -440,7 +536,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 19
+        "y": 37
       },
       "id": 16,
       "panels": [
@@ -488,8 +584,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -504,7 +599,7 @@
             "h": 7,
             "w": 10,
             "x": 0,
-            "y": 20
+            "y": 36
           },
           "id": 64,
           "options": {
@@ -550,7 +645,7 @@
             "h": 7,
             "w": 7,
             "x": 10,
-            "y": 20
+            "y": 36
           },
           "hiddenSeries": false,
           "id": 2,
@@ -640,7 +735,7 @@
             "h": 7,
             "w": 7,
             "x": 17,
-            "y": 20
+            "y": 36
           },
           "hiddenSeries": false,
           "id": 4,
@@ -741,7 +836,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 27
+            "y": 43
           },
           "hiddenSeries": false,
           "id": 6,
@@ -829,7 +924,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 27
+            "y": 43
           },
           "hiddenSeries": false,
           "id": 8,
@@ -916,7 +1011,7 @@
             "h": 7,
             "w": 8,
             "x": 0,
-            "y": 34
+            "y": 50
           },
           "hiddenSeries": false,
           "id": 10,
@@ -1012,7 +1107,7 @@
             "h": 7,
             "w": 8,
             "x": 8,
-            "y": 34
+            "y": 50
           },
           "hiddenSeries": false,
           "id": 30,
@@ -1110,7 +1205,7 @@
             "h": 7,
             "w": 8,
             "x": 16,
-            "y": 34
+            "y": 50
           },
           "hiddenSeries": false,
           "id": 32,
@@ -1209,7 +1304,7 @@
             "h": 9,
             "w": 8,
             "x": 0,
-            "y": 41
+            "y": 57
           },
           "hiddenSeries": false,
           "id": 22,
@@ -1298,7 +1393,7 @@
             "h": 9,
             "w": 8,
             "x": 8,
-            "y": 41
+            "y": 57
           },
           "hiddenSeries": false,
           "id": 28,
@@ -1405,7 +1500,7 @@
             "h": 9,
             "w": 8,
             "x": 16,
-            "y": 41
+            "y": 57
           },
           "hiddenSeries": false,
           "id": 26,
@@ -1520,7 +1615,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 20
+        "y": 38
       },
       "id": 46,
       "panels": [
@@ -1539,7 +1634,7 @@
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 21
+            "y": 37
           },
           "hiddenSeries": false,
           "id": 48,
@@ -1631,7 +1726,7 @@
             "h": 9,
             "w": 12,
             "x": 12,
-            "y": 21
+            "y": 37
           },
           "hiddenSeries": false,
           "id": 50,
@@ -1729,7 +1824,7 @@
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 30
+            "y": 46
           },
           "hiddenSeries": false,
           "id": 52,
@@ -1824,7 +1919,7 @@
             "h": 9,
             "w": 12,
             "x": 12,
-            "y": 30
+            "y": 46
           },
           "hiddenSeries": false,
           "id": 54,
@@ -1918,7 +2013,7 @@
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 39
+            "y": 55
           },
           "hiddenSeries": false,
           "id": 56,
@@ -2007,7 +2102,7 @@
             "h": 9,
             "w": 12,
             "x": 12,
-            "y": 39
+            "y": 55
           },
           "hiddenSeries": false,
           "id": 58,
@@ -2125,7 +2220,15 @@
   "templating": {
     "list": [
       {
-        "current": {},
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
         "datasource": {
           "type": "prometheus",
           "uid": "$datasource"
@@ -2151,7 +2254,11 @@
         "useTags": false
       },
       {
-        "current": {},
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
         "datasource": {
           "type": "prometheus",
           "uid": "$datasource"
@@ -2177,7 +2284,11 @@
         "useTags": false
       },
       {
-        "current": {},
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
         "datasource": {
           "type": "prometheus",
           "uid": "$datasource"
@@ -2203,7 +2314,11 @@
         "useTags": false
       },
       {
-        "current": {},
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
         "datasource": {
           "type": "prometheus",
           "uid": "$datasource"
