@@ -267,9 +267,9 @@ export class UserController {
 
                 const token = instance.status.ownerToken;
                 if (!token) {
-                    // no token, no problem. The dashboard will try again later.
-                    res.sendStatus(200);
-                    log.debug("attempted to fetch workspace cookie, but instance has no owner token", {
+                    // There is no token to answer with, so we sent a 404. The client has to properly handle this case with retries/timeouts, etc.
+                    res.sendStatus(404);
+                    log.warn("attempted to fetch workspace cookie, but instance has no owner token", {
                         instanceId: req.params.instanceID,
                         userId: user.id,
                     });
