@@ -27,14 +27,16 @@ import {
     publicApiTeamToProtocol,
     teamsService,
 } from "../service/public-api";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
+import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import { ConnectError } from "@bufbuild/connect-web";
+import { useRefreshProjects } from "../data/projects/hooks";
 
 export default function NewProject() {
     const location = useLocation();
     const { teams } = useContext(TeamsContext);
     const { user, setUser } = useContext(UserContext);
-    const { usePublicApiTeamsService } = useContext(FeatureFlagContext);
+    const { usePublicApiTeamsService } = useFeatureFlags();
+    const refreshProjects = useRefreshProjects();
 
     const [selectedProviderHost, setSelectedProviderHost] = useState<string | undefined>();
     const [reposInAccounts, setReposInAccounts] = useState<ProviderRepository[]>([]);
@@ -242,6 +244,8 @@ export default function NewProject() {
                 ...(User.is(teamOrUser) ? { userId: teamOrUser.id } : { teamId: teamOrUser.id }),
                 appInstallationId: String(repo.installationId),
             });
+
+            refreshProjects(project.teamId ? { teamId: project.teamId } : { userId: project.userId || "" });
 
             setProject(project);
         } catch (error) {
@@ -728,7 +732,7 @@ function GitProviders(props: {
 
 function NewTeam(props: { onSuccess: (team: Team) => void }) {
     const { setTeams } = useContext(TeamsContext);
-    const { usePublicApiTeamsService } = useContext(FeatureFlagContext);
+    const { usePublicApiTeamsService } = useFeatureFlags();
 
     const [teamName, setTeamName] = useState<string | undefined>();
     const [error, setError] = useState<string | undefined>();
