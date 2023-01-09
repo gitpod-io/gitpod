@@ -1,6 +1,7 @@
 # Change Log
 
 ## January 2023
+- Fix image build logs not showing in the dashboard if the build is delayed. ([#15586](https://github.com/gitpod-io/gitpod/pull/15586)) - [@WVerlaek](https://github.com/WVerlaek)
 - Update Helm dependencies in Installer ([#15568](https://github.com/gitpod-io/gitpod/pull/15568)) - [@mrsimonemms](https://github.com/mrsimonemms)
 - remove outdated UI experiments ([#15569](https://github.com/gitpod-io/gitpod/pull/15569)) - [@geropl](https://github.com/geropl)
 - Allow picking workspace class and editor when opening a workspace from the dashboard ([#15389](https://github.com/gitpod-io/gitpod/pull/15389)) - [@svenefftinge](https://github.com/svenefftinge)
