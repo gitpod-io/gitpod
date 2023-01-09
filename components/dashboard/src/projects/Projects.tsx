@@ -4,21 +4,17 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import dayjs from "dayjs";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import projectsEmpty from "../images/projects-empty.svg";
 import projectsEmptyDark from "../images/projects-empty-dark.svg";
 import { useHistory, useLocation } from "react-router";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { getGitpodService } from "../service/service";
+import { useCallback, useContext, useMemo, useState } from "react";
 import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { ThemeContext } from "../theme-context";
-import { PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
+import { Project } from "@gitpod/gitpod-protocol";
 import Alert from "../components/Alert";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
-import { listAllProjects } from "../service/public-api";
-import { UserContext } from "../user-context";
+import { useProjects } from "../data/projects";
 import { ProjectListItem } from "./ProjectListItem";
 
 export default function () {
@@ -26,58 +22,63 @@ export default function () {
     const history = useHistory();
 
     const { teams } = useContext(TeamsContext);
-    const { user } = useContext(UserContext);
-    const { usePublicApiProjectsService } = useContext(FeatureFlagContext);
+    // const { user } = useContext(UserContext);
+    // let { usePublicApiProjectsService } = useContext(FeatureFlagContext);
+    // usePublicApiProjectsService = false;
     const team = getCurrentTeam(location, teams);
-    const [projectsLoaded, setProjectsLoaded] = useState(false);
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [lastPrebuilds, setLastPrebuilds] = useState<Map<string, PrebuildWithStatus>>(new Map());
+    // const [projectsLoaded, setProjectsLoaded] = useState(false);
+    // console.log(projectsLoaded);
+    // const [projects, setProjects] = useState<Project[]>([]);
+    // const [lastPrebuilds, setLastPrebuilds] = useState<Map<string, PrebuildWithStatus>>(new Map());
+
+    const { projects: projectsNew, latestPrebuilds, isLoading, error, refetch } = useProjects();
+    console.log("error", error);
 
     const { isDark } = useContext(ThemeContext);
 
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
 
-    const updateProjects = useCallback(async () => {
-        if (!teams) {
-            return;
-        }
+    // const updateProjects = useCallback(async () => {
+    //     if (!teams) {
+    //         return;
+    //     }
 
-        let infos: Project[];
-        if (!!team) {
-            infos = usePublicApiProjectsService
-                ? await listAllProjects({ teamId: team.id })
-                : await getGitpodService().server.getTeamProjects(team.id);
-        } else {
-            infos = usePublicApiProjectsService
-                ? await listAllProjects({ userId: user?.id })
-                : await getGitpodService().server.getUserProjects();
-        }
-        setProjects(infos);
-        setProjectsLoaded(true);
+    //     let infos: Project[];
+    //     if (!!team) {
+    //         infos = usePublicApiProjectsService
+    //             ? await listAllProjects({ teamId: team.id })
+    //             : await getGitpodService().server.getTeamProjects(team.id);
+    //     } else {
+    //         infos = usePublicApiProjectsService
+    //             ? await listAllProjects({ userId: user?.id })
+    //             : await getGitpodService().server.getUserProjects();
+    //     }
+    //     setProjects(infos);
+    //     setProjectsLoaded(true);
 
-        const map = new Map();
-        await Promise.all(
-            infos.map(async (p) => {
-                try {
-                    const lastPrebuild = await getGitpodService().server.findPrebuilds({
-                        projectId: p.id,
-                        latest: true,
-                    });
-                    if (lastPrebuild[0]) {
-                        map.set(p.id, lastPrebuild[0]);
-                    }
-                } catch (error) {
-                    console.error("Failed to load prebuilds for project", p, error);
-                }
-            }),
-        );
-        setLastPrebuilds(map);
-    }, [team, teams, usePublicApiProjectsService, user?.id]);
+    //     const map = new Map();
+    //     await Promise.all(
+    //         infos.map(async (p) => {
+    //             try {
+    //                 const lastPrebuild = await getGitpodService().server.findPrebuilds({
+    //                     projectId: p.id,
+    //                     latest: true,
+    //                 });
+    //                 if (lastPrebuild[0]) {
+    //                     map.set(p.id, lastPrebuild[0]);
+    //                 }
+    //             } catch (error) {
+    //                 console.error("Failed to load prebuilds for project", p, error);
+    //             }
+    //         }),
+    //     );
+    //     setLastPrebuilds(map);
+    // }, [team, teams, usePublicApiProjectsService, user?.id]);
 
     // Reload projects if the team changes
-    useEffect(() => {
-        updateProjects();
-    }, [teams, updateProjects]);
+    // useEffect(() => {
+    //     updateProjects();
+    // }, [teams, updateProjects]);
 
     const newProjectUrl = !!team ? `/new?team=${team.slug}` : "/new?user=1";
 
@@ -86,7 +87,25 @@ export default function () {
     }, [history, newProjectUrl]);
 
     // sort/filter projects if anything related changes
-    const sortedFilteredProjects = useMemo(() => {
+    // const sortedFilteredProjects = useMemo(() => {
+    //     const filter = (project: Project) => {
+    //         if (searchFilter && `${project.name}`.toLowerCase().includes(searchFilter.toLowerCase()) === false) {
+    //             return false;
+    //         }
+    //         return true;
+    //     };
+
+    //     const hasNewerPrebuild = (p0: Project, p1: Project): number => {
+    //         return dayjs(lastPrebuilds.get(p1.id)?.info?.startedAt || "1970-01-01").diff(
+    //             dayjs(lastPrebuilds.get(p0.id)?.info?.startedAt || "1970-01-01"),
+    //         );
+    //     };
+
+    //     return projects.filter(filter).sort(hasNewerPrebuild);
+    // }, [lastPrebuilds, projects, searchFilter]);
+    // console.log("sortedFilteredProjects", sortedFilteredProjects);
+
+    const filteredProjects = useMemo(() => {
         const filter = (project: Project) => {
             if (searchFilter && `${project.name}`.toLowerCase().includes(searchFilter.toLowerCase()) === false) {
                 return false;
@@ -94,14 +113,8 @@ export default function () {
             return true;
         };
 
-        const hasNewerPrebuild = (p0: Project, p1: Project): number => {
-            return dayjs(lastPrebuilds.get(p1.id)?.info?.startedAt || "1970-01-01").diff(
-                dayjs(lastPrebuilds.get(p0.id)?.info?.startedAt || "1970-01-01"),
-            );
-        };
-
-        return projects.filter(filter).sort(hasNewerPrebuild);
-    }, [lastPrebuilds, projects, searchFilter]);
+        return projectsNew.filter(filter);
+    }, [projectsNew, searchFilter]);
 
     return (
         <>
@@ -117,7 +130,7 @@ export default function () {
             )}
             <Header title="Projects" subtitle="Manage recently added projects." />
             {/* only show if we're not still loading projects to avoid a content flash */}
-            {projectsLoaded && projects.length === 0 && (
+            {!isLoading && projectsNew?.length === 0 && (
                 <div>
                     <img
                         alt="Projects (empty)"
@@ -150,7 +163,7 @@ export default function () {
                     </div>
                 </div>
             )}
-            {projects.length > 0 && (
+            {(projectsNew?.length ?? 0) > 0 && (
                 <div className="app-container">
                     <div className="mt-8 pb-2 flex border-b border-gray-200 dark:border-gray-800">
                         <div className="flex">
@@ -186,12 +199,12 @@ export default function () {
                         </button>
                     </div>
                     <div className="mt-4 grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-4 pb-40">
-                        {sortedFilteredProjects.map((p) => (
+                        {filteredProjects.map((p) => (
                             <ProjectListItem
                                 project={p}
                                 key={p.id}
-                                prebuild={lastPrebuilds.get(p.id)}
-                                onProjectRemoved={updateProjects}
+                                prebuild={latestPrebuilds.get(p.id)}
+                                onProjectRemoved={refetch}
                             />
                         ))}
                         {!searchFilter && (

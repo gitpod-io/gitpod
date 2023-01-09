@@ -6,7 +6,7 @@
 
 import { User } from "@gitpod/gitpod-protocol";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import React, { createContext, useState, useCallback } from "react";
+import React, { createContext, useState, useCallback, useContext } from "react";
 import { getGitpodService } from "./service/service";
 
 const UserContext = createContext<{
@@ -35,3 +35,8 @@ const UserContextProvider: React.FC = ({ children }) => {
 };
 
 export { UserContext, UserContextProvider };
+
+export const useCurrentUser = () => {
+    const { user } = useContext(UserContext);
+    return user;
+};
