@@ -6,6 +6,7 @@
 
 import React from "react";
 import ReactDOM from "react-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./App";
 import { UserContextProvider } from "./user-context";
 import { AdminContextProvider } from "./admin-context";
@@ -22,11 +23,13 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import utc from "dayjs/plugin/utc";
 import { getURLHash, isGitpodIo } from "./utils";
 import { isWebsiteSlug } from "./utils";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 import "./index.css";
 
 const bootApp = () => {
     // Handle any boot logic prior to rendering app
+    const queryClient = new QueryClient();
 
     // gitpod.io specific boot logic
     if (isGitpodIo()) {
@@ -55,27 +58,30 @@ const bootApp = () => {
     // Render the App
     ReactDOM.render(
         <React.StrictMode>
-            <UserContextProvider>
-                <AdminContextProvider>
-                    <PaymentContextProvider>
-                        <LicenseContextProvider>
-                            <TeamsContextProvider>
-                                <ProjectContextProvider>
-                                    <ThemeContextProvider>
-                                        <StartWorkspaceModalContextProvider>
-                                            <BrowserRouter>
-                                                <FeatureFlagContextProvider>
-                                                    <App />
-                                                </FeatureFlagContextProvider>
-                                            </BrowserRouter>
-                                        </StartWorkspaceModalContextProvider>
-                                    </ThemeContextProvider>
-                                </ProjectContextProvider>
-                            </TeamsContextProvider>
-                        </LicenseContextProvider>
-                    </PaymentContextProvider>
-                </AdminContextProvider>
-            </UserContextProvider>
+            <QueryClientProvider client={queryClient}>
+                <UserContextProvider>
+                    <AdminContextProvider>
+                        <PaymentContextProvider>
+                            <LicenseContextProvider>
+                                <TeamsContextProvider>
+                                    <ProjectContextProvider>
+                                        <ThemeContextProvider>
+                                            <StartWorkspaceModalContextProvider>
+                                                <BrowserRouter>
+                                                    <FeatureFlagContextProvider>
+                                                        <App />
+                                                    </FeatureFlagContextProvider>
+                                                </BrowserRouter>
+                                            </StartWorkspaceModalContextProvider>
+                                        </ThemeContextProvider>
+                                    </ProjectContextProvider>
+                                </TeamsContextProvider>
+                            </LicenseContextProvider>
+                        </PaymentContextProvider>
+                    </AdminContextProvider>
+                </UserContextProvider>
+                <ReactQueryDevtools initialIsOpen={false} />
+            </QueryClientProvider>
         </React.StrictMode>,
         document.getElementById("root"),
     );
