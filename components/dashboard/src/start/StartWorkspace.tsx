@@ -25,7 +25,7 @@ import Arrow from "../components/Arrow";
 import ContextMenu from "../components/ContextMenu";
 import PendingChangesDropdown from "../components/PendingChangesDropdown";
 import PrebuildLogs from "../components/PrebuildLogs";
-import { getGitpodService, gitpodHostUrl } from "../service/service";
+import { getGitpodService, gitpodHostUrl, getIDEFrontendService } from "../service/service";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
 import Alert from "../components/Alert";
@@ -112,33 +112,17 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     componentWillMount() {
         if (this.props.runsInIFrame) {
             window.parent.postMessage({ type: "$setSessionId", sessionId }, "*");
-            const setStateEventListener = (event: MessageEvent) => {
-                if (
-                    event.data.type === "setState" &&
-                    "state" in event.data &&
-                    typeof event.data["state"] === "object"
-                ) {
-                    if (event.data.state.ideFrontendFailureCause) {
-                        const error = { message: event.data.state.ideFrontendFailureCause };
-                        this.setState({ error });
-                    }
-                    if (event.data.state.desktopIdeLink) {
-                        const label = event.data.state.desktopIdeLabel || "Open Desktop IDE";
-                        const clientID = event.data.state.desktopIdeClientID;
-                        this.setState({ desktopIde: { link: event.data.state.desktopIdeLink, label, clientID } });
-                    }
+            getIDEFrontendService(getGitpodService()).onSetState((data) => {
+                if (data.ideFrontendFailureCause) {
+                    const error = { message: data.ideFrontendFailureCause };
+                    this.setState({ error });
                 }
-                if (
-                    event.data.type === "$openDesktopLink" &&
-                    "link" in event.data &&
-                    typeof event.data["link"] === "string"
-                ) {
-                    this.openDesktopLink(event.data["link"] as string);
+                if (data.desktopIDE?.link) {
+                    const label = data.desktopIDE.label || "Open Desktop IDE";
+                    const clientID = data.desktopIDE.clientID;
+                    const link = data.desktopIDE?.link;
+                    this.setState({ desktopIde: { link, label, clientID } });
                 }
-            };
-            window.addEventListener("message", setStateEventListener, false);
-            this.toDispose.push({
-                dispose: () => window.removeEventListener("message", setStateEventListener),
             });
         }
 
