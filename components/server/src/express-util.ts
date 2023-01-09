@@ -22,11 +22,10 @@ export const query = (...tuples: [string, string][]) => {
 //  - a frontend domain (workspace domain)
 //  - a workspace port domain
 // We control all of those values and the base domain, so we don't need to much effort
-export const isAllowedWebsocketDomain = (originHeader: any, gitpodHostName: string): boolean => {
-    if (!originHeader || typeof originHeader !== "string") {
-        return false;
+export const isAllowedWebsocketDomain = (originHeader: string, gitpodHostName: string): boolean => {
+    if (!originHeader) {
+        return true;
     }
-
     var originHostname = "";
     try {
         const originUrl = new URL(originHeader);
