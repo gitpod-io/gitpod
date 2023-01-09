@@ -9,101 +9,28 @@ import Header from "../components/Header";
 import projectsEmpty from "../images/projects-empty.svg";
 import projectsEmptyDark from "../images/projects-empty-dark.svg";
 import { useHistory, useLocation } from "react-router";
-import { useCallback, useContext, useMemo, useState } from "react";
+import { MouseEvent, useCallback, useContext, useMemo, useState } from "react";
 import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { ThemeContext } from "../theme-context";
 import { Project } from "@gitpod/gitpod-protocol";
 import Alert from "../components/Alert";
-import { useProjects } from "../data/projects";
+import { useProjects } from "../data/projects/hooks";
 import { ProjectListItem } from "./ProjectListItem";
+import { SpinnerLoader } from "../components/Loader";
 
 export default function () {
     const location = useLocation();
     const history = useHistory();
-
     const { teams } = useContext(TeamsContext);
-    // const { user } = useContext(UserContext);
-    // let { usePublicApiProjectsService } = useContext(FeatureFlagContext);
-    // usePublicApiProjectsService = false;
     const team = getCurrentTeam(location, teams);
-    // const [projectsLoaded, setProjectsLoaded] = useState(false);
-    // console.log(projectsLoaded);
-    // const [projects, setProjects] = useState<Project[]>([]);
-    // const [lastPrebuilds, setLastPrebuilds] = useState<Map<string, PrebuildWithStatus>>(new Map());
-
-    const { projects: projectsNew, latestPrebuilds, isLoading, error, refetch } = useProjects();
-    console.log("error", error);
-
+    const { projects, latestPrebuilds, isLoading, isError, refetch } = useProjects();
     const { isDark } = useContext(ThemeContext);
-
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
-
-    // const updateProjects = useCallback(async () => {
-    //     if (!teams) {
-    //         return;
-    //     }
-
-    //     let infos: Project[];
-    //     if (!!team) {
-    //         infos = usePublicApiProjectsService
-    //             ? await listAllProjects({ teamId: team.id })
-    //             : await getGitpodService().server.getTeamProjects(team.id);
-    //     } else {
-    //         infos = usePublicApiProjectsService
-    //             ? await listAllProjects({ userId: user?.id })
-    //             : await getGitpodService().server.getUserProjects();
-    //     }
-    //     setProjects(infos);
-    //     setProjectsLoaded(true);
-
-    //     const map = new Map();
-    //     await Promise.all(
-    //         infos.map(async (p) => {
-    //             try {
-    //                 const lastPrebuild = await getGitpodService().server.findPrebuilds({
-    //                     projectId: p.id,
-    //                     latest: true,
-    //                 });
-    //                 if (lastPrebuild[0]) {
-    //                     map.set(p.id, lastPrebuild[0]);
-    //                 }
-    //             } catch (error) {
-    //                 console.error("Failed to load prebuilds for project", p, error);
-    //             }
-    //         }),
-    //     );
-    //     setLastPrebuilds(map);
-    // }, [team, teams, usePublicApiProjectsService, user?.id]);
-
-    // Reload projects if the team changes
-    // useEffect(() => {
-    //     updateProjects();
-    // }, [teams, updateProjects]);
-
-    const newProjectUrl = !!team ? `/new?team=${team.slug}` : "/new?user=1";
+    const newProjectUrl = useMemo(() => (!!team ? `/new?team=${team.slug}` : "/new?user=1"), [team]);
 
     const onNewProject = useCallback(() => {
         history.push(newProjectUrl);
     }, [history, newProjectUrl]);
-
-    // sort/filter projects if anything related changes
-    // const sortedFilteredProjects = useMemo(() => {
-    //     const filter = (project: Project) => {
-    //         if (searchFilter && `${project.name}`.toLowerCase().includes(searchFilter.toLowerCase()) === false) {
-    //             return false;
-    //         }
-    //         return true;
-    //     };
-
-    //     const hasNewerPrebuild = (p0: Project, p1: Project): number => {
-    //         return dayjs(lastPrebuilds.get(p1.id)?.info?.startedAt || "1970-01-01").diff(
-    //             dayjs(lastPrebuilds.get(p0.id)?.info?.startedAt || "1970-01-01"),
-    //         );
-    //     };
-
-    //     return projects.filter(filter).sort(hasNewerPrebuild);
-    // }, [lastPrebuilds, projects, searchFilter]);
-    // console.log("sortedFilteredProjects", sortedFilteredProjects);
 
     const filteredProjects = useMemo(() => {
         const filter = (project: Project) => {
@@ -113,8 +40,16 @@ export default function () {
             return true;
         };
 
-        return projectsNew.filter(filter);
-    }, [projectsNew, searchFilter]);
+        return projects.filter(filter);
+    }, [projects, searchFilter]);
+
+    const retryLoadProjects = useCallback(
+        (e: MouseEvent) => {
+            e.preventDefault();
+            refetch();
+        },
+        [refetch],
+    );
 
     return (
         <>
@@ -129,8 +64,21 @@ export default function () {
                 </div>
             )}
             <Header title="Projects" subtitle="Manage recently added projects." />
+            {/* TODO: Add a delay around Spinner so it delays rendering ~ 500ms so we don't flash spinners too often for fast response */}
+            {isLoading && <SpinnerLoader />}
+            {/* TODO: Find a better looking way to offer an actionable error */}
+            {isError && projects.length === 0 && (
+                <Alert type="error" className="mt-4">
+                    <div className="flex justify-between items-center">
+                        <span>There was a problem loading your projects.</span>
+                        <button className="primary" onClick={retryLoadProjects}>
+                            Retry
+                        </button>
+                    </div>
+                </Alert>
+            )}
             {/* only show if we're not still loading projects to avoid a content flash */}
-            {!isLoading && projectsNew?.length === 0 && (
+            {!isLoading && projects?.length === 0 && (
                 <div>
                     <img
                         alt="Projects (empty)"
@@ -163,7 +111,7 @@ export default function () {
                     </div>
                 </div>
             )}
-            {(projectsNew?.length ?? 0) > 0 && (
+            {(projects?.length ?? 0) > 0 && (
                 <div className="app-container">
                     <div className="mt-8 pb-2 flex border-b border-gray-200 dark:border-gray-800">
                         <div className="flex">
