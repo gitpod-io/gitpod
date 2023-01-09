@@ -8,6 +8,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/ws-daemon"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -22,6 +23,25 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	configHash, err := common.ObjectHash(configmap(ctx))
 	if err != nil {
 		return nil, err
+	}
+
+	var volumes []corev1.Volume
+	var volumeMounts []corev1.VolumeMount
+	if ctx.Config.Kind == config.InstallationWorkspace {
+		// Image builder TLS is only enabled in workspace clusters. This check
+		// can be removed once image-builder-mk3 has been removed from application clusters
+		// (https://github.com/gitpod-io/gitpod/issues/7845).
+		volumes = append(volumes, corev1.Volume{
+			Name: common.ImageBuilderVolumeTLSCerts,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{SecretName: common.ImageBuilderTLSSecret},
+			},
+		})
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      common.ImageBuilderVolumeTLSCerts,
+			MountPath: "/image-builder-mk3-tls-certs",
+			ReadOnly:  true,
+		})
 	}
 
 	podSpec := corev1.PodSpec{
@@ -57,29 +77,32 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				common.WorkspaceTracingEnv(ctx, Component),
 				[]corev1.EnvVar{{Name: "GRPC_GO_RETRY", Value: "on"}},
 			),
-			VolumeMounts: []corev1.VolumeMount{
+			VolumeMounts: append([]corev1.VolumeMount{
 				{
 					Name:      VolumeConfig,
 					MountPath: "/config",
 					ReadOnly:  true,
-				}, {
+				},
+				{
 					Name:      VolumeWorkspaceTemplate,
 					MountPath: WorkspaceTemplatePath,
 					ReadOnly:  true,
-				}, {
+				},
+				{
 					Name:      wsdaemon.VolumeTLSCerts,
 					MountPath: "/ws-daemon-tls-certs",
 					ReadOnly:  true,
-				}, {
+				},
+				{
 					Name:      VolumeTLSCerts,
 					MountPath: "/certs",
 					ReadOnly:  true,
 				},
-			},
+			}, volumeMounts...),
 		},
 			*common.KubeRBACProxyContainer(ctx),
 		},
-		Volumes: []corev1.Volume{
+		Volumes: append([]corev1.Volume{
 			{
 				Name: VolumeConfig,
 				VolumeSource: corev1.VolumeSource{
@@ -108,7 +131,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Secret: &corev1.SecretVolumeSource{SecretName: TLSSecretNameSecret},
 				},
 			},
-		},
+		}, volumes...),
 	}
 
 	err = common.AddStorageMounts(ctx, &podSpec, Component)
