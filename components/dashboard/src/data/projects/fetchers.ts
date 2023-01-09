@@ -6,13 +6,13 @@
 
 import { PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
 import dayjs from "dayjs";
+import { useFeatureFlags } from "../../contexts/FeatureFlagContext";
 import { listAllProjects } from "../../service/public-api";
 import { getGitpodService } from "../../service/service";
 
-type FetchProjectsArgs = {
+type UseFetchProjectsArgs = {
     userId?: string;
     teamId?: string;
-    usePublicApiProjectsService: boolean;
 };
 
 type FetchProjectsReturnValue = {
@@ -20,56 +20,58 @@ type FetchProjectsReturnValue = {
     latestPrebuilds: Map<string, PrebuildWithStatus>;
 };
 
-export const fetchProjects = async ({
-    userId,
-    teamId,
-    usePublicApiProjectsService,
-}: FetchProjectsArgs): Promise<FetchProjectsReturnValue> => {
-    if (!userId && !teamId) {
-        return {
-            projects: [],
-            latestPrebuilds: new Map(),
-        };
-    }
+// Wrap fetcher fn in a hook for easy access to feature flags
+export const useFetchProjects = ({ teamId, userId }: UseFetchProjectsArgs) => {
+    const { usePublicApiProjectsService } = useFeatureFlags();
 
-    let projects: Project[] = [];
-    if (teamId) {
-        projects = usePublicApiProjectsService
-            ? await listAllProjects({ teamId })
-            : await getGitpodService().server.getTeamProjects(teamId);
-    } else {
-        projects = usePublicApiProjectsService
-            ? await listAllProjects({ userId })
-            : await getGitpodService().server.getUserProjects();
-    }
+    // Return an async fn to fetch data
+    return async (): Promise<FetchProjectsReturnValue> => {
+        if (!userId && !teamId) {
+            return {
+                projects: [],
+                latestPrebuilds: new Map(),
+            };
+        }
 
-    // Load prebuilds for each project
-    const latestPrebuilds = new Map<string, PrebuildWithStatus>();
-    await Promise.all(
-        projects.map(async (p) => {
-            try {
-                const lastPrebuild = await getGitpodService().server.findPrebuilds({
-                    projectId: p.id,
-                    latest: true,
-                });
-                if (lastPrebuild[0]) {
-                    latestPrebuilds.set(p.id, lastPrebuild[0]);
+        let projects: Project[] = [];
+        if (teamId) {
+            projects = usePublicApiProjectsService
+                ? await listAllProjects({ teamId })
+                : await getGitpodService().server.getTeamProjects(teamId);
+        } else {
+            projects = usePublicApiProjectsService
+                ? await listAllProjects({ userId })
+                : await getGitpodService().server.getUserProjects();
+        }
+
+        // Load prebuilds for each project
+        const latestPrebuilds = new Map<string, PrebuildWithStatus>();
+        await Promise.all(
+            projects.map(async (p) => {
+                try {
+                    const lastPrebuild = await getGitpodService().server.findPrebuilds({
+                        projectId: p.id,
+                        latest: true,
+                    });
+                    if (lastPrebuild[0]) {
+                        latestPrebuilds.set(p.id, lastPrebuild[0]);
+                    }
+                } catch (error) {
+                    console.error("Failed to load prebuilds for project", p, error);
                 }
-            } catch (error) {
-                console.error("Failed to load prebuilds for project", p, error);
-            }
-        }),
-    );
-
-    // Sort projects by latest prebuild first
-    projects.sort((p0: Project, p1: Project): number => {
-        return dayjs(latestPrebuilds.get(p1.id)?.info?.startedAt || "1970-01-01").diff(
-            dayjs(latestPrebuilds.get(p0.id)?.info?.startedAt || "1970-01-01"),
+            }),
         );
-    });
 
-    return {
-        projects,
-        latestPrebuilds,
+        // Sort projects by latest prebuild first
+        projects.sort((p0: Project, p1: Project): number => {
+            return dayjs(latestPrebuilds.get(p1.id)?.info?.startedAt || "1970-01-01").diff(
+                dayjs(latestPrebuilds.get(p0.id)?.info?.startedAt || "1970-01-01"),
+            );
+        });
+
+        return {
+            projects,
+            latestPrebuilds,
+        };
     };
 };
