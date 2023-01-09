@@ -157,30 +157,34 @@ func randString(size int) (string, error) {
 	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
-func (s *Service) GetClientConfigFromRequest(r *http.Request) (*ClientConfig, error) {
+func (s *Service) GetClientConfigFromStartRequest(r *http.Request) (*ClientConfig, error) {
 	issuerParam := r.URL.Query().Get("issuer")
+	if issuerParam == "" {
+		return nil, fmt.Errorf("missing issuer parameter")
+	}
+
+	for _, value := range s.configsById {
+		if value.Issuer == issuerParam {
+			return value, nil
+		}
+	}
+
+	return nil, fmt.Errorf("failed to find OIDC config for start request")
+}
+
+func (s *Service) GetClientConfigFromCallbackRequest(r *http.Request) (*ClientConfig, error) {
 	stateParam := r.URL.Query().Get("state")
-	if issuerParam == "" && stateParam == "" {
-		return nil, fmt.Errorf("missing request parameters")
+	if stateParam == "" {
+		return nil, fmt.Errorf("missing state parameter")
 	}
 
-	if issuerParam != "" {
-		for _, value := range s.configsById {
-			if value.Issuer == issuerParam {
-				return value, nil
-			}
-		}
+	state, err := decodeStateParam(stateParam)
+	if err != nil {
+		return nil, fmt.Errorf("bad state param")
 	}
-
-	if stateParam != "" {
-		state, err := decodeStateParam(stateParam)
-		if err != nil {
-			return nil, fmt.Errorf("bad state param")
-		}
-		config := s.configsById[state.ClientConfigID]
-		if config != nil {
-			return config, nil
-		}
+	config := s.configsById[state.ClientConfigID]
+	if config != nil {
+		return config, nil
 	}
 
 	return nil, fmt.Errorf("failed to find OIDC config for request")

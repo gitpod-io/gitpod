@@ -74,7 +74,6 @@ func TestRoute_callback(t *testing.T) {
 	require.NoError(t, err)
 	defer resp.Body.Close()
 
-	require.NoError(t, err)
 	require.Equal(t, http.StatusTemporaryRedirect, resp.StatusCode, "callback should response with redirect (307)")
 	require.NotEmpty(t, resp.Cookies(), "missing cookies on redirect")
 	require.Equal(t, "test-cookie", resp.Cookies()[0].Name, "missing cookie on redirect")

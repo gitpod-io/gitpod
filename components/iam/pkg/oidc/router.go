@@ -5,7 +5,6 @@
 package oidc
 
 import (
-	"context"
 	"net/http"
 	"time"
 
@@ -18,43 +17,27 @@ func Router(s *Service) *chi.Mux {
 	router := chi.NewRouter()
 
 	router.Route("/start", func(r chi.Router) {
-		r.Use(s.clientConfigMiddleware())
 		r.Get("/", s.getStartHandler())
 	})
 	router.Route("/callback", func(r chi.Router) {
-		r.Use(s.clientConfigMiddleware())
-		r.Use(OAuth2Middleware)
+		r.Use(s.OAuth2Middleware)
 		r.Get("/", s.getCallbackHandler())
 	})
 
 	return router
 }
 
-type keyOIDCClientConfig struct{}
-
 const (
 	stateCookieName = "state"
 	nonceCookieName = "nonce"
 )
 
-func AttachClientConfigToContext(parentContext context.Context, config *ClientConfig) context.Context {
-	childContext := context.WithValue(parentContext, keyOIDCClientConfig{}, config)
-	return childContext
-}
-
-func GetClientConfigFromContext(ctx context.Context) *ClientConfig {
-	value, ok := ctx.Value(keyOIDCClientConfig{}).(*ClientConfig)
-	if !ok {
-		return nil
-	}
-	return value
-}
-
 func (s *Service) getStartHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		config := GetClientConfigFromContext(r.Context())
-		if config == nil {
-			http.Error(rw, "config not found", http.StatusInternalServerError)
+		config, err := s.GetClientConfigFromStartRequest(r)
+		if err != nil {
+			log.Warn("client config not found: " + err.Error())
+			http.Error(rw, "config not found", http.StatusNotFound)
 			return
 		}
 
@@ -82,29 +65,13 @@ func newCallbackCookie(r *http.Request, name string, value string) *http.Cookie 
 	}
 }
 
-// The config middleware is responsible to retrieve the client config suitable for request
-func (s *Service) clientConfigMiddleware() func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-			config, err := s.GetClientConfigFromRequest(r)
-			if err != nil {
-				log.Warn("client config not found: " + err.Error())
-				http.Error(rw, "config not found", http.StatusNotFound)
-				return
-			}
-
-			ctx := AttachClientConfigToContext(r.Context(), config)
-			next.ServeHTTP(rw, r.WithContext(ctx))
-		})
-	}
-}
-
 // The OIDC callback handler depends on the state produced in the OAuth2 middleware
 func (s *Service) getCallbackHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		config := GetClientConfigFromContext(r.Context())
-		if config == nil {
-			http.Error(rw, "config not found", http.StatusInternalServerError)
+		config, err := s.GetClientConfigFromCallbackRequest(r)
+		if err != nil {
+			log.Warn("client config not found: " + err.Error())
+			http.Error(rw, "config not found", http.StatusNotFound)
 			return
 		}
 		oauth2Result := GetOAuth2ResultFromContext(r.Context())
