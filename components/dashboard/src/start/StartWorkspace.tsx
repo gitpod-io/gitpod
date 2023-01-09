@@ -380,34 +380,49 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     async ensureWorkspaceAuth(instanceID: string, retry: boolean) {
         if (!document.cookie.includes(`${instanceID}_owner_`)) {
             let attempt = 0;
+            let fetchError: Error | undefined = undefined;
             while (attempt <= 10) {
                 attempt++;
 
-                const authURL = gitpodHostUrl.asWorkspaceAuth(instanceID);
-                const response = await fetch(authURL.toString());
-                if (response.status === 404 && retry) {
-                    console.warn("Unable to retrieve workspace-auth cookie! Retrying shortly...", {
-                        code: response.status,
+                let code: number | undefined = undefined;
+                fetchError = undefined;
+                try {
+                    const authURL = gitpodHostUrl.asWorkspaceAuth(instanceID);
+                    const response = await fetch(authURL.toString());
+                    code = response.status;
+                } catch (err) {
+                    fetchError = err;
+                }
+
+                if (retry && (code === 404 || !!fetchError)) {
+                    console.warn("Unable to retrieve workspace-auth cookie! Retrying shortly...", fetchError, {
+                        code,
                         attempt,
                     });
                     // If the token is not there, we assume it will appear, soon: Retry a couple of times.
                     await new Promise((resolve) => setTimeout(resolve, 2000));
                     continue;
                 }
-                if (!response.ok) {
+                if (code !== 200) {
                     // getting workspace auth didn't work as planned
                     console.error("Unable to retrieve workspace-auth cookie! Quitting.", {
-                        code: response.status,
+                        code,
                         attempt,
                     });
                     return;
                 }
 
                 // Response code is 200 at this point: done!
-                console.info("Retrieved workspace-auth cookie.", { code: response.status, attempt });
+                console.info("Retrieved workspace-auth cookie.", { code, attempt });
                 return;
             }
+
             console.error("Unable to retrieve workspace-auth cookie! Giving up.", { attempt });
+
+            if (fetchError) {
+                // To maintain prior behavior we bubble up this error to callers
+                throw fetchError;
+            }
         }
     }
 
