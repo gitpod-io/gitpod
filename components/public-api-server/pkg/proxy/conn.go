@@ -85,8 +85,9 @@ func NewConnectionPool(address *url.URL, poolSize int) (*ConnectionPool, error) 
 		connConstructor: func(token auth.Token) (gitpod.APIInterface, error) {
 			opts := gitpod.ConnectToServerOpts{
 				// We're using Background context as we want the connection to persist beyond the lifecycle of a single request
-				Context: context.Background(),
-				Log:     log.Log,
+				Context:  context.Background(),
+				Log:      log.Log,
+				NoOrigin: true,
 				CloseHandler: func(_ error) {
 					cache.Remove(token)
 					connectionPoolSize.Dec()
