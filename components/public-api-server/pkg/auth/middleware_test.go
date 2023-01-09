@@ -60,7 +60,8 @@ func TestNewServerInterceptor(t *testing.T) {
 				request.Header().Add(header.Key, header.Value)
 			}
 
-			resp, err := NewServerInterceptor()(handler)(ctx, request)
+			interceptor := NewServerInterceptor()
+			resp, err := interceptor.WrapUnary(handler)(ctx, request)
 
 			require.Equal(t, s.ExpectedError, err)
 			if err == nil {

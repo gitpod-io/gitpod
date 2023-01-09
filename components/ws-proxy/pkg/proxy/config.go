@@ -71,8 +71,10 @@ func (c *HostBasedIngressConfig) Validate() error {
 
 // WorkspacePodConfig contains config around the workspace pod.
 type WorkspacePodConfig struct {
-	TheiaPort      uint16 `json:"theiaPort"`
-	SupervisorPort uint16 `json:"supervisorPort"`
+	TheiaPort           uint16 `json:"theiaPort"`
+	IDEDebugPort        uint16 `json:"ideDebugPort"`
+	SupervisorPort      uint16 `json:"supervisorPort"`
+	SupervisorDebugPort uint16 `json:"supervisorDebugPort"`
 	// SupervisorImage is deprecated
 	SupervisorImage string `json:"supervisorImage"`
 }
@@ -85,7 +87,9 @@ func (c *WorkspacePodConfig) Validate() error {
 
 	err := validation.ValidateStruct(c,
 		validation.Field(&c.TheiaPort, validation.Required),
+		validation.Field(&c.IDEDebugPort, validation.Required),
 		validation.Field(&c.SupervisorPort, validation.Required),
+		validation.Field(&c.SupervisorDebugPort, validation.Required),
 	)
 	if len(c.SupervisorImage) > 0 {
 		log.Warn("config value 'workspacePodConfig.supervisorImage' is deprected, use it only to be backwards compatible")

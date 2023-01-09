@@ -16,10 +16,10 @@ const baseWorkspaceIDRegex =
     "(([a-f][0-9a-f]{7}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})|([0-9a-z]{2,16}-[0-9a-z]{2,16}-[0-9a-z]{8,11}))";
 
 // this pattern matches v4 UUIDs as well as the new generated workspace ids (e.g. pink-panda-ns35kd21)
-const workspaceIDRegex = RegExp(`^${baseWorkspaceIDRegex}$`);
+const workspaceIDRegex = RegExp(`^(?:debug-)?${baseWorkspaceIDRegex}$`);
 
 // this pattern matches URL prefixes of workspaces
-const workspaceUrlPrefixRegex = RegExp(`^([0-9]{4,6}-)?${baseWorkspaceIDRegex}\\.`);
+const workspaceUrlPrefixRegex = RegExp(`^(([0-9]{4,6}|debug)-)?${baseWorkspaceIDRegex}\\.`);
 
 export namespace StartOptions {
     export const WORKSPACE_CLASS = "workspaceClass";
@@ -174,6 +174,10 @@ export class GitpodHostUrl {
         return result;
     }
 
+    get debugWorkspace(): boolean {
+        return this.url.host.match(workspaceUrlPrefixRegex)?.[2] === "debug";
+    }
+
     get workspaceId(): string | undefined {
         const hostSegs = this.url.host.split(".");
         if (hostSegs.length > 1) {
@@ -181,7 +185,7 @@ export class GitpodHostUrl {
             if (matchResults) {
                 // URL has a workspace prefix
                 // port prefixes are excluded
-                return matchResults[0];
+                return matchResults[1];
             }
         }
 

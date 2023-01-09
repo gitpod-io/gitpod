@@ -13,4 +13,6 @@ const (
 	SupervisorImage              = "supervisor"
 	WorkspacekitImage            = "workspacekit"
 	SupervisorPort               = 22999
+	SupervisorDebugPort          = 24999
+	IDEDebugPort                 = 25000
 )

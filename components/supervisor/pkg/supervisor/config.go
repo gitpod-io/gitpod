@@ -83,6 +83,9 @@ type StaticConfig struct {
 	// APIEndpointPort is the port where to serve the API endpoint on
 	APIEndpointPort int `json:"apiEndpointPort"`
 
+	// HostAPIEndpointPort is the port where to the host API endpoint served
+	HostAPIEndpointPort *int `json:"hostAPIEndpointPort,omitempty"`
+
 	// SSHPort is the port we run the SSH server on
 	SSHPort int `json:"sshPort"`
 }

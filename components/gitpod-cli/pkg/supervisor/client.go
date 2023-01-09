@@ -30,7 +30,7 @@ type SupervisorClientOption struct {
 	Address string
 }
 
-func New(ctx context.Context, options ...SupervisorClientOption) (*SupervisorClient, error) {
+func New(ctx context.Context, options ...*SupervisorClientOption) (*SupervisorClient, error) {
 	address := util.GetSupervisorAddress()
 	for _, option := range options {
 		if option.Address != "" {

@@ -74,7 +74,12 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Replacement: fmt.Sprintf("ide.%s/code/marketplace.json", ctx.Config.Domain),
 						Path:        "/ide/out/vs/workbench/workbench.web.main.js",
 					}},
+					// TODO consider to provide it as a part of image label or rather inline ${ide} and ${supervisor} in index.html
+					// to decouple blobserve and code image
 					InlineStatic: []blobserve.InlineReplacement{{
+						Search:      "window.location.origin;",
+						Replacement: "'${ide}';",
+					}, {
 						Search:      "${window.location.origin}",
 						Replacement: ".",
 					}, {

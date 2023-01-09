@@ -37,6 +37,8 @@ type WorkspaceCoords struct {
 	ID string
 	// The workspace port
 	Port string
+	// Debug workspace
+	Debug bool
 }
 
 // WorkspaceInfoProvider is an entity that is able to provide workspaces related information.
