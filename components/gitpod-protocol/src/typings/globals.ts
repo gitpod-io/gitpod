@@ -6,7 +6,7 @@
 
 interface Window {
     gitpod: {
-        service: import("../gitpod-service").GitpodService;
         ideService?: import("../ide-frontend-service").IDEFrontendService;
+        loggedUserID?: string;
     };
 }

@@ -5,9 +5,9 @@
  */
 
 import { DisposableCollection, Disposable } from "@gitpod/gitpod-protocol/lib/util/disposable";
-import { WorkspaceInfo } from "@gitpod/gitpod-protocol";
 import { isSaaSServerGreaterThan, isSaaS } from "./gitpod-server-compatibility";
 import { serverUrl } from "../shared/urls";
+import { FrontendDashboardServiceClient } from "../shared/frontend-dashboard-service";
 
 let lastActivity = 0;
 const updateLastActivitiy = () => {
@@ -25,20 +25,18 @@ isSaaSServerGreaterThan("main.4124").then((r) => {
 });
 
 let toCancel: DisposableCollection | undefined;
-export function schedule(wsInfo: WorkspaceInfo, sessionId: string): void {
+export function schedule(frontendDashboardServiceClient: FrontendDashboardServiceClient, sessionId: string): void {
     if (toCancel) {
         return;
     }
     toCancel = new DisposableCollection();
     const sendHeartBeat = async (wasClosed?: true) => {
         try {
-            await window.gitpod.service.server.sendHeartBeat({ instanceId: wsInfo.latestInstance!.id, wasClosed });
+            frontendDashboardServiceClient.activeHeartbeat(); // wasClosed
             if (wasClosed) {
-                window.gitpod.service.server.trackEvent({
+                frontendDashboardServiceClient.trackEvent({
                     event: "ide_close_signal",
                     properties: {
-                        workspaceId: wsInfo.workspace.id,
-                        instanceId: wsInfo.latestInstance!.id,
                         sessionId,
                         clientKind: "supervisor-frontend",
                     },
@@ -51,7 +49,10 @@ export function schedule(wsInfo: WorkspaceInfo, sessionId: string): void {
     sendHeartBeat();
 
     const beaconWorkspacePageClose = () => {
-        const instanceId = wsInfo.latestInstance!.id;
+        const instanceId = frontendDashboardServiceClient.latestStatus?.instanceId;
+        if (!instanceId) {
+            return;
+        }
         const data = { sessionId };
         const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
         const url = serverUrl.withApi({ pathname: `/auth/workspacePageClose/${instanceId}` }).toString();
