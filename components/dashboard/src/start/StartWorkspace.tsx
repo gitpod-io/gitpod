@@ -221,7 +221,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             // redirect to workspaceURL if we are not yet running in an iframe
             if (!this.props.runsInIFrame && result.workspaceURL) {
                 // before redirect, make sure we actually have the auth cookie set!
-                await this.ensureWorkspaceAuth(result.instanceID);
+                await this.ensureWorkspaceAuth(result.instanceID, true);
                 this.redirectTo(result.workspaceURL);
                 return;
             }
@@ -341,7 +341,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             this.fetchIDEOptions();
         }
 
-        await this.ensureWorkspaceAuth(workspaceInstance.id);
+        await this.ensureWorkspaceAuth(workspaceInstance.id, false); // Don't block the workspace auth retrieval, as it's guaranteed to get a seconds chance later on!
 
         // Redirect to workspaceURL if we are not yet running in an iframe.
         // It happens this late if we were waiting for a docker build.
@@ -377,19 +377,37 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         this.setState({ workspaceInstance, error });
     }
 
-    async ensureWorkspaceAuth(instanceID: string) {
+    async ensureWorkspaceAuth(instanceID: string, retry: boolean) {
         if (!document.cookie.includes(`${instanceID}_owner_`)) {
-            const authURL = gitpodHostUrl.asWorkspaceAuth(instanceID);
-            const response = await fetch(authURL.toString());
-            if (response.redirected) {
-                this.redirectTo(response.url);
+            let attempt = 0;
+            while (attempt <= 10) {
+                attempt++;
+
+                const authURL = gitpodHostUrl.asWorkspaceAuth(instanceID);
+                const response = await fetch(authURL.toString());
+                if (response.status === 404 && retry) {
+                    console.warn("Unable to retrieve workspace-auth cookie! Retrying shortly...", {
+                        code: response.status,
+                        attempt,
+                    });
+                    // If the token is not there, we assume it will appear, soon: Retry a couple of times.
+                    await new Promise((resolve) => setTimeout(resolve, 2000));
+                    continue;
+                }
+                if (!response.ok) {
+                    // getting workspace auth didn't work as planned
+                    console.error("Unable to retrieve workspace-auth cookie! Quitting.", {
+                        code: response.status,
+                        attempt,
+                    });
+                    return;
+                }
+
+                // Response code is 200 at this point: done!
+                console.info("Retrieved workspace-auth cookie.", { code: response.status, attempt });
                 return;
             }
-            if (!response.ok) {
-                // getting workspace auth didn't work as planned - redirect
-                this.redirectTo(authURL.asWorkspaceAuth(instanceID, true).toString());
-                return;
-            }
+            console.error("Unable to retrieve workspace-auth cookie! Giving up.", { attempt });
         }
     }
 

@@ -124,10 +124,9 @@ export class GitpodHostUrl {
         });
     }
 
-    asWorkspaceAuth(instanceID: string, redirect?: boolean): GitpodHostUrl {
+    asWorkspaceAuth(instanceID: string): GitpodHostUrl {
         return this.with((url) => ({
             pathname: `/api/auth/workspace-cookie/${instanceID}`,
-            search: redirect ? "redirect" : "",
         }));
     }
 
