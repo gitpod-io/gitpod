@@ -59,7 +59,61 @@ func TestGetStartParams(t *testing.T) {
 	require.Contains(t, params.AuthCodeURL, url.QueryEscape(params.State))
 }
 
-func TestGetClientConfigFromRequest(t *testing.T) {
+func TestGetClientConfigFromStartRequest(t *testing.T) {
+	issuer := newFakeIdP(t)
+
+	const (
+		clientID = "google-1"
+	)
+	testCases := []struct {
+		Location      string
+		ExpectedError bool
+		ExpectedId    string
+	}{
+		{
+			Location:      "/start?word=abc",
+			ExpectedError: true,
+			ExpectedId:    "",
+		},
+		{
+			Location:      "/start?issuer=" + issuer,
+			ExpectedError: false,
+			ExpectedId:    clientID,
+		},
+		{
+			Location:      "/start?issuer=UNKNOWN",
+			ExpectedError: true,
+			ExpectedId:    "",
+		},
+	}
+
+	sessionServerAddress := newFakeSessionServer(t)
+	service := NewService(sessionServerAddress)
+	err := service.AddClientConfig(&ClientConfig{
+		ID:             clientID,
+		Issuer:         issuer,
+		VerifierConfig: &oidc.Config{},
+		OAuth2Config:   &oauth2.Config{},
+	})
+	require.NoError(t, err, "failed to initialize test")
+
+	for _, tc := range testCases {
+		t.Run(tc.Location, func(t *testing.T) {
+			request := httptest.NewRequest(http.MethodGet, tc.Location, nil)
+			config, err := service.GetClientConfigFromStartRequest(request)
+			if tc.ExpectedError == true {
+				require.Error(t, err)
+			}
+			if tc.ExpectedError != true {
+				require.NoError(t, err)
+				require.NotNil(t, config)
+				require.Equal(t, tc.ExpectedId, config.ID)
+			}
+		})
+	}
+}
+
+func TestGetClientConfigFromCallbackRequest(t *testing.T) {
 	issuer := newFakeIdP(t)
 
 	const (
@@ -83,21 +137,6 @@ func TestGetClientConfigFromRequest(t *testing.T) {
 		ExpectedError bool
 		ExpectedId    string
 	}{
-		{
-			Location:      "/start?word=abc",
-			ExpectedError: true,
-			ExpectedId:    "",
-		},
-		{
-			Location:      "/start?issuer=" + issuer,
-			ExpectedError: false,
-			ExpectedId:    clientID,
-		},
-		{
-			Location:      "/start?issuer=UNKNOWN",
-			ExpectedError: true,
-			ExpectedId:    "",
-		},
 		{
 			Location:      "/callback?state=BAD",
 			ExpectedError: true,
@@ -128,7 +167,7 @@ func TestGetClientConfigFromRequest(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.Location, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, tc.Location, nil)
-			config, err := service.GetClientConfigFromRequest(request)
+			config, err := service.GetClientConfigFromCallbackRequest(request)
 			if tc.ExpectedError == true {
 				require.Error(t, err)
 			}

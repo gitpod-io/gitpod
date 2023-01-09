@@ -8,6 +8,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"golang.org/x/oauth2"
 )
 
@@ -39,11 +40,12 @@ func GetOAuth2ResultFromContext(ctx context.Context) *OAuth2Result {
 	return value
 }
 
-func OAuth2Middleware(next http.Handler) http.Handler {
+func (s *Service) OAuth2Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		config := GetClientConfigFromContext(r.Context())
-		if config == nil {
-			http.Error(rw, "config not found", http.StatusInternalServerError)
+		config, err := s.GetClientConfigFromCallbackRequest(r)
+		if err != nil {
+			log.Warn("client config not found: " + err.Error())
+			http.Error(rw, "config not found", http.StatusNotFound)
 			return
 		}
 
