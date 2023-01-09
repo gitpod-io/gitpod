@@ -369,6 +369,13 @@ spec:
         - port: 3000
           protocol: TCP
     - from:
+        - podSelector:
+            matchLabels:
+              component: public-api-server
+      ports:
+        - port: 3000
+          protocol: TCP
+    - from:
         - namespaceSelector:
             matchLabels:
               chart: monitoring
@@ -3203,7 +3210,7 @@ data:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: c8ec0a4694c7ee3ab1dc716c894e528f605270c05c212ec9b4d7a28ba100ac8e
+        gitpod.io/checksum_config: 42794ba2ca883c6d462ea918350a0d347f0ce1ca14ed7672c0cd2da0bed81c6e
         hello: world
       creationTimestamp: null
       labels:
@@ -5842,7 +5849,7 @@ apiVersion: v1
 data:
   config.json: |-
     {
-      "gitpodServiceUrl": "wss://gitpod.example.com",
+      "gitpodServiceUrl": "ws://server.default.svc.cluster.local:3000",
       "billingServiceAddress": "usage.default.svc.cluster.local:9001",
       "stripeWebhookSigningSecretPath": "",
       "personalAccessTokenSigningKeyPath": "",
@@ -11191,7 +11198,7 @@ kind: Deployment
 metadata:
   annotations:
     gitpod.io: hello
-    gitpod.io/checksum_config: c8ec0a4694c7ee3ab1dc716c894e528f605270c05c212ec9b4d7a28ba100ac8e
+    gitpod.io/checksum_config: 42794ba2ca883c6d462ea918350a0d347f0ce1ca14ed7672c0cd2da0bed81c6e
     hello: world
   creationTimestamp: null
   labels:
