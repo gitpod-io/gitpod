@@ -133,7 +133,7 @@ import {
 import * as crypto from "crypto";
 import { inject, injectable } from "inversify";
 import { URL } from "url";
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4, validate as uuidValidate } from "uuid";
 import { Disposable, ResponseError } from "vscode-jsonrpc";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { AuthProviderService } from "../auth/auth-provider-service";
@@ -2124,6 +2124,18 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         role: TeamMemberRole,
     ): Promise<void> {
         traceAPIParams(ctx, { teamId, userId, role });
+
+        if (!uuidValidate(teamId)) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "team ID must be a valid UUID");
+        }
+
+        if (!uuidValidate(userId)) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "user ID must be a valid UUID");
+        }
+
+        if (!TeamMemberRole.isValid(role)) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "invalid role name");
+        }
 
         this.checkAndBlockUser("setTeamMemberRole");
         await this.guardTeamOperation(teamId, "update");

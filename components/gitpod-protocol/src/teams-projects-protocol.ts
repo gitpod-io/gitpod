@@ -137,6 +137,12 @@ export interface Team {
 
 export type TeamMemberRole = "owner" | "member";
 
+export namespace TeamMemberRole {
+    export function isValid(role: any): role is TeamMemberRole {
+        return role === "owner" || role === "member";
+    }
+}
+
 export interface TeamMemberInfo {
     userId: string;
     fullName?: string;
