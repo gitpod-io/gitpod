@@ -10,6 +10,7 @@ import (
 )
 
 func TestNewClient_WithoutEnvSet(t *testing.T) {
+	t.Setenv("GITPOD_HOST", "")
 	client := NewClient()
 	require.IsType(t, &alwaysReturningDefaultValueClient{}, client)
 }
