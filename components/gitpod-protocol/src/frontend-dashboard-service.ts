@@ -33,7 +33,7 @@ export namespace IDEFrontendDashboardService {
         auth(): Promise<void>;
     }
     interface IServerOn {
-        setState(state: SetStateData): void;
+        onSetState: Event<SetStateData>;
         trackEvent(msg: RemoteTrackMessage): void;
         activeHeartbeat(): void;
     }

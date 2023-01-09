@@ -92,16 +92,16 @@ class IDEFrontendService implements IDEFrontendDashboardService.IServer {
     private readonly onDidChangeEmitter = new Emitter<IDEFrontendDashboardService.SetStateData>();
     readonly onSetState = this.onDidChangeEmitter.event;
 
-    getWindowWorkspaceID() {}
-
     constructor(private service: GitpodService, private clientWindow: Window) {
         if (!gitpodHostUrl.workspaceId) {
             throw new Error("no workspace id");
         }
         this.workspaceID = gitpodHostUrl.workspaceId;
+        console.log("=============workspaceID", this.workspaceID);
         this.processInfo();
         this.processInstanceUpdate();
         window.addEventListener("message", (event: MessageEvent) => {
+            console.log("=============dashboard on message", event);
             if (IDEFrontendDashboardService.isTrackEventData(event.data)) {
                 this.trackEvent(event.data.msg);
             }
@@ -116,12 +116,14 @@ class IDEFrontendService implements IDEFrontendDashboardService.IServer {
 
     async processInfo() {
         this.user = await this.service.server.getLoggedInUser();
+        console.log("=============dashboard getUser", this.user.id);
         if (this.latestStatus) {
             this.latestStatus.loggedUserId = this.user.id;
             this.sendStatusUpdate(this.latestStatus);
         }
         const workspace = await this.service.server.getWorkspace(this.workspaceID);
         this.instanceID = workspace.latestInstance?.id;
+        console.log("=============dashboard instanceID", this.instanceID);
         if (this.instanceID) {
             this.auth();
         }
@@ -155,6 +157,7 @@ class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             return;
         }
         const url = gitpodHostUrl.asStart().asWorkspaceAuth(this.instanceID).toString();
+        console.log("=============dashboard auth url", url);
         await fetch(url, {
             credentials: "include",
         });
@@ -178,22 +181,31 @@ class IDEFrontendService implements IDEFrontendDashboardService.IServer {
     }
     sendStatusUpdate(status: IDEFrontendDashboardService.Status): void {
         console.log("<<<<<<<<< send sendStatusUpdate");
-        this.clientWindow.postMessage({
-            type: "ide-status-update",
-            status,
-        } as IDEFrontendDashboardService.StatusUpdateEventData);
+        this.clientWindow.postMessage(
+            {
+                type: "ide-status-update",
+                status,
+            } as IDEFrontendDashboardService.StatusUpdateEventData,
+            "*",
+        );
     }
     relocate(url: string): void {
         console.log("<<<<<<<<< send relocate");
-        this.clientWindow.postMessage({ type: "ide-relocate", url } as IDEFrontendDashboardService.RelocateEventData);
+        this.clientWindow.postMessage(
+            { type: "ide-relocate", url } as IDEFrontendDashboardService.RelocateEventData,
+            "*",
+        );
     }
 
     setSessionID(sessionID: string): void {
         console.log("<<<<<<<<< send setSessionID");
-        this.clientWindow.postMessage({
-            type: "ide-set-session-id",
-            sessionID,
-        } as IDEFrontendDashboardService.SetSessionIDEventData);
+        this.clientWindow.postMessage(
+            {
+                type: "ide-set-session-id",
+                sessionID,
+            } as IDEFrontendDashboardService.SetSessionIDEventData,
+            "*",
+        );
     }
 }
 
