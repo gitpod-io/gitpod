@@ -162,7 +162,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Namespace:      ctx.Namespace,
 			SchedulerName:  schedulerName,
 			SeccompProfile: fmt.Sprintf("workspace_default_%s.json", ctx.VersionManifest.Version),
-			DryRun:         false,
 			WorkspaceDaemon: config.WorkspaceDaemonConfiguration{
 				Port: 8080,
 				TLS: struct {
@@ -224,11 +223,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				PrivateKey:  "/certs/tls.key",
 			},
 			RateLimits: rateLimits,
-		},
-		ImageBuilderProxy: struct {
-			TargetAddr string "json:\"targetAddr\""
-		}{
-			TargetAddr: fmt.Sprintf("%s.%s.svc.cluster.local:%d", common.ImageBuilderComponent, ctx.Namespace, common.ImageBuilderRPCPort),
 		},
 		PProf: struct {
 			Addr string `json:"addr"`
