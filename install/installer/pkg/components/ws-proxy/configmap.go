@@ -38,6 +38,28 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	gitpodInstallationWorkspaceHostSuffix := fmt.Sprintf(".ws%s.%s", installationShortNameSuffix, ctx.Config.Domain)
 	gitpodInstallationWorkspaceHostSuffixRegex := fmt.Sprintf("\\.ws[^\\.]*\\.%s", ctx.Config.Domain)
 
+	wsmanagerAddr := fmt.Sprintf("ws-manager:%d", wsmanager.RPCPort)
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.Workspace == nil || !cfg.Workspace.UseWsmanagerMk2 {
+			return nil
+		}
+		wsmanagerAddr = fmt.Sprintf("ws-manager-mk2:%d", wsmanagermk2.RPCPort)
+		return nil
+	})
+
+	wsManagerConfig := &config.WorkspaceManagerConn{
+		Addr: wsmanagerAddr,
+		TLS: struct {
+			CA   string "json:\"ca\""
+			Cert string "json:\"crt\""
+			Key  string "json:\"key\""
+		}{
+			CA:   "/ws-manager-client-tls-certs/ca.crt",
+			Cert: "/ws-manager-client-tls-certs/tls.crt",
+			Key:  "/ws-manager-client-tls-certs/tls.key",
+		},
+	}
+
 	ctx.WithExperimental(func(ucfg *experimental.Config) error {
 		if ucfg.WebApp != nil && ucfg.WebApp.WithoutWorkspaceComponents {
 			// No ws-manager exists in the application cluster, don't try to connect to it.
@@ -63,28 +85,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		}
 		return nil
 	})
-
-	wsmanagerAddr := fmt.Sprintf("ws-manager:%d", wsmanager.RPCPort)
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.Workspace == nil || !cfg.Workspace.UseWsmanagerMk2 {
-			return nil
-		}
-		wsmanagerAddr = fmt.Sprintf("ws-manager-mk2:%d", wsmanagermk2.RPCPort)
-		return nil
-	})
-
-	wsManagerConfig := &config.WorkspaceManagerConn{
-		Addr: "ws-manager:8080",
-		TLS: struct {
-			CA   string "json:\"ca\""
-			Cert string "json:\"crt\""
-			Key  string "json:\"key\""
-		}{
-			CA:   "/ws-manager-client-tls-certs/ca.crt",
-			Cert: "/ws-manager-client-tls-certs/tls.crt",
-			Key:  "/ws-manager-client-tls-certs/tls.key",
-		},
-	}
 
 	// todo(sje): wsManagerProxy seems to be unused
 	wspcfg := config.Config{
