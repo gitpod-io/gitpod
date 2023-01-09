@@ -119,9 +119,7 @@ func setupOIDCClientConfigService(t *testing.T) (v1.OIDCServiceClient, *gorm.DB)
 		require.NoError(t, srv.Close())
 	})
 
-	go func(t *testing.T) {
-		require.NoError(t, srv.ListenAndServe())
-	}(t)
+	baseserver.StartServerForTests(t, srv)
 
 	conn, err := grpc.Dial(srv.GRPCAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(t, err)
