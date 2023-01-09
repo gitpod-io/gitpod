@@ -157,6 +157,26 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
+	var imageBuilderTLS struct {
+		CA          string `json:"ca"`
+		Certificate string `json:"crt"`
+		PrivateKey  string `json:"key"`
+	}
+	if ctx.Config.Kind == configv1.InstallationWorkspace {
+		// Image builder TLS is only enabled in workspace clusters. This check
+		// can be removed once image-builder-mk3 has been removed from application clusters
+		// (https://github.com/gitpod-io/gitpod/issues/7845).
+		imageBuilderTLS = struct {
+			CA          string `json:"ca"`
+			Certificate string `json:"crt"`
+			PrivateKey  string `json:"key"`
+		}{
+			CA:          "/image-builder-mk3-tls-certs/ca.crt",
+			Certificate: "/image-builder-mk3-tls-certs/tls.crt",
+			PrivateKey:  "/image-builder-mk3-tls-certs/tls.key",
+		}
+	}
+
 	wsmcfg := config.ServiceConfiguration{
 		Manager: config.Configuration{
 			Namespace:      ctx.Namespace,
@@ -223,6 +243,17 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				PrivateKey:  "/certs/tls.key",
 			},
 			RateLimits: rateLimits,
+		},
+		ImageBuilderProxy: struct {
+			TargetAddr string "json:\"targetAddr\""
+			TLS        struct {
+				CA          string `json:"ca"`
+				Certificate string `json:"crt"`
+				PrivateKey  string `json:"key"`
+			} `json:"tls"`
+		}{
+			TargetAddr: fmt.Sprintf("%s.%s.svc.cluster.local:%d", common.ImageBuilderComponent, ctx.Namespace, common.ImageBuilderRPCPort),
+			TLS:        imageBuilderTLS,
 		},
 		PProf: struct {
 			Addr string `json:"addr"`

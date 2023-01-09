@@ -31,6 +31,7 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 		common.RegistryFacadeComponent,
 		common.ServerComponent,
 		common.WSManagerBridgeComponent,
+		common.ImageBuilderComponent,
 		common.WSProxyComponent,
 		Component,
 	}
