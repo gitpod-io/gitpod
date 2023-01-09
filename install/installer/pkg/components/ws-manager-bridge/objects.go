@@ -31,7 +31,8 @@ func WSManagerList(ctx *common.RenderContext) []WorkspaceCluster {
 		if cfg.WebApp != nil && cfg.WebApp.WithoutWorkspaceComponents {
 			// Must skip self if cluster does not contain ws-manager.
 			skipSelf = true
-			
+		}
+
 		if cfg.Workspace != nil && cfg.Workspace.UseWsmanagerMk2 {
 			wsmanagerAddr = fmt.Sprintf("dns:///%s:%d", wsmanagermk2.Component, wsmanagermk2.RPCPort)
 		}
