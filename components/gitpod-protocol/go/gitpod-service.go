@@ -261,6 +261,7 @@ type ConnectToServerOpts struct {
 	Context             context.Context
 	Token               string
 	Cookie              string
+	NoOrigin            bool
 	Log                 *logrus.Entry
 	ReconnectionHandler func()
 	CloseHandler        func(error)
@@ -278,16 +279,18 @@ func ConnectToServer(endpoint string, opts ConnectToServerOpts) (*APIoverJSONRPC
 		return nil, xerrors.Errorf("invalid endpoint URL: %w", err)
 	}
 
-	var protocol string
-	if epURL.Scheme == "wss:" {
-		protocol = "https"
-	} else {
-		protocol = "http"
-	}
-	origin := fmt.Sprintf("%s://%s/", protocol, epURL.Hostname())
-
 	reqHeader := http.Header{}
-	reqHeader.Set("Origin", origin)
+	if !opts.NoOrigin {
+		var protocol string
+		if epURL.Scheme == "wss:" {
+			protocol = "https"
+		} else {
+			protocol = "http"
+		}
+		origin := fmt.Sprintf("%s://%s/", protocol, epURL.Hostname())
+		reqHeader.Set("Origin", origin)
+	}
+
 	for k, v := range opts.ExtraHeaders {
 		reqHeader.Set(k, v)
 	}
