@@ -14,7 +14,7 @@ import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { ThemeContext } from "../theme-context";
 import { Project } from "@gitpod/gitpod-protocol";
 import Alert from "../components/Alert";
-import { useProjects } from "../data/projects/hooks";
+import { useProjects } from "../data/projects/queries";
 import { ProjectListItem } from "./ProjectListItem";
 import { SpinnerLoader } from "../components/Loader";
 
@@ -23,7 +23,7 @@ export default function () {
     const history = useHistory();
     const { teams } = useContext(TeamsContext);
     const team = getCurrentTeam(location, teams);
-    const { projects, latestPrebuilds, isLoading, isError, refetch } = useProjects();
+    const { data, isLoading, isError, refetch } = useProjects();
     const { isDark } = useContext(ThemeContext);
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
     const newProjectUrl = useMemo(() => (!!team ? `/new?team=${team.slug}` : "/new?user=1"), [team]);
@@ -40,8 +40,8 @@ export default function () {
             return true;
         };
 
-        return projects.filter(filter);
-    }, [projects, searchFilter]);
+        return (data?.projects || []).filter(filter);
+    }, [data?.projects, searchFilter]);
 
     const retryLoadProjects = useCallback(
         (e: MouseEvent) => {
@@ -67,7 +67,7 @@ export default function () {
             {/* TODO: Add a delay around Spinner so it delays rendering ~ 500ms so we don't flash spinners too often for fast response */}
             {isLoading && <SpinnerLoader />}
             {/* TODO: Find a better looking way to offer an actionable error */}
-            {isError && projects.length === 0 && (
+            {isError && (
                 <Alert type="error" className="mt-4">
                     <div className="flex justify-between items-center">
                         <span>There was a problem loading your projects.</span>
@@ -78,7 +78,7 @@ export default function () {
                 </Alert>
             )}
             {/* only show if we're not still loading projects to avoid a content flash */}
-            {!isLoading && projects?.length === 0 && (
+            {!isLoading && data?.projects.length === 0 && (
                 <div>
                     <img
                         alt="Projects (empty)"
@@ -111,7 +111,7 @@ export default function () {
                     </div>
                 </div>
             )}
-            {(projects?.length ?? 0) > 0 && (
+            {(data?.projects || []).length > 0 && (
                 <div className="app-container">
                     <div className="mt-8 pb-2 flex border-b border-gray-200 dark:border-gray-800">
                         <div className="flex">
@@ -151,7 +151,7 @@ export default function () {
                             <ProjectListItem
                                 project={p}
                                 key={p.id}
-                                prebuild={latestPrebuilds.get(p.id)}
+                                prebuild={data?.latestPrebuilds.get(p.id)}
                                 onProjectRemoved={refetch}
                             />
                         ))}

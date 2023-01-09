@@ -5,27 +5,20 @@
  */
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useFeatureFlags } from "../../contexts/FeatureFlagContext";
 import { useCurrentTeam } from "../../teams/teams-context";
 import { useCurrentUser } from "../../user-context";
-import { fetchProjects } from "./fetchers";
+import { useFetchProjects } from "./fetchers";
 
 export const useProjects = () => {
     const team = useCurrentTeam();
     const user = useCurrentUser();
-    const { usePublicApiProjectsService } = useFeatureFlags();
+    const fetchProjects = useFetchProjects({ teamId: team?.id, userId: user?.id });
 
-    const info = useQuery({
+    return useQuery({
         // Projects are either tied to current team, otherwise current user
         queryKey: ["projects", team ? { teamId: team.id } : { userId: user?.id }],
-        queryFn: async () => fetchProjects({ teamId: team?.id, userId: user?.id, usePublicApiProjectsService }),
+        queryFn: fetchProjects,
     });
-
-    return {
-        projects: info.data?.projects ?? [],
-        latestPrebuilds: info.data?.latestPrebuilds ?? new Map(),
-        ...info,
-    };
 };
 
 type RefreshProjectsArgs = {

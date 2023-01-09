@@ -29,7 +29,7 @@ import {
 } from "../service/public-api";
 import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import { ConnectError } from "@bufbuild/connect-web";
-import { useRefreshProjects } from "../data/projects/hooks";
+import { useRefreshProjects } from "../data/projects/queries";
 
 export default function NewProject() {
     const location = useLocation();
