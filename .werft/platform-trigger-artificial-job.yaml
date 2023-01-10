@@ -47,5 +47,5 @@ pod:
         - bash
         - .werft/platform-trigger-artificial-job.sh
 
-plugins:
-  cron: "*/30 * * * *" # Every 30 minutes
+#plugins:
+#  cron: "*/30 * * * *" # Every 30 minutes
