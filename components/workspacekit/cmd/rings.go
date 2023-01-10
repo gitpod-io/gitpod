@@ -116,17 +116,17 @@ var ring0Cmd = &cobra.Command{
 		}()
 
 		// start ring0 services
-		stopHook, err := startInnerLoopService("/.workspace/mark/")
+		stopHook, err := startInnerLoopService("/.workspace/mark/", prep)
 		if err != nil {
 			log.WithError(err).Error("cannot start inner loop service")
 		}
 		defer stopHook()
 		// root process tree don't have cancelable context
-		exitCode = startRing1(context.Background(), true, prep)
+		exitCode = startRing1(context.Background(), true, prep, os.Stderr, os.Stdout, os.Stderr)
 	},
 }
 
-func startRing1(ctx context.Context, isRootProcess bool, prep *api.PrepareForUserNSResponse) (exitCode int) {
+func startRing1(ctx context.Context, isRootProcess bool, prep *api.PrepareForUserNSResponse, stdin io.Reader, stdout, stderr io.Writer) (exitCode int) {
 	exitCode = 1
 	cmd := exec.Command("/proc/self/exe", "ring1")
 	cmd.SysProcAttr = &syscall.SysProcAttr{
@@ -213,100 +213,28 @@ type workspaceInnerLoopService struct {
 	socket net.Listener
 	server *grpc.Server
 	api.UnimplementedWorkspaceInnerLoopServer
+	prep *api.PrepareForUserNSResponse
 }
 
 func (svc *workspaceInnerLoopService) StartInnerLoop(req *api.StartInnerLoopRequest, resp api.WorkspaceInnerLoop_StartInnerLoopServer) error {
 	errchan := make(chan error, 1)
 	messages := make(chan *api.StartInnerLoopResponse, 1)
 
-	reader, writer := io.Pipe()
-
-	test := func() (exitCode int) {
-		defer func() {
-			writer.Close()
-		}()
-		exitCode = -1
-		cmd := exec.Command("bash", "-c", "sleep 1 && echo 1 && sleep 1 && echo 2")
-		cmd.SysProcAttr = &syscall.SysProcAttr{}
-		cmd.Stdout = writer
-		cmd.Env = os.Environ()
-		if err := cmd.Start(); err != nil {
-			log.WithError(err).Error("failed to start test")
-			return
-		}
-
-		sigc := make(chan os.Signal, 128)
-		signal.Notify(sigc)
-		go func() {
-			defer func() {
-				signal.Stop(sigc)
-
-				// This is a 'just in case' fallback, in case we're racing the cmd.Process and it's become
-				// nil in the time since we checked.
-				err := recover()
-				if err != nil {
-					log.WithField("recovered", err).Error("recovered from panic")
-				}
-			}()
-
-			for {
-				select {
-				case <-resp.Context().Done():
-				case sig := <-sigc:
-					if sig != unix.SIGTERM {
-						_ = cmd.Process.Signal(sig)
-						continue
-					}
-				}
-
-				_ = cmd.Process.Signal(unix.SIGTERM)
-				time.Sleep(ring1ShutdownTimeout)
-				if cmd.Process == nil {
-					return
-				}
-
-				log.Warn("test did not shut down in time - sending sigkill")
-				err := cmd.Process.Kill()
-				if err != nil {
-					if isProcessAlreadyFinished(err) {
-						return
-					}
-					log.WithError(err).Error("cannot kill test")
-				}
-			}
-		}()
-
-		err := cmd.Wait()
-		if eerr, ok := err.(*exec.ExitError); ok {
-			state, ok := eerr.ProcessState.Sys().(syscall.WaitStatus)
-			if ok && state.Signal() == syscall.SIGKILL {
-				log.Warn("test was killed")
-				return
-			}
-		}
-		if err != nil {
-			if eerr, ok := err.(*exec.ExitError); ok {
-				exitCode = eerr.ExitCode()
-			}
-			log.WithError(err).Error("unexpected exit test")
-			return
-		}
-		exitCode = 0 // once we get here everythings good
-		return
-	}
+	outReader, outWriter := io.Pipe()
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	exitCode := -1
 	go func() {
 		defer wg.Done()
-		exitCode = test()
+		exitCode = startRing1(resp.Context(), false, svc.prep, nil, outWriter, outWriter)
+		outWriter.Close()
 	}()
 
 	go func() {
 		for {
 			buf := make([]byte, 4096)
-			n, err := reader.Read(buf)
+			n, err := outReader.Read(buf)
 			if err == io.EOF {
 				break
 			}
@@ -341,7 +269,7 @@ func (svc *workspaceInnerLoopService) StartInnerLoop(req *api.StartInnerLoopRequ
 
 }
 
-func startInnerLoopService(socketDir string) (func(), error) {
+func startInnerLoopService(socketDir string, prep *api.PrepareForUserNSResponse) (func(), error) {
 	socketFN := filepath.Join(socketDir, "inner-loop.sock")
 	if _, err := os.Stat(socketFN); err == nil {
 		_ = os.Remove(socketFN)
@@ -359,6 +287,7 @@ func startInnerLoopService(socketDir string) (func(), error) {
 
 	innerLoopSvc := workspaceInnerLoopService{
 		socket: sckt,
+		prep:   prep,
 	}
 
 	limiter := common_grpc.NewRatelimitingInterceptor(
@@ -651,11 +580,13 @@ var ring1Cmd = &cobra.Command{
 			return
 		}
 
-		_, err = client.EvacuateCGroup(ctx, &daemonapi.EvacuateCGroupRequest{})
-		if err != nil {
-			client.Close()
-			log.WithError(err).Error("cannot evacuate cgroup")
-			return
+		if rootfs == "" {
+			_, err = client.EvacuateCGroup(ctx, &daemonapi.EvacuateCGroupRequest{})
+			if err != nil {
+				client.Close()
+				log.WithError(err).Error("cannot evacuate cgroup")
+				return
+			}
 		}
 		client.Close()
 
@@ -705,17 +636,20 @@ var ring1Cmd = &cobra.Command{
 			return
 		}
 
-		client, err = connectToInWorkspaceDaemonService(ctx)
-		if err != nil {
-			log.WithError(err).Error("cannot connect to daemon from ring1 after ring2")
-			return
+		// TODO need setup another network interface
+		if rootfs == "" {
+			client, err = connectToInWorkspaceDaemonService(ctx)
+			if err != nil {
+				log.WithError(err).Error("cannot connect to daemon from ring1 after ring2")
+				return
+			}
+			_, err = client.SetupPairVeths(ctx, &daemonapi.SetupPairVethsRequest{Pid: int64(cmd.Process.Pid)})
+			if err != nil {
+				log.WithError(err).Error("cannot setup pair of veths")
+				return
+			}
+			client.Close()
 		}
-		_, err = client.SetupPairVeths(ctx, &daemonapi.SetupPairVethsRequest{Pid: int64(cmd.Process.Pid)})
-		if err != nil {
-			log.WithError(err).Error("cannot setup pair of veths")
-			return
-		}
-		client.Close()
 
 		log.Info("signaling to child process")
 		_, err = msgutil.MarshalToWriter(ring2Conn, ringSyncMsg{
