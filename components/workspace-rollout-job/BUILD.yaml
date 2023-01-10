@@ -7,6 +7,7 @@ packages:
       - "go.sum"
     deps:
       - components/common-go:lib
+      - dev/gpctl:lib
       - components/ws-manager-bridge-api/go:lib
     env:
       - CGO_ENABLED=0
@@ -37,3 +38,4 @@ packages:
       packaging: library
     deps:
       - components/common-go:lib
+      - dev/gpctl:lib
