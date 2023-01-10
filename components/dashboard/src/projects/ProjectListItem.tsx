@@ -13,6 +13,7 @@ import { useCurrentTeam } from "../teams/teams-context";
 import { RemoveProjectModal } from "./RemoveProjectModal";
 import { toRemoteURL } from "./render-utils";
 import { prebuildStatusIcon } from "./Prebuilds";
+import { gitpodHostUrl } from "../service/service";
 
 type ProjectListItemProps = {
     project: Project;
@@ -40,7 +41,14 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                                 menuEntries={[
                                     {
                                         title: "New Workspace",
-                                        href: `/#${project.cloneUrl}`,
+                                        href: gitpodHostUrl.withContext(`${project.cloneUrl}`).toString(),
+                                        separator: true,
+                                    },
+                                    {
+                                        title: "New Workspace ...",
+                                        href: gitpodHostUrl
+                                            .withContext(`${project.cloneUrl}`, { showOptions: true })
+                                            .toString(),
                                         separator: true,
                                     },
                                     {

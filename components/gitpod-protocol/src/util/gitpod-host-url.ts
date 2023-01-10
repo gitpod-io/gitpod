@@ -77,8 +77,15 @@ export class GitpodHostUrl {
         return updated.with((url) => ({ pathname: `/api${url.pathname}` }));
     }
 
-    withContext(contextUrl: string) {
-        return this.with((url) => ({ hash: contextUrl }));
+    withContext(
+        contextUrl: string,
+        startOptions?: { showOptions?: boolean; editor?: string; workspaceClass?: string },
+    ) {
+        const searchParams = new URLSearchParams();
+        if (startOptions?.showOptions) {
+            searchParams.append("showOptions", "true");
+        }
+        return this.with((url) => ({ hash: contextUrl, search: searchParams.toString() }));
     }
 
     asWebsocket(): GitpodHostUrl {
