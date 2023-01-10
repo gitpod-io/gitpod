@@ -70,6 +70,7 @@ const bootApp = () => {
                                                 <BrowserRouter>
                                                     <FeatureFlagContextProvider>
                                                         <App />
+                                                        <ReactQueryDevtools initialIsOpen={false} />
                                                     </FeatureFlagContextProvider>
                                                 </BrowserRouter>
                                             </StartWorkspaceModalContextProvider>
@@ -80,7 +81,6 @@ const bootApp = () => {
                         </PaymentContextProvider>
                     </AdminContextProvider>
                 </UserContextProvider>
-                <ReactQueryDevtools initialIsOpen={false} />
             </QueryClientProvider>
         </React.StrictMode>,
         document.getElementById("root"),

@@ -9,6 +9,11 @@ import { useCurrentTeam } from "../../teams/teams-context";
 import { useCurrentUser } from "../../user-context";
 import { useFetchProjects } from "./fetchers";
 
+type TeamOrUserID = {
+    teamId?: string;
+    userId?: string;
+};
+
 export const useProjects = () => {
     const team = useCurrentTeam();
     const user = useCurrentUser();
@@ -16,27 +21,30 @@ export const useProjects = () => {
 
     return useQuery({
         // Projects are either tied to current team, otherwise current user
-        queryKey: ["projects", team ? { teamId: team.id } : { userId: user?.id }],
+        queryKey: getProjectsQueryKey({ teamId: team?.id, userId: user?.id }),
         queryFn: fetchProjects,
     });
-};
-
-type RefreshProjectsArgs = {
-    userId?: string;
-    teamId?: string;
 };
 
 export const useRefreshProjects = () => {
     const queryClient = useQueryClient();
 
-    return ({ teamId, userId }: RefreshProjectsArgs) => {
+    return ({ teamId, userId }: TeamOrUserID) => {
         // Don't refetch if no team/user is provided
         if (!teamId && !userId) {
             return;
         }
 
         queryClient.refetchQueries({
-            queryKey: ["projects", teamId ? { teamId } : { userId }],
+            queryKey: getProjectsQueryKey({ teamId, userId }),
         });
     };
+};
+
+const getProjectsQueryKey = ({ teamId, userId }: TeamOrUserID) => {
+    if (!teamId && !userId) {
+        throw new Error("Must provide either a teamId or userId for projects query key");
+    }
+
+    return ["projects", teamId ? { teamId } : { userId }];
 };

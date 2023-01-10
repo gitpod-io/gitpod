@@ -9,7 +9,7 @@ import Header from "../components/Header";
 import projectsEmpty from "../images/projects-empty.svg";
 import projectsEmptyDark from "../images/projects-empty-dark.svg";
 import { useHistory, useLocation } from "react-router";
-import { MouseEvent, useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useContext, useMemo, useState } from "react";
 import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { ThemeContext } from "../theme-context";
 import { Project } from "@gitpod/gitpod-protocol";
@@ -43,14 +43,6 @@ export default function () {
         return (data?.projects || []).filter(filter);
     }, [data?.projects, searchFilter]);
 
-    const retryLoadProjects = useCallback(
-        (e: MouseEvent) => {
-            e.preventDefault();
-            refetch();
-        },
-        [refetch],
-    );
-
     return (
         <>
             {!team && (
@@ -66,19 +58,19 @@ export default function () {
             <Header title="Projects" subtitle="Manage recently added projects." />
             {/* TODO: Add a delay around Spinner so it delays rendering ~ 500ms so we don't flash spinners too often for fast response */}
             {isLoading && <SpinnerLoader />}
-            {/* TODO: Find a better looking way to offer an actionable error */}
+            {/* TODO: Look into a more formalized actionable error message component */}
             {isError && (
-                <Alert type="error" className="mt-4">
+                <Alert type="error" className="mt-4 items-center">
                     <div className="flex justify-between items-center">
                         <span>There was a problem loading your projects.</span>
-                        <button className="primary" onClick={retryLoadProjects}>
+                        <button className="primary" onClick={() => refetch()}>
                             Retry
                         </button>
                     </div>
                 </Alert>
             )}
             {/* only show if we're not still loading projects to avoid a content flash */}
-            {!isLoading && data?.projects.length === 0 && (
+            {!isLoading && (data?.projects ?? []).length === 0 && (
                 <div>
                     <img
                         alt="Projects (empty)"
