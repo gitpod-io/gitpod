@@ -69,6 +69,8 @@ const toStop = new DisposableCollection();
 
     document.title = gitpodServiceClient.info.workspace.description;
 
+    window.gitpod.loggedUserID = gitpodServiceClient.user.id;
+
     if (gitpodServiceClient.info.workspace.type !== "regular") {
         return;
     }
