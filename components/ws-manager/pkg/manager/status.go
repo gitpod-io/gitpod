@@ -18,6 +18,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
@@ -332,7 +333,7 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 	result.Spec.ExposedPorts = extractExposedPorts(pod).Ports
 
 	// check failure states, i.e. determine value of result.Failed
-	failure, phase := extractFailure(wso, m.metrics)
+	failure, phase := m.extractFailure(wso, m.metrics)
 	result.Conditions.Failed = failure
 	if phase != nil {
 		result.Phase = *phase
@@ -550,7 +551,7 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 
 // extractFailure returns a pod failure reason and possibly a phase. If phase is nil then
 // one should extract the phase themselves. If the pod has not failed, this function returns "", nil.
-func extractFailure(wso workspaceObjects, metrics *metrics) (string, *api.WorkspacePhase) {
+func (m *Manager) extractFailure(wso workspaceObjects, metrics *metrics) (string, *api.WorkspacePhase) {
 	pod := wso.Pod
 	wsType := strings.ToUpper(pod.Labels[wsk8s.TypeLabel])
 	wsClass := pod.Labels[workspaceClassLabel]
@@ -604,6 +605,19 @@ func extractFailure(wso workspaceObjects, metrics *metrics) (string, *api.Worksp
 					// we'd be in unknown.
 					c := api.WorkspacePhase_RUNNING
 					phase = &c
+				}
+
+				// TODO(jenting)
+				// remove the debug log after we address the issue https://github.com/gitpod-io/gitpod/issues/12021
+				log.WithField("phase", status.Phase).WithField("code", terminationState.ExitCode).WithField("reason", terminationState.Reason).Infof("reason: %s, message: %s", status.Reason, status.Message)
+				// dump the underlying node taint
+				var node corev1.Node
+				if m.Clientset != nil {
+					if err := m.Clientset.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: wso.NodeName()}, &node); err == nil {
+						for _, taint := range node.Spec.Taints {
+							log.WithField("nodeName", wso.NodeName()).Infof("taint key: %v, value: %v, effect: %v, time: %v", taint.Key, taint.Value, taint.Effect, taint.TimeAdded.String())
+						}
+					}
 				}
 
 				// the container itself told us why it was terminated - use that as failure reason
