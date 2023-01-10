@@ -1,6 +1,7 @@
 # Change Log
 
 ## January 2023
+- Support start-with-options URL, for prompting users about the preferred IDE and workspace class when opening a fresh workspace. ([#15567](https://github.com/gitpod-io/gitpod/pull/15567)) - [@svenefftinge](https://github.com/svenefftinge)
 - Fix image build logs not showing in the dashboard if the build is delayed. ([#15586](https://github.com/gitpod-io/gitpod/pull/15586)) - [@WVerlaek](https://github.com/WVerlaek)
 - Update Helm dependencies in Installer ([#15568](https://github.com/gitpod-io/gitpod/pull/15568)) - [@mrsimonemms](https://github.com/mrsimonemms)
 - remove outdated UI experiments ([#15569](https://github.com/gitpod-io/gitpod/pull/15569)) - [@geropl](https://github.com/geropl)
