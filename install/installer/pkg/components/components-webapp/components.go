@@ -12,6 +12,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/components/iam"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/migrations"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/minio"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/openfga"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/proxy"
 	public_api_server "github.com/gitpod-io/gitpod/installer/pkg/components/public-api-server"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/rabbitmq"
@@ -37,6 +38,7 @@ var Objects = common.CompositeRenderFunc(
 	public_api_server.Objects,
 	usage.Objects,
 	toxiproxy.Objects,
+	openfga.Objects,
 )
 
 var Helm = common.CompositeHelmFunc(

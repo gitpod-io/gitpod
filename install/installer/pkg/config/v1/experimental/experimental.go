@@ -188,6 +188,10 @@ type IAMConfig struct {
 	OIDCClientsSecretName string `json:"oidsClientsConfigSecret,omitempty"`
 }
 
+type OpenFGAConfig struct {
+	Enabled bool `json:"enabled"`
+}
+
 type WebAppConfig struct {
 	PublicAPI                  *PublicAPIConfig       `json:"publicApi,omitempty"`
 	Server                     *ServerConfig          `json:"server,omitempty"`
@@ -203,6 +207,7 @@ type WebAppConfig struct {
 	SlowDatabase               bool                   `json:"slowDatabase,omitempty"`
 	IAM                        *IAMConfig             `json:"iam,omitempty"`
 	WithoutWorkspaceComponents bool                   `json:"withoutWorkspaceComponents,omitempty"`
+	OpenFGA                    *OpenFGAConfig         `json:"openfga,omitempty"`
 }
 
 type WorkspaceDefaults struct {
