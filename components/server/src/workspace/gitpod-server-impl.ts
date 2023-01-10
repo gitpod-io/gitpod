@@ -2046,6 +2046,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     public async getTeam(ctx: TraceContext, teamId: string): Promise<Team> {
         traceAPIParams(ctx, { teamId });
+
+        if (!uuidValidate(teamId)) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "team ID must be a valid UUID");
+        }
+
         this.checkAndBlockUser("getTeam");
 
         const team = await this.teamDB.findTeamById(teamId);
@@ -2058,6 +2063,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     public async getTeamMembers(ctx: TraceContext, teamId: string): Promise<TeamMemberInfo[]> {
         traceAPIParams(ctx, { teamId });
+
+        if (!uuidValidate(teamId)) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "team ID must be a valid UUID");
+        }
 
         this.checkUser("getTeamMembers");
         const team = await this.getTeam(ctx, teamId);
@@ -2145,6 +2154,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async removeTeamMember(ctx: TraceContext, teamId: string, userId: string): Promise<void> {
         traceAPIParams(ctx, { teamId, userId });
 
+        if (!uuidValidate(teamId)) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "team ID must be a valid UUID");
+        }
+
+        if (!uuidValidate(userId)) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "user ID must be a valid UUID");
+        }
+
         const user = this.checkAndBlockUser("removeTeamMember");
         // Users are free to leave any team themselves, but only owners can remove others from their teams.
         await this.guardTeamOperation(teamId, user.id === userId ? "get" : "update");
@@ -2167,6 +2184,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async getGenericInvite(ctx: TraceContext, teamId: string): Promise<TeamMembershipInvite> {
         traceAPIParams(ctx, { teamId });
 
+        if (!uuidValidate(teamId)) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "team ID must be a valid UUID");
+        }
+
         this.checkUser("getGenericInvite");
         await this.guardTeamOperation(teamId, "get");
         const invite = await this.teamDB.findGenericInviteByTeamId(teamId);
@@ -2178,6 +2199,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     public async resetGenericInvite(ctx: TraceContext, teamId: string): Promise<TeamMembershipInvite> {
         traceAPIParams(ctx, { teamId });
+
+        if (!uuidValidate(teamId)) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "team ID must be a valid UUID");
+        }
 
         this.checkAndBlockUser("resetGenericInvite");
         await this.guardTeamOperation(teamId, "update");
