@@ -1,0 +1,89 @@
+# Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+apiVersion: v1
+domain: gitpod.example.com
+experimental:
+  overrides:
+    - kind: NetworkPolicy
+      apiVersion: networking.k8s.io/v1
+      metadata:
+        name: ws-proxy
+      override:
+        spec:
+          ingress:
+            - from: []
+              ports:
+                - port: 8080
+                - port: 9090
+                - port: 2200
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        name: proxy
+      override:
+        metadata:
+          annotations: null
+        spec:
+          externalTrafficPolicy: Local
+          ports:
+          - name: http
+            nodePort: 31000
+            port: 80
+            protocol: TCP
+            targetPort: 80
+          - name: https
+            nodePort: 32000
+            port: 443
+            protocol: TCP
+            targetPort: 443
+          - name: metrics
+            nodePort: 32111
+            port: 9500
+            protocol: TCP
+            targetPort: 9500
+          type: NodePort
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        name: ws-manager
+      override:
+        spec:
+          externalTrafficPolicy: Local
+          ports:
+          - name: rpc
+            port: 8080
+            nodePort: 31700
+            protocol: TCP
+            targetPort: 8080
+          type: NodePort
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        name: ws-proxy
+      override:
+        spec:
+          externalTrafficPolicy: Local
+          type: NodePort
+          ports:
+          - name: http-proxy
+            nodePort: 31300
+            port: 80
+            protocol: TCP
+            targetPort: 8080
+          - name: https-proxy
+            nodePort: 31400
+            port: 443
+            protocol: TCP
+            targetPort: 9090
+          - name: ssh
+            nodePort: 31600
+            port: 22
+            protocol: TCP
+            targetPort: 2200
+          - name: metrics
+            nodePort: 32112
+            port: 9500
+            protocol: TCP
+            targetPort: 9500
