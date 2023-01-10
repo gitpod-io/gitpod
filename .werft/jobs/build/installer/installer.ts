@@ -32,6 +32,7 @@ export class Installer {
             GITPOD_WORKSPACE_FEATURE_FLAGS: this.options.workspaceFeatureFlags.join(" "),
             GITPOD_WITH_SLOW_DATABASE: this.options.withSlowDatabase,
             GITPOD_WITH_EE_LICENSE: this.options.withEELicense,
+            GITPOD_WSMANAGER_MK2: this.options.useWsManagerMk2,
         };
         const variables = Object.entries(environment)
             .map(([key, value]) => `${key}="${value}"`)
