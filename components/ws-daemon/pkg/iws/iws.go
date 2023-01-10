@@ -177,7 +177,7 @@ func (wbs *InWorkspaceServiceServer) Start() error {
 			UseOnce: true,
 		},
 		"/iws.InWorkspaceService/EvacuateCGroup": ratelimit{
-			UseOnce: true,
+			UseOnce: false,
 		},
 		"/iws.InWorkspaceService/WriteIDMapping": ratelimit{
 			Limiter: rate.NewLimiter(rate.Every(2500*time.Millisecond), 4),

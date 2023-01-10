@@ -18,10 +18,12 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -33,7 +35,9 @@ import (
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -111,21 +115,123 @@ var ring0Cmd = &cobra.Command{
 			}
 		}()
 
-		cmd := exec.Command("/proc/self/exe", "ring1")
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Pdeathsig:  syscall.SIGKILL,
-			Cloneflags: syscall.CLONE_NEWUSER | syscall.CLONE_NEWNS | unix.CLONE_NEWCGROUP,
+		// start ring0 services
+		stopHook, err := startInnerLoopService("/.workspace/mark/")
+		if err != nil {
+			log.WithError(err).Error("cannot start inner loop service")
 		}
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Env = append(os.Environ(),
-			"WORKSPACEKIT_FSSHIFT="+prep.FsShift.String(),
-			fmt.Sprintf("WORKSPACEKIT_NO_WORKSPACE_MOUNT=%v", prep.FullWorkspaceBackup || prep.PersistentVolumeClaim),
-		)
+		defer stopHook()
+		// root process tree don't have cancelable context
+		exitCode = startRing1(context.Background(), true, prep)
+	},
+}
 
+func startRing1(ctx context.Context, isRootProcess bool, prep *api.PrepareForUserNSResponse) (exitCode int) {
+	exitCode = 1
+	cmd := exec.Command("/proc/self/exe", "ring1")
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Pdeathsig:  syscall.SIGKILL,
+		Cloneflags: syscall.CLONE_NEWUSER | syscall.CLONE_NEWNS | unix.CLONE_NEWCGROUP,
+	}
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Env = append(os.Environ(),
+		"WORKSPACEKIT_FSSHIFT="+prep.FsShift.String(),
+		fmt.Sprintf("WORKSPACEKIT_NO_WORKSPACE_MOUNT=%v", prep.FullWorkspaceBackup || prep.PersistentVolumeClaim),
+	)
+	if !isRootProcess {
+		cmd.Env = append(cmd.Env, "WORKSPACEKIT_ROOTFS=/demo")
+	}
+
+	if err := cmd.Start(); err != nil {
+		log.WithError(err).Error("failed to start ring1")
+		return
+	}
+
+	sigc := make(chan os.Signal, 128)
+	signal.Notify(sigc)
+	go func() {
+		defer func() {
+			signal.Stop(sigc)
+
+			// This is a 'just in case' fallback, in case we're racing the cmd.Process and it's become
+			// nil in the time since we checked.
+			err := recover()
+			if err != nil {
+				log.WithField("recovered", err).Error("recovered from panic")
+			}
+		}()
+
+		for {
+			select {
+			case <-ctx.Done():
+			case sig := <-sigc:
+				if sig != unix.SIGTERM {
+					_ = cmd.Process.Signal(sig)
+					continue
+				}
+			}
+
+			_ = cmd.Process.Signal(unix.SIGTERM)
+			time.Sleep(ring1ShutdownTimeout)
+			if cmd.Process == nil {
+				return
+			}
+
+			log.Warn("ring1 did not shut down in time - sending sigkill")
+			err := cmd.Process.Kill()
+			if err != nil {
+				if isProcessAlreadyFinished(err) {
+					return
+				}
+				log.WithError(err).Error("cannot kill ring1")
+			}
+		}
+	}()
+
+	err := cmd.Wait()
+	if eerr, ok := err.(*exec.ExitError); ok {
+		state, ok := eerr.ProcessState.Sys().(syscall.WaitStatus)
+		if ok && state.Signal() == syscall.SIGKILL {
+			log.Warn("ring1 was killed")
+			return
+		}
+	}
+	if err != nil {
+		if eerr, ok := err.(*exec.ExitError); ok {
+			exitCode = eerr.ExitCode()
+		}
+		log.WithError(err).Error("unexpected exit")
+		return
+	}
+	exitCode = 0 // once we get here everythings good
+	return
+}
+
+type workspaceInnerLoopService struct {
+	socket net.Listener
+	server *grpc.Server
+	api.UnimplementedWorkspaceInnerLoopServer
+}
+
+func (svc *workspaceInnerLoopService) StartInnerLoop(req *api.StartInnerLoopRequest, resp api.WorkspaceInnerLoop_StartInnerLoopServer) error {
+	errchan := make(chan error, 1)
+	messages := make(chan *api.StartInnerLoopResponse, 1)
+
+	reader, writer := io.Pipe()
+
+	test := func() (exitCode int) {
+		defer func() {
+			writer.Close()
+		}()
+		exitCode = -1
+		cmd := exec.Command("bash", "-c", "sleep 1 && echo 1 && sleep 1 && echo 2")
+		cmd.SysProcAttr = &syscall.SysProcAttr{}
+		cmd.Stdout = writer
+		cmd.Env = os.Environ()
 		if err := cmd.Start(); err != nil {
-			log.WithError(err).Error("failed to start ring0")
+			log.WithError(err).Error("failed to start test")
 			return
 		}
 
@@ -133,6 +239,8 @@ var ring0Cmd = &cobra.Command{
 		signal.Notify(sigc)
 		go func() {
 			defer func() {
+				signal.Stop(sigc)
+
 				// This is a 'just in case' fallback, in case we're racing the cmd.Process and it's become
 				// nil in the time since we checked.
 				err := recover()
@@ -142,10 +250,13 @@ var ring0Cmd = &cobra.Command{
 			}()
 
 			for {
-				sig := <-sigc
-				if sig != unix.SIGTERM {
-					_ = cmd.Process.Signal(sig)
-					continue
+				select {
+				case <-resp.Context().Done():
+				case sig := <-sigc:
+					if sig != unix.SIGTERM {
+						_ = cmd.Process.Signal(sig)
+						continue
+					}
 				}
 
 				_ = cmd.Process.Signal(unix.SIGTERM)
@@ -154,25 +265,22 @@ var ring0Cmd = &cobra.Command{
 					return
 				}
 
-				log.Warn("ring1 did not shut down in time - sending sigkill")
-				err = cmd.Process.Kill()
+				log.Warn("test did not shut down in time - sending sigkill")
+				err := cmd.Process.Kill()
 				if err != nil {
 					if isProcessAlreadyFinished(err) {
-						err = nil
 						return
 					}
-
-					log.WithError(err).Error("cannot kill ring1")
+					log.WithError(err).Error("cannot kill test")
 				}
-				return
 			}
 		}()
 
-		err = cmd.Wait()
+		err := cmd.Wait()
 		if eerr, ok := err.(*exec.ExitError); ok {
 			state, ok := eerr.ProcessState.Sys().(syscall.WaitStatus)
 			if ok && state.Signal() == syscall.SIGKILL {
-				log.Warn("ring1 was killed")
+				log.Warn("test was killed")
 				return
 			}
 		}
@@ -180,11 +288,101 @@ var ring0Cmd = &cobra.Command{
 			if eerr, ok := err.(*exec.ExitError); ok {
 				exitCode = eerr.ExitCode()
 			}
-			log.WithError(err).Error("unexpected exit")
+			log.WithError(err).Error("unexpected exit test")
 			return
 		}
 		exitCode = 0 // once we get here everythings good
-	},
+		return
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	exitCode := -1
+	go func() {
+		defer wg.Done()
+		exitCode = test()
+	}()
+
+	go func() {
+		for {
+			buf := make([]byte, 4096)
+			n, err := reader.Read(buf)
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				errchan <- err
+				return
+			}
+			messages <- &api.StartInnerLoopResponse{Output: &api.StartInnerLoopResponse_Data{Data: buf[:n]}}
+		}
+		wg.Wait()
+		messages <- &api.StartInnerLoopResponse{Output: &api.StartInnerLoopResponse_ExitCode{ExitCode: int32(exitCode)}}
+		errchan <- io.EOF
+	}()
+
+	for {
+		var err error
+		select {
+		case message := <-messages:
+			err = resp.Send(message)
+		case err = <-errchan:
+		case <-resp.Context().Done():
+			return status.Error(codes.DeadlineExceeded, resp.Context().Err().Error())
+		}
+		if err == io.EOF {
+			// EOF isn't really an error here
+			return nil
+		}
+		if err != nil {
+			return status.Error(codes.Internal, err.Error())
+		}
+	}
+
+}
+
+func startInnerLoopService(socketDir string) (func(), error) {
+	socketFN := filepath.Join(socketDir, "inner-loop.sock")
+	if _, err := os.Stat(socketFN); err == nil {
+		_ = os.Remove(socketFN)
+	}
+
+	sckt, err := net.Listen("unix", socketFN)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot create info socket: %w", err)
+	}
+
+	err = os.Chmod(socketFN, 0777)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot chmod info socket: %w", err)
+	}
+
+	innerLoopSvc := workspaceInnerLoopService{
+		socket: sckt,
+	}
+
+	limiter := common_grpc.NewRatelimitingInterceptor(
+		map[string]common_grpc.RateLimit{
+			"iws.WorkspaceInnerLoopService/StartInnerLoop": {
+				RefillInterval: 1500,
+				BucketSize:     4,
+			},
+		},
+	)
+
+	innerLoopSvc.server = grpc.NewServer(grpc.ChainUnaryInterceptor(limiter.UnaryInterceptor()))
+	api.RegisterWorkspaceInnerLoopServer(innerLoopSvc.server, &innerLoopSvc)
+	go func() {
+		err := innerLoopSvc.server.Serve(sckt)
+		if err != nil {
+			log.WithError(err).Error("workspace inner loop server failed")
+		}
+	}()
+
+	return func() {
+		innerLoopSvc.server.Stop()
+		os.Remove(socketFN)
+	}, nil
 }
 
 var ring1Opts struct {
@@ -273,19 +471,31 @@ var ring1Cmd = &cobra.Command{
 		}
 
 		var mnts []mnte
+
+		rootfs := os.Getenv("WORKSPACEKIT_ROOTFS")
+
 		switch fsshift {
 		case api.FSShiftMethod_FUSE:
 			mnts = append(mnts,
-				mnte{Target: "/", Source: "/.workspace/mark", Flags: unix.MS_BIND | unix.MS_REC},
+				mnte{Target: "/", Source: "/.workspace/mark" + rootfs, Flags: unix.MS_BIND | unix.MS_REC},
 			)
 		case api.FSShiftMethod_SHIFTFS:
 			mnts = append(mnts,
-				mnte{Target: "/", Source: "/.workspace/mark", FSType: "shiftfs"},
+				mnte{Target: "/", Source: "/.workspace/mark" + rootfs, FSType: "shiftfs"},
 			)
 		default:
 			log.WithField("fsshift", fsshift).Fatal("unknown FS shift method")
 		}
-
+		if rootfs != "" {
+			mnts = append(mnts,
+				mnte{Target: "/ide", Source: "/.workspace/mark/ide", Flags: unix.MS_BIND},
+				mnte{Target: "/.supervisor", Source: "/.workspace/mark/.supervisor", Flags: unix.MS_BIND},
+			)
+		} else {
+			mnts = append(mnts,
+				mnte{Target: "/.supervisor/inner-loop.sock", Source: "/.workspace/mark/inner-loop.sock", Flags: unix.MS_BIND},
+			)
+		}
 		procMounts, err := ioutil.ReadFile("/proc/mounts")
 		if err != nil {
 			log.WithError(err).Fatal("cannot read /proc/mounts")
@@ -328,7 +538,17 @@ var ring1Cmd = &cobra.Command{
 
 		for _, m := range mnts {
 			dst := filepath.Join(ring2Root, m.Target)
-			_ = os.MkdirAll(dst, 0644)
+			func() {
+				if (m.FSType == "" || m.FSType == "none") && m.Source != "" {
+					stat, err := os.Stat(m.Source)
+					if err == nil && !stat.IsDir() {
+						_ = os.MkdirAll(path.Base(dst), 0644)
+						_ = os.WriteFile(dst, []byte("placeholder"), 0644)
+					}
+					return
+				}
+				_ = os.MkdirAll(dst, 0644)
+			}()
 
 			if m.Source == "" {
 				m.Source = m.Target
@@ -345,7 +565,12 @@ var ring1Cmd = &cobra.Command{
 			}).Debug("mounting new rootfs")
 			err = unix.Mount(m.Source, dst, m.FSType, m.Flags, "")
 			if err != nil {
-				log.WithError(err).WithField("dest", dst).WithField("fsType", m.FSType).Error("cannot establish mount")
+				log.WithError(err).WithFields(map[string]interface{}{
+					"source": m.Source,
+					"target": dst,
+					"fstype": m.FSType,
+					"flags":  m.Flags,
+				}).Error("cannot establish mount")
 				return
 			}
 		}

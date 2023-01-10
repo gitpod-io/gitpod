@@ -134,3 +134,16 @@ message Memory {
     int64 used = 1;
     int64 limit = 2;
 }
+
+service WorkspaceInnerLoop {
+    rpc StartInnerLoop(StartInnerLoopRequest) returns (stream StartInnerLoopResponse) {}
+}
+
+message StartInnerLoopRequest {}
+
+message StartInnerLoopResponse {
+    oneof output {
+        bytes data = 1;
+        int32 exit_code = 2;
+    };
+}
