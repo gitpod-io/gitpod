@@ -9,6 +9,7 @@ import * as express from "express";
 import { SessionHandlerProvider } from "../session-handler";
 import { Authenticator } from "../auth/authenticator";
 import { UserService } from "../user/user-service";
+import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
 
 @injectable()
 export class IamSessionApp {
@@ -31,10 +32,11 @@ export class IamSessionApp {
 
         app.post("/session", async (req: express.Request, res: express.Response) => {
             try {
-                await this.doCreateSession(req);
-                res.status(200).json();
+                const result = await this.doCreateSession(req);
+                res.status(200).json(result);
             } catch (error) {
-                res.status(500).json({ error, message: error.message });
+                // we treat all errors as bad request here and forward the error message to the caller
+                res.status(400).json({ error, message: error.message });
             }
         });
 
@@ -42,23 +44,34 @@ export class IamSessionApp {
     }
 
     protected async doCreateSession(req: express.Request) {
-        // We need an account to sign in, which is done by calling `req.login` below.
-        // As proper account creation/selection will be added in later on, we're creating a
-        // dummy account on each attempt.
-        //
-        const user = await this.userService.createUser({
-            identity: {
-                authId: "fake-id-" + Date.now(),
-                authName: "FakeUser",
-                authProviderId: "oidc1",
-                primaryEmail: "fake@email.io",
-            },
-            userUpdate: (user) => {
-                user.name = "FakeUser";
-                user.fullName = "Fake User";
-                user.avatarUrl = "https://github.com/github.png";
+        if (!OIDCCreateSessionPayload.is(req.body)) {
+            throw new Error("Unexpected payload.");
+        }
+        const payload = req.body;
+        OIDCCreateSessionPayload.validate(payload);
+        const claims = payload.claims;
+
+        const existingUser = await this.userService.findUserForLogin({
+            candidate: {
+                authId: claims.sub,
+                authProviderId: claims.iss,
+                authName: claims.name,
             },
         });
+        const user =
+            existingUser ||
+            (await this.userService.createUser({
+                identity: {
+                    authId: claims.sub,
+                    authProviderId: claims.iss,
+                    authName: claims.name,
+                    primaryEmail: claims.email,
+                },
+                userUpdate: (user) => {
+                    user.name = claims.name;
+                    user.avatarUrl = claims.picture;
+                },
+            }));
 
         await new Promise<void>((resolve, reject) => {
             req.login(user, (err) => {
@@ -69,5 +82,9 @@ export class IamSessionApp {
                 }
             });
         });
+        return {
+            sessionId: req.sessionID,
+            userId: user.id,
+        };
     }
 }
