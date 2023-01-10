@@ -120,13 +120,25 @@ class GitpodWorkspacesView(
                     }
                     label("").resizableColumn().horizontalAlign(HorizontalAlign.FILL)
                     actionsButton(object :
-                        DumbAwareAction("Open Dashboard", "Open Dashboard", AllIcons.Nodes.Servlet) {
+                        DumbAwareAction("Dashboard", "Dashboard", AllIcons.Nodes.Servlet) {
                         override fun actionPerformed(e: AnActionEvent) {
                             BrowserUtil.browse("https://${settings.gitpodHost}")
                         }
+                    }, object : DumbAwareAction("Usage", "Usage", AllIcons.Actions.DynamicUsages) {
+                        override fun actionPerformed(e: AnActionEvent) {
+                            BrowserUtil.browse("https://${settings.gitpodHost}/usage")
+                        }
                     }, object : DumbAwareAction("Documentation", "Documentation", AllIcons.Toolwindows.Documentation) {
                         override fun actionPerformed(e: AnActionEvent) {
-                            BrowserUtil.browse("https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway")
+                            BrowserUtil.browse("https://www.gitpod.io/docs/integrations/jetbrains-gateway")
+                        }
+                    }, object : DumbAwareAction("Feedback", "Feedback", AllIcons.Actions.IntentionBulb) {
+                        override fun actionPerformed(e: AnActionEvent) {
+                            BrowserUtil.browse("https://github.com/gitpod-io/gitpod/issues/6576")
+                        }
+                    }, object : DumbAwareAction("Help", "Help", AllIcons.Actions.Help) {
+                        override fun actionPerformed(e: AnActionEvent) {
+                            BrowserUtil.browse("https://www.gitpod.io/contact/support?subject=technical%20support")
                         }
                     }, object : DumbAwareAction("Log Out", "Log out", AllIcons.Actions.Exit) {
                         override fun actionPerformed(e: AnActionEvent) {
