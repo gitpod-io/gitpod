@@ -52,7 +52,7 @@ func NewServiceWithTestConfig(configPath string, sessionServiceAddress string) (
 
 	testConfig, err := readDemoConfigFromFile(configPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read test config: %w", err)
+		log.WithError(err).Errorf("failed to read test config")
 	}
 	if testConfig != nil {
 		clientConfig := &ClientConfig{
@@ -71,7 +71,7 @@ func NewServiceWithTestConfig(configPath string, sessionServiceAddress string) (
 
 		err = s.AddClientConfig(clientConfig)
 		if err != nil {
-			log.Errorf("failed to add client config: %v", err)
+			log.WithError(err).Errorf("failed to add client config")
 		}
 	}
 
