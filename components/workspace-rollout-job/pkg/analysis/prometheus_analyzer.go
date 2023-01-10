@@ -8,12 +8,16 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	logrus "github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/gpctl/pkg/util"
 	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 const (
@@ -26,11 +30,39 @@ type PrometheusAnalyzer struct {
 	startTime     time.Time
 }
 
-func NewPrometheusAnalyzer(promURL string) *PrometheusAnalyzer {
-	return &PrometheusAnalyzer{
-		prometheusURL: promURL,
-		startTime:     time.Now(),
+func NewPrometheusAnalyzer(ctx context.Context, kubeConfig *rest.Config, prometheusResource string, localPort int) (*PrometheusAnalyzer, error) {
+	clientSet, err := kubernetes.NewForConfig(kubeConfig)
+	if err != nil {
+		return nil, err
 	}
+
+	ownerSplit := strings.Split(prometheusResource, "/")
+	if len(ownerSplit) != 3 {
+		return nil, fmt.Errorf("invalid prometheus service name: %s", prometheusResource)
+	}
+	namespace := ownerSplit[0]
+	ownerKind := ownerSplit[1]
+	ownerName := ownerSplit[2]
+
+	// 9090 is the port of the prometheus Service
+	port := fmt.Sprintf("%d:%d", localPort, 9090)
+	podName, err := util.FindAnyPodWithOwnedBy(clientSet, namespace, ownerKind, ownerName)
+	if err != nil {
+		return nil, err
+	}
+	readychan, errchan := util.ForwardPort(ctx, kubeConfig, namespace, podName, port)
+	select {
+	case <-readychan:
+	case err := <-errchan:
+		return nil, err
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+
+	return &PrometheusAnalyzer{
+		prometheusURL: fmt.Sprintf("http://localhost:%d", localPort),
+		startTime:     time.Now(),
+	}, nil
 }
 
 func (pa *PrometheusAnalyzer) MoveForward(ctx context.Context, clusterName string) (bool, error) {

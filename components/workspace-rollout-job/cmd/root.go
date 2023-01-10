@@ -16,6 +16,8 @@ import (
 	"github.com/gitpod-io/gitpod/workspace-rollout-job/pkg/rollout"
 	"github.com/gitpod-io/gitpod/workspace-rollout-job/pkg/wsbridge"
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 var rootCmd = &cobra.Command{
@@ -27,12 +29,18 @@ var rootCmd = &cobra.Command{
 		var err error
 		old, presence := os.LookupEnv("OLD_CLUSTER")
 		if !presence {
-			log.WithError(err).Fatal("cannot get old cluster")
+			log.Fatal("cannot get old cluster name. Please set using OLD_CLUSTER environment variable.")
 		}
 
 		new, presence := os.LookupEnv("NEW_CLUSTER")
 		if !presence {
-			log.WithError(err).Fatal("cannot get new cluster")
+			log.Fatal("cannot get new cluster name. Please set using NEW_CLUSTER environment variable.")
+		}
+
+		// Get kubeconfig
+		config, err := getKubeConfig()
+		if err != nil {
+			log.WithError(err).Fatal("failed to retrieve kube config")
 		}
 
 		version := "v0.1.0"
@@ -55,7 +63,13 @@ var rootCmd = &cobra.Command{
 
 		rollout.RegisterMetrics(srv.MetricsRegistry())
 
-		wsManagerBridgeClient := wsbridge.NewWsManagerBridgeClient("localhost:8080")
+		// 30304 is the port where ws-manager-bridge will be accessible
+		wsManagerBridgeClient, err := wsbridge.NewWsManagerBridgeClient(context.Background(), config, 30304)
+		if err != nil {
+			log.WithError(err).Fatal("failed to create a ws-manager-bridge client")
+			return
+		}
+
 		// Check if the old cluster has a 100 score.
 		if score, err := wsManagerBridgeClient.GetScore(ctx, old); err != nil || score != 100 {
 			log.WithError(err).Fatal("init condition does not satisfy")
@@ -67,11 +81,34 @@ var rootCmd = &cobra.Command{
 			log.WithError(err).Fatal("init condition does not satisfy")
 		}
 
+		prometheusResource, presence := os.LookupEnv("PROMETHEUS_RESOURCE")
+		if !presence {
+			log.Fatal("cannot get prometheus resource. Please set using PROMETHEUS_RESOURCE environment variable in the format <namespace>/<kind>/<name>.")
+		}
+
 		// Start the rollout process
-		prometheusAnalyzer := analysis.NewPrometheusAnalyzer("http://localhost:9090")
+		prometheusAnalyzer, err := analysis.NewPrometheusAnalyzer(ctx, config, prometheusResource, 30305)
+		if err != nil {
+			log.WithError(err).Fatal("failed to create a prometheus client")
+			return
+		}
+
 		job := rollout.New(old, new, 20*time.Second, 1*time.Second, 10, prometheusAnalyzer, wsManagerBridgeClient)
 		job.Start(ctx)
 	},
+}
+
+func getKubeConfig() (*rest.Config, error) {
+	var config *rest.Config
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		kubeConfig := clientcmd.NewDefaultClientConfigLoadingRules().GetDefaultFilename()
+		config, err = clientcmd.BuildConfigFromFlags("", kubeConfig)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return config, nil
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

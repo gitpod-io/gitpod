@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ws-rollout
+spec:
+  template:
+    spec:
+      containers:
+      - name: ws-rollout
+        image: eu.gcr.io/gitpod-core-dev/build/workspace-rollout-job:tar-work-rollout.25
+        env:
+        - name: OLD_CLUSTER
+          value: "gbdde17909f"
+        - name: NEW_CLUSTER
+          value: "g8c770c402e"
+        - name: PROMETHEUS_RESOURCE
+          value: "monitoring-satellite/statefulset/prometheus-k8s"
+      restartPolicy: Never
+      serviceAccountName: ws-rollout
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: ws-rollout
+---
+# ClusterRole as we might need port-forward across resources
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ws-rollout
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/portforward"]
+  verbs: ["get", "list", "create"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ws-rollout
+subjects:
+- kind: ServiceAccount
+  name: ws-rollout
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: ws-rollout
+  apiGroup: rbac.authorization.k8s.io
