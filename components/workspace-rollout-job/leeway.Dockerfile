@@ -14,4 +14,3 @@ RUN chown -R appuser /app
 
 USER appuser
 ENTRYPOINT [ "/app/workspace-rollout-job" ]
-CMD [ "-v", "help" ]
