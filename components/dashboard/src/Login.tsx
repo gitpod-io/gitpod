@@ -151,7 +151,8 @@ export function Login() {
                             <div className="mb-10">
                                 <h1 className="text-5xl mb-3">Welcome to Gitpod</h1>
                                 <div className="text-gray-400 text-lg">
-                                    Spin up fresh, automated dev environments for each task in the cloud, in seconds.
+                                    Spin up fresh cloud development environments for each task, fully automated, in
+                                    seconds.
                                 </div>
                             </div>
                             <div className="flex mb-10">
