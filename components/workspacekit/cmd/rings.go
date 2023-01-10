@@ -133,9 +133,9 @@ func startRing1(ctx context.Context, isRootProcess bool, prep *api.PrepareForUse
 		Pdeathsig:  syscall.SIGKILL,
 		Cloneflags: syscall.CLONE_NEWUSER | syscall.CLONE_NEWNS | unix.CLONE_NEWCGROUP,
 	}
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdin = stdin
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
 	cmd.Env = append(os.Environ(),
 		"WORKSPACEKIT_FSSHIFT="+prep.FsShift.String(),
 		fmt.Sprintf("WORKSPACEKIT_NO_WORKSPACE_MOUNT=%v", prep.FullWorkspaceBackup || prep.PersistentVolumeClaim),
@@ -473,8 +473,8 @@ var ring1Cmd = &cobra.Command{
 					if err == nil && !stat.IsDir() {
 						_ = os.MkdirAll(path.Base(dst), 0644)
 						_ = os.WriteFile(dst, []byte("placeholder"), 0644)
+						return
 					}
-					return
 				}
 				_ = os.MkdirAll(dst, 0644)
 			}()
@@ -715,6 +715,9 @@ var ring1Cmd = &cobra.Command{
 		}
 
 		go func() {
+			if rootfs != "" {
+				return
+			}
 			err := lift.ServeLift(ctx, lift.DefaultSocketPath)
 			if err != nil {
 				log.WithError(err).Error("failed to serve ring1 command lift")
