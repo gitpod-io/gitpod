@@ -398,26 +398,29 @@ export default function () {
                                                 </a>
                                                 <ItemFieldContextMenu
                                                     className="py-0.5"
-                                                    menuEntries={
+                                                    menuEntries={[
+                                                        {
+                                                            title: "New Workspace ...",
+                                                            href: gitpodHostUrl
+                                                                .withContext(`${branch.url}`, { showOptions: true })
+                                                                .toString(),
+                                                            separator: true,
+                                                        },
                                                         prebuild?.status === "queued" || prebuild?.status === "building"
-                                                            ? [
-                                                                  {
-                                                                      title: "Cancel Prebuild",
-                                                                      customFontStyle:
-                                                                          "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
-                                                                      onClick: () =>
-                                                                          prebuild && cancelPrebuild(prebuild.info.id),
-                                                                  },
-                                                              ]
-                                                            : [
-                                                                  {
-                                                                      title: `${prebuild ? "Rerun" : "Run"} Prebuild (${
-                                                                          branch.name
-                                                                      })`,
-                                                                      onClick: () => triggerPrebuild(branch),
-                                                                  },
-                                                              ]
-                                                    }
+                                                            ? {
+                                                                  title: "Cancel Prebuild",
+                                                                  customFontStyle:
+                                                                      "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
+                                                                  onClick: () =>
+                                                                      prebuild && cancelPrebuild(prebuild.info.id),
+                                                              }
+                                                            : {
+                                                                  title: `${prebuild ? "Rerun" : "Run"} Prebuild (${
+                                                                      branch.name
+                                                                  })`,
+                                                                  onClick: () => triggerPrebuild(branch),
+                                                              },
+                                                    ]}
                                                 />
                                             </ItemField>
                                         </Item>
