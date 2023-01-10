@@ -19,6 +19,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Config contains all experimental configuration.
@@ -27,6 +28,7 @@ type Config struct {
 	WebApp     *WebAppConfig      `json:"webapp,omitempty"`
 	IDE        *IDEConfig         `json:"ide,omitempty"`
 	Common     *CommonConfig      `json:"common,omitempty"`
+	Overrides  *[]Overrides       `json:"overrides,omitempty"`
 	Telemetry  *TelemetryConfig   `json:"telemetry,omitempty"`
 	AgentSmith *agentSmith.Config `json:"agentSmith,omitempty"`
 }
@@ -348,3 +350,9 @@ const (
 	TracingSampleTypeRateLimiting  TracingSampleType = "rateLimiting"
 	TracingSampleTypeRemote        TracingSampleType = "remote"
 )
+
+type Overrides struct {
+	metav1.TypeMeta `json:",inline"`
+	Metadata        metav1.ObjectMeta `json:"metadata"`
+	Override        map[string]any    `json:"override"`
+}
