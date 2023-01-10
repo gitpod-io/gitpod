@@ -18,6 +18,7 @@ import * as session from "express-session";
 import * as request from "supertest";
 
 import * as chai from "chai";
+import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
 const expect = chai.expect;
 
 @suite(timeout(10000))
@@ -27,6 +28,38 @@ class TestIamSessionApp {
 
     protected cookieName = "test-session-name";
 
+    protected knownSub = "111";
+
+    protected userServiceMock: Partial<UserService> = {
+        createUser: (params) => {
+            return { id: "id-new-user" } as any;
+        },
+
+        findUserForLogin: (params) => {
+            if (params.candidate?.authId === this.knownSub) {
+                return { id: "id-known-user" } as any;
+            }
+            return undefined;
+        },
+    };
+
+    protected payload: OIDCCreateSessionPayload = {
+        idToken: {} as any,
+        claims: {
+            aud: "1234",
+            email: "user@test.net",
+            email_verified: true,
+            family_name: "User",
+            given_name: "Test",
+            iss: "https://accounts.get.net",
+            locale: "de",
+            name: "Test User",
+            picture: "https://cdn.get.net/users/abc23",
+            sub: "1234567890",
+            hd: "test.net",
+        },
+    };
+
     public before() {
         const container = new Container();
         container.load(
@@ -35,11 +68,7 @@ class TestIamSessionApp {
                 bind(IamSessionApp).toSelf().inSingletonScope();
                 bind(Authenticator).toConstantValue(<any>{}); // unused
                 bind(Config).toConstantValue(<any>{}); // unused
-                bind(UserService).toConstantValue(<any>{
-                    createUser: () => ({
-                        id: "C0FFEE",
-                    }),
-                });
+                bind(UserService).toConstantValue(this.userServiceMock as any);
             }),
         );
         this.app = container.get(IamSessionApp);
@@ -72,22 +101,56 @@ class TestIamSessionApp {
         await request(this.app.create())
             .post("/session")
             .set("Content-Type", "application/json")
-            .send(JSON.stringify(this.idToken));
+            .send(JSON.stringify(this.payload));
 
         expect(count, "sessions added").to.equal(1);
     }
 
-    @test public async testSessionRequestResponsesWithSetCookie() {
+    @test public async testSessionRequestResponsesWithSetCookie_createUser() {
         const result = await request(this.app.create())
             .post("/session")
             .set("Content-Type", "application/json")
-            .send(JSON.stringify(this.idToken));
+            .send(JSON.stringify(this.payload));
 
-        expect(result.statusCode).to.equal(200);
+        expect(result.statusCode, JSON.stringify(result.body)).to.equal(200);
+        expect(result.body?.userId).to.equal("id-new-user");
         expect(JSON.stringify(result.get("Set-Cookie"))).to.contain(this.cookieName);
     }
 
-    idToken = {};
+    @test public async testSessionRequestResponsesWithSetCookie_knownUser() {
+        const payload = { ...this.payload };
+        payload.claims.sub = this.knownSub;
+        const result = await request(this.app.create())
+            .post("/session")
+            .set("Content-Type", "application/json")
+            .send(JSON.stringify(payload));
+
+        expect(result.statusCode, JSON.stringify(result.body)).to.equal(200);
+        expect(result.body?.userId).to.equal("id-known-user");
+        expect(JSON.stringify(result.get("Set-Cookie"))).to.contain(this.cookieName);
+    }
+
+    @test public async testInvalidPayload() {
+        const cases = [
+            { claims: { sub: "" }, expectedMessage: "Subject is missing" },
+            { claims: { iss: "" }, expectedMessage: "Issuer is missing" },
+            { claims: { email: "" }, expectedMessage: "Email is missing" },
+            { claims: { name: "" }, expectedMessage: "Name is missing" },
+        ];
+        for (const c of cases) {
+            const payload = { ...this.payload };
+            payload.claims = { ...payload.claims, ...c.claims };
+
+            const sr = request(this.app.create());
+            const result = await sr
+                .post("/session")
+                .set("Content-Type", "application/json")
+                .send(JSON.stringify(payload));
+
+            expect(result.statusCode, JSON.stringify(result.body)).to.equal(400);
+            expect(result.body?.message).to.equal(c.expectedMessage);
+        }
+    }
 }
 
 module.exports = new TestIamSessionApp();
