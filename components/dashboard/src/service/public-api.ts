@@ -16,8 +16,7 @@ import { TeamMember, TeamRole } from "@gitpod/public-api/lib/gitpod/experimental
 import { Project } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_pb";
 
 const transport = createConnectTransport({
-    baseUrl: `${window.location.protocol}//api.${window.location.host}`,
-    credentials: "include",
+    baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
 });
 
 export const teamsService = createPromiseClient(TeamsService, transport);
