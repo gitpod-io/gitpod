@@ -50,14 +50,14 @@ func TestConnectionPool(t *testing.T) {
 }
 
 func TestEndpointBasedOnToken(t *testing.T) {
-	u, err := url.Parse("wss://gitpod.io")
+	u, err := url.Parse("wss://server:3000")
 	require.NoError(t, err)
 
 	endpointForAccessToken, err := getEndpointBasedOnToken(auth.NewAccessToken("foo"), u)
 	require.NoError(t, err)
-	require.Equal(t, "wss://gitpod.io/api/v1", endpointForAccessToken)
+	require.Equal(t, "wss://server:3000/v1", endpointForAccessToken)
 
 	endpointForCookie, err := getEndpointBasedOnToken(auth.NewCookieToken("foo"), u)
 	require.NoError(t, err)
-	require.Equal(t, "wss://gitpod.io/api/gitpod", endpointForCookie)
+	require.Equal(t, "wss://server:3000/gitpod", endpointForCookie)
 }
