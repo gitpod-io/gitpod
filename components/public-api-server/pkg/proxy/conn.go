@@ -150,9 +150,9 @@ func (p *ConnectionPool) Get(ctx context.Context, token auth.Token) (gitpod.APII
 func getEndpointBasedOnToken(t auth.Token, u *url.URL) (string, error) {
 	switch t.Type {
 	case auth.AccessTokenType:
-		return fmt.Sprintf("%s/api/v1", u.String()), nil
+		return fmt.Sprintf("%s/v1", u.String()), nil
 	case auth.CookieTokenType:
-		return fmt.Sprintf("%s/api/gitpod", u.String()), nil
+		return fmt.Sprintf("%s/gitpod", u.String()), nil
 	default:
 		return "", errors.New("unknown token type")
 	}
