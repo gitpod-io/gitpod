@@ -64,9 +64,11 @@ export const useFetchProjects = ({ teamId, userId }: UseFetchProjectsArgs) => {
 
         // Sort projects by latest prebuild first
         projects.sort((p0: Project, p1: Project): number => {
-            return dayjs(latestPrebuilds.get(p1.id)?.info?.startedAt || "1970-01-01").diff(
-                dayjs(latestPrebuilds.get(p0.id)?.info?.startedAt || "1970-01-01"),
-            );
+            // use latest prebuild start time, then fallback to project creation if no prebuild
+            const p0Date = latestPrebuilds.get(p0.id)?.info?.startedAt || p0.creationTime || "1970-01-01";
+            const p1Date = latestPrebuilds.get(p1.id)?.info?.startedAt || p1.creationTime || "1970-01-01";
+
+            return dayjs(p1Date).diff(dayjs(p0Date));
         });
 
         return {
