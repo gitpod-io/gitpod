@@ -3,18 +3,22 @@ locals {
 }
 
 data "google_secret_manager_secret_version" "zerossl_eab" {
-  count  = local.zerossl_enabled ? 1 : 0
+  provider = google
+  count    = local.zerossl_enabled ? 1 : 0
+
   secret = "zerossl-eab"
 }
 
 resource "tls_private_key" "zerossl" {
-  count     = local.zerossl_enabled ? 1 : 0
+  count = local.zerossl_enabled ? 1 : 0
+
   algorithm = "RSA"
 }
 
 resource "acme_registration" "zerossl" {
-  count           = local.zerossl_enabled ? 1 : 0
-  provider        = acme.zerossl
+  provider = acme.zerossl
+  count    = local.zerossl_enabled ? 1 : 0
+
   account_key_pem = tls_private_key.zerossl[0].private_key_pem
   email_address   = "preview-environment-certificate-throwaway@gitpod.io"
 
@@ -25,8 +29,9 @@ resource "acme_registration" "zerossl" {
 }
 
 resource "acme_certificate" "zerossl" {
-  count           = local.zerossl_enabled ? 1 : 0
-  provider        = acme.zerossl
+  provider = acme.zerossl
+  count    = local.zerossl_enabled ? 1 : 0
+
   account_key_pem = acme_registration.zerossl[0].account_key_pem
   common_name     = "${var.preview_name}.${local.non_fully_qualified_dns_name}"
   subject_alternative_names = [
@@ -44,8 +49,8 @@ resource "acme_certificate" "zerossl" {
 }
 
 resource "kubernetes_secret" "zerossl" {
-  count    = local.zerossl_enabled ? 1 : 0
   provider = k8s.dev
+  count    = local.zerossl_enabled ? 1 : 0
 
   type = "kubernetes.io/tls"
 
@@ -58,7 +63,7 @@ resource "kubernetes_secret" "zerossl" {
   }
 
   data = {
-    "tls.crt" = "${lookup(acme_certificate.zerossl[0], "certificate_pem")}"
+    "tls.crt" = "${lookup(acme_certificate.zerossl[0], "certificate_pem")}${lookup(acme_certificate.zerossl[0], "issuer_pem")}"
     "tls.key" = "${lookup(acme_certificate.zerossl[0], "private_key_pem")}"
   }
 
