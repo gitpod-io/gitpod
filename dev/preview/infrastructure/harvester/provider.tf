@@ -28,19 +28,19 @@ terraform {
 
 provider "harvester" {
   alias       = "harvester"
-  kubeconfig  = var.kubeconfig_path
+  kubeconfig  = pathexpand(var.kubeconfig_path)
   kubecontext = "harvester"
 }
 
 provider "k8s" {
   alias          = "dev"
-  config_path    = var.kubeconfig_path
+  config_path    = pathexpand(var.kubeconfig_path)
   config_context = var.dev_kube_context
 }
 
 provider "k8s" {
   alias          = "harvester"
-  config_path    = var.kubeconfig_path
+  config_path    = pathexpand(var.kubeconfig_path)
   config_context = var.harvester_kube_context
 }
 
