@@ -4,9 +4,10 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { injectable, inject, optional } from "inversify";
 
-import { Connection, createConnection, ConnectionOptions, getConnectionManager, PrimaryColumnOptions } from "typeorm";
+import { Connection, ConnectionOptions, PrimaryColumnOptions, getConnectionManager, createConnection } from "typeorm";
 import { Config } from "../config";
 import { DefaultNamingStrategy } from "./naming-strategy";
 
@@ -46,7 +47,7 @@ export class TypeORM {
         };
     }
 
-    protected _connection?: Connection = undefined;
+    protected _connection: undefined | Deferred<Connection> = undefined;
     protected readonly _options: ConnectionOptions;
 
     constructor(
@@ -61,19 +62,28 @@ export class TypeORM {
         } as ConnectionOptions;
     }
 
-    public async getConnection() {
+    public async getConnection(): Promise<Connection> {
+        const connectionManager = getConnectionManager();
         if (this._connection === undefined) {
-            const connectionMgr = getConnectionManager();
-            if (connectionMgr.has(TypeORM.DEFAULT_CONNECTION_NAME)) {
-                this._connection = connectionMgr.get(TypeORM.DEFAULT_CONNECTION_NAME);
+            this._connection = new Deferred();
+
+            let connection: Connection;
+            if (connectionManager.has(TypeORM.DEFAULT_CONNECTION_NAME)) {
+                // This path is important for the CLI, where the "default" connection at this point already
+                // is initialized from "ormconfig.ts"
+                connection = connectionManager.get(TypeORM.DEFAULT_CONNECTION_NAME);
             } else {
-                this._connection = await createConnection({
+                // Default path for all apps (server, etc.)
+                connection = await createConnection({
+                    // cannot be connectionMgr.create() as suggested by docs
                     ...this._options,
                     name: TypeORM.DEFAULT_CONNECTION_NAME,
                 });
             }
+            this._connection.resolve(connection);
         }
-        return this._connection;
+
+        return await this._connection!.promise;
     }
 
     public async connect() {
