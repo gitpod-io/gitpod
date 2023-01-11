@@ -24,22 +24,8 @@ func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
 	)(ctx)
 }
 
-func getExperimentalWebAppConfig(ctx *common.RenderContext) *experimental.WebAppConfig {
-	var experimentalCfg *experimental.Config
-	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
-		experimentalCfg = ucfg
-		return nil
-	})
-
-	if experimentalCfg == nil || experimentalCfg.WebApp == nil {
-		return nil
-	}
-
-	return experimentalCfg.WebApp
-}
-
 func getExperimentalOpenFGAConfig(ctx *common.RenderContext) *experimental.OpenFGAConfig {
-	webappCfg := getExperimentalWebAppConfig(ctx)
+	webappCfg := common.ExperimentalWebappConfig(ctx)
 
 	if webappCfg == nil || webappCfg.OpenFGA == nil {
 		return nil

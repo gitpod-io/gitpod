@@ -788,3 +788,19 @@ func NodeNameEnv(context *RenderContext) []corev1.EnvVar {
 		},
 	}}
 }
+
+// ExperimentalWebappConfig extracts webapp experimental config from the render context.
+// When the experimental config is not defined, the result will be nil.
+func ExperimentalWebappConfig(ctx *RenderContext) *experimental.WebAppConfig {
+	var experimentalCfg *experimental.Config
+	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		experimentalCfg = ucfg
+		return nil
+	})
+
+	if experimentalCfg == nil || experimentalCfg.WebApp == nil {
+		return nil
+	}
+
+	return experimentalCfg.WebApp
+}

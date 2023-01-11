@@ -39,7 +39,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 	}
 
-	expWebAppConfig := getExperimentalWebAppConfig(ctx)
+	expWebAppConfig := common.ExperimentalWebappConfig(ctx)
 	if expWebAppConfig != nil && expWebAppConfig.Stripe != nil {
 		cfg.StripePrices = stripe.StripePrices{
 			IndividualUsagePriceIDs: stripe.PriceConfig{
