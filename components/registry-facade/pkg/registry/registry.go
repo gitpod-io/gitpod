@@ -260,8 +260,12 @@ func getRedisClient(cfg *config.RedisCacheConfig) (*redis.Client, error) {
 
 	opts := &redis.Options{
 		Addr:     cfg.SingleHostAddress,
-		Username: cfg.Username,
+		Username: "default",
 		Password: cfg.Password,
+	}
+
+	if cfg.Username != "" {
+		opts.Username = cfg.Username
 	}
 
 	if cfg.UseTLS {
@@ -271,7 +275,7 @@ func getRedisClient(cfg *config.RedisCacheConfig) (*redis.Client, error) {
 		}
 	}
 
-	log.WithField("addr", cfg.SingleHostAddress).WithField("tls", cfg.UseTLS).Info("connecting to single Redis host")
+	log.WithField("addr", cfg.SingleHostAddress).WithField("username", cfg.Username).WithField("tls", cfg.UseTLS).Info("connecting to Redis")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
