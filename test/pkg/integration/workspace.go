@@ -729,10 +729,7 @@ func WaitForWorkspaceStop(t *testing.T, ctx context.Context, ready chan<- struct
 
 			wss = resp.GetStatus()
 			if wss.Conditions.Failed != "" {
-				// TODO(toru): we have to fix https://github.com/gitpod-io/gitpod/issues/12021
-				if wss.Conditions.Failed != "The container could not be located when the pod was deleted.  The container used to be Running" && wss.Conditions.Failed != "The container could not be located when the pod was terminated" {
-					errCh <- xerrors.Errorf("workspace instance %s failed: %s", instanceID, wss.Conditions.Failed)
-				}
+				errCh <- xerrors.Errorf("workspace instance %s failed: %s", instanceID, wss.Conditions.Failed)
 				return
 			}
 			if wss.Phase == wsmanapi.WorkspacePhase_STOPPED {
