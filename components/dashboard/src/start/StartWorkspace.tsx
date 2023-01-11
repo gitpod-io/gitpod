@@ -25,7 +25,7 @@ import Arrow from "../components/Arrow";
 import ContextMenu from "../components/ContextMenu";
 import PendingChangesDropdown from "../components/PendingChangesDropdown";
 import PrebuildLogs from "../components/PrebuildLogs";
-import { getGitpodService, gitpodHostUrl } from "../service/service";
+import { getGitpodService, gitpodHostUrl, getIDEFrontendService, IDEFrontendService } from "../service/service";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
 import Alert from "../components/Alert";
@@ -103,6 +103,8 @@ export interface StartWorkspaceState {
 export default class StartWorkspace extends React.Component<StartWorkspaceProps, StartWorkspaceState> {
     static contextType = FeatureFlagContext;
 
+    private ideFrontendService: IDEFrontendService | undefined;
+
     constructor(props: StartWorkspaceProps) {
         super(props);
         this.state = {};
@@ -111,6 +113,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     private readonly toDispose = new DisposableCollection();
     componentWillMount() {
         if (this.props.runsInIFrame) {
+            // TODO(hw): delete after supervisor deploy
             window.parent.postMessage({ type: "$setSessionId", sessionId }, "*");
             const setStateEventListener = (event: MessageEvent) => {
                 if (
@@ -140,6 +143,23 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             this.toDispose.push({
                 dispose: () => window.removeEventListener("message", setStateEventListener),
             });
+            // TODO(hw): end of delete
+
+            this.ideFrontendService = getIDEFrontendService(this.props.workspaceId, sessionId, getGitpodService());
+            this.toDispose.push(
+                this.ideFrontendService.onSetState((data) => {
+                    if (data.ideFrontendFailureCause) {
+                        const error = { message: data.ideFrontendFailureCause };
+                        this.setState({ error });
+                    }
+                    if (data.desktopIDE?.link) {
+                        const label = data.desktopIDE.label || "Open Desktop IDE";
+                        const clientID = data.desktopIDE.clientID;
+                        const link = data.desktopIDE?.link;
+                        this.setState({ desktopIde: { link, label, clientID } });
+                    }
+                }),
+            );
         }
 
         try {
@@ -354,7 +374,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             return;
         }
 
-        if (workspaceInstance.status.phase === "building" || workspaceInstance.status.phase == "preparing") {
+        if (workspaceInstance.status.phase === "building" || workspaceInstance.status.phase === "preparing") {
             this.setState({ hasImageBuildLogs: true });
         }
 
@@ -428,7 +448,10 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
     redirectTo(url: string) {
         if (this.props.runsInIFrame) {
+            // TODO(hw): delete after supervisor deploy
             window.parent.postMessage({ type: "relocate", url }, "*");
+            // TODO(hw): end of delete
+            this.ideFrontendService?.relocate(url);
         } else {
             window.location.href = url;
         }
