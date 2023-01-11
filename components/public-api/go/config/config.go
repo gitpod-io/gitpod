@@ -11,6 +11,8 @@ type Configuration struct {
 
 	BillingServiceAddress string `json:"billingServiceAddress,omitempty"`
 
+	OIDCServiceAddress string `json:"oidcServiceAddress,omitempty"`
+
 	// StripeWebhookSigningSecretPath is a filepath to a secret used to validate incoming webhooks from Stripe
 	StripeWebhookSigningSecretPath string `json:"stripeWebhookSigningSecretPath"`
 
