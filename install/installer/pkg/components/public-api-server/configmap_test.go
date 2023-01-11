@@ -40,6 +40,7 @@ func TestConfigMap(t *testing.T) {
 	expectedConfiguration := config.Configuration{
 		GitpodServiceURL:                  fmt.Sprintf("ws://server.%s.svc.cluster.local:3000", ctx.Namespace),
 		BillingServiceAddress:             fmt.Sprintf("usage.%s.svc.cluster.local:9001", ctx.Namespace),
+		OIDCServiceAddress:                fmt.Sprintf("iam.%s.svc.cluster.local:9001", ctx.Namespace),
 		StripeWebhookSigningSecretPath:    stripeSecretPath,
 		PersonalAccessTokenSigningKeyPath: personalAccessTokenSigningKeyPath,
 		Server: &baseserver.Configuration{
