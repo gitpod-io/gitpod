@@ -21,4 +21,6 @@ const (
 	ImageTag      = "v0.3.1"
 
 	ContainerName = "openfga"
+
+	CloudSQLProxyPort = 3306
 )
