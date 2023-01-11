@@ -37,7 +37,7 @@ export default function SelectIDEComponent(props: SelectIDEComponentProps) {
                     element: <IdeOptionElementInDropDown option={ide} useLatest={false} />,
                     isSelectable: true,
                 });
-                if (ide.imageVersion !== ide.latestImageVersion) {
+                if (ide.latestImage) {
                     result.push({
                         id: ide.id + "-latest",
                         element: <IdeOptionElementInDropDown option={ide} useLatest={true} />,
