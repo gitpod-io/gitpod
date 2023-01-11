@@ -157,6 +157,8 @@ func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target s
 
 	env := os.Environ()
 	env = append(env, "DOCKER_CONFIG=/tmp")
+	// set log max size to 4MB from 2MB default (to prevent log clipping for large builds)
+	env = append(env, "BUILDKIT_STEP_LOG_MAX_SIZE=4194304")
 	buildctlCmd.Env = env
 
 	if err := buildctlCmd.Start(); err != nil {
