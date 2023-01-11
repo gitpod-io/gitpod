@@ -84,6 +84,9 @@ spec:
         - podSelector:
             matchLabels:
               component: proxy
+        - podSelector:
+            matchLabels:
+              component: public-api-server
       ports:
         - port: 9001
           protocol: TCP
