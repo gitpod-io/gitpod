@@ -7,6 +7,7 @@ require (
 	github.com/bufbuild/connect-go v1.0.0
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/components/gitpod-db/go v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/components/iam-api/go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/usage-api v0.0.0-00010101000000-000000000000
@@ -23,7 +24,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/stretchr/testify v1.8.1
 	github.com/stripe/stripe-go/v72 v72.122.0
-	google.golang.org/grpc v1.50.1
+	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
 	gorm.io/gorm v1.24.1
 )
@@ -53,10 +54,10 @@ require (
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/slok/go-http-metrics v0.10.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
+	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
-	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
+	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/genproto v0.0.0-20201019141844-1ed22bb0c154 // indirect
@@ -70,6 +71,8 @@ replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
 replace github.com/gitpod-io/gitpod/gitpod-protocol => ../gitpod-protocol/go // leeway
 
 replace github.com/gitpod-io/gitpod/components/gitpod-db/go => ../gitpod-db/go // leeway
+
+replace github.com/gitpod-io/gitpod/components/iam-api/go => ../iam-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/components/public-api/go => ../public-api/go // leeway
 

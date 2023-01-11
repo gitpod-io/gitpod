@@ -9,6 +9,7 @@
         { "path": "components/gitpod-cli" },
         { "path": "components/gitpod-protocol" },
         { "path": "components/iam" },
+        { "path": "components/iam-api" },
         { "path": "components/ide-metrics" },
         { "path": "components/ide-service" },
         { "path": "components/image-builder-bob" },
