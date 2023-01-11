@@ -124,7 +124,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 			}
 		}
 
-		if ucfg.Workspace.RegistryFacade.IPFSCache.Enabled {
+		if ucfg.Workspace.RegistryFacade.RedisCache.Enabled {
 			if scr := ucfg.Workspace.RegistryFacade.RedisCache.PasswordSecret; scr != "" {
 				envvars = append(envvars, corev1.EnvVar{
 					Name: "REDIS_PASSWORD",
