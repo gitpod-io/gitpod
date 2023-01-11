@@ -6,12 +6,11 @@ package toxiproxy
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
-	cfg := getExperimentalWebAppConfig(ctx)
+	cfg := common.ExperimentalWebappConfig(ctx)
 	if cfg == nil || !cfg.SlowDatabase {
 		return nil, nil
 	}
@@ -22,18 +21,4 @@ func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
 		configmap,
 		common.DefaultServiceAccount(Component),
 	)(ctx)
-}
-
-func getExperimentalWebAppConfig(ctx *common.RenderContext) *experimental.WebAppConfig {
-	var experimentalCfg *experimental.Config
-	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
-		experimentalCfg = ucfg
-		return nil
-	})
-
-	if experimentalCfg == nil || experimentalCfg.WebApp == nil {
-		return nil
-	}
-
-	return experimentalCfg.WebApp
 }

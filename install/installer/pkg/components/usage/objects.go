@@ -28,23 +28,8 @@ func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
 	)(ctx)
 }
 
-func getExperimentalWebAppConfig(ctx *common.RenderContext) *experimental.WebAppConfig {
-	var experimentalCfg *experimental.Config
-
-	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
-		experimentalCfg = ucfg
-		return nil
-	})
-
-	if experimentalCfg == nil || experimentalCfg.WebApp == nil {
-		return nil
-	}
-
-	return experimentalCfg.WebApp
-}
-
 func getExperimentalUsageConfig(ctx *common.RenderContext) *experimental.UsageConfig {
-	experimentalWebAppCfg := getExperimentalWebAppConfig(ctx)
+	experimentalWebAppCfg := common.ExperimentalWebappConfig(ctx)
 	if experimentalWebAppCfg == nil || experimentalWebAppCfg.Usage == nil {
 
 		return nil
@@ -54,7 +39,7 @@ func getExperimentalUsageConfig(ctx *common.RenderContext) *experimental.UsageCo
 }
 
 func getExperimentalWorkspaceClassConfig(ctx *common.RenderContext) []experimental.WebAppWorkspaceClass {
-	experimentalWebAppCfg := getExperimentalWebAppConfig(ctx)
+	experimentalWebAppCfg := common.ExperimentalWebappConfig(ctx)
 	if experimentalWebAppCfg == nil {
 		return nil
 	}
