@@ -80,7 +80,7 @@ type hostHeaderProvider func(req *http.Request) string
 func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProvider, matchPort bool) mux.MatcherFunc {
 	var regexPrefix string
 	if matchPort {
-		regexPrefix = workspacePortRegex + workspaceIDRegex
+		regexPrefix = workspacePortRegex + debugWorkspaceRegex + workspaceIDRegex
 	} else {
 		regexPrefix = debugWorkspaceRegex + workspaceIDRegex
 	}
@@ -95,17 +95,23 @@ func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 
 		var workspaceID, workspacePort, debugWorkspace string
 		matches := r.FindStringSubmatch(hostname)
-		if len(matches) < 3 {
-			return false
-		}
 		if matchPort {
-			// https://3000-coral-dragon-ilr0r6eq.ws-eu10.gitpod.io/index.html
-			// debugWorkspace:
+			if len(matches) < 4 {
+				return false
+			}
+			if matches[2] != "" {
+				debugWorkspace = "true"
+			}
+			// https://3000-debug-coral-dragon-ilr0r6eq.ws-eu10.gitpod.io/index.html
+			// debugWorkspace: true
 			// workspaceID: coral-dragon-ilr0r6eq
 			// workspacePort: 3000
-			workspaceID = matches[2]
+			workspaceID = matches[3]
 			workspacePort = matches[1]
 		} else {
+			if len(matches) < 3 {
+				return false
+			}
 			// https://debug-coral-dragon-ilr0r6eq.ws-eu10.gitpod.io/index.html
 			// debugWorkspace: true
 			// workspaceID: coral-dragon-ilr0r6eq

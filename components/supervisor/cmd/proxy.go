@@ -39,7 +39,7 @@ var proxyCmd = &cobra.Command{
 				w.WriteHeader(502)
 				return
 			}
-			dst, err := url.Parse("http://127.0.0.1:" + portStr)
+			dst, err := url.Parse("http://10.0.5.2:" + portStr)
 			if err != nil {
 				w.WriteHeader(502)
 				return

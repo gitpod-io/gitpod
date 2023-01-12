@@ -213,21 +213,51 @@ type workspaceInnerLoopService struct {
 	socket net.Listener
 	server *grpc.Server
 	api.UnimplementedWorkspaceInnerLoopServer
-	prep *api.PrepareForUserNSResponse
+
+	prep    *api.PrepareForUserNSResponse
+	running bool
 }
 
 func (svc *workspaceInnerLoopService) StartInnerLoop(req *api.StartInnerLoopRequest, resp api.WorkspaceInnerLoop_StartInnerLoopServer) error {
+	if svc.running {
+		return errors.New("already running debug workspace")
+	}
+	svc.running = true
+	defer func() {
+		svc.running = false
+	}()
+
+	ctx, cancel := context.WithCancel(resp.Context())
+	defer cancel()
+
 	errchan := make(chan error, 1)
 	messages := make(chan *api.StartInnerLoopResponse, 1)
 
 	outReader, outWriter := io.Pipe()
 
+	startDebugProxy := func() {
+		cmd := exec.Command("/.supervisor/supervisor", "proxy")
+		err := cmd.Start()
+		if err != nil {
+			log.WithError(err).Error("cannot run debug workspace proxy")
+			return
+		}
+		go func() {
+			<-ctx.Done()
+			if cmd != nil && cmd.Process != nil {
+				_ = cmd.Process.Kill()
+			}
+		}()
+		_ = cmd.Wait()
+	}
+
+	go startDebugProxy()
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	exitCode := -1
 	go func() {
 		defer wg.Done()
-		exitCode = startRing1(resp.Context(), false, svc.prep, nil, outWriter, outWriter)
+		exitCode = startRing1(ctx, false, svc.prep, nil, outWriter, outWriter)
 		outWriter.Close()
 	}()
 
@@ -255,8 +285,8 @@ func (svc *workspaceInnerLoopService) StartInnerLoop(req *api.StartInnerLoopRequ
 		case message := <-messages:
 			err = resp.Send(message)
 		case err = <-errchan:
-		case <-resp.Context().Done():
-			return status.Error(codes.DeadlineExceeded, resp.Context().Err().Error())
+		case <-ctx.Done():
+			return status.Error(codes.DeadlineExceeded, ctx.Err().Error())
 		}
 		if err == io.EOF {
 			// EOF isn't really an error here
@@ -636,7 +666,6 @@ var ring1Cmd = &cobra.Command{
 			return
 		}
 
-		// TODO need setup another network interface
 		client, err = connectToInWorkspaceDaemonService(ctx)
 		if err != nil {
 			log.WithError(err).Error("cannot connect to daemon from ring1 after ring2")
