@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useCallback, useEffect, useState } from "react";
 import { Portal } from "react-portal";
 import { usePopper } from "react-popper";
 
@@ -16,6 +16,7 @@ export interface TooltipProps {
 
 function Tooltip(props: TooltipProps) {
     const [expanded, setExpanded] = useState(false);
+    const [showTooltipTimeout, setShowTooltipTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
     const [triggerEl, setTriggerEl] = useState<HTMLElement | null>(null);
     const [tooltipEl, setTooltipEl] = useState<HTMLElement | null>(null);
 
@@ -29,8 +30,24 @@ function Tooltip(props: TooltipProps) {
         update && update();
     }, [update, props.content]);
 
+    // Adds a 500ms delay to showing tooltip so we don't show them until user pauses a bit like native browser tooltips
+    const handleMouseEnter = useCallback(() => {
+        const timeout = setTimeout(() => {
+            setExpanded(true);
+        }, 500);
+        setShowTooltipTimeout(timeout);
+    }, []);
+
+    const handleMouseLeave = useCallback(() => {
+        if (showTooltipTimeout) {
+            clearTimeout(showTooltipTimeout);
+        }
+        setShowTooltipTimeout(null);
+        setExpanded(false);
+    }, [showTooltipTimeout]);
+
     return (
-        <div onMouseLeave={() => setExpanded(false)} onMouseEnter={() => setExpanded(true)} className="relative">
+        <div onMouseLeave={handleMouseLeave} onMouseEnter={handleMouseEnter} className="relative">
             <div ref={setTriggerEl}>{props.children}</div>
             {expanded ? (
                 <Portal>
