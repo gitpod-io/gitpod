@@ -113,11 +113,15 @@ func (s *WorkspaceService) StreamWorkspaceStatus(ctx context.Context, req *conne
 			logger.WithError(err).Error("Failed to convert workspace instance.")
 			return proxy.ConvertError(err)
 		}
-		_ = stream.Send(&v1.StreamWorkspaceStatusResponse{
+		err = stream.Send(&v1.StreamWorkspaceStatusResponse{
 			Result: &v1.WorkspaceStatus{
 				Instance: instance,
 			},
 		})
+		if err != nil {
+			logger.WithError(err).Error("Failed to stream workspace status.")
+			return proxy.ConvertError(err)
+		}
 	}
 
 	return nil
