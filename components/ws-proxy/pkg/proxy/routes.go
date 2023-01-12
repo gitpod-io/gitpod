@@ -94,9 +94,6 @@ func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip Worksp
 	})
 	routes.HandleSupervisorFrontendRoute(faviconRouter.NewRoute())
 
-	routes.HandleDirectSupervisorRoute(enableCompression(r).PathPrefix("/_supervisor/frontend").MatcherFunc(func(r *http.Request, rm *mux.RouteMatch) bool {
-		return rm.Vars[debugWorkspaceIdentifier] == "true"
-	}), false)
 	routes.HandleSupervisorFrontendRoute(enableCompression(r).PathPrefix("/_supervisor/frontend"))
 
 	routes.HandleDirectSupervisorRoute(r.PathPrefix("/_supervisor/v1/status/supervisor"), false)
@@ -115,12 +112,6 @@ func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip Worksp
 			h.ServeHTTP(resp, req)
 		})
 	})
-	err := installDebugWorkspaceRoutes(rootRouter.MatcherFunc(func(r *http.Request, rm *mux.RouteMatch) bool {
-		return rm.Vars[debugWorkspaceIdentifier] == "true"
-	}).Subrouter(), routes.Config, routes.InfoProvider)
-	if err != nil {
-		return err
-	}
 	routes.HandleRoot(rootRouter.NewRoute())
 	return nil
 }
@@ -449,7 +440,13 @@ func workspacePodResolver(config *Config, infoProvider WorkspaceInfoProvider, re
 func workspacePodPortResolver(config *Config, infoProvider WorkspaceInfoProvider, req *http.Request) (url *url.URL, err error) {
 	coords := getWorkspaceCoords(req)
 	workspaceInfo := infoProvider.WorkspaceInfo(coords.ID)
-	return buildWorkspacePodURL(workspaceInfo.IPAddress, coords.Port)
+	var port string
+	if coords.Debug {
+		port = fmt.Sprint(config.WorkspacePodConfig.DebugWorkspaceProxyPort)
+	} else {
+		port = coords.Port
+	}
+	return buildWorkspacePodURL(workspaceInfo.IPAddress, port)
 }
 
 // workspacePodSupervisorResolver resolves to the workspace pods Supervisor url from the given request.

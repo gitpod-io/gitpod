@@ -5652,6 +5652,7 @@ data:
           "ideDebugPort": 25000,
           "supervisorPort": 22999,
           "supervisorDebugPort": 24999,
+          "debugWorkspaceProxyPort": 25003,
           "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:test"
         },
         "builtinPages": {
@@ -10411,7 +10412,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 714740065966c437ee71b41e8953aa6bb77ac83596e2326b267a2b954f60242d
+        gitpod.io/checksum_config: 50975660db033ea3555b3ced8dcb5e88a95b63142b5402732d0bc8355f3daaed
       creationTimestamp: null
       labels:
         app: gitpod

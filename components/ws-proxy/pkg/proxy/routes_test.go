@@ -56,14 +56,15 @@ var (
 		},
 	}
 
-	ideServerHost       = "localhost:20000"
-	workspacePort       = uint16(20001)
-	supervisorPort      = uint16(20002)
-	workspaceDebugPort  = uint16(20004)
-	supervisorDebugPort = uint16(20005)
-	workspaceHost       = fmt.Sprintf("localhost:%d", workspacePort)
-	portServeHost       = fmt.Sprintf("localhost:%d", workspaces[0].Ports[0].Port)
-	blobServeHost       = "localhost:20003"
+	ideServerHost           = "localhost:20000"
+	workspacePort           = uint16(20001)
+	supervisorPort          = uint16(20002)
+	workspaceDebugPort      = uint16(20004)
+	supervisorDebugPort     = uint16(20005)
+	debugWorkspaceProxyPort = uint16(20006)
+	workspaceHost           = fmt.Sprintf("localhost:%d", workspacePort)
+	portServeHost           = fmt.Sprintf("localhost:%d", workspaces[0].Ports[0].Port)
+	blobServeHost           = "localhost:20003"
 
 	config = Config{
 		TransportConfig: &TransportConfig{
@@ -82,10 +83,11 @@ var (
 			Scheme: "http",
 		},
 		WorkspacePodConfig: &WorkspacePodConfig{
-			TheiaPort:           workspacePort,
-			SupervisorPort:      supervisorPort,
-			IDEDebugPort:        workspaceDebugPort,
-			SupervisorDebugPort: supervisorDebugPort,
+			TheiaPort:               workspacePort,
+			SupervisorPort:          supervisorPort,
+			IDEDebugPort:            workspaceDebugPort,
+			SupervisorDebugPort:     supervisorDebugPort,
+			DebugWorkspaceProxyPort: debugWorkspaceProxyPort,
 		},
 		BuiltinPages: BuiltinPagesConfig{
 			Location: "../../public",
@@ -663,23 +665,6 @@ func TestRoutes(t *testing.T) {
 					"Vary":           {"Accept-Encoding"},
 				},
 				Body: "debug workspace hit: /\n",
-			},
-		},
-		{
-			Desc:   "debug supervisor frontend /main.js",
-			Config: &config,
-			Request: modifyRequest(httptest.NewRequest("GET", debugWorkspaceURL+"_supervisor/frontend/main.js", nil),
-				addHostHeader,
-			),
-			Targets: &Targets{DebugSupervisor: &Target{Status: http.StatusOK}},
-			Expectation: Expectation{
-				Status: http.StatusOK,
-				Header: http.Header{
-					"Content-Length": {"52"},
-					"Content-Type":   {"text/plain; charset=utf-8"},
-					"Vary":           {"Accept-Encoding"},
-				},
-				Body: "supervisor debug hit: /_supervisor/frontend/main.js\n",
 			},
 		},
 	}
