@@ -61,8 +61,11 @@ func load(client openfga.OpenFgaApi, opts loadOpts) error {
 				}),
 				Deletes: nil,
 			}
-			client.Write(ctx).Body()
-
+			data, response, err := client.Write(ctx).Body(req).Execute()
+			if err != nil {
+				return err
+			}
+			fmt.Println(data, response)
 		}
 	}
 }
