@@ -171,16 +171,27 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 		bp := bufPool.Get().(*[]byte)
 		defer bufPool.Put(bp)
 
-		n, err := io.CopyBuffer(w, rc, *bp)
+		const retryMax int = 5
+		var n int64
+		for i := 0; i <= retryMax; i++ {
+			n, err = io.CopyBuffer(w, rc, *bp)
+			if err == nil {
+				break
+			}
+		}
 		if err != nil {
-			bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "false").Inc()
+			if bh.Metrics != nil {
+				bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "false").Inc()
+			}
 			log.WithField("blobSource", src.Name()).WithField("baseRef", bh.Spec.BaseRef).WithError(err).Error("unable to return blob")
 			return xerrors.Errorf("unable to return blob: %w", err)
 		}
 
-		bh.Metrics.BlobDownloadSpeedHist.WithLabelValues(src.Name()).Observe(float64(n) / time.Since(t0).Seconds())
-		bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "true").Inc()
-		bh.Metrics.BlobDownloadSizeCounter.WithLabelValues(src.Name()).Add(float64(n))
+		if bh.Metrics != nil {
+			bh.Metrics.BlobDownloadSpeedHist.WithLabelValues(src.Name()).Observe(float64(n) / time.Since(t0).Seconds())
+			bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "true").Inc()
+			bh.Metrics.BlobDownloadSizeCounter.WithLabelValues(src.Name()).Add(float64(n))
+		}
 
 		if dontCache {
 			return nil
