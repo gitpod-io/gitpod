@@ -8,13 +8,16 @@ spec:
       containers:
       - name: ws-rollout
         image: eu.gcr.io/gitpod-core-dev/build/workspace-rollout-job:tar-work-rollout.25
-        env:
-        - name: OLD_CLUSTER
-          value: "gbdde17909f"
-        - name: NEW_CLUSTER
-          value: "g8c770c402e"
-        - name: PROMETHEUS_RESOURCE
-          value: "monitoring-satellite/statefulset/prometheus-k8s"
+        args:
+        - --old-cluster=$(OLD_CLUSTER)
+        - --new-cluster=$(NEW_CLUSTER)
+        - --prometheus-resource=$(PROMETHEUS_RESOURCE)
+        - --rollout-wait-duration=$(ROLLOUT_WAIT_DURATION)
+        - --analysis-wait-duration=$(ANALYSIS_WAIT_DURATION)
+        - --rollout-step-score=$(ROLLOUT_STEP_SCORE)
+        ports:
+        - containerPort: 9500
+          name: metrics
       restartPolicy: Never
       serviceAccountName: ws-rollout
 ---
@@ -23,7 +26,7 @@ apiVersion: v1
 metadata:
   name: ws-rollout
 ---
-# ClusterRole as we might need port-forward across resources
+# ClusterRole as we might need port-forward across namespaces
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
