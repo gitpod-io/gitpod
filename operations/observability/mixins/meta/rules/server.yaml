@@ -109,7 +109,7 @@ spec:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/WebAppServicesHighCPUUsage.md
         summary: WebApp Services excessive CPU usage.
         description: Pod {{ $labels.pod }} is consumming too much CPU. Please investigate.
-        dashboard_url: https://grafana.gitpod.io/d/6581e46e4e5c7ba40a07646395ef7b23/kubernetes-compute-resources-pod?var-cluster={{ $labels.cluster }}&var-namespace=default&var-pod={{ $labels.pod }}
+        dashboard_url: https://grafana.gitpod.io/d/gitpod-services/meta-services?orgId=1&var-datasource=VictoriaMetrics&var-cluster={{ $labels.cluster }}&var-node=All&var-component=All&from=now-1h&to=now
 
     - alert: WebAppServicesCrashlooping
       # Reasoning: alert if any pod is restarting more than 3 times / 5 minutes.
