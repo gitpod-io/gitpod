@@ -43,7 +43,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const [isUsageBasedBillingEnabled, setIsUsageBasedBillingEnabled] = useState<boolean>(false);
     const [showUseLastSuccessfulPrebuild, setShowUseLastSuccessfulPrebuild] = useState<boolean>(false);
     const [usePublicApiTeamsService, setUsePublicApiTeamsService] = useState<boolean>(true);
-    const [usePublicApiProjectsService, setUsePublicApiProjectsService] = useState<boolean>(false);
+    const [usePublicApiProjectsService, setUsePublicApiProjectsService] = useState<boolean>(true);
     const [enablePersonalAccessTokens, setPersonalAccessTokensEnabled] = useState<boolean>(false);
     const [usePublicApiWorkspacesService, setUsePublicApiWorkspacesService] = useState<boolean>(false);
 
@@ -55,7 +55,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 isUsageBasedBillingEnabled: { defaultValue: false, setter: setIsUsageBasedBillingEnabled },
                 showUseLastSuccessfulPrebuild: { defaultValue: false, setter: setShowUseLastSuccessfulPrebuild },
                 publicApiExperimentalTeamsService: { defaultValue: true, setter: setUsePublicApiTeamsService },
-                publicApiExperimentalProjectsService: { defaultValue: false, setter: setUsePublicApiProjectsService },
+                publicApiExperimentalProjectsService: { defaultValue: true, setter: setUsePublicApiProjectsService },
                 personalAccessTokensEnabled: { defaultValue: false, setter: setPersonalAccessTokensEnabled },
                 publicApiExperimentalWorkspaceService: {
                     defaultValue: false,
