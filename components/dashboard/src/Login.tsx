@@ -23,7 +23,6 @@ import prebuild from "./images/welcome/prebuild.svg";
 import exclamation from "./images/exclamation.svg";
 import { getURLHash } from "./utils";
 import ErrorMessage from "./components/ErrorMessage";
-import { FeatureFlagContext } from "./contexts/FeatureFlagContext";
 import { publicApiTeamsToProtocol, teamsService } from "./service/public-api";
 
 function Item(props: { icon: string; iconSize?: string; text: string }) {
@@ -51,7 +50,6 @@ export function hasVisitedMarketingWebsiteBefore() {
 export function Login() {
     const { setUser } = useContext(UserContext);
     const { setTeams } = useContext(TeamsContext);
-    const { usePublicApiTeamsService } = useContext(FeatureFlagContext);
 
     const urlHash = getURLHash();
     let hostFromContext: string | undefined;
@@ -101,9 +99,7 @@ export function Login() {
         await getGitpodService().reconnect();
         const [user, teams] = await Promise.all([
             getGitpodService().server.getLoggedInUser(),
-            usePublicApiTeamsService
-                ? publicApiTeamsToProtocol((await teamsService.listTeams({})).teams)
-                : await getGitpodService().server.getTeams(),
+            publicApiTeamsToProtocol((await teamsService.listTeams({})).teams),
         ]);
         setUser(user);
         setTeams(teams);

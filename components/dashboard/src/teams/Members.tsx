@@ -14,18 +14,15 @@ import { ItemsList, Item, ItemField, ItemFieldContextMenu } from "../components/
 import Modal from "../components/Modal";
 import Tooltip from "../components/Tooltip";
 import copy from "../images/copy.svg";
-import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import { TeamsContext, getCurrentTeam } from "./teams-context";
 import { trackEvent } from "../Analytics";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { publicApiTeamMembersToProtocol, publicApiTeamsToProtocol, teamsService } from "../service/public-api";
 import { TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 
 export default function () {
     const { user } = useContext(UserContext);
     const { teams, setTeams } = useContext(TeamsContext);
-    const { usePublicApiTeamsService } = useContext(FeatureFlagContext);
 
     const history = useHistory();
     const location = useLocation();
@@ -42,21 +39,9 @@ export default function () {
             return;
         }
         (async () => {
-            let members: TeamMemberInfo[];
-            let invite: string;
-
-            if (usePublicApiTeamsService) {
-                const response = await teamsService.getTeam({ teamId: team.id });
-                members = publicApiTeamMembersToProtocol(response.team?.members || []);
-                invite = response.team?.teamInvitation?.id || "";
-            } else {
-                const [teamMembers, genericInvite] = await Promise.all([
-                    getGitpodService().server.getTeamMembers(team.id),
-                    getGitpodService().server.getGenericInvite(team.id),
-                ]);
-                members = teamMembers;
-                invite = genericInvite.id;
-            }
+            const response = await teamsService.getTeam({ teamId: team.id });
+            const members = publicApiTeamMembersToProtocol(response.team?.members || []);
+            const invite = response.team?.teamInvitation?.id || "";
 
             setMembers(members);
             setGenericInviteId(invite);
@@ -97,43 +82,34 @@ export default function () {
         // reset genericInvite first to prevent races on double click
         if (genericInviteId) {
             setGenericInviteId(undefined);
-            const newInviteId = usePublicApiTeamsService
-                ? (await teamsService.resetTeamInvitation({ teamId: team!.id })).teamInvitation?.id
-                : (await getGitpodService().server.resetGenericInvite(team!.id)).id;
+            const newInviteId = (await teamsService.resetTeamInvitation({ teamId: team!.id })).teamInvitation?.id;
             setGenericInviteId(newInviteId);
         }
     };
 
     const setTeamMemberRole = async (userId: string, role: TeamMemberRole) => {
-        usePublicApiTeamsService
-            ? await teamsService.updateTeamMember({
-                  teamId: team!.id,
-                  teamMember: { userId, role: role === "owner" ? TeamRole.OWNER : TeamRole.MEMBER },
-              })
-            : await getGitpodService().server.setTeamMemberRole(team!.id, userId, role);
+        await teamsService.updateTeamMember({
+            teamId: team!.id,
+            teamMember: { userId, role: role === "owner" ? TeamRole.OWNER : TeamRole.MEMBER },
+        });
 
-        const members = usePublicApiTeamsService
-            ? publicApiTeamMembersToProtocol((await teamsService.getTeam({ teamId: team!.id })).team?.members || [])
-            : await getGitpodService().server.getTeamMembers(team!.id);
-
+        const members = publicApiTeamMembersToProtocol(
+            (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
+        );
         setMembers(members);
     };
 
     const removeTeamMember = async (userId: string) => {
-        usePublicApiTeamsService
-            ? await teamsService.deleteTeamMember({ teamId: team!.id, teamMemberId: userId })
-            : await getGitpodService().server.removeTeamMember(team!.id, userId);
+        await teamsService.deleteTeamMember({ teamId: team!.id, teamMemberId: userId });
 
-        const newTeams = usePublicApiTeamsService
-            ? publicApiTeamsToProtocol((await teamsService.listTeams({})).teams)
-            : await getGitpodService().server.getTeams();
+        const newTeams = publicApiTeamsToProtocol((await teamsService.listTeams({})).teams);
 
         if (newTeams.some((t) => t.id === team!.id)) {
             // We're still a member of this team.
 
-            const newMembers = usePublicApiTeamsService
-                ? publicApiTeamMembersToProtocol((await teamsService.getTeam({ teamId: team!.id })).team?.members || [])
-                : await getGitpodService().server.getTeamMembers(team!.id);
+            const newMembers = publicApiTeamMembersToProtocol(
+                (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
+            );
             setMembers(newMembers);
         } else {
             // We're no longer a member of this team (note: we navigate away first in order to avoid a 404).

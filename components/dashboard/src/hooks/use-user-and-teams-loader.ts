@@ -8,7 +8,6 @@ import { useState, useContext, useEffect } from "react";
 import { User } from "@gitpod/gitpod-protocol";
 import { useHistory } from "react-router-dom";
 import { UserContext } from "../user-context";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { getSelectedTeamSlug, TeamsContext } from "../teams/teams-context";
 import { getGitpodService } from "../service/service";
 import { publicApiTeamsToProtocol, teamsService } from "../service/public-api";
@@ -21,7 +20,6 @@ export const useUserAndTeamsLoader = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const { user, setUser, refreshUserBillingMode } = useContext(UserContext);
     const { teams, setTeams } = useContext(TeamsContext);
-    const { usePublicApiTeamsService } = useContext(FeatureFlagContext);
     const history = useHistory();
     const [isSetupRequired, setSetupRequired] = useState(false);
 
@@ -35,9 +33,7 @@ export const useUserAndTeamsLoader = () => {
 
                 // TODO: atm this feature-flag won't have been set yet, as it's dependant on user/teams
                 // so it will always be false when this runs
-                const loadedTeams = usePublicApiTeamsService
-                    ? publicApiTeamsToProtocol((await teamsService.listTeams({})).teams)
-                    : await getGitpodService().server.getTeams();
+                const loadedTeams = publicApiTeamsToProtocol((await teamsService.listTeams({})).teams);
 
                 {
                     // if a team was selected previously and we call the root URL (e.g. "gitpod.io"),

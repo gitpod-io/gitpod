@@ -27,7 +27,6 @@ import {
     publicApiTeamToProtocol,
     teamsService,
 } from "../service/public-api";
-import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import { ConnectError } from "@bufbuild/connect-web";
 import { useRefreshProjects } from "../data/projects/queries";
 
@@ -35,7 +34,6 @@ export default function NewProject() {
     const location = useLocation();
     const { teams } = useContext(TeamsContext);
     const { user, setUser } = useContext(UserContext);
-    const { usePublicApiTeamsService } = useFeatureFlags();
     const refreshProjects = useRefreshProjects();
 
     const [selectedProviderHost, setSelectedProviderHost] = useState<string | undefined>();
@@ -121,11 +119,9 @@ export default function NewProject() {
             await Promise.all(
                 teams.map(async (team) => {
                     try {
-                        members[team.id] = usePublicApiTeamsService
-                            ? await publicApiTeamMembersToProtocol(
-                                  (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
-                              )
-                            : await getGitpodService().server.getTeamMembers(team.id);
+                        members[team.id] = publicApiTeamMembersToProtocol(
+                            (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
+                        );
                     } catch (error) {
                         console.error("Could not get members of team", team, error);
                     }
@@ -732,7 +728,6 @@ function GitProviders(props: {
 
 function NewTeam(props: { onSuccess: (team: Team) => void }) {
     const { setTeams } = useContext(TeamsContext);
-    const { usePublicApiTeamsService } = useFeatureFlags();
 
     const [teamName, setTeamName] = useState<string | undefined>();
     const [error, setError] = useState<string | undefined>();
@@ -743,12 +738,8 @@ function NewTeam(props: { onSuccess: (team: Team) => void }) {
         }
 
         try {
-            const team = usePublicApiTeamsService
-                ? publicApiTeamToProtocol((await teamsService.createTeam({ name: teamName })).team!)
-                : await getGitpodService().server.createTeam(teamName);
-            const teams = usePublicApiTeamsService
-                ? publicApiTeamsToProtocol((await teamsService.listTeams({})).teams)
-                : await getGitpodService().server.getTeams();
+            const team = publicApiTeamToProtocol((await teamsService.createTeam({ name: teamName })).team!);
+            const teams = publicApiTeamsToProtocol((await teamsService.listTeams({})).teams);
 
             setTeams(teams);
             props.onSuccess(team);

@@ -38,7 +38,7 @@ interface Entry {
 
 export default function Menu() {
     const { user } = useContext(UserContext);
-    const { showUsageView, usePublicApiTeamsService, usePublicApiProjectsService } = useContext(FeatureFlagContext);
+    const { showUsageView } = useContext(FeatureFlagContext);
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
@@ -136,11 +136,9 @@ export default function Menu() {
             await Promise.all(
                 teams.map(async (team) => {
                     try {
-                        members[team.id] = usePublicApiTeamsService
-                            ? await publicApiTeamMembersToProtocol(
-                                  (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
-                              )
-                            : await getGitpodService().server.getTeamMembers(team.id);
+                        members[team.id] = publicApiTeamMembersToProtocol(
+                            (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
+                        );
                     } catch (error) {
                         console.error("Could not get members of team", team, error);
                     }
@@ -157,13 +155,9 @@ export default function Menu() {
         (async () => {
             let projects: Project[];
             if (!!team) {
-                projects = usePublicApiProjectsService
-                    ? await listAllProjects({ teamId: team.id })
-                    : await getGitpodService().server.getTeamProjects(team.id);
+                projects = await listAllProjects({ teamId: team.id });
             } else {
-                projects = usePublicApiProjectsService
-                    ? await listAllProjects({ userId: user?.id })
-                    : await getGitpodService().server.getUserProjects();
+                projects = await listAllProjects({ userId: user?.id });
             }
 
             // Find project matching with slug, otherwise with name

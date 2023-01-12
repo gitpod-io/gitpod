@@ -20,7 +20,6 @@ import Modal from "../components/Modal";
 import Alert from "./Alert";
 import dayjs from "dayjs";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
 
 const BASE_USAGE_LIMIT_FOR_STRIPE_USERS = 1000;
@@ -34,7 +33,6 @@ interface Props {
 export default function UsageBasedBillingConfig({ attributionId }: Props) {
     const location = useLocation();
     const { currency } = useContext(PaymentContext);
-    const { usePublicApiTeamsService } = useContext(FeatureFlagContext);
     const [showUpdateLimitModal, setShowUpdateLimitModal] = useState<boolean>(false);
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
     const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | undefined>();
@@ -101,11 +99,9 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                 let limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS;
                 const attrId = AttributionId.parse(attributionId);
                 if (attrId?.kind === "team") {
-                    const members = usePublicApiTeamsService
-                        ? publicApiTeamMembersToProtocol(
-                              (await teamsService.getTeam({ teamId: attrId.teamId })).team?.members || [],
-                          )
-                        : await getGitpodService().server.getTeamMembers(attrId.teamId);
+                    const members = publicApiTeamMembersToProtocol(
+                        (await teamsService.getTeam({ teamId: attrId.teamId })).team?.members || [],
+                    );
                     limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS * members.length;
                 }
                 const newLimit = await getGitpodService().server.subscribeToStripe(attributionId, setupIntentId, limit);
@@ -131,7 +127,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                 setErrorMessage(`Could not subscribe to Stripe. ${error?.message || String(error)}`);
             }
         })();
-    }, [attributionId, location.pathname, location.search, refreshSubscriptionDetails, usePublicApiTeamsService]);
+    }, [attributionId, location.pathname, location.search, refreshSubscriptionDetails]);
 
     const showSpinner = !attributionId || isLoadingStripeSubscription || !!pendingStripeSubscription;
     const showBalance = !showSpinner;

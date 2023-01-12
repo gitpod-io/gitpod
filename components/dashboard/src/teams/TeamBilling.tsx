@@ -24,7 +24,6 @@ import { getCurrentTeam, TeamsContext } from "./teams-context";
 import { getTeamSettingsMenu } from "./TeamSettings";
 import TeamUsageBasedBilling from "./TeamUsageBasedBilling";
 import { UserContext } from "../user-context";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
 import Alert from "../components/Alert";
 import { getExperimentsClient } from "../experiments/client";
@@ -44,7 +43,6 @@ export default function TeamBilling() {
     const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
     const [pendingTeamPlan, setPendingTeamPlan] = useState<PendingPlan | undefined>();
     const [pollTeamSubscriptionTimeout, setPollTeamSubscriptionTimeout] = useState<NodeJS.Timeout | undefined>();
-    const { usePublicApiTeamsService } = useContext(FeatureFlagContext);
 
     useEffect(() => {
         if (!team) {
@@ -52,11 +50,9 @@ export default function TeamBilling() {
         }
         (async () => {
             const [memberInfos, subscription, teamBillingMode] = await Promise.all([
-                usePublicApiTeamsService
-                    ? teamsService.getTeam({ teamId: team!.id }).then((resp) => {
-                          return publicApiTeamMembersToProtocol(resp.team?.members || []);
-                      })
-                    : getGitpodService().server.getTeamMembers(team.id),
+                teamsService.getTeam({ teamId: team!.id }).then((resp) => {
+                    return publicApiTeamMembersToProtocol(resp.team?.members || []);
+                }),
                 getGitpodService().server.getTeamSubscription(team.id),
                 getGitpodService().server.getBillingModeForTeam(team.id),
             ]);

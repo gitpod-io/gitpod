@@ -6,7 +6,6 @@
 
 import { PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
 import dayjs from "dayjs";
-import { useFeatureFlags } from "../../contexts/FeatureFlagContext";
 import { listAllProjects } from "../../service/public-api";
 import { getGitpodService } from "../../service/service";
 
@@ -22,8 +21,6 @@ type FetchProjectsReturnValue = {
 
 // Wrap fetcher fn in a hook for easy access to feature flags
 export const useFetchProjects = ({ teamId, userId }: UseFetchProjectsArgs) => {
-    const { usePublicApiProjectsService } = useFeatureFlags();
-
     // Return an async fn to fetch data
     return async (): Promise<FetchProjectsReturnValue> => {
         if (!userId && !teamId) {
@@ -35,13 +32,9 @@ export const useFetchProjects = ({ teamId, userId }: UseFetchProjectsArgs) => {
 
         let projects: Project[] = [];
         if (teamId) {
-            projects = usePublicApiProjectsService
-                ? await listAllProjects({ teamId })
-                : await getGitpodService().server.getTeamProjects(teamId);
+            projects = await listAllProjects({ teamId });
         } else {
-            projects = usePublicApiProjectsService
-                ? await listAllProjects({ userId })
-                : await getGitpodService().server.getUserProjects();
+            projects = await listAllProjects({ userId });
         }
 
         // Load prebuilds for each project

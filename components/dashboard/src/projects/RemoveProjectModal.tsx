@@ -7,9 +7,7 @@
 import { FunctionComponent, useCallback, useState } from "react";
 import type { Project } from "@gitpod/gitpod-protocol";
 import { projectsService } from "../service/public-api";
-import { getGitpodService } from "../service/service";
 import ConfirmationModal from "../components/ConfirmationModal";
-import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 
 type RemoveProjectModalProps = {
     project: Project;
@@ -18,17 +16,14 @@ type RemoveProjectModalProps = {
 };
 
 export const RemoveProjectModal: FunctionComponent<RemoveProjectModalProps> = ({ project, onClose, onRemoved }) => {
-    const { usePublicApiProjectsService } = useFeatureFlags();
     const [disabled, setDisabled] = useState(false);
 
     const removeProject = useCallback(async () => {
         setDisabled(true);
-        usePublicApiProjectsService
-            ? await projectsService.deleteProject({ projectId: project.id })
-            : await getGitpodService().server.deleteProject(project.id);
+        await projectsService.deleteProject({ projectId: project.id });
         setDisabled(false);
         onRemoved();
-    }, [onRemoved, project.id, usePublicApiProjectsService]);
+    }, [onRemoved, project.id]);
 
     return (
         <ConfirmationModal
