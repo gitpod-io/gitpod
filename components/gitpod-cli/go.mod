@@ -19,7 +19,7 @@ require (
 	github.com/prometheus/procfs v0.8.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37
-	github.com/spf13/cobra v1.1.3
+	github.com/spf13/cobra v1.6.1
 	golang.org/x/sys v0.0.0-20220610221304-9f5ed59c137d
 	golang.org/x/term v0.0.0-20220526004731-065cf7ba2467
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f
@@ -34,7 +34,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3 // indirect
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/segmentio/backo-go v0.0.0-20200129164019-23eae7c10bd3 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect

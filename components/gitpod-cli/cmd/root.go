@@ -5,17 +5,53 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
+type contextKey int
+
+const (
+	ctxKeyAnalytics        contextKey = iota
+	ctxKeySupervisorClient contextKey = iota
+	rootCmdName                       = "gp"
+)
+
 var rootCmd = &cobra.Command{
-	Use:   "gp",
+	Use:   rootCmdName,
 	Short: "Command line interface for Gitpod",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		ctx := context.Background()
+		supervisorClient, err := supervisor.New(ctx)
+		if err != nil {
+			utils.LogError(ctx, err, "Could not get workspace info", supervisorClient)
+			return
+		}
+		defer supervisorClient.Close()
+
+		cmdName := strings.TrimSpace(strings.TrimPrefix(cmd.CommandPath(), rootCmdName))
+		event := utils.NewAnalyticsEvent(ctx, supervisorClient, &utils.TrackCommandUsageParams{
+			Command: cmdName,
+		})
+
+		analyticsCtx := context.WithValue(cmd.Context(), ctxKeyAnalytics, event)
+		cmd.SetContext(analyticsCtx)
+
+		supervisorClientCtx := context.WithValue(cmd.Context(), ctxKeySupervisorClient, supervisorClient)
+		cmd.SetContext(supervisorClientCtx)
+	},
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		ctx := cmd.Context()
+		event := ctx.Value(ctxKeyAnalytics).(*utils.AnalyticsEvent)
+		event.Send(ctx)
+	},
 }
 
 var noColor bool

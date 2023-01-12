@@ -215,24 +215,16 @@ var buildCmd = &cobra.Command{
 	Short:  "Re-builds the workspace image (useful to debug a workspace custom image)",
 	Hidden: false,
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(cmd.Context())
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 		go func() {
 			<-sigChan
 			cancel()
 		}()
-		supervisorClient, err := supervisor.New(ctx)
-		if err != nil {
-			utils.LogError(ctx, err, "Could not get workspace info required to build", supervisorClient)
-			return
-		}
-		defer supervisorClient.Close()
+		supervisorClient := ctx.Value(ctxKeySupervisorClient).(*supervisor.SupervisorClient)
 
-		event := utils.NewAnalyticsEvent(ctx, supervisorClient, &utils.TrackCommandUsageParams{
-			Command: cmd.Name(),
-		})
-
+		event := cmd.Context().Value(ctxKeyAnalytics).(*utils.AnalyticsEvent)
 		outcome, err := runRebuild(ctx, supervisorClient, event)
 		event.Set("Outcome", outcome)
 
@@ -244,8 +236,6 @@ var buildCmd = &cobra.Command{
 				event.Set("ErrorCode", utils.SystemErrorCode)
 			}
 		}
-
-		event.Send(ctx)
 
 		if err != nil {
 			utils.LogError(ctx, err, "Failed to rebuild", supervisorClient)
