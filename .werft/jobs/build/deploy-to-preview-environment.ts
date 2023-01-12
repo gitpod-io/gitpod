@@ -60,7 +60,6 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         installEELicense,
         withObservability,
         analytics: jobConfig.analytics,
-        useWsManagerMk2,
     };
 
     // We set all attributes to false as default and only set it to true once the each process is complete.
