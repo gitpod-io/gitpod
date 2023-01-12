@@ -28,75 +28,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, nil
 	}
 
-	containers := []corev1.Container{
-		{
-			Name:            ContainerName,
-			Image:           ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, RegistryRepo), RegistryImage, ImageTag),
-			ImagePullPolicy: corev1.PullIfNotPresent,
-			Args: []string{
-				"run",
-				"--log-format=json",
-				"--log-level=warn",
-			},
-			Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
-				common.DefaultEnv(&ctx.Config),
-			)),
-			Ports: []corev1.ContainerPort{
-				{
-					ContainerPort: ContainerGRPCPort,
-					Name:          ContainerGRPCName,
-					Protocol:      *common.TCPProtocol,
-				},
-				{
-					ContainerPort: ContainerHTTPPort,
-					Name:          ContainerHTTPName,
-					Protocol:      *common.TCPProtocol,
-				},
-				{
-					ContainerPort: ContainerPlaygroundPort,
-					Name:          ContainerPlaygroundName,
-					Protocol:      *common.TCPProtocol,
-				},
-			},
-			Resources: common.ResourceRequirements(ctx, Component, ContainerName, corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					"cpu":    resource.MustParse("1m"),
-					"memory": resource.MustParse("30Mi"),
-				},
-			}),
-			SecurityContext: &corev1.SecurityContext{
-				RunAsGroup:   pointer.Int64(65532),
-				RunAsNonRoot: pointer.Bool(true),
-				RunAsUser:    pointer.Int64(65532),
-			},
-			LivenessProbe: &corev1.Probe{
-				ProbeHandler: corev1.ProbeHandler{
-					HTTPGet: &corev1.HTTPGetAction{
-						Path:   "/healthz",
-						Port:   intstr.IntOrString{IntVal: ContainerHTTPPort},
-						Scheme: corev1.URISchemeHTTP,
-					},
-				},
-				FailureThreshold: 3,
-				SuccessThreshold: 1,
-				TimeoutSeconds:   1,
-			},
-			ReadinessProbe: &corev1.Probe{
-				ProbeHandler: corev1.ProbeHandler{
-					HTTPGet: &corev1.HTTPGetAction{
-						Path:   "/healthz",
-						Port:   intstr.IntOrString{IntVal: ContainerHTTPPort},
-						Scheme: corev1.URISchemeHTTP,
-					},
-				},
-				FailureThreshold: 3,
-				SuccessThreshold: 1,
-				TimeoutSeconds:   1,
-			},
-		},
-	}
+	var containers []corev1.Container
 
 	var volumes []corev1.Volume
+	var openfgaEnvVars []corev1.EnvVar
 
 	if cfg.CloudSQL != nil {
 		containers = append(containers, corev1.Container{
@@ -137,7 +72,107 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				}},
 			},
 		}...)
+
+		// We use our cloud-sql-proxy sidecar to target the DB.
+		dbHost := "localhost"
+		openfgaEnvVars = append(openfgaEnvVars, []corev1.EnvVar{
+			{
+				Name:  "OPENFGA_DATASTORE_ENGINE",
+				Value: "mysql",
+			},
+			{
+				Name: "DB_PASSWORD",
+				ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: cfg.CloudSQL.DatabaseSecretRef,
+					},
+					Key: "password",
+				}},
+			},
+			{
+				Name: "DB_USERNAME",
+				ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: cfg.CloudSQL.DatabaseSecretRef,
+					},
+					Key: "user",
+				}},
+			},
+			{
+				Name:  "OPENFGA_DATASTORE_URI",
+				Value: fmt.Sprintf("$(DB_USERNAME):$(DB_PASSWORD)@tcp(%s:%d)/%s?parseTime=true", dbHost, CloudSQLProxyPort, cfg.CloudSQL.Instance),
+			},
+		}...)
 	}
+
+	openfgaContainer := corev1.Container{
+		Name:            ContainerName,
+		Image:           ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, RegistryRepo), RegistryImage, ImageTag),
+		ImagePullPolicy: corev1.PullIfNotPresent,
+		Args: []string{
+			"run",
+			"--log-format=json",
+			"--log-level=warn",
+		},
+		Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
+			common.DefaultEnv(&ctx.Config),
+			openfgaEnvVars,
+		)),
+		Ports: []corev1.ContainerPort{
+			{
+				ContainerPort: ContainerGRPCPort,
+				Name:          ContainerGRPCName,
+				Protocol:      *common.TCPProtocol,
+			},
+			{
+				ContainerPort: ContainerHTTPPort,
+				Name:          ContainerHTTPName,
+				Protocol:      *common.TCPProtocol,
+			},
+			{
+				ContainerPort: ContainerPlaygroundPort,
+				Name:          ContainerPlaygroundName,
+				Protocol:      *common.TCPProtocol,
+			},
+		},
+		Resources: common.ResourceRequirements(ctx, Component, ContainerName, corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				"cpu":    resource.MustParse("1m"),
+				"memory": resource.MustParse("30Mi"),
+			},
+		}),
+		SecurityContext: &corev1.SecurityContext{
+			RunAsGroup:   pointer.Int64(65532),
+			RunAsNonRoot: pointer.Bool(true),
+			RunAsUser:    pointer.Int64(65532),
+		},
+		LivenessProbe: &corev1.Probe{
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path:   "/healthz",
+					Port:   intstr.IntOrString{IntVal: ContainerHTTPPort},
+					Scheme: corev1.URISchemeHTTP,
+				},
+			},
+			FailureThreshold: 3,
+			SuccessThreshold: 1,
+			TimeoutSeconds:   1,
+		},
+		ReadinessProbe: &corev1.Probe{
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path:   "/healthz",
+					Port:   intstr.IntOrString{IntVal: ContainerHTTPPort},
+					Scheme: corev1.URISchemeHTTP,
+				},
+			},
+			FailureThreshold: 3,
+			SuccessThreshold: 1,
+			TimeoutSeconds:   1,
+		},
+	}
+
+	containers = append(containers, openfgaContainer)
 
 	return []runtime.Object{
 		&appsv1.Deployment{
