@@ -410,6 +410,12 @@ func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig, infoP
 			r.Header.Add("X-Forwarded-Proto", "https")
 			r.Header.Add("X-Forwarded-Host", r.Host)
 			r.Header.Add("X-Forwarded-Port", "443")
+
+			coords := getWorkspaceCoords(r)
+			if coords.Debug {
+				r.Header.Add("X-WS-Proxy-Debug-Port", coords.Port)
+			}
+
 			proxyPass(
 				config,
 				infoProvider,
