@@ -10,6 +10,7 @@ import (
 
 	connect "github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
@@ -17,11 +18,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/relvacode/iso8601"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"gorm.io/gorm"
 )
 
-func NewTeamsService(pool proxy.ServerConnectionPool) *TeamService {
+func NewTeamsService(pool proxy.ServerConnectionPool, dbConn *gorm.DB) *TeamService {
 	return &TeamService{
 		connectionPool: pool,
+		dbConn:         dbConn,
 	}
 }
 
@@ -29,6 +32,7 @@ var _ v1connect.TeamsServiceHandler = (*TeamService)(nil)
 
 type TeamService struct {
 	connectionPool proxy.ServerConnectionPool
+	dbConn         *gorm.DB
 
 	v1connect.UnimplementedTeamsServiceHandler
 }
@@ -112,6 +116,68 @@ func (s *TeamService) ListTeams(ctx context.Context, req *connect.Request[v1.Lis
 	return connect.NewResponse(&v1.ListTeamsResponse{
 		Teams: response,
 	}), nil
+}
+
+func (s *TeamService) UpdateTeam(ctx context.Context, req *connect.Request[v1.UpdateTeamRequest]) (*connect.Response[v1.UpdateTeamResponse], error) {
+	teamID, err := validateTeamID(req.Msg.Team.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+	user, err := conn.GetLoggedInUser(ctx)
+	if err != nil {
+		return nil, proxy.ConvertError(err)
+	}
+	result, err := s.GetTeam(ctx, connect.NewRequest(&v1.GetTeamRequest{TeamId: teamID.String()}))
+	if err != nil {
+		return nil, err
+	}
+
+	if !canUpdateTeam(user, result.Msg.Team.Members) {
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("You are not allowed to update this team."))
+	}
+
+	team, err := db.GetTeam(ctx, s.dbConn, teamID)
+
+	for _, path := range req.Msg.UpdateMask.GetPaths() {
+		switch path {
+		case "name":
+			if req.Msg.Team.Name == "" {
+				return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Name is a required argument when updating a team."))
+			}
+			team.Name = req.Msg.Team.Name
+		}
+	}
+	team, err = db.SaveTeam(ctx, s.dbConn, team)
+	if err != nil {
+		return nil, proxy.ConvertError(err)
+	}
+
+	result, err = s.GetTeam(ctx, connect.NewRequest(&v1.GetTeamRequest{TeamId: team.ID.String()}))
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&v1.UpdateTeamResponse{
+		Team: result.Msg.Team,
+	}), nil
+}
+
+func canUpdateTeam(user *protocol.User, members []*v1.TeamMember) bool {
+	for _, role := range user.RolesOrPermissions {
+		if role == "admin" {
+			return true
+		}
+	}
+	for _, member := range members {
+		if member.Role == v1.TeamRole_TEAM_ROLE_OWNER {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *TeamService) DeleteTeam(ctx context.Context, req *connect.Request[v1.DeleteTeamRequest]) (*connect.Response[v1.DeleteTeamResponse], error) {

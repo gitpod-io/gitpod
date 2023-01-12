@@ -4,6 +4,7 @@ package gitpod.experimental.v1;
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1";
 
+import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 
 message Team {
@@ -70,6 +71,9 @@ service TeamsService {
     // ListTeams lists the caller has access to.
     rpc ListTeams(ListTeamsRequest) returns (ListTeamsResponse) {};
 
+    // UpdateTeam updates the specified team.
+    rpc UpdateTeam(UpdateTeamRequest) returns (UpdateTeamResponse) {};
+
     // DeleteTeam deletes the specified team.
     rpc DeleteTeam(DeleteTeamRequest) returns (DeleteTeamResponse) {};
 
@@ -110,6 +114,15 @@ message ListTeamsRequest {
 
 message ListTeamsResponse {
     repeated Team teams = 1;
+}
+
+message UpdateTeamRequest {
+    Team team = 1;
+    google.protobuf.FieldMask update_mask = 2;
+}
+
+message UpdateTeamResponse {
+    Team team = 1;
 }
 
 message DeleteTeamRequest {

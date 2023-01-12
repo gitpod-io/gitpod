@@ -10,7 +10,7 @@
 /* @ts-nocheck */
 
 import type {BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage} from "@bufbuild/protobuf";
-import {Message, proto3, Timestamp} from "@bufbuild/protobuf";
+import {FieldMask, Message, proto3, Timestamp} from "@bufbuild/protobuf";
 
 /**
  * @generated from enum gitpod.experimental.v1.TeamRole
@@ -453,6 +453,86 @@ export class ListTeamsResponse extends Message<ListTeamsResponse> {
 
   static equals(a: ListTeamsResponse | PlainMessage<ListTeamsResponse> | undefined, b: ListTeamsResponse | PlainMessage<ListTeamsResponse> | undefined): boolean {
     return proto3.util.equals(ListTeamsResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.UpdateTeamRequest
+ */
+export class UpdateTeamRequest extends Message<UpdateTeamRequest> {
+  /**
+   * @generated from field: gitpod.experimental.v1.Team team = 1;
+   */
+  team?: Team;
+
+  /**
+   * @generated from field: google.protobuf.FieldMask update_mask = 2;
+   */
+  updateMask?: FieldMask;
+
+  constructor(data?: PartialMessage<UpdateTeamRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.UpdateTeamRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "team", kind: "message", T: Team },
+    { no: 2, name: "update_mask", kind: "message", T: FieldMask },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateTeamRequest {
+    return new UpdateTeamRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateTeamRequest {
+    return new UpdateTeamRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateTeamRequest {
+    return new UpdateTeamRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateTeamRequest | PlainMessage<UpdateTeamRequest> | undefined, b: UpdateTeamRequest | PlainMessage<UpdateTeamRequest> | undefined): boolean {
+    return proto3.util.equals(UpdateTeamRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.UpdateTeamResponse
+ */
+export class UpdateTeamResponse extends Message<UpdateTeamResponse> {
+  /**
+   * @generated from field: gitpod.experimental.v1.Team team = 1;
+   */
+  team?: Team;
+
+  constructor(data?: PartialMessage<UpdateTeamResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.UpdateTeamResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "team", kind: "message", T: Team },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateTeamResponse {
+    return new UpdateTeamResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateTeamResponse {
+    return new UpdateTeamResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateTeamResponse {
+    return new UpdateTeamResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateTeamResponse | PlainMessage<UpdateTeamResponse> | undefined, b: UpdateTeamResponse | PlainMessage<UpdateTeamResponse> | undefined): boolean {
+    return proto3.util.equals(UpdateTeamResponse, a, b);
   }
 }
 

@@ -5,9 +5,13 @@
 package db
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type Team struct {
@@ -27,4 +31,30 @@ type Team struct {
 // TableName sets the insert table name for this struct type
 func (d *Team) TableName() string {
 	return "d_b_team"
+}
+
+func SaveTeam(ctx context.Context, conn *gorm.DB, team *Team) (*Team, error) {
+	tx := conn.
+		WithContext(ctx).Save(team)
+	if err := tx.Error; err != nil {
+		return nil, fmt.Errorf("failed to save team: %w", err)
+	}
+	return team, nil
+}
+
+func GetTeam(ctx context.Context, conn *gorm.DB, teamID uuid.UUID) (*Team, error) {
+	var team Team
+	tx := conn.
+		WithContext(ctx).
+		Where("id = ?", teamID).
+		First(&team)
+	if err := tx.Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("failed to lookup stripe customer with ID %s", teamID)
+	}
+
+	return &team, nil
 }
