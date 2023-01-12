@@ -96,7 +96,8 @@
                 "steps": []
               },
               "unit": "none"
-            }
+            },
+            "overrides": []
           },
           "gridPos": {
             "h": 7,
@@ -120,7 +121,7 @@
             },
             "textMode": "auto"
           },
-          "pluginVersion": "7",
+          "pluginVersion": "9.3.2",
           "targets": [
             {
               "datasource": {
@@ -154,7 +155,6 @@
             }
           ],
           "title": "Stats(7d)",
-          "transparent": false,
           "type": "stat"
         },
         {
@@ -168,11 +168,13 @@
                 "mode": "fixed"
               },
               "decimals": 0,
+              "mappings": [],
               "thresholds": {
                 "mode": "absolute",
                 "steps": []
               }
-            }
+            },
+            "overrides": []
           },
           "gridPos": {
             "h": 7,
@@ -183,6 +185,8 @@
           "id": 3,
           "options": {
             "displayMode": "lcd",
+            "minVizHeight": 10,
+            "minVizWidth": 0,
             "orientation": "horizontal",
             "reduceOptions": {
               "calcs": [
@@ -193,6 +197,7 @@
             },
             "showUnfilled": true
           },
+          "pluginVersion": "9.3.2",
           "targets": [
             {
               "datasource": {
@@ -219,11 +224,13 @@
                 "mode": "fixed"
               },
               "decimals": 0,
+              "mappings": [],
               "thresholds": {
                 "mode": "absolute",
                 "steps": []
               }
-            }
+            },
+            "overrides": []
           },
           "gridPos": {
             "h": 7,
@@ -234,6 +241,8 @@
           "id": 4,
           "options": {
             "displayMode": "lcd",
+            "minVizHeight": 10,
+            "minVizWidth": 0,
             "orientation": "horizontal",
             "reduceOptions": {
               "calcs": [
@@ -244,6 +253,7 @@
             },
             "showUnfilled": true
           },
+          "pluginVersion": "9.3.2",
           "targets": [
             {
               "datasource": {
@@ -310,7 +320,7 @@
       "fillGradient": 5,
       "gridPos": {
         "h": 7,
-        "w": 6,
+        "w": 8,
         "x": 0,
         "y": 2
       },
@@ -335,27 +345,42 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.1.5",
+      "pluginVersion": "9.3.2",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
       "repeat": "cluster",
       "seriesOverrides": [
         {
+          "$$hashKey": "object:146",
           "alias": "REGULAR",
           "color": "#73BF69"
         },
         {
+          "$$hashKey": "object:147",
           "alias": "PREBUILD",
-          "color": "#5794F2"
+          "color": "#5794F2",
+          "yaxis": 1
         },
         {
+          "$$hashKey": "object:148",
           "alias": "PROBE",
           "color": "#B877D9"
         },
         {
+          "$$hashKey": "object:149",
           "alias": "Regular Not Active",
           "color": "#FADE2A"
+        },
+        {
+          "$$hashKey": "object:389",
+          "alias": "IMAGEBUILD",
+          "color": "#6ED0E0",
+          "dashLength": 8,
+          "dashes": true,
+          "spaceLength": 8,
+          "steppedLine": true,
+          "yaxis": 2
         }
       ],
       "spaceLength": 10,
@@ -399,13 +424,16 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:126",
           "format": "none",
           "logBase": 1,
           "min": 0,
           "show": true
         },
         {
+          "$$hashKey": "object:127",
           "format": "none",
+          "label": "",
           "logBase": 1,
           "min": 0,
           "show": true
@@ -425,7 +453,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 16
+        "y": 9
       },
       "id": 13,
       "panels": [],
@@ -454,9 +482,9 @@
       "fillGradient": 5,
       "gridPos": {
         "h": 7,
-        "w": 6,
+        "w": 8,
         "x": 0,
-        "y": 17
+        "y": 10
       },
       "hiddenSeries": false,
       "id": 6,
@@ -479,7 +507,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.1.5",
+      "pluginVersion": "9.3.2",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -557,7 +585,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 31
+        "y": 17
       },
       "id": 14,
       "panels": [],
@@ -586,11 +614,26 @@
       "datasource": {
         "uid": "$datasource"
       },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 7,
-        "w": 6,
+        "w": 8,
         "x": 0,
-        "y": 32
+        "y": 18
       },
       "heatmap": {},
       "hideZeroBuckets": true,
@@ -599,6 +642,44 @@
       "legend": {
         "show": false
       },
+      "options": {
+        "calculate": false,
+        "calculation": {},
+        "cellGap": 2,
+        "cellValues": {},
+        "color": {
+          "exponent": 0.5,
+          "fill": "#b4ff00",
+          "mode": "scheme",
+          "reverse": false,
+          "scale": "exponential",
+          "scheme": "Greens",
+          "steps": 128
+        },
+        "exemplars": {
+          "color": "rgba(255,0,255,0.7)"
+        },
+        "filterValues": {
+          "le": 1e-9
+        },
+        "legend": {
+          "show": false
+        },
+        "rowsFrame": {
+          "layout": "auto"
+        },
+        "showValue": "never",
+        "tooltip": {
+          "show": true,
+          "yHistogram": false
+        },
+        "yAxis": {
+          "axisPlacement": "left",
+          "reverse": false,
+          "unit": "s"
+        }
+      },
+      "pluginVersion": "9.3.2",
       "repeat": "cluster",
       "targets": [
         {
@@ -637,7 +718,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 46
+        "y": 25
       },
       "id": 15,
       "panels": [],
@@ -665,10 +746,11 @@
       "fillGradient": 5,
       "gridPos": {
         "h": 7,
-        "w": 6,
+        "w": 8,
         "x": 0,
-        "y": 47
+        "y": 26
       },
+      "hiddenSeries": false,
       "id": 8,
       "legend": {
         "alignAsTable": false,
@@ -685,7 +767,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "9.3.2",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -748,6 +834,7 @@
         }
       ],
       "thresholds": [],
+      "timeRegions": [],
       "title": "$cluster: Workspace Phases",
       "tooltip": {
         "shared": true,
@@ -773,7 +860,10 @@
           "min": 0,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false
+      }
     },
     {
       "collapsed": false,
@@ -785,7 +875,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 61
+        "y": 33
       },
       "id": 16,
       "panels": [],
@@ -813,10 +903,11 @@
       "fillGradient": 5,
       "gridPos": {
         "h": 7,
-        "w": 6,
+        "w": 8,
         "x": 0,
-        "y": 62
+        "y": 34
       },
+      "hiddenSeries": false,
       "id": 9,
       "legend": {
         "alignAsTable": false,
@@ -833,7 +924,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "9.3.2",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -868,6 +963,7 @@
         }
       ],
       "thresholds": [],
+      "timeRegions": [],
       "title": "$cluster: Workspace Failures per second",
       "tooltip": {
         "shared": true,
@@ -893,7 +989,10 @@
           "min": 0,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false
+      }
     },
     {
       "collapsed": false,
@@ -905,7 +1004,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 76
+        "y": 41
       },
       "id": 17,
       "panels": [],
@@ -933,10 +1032,11 @@
       "fillGradient": 5,
       "gridPos": {
         "h": 7,
-        "w": 6,
+        "w": 8,
         "x": 0,
-        "y": 77
+        "y": 42
       },
+      "hiddenSeries": false,
       "id": 10,
       "legend": {
         "alignAsTable": false,
@@ -953,7 +1053,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "9.3.2",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -975,6 +1079,7 @@
         }
       ],
       "thresholds": [],
+      "timeRegions": [],
       "title": "$cluster: Number of nodes",
       "tooltip": {
         "shared": true,
@@ -1000,7 +1105,10 @@
           "min": 0,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false
+      }
     }
   ],
   "refresh": "30s",
@@ -1023,6 +1131,7 @@
         "name": "datasource",
         "options": [],
         "query": "prometheus",
+        "queryValue": "",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
