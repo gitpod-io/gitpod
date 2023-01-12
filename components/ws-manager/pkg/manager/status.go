@@ -552,6 +552,8 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 // extractFailure returns a pod failure reason and possibly a phase. If phase is nil then
 // one should extract the phase themselves. If the pod has not failed, this function returns "", nil.
 func (m *Manager) extractFailure(wso workspaceObjects, metrics *metrics) (string, *api.WorkspacePhase) {
+	log := log.WithFields(wso.GetOWI())
+
 	pod := wso.Pod
 	wsType := strings.ToUpper(pod.Labels[wsk8s.TypeLabel])
 	wsClass := pod.Labels[workspaceClassLabel]
@@ -607,15 +609,14 @@ func (m *Manager) extractFailure(wso workspaceObjects, metrics *metrics) (string
 					phase = &c
 				}
 
-				// TODO(jenting)
-				// remove the debug log after we address the issue https://github.com/gitpod-io/gitpod/issues/12021
-				log.WithField("phase", status.Phase).WithField("code", terminationState.ExitCode).WithField("reason", terminationState.Reason).Infof("reason: %s, message: %s", status.Reason, status.Message)
-				// dump the underlying node taint
-				var node corev1.Node
-				if m.Clientset != nil {
-					if err := m.Clientset.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: wso.NodeName()}, &node); err == nil {
-						for _, taint := range node.Spec.Taints {
-							log.WithField("nodeName", wso.NodeName()).Infof("taint key: %v, value: %v, effect: %v, time: %v", taint.Key, taint.Value, taint.Effect, taint.TimeAdded.String())
+				if terminationState.ExitCode == containerKilledExitCode && terminationState.Reason == "ContainerStatusUnknown" {
+					// For some reason, the pod is killed with unknown container status and no taints on the underlying node.
+					// Therefore, we skip extracting the failure from the terminated message.
+					// ref: https://github.com/gitpod-io/gitpod/issues/12021
+					if m.Clientset != nil {
+						var node corev1.Node
+						if err := m.Clientset.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: wso.NodeName()}, &node); err == nil && len(node.Spec.Taints) == 0 {
+							return "", nil
 						}
 					}
 				}
