@@ -100,7 +100,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			{
 				Name:  "OPENFGA_DATASTORE_URI",
-				Value: fmt.Sprintf("$(DB_USERNAME):$(DB_PASSWORD)@tcp(%s:%d)/%s?parseTime=true", dbHost, CloudSQLProxyPort, cfg.CloudSQL.Instance),
+				Value: fmt.Sprintf("$(DB_USERNAME):$(DB_PASSWORD)@tcp(%s:%d)/%s?parseTime=true", dbHost, CloudSQLProxyPort, cfg.CloudSQL.Database),
 			},
 		}...)
 	}
