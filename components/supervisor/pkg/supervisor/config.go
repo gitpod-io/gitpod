@@ -285,6 +285,9 @@ type WorkspaceConfig struct {
 
 	// TerminationGracePeriodSeconds is the max number of seconds the workspace can take to shut down all its processes after SIGTERM was sent.
 	TerminationGracePeriodSeconds *int `env:"GITPOD_TERMINATION_GRACE_PERIOD_SECONDS"`
+
+	// DebugWorkspace controls whether the workspace is running in inner-loop
+	DebugWorkspace bool `env:"SUPERVISOR_DEBUG_WORKSPACE"`
 }
 
 // WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service.

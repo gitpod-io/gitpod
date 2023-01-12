@@ -60,10 +60,11 @@ func (*NoopExposedPorts) Expose(ctx context.Context, local uint32, public bool) 
 // GitpodExposedPorts uses a connection to the Gitpod server to implement
 // the ExposedPortsInterface.
 type GitpodExposedPorts struct {
-	WorkspaceID   string
-	InstanceID    string
-	WorkspaceUrl  string
-	gitpodService serverapi.APIInterface
+	WorkspaceID    string
+	InstanceID     string
+	WorkspaceUrl   string
+	gitpodService  serverapi.APIInterface
+	debugWorkspace bool
 
 	localExposedPort   []uint32
 	localExposedNotice chan struct{}
@@ -79,12 +80,13 @@ type exposePortRequest struct {
 }
 
 // NewGitpodExposedPorts creates a new instance of GitpodExposedPorts
-func NewGitpodExposedPorts(workspaceID string, instanceID string, workspaceUrl string, gitpodService serverapi.APIInterface) *GitpodExposedPorts {
+func NewGitpodExposedPorts(workspaceID string, instanceID string, workspaceUrl string, debugWorkspace bool, gitpodService serverapi.APIInterface) *GitpodExposedPorts {
 	return &GitpodExposedPorts{
-		WorkspaceID:   workspaceID,
-		InstanceID:    instanceID,
-		WorkspaceUrl:  workspaceUrl,
-		gitpodService: gitpodService,
+		WorkspaceID:    workspaceID,
+		InstanceID:     instanceID,
+		WorkspaceUrl:   workspaceUrl,
+		gitpodService:  gitpodService,
+		debugWorkspace: debugWorkspace,
 
 		// allow clients to submit 30 expose requests without blocking
 		requests:           make(chan *exposePortRequest, 30),
@@ -97,7 +99,11 @@ func (g *GitpodExposedPorts) getPortUrl(port uint32) string {
 	if err != nil {
 		return ""
 	}
-	u.Host = fmt.Sprintf("%d-%s", port, u.Host)
+	if g.debugWorkspace {
+		u.Host = fmt.Sprintf("%d-debug-%s", port, u.Host)
+	} else {
+		u.Host = fmt.Sprintf("%d-%s", port, u.Host)
+	}
 	return u.String()
 }
 
@@ -227,7 +233,7 @@ func (g *GitpodExposedPorts) doExpose(req *exposePortRequest) {
 
 // Expose exposes a port to the internet. Upon successful execution any Observer will be updated.
 func (g *GitpodExposedPorts) Expose(ctx context.Context, local uint32, public bool) <-chan error {
-	if !public {
+	if !public || g.debugWorkspace {
 		if !g.existInLocalExposed(local) {
 			g.localExposedPort = append(g.localExposedPort, local)
 			g.localExposedNotice <- struct{}{}

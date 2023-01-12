@@ -141,7 +141,7 @@ func startRing1(ctx context.Context, isRootProcess bool, prep *api.PrepareForUse
 		fmt.Sprintf("WORKSPACEKIT_NO_WORKSPACE_MOUNT=%v", prep.FullWorkspaceBackup || prep.PersistentVolumeClaim),
 	)
 	if !isRootProcess {
-		cmd.Env = append(cmd.Env, "WORKSPACEKIT_ROOTFS=/demo")
+		cmd.Env = append(cmd.Env, "WORKSPACEKIT_ROOTFS=/demo", "SUPERVISOR_DEBUG_WORKSPACE=true")
 	}
 
 	if err := cmd.Start(); err != nil {
@@ -237,6 +237,9 @@ func (svc *workspaceInnerLoopService) StartInnerLoop(req *api.StartInnerLoopRequ
 
 	startDebugProxy := func() {
 		cmd := exec.Command("/.supervisor/supervisor", "proxy")
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			Pdeathsig: syscall.SIGKILL,
+		}
 		err := cmd.Start()
 		if err != nil {
 			log.WithError(err).Error("cannot run debug workspace proxy")
