@@ -7,7 +7,7 @@
 import { Workspace } from "@gitpod/gitpod-protocol";
 import { FunctionComponent, useCallback, useState } from "react";
 import Modal from "../components/Modal";
-import { getGitpodService } from "../service/service";
+import { useUpdateWorkspaceDescription } from "../data/workspaces/mutations";
 
 type Props = {
     workspace: Workspace;
@@ -16,6 +16,7 @@ type Props = {
 export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onClose }) => {
     const [description, setDescription] = useState(workspace.description || "");
     const [errorMessage, setErrorMessage] = useState("");
+    const { mutateAsync, isLoading } = useUpdateWorkspaceDescription();
 
     const updateWorkspaceDescription = useCallback(async () => {
         try {
@@ -31,21 +32,21 @@ export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
 
             setErrorMessage("");
 
-            // TODO: Put this in a mutation
-            await getGitpodService().server.setWorkspaceDescription(workspace.id, description);
+            await mutateAsync({ workspaceId: workspace.id, newDescription: description });
+            console.log("after mutateAsync");
             onClose();
         } catch (error) {
             console.error(error);
             setErrorMessage("Something went wrong. Please try renaming again.");
         }
-    }, [description, onClose, workspace.id]);
+    }, [description, mutateAsync, onClose, workspace.id]);
 
     return (
         <Modal
             visible
             onClose={onClose}
-            onEnter={() => {
-                updateWorkspaceDescription();
+            onEnter={async () => {
+                await updateWorkspaceDescription();
                 return true;
             }}
         >
@@ -61,6 +62,7 @@ export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
                     className="w-full truncate"
                     type="text"
                     value={description}
+                    disabled={isLoading}
                     onChange={(e) => setDescription(e.target.value)}
                 />
                 <div className="mt-1">
@@ -69,10 +71,10 @@ export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
                 </div>
             </div>
             <div className="flex justify-end mt-6">
-                <button className="secondary" onClick={onClose}>
+                <button disabled={isLoading} className="secondary" onClick={onClose}>
                     Cancel
                 </button>
-                <button className="ml-2" type="submit" onClick={updateWorkspaceDescription}>
+                <button disabled={isLoading} className="ml-2" type="submit" onClick={updateWorkspaceDescription}>
                     Update Description
                 </button>
             </div>

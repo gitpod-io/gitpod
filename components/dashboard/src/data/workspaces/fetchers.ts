@@ -64,6 +64,18 @@ export const useFetchWorkspaces = ({ limit = 50 }: UseFetchWorkspacesArgs) => {
     }, [limit]);
 };
 
+type FetchUpdateWorkspaceDescriptionArgs = {
+    workspaceId: string;
+    newDescription: string;
+};
+// TODO: Should args be on the hook, or the return callback?
+export const useFetchUpdateWorkspaceDescription = () => {
+    return useCallback(async ({ workspaceId, newDescription }: FetchUpdateWorkspaceDescriptionArgs) => {
+        console.log("fetcher update");
+        await getGitpodService().server.setWorkspaceDescription(workspaceId, newDescription);
+    }, []);
+};
+
 /**
  * Given a WorkspaceInfo, return a timestamp of the last related activitiy
  *
