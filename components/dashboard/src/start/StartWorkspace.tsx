@@ -113,7 +113,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     private readonly toDispose = new DisposableCollection();
     componentWillMount() {
         if (this.props.runsInIFrame) {
-            this.ideFrontendService = getIDEFrontendService(getGitpodService(), sessionId);
+            this.ideFrontendService = getIDEFrontendService(this.props.workspaceId, sessionId, getGitpodService());
             this.ideFrontendService.onSetState((data) => {
                 if (data.ideFrontendFailureCause) {
                     const error = { message: data.ideFrontendFailureCause };

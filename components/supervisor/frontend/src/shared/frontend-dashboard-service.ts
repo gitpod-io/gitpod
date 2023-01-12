@@ -7,6 +7,7 @@
 import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/frontend-dashboard-service";
 import { RemoteTrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
 import { Emitter } from "@gitpod/gitpod-protocol/lib/util/event";
+import { serverUrl } from "./urls";
 
 export class FrontendDashboardServiceClient implements IDEFrontendDashboardService.IClient {
     public latestStatus!: IDEFrontendDashboardService.Status;
@@ -20,6 +21,10 @@ export class FrontendDashboardServiceClient implements IDEFrontendDashboardServi
     constructor(private serverWindow: Window) {
         console.log("===========new.FrontendDashboardServiceClient", serverWindow);
         window.addEventListener("message", (event: MessageEvent) => {
+            if (event.origin !== serverUrl.url.origin) {
+                return;
+            }
+
             if (IDEFrontendDashboardService.isStatusUpdateEventData(event.data)) {
                 console.log("=============supervisor isStatusUpdateEventData", event.data);
                 this.latestStatus = event.data.status;
@@ -45,20 +50,23 @@ export class FrontendDashboardServiceClient implements IDEFrontendDashboardServi
         console.log("=========== supervisor send trackEvent");
         this.serverWindow.postMessage(
             { type: "ide-track-event", msg } as IDEFrontendDashboardService.TrackEventData,
-            "*",
+            serverUrl.url.origin,
         );
     }
 
     activeHeartbeat(): void {
         console.log("=========== supervisor send activeHeartbeat");
-        this.serverWindow.postMessage({ type: "ide-heartbeat" } as IDEFrontendDashboardService.HeartbeatEventData, "*");
+        this.serverWindow.postMessage(
+            { type: "ide-heartbeat" } as IDEFrontendDashboardService.HeartbeatEventData,
+            serverUrl.url.origin,
+        );
     }
 
     setState(state: IDEFrontendDashboardService.SetStateData): void {
         console.log("=========== supervisor send setState");
         this.serverWindow.postMessage(
             { type: "ide-set-state", state } as IDEFrontendDashboardService.SetStateData,
-            "*",
+            serverUrl.url.origin,
         );
     }
 }

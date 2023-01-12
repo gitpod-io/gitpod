@@ -58,16 +58,16 @@ export function getGitpodService(): GitpodService {
 }
 
 let ideFrontendService: IDEFrontendService | undefined;
-export function getIDEFrontendService(service: GitpodService, sessionId: string) {
+export function getIDEFrontendService(workspaceID: string, sessionId: string, service: GitpodService) {
     if (!ideFrontendService) {
-        ideFrontendService = new IDEFrontendService(service, sessionId, window.parent);
+        ideFrontendService = new IDEFrontendService(workspaceID, sessionId, service, window.parent);
     }
     return ideFrontendService;
 }
 
 export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
-    private workspaceID: string;
     private instanceID: string | undefined;
+    private ideUrl: URL | undefined;
     private user: User | undefined;
 
     private latestStatus?: IDEFrontendDashboardService.Status;
@@ -75,15 +75,18 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
     private readonly onDidChangeEmitter = new Emitter<IDEFrontendDashboardService.SetStateData>();
     readonly onSetState = this.onDidChangeEmitter.event;
 
-    constructor(private service: GitpodService, private sessionId: string, private clientWindow: Window) {
-        // we will need hash here
-        const gitpodHostUrl = new GitpodHostUrl(new URL(window.location.toString()));
-        if (!gitpodHostUrl.workspaceId) {
-            throw new Error("no workspace id");
-        }
-        this.workspaceID = gitpodHostUrl.workspaceId;
+    constructor(
+        private workspaceID: string,
+        private sessionId: string,
+        private service: GitpodService,
+        private clientWindow: Window,
+    ) {
         this.processServerInfo();
         window.addEventListener("message", (event: MessageEvent) => {
+            if (event.origin !== this.ideUrl?.origin) {
+                return;
+            }
+
             if (IDEFrontendDashboardService.isTrackEventData(event.data)) {
                 console.log("=============dashboard isTrackEventData", event.data);
                 this.trackEvent(event.data.msg);
@@ -104,6 +107,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
 
             const data = { sessionId: this.sessionId };
             const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+            const gitpodHostUrl = new GitpodHostUrl(new URL(window.location.toString()));
             const url = gitpodHostUrl.withApi({ pathname: `/auth/workspacePageClose/${this.instanceID}` }).toString();
             navigator.sendBeacon(url, blob);
         });
@@ -119,6 +123,9 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
 
         const listener = await this.service.listenToInstance(this.workspaceID);
         listener.onDidChange(() => {
+            this.ideUrl = listener.info.latestInstance?.ideUrl
+                ? new URL(listener.info.latestInstance?.ideUrl)
+                : undefined;
             const status = this.getWorkspaceStatus(listener.info);
             this.latestStatus = status;
             this.sendStatusUpdate(this.latestStatus);
@@ -173,21 +180,31 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
     }
 
     sendStatusUpdate(status: IDEFrontendDashboardService.Status): void {
+        if (!this.ideUrl) {
+            console.log("=========== dashboard send sendStatusUpdate => NO ideUrl");
+            return;
+        }
+
         console.log("=========== dashboard send sendStatusUpdate");
         this.clientWindow.postMessage(
             {
                 type: "ide-status-update",
                 status,
             } as IDEFrontendDashboardService.StatusUpdateEventData,
-            "*",
+            this.ideUrl.origin,
         );
     }
 
     relocate(url: string): void {
+        if (!this.ideUrl) {
+            console.log("=========== dashboard send relocate => NO ideUrl");
+            return;
+        }
+
         console.log("=========== dashboard send relocate");
         this.clientWindow.postMessage(
             { type: "ide-relocate", url } as IDEFrontendDashboardService.RelocateEventData,
-            "*",
+            this.ideUrl.origin,
         );
     }
 }
