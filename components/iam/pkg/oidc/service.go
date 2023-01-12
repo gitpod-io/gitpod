@@ -16,10 +16,7 @@ import (
 	"strings"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	goidc "github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
-
-	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 type Service struct {
@@ -45,37 +42,6 @@ type StartParams struct {
 type AuthFlowResult struct {
 	IDToken *oidc.IDToken          `json:"idToken"`
 	Claims  map[string]interface{} `json:"claims"`
-}
-
-func NewServiceWithTestConfig(configPath string, sessionServiceAddress string) (*Service, error) {
-	s := NewService(sessionServiceAddress)
-
-	testConfig, err := readDemoConfigFromFile(configPath)
-	if err != nil {
-		log.WithError(err).Errorf("failed to read test config")
-	}
-	if testConfig != nil {
-		clientConfig := &ClientConfig{
-			Issuer: testConfig.Issuer,
-			ID:     "R4ND0M1D",
-			OAuth2Config: &oauth2.Config{
-				ClientID:     testConfig.ClientID,
-				ClientSecret: testConfig.ClientSecret,
-				RedirectURL:  testConfig.RedirectURL,
-				Scopes:       []string{goidc.ScopeOpenID, "profile", "email"},
-			},
-			VerifierConfig: &goidc.Config{
-				ClientID: testConfig.ClientID,
-			},
-		}
-
-		err = s.AddClientConfig(clientConfig)
-		if err != nil {
-			log.WithError(err).Errorf("failed to add client config")
-		}
-	}
-
-	return s, nil
 }
 
 func NewService(sessionServiceAddress string) *Service {
