@@ -53,6 +53,7 @@ import { StartWorkspaceOptions } from "../start/start-workspace-options";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
+const WorkspacesNew = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/WorkspacesNew"));
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/Account"));
 const Notifications = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/Notifications"));
 const Billing = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/Billing"));
@@ -172,6 +173,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                     <Route path={projectsPathNew} exact component={NewProject} />
                     <Route path="/open" exact component={Open} />
                     <Route path="/setup" exact component={Setup} />
+                    <Route path={workspacesPathMain} exact component={WorkspacesNew} />
                     <Route path={workspacesPathMain} exact component={Workspaces} />
                     <Route path={settingsPathAccount} exact component={Account} />
                     <Route path={usagePathMain} exact component={Usage} />

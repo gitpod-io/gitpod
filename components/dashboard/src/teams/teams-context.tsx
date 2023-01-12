@@ -45,3 +45,9 @@ export function useCurrentTeam(): Team | undefined {
 
     return getCurrentTeam(location, teams);
 }
+
+export function useTeams(): Team[] {
+    const { teams } = useContext(TeamsContext);
+
+    return teams || [];
+}
