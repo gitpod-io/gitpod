@@ -18,7 +18,6 @@ import NoAccess from "../icons/NoAccess.svg";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { openAuthorizeWindow } from "../provider-utils";
 import { UserContext } from "../user-context";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { listAllProjects } from "../service/public-api";
 
 export default function () {
@@ -26,7 +25,6 @@ export default function () {
 
     const { teams } = useContext(TeamsContext);
     const { user } = useContext(UserContext);
-    const { usePublicApiProjectsService } = useContext(FeatureFlagContext);
     const team = getCurrentTeam(location, teams);
 
     const match = useRouteMatch<{ team: string; resource: string }>("/(t/)?:team/:resource");
@@ -68,13 +66,9 @@ export default function () {
         }
         let projects: Project[];
         if (!!team) {
-            projects = usePublicApiProjectsService
-                ? await listAllProjects({ teamId: team.id })
-                : await getGitpodService().server.getTeamProjects(team.id);
+            projects = await listAllProjects({ teamId: team.id });
         } else {
-            projects = usePublicApiProjectsService
-                ? await listAllProjects({ userId: user?.id })
-                : await getGitpodService().server.getUserProjects();
+            projects = await listAllProjects({ userId: user?.id });
         }
 
         // Find project matching with slug, otherwise with name

@@ -10,7 +10,6 @@ import { useContext, useEffect, useState } from "react";
 import { Redirect, useLocation } from "react-router";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
@@ -41,7 +40,6 @@ export default function TeamSettings() {
     const [isUserOwner, setIsUserOwner] = useState(true);
     const { teams } = useContext(TeamsContext);
     const { user } = useContext(UserContext);
-    const { usePublicApiTeamsService } = useContext(FeatureFlagContext);
     const [billingMode, setBillingMode] = useState<BillingMode | undefined>(undefined);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
@@ -51,11 +49,9 @@ export default function TeamSettings() {
     useEffect(() => {
         (async () => {
             if (!team) return;
-            const members = usePublicApiTeamsService
-                ? await publicApiTeamMembersToProtocol(
-                      (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
-                  )
-                : await getGitpodService().server.getTeamMembers(team.id);
+            const members = publicApiTeamMembersToProtocol(
+                (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
+            );
 
             const currentUserInTeam = members.find((member) => member.userId === user?.id);
             setIsUserOwner(currentUserInTeam?.role === "owner");
@@ -74,9 +70,7 @@ export default function TeamSettings() {
             return;
         }
 
-        usePublicApiTeamsService
-            ? await teamsService.deleteTeam({ teamId: team.id })
-            : await getGitpodService().server.deleteTeam(team.id);
+        await teamsService.deleteTeam({ teamId: team.id });
 
         document.location.href = gitpodHostUrl.asDashboard().toString();
     };

@@ -16,7 +16,6 @@ import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
 import { shortCommitMessage } from "./render-utils";
 import { listAllProjects } from "../service/public-api";
 import { UserContext } from "../user-context";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 
 export default function () {
     const history = useHistory();
@@ -24,7 +23,6 @@ export default function () {
 
     const { teams } = useContext(TeamsContext);
     const { user } = useContext(UserContext);
-    const { usePublicApiProjectsService } = useContext(FeatureFlagContext);
     const team = getCurrentTeam(location, teams);
 
     const match = useRouteMatch<{ team: string; project: string; prebuildId: string }>(
@@ -44,13 +42,9 @@ export default function () {
         (async () => {
             let projects: Project[];
             if (!!team) {
-                projects = usePublicApiProjectsService
-                    ? await listAllProjects({ teamId: team.id })
-                    : await getGitpodService().server.getTeamProjects(team.id);
+                projects = await listAllProjects({ teamId: team.id });
             } else {
-                projects = usePublicApiProjectsService
-                    ? await listAllProjects({ userId: user?.id })
-                    : await getGitpodService().server.getUserProjects();
+                projects = await listAllProjects({ userId: user?.id });
             }
 
             const project =

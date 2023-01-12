@@ -13,7 +13,6 @@ import { UserContext } from "../user-context";
 import SelectableCardSolid from "../components/SelectableCardSolid";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import Alert from "./Alert";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
 
 export function BillingAccountSelector(props: { onSelected?: () => void }) {
@@ -22,7 +21,6 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
     const [teamsAvailableForAttribution, setTeamsAvailableForAttribution] = useState<Team[] | undefined>();
     const [membersByTeam, setMembersByTeam] = useState<Record<string, TeamMemberInfo[]>>({});
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
-    const { usePublicApiTeamsService } = useContext(FeatureFlagContext);
 
     useEffect(() => {
         if (!teams) {
@@ -57,11 +55,9 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
         Promise.all(
             teams.map(async (team) => {
                 try {
-                    members[team.id] = usePublicApiTeamsService
-                        ? await publicApiTeamMembersToProtocol(
-                              (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
-                          )
-                        : await getGitpodService().server.getTeamMembers(team.id);
+                    members[team.id] = publicApiTeamMembersToProtocol(
+                        (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
+                    );
                 } catch (error) {
                     console.warn("Could not get members of team", team, error);
                 }

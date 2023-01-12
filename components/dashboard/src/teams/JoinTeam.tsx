@@ -6,14 +6,11 @@
 
 import { useContext, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { publicApiTeamsToProtocol, publicApiTeamToProtocol, teamsService } from "../service/public-api";
-import { getGitpodService } from "../service/service";
 import { TeamsContext } from "./teams-context";
 
 export default function () {
     const { setTeams } = useContext(TeamsContext);
-    const { usePublicApiTeamsService } = useContext(FeatureFlagContext);
     const history = useHistory();
 
     const [joinError, setJoinError] = useState<Error>();
@@ -26,13 +23,8 @@ export default function () {
                     throw new Error("This invite URL is incorrect.");
                 }
 
-                const team = usePublicApiTeamsService
-                    ? publicApiTeamToProtocol((await teamsService.joinTeam({ invitationId: inviteId })).team!)
-                    : await getGitpodService().server.joinTeam(inviteId);
-
-                const teams = usePublicApiTeamsService
-                    ? publicApiTeamsToProtocol((await teamsService.listTeams({})).teams)
-                    : await getGitpodService().server.getTeams();
+                const team = publicApiTeamToProtocol((await teamsService.joinTeam({ invitationId: inviteId })).team!);
+                const teams = publicApiTeamsToProtocol((await teamsService.listTeams({})).teams);
 
                 setTeams(teams);
 
