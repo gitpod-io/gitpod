@@ -637,19 +637,25 @@ var ring1Cmd = &cobra.Command{
 		}
 
 		// TODO need setup another network interface
+		client, err = connectToInWorkspaceDaemonService(ctx)
+		if err != nil {
+			log.WithError(err).Error("cannot connect to daemon from ring1 after ring2")
+			return
+		}
 		if rootfs == "" {
-			client, err = connectToInWorkspaceDaemonService(ctx)
-			if err != nil {
-				log.WithError(err).Error("cannot connect to daemon from ring1 after ring2")
-				return
-			}
 			_, err = client.SetupPairVeths(ctx, &daemonapi.SetupPairVethsRequest{Pid: int64(cmd.Process.Pid)})
 			if err != nil {
 				log.WithError(err).Error("cannot setup pair of veths")
 				return
 			}
-			client.Close()
+		} else {
+			_, err = client.SetupDebugPairVeths(ctx, &daemonapi.SetupDebugPairVethsRequest{Pid: int64(cmd.Process.Pid)})
+			if err != nil {
+				log.WithError(err).Error("cannot setup debug pair of veths")
+				return
+			}
 		}
+		client.Close()
 
 		log.Info("signaling to child process")
 		_, err = msgutil.MarshalToWriter(ring2Conn, ringSyncMsg{

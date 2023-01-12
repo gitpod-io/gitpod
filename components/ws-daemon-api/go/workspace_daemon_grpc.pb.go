@@ -63,6 +63,8 @@ type InWorkspaceServiceClient interface {
 	SetupPairVeths(ctx context.Context, in *SetupPairVethsRequest, opts ...grpc.CallOption) (*SetupPairVethsResponse, error)
 	// Get information about the workspace
 	WorkspaceInfo(ctx context.Context, in *WorkspaceInfoRequest, opts ...grpc.CallOption) (*WorkspaceInfoResponse, error)
+	// Set up a pair of veths that interconnect the specified PID and the workspace container's network namespace, but only setup route for access network.
+	SetupDebugPairVeths(ctx context.Context, in *SetupDebugPairVethsRequest, opts ...grpc.CallOption) (*SetupDebugPairVethsResponse, error)
 }
 
 type inWorkspaceServiceClient struct {
@@ -163,6 +165,15 @@ func (c *inWorkspaceServiceClient) WorkspaceInfo(ctx context.Context, in *Worksp
 	return out, nil
 }
 
+func (c *inWorkspaceServiceClient) SetupDebugPairVeths(ctx context.Context, in *SetupDebugPairVethsRequest, opts ...grpc.CallOption) (*SetupDebugPairVethsResponse, error) {
+	out := new(SetupDebugPairVethsResponse)
+	err := c.cc.Invoke(ctx, "/iws.InWorkspaceService/SetupDebugPairVeths", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InWorkspaceServiceServer is the server API for InWorkspaceService service.
 // All implementations must embed UnimplementedInWorkspaceServiceServer
 // for forward compatibility
@@ -204,6 +215,8 @@ type InWorkspaceServiceServer interface {
 	SetupPairVeths(context.Context, *SetupPairVethsRequest) (*SetupPairVethsResponse, error)
 	// Get information about the workspace
 	WorkspaceInfo(context.Context, *WorkspaceInfoRequest) (*WorkspaceInfoResponse, error)
+	// Set up a pair of veths that interconnect the specified PID and the workspace container's network namespace, but only setup route for access network.
+	SetupDebugPairVeths(context.Context, *SetupDebugPairVethsRequest) (*SetupDebugPairVethsResponse, error)
 	mustEmbedUnimplementedInWorkspaceServiceServer()
 }
 
@@ -240,6 +253,9 @@ func (UnimplementedInWorkspaceServiceServer) SetupPairVeths(context.Context, *Se
 }
 func (UnimplementedInWorkspaceServiceServer) WorkspaceInfo(context.Context, *WorkspaceInfoRequest) (*WorkspaceInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WorkspaceInfo not implemented")
+}
+func (UnimplementedInWorkspaceServiceServer) SetupDebugPairVeths(context.Context, *SetupDebugPairVethsRequest) (*SetupDebugPairVethsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetupDebugPairVeths not implemented")
 }
 func (UnimplementedInWorkspaceServiceServer) mustEmbedUnimplementedInWorkspaceServiceServer() {}
 
@@ -434,6 +450,24 @@ func _InWorkspaceService_WorkspaceInfo_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InWorkspaceService_SetupDebugPairVeths_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetupDebugPairVethsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InWorkspaceServiceServer).SetupDebugPairVeths(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/iws.InWorkspaceService/SetupDebugPairVeths",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InWorkspaceServiceServer).SetupDebugPairVeths(ctx, req.(*SetupDebugPairVethsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // InWorkspaceService_ServiceDesc is the grpc.ServiceDesc for InWorkspaceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -480,6 +514,10 @@ var InWorkspaceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "WorkspaceInfo",
 			Handler:    _InWorkspaceService_WorkspaceInfo_Handler,
+		},
+		{
+			MethodName: "SetupDebugPairVeths",
+			Handler:    _InWorkspaceService_SetupDebugPairVeths_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

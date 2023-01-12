@@ -76,6 +76,28 @@ function deserialize_iws_PrepareForUserNSResponse(buffer_arg) {
   return workspace_daemon_pb.PrepareForUserNSResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_iws_SetupDebugPairVethsRequest(arg) {
+  if (!(arg instanceof workspace_daemon_pb.SetupDebugPairVethsRequest)) {
+    throw new Error('Expected argument of type iws.SetupDebugPairVethsRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_SetupDebugPairVethsRequest(buffer_arg) {
+  return workspace_daemon_pb.SetupDebugPairVethsRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_iws_SetupDebugPairVethsResponse(arg) {
+  if (!(arg instanceof workspace_daemon_pb.SetupDebugPairVethsResponse)) {
+    throw new Error('Expected argument of type iws.SetupDebugPairVethsResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_SetupDebugPairVethsResponse(buffer_arg) {
+  return workspace_daemon_pb.SetupDebugPairVethsResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_iws_SetupPairVethsRequest(arg) {
   if (!(arg instanceof workspace_daemon_pb.SetupPairVethsRequest)) {
     throw new Error('Expected argument of type iws.SetupPairVethsRequest');
@@ -346,6 +368,18 @@ workspaceInfo: {
     requestDeserialize: deserialize_iws_WorkspaceInfoRequest,
     responseSerialize: serialize_iws_WorkspaceInfoResponse,
     responseDeserialize: deserialize_iws_WorkspaceInfoResponse,
+  },
+  // Set up a pair of veths that interconnect the specified PID and the workspace container's network namespace, but only setup route for access network.
+setupDebugPairVeths: {
+    path: '/iws.InWorkspaceService/SetupDebugPairVeths',
+    requestStream: false,
+    responseStream: false,
+    requestType: workspace_daemon_pb.SetupDebugPairVethsRequest,
+    responseType: workspace_daemon_pb.SetupDebugPairVethsResponse,
+    requestSerialize: serialize_iws_SetupDebugPairVethsRequest,
+    requestDeserialize: deserialize_iws_SetupDebugPairVethsRequest,
+    responseSerialize: serialize_iws_SetupDebugPairVethsResponse,
+    responseDeserialize: deserialize_iws_SetupDebugPairVethsResponse,
   },
 };
 

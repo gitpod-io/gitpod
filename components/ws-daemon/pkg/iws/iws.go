@@ -392,6 +392,54 @@ func (wbs *InWorkspaceServiceServer) SetupPairVeths(ctx context.Context, req *ap
 	return &api.SetupPairVethsResponse{}, nil
 }
 
+func (wbs *InWorkspaceServiceServer) SetupDebugPairVeths(ctx context.Context, req *api.SetupDebugPairVethsRequest) (*api.SetupDebugPairVethsResponse, error) {
+	rt := wbs.Uidmapper.Runtime
+	if rt == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "not connected to container runtime")
+	}
+	wscontainerID, err := rt.WaitForContainer(ctx, wbs.Session.InstanceID)
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("SetupDebugPairVeths: cannot find workspace container")
+		return nil, status.Errorf(codes.Internal, "cannot find workspace container")
+	}
+
+	containerPID, err := rt.ContainerPID(ctx, wscontainerID)
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("SetupDebugPairVeths: cannot find workspace container PID")
+		return nil, status.Errorf(codes.Internal, "cannnot setup a pair of veths")
+	}
+
+	err = nsi.Nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
+		c.Args = append(c.Args, "setup-pair-veths", "--target-pid", strconv.Itoa(int(req.Pid)), "--network-offset", strconv.Itoa(int(1)))
+	}, nsi.EnterMountNS(true), nsi.EnterPidNS(true), nsi.EnterNetNS(true))
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("SetupDebugPairVeths: cannot setup a pair of veths")
+		return nil, status.Errorf(codes.Internal, "cannot setup a pair of veths")
+	}
+
+	pid, err := wbs.Uidmapper.findHostPID(containerPID, uint64(req.Pid))
+	if err != nil {
+		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID, err)
+	}
+	err = nsi.Nsinsider(wbs.Session.InstanceID, int(pid), func(c *exec.Cmd) {
+		c.Args = append(c.Args, "setup-peer-veth", "--network-offset", strconv.Itoa(int(1)))
+	}, nsi.EnterMountNS(true), nsi.EnterPidNS(true), nsi.EnterNetNS(true))
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("SetupDebugPairVeths: cannot setup a peer veths")
+		return nil, status.Errorf(codes.Internal, "cannot setup a peer veths")
+	}
+
+	err = nsi.Nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
+		c.Args = append(c.Args, "enable-ip-forward")
+	}, nsi.EnterNetNS(true), nsi.EnterMountNSPid(1))
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("SetupDebugPairVeths: cannot enable IP forwarding")
+		return nil, status.Errorf(codes.Internal, "cannot enable IP forwarding")
+	}
+
+	return &api.SetupDebugPairVethsResponse{}, nil
+}
+
 func evacuateToCGroup(ctx context.Context, mountpoint, oldGroup, child string) error {
 	newGroup := filepath.Join(oldGroup, child)
 	oldPath := filepath.Join(mountpoint, oldGroup)

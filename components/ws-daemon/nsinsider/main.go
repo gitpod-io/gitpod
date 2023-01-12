@@ -268,16 +268,21 @@ func main() {
 						Name:     "target-pid",
 						Required: true,
 					},
+					&cli.IntFlag{
+						Name:  "network-offset",
+						Value: 0,
+					},
 				},
 				Action: func(c *cli.Context) error {
-					containerIf, vethIf, cethIf := "eth0", "veth0", "ceth0"
+					offset := c.Int("network-offset")
+					containerIf, vethIf, cethIf := "eth0", fmt.Sprintf("veth%d", offset), fmt.Sprintf("ceth%d", offset)
 					mask := net.IPv4Mask(255, 255, 255, 0)
 					vethIp := net.IPNet{
-						IP:   net.IPv4(10, 0, 5, 1),
+						IP:   net.IPv4(10, 0, byte(5+offset), 1),
 						Mask: mask,
 					}
 					cethIp := net.IPNet{
-						IP:   net.IPv4(10, 0, 5, 2),
+						IP:   net.IPv4(10, 0, byte(5+offset), 2),
 						Mask: mask,
 					}
 					masqueradeAddr := net.IPNet{
@@ -289,6 +294,10 @@ func main() {
 					eth0, err := netlink.LinkByName(containerIf)
 					if err != nil {
 						return xerrors.Errorf("cannot get container network device %s: %w", containerIf, err)
+					}
+
+					if oldVeth, err := netlink.LinkByName(vethIf); err == nil && oldVeth != nil {
+						netlink.LinkDel(oldVeth)
 					}
 
 					veth := &netlink.Veth{
@@ -329,7 +338,7 @@ func main() {
 						Type:     nftables.ChainTypeNAT,
 					})
 
-					// ip saddr 10.0.5.0/24 oifname "eth0" masquerade
+					// ip saddr 10.0.(5+offset).0/24 oifname "eth0" masquerade
 					nc.AddRule(&nftables.Rule{
 						Table: nat,
 						Chain: postrouting,
@@ -370,54 +379,161 @@ func main() {
 						Type:     nftables.ChainTypeNAT,
 					})
 
-					// iif $containerIf tcp dport 1-65535 dnat to $cethIp:tcp dport
-					nc.AddRule(&nftables.Rule{
-						Table: nat,
-						Chain: prerouting,
-						Exprs: []expr.Any{
-							&expr.Meta{Key: expr.MetaKeyIIFNAME, Register: 1},
-							&expr.Cmp{
-								Op:       expr.CmpOpEq,
-								Register: 1,
-								Data:     []byte(containerIf + "\x00"),
-							},
+					if offset == 0 {
+						// iif $containerIf tcp dport 1-24998 dnat to $cethIp:tcp dport
+						nc.AddRule(&nftables.Rule{
+							Table: nat,
+							Chain: prerouting,
+							Exprs: []expr.Any{
+								&expr.Meta{Key: expr.MetaKeyIIFNAME, Register: 1},
+								&expr.Cmp{
+									Op:       expr.CmpOpEq,
+									Register: 1,
+									Data:     []byte(containerIf + "\x00"),
+								},
 
-							&expr.Meta{Key: expr.MetaKeyL4PROTO, Register: 1},
-							&expr.Cmp{
-								Op:       expr.CmpOpEq,
-								Register: 1,
-								Data:     []byte{unix.IPPROTO_TCP},
-							},
-							&expr.Payload{
-								DestRegister: 1,
-								Base:         expr.PayloadBaseTransportHeader,
-								Offset:       2,
-								Len:          2,
-							},
+								&expr.Meta{Key: expr.MetaKeyL4PROTO, Register: 1},
+								&expr.Cmp{
+									Op:       expr.CmpOpEq,
+									Register: 1,
+									Data:     []byte{unix.IPPROTO_TCP},
+								},
+								&expr.Payload{
+									DestRegister: 1,
+									Base:         expr.PayloadBaseTransportHeader,
+									Offset:       2,
+									Len:          2,
+								},
 
-							&expr.Cmp{
-								Op:       expr.CmpOpGte,
-								Register: 1,
-								Data:     []byte{0x00, 0x01},
-							},
-							&expr.Cmp{
-								Op:       expr.CmpOpLte,
-								Register: 1,
-								Data:     []byte{0xff, 0xff},
-							},
+								&expr.Cmp{
+									Op:       expr.CmpOpGte,
+									Register: 1,
+									Data:     []byte{0x00, 0x01},
+								},
+								&expr.Cmp{
+									Op:       expr.CmpOpLte,
+									Register: 1,
+									Data:     []byte{0x61, 0xa6},
+								},
 
-							&expr.Immediate{
-								Register: 2,
-								Data:     cethIp.IP.To4(),
+								&expr.Immediate{
+									Register: 2,
+									Data:     cethIp.IP.To4(),
+								},
+								&expr.NAT{
+									Type:        expr.NATTypeDestNAT,
+									Family:      unix.NFPROTO_IPV4,
+									RegAddrMin:  2,
+									RegProtoMin: 1,
+								},
 							},
-							&expr.NAT{
-								Type:        expr.NATTypeDestNAT,
-								Family:      unix.NFPROTO_IPV4,
-								RegAddrMin:  2,
-								RegProtoMin: 1,
+						})
+
+						// iif $containerIf tcp dport 25004-65535 dnat to $cethIp:tcp dport
+						nc.AddRule(&nftables.Rule{
+							Table: nat,
+							Chain: prerouting,
+							Exprs: []expr.Any{
+								&expr.Meta{Key: expr.MetaKeyIIFNAME, Register: 1},
+								&expr.Cmp{
+									Op:       expr.CmpOpEq,
+									Register: 1,
+									Data:     []byte(containerIf + "\x00"),
+								},
+
+								&expr.Meta{Key: expr.MetaKeyL4PROTO, Register: 1},
+								&expr.Cmp{
+									Op:       expr.CmpOpEq,
+									Register: 1,
+									Data:     []byte{unix.IPPROTO_TCP},
+								},
+								&expr.Payload{
+									DestRegister: 1,
+									Base:         expr.PayloadBaseTransportHeader,
+									Offset:       2,
+									Len:          2,
+								},
+
+								&expr.Cmp{
+									Op:       expr.CmpOpGte,
+									Register: 1,
+									Data:     []byte{0x61, 0xac},
+								},
+								&expr.Cmp{
+									Op:       expr.CmpOpLte,
+									Register: 1,
+									Data:     []byte{0xff, 0xff},
+								},
+
+								&expr.Immediate{
+									Register: 2,
+									Data:     cethIp.IP.To4(),
+								},
+								&expr.NAT{
+									Type:        expr.NATTypeDestNAT,
+									Family:      unix.NFPROTO_IPV4,
+									RegAddrMin:  2,
+									RegProtoMin: 1,
+								},
 							},
-						},
-					})
+						})
+
+					} else {
+						addPortForwardRule := func(srcPort, dstPort uint16) {
+							srcPortByte := []byte{byte(srcPort >> 8), byte(srcPort & 0xff)}
+							dstPortByte := []byte{byte(dstPort >> 8), byte(dstPort & 0xff)}
+							nc.AddRule(&nftables.Rule{
+								Table: nat,
+								Chain: prerouting,
+								Exprs: []expr.Any{
+									&expr.Meta{Key: expr.MetaKeyIIFNAME, Register: 1},
+									&expr.Cmp{
+										Op:       expr.CmpOpEq,
+										Register: 1,
+										Data:     []byte(containerIf + "\x00"),
+									},
+
+									&expr.Meta{Key: expr.MetaKeyL4PROTO, Register: 1},
+									&expr.Cmp{
+										Op:       expr.CmpOpEq,
+										Register: 1,
+										Data:     []byte{unix.IPPROTO_TCP},
+									},
+									&expr.Payload{
+										DestRegister: 1,
+										Base:         expr.PayloadBaseTransportHeader,
+										Offset:       2,
+										Len:          2,
+									},
+
+									&expr.Cmp{
+										Op:       expr.CmpOpEq,
+										Register: 1,
+										Data:     srcPortByte,
+									},
+
+									&expr.Immediate{
+										Register: 1,
+										Data:     dstPortByte,
+									},
+									&expr.Immediate{
+										Register: 2,
+										Data:     cethIp.IP.To4(),
+									},
+									&expr.NAT{
+										Type:        expr.NATTypeDestNAT,
+										Family:      unix.NFPROTO_IPV4,
+										RegAddrMin:  2,
+										RegProtoMin: 1,
+									},
+								},
+							})
+						}
+						// iif $containerIf tcp dport 24999-25002 dnat to $cethIp:tcp dport-2000, 25003 should direct send to workspacekit
+						for port := uint16(24999); port < 25003; port++ {
+							addPortForwardRule(port, port-2000)
+						}
+					}
 
 					if err := nc.Flush(); err != nil {
 						return xerrors.Errorf("failed to apply nftables: %v", err)
@@ -429,15 +545,22 @@ func main() {
 			{
 				Name:  "setup-peer-veth",
 				Usage: "set up a peer veth",
+				Flags: []cli.Flag{
+					&cli.IntFlag{
+						Name:  "network-offset",
+						Value: 0,
+					},
+				},
 				Action: func(c *cli.Context) error {
-					cethIf := "ceth0"
+					offset := c.Int("network-offset")
+					cethIf := fmt.Sprintf("ceth%d", offset)
 					mask := net.IPv4Mask(255, 255, 255, 0)
 					cethIp := net.IPNet{
-						IP:   net.IPv4(10, 0, 5, 2),
+						IP:   net.IPv4(10, 0, byte(5+offset), 2),
 						Mask: mask,
 					}
 					vethIp := net.IPNet{
-						IP:   net.IPv4(10, 0, 5, 1),
+						IP:   net.IPv4(10, 0, byte(5+offset), 1),
 						Mask: mask,
 					}
 

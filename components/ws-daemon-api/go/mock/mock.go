@@ -389,6 +389,26 @@ func (mr *MockInWorkspaceServiceClientMockRecorder) PrepareForUserNS(arg0, arg1 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PrepareForUserNS", reflect.TypeOf((*MockInWorkspaceServiceClient)(nil).PrepareForUserNS), varargs...)
 }
 
+// SetupDebugPairVeths mocks base method.
+func (m *MockInWorkspaceServiceClient) SetupDebugPairVeths(arg0 context.Context, arg1 *api.SetupDebugPairVethsRequest, arg2 ...grpc.CallOption) (*api.SetupDebugPairVethsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "SetupDebugPairVeths", varargs...)
+	ret0, _ := ret[0].(*api.SetupDebugPairVethsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SetupDebugPairVeths indicates an expected call of SetupDebugPairVeths.
+func (mr *MockInWorkspaceServiceClientMockRecorder) SetupDebugPairVeths(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetupDebugPairVeths", reflect.TypeOf((*MockInWorkspaceServiceClient)(nil).SetupDebugPairVeths), varargs...)
+}
+
 // SetupPairVeths mocks base method.
 func (m *MockInWorkspaceServiceClient) SetupPairVeths(arg0 context.Context, arg1 *api.SetupPairVethsRequest, arg2 ...grpc.CallOption) (*api.SetupPairVethsResponse, error) {
 	m.ctrl.T.Helper()
