@@ -1,6 +1,9 @@
 # Change Log
 
 ## January 2023
+- Fix race for DB connection ([#15691](https://github.com/gitpod-io/gitpod/pull/15691)) - [@geropl](https://github.com/geropl)
+- Update JetBrains IDE images to most recent stable version. ([#15689](https://github.com/gitpod-io/gitpod/pull/15689)) - [@roboquat](https://github.com/roboquat)
+- Added a secondary button to start workspaces on projects and branches with options. ([#15668](https://github.com/gitpod-io/gitpod/pull/15668)) - [@svenefftinge](https://github.com/svenefftinge)
 - [server] Validate userID and teamID is a UUID on Team operations ([#15651](https://github.com/gitpod-io/gitpod/pull/15651)) - [@easyCZ](https://github.com/easyCZ)
 - Menu Options for Usage, Feedback & Help in Gitpod's JetBrains Gateway Plugin ([#15648](https://github.com/gitpod-io/gitpod/pull/15648)) - [@Siddhant-K-code](https://github.com/Siddhant-K-code)
 - [licensor]: remove limits on licence user numbers and feature sets ([#15583](https://github.com/gitpod-io/gitpod/pull/15583)) - [@mrsimonemms](https://github.com/mrsimonemms)
