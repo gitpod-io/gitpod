@@ -20,22 +20,29 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+const (
+	version string = "0.0.0"
+)
+
+type config struct {
+	oldCluster          string
+	newCluster          string
+	prometheusService   string
+	rollOutWaitDuration time.Duration
+	analsysWaitDuration time.Duration
+	rolloutStepScore    int32
+}
+
+var (
+	conf config
+)
+
 var rootCmd = &cobra.Command{
-	Use:   "workspace-rollout-job",
 	Short: "Rollout from old to a new cluster while monitoring metrics",
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Info("Starting workspace-rollout-job")
 		ctx := context.Background()
 		var err error
-		old, presence := os.LookupEnv("OLD_CLUSTER")
-		if !presence {
-			log.Fatal("cannot get old cluster name. Please set using OLD_CLUSTER environment variable.")
-		}
-
-		new, presence := os.LookupEnv("NEW_CLUSTER")
-		if !presence {
-			log.Fatal("cannot get new cluster name. Please set using NEW_CLUSTER environment variable.")
-		}
 
 		// Get kubeconfig
 		config, err := getKubeConfig()
@@ -43,7 +50,6 @@ var rootCmd = &cobra.Command{
 			log.WithError(err).Fatal("failed to retrieve kube config")
 		}
 
-		version := "v0.1.0"
 		serverOpts := []baseserver.Option{
 			baseserver.WithVersion(version),
 		}
@@ -71,29 +77,24 @@ var rootCmd = &cobra.Command{
 		}
 
 		// Check if the old cluster has a 100 score.
-		if score, err := wsManagerBridgeClient.GetScore(ctx, old); err != nil || score != 100 {
+		if score, err := wsManagerBridgeClient.GetScore(ctx, conf.oldCluster); err != nil || score != 100 {
 			log.WithError(err).Fatal("init condition does not satisfy")
 		}
 
 		// Check if the new cluster has a 0 zero score.
 		// TODO: Check if the new cluster has no constraints.
-		if score, err := wsManagerBridgeClient.GetScore(ctx, new); err != nil || score != 0 {
+		if score, err := wsManagerBridgeClient.GetScore(ctx, conf.newCluster); err != nil || score != 0 {
 			log.WithError(err).Fatal("init condition does not satisfy")
 		}
 
-		prometheusResource, presence := os.LookupEnv("PROMETHEUS_RESOURCE")
-		if !presence {
-			log.Fatal("cannot get prometheus resource. Please set using PROMETHEUS_RESOURCE environment variable in the format <namespace>/<kind>/<name>.")
-		}
-
 		// Start the rollout process
-		prometheusAnalyzer, err := analysis.NewPrometheusAnalyzer(ctx, config, prometheusResource, 30305)
+		prometheusAnalyzer, err := analysis.NewPrometheusAnalyzer(ctx, config, conf.prometheusService, 30305)
 		if err != nil {
 			log.WithError(err).Fatal("failed to create a prometheus client")
 			return
 		}
 
-		job := rollout.New(old, new, 20*time.Second, 1*time.Second, 10, prometheusAnalyzer, wsManagerBridgeClient)
+		job := rollout.New(conf.oldCluster, conf.newCluster, conf.rollOutWaitDuration, conf.analsysWaitDuration, conf.rolloutStepScore, prometheusAnalyzer, wsManagerBridgeClient)
 		job.Start(ctx)
 	},
 }
@@ -114,6 +115,16 @@ func getKubeConfig() (*rest.Config, error) {
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+	rootCmd.Flags().StringVar(&conf.oldCluster, "old-cluster", "", "Name of the old cluster with score 100")
+	rootCmd.Flags().StringVar(&conf.newCluster, "new-cluster", "", "Name of the new cluster with score 0")
+	rootCmd.Flags().StringVar(&conf.prometheusService, "prometheus-resource", "", "Please set in the format <namespace>/<kind>/<name>")
+	rootCmd.Flags().DurationVar(&conf.rollOutWaitDuration, "rollout-wait-duration", 20*time.Second, "Duration to wait before updating the score of the new cluster")
+	rootCmd.Flags().DurationVar(&conf.analsysWaitDuration, "analysis-wait-duration", 1*time.Second, "Duration to wait before analyzing the metrics")
+	rootCmd.Flags().Int32Var(&conf.rolloutStepScore, "rollout-step-score", 10, "Score to be added to the new cluster, and decreased to the old cluster")
+
+	rootCmd.MarkFlagRequired("old-cluster")
+	rootCmd.MarkFlagRequired("new-cluster")
+	rootCmd.MarkFlagRequired("prometheus-resource")
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
