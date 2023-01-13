@@ -14,7 +14,7 @@ import SelectIDEModal from "../settings/SelectIDEModal";
 import Arrow from "../components/Arrow";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { ProfileState } from "../settings/ProfileInformation";
-import { useWorkspaces } from "../data/workspaces/queries";
+import { useListWorkspacesQuery } from "../data/workspaces/queries";
 import { EmptyWorkspacesContent } from "./EmptyWorkspacesContent";
 import { WorkspacesSearchBar } from "./WorkspacesSearchBar";
 import { hoursBefore, isDateSmallerOrEqual } from "@gitpod/gitpod-protocol/lib/util/timeutil";
@@ -26,7 +26,7 @@ const WorkspacesPage: FunctionComponent = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [showInactive, setShowInactive] = useState(false);
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-    const { data, isLoading } = useWorkspaces({ limit });
+    const { data, isLoading } = useListWorkspacesQuery({ limit });
     const isOnboardingUser = useMemo(() => user && User.isOnboardingUser(user), [user]);
     const deleteInactiveWorkspaces = useDeleteInactiveWorkspacesMutation();
 
