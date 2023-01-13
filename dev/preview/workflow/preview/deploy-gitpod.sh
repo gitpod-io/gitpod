@@ -272,6 +272,7 @@ yq w -i "${INSTALLER_CONFIG_PATH}" domain "${DOMAIN}"
 #
 CONTAINERD_RUNTIME_DIR="/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io"
 yq w -i "${INSTALLER_CONFIG_PATH}" workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}
+yq w -i "${INSTALLER_CONFIG_PATH}" workspace.runtime.fsShiftMethod "shiftfs"
 yq w -i "${INSTALLER_CONFIG_PATH}" workspace.resources.requests.cpu "100m"
 yq w -i "${INSTALLER_CONFIG_PATH}" workspace.resources.requests.memory "256Mi"
 
