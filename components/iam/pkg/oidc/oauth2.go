@@ -21,8 +21,7 @@ type OAuth2Result struct {
 type StateParam struct {
 	// Internal client ID
 	ClientConfigID string `json:"clientId"`
-
-	ReturnToURL string `json:"returnTo"`
+	ReturnToURL    string `json:"returnTo"`
 }
 
 type keyOAuth2Result struct{}
