@@ -37,7 +37,7 @@ export const WorkspacesSearchBar: FunctionComponent<WorkspacesSearchBarProps> = 
                 <input
                     type="search"
                     className="text-sm"
-                    placeholder="Search Workspaces"
+                    placeholder="Filter Workspaces"
                     value={searchTerm}
                     onChange={(v) => {
                         onSearchTermUpdated(v.target.value);

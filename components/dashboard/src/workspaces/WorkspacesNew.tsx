@@ -23,27 +23,24 @@ const WorkspacesPage: FunctionComponent = () => {
     const user = useCurrentUser();
     const [limit, setLimit] = useState(50);
     const [searchTerm, setSearchTerm] = useState("");
-
     const [showInactive, setShowInactive] = useState(false);
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-
     const { data, isLoading } = useWorkspaces({ limit });
-
     const isOnboardingUser = useMemo(() => user && User.isOnboardingUser(user), [user]);
 
-    const deleteInactiveWorkspaces = useCallback(() => {
-        // TODO: Add mutation for deleting a workspace
-        console.log("delete inactive workspaces");
-
-        // We make this call for each workspace
-        // workspaceModel?.deleteWorkspace(ws.workspace.id, usePublicApiWorkspacesService),
-        setDeleteModalVisible(false);
-    }, []);
+    const filteredWorkspaces = useMemo(() => {
+        return (data || []).filter(
+            (info) =>
+                `${info.workspace.description}${info.workspace.id}${info.workspace.contextURL}${info.workspace.context}`
+                    .toLowerCase()
+                    .indexOf(searchTerm.toLowerCase()) !== -1,
+        );
+    }, [data, searchTerm]);
 
     // Sort workspaces into active/inactive groups
     const { activeWorkspaces, inactiveWorkspaces } = useMemo(() => {
         console.log("sorting workspaces");
-        const sortedWorkspaces = (data || []).sort(sortWorkspaces);
+        const sortedWorkspaces = filteredWorkspaces.sort(sortWorkspaces);
         const activeWorkspaces = sortedWorkspaces.filter((ws) => isWorkspaceActive(ws));
 
         // respecting the limit, return inactive workspaces as well
@@ -55,9 +52,16 @@ const WorkspacesPage: FunctionComponent = () => {
             activeWorkspaces,
             inactiveWorkspaces,
         };
-    }, [data, limit]);
+    }, [filteredWorkspaces, limit]);
 
-    // TODO: Add memoized filtered (by searchTerm) sets for data.active and data.inactive
+    const deleteInactiveWorkspaces = useCallback(() => {
+        // TODO: Add mutation for deleting a workspace
+        console.log("delete inactive workspaces");
+
+        // We make this call for each workspace
+        // workspaceModel?.deleteWorkspace(ws.workspace.id, usePublicApiWorkspacesService),
+        setDeleteModalVisible(false);
+    }, []);
 
     return (
         <>
