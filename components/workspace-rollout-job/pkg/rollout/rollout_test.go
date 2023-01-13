@@ -6,6 +6,7 @@ package rollout
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -93,5 +94,25 @@ func TestRollout_MidpointFailure(t *testing.T) {
 	oldClusterScore, err := rolloutAction.GetScore(context.Background(), "ws-1")
 	assert.NoError(t, err)
 	assert.Equal(t, int32(100), oldClusterScore)
+}
 
+type ErrorMockAnalyzer struct{}
+
+func (m *ErrorMockAnalyzer) MoveForward(ctx context.Context, clusterName string) (bool, error) {
+	return true, errors.New("error")
+}
+
+func TestRollout_AnalysisError(t *testing.T) {
+	rolloutAction := NewMockRolloutAction()
+	rolloutJob := New("ws-1", "ws-2", 1*time.Second, 1*time.Second, 25, &ErrorMockAnalyzer{}, rolloutAction)
+	rolloutJob.Start(context.Background())
+
+	// Should've rolled back due to the error
+	newClusterScore, err := rolloutAction.GetScore(context.Background(), "ws-2")
+	assert.NoError(t, err)
+	assert.Equal(t, int32(0), newClusterScore)
+
+	oldClusterScore, err := rolloutAction.GetScore(context.Background(), "ws-1")
+	assert.NoError(t, err)
+	assert.Equal(t, int32(100), oldClusterScore)
 }

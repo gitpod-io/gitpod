@@ -15,6 +15,20 @@ var (
 			Help: "The current rollout step",
 		}, []string{"cluster"},
 	)
+
+	scoreUpdatesTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "score_updates_total",
+			Help: "Counter for rollout scores updates",
+		}, []string{"cluster"},
+	)
+
+	scoreUpdatesFailuresTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "score_updates_failures_total",
+			Help: "Counter for failed rollout scores updates",
+		}, []string{"cluster", "reason"},
+	)
 )
 
 func RegisterMetrics(registry *prometheus.Registry) {
