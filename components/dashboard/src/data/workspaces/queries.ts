@@ -5,7 +5,7 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { useFetchWorkspaces } from "./fetchers";
+import { FetchWorkspacesReturnValue, useFetchWorkspaces } from "./fetchers";
 
 type UseWorkspaceArgs = {
     limit: number;
@@ -14,10 +14,10 @@ type UseWorkspaceArgs = {
 export const useWorkspaces = ({ limit }: UseWorkspaceArgs) => {
     const fetchWorkspaces = useFetchWorkspaces({ limit });
 
-    return useQuery({
+    return useQuery<FetchWorkspacesReturnValue>({
         queryKey: getWorkspacesQueryKey(),
         queryFn: fetchWorkspaces,
     });
 };
 
-const getWorkspacesQueryKey = () => ["workspaces"];
+export const getWorkspacesQueryKey = () => ["workspaces"];

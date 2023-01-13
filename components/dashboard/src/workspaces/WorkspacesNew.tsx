@@ -9,7 +9,7 @@ import Header from "../components/Header";
 import { WorkspaceEntry } from "./WorkspaceEntryNew";
 import { ItemsList } from "../components/ItemsList";
 import { useCurrentUser } from "../user-context";
-import { User } from "@gitpod/gitpod-protocol";
+import { User, WorkspaceInfo } from "@gitpod/gitpod-protocol";
 import SelectIDEModal from "../settings/SelectIDEModal";
 import Arrow from "../components/Arrow";
 import ConfirmationModal from "../components/ConfirmationModal";
@@ -17,6 +17,7 @@ import { ProfileState } from "../settings/ProfileInformation";
 import { useWorkspaces } from "../data/workspaces/queries";
 import { EmptyWorkspacesContent } from "./EmptyWorkspacesContent";
 import { WorkspacesSearchBar } from "./WorkspacesSearchBar";
+import { hoursBefore, isDateSmallerOrEqual } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 
 const WorkspacesPage: FunctionComponent = () => {
     const user = useCurrentUser();
@@ -32,13 +33,30 @@ const WorkspacesPage: FunctionComponent = () => {
 
     const deleteInactiveWorkspaces = useCallback(() => {
         // TODO: Add mutation for deleting a workspace
-        console.log("delete inactive workspaces", data?.inactive);
+        console.log("delete inactive workspaces");
+
+        // We make this call for each workspace
         // workspaceModel?.deleteWorkspace(ws.workspace.id, usePublicApiWorkspacesService),
         setDeleteModalVisible(false);
-    }, [data?.inactive]);
+    }, []);
 
-    const activeWorkspaces = data?.active || [];
-    const inactiveWorkspaces = data?.inactive || [];
+    // Sort workspaces into active/inactive groups
+    const { activeWorkspaces, inactiveWorkspaces } = useMemo(() => {
+        console.log("sorting workspaces");
+        const sortedWorkspaces = (data || []).sort(sortWorkspaces);
+        const activeWorkspaces = sortedWorkspaces.filter((ws) => isWorkspaceActive(ws));
+
+        // respecting the limit, return inactive workspaces as well
+        const inactiveWorkspaces = sortedWorkspaces
+            .filter((ws) => !isWorkspaceActive(ws))
+            .slice(0, limit - activeWorkspaces.length);
+
+        return {
+            activeWorkspaces,
+            inactiveWorkspaces,
+        };
+    }, [data, limit]);
+
     // TODO: Add memoized filtered (by searchTerm) sets for data.active and data.inactive
 
     return (
@@ -137,3 +155,49 @@ const WorkspacesPage: FunctionComponent = () => {
 };
 
 export default WorkspacesPage;
+
+const sortWorkspaces = (a: WorkspaceInfo, b: WorkspaceInfo) => {
+    const result = workspaceActiveDate(b).localeCompare(workspaceActiveDate(a));
+    if (result === 0) {
+        // both active now? order by creationtime
+        return WorkspaceInfo.lastActiveISODate(b).localeCompare(WorkspaceInfo.lastActiveISODate(a));
+    }
+    return result;
+};
+
+/**
+ * Given a WorkspaceInfo, return a timestamp of the last related activitiy
+ *
+ * @param info WorkspaceInfo
+ * @returns string timestamp
+ */
+function workspaceActiveDate(info: WorkspaceInfo): string {
+    if (!info.latestInstance) {
+        return info.workspace.creationTime;
+    }
+    if (info.latestInstance.status.phase === "stopped" || info.latestInstance.status.phase === "unknown") {
+        return WorkspaceInfo.lastActiveISODate(info);
+    }
+
+    const now = new Date().toISOString();
+    return info.latestInstance.stoppedTime || info.latestInstance.stoppingTime || now;
+}
+
+/**
+ * Returns a boolean indicating if the workspace should be considered active.
+ * A workspace is considered active if it is pinned, not stopped, or was active within the last 24 hours
+ *
+ * @param info WorkspaceInfo
+ * @returns boolean If workspace is considered active
+ */
+function isWorkspaceActive(info: WorkspaceInfo): boolean {
+    const lastSessionStart = WorkspaceInfo.lastActiveISODate(info);
+    const twentyfourHoursAgo = hoursBefore(new Date().toISOString(), 24);
+
+    return (
+        (info.workspace.pinned ||
+            (!!info.latestInstance && info.latestInstance.status?.phase !== "stopped") ||
+            isDateSmallerOrEqual(twentyfourHoursAgo, lastSessionStart)) &&
+        !info.workspace.softDeleted
+    );
+}
