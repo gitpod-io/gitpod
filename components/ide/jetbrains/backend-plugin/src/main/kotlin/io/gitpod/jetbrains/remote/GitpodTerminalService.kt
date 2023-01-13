@@ -4,8 +4,11 @@
 
 package io.gitpod.jetbrains.remote
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.defineNestedLifetime
 import com.intellij.remoteDev.util.onTerminationOrNow
@@ -26,12 +29,14 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.guava.await
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.TerminalView
+import org.jetbrains.plugins.terminal.vfs.TerminalEditorWidgetListener
+import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 
 @Suppress("UnstableApiUsage")
-class GitpodTerminalService(project: Project): Disposable {
+class GitpodTerminalService(private val project: Project): Disposable {
     private val lifetime = defineNestedLifetime()
     private val terminalView = TerminalView.getInstance(project)
     private val backendTerminalManager = BackendTerminalManager.getInstance(project)
@@ -186,11 +191,21 @@ class GitpodTerminalService(project: Project): Disposable {
                 "gp tasks attach ${supervisorTerminal.alias}"
         ) ?: return
 
-        closeTerminalWidgetWhenClientGetsClosed(shellTerminalWidget)
+       closeTerminalWidgetWhenClientGetsClosed(shellTerminalWidget)
 
-        exitTaskWhenTerminalWidgetGetsClosed(supervisorTerminal, shellTerminalWidget)
+       exitTaskWhenTerminalWidgetGetsClosed(supervisorTerminal, shellTerminalWidget)
 
-        listenForTaskTerminationAndTitleChanges(supervisorTerminal, shellTerminalWidget)
+       listenForTaskTerminationAndTitleChanges(supervisorTerminal, shellTerminalWidget)
+
+        ClientId.withClientId(ClientId.ownerId) {
+            val content = terminalView.toolWindow.contentManager.getContent(shellTerminalWidget)
+            val file = TerminalSessionVirtualFileImpl(content.displayName, shellTerminalWidget, terminalView.terminalRunner.settingsProvider)
+            file.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, java.lang.Boolean.TRUE)
+            FileEditorManager.getInstance(project).openFile(file, true).first()
+            shellTerminalWidget.listener = TerminalEditorWidgetListener(project, file)
+            terminalView.detachWidgetAndRemoveContent(content)
+            file.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null)
+        }
     }
 
     private fun listenForTaskTerminationAndTitleChanges(
