@@ -21,12 +21,14 @@ const FeatureFlagContext = createContext<{
     showUseLastSuccessfulPrebuild: boolean;
     usePublicApiWorkspacesService: boolean;
     enablePersonalAccessTokens: boolean;
+    useNewWorkspacesList: boolean;
 }>({
     showUsageView: false,
     isUsageBasedBillingEnabled: false,
     showUseLastSuccessfulPrebuild: false,
     usePublicApiWorkspacesService: false,
     enablePersonalAccessTokens: false,
+    useNewWorkspacesList: false,
 });
 
 const FeatureFlagContextProvider: React.FC = ({ children }) => {
@@ -40,6 +42,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const [showUseLastSuccessfulPrebuild, setShowUseLastSuccessfulPrebuild] = useState<boolean>(false);
     const [enablePersonalAccessTokens, setPersonalAccessTokensEnabled] = useState<boolean>(false);
     const [usePublicApiWorkspacesService, setUsePublicApiWorkspacesService] = useState<boolean>(false);
+    const [useNewWorkspacesList, setUseNewWorkspacesList] = useState<boolean>(false);
 
     useEffect(() => {
         if (!user) return;
@@ -52,6 +55,10 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 publicApiExperimentalWorkspaceService: {
                     defaultValue: false,
                     setter: setUsePublicApiWorkspacesService,
+                },
+                useNewWorkspacesList: {
+                    defaultValue: false,
+                    setter: setUseNewWorkspacesList,
                 },
             };
 
@@ -97,6 +104,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 showUseLastSuccessfulPrebuild,
                 enablePersonalAccessTokens,
                 usePublicApiWorkspacesService,
+                useNewWorkspacesList,
             }}
         >
             {children}
