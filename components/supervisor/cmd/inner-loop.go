@@ -28,6 +28,9 @@ var innerLoopCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cancel()
+
+		log.Init(ServiceName, Version, false, false)
+
 		const socketFN = "/.supervisor/debug-service.sock"
 
 		conn, err := grpc.DialContext(ctx, "unix://"+socketFN, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -56,5 +59,5 @@ var innerLoopCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(innerLoopCmd)
-	innerLoopCmd.Flags().BoolVarP(&innerLoopOpts.Headless, "headless", "h", false, "running debug workspace in headless mode")
+	innerLoopCmd.Flags().BoolVar(&innerLoopOpts.Headless, "headless", false, "running debug workspace in headless mode")
 }

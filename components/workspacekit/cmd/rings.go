@@ -117,11 +117,12 @@ var ring0Cmd = &cobra.Command{
 		}()
 
 		// start ring0 services
-		stopHook, err := startDebugServiceServer("/.workspace/mark/", prep)
+		stopHook, err := startDebugServiceServer("/tmp/", prep)
 		if err != nil {
-			log.WithError(err).Error("cannot start inner loop service")
+			log.WithError(err).Error("cannot start debug service")
+		} else {
+			defer stopHook()
 		}
-		defer stopHook()
 		// root process tree don't have cancelable context
 		exitCode = startRing1(context.Background(), nil, prep, os.Stderr, os.Stdout, os.Stderr)
 	},
@@ -331,12 +332,12 @@ func startDebugServiceServer(socketDir string, prep *api.PrepareForUserNSRespons
 		socket: sckt,
 		prep:   prep,
 	}
-
+	debugSvc.server = grpc.NewServer()
 	api.RegisterDebugServiceServer(debugSvc.server, &debugSvc)
 	go func() {
 		err := debugSvc.server.Serve(sckt)
 		if err != nil {
-			log.WithError(err).Error("workspace inner loop server failed")
+			log.WithError(err).Error("start debug service failed")
 		}
 	}()
 
@@ -440,23 +441,29 @@ var ring1Cmd = &cobra.Command{
 			mnts = append(mnts,
 				mnte{Target: "/", Source: "/.workspace/mark" + rootfs, Flags: unix.MS_BIND | unix.MS_REC},
 			)
+			if rootfs != "" {
+				mnts = append(mnts,
+					mnte{Target: "/ide", Source: "/.workspace/mark/ide", Flags: unix.MS_BIND},
+					mnte{Target: "/.supervisor", Source: "/.workspace/mark/.supervisor", Flags: unix.MS_BIND},
+				)
+			}
 		case api.FSShiftMethod_SHIFTFS:
 			mnts = append(mnts,
 				mnte{Target: "/", Source: "/.workspace/mark" + rootfs, FSType: "shiftfs"},
 			)
+			if rootfs != "" {
+				mnts = append(mnts,
+					mnte{Target: "/ide", Source: "/.workspace/mark/ide", FSType: "shiftfs"},
+					mnte{Target: "/.supervisor", Source: "/.workspace/mark/.supervisor", FSType: "shiftfs"},
+				)
+			}
 		default:
 			log.WithField("fsshift", fsshift).Fatal("unknown FS shift method")
 		}
-		if rootfs != "" {
-			mnts = append(mnts,
-				mnte{Target: "/ide", Source: "/.workspace/mark/ide", Flags: unix.MS_BIND},
-				mnte{Target: "/.supervisor", Source: "/.workspace/mark/.supervisor", Flags: unix.MS_BIND},
-			)
-		} else {
-			mnts = append(mnts,
-				mnte{Target: "/.supervisor/inner-loop.sock", Source: "/.workspace/mark/inner-loop.sock", Flags: unix.MS_BIND},
-			)
-		}
+		mnts = append(mnts,
+			mnte{Target: "/.supervisor/debug-service.sock", Source: "/tmp/debug-service.sock", Flags: unix.MS_BIND},
+		)
+
 		procMounts, err := ioutil.ReadFile("/proc/mounts")
 		if err != nil {
 			log.WithError(err).Fatal("cannot read /proc/mounts")
