@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sync/atomic"
 	"time"
 
 	backoff "github.com/cenkalti/backoff/v4"
@@ -67,7 +68,8 @@ type Service struct {
 	publicAPIConn    *grpc.ClientConn
 	publicApiMetrics *grpc_prometheus.ClientMetrics
 
-	previousUsingPublicAPI bool
+	// previousUsingPublicAPI is using atomic type to avoid reconnect when configcat value change
+	previousUsingPublicAPI atomic.Bool
 	onUsingPublicAPI       chan bool
 }
 
@@ -114,7 +116,7 @@ func NewServerApiService(ctx context.Context, cfg *ServiceConfig, tknsrv api.Tok
 
 	// schedule get public api configcat value for instance updates traffic switching
 	go func() {
-		ticker := time.NewTicker(time.Second * 1)
+		ticker := time.NewTicker(time.Second * 2)
 		for {
 			select {
 			case <-ctx.Done():
@@ -174,14 +176,16 @@ func (s *Service) usePublicAPI(ctx context.Context) bool {
 	usePublicAPI := experiments.SupervisorUsePublicAPI(ctx, s.experiments, experiments.Attributes{
 		UserID: s.ownerID,
 	})
-	if usePublicAPI != s.previousUsingPublicAPI {
+	if prev := s.previousUsingPublicAPI.Swap(usePublicAPI); prev != usePublicAPI {
 		if usePublicAPI {
 			log.Info("switch to use PublicAPI")
 		} else {
 			log.Info("switch to use ServerAPI")
 		}
-		s.previousUsingPublicAPI = usePublicAPI
-		s.onUsingPublicAPI <- usePublicAPI
+		select {
+		case s.onUsingPublicAPI <- usePublicAPI:
+		default:
+		}
 	}
 	return usePublicAPI
 }
