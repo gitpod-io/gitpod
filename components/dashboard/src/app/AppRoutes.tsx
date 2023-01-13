@@ -324,7 +324,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                     />
                 )}
             </div>
-            <WebsocketClients />
+            {useNewWorkspacesList && <WebsocketClients />}
         </Route>
     );
 };
