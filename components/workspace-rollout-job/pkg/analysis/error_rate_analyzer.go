@@ -25,12 +25,12 @@ const (
 	errorMetric = "sum by (cluster) (rate(gitpod_ws_manager_workspace_starts_failure_total{cluster=~\"%s.*\"}[%dms]))"
 )
 
-type PrometheusAnalyzer struct {
+type ErrorRateAnalyzer struct {
 	prometheusURL string
 	startTime     time.Time
 }
 
-func NewPrometheusAnalyzer(ctx context.Context, kubeConfig *rest.Config, prometheusResource string, localPort int) (*PrometheusAnalyzer, error) {
+func NewErrorRateAnalyzer(ctx context.Context, kubeConfig *rest.Config, prometheusResource string, localPort int) (*ErrorRateAnalyzer, error) {
 	clientSet, err := kubernetes.NewForConfig(kubeConfig)
 	if err != nil {
 		return nil, err
@@ -59,19 +59,19 @@ func NewPrometheusAnalyzer(ctx context.Context, kubeConfig *rest.Config, prometh
 		return nil, ctx.Err()
 	}
 
-	return &PrometheusAnalyzer{
+	return &ErrorRateAnalyzer{
 		prometheusURL: fmt.Sprintf("http://localhost:%d", localPort),
 		startTime:     time.Now(),
 	}, nil
 }
 
-func (pa *PrometheusAnalyzer) MoveForward(ctx context.Context, clusterName string) (bool, error) {
-	log := logrus.WithField("component", "prometheus-analyzer")
+func (pa *ErrorRateAnalyzer) MoveForward(ctx context.Context, clusterName string) (int, error) {
+	log := logrus.WithField("component", "error-rate-analyzer")
 	client, err := api.NewClient(api.Config{
 		Address: pa.prometheusURL,
 	})
 	if err != nil {
-		return false, err
+		return -1, err
 	}
 
 	v1api := v1.NewAPI(client)
@@ -80,7 +80,7 @@ func (pa *PrometheusAnalyzer) MoveForward(ctx context.Context, clusterName strin
 
 	queryResult, warnings, err := v1api.Query(ctx, fmt.Sprintf(errorMetric, clusterName, time.Since(pa.startTime).Milliseconds()), time.Now())
 	if err != nil {
-		return false, err
+		return -1, err
 	}
 	if len(warnings) > 0 {
 		log.Warnf("Warnings: %v\n", warnings)
@@ -88,26 +88,28 @@ func (pa *PrometheusAnalyzer) MoveForward(ctx context.Context, clusterName strin
 
 	result, ok := queryResult.(model.Vector)
 	if !ok {
-		return false, fmt.Errorf("unexpected result type: %T", queryResult)
+		return -1, fmt.Errorf("unexpected result type: %T", queryResult)
 	}
 
 	if len(result) != 1 {
 		if len(result) == 0 {
 			log.Infof("No error data found for %s. Proceeding", clusterName)
-			return true, nil
+			return 0, nil
 		}
-		return false, fmt.Errorf("unexpected result Prometheus result vector length: %d", len(result))
+		return -1, fmt.Errorf("unexpected result Prometheus result vector length: %d", len(result))
 	}
 	val := float64(result[0].Value)
 	if math.IsNaN(val) {
-		return false, fmt.Errorf("unexpected sample value: %v", result[0].Value)
+		return -1, fmt.Errorf("unexpected sample value: %v", result[0].Value)
 	}
 
 	// Return true if the error rate is 0
+	log.Infof("Found error metric rate as %f ", val)
 	if val > 0 {
-		log.Infof("Found error metric rate as %f ", val)
-		return false, nil
+		return -1, nil
+	} else if val == 0 {
+		return 0, nil
 	}
 
-	return true, nil
+	return 1, nil
 }
