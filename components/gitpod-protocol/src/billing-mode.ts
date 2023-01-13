@@ -41,8 +41,8 @@ export namespace BillingMode {
             return false;
         }
 
-        // if has any Stripe subscription, either directly or per team
-        return billingMode.mode === "usage-based";
+        // if has any Stripe subscription, either directly or per team, OR we're running on a license
+        return billingMode.mode === "usage-based" || billingMode.mode === "none";
     }
 
     export function canSetCostCenter(billingMode: BillingMode): boolean {
