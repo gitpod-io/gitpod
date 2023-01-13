@@ -5,7 +5,14 @@
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { FetchWorkspacesReturnValue, useDeleteWorkspaceFetcher, useFetchUpdateWorkspaceDescription } from "./fetchers";
+import {
+    FetchWorkspacesReturnValue,
+    useDeleteWorkspaceFetcher,
+    useFetchUpdateWorkspaceDescription,
+    useStopWorkspaceFetcher,
+    useToggleWorkspacePinnedFetcher,
+    useToggleWorkspaceSharedFetcher,
+} from "./fetchers";
 import { getWorkspacesQueryKey } from "./queries";
 
 export const useUpdateWorkspaceDescription = () => {
@@ -17,30 +24,23 @@ export const useUpdateWorkspaceDescription = () => {
         onSuccess: (_, { workspaceId, newDescription }) => {
             const queryKey = getWorkspacesQueryKey();
 
-            // TODO: This is a lot of work (and error prone) to update the description, should we just invalidate the query instead?
-            const workspacesData: FetchWorkspacesReturnValue | undefined = queryClient.getQueryData(queryKey);
-            if (!workspacesData) {
-                return;
-            }
-
             // pro-actively update workspace description rather than reload all workspaces
-            const updatedWorkspacesData = workspacesData.map((info) => {
-                if (info.workspace.id !== workspaceId) {
-                    return info;
-                }
+            queryClient.setQueryData<FetchWorkspacesReturnValue>(queryKey, (oldWorkspacesData) => {
+                return oldWorkspacesData?.map((info) => {
+                    if (info.workspace.id !== workspaceId) {
+                        return info;
+                    }
 
-                return {
-                    ...info,
-                    workspace: {
-                        ...info.workspace,
-                        description: newDescription,
-                    },
-                };
+                    return {
+                        ...info,
+                        workspace: {
+                            ...info.workspace,
+                            description: newDescription,
+                        },
+                    };
+                });
             });
 
-            queryClient.setQueryData(queryKey, updatedWorkspacesData);
-
-            // Invalidate so we get the latest from the server
             queryClient.invalidateQueries({ queryKey });
         },
     });
@@ -55,20 +55,85 @@ export const useDeleteWorkspaceMutation = () => {
         onSuccess: (_, { workspaceId }) => {
             const queryKey = getWorkspacesQueryKey();
 
-            const workspacesData: FetchWorkspacesReturnValue | undefined = queryClient.getQueryData(queryKey);
-            if (!workspacesData) {
-                return;
-            }
-
-            // pro-actively prune workspace from list
-            const updatedWorkspacesData = workspacesData.filter((info) => {
-                return info.workspace.id !== workspaceId;
+            // Remove workspace from cache so it's reflected right away
+            queryClient.setQueryData<FetchWorkspacesReturnValue>(queryKey, (oldWorkspacesData) => {
+                return oldWorkspacesData?.filter((info) => {
+                    return info.workspace.id !== workspaceId;
+                });
             });
 
-            queryClient.setQueryData(queryKey, updatedWorkspacesData);
+            queryClient.invalidateQueries({ queryKey });
+        },
+    });
+};
 
-            // Invalidate the query so we can get new data
-            // queryClient.invalidateQueries({ queryKey });
+export const useStopWorkspaceMutation = () => {
+    const stopWorkspace = useStopWorkspaceFetcher();
+
+    // No need to manually update workspace in cache here, we'll receive messages over the ws that will update it
+    return useMutation({
+        mutationFn: stopWorkspace,
+    });
+};
+
+export const useToggleWorkspaceSharedMutation = () => {
+    const queryClient = useQueryClient();
+    const toggleWorkspaceShared = useToggleWorkspaceSharedFetcher();
+
+    return useMutation({
+        mutationFn: toggleWorkspaceShared,
+        onSuccess: (_, { workspaceId, level }) => {
+            const queryKey = getWorkspacesQueryKey();
+
+            // Update workspace.shareable to the level we set so it's reflected immediately
+            queryClient.setQueryData<FetchWorkspacesReturnValue>(queryKey, (oldWorkspacesData) => {
+                return oldWorkspacesData?.map((info) => {
+                    if (info.workspace.id !== workspaceId) {
+                        return info;
+                    }
+
+                    return {
+                        ...info,
+                        workspace: {
+                            ...info.workspace,
+                            shareable: level === "everyone" ? true : false,
+                        },
+                    };
+                });
+            });
+
+            queryClient.invalidateQueries({ queryKey });
+        },
+    });
+};
+
+export const useToggleWorkspacedPinnedMutation = () => {
+    const queryClient = useQueryClient();
+    const toggleWorkspacePinned = useToggleWorkspacePinnedFetcher();
+
+    return useMutation({
+        mutationFn: toggleWorkspacePinned,
+        onSuccess: (_, { workspaceId }) => {
+            const queryKey = getWorkspacesQueryKey();
+
+            // Update workspace.pinned to account for the toggle so it's reflected immediately
+            queryClient.setQueryData<FetchWorkspacesReturnValue>(queryKey, (oldWorkspaceData) => {
+                return oldWorkspaceData?.map((info) => {
+                    if (info.workspace.id !== workspaceId) {
+                        return info;
+                    }
+
+                    return {
+                        ...info,
+                        workspace: {
+                            ...info.workspace,
+                            pinned: !info.workspace.pinned,
+                        },
+                    };
+                });
+            });
+
+            queryClient.invalidateQueries({ queryKey });
         },
     });
 };

@@ -21,22 +21,17 @@ import Tooltip from "../components/Tooltip";
 import dayjs from "dayjs";
 import { WorkspaceEntryOverflowMenu } from "./WorkspaceOverflowMenu";
 
-function getLabel(state: WorkspaceInstancePhase, conditions?: WorkspaceInstanceConditions) {
-    if (conditions?.failed) {
-        return "Failed";
-    }
-    return state.substr(0, 1).toLocaleUpperCase() + state.substr(1);
-}
-
-interface Props {
+type Props = {
     info: WorkspaceInfo;
-}
+};
 
 export const WorkspaceEntry: FunctionComponent<Props> = ({ info }) => {
+    const workspace = info.workspace;
     const currentBranch =
         info.latestInstance?.status.repo?.branch || Workspace.getBranchName(info.workspace) || "<unknown>";
-
-    const workspace = info.workspace;
+    const project = getProjectPath(workspace);
+    const normalizedContextUrl = ContextURL.getNormalizedURL(workspace)?.toString();
+    const normalizedContextUrlDescription = normalizedContextUrl || workspace.contextURL; // Instead of showing nothing, we prefer to show the raw content instead
 
     const startUrl = useMemo(
         () =>
@@ -48,11 +43,6 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info }) => {
                 .toString(),
         [workspace.id],
     );
-
-    const project = getProjectPath(workspace);
-
-    const normalizedContextUrl = ContextURL.getNormalizedURL(workspace)?.toString();
-    const normalizedContextUrlDescription = normalizedContextUrl || workspace.contextURL; // Instead of showing nothing, we prefer to show the raw content instead
 
     return (
         <Item className="whitespace-nowrap py-6 px-6">
@@ -146,4 +136,11 @@ export function WorkspaceStatusIndicator({ instance }: { instance?: WorkspaceIns
             </Tooltip>
         </div>
     );
+}
+
+function getLabel(state: WorkspaceInstancePhase, conditions?: WorkspaceInstanceConditions) {
+    if (conditions?.failed) {
+        return "Failed";
+    }
+    return state.substr(0, 1).toLocaleUpperCase() + state.substr(1);
 }
