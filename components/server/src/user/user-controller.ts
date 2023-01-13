@@ -25,7 +25,7 @@ import { LoginCompletionHandler } from "../auth/login-completion-handler";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { TosCookie } from "./tos-cookie";
 import { TosFlow } from "../terms/tos-flow";
-import { increaseLoginCounter } from "../../src/prometheus-metrics";
+import { increaseLoginCounter } from "../prometheus-metrics";
 import { v4 as uuidv4 } from "uuid";
 import { OwnerResourceGuard, ResourceAccessGuard, ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from "../one-time-secret-server";

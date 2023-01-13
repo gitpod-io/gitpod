@@ -136,14 +136,6 @@ export class TeamDBImpl implements TeamDB {
         if (blocklist.indexOf(slug) !== -1) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "Creating a team with this name is not allowed");
         }
-        const userRepo = await this.getUserRepo();
-        const existingUsers = await userRepo.query(
-            "SELECT COUNT(id) AS count FROM d_b_user WHERE fullName LIKE ? OR name LIKE ?",
-            [name, slug],
-        );
-        if (Number.parseInt(existingUsers[0].count) > 0) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "A team cannot have the same name as an existing user");
-        }
         const teamRepo = await this.getTeamRepo();
         const existingTeam = await teamRepo.findOne({ slug, deleted: false, markedDeleted: false });
         if (!!existingTeam) {

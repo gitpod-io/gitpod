@@ -212,6 +212,9 @@ export interface AdditionalUserData {
     workspaceClasses?: WorkspaceClasses;
     // additional user profile data
     profile?: ProfileDetails;
+    // whether the user has been migrated to team attribution.
+    // a corresponding feature flag (team_only_attribution) triggers the migration.
+    isMigratedToTeamOnlyAttribution?: boolean;
 }
 export namespace AdditionalUserData {
     export function set(user: User, partialData: Partial<AdditionalUserData>): User {

@@ -7,7 +7,7 @@
 import { IPrefixContextParser } from "./context-parser";
 import { User, WorkspaceContext, WithEnvvarsContext } from "@gitpod/gitpod-protocol";
 import { injectable } from "inversify";
-import { EnvVarWithValue } from "@gitpod/gitpod-protocol/src/protocol";
+import { EnvVarWithValue } from "@gitpod/gitpod-protocol/lib/protocol";
 
 @injectable()
 export class EnvvarPrefixParser implements IPrefixContextParser {

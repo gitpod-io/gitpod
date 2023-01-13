@@ -12,7 +12,7 @@ import {
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
 } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { BillingTier } from "@gitpod/gitpod-protocol/src/protocol";
+import { BillingTier } from "@gitpod/gitpod-protocol/lib/protocol";
 import { injectable } from "inversify";
 
 export interface MayStartWorkspaceResult {

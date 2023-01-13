@@ -112,22 +112,24 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
                         </a>
                     </h2>
                     <div className="mt-4 max-w-2xl grid grid-cols-3 gap-3">
-                        <SelectableCardSolid
-                            className="h-18"
-                            title="(myself)"
-                            selected={!!user && isSelected("user", user.id)}
-                            onClick={() => setUsageAttributionTeam(undefined)}
-                        >
-                            <div className="flex-grow flex items-end px-1">
-                                <span
-                                    className={`text-sm text-gray-400${
-                                        !!user && isSelected("user", user.id) ? " dark:text-gray-600" : ""
-                                    }`}
-                                >
-                                    Personal Account
-                                </span>
-                            </div>
-                        </SelectableCardSolid>
+                        {!user?.additionalData?.isMigratedToTeamOnlyAttribution && (
+                            <SelectableCardSolid
+                                className="h-18"
+                                title="(myself)"
+                                selected={!!user && isSelected("user", user.id)}
+                                onClick={() => setUsageAttributionTeam(undefined)}
+                            >
+                                <div className="flex-grow flex items-end px-1">
+                                    <span
+                                        className={`text-sm text-gray-400${
+                                            !!user && isSelected("user", user.id) ? " dark:text-gray-600" : ""
+                                        }`}
+                                    >
+                                        Personal Account
+                                    </span>
+                                </div>
+                            </SelectableCardSolid>
+                        )}
                         {teamsAvailableForAttribution.map((t) => (
                             <SelectableCardSolid
                                 className="h-18"

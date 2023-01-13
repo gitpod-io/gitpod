@@ -19,10 +19,14 @@ export default function Billing() {
             <div>
                 <h3>Default Billing Account</h3>
                 <BillingAccountSelector />
-                <h3 className="mt-12">Personal Billing</h3>
-                <UsageBasedBillingConfig
-                    attributionId={user && AttributionId.render({ kind: "user", userId: user.id })}
-                />
+                {!user?.additionalData?.isMigratedToTeamOnlyAttribution && (
+                    <>
+                        <h3 className="mt-12">Personal Billing</h3>
+                        <UsageBasedBillingConfig
+                            attributionId={user && AttributionId.render({ kind: "user", userId: user.id })}
+                        />
+                    </>
+                )}
             </div>
         </PageWithSettingsSubMenu>
     );
