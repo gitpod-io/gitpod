@@ -6,26 +6,26 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-    FetchWorkspacesReturnValue,
+    WorkspacesFetcherResult,
     useDeleteWorkspaceFetcher,
-    useFetchUpdateWorkspaceDescription,
+    useUpdateWorkspaceDescriptionFetcher,
     useStopWorkspaceFetcher,
     useToggleWorkspacePinnedFetcher,
     useToggleWorkspaceSharedFetcher,
 } from "./fetchers";
-import { getWorkspacesQueryKey } from "./queries";
+import { getListWorkspacesQueryKey } from "./queries";
 
 export const useUpdateWorkspaceDescription = () => {
     const queryClient = useQueryClient();
-    const updateDescription = useFetchUpdateWorkspaceDescription();
+    const updateDescription = useUpdateWorkspaceDescriptionFetcher();
 
     return useMutation({
         mutationFn: updateDescription,
         onSuccess: (_, { workspaceId, newDescription }) => {
-            const queryKey = getWorkspacesQueryKey();
+            const queryKey = getListWorkspacesQueryKey();
 
             // pro-actively update workspace description rather than reload all workspaces
-            queryClient.setQueryData<FetchWorkspacesReturnValue>(queryKey, (oldWorkspacesData) => {
+            queryClient.setQueryData<WorkspacesFetcherResult>(queryKey, (oldWorkspacesData) => {
                 return oldWorkspacesData?.map((info) => {
                     if (info.workspace.id !== workspaceId) {
                         return info;
@@ -53,10 +53,10 @@ export const useDeleteWorkspaceMutation = () => {
     return useMutation({
         mutationFn: deleteWorkspace,
         onSuccess: (_, { workspaceId }) => {
-            const queryKey = getWorkspacesQueryKey();
+            const queryKey = getListWorkspacesQueryKey();
 
             // Remove workspace from cache so it's reflected right away
-            queryClient.setQueryData<FetchWorkspacesReturnValue>(queryKey, (oldWorkspacesData) => {
+            queryClient.setQueryData<WorkspacesFetcherResult>(queryKey, (oldWorkspacesData) => {
                 return oldWorkspacesData?.filter((info) => {
                     return info.workspace.id !== workspaceId;
                 });
@@ -83,10 +83,10 @@ export const useToggleWorkspaceSharedMutation = () => {
     return useMutation({
         mutationFn: toggleWorkspaceShared,
         onSuccess: (_, { workspaceId, level }) => {
-            const queryKey = getWorkspacesQueryKey();
+            const queryKey = getListWorkspacesQueryKey();
 
             // Update workspace.shareable to the level we set so it's reflected immediately
-            queryClient.setQueryData<FetchWorkspacesReturnValue>(queryKey, (oldWorkspacesData) => {
+            queryClient.setQueryData<WorkspacesFetcherResult>(queryKey, (oldWorkspacesData) => {
                 return oldWorkspacesData?.map((info) => {
                     if (info.workspace.id !== workspaceId) {
                         return info;
@@ -114,10 +114,10 @@ export const useToggleWorkspacedPinnedMutation = () => {
     return useMutation({
         mutationFn: toggleWorkspacePinned,
         onSuccess: (_, { workspaceId }) => {
-            const queryKey = getWorkspacesQueryKey();
+            const queryKey = getListWorkspacesQueryKey();
 
             // Update workspace.pinned to account for the toggle so it's reflected immediately
-            queryClient.setQueryData<FetchWorkspacesReturnValue>(queryKey, (oldWorkspaceData) => {
+            queryClient.setQueryData<WorkspacesFetcherResult>(queryKey, (oldWorkspaceData) => {
                 return oldWorkspaceData?.map((info) => {
                     if (info.workspace.id !== workspaceId) {
                         return info;
