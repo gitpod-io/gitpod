@@ -14,7 +14,7 @@ import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { ThemeContext } from "../theme-context";
 import { Project } from "@gitpod/gitpod-protocol";
 import Alert from "../components/Alert";
-import { useProjects } from "../data/projects/queries";
+import { useListProjectsQuery } from "../data/projects/queries";
 import { ProjectListItem } from "./ProjectListItem";
 import { SpinnerLoader } from "../components/Loader";
 
@@ -23,7 +23,7 @@ export default function () {
     const history = useHistory();
     const { teams } = useContext(TeamsContext);
     const team = getCurrentTeam(location, teams);
-    const { data, isLoading, isError, refetch } = useProjects();
+    const { data, isLoading, isError, refetch } = useListProjectsQuery();
     const { isDark } = useContext(ThemeContext);
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
     const newProjectUrl = useMemo(() => (!!team ? `/new?team=${team.slug}` : "/new?user=1"), [team]);

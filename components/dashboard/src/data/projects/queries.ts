@@ -14,7 +14,7 @@ type TeamOrUserID = {
     userId?: string;
 };
 
-export const useProjects = () => {
+export const useListProjectsQuery = () => {
     const team = useCurrentTeam();
     const user = useCurrentUser();
     const fetchProjects = useProjectsFetcher({ teamId: team?.id, userId: user?.id });
