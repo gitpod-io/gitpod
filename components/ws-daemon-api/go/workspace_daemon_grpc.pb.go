@@ -612,27 +612,27 @@ var WorkspaceInfoService_ServiceDesc = grpc.ServiceDesc{
 	Metadata: "workspace_daemon.proto",
 }
 
-// WorkspaceInnerLoopClient is the client API for WorkspaceInnerLoop service.
+// DebugServiceClient is the client API for DebugService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type WorkspaceInnerLoopClient interface {
-	StartInnerLoop(ctx context.Context, in *StartInnerLoopRequest, opts ...grpc.CallOption) (WorkspaceInnerLoop_StartInnerLoopClient, error)
+type DebugServiceClient interface {
+	Start(ctx context.Context, in *StartRequest, opts ...grpc.CallOption) (DebugService_StartClient, error)
 }
 
-type workspaceInnerLoopClient struct {
+type debugServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewWorkspaceInnerLoopClient(cc grpc.ClientConnInterface) WorkspaceInnerLoopClient {
-	return &workspaceInnerLoopClient{cc}
+func NewDebugServiceClient(cc grpc.ClientConnInterface) DebugServiceClient {
+	return &debugServiceClient{cc}
 }
 
-func (c *workspaceInnerLoopClient) StartInnerLoop(ctx context.Context, in *StartInnerLoopRequest, opts ...grpc.CallOption) (WorkspaceInnerLoop_StartInnerLoopClient, error) {
-	stream, err := c.cc.NewStream(ctx, &WorkspaceInnerLoop_ServiceDesc.Streams[0], "/iws.WorkspaceInnerLoop/StartInnerLoop", opts...)
+func (c *debugServiceClient) Start(ctx context.Context, in *StartRequest, opts ...grpc.CallOption) (DebugService_StartClient, error) {
+	stream, err := c.cc.NewStream(ctx, &DebugService_ServiceDesc.Streams[0], "/iws.DebugService/Start", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &workspaceInnerLoopStartInnerLoopClient{stream}
+	x := &debugServiceStartClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -642,83 +642,83 @@ func (c *workspaceInnerLoopClient) StartInnerLoop(ctx context.Context, in *Start
 	return x, nil
 }
 
-type WorkspaceInnerLoop_StartInnerLoopClient interface {
-	Recv() (*StartInnerLoopResponse, error)
+type DebugService_StartClient interface {
+	Recv() (*StartResponse, error)
 	grpc.ClientStream
 }
 
-type workspaceInnerLoopStartInnerLoopClient struct {
+type debugServiceStartClient struct {
 	grpc.ClientStream
 }
 
-func (x *workspaceInnerLoopStartInnerLoopClient) Recv() (*StartInnerLoopResponse, error) {
-	m := new(StartInnerLoopResponse)
+func (x *debugServiceStartClient) Recv() (*StartResponse, error) {
+	m := new(StartResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-// WorkspaceInnerLoopServer is the server API for WorkspaceInnerLoop service.
-// All implementations must embed UnimplementedWorkspaceInnerLoopServer
+// DebugServiceServer is the server API for DebugService service.
+// All implementations must embed UnimplementedDebugServiceServer
 // for forward compatibility
-type WorkspaceInnerLoopServer interface {
-	StartInnerLoop(*StartInnerLoopRequest, WorkspaceInnerLoop_StartInnerLoopServer) error
-	mustEmbedUnimplementedWorkspaceInnerLoopServer()
+type DebugServiceServer interface {
+	Start(*StartRequest, DebugService_StartServer) error
+	mustEmbedUnimplementedDebugServiceServer()
 }
 
-// UnimplementedWorkspaceInnerLoopServer must be embedded to have forward compatible implementations.
-type UnimplementedWorkspaceInnerLoopServer struct {
+// UnimplementedDebugServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedDebugServiceServer struct {
 }
 
-func (UnimplementedWorkspaceInnerLoopServer) StartInnerLoop(*StartInnerLoopRequest, WorkspaceInnerLoop_StartInnerLoopServer) error {
-	return status.Errorf(codes.Unimplemented, "method StartInnerLoop not implemented")
+func (UnimplementedDebugServiceServer) Start(*StartRequest, DebugService_StartServer) error {
+	return status.Errorf(codes.Unimplemented, "method Start not implemented")
 }
-func (UnimplementedWorkspaceInnerLoopServer) mustEmbedUnimplementedWorkspaceInnerLoopServer() {}
+func (UnimplementedDebugServiceServer) mustEmbedUnimplementedDebugServiceServer() {}
 
-// UnsafeWorkspaceInnerLoopServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to WorkspaceInnerLoopServer will
+// UnsafeDebugServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to DebugServiceServer will
 // result in compilation errors.
-type UnsafeWorkspaceInnerLoopServer interface {
-	mustEmbedUnimplementedWorkspaceInnerLoopServer()
+type UnsafeDebugServiceServer interface {
+	mustEmbedUnimplementedDebugServiceServer()
 }
 
-func RegisterWorkspaceInnerLoopServer(s grpc.ServiceRegistrar, srv WorkspaceInnerLoopServer) {
-	s.RegisterService(&WorkspaceInnerLoop_ServiceDesc, srv)
+func RegisterDebugServiceServer(s grpc.ServiceRegistrar, srv DebugServiceServer) {
+	s.RegisterService(&DebugService_ServiceDesc, srv)
 }
 
-func _WorkspaceInnerLoop_StartInnerLoop_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(StartInnerLoopRequest)
+func _DebugService_Start_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(StartRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(WorkspaceInnerLoopServer).StartInnerLoop(m, &workspaceInnerLoopStartInnerLoopServer{stream})
+	return srv.(DebugServiceServer).Start(m, &debugServiceStartServer{stream})
 }
 
-type WorkspaceInnerLoop_StartInnerLoopServer interface {
-	Send(*StartInnerLoopResponse) error
+type DebugService_StartServer interface {
+	Send(*StartResponse) error
 	grpc.ServerStream
 }
 
-type workspaceInnerLoopStartInnerLoopServer struct {
+type debugServiceStartServer struct {
 	grpc.ServerStream
 }
 
-func (x *workspaceInnerLoopStartInnerLoopServer) Send(m *StartInnerLoopResponse) error {
+func (x *debugServiceStartServer) Send(m *StartResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-// WorkspaceInnerLoop_ServiceDesc is the grpc.ServiceDesc for WorkspaceInnerLoop service.
+// DebugService_ServiceDesc is the grpc.ServiceDesc for DebugService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var WorkspaceInnerLoop_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "iws.WorkspaceInnerLoop",
-	HandlerType: (*WorkspaceInnerLoopServer)(nil),
+var DebugService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "iws.DebugService",
+	HandlerType: (*DebugServiceServer)(nil),
 	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "StartInnerLoop",
-			Handler:       _WorkspaceInnerLoop_StartInnerLoop_Handler,
+			StreamName:    "Start",
+			Handler:       _DebugService_Start_Handler,
 			ServerStreams: true,
 		},
 	},

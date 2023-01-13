@@ -474,50 +474,53 @@ export namespace Memory {
     }
 }
 
-export class StartInnerLoopRequest extends jspb.Message {
+export class StartRequest extends jspb.Message {
+    getHeadless(): boolean;
+    setHeadless(value: boolean): StartRequest;
 
     serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): StartInnerLoopRequest.AsObject;
-    static toObject(includeInstance: boolean, msg: StartInnerLoopRequest): StartInnerLoopRequest.AsObject;
+    toObject(includeInstance?: boolean): StartRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: StartRequest): StartRequest.AsObject;
     static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
     static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: StartInnerLoopRequest, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): StartInnerLoopRequest;
-    static deserializeBinaryFromReader(message: StartInnerLoopRequest, reader: jspb.BinaryReader): StartInnerLoopRequest;
+    static serializeBinaryToWriter(message: StartRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): StartRequest;
+    static deserializeBinaryFromReader(message: StartRequest, reader: jspb.BinaryReader): StartRequest;
 }
 
-export namespace StartInnerLoopRequest {
+export namespace StartRequest {
     export type AsObject = {
+        headless: boolean,
     }
 }
 
-export class StartInnerLoopResponse extends jspb.Message {
+export class StartResponse extends jspb.Message {
 
     hasData(): boolean;
     clearData(): void;
     getData(): Uint8Array | string;
     getData_asU8(): Uint8Array;
     getData_asB64(): string;
-    setData(value: Uint8Array | string): StartInnerLoopResponse;
+    setData(value: Uint8Array | string): StartResponse;
 
     hasExitCode(): boolean;
     clearExitCode(): void;
     getExitCode(): number;
-    setExitCode(value: number): StartInnerLoopResponse;
+    setExitCode(value: number): StartResponse;
 
-    getOutputCase(): StartInnerLoopResponse.OutputCase;
+    getOutputCase(): StartResponse.OutputCase;
 
     serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): StartInnerLoopResponse.AsObject;
-    static toObject(includeInstance: boolean, msg: StartInnerLoopResponse): StartInnerLoopResponse.AsObject;
+    toObject(includeInstance?: boolean): StartResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: StartResponse): StartResponse.AsObject;
     static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
     static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: StartInnerLoopResponse, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): StartInnerLoopResponse;
-    static deserializeBinaryFromReader(message: StartInnerLoopResponse, reader: jspb.BinaryReader): StartInnerLoopResponse;
+    static serializeBinaryToWriter(message: StartResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): StartResponse;
+    static deserializeBinaryFromReader(message: StartResponse, reader: jspb.BinaryReader): StartResponse;
 }
 
-export namespace StartInnerLoopResponse {
+export namespace StartResponse {
     export type AsObject = {
         data: Uint8Array | string,
         exitCode: number,

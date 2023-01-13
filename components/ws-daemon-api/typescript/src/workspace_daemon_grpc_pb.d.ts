@@ -249,33 +249,33 @@ export class WorkspaceInfoServiceClient extends grpc.Client implements IWorkspac
     public workspaceInfo(request: workspace_daemon_pb.WorkspaceInfoRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.WorkspaceInfoResponse) => void): grpc.ClientUnaryCall;
 }
 
-interface IWorkspaceInnerLoopService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
-    startInnerLoop: IWorkspaceInnerLoopService_IStartInnerLoop;
+interface IDebugServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
+    start: IDebugServiceService_IStart;
 }
 
-interface IWorkspaceInnerLoopService_IStartInnerLoop extends grpc.MethodDefinition<workspace_daemon_pb.StartInnerLoopRequest, workspace_daemon_pb.StartInnerLoopResponse> {
-    path: "/iws.WorkspaceInnerLoop/StartInnerLoop";
+interface IDebugServiceService_IStart extends grpc.MethodDefinition<workspace_daemon_pb.StartRequest, workspace_daemon_pb.StartResponse> {
+    path: "/iws.DebugService/Start";
     requestStream: false;
     responseStream: true;
-    requestSerialize: grpc.serialize<workspace_daemon_pb.StartInnerLoopRequest>;
-    requestDeserialize: grpc.deserialize<workspace_daemon_pb.StartInnerLoopRequest>;
-    responseSerialize: grpc.serialize<workspace_daemon_pb.StartInnerLoopResponse>;
-    responseDeserialize: grpc.deserialize<workspace_daemon_pb.StartInnerLoopResponse>;
+    requestSerialize: grpc.serialize<workspace_daemon_pb.StartRequest>;
+    requestDeserialize: grpc.deserialize<workspace_daemon_pb.StartRequest>;
+    responseSerialize: grpc.serialize<workspace_daemon_pb.StartResponse>;
+    responseDeserialize: grpc.deserialize<workspace_daemon_pb.StartResponse>;
 }
 
-export const WorkspaceInnerLoopService: IWorkspaceInnerLoopService;
+export const DebugServiceService: IDebugServiceService;
 
-export interface IWorkspaceInnerLoopServer extends grpc.UntypedServiceImplementation {
-    startInnerLoop: grpc.handleServerStreamingCall<workspace_daemon_pb.StartInnerLoopRequest, workspace_daemon_pb.StartInnerLoopResponse>;
+export interface IDebugServiceServer extends grpc.UntypedServiceImplementation {
+    start: grpc.handleServerStreamingCall<workspace_daemon_pb.StartRequest, workspace_daemon_pb.StartResponse>;
 }
 
-export interface IWorkspaceInnerLoopClient {
-    startInnerLoop(request: workspace_daemon_pb.StartInnerLoopRequest, options?: Partial<grpc.CallOptions>): grpc.ClientReadableStream<workspace_daemon_pb.StartInnerLoopResponse>;
-    startInnerLoop(request: workspace_daemon_pb.StartInnerLoopRequest, metadata?: grpc.Metadata, options?: Partial<grpc.CallOptions>): grpc.ClientReadableStream<workspace_daemon_pb.StartInnerLoopResponse>;
+export interface IDebugServiceClient {
+    start(request: workspace_daemon_pb.StartRequest, options?: Partial<grpc.CallOptions>): grpc.ClientReadableStream<workspace_daemon_pb.StartResponse>;
+    start(request: workspace_daemon_pb.StartRequest, metadata?: grpc.Metadata, options?: Partial<grpc.CallOptions>): grpc.ClientReadableStream<workspace_daemon_pb.StartResponse>;
 }
 
-export class WorkspaceInnerLoopClient extends grpc.Client implements IWorkspaceInnerLoopClient {
+export class DebugServiceClient extends grpc.Client implements IDebugServiceClient {
     constructor(address: string, credentials: grpc.ChannelCredentials, options?: Partial<grpc.ClientOptions>);
-    public startInnerLoop(request: workspace_daemon_pb.StartInnerLoopRequest, options?: Partial<grpc.CallOptions>): grpc.ClientReadableStream<workspace_daemon_pb.StartInnerLoopResponse>;
-    public startInnerLoop(request: workspace_daemon_pb.StartInnerLoopRequest, metadata?: grpc.Metadata, options?: Partial<grpc.CallOptions>): grpc.ClientReadableStream<workspace_daemon_pb.StartInnerLoopResponse>;
+    public start(request: workspace_daemon_pb.StartRequest, options?: Partial<grpc.CallOptions>): grpc.ClientReadableStream<workspace_daemon_pb.StartResponse>;
+    public start(request: workspace_daemon_pb.StartRequest, metadata?: grpc.Metadata, options?: Partial<grpc.CallOptions>): grpc.ClientReadableStream<workspace_daemon_pb.StartResponse>;
 }

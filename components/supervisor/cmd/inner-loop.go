@@ -18,13 +18,17 @@ import (
 	daemonapi "github.com/gitpod-io/gitpod/ws-daemon/api"
 )
 
+var innerLoopOpts struct {
+	Headless bool
+}
+
 var innerLoopCmd = &cobra.Command{
 	Use:   "inner-loop",
 	Short: "innerLoop Test",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cancel()
-		const socketFN = "/.supervisor/inner-loop.sock"
+		const socketFN = "/.supervisor/debug-service.sock"
 
 		conn, err := grpc.DialContext(ctx, "unix://"+socketFN, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
@@ -32,8 +36,8 @@ var innerLoopCmd = &cobra.Command{
 		}
 		defer conn.Close()
 
-		client := daemonapi.NewWorkspaceInnerLoopClient(conn)
-		resp, err := client.StartInnerLoop(context.Background(), &daemonapi.StartInnerLoopRequest{})
+		client := daemonapi.NewDebugServiceClient(conn)
+		resp, err := client.Start(context.Background(), &daemonapi.StartRequest{})
 		if err != nil {
 			log.WithError(err).Fatal("could not retrieve workspace info")
 		}
@@ -52,4 +56,5 @@ var innerLoopCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(innerLoopCmd)
+	innerLoopCmd.Flags().BoolVarP(&innerLoopOpts.Headless, "headless", "h", false, "running debug workspace in headless mode")
 }

@@ -120,26 +120,26 @@ function deserialize_iws_SetupPairVethsResponse(buffer_arg) {
   return workspace_daemon_pb.SetupPairVethsResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-function serialize_iws_StartInnerLoopRequest(arg) {
-  if (!(arg instanceof workspace_daemon_pb.StartInnerLoopRequest)) {
-    throw new Error('Expected argument of type iws.StartInnerLoopRequest');
+function serialize_iws_StartRequest(arg) {
+  if (!(arg instanceof workspace_daemon_pb.StartRequest)) {
+    throw new Error('Expected argument of type iws.StartRequest');
   }
   return Buffer.from(arg.serializeBinary());
 }
 
-function deserialize_iws_StartInnerLoopRequest(buffer_arg) {
-  return workspace_daemon_pb.StartInnerLoopRequest.deserializeBinary(new Uint8Array(buffer_arg));
+function deserialize_iws_StartRequest(buffer_arg) {
+  return workspace_daemon_pb.StartRequest.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-function serialize_iws_StartInnerLoopResponse(arg) {
-  if (!(arg instanceof workspace_daemon_pb.StartInnerLoopResponse)) {
-    throw new Error('Expected argument of type iws.StartInnerLoopResponse');
+function serialize_iws_StartResponse(arg) {
+  if (!(arg instanceof workspace_daemon_pb.StartResponse)) {
+    throw new Error('Expected argument of type iws.StartResponse');
   }
   return Buffer.from(arg.serializeBinary());
 }
 
-function deserialize_iws_StartInnerLoopResponse(buffer_arg) {
-  return workspace_daemon_pb.StartInnerLoopResponse.deserializeBinary(new Uint8Array(buffer_arg));
+function deserialize_iws_StartResponse(buffer_arg) {
+  return workspace_daemon_pb.StartResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
 function serialize_iws_TeardownRequest(arg) {
@@ -400,18 +400,18 @@ workspaceInfo: {
 };
 
 exports.WorkspaceInfoServiceClient = grpc.makeGenericClientConstructor(WorkspaceInfoServiceService);
-var WorkspaceInnerLoopService = exports.WorkspaceInnerLoopService = {
-  startInnerLoop: {
-    path: '/iws.WorkspaceInnerLoop/StartInnerLoop',
+var DebugServiceService = exports.DebugServiceService = {
+  start: {
+    path: '/iws.DebugService/Start',
     requestStream: false,
     responseStream: true,
-    requestType: workspace_daemon_pb.StartInnerLoopRequest,
-    responseType: workspace_daemon_pb.StartInnerLoopResponse,
-    requestSerialize: serialize_iws_StartInnerLoopRequest,
-    requestDeserialize: deserialize_iws_StartInnerLoopRequest,
-    responseSerialize: serialize_iws_StartInnerLoopResponse,
-    responseDeserialize: deserialize_iws_StartInnerLoopResponse,
+    requestType: workspace_daemon_pb.StartRequest,
+    responseType: workspace_daemon_pb.StartResponse,
+    requestSerialize: serialize_iws_StartRequest,
+    requestDeserialize: deserialize_iws_StartRequest,
+    responseSerialize: serialize_iws_StartResponse,
+    responseDeserialize: deserialize_iws_StartResponse,
   },
 };
 
-exports.WorkspaceInnerLoopClient = grpc.makeGenericClientConstructor(WorkspaceInnerLoopService);
+exports.DebugServiceClient = grpc.makeGenericClientConstructor(DebugServiceService);

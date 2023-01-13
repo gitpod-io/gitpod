@@ -143,13 +143,15 @@ message Memory {
     int64 limit = 2;
 }
 
-service WorkspaceInnerLoop {
-    rpc StartInnerLoop(StartInnerLoopRequest) returns (stream StartInnerLoopResponse) {}
+service DebugService {
+    rpc Start(StartRequest) returns (stream StartResponse) {}
 }
 
-message StartInnerLoopRequest {}
+message StartRequest {
+    bool headless = 1;
+}
 
-message StartInnerLoopResponse {
+message StartResponse {
     oneof output {
         bytes data = 1;
         int32 exit_code = 2;

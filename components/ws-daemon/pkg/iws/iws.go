@@ -186,7 +186,7 @@ func (wbs *InWorkspaceServiceServer) Start() error {
 			UseOnce: true,
 		},
 		"/iws.InWorkspaceService/WorkspaceInfo": ratelimit{
-			Limiter: rate.NewLimiter(rate.Every(1500*time.Millisecond), 4),
+			Limiter: rate.NewLimiter(rate.Every(1500*time.Millisecond), 8),
 		},
 	}
 

@@ -116,17 +116,17 @@ var ring0Cmd = &cobra.Command{
 		}()
 
 		// start ring0 services
-		stopHook, err := startInnerLoopService("/.workspace/mark/", prep)
+		stopHook, err := startDebugServiceServer("/.workspace/mark/", prep)
 		if err != nil {
 			log.WithError(err).Error("cannot start inner loop service")
 		}
 		defer stopHook()
 		// root process tree don't have cancelable context
-		exitCode = startRing1(context.Background(), true, prep, os.Stderr, os.Stdout, os.Stderr)
+		exitCode = startRing1(context.Background(), nil, prep, os.Stderr, os.Stdout, os.Stderr)
 	},
 }
 
-func startRing1(ctx context.Context, isRootProcess bool, prep *api.PrepareForUserNSResponse, stdin io.Reader, stdout, stderr io.Writer) (exitCode int) {
+func startRing1(ctx context.Context, additionEnviron []string, prep *api.PrepareForUserNSResponse, stdin io.Reader, stdout, stderr io.Writer) (exitCode int) {
 	exitCode = 1
 	cmd := exec.Command("/proc/self/exe", "ring1")
 	cmd.SysProcAttr = &syscall.SysProcAttr{
@@ -140,9 +140,7 @@ func startRing1(ctx context.Context, isRootProcess bool, prep *api.PrepareForUse
 		"WORKSPACEKIT_FSSHIFT="+prep.FsShift.String(),
 		fmt.Sprintf("WORKSPACEKIT_NO_WORKSPACE_MOUNT=%v", prep.FullWorkspaceBackup || prep.PersistentVolumeClaim),
 	)
-	if !isRootProcess {
-		cmd.Env = append(cmd.Env, "WORKSPACEKIT_ROOTFS=/demo", "SUPERVISOR_DEBUG_WORKSPACE=true")
-	}
+	cmd.Env = append(cmd.Env, additionEnviron...)
 
 	if err := cmd.Start(); err != nil {
 		log.WithError(err).Error("failed to start ring1")
@@ -209,16 +207,16 @@ func startRing1(ctx context.Context, isRootProcess bool, prep *api.PrepareForUse
 	return
 }
 
-type workspaceInnerLoopService struct {
+type debugServiceServer struct {
 	socket net.Listener
 	server *grpc.Server
-	api.UnimplementedWorkspaceInnerLoopServer
+	api.UnimplementedDebugServiceServer
 
 	prep    *api.PrepareForUserNSResponse
 	running bool
 }
 
-func (svc *workspaceInnerLoopService) StartInnerLoop(req *api.StartInnerLoopRequest, resp api.WorkspaceInnerLoop_StartInnerLoopServer) error {
+func (svc *debugServiceServer) Start(req *api.StartRequest, resp api.DebugService_StartServer) error {
 	if svc.running {
 		return errors.New("already running debug workspace")
 	}
@@ -231,7 +229,7 @@ func (svc *workspaceInnerLoopService) StartInnerLoop(req *api.StartInnerLoopRequ
 	defer cancel()
 
 	errchan := make(chan error, 1)
-	messages := make(chan *api.StartInnerLoopResponse, 1)
+	messages := make(chan *api.StartResponse, 1)
 
 	outReader, outWriter := io.Pipe()
 
@@ -258,9 +256,13 @@ func (svc *workspaceInnerLoopService) StartInnerLoop(req *api.StartInnerLoopRequ
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	exitCode := -1
+	additionEnviron := []string{"WORKSPACEKIT_ROOTFS=/demo", "SUPERVISOR_DEBUG_WORKSPACE=true"}
+	if req.Headless {
+		additionEnviron = append(additionEnviron, "GITPOD_HEADLESS=true")
+	}
 	go func() {
 		defer wg.Done()
-		exitCode = startRing1(ctx, false, svc.prep, nil, outWriter, outWriter)
+		exitCode = startRing1(ctx, additionEnviron, svc.prep, nil, outWriter, outWriter)
 		outWriter.Close()
 	}()
 
@@ -275,10 +277,10 @@ func (svc *workspaceInnerLoopService) StartInnerLoop(req *api.StartInnerLoopRequ
 				errchan <- err
 				return
 			}
-			messages <- &api.StartInnerLoopResponse{Output: &api.StartInnerLoopResponse_Data{Data: buf[:n]}}
+			messages <- &api.StartResponse{Output: &api.StartResponse_Data{Data: buf[:n]}}
 		}
 		wg.Wait()
-		messages <- &api.StartInnerLoopResponse{Output: &api.StartInnerLoopResponse_ExitCode{ExitCode: int32(exitCode)}}
+		messages <- &api.StartResponse{Output: &api.StartResponse_ExitCode{ExitCode: int32(exitCode)}}
 		errchan <- io.EOF
 	}()
 
@@ -302,8 +304,8 @@ func (svc *workspaceInnerLoopService) StartInnerLoop(req *api.StartInnerLoopRequ
 
 }
 
-func startInnerLoopService(socketDir string, prep *api.PrepareForUserNSResponse) (func(), error) {
-	socketFN := filepath.Join(socketDir, "inner-loop.sock")
+func startDebugServiceServer(socketDir string, prep *api.PrepareForUserNSResponse) (func(), error) {
+	socketFN := filepath.Join(socketDir, "debug-service.sock")
 	if _, err := os.Stat(socketFN); err == nil {
 		_ = os.Remove(socketFN)
 	}
@@ -318,31 +320,21 @@ func startInnerLoopService(socketDir string, prep *api.PrepareForUserNSResponse)
 		return nil, xerrors.Errorf("cannot chmod info socket: %w", err)
 	}
 
-	innerLoopSvc := workspaceInnerLoopService{
+	debugSvc := debugServiceServer{
 		socket: sckt,
 		prep:   prep,
 	}
 
-	limiter := common_grpc.NewRatelimitingInterceptor(
-		map[string]common_grpc.RateLimit{
-			"iws.WorkspaceInnerLoopService/StartInnerLoop": {
-				RefillInterval: 1500,
-				BucketSize:     4,
-			},
-		},
-	)
-
-	innerLoopSvc.server = grpc.NewServer(grpc.ChainUnaryInterceptor(limiter.UnaryInterceptor()))
-	api.RegisterWorkspaceInnerLoopServer(innerLoopSvc.server, &innerLoopSvc)
+	api.RegisterDebugServiceServer(debugSvc.server, &debugSvc)
 	go func() {
-		err := innerLoopSvc.server.Serve(sckt)
+		err := debugSvc.server.Serve(sckt)
 		if err != nil {
 			log.WithError(err).Error("workspace inner loop server failed")
 		}
 	}()
 
 	return func() {
-		innerLoopSvc.server.Stop()
+		debugSvc.server.Stop()
 		os.Remove(socketFN)
 	}, nil
 }
