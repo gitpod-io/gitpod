@@ -17,6 +17,7 @@ type RollOutJob struct {
 	oldCluster           string
 	newCluster           string
 	currentScore         int32
+	okayScoreUntilNoData int32
 	analyzer             analysis.Analyzer
 	RolloutAction        wsbridge.RolloutAction
 	rolloutStep          int32
@@ -27,10 +28,11 @@ type RollOutJob struct {
 	done   chan bool
 }
 
-func New(oldCluster, newCluster string, rolloutWaitDuration, analysisWaitDuration time.Duration, step int32, analyzer analysis.Analyzer, rolloutAction wsbridge.RolloutAction) *RollOutJob {
+func New(oldCluster, newCluster string, rolloutWaitDuration, analysisWaitDuration time.Duration, step, okayScoreUntilNoData int32, analyzer analysis.Analyzer, rolloutAction wsbridge.RolloutAction) *RollOutJob {
 	return &RollOutJob{
 		oldCluster:           oldCluster,
 		newCluster:           newCluster,
+		okayScoreUntilNoData: okayScoreUntilNoData,
 		currentScore:         0,
 		rolloutStep:          step,
 		analyzer:             analyzer,
@@ -60,10 +62,21 @@ func (r *RollOutJob) Start(ctx context.Context) {
 					// Revert the rollout in case of analysis failure
 					r.revert <- true
 				}
+
 				// Analyzer says no, stop the rollout
-				if !moveForward {
+				if moveForward == -1 {
 					log.Info("Analyzer says no, stopping the rollout")
 					r.revert <- true
+				} else if moveForward == 0 {
+					log.Info("Analyzer says no data, waiting for more data")
+					// Rollout okay until currentScore < okayScoreUntilNoData
+					if r.currentScore >= r.okayScoreUntilNoData {
+						log.Info("Current score is more than okayScoreUntilNoData, reverting the rollout")
+						r.revert <- true
+					}
+				} else {
+					// Roll forward otherwise
+					log.Info("Analyzer says yes, rolling forward")
 				}
 			}
 		}
