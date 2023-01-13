@@ -46,6 +46,44 @@ export const useUpdateWorkspaceDescription = () => {
     });
 };
 
+type DeleteInactiveWorkspacesArgs = {
+    workspaceIds: string[];
+};
+export const useDeleteInactiveWorkspacesMutation = () => {
+    const queryClient = useQueryClient();
+    const deleteWorkspace = useDeleteWorkspaceFetcher();
+
+    return useMutation({
+        mutationFn: async ({ workspaceIds }: DeleteInactiveWorkspacesArgs) => {
+            const deletedWorkspaceIds = [];
+
+            for (const workspaceId of workspaceIds) {
+                try {
+                    await deleteWorkspace({ workspaceId });
+                    deletedWorkspaceIds.push(workspaceId);
+                } catch (e) {
+                    // TODO good candidate for a toast?
+                    console.error("Error deleting inactive workspace");
+                }
+            }
+
+            return deletedWorkspaceIds;
+        },
+        onSuccess: (deletedWorkspaceIds) => {
+            const queryKey = getListWorkspacesQueryKey();
+
+            // Remove deleted workspaces from cache so it's reflected right away
+            queryClient.setQueryData<WorkspacesFetcherResult>(queryKey, (oldWorkspacesData) => {
+                return oldWorkspacesData?.filter((info) => {
+                    return !deletedWorkspaceIds.includes(info.workspace.id);
+                });
+            });
+
+            queryClient.invalidateQueries({ queryKey });
+        },
+    });
+};
+
 export const useDeleteWorkspaceMutation = () => {
     const queryClient = useQueryClient();
     const deleteWorkspace = useDeleteWorkspaceFetcher();
