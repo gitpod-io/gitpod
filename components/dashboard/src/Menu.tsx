@@ -468,7 +468,8 @@ export default function Menu() {
                                         title: "Settings",
                                         link: "/settings",
                                     },
-                                    ...(BillingMode.showUsageBasedBilling(userBillingMode)
+                                    ...(BillingMode.showUsageBasedBilling(userBillingMode) &&
+                                    !user?.additionalData?.isMigratedToTeamOnlyAttribution
                                         ? [
                                               {
                                                   title: "Usage",

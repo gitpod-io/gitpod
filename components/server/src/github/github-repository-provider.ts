@@ -10,7 +10,7 @@ import { User, Repository } from "@gitpod/gitpod-protocol";
 import { GitHubGraphQlEndpoint, GitHubRestApi } from "./api";
 import { RepositoryProvider } from "../repohost/repository-provider";
 import { RepoURL } from "../repohost/repo-url";
-import { Branch, CommitInfo } from "@gitpod/gitpod-protocol/src/protocol";
+import { Branch, CommitInfo } from "@gitpod/gitpod-protocol/lib/protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()

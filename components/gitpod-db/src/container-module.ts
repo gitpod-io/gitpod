@@ -68,6 +68,7 @@ import { BlockedRepositoryDB } from "./blocked-repository-db";
 import { WebhookEventDB } from "./webhook-event-db";
 import { WebhookEventDBImpl } from "./typeorm/webhook-event-db-impl";
 import { PersonalAccessTokenDBImpl } from "./typeorm/personal-access-token-db-impl";
+import { UserToTeamMigrationService } from "./user-to-team-migration-service";
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
@@ -161,4 +162,5 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
     bind(EduEmailDomainDB).to(EduEmailDomainDBImpl).inSingletonScope();
     bind(LicenseDB).to(LicenseDBImpl).inSingletonScope();
     bind(OssAllowListDB).to(OssAllowListDBImpl).inSingletonScope();
+    bind(UserToTeamMigrationService).toSelf().inSingletonScope();
 });

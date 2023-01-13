@@ -27,7 +27,7 @@ import {
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { PartialProject, ProjectUsage } from "@gitpod/gitpod-protocol/src/teams-projects-protocol";
+import { PartialProject, ProjectUsage } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { Config } from "../config";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 

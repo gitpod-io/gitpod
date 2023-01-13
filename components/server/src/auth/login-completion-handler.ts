@@ -13,7 +13,7 @@ import { AuthFlow } from "./auth-provider";
 import { HostContextProvider } from "./host-context-provider";
 import { AuthProviderService } from "./auth-provider-service";
 import { TosFlow } from "../terms/tos-flow";
-import { increaseLoginCounter } from "../../src/prometheus-metrics";
+import { increaseLoginCounter } from "../prometheus-metrics";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { trackLogin } from "../analytics";
 import { UserService } from "../user/user-service";

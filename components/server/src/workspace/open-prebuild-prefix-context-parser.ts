@@ -6,7 +6,7 @@
 
 import { User, WorkspaceContext } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { OpenPrebuildContext } from "@gitpod/gitpod-protocol/src/protocol";
+import { OpenPrebuildContext } from "@gitpod/gitpod-protocol/lib/protocol";
 import { inject, injectable } from "inversify";
 import { Config } from "../config";
 import { IPrefixContextParser } from "./context-parser";

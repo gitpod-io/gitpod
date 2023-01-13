@@ -30,7 +30,7 @@ import { UserService } from "../user/user-service";
 import { AuthProviderService } from "./auth-provider-service";
 import { LoginCompletionHandler } from "./login-completion-handler";
 import { TosFlow } from "../terms/tos-flow";
-import { increaseLoginCounter } from "../../src/prometheus-metrics";
+import { increaseLoginCounter } from "../prometheus-metrics";
 import { OutgoingHttpHeaders } from "http2";
 
 /**

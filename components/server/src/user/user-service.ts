@@ -33,7 +33,8 @@ import { StripeService } from "../../ee/src/user/stripe-service";
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UsageService } from "./usage-service";
-import { CostCenter_BillingStrategy } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
+import { UserToTeamMigrationService } from "@gitpod/gitpod-db/lib/user-to-team-migration-service";
+import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 export interface FindUserByIdentityStrResult {
     user: User;
@@ -80,6 +81,8 @@ export class UserService {
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(StripeService) protected readonly stripeService: StripeService;
     @inject(UsageService) protected readonly usageService: UsageService;
+    @inject(UserToTeamMigrationService) protected readonly migrationService: UserToTeamMigrationService;
+    @inject(ConfigCatClientFactory) protected readonly configCatClientFactory: ConfigCatClientFactory;
 
     /**
      * Takes strings in the form of <authHost>/<authName> and returns the matching User
@@ -249,7 +252,7 @@ export class UserService {
                 if (team) {
                     attributionId = AttributionId.create(team);
                 }
-            } else {
+            } else if (!user?.additionalData?.isMigratedToTeamOnlyAttribution) {
                 attributionId = AttributionId.create(user);
             }
             if (!!attributionId && (await this.hasCredits(attributionId))) {
@@ -259,6 +262,13 @@ export class UserService {
         if (user.usageAttributionId) {
             // Return the user's explicit attribution ID.
             return await this.validateUsageAttributionId(user, user.usageAttributionId);
+        }
+        if (user?.additionalData?.isMigratedToTeamOnlyAttribution) {
+            const teams = await this.teamDB.findTeamsByUser(user.id);
+            if (teams.length > 0) {
+                return AttributionId.create(teams[0]);
+            }
+            throw new ResponseError(ErrorCodes.INVALID_COST_CENTER, "No team found for user");
         }
         return AttributionId.create(user);
     }
@@ -320,22 +330,11 @@ export class UserService {
      */
     async listAvailableUsageAttributionIds(user: User): Promise<AttributionId[]> {
         // List all teams available for attribution
-        const teams = await this.teamDB.findTeamsByUser(user.id);
-        const billedStripeTeams = (
-            await Promise.all(
-                teams.map(async (team) => {
-                    const attributionId = AttributionId.create(team);
-                    const billingStrategy = await this.usageService.getCurrentBillingStategy(attributionId);
-                    if (billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
-                        return attributionId;
-                    }
-                    return undefined;
-                }),
-            )
-        ).filter((t) => !!t) as AttributionId[];
-
-        // Attributing to oneself is always an option
-        return [AttributionId.create(user)].concat(billedStripeTeams);
+        const result = (await this.teamDB.findTeamsByUser(user.id)).map((team) => AttributionId.create(team));
+        if (user?.additionalData?.isMigratedToTeamOnlyAttribution) {
+            return result;
+        }
+        return [AttributionId.create(user)].concat(result);
     }
 
     /**
@@ -421,8 +420,23 @@ export class UserService {
         // update user
         user.name = user.name || authUser.name || authUser.primaryEmail;
         user.avatarUrl = user.avatarUrl || authUser.avatarUrl;
-
+        await this.onAfterUserLoad(user);
         await this.updateUserIdentity(user, candidate, token);
+    }
+
+    async onAfterUserLoad(user: User): Promise<User> {
+        try {
+            // migrate user to team only attribution
+            const shouldMigrate = this.configCatClientFactory().getValueAsync("team_only_attribution", false, {
+                user,
+            });
+            if (User.is(user) && (await this.migrationService.needsMigration(user)) && (await shouldMigrate)) {
+                return await this.migrationService.migrateUser(user);
+            }
+        } catch (error) {
+            log.error({ user }, `Migrating user to team-only attribution failed`);
+        }
+        return user;
     }
 
     async updateUserIdentity(user: User, candidate: Identity, token: Token) {

@@ -44,8 +44,9 @@ export class Authenticator {
         });
         passport.deserializeUser(async (id, done) => {
             try {
-                const user = await this.userDb.findUserById(id as string);
+                let user = await this.userDb.findUserById(id as string);
                 if (user) {
+                    user = await this.userService.onAfterUserLoad(user);
                     done(null, user);
                 } else {
                     done(new Error("User not found."));
