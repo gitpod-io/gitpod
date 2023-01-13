@@ -220,12 +220,17 @@ type debugServiceServer struct {
 
 func (svc *debugServiceServer) Start(req *api.StartRequest, resp api.DebugService_StartServer) error {
 	if svc.running {
-		return errors.New("already running debug workspace")
+		return errors.New("Already running debug workspace")
 	}
 	svc.running = true
 	defer func() {
 		svc.running = false
 	}()
+
+	stat, err := os.Stat("/.workspace/mark/.debug/image")
+	if err != nil || !stat.IsDir() {
+		return errors.New("Looks like you don't have any root filesystem in /.debug/image folder")
+	}
 
 	ctx, cancel := context.WithCancel(resp.Context())
 	defer cancel()
@@ -264,7 +269,7 @@ func (svc *debugServiceServer) Start(req *api.StartRequest, resp api.DebugServic
 		return errors.New("cannot running debug workspace, missing GITPOD_WORKSPACE_URL")
 	}
 	workspaceUrl.Host = "debug-" + workspaceUrl.Host
-	additionEnviron := []string{"WORKSPACEKIT_ROOTFS=/demo", "SUPERVISOR_DEBUG_WORKSPACE=true", "GITPOD_WORKSPACE_URL=" + workspaceUrl.String()}
+	additionEnviron := []string{"WORKSPACEKIT_ROOTFS=/.debug/image", "SUPERVISOR_DEBUG_WORKSPACE=true", "GITPOD_WORKSPACE_URL=" + workspaceUrl.String()}
 	if req.Headless {
 		additionEnviron = append(additionEnviron, "GITPOD_HEADLESS=true")
 	}
