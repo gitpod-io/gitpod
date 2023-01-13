@@ -6,7 +6,7 @@
 
 import { Workspace } from "@gitpod/gitpod-protocol";
 import { FunctionComponent, useCallback, useState } from "react";
-import Modal from "../components/Modal";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { useUpdateWorkspaceDescription } from "../data/workspaces/mutations";
 
 type Props = {
@@ -14,9 +14,10 @@ type Props = {
     onClose(): void;
 };
 export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onClose }) => {
-    const [description, setDescription] = useState(workspace.description || "");
     const [errorMessage, setErrorMessage] = useState("");
-    const { mutateAsync, isLoading } = useUpdateWorkspaceDescription();
+    const [description, setDescription] = useState(workspace.description || "");
+    // const { mutateAsync, isLoading } = useUpdateWorkspaceDescription();
+    const updateDescription = useUpdateWorkspaceDescription();
 
     const updateWorkspaceDescription = useCallback(async () => {
         try {
@@ -32,14 +33,15 @@ export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
 
             setErrorMessage("");
 
-            await mutateAsync({ workspaceId: workspace.id, newDescription: description });
-            console.log("after mutateAsync");
+            // Using mutateAsync here so we can close the modal after it completes successfully
+            await updateDescription.mutateAsync({ workspaceId: workspace.id, newDescription: description });
+
             onClose();
         } catch (error) {
             console.error(error);
             setErrorMessage("Something went wrong. Please try renaming again.");
         }
-    }, [description, mutateAsync, onClose, workspace.id]);
+    }, [description, updateDescription, workspace.id, onClose]);
 
     return (
         <Modal
@@ -50,8 +52,8 @@ export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
                 return true;
             }}
         >
-            <h3 className="mb-4">Rename Workspace Description</h3>
-            <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 space-y-2">
+            <ModalHeader>Rename Workspace Description</ModalHeader>
+            <ModalBody>
                 {errorMessage.length > 0 ? (
                     <div className="bg-gitpod-kumquat-light rounded-md p-3 text-gitpod-red text-sm mb-2">
                         {errorMessage}
@@ -62,22 +64,27 @@ export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
                     className="w-full truncate"
                     type="text"
                     value={description}
-                    disabled={isLoading}
+                    disabled={updateDescription.isLoading}
                     onChange={(e) => setDescription(e.target.value)}
                 />
                 <div className="mt-1">
                     <p className="text-gray-500">Change the description to make it easier to go back to a workspace.</p>
                     <p className="text-gray-500">Workspace URLs and endpoints will remain the same.</p>
                 </div>
-            </div>
-            <div className="flex justify-end mt-6">
-                <button disabled={isLoading} className="secondary" onClick={onClose}>
+            </ModalBody>
+            <ModalFooter>
+                <button disabled={updateDescription.isLoading} className="secondary" onClick={onClose}>
                     Cancel
                 </button>
-                <button disabled={isLoading} className="ml-2" type="submit" onClick={updateWorkspaceDescription}>
+                <button
+                    disabled={updateDescription.isLoading}
+                    className="ml-2"
+                    type="submit"
+                    onClick={updateWorkspaceDescription}
+                >
                     Update Description
                 </button>
-            </div>
+            </ModalFooter>
         </Modal>
     );
 };

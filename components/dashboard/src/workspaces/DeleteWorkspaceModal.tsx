@@ -7,20 +7,23 @@
 import { Workspace } from "@gitpod/gitpod-protocol";
 import { FunctionComponent, useCallback } from "react";
 import ConfirmationModal from "../components/ConfirmationModal";
+import { useDeleteWorkspaceMutation } from "../data/workspaces/mutations";
 
 type Props = {
     workspace: Workspace;
     onClose(): void;
 };
 export const DeleteWorkspaceModal: FunctionComponent<Props> = ({ workspace, onClose }) => {
-    // TODO: Create a mutation for this
-    const deleteWorkspace = useCallback(() => {
-        console.log("delete workspace", workspace.id);
+    const deleteWorkspace = useDeleteWorkspaceMutation();
 
-        // model.deleteWorkspace(ws.id, usePublicApiWorkspacesService);
-
-        onClose();
-    }, [onClose, workspace.id]);
+    const handleConfirmation = useCallback(async () => {
+        try {
+            await deleteWorkspace.mutateAsync({ workspaceId: workspace.id });
+            onClose();
+        } catch (e) {
+            console.error(e);
+        }
+    }, [deleteWorkspace, onClose, workspace.id]);
 
     return (
         <ConfirmationModal
@@ -31,9 +34,11 @@ export const DeleteWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
                 description: workspace.description,
             }}
             buttonText="Delete Workspace"
+            warningText={deleteWorkspace.isError ? "There was a problem deleting your workspace." : undefined}
             visible
+            buttonDisabled={deleteWorkspace.isLoading}
             onClose={onClose}
-            onConfirm={deleteWorkspace}
+            onConfirm={handleConfirmation}
         />
     );
 };

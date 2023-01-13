@@ -6,20 +6,20 @@
 
 import { WorkspaceInfo } from "@gitpod/gitpod-protocol";
 import { useCallback } from "react";
-import { hoursBefore, isDateSmallerOrEqual } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { useFeatureFlags } from "../../contexts/FeatureFlagContext";
+import { workspacesService } from "../../service/public-api";
 import { getGitpodService } from "../../service/service";
 
 type UseFetchWorkspacesArgs = {
     limit: number;
 };
 
-type FetchWorkspacesReturnValue = {
-    active: WorkspaceInfo[];
-    inactive: WorkspaceInfo[];
-};
+// TODO: where should this return type live - in query or here? both? mutations may want this type too?
+export type FetchWorkspacesReturnValue = WorkspaceInfo[];
 
 export const useFetchWorkspaces = ({ limit = 50 }: UseFetchWorkspacesArgs) => {
     return useCallback(async (): Promise<FetchWorkspacesReturnValue> => {
+        // TODO: Can we update the backend api to sort & rank pinned over non-pinned for us?
         const [infos, pinned] = await Promise.all([
             getGitpodService().server.getWorkspaces({
                 limit,
@@ -34,33 +34,12 @@ export const useFetchWorkspaces = ({ limit = 50 }: UseFetchWorkspacesArgs) => {
             }),
         ]);
 
+        // Merge both data sets into one unique (by ws id) array
         const workspacesMap = new Map(infos.map((ws) => [ws.workspace.id, ws]));
         const pinnedWorkspacesMap = new Map(pinned.map((ws) => [ws.workspace.id, ws]));
+        const workspaces = Array.from(new Map([...workspacesMap, ...pinnedWorkspacesMap]).values());
 
-        const mergedWorkspaces = new Map([...workspacesMap, ...pinnedWorkspacesMap]);
-
-        const workspaces = Array.from(mergedWorkspaces.values());
-
-        const sortedWorkspaces = workspaces.sort((a, b) => {
-            const result = workspaceActiveDate(b).localeCompare(workspaceActiveDate(a));
-            if (result === 0) {
-                // both active now? order by creationtime
-                return WorkspaceInfo.lastActiveISODate(b).localeCompare(WorkspaceInfo.lastActiveISODate(a));
-            }
-            return result;
-        });
-
-        const activeWorkspaces = sortedWorkspaces.filter((ws) => isWorkspaceActive(ws));
-
-        // respecting the limit, return inactive workspaces as well
-        const inactiveWorkspaces = sortedWorkspaces
-            .filter((ws) => !isWorkspaceActive(ws))
-            .slice(0, limit - activeWorkspaces.length);
-
-        return {
-            active: activeWorkspaces,
-            inactive: inactiveWorkspaces,
-        };
+        return workspaces;
     }, [limit]);
 };
 
@@ -71,44 +50,22 @@ type FetchUpdateWorkspaceDescriptionArgs = {
 // TODO: Should args be on the hook, or the return callback?
 export const useFetchUpdateWorkspaceDescription = () => {
     return useCallback(async ({ workspaceId, newDescription }: FetchUpdateWorkspaceDescriptionArgs) => {
-        console.log("fetcher update");
         await getGitpodService().server.setWorkspaceDescription(workspaceId, newDescription);
     }, []);
 };
 
-/**
- * Given a WorkspaceInfo, return a timestamp of the last related activitiy
- *
- * @param info WorkspaceInfo
- * @returns string timestamp
- */
-function workspaceActiveDate(info: WorkspaceInfo): string {
-    if (!info.latestInstance) {
-        return info.workspace.creationTime;
-    }
-    if (info.latestInstance.status.phase === "stopped" || info.latestInstance.status.phase === "unknown") {
-        return WorkspaceInfo.lastActiveISODate(info);
-    }
+type DeleteWorkspaceFetcherArgs = {
+    workspaceId: string;
+};
+export const useDeleteWorkspaceFetcher = () => {
+    const { usePublicApiWorkspacesService } = useFeatureFlags();
 
-    const now = new Date().toISOString();
-    return info.latestInstance.stoppedTime || info.latestInstance.stoppingTime || now;
-}
-
-/**
- * Returns a boolean indicating if the workspace should be considered active.
- * A workspace is considered active if it is pinned, not stopped, or was active within the last 24 hours
- *
- * @param info WorkspaceInfo
- * @returns boolean If workspace is considered active
- */
-function isWorkspaceActive(info: WorkspaceInfo): boolean {
-    const lastSessionStart = WorkspaceInfo.lastActiveISODate(info);
-    const twentyfourHoursAgo = hoursBefore(new Date().toISOString(), 24);
-
-    return (
-        (info.workspace.pinned ||
-            (!!info.latestInstance && info.latestInstance.status?.phase !== "stopped") ||
-            isDateSmallerOrEqual(twentyfourHoursAgo, lastSessionStart)) &&
-        !info.workspace.softDeleted
+    return useCallback(
+        async ({ workspaceId }: DeleteWorkspaceFetcherArgs) => {
+            usePublicApiWorkspacesService
+                ? await workspacesService.deleteWorkspace({ workspaceId })
+                : await getGitpodService().server.deleteWorkspace(workspaceId);
+        },
+        [usePublicApiWorkspacesService],
     );
-}
+};

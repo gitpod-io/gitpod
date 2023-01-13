@@ -5,12 +5,13 @@
  */
 
 import { useEffect, useState } from "react";
-import Modal from "../components/Modal";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import Alert from "../components/Alert";
 import TabMenuItem from "../components/TabMenuItem";
 import { settingsPathSSHKeys } from "../settings/settings.routes";
 import { getGitpodService } from "../service/service";
 import { InputWithCopy } from "../components/InputWithCopy";
+import { Link } from "react-router-dom";
 
 interface SSHProps {
     workspaceId: string;
@@ -66,9 +67,9 @@ function SSHView(props: SSHProps) {
                 {!hasSSHKey && selectSSHKey && (
                     <Alert type="warning" className="whitespace-normal">
                         You don't have any public SSH keys in your Gitpod account. You can{" "}
-                        <a href={settingsPathSSHKeys} target="setting-keys" className="gp-link">
+                        <Link to={settingsPathSSHKeys} className="gp-link">
                             add a new public key
-                        </a>
+                        </Link>
                         , or use a generated access token.
                     </Alert>
                 )}
@@ -79,9 +80,9 @@ function SSHView(props: SSHProps) {
                     ) : (
                         <>
                             The following shell command can be used to SSH into this workspace with a{" "}
-                            <a href={settingsPathSSHKeys} target="setting-keys" className="gp-link">
+                            <Link to={settingsPathSSHKeys} className="gp-link">
                                 ssh key
-                            </a>
+                            </Link>
                             .
                         </>
                     )}
@@ -103,20 +104,16 @@ export default function ConnectToSSHModal(props: {
     onClose: () => void;
 }) {
     return (
-        <Modal
-            title="Connect via SSH"
-            hideDivider
-            buttons={
+        <Modal hideDivider visible onClose={props.onClose}>
+            <ModalHeader>Connect via SSH</ModalHeader>
+            <ModalBody>
+                <SSHView workspaceId={props.workspaceId} ownerToken={props.ownerToken} ideUrl={props.ideUrl} />
+            </ModalBody>
+            <ModalFooter>
                 <button className={"ml-2 secondary"} onClick={() => props.onClose()}>
                     Close
                 </button>
-            }
-            visible={true}
-            onClose={props.onClose}
-        >
-            <div className="border-gray-200 dark:border-gray-800 -mx-6 px-6 border-b pb-4">
-                <SSHView workspaceId={props.workspaceId} ownerToken={props.ownerToken} ideUrl={props.ideUrl} />
-            </div>
+            </ModalFooter>
         </Modal>
     );
 }
