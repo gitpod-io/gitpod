@@ -8,36 +8,35 @@ import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { getGitpodService } from "../../service/service";
-import { FetchWorkspacesReturnValue, useFetchWorkspaces } from "./fetchers";
+import { WorkspacesFetcherResult, useWorkspacesFetcher } from "./fetchers";
 
 type UseWorkspaceArgs = {
     limit: number;
 };
 
 export const useWorkspaces = ({ limit }: UseWorkspaceArgs) => {
-    const fetchWorkspaces = useFetchWorkspaces({ limit });
+    const fetchWorkspaces = useWorkspacesFetcher({ limit });
 
-    return useQuery<FetchWorkspacesReturnValue>({
-        queryKey: getWorkspacesQueryKey(),
+    return useQuery<WorkspacesFetcherResult>({
+        queryKey: getListWorkspacesQueryKey(),
         queryFn: fetchWorkspaces,
     });
 };
 
-export const getWorkspacesQueryKey = () => ["workspaces"];
+export const getListWorkspacesQueryKey = () => ["workspaces", "list"];
 
 // TODO: Find a better place for this to live
 export const useListenToWorkspacesWSMessages = () => {
     const queryClient = useQueryClient();
 
     useEffect(() => {
-        console.log("registeringClient");
         const disposable = getGitpodService().registerClient({
             onInstanceUpdate: (instance: WorkspaceInstance) => {
-                const queryKey = getWorkspacesQueryKey();
+                const queryKey = getListWorkspacesQueryKey();
                 let foundWorkspaces = false;
 
                 // Update the workspace with the latest instance
-                queryClient.setQueryData<FetchWorkspacesReturnValue>(queryKey, (oldWorkspacesData) => {
+                queryClient.setQueryData<WorkspacesFetcherResult>(queryKey, (oldWorkspacesData) => {
                     return oldWorkspacesData?.map((info) => {
                         if (info.workspace.id !== instance.workspaceId) {
                             return info;

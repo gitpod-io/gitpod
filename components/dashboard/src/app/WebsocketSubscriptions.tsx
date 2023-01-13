@@ -6,8 +6,9 @@
 
 import { useListenToWorkspacesWSMessages } from "../data/workspaces/queries";
 
-// This component is intended to setup any app-wide websocket subscriptions
-export const WebsocketSubscriptions = () => {
+// This component is intended to setup any app-wide websocket client subscriptions
+// It doesn't render anything directly
+export const WebsocketClients = () => {
     useListenToWorkspacesWSMessages();
 
     return null;

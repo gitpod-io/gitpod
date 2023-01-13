@@ -6,23 +6,23 @@
 
 import { PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
 import dayjs from "dayjs";
+import { useCallback } from "react";
 import { listAllProjects } from "../../service/public-api";
 import { getGitpodService } from "../../service/service";
 
-type UseFetchProjectsArgs = {
+type UseProjectsFetcherArgs = {
     userId?: string;
     teamId?: string;
 };
 
-type FetchProjectsReturnValue = {
+type ProjectsFetcherResult = {
     projects: Project[];
     latestPrebuilds: Map<string, PrebuildWithStatus>;
 };
 
 // Wrap fetcher fn in a hook for easy access to feature flags
-export const useFetchProjects = ({ teamId, userId }: UseFetchProjectsArgs) => {
-    // Return an async fn to fetch data
-    return async (): Promise<FetchProjectsReturnValue> => {
+export const useProjectsFetcher = ({ teamId, userId }: UseProjectsFetcherArgs) => {
+    return useCallback(async (): Promise<ProjectsFetcherResult> => {
         if (!userId && !teamId) {
             return {
                 projects: [],
@@ -68,5 +68,5 @@ export const useFetchProjects = ({ teamId, userId }: UseFetchProjectsArgs) => {
             projects,
             latestPrebuilds,
         };
-    };
+    }, [teamId, userId]);
 };

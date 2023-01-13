@@ -10,14 +10,14 @@ import { useFeatureFlags } from "../../contexts/FeatureFlagContext";
 import { workspacesService } from "../../service/public-api";
 import { getGitpodService } from "../../service/service";
 
-type UseFetchWorkspacesArgs = {
+type UseWorkspacesFetcherArgs = {
     limit: number;
 };
 
-export type FetchWorkspacesReturnValue = WorkspaceInfo[];
+export type WorkspacesFetcherResult = WorkspaceInfo[];
 
-export const useFetchWorkspaces = ({ limit = 50 }: UseFetchWorkspacesArgs) => {
-    return useCallback(async (): Promise<FetchWorkspacesReturnValue> => {
+export const useWorkspacesFetcher = ({ limit = 50 }: UseWorkspacesFetcherArgs) => {
+    return useCallback(async (): Promise<WorkspacesFetcherResult> => {
         // TODO: Can we update the backend api to sort & rank pinned over non-pinned for us?
         const [infos, pinned] = await Promise.all([
             getGitpodService().server.getWorkspaces({
@@ -42,12 +42,12 @@ export const useFetchWorkspaces = ({ limit = 50 }: UseFetchWorkspacesArgs) => {
     }, [limit]);
 };
 
-type FetchUpdateWorkspaceDescriptionArgs = {
+type UpdateWorkspaceDescriptionFetcherArgs = {
     workspaceId: string;
     newDescription: string;
 };
-export const useFetchUpdateWorkspaceDescription = () => {
-    return useCallback(async ({ workspaceId, newDescription }: FetchUpdateWorkspaceDescriptionArgs) => {
+export const useUpdateWorkspaceDescriptionFetcher = () => {
+    return useCallback(async ({ workspaceId, newDescription }: UpdateWorkspaceDescriptionFetcherArgs) => {
         return await getGitpodService().server.setWorkspaceDescription(workspaceId, newDescription);
     }, []);
 };

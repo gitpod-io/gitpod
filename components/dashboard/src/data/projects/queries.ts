@@ -7,7 +7,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentTeam } from "../../teams/teams-context";
 import { useCurrentUser } from "../../user-context";
-import { useFetchProjects } from "./fetchers";
+import { useProjectsFetcher } from "./fetchers";
 
 type TeamOrUserID = {
     teamId?: string;
@@ -17,11 +17,11 @@ type TeamOrUserID = {
 export const useProjects = () => {
     const team = useCurrentTeam();
     const user = useCurrentUser();
-    const fetchProjects = useFetchProjects({ teamId: team?.id, userId: user?.id });
+    const fetchProjects = useProjectsFetcher({ teamId: team?.id, userId: user?.id });
 
     return useQuery({
         // Projects are either tied to current team, otherwise current user
-        queryKey: getProjectsQueryKey({ teamId: team?.id, userId: user?.id }),
+        queryKey: getListProjectsQueryKey({ teamId: team?.id, userId: user?.id }),
         queryFn: fetchProjects,
     });
 };
@@ -36,15 +36,15 @@ export const useRefreshProjects = () => {
         }
 
         queryClient.refetchQueries({
-            queryKey: getProjectsQueryKey({ teamId, userId }),
+            queryKey: getListProjectsQueryKey({ teamId, userId }),
         });
     };
 };
 
-const getProjectsQueryKey = ({ teamId, userId }: TeamOrUserID) => {
+const getListProjectsQueryKey = ({ teamId, userId }: TeamOrUserID) => {
     if (!teamId && !userId) {
         throw new Error("Must provide either a teamId or userId for projects query key");
     }
 
-    return ["projects", teamId ? { teamId } : { userId }];
+    return ["projects", "list", teamId ? { teamId } : { userId }];
 };
