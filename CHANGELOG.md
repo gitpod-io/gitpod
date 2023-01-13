@@ -1,6 +1,8 @@
 # Change Log
 
 ## January 2023
+- fix-IDEA2022.3-gradle-runIde ([#15646](https://github.com/gitpod-io/gitpod/pull/15646)) - [@zhipengzuo](https://github.com/zhipengzuo)
+- [dashboard] Default use public API when interacting with Teams ([#15706](https://github.com/gitpod-io/gitpod/pull/15706)) - [@easyCZ](https://github.com/easyCZ)
 - Fix race for DB connection ([#15691](https://github.com/gitpod-io/gitpod/pull/15691)) - [@geropl](https://github.com/geropl)
 - Update JetBrains IDE images to most recent stable version. ([#15689](https://github.com/gitpod-io/gitpod/pull/15689)) - [@roboquat](https://github.com/roboquat)
 - Added a secondary button to start workspaces on projects and branches with options. ([#15668](https://github.com/gitpod-io/gitpod/pull/15668)) - [@svenefftinge](https://github.com/svenefftinge)
