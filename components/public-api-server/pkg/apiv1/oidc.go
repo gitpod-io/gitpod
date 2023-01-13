@@ -12,6 +12,7 @@ import (
 	connect "github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	iam "github.com/gitpod-io/gitpod/components/iam-api/go/v1"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
@@ -20,16 +21,18 @@ import (
 	"github.com/google/uuid"
 )
 
-func NewOIDCService(connPool proxy.ServerConnectionPool, expClient experiments.Client) *OIDCService {
+func NewOIDCService(connPool proxy.ServerConnectionPool, expClient experiments.Client, oidcService iam.OIDCServiceClient) *OIDCService {
 	return &OIDCService{
 		connectionPool: connPool,
 		expClient:      expClient,
+		oidcService:    oidcService,
 	}
 }
 
 type OIDCService struct {
 	expClient      experiments.Client
 	connectionPool proxy.ServerConnectionPool
+	oidcService    iam.OIDCServiceClient
 
 	v1connect.UnimplementedOIDCServiceHandler
 }
@@ -45,7 +48,42 @@ func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Reque
 		return nil, err
 	}
 
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gitpod.experimental.v1.OIDCService.CreateClientConfig is not implemented"))
+	result, err := s.oidcService.CreateClientConfig(ctx, &iam.CreateClientConfigRequest{
+		Config: papiConfigToIAM(req.Msg.GetConfig()),
+	})
+	if err != nil {
+		// todo@at fix error handling
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	return connect.NewResponse(&v1.CreateClientConfigResponse{
+		Config: iamConfigToPAPI(result.GetConfig()),
+	}), nil
+}
+
+func papiConfigToIAM(c *v1.OIDCClientConfig) *iam.OIDCClientConfig {
+	return &iam.OIDCClientConfig{
+		OidcConfig: &iam.OIDCConfig{
+			Issuer: c.OidcConfig.GetIssuer(),
+		},
+		Oauth2Config: &iam.OAuth2Config{
+			ClientId:     c.GetOauth2Config().GetClientId(),
+			ClientSecret: c.GetOauth2Config().GetClientSecret(),
+		},
+	}
+}
+func iamConfigToPAPI(c *iam.OIDCClientConfig) *v1.OIDCClientConfig {
+	return &v1.OIDCClientConfig{
+		Id: c.GetId(),
+		OidcConfig: &v1.OIDCConfig{
+			Issuer: c.OidcConfig.GetIssuer(),
+		},
+		Oauth2Config: &v1.OAuth2Config{
+			ClientId:     c.GetOauth2Config().GetClientId(),
+			ClientSecret: "REDACTED",
+		},
+		CreationTime: c.GetCreationTime(),
+	}
 }
 
 func (s *OIDCService) GetClientConfig(ctx context.Context, req *connect.Request[v1.GetClientConfigRequest]) (*connect.Response[v1.GetClientConfigResponse], error) {

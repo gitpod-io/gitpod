@@ -16,6 +16,10 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"gorm.io/gorm"
 
+	grpc "google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
+	iam "github.com/gitpod-io/gitpod/components/iam-api/go/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/config"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	"github.com/gorilla/handlers"
@@ -32,6 +36,10 @@ import (
 
 func Start(logger *logrus.Entry, version string, cfg *config.Configuration) error {
 	logger.WithField("config", cfg).Info("Starting public-api.")
+
+	if cfg.OIDCServiceAddress == "" {
+		return fmt.Errorf("`oidcServiceAddress` is missing in config")
+	}
 
 	gitpodAPI, err := url.Parse(cfg.GitpodServiceURL)
 	if err != nil {
@@ -92,7 +100,13 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 
 	srv.HTTPMux().Handle("/stripe/invoices/webhook", handlers.ContentTypeHandler(stripeWebhookHandler, "application/json"))
 
-	if registerErr := register(srv, connPool, expClient, dbConn, signer); registerErr != nil {
+	conn, err := grpc.Dial(cfg.OIDCServiceAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return fmt.Errorf("failed to dial oidc service gRPC server: %w", err)
+	}
+	var oidcService = iam.NewOIDCServiceClient(conn)
+
+	if registerErr := register(srv, connPool, expClient, dbConn, signer, oidcService); registerErr != nil {
 		return fmt.Errorf("failed to register services: %w", registerErr)
 	}
 
@@ -103,7 +117,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	return nil
 }
 
-func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool, expClient experiments.Client, dbConn *gorm.DB, signer auth.Signer) error {
+func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool, expClient experiments.Client, dbConn *gorm.DB, signer auth.Signer, oidcService iam.OIDCServiceClient) error {
 	proxy.RegisterMetrics(srv.MetricsRegistry())
 
 	connectMetrics := NewConnectMetrics()
@@ -140,7 +154,7 @@ func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool, expCl
 	projectsRoute, projectsServiceHandler := v1connect.NewProjectsServiceHandler(apiv1.NewProjectsService(connPool), handlerOptions...)
 	srv.HTTPMux().Handle(projectsRoute, projectsServiceHandler)
 
-	oidcRoute, oidcServiceHandler := v1connect.NewOIDCServiceHandler(apiv1.NewOIDCService(connPool, expClient), handlerOptions...)
+	oidcRoute, oidcServiceHandler := v1connect.NewOIDCServiceHandler(apiv1.NewOIDCService(connPool, expClient, oidcService), handlerOptions...)
 	srv.HTTPMux().Handle(oidcRoute, oidcServiceHandler)
 
 	return nil

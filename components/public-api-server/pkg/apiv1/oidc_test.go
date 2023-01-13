@@ -10,6 +10,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	grpc "google.golang.org/grpc"
+
+	iam "github.com/gitpod-io/gitpod/components/iam-api/go/v1"
+
 	connect "github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/experiments/experimentstest"
@@ -37,7 +44,7 @@ var (
 )
 
 func TestOIDCService_CreateClientConfig(t *testing.T) {
-	t.Run("feature flag disabled returns unathorized", func(t *testing.T) {
+	t.Run("feature flag disabled returns unauthorized", func(t *testing.T) {
 		serverMock, client := setupOIDCService(t, withOIDCFeatureDisabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
@@ -48,19 +55,29 @@ func TestOIDCService_CreateClientConfig(t *testing.T) {
 		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
 	})
 
-	t.Run("feature flag enabled returns unimplemented", func(t *testing.T) {
+	t.Run("feature flag enabled returns created config", func(t *testing.T) {
 		serverMock, client := setupOIDCService(t, withOIDCFeatureEnabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
-		_, err := client.CreateClientConfig(context.Background(), connect.NewRequest(&v1.CreateClientConfigRequest{}))
-		require.Error(t, err)
-		require.Equal(t, connect.CodeUnimplemented, connect.CodeOf(err))
+		config := &v1.OIDCClientConfig{
+			OidcConfig:   &v1.OIDCConfig{Issuer: "test-issuer"},
+			Oauth2Config: &v1.OAuth2Config{ClientId: "test-id", ClientSecret: "test-secret"},
+		}
+		response, err := client.CreateClientConfig(context.Background(), connect.NewRequest(&v1.CreateClientConfigRequest{
+			Config: config,
+		}))
+		require.NoError(t, err)
+		require.NotNil(t, response)
+		config.Oauth2Config.ClientSecret = "REDACTED"
+		requireEqualProto(t, &v1.CreateClientConfigResponse{
+			Config: config,
+		}, response.Msg)
 	})
 }
 
 func TestOIDCService_GetClientConfig(t *testing.T) {
-	t.Run("feature flag disabled returns unathorized", func(t *testing.T) {
+	t.Run("feature flag disabled returns unauthorized", func(t *testing.T) {
 		serverMock, client := setupOIDCService(t, withOIDCFeatureDisabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
@@ -83,7 +100,7 @@ func TestOIDCService_GetClientConfig(t *testing.T) {
 }
 
 func TestOIDCService_ListClientConfigs(t *testing.T) {
-	t.Run("feature flag disabled returns unathorized", func(t *testing.T) {
+	t.Run("feature flag disabled returns unauthorized", func(t *testing.T) {
 		serverMock, client := setupOIDCService(t, withOIDCFeatureDisabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
@@ -106,7 +123,7 @@ func TestOIDCService_ListClientConfigs(t *testing.T) {
 }
 
 func TestOIDCService_UpdateClientConfig(t *testing.T) {
-	t.Run("feature flag disabled returns unathorized", func(t *testing.T) {
+	t.Run("feature flag disabled returns unauthorized", func(t *testing.T) {
 		serverMock, client := setupOIDCService(t, withOIDCFeatureDisabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
@@ -129,7 +146,7 @@ func TestOIDCService_UpdateClientConfig(t *testing.T) {
 }
 
 func TestOIDCService_DeleteClientConfig(t *testing.T) {
-	t.Run("feature flag disabled returns unathorized", func(t *testing.T) {
+	t.Run("feature flag disabled returns unauthorized", func(t *testing.T) {
 		serverMock, client := setupOIDCService(t, withOIDCFeatureDisabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
@@ -159,7 +176,7 @@ func setupOIDCService(t *testing.T, expClient experiments.Client) (*protocol.Moc
 
 	serverMock := protocol.NewMockAPIInterface(ctrl)
 
-	svc := NewOIDCService(&FakeServerConnPool{api: serverMock}, expClient)
+	svc := NewOIDCService(&FakeServerConnPool{api: serverMock}, expClient, &stubOIDCServiceServer{})
 
 	_, handler := v1connect.NewOIDCServiceHandler(svc, connect.WithInterceptors(auth.NewServerInterceptor()))
 
@@ -171,4 +188,25 @@ func setupOIDCService(t *testing.T, expClient experiments.Client) (*protocol.Moc
 	))
 
 	return serverMock, client
+}
+
+type stubOIDCServiceServer struct {
+}
+
+func (stubOIDCServiceServer) CreateClientConfig(ctx context.Context, request *iam.CreateClientConfigRequest, options ...grpc.CallOption) (*iam.CreateClientConfigResponse, error) {
+	return &iam.CreateClientConfigResponse{
+		Config: request.GetConfig(),
+	}, nil
+}
+func (stubOIDCServiceServer) GetClientConfig(context.Context, *iam.GetClientConfigRequest, ...grpc.CallOption) (*iam.GetClientConfigResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetClientConfig not implemented")
+}
+func (stubOIDCServiceServer) ListClientConfigs(context.Context, *iam.ListClientConfigsRequest, ...grpc.CallOption) (*iam.ListClientConfigsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListClientConfigs not implemented")
+}
+func (stubOIDCServiceServer) UpdateClientConfig(context.Context, *iam.UpdateClientConfigRequest, ...grpc.CallOption) (*iam.UpdateClientConfigResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateClientConfig not implemented")
+}
+func (stubOIDCServiceServer) DeleteClientConfig(context.Context, *iam.DeleteClientConfigRequest, ...grpc.CallOption) (*iam.DeleteClientConfigResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteClientConfig not implemented")
 }
