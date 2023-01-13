@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceInfo } from "@gitpod/gitpod-protocol";
+import { GitpodServer, WorkspaceInfo } from "@gitpod/gitpod-protocol";
 import { useCallback } from "react";
 import { useFeatureFlags } from "../../contexts/FeatureFlagContext";
 import { workspacesService } from "../../service/public-api";
@@ -14,7 +14,6 @@ type UseFetchWorkspacesArgs = {
     limit: number;
 };
 
-// TODO: where should this return type live - in query or here? both? mutations may want this type too?
 export type FetchWorkspacesReturnValue = WorkspaceInfo[];
 
 export const useFetchWorkspaces = ({ limit = 50 }: UseFetchWorkspacesArgs) => {
@@ -47,10 +46,9 @@ type FetchUpdateWorkspaceDescriptionArgs = {
     workspaceId: string;
     newDescription: string;
 };
-// TODO: Should args be on the hook, or the return callback?
 export const useFetchUpdateWorkspaceDescription = () => {
     return useCallback(async ({ workspaceId, newDescription }: FetchUpdateWorkspaceDescriptionArgs) => {
-        await getGitpodService().server.setWorkspaceDescription(workspaceId, newDescription);
+        return await getGitpodService().server.setWorkspaceDescription(workspaceId, newDescription);
     }, []);
 };
 
@@ -62,10 +60,45 @@ export const useDeleteWorkspaceFetcher = () => {
 
     return useCallback(
         async ({ workspaceId }: DeleteWorkspaceFetcherArgs) => {
-            usePublicApiWorkspacesService
+            return usePublicApiWorkspacesService
                 ? await workspacesService.deleteWorkspace({ workspaceId })
                 : await getGitpodService().server.deleteWorkspace(workspaceId);
         },
         [usePublicApiWorkspacesService],
     );
+};
+
+type StopWorkspaceFetcherArgs = {
+    workspaceId: string;
+};
+export const useStopWorkspaceFetcher = () => {
+    const { usePublicApiWorkspacesService } = useFeatureFlags();
+
+    return useCallback(
+        async ({ workspaceId }: StopWorkspaceFetcherArgs) => {
+            return usePublicApiWorkspacesService
+                ? workspacesService.stopWorkspace({ workspaceId })
+                : getGitpodService().server.stopWorkspace(workspaceId);
+        },
+        [usePublicApiWorkspacesService],
+    );
+};
+
+type ToggleWorkspaceSharedFetcherArgs = {
+    workspaceId: string;
+    level: GitpodServer.AdmissionLevel;
+};
+export const useToggleWorkspaceSharedFetcher = () => {
+    return useCallback(async ({ workspaceId, level }: ToggleWorkspaceSharedFetcherArgs) => {
+        return await getGitpodService().server.controlAdmission(workspaceId, level);
+    }, []);
+};
+
+type ToggleWorkspacePinnedFetcherArgs = {
+    workspaceId: string;
+};
+export const useToggleWorkspacePinnedFetcher = () => {
+    return useCallback(async ({ workspaceId }: ToggleWorkspacePinnedFetcherArgs) => {
+        return await getGitpodService().server.updateWorkspaceUserPin(workspaceId, "toggle");
+    }, []);
 };

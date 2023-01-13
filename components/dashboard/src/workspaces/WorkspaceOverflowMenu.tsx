@@ -9,6 +9,11 @@ import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url"
 import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import { ContextMenuEntry } from "../components/ContextMenu";
 import { ItemFieldContextMenu } from "../components/ItemsList";
+import {
+    useStopWorkspaceMutation,
+    useToggleWorkspacedPinnedMutation,
+    useToggleWorkspaceSharedMutation,
+} from "../data/workspaces/mutations";
 import { getGitpodService } from "../service/service";
 import ConnectToSSHModal from "./ConnectToSSHModal";
 import { DeleteWorkspaceModal } from "./DeleteWorkspaceModal";
@@ -24,36 +29,40 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
     const [isSSHModalVisible, setSSHModalVisible] = useState(false);
     const [ownerToken, setOwnerToken] = useState("");
 
+    const stopWorkspace = useStopWorkspaceMutation();
+    const toggleWorkspaceShared = useToggleWorkspaceSharedMutation();
+    const toggleWorkspacePinned = useToggleWorkspacedPinnedMutation();
+
     const workspace = info.workspace;
     const state: WorkspaceInstancePhase = info.latestInstance?.status?.phase || "stopped";
 
+    //TODO: shift this into ConnectToSSHModal
     const handleConnectViaSSHClick = useCallback(async () => {
         const ot = await getGitpodService().server.getOwnerToken(workspace.id);
         setOwnerToken(ot);
         setSSHModalVisible(true);
     }, [workspace.id]);
 
-    // TODO: Create a mutation for this
-    const stopWorkspace = useCallback(() => {
-        console.log("stop workspace", workspace.id);
-        // usePublicApiWorkspacesService
-        //     ? workspacesService.stopWorkspace({ workspaceId: wsId })
-        //     : getGitpodService().server.stopWorkspace(wsId);
-    }, [workspace.id]);
+    const handleStopWorkspace = useCallback(() => {
+        stopWorkspace.mutate({ workspaceId: workspace.id });
+    }, [stopWorkspace, workspace.id]);
 
-    // TODO: Create a mutation for this
     const toggleShared = useCallback(() => {
-        console.log("toggle workspace shared", workspace.id);
-        // model.toggleShared(workspace.id);
-    }, [workspace.id]);
+        const newLevel = workspace.shareable ? "owner" : "everyone";
 
-    // TODO: Create a mutation for this
+        toggleWorkspaceShared.mutate({
+            workspaceId: workspace.id,
+            level: newLevel,
+        });
+    }, [toggleWorkspaceShared, workspace.id, workspace.shareable]);
+
     const togglePinned = useCallback(() => {
-        console.log("toggle workspace pinned", workspace.id);
-        // model.togglePinned(workspace.id);
-    }, [workspace.id]);
+        toggleWorkspacePinned.mutate({
+            workspaceId: workspace.id,
+        });
+    }, [toggleWorkspacePinned, workspace.id]);
 
-    // Can we just use `/start#${workspace.id}`?
+    // Can we use `/start#${workspace.id}` instead?
     const startUrl = useMemo(
         () =>
             new GitpodHostUrl(window.location.href).with({
@@ -63,7 +72,7 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
         [workspace.id],
     );
 
-    // Can we just use `/workspace-download/get/${workspace.id}`?
+    // Can we use `/workspace-download/get/${workspace.id}` instead?
     const downloadURL = useMemo(
         () =>
             new GitpodHostUrl(window.location.href)
@@ -89,7 +98,7 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
     if (state === "running") {
         menuEntries.push({
             title: "Stop",
-            onClick: stopWorkspace,
+            onClick: handleStopWorkspace,
         });
         menuEntries.splice(1, 0, {
             title: "Connect via SSH",
