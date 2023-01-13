@@ -22,6 +22,7 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/logs"
 	"github.com/gitpod-io/gitpod/supervisor/api"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/config"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
 )
 
@@ -109,9 +110,11 @@ type tasksManager struct {
 	reporter        headlessTaskProgressReporter
 	ideReady        *ideReadyState
 	desktopIdeReady *ideReadyState
+
+	configService config.ConfigInterface
 }
 
-func newTasksManager(config *Config, terminalService *terminal.MuxTerminalService, contentState ContentState, reporter headlessTaskProgressReporter, ideReady *ideReadyState, desktopIdeReady *ideReadyState) *tasksManager {
+func newTasksManager(config *Config, terminalService *terminal.MuxTerminalService, contentState ContentState, reporter headlessTaskProgressReporter, ideReady *ideReadyState, desktopIdeReady *ideReadyState, configService config.ConfigInterface) *tasksManager {
 	return &tasksManager{
 		config:          config,
 		terminalService: terminalService,
@@ -122,6 +125,7 @@ func newTasksManager(config *Config, terminalService *terminal.MuxTerminalServic
 		storeLocation:   logs.TerminalStoreLocation,
 		ideReady:        ideReady,
 		desktopIdeReady: desktopIdeReady,
+		configService:   configService,
 	}
 }
 
@@ -176,10 +180,36 @@ func (tm *tasksManager) setTaskState(t *task, newState api.TaskState) {
 func (tm *tasksManager) init(ctx context.Context) {
 	defer close(tm.ready)
 
-	tasks, err := tm.config.getGitpodTasks()
-	if err != nil {
-		log.WithError(err).Error()
-		return
+	var tasks *[]TaskConfig
+	var err error
+	if tm.config.DebugWorkspace {
+		if tm.configService == nil {
+			return
+		}
+
+		nctx, cancel := context.WithCancel(ctx)
+		ch := tm.configService.Observe(nctx)
+		gitpodConfig, ok := <-ch
+		cancel()
+		if !ok {
+			return
+		}
+		tasksRaw, err := json.Marshal(gitpodConfig.Tasks)
+		if err != nil {
+			log.WithError(err).Error("resolve .gitpod.yml tasks failed")
+			return
+		}
+		err = json.Unmarshal(tasksRaw, &tasks)
+		if err != nil {
+			log.WithError(err).Error("resolve .gitpod.yml tasks failed")
+			return
+		}
+	} else {
+		tasks, err = tm.config.getGitpodTasks()
+		if err != nil {
+			log.WithError(err).Error()
+			return
+		}
 	}
 	if tasks == nil && tm.config.isHeadless() {
 		return
@@ -187,7 +217,6 @@ func (tm *tasksManager) init(ctx context.Context) {
 	if tasks == nil {
 		tasks = &[]TaskConfig{{}}
 	}
-
 	select {
 	case <-ctx.Done():
 		return

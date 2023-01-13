@@ -337,7 +337,7 @@ func Run(options ...RunOption) {
 		Gid: gitpodGID,
 	}
 
-	taskManager := newTasksManager(cfg, termMuxSrv, cstate, nil, ideReady, desktopIdeReady)
+	taskManager := newTasksManager(cfg, termMuxSrv, cstate, nil, ideReady, desktopIdeReady, gitpodConfigService)
 
 	apiServices := []RegisterableService{
 		&statusService{

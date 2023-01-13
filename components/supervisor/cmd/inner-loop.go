@@ -40,7 +40,7 @@ var innerLoopCmd = &cobra.Command{
 		defer conn.Close()
 
 		client := daemonapi.NewDebugServiceClient(conn)
-		resp, err := client.Start(context.Background(), &daemonapi.StartRequest{})
+		resp, err := client.Start(context.Background(), &daemonapi.StartRequest{Headless: innerLoopOpts.Headless})
 		if err != nil {
 			log.WithError(err).Fatal("could not retrieve workspace info")
 		}

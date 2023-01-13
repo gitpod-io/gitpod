@@ -224,7 +224,7 @@ func TestTaskManager(t *testing.T) {
 						GitpodTasks:    gitpodTasks,
 						GitpodHeadless: strconv.FormatBool(test.Headless),
 					},
-				}, terminalService, contentState, &reporter, nil, nil)
+				}, terminalService, contentState, &reporter, nil, nil, nil)
 			)
 			taskManager.storeLocation = storeLocation
 			contentState.MarkContentReady(test.Source)
