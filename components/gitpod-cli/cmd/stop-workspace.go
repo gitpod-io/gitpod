@@ -6,9 +6,11 @@ package cmd
 
 import (
 	"context"
+	"syscall"
 	"time"
 
 	gitpod "github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpod"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -20,6 +22,10 @@ var stopWorkspaceCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
+		if utils.IsRunningInDebugWorkspace() {
+			_ = syscall.Kill(1, syscall.SIGTERM)
+			return
+		}
 		wsInfo, err := gitpod.GetWSInfo(ctx)
 		if err != nil {
 			fail(err.Error())
