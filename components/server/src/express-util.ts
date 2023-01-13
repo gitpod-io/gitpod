@@ -171,11 +171,9 @@ export const takeFirst = (h: string | string[] | undefined): string | undefined 
 };
 
 export function clientIp(req: express.Request): string | undefined {
-    const forwardedFor = takeFirst(req.headers["x-forwarded-for"]);
-    if (!forwardedFor) {
+    const clientIp = takeFirst(req.headers["x-real-ip"]);
+    if (!clientIp) {
         return undefined;
     }
-
-    // We now have a ,-separated string of IPs, where the first one is the (closest to) client IP
-    return forwardedFor.split(",")[0];
+    return clientIp.split(",")[0];
 }
