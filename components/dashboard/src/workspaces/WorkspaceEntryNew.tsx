@@ -33,6 +33,7 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info }) => {
     const normalizedContextUrl = ContextURL.getNormalizedURL(workspace)?.toString();
     const normalizedContextUrlDescription = normalizedContextUrl || workspace.contextURL; // Instead of showing nothing, we prefer to show the raw content instead
 
+    // Could this be `/start#${workspace.id}` instead?
     const startUrl = useMemo(
         () =>
             new GitpodHostUrl(window.location.href)
