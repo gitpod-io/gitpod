@@ -99,11 +99,7 @@ func (g *GitpodExposedPorts) getPortUrl(port uint32) string {
 	if err != nil {
 		return ""
 	}
-	if g.debugWorkspace {
-		u.Host = fmt.Sprintf("%d-debug-%s", port, u.Host)
-	} else {
-		u.Host = fmt.Sprintf("%d-%s", port, u.Host)
-	}
+	u.Host = fmt.Sprintf("%d-%s", port, u.Host)
 	return u.String()
 }
 

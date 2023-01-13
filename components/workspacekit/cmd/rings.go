@@ -15,6 +15,7 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"net"
+	"net/url"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -256,7 +257,13 @@ func (svc *debugServiceServer) Start(req *api.StartRequest, resp api.DebugServic
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	exitCode := -1
-	additionEnviron := []string{"WORKSPACEKIT_ROOTFS=/demo", "SUPERVISOR_DEBUG_WORKSPACE=true"}
+
+	workspaceUrl, err := url.Parse(os.Getenv("GITPOD_WORKSPACE_URL"))
+	if err != nil {
+		return errors.New("cannot running debug workspace, missing GITPOD_WORKSPACE_URL")
+	}
+	workspaceUrl.Host = "debug-" + workspaceUrl.Host
+	additionEnviron := []string{"WORKSPACEKIT_ROOTFS=/demo", "SUPERVISOR_DEBUG_WORKSPACE=true", "GITPOD_WORKSPACE_URL=" + workspaceUrl.String()}
 	if req.Headless {
 		additionEnviron = append(additionEnviron, "GITPOD_HEADLESS=true")
 	}
