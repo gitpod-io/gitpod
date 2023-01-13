@@ -57,9 +57,12 @@ func (r *RollOutJob) Start(ctx context.Context) {
 				moveForward, err := r.analyzer.MoveForward(context.Background(), r.newCluster)
 				if err != nil {
 					log.Error("Failed to retrieve new cluster error count: ", err)
+					// Revert the rollout in case of analysis failure
+					r.revert <- true
 				}
 				// Analyzer says no, stop the rollout
 				if !moveForward {
+					log.Info("Analyzer says no, stopping the rollout")
 					r.revert <- true
 				}
 			}
@@ -108,8 +111,11 @@ func (r *RollOutJob) Start(ctx context.Context) {
 
 func (r *RollOutJob) UpdateScoreWithMetricUpdate(ctx context.Context, cluster string, score int32) error {
 	if err := r.RolloutAction.UpdateScore(ctx, cluster, score); err != nil {
+		scoreUpdatesFailuresTotal.WithLabelValues(cluster, err.Error()).Inc()
 		return err
 	}
+
+	scoreUpdatesTotal.WithLabelValues(cluster).Inc()
 	clusterScores.WithLabelValues(cluster).Set(float64(score))
 	return nil
 }
