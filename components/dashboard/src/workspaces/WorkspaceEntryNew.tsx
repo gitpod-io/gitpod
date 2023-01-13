@@ -4,15 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import {
-    CommitContext,
-    Workspace,
-    WorkspaceInfo,
-    WorkspaceInstance,
-    WorkspaceInstanceConditions,
-    WorkspaceInstancePhase,
-    ContextURL,
-} from "@gitpod/gitpod-protocol";
+import { CommitContext, Workspace, WorkspaceInfo, ContextURL } from "@gitpod/gitpod-protocol";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { FunctionComponent, useMemo } from "react";
 import { Item, ItemField, ItemFieldIcon } from "../components/ItemsList";
@@ -20,6 +12,7 @@ import PendingChangesDropdown from "../components/PendingChangesDropdown";
 import Tooltip from "../components/Tooltip";
 import dayjs from "dayjs";
 import { WorkspaceEntryOverflowMenu } from "./WorkspaceOverflowMenu";
+import { WorkspaceStatusIndicator } from "./WorkspaceStatusIndicator";
 
 type Props = {
     info: WorkspaceInfo;
@@ -98,50 +91,4 @@ export function getProjectPath(ws: Workspace) {
     } else {
         return undefined;
     }
-}
-
-export function WorkspaceStatusIndicator({ instance }: { instance?: WorkspaceInstance }) {
-    const state: WorkspaceInstancePhase = instance?.status?.phase || "stopped";
-    const conditions = instance?.status?.conditions;
-    let stateClassName = "rounded-full w-3 h-3 text-sm align-middle";
-    switch (state) {
-        case "running": {
-            stateClassName += " bg-green-500";
-            break;
-        }
-        case "stopped": {
-            if (conditions?.failed) {
-                stateClassName += " bg-red-400";
-            } else {
-                stateClassName += " bg-gray-400";
-            }
-            break;
-        }
-        case "interrupted": {
-            stateClassName += " bg-red-400";
-            break;
-        }
-        case "unknown": {
-            stateClassName += " bg-red-400";
-            break;
-        }
-        default: {
-            stateClassName += " bg-gitpod-kumquat animate-pulse";
-            break;
-        }
-    }
-    return (
-        <div className="m-auto">
-            <Tooltip content={getLabel(state, conditions)}>
-                <div className={stateClassName} />
-            </Tooltip>
-        </div>
-    );
-}
-
-function getLabel(state: WorkspaceInstancePhase, conditions?: WorkspaceInstanceConditions) {
-    if (conditions?.failed) {
-        return "Failed";
-    }
-    return state.substr(0, 1).toLocaleUpperCase() + state.substr(1);
 }
