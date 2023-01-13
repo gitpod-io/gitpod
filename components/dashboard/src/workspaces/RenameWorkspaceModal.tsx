@@ -7,7 +7,7 @@
 import { Workspace } from "@gitpod/gitpod-protocol";
 import { FunctionComponent, useCallback, useState } from "react";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
-import { useUpdateWorkspaceDescription } from "../data/workspaces/mutations";
+import { useUpdateWorkspaceDescriptionMutation } from "../data/workspaces/mutations";
 
 type Props = {
     workspace: Workspace;
@@ -16,8 +16,7 @@ type Props = {
 export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onClose }) => {
     const [errorMessage, setErrorMessage] = useState("");
     const [description, setDescription] = useState(workspace.description || "");
-    // const { mutateAsync, isLoading } = useUpdateWorkspaceDescription();
-    const updateDescription = useUpdateWorkspaceDescription();
+    const updateDescription = useUpdateWorkspaceDescriptionMutation();
 
     const updateWorkspaceDescription = useCallback(async () => {
         try {

@@ -15,7 +15,7 @@ import {
 } from "./fetchers";
 import { getListWorkspacesQueryKey } from "./queries";
 
-export const useUpdateWorkspaceDescription = () => {
+export const useUpdateWorkspaceDescriptionMutation = () => {
     const queryClient = useQueryClient();
     const updateDescription = useUpdateWorkspaceDescriptionFetcher();
 
