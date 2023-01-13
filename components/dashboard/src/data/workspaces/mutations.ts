@@ -31,6 +31,8 @@ export const useUpdateWorkspaceDescriptionMutation = () => {
                         return info;
                     }
 
+                    // TODO: Once the update description response includes an updated record,
+                    // we can return that instead of having to know what to merge manually (same for other mutations)
                     return {
                         ...info,
                         workspace: {
