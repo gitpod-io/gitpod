@@ -18,6 +18,7 @@ import { useWorkspaces } from "../data/workspaces/queries";
 import { EmptyWorkspacesContent } from "./EmptyWorkspacesContent";
 import { WorkspacesSearchBar } from "./WorkspacesSearchBar";
 import { hoursBefore, isDateSmallerOrEqual } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { useDeleteInactiveWorkspacesMutation } from "../data/workspaces/mutations";
 
 const WorkspacesPage: FunctionComponent = () => {
     const user = useCurrentUser();
@@ -27,6 +28,7 @@ const WorkspacesPage: FunctionComponent = () => {
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const { data, isLoading } = useWorkspaces({ limit });
     const isOnboardingUser = useMemo(() => user && User.isOnboardingUser(user), [user]);
+    const deleteInactiveWorkspaces = useDeleteInactiveWorkspacesMutation();
 
     const filteredWorkspaces = useMemo(() => {
         return (data || []).filter(
@@ -54,27 +56,32 @@ const WorkspacesPage: FunctionComponent = () => {
         };
     }, [filteredWorkspaces, limit]);
 
-    const deleteInactiveWorkspaces = useCallback(() => {
-        // TODO: Add mutation for deleting a workspace
-        console.log("delete inactive workspaces");
+    const handleDeleteInactiveWorkspacesConfirmation = useCallback(async () => {
+        try {
+            await deleteInactiveWorkspaces.mutateAsync({
+                workspaceIds: inactiveWorkspaces.map((info) => info.workspace.id),
+            });
+        } catch (e) {
+            console.error("error deleting inactive workspaces");
+        }
 
-        // We make this call for each workspace
-        // workspaceModel?.deleteWorkspace(ws.workspace.id, usePublicApiWorkspacesService),
         setDeleteModalVisible(false);
-    }, []);
+    }, [deleteInactiveWorkspaces, inactiveWorkspaces]);
 
     return (
         <>
             <Header title="Workspaces" subtitle="Manage recent and stopped workspaces." />
 
-            <ConfirmationModal
-                title="Delete Inactive Workspaces"
-                areYouSureText="Are you sure you want to delete all inactive workspaces?"
-                buttonText="Delete Inactive Workspaces"
-                visible={!!deleteModalVisible}
-                onClose={() => setDeleteModalVisible(false)}
-                onConfirm={deleteInactiveWorkspaces}
-            />
+            {deleteModalVisible && (
+                <ConfirmationModal
+                    title="Delete Inactive Workspaces"
+                    areYouSureText="Are you sure you want to delete all inactive workspaces?"
+                    buttonText="Delete Inactive Workspaces"
+                    onClose={() => setDeleteModalVisible(false)}
+                    onConfirm={handleDeleteInactiveWorkspacesConfirmation}
+                    visible
+                />
+            )}
 
             {isOnboardingUser ? (
                 <SelectIDEModal location={"workspace_list"} />
