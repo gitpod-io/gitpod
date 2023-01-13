@@ -50,6 +50,7 @@ import { BlockedRepositories } from "../admin/BlockedRepositories";
 import PersonalAccessTokenCreateView from "../settings/PersonalAccessTokensCreateView";
 import { StartWorkspaceModalContext } from "../workspaces/start-workspace-modal-context";
 import { StartWorkspaceOptions } from "../start/start-workspace-options";
+import { WebsocketSubscriptions } from "./WebsocketSubscriptions";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
@@ -318,6 +319,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                     />
                 )}
             </div>
+            <WebsocketSubscriptions />
         </Route>
     );
 };
