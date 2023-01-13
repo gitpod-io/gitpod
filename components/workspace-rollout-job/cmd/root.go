@@ -25,12 +25,14 @@ const (
 )
 
 type config struct {
-	oldCluster          string
-	newCluster          string
-	prometheusService   string
-	rollOutWaitDuration time.Duration
-	analsysWaitDuration time.Duration
-	rolloutStepScore    int32
+	oldCluster               string
+	newCluster               string
+	prometheusService        string
+	rollOutWaitDuration      time.Duration
+	analsysWaitDuration      time.Duration
+	rolloutStepScore         int32
+	okayScoreUntilNoData     int32
+	targetPositivePercentage int
 }
 
 var (
@@ -88,13 +90,13 @@ var rootCmd = &cobra.Command{
 		}
 
 		// Start the rollout process
-		prometheusAnalyzer, err := analysis.NewPrometheusAnalyzer(ctx, config, conf.prometheusService, 30305)
+		prometheusAnalyzer, err := analysis.NewErrorRatioAnalyzer(ctx, config, conf.prometheusService, conf.targetPositivePercentage, 30305)
 		if err != nil {
 			log.WithError(err).Fatal("failed to create a prometheus client")
 			return
 		}
 
-		job := rollout.New(conf.oldCluster, conf.newCluster, conf.rollOutWaitDuration, conf.analsysWaitDuration, conf.rolloutStepScore, prometheusAnalyzer, wsManagerBridgeClient)
+		job := rollout.New(conf.oldCluster, conf.newCluster, conf.rollOutWaitDuration, conf.analsysWaitDuration, conf.rolloutStepScore, conf.okayScoreUntilNoData, prometheusAnalyzer, wsManagerBridgeClient)
 		job.Start(ctx)
 	},
 }
@@ -121,6 +123,8 @@ func Execute() {
 	rootCmd.Flags().DurationVar(&conf.rollOutWaitDuration, "rollout-wait-duration", 20*time.Second, "Duration to wait before updating the score of the new cluster")
 	rootCmd.Flags().DurationVar(&conf.analsysWaitDuration, "analysis-wait-duration", 1*time.Second, "Duration to wait before analyzing the metrics")
 	rootCmd.Flags().Int32Var(&conf.rolloutStepScore, "rollout-step-score", 10, "Score to be added to the new cluster, and decreased to the old cluster")
+	rootCmd.Flags().Int32Var(&conf.okayScoreUntilNoData, "okay-score-until-no-data", 60, "If the score is below this value, and there is no data, the rollout score will be considered okay")
+	rootCmd.Flags().IntVar(&conf.targetPositivePercentage, "target-positive-percentage", 95, "Target percentage of positive metrics")
 
 	rootCmd.MarkFlagRequired("old-cluster")
 	rootCmd.MarkFlagRequired("new-cluster")
