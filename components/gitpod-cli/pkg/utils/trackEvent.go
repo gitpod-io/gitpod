@@ -18,6 +18,7 @@ import (
 const (
 	// System
 	SystemErrorCode = "system_error"
+	UserErrorCode   = "user_error"
 
 	// Rebuild
 	RebuildErrorCode_DockerBuildFailed     = "rebuild_docker_build_failed"
@@ -27,10 +28,10 @@ const (
 	RebuildErrorCode_DockerfileEmpty       = "rebuild_dockerfile_empty"
 	RebuildErrorCode_DockerfileNotFound    = "rebuild_dockerfile_not_found"
 	RebuildErrorCode_DockerNotFound        = "rebuild_docker_not_found"
-	RebuildErrorCode_DockerRunFailed       = "rebuild_docker_run_failed"
 	RebuildErrorCode_MalformedGitpodYaml   = "rebuild_malformed_gitpod_yaml"
 	RebuildErrorCode_MissingGitpodYaml     = "rebuild_missing_gitpod_yaml"
 	RebuildErrorCode_NoCustomImage         = "rebuild_no_custom_image"
+	RebuildErrorCode_DebugFailed           = "rebuild_docker_debug_failed"
 )
 
 type TrackCommandUsageParams struct {

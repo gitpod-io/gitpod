@@ -357,6 +357,8 @@ func Run(options ...RunOption) {
 	}
 	apiServices = append(apiServices, additionalServices...)
 
+	prepareDebugLocation()
+
 	if !cfg.isHeadless() {
 		// We need to checkout dotfiles first, because they may be changing the path which affects the IDE.
 		// TODO(cw): provide better feedback if the IDE start fails because of the dotfiles (provide any feedback at all).
@@ -463,6 +465,16 @@ func Run(options ...RunOption) {
 	}
 
 	wg.Wait()
+}
+
+func prepareDebugLocation() {
+	err := os.Mkdir("/.debug", 0755)
+	if err == nil {
+		err = os.Chown("/.debug", gitpodUID, gitpodGID)
+	}
+	if err != nil {
+		log.WithError(err).Warn("preparing debug location failed")
+	}
 }
 
 func isShallowRepository(rootDir string, env []string) bool {
