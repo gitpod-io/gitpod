@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -28,10 +29,10 @@ import (
 )
 
 type APIInterface interface {
-	GetOwnerID(ctx context.Context, workspaceID string) (ownerID string, err error)
+	GetOwnerID(ctx context.Context) (ownerID string, err error)
 	GetToken(ctx context.Context, query *gitpod.GetTokenSearchOptions) (res *gitpod.Token, err error)
-	OpenPort(ctx context.Context, workspaceID string, port *gitpod.WorkspaceInstancePort) (res *gitpod.WorkspaceInstancePort, err error)
-	InstanceUpdates(ctx context.Context, instanceID string, workspaceID string) (<-chan *gitpod.WorkspaceInstance, error)
+	OpenPort(ctx context.Context, port *gitpod.WorkspaceInstancePort) (res *gitpod.WorkspaceInstancePort, err error)
+	InstanceUpdates(ctx context.Context) (<-chan *gitpod.WorkspaceInstance, error)
 
 	// Remove this and use segment client directly
 	TrackEvent(ctx context.Context, event *gitpod.RemoteTrackMessage) (err error)
@@ -68,9 +69,14 @@ type Service struct {
 	publicAPIConn    *grpc.ClientConn
 	publicApiMetrics *grpc_prometheus.ClientMetrics
 
-	// previousUsingPublicAPI is using atomic type to avoid reconnect when configcat value change
-	previousUsingPublicAPI atomic.Bool
-	onUsingPublicAPI       chan bool
+	// usingPublicAPI is using atomic type to avoid reconnect when configcat value change
+	usingPublicAPI atomic.Bool
+	// onUsingPublicAPI which will only used in instanceUpdate config change notify
+	onUsingPublicAPI chan struct{}
+
+	// subs is the subscribers of instanceUpdates
+	subs     map[chan *gitpod.WorkspaceInstance]struct{}
+	subMutex sync.Mutex
 }
 
 var _ APIInterface = (*Service)(nil)
@@ -111,21 +117,9 @@ func NewServerApiService(ctx context.Context, cfg *ServiceConfig, tknsrv api.Tok
 		cfg:              cfg,
 		experiments:      experiments.NewClient(),
 		publicApiMetrics: grpc_prometheus.NewClientMetrics(),
-		onUsingPublicAPI: make(chan bool),
+		onUsingPublicAPI: make(chan struct{}),
+		subs:             make(map[chan *gitpod.WorkspaceInstance]struct{}),
 	}
-
-	// schedule get public api configcat value for instance updates traffic switching
-	go func() {
-		ticker := time.NewTicker(time.Second * 2)
-		for {
-			select {
-			case <-ctx.Done():
-				ticker.Stop()
-			case <-ticker.C:
-				service.usePublicAPI(ctx)
-			}
-		}
-	}()
 
 	service.publicApiMetrics.EnableClientHandlingTimeHistogram(
 		// it should be aligned with https://github.com/gitpod-io/gitpod/blob/84ed1a0672d91446ba33cb7b504cfada769271a8/install/installer/pkg/components/ide-metrics/configmap.go#L315
@@ -140,6 +134,13 @@ func NewServerApiService(ctx context.Context, cfg *ServiceConfig, tknsrv api.Tok
 	} else {
 		service.ownerID = wsInfo.Workspace.OwnerID
 	}
+	service.usingPublicAPI.Store(experiments.SupervisorUsePublicAPI(ctx, service.experiments, experiments.Attributes{
+		UserID: service.ownerID,
+	}))
+	// start to listen on real instance updates
+	go service.onInstanceUpdates(ctx)
+	go service.observeConfigcatValue(ctx)
+
 	return service
 }
 
@@ -169,28 +170,39 @@ func (s *Service) tryConnToPublicAPI() {
 	}
 }
 
+func (s *Service) observeConfigcatValue(ctx context.Context) {
+	ticker := time.NewTicker(time.Second * 10)
+	for {
+		select {
+		case <-ctx.Done():
+			ticker.Stop()
+			return
+		case <-ticker.C:
+			usePublicAPI := experiments.SupervisorUsePublicAPI(ctx, s.experiments, experiments.Attributes{
+				UserID: s.ownerID,
+			})
+			if prev := s.usingPublicAPI.Swap(usePublicAPI); prev != usePublicAPI {
+				if usePublicAPI {
+					log.Info("switch to use PublicAPI")
+				} else {
+					log.Info("switch to use ServerAPI")
+				}
+				select {
+				case s.onUsingPublicAPI <- struct{}{}:
+				default:
+				}
+			}
+		}
+	}
+}
+
 func (s *Service) usePublicAPI(ctx context.Context) bool {
 	if s.publicAPIConn == nil || s.ownerID == "" {
 		return false
 	}
-	usePublicAPI := experiments.SupervisorUsePublicAPI(ctx, s.experiments, experiments.Attributes{
-		UserID: s.ownerID,
-	})
-	if prev := s.previousUsingPublicAPI.Swap(usePublicAPI); prev != usePublicAPI {
-		if usePublicAPI {
-			log.Info("switch to use PublicAPI")
-		} else {
-			log.Info("switch to use ServerAPI")
-		}
-		select {
-		case s.onUsingPublicAPI <- usePublicAPI:
-		default:
-		}
-	}
-	return usePublicAPI
+	return s.usingPublicAPI.Load()
 }
 
-// GetToken implements protocol.APIInterface
 func (s *Service) GetToken(ctx context.Context, query *gitpod.GetTokenSearchOptions) (res *gitpod.Token, err error) {
 	if s == nil {
 		return nil, errNotConnected
@@ -218,11 +230,11 @@ func (s *Service) GetToken(ctx context.Context, query *gitpod.GetTokenSearchOpti
 	}, nil
 }
 
-// OpenPort implements protocol.APIInterface
-func (s *Service) OpenPort(ctx context.Context, workspaceID string, port *gitpod.WorkspaceInstancePort) (res *gitpod.WorkspaceInstancePort, err error) {
+func (s *Service) OpenPort(ctx context.Context, port *gitpod.WorkspaceInstancePort) (res *gitpod.WorkspaceInstancePort, err error) {
 	if s == nil {
 		return nil, errNotConnected
 	}
+	workspaceID := s.cfg.WorkspaceID
 	if !s.usePublicAPI(ctx) {
 		return s.gitpodService.OpenPort(ctx, workspaceID, port)
 	}
@@ -249,20 +261,15 @@ func (s *Service) OpenPort(ctx context.Context, workspaceID string, port *gitpod
 	return port, nil
 }
 
-// InstanceUpdates implements protocol.APIInterface
-func (s *Service) InstanceUpdates(ctx context.Context, instanceID string, workspaceID string) (<-chan *gitpod.WorkspaceInstance, error) {
-	if s == nil {
-		return nil, errNotConnected
-	}
-
-	updateChan := make(chan *gitpod.WorkspaceInstance)
+// onInstanceUpdates listen to server and public API instanceUpdates and publish to subscribers once Service created.
+func (s *Service) onInstanceUpdates(ctx context.Context) {
 	errChan := make(chan error)
 	processUpdate := func(usePublicAPI bool) context.CancelFunc {
 		childCtx, cancel := context.WithCancel(ctx)
 		if usePublicAPI {
-			go s.publicAPIInstanceUpdate(childCtx, workspaceID, updateChan, errChan)
+			go s.publicAPIInstanceUpdate(childCtx, errChan)
 		} else {
-			go s.serverInstanceUpdate(childCtx, instanceID, updateChan, errChan)
+			go s.serverInstanceUpdate(childCtx, errChan)
 		}
 		return cancel
 	}
@@ -270,15 +277,14 @@ func (s *Service) InstanceUpdates(ctx context.Context, instanceID string, worksp
 		cancel := processUpdate(s.usePublicAPI(ctx))
 		defer func() {
 			cancel()
-			close(updateChan)
 		}()
 		for {
 			select {
 			case <-ctx.Done():
 				return
-			case usePublicAPI := <-s.onUsingPublicAPI:
+			case <-s.onUsingPublicAPI:
 				cancel()
-				cancel = processUpdate(usePublicAPI)
+				cancel = processUpdate(s.usePublicAPI(ctx))
 			case err := <-errChan:
 				if errors.Is(err, context.Canceled) || errors.Is(err, io.EOF) {
 					continue
@@ -290,11 +296,31 @@ func (s *Service) InstanceUpdates(ctx context.Context, instanceID string, worksp
 			}
 		}
 	}()
-
-	return updateChan, nil
 }
 
-func (s *Service) publicAPIInstanceUpdate(ctx context.Context, workspaceID string, updateChan chan *gitpod.WorkspaceInstance, errChan chan error) {
+func (s *Service) InstanceUpdates(ctx context.Context) (<-chan *gitpod.WorkspaceInstance, error) {
+	if s == nil {
+		return nil, errNotConnected
+	}
+	ch := make(chan *gitpod.WorkspaceInstance)
+	s.subMutex.Lock()
+	s.subs[ch] = struct{}{}
+	s.subMutex.Unlock()
+
+	go func() {
+		defer func() {
+			close(ch)
+		}()
+		<-ctx.Done()
+		s.subMutex.Lock()
+		delete(s.subs, ch)
+		s.subMutex.Unlock()
+	}()
+	return ch, nil
+}
+
+func (s *Service) publicAPIInstanceUpdate(ctx context.Context, errChan chan error) {
+	workspaceID := s.cfg.WorkspaceID
 	resp, err := backoff.RetryWithData(func() (v1.WorkspacesService_StreamWorkspaceStatusClient, error) {
 		service := v1.NewWorkspacesServiceClient(s.publicAPIConn)
 		resp, err := service.StreamWorkspaceStatus(ctx, &v1.StreamWorkspaceStatusRequest{
@@ -327,11 +353,16 @@ func (s *Service) publicAPIInstanceUpdate(ctx context.Context, workspaceID strin
 			errChan <- err
 			return
 		}
-		updateChan <- workspaceStatusToWorkspaceInstance(resp.Result)
+		s.subMutex.Lock()
+		for sub := range s.subs {
+			sub <- workspaceStatusToWorkspaceInstance(resp.Result)
+		}
+		s.subMutex.Unlock()
 	}
 }
 
-func (s *Service) serverInstanceUpdate(ctx context.Context, instanceID string, updateChan chan *gitpod.WorkspaceInstance, errChan chan error) {
+func (s *Service) serverInstanceUpdate(ctx context.Context, errChan chan error) {
+	instanceID := s.cfg.InstanceID
 	ch, err := backoff.RetryWithData(func() (<-chan *gitpod.WorkspaceInstance, error) {
 		ch, err := s.gitpodService.InstanceUpdates(ctx, instanceID)
 		if err != nil {
@@ -350,7 +381,11 @@ func (s *Service) serverInstanceUpdate(ctx context.Context, instanceID string, u
 	}
 	log.WithField("method", "InstanceUpdates").WithField("instanceID", instanceID).Info("start to listen on serverAPI instanceUpdates")
 	for update := range ch {
-		updateChan <- update
+		s.subMutex.Lock()
+		for sub := range s.subs {
+			sub <- update
+		}
+		s.subMutex.Unlock()
 	}
 	if ctx.Err() != nil {
 		return
@@ -368,11 +403,11 @@ var ConnBackoff = &backoff.ExponentialBackOff{
 	Clock:               backoff.SystemClock,
 }
 
-// GetOwnerID implements APIInterface
-func (s *Service) GetOwnerID(ctx context.Context, workspaceID string) (ownerID string, err error) {
+func (s *Service) GetOwnerID(ctx context.Context) (ownerID string, err error) {
 	if s == nil {
 		return "", errNotConnected
 	}
+	workspaceID := s.cfg.WorkspaceID
 	if !s.usePublicAPI(ctx) {
 		resp, err := s.gitpodService.GetWorkspace(ctx, workspaceID)
 		if err != nil {

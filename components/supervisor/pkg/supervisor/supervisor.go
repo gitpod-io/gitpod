@@ -1616,7 +1616,7 @@ func (a *PerfAnalyzer) analyze(used float64) bool {
 }
 
 func analysePerfChanges(ctx context.Context, wscfg *Config, w analytics.Writer, topService *TopService, gitpodAPI serverapi.APIInterface) {
-	ownerID, err := gitpodAPI.GetOwnerID(ctx, wscfg.WorkspaceID)
+	ownerID, err := gitpodAPI.GetOwnerID(ctx)
 	if err != nil {
 		log.WithError(err).Error("gitpod perf analytics: failed to resolve workspace info")
 		return
@@ -1658,7 +1658,7 @@ func analysePerfChanges(ctx context.Context, wscfg *Config, w analytics.Writer, 
 }
 
 func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer, cfgobs config.ConfigInterface, gitpodAPI serverapi.APIInterface) {
-	ownerID, err := gitpodAPI.GetOwnerID(ctx, wscfg.WorkspaceID)
+	ownerID, err := gitpodAPI.GetOwnerID(ctx)
 	if err != nil {
 		log.WithError(err).Error("gitpod config analytics: failed to resolve workspace info")
 		return
