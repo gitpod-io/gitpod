@@ -52,15 +52,20 @@ Create a Gitpod configuration for this project.
 			log.Fatal(err)
 		}
 		if !interactive {
-			d = []byte(`# List the start up tasks. Learn more https://www.gitpod.io/docs/config-start-tasks/
+			d = []byte(`# List the start up tasks. Learn more: https://www.gitpod.io/docs/configure/workspaces/tasks
 tasks:
-  - init: echo 'init script' # runs during prebuild
+  - name: Script Task
+    init: echo 'init script' # runs during prebuild => https://www.gitpod.io/docs/configure/projects/prebuilds
     command: echo 'start script'
 
-# List the ports to expose. Learn more https://www.gitpod.io/docs/config-ports/
+# List the ports to expose. Learn more: https://www.gitpod.io/docs/configure/workspaces/ports
 ports:
-  - port: 3000
+  - name: Frontend
+    description: Port 3000 for the frontend
+    port: 3000
     onOpen: open-preview
+
+# Learn more from ready-to-use templates: https://www.gitpod.io/docs/introduction/getting-started/quickstart
 `)
 		} else {
 			fmt.Printf("\n\n---\n%s", d)
