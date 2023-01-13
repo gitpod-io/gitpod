@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"os"
 	"os/exec"
+	"strconv"
 	"syscall"
 
 	"github.com/opencontainers/runtime-spec/specs-go"
@@ -15,7 +16,8 @@ import (
 	"golang.org/x/xerrors"
 )
 
-const RETRY = 3
+const DaemonArgs = "DOCKERD_ARGS"
+const DEFAULT_RETRY = 3
 
 var (
 	defaultOOMScoreAdj = 1000
@@ -87,16 +89,56 @@ func createAndRunc(runcPath string, log *logrus.Logger) error {
 			return xerrors.Errorf("cannot encode config.json: %w", err)
 		}
 	}
+	exec := func() error {
+		err = syscall.Exec(runcPath, os.Args, os.Environ())
+		if err == nil {
+			return nil
+		} else {
+			log.WithError(err).Warn("runc failed")
+			return err
+		}
+	}
+
+	err = exec()
+	if err != nil {
+		retry, err := LookUpRetryCount()
+		if err != nil {
+			return err
+		}
+		for i := 0; i <= retry-1; i++ {
+			err = exec()
+			if err == nil {
+				return nil
+			}
+		}
+	} else {
+		return nil
+	}
 
 	// See here for more details on why retries are necessary.
 	// https://github.com/gitpod-io/gitpod/issues/12365
-	for i := 0; i <= RETRY; i++ {
-		err = syscall.Exec(runcPath, os.Args, os.Environ())
-		if err == nil {
-			return err
-		} else {
-			log.WithError(err).Warn("runc failed")
-		}
-	}
 	return xerrors.Errorf("exec %s: %w", runcPath, err)
+}
+
+func LookUpRetryCount() (int, error) {
+	userArgs, exists := os.LookupEnv(DaemonArgs)
+	if !exists {
+		return DEFAULT_RETRY, nil
+	}
+
+	var providedDockerArgs map[string]string
+	if err := json.Unmarshal([]byte(userArgs), &providedDockerArgs); err != nil {
+		return 0, xerrors.Errorf("unable to deserialize docker args: %w", err)
+	}
+
+	v, ok := providedDockerArgs["runc-retry"]
+	if !ok {
+		return DEFAULT_RETRY, nil
+	}
+
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		return 0, err
+	}
+	return n, nil
 }
