@@ -124,10 +124,9 @@ func randString(size int) (string, error) {
 }
 
 func (s *Service) GetClientConfigFromStartRequest(r *http.Request) (*ClientConfig, error) {
-	issuerParam := r.URL.Query().Get("issuer")
 	idParam := r.URL.Query().Get("id")
-	if issuerParam == "" && idParam == "" {
-		return nil, fmt.Errorf("missing parameters")
+	if idParam == "" {
+		return nil, fmt.Errorf("missing id parameter")
 	}
 
 	if idParam != "" {
@@ -136,13 +135,6 @@ func (s *Service) GetClientConfigFromStartRequest(r *http.Request) (*ClientConfi
 			return config, nil
 		}
 		return nil, fmt.Errorf("failed to find OIDC config by ID")
-	}
-	if issuerParam != "" {
-		for _, value := range s.configsById {
-			if value.Issuer == issuerParam {
-				return value, nil
-			}
-		}
 	}
 
 	return nil, fmt.Errorf("failed to find OIDC config")

@@ -76,16 +76,6 @@ func TestGetClientConfigFromStartRequest(t *testing.T) {
 			ExpectedId:    "",
 		},
 		{
-			Location:      "/start?issuer=" + issuer,
-			ExpectedError: false,
-			ExpectedId:    clientID,
-		},
-		{
-			Location:      "/start?issuer=UNKNOWN",
-			ExpectedError: true,
-			ExpectedId:    "",
-		},
-		{
 			Location:      "/start?id=UNKNOWN",
 			ExpectedError: true,
 			ExpectedId:    "",
