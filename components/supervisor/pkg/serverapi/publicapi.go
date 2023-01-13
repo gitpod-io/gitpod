@@ -304,8 +304,12 @@ func (s *Service) publicAPIInstanceUpdate(ctx context.Context, workspaceID strin
 			log.WithError(err).Info("backoff failed to get workspace service client of PublicAPI, try again")
 		}
 		return resp, err
-	}, connBackoff)
+	}, backoff.WithContext(ConnBackoff, ctx))
 	if err != nil {
+		// we don't care about ctx canceled
+		if ctx.Err() != nil {
+			return
+		}
 		log.WithField("method", "StreamWorkspaceStatus").WithError(err).Error("failed to call PublicAPI")
 		errChan <- err
 		return
@@ -334,8 +338,12 @@ func (s *Service) serverInstanceUpdate(ctx context.Context, instanceID string, u
 			log.WithError(err).Info("backoff failed to listen to serverAPI instanceUpdates, try again")
 		}
 		return ch, err
-	}, connBackoff)
+	}, backoff.WithContext(ConnBackoff, ctx))
 	if err != nil {
+		// we don't care about ctx canceled
+		if ctx.Err() != nil {
+			return
+		}
 		log.WithField("method", "InstanceUpdates").WithError(err).Error("failed to call serverAPI")
 		errChan <- err
 		return
@@ -350,7 +358,7 @@ func (s *Service) serverInstanceUpdate(ctx context.Context, instanceID string, u
 	errChan <- io.EOF
 }
 
-var connBackoff = &backoff.ExponentialBackOff{
+var ConnBackoff = &backoff.ExponentialBackOff{
 	InitialInterval:     2 * time.Second,
 	RandomizationFactor: 0.5,
 	Multiplier:          1.5,
