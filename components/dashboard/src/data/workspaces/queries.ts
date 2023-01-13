@@ -14,7 +14,7 @@ type UseWorkspaceArgs = {
     limit: number;
 };
 
-export const useWorkspaces = ({ limit }: UseWorkspaceArgs) => {
+export const useListWorkspacesQuery = ({ limit }: UseWorkspaceArgs) => {
     const fetchWorkspaces = useWorkspacesFetcher({ limit });
 
     return useQuery<WorkspacesFetcherResult>({
@@ -58,7 +58,6 @@ export const useListenToWorkspacesWSMessages = () => {
         });
 
         return () => {
-            console.log("disposing client");
             disposable.dispose();
         };
     }, [queryClient]);
