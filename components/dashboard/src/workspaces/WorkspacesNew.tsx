@@ -30,19 +30,9 @@ const WorkspacesPage: FunctionComponent = () => {
     const isOnboardingUser = useMemo(() => user && User.isOnboardingUser(user), [user]);
     const deleteInactiveWorkspaces = useDeleteInactiveWorkspacesMutation();
 
-    const filteredWorkspaces = useMemo(() => {
-        return (data || []).filter(
-            (info) =>
-                `${info.workspace.description}${info.workspace.id}${info.workspace.contextURL}${info.workspace.context}`
-                    .toLowerCase()
-                    .indexOf(searchTerm.toLowerCase()) !== -1,
-        );
-    }, [data, searchTerm]);
-
     // Sort workspaces into active/inactive groups
     const { activeWorkspaces, inactiveWorkspaces } = useMemo(() => {
-        console.log("sorting workspaces");
-        const sortedWorkspaces = filteredWorkspaces.sort(sortWorkspaces);
+        const sortedWorkspaces = (data || []).sort(sortWorkspaces);
         const activeWorkspaces = sortedWorkspaces.filter((ws) => isWorkspaceActive(ws));
 
         // respecting the limit, return inactive workspaces as well
@@ -54,7 +44,28 @@ const WorkspacesPage: FunctionComponent = () => {
             activeWorkspaces,
             inactiveWorkspaces,
         };
-    }, [filteredWorkspaces, limit]);
+    }, [data, limit]);
+
+    const { filteredActiveWorkspaces, filteredInactiveWorkspaces } = useMemo(() => {
+        const filteredActiveWorkspaces = activeWorkspaces.filter(
+            (info) =>
+                `${info.workspace.description}${info.workspace.id}${info.workspace.contextURL}${info.workspace.context}`
+                    .toLowerCase()
+                    .indexOf(searchTerm.toLowerCase()) !== -1,
+        );
+
+        const filteredInactiveWorkspaces = inactiveWorkspaces.filter(
+            (info) =>
+                `${info.workspace.description}${info.workspace.id}${info.workspace.contextURL}${info.workspace.context}`
+                    .toLowerCase()
+                    .indexOf(searchTerm.toLowerCase()) !== -1,
+        );
+
+        return {
+            filteredActiveWorkspaces,
+            filteredInactiveWorkspaces,
+        };
+    }, [activeWorkspaces, inactiveWorkspaces, searchTerm]);
 
     const handleDeleteInactiveWorkspacesConfirmation = useCallback(async () => {
         try {
@@ -101,11 +112,11 @@ const WorkspacesPage: FunctionComponent = () => {
                         />
                         <ItemsList className="app-container pb-40">
                             <div className="border-t border-gray-200 dark:border-gray-800"></div>
-                            {activeWorkspaces.map((info) => {
+                            {filteredActiveWorkspaces.map((info) => {
                                 return <WorkspaceEntry key={info.workspace.id} info={info} />;
                             })}
-                            {activeWorkspaces.length > 0 && <div className="py-6"></div>}
-                            {inactiveWorkspaces.length > 0 && (
+                            {filteredActiveWorkspaces.length > 0 && <div className="py-6"></div>}
+                            {filteredInactiveWorkspaces.length > 0 && (
                                 <div>
                                     <div
                                         onClick={() => setShowInactive(!showInactive)}
@@ -118,7 +129,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                             <div className="font-medium text-gray-500 dark:text-gray-200 truncate">
                                                 <span>Inactive Workspaces&nbsp;</span>
                                                 <span className="text-gray-400 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 rounded-xl px-2 py-0.5 text-xs">
-                                                    {inactiveWorkspaces.length}
+                                                    {filteredInactiveWorkspaces.length}
                                                 </span>
                                             </div>
                                             <div className="text-sm flex-auto">
@@ -149,7 +160,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                     </div>
                                     {showInactive ? (
                                         <>
-                                            {inactiveWorkspaces.map((info) => {
+                                            {filteredInactiveWorkspaces.map((info) => {
                                                 return <WorkspaceEntry key={info.workspace.id} info={info} />;
                                             })}
                                         </>
