@@ -5,10 +5,8 @@
 package cmd
 
 import (
-	"archive/tar"
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -179,7 +177,10 @@ func debug(ctx context.Context, event *utils.EventTracker, rebuildCtx *rebuildCo
 	exportStartTime := time.Now()
 	exportPhase := "exporting the workspace root filesystem"
 	fmt.Println(exportPhase + ", may take sometime...")
-	err = exportRootFS(rebuildCtx)
+	exportCmd := exec.Command("sudo", "/.supervisor/supervisor", "export-rootfs", rebuildCtx.dockerPath, rebuildCtx.imageTag)
+	exportCmd.Stdout = os.Stdout
+	exportCmd.Stderr = os.Stderr
+	err = exportCmd.Run()
 	event.Data.ExportRootFileSystemDuration = time.Since(exportStartTime).Milliseconds()
 	fmt.Printf(exportPhase+" finished in %s \n",
 		(time.Duration(event.Data.ExportRootFileSystemDuration) * time.Millisecond).Round(time.Second).String(),
@@ -199,75 +200,6 @@ func debug(ctx context.Context, event *utils.EventTracker, rebuildCtx *rebuildCo
 	return nil
 }
 
-var rootFS = "/.debug/rootfs"
-
-func exportRootFS(rebuildCtx *rebuildContext) error {
-	err := os.RemoveAll(rootFS)
-	if err != nil {
-		return err
-	}
-	err = os.MkdirAll(rootFS, 0700)
-	if err != nil {
-		return err
-	}
-
-	containerName := rebuildCtx.imageTag + "-0"
-
-	rmCmd := exec.Command(rebuildCtx.dockerPath, "rm", "-f", containerName)
-	rmCmd.Stderr = os.Stderr
-	_ = rmCmd.Run()
-
-	runCmd := exec.Command(rebuildCtx.dockerPath, "run", "--name", containerName, rebuildCtx.imageTag)
-	runCmd.Stdout = os.Stdout
-	runCmd.Stderr = os.Stderr
-	err = runCmd.Run()
-	if err != nil {
-		return err
-	}
-
-	exportCmd := exec.Command(rebuildCtx.dockerPath, "export", containerName)
-	exportCmd.Stderr = os.Stderr
-	stdout, err := exportCmd.StdoutPipe()
-	if err != nil {
-		return err
-	}
-
-	err = exportCmd.Start()
-	if err != nil {
-		return err
-	}
-
-	tarReader := tar.NewReader(stdout)
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return err
-		}
-
-		path := filepath.Join(rootFS, header.Name)
-		if header.FileInfo().IsDir() {
-			err := os.MkdirAll(path, header.FileInfo().Mode())
-			if err != nil {
-				return err
-			}
-		} else {
-			file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, header.FileInfo().Mode())
-			if err != nil {
-				return err
-			}
-			_, err = io.Copy(file, tarReader)
-			file.Close()
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return exportCmd.Wait()
-}
-
 var buildCmd = &cobra.Command{
 	Use:    "rebuild",
 	Short:  "Re-builds the workspace (useful to debug a workspace configuration)",
@@ -281,16 +213,6 @@ var buildCmd = &cobra.Command{
 			return
 		}
 		defer supervisorClient.Close()
-
-		if os.Geteuid() != 0 {
-			// TODO only run export rootfs under root
-			cmd := exec.Command("sudo", os.Args...)
-			cmd.Stdin = os.Stdin
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-			_ = cmd.Run()
-			os.Exit(cmd.ProcessState.ExitCode())
-		}
 
 		event := utils.TrackEvent(ctx, supervisorClient, &utils.TrackCommandUsageParams{
 			Command: cmd.Name(),
