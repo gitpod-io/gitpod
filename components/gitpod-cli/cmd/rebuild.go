@@ -64,6 +64,7 @@ func validate(ctx context.Context, event *utils.EventTracker, rebuildCtx *rebuil
 		return false, err
 	}
 
+	// TODO make it flexible, look for first .gitopd.yml traversing parents?
 	gitpodConfig, err := utils.ParseGitpodConfig(wsInfo.CheckoutLocation)
 	if err != nil {
 		fmt.Println("The .gitpod.yml file cannot be parsed: please check the file and try again")
@@ -198,7 +199,7 @@ func debug(ctx context.Context, event *utils.EventTracker, rebuildCtx *rebuildCo
 	return nil
 }
 
-var rootFS = "/home/gitpod/.debug/image"
+var rootFS = "/.debug/rootfs"
 
 func exportRootFS(rebuildCtx *rebuildContext) error {
 	err := os.RemoveAll(rootFS)
@@ -248,8 +249,7 @@ func exportRootFS(rebuildCtx *rebuildContext) error {
 
 		path := filepath.Join(rootFS, header.Name)
 		if header.FileInfo().IsDir() {
-			// don't use header.FileInfo().Mode() since we don't run under sudo
-			err := os.MkdirAll(path, 0755)
+			err := os.MkdirAll(path, header.FileInfo().Mode())
 			if err != nil {
 				return err
 			}
@@ -274,12 +274,23 @@ var buildCmd = &cobra.Command{
 	Hidden: false,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
+
 		supervisorClient, err := supervisor.New(ctx)
 		if err != nil {
 			utils.LogError(ctx, err, "Could not get workspace info required to build", supervisorClient)
 			return
 		}
 		defer supervisorClient.Close()
+
+		if os.Geteuid() != 0 {
+			// TODO only run export rootfs under root
+			cmd := exec.Command("sudo", os.Args...)
+			cmd.Stdin = os.Stdin
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			_ = cmd.Run()
+			os.Exit(cmd.ProcessState.ExitCode())
+		}
 
 		event := utils.TrackEvent(ctx, supervisorClient, &utils.TrackCommandUsageParams{
 			Command: cmd.Name(),
