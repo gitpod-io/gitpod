@@ -190,9 +190,11 @@ func debug(ctx context.Context, event *utils.EventTracker, rebuildCtx *rebuildCo
 		return err
 	}
 
-	// TODO inline
 	fmt.Println("starting a debug workspace...")
-	err = exec.Command("/.supervisor/supervisor", "inner-loop").Run()
+	debugCmd := exec.Command("/.supervisor/supervisor", "inner-loop")
+	debugCmd.Stdout = os.Stdout
+	debugCmd.Stderr = os.Stderr
+	err = debugCmd.Run()
 	if err != nil {
 		event.Data.ErrorCode = utils.RebuildErrorCode_DebugFailed
 		return err
