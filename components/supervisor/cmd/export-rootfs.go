@@ -19,7 +19,7 @@ func exportRootFS(dockerPath string, imageTag string) error {
 	if err != nil {
 		return err
 	}
-	err = os.MkdirAll(rootFS, 0700)
+	err = os.MkdirAll(rootFS, 0775)
 	if err != nil {
 		return err
 	}
