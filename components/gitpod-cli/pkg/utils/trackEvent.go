@@ -31,17 +31,19 @@ const (
 	RebuildErrorCode_MalformedGitpodYaml   = "rebuild_malformed_gitpod_yaml"
 	RebuildErrorCode_MissingGitpodYaml     = "rebuild_missing_gitpod_yaml"
 	RebuildErrorCode_NoCustomImage         = "rebuild_no_custom_image"
-	RebuildErrorCode_DebugFailed           = "rebuild_docker_debug_failed"
+	RebuildErrorCode_ExportRootFSFailed    = "rebuild_export_root_fs_failed"
+	RebuildErrorCode_DebugFailed           = "rebuild_debug_failed"
 )
 
 type TrackCommandUsageParams struct {
-	Command            string `json:"command,omitempty"`
-	Duration           int64  `json:"duration,omitempty"`
-	ErrorCode          string `json:"errorCode,omitempty"`
-	WorkspaceId        string `json:"workspaceId,omitempty"`
-	InstanceId         string `json:"instanceId,omitempty"`
-	Timestamp          int64  `json:"timestamp,omitempty"`
-	ImageBuildDuration int64  `json:"imageBuildDuration,omitempty"`
+	Command                      string `json:"command,omitempty"`
+	Duration                     int64  `json:"duration,omitempty"`
+	ErrorCode                    string `json:"errorCode,omitempty"`
+	WorkspaceId                  string `json:"workspaceId,omitempty"`
+	InstanceId                   string `json:"instanceId,omitempty"`
+	Timestamp                    int64  `json:"timestamp,omitempty"`
+	ImageBuildDuration           int64  `json:"imageBuildDuration,omitempty"`
+	ExportRootFileSystemDuration int64  `json:"imageExportDuration,omitempty"`
 }
 
 type EventTracker struct {

@@ -5,8 +5,10 @@
 package cmd
 
 import (
+	"archive/tar"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,6 +23,7 @@ import (
 func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClient, event *utils.EventTracker) (bool, error) {
 	rebuildCtx := &rebuildContext{
 		supervisorClient: supervisorClient,
+		imageTag:         "gp-rebuild",
 	}
 	valid, err := validate(ctx, event, rebuildCtx)
 	if !valid || err != nil {
@@ -39,7 +42,7 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 	if err != nil {
 		return false, err
 	}
-	err = startDebug(ctx, event, rebuildCtx)
+	err = debug(ctx, event, rebuildCtx)
 	if err != nil {
 		return false, err
 	}
@@ -50,6 +53,8 @@ type rebuildContext struct {
 	supervisorClient *supervisor.SupervisorClient
 	baseImage        string
 	buildDir         string
+	dockerPath       string
+	imageTag         string
 }
 
 func validate(ctx context.Context, event *utils.EventTracker, rebuildCtx *rebuildContext) (bool, error) {
@@ -129,37 +134,28 @@ func validate(ctx context.Context, event *utils.EventTracker, rebuildCtx *rebuil
 }
 
 func buildImage(ctx context.Context, event *utils.EventTracker, rebuildCtx *rebuildContext) error {
-	dockerFile := filepath.Join(rebuildCtx.buildDir, "Dockerfile")
-	err := os.WriteFile(dockerFile, []byte(rebuildCtx.baseImage), 0644)
-	if err != nil {
-		fmt.Println("Could not write the temporary Dockerfile")
-		event.Set("ErrorCode", utils.RebuildErrorCode_DockerfileCannotWirte)
-		return err
-	}
-
 	dockerPath, err := exec.LookPath("docker")
 	if err != nil {
 		fmt.Println("Docker is not installed in your workspace")
 		event.Set("ErrorCode", utils.RebuildErrorCode_DockerNotFound)
 		return err
 	}
+	rebuildCtx.dockerPath = dockerPath
 
-	debugRootFS := "/.debug/image"
-	err = os.RemoveAll(debugRootFS)
+	dockerFile := filepath.Join(rebuildCtx.buildDir, "Dockerfile")
+	err = os.WriteFile(dockerFile, []byte(rebuildCtx.baseImage), 0644)
 	if err != nil {
+		fmt.Println("Could not write the temporary Dockerfile")
+		event.Set("ErrorCode", utils.RebuildErrorCode_DockerfileCannotWirte)
 		return err
 	}
-	err = os.Mkdir(debugRootFS, 0700)
-	if err != nil {
-		return err
-	}
-
-	dockerCmd := exec.Command(dockerPath, "buildx", "build", "-o", debugRootFS, ".", "-f", dockerFile)
-	dockerCmd.Stdout = os.Stdout
-	dockerCmd.Stderr = os.Stderr
-	dockerCmd.Stdin = os.Stdin
 
 	imageBuildStartTime := time.Now()
+	fmt.Println("building the workspace image...")
+	dockerCmd := exec.Command(dockerPath, "build", "-t", rebuildCtx.imageTag, ".", "-f", dockerFile)
+	dockerCmd.Stdout = os.Stdout
+	dockerCmd.Stderr = os.Stderr
+	dockerCmd.Env = append(os.Environ(), "DOCKER_BUILDKIT=1")
 	err = dockerCmd.Run()
 	if _, ok := err.(*exec.ExitError); ok {
 		fmt.Println("Image Build Failed")
@@ -175,18 +171,101 @@ func buildImage(ctx context.Context, event *utils.EventTracker, rebuildCtx *rebu
 	return err
 }
 
-func startDebug(ctx context.Context, event *utils.EventTracker, rebuildCtx *rebuildContext) error {
-	debugCmd := exec.Command("/.supervisor/supervisor", "inner-loop")
-	debugCmd.Stdout = os.Stdout
-	debugCmd.Stderr = os.Stderr
-	debugCmd.Stdin = os.Stdin
+func debug(ctx context.Context, event *utils.EventTracker, rebuildCtx *rebuildContext) (err error) {
+	// TODO: stopDebug to release the root FS
 
-	err := debugCmd.Run()
+	// TODO skip if image did not change, it is very slow, how to tune?
+	exportStartTime := time.Now()
+	exportPhase := "exporting the workspace root filesystem"
+	fmt.Println(exportPhase + ", may take sometime...")
+	err = exportRootFS(rebuildCtx)
+	event.Data.ExportRootFileSystemDuration = time.Since(exportStartTime).Milliseconds()
+	fmt.Printf(exportPhase+" finished in %s \n",
+		(time.Duration(event.Data.ExportRootFileSystemDuration) * time.Millisecond).Round(time.Second).String(),
+	)
 	if err != nil {
-		event.Set("ErrorCode", utils.RebuildErrorCode_DebugFailed)
+		event.Data.ErrorCode = utils.RebuildErrorCode_ExportRootFSFailed
+		return err
+	}
+
+	// TODO inline
+	fmt.Println("starting a debug workspace...")
+	err = exec.Command("/.supervisor/supervisor", "inner-loop").Run()
+	if err != nil {
+		event.Data.ErrorCode = utils.RebuildErrorCode_DebugFailed
 		return err
 	}
 	return nil
+}
+
+var rootFS = "/home/gitpod/.debug/image"
+
+func exportRootFS(rebuildCtx *rebuildContext) error {
+	err := os.RemoveAll(rootFS)
+	if err != nil {
+		return err
+	}
+	err = os.MkdirAll(rootFS, 0700)
+	if err != nil {
+		return err
+	}
+
+	containerName := rebuildCtx.imageTag + "-0"
+
+	rmCmd := exec.Command(rebuildCtx.dockerPath, "rm", "-f", containerName)
+	rmCmd.Stderr = os.Stderr
+	_ = rmCmd.Run()
+
+	runCmd := exec.Command(rebuildCtx.dockerPath, "run", "--name", containerName, rebuildCtx.imageTag)
+	runCmd.Stdout = os.Stdout
+	runCmd.Stderr = os.Stderr
+	err = runCmd.Run()
+	if err != nil {
+		return err
+	}
+
+	exportCmd := exec.Command(rebuildCtx.dockerPath, "export", containerName)
+	exportCmd.Stderr = os.Stderr
+	stdout, err := exportCmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+
+	err = exportCmd.Start()
+	if err != nil {
+		return err
+	}
+
+	tarReader := tar.NewReader(stdout)
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		path := filepath.Join(rootFS, header.Name)
+		if header.FileInfo().IsDir() {
+			// don't use header.FileInfo().Mode() since we don't run under sudo
+			err := os.MkdirAll(path, 0755)
+			if err != nil {
+				return err
+			}
+		} else {
+			file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, header.FileInfo().Mode())
+			if err != nil {
+				return err
+			}
+			_, err = io.Copy(file, tarReader)
+			file.Close()
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return exportCmd.Wait()
 }
 
 var buildCmd = &cobra.Command{
