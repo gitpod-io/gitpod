@@ -15,6 +15,7 @@ export default function ConfirmationModal(props: {
     buttonText?: string;
     buttonDisabled?: boolean;
     visible?: boolean;
+    warningHead?: string;
     warningText?: string;
     onClose: () => void;
     onConfirm: () => void;
@@ -26,7 +27,11 @@ export default function ConfirmationModal(props: {
     ];
 
     if (props.warningText) {
-        children.unshift(<Alert type="warning">{props.warningText}</Alert>);
+        children.unshift(
+            <Alert type="warning">
+                <strong>{props.warningHead}</strong>: {props.warningText}
+            </Alert>,
+        );
     }
 
     const isEntity = (x: any): x is Entity => typeof x === "object" && "name" in x;

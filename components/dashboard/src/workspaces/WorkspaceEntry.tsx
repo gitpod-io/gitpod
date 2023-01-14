@@ -152,6 +152,20 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
         }
     };
 
+    // check for workspace changes
+    const repo = desc.latestInstance?.status?.repo;
+    let currentChanges = false;
+    if (repo) {
+        if ((repo.totalUntrackedFiles || 0) > 0) {
+            currentChanges = true;
+        }
+        if ((repo.totalUncommitedFiles || 0) > 0) {
+            currentChanges = true;
+        }
+        if ((repo.totalUnpushedCommits || 0) > 0) {
+            currentChanges = true;
+        }
+    }
     const normalizedContextUrl = ContextURL.getNormalizedURL(ws)?.toString();
     const normalizedContextUrlDescription = normalizedContextUrl || ws.contextURL; // Instead of showing nothing, we prefer to show the raw content instead
     return (
@@ -207,6 +221,8 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
                     }}
                     buttonText="Delete Workspace"
                     visible={isDeleteModalVisible}
+                    warningHead="Pending Changes"
+                    warningText={currentChanges ? "Workspace contains uncommited files or unpushed commits." : ""}
                     onClose={() => setDeleteModalVisible(false)}
                     onConfirm={() => model.deleteWorkspace(ws.id, usePublicApiWorkspacesService)}
                 />
