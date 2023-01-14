@@ -12,7 +12,6 @@ import (
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/supervisor"
-	prefixed "github.com/x-cray/logrus-prefixed-formatter"
 )
 
 var runOpts struct {
@@ -25,14 +24,6 @@ var runCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, !runOpts.RunGP, os.Getenv("SUPERVISOR_DEBUG_ENABLE") == "true")
-		if os.Getenv("SUPERVISOR_DEBUG_WORKSPACE") == "true" {
-			log.Log.Logger.SetFormatter(&prefixed.TextFormatter{
-				TimestampFormat: "2006-01-02 15:04:05",
-				FullTimestamp:   true,
-				ForceFormatting: true,
-				ForceColors:     true,
-			})
-		}
 		common_grpc.SetupLogging()
 		supervisor.Version = Version
 		supervisor.Run(supervisor.WithRunGP(runOpts.RunGP))

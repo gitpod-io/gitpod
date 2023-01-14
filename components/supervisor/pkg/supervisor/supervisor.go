@@ -1088,6 +1088,9 @@ func runIDEReadinessProbe(cfg *Config, ideConfig *IDEConfig, ide IDEKind) (deskt
 		duration := time.Since(t0).Seconds()
 		log.WithField("ide", ide.String()).WithField("duration", duration).Infof("IDE readiness took %.3f seconds", duration)
 
+		if cfg.DebugWorkspace && ide == WebIDE {
+			log.WithField("debugWorkspace", "true").Infof("Debug workspace is ready: %s", cfg.WorkspaceUrl)
+		}
 		if ide != DesktopIDE {
 			return
 		}
