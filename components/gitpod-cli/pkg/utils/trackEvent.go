@@ -16,21 +16,24 @@ import (
 )
 
 const (
+	Outcome_Success   = "success"
+	Outcome_UserErr   = "user_error"
+	Outcome_SystemErr = "system_error"
+)
+
+const (
 	// System
 	SystemErrorCode = "system_error"
+	UserErrorCode   = "user_error"
 
 	// Rebuild
-	RebuildErrorCode_DockerBuildFailed     = "rebuild_docker_build_failed"
-	RebuildErrorCode_DockerErr             = "rebuild_docker_err"
-	RebuildErrorCode_DockerfileCannotRead  = "rebuild_dockerfile_cannot_read"
-	RebuildErrorCode_DockerfileCannotWirte = "rebuild_dockerfile_cannot_write"
-	RebuildErrorCode_DockerfileEmpty       = "rebuild_dockerfile_empty"
-	RebuildErrorCode_DockerfileNotFound    = "rebuild_dockerfile_not_found"
-	RebuildErrorCode_DockerNotFound        = "rebuild_docker_not_found"
-	RebuildErrorCode_DockerRunFailed       = "rebuild_docker_run_failed"
-	RebuildErrorCode_MalformedGitpodYaml   = "rebuild_malformed_gitpod_yaml"
-	RebuildErrorCode_MissingGitpodYaml     = "rebuild_missing_gitpod_yaml"
-	RebuildErrorCode_NoCustomImage         = "rebuild_no_custom_image"
+	RebuildErrorCode_ImageBuildFailed    = "rebuild_image_build_failed"
+	RebuildErrorCode_DockerErr           = "rebuild_docker_err"
+	RebuildErrorCode_DockerNotFound      = "rebuild_docker_not_found"
+	RebuildErrorCode_DockerRunFailed     = "rebuild_docker_run_failed"
+	RebuildErrorCode_MalformedGitpodYaml = "rebuild_malformed_gitpod_yaml"
+	RebuildErrorCode_MissingGitpodYaml   = "rebuild_missing_gitpod_yaml"
+	RebuildErrorCode_NoCustomImage       = "rebuild_no_custom_image"
 )
 
 type TrackCommandUsageParams struct {
@@ -41,6 +44,7 @@ type TrackCommandUsageParams struct {
 	InstanceId         string `json:"instanceId,omitempty"`
 	Timestamp          int64  `json:"timestamp,omitempty"`
 	ImageBuildDuration int64  `json:"imageBuildDuration,omitempty"`
+	Outcome            string `json:"outcome,omitempty"`
 }
 
 type EventTracker struct {
@@ -96,6 +100,8 @@ func (t *EventTracker) Set(key string, value interface{}) *EventTracker {
 		t.Data.InstanceId = value.(string)
 	case "ImageBuildDuration":
 		t.Data.ImageBuildDuration = value.(int64)
+	case "Outcome":
+		t.Data.Outcome = value.(string)
 	}
 	return t
 }
