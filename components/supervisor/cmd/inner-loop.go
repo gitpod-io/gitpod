@@ -9,6 +9,9 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"os"
+	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -20,6 +23,8 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	daemonapi "github.com/gitpod-io/gitpod/ws-daemon/api"
+
+	supervisorapi "github.com/gitpod-io/gitpod/supervisor/api"
 )
 
 var innerLoopOpts struct {
@@ -31,6 +36,7 @@ type message struct {
 	Message        string `json:"message"`
 	Level          string `json:"level"`
 	DebugWorkspace string `json:"debugWorkspace"`
+	WorkspaceUrl   string `json:"workspaceUrl"`
 }
 
 var innerLoopCmd = &cobra.Command{
@@ -98,7 +104,15 @@ var innerLoopCmd = &cobra.Command{
 				continue
 			}
 			if msg.DebugWorkspace == "true" {
-				log.Info(msg.Message)
+				// TODO ssh link too
+				sep := strings.Repeat("=", len(msg.Message))
+				log.Info(sep + "\n\n\n" + msg.Message + "\n\n\n" + sep)
+				go func() {
+					err := notify(msg.WorkspaceUrl, msg.Message)
+					if err != nil {
+						log.WithError(err).Error("failed to notify")
+					}
+				}()
 			} else if msg.Level == "fatal" || msg.Level == "error" {
 				log.Error(msg.Message + ": " + msg.Error)
 			} else {
@@ -106,6 +120,33 @@ var innerLoopCmd = &cobra.Command{
 			}
 		}
 	},
+}
+
+func notify(workspaceUrl string, message string) error {
+	conn := dialSupervisor()
+	defer conn.Close()
+
+	client := supervisorapi.NewNotificationServiceClient(conn)
+
+	response, err := client.Notify(context.Background(), &supervisorapi.NotifyRequest{
+		Level:   supervisorapi.NotifyRequest_INFO,
+		Message: message,
+		Actions: []string{"Open Browser"},
+	})
+	if err != nil {
+		return err
+	}
+	if response.Action == "Open Browser" {
+		gpPath, err := exec.LookPath("gp")
+		if err != nil {
+			return err
+		}
+		gpCmd := exec.Command(gpPath, "preview", "--external", workspaceUrl)
+		gpCmd.Stdout = os.Stdout
+		gpCmd.Stderr = os.Stderr
+		return gpCmd.Run()
+	}
+	return nil
 }
 
 func init() {
