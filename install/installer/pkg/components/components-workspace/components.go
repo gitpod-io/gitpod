@@ -8,7 +8,6 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	agentsmith "github.com/gitpod-io/gitpod/installer/pkg/components/agent-smith"
 	imagebuildermk3 "github.com/gitpod-io/gitpod/installer/pkg/components/image-builder-mk3"
-	refreshcredential "github.com/gitpod-io/gitpod/installer/pkg/components/refresh-credential"
 	registryfacade "github.com/gitpod-io/gitpod/installer/pkg/components/registry-facade"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/ws-daemon"
@@ -24,7 +23,6 @@ var Objects = common.CompositeRenderFunc(
 	wsmanager.Objects,
 	wsproxy.Objects,
 	imagebuildermk3.Objects,
-	refreshcredential.Objects,
 )
 
 var Helm = common.CompositeHelmFunc()
