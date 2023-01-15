@@ -1,6 +1,8 @@
 # Change Log
 
 ## January 2023
+- new command: `gp rebuild` ([#15638](https://github.com/gitpod-io/gitpod/pull/15638)) - [@andreafalzetti](https://github.com/andreafalzetti)
+- feat: `gp docs` in gitpod cli ([#15724](https://github.com/gitpod-io/gitpod/pull/15724)) - [@Siddhant-K-code](https://github.com/Siddhant-K-code)
 - fix-IDEA2022.3-gradle-runIde ([#15646](https://github.com/gitpod-io/gitpod/pull/15646)) - [@zhipengzuo](https://github.com/zhipengzuo)
 - [dashboard] Default use public API when interacting with Teams ([#15706](https://github.com/gitpod-io/gitpod/pull/15706)) - [@easyCZ](https://github.com/easyCZ)
 - Fix race for DB connection ([#15691](https://github.com/gitpod-io/gitpod/pull/15691)) - [@geropl](https://github.com/geropl)
