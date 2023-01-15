@@ -24,7 +24,7 @@ const (
 	RebuildErrorCode_DockerBuildFailed     = "rebuild_docker_build_failed"
 	RebuildErrorCode_DockerErr             = "rebuild_docker_err"
 	RebuildErrorCode_DockerfileCannotRead  = "rebuild_dockerfile_cannot_read"
-	RebuildErrorCode_DockerfileCannotWirte = "rebuild_dockerfile_cannot_write"
+	RebuildErrorCode_DockerfileCannotWrite = "rebuild_dockerfile_cannot_write"
 	RebuildErrorCode_DockerfileEmpty       = "rebuild_dockerfile_empty"
 	RebuildErrorCode_DockerfileNotFound    = "rebuild_dockerfile_not_found"
 	RebuildErrorCode_DockerNotFound        = "rebuild_docker_not_found"

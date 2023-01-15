@@ -9,7 +9,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 	"time"
 
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
@@ -145,13 +147,13 @@ func buildImage(ctx context.Context, event *utils.EventTracker, rebuildCtx *rebu
 	err = os.WriteFile(dockerFile, []byte(rebuildCtx.baseImage), 0644)
 	if err != nil {
 		fmt.Println("Could not write the temporary Dockerfile")
-		event.Set("ErrorCode", utils.RebuildErrorCode_DockerfileCannotWirte)
+		event.Set("ErrorCode", utils.RebuildErrorCode_DockerfileCannotWrite)
 		return err
 	}
 
 	imageBuildStartTime := time.Now()
 	fmt.Println("building the workspace image...")
-	dockerCmd := exec.Command(dockerPath, "build", "-t", rebuildCtx.imageTag, ".", "-f", dockerFile)
+	dockerCmd := exec.CommandContext(ctx, dockerPath, "build", "-t", rebuildCtx.imageTag, ".", "-f", dockerFile)
 	dockerCmd.Stdout = os.Stdout
 	dockerCmd.Stderr = os.Stderr
 	dockerCmd.Env = append(os.Environ(), "DOCKER_BUILDKIT=1")
@@ -177,7 +179,7 @@ func debug(ctx context.Context, event *utils.EventTracker, rebuildCtx *rebuildCo
 	exportStartTime := time.Now()
 	exportPhase := "exporting the workspace root filesystem"
 	fmt.Println(exportPhase + ", may take sometime...")
-	exportCmd := exec.Command("sudo", "/.supervisor/supervisor", "export-rootfs", rebuildCtx.dockerPath, rebuildCtx.imageTag)
+	exportCmd := exec.CommandContext(ctx, "sudo", "/.supervisor/supervisor", "export-rootfs", rebuildCtx.buildDir, rebuildCtx.dockerPath, rebuildCtx.imageTag)
 	exportCmd.Stdout = os.Stdout
 	exportCmd.Stderr = os.Stderr
 	err = exportCmd.Run()
@@ -191,7 +193,7 @@ func debug(ctx context.Context, event *utils.EventTracker, rebuildCtx *rebuildCo
 	}
 
 	fmt.Println("starting a debug workspace...")
-	debugCmd := exec.Command("/.supervisor/supervisor", "inner-loop")
+	debugCmd := exec.CommandContext(ctx, "/.supervisor/supervisor", "inner-loop")
 	debugCmd.Stdout = os.Stdout
 	debugCmd.Stderr = os.Stderr
 	err = debugCmd.Run()
@@ -207,7 +209,15 @@ var buildCmd = &cobra.Command{
 	Short:  "Re-builds the workspace (useful to debug a workspace configuration)",
 	Hidden: false,
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
+		go func() {
+			<-sigChan
+			cancel()
+		}()
 
 		supervisorClient, err := supervisor.New(ctx)
 		if err != nil {
