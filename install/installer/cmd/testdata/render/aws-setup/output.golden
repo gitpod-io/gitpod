@@ -986,18 +986,6 @@ automountServiceAccountToken: true
 secrets:
   - name: messagebus
 ---
-# v1/ServiceAccount refresh-credential
-apiVersion: v1
-automountServiceAccountToken: true
-kind: ServiceAccount
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: refresh-credential
-  name: refresh-credential
-  namespace: default
----
 # v1/ServiceAccount registry-facade
 apiVersion: v1
 automountServiceAccountToken: true
@@ -3250,56 +3238,6 @@ data:
       name: image-builder-mk3
       namespace: default
     ---
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: refresh-credential
-      name: refresh-credential
-      namespace: default
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: Role
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: refresh-credential
-      name: refresh-credential
-      namespace: default
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: RoleBinding
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: refresh-credential
-      name: refresh-credential
-      namespace: default
-    ---
-    apiVersion: batch/v1
-    kind: CronJob
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: refresh-credential
-      name: refresh-credential
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: refresh-credential
-      name: refresh-credential
-      namespace: default
-    ---
     apiVersion: networking.k8s.io/v1
     kind: NetworkPolicy
     metadata:
@@ -4913,26 +4851,6 @@ metadata:
   name: public-api-server
   namespace: default
 ---
-# v1/ConfigMap refresh-credential
-apiVersion: v1
-data:
-  config.json: |-
-    {
-      "namespace": "default",
-      "credentialsFile": "/mnt/secrets/storage/credentials",
-      "region": "eu-west-2",
-      "publicRegistry": false,
-      "secretToUpdate": "aws-ecr-credential"
-    }
-kind: ConfigMap
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: refresh-credential
-  name: refresh-credential
-  namespace: default
----
 # v1/ConfigMap registry-facade
 apiVersion: v1
 data:
@@ -6271,28 +6189,6 @@ rules:
     resources: ["events"]
     verbs: ["create"]
 ---
-# rbac.authorization.k8s.io/v1/Role refresh-credential
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: refresh-credential
-  name: refresh-credential
-  namespace: default
-rules:
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - create
-  - get
-  - list
-  - watch
-  - update
----
 # rbac.authorization.k8s.io/v1/Role server
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -6743,24 +6639,6 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: rabbitmq
----
-# rbac.authorization.k8s.io/v1/RoleBinding refresh-credential
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: refresh-credential
-  name: refresh-credential
-  namespace: default
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: refresh-credential
-subjects:
-- kind: ServiceAccount
-  name: refresh-credential
 ---
 # rbac.authorization.k8s.io/v1/RoleBinding server
 apiVersion: rbac.authorization.k8s.io/v1
@@ -10885,66 +10763,4 @@ spec:
           serviceAccountName: gitpod
   schedule: '@daily'
   successfulJobsHistoryLimit: 3
-status: {}
----
-# batch/v1/CronJob refresh-credential
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: refresh-credential
-  name: refresh-credential
-  namespace: default
-spec:
-  concurrencyPolicy: Forbid
-  failedJobsHistoryLimit: 1
-  jobTemplate:
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: refresh-credential
-      name: refresh-credential
-      namespace: default
-    spec:
-      backoffLimit: 10
-      template:
-        metadata:
-          creationTimestamp: null
-          labels:
-            app: gitpod
-            component: refresh-credential
-          name: refresh-credential
-          namespace: default
-        spec:
-          containers:
-          - args:
-            - ecr-update
-            - /config/config.json
-            image: eu.gcr.io/gitpod-core-dev/build/refresh-credential:test
-            imagePullPolicy: IfNotPresent
-            name: refresh-credential
-            resources: {}
-            securityContext:
-              allowPrivilegeEscalation: false
-            volumeMounts:
-            - mountPath: /config
-              name: config
-              readOnly: true
-            - mountPath: /mnt/secrets/storage
-              name: storage-volume
-              readOnly: true
-          restartPolicy: OnFailure
-          serviceAccountName: refresh-credential
-          volumes:
-          - configMap:
-              name: refresh-credential
-            name: config
-          - name: storage-volume
-            secret:
-              secretName: aws-storage
-  schedule: '* */6 * * *'
-  successfulJobsHistoryLimit: 1
 status: {}
