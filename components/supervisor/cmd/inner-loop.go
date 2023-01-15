@@ -8,6 +8,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -29,14 +30,6 @@ import (
 
 var innerLoopOpts struct {
 	Headless bool
-}
-
-type message struct {
-	Error          string `json:"error"`
-	Message        string `json:"message"`
-	Level          string `json:"level"`
-	DebugWorkspace string `json:"debugWorkspace"`
-	WorkspaceUrl   string `json:"workspaceUrl"`
 }
 
 var innerLoopCmd = &cobra.Command{
@@ -98,25 +91,43 @@ var innerLoopCmd = &cobra.Command{
 				}
 				log.Fatal(err.Error())
 			}
-			var msg message
+			msg := make(logrus.Fields)
 			err = json.Unmarshal(line, &msg)
 			if err != nil {
 				continue
+
 			}
-			if msg.DebugWorkspace == "true" {
+			message := fmt.Sprintf("%v", msg["message"])
+			level, err := logrus.ParseLevel(fmt.Sprintf("%v", msg["level"]))
+			if err != nil {
+				level = logrus.DebugLevel
+			}
+			if level == logrus.FatalLevel {
+				level = logrus.ErrorLevel
+			}
+
+			delete(msg, "message")
+			delete(msg, "level")
+			delete(msg, "file")
+			delete(msg, "func")
+			delete(msg, "serviceContext")
+			delete(msg, "time")
+			delete(msg, "severity")
+			delete(msg, "@type")
+
+			if fmt.Sprintf("%v", msg["debugWorkspace"]) == "true" {
+				workspaceUrl := fmt.Sprintf("%v", msg["workspaceUrl"])
 				// TODO ssh link too
-				sep := strings.Repeat("=", len(msg.Message))
-				log.Info(sep + "\n\n\n" + msg.Message + "\n\n\n" + sep)
+				sep := strings.Repeat("=", len(message))
+				log.Info("\n" + sep + "\n\n\n" + message + "\n\n\n" + sep)
 				go func() {
-					err := notify(msg.WorkspaceUrl, msg.Message)
+					err := notify(workspaceUrl, message)
 					if err != nil {
 						log.WithError(err).Error("failed to notify")
 					}
 				}()
-			} else if msg.Level == "fatal" || msg.Level == "error" {
-				log.Error(msg.Message + ": " + msg.Error)
 			} else {
-				log.Debug(msg.Message)
+				log.Log.WithFields(msg).Log(level, message)
 			}
 		}
 	},
