@@ -224,7 +224,7 @@ fi
 	}
 
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.Workspace.UseWsmanagerMk2 {
+		if cfg.Workspace != nil && cfg.Workspace.UseWsmanagerMk2 {
 			mk2WorkingAreaVolume := corev1.Volume{
 				Name: "working-area-mk2",
 				VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
