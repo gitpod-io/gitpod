@@ -40,6 +40,7 @@ export default function TeamSettings() {
     const team = useCurrentTeam();
     const { teams, setTeams } = useContext(TeamsContext);
     const [modal, setModal] = useState(false);
+    const [teamNameToDelete, setTeamNameToDelete] = useState("");
     const [teamName, setTeamName] = useState(team?.name || "");
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
     const [isUserOwner, setIsUserOwner] = useState(true);
@@ -166,7 +167,7 @@ export default function TeamSettings() {
             <ConfirmationModal
                 title="Delete Team"
                 buttonText="Delete Team"
-                buttonDisabled={teamName !== team!.name}
+                buttonDisabled={teamNameToDelete !== team!.name}
                 visible={modal}
                 warningText="Warning: This action cannot be reversed."
                 onClose={close}
@@ -186,9 +187,14 @@ export default function TeamSettings() {
                     </li>
                 </ol>
                 <p className="pt-4 pb-2 text-gray-600 dark:text-gray-400 text-base font-semibold">
-                    Type <code>{team?.slug}</code> to confirm
+                    Type <code>{team?.name}</code> to confirm
                 </p>
-                <input autoFocus className="w-full" type="text" onChange={(e) => setTeamName(e.target.value)}></input>
+                <input
+                    autoFocus
+                    className="w-full"
+                    type="text"
+                    onChange={(e) => setTeamNameToDelete(e.target.value)}
+                ></input>
             </ConfirmationModal>
         </>
     );
