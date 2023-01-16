@@ -216,6 +216,33 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"overrides.yaml
    fi
 
+    # overrides for ws-manager-mk2
+   if [[ "ws-manager-mk2" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
+      WORK="overrides for $NAME $KIND"
+      echo "$WORK"
+       # Change the port we use to connect to registry-facade
+      # is expected to be reg.<branch-name-with-dashes>.staging.gitpod-dev.com:$REG_DAEMON_PORT
+      # Change the port we use to connect to ws-daemon
+      REGISTRY_FACADE_HOST="reg.$DEV_BRANCH.staging.gitpod-dev.com:$REG_DAEMON_PORT"
+      if [[ -v WITH_VM ]]; then
+         REGISTRY_FACADE_HOST="reg.$DEV_BRANCH.preview.gitpod-dev.com:$REG_DAEMON_PORT"
+      fi
+
+      # get a copy of the config we're working with
+      yq r k8s.yaml -d "$documentIndex" > /tmp/"$NAME"-"$KIND"-overrides.yaml
+
+      # replace registry port
+      yq r /tmp/"$NAME"-"$KIND"-overrides.yaml 'data.[config.json]' \
+      | jq ".manager.registryFacadeHost = \"$REGISTRY_FACADE_HOST\"" > /tmp/"$NAME"-"$KIND"-overrides.json
+
+      # create override file
+      touch /tmp/"$NAME"-"$KIND"-data-overrides.yaml
+      yq w -i /tmp/"$NAME"-"$KIND"-data-overrides.yaml "data.[config.json]" -- "$(< /tmp/"$NAME"-"$KIND"-overrides.json)"
+
+      # merge the updated config map with k8s.yaml
+      yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"-"$KIND"-data-overrides.yaml
+   fi
+
    # overrides for ws-proxy
    if [[ "ws-proxy" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
       WORK="overrides for $NAME $KIND"
