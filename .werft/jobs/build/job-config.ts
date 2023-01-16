@@ -43,6 +43,7 @@ export interface JobConfig {
     certIssuer: string;
     recreatePreview: boolean;
     recreateVm: boolean;
+    withGitHubActions: boolean;
 }
 
 export interface PreviewEnvironmentConfig {
@@ -111,6 +112,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const analytics = parseAnalytics(werft, sliceId, buildConfig["analytics"])
     const withIntegrationTests = parseWithIntegrationTests(werft, sliceId, buildConfig["with-integration-tests"]);
     const withPreview = decideWithPreview({werft, sliceID: sliceId, buildConfig, mainBuild, withIntegrationTests})
+    const withGitHubActions = "with-github-actions" in buildConfig;
 
     switch (buildConfig["cert-issuer"]) {
         case "zerossl":
@@ -180,6 +182,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         recreatePreview,
         recreateVm,
         withSlowDatabase,
+        withGitHubActions,
     };
 
     werft.logOutput(sliceId, JSON.stringify(jobConfig, null, 2));
