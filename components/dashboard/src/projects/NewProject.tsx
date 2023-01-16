@@ -7,8 +7,8 @@
 import { useContext, useEffect, useState } from "react";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName } from "../provider-utils";
-import { AuthProviderInfo, Project, ProviderRepository, TeamMemberInfo, User } from "@gitpod/gitpod-protocol";
-import { Team } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
+import { AuthProviderInfo, Project, ProviderRepository, User } from "@gitpod/gitpod-protocol";
+import { Team, TeamMember } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { TeamsContext } from "../teams/teams-context";
 import { useLocation } from "react-router";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
@@ -22,7 +22,7 @@ import { trackEvent } from "../Analytics";
 import exclamation from "../images/exclamation.svg";
 import ErrorMessage from "../components/ErrorMessage";
 import Spinner from "../icons/Spinner.svg";
-import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
+import { teamsService } from "../service/public-api";
 import { ConnectError } from "@bufbuild/connect-web";
 import { useRefreshProjects } from "../data/projects/queries";
 
@@ -105,19 +105,17 @@ export default function NewProject() {
         }
     }, []);
 
-    const [teamMembers, setTeamMembers] = useState<Record<string, TeamMemberInfo[]>>({});
+    const [teamMembers, setTeamMembers] = useState<Record<string, TeamMember[]>>({});
     useEffect(() => {
         if (!teams) {
             return;
         }
         (async () => {
-            const members: Record<string, TeamMemberInfo[]> = {};
+            const members: Record<string, TeamMember[]> = {};
             await Promise.all(
                 teams.map(async (team) => {
                     try {
-                        members[team.id] = publicApiTeamMembersToProtocol(
-                            (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
-                        );
+                        members[team.id] = (await teamsService.getTeam({ teamId: team!.id })).team?.members || [];
                     } catch (error) {
                         console.error("Could not get members of team", team, error);
                     }

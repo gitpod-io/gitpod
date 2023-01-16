@@ -20,7 +20,7 @@ import Modal from "../components/Modal";
 import Alert from "./Alert";
 import dayjs from "dayjs";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
+import { teamsService } from "../service/public-api";
 
 const BASE_USAGE_LIMIT_FOR_STRIPE_USERS = 1000;
 
@@ -99,9 +99,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                 let limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS;
                 const attrId = AttributionId.parse(attributionId);
                 if (attrId?.kind === "team") {
-                    const members = publicApiTeamMembersToProtocol(
-                        (await teamsService.getTeam({ teamId: attrId.teamId })).team?.members || [],
-                    );
+                    const members = (await teamsService.getTeam({ teamId: attrId.teamId })).team?.members || [];
                     limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS * members.length;
                 }
                 const newLimit = await getGitpodService().server.subscribeToStripe(attributionId, setupIntentId, limit);

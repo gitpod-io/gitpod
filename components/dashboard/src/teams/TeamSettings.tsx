@@ -5,12 +5,12 @@
  */
 
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import { Team } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
+import { Team, TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { useContext, useEffect, useState } from "react";
 import { Redirect, useLocation } from "react-router";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
+import { teamsService } from "../service/public-api";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import { getCurrentTeam, TeamsContext } from "./teams-context";
@@ -49,12 +49,10 @@ export default function TeamSettings() {
     useEffect(() => {
         (async () => {
             if (!team) return;
-            const members = publicApiTeamMembersToProtocol(
-                (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
-            );
+            const members = (await teamsService.getTeam({ teamId: team!.id })).team?.members || [];
 
             const currentUserInTeam = members.find((member) => member.userId === user?.id);
-            setIsUserOwner(currentUserInTeam?.role === "owner");
+            setIsUserOwner(currentUserInTeam?.role === TeamRole.OWNER);
 
             // TODO(gpl) Maybe we should have TeamContext here instead of repeating ourselves...
             const billingMode = await getGitpodService().server.getBillingModeForTeam(team.id);

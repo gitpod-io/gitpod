@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
 import dayjs from "dayjs";
 import { useContext, useEffect, useState } from "react";
 import { useHistory, useLocation } from "react-router";
@@ -17,8 +16,8 @@ import copy from "../images/copy.svg";
 import { UserContext } from "../user-context";
 import { TeamsContext, getCurrentTeam } from "./teams-context";
 import { trackEvent } from "../Analytics";
-import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
-import { TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
+import { teamsService } from "../service/public-api";
+import { TeamMember, TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 
 export default function () {
     const { user } = useContext(UserContext);
@@ -27,11 +26,11 @@ export default function () {
     const history = useHistory();
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
-    const [members, setMembers] = useState<TeamMemberInfo[]>([]);
+    const [members, setMembers] = useState<TeamMember[]>([]);
     const [genericInviteId, setGenericInviteId] = useState<string>();
     const [showInviteModal, setShowInviteModal] = useState<boolean>(false);
     const [searchText, setSearchText] = useState<string>("");
-    const [roleFilter, setRoleFilter] = useState<TeamMemberRole | undefined>();
+    const [roleFilter, setRoleFilter] = useState<TeamRole | undefined>();
     const [leaveTeamEnabled, setLeaveTeamEnabled] = useState<boolean>(false);
 
     useEffect(() => {
@@ -40,7 +39,7 @@ export default function () {
         }
         (async () => {
             const response = await teamsService.getTeam({ teamId: team.id });
-            const members = publicApiTeamMembersToProtocol(response.team?.members || []);
+            const members = response.team?.members || [];
             const invite = response.team?.teamInvitation?.id || "";
 
             setMembers(members);
@@ -49,7 +48,7 @@ export default function () {
     }, [team]);
 
     useEffect(() => {
-        const owners = members.filter((m) => m.role === "owner");
+        const owners = members.filter((m) => m.role === TeamRole.OWNER);
         const isOwner = owners.some((o) => o.userId === user?.id);
         setLeaveTeamEnabled(!isOwner || owners.length > 1);
     }, [members]);
@@ -87,15 +86,13 @@ export default function () {
         }
     };
 
-    const setTeamMemberRole = async (userId: string, role: TeamMemberRole) => {
+    const setTeamMemberRole = async (userId: string, role: TeamRole) => {
         await teamsService.updateTeamMember({
             teamId: team!.id,
-            teamMember: { userId, role: role === "owner" ? TeamRole.OWNER : TeamRole.MEMBER },
+            teamMember: { userId, role },
         });
 
-        const members = publicApiTeamMembersToProtocol(
-            (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
-        );
+        const members = (await teamsService.getTeam({ teamId: team!.id })).team?.members || [];
         setMembers(members);
     };
 
@@ -107,9 +104,7 @@ export default function () {
         if (newTeams.some((t) => t.id === team!.id)) {
             // We're still a member of this team.
 
-            const newMembers = publicApiTeamMembersToProtocol(
-                (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
-            );
+            const newMembers = (await teamsService.getTeam({ teamId: team!.id })).team?.members || [];
             setMembers(newMembers);
         } else {
             // We're no longer a member of this team (note: we navigate away first in order to avoid a 404).
@@ -160,7 +155,13 @@ export default function () {
                         <DropDown
                             prefix="Role: "
                             customClasses="w-32"
-                            activeEntry={roleFilter === "owner" ? "Owner" : roleFilter === "member" ? "Member" : "All"}
+                            activeEntry={
+                                roleFilter === TeamRole.OWNER
+                                    ? "Owner"
+                                    : roleFilter === TeamRole.MEMBER
+                                    ? "Member"
+                                    : "All"
+                            }
                             entries={[
                                 {
                                     title: "All",
@@ -168,11 +169,11 @@ export default function () {
                                 },
                                 {
                                     title: "Owner",
-                                    onClick: () => setRoleFilter("owner"),
+                                    onClick: () => setRoleFilter(TeamRole.OWNER),
                                 },
                                 {
                                     title: "Member",
-                                    onClick: () => setRoleFilter("member"),
+                                    onClick: () => setRoleFilter(TeamRole.MEMBER),
                                 },
                             ]}
                         />
@@ -235,24 +236,24 @@ export default function () {
                                     </div>
                                 </ItemField>
                                 <ItemField className="my-auto">
-                                    <span className="text-gray-400">{dayjs(m.memberSince).fromNow()}</span>
+                                    <span className="text-gray-400">{dayjs(m.memberSince?.toDate()).fromNow()}</span>
                                 </ItemField>
                                 <ItemField className="flex items-center my-auto">
                                     <span className="text-gray-400 capitalize">
-                                        {ownMemberInfo?.role !== "owner" ? (
+                                        {ownMemberInfo?.role !== TeamRole.OWNER ? (
                                             m.role
                                         ) : (
                                             <DropDown
                                                 customClasses="w-32"
-                                                activeEntry={m.role}
+                                                activeEntry={m.role.toString()}
                                                 entries={[
                                                     {
                                                         title: "owner",
-                                                        onClick: () => setTeamMemberRole(m.userId, "owner"),
+                                                        onClick: () => setTeamMemberRole(m.userId, TeamRole.OWNER),
                                                     },
                                                     {
                                                         title: "member",
-                                                        onClick: () => setTeamMemberRole(m.userId, "member"),
+                                                        onClick: () => setTeamMemberRole(m.userId, TeamRole.MEMBER),
                                                     },
                                                 ]}
                                             />
@@ -271,7 +272,7 @@ export default function () {
                                                           onClick: () => leaveTeamEnabled && removeTeamMember(m.userId),
                                                       },
                                                   ]
-                                                : ownMemberInfo?.role === "owner"
+                                                : ownMemberInfo?.role === TeamRole.OWNER
                                                 ? [
                                                       {
                                                           title: "Remove",

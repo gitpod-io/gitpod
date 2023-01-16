@@ -5,7 +5,6 @@
  */
 
 import { useContext, useEffect, useState } from "react";
-import { TeamMemberInfo } from "@gitpod/gitpod-protocol";
 import { AttributionId, AttributionTarget } from "@gitpod/gitpod-protocol/lib/attribution";
 import { getGitpodService } from "../service/service";
 import { TeamsContext } from "../teams/teams-context";
@@ -13,14 +12,14 @@ import { UserContext } from "../user-context";
 import SelectableCardSolid from "../components/SelectableCardSolid";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import Alert from "./Alert";
-import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
-import { Team } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
+import { teamsService } from "../service/public-api";
+import { Team, TeamMember } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 
 export function BillingAccountSelector(props: { onSelected?: () => void }) {
     const { user, setUser } = useContext(UserContext);
     const { teams } = useContext(TeamsContext);
     const [teamsAvailableForAttribution, setTeamsAvailableForAttribution] = useState<Team[] | undefined>();
-    const [membersByTeam, setMembersByTeam] = useState<Record<string, TeamMemberInfo[]>>({});
+    const [membersByTeam, setMembersByTeam] = useState<Record<string, TeamMember[]>>({});
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
     useEffect(() => {
@@ -52,13 +51,11 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
                 setErrorMessage(`Could not get list of available billing accounts. ${error?.message || String(error)}`);
             });
 
-        const members: Record<string, TeamMemberInfo[]> = {};
+        const members: Record<string, TeamMember[]> = {};
         Promise.all(
             teams.map(async (team) => {
                 try {
-                    members[team.id] = publicApiTeamMembersToProtocol(
-                        (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
-                    );
+                    members[team.id] = (await teamsService.getTeam({ teamId: team!.id })).team?.members || [];
                 } catch (error) {
                     console.warn("Could not get members of team", team, error);
                 }

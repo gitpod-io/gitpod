@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User, TeamMemberInfo, Project } from "@gitpod/gitpod-protocol";
+import { User, Project } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useLocation, useRouteMatch } from "react-router";
@@ -27,8 +27,9 @@ import FeedbackFormModal from "./feedback-form/FeedbackModal";
 import { inResource, isGitpodIo } from "./utils";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { FeatureFlagContext } from "./contexts/FeatureFlagContext";
-import { publicApiTeamMembersToProtocol, teamsService } from "./service/public-api";
+import { teamsService } from "./service/public-api";
 import { listAllProjects } from "./service/public-api";
+import { TeamMember, TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 
 interface Entry {
     title: string;
@@ -125,20 +126,18 @@ export default function Menu() {
     ]);
     const isAdminUI = inResource(window.location.pathname, ["admin"]);
 
-    const [teamMembers, setTeamMembers] = useState<Record<string, TeamMemberInfo[]>>({});
+    const [teamMembers, setTeamMembers] = useState<Record<string, TeamMember[]>>({});
 
     useEffect(() => {
         if (!teams) {
             return;
         }
         (async () => {
-            const members: Record<string, TeamMemberInfo[]> = {};
+            const members: Record<string, TeamMember[]> = {};
             await Promise.all(
                 teams.map(async (team) => {
                     try {
-                        members[team.id] = publicApiTeamMembersToProtocol(
-                            (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
-                        );
+                        members[team.id] = (await teamsService.getTeam({ teamId: team!.id })).team?.members || [];
                     } catch (error) {
                         console.error("Could not get members of team", team, error);
                     }
@@ -226,7 +225,7 @@ export default function Menu() {
             },
         ];
         if (
-            currentUserInTeam?.role === "owner" &&
+            currentUserInTeam?.role === TeamRole.OWNER &&
             (showUsageView || (teamBillingMode && teamBillingMode.mode === "usage-based"))
         ) {
             teamSettingsList.push({
@@ -234,7 +233,7 @@ export default function Menu() {
                 link: `/t/${team.slug}/usage`,
             });
         }
-        if (currentUserInTeam?.role === "owner") {
+        if (currentUserInTeam?.role === TeamRole.OWNER) {
             teamSettingsList.push({
                 title: "Settings",
                 link: `/t/${team.slug}/settings`,

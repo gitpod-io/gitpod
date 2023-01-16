@@ -10,8 +10,6 @@ import { TeamsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/team
 import { TokensService } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_connectweb";
 import { ProjectsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_connectweb";
 import { WorkspacesService } from "@gitpod/public-api/lib/gitpod/experimental/v1/workspaces_connectweb";
-import { TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
-import { TeamMember, TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { Project } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_pb";
 
 const transport = createConnectTransport({
@@ -22,31 +20,6 @@ export const teamsService = createPromiseClient(TeamsService, transport);
 export const personalAccessTokensService = createPromiseClient(TokensService, transport);
 export const projectsService = createPromiseClient(ProjectsService, transport);
 export const workspacesService = createPromiseClient(WorkspacesService, transport);
-
-export function publicApiTeamMembersToProtocol(members: TeamMember[]): TeamMemberInfo[] {
-    return members.map(publicApiTeamMemberToProtocol);
-}
-
-export function publicApiTeamMemberToProtocol(member: TeamMember): TeamMemberInfo {
-    return {
-        userId: member.userId,
-        fullName: member.fullName,
-        avatarUrl: member.avatarUrl,
-        memberSince: member.memberSince?.toDate().toISOString() || "",
-        role: publicApiTeamRoleToProtocol(member.role),
-        primaryEmail: member.primaryEmail,
-    };
-}
-
-export function publicApiTeamRoleToProtocol(role: TeamRole): TeamMemberRole {
-    switch (role) {
-        case TeamRole.OWNER:
-            return "owner";
-        case TeamRole.MEMBER:
-        case TeamRole.UNSPECIFIED:
-            return "member";
-    }
-}
 
 export async function listAllProjects(opts: { userId?: string; teamId?: string }): Promise<ProtocolProject[]> {
     let pagination = {

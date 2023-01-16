@@ -6,7 +6,6 @@
 
 import React, { useContext, useEffect, useState } from "react";
 import { Redirect, useLocation } from "react-router";
-import { TeamMemberInfo } from "@gitpod/gitpod-protocol";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { Currency, Plan, Plans, PlanType } from "@gitpod/gitpod-protocol/lib/plans";
 import { TeamSubscription2 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
@@ -24,9 +23,10 @@ import { getCurrentTeam, TeamsContext } from "./teams-context";
 import { getTeamSettingsMenu } from "./TeamSettings";
 import TeamUsageBasedBilling from "./TeamUsageBasedBilling";
 import { UserContext } from "../user-context";
-import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
+import { teamsService } from "../service/public-api";
 import Alert from "../components/Alert";
 import { getExperimentsClient } from "../experiments/client";
+import { TeamMember, TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 
 type PendingPlan = Plan & { pendingSince: number };
 
@@ -35,7 +35,7 @@ export default function TeamBilling() {
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
-    const [members, setMembers] = useState<TeamMemberInfo[]>([]);
+    const [members, setMembers] = useState<TeamMember[]>([]);
     const [isUserOwner, setIsUserOwner] = useState(true);
     const [teamSubscription, setTeamSubscription] = useState<TeamSubscription2 | undefined>();
     const { currency, setCurrency } = useContext(PaymentContext);
@@ -51,14 +51,14 @@ export default function TeamBilling() {
         (async () => {
             const [memberInfos, subscription, teamBillingMode] = await Promise.all([
                 teamsService.getTeam({ teamId: team!.id }).then((resp) => {
-                    return publicApiTeamMembersToProtocol(resp.team?.members || []);
+                    return resp.team?.members || [];
                 }),
                 getGitpodService().server.getTeamSubscription(team.id),
                 getGitpodService().server.getBillingModeForTeam(team.id),
             ]);
             setMembers(memberInfos);
-            const currentUserInTeam = memberInfos.find((member: TeamMemberInfo) => member.userId === user?.id);
-            setIsUserOwner(currentUserInTeam?.role === "owner");
+            const currentUserInTeam = memberInfos.find((member: TeamMember) => member.userId === user?.id);
+            setIsUserOwner(currentUserInTeam?.role === TeamRole.OWNER);
             setTeamSubscription(subscription);
             setTeamBillingMode(teamBillingMode);
         })();
