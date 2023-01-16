@@ -54,6 +54,13 @@ Tracing.initialize()
 async function run(context: any) {
     const config = jobConfig(werft, context);
 
+    if(config.withGitHubActions) {
+        werft.phase("Build Disabled");
+        werft.log("(not building)","The build is being performed via GitHub Actions; Thus, this Werft build does not run");
+        werft.done("(not building)");
+        return;
+    }
+
     await validateChanges(werft, config);
     await prepare(werft, config);
     if (config.withUpgradeTests) {

@@ -29,8 +29,10 @@ Does this PR require updates to the documentation at www.gitpod.io/docs?
   * Are you sure? If so, nothing to do here.
 -->
 
-## Werft options:
+## Build Options:
 
+- [ ] /werft with-github-actions
+      Experimental feature to run the build with GitHub Actions (and not in Werft).
 - [ ] /werft with-local-preview
       If enabled this will build `install/preview`
 - [ ] /werft with-preview
