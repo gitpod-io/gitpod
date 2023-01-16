@@ -30,10 +30,6 @@
 	encode zstd gzip
 }
 
-(upstream_headers) {
-	header_up X-Real-IP {http.request.remote.host}
-}
-
 (upstream_connection) {
 	lb_try_duration 1s
 }
@@ -57,7 +53,6 @@
 		}
 
 		reverse_proxy blobserve.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:4000 {
-			import upstream_headers
 			import upstream_connection
 		}
 	}
