@@ -28,8 +28,10 @@ export default function ConfirmationModal(props: {
 
     if (props.warningText) {
         children.unshift(
-            <Alert type="warning">
-                <strong>{props.warningHead}</strong>: {props.warningText}
+            <Alert type="warning" className="mb-4">
+                <strong>{props.warningHead}</strong>
+                {props.warningHead ? ": " : ""}
+                {props.warningText}
             </Alert>,
         );
     }
