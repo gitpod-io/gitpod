@@ -3,8 +3,7 @@
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
-
-import { Team } from "@gitpod/gitpod-protocol";
+import { Team } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import React, { createContext, useContext, useState } from "react";
 import { Location } from "history";
 import { useLocation } from "react-router";

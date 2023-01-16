@@ -17,7 +17,7 @@ import copy from "../images/copy.svg";
 import { UserContext } from "../user-context";
 import { TeamsContext, getCurrentTeam } from "./teams-context";
 import { trackEvent } from "../Analytics";
-import { publicApiTeamMembersToProtocol, publicApiTeamsToProtocol, teamsService } from "../service/public-api";
+import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
 import { TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 
 export default function () {
@@ -102,7 +102,7 @@ export default function () {
     const removeTeamMember = async (userId: string) => {
         await teamsService.deleteTeamMember({ teamId: team!.id, teamMemberId: userId });
 
-        const newTeams = publicApiTeamsToProtocol((await teamsService.listTeams({})).teams);
+        const newTeams = (await teamsService.listTeams({})).teams;
 
         if (newTeams.some((t) => t.id === team!.id)) {
             // We're still a member of this team.

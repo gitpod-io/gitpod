@@ -5,7 +5,7 @@
  */
 
 import React, { FunctionComponent, useContext, useState } from "react";
-import { ContextURL, User, Team } from "@gitpod/gitpod-protocol";
+import { ContextURL, User } from "@gitpod/gitpod-protocol";
 import SelectIDEModal from "../settings/SelectIDEModal";
 import { StartPage, StartPhase } from "../start/StartPage";
 import { getURLHash, isGitpodIo, isLocalPreview } from "../utils";
@@ -50,6 +50,7 @@ import { BlockedRepositories } from "../admin/BlockedRepositories";
 import PersonalAccessTokenCreateView from "../settings/PersonalAccessTokensCreateView";
 import { StartWorkspaceModalContext } from "../workspaces/start-workspace-modal-context";
 import { StartWorkspaceOptions } from "../start/start-workspace-options";
+import { Team } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));

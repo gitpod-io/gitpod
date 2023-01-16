@@ -23,7 +23,7 @@ import prebuild from "./images/welcome/prebuild.svg";
 import exclamation from "./images/exclamation.svg";
 import { getURLHash } from "./utils";
 import ErrorMessage from "./components/ErrorMessage";
-import { publicApiTeamsToProtocol, teamsService } from "./service/public-api";
+import { teamsService } from "./service/public-api";
 
 function Item(props: { icon: string; iconSize?: string; text: string }) {
     const iconSize = props.iconSize || 28;
@@ -99,7 +99,7 @@ export function Login() {
         await getGitpodService().reconnect();
         const [user, teams] = await Promise.all([
             getGitpodService().server.getLoggedInUser(),
-            publicApiTeamsToProtocol((await teamsService.listTeams({})).teams),
+            (await teamsService.listTeams({})).teams,
         ]);
         setUser(user);
         setTeams(teams);
