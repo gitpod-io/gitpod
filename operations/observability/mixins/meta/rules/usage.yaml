@@ -67,3 +67,17 @@ spec:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodUsageStripeWebhookFailures.md
         summary: Detected {{ printf "%.2f" $value }} errors handling Stripe webhook.
         description: Stripe is sending us webhooks but we are failing to handle them. Inconsistent usage data very likely.
+
+    - alert: UsageHighCPUUsage
+      # Reasoning: high rates of CPU consumption should only be temporary.
+      expr: sum(rate(container_cpu_usage_seconds_total{container!="POD", pod=~"usage-.*"}[5m])) by (cluster) > 0.80
+      for: 10m
+      labels:
+        # sent to the team internal channel until we fine tuned it
+        severity: warning
+        team: webapp
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/WebAppServicesHighCPUUsage.md
+        summary: Usage has excessive CPU usage.
+        description: Usage is consumming too much CPU. Please investigate.
+        dashboard_url: https://grafana.gitpod.io/d/6581e46e4e5c7ba40a07646395ef7b23/kubernetes-compute-resources-pod?var-cluster={{ $labels.cluster }}&var-namespace=default
