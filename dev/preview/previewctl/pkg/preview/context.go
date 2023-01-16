@@ -58,22 +58,6 @@ func (c *Config) InstallContext(ctx context.Context, opts *InstallCtxOpts) error
 
 	c.logger.WithFields(logrus.Fields{"timeout": opts.RetryTimeout}).Debug("Installing context")
 
-	// we use this channel to signal when we've found an event in wait functions, so we know when we're done
-	doneCh := make(chan struct{})
-	defer close(doneCh)
-
-	err := c.harvesterClient.GetVMStatus(ctx, c.name, c.namespace)
-	if err != nil && !errors.Is(err, k8s.ErrVmNotReady) {
-		return err
-	} else if errors.Is(err, k8s.ErrVmNotReady) && !opts.Retry {
-		return err
-	} else if errors.Is(err, k8s.ErrVmNotReady) && opts.Retry {
-		err = c.harvesterClient.WaitVMReady(ctx, c.name, c.namespace, doneCh)
-		if err != nil {
-			return err
-		}
-	}
-
 	if opts.Retry {
 		for {
 			select {
@@ -81,7 +65,7 @@ func (c *Config) InstallContext(ctx context.Context, opts *InstallCtxOpts) error
 				return ctx.Err()
 			case <-time.Tick(10 * time.Second):
 				c.logger.Infof("waiting for context install to succeed")
-				err = c.install(ctx, opts)
+				err := c.install(ctx, opts)
 				if err == nil {
 					c.logger.Infof("Successfully installed context")
 					return nil

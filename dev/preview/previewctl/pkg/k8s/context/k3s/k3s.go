@@ -18,8 +18,6 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 
@@ -164,14 +162,17 @@ func (k *ConfigLoader) setup(ctx context.Context, stopChan, readyChan chan struc
 	// we use portForwardReadyChan to signal when we've started the port-forward
 	portForwardReadyChan := make(chan struct{}, 1)
 	go func() {
-		podName, err := k.getVMPodName(ctx, k.opts.PreviewName, k.opts.PreviewNamespace)
+		pods, err := k.harvesterClient.GetSVCTargets(ctx, "proxy", k.opts.PreviewNamespace)
 		if err != nil {
 			errChan <- err
+			return
+		} else if len(pods) != 1 {
+			errChan <- errors.Newf("unexpected number of pods received [%d], [%s]", len(pods), pods)
 			return
 		}
 
 		err = k.harvesterClient.PortForward(ctx, k8s.PortForwardOpts{
-			Name:      podName,
+			Name:      pods[0],
 			Namespace: k.opts.PreviewNamespace,
 			Ports: []string{
 				fmt.Sprintf("%s:2200", randPort),
@@ -232,27 +233,4 @@ func (k *ConfigLoader) Close() error {
 
 	k.client = nil
 	return nil
-}
-
-func (k *ConfigLoader) getVMPodName(ctx context.Context, previewName, namespace string) (string, error) {
-	// TODO: replace this with a call to SVC.Proxy and get the pod name from there
-	labelSelector := metav1.LabelSelector{
-		MatchLabels: map[string]string{
-			"harvesterhci.io/vmName": previewName,
-		},
-	}
-
-	pods, err := k.harvesterClient.CoreClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
-		LabelSelector: labels.Set(labelSelector.MatchLabels).String(),
-	})
-
-	if err != nil {
-		return "", err
-	}
-
-	if len(pods.Items) != 1 {
-		return "", errors.Newf("expected a single pod, got [%d]", len(pods.Items))
-	}
-
-	return pods.Items[0].Name, nil
 }

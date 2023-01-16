@@ -16,10 +16,10 @@ resource "kubernetes_pod" "proxy" {
       command           = ["/bin/ash"]
       # dumb port-forward directly to the machine
       # those should be all the ports that need to be accessible in a preview env
-      # we also forward 22 to 2222, as 22 is disabled in the vm image and we don't want to change that
+      # we also forward 22,2200 to 2222, as 22 is disabled in the vm image and we don't want to change that
       args = [
         "-c",
-        "socat TCP-LISTEN:22,fork,reuseaddr TCP:${google_compute_instance.default.network_interface.0.access_config.0.nat_ip}:2222 & for i in 2200 80 443 6443 9090 3000; do socat TCP-LISTEN:$i,fork,reuseaddr TCP:${google_compute_instance.default.network_interface.0.access_config.0.nat_ip}:$i & done; wait"
+        "for i in 22 2200; do socat TCP-LISTEN:$i,fork,reuseaddr TCP:${google_compute_instance.default.network_interface.0.access_config.0.nat_ip}:2222 & done; for i in 80 443 6443 9090 3000; do socat TCP-LISTEN:$i,fork,reuseaddr TCP:${google_compute_instance.default.network_interface.0.access_config.0.nat_ip}:$i & done; wait"
       ]
     }
   }

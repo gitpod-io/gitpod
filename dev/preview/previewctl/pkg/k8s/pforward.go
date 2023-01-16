@@ -8,11 +8,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/cockroachdb/errors"
-	"k8s.io/client-go/tools/portforward"
-	"k8s.io/client-go/transport/spdy"
 	"net/http"
 	"net/url"
+
+	"github.com/cockroachdb/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/portforward"
+	"k8s.io/client-go/transport/spdy"
 )
 
 type PortForwardOpts struct {
@@ -60,4 +62,24 @@ func (c *Config) PortForward(ctx context.Context, opts PortForwardOpts) error {
 	}
 
 	return nil
+}
+
+func (c *Config) GetSVCTargets(ctx context.Context, name, namespace string) ([]string, error) {
+	svc, err := c.CoreClient.CoreV1().Services(namespace).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	pods, err := c.CoreClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
+			MatchLabels: svc.Spec.Selector,
+		}),
+	})
+
+	podList := make([]string, 0, len(pods.Items))
+	for _, p := range pods.Items {
+		podList = append(podList, p.Name)
+	}
+
+	return podList, err
 }

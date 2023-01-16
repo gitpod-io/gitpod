@@ -29,7 +29,7 @@ variable "harvester_ingress_ip" {
 
 variable "vmi" {
   type        = string
-  description = "The storage class for the VM"
+  description = "The VM image"
   default     = "gitpod-k3s-202209251218"
 }
 

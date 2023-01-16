@@ -24,7 +24,7 @@ resource "google_compute_instance" "default" {
   #  }
 
   metadata = {
-    ssh-keys           = "dev:${file(pathexpand("~/.ssh/vm_id_rsa.pub"))}"
+    ssh-keys           = "ubuntu:${file(pathexpand("~/.ssh/vm_id_rsa.pub"))}"
     serial-port-enable = true
     user-data          = local.cloudinit_user_data
   }
