@@ -7,7 +7,8 @@
 import { useContext, useEffect, useState } from "react";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName } from "../provider-utils";
-import { AuthProviderInfo, Project, ProviderRepository, Team, TeamMemberInfo, User } from "@gitpod/gitpod-protocol";
+import { AuthProviderInfo, Project, ProviderRepository, TeamMemberInfo, User } from "@gitpod/gitpod-protocol";
+import { Team } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { TeamsContext } from "../teams/teams-context";
 import { useLocation } from "react-router";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
@@ -21,12 +22,7 @@ import { trackEvent } from "../Analytics";
 import exclamation from "../images/exclamation.svg";
 import ErrorMessage from "../components/ErrorMessage";
 import Spinner from "../icons/Spinner.svg";
-import {
-    publicApiTeamMembersToProtocol,
-    publicApiTeamsToProtocol,
-    publicApiTeamToProtocol,
-    teamsService,
-} from "../service/public-api";
+import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
 import { ConnectError } from "@bufbuild/connect-web";
 import { useRefreshProjects } from "../data/projects/queries";
 
@@ -738,8 +734,8 @@ function NewTeam(props: { onSuccess: (team: Team) => void }) {
         }
 
         try {
-            const team = publicApiTeamToProtocol((await teamsService.createTeam({ name: teamName })).team!);
-            const teams = publicApiTeamsToProtocol((await teamsService.listTeams({})).teams);
+            const team = (await teamsService.createTeam({ name: teamName })).team!;
+            const teams = (await teamsService.listTeams({})).teams;
 
             setTeams(teams);
             props.onSuccess(team);

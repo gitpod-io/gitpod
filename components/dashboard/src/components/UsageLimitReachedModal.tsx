@@ -4,8 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Team } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { Team } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { useContext, useEffect, useState } from "react";
 import { gitpodHostUrl } from "../service/service";
 import { TeamsContext } from "../teams/teams-context";

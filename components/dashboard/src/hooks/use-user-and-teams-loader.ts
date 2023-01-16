@@ -10,7 +10,7 @@ import { useHistory } from "react-router-dom";
 import { UserContext } from "../user-context";
 import { getSelectedTeamSlug, TeamsContext } from "../teams/teams-context";
 import { getGitpodService } from "../service/service";
-import { publicApiTeamsToProtocol, teamsService } from "../service/public-api";
+import { teamsService } from "../service/public-api";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { trackLocation } from "../Analytics";
 import { refreshSearchData } from "../components/RepositoryFinder";
@@ -33,7 +33,7 @@ export const useUserAndTeamsLoader = () => {
 
                 // TODO: atm this feature-flag won't have been set yet, as it's dependant on user/teams
                 // so it will always be false when this runs
-                const loadedTeams = publicApiTeamsToProtocol((await teamsService.listTeams({})).teams);
+                const loadedTeams = (await teamsService.listTeams({})).teams;
 
                 {
                     // if a team was selected previously and we call the root URL (e.g. "gitpod.io"),

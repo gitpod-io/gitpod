@@ -7,7 +7,7 @@
 import { FormEvent, useContext, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { TeamsContext } from "./teams-context";
-import { publicApiTeamsToProtocol, publicApiTeamToProtocol, teamsService } from "../service/public-api";
+import { teamsService } from "../service/public-api";
 import { ConnectError } from "@bufbuild/connect-web";
 
 export default function () {
@@ -21,9 +21,9 @@ export default function () {
         event.preventDefault();
 
         try {
-            const team = publicApiTeamToProtocol((await teamsService.createTeam({ name })).team!);
+            const team = (await teamsService.createTeam({ name })).team!;
 
-            const teams = publicApiTeamsToProtocol((await teamsService.listTeams({})).teams);
+            const teams = (await teamsService.listTeams({})).teams;
 
             setTeams(teams);
             history.push(`/t/${team.slug}`);

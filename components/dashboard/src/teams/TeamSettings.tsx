@@ -4,8 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Team } from "@gitpod/gitpod-protocol";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
+import { Team } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { useContext, useEffect, useState } from "react";
 import { Redirect, useLocation } from "react-router";
 import ConfirmationModal from "../components/ConfirmationModal";

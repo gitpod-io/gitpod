@@ -5,12 +5,11 @@
  */
 
 import { createConnectTransport, createPromiseClient } from "@bufbuild/connect-web";
-import { Project as ProtocolProject, Team as ProtocolTeam } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
+import { Project as ProtocolProject } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { TeamsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
 import { TokensService } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_connectweb";
 import { ProjectsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_connectweb";
 import { WorkspacesService } from "@gitpod/public-api/lib/gitpod/experimental/v1/workspaces_connectweb";
-import { Team } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
 import { TeamMember, TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { Project } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_pb";
@@ -23,20 +22,6 @@ export const teamsService = createPromiseClient(TeamsService, transport);
 export const personalAccessTokensService = createPromiseClient(TokensService, transport);
 export const projectsService = createPromiseClient(ProjectsService, transport);
 export const workspacesService = createPromiseClient(WorkspacesService, transport);
-
-export function publicApiTeamToProtocol(team: Team): ProtocolTeam {
-    return {
-        id: team.id,
-        name: team.name,
-        slug: team.slug,
-        // We do not use the creationTime in the dashboard anywhere, se we keep it empty.
-        creationTime: "",
-    };
-}
-
-export function publicApiTeamsToProtocol(teams: Team[]): ProtocolTeam[] {
-    return teams.map(publicApiTeamToProtocol);
-}
 
 export function publicApiTeamMembersToProtocol(members: TeamMember[]): TeamMemberInfo[] {
     return members.map(publicApiTeamMemberToProtocol);

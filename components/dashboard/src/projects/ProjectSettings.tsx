@@ -6,7 +6,7 @@
 
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useLocation, useHistory } from "react-router";
-import { Project, ProjectSettings, Team } from "@gitpod/gitpod-protocol";
+import { Project, ProjectSettings } from "@gitpod/gitpod-protocol";
 import CheckBox from "../components/CheckBox";
 import { getGitpodService } from "../service/service";
 import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
@@ -18,6 +18,7 @@ import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import Alert from "../components/Alert";
 import { Link } from "react-router-dom";
 import { RemoveProjectModal } from "./RemoveProjectModal";
+import { Team } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 
 export function getProjectSettingsMenu(project?: Project, team?: Team) {
     const teamOrUserSlug = !!team ? "t/" + team.slug : "projects";
