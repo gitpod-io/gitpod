@@ -23,7 +23,7 @@ export interface TeamDB {
     findTeamsByUser(userId: string): Promise<Team[]>;
     findTeamsByUserAsSoleOwner(userId: string): Promise<Team[]>;
     createTeam(userId: string, name: string): Promise<Team>;
-    updateTeam(teamId: string, team: Partial<Pick<Team, "name">>): Promise<Team>;
+    updateTeam(teamId: string, team: Pick<Team, "name">): Promise<Team>;
     addMemberToTeam(userId: string, teamId: string): Promise<"added" | "already_member">;
     setTeamMemberRole(userId: string, teamId: string, role: TeamMemberRole): Promise<void>;
     setTeamMemberSubscription(userId: string, teamId: string, subscriptionId: string): Promise<void>;
