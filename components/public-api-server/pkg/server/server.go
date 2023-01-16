@@ -46,7 +46,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 		return fmt.Errorf("failed to parse Gitpod API URL: %w", err)
 	}
 
-	connPool, err := proxy.NewConnectionPool(gitpodAPI, 3000)
+	connPool, err := proxy.NewConnectionPool(gitpodAPI, 500)
 	if err != nil {
 		return fmt.Errorf("failed to setup connection pool: %w", err)
 	}
