@@ -799,9 +799,25 @@ function ImageBuildView(props: ImageBuildViewProps) {
                 <WorkspaceLogs logsEmitter={logsEmitter} errorMessage={props.error?.message} />
             </Suspense>
             {!!props.onStartWithDefaultImage && (
-                <button className="mt-6 secondary" onClick={props.onStartWithDefaultImage}>
-                    Continue with Default Image
-                </button>
+                <>
+                    <div className="mt-6 w-11/12 lg:w-3/5">
+                        <p className="text-center text-gray-400 dark:text-gray-500">
+                            💡 You can use <code>gp rebuild</code> to validate and debug your workspace configuration
+                            &nbsp;&middot;&nbsp;
+                            <a
+                                href="https://www.gitpod.io/docs/configure/workspaces/workspace-image#trying-out-changes-to-your-dockerfile"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="gp-link"
+                            >
+                                Learn More
+                            </a>
+                        </p>
+                    </div>
+                    <button className="mt-6 secondary" onClick={props.onStartWithDefaultImage}>
+                        Continue with Default Image
+                    </button>
+                </>
             )}
         </StartPage>
     );
