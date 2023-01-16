@@ -88,10 +88,6 @@
 	}
 }
 
-(upstream_headers) {
-	header_up X-Real-IP {http.request.remote.host}
-}
-
 (upstream_connection) {
 	lb_try_duration 1s
 }
@@ -245,12 +241,10 @@ https://{$GITPOD_DOMAIN} {
 		uri strip_prefix /api
 
 		reverse_proxy @fast server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-			import upstream_headers
 			import upstream_connection
 		}
 
 		reverse_proxy @slow slow-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-			import upstream_headers
 			import upstream_connection
 		}
 	}
@@ -271,7 +265,6 @@ https://{$GITPOD_DOMAIN} {
 		uri strip_prefix /api
 
 		reverse_proxy @fast server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-			import upstream_headers
 			import upstream_connection
 
 			# required for smooth streaming of terminal logs
@@ -279,7 +272,6 @@ https://{$GITPOD_DOMAIN} {
 		}
 
 		reverse_proxy @slow slow-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-			import upstream_headers
 			import upstream_connection
 
 			# required for smooth streaming of terminal logs
@@ -297,7 +289,6 @@ https://{$GITPOD_DOMAIN} {
 		uri strip_prefix /iam
 
 		reverse_proxy iam.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002 {
-			import upstream_headers
 			import upstream_connection
 		}
 	}
@@ -311,7 +302,6 @@ https://{$GITPOD_DOMAIN} {
 		import compression
 
 		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-			import upstream_headers
 			import upstream_connection
 
 			flush_interval -1
@@ -325,7 +315,6 @@ https://{$GITPOD_DOMAIN} {
 		import compression
 
 		reverse_proxy ide-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:80 {
-			import upstream_headers
 			import upstream_connection
 		}
 	}
@@ -342,19 +331,16 @@ https://{$GITPOD_DOMAIN} {
 		import slow_fast_matchers
 
 		reverse_proxy @fast server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-			import upstream_headers
 			import upstream_connection
 		}
 
 		reverse_proxy @slow slow-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-			import upstream_headers
 			import upstream_connection
 		}
 	}
 
 	handle {
 		reverse_proxy dashboard.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3001 {
-			import upstream_headers
 			import upstream_connection
 		}
 	}
@@ -386,7 +372,6 @@ https://*.*.{$GITPOD_DOMAIN} {
 	handle @foreign_content2 {
 		reverse_proxy https://ws-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9090 {
 			import workspace_transport
-			import upstream_headers
 
 			header_up X-WSProxy-Host {http.request.host}
 		}
@@ -396,7 +381,6 @@ https://*.*.{$GITPOD_DOMAIN} {
 	handle @workspace_port {
 		reverse_proxy https://ws-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9090 {
 			import workspace_transport
-			import upstream_headers
 
 			header_up X-Gitpod-WorkspaceId {re.host.workspaceID}
 			header_up X-Gitpod-Port {re.host.workspacePort}
@@ -409,7 +393,6 @@ https://*.*.{$GITPOD_DOMAIN} {
 	handle @debug_workspace {
 		reverse_proxy https://ws-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9090 {
 			import workspace_transport
-			import upstream_headers
 
 			header_up X-Gitpod-WorkspaceId {re.host.workspaceID}
 			header_up X-WSProxy-Host {http.request.host}
@@ -420,7 +403,6 @@ https://*.*.{$GITPOD_DOMAIN} {
 	handle @workspace {
 		reverse_proxy https://ws-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9090 {
 			import workspace_transport
-			import upstream_headers
 
 			header_up X-Gitpod-WorkspaceId {re.host.workspaceID}
 			header_up X-WSProxy-Host {http.request.host}
