@@ -440,7 +440,11 @@ fi
 # wsManagerMk2
 #
 
-yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.workspace.useWsmanagerMk2" "true"
+echo "WSMAN_VALUE: ${GITPOD_WSMANAGER_MK2}"
+if [[ "${GITPOD_WSMANAGER_MK2}" == "true" ]]; then
+  echo "MODIFIED WSMAN"
+  yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.workspace.useWsmanagerMk2" "true"
+fi
 
 
 #
