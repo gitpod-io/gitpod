@@ -5817,14 +5817,12 @@ data:
         import debug_headers
 
         reverse_proxy payment-endpoint.default.svc.cluster.local:3002 {
-            import upstream_headers
             import upstream_connection
         }
 
         @backend path /stripe/invoices/webhook
         handle @backend {
             reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002 {
-                import upstream_headers
                 import upstream_connection
             }
         }
@@ -11060,7 +11058,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: 7eae00bddbe605f0150e2b3c4c065084f924179153e824d7281f1c169bc7abd0
+        gitpod.io/checksum_config: 413b717e45765a08616de9e7b7b8864305d0714e7772ee2c139a869733450033
         hello: world
       creationTimestamp: null
       labels:
