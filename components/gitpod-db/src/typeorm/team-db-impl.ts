@@ -122,7 +122,7 @@ export class TeamDBImpl implements TeamDB {
         return soleOwnedTeams;
     }
 
-    public async updateTeam(teamId: string, team: Partial<Pick<Team, "name">>): Promise<Team> {
+    public async updateTeam(teamId: string, team: Pick<Team, "name">): Promise<Team> {
         const teamRepo = await this.getTeamRepo();
         const existingTeam = await teamRepo.findOne({ id: teamId, deleted: false, markedDeleted: false });
         if (!existingTeam) {
