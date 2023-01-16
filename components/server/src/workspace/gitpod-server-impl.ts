@@ -2061,6 +2061,24 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return team;
     }
 
+    public async updateTeam(ctx: TraceContext, teamId: string, team: Partial<Pick<Team, "name">>): Promise<Team> {
+        traceAPIParams(ctx, { teamId });
+
+        if (!teamId || !uuidValidate(teamId)) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "team ID must be a valid UUID");
+        }
+        this.checkUser("updateTeam");
+        const existingTeam = await this.teamDB.findTeamById(teamId);
+        if (!existingTeam) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, `Team ${teamId} does not exist`);
+        }
+        const members = await this.teamDB.findMembersByTeam(teamId);
+        await this.guardAccess({ kind: "team", subject: existingTeam, members }, "update");
+
+        const updatedTeam = await this.teamDB.updateTeam(teamId, team);
+        return updatedTeam;
+    }
+
     public async getTeamMembers(ctx: TraceContext, teamId: string): Promise<TeamMemberInfo[]> {
         traceAPIParams(ctx, { teamId });
 

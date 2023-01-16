@@ -165,6 +165,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
 
     // Teams
     getTeam(teamId: string): Promise<Team>;
+    updateTeam(teamId: string, team: Partial<Pick<Team, "name">>): Promise<Team>;
     getTeams(): Promise<Team[]>;
     getTeamMembers(teamId: string): Promise<TeamMemberInfo[]>;
     createTeam(name: string): Promise<Team>;
