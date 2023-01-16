@@ -183,6 +183,10 @@ func (wsc *WorkspaceController) initWorkspaceContent(ctx context.Context, ws *wo
 		return "", nil
 	}
 
+	if err != nil {
+		return "bug: cannot add workspace to store", xerrors.Errorf("cannot add workspace to store: %w", err)
+	}
+
 	rs, ok := res.NonPersistentAttrs[session.AttrRemoteStorage].(storage.DirectAccess)
 	if rs == nil || !ok {
 		return "bug: workspace has no remote storage", xerrors.Errorf("workspace has no remote storage")
