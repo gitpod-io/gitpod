@@ -272,9 +272,6 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                                     switch (maybeProject) {
                                         case "projects":
                                             return <Projects />;
-                                        // TODO: Determine if we surface this - if so, can it also use WorkspacesNew?
-                                        case "workspaces":
-                                            return useNewWorkspacesList ? <WorkspacesNew /> : <Workspaces />;
                                         case "members":
                                             return <Members />;
                                         case "settings":
