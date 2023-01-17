@@ -73,7 +73,11 @@ export default function Modal(props: {
     }
 
     return (
-        <div className="fixed top-0 left-0 bg-black bg-opacity-70 z-50 w-screen h-screen">
+        <div
+            className="fixed top-0 left-0 bg-black bg-opacity-70 z-50 w-screen h-screen"
+            aria-labelledby="modal-title"
+            role="alertdialog"
+        >
             <div className="w-screen h-screen align-middle" style={{ display: "table-cell" }}>
                 <div
                     className={cn(
@@ -84,6 +88,7 @@ export default function Modal(props: {
                     {props.closeable !== false && (
                         <button
                             className="absolute right-7 top-6 cursor-pointer text-gray-800 bg-transparent dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md p-2"
+                            aria-label="Close this modal"
                             onKeyDown={(e) => {
                                 // Prevent the modal from submitting when attempting to close it
                                 if (e.key === "Enter" || e.key === "Space") {
@@ -119,7 +124,11 @@ type ModalHeaderProps = {
 };
 
 export const ModalHeader = ({ children }: ModalHeaderProps) => {
-    return <h3 className="pb-2">{children}</h3>;
+    return (
+        <h3 className="pb-2" id="modal-title">
+            {children}
+        </h3>
+    );
 };
 
 type ModalBodyProps = {

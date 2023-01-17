@@ -158,12 +158,14 @@ export const DropDown2: FunctionComponent<DropDown2Props> = (props) => {
                                 />
                             </div>
                         )}
-                        <ul>
+                        <ul role="listbox" aria-activedescendant={selectedElementTemp} tabIndex={0}>
                             {filteredOptions.length > 0 ? (
                                 filteredOptions.map((element) => {
                                     let selectionClasses = `dark:bg-gray-800 cursor-pointer`;
-                                    if (element.id === selectedElementTemp) {
-                                        selectionClasses = `bg-gray-200 dark:bg-gray-700 cursor-pointer  focus:outline-none focus:ring-0`;
+                                    const active = element.id === selectedElementTemp;
+
+                                    if (active) {
+                                        selectionClasses = `bg-gray-200 dark:bg-gray-700 cursor-pointer focus:outline-none focus:ring-0`;
                                     }
                                     if (!element.isSelectable) {
                                         selectionClasses = ``;
@@ -173,6 +175,8 @@ export const DropDown2: FunctionComponent<DropDown2Props> = (props) => {
                                             key={element.id}
                                             id={element.id}
                                             tabIndex={0}
+                                            role="option"
+                                            aria-selected={active}
                                             className={"h-16 rounded-lg flex items-center px-2 " + selectionClasses}
                                             onMouseDown={() => {
                                                 if (element.isSelectable) {
