@@ -17,6 +17,8 @@ import (
 type OIDCClientConfig struct {
 	ID uuid.UUID `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
 
+	OrganisationID uuid.UUID `gorm:"column:organisationId;type:char;size:36;" json:"organisationId"`
+
 	Issuer string `gorm:"column:issuer;type:char;size:255;" json:"issuer"`
 
 	Data EncryptedJSON[OIDCSpec] `gorm:"column:data;type:text;size:65535" json:"data"`
@@ -50,11 +52,11 @@ type OIDCSpec struct {
 
 func CreateOIDCCLientConfig(ctx context.Context, conn *gorm.DB, cfg OIDCClientConfig) (OIDCClientConfig, error) {
 	if cfg.ID == uuid.Nil {
-		return OIDCClientConfig{}, errors.New("OIDC Client Config ID must be set")
+		return OIDCClientConfig{}, errors.New("id must be set")
 	}
 
 	if cfg.Issuer == "" {
-		return OIDCClientConfig{}, errors.New("OIDC Client Config issuer must be set")
+		return OIDCClientConfig{}, errors.New("issuer must be set")
 	}
 
 	tx := conn.
