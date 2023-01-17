@@ -2509,10 +2509,22 @@
   dependencies:
     remove-accents "0.4.2"
 
+"@tanstack/query-async-storage-persister@^4.22.0":
+  version "4.22.0"
+  resolved "https://registry.yarnpkg.com/@tanstack/query-async-storage-persister/-/query-async-storage-persister-4.22.0.tgz#dac8890533e9385c4646b8442368683ad229e30b"
+  integrity sha512-ytjpxQt7oJtgOxgrXP+Xn5AqHaHe9fh53CJhs57By7Gk04cYaa+lsIqVMLNmewakCOBhg1qFeKOl7nw3yxC8ZA==
+  dependencies:
+    "@tanstack/query-persist-client-core" "4.22.0"
+
 "@tanstack/query-core@4.22.0":
   version "4.22.0"
   resolved "https://registry.yarnpkg.com/@tanstack/query-core/-/query-core-4.22.0.tgz#7a786fcea64e229ed5d4308093dd644cdfaa895e"
   integrity sha512-OeLyBKBQoT265f5G9biReijeP8mBxNFwY7ZUu1dKL+YzqpG5q5z7J/N1eT8aWyKuhyDTiUHuKm5l+oIVzbtrjw==
+
+"@tanstack/query-persist-client-core@4.22.0":
+  version "4.22.0"
+  resolved "https://registry.yarnpkg.com/@tanstack/query-persist-client-core/-/query-persist-client-core-4.22.0.tgz#cb0677cb0ab36c626bfb18bd681426f661ef4a85"
+  integrity sha512-O5Qh4HycMWPD67qoGs9zwNJuCpQnbgAgpWmg/M5+jpWaobGGtdIW6SHuvVogQM53uTaWT8b30ymi4BKds4GxIA==
 
 "@tanstack/react-query-devtools@^4.22.0":
   version "4.22.0"
@@ -2522,6 +2534,13 @@
     "@tanstack/match-sorter-utils" "^8.7.0"
     superjson "^1.10.0"
     use-sync-external-store "^1.2.0"
+
+"@tanstack/react-query-persist-client@^4.22.0":
+  version "4.22.0"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-query-persist-client/-/react-query-persist-client-4.22.0.tgz#29dd5542b96a0a83a58e32f2c815874cd90a729d"
+  integrity sha512-E9eAstffzr+PMsKcgTI6AfMMYtUjV6w3VKCa/0v9wGWdGEJYKcjNJWyYiPF0Z0ccwAaDCeOuQCFId8y0BKCK8g==
+  dependencies:
+    "@tanstack/query-persist-client-core" "4.22.0"
 
 "@tanstack/react-query@^4.22.0":
   version "4.22.0"
