@@ -18,7 +18,8 @@ RUN xcaddy build v2.6.2 \
   --with github.com/gitpod-io/gitpod/proxy/plugins/configcat=/plugins/configcat \
   --with github.com/gitpod-io/gitpod/proxy/plugins/logif=/plugins/logif \
   --with github.com/gitpod-io/gitpod/proxy/plugins/jsonselect=/plugins/jsonselect \
-  --with github.com/gitpod-io/gitpod/proxy/plugins/sshtunnel=/plugins/sshtunnel
+  --with github.com/gitpod-io/gitpod/proxy/plugins/sshtunnel=/plugins/sshtunnel \
+  --with github.com/gitpod-io/gitpod/proxy/plugins/frontend_dev=/plugins/frontend_dev
 
 FROM alpine:3.16
 

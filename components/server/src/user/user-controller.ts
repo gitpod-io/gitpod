@@ -436,6 +436,23 @@ export class UserController {
                 res.sendStatus(200);
             },
         );
+        router.get(
+            "/auth/frontend-dev",
+            async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+                if (!req.isAuthenticated() || !User.is(req.user)) {
+                    res.sendStatus(401);
+                    return;
+                }
+
+                const user = req.user as User;
+                if (this.authService.hasPermission(user, Permission.DEVELOPER)) {
+                    res.sendStatus(200);
+                    return;
+                }
+
+                res.sendStatus(401);
+            },
+        );
         router.get("/auth/monitor", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             if (!req.isAuthenticated() || !User.is(req.user)) {
                 // Pretend there's nothing to see
