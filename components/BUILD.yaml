@@ -15,6 +15,19 @@ packages:
       - install/installer:docker
       - install/kots:lint
       - components/gitpod-protocol:all
+
+  - name: all-ci
+  # like components:all + dev:all + exports files for .github/workflows/build.yml
+    type: generic
+    deps:
+      - :all
+      - dev:all
+      - :all-docker
+      - install/installer:raw-app
+    config:
+      commands:
+        - [ "sh", "-c", "mv install-installer--raw-app/installer /tmp/installer" ]
+        - [ "sh", "-c", "cat components--all-docker/versions.yaml > /tmp/versions.yaml" ]
   - name: docker-versions
     type: docker
     config:
