@@ -10,13 +10,11 @@ import (
 
 	connect "github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/namegen"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
-	"github.com/relvacode/iso8601"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -384,25 +382,4 @@ func convertWorkspaceInstance(wsi *protocol.WorkspaceInstance, shareable bool) (
 			Ports: ports,
 		},
 	}, nil
-}
-
-func parseGitpodTimestamp(input string) (*timestamppb.Timestamp, error) {
-	parsed, err := iso8601.ParseString(input)
-	if err != nil {
-		return nil, err
-	}
-	return timestamppb.New(parsed), nil
-}
-
-func validateWorkspaceID(id string) (string, error) {
-	if id == "" {
-		return "", connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Empty workspace id specified"))
-	}
-
-	err := namegen.ValidateWorkspaceID(id)
-	if err != nil {
-		return "", connect.NewError(connect.CodeInvalidArgument, err)
-	}
-
-	return id, nil
 }

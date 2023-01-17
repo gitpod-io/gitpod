@@ -38,6 +38,7 @@ type OIDCService struct {
 }
 
 func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Request[v1.CreateClientConfigRequest]) (*connect.Response[v1.CreateClientConfigResponse], error) {
+
 	conn, err := s.getConnection(ctx)
 	if err != nil {
 		return nil, err
