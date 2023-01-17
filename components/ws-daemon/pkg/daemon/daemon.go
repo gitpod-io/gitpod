@@ -203,6 +203,30 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		return nil, xerrors.Errorf("cannot create content service: %w", err)
 	}
 
+	if config.WorkspaceController.Enabled {
+		log.Info("enabling workspace CRD controller")
+
+		contentCfg := config.Content
+		contentCfg.WorkingArea += config.WorkspaceController.WorkingAreaSuffix
+		contentCfg.WorkingAreaNode += config.WorkspaceController.WorkingAreaSuffix
+
+		wsctrl, err := controller.NewWorkspaceController(mgr.GetClient(), controller.WorkspaceControllerOpts{
+			NodeName:         nodename,
+			ContentConfig:    contentCfg,
+			UIDMapperConfig:  config.Uidmapper,
+			ContainerRuntime: containerRuntime,
+			CGroupMountPoint: config.CPULimit.CGroupBasePath,
+			MetricsRegistry:  reg,
+		})
+		if err != nil {
+			return nil, err
+		}
+		err = wsctrl.SetupWithManager(mgr)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	dsk := diskguard.FromConfig(config.DiskSpaceGuard, clientset, nodename)
 
 	hsts, err := hosts.FromConfig(config.Hosts, clientset, config.Runtime.KubernetesNamespace)

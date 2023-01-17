@@ -187,10 +187,10 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
 
-		err = r.Client.Delete(ctx, workspace)
-		if err != nil {
-			return ctrl.Result{Requeue: true}, err
-		}
+		// err = r.Client.Delete(ctx, workspace)
+		// if err != nil {
+		// 	return ctrl.Result{Requeue: true}, err
+		// }
 	}
 
 	return ctrl.Result{}, nil
@@ -238,7 +238,7 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func addUniqueCondition(conds []metav1.Condition, cond metav1.Condition) []metav1.Condition {
+func AddUniqueCondition(conds []metav1.Condition, cond metav1.Condition) []metav1.Condition {
 	if cond.Reason == "" {
 		cond.Reason = "Foo"
 	}
