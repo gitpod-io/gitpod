@@ -7,7 +7,7 @@
 import { Workspace } from "@gitpod/gitpod-protocol";
 import { FunctionComponent, useCallback } from "react";
 import ConfirmationModal from "../components/ConfirmationModal";
-import { useDeleteWorkspaceMutation } from "../data/workspaces/mutations";
+import { useDeleteWorkspaceMutation } from "../data/workspaces/delete-workspace-mutation";
 
 type Props = {
     workspace: Workspace;

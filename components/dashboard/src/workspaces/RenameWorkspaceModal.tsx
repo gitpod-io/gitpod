@@ -7,7 +7,7 @@
 import { Workspace } from "@gitpod/gitpod-protocol";
 import { FunctionComponent, useCallback, useState } from "react";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
-import { useUpdateWorkspaceDescriptionMutation } from "../data/workspaces/mutations";
+import { useUpdateWorkspaceDescriptionMutation } from "../data/workspaces/update-workspace-description-mutation";
 
 type Props = {
     workspace: Workspace;
@@ -34,13 +34,11 @@ export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
 
             // Using mutateAsync here so we can close the modal after it completes successfully
             await updateDescription.mutateAsync({ workspaceId: workspace.id, newDescription: description });
-
-            onClose();
         } catch (error) {
             console.error(error);
             setErrorMessage("Something went wrong. Please try renaming again.");
         }
-    }, [description, updateDescription, workspace.id, onClose]);
+    }, [description, updateDescription, workspace.id]);
 
     return (
         <Modal
@@ -79,7 +77,10 @@ export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
                     disabled={updateDescription.isLoading}
                     className="ml-2"
                     type="submit"
-                    onClick={updateWorkspaceDescription}
+                    onClick={async () => {
+                        await updateWorkspaceDescription();
+                        onClose();
+                    }}
                 >
                     Update Description
                 </button>

@@ -14,11 +14,11 @@ import SelectIDEModal from "../settings/SelectIDEModal";
 import Arrow from "../components/Arrow";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { ProfileState } from "../settings/ProfileInformation";
-import { useListWorkspacesQuery } from "../data/workspaces/queries";
+import { useListWorkspacesQuery } from "../data/workspaces/list-workspaces-query";
 import { EmptyWorkspacesContent } from "./EmptyWorkspacesContent";
 import { WorkspacesSearchBar } from "./WorkspacesSearchBar";
 import { hoursBefore, isDateSmallerOrEqual } from "@gitpod/gitpod-protocol/lib/util/timeutil";
-import { useDeleteInactiveWorkspacesMutation } from "../data/workspaces/mutations";
+import { useDeleteInactiveWorkspacesMutation } from "../data/workspaces/delete-inactive-workspaces-mutation";
 
 const WorkspacesPage: FunctionComponent = () => {
     const user = useCurrentUser();

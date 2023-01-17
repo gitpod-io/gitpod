@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useListenToWorkspacesWSMessages } from "../data/workspaces/queries";
+import { useListenToWorkspacesWSMessages } from "../data/workspaces/listen-to-workspace-ws-messages";
 
 // This component is intended to setup any app-wide websocket client subscriptions
 // It doesn't render anything directly
