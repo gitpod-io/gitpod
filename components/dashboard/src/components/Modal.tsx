@@ -82,15 +82,15 @@ export default function Modal(props: {
                     )}
                 >
                     {props.closeable !== false && (
-                        <div
-                            className="absolute right-7 top-6 cursor-pointer text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md p-2"
+                        <button
+                            className="absolute right-7 top-6 cursor-pointer text-gray-800 bg-transparent dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md p-2"
                             onClick={() => closeModal("x")}
                         >
                             <svg version="1.1" width="14px" height="14px" viewBox="0 0 100 100">
                                 <line x1="0" y1="0" x2="100" y2="100" stroke="currentColor" strokeWidth="10px" />
                                 <line x1="0" y1="100" x2="100" y2="0" stroke="currentColor" strokeWidth="10px" />
                             </svg>
-                        </div>
+                        </button>
                     )}
                     {props.title ? (
                         <>
