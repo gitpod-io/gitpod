@@ -175,7 +175,7 @@ export class WorkspaceManagerBridge implements Disposable {
     protected async handleStatusUpdate(ctx: TraceContext, rawStatus: WorkspaceStatus, writeToDB: boolean) {
         const start = performance.now();
         const status = rawStatus.toObject();
-        log.info("Handling WorkspaceStatus update", status);
+        log.info("Handling WorkspaceStatus update", filterStatus(status));
 
         if (!status.spec || !status.metadata || !status.conditions) {
             log.warn("Received invalid status update", status);
