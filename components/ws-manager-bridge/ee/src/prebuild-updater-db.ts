@@ -15,6 +15,7 @@ import { DBWithTracing, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-d
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { MessageBusIntegration } from "../../src/messagebus-integration";
 import { PrometheusMetricsExporter } from "../../src/prometheus-metrics-exporter";
+import { filterStatus } from "../../src/bridge";
 
 @injectable()
 export class PrebuildUpdaterDB implements PrebuildUpdater {
@@ -44,7 +45,7 @@ export class PrebuildUpdaterDB implements PrebuildUpdater {
         const workspaceId = status.metadata!.metaId!;
         const logCtx: LogContext = { instanceId, workspaceId, userId };
 
-        log.info(logCtx, "Handling prebuild workspace update.", status);
+        log.info(logCtx, "Handling prebuild workspace update.", filterStatus(status));
 
         const span = TraceContext.startSpan("updatePrebuiltWorkspace", ctx);
         try {
