@@ -156,6 +156,8 @@ type Config struct {
 
 	Components *Components `json:"components,omitempty"`
 
+	Telemetry *TelemetryConfig `json:"telemetry,omitempty"`
+
 	Experimental *experimental.Config `json:"experimental,omitempty"`
 }
 
@@ -433,4 +435,12 @@ type ProxyComponent struct {
 
 type ComponentTypeService struct {
 	ServiceType *corev1.ServiceType `json:"serviceType,omitempty" validate:"omitempty,service_config_type"`
+}
+
+type TelemetryConfig struct {
+	Data *TelemetryData `json:"data,omitempty"`
+}
+
+type TelemetryData struct {
+	Platform string `json:"platform"`
 }

@@ -29,10 +29,11 @@ type Config struct {
 	IDE        *IDEConfig         `json:"ide,omitempty"`
 	Common     *CommonConfig      `json:"common,omitempty"`
 	Overrides  *[]Overrides       `json:"overrides,omitempty"`
-	Telemetry  *TelemetryConfig   `json:"telemetry,omitempty"`
+	Telemetry  *TelemetryConfig   `json:"telemetry,omitempty"` // @deprecated
 	AgentSmith *agentSmith.Config `json:"agentSmith,omitempty"`
 }
 
+// @deprecated
 type TelemetryConfig struct {
 	Data struct {
 		Platform string `json:"platform"`
