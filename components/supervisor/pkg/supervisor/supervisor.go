@@ -195,6 +195,9 @@ func Run(options ...RunOption) {
 
 	configureGit(cfg, childProcEnvvars)
 
+	telemetry := analytics.NewFromEnvironment()
+	defer telemetry.Close()
+
 	tokenService := NewInMemoryTokenService()
 
 	if !opts.RunGP {
@@ -265,7 +268,7 @@ func Run(options ...RunOption) {
 		desktopIdeReady = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
 	}
 	if !cfg.isHeadless() && !opts.RunGP {
-		go trackReadiness(ctx, gitpodService, cfg, cstate, ideReady, desktopIdeReady)
+		go trackReadiness(ctx, gitpodService, telemetry, cfg, cstate, ideReady, desktopIdeReady)
 	}
 	tokenService.provider[KindGit] = []tokenProvider{NewGitTokenProvider(gitpodService, cfg.WorkspaceConfig, notificationService)}
 
@@ -298,7 +301,8 @@ func Run(options ...RunOption) {
 		topService.Observe(ctx)
 
 		if !cfg.isHeadless() && !opts.RunGP {
-			go startAnalyze(ctx, cfg, gitpodConfigService, topService, gitpodService)
+			go analyseConfigChanges(ctx, cfg, telemetry, gitpodConfigService, gitpodService)
+			go analysePerfChanges(ctx, cfg, telemetry, topService, gitpodService)
 		}
 		if !strings.Contains("ephemeral", cfg.WorkspaceClusterHost) {
 			_, gitpodHost, err := cfg.GitpodAPIEndpoint()
@@ -1586,14 +1590,6 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 	}
 }
 
-func startAnalyze(ctx context.Context, cfg *Config, gitpodConfigService config.ConfigInterface, topService *TopService, gitpodService serverapi.APIInterface) {
-	analytics := analytics.NewFromEnvironment()
-	go analyseConfigChanges(ctx, cfg, analytics, gitpodConfigService, gitpodService)
-	go analysePerfChanges(ctx, cfg, analytics, topService, gitpodService)
-	<-ctx.Done()
-	analytics.Close()
-}
-
 type PerfAnalyzer struct {
 	label   string
 	defs    []int
@@ -1618,7 +1614,7 @@ func (a *PerfAnalyzer) analyze(used float64) bool {
 func analysePerfChanges(ctx context.Context, wscfg *Config, w analytics.Writer, topService *TopService, gitpodAPI serverapi.APIInterface) {
 	ownerID, err := gitpodAPI.GetOwnerID(ctx)
 	if err != nil {
-		log.WithError(err).Error("gitpod perf analytics: failed to resolve workspace info")
+		log.WithError(err).Error("gitpod perf analytics: failed to resolve ownerId")
 		return
 	}
 
@@ -1660,7 +1656,7 @@ func analysePerfChanges(ctx context.Context, wscfg *Config, w analytics.Writer, 
 func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer, cfgobs config.ConfigInterface, gitpodAPI serverapi.APIInterface) {
 	ownerID, err := gitpodAPI.GetOwnerID(ctx)
 	if err != nil {
-		log.WithError(err).Error("gitpod config analytics: failed to resolve workspace info")
+		log.WithError(err).Error("gitpod config analytics: failed to resolve ownerId")
 		return
 	}
 
@@ -1696,26 +1692,24 @@ func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer
 	}
 }
 
-func trackReadiness(ctx context.Context, gitpodService serverapi.APIInterface, cfg *Config, cstate *InMemoryContentState, ideReady *ideReadyState, desktopIdeReady *ideReadyState) {
-	type SupervisorReadiness struct {
-		Kind                string `json:"kind,omitempty"`
-		WorkspaceId         string `json:"workspaceId,omitempty"`
-		WorkspaceInstanceId string `json:"instanceId,omitempty"`
-		Timestamp           int64  `json:"timestamp,omitempty"`
+func trackReadiness(ctx context.Context, gitpodAPI serverapi.APIInterface, w analytics.Writer, cfg *Config, cstate *InMemoryContentState, ideReady *ideReadyState, desktopIdeReady *ideReadyState) {
+	ownerID, err := gitpodAPI.GetOwnerID(ctx)
+	if err != nil {
+		log.WithError(err).Error("gitpod trackReadiness: failed to resolve ownerId")
+		return
 	}
-	trackFn := func(ctx context.Context, gitpodService serverapi.APIInterface, cfg *Config, kind string) {
-		err := gitpodService.TrackEvent(ctx, &gitpod.RemoteTrackMessage{
-			Event: "supervisor_readiness",
-			Properties: SupervisorReadiness{
-				Kind:                kind,
-				WorkspaceId:         cfg.WorkspaceID,
-				WorkspaceInstanceId: cfg.WorkspaceInstanceID,
-				Timestamp:           time.Now().UnixMilli(),
+
+	trackFn := func(cfg *Config, kind string) {
+		w.Track(analytics.TrackMessage{
+			Identity: analytics.Identity{UserID: ownerID},
+			Event:    "supervisor_readiness",
+			Properties: map[string]interface{}{
+				"kind":        kind,
+				"workspaceId": cfg.WorkspaceID,
+				"instanceId":  cfg.WorkspaceInstanceID,
+				"timestamp":   time.Now().UnixMilli(),
 			},
 		})
-		if err != nil {
-			log.WithError(err).Error("error tracking supervisor_readiness")
-		}
 	}
 	const (
 		readinessKindContent    = "content"
@@ -1724,16 +1718,16 @@ func trackReadiness(ctx context.Context, gitpodService serverapi.APIInterface, c
 	)
 	go func() {
 		<-cstate.ContentReady()
-		trackFn(ctx, gitpodService, cfg, readinessKindContent)
+		trackFn(cfg, readinessKindContent)
 	}()
 	go func() {
 		<-ideReady.Wait()
-		trackFn(ctx, gitpodService, cfg, readinessKindIDE)
+		trackFn(cfg, readinessKindIDE)
 	}()
 	if cfg.DesktopIDE != nil {
 		go func() {
 			<-desktopIdeReady.Wait()
-			trackFn(ctx, gitpodService, cfg, readinessKindDesktopIDE)
+			trackFn(cfg, readinessKindDesktopIDE)
 		}()
 	}
 }

@@ -34,9 +34,6 @@ type APIInterface interface {
 	OpenPort(ctx context.Context, port *gitpod.WorkspaceInstancePort) (res *gitpod.WorkspaceInstancePort, err error)
 	InstanceUpdates(ctx context.Context) (<-chan *gitpod.WorkspaceInstance, error)
 
-	// Remove this and use segment client directly
-	TrackEvent(ctx context.Context, event *gitpod.RemoteTrackMessage) (err error)
-
 	// Metrics
 	RegisterMetrics(registry *prometheus.Registry) error
 }
@@ -407,14 +404,19 @@ func (s *Service) GetOwnerID(ctx context.Context) (ownerID string, err error) {
 	if s == nil {
 		return "", errNotConnected
 	}
+	if s.ownerID != "" {
+		return s.ownerID, nil
+	}
+
 	workspaceID := s.cfg.WorkspaceID
 	if !s.usePublicAPI(ctx) {
 		resp, err := s.gitpodService.GetWorkspace(ctx, workspaceID)
 		if err != nil {
 			return "", err
 		}
-		return resp.Workspace.OwnerID, nil
+		s.ownerID = resp.Workspace.OwnerID
 	}
+
 	service := v1.NewWorkspacesServiceClient(s.publicAPIConn)
 	resp, err := service.GetWorkspace(ctx, &v1.GetWorkspaceRequest{
 		WorkspaceId: workspaceID,
@@ -422,14 +424,9 @@ func (s *Service) GetOwnerID(ctx context.Context) (ownerID string, err error) {
 	if err != nil {
 		return "", err
 	}
-	return resp.Result.OwnerId, nil
-}
+	s.ownerID = resp.Result.OwnerId
 
-func (s *Service) TrackEvent(ctx context.Context, event *gitpod.RemoteTrackMessage) (err error) {
-	if s == nil {
-		return errNotConnected
-	}
-	return s.gitpodService.TrackEvent(ctx, event)
+	return s.ownerID, nil
 }
 
 func (s *Service) RegisterMetrics(registry *prometheus.Registry) error {
