@@ -31,10 +31,7 @@ pod:
       resources:
         requests:
           memory: "2Gi"
-          cpu: "1"
-        limits:
-          memory: "2Gi"
-          cpu: "1"
+          cpu: "2"
       volumeMounts:
         - name: gcp-sa
           mountPath: /mnt/secrets/gcp-sa
