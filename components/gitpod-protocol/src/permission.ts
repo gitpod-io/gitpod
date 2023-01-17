@@ -7,6 +7,7 @@
 // see below for explanation
 export const Permissions = {
     monitor: undefined,
+    developer: undefined,
     enforcement: undefined,
     "privileged-ws": undefined,
     "registry-access": undefined,
@@ -52,6 +53,9 @@ export namespace RolesOrPermissions {
 export namespace Permission {
     /** The permission to monitor the (live) state of a Gitpod installation */
     export const MONITOR: PermissionName = "monitor";
+
+    /** The permission to develop on this running Gitpod installation */
+    export const DEVELOPER: PermissionName = "developer";
 
     /** The permission for actions like block user, stop workspace, etc. */
     export const ENFORCEMENT: PermissionName = "enforcement";
