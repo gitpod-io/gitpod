@@ -88,7 +88,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = (props) => {
                 setShowDropDown(false);
                 e.preventDefault();
             }
-            if (e.key === "Enter") {
+            if (e.key === "Enter" || e.key === "Space") {
                 if (showDropDown && selectedElementTemp && filteredOptions.some((e) => e.id === selectedElementTemp)) {
                     e.preventDefault();
                     props.onSelectionChange(selectedElementTemp);

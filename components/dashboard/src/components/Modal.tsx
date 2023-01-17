@@ -84,6 +84,13 @@ export default function Modal(props: {
                     {props.closeable !== false && (
                         <button
                             className="absolute right-7 top-6 cursor-pointer text-gray-800 bg-transparent dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md p-2"
+                            onKeyDown={(e) => {
+                                // Prevent the modal from submitting when attempting to close it
+                                if (e.key === "Enter" || e.key === "Space") {
+                                    e.preventDefault();
+                                    closeModal("x");
+                                }
+                            }}
                             onClick={() => closeModal("x")}
                         >
                             <svg version="1.1" width="14px" height="14px" viewBox="0 0 100 100">
