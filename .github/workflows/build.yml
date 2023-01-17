@@ -89,6 +89,11 @@ jobs:
       - name: "Determine Branch"
         id: branches
         uses: transferwise/sanitize-branch-name@v1
+      - name: Leeway Vet
+        shell: bash
+        working-directory: /workspace/gitpod
+        run: |
+          leeway vet --ignore-warnings
       - name: Leeway
         id: leeway
         shell: bash
