@@ -111,25 +111,21 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
 
     private async processServerInfo() {
         this.user = await this.service.server.getLoggedInUser();
-        const workspace = await this.service.server.getWorkspace(this.workspaceID);
-        this.instanceID = workspace.latestInstance?.id;
-        if (this.instanceID) {
-            this.auth();
-        }
 
         const listener = await this.service.listenToInstance(this.workspaceID);
-        listener.onDidChange(() => {
-            this.ideUrl = listener.info.latestInstance?.ideUrl
-                ? new URL(listener.info.latestInstance?.ideUrl)
-                : undefined;
+        const reconcile = () => {
             const status = this.getWorkspaceStatus(listener.info);
             this.latestStatus = status;
-            this.sendStatusUpdate(this.latestStatus);
-            if (this.instanceID !== status.instanceId) {
-                this.instanceID = status.instanceId;
+            this.ideUrl = status.ideUrl ? new URL(status.ideUrl) : undefined;
+            const oldInstanceID = this.instanceID;
+            this.instanceID = status.instanceId;
+            if (status.instanceId && oldInstanceID !== status.instanceId) {
                 this.auth();
             }
-        });
+            this.sendStatusUpdate(this.latestStatus);
+        };
+        reconcile();
+        listener.onDidChange(reconcile);
     }
 
     getWorkspaceStatus(workspace: WorkspaceInfo): IDEFrontendDashboardService.Status {
