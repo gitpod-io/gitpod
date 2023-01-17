@@ -4,11 +4,84 @@ on:
     types: [opened, synchronize, edited]
 
 jobs:
+  image:
+    if: ${{ contains(github.event.pull_request.body, '[x] /werft with-github-actions') }}
+    runs-on: [self-hosted]
+    container:
+      image: gitpod/workspace-full:latest
+    outputs:
+      devimage: ${{ steps.image.outputs.devimage }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1000
+      - name: Configure workspace
+        run: |
+          cp -r /__w/gitpod/gitpod /workspace
+          # Needed by google-github-actions/setup-gcloud
+          sudo chown -R gitpod:gitpod /__t
+          # Needed by docker/login-action
+          sudo chmod goa+rw /var/run/docker.sock
+      - name: Install Leeway
+        shell: bash
+        working-directory: /workspace/gitpod
+        run: |
+          LEEWAY_VERSION=0.7.3
+          cd /usr/bin && sudo curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v${LEEWAY_VERSION}/leeway_${LEEWAY_VERSION}_Linux_x86_64.tar.gz | sudo tar xz
+      - id: auth
+        uses: google-github-actions/auth@v1
+        with:
+          token_format: access_token
+          credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+      - uses: docker/login-action@v2
+        with:
+          registry: eu.gcr.io
+          username: oauth2accesstoken
+          password: "${{ steps.auth.outputs.access_token }}"
+      - name: Probe If Image Exists
+        id: image
+        shell: bash
+        working-directory: /workspace/gitpod
+        run: |
+          pwd
+          ls -l
+          RESULT=""
+          IMG_VERSION="img-$(git log -n 1 --pretty=format:%H dev/image/)"
+          IMG_BASE="eu.gcr.io/gitpod-core-dev/dev"
+          IMG_NAME="$IMG_BASE/dev-environment:$IMG_VERSION"
+
+          echo "Probing for image $IMG_NAME"
+          docker manifest inspect "$IMG_NAME" || RESULT="missing"
+
+          echo "IMG_VERSION=$IMG_VERSION" >> $GITHUB_ENV
+          echo "IMG_BASE=$IMG_BASE"       >> $GITHUB_ENV
+          echo "IMG_MISSING=$RESULT"      >> $GITHUB_ENV
+
+          echo "devimage=$IMG_NAME" >> $GITHUB_OUTPUT
+
+          # sleep 10000
+
+      - name: Build Image
+        if: ${{ env.IMG_MISSING }}
+        shell: bash
+        working-directory: /workspace/gitpod
+        run: |
+          RESULT=0
+          leeway build dev/image:docker \
+            -Dversion=$IMG_VERSION \
+            -DimageRepoBase=$IMG_BASE \
+            --report report.html || RESULT=$?
+          cat report.html >> $GITHUB_STEP_SUMMARY
+          exit $RESULT
+
   previewctl:
     if: ${{ contains(github.event.pull_request.body, '[x] /werft with-github-actions') && contains(github.event.pull_request.body, '[x] /werft with-preview') }}
     runs-on: [self-hosted]
+    needs: [image]
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.3.4
+      image: ${{ needs.image.outputs.devimage }}
     steps:
       - uses: actions/checkout@v3
       - name: Configure workspace
@@ -29,7 +102,7 @@ jobs:
     runs-on: [self-hosted]
     needs: [previewctl]
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.3.4
+      image: ${{ needs.image.outputs.devimage }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
@@ -61,10 +134,11 @@ jobs:
   build:
     if: ${{ contains(github.event.pull_request.body, '[x] /werft with-github-actions') }}
     runs-on: [self-hosted]
+    needs: [image]
     outputs:
       version: ${{ steps.leeway.outputs.version }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.3.4
+      image: ${{ needs.image.outputs.devimage }}
     steps:
       - uses: actions/checkout@v3
       - name: Configure workspace
@@ -129,7 +203,7 @@ jobs:
     needs: [previewctl, build, infrastructure]
     runs-on: [self-hosted]
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.3.4
+      image: ${{ needs.image.outputs.devimage }}
     steps:
       - uses: actions/checkout@v3
       - name: Configure workspace
@@ -175,7 +249,7 @@ jobs:
     needs: [previewctl, infrastructure]
     runs-on: [self-hosted]
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.3.4
+      image: ${{ needs.image.outputs.devimage }}
     steps:
       - uses: actions/checkout@v3
       - name: Configure workspace
