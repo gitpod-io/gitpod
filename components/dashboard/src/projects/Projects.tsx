@@ -45,16 +45,6 @@ export default function () {
 
     return (
         <>
-            {!team && (
-                <div className="app-container pt-2">
-                    <Alert type={"message"} closable={false} showIcon={true} className="flex rounded mb-2 w-full">
-                        We'll remove projects under personal accounts in Q1'2023.{" "}
-                        <Link to="/teams/new" className="gp-link">
-                            Create a team
-                        </Link>
-                    </Alert>
-                </div>
-            )}
             <Header title="Projects" subtitle="Manage recently added projects." />
             {/* TODO: Add a delay around Spinner so it delays rendering ~ 500ms so we don't flash spinners too often for fast response */}
             {isLoading && <SpinnerLoader />}
