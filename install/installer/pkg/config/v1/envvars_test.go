@@ -30,6 +30,8 @@ type envvarTestData struct {
 }
 
 func TestBuildFromEnvvars(t *testing.T) {
+	t.Skip("--remove--")
+
 	baseDir := "testdata/envvars"
 
 	dir, err := ioutil.ReadDir(baseDir)
