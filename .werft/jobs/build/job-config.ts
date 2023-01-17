@@ -34,6 +34,7 @@ export interface JobConfig {
     withObservability: boolean;
     withLocalPreview: boolean;
     withSlowDatabase: boolean;
+    withDedicatedEmulation: boolean;
     workspaceFeatureFlags: string[];
     previewEnvironment: PreviewEnvironmentConfig;
     repository: Repository;
@@ -107,6 +108,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const recreatePreview = "recreate-preview" in buildConfig
     const recreateVm = mainBuild || "recreate-vm" in buildConfig;
     const withSlowDatabase = "with-slow-database" in buildConfig && !mainBuild;
+    const withDedicatedEmulation = "with-dedicated-emulation" in buildConfig && !mainBuild;
     const storageClass = buildConfig["storage-class"] || "";
 
     const analytics = parseAnalytics(werft, sliceId, buildConfig["analytics"])
@@ -183,6 +185,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         recreateVm,
         withSlowDatabase,
         withGitHubActions,
+        withDedicatedEmulation,
     };
 
     werft.logOutput(sliceId, JSON.stringify(jobConfig, null, 2));
