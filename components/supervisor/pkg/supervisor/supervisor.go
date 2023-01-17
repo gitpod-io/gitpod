@@ -77,6 +77,7 @@ const (
 	gitpodGID       = 33333
 	gitpodGroupName = "gitpod"
 	desktopIDEPort  = 24000
+	gitpodCliName   = "gitpod-cli"
 )
 
 var (
@@ -192,6 +193,8 @@ func Run(options ...RunOption) {
 		log.WithError(err).Fatal("cannot ensure Gitpod user exists")
 	}
 	symlinkBinaries(cfg)
+
+	installGpCliCompletion()
 
 	configureGit(cfg, childProcEnvvars)
 
@@ -657,6 +660,76 @@ func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTok
 	}
 }
 
+func installGpCliCompletion() {
+	supervisorPath, err := os.Executable()
+	if err != nil {
+		log.WithError(err).Error("supervisor bin missing")
+		return
+	}
+
+	basedir := filepath.Dir(supervisorPath)
+	gpcli := filepath.Join(basedir, gitpodCliName)
+
+	if _, err := os.Stat(gpcli); err != nil {
+		log.WithError(err).Error(gitpodCliName, "bin is missing")
+		return
+	}
+
+	write_comp := func(bin string, basedir string, shell string) {
+
+		filename := "gp"
+		if shell == "zsh" {
+			filename = "_" + filename
+		} else if shell == "fish" {
+			filename = filename + "." + shell
+		}
+		target := filepath.Join(basedir, filename)
+
+		// No need to write completion if it already exists
+		if _, err := os.Stat(target); err == nil {
+			return
+		}
+
+		if err := os.MkdirAll(basedir, 0755); err == nil {
+			if file, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644); err == nil {
+				defer file.Close()
+
+				cmd := exec.Command(bin, "completion", shell)
+				cmd.Stdout = file
+
+				if err := cmd.Run(); err != nil {
+					log.WithError(err).Error("Failed to write completion for", shell)
+				}
+			}
+		}
+	}
+
+	// bash
+	bashrc_file := filepath.FromSlash("/etc/bash.bashrc")
+	bash_comp_dir := filepath.FromSlash("/usr/share/bash-completion/completions")
+
+	if _, err := os.Stat(bash_comp_dir); err == nil {
+		write_comp(gpcli, bash_comp_dir, "bash")
+		// Unless bash-completion package is installed, do not use it's path and fallback to system bashrc
+	} else if file, err := os.OpenFile(bashrc_file, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644); err == nil {
+		defer file.Close()
+
+		if _, err := file.WriteString(`
+if test -n "${PS1:-}" && test -n "${BASH:-}" && test "${BASH:-}" != "/bin/sh" && command -v gp 1>/dev/null; then
+	source <(gp completion bash)
+fi
+		`); err != nil {
+			log.Error(err)
+		}
+	}
+
+	// fish
+	write_comp(gpcli, filepath.FromSlash("/usr/local/share/fish/vendor_completions.d"), "fish")
+
+	// zsh
+	write_comp(gpcli, filepath.FromSlash("/usr/local/share/zsh/site-functions"), "zsh")
+}
+
 func createExposedPortsImpl(cfg *Config, gitpodService serverapi.APIInterface) ports.ExposedPortsInterface {
 	if gitpodService == nil {
 		log.Error("auto-port exposure won't work")
@@ -676,7 +749,7 @@ func symlinkBinaries(cfg *Config) {
 	base := filepath.Dir(bin)
 
 	binaries := map[string]string{
-		"gitpod-cli": "gp",
+		gitpodCliName: "gp",
 	}
 	for k, v := range binaries {
 		var (
