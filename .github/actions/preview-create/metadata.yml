@@ -1,0 +1,9 @@
+name: "Create preview environment"
+description: "Creates the infrastructure for a preview environment"
+inputs:
+    sa_key:
+        description: "The service account key to use when authenticating with GCP"
+        required: true
+runs:
+    using: "docker"
+    image: "Dockerfile"

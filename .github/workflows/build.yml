@@ -28,35 +28,13 @@ jobs:
   infrastructure:
     runs-on: [self-hosted]
     needs: [previewctl]
-    container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.3.4
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
+      - name: Create preview environment infrastructure
+        id: create
+        uses: ./.github/actions/preview-create
         with:
-          name: previewctl
-      - name: Configure workspace
-        run: |
-          cp -r /__w/gitpod/gitpod /workspace
-          chmod +x ./previewctl
-          sudo mv ./previewctl /usr/local/bin/
-      - name: Terraform
-        id: terraform
-        shell: bash
-        working-directory: /workspace/gitpod
-        env:
-          HOME: /home/gitpod
-          PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
-          PREVIEW_ENV_DEV_SA_KEY_PATH: /home/gitpod/.config/gcloud/preview-environment-dev-sa.json
-          # Don't prompt user before terraform apply
-          TF_INPUT: 0
-          TF_IN_AUTOMATION: true
-        run: |
-          echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-          gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-
-          previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-          leeway run dev/preview:create-preview
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
 
   build:
     if: ${{ contains(github.event.pull_request.body, '[x] /werft with-github-actions') }}
