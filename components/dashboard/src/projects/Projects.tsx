@@ -14,9 +14,9 @@ import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { ThemeContext } from "../theme-context";
 import { Project } from "@gitpod/gitpod-protocol";
 import Alert from "../components/Alert";
-import { useListProjectsQuery } from "../data/projects/queries";
 import { ProjectListItem } from "./ProjectListItem";
 import { SpinnerLoader } from "../components/Loader";
+import { useListProjectsQuery } from "../data/projects/list-projects-query";
 
 export default function () {
     const location = useLocation();

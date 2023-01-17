@@ -28,7 +28,7 @@ import {
     teamsService,
 } from "../service/public-api";
 import { ConnectError } from "@bufbuild/connect-web";
-import { useRefreshProjects } from "../data/projects/queries";
+import { useRefreshProjects } from "../data/projects/list-projects-query";
 
 export default function NewProject() {
     const location = useLocation();
@@ -226,6 +226,7 @@ export default function NewProject() {
         });
     };
 
+    // TODO: Look into making this a react-query mutation
     const createProject = async (teamOrUser: Team | User, repo: ProviderRepository) => {
         if (!selectedProviderHost) {
             return;
@@ -241,6 +242,7 @@ export default function NewProject() {
                 appInstallationId: String(repo.installationId),
             });
 
+            // TODO: After converting this to a mutation, we can handle invalidating/updating the query in a side effect
             refreshProjects(project.teamId ? { teamId: project.teamId } : { userId: project.userId || "" });
 
             setProject(project);
