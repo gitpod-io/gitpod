@@ -9,11 +9,9 @@ import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url"
 import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import { ContextMenuEntry } from "../components/ContextMenu";
 import { ItemFieldContextMenu } from "../components/ItemsList";
-import {
-    useStopWorkspaceMutation,
-    useToggleWorkspacedPinnedMutation,
-    useToggleWorkspaceSharedMutation,
-} from "../data/workspaces/mutations";
+import { useStopWorkspaceMutation } from "../data/workspaces/stop-workspace-mutation";
+import { useToggleWorkspacedPinnedMutation } from "../data/workspaces/toggle-workspace-pinned-mutation";
+import { useToggleWorkspaceSharedMutation } from "../data/workspaces/toggle-workspace-shared-mutation";
 import { getGitpodService } from "../service/service";
 import ConnectToSSHModal from "./ConnectToSSHModal";
 import { DeleteWorkspaceModal } from "./DeleteWorkspaceModal";
