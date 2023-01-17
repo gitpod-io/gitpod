@@ -21,6 +21,7 @@ import { openAuthorizeWindow } from "../provider-utils";
 import Alert from "../components/Alert";
 import { listAllProjects } from "../service/public-api";
 import { UserContext } from "../user-context";
+import Tooltip from "../components/Tooltip";
 
 export default function () {
     const location = useLocation();
@@ -354,10 +355,24 @@ export default function () {
                                                     <div className="text-base text-gray-500 dark:text-gray-50 font-medium mb-1 truncate">
                                                         {shortCommitMessage(branch.changeTitle)}
                                                     </div>
-                                                    <p>
-                                                        {avatar}Authored {formatDate(branch.changeDate)} ·{" "}
-                                                        {branch.changeHash?.substring(0, 8)}
-                                                    </p>
+                                                    {branch.changeDate ? (
+                                                        <Tooltip
+                                                            className="w-fit"
+                                                            content={`Authored On ${dayjs(branch.changeDate)
+                                                                .toDate()
+                                                                .toLocaleString("hi-IN")}`}
+                                                        >
+                                                            <p>
+                                                                {avatar}Authored {formatDate(branch.changeDate)} ·{" "}
+                                                                {branch.changeHash?.substring(0, 8)}
+                                                            </p>
+                                                        </Tooltip>
+                                                    ) : (
+                                                        <p>
+                                                            {avatar}Authored {formatDate(branch.changeDate)} ·{" "}
+                                                            {branch.changeHash?.substring(0, 8)}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </ItemField>
                                             <ItemField className="flex items-center my-auto">

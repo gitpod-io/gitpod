@@ -24,6 +24,7 @@ import { Link } from "react-router-dom";
 import { Disposable } from "vscode-jsonrpc";
 import { UserContext } from "../user-context";
 import { listAllProjects } from "../service/public-api";
+import Tooltip from "../components/Tooltip";
 
 export default function (props: { project?: Project; isAdminDashboard?: boolean }) {
     const location = useLocation();
@@ -258,7 +259,14 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                                                         alt={p.info.startedBy}
                                                     />
                                                 )}
-                                                Triggered {formatDate(p.info.startedAt)}
+                                                <Tooltip
+                                                    className="w-fit"
+                                                    content={`Triggered At ${dayjs(p.info.startedAt)
+                                                        .toDate()
+                                                        .toLocaleString("hi-IN")}`}
+                                                >
+                                                    Triggered {formatDate(p.info.startedAt)}
+                                                </Tooltip>
                                             </p>
                                         </div>
                                     </ItemField>
@@ -280,8 +288,16 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                                                         alt={p.info.changeAuthor}
                                                     />
                                                 )}
-                                                Authored {formatDate(p.info.changeDate)} ·{" "}
-                                                {p.info.changeHash?.substring(0, 8)}
+
+                                                <Tooltip
+                                                    className="w-fit"
+                                                    content={`Authored On ${dayjs(p.info.changeDate)
+                                                        .toDate()
+                                                        .toLocaleString("hi-IN")}`}
+                                                >
+                                                    Authored {formatDate(p.info.changeDate)} ·{" "}
+                                                    {p.info.changeHash?.substring(0, 8)}
+                                                </Tooltip>
                                             </p>
                                         </div>
                                     </ItemField>

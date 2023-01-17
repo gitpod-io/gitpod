@@ -14,6 +14,7 @@ import { RemoveProjectModal } from "./RemoveProjectModal";
 import { toRemoteURL } from "./render-utils";
 import { prebuildStatusIcon } from "./Prebuilds";
 import { gitpodHostUrl } from "../service/service";
+import Tooltip from "../components/Tooltip";
 
 type ProjectListItemProps = {
     project: Project;
@@ -92,9 +93,14 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                                 {prebuild?.info?.branch}
                             </div>
                             <span className="flex-shrink-0 mx-1 text-gray-400 dark:text-gray-600">·</span>
-                            <div className="flex-shrink-0 text-gray-400 dark:text-gray-500 group-hover:text-gray-800 dark:group-hover:text-gray-300">
-                                {dayjs(prebuild?.info?.startedAt).fromNow()}
-                            </div>
+                            <Tooltip
+                                className="w-fit"
+                                content={dayjs(prebuild?.info?.startedAt).toDate().toLocaleString("hi-IN")}
+                            >
+                                <div className="flex-shrink-0 text-gray-400 dark:text-gray-500 group-hover:text-gray-800 dark:group-hover:text-gray-300">
+                                    {dayjs(prebuild?.info?.startedAt).fromNow()}
+                                </div>
+                            </Tooltip>
                         </Link>
                         <Link
                             to={`/${teamOrUserSlug}/${project.slug || project.name}/prebuilds`}

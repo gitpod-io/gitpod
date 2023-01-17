@@ -235,7 +235,14 @@ export default function () {
                                     </div>
                                 </ItemField>
                                 <ItemField className="my-auto">
-                                    <span className="text-gray-400">{dayjs(m.memberSince).fromNow()}</span>
+                                    <Tooltip
+                                        className="w-fit"
+                                        content={`Joined On ${dayjs(m.memberSince).toDate().toLocaleString("hi-IN")}`}
+                                    >
+                                        <span className="text-gray-400 hover:text-gray-200">
+                                            {dayjs(m.memberSince).fromNow()}
+                                        </span>
+                                    </Tooltip>
                                 </ItemField>
                                 <ItemField className="flex items-center my-auto">
                                     <span className="text-gray-400 capitalize">

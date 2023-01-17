@@ -190,7 +190,7 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
                 </div>
             </ItemField>
             <ItemField className="w-2/12 flex my-auto">
-                <Tooltip content={`Created ${dayjs(desc.workspace.creationTime).fromNow()}`}>
+                <Tooltip content={`Created On ${dayjs(desc.workspace.creationTime).toDate().toLocaleString("hi-IN")}`}>
                     <div className="text-sm w-full text-gray-400 overflow-ellipsis truncate">
                         {dayjs(WorkspaceInfo.lastActiveISODate(desc)).fromNow()}
                     </div>

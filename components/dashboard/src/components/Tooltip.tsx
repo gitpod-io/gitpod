@@ -7,11 +7,13 @@
 import { ReactNode, useCallback, useEffect, useState } from "react";
 import { Portal } from "react-portal";
 import { usePopper } from "react-popper";
+import classNames from "classnames";
 
 export interface TooltipProps {
     children: ReactNode;
     content: string;
     allowWrap?: boolean;
+    className?: string;
 }
 
 function Tooltip(props: TooltipProps) {
@@ -47,7 +49,11 @@ function Tooltip(props: TooltipProps) {
     }, [showTooltipTimeout]);
 
     return (
-        <div onMouseLeave={handleMouseLeave} onMouseEnter={handleMouseEnter} className="relative">
+        <div
+            onMouseLeave={handleMouseLeave}
+            onMouseEnter={handleMouseEnter}
+            className={classNames("relative", props.className)}
+        >
             <div ref={setTriggerEl}>{props.children}</div>
             {expanded ? (
                 <Portal>

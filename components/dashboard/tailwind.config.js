@@ -41,6 +41,7 @@ module.exports = {
             width: {
                 112: "28rem",
                 128: "32rem",
+                "fit": "fit-content"
             },
             maxWidth: {
                 // TODO(andreafalzetti): remove custom ide-modal class once we implement https://github.com/gitpod-io/gitpod/issues/13116
