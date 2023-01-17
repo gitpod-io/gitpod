@@ -5,7 +5,9 @@
  */
 
 import { DisposableCollection, Disposable } from "@gitpod/gitpod-protocol/lib/util/disposable";
-import { FrontendDashboardServiceClient } from "../shared/frontend-dashboard-service";
+import { WorkspaceInfo } from "@gitpod/gitpod-protocol";
+import { isSaaSServerGreaterThan, isSaaS } from "./gitpod-server-compatibility";
+import { serverUrl } from "../shared/urls";
 
 let lastActivity = 0;
 const updateLastActivitiy = () => {
@@ -16,19 +18,31 @@ export const track = (w: Window) => {
     w.document.addEventListener("keydown", updateLastActivitiy, { capture: true });
 };
 
+let pageCloseCompatibile: boolean = false;
+// TODO(ak) remove
+isSaaSServerGreaterThan("main.4124").then((r) => {
+    pageCloseCompatibile = r;
+});
+
 let toCancel: DisposableCollection | undefined;
-export function schedule(frontendDashboardServiceClient: FrontendDashboardServiceClient): void {
+export function schedule(wsInfo: WorkspaceInfo, sessionId: string): void {
     if (toCancel) {
         return;
     }
     toCancel = new DisposableCollection();
     const sendHeartBeat = async (wasClosed?: true) => {
         try {
-            frontendDashboardServiceClient.activeHeartbeat(); // wasClosed
+            await (window.gitpod as any).service.server.sendHeartBeat({
+                instanceId: wsInfo.latestInstance!.id,
+                wasClosed,
+            });
             if (wasClosed) {
-                frontendDashboardServiceClient.trackEvent({
+                (window.gitpod as any).service.server.trackEvent({
                     event: "ide_close_signal",
                     properties: {
+                        workspaceId: wsInfo.workspace.id,
+                        instanceId: wsInfo.latestInstance!.id,
+                        sessionId,
                         clientKind: "supervisor-frontend",
                     },
                 });
@@ -38,6 +52,28 @@ export function schedule(frontendDashboardServiceClient: FrontendDashboardServic
         }
     };
     sendHeartBeat();
+
+    const beaconWorkspacePageClose = () => {
+        const instanceId = wsInfo.latestInstance!.id;
+        const data = { sessionId };
+        const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+        const url = serverUrl.withApi({ pathname: `/auth/workspacePageClose/${instanceId}` }).toString();
+        navigator.sendBeacon(url, blob);
+    };
+
+    const workspacePageCloseCompatible = () => {
+        if (isSaaS && !pageCloseCompatibile) {
+            sendHeartBeat(true);
+            return;
+        }
+        beaconWorkspacePageClose();
+    };
+
+    const unloadListener = () => {
+        workspacePageCloseCompatible();
+    };
+    window.addEventListener("unload", unloadListener);
+    toCancel.push(Disposable.create(() => window.removeEventListener("unload", unloadListener)));
 
     let activityInterval = 30000;
     const intervalHandle = setInterval(() => {

@@ -4,8 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FrontendDashboardServiceClient } from "../shared/frontend-dashboard-service";
 import { serverUrl, workspaceUrl } from "../shared/urls";
+import { GitpodServiceClient } from "./gitpod-service-client";
 const commit = require("../../config.json").commit;
 
 export enum MetricsName {
@@ -31,15 +31,15 @@ interface ReportErrorParam {
     properties?: Record<string, string>;
 }
 export class IDEMetricsServiceClient {
-    static workspaceId? = workspaceUrl.workspaceId;
+    static workspaceId = workspaceUrl.workspaceId;
     static debugWorkspace = workspaceUrl.debugWorkspace;
-    static serviceClient: FrontendDashboardServiceClient;
+    static gitpodServiceClient?: GitpodServiceClient;
 
     static get instanceId(): string {
-        return this.serviceClient.latestStatus?.instanceId ?? "";
+        return this.gitpodServiceClient?.info.latestInstance?.id ?? "";
     }
     static get userId(): string {
-        return this.serviceClient.latestStatus?.loggedUserId ?? "";
+        return this.gitpodServiceClient?.user.id ?? "";
     }
 
     static async addCounter(
@@ -101,7 +101,7 @@ export class IDEMetricsServiceClient {
         }
     }
 
-    static loadWorkspaceInfo(serviceClient: FrontendDashboardServiceClient) {
-        this.serviceClient = serviceClient;
+    static loadWorkspaceInfo(gitpodServiceClient: GitpodServiceClient) {
+        this.gitpodServiceClient = gitpodServiceClient;
     }
 }

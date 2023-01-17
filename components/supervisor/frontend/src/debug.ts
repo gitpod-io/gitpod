@@ -19,7 +19,7 @@ const loadingIDE = new Promise((resolve) => window.addEventListener("DOMContentL
 const toStop = new DisposableCollection();
 
 (async () => {
-    const supervisorServiceClient = SupervisorServiceClient.get();
+    const supervisorServiceClient = SupervisorServiceClient.get(Promise.resolve());
     const [ideStatus] = await Promise.all([
         supervisorServiceClient.ideReady,
         supervisorServiceClient.contentReady,

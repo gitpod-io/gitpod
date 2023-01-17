@@ -9,22 +9,23 @@ import {
     IDEStatusResponse,
     ContentStatusResponse,
 } from "@gitpod/supervisor-api-grpc/lib/status_pb";
+import { GitpodServiceClient } from "./gitpod-service-client";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 
 export class SupervisorServiceClient {
     private static _instance: SupervisorServiceClient | undefined;
-    static get(): SupervisorServiceClient {
+    static get(gitpodAuth: Promise<void>): SupervisorServiceClient {
         if (!SupervisorServiceClient._instance) {
-            SupervisorServiceClient._instance = new SupervisorServiceClient();
+            SupervisorServiceClient._instance = new SupervisorServiceClient(gitpodAuth);
         }
         return SupervisorServiceClient._instance;
     }
 
     readonly supervisorReady = this.checkReady("supervisor");
     readonly ideReady = this.supervisorReady.then(() => this.checkReady("ide"));
-    readonly contentReady = Promise.all([this.supervisorReady]).then(() => this.checkReady("content"));
+    readonly contentReady = Promise.all([this.supervisorReady, this.gitpodAuth]).then(() => this.checkReady("content"));
 
-    private constructor() {}
+    private constructor(private readonly gitpodAuth: Promise<void>) {}
 
     private async checkReady(kind: "content" | "ide" | "supervisor", delay?: boolean): Promise<any> {
         if (delay) {

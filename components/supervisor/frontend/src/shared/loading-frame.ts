@@ -4,12 +4,44 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FrontendDashboardServiceClient } from "./frontend-dashboard-service";
+import { createGitpodService, GitpodClient } from "@gitpod/gitpod-protocol";
+import {
+    WindowMessageReader,
+    WindowMessageWriter,
+} from "@gitpod/gitpod-protocol/lib/messaging/browser/window-connection";
+import { JsonRpcProxyFactory } from "@gitpod/gitpod-protocol/lib/messaging/proxy-factory";
+import { createMessageConnection } from "vscode-jsonrpc/lib/main";
+import { ConsoleLogger } from "vscode-ws-jsonrpc";
+import { isSaaSServerGreaterThan } from "../ide/gitpod-server-compatibility";
 import { startUrl } from "./urls";
 
-export function load(): Promise<{
+let openDesktopLinkSupported = false;
+// TODO(ak) remove after 15.09.2022
+isSaaSServerGreaterThan("main.4275").then((r) => (openDesktopLinkSupported = r));
+
+const serverOrigin = startUrl.url.origin;
+const relocateListener = (event: MessageEvent) => {
+    if (event.origin === serverOrigin && event.data.type == "relocate" && event.data.url) {
+        window.removeEventListener("message", relocateListener);
+        window.location.href = event.data.url;
+    }
+};
+window.addEventListener("message", relocateListener, false);
+
+let resolveSessionId: (sessionId: string) => void;
+const sessionId = new Promise<string>((resolve) => (resolveSessionId = resolve));
+const setSessionIdListener = (event: MessageEvent) => {
+    if (event.origin === serverOrigin && event.data.type == "$setSessionId" && event.data.sessionId) {
+        window.removeEventListener("message", setSessionIdListener);
+        resolveSessionId(event.data.sessionId);
+    }
+};
+window.addEventListener("message", setSessionIdListener, false);
+
+export function load({ gitpodService }: { gitpodService: ReturnType<typeof createGitpodService> }): Promise<{
     frame: HTMLIFrameElement;
-    frontendDashboardServiceClient: FrontendDashboardServiceClient;
+    sessionId: Promise<string>;
+    setState: (state: object) => void;
     openDesktopLink: (link: string) => void;
 }> {
     return new Promise((resolve) => {
@@ -19,25 +51,39 @@ export function load(): Promise<{
         frame.className = "gitpod-frame loading";
         document.body.appendChild(frame);
 
+        const factory = new JsonRpcProxyFactory<GitpodClient>(gitpodService.server);
+        gitpodService.registerClient(factory.createProxy());
+        const reader = new WindowMessageReader("gitpodServer", serverOrigin);
         frame.onload = () => {
-            const frontendDashboardServiceClient = new FrontendDashboardServiceClient(frame.contentWindow!);
+            const frameWindow = frame.contentWindow!;
+            const writer = new WindowMessageWriter("gitpodServer", frameWindow, serverOrigin);
+            const connection = createMessageConnection(reader, writer, new ConsoleLogger());
+            connection.onRequest("$reconnectServer", () => gitpodService.reconnect());
+            factory.listen(connection);
+            const setState = (state: object) => {
+                frameWindow.postMessage({ type: "setState", state }, serverOrigin);
+            };
             const openDesktopLink = (link: string) => {
-                let redirect = false;
-                try {
-                    const desktopLink = new URL(link);
-                    redirect = desktopLink.protocol !== "http:" && desktopLink.protocol !== "https:";
-                } catch (e) {
-                    console.error("invalid desktop link:", e);
-                }
-                // redirect only if points to desktop application
-                // don't navigate browser to another page
-                if (redirect) {
-                    window.location.href = link;
+                if (openDesktopLinkSupported) {
+                    frameWindow.postMessage({ type: "$openDesktopLink", link }, serverOrigin);
                 } else {
-                    window.open(link, "_blank", "noopener");
+                    let redirect = false;
+                    try {
+                        const desktopLink = new URL(link);
+                        redirect = desktopLink.protocol !== "http:" && desktopLink.protocol !== "https:";
+                    } catch (e) {
+                        console.error("invalid desktop link:", e);
+                    }
+                    // redirect only if points to desktop application
+                    // don't navigate browser to another page
+                    if (redirect) {
+                        window.location.href = link;
+                    } else {
+                        window.open(link, "_blank", "noopener");
+                    }
                 }
             };
-            resolve({ frame, frontendDashboardServiceClient, openDesktopLink });
+            resolve({ frame, sessionId, setState, openDesktopLink });
         };
     });
 }
