@@ -49,7 +49,7 @@ func TerminateExistingContainer(ctx context.Context) error {
 	return nil
 }
 
-func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClient, event *utils.EventTracker) (string, error) {
+func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClient, event *utils.AnalyticsEvent) (string, error) {
 	wsInfo, err := supervisorClient.Info.WorkspaceInfo(ctx, &api.WorkspaceInfoRequest{})
 	if err != nil {
 		return utils.Outcome_SystemErr, err
@@ -229,7 +229,7 @@ var buildCmd = &cobra.Command{
 		}
 		defer supervisorClient.Close()
 
-		event := utils.TrackEvent(ctx, supervisorClient, &utils.TrackCommandUsageParams{
+		event := utils.NewAnalyticsEvent(ctx, supervisorClient, &utils.TrackCommandUsageParams{
 			Command: cmd.Name(),
 		})
 

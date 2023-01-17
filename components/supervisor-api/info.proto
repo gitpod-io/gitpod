@@ -91,4 +91,7 @@ message WorkspaceInfoResponse {
     }
     // workspace_class denotes the class of the workspace
     WorkspaceClass workspace_class = 15;
+
+    // owner_id is user id who owns the workspace
+    string owner_id = 16;
 }
