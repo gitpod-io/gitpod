@@ -1,4 +1,4 @@
-name: PoC-Build
+name: Build
 on:
   pull_request:
     types: [opened, synchronize, edited]
