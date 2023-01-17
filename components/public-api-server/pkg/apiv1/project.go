@@ -195,7 +195,7 @@ func projectToAPIResponse(p *protocol.Project) *v1.Project {
 		Name:         p.Name,
 		Slug:         p.Slug,
 		CloneUrl:     p.CloneURL,
-		CreationTime: parseTimeStamp(p.CreationTime),
+		CreationTime: parseGitpodTimeStampOrDefault(p.CreationTime),
 		Settings:     projectSettingsToAPIResponse(p.Settings),
 	}
 }
@@ -228,19 +228,4 @@ func workspaceClassesToAPIResponse(s *protocol.WorkspaceClassesSettings) *v1.Wor
 		Regular:  s.Regular,
 		Prebuild: s.Prebuild,
 	}
-}
-
-func validateProjectID(id string) (uuid.UUID, error) {
-	trimmed := strings.TrimSpace(id)
-
-	if trimmed == "" {
-		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Project ID is a required argument."))
-	}
-
-	projectID, err := uuid.Parse(trimmed)
-	if err != nil {
-		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Project ID must be a valid UUID."))
-	}
-
-	return projectID, nil
 }

@@ -14,9 +14,6 @@ import (
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
-	"github.com/google/uuid"
-	"github.com/relvacode/iso8601"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func NewTeamsService(pool proxy.ServerConnectionPool) *TeamService {
@@ -274,7 +271,7 @@ func teamMembersToAPIResponse(members []*protocol.TeamMemberInfo) []*v1.TeamMemb
 		result = append(result, &v1.TeamMember{
 			UserId:       m.UserId,
 			Role:         teamRoleToAPIResponse(m.Role),
-			MemberSince:  parseTimeStamp(m.MemberSince),
+			MemberSince:  parseGitpodTimeStampOrDefault(m.MemberSince),
 			AvatarUrl:    m.AvatarUrl,
 			FullName:     m.FullName,
 			PrimaryEmail: m.PrimaryEmail,
@@ -299,26 +296,4 @@ func teamInviteToAPIResponse(invite *protocol.TeamMembershipInvite) *v1.TeamInvi
 	return &v1.TeamInvitation{
 		Id: invite.ID,
 	}
-}
-
-func parseTimeStamp(s string) *timestamppb.Timestamp {
-	parsed, err := iso8601.ParseString(s)
-	if err != nil {
-		return &timestamppb.Timestamp{}
-	}
-
-	return timestamppb.New(parsed)
-}
-
-func validateTeamID(s string) (uuid.UUID, error) {
-	if s == "" {
-		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Team ID is a required argument."))
-	}
-
-	teamID, err := uuid.Parse(s)
-	if err != nil {
-		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Team ID must be a valid UUID."))
-	}
-
-	return teamID, nil
 }
