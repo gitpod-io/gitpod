@@ -34,6 +34,10 @@ func NewOIDCClientConfig(t *testing.T, record db.OIDCClientConfig) db.OIDCClient
 		result.ID = record.ID
 	}
 
+	if record.OrganizationID != nil {
+		result.OrganizationID = record.OrganizationID
+	}
+
 	if record.Issuer != "" {
 		result.Issuer = record.Issuer
 	}
