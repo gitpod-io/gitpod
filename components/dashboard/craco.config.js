@@ -23,6 +23,15 @@ module.exports = {
                         cookie: process.env.GP_DEV_COOKIE,
                     },
                 },
+                "/public-api": {
+                    target: "https://" + process.env.GP_DEV_HOST,
+                    ws: true,
+                    headers: {
+                        host: process.env.GP_DEV_HOST,
+                        origin: "https://" + process.env.GP_DEV_HOST,
+                        cookie: process.env.GP_DEV_COOKIE,
+                    },
+                },
             },
         },
     })),
