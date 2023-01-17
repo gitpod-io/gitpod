@@ -1,6 +1,7 @@
 # Change Log
 
 ## January 2023
+- Allow renaming teams ([#15754](https://github.com/gitpod-io/gitpod/pull/15754)) - [@svenefftinge](https://github.com/svenefftinge)
 - new command: `gp rebuild` ([#15638](https://github.com/gitpod-io/gitpod/pull/15638)) - [@andreafalzetti](https://github.com/andreafalzetti)
 - feat: `gp docs` in gitpod cli ([#15724](https://github.com/gitpod-io/gitpod/pull/15724)) - [@Siddhant-K-code](https://github.com/Siddhant-K-code)
 - fix-IDEA2022.3-gradle-runIde ([#15646](https://github.com/gitpod-io/gitpod/pull/15646)) - [@zhipengzuo](https://github.com/zhipengzuo)
