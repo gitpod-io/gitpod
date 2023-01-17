@@ -103,6 +103,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
             withEELicense: deploymentConfig.installEELicense,
             workspaceFeatureFlags: workspaceFeatureFlags,
             withSlowDatabase: jobConfig.withSlowDatabase,
+            withDedicatedEmulation: jobConfig.withDedicatedEmulation,
         });
         try {
             werft.log(installerSlices.INSTALL, "deploying using installer");

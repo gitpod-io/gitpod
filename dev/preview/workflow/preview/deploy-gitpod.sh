@@ -29,6 +29,7 @@ GITPOD_ANALYTICS="${GITPOD_ANALYTICS:-}"
 GITPOD_WITH_EE_LICENSE="${GITPOD_WITH_EE_LICENSE:-true}"
 GITPOD_WORKSPACE_FEATURE_FLAGS="${GITPOD_WORKSPACE_FEATURE_FLAGS:-}"
 GITPOD_WITH_SLOW_DATABASE="${GITPOD_WITH_SLOW_DATABASE:-false}"
+GITPOD_WITH_DEDICATED_EMU="${GITPOD_WITH_DEDICATED_EMU:-false}"
 
 if [[ "${VERSION:-}" == "" ]]; then
   if [[ ! -f  /tmp/local-dev-version ]]; then
@@ -333,24 +334,29 @@ yq w -i "${INSTALLER_CONFIG_PATH}" observability.tracing.endpoint "${TRACING_END
 #
 # configureAuthProviders
 #
-for row in $(kubectl --kubeconfig "$DEV_KUBE_PATH" --context "${DEV_KUBE_CONTEXT}" get secret preview-envs-authproviders-harvester --namespace=keys -o jsonpath="{.data.authProviders}" \
-| base64 -d -w 0 \
-| yq r - authProviders -j \
-| jq -r 'to_entries | .[] | @base64'); do
-    key=$(echo "${row}" | base64 -d | jq -r '.key')
-    providerId=$(echo "$row" | base64 -d | jq -r '.value.id | ascii_downcase')
-    data=$(echo "$row" | base64 -d | yq r - value --prettyPrint)
-    yq w -i "${INSTALLER_CONFIG_PATH}" authProviders["$key"].kind "secret"
-    yq w -i "${INSTALLER_CONFIG_PATH}" authProviders["$key"].name "$providerId"
 
-    kubectl create secret generic "$providerId" \
-        --namespace "${PREVIEW_NAMESPACE}" \
-        --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-        --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-        --from-literal=provider="$data" \
-        --dry-run=client -o yaml | \
-        kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" replace --force -f -
-done
+if [[ "${GITPOD_WITH_DEDICATED_EMU}" != "true" ]]
+then
+  for row in $(kubectl --kubeconfig "$DEV_KUBE_PATH" --context "${DEV_KUBE_CONTEXT}" get secret preview-envs-authproviders-harvester --namespace=keys -o jsonpath="{.data.authProviders}" \
+  | base64 -d -w 0 \
+  | yq r - authProviders -j \
+  | jq -r 'to_entries | .[] | @base64'); do
+      key=$(echo "${row}" | base64 -d | jq -r '.key')
+      providerId=$(echo "$row" | base64 -d | jq -r '.value.id | ascii_downcase')
+      data=$(echo "$row" | base64 -d | yq r - value --prettyPrint)
+      yq w -i "${INSTALLER_CONFIG_PATH}" authProviders["$key"].kind "secret"
+      yq w -i "${INSTALLER_CONFIG_PATH}" authProviders["$key"].name "$providerId"
+
+      kubectl create secret generic "$providerId" \
+          --namespace "${PREVIEW_NAMESPACE}" \
+          --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+          --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+          --from-literal=provider="$data" \
+          --dry-run=client -o yaml | \
+          kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" replace --force -f -
+  done
+fi
+
 
 #
 # configureStripeAPIKeys
