@@ -15,7 +15,6 @@ import (
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 )
 
 func cronjob(ctx *common.RenderContext) ([]runtime.Object, error) {
@@ -24,12 +23,9 @@ func cronjob(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	platformTelemetryData := "unknown"
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.Telemetry != nil && cfg.Telemetry.Data.Platform != "" {
-			platformTelemetryData = cfg.Telemetry.Data.Platform
-		}
-		return nil
-	})
+	if ctx.Config.Telemetry != nil && ctx.Config.Telemetry.Data != nil && ctx.Config.Telemetry.Data.Platform != "" {
+		platformTelemetryData = ctx.Config.Telemetry.Data.Platform
+	}
 
 	installationTelemetryComponent := fmt.Sprintf("%s-telemetry", Component)
 
