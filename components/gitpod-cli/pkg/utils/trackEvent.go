@@ -6,13 +6,12 @@ package utils
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
-	gitpod "github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpod"
+	"github.com/gitpod-io/gitpod/common-go/analytics"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
-	serverapi "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -47,17 +46,19 @@ type TrackCommandUsageParams struct {
 	Outcome            string `json:"outcome,omitempty"`
 }
 
-type EventTracker struct {
+type AnalyticsEvent struct {
 	Data             *TrackCommandUsageParams
 	startTime        time.Time
-	serverClient     *serverapi.APIoverJSONRPC
 	supervisorClient *supervisor.SupervisorClient
+	ownerId          string
+	w                analytics.Writer
 }
 
-func TrackEvent(ctx context.Context, supervisorClient *supervisor.SupervisorClient, cmdParams *TrackCommandUsageParams) *EventTracker {
-	tracker := &EventTracker{
+func NewAnalyticsEvent(ctx context.Context, supervisorClient *supervisor.SupervisorClient, cmdParams *TrackCommandUsageParams) *AnalyticsEvent {
+	event := &AnalyticsEvent{
 		startTime:        time.Now(),
 		supervisorClient: supervisorClient,
+		w:                analytics.NewFromEnvironment(),
 	}
 
 	wsInfo, err := supervisorClient.Info.WorkspaceInfo(ctx, &api.WorkspaceInfoRequest{})
@@ -66,15 +67,9 @@ func TrackEvent(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		return nil
 	}
 
-	serverClient, err := gitpod.ConnectToServer(ctx, wsInfo, []string{"function:trackEvent"})
-	if err != nil {
-		log.WithError(err).Fatal("error connecting to server")
-		return nil
-	}
+	event.ownerId = wsInfo.OwnerId
 
-	tracker.serverClient = serverClient
-
-	tracker.Data = &TrackCommandUsageParams{
+	event.Data = &TrackCommandUsageParams{
 		Command:     cmdParams.Command,
 		Duration:    0,
 		WorkspaceId: wsInfo.WorkspaceId,
@@ -83,40 +78,49 @@ func TrackEvent(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		Timestamp:   time.Now().UnixMilli(),
 	}
 
-	return tracker
+	return event
 }
 
-func (t *EventTracker) Set(key string, value interface{}) *EventTracker {
+func (e *AnalyticsEvent) Set(key string, value interface{}) *AnalyticsEvent {
 	switch key {
 	case "Command":
-		t.Data.Command = value.(string)
+		e.Data.Command = value.(string)
 	case "ErrorCode":
-		t.Data.ErrorCode = value.(string)
+		e.Data.ErrorCode = value.(string)
 	case "Duration":
-		t.Data.Duration = value.(int64)
+		e.Data.Duration = value.(int64)
 	case "WorkspaceId":
-		t.Data.WorkspaceId = value.(string)
+		e.Data.WorkspaceId = value.(string)
 	case "InstanceId":
-		t.Data.InstanceId = value.(string)
+		e.Data.InstanceId = value.(string)
 	case "ImageBuildDuration":
-		t.Data.ImageBuildDuration = value.(int64)
+		e.Data.ImageBuildDuration = value.(int64)
 	case "Outcome":
-		t.Data.Outcome = value.(string)
+		e.Data.Outcome = value.(string)
 	}
-	return t
+	return e
 }
 
-func (t *EventTracker) Send(ctx context.Context) {
-	t.Set("Duration", time.Since(t.startTime).Milliseconds())
+func (e *AnalyticsEvent) Send(ctx context.Context) {
+	defer e.w.Close()
 
-	event := &serverapi.RemoteTrackMessage{
-		Event:      "gp_command",
-		Properties: t.Data,
-	}
+	e.Set("Duration", time.Since(e.startTime).Milliseconds())
 
-	err := t.serverClient.TrackEvent(ctx, event)
+	data := make(map[string]interface{})
+	jsonData, err := json.Marshal(e.Data)
 	if err != nil {
-		LogError(ctx, err, "Could not track gp command event", t.supervisorClient)
+		LogError(ctx, err, "Could not marshal event data", e.supervisorClient)
 		return
 	}
+	err = json.Unmarshal(jsonData, &data)
+	if err != nil {
+		LogError(ctx, err, "Could not unmarshal event data", e.supervisorClient)
+		return
+	}
+
+	e.w.Track(analytics.TrackMessage{
+		Identity:   analytics.Identity{UserID: e.ownerId},
+		Event:      "gp_command",
+		Properties: data,
+	})
 }
