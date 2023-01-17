@@ -28,13 +28,13 @@ pod:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.3.4
       workingDir: /workspace
       imagePullPolicy: IfNotPresent
-    resources:
-      requests:
-        memory: "2Gi"
-        cpu: "1"
-      limits:
-        memory: "2Gi"
-        cpu: "1"
+      resources:
+        requests:
+          memory: "2Gi"
+          cpu: "1"
+        limits:
+          memory: "2Gi"
+          cpu: "1"
       volumeMounts:
         - name: gcp-sa
           mountPath: /mnt/secrets/gcp-sa
