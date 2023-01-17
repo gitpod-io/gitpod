@@ -137,7 +137,7 @@ func (s *Workspace) MarkInitDone(ctx context.Context) (err error) {
 	// We persist before changing state so that we only mark everything as ready
 	// if we actually have a persistent workspace. Otherwise we might have wsman thinking
 	// something different than a restarted ws-daemon.
-	err = s.persist()
+	err = s.Persist()
 	if err != nil {
 		return xerrors.Errorf("cannot mark init done: %w", err)
 	}
@@ -153,7 +153,7 @@ func (s *Workspace) MarkInitDone(ctx context.Context) (err error) {
 	}
 
 	// Now that the rest of the world know's we're ready, we have to remember that ourselves.
-	err = s.persist()
+	err = s.Persist()
 	if err != nil {
 		return xerrors.Errorf("cannot mark init done: %w", err)
 	}
@@ -167,19 +167,24 @@ func (s *Workspace) WaitOrMarkForDisposal(ctx context.Context) (done bool, repo 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "workspace.WaitOrMarkForDisposal")
 	defer tracing.FinishSpan(span, &err)
 
+	log.Info("waitOrMark")
+
 	s.stateLock.Lock()
 	if s.state == WorkspaceDisposed {
+		log.Info("waitOrMark: already disposed")
 		s.stateLock.Unlock()
 		return true, nil, nil
 	} else if s.state != WorkspaceDisposing {
 		s.state = WorkspaceDisposing
+		log.Info("waitOrMark: need to dispose")
 		s.stateLock.Unlock()
 
-		err = s.persist()
+		err = s.Persist()
 		if err != nil {
 			return false, nil, xerrors.Errorf("cannot mark as disposing: %w", err)
 		}
 
+		log.Info("waitOrMark: run hooks")
 		err = s.store.runLifecycleHooks(ctx, s)
 		if err != nil {
 			return false, nil, err
@@ -187,8 +192,10 @@ func (s *Workspace) WaitOrMarkForDisposal(ctx context.Context) (done bool, repo 
 
 		return false, nil, nil
 	}
+	log.Info("waitOrMark: unlock")
 	s.stateLock.Unlock()
 
+	log.Info("waitOrMark: wait for condition")
 	s.operatingCondition.L.Lock()
 	s.operatingCondition.Wait()
 	done = true
@@ -262,7 +269,7 @@ func (s *Workspace) SetGitStatus(status *csapi.GitStatus) error {
 	s.LastGitStatus = status
 	s.stateLock.Unlock()
 
-	return s.persist()
+	return s.Persist()
 }
 
 // UpdateGitStatus attempts to update the LastGitStatus from the workspace's local working copy.
@@ -307,7 +314,7 @@ func (s *Workspace) UpdateGitStatus(ctx context.Context, persistentVolumeClaim b
 		s.LastGitStatus = toGitStatus(stat)
 	}
 
-	err = s.persist()
+	err = s.Persist()
 	if err != nil {
 		log.WithError(err).WithFields(s.OWI()).Warn("cannot persist latest Git status")
 		err = nil
@@ -346,7 +353,7 @@ func (s *Workspace) persistentStateLocation() string {
 	return filepath.Join(s.store.Location, fmt.Sprintf("%s.workspace.json", s.InstanceID))
 }
 
-func (s *Workspace) persist() error {
+func (s *Workspace) Persist() error {
 	s.stateLock.RLock()
 	fc, err := json.Marshal(persistentWorkspace{s, s.state})
 	s.stateLock.RUnlock()
