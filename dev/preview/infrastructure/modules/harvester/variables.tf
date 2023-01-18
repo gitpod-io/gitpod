@@ -5,7 +5,7 @@ variable "preview_name" {
 
 variable "kubeconfig_path" {
   type        = string
-  default     = "~/.kube/config"
+  default     = "/home/gitpod/.kube/config"
   description = "The path to the kubernetes config"
 }
 
@@ -15,22 +15,43 @@ variable "harvester_kube_context" {
   description = "The name of the harvester kube context"
 }
 
+variable "preview_namespace" {
+  type = string
+}
+
 variable "dev_kube_context" {
   type        = string
   default     = "dev"
   description = "The name of the dev kube context"
 }
 
+variable "vm_memory" {
+  type        = string
+  default     = "12Gi"
+  description = "Memory for the VM"
+}
+
+variable "vm_cpu" {
+  type        = number
+  default     = 6
+  description = "CPU for the VM"
+}
+
+variable "ssh_key" {
+  type        = string
+  description = "ssh public key used for access to the vm"
+}
+
+variable "vm_image" {
+  type        = string
+  description = "The VM image"
+  default     = "gitpod-k3s-202209251218"
+}
+
 variable "harvester_ingress_ip" {
   type        = string
   default     = "159.69.172.117"
   description = "Ingress IP in Harvester cluster"
-}
-
-variable "vmi" {
-  type        = string
-  description = "The VM image"
-  default     = "gitpod-k3s-202209251218"
 }
 
 variable "cert_issuer" {

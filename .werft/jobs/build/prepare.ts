@@ -71,7 +71,7 @@ async function createVM(werft: Werft, config: JobConfig) {
         werft.log(prepareSlices.BOOT_VM, "Cleaning previously created VM");
         // -replace=... forces recreation of the resource
         await execStream(`${variables} \
-                                   TF_CLI_ARGS_plan=-replace=harvester_virtualmachine.harvester \
+                                   TF_CLI_ARGS_plan=-replace=module.preview_harvester[0].harvester_virtualmachine.harvester \
                                    leeway run dev/preview:create-preview`, {slice: prepareSlices.BOOT_VM});
     }
 
