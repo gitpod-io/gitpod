@@ -42,12 +42,15 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	_, _, databaseSecretMountPath := common.DatabaseEnvSecret(ctx.Config)
+
 	cfg := config.Configuration{
 		GitpodServiceURL:                  fmt.Sprintf("ws://%s.%s.svc.cluster.local:%d", server.Component, ctx.Namespace, server.ContainerPort),
 		StripeWebhookSigningSecretPath:    stripeSecretPath,
 		PersonalAccessTokenSigningKeyPath: personalAccessTokenSigningKeyPath,
 		OIDCServiceAddress:                net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", iam.Component, ctx.Namespace), strconv.Itoa(iam.GRPCServicePort)),
 		BillingServiceAddress:             net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", usage.Component, ctx.Namespace), strconv.Itoa(usage.GRPCServicePort)),
+		DatabaseConfigPath:                databaseSecretMountPath,
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{

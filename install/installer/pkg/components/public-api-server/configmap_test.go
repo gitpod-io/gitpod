@@ -43,6 +43,7 @@ func TestConfigMap(t *testing.T) {
 		OIDCServiceAddress:                fmt.Sprintf("iam.%s.svc.cluster.local:9001", ctx.Namespace),
 		StripeWebhookSigningSecretPath:    stripeSecretPath,
 		PersonalAccessTokenSigningKeyPath: personalAccessTokenSigningKeyPath,
+		DatabaseConfigPath:                "/secrets/database-config",
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{
