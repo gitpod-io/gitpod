@@ -228,6 +228,7 @@ func (wsm *WorkspaceManagerServer) StopWorkspace(ctx context.Context, req *wsman
 			Type:               string(workspacev1.WorkspaceConditionStoppedByRequest),
 			Status:             metav1.ConditionTrue,
 			LastTransitionTime: metav1.Now(),
+			Reason:             "unknown",
 		})
 		return nil
 	})
