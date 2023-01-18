@@ -169,6 +169,6 @@ The configuration has a required `kind` parameter, which is used to generate dif
 | Meta      | This is the `WebApp` and `IDE` components combined. This exists for historical reasons and should be considered deprecated. Used for multi-cluster deployments.          |
 | WebApp    | Components deployed to nodes with the `gitpod.io/workload_meta` label.                                                                                                   |
 | IDE       | Components deployed to nodes with the `gitpod.io/workload_ide` label.                                                                                                    |
-| Workspace | Components deployed to nodes with the `gitpod.io/workload_workspace_headless`, `gitpod.io/workload_workspace_regular` or `gitpod.io/workload_workspace_services` labels. |
+| Workspace | Components deployed to nodes with the `gitpod.io/workload_workspace_headless`, `gitpod.io/workload_workspace_regular` or `gitpod.io/workload_services` labels. |
 
 ---

@@ -261,5 +261,6 @@ run_telemetry 2>&1 &
   --node-label gitpod.io/workload_meta=true \
   --node-label gitpod.io/workload_ide=true \
   --node-label gitpod.io/workload_workspace_services=true \
+  --node-label gitpod.io/workload_services=true \
   --node-label gitpod.io/workload_workspace_regular=true \
   --node-label gitpod.io/workload_workspace_headless=true

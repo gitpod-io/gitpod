@@ -70,6 +70,7 @@ resource "google_container_node_pool" "services" {
       "gitpod.io/workload_meta"               = true
       "gitpod.io/workload_ide"                = true
       "gitpod.io/workload_workspace_services" = true
+      "gitpod.io/workload_services"           = true
     }
 
     preemptible  = false
