@@ -653,9 +653,6 @@ data:
             "userNamespaces": {
               "seccompProfileInstaller": {
                 "version": "test"
-              },
-              "shiftfsModuleLoader": {
-                "version": "test"
               }
             }
           },

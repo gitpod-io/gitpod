@@ -92,11 +92,6 @@ EOF
     echo "Gitpod: Generate the base Installer config"
     /app/installer config init --overwrite
 
-    if [ "${INSTALLER_DRY_RUN}" != "true" ]; then
-        echo "Gitpod: auto-detecting ShiftFS support on host machine"
-        /app/installer config cluster shiftfs
-    fi
-
     echo "Gitpod: auto-detecting containerd settings on host machine"
     /app/installer config files containerd
 
