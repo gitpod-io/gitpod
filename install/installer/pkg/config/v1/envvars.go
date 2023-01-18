@@ -267,7 +267,7 @@ func (v version) BuildFromEnvvars(in interface{}) error {
 			URL: envvars.RegistryExternalURL,
 		}
 
-		if envvars.RegistryInClusterStorageS3CertName != "" {
+		if envvars.RegistryExternalCertName != "" {
 			cfg.ContainerRegistry.External.Certificate = &ObjectRef{
 				Kind: ObjectRefSecret,
 				Name: envvars.RegistryExternalCertName,
