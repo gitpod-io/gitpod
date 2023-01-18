@@ -6,7 +6,6 @@ package controller
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -29,8 +28,6 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/quota"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
-	"github.com/opencontainers/go-digest"
-	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
@@ -93,7 +90,7 @@ func NewWorkspaceController(c client.Client, opts WorkspaceControllerOpts) (*Wor
 		return nil, err
 	}
 
-	waitingTimeHist, waitingTimeoutCounter, err := content.RegisterConcurrentBackupMetrics(opts.MetricsRegistry)
+	waitingTimeHist, waitingTimeoutCounter, err := content.RegisterConcurrentBackupMetrics(opts.MetricsRegistry, "_mk2")
 	if err != nil {
 		return nil, err
 	}
@@ -179,8 +176,14 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 		}
 	}
 
+	log.WithValues("workspaceID", workspace.Name, "runtime", workspace.Status.Runtime).Info("CHECKING PHASE")
+
 	if workspace.Status.Phase == workspacev1.WorkspacePhaseStopping {
+		log.WithValues("workspaceID", workspace.Name, "runtime", workspace.Status.Runtime).Info("DISPOSING WORKSPACE")
 		disposeErr := wsc.disposeWorkspace(ctx, &workspace)
+		if disposeErr != nil {
+			log.Error(disposeErr, "failed to dispose workspace", "workspace", workspace.Name)
+		}
 
 		err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 			var workspace workspacev1.Workspace
@@ -306,30 +309,36 @@ func (wsc *WorkspaceController) initWorkspaceContent(ctx context.Context, ws *wo
 }
 
 func (wsc *WorkspaceController) disposeWorkspace(ctx context.Context, ws *workspacev1.Workspace) error {
+	log := log.FromContext(ctx)
+
 	sess := wsc.store.Get(ws.Name)
 	if sess == nil {
 		return status.Error(codes.NotFound, fmt.Sprintf("cannot find workspace %s during DisposeWorkspace", ws.Name))
 	}
 
+	log.Info("get condition")
+
 	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)); c == nil || c.Status == metav1.ConditionFalse {
 		return xerrors.Errorf("workspace content was never ready")
 	}
 
+	log.Info("wait disposal")
+
 	// Maybe there's someone else already trying to dispose the workspace.
 	// In that case we'll simply wait for that to happen.
-	done, repo, err := sess.WaitOrMarkForDisposal(ctx)
-	if err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
+	// done, repo, err := sess.WaitOrMarkForDisposal(ctx)
+	// if err != nil {
+	// 	return status.Error(codes.Internal, err.Error())
+	// }
 
-	if done {
-		ws.Status.GitStatus = toWorkspaceGitStatus(repo)
-		return nil
-	}
+	// if done {
+	// 	ws.Status.GitStatus = toWorkspaceGitStatus(repo)
+	// 	return nil
+	// }
 
 	// todo(thomas) check when logs need to be backed up
 	if ws.Spec.Type == workspacev1.WorkspaceTypePrebuild {
-		err = wsc.uploadWorkspaceLogs(ctx, ws)
+		err := wsc.uploadWorkspaceLogs(ctx, ws)
 		if err != nil {
 			// we do not fail the workspace yet because we still might succeed with its content!
 			glog.WithError(err).Error("log backup failed")
@@ -340,14 +349,18 @@ func (wsc *WorkspaceController) disposeWorkspace(ctx context.Context, ws *worksp
 		return xerrors.Errorf("workspace has no remote storage")
 	}
 
-	err = wsc.uploadWorkspaceContent(ctx, ws, sess)
+	log.Info("upload workspace content")
+
+	err := wsc.uploadWorkspaceContent(ctx, ws, sess)
 	if err != nil {
 		glog.WithError(err).Error("final backup failed")
 		return xerrors.Errorf("final backup failed for workspace %s", ws.Name)
 	}
 
+	log.Info("update git status")
+
 	// Update the git status prior to deleting the workspace
-	repo, err = wsc.UpdateGitStatus(ctx, ws, sess)
+	repo, err := wsc.UpdateGitStatus(ctx, ws, sess)
 	if err != nil {
 		// do not fail workspace because we were unable to get git status
 		// which can happen for various reasons, including user corrupting his .git folder somehow
@@ -426,10 +439,7 @@ func (wsc *WorkspaceController) uploadWorkspaceLogs(ctx context.Context, ws *wor
 }
 
 func (wsc *WorkspaceController) uploadWorkspaceContent(ctx context.Context, ws *workspacev1.Workspace, sess *session.Workspace) (err error) {
-	var (
-		backupName = storage.DefaultBackup
-		mfName     = storage.DefaultBackupManifest
-	)
+	var backupName = storage.DefaultBackup
 
 	// Avoid too many simultaneous backups in order to avoid excessive memory utilization.
 	waitStart := time.Now()
@@ -451,7 +461,6 @@ func (wsc *WorkspaceController) uploadWorkspaceContent(ctx context.Context, ws *
 	var (
 		loc  = sess.Location
 		opts []storage.UploadOption
-		mf   csapi.WorkspaceContentManifest
 	)
 
 	err = os.Remove(filepath.Join(sess.Location, wsinit.WorkspaceReadyFile))
@@ -467,9 +476,8 @@ func (wsc *WorkspaceController) uploadWorkspaceContent(ctx context.Context, ws *
 	}
 
 	var (
-		tmpf       *os.File
-		tmpfSize   int64
-		tmpfDigest digest.Digest
+		tmpf     *os.File
+		tmpfSize int64
 	)
 
 	err = retryIfErr(ctx, wsc.opts.ContentConfig.Backup.Attempts, glog.WithFields(sess.OWI()).WithField("op", "create archive"), func(ctx context.Context) (err error) {
@@ -504,10 +512,6 @@ func (wsc *WorkspaceController) uploadWorkspaceContent(ctx context.Context, ws *
 		if err != nil {
 			return
 		}
-		tmpfDigest, err = digest.FromReader(tmpf)
-		if err != nil {
-			return
-		}
 
 		stat, err := tmpf.Stat()
 		if err != nil {
@@ -528,24 +532,8 @@ func (wsc *WorkspaceController) uploadWorkspaceContent(ctx context.Context, ws *
 		}
 	}()
 
-	var (
-		layerBucket string
-		layerObject string
-	)
 	err = retryIfErr(ctx, wsc.opts.ContentConfig.Backup.Attempts, glog.WithFields(sess.OWI()).WithField("op", "upload layer"), func(ctx context.Context) (err error) {
-		layerUploadOpts := opts
-		if sess.FullWorkspaceBackup {
-			// we deliberately ignore the other opload options here as FWB workspace trailing doesn't make sense
-			layerUploadOpts = []storage.UploadOption{
-				storage.WithAnnotations(map[string]string{
-					storage.ObjectAnnotationDigest:             tmpfDigest.String(),
-					storage.ObjectAnnotationUncompressedDigest: tmpfDigest.String(),
-					storage.ObjectAnnotationOCIContentType:     csapi.MediaTypeUncompressedLayer,
-				}),
-			}
-		}
-
-		layerBucket, layerObject, err = rs.Upload(ctx, tmpf.Name(), backupName, layerUploadOpts...)
+		_, _, err = rs.Upload(ctx, tmpf.Name(), backupName, opts...)
 		if err != nil {
 			return
 		}
@@ -554,58 +542,6 @@ func (wsc *WorkspaceController) uploadWorkspaceContent(ctx context.Context, ws *
 	})
 	if err != nil {
 		return xerrors.Errorf("cannot upload workspace content: %w", err)
-	}
-
-	err = retryIfErr(ctx, wsc.opts.ContentConfig.Backup.Attempts, glog.WithFields(sess.OWI()).WithField("op", "upload manifest"), func(ctx context.Context) (err error) {
-		if !sess.FullWorkspaceBackup {
-			return
-		}
-
-		ls := make([]csapi.WorkspaceContentLayer, len(mf.Layers), len(mf.Layers)+1)
-		copy(ls, mf.Layers)
-		ls = append(ls, csapi.WorkspaceContentLayer{
-			Bucket:     layerBucket,
-			Object:     layerObject,
-			DiffID:     tmpfDigest,
-			InstanceID: sess.InstanceID,
-			Descriptor: ociv1.Descriptor{
-				MediaType: csapi.MediaTypeUncompressedLayer,
-				Digest:    tmpfDigest,
-				Size:      tmpfSize,
-			},
-		})
-
-		mf, err := json.Marshal(csapi.WorkspaceContentManifest{
-			Type:   mf.Type,
-			Layers: append(mf.Layers, ls...),
-		})
-		if err != nil {
-			return err
-		}
-		glog.WithFields(sess.OWI()).WithField("manifest", mf).Debug("uploading content manifest")
-
-		tmpmf, err := os.CreateTemp(wsc.opts.ContentConfig.TmpDir, fmt.Sprintf("mf-%s-*.json", sess.InstanceID))
-		if err != nil {
-			return err
-		}
-		defer os.Remove(tmpmf.Name())
-		_, err = tmpmf.Write(mf)
-		tmpmf.Close()
-		if err != nil {
-			return err
-		}
-
-		// Upload new manifest without opts as don't want to overwrite the layer trail with the manifest.
-		// We have to make sure we use the right content type s.t. we can identify this as manifest later on,
-		// e.g. when distinguishing between legacy snapshots and new manifests.
-		_, _, err = rs.Upload(ctx, tmpmf.Name(), mfName, storage.WithContentType(csapi.ContentTypeManifest))
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		return xerrors.Errorf("cannot upload workspace content manifest: %w", err)
 	}
 
 	return nil
