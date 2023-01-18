@@ -41,8 +41,16 @@ jobs:
     runs-on: [self-hosted]
     outputs:
       version: ${{ steps.leeway.outputs.version }}
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: test
+          MYSQL_TCP_PORT: 23306
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.3.4
+      env:
+        DB_HOST: mysql
     steps:
       - uses: actions/checkout@v3
       - name: Configure workspace

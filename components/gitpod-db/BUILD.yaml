@@ -50,7 +50,6 @@ packages:
       - :migrations
       - install/installer/pkg/components/database/incluster/init:init-scripts
     env:
-      - DB_HOST=127.0.0.1
       - DB_PORT=23306
       - DB_USER=root
       - DB_PASSWORD=test
