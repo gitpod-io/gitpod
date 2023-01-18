@@ -102,9 +102,11 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 		}
 		if hasFinalizer {
 			// TODO(cw): if the condition isn't present or not true, we should re-trigger the reconiliation
-			if conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) {
+			if conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) ||
+				conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) {
 				workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
 			}
+
 		} else {
 			// We do this independently of the dispostal status because pods only get their finalizer
 			// once they're running. If they fail before they reach the running phase we'll never see
@@ -134,7 +136,6 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 		}
 
 	case pod.Status.Phase == corev1.PodRunning:
-		// TODO(cw): port interrupted handling - after making sure this is even still relevant
 		var ready bool
 		for _, cs := range pod.Status.ContainerStatuses {
 			if cs.Ready {
