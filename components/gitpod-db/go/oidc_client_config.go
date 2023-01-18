@@ -90,3 +90,22 @@ func GetOIDCClientConfig(ctx context.Context, conn *gorm.DB, id uuid.UUID) (OIDC
 
 	return config, nil
 }
+
+func ListOIDCClientConfigsForOrganization(ctx context.Context, conn *gorm.DB, organizationID uuid.UUID) ([]OIDCClientConfig, error) {
+	if organizationID == uuid.Nil {
+		return nil, errors.New("organization ID is a required argument")
+	}
+
+	var results []OIDCClientConfig
+
+	tx := conn.
+		WithContext(ctx).
+		Where("organizationId = ?", organizationID).
+		Where("deleted = ?", 0).
+		Find(&results)
+	if tx.Error != nil {
+		return nil, fmt.Errorf("failed to list oidc client configs for organization %s: %w", organizationID.String(), tx.Error)
+	}
+
+	return results, nil
+}
