@@ -115,6 +115,7 @@ scripts:
             - name: server
               securityContext:
                 privileged: true
+                allowPrivilegeEscalation: true
                 runAsUser: 0
             serviceAccountName: ws-daemon
       EOF
