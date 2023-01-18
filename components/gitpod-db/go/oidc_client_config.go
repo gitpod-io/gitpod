@@ -102,6 +102,7 @@ func ListOIDCClientConfigsForOrganization(ctx context.Context, conn *gorm.DB, or
 		WithContext(ctx).
 		Where("organizationId = ?", organizationID).
 		Where("deleted = ?", 0).
+		Order("id").
 		Find(&results)
 	if tx.Error != nil {
 		return nil, fmt.Errorf("failed to list oidc client configs for organization %s: %w", organizationID.String(), tx.Error)

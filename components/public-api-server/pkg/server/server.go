@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/bufbuild/connect-go"
@@ -54,6 +55,11 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	dbConn, err := db.Connect(db.ConnectionParamsFromEnv())
 	if err != nil {
 		return fmt.Errorf("failed to establish database connection: %w", err)
+	}
+
+	cipherSet, err := db.NewCipherSetFromKeysInFile(filepath.Join(cfg.DatabaseConfigPath, "encryptionKeys"))
+	if err != nil {
+		return fmt.Errorf("failed to read cipherset from file: %w", err)
 	}
 
 	expClient := experiments.NewClient()
@@ -106,7 +112,14 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	}
 	var oidcService = iam.NewOIDCServiceClient(conn)
 
-	if registerErr := register(srv, connPool, expClient, dbConn, signer, oidcService); registerErr != nil {
+	if registerErr := register(srv, &registerDependencies{
+		connPool:    connPool,
+		expClient:   expClient,
+		dbConn:      dbConn,
+		signer:      signer,
+		oidcService: oidcService,
+		cipher:      cipherSet,
+	}); registerErr != nil {
 		return fmt.Errorf("failed to register services: %w", registerErr)
 	}
 
@@ -117,7 +130,16 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	return nil
 }
 
-func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool, expClient experiments.Client, dbConn *gorm.DB, signer auth.Signer, oidcService iam.OIDCServiceClient) error {
+type registerDependencies struct {
+	connPool    proxy.ServerConnectionPool
+	expClient   experiments.Client
+	dbConn      *gorm.DB
+	signer      auth.Signer
+	oidcService iam.OIDCServiceClient
+	cipher      db.Cipher
+}
+
+func register(srv *baseserver.Server, deps *registerDependencies) error {
 	proxy.RegisterMetrics(srv.MetricsRegistry())
 
 	connectMetrics := NewConnectMetrics()
@@ -134,27 +156,27 @@ func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool, expCl
 		),
 	}
 
-	workspacesRoute, workspacesServiceHandler := v1connect.NewWorkspacesServiceHandler(apiv1.NewWorkspaceService(connPool), handlerOptions...)
+	workspacesRoute, workspacesServiceHandler := v1connect.NewWorkspacesServiceHandler(apiv1.NewWorkspaceService(deps.connPool), handlerOptions...)
 	srv.HTTPMux().Handle(workspacesRoute, workspacesServiceHandler)
 
-	teamsRoute, teamsServiceHandler := v1connect.NewTeamsServiceHandler(apiv1.NewTeamsService(connPool), handlerOptions...)
+	teamsRoute, teamsServiceHandler := v1connect.NewTeamsServiceHandler(apiv1.NewTeamsService(deps.connPool), handlerOptions...)
 	srv.HTTPMux().Handle(teamsRoute, teamsServiceHandler)
 
-	if signer != nil {
-		tokensRoute, tokensServiceHandler := v1connect.NewTokensServiceHandler(apiv1.NewTokensService(connPool, expClient, dbConn, signer), handlerOptions...)
+	if deps.signer != nil {
+		tokensRoute, tokensServiceHandler := v1connect.NewTokensServiceHandler(apiv1.NewTokensService(deps.connPool, deps.expClient, deps.dbConn, deps.signer), handlerOptions...)
 		srv.HTTPMux().Handle(tokensRoute, tokensServiceHandler)
 	}
 
-	userRoute, userServiceHandler := v1connect.NewUserServiceHandler(apiv1.NewUserService(connPool), handlerOptions...)
+	userRoute, userServiceHandler := v1connect.NewUserServiceHandler(apiv1.NewUserService(deps.connPool), handlerOptions...)
 	srv.HTTPMux().Handle(userRoute, userServiceHandler)
 
-	ideClientRoute, ideClientServiceHandler := v1connect.NewIDEClientServiceHandler(apiv1.NewIDEClientService(connPool), handlerOptions...)
+	ideClientRoute, ideClientServiceHandler := v1connect.NewIDEClientServiceHandler(apiv1.NewIDEClientService(deps.connPool), handlerOptions...)
 	srv.HTTPMux().Handle(ideClientRoute, ideClientServiceHandler)
 
-	projectsRoute, projectsServiceHandler := v1connect.NewProjectsServiceHandler(apiv1.NewProjectsService(connPool), handlerOptions...)
+	projectsRoute, projectsServiceHandler := v1connect.NewProjectsServiceHandler(apiv1.NewProjectsService(deps.connPool), handlerOptions...)
 	srv.HTTPMux().Handle(projectsRoute, projectsServiceHandler)
 
-	oidcRoute, oidcServiceHandler := v1connect.NewOIDCServiceHandler(apiv1.NewOIDCService(connPool, expClient, oidcService), handlerOptions...)
+	oidcRoute, oidcServiceHandler := v1connect.NewOIDCServiceHandler(apiv1.NewOIDCService(deps.connPool, deps.expClient, deps.oidcService, deps.dbConn, deps.cipher), handlerOptions...)
 	srv.HTTPMux().Handle(oidcRoute, oidcServiceHandler)
 
 	return nil
