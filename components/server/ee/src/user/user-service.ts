@@ -5,14 +5,7 @@
  */
 
 import { UserService, CheckSignUpParams, CheckTermsParams } from "../../../src/user/user-service";
-import {
-    User,
-    WorkspaceTimeoutDuration,
-    WORKSPACE_TIMEOUT_EXTENDED,
-    WORKSPACE_TIMEOUT_EXTENDED_ALT,
-    WORKSPACE_TIMEOUT_DEFAULT_LONG,
-    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
-} from "@gitpod/gitpod-protocol";
+import { User } from "@gitpod/gitpod-protocol";
 import { inject } from "inversify";
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { AuthException } from "../../../src/auth/errors";
@@ -27,31 +20,6 @@ export class UserServiceEE extends UserService {
     @inject(OssAllowListDB) protected readonly OssAllowListDb: OssAllowListDB;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(Config) protected readonly config: Config;
-
-    public workspaceTimeoutToDuration(timeout: WorkspaceTimeoutDuration): string {
-        switch (timeout) {
-            case WORKSPACE_TIMEOUT_DEFAULT_SHORT:
-                return "30m";
-            case WORKSPACE_TIMEOUT_DEFAULT_LONG:
-                return this.config.workspaceDefaults.timeoutDefault || "60m";
-            case WORKSPACE_TIMEOUT_EXTENDED:
-            case WORKSPACE_TIMEOUT_EXTENDED_ALT:
-                return this.config.workspaceDefaults.timeoutExtended || "180m";
-        }
-    }
-
-    public durationToWorkspaceTimeout(duration: string): WorkspaceTimeoutDuration {
-        switch (duration) {
-            case "30m":
-                return WORKSPACE_TIMEOUT_DEFAULT_SHORT;
-            case this.config.workspaceDefaults.timeoutDefault || "60m":
-                return WORKSPACE_TIMEOUT_DEFAULT_LONG;
-            case this.config.workspaceDefaults.timeoutExtended || "180m":
-                return WORKSPACE_TIMEOUT_EXTENDED_ALT;
-            default:
-                return WORKSPACE_TIMEOUT_DEFAULT_SHORT;
-        }
-    }
 
     async checkSignUp(params: CheckSignUpParams) {
         // todo@at: check if we need an optimization for SaaS here. used to be a no-op there.

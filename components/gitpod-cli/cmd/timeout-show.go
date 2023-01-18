@@ -37,13 +37,11 @@ var showTimeoutCommand = &cobra.Command{
 			fail(err.Error())
 		}
 
-		// Try to use `DurationRaw` but fall back to `Duration` in case of
-		// old server component versions that don't expose it.
-		if res.DurationRaw != "" {
-			fmt.Println("Timeout for current workspace is", res.DurationRaw)
-		} else {
-			fmt.Println("Timeout for current workspace is", res.Duration)
+		duration, err := time.ParseDuration(res.Duration)
+		if err != nil {
+			fail(err.Error())
 		}
+		fmt.Printf("Workspace timeout is set to %d minutes.\n", int(duration.Minutes()))
 	},
 }
 

@@ -353,16 +353,24 @@ export interface ClientHeaderFields {
     clientRegion?: string;
 }
 
-export const WORKSPACE_TIMEOUT_DEFAULT_SHORT = "short";
-export const WORKSPACE_TIMEOUT_DEFAULT_LONG = "long";
-export const WORKSPACE_TIMEOUT_EXTENDED = "extended";
-export const WORKSPACE_TIMEOUT_EXTENDED_ALT = "180m"; // for backwards compatibility since the IDE uses this
-export const WorkspaceTimeoutValues = [
-    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
-    WORKSPACE_TIMEOUT_DEFAULT_LONG,
-    WORKSPACE_TIMEOUT_EXTENDED,
-    WORKSPACE_TIMEOUT_EXTENDED_ALT,
-] as const;
+export type WorkspaceTimeoutDuration = string;
+export namespace WorkspaceTimeoutDuration {
+    export function validate(duration: string): WorkspaceTimeoutDuration {
+        const unit = duration.slice(-1);
+        if (!["m", "h", "d"].includes(unit)) {
+            throw new Error(`Invalid timeout unit: ${unit}`);
+        }
+        const value = parseInt(duration.slice(0, -1));
+        if (isNaN(value) || value <= 0) {
+            throw new Error(`Invalid timeout value: ${duration}`);
+        }
+        return duration;
+    }
+}
+
+export const WORKSPACE_TIMEOUT_DEFAULT_SHORT: WorkspaceTimeoutDuration = "30m";
+export const WORKSPACE_TIMEOUT_DEFAULT_LONG: WorkspaceTimeoutDuration = "60m";
+export const WORKSPACE_TIMEOUT_EXTENDED: WorkspaceTimeoutDuration = "180m";
 
 export const createServiceMock = function <C extends GitpodClient, S extends GitpodServer>(
     methods: Partial<JsonRpcProxy<S>>,
@@ -387,16 +395,12 @@ export const createServerMock = function <C extends GitpodClient, S extends Gitp
     });
 };
 
-type WorkspaceTimeoutDurationTuple = typeof WorkspaceTimeoutValues;
-export type WorkspaceTimeoutDuration = WorkspaceTimeoutDurationTuple[number];
-
 export interface SetWorkspaceTimeoutResult {
     resetTimeoutOnWorkspaces: string[];
 }
 
 export interface GetWorkspaceTimeoutResult {
     duration: WorkspaceTimeoutDuration;
-    durationRaw: string;
     canChange: boolean;
 }
 

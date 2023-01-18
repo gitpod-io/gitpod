@@ -25,7 +25,6 @@ import {
     WorkspaceAndInstance,
     GetWorkspaceTimeoutResult,
     WorkspaceTimeoutDuration,
-    WorkspaceTimeoutValues,
     SetWorkspaceTimeoutResult,
     WorkspaceContext,
     WorkspaceCreationResult,
@@ -374,12 +373,15 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         await this.requireEELicense(Feature.FeatureSetTimeout);
         const user = this.checkUser("setWorkspaceTimeout");
 
-        if (!WorkspaceTimeoutValues.includes(duration)) {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Invalid duration");
-        }
-
         if (!(await this.maySetTimeout(user))) {
             throw new ResponseError(ErrorCodes.PLAN_PROFESSIONAL_REQUIRED, "Plan upgrade is required");
+        }
+
+        let validatedDuration;
+        try {
+            validatedDuration = WorkspaceTimeoutDuration.validate(duration);
+        } catch (err) {
+            throw new ResponseError(ErrorCodes.INVALID_VALUE, "Invalid duration : " + err.message);
         }
 
         const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace(ctx));
@@ -390,36 +392,18 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
         await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "update");
 
-        // if any other running instance has a custom timeout other than the user's default, we'll reset that timeout
         const client = await this.workspaceManagerClientProvider.get(
             runningInstance.region,
             this.config.installationShortname,
         );
-        const defaultTimeout = await this.entitlementService.getDefaultWorkspaceTimeout(user, new Date());
-        const instancesWithReset = runningInstances.filter(
-            (i) => i.workspaceId !== workspaceId && i.status.timeout !== defaultTimeout && i.status.phase === "running",
-        );
-        await Promise.all(
-            instancesWithReset.map(async (i) => {
-                const req = new SetTimeoutRequest();
-                req.setId(i.id);
-                req.setDuration(this.userService.workspaceTimeoutToDuration(defaultTimeout));
-
-                const client = await this.workspaceManagerClientProvider.get(
-                    i.region,
-                    this.config.installationShortname,
-                );
-                return client.setTimeout(ctx, req);
-            }),
-        );
 
         const req = new SetTimeoutRequest();
         req.setId(runningInstance.id);
-        req.setDuration(this.userService.workspaceTimeoutToDuration(duration));
+        req.setDuration(validatedDuration);
         await client.setTimeout(ctx, req);
 
         return {
-            resetTimeoutOnWorkspaces: instancesWithReset.map((i) => i.workspaceId),
+            resetTimeoutOnWorkspaces: [workspace.id],
         };
     }
 
@@ -439,7 +423,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         if (!runningInstance) {
             log.warn({ userId: user.id, workspaceId }, "Can only get keep-alive for running workspaces");
             const duration = WORKSPACE_TIMEOUT_DEFAULT_SHORT;
-            return { duration, durationRaw: this.userService.workspaceTimeoutToDuration(duration), canChange };
+            return { duration, canChange };
         }
         await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "get");
 
@@ -451,10 +435,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             this.config.installationShortname,
         );
         const desc = await client.describeWorkspace(ctx, req);
-        const duration = this.userService.durationToWorkspaceTimeout(desc.getStatus()!.getSpec()!.getTimeout());
-        const durationRaw = this.userService.workspaceTimeoutToDuration(duration);
+        const duration = desc.getStatus()!.getSpec()!.getTimeout();
 
-        return { duration, durationRaw, canChange };
+        return { duration, canChange };
     }
 
     public async isPrebuildDone(ctx: TraceContext, pwsId: string): Promise<boolean> {

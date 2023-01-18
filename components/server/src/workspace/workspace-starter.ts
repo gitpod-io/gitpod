@@ -1483,7 +1483,7 @@ export class WorkspaceStarter {
         spec.setClass(instance.workspaceClass!);
 
         if (workspace.type === "regular") {
-            spec.setTimeout(this.userService.workspaceTimeoutToDuration(await userTimeoutPromise));
+            spec.setTimeout(await userTimeoutPromise);
         }
         spec.setAdmission(admissionLevel);
         const sshKeys = await this.userDB.trace(traceCtx).getSSHPublicKeys(user.id);
