@@ -13,6 +13,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	contentservice "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/toxiproxy"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
@@ -354,6 +355,21 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ReadOnly:  true,
 		})
 	}
+
+	// admin secret
+	volumes = append(volumes, corev1.Volume{
+		Name: "admin-login-key",
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: server.AdminSecretName,
+			},
+		},
+	})
+	volumeMounts = append(volumeMounts, corev1.VolumeMount{
+		Name:      "admin-login-key",
+		MountPath: server.AdminSecretMountPath,
+		ReadOnly:  true,
+	})
 
 	return []runtime.Object{
 		&appsv1.Deployment{

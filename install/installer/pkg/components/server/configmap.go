@@ -234,7 +234,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		MaxConcurrentPrebuildsPerRef:      10,
 		IncrementalPrebuilds:              IncrementalPrebuilds{CommitHistory: 100, RepositoryPasslist: []string{}},
 		BlockNewUsers:                     ctx.Config.BlockNewUsers,
-		MakeNewUsersAdmin:                 false,
 		DefaultBaseImageRegistryWhitelist: defaultBaseImageRegistryWhitelist,
 		RunDbDeleter:                      runDbDeleter,
 		OAuthServer: OAuthServer{
@@ -277,6 +276,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		InactivityPeriodForReposInDays: inactivityPeriodForReposInDays,
 		PATSigningKeyFile:              personalAccessTokenSigningKeyPath,
 		WithoutWorkspaceComponents:     withoutWorkspaceComponents,
+		Admin: AdminConfig{
+			GrantFirstUserAdminRole: true, // existing default
+		},
+		AdminLoginKeyFile: fmt.Sprintf("%s/%s", AdminSecretMountPath, AdminSecretLoginKeyName),
 	}
 
 	fc, err := common.ToJSONString(scfg)
