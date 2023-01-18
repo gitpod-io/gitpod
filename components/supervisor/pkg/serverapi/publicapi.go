@@ -29,7 +29,6 @@ import (
 )
 
 type APIInterface interface {
-	GetOwnerID(ctx context.Context) (ownerID string, err error)
 	GetToken(ctx context.Context, query *gitpod.GetTokenSearchOptions) (res *gitpod.Token, err error)
 	OpenPort(ctx context.Context, port *gitpod.WorkspaceInstancePort) (res *gitpod.WorkspaceInstancePort, err error)
 	InstanceUpdates(ctx context.Context) (<-chan *gitpod.WorkspaceInstance, error)
@@ -50,6 +49,7 @@ type ServiceConfig struct {
 	Endpoint          string
 	InstanceID        string
 	WorkspaceID       string
+	OwnerID           string
 	SupervisorVersion string
 }
 
@@ -57,8 +57,7 @@ type Service struct {
 	cfg         *ServiceConfig
 	experiments experiments.Client
 
-	token   string
-	ownerID string
+	token string
 
 	// gitpodService server API
 	gitpodService gitpod.APIInterface
@@ -126,13 +125,8 @@ func NewServerApiService(ctx context.Context, cfg *ServiceConfig, tknsrv api.Tok
 	// public api
 	service.tryConnToPublicAPI()
 
-	if wsInfo, err := gitpodService.GetWorkspace(ctx, cfg.WorkspaceID); err != nil {
-		log.WithError(err).Error("cannot get workspace info")
-	} else {
-		service.ownerID = wsInfo.Workspace.OwnerID
-	}
 	service.usingPublicAPI.Store(experiments.SupervisorUsePublicAPI(ctx, service.experiments, experiments.Attributes{
-		UserID: service.ownerID,
+		UserID: cfg.OwnerID,
 	}))
 	// start to listen on real instance updates
 	go service.onInstanceUpdates(ctx)
@@ -176,7 +170,7 @@ func (s *Service) observeConfigcatValue(ctx context.Context) {
 			return
 		case <-ticker.C:
 			usePublicAPI := experiments.SupervisorUsePublicAPI(ctx, s.experiments, experiments.Attributes{
-				UserID: s.ownerID,
+				UserID: s.cfg.OwnerID,
 			})
 			if prev := s.usingPublicAPI.Swap(usePublicAPI); prev != usePublicAPI {
 				if usePublicAPI {
@@ -194,7 +188,7 @@ func (s *Service) observeConfigcatValue(ctx context.Context) {
 }
 
 func (s *Service) usePublicAPI(ctx context.Context) bool {
-	if s.publicAPIConn == nil || s.ownerID == "" {
+	if s.publicAPIConn == nil {
 		return false
 	}
 	return s.usingPublicAPI.Load()
@@ -398,35 +392,6 @@ var ConnBackoff = &backoff.ExponentialBackOff{
 	MaxElapsedTime:      0,
 	Stop:                backoff.Stop,
 	Clock:               backoff.SystemClock,
-}
-
-func (s *Service) GetOwnerID(ctx context.Context) (ownerID string, err error) {
-	if s == nil {
-		return "", errNotConnected
-	}
-	if s.ownerID != "" {
-		return s.ownerID, nil
-	}
-
-	workspaceID := s.cfg.WorkspaceID
-	if !s.usePublicAPI(ctx) {
-		resp, err := s.gitpodService.GetWorkspace(ctx, workspaceID)
-		if err != nil {
-			return "", err
-		}
-		s.ownerID = resp.Workspace.OwnerID
-	}
-
-	service := v1.NewWorkspacesServiceClient(s.publicAPIConn)
-	resp, err := service.GetWorkspace(ctx, &v1.GetWorkspaceRequest{
-		WorkspaceId: workspaceID,
-	})
-	if err != nil {
-		return "", err
-	}
-	s.ownerID = resp.Result.OwnerId
-
-	return s.ownerID, nil
 }
 
 func (s *Service) RegisterMetrics(registry *prometheus.Registry) error {

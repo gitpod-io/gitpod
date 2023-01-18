@@ -260,6 +260,7 @@ func Run(options ...RunOption) {
 			Endpoint:          endpoint,
 			InstanceID:        cfg.WorkspaceInstanceID,
 			WorkspaceID:       cfg.WorkspaceID,
+			OwnerID:           cfg.OwnerId,
 			SupervisorVersion: Version,
 		}, tokenService)
 	}
@@ -268,7 +269,7 @@ func Run(options ...RunOption) {
 		desktopIdeReady = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
 	}
 	if !cfg.isHeadless() && !opts.RunGP {
-		go trackReadiness(ctx, gitpodService, telemetry, cfg, cstate, ideReady, desktopIdeReady)
+		go trackReadiness(ctx, telemetry, cfg, cstate, ideReady, desktopIdeReady)
 	}
 	tokenService.provider[KindGit] = []tokenProvider{NewGitTokenProvider(gitpodService, cfg.WorkspaceConfig, notificationService)}
 
@@ -301,8 +302,8 @@ func Run(options ...RunOption) {
 		topService.Observe(ctx)
 
 		if !cfg.isHeadless() && !opts.RunGP {
-			go analyseConfigChanges(ctx, cfg, telemetry, gitpodConfigService, gitpodService)
-			go analysePerfChanges(ctx, cfg, telemetry, topService, gitpodService)
+			go analyseConfigChanges(ctx, cfg, telemetry, gitpodConfigService)
+			go analysePerfChanges(ctx, cfg, telemetry, topService)
 		}
 		if !strings.Contains("ephemeral", cfg.WorkspaceClusterHost) {
 			_, gitpodHost, err := cfg.GitpodAPIEndpoint()
@@ -1611,20 +1612,14 @@ func (a *PerfAnalyzer) analyze(used float64) bool {
 	return true
 }
 
-func analysePerfChanges(ctx context.Context, wscfg *Config, w analytics.Writer, topService *TopService, gitpodAPI serverapi.APIInterface) {
-	ownerID, err := gitpodAPI.GetOwnerID(ctx)
-	if err != nil {
-		log.WithError(err).Error("gitpod perf analytics: failed to resolve ownerId")
-		return
-	}
-
+func analysePerfChanges(ctx context.Context, wscfg *Config, w analytics.Writer, topService *TopService) {
 	analyze := func(analyzer *PerfAnalyzer, used float64) {
 		if !analyzer.analyze(used) {
 			return
 		}
 		log.WithField("buckets", analyzer.buckets).WithField("used", used).WithField("label", analyzer.label).Debug("gitpod perf analytics: changed")
 		w.Track(analytics.TrackMessage{
-			Identity: analytics.Identity{UserID: ownerID},
+			Identity: analytics.Identity{UserID: wscfg.OwnerId},
 			Event:    "gitpod_" + analyzer.label + "_changed",
 			Properties: map[string]interface{}{
 				"used":        used,
@@ -1653,13 +1648,7 @@ func analysePerfChanges(ctx context.Context, wscfg *Config, w analytics.Writer, 
 	}
 }
 
-func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer, cfgobs config.ConfigInterface, gitpodAPI serverapi.APIInterface) {
-	ownerID, err := gitpodAPI.GetOwnerID(ctx)
-	if err != nil {
-		log.WithError(err).Error("gitpod config analytics: failed to resolve ownerId")
-		return
-	}
-
+func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer, cfgobs config.ConfigInterface) {
 	var analyzer *config.ConfigAnalyzer
 	log.Debug("gitpod config analytics: watching...")
 
@@ -1675,7 +1664,7 @@ func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer
 			} else {
 				analyzer = config.NewConfigAnalyzer(log.Log, 5*time.Second, func(field string) {
 					w.Track(analytics.TrackMessage{
-						Identity: analytics.Identity{UserID: ownerID},
+						Identity: analytics.Identity{UserID: wscfg.OwnerId},
 						Event:    "gitpod_config_changed",
 						Properties: map[string]interface{}{
 							"key":         field,
@@ -1692,16 +1681,10 @@ func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer
 	}
 }
 
-func trackReadiness(ctx context.Context, gitpodAPI serverapi.APIInterface, w analytics.Writer, cfg *Config, cstate *InMemoryContentState, ideReady *ideReadyState, desktopIdeReady *ideReadyState) {
-	ownerID, err := gitpodAPI.GetOwnerID(ctx)
-	if err != nil {
-		log.WithError(err).Error("gitpod trackReadiness: failed to resolve ownerId")
-		return
-	}
-
+func trackReadiness(ctx context.Context, w analytics.Writer, cfg *Config, cstate *InMemoryContentState, ideReady *ideReadyState, desktopIdeReady *ideReadyState) {
 	trackFn := func(cfg *Config, kind string) {
 		w.Track(analytics.TrackMessage{
-			Identity: analytics.Identity{UserID: ownerID},
+			Identity: analytics.Identity{UserID: cfg.OwnerId},
 			Event:    "supervisor_readiness",
 			Properties: map[string]interface{}{
 				"kind":        kind,
