@@ -94,6 +94,12 @@ jobs:
         working-directory: /workspace/gitpod
         run: |
           leeway vet --ignore-warnings
+      - name: Get Secrets from GCP
+        id: 'secrets'
+        uses: 'google-github-actions/get-secretmanager-secrets@v1'
+        with:
+          secrets: |-
+            segment-io-token:gitpod-core-dev/segment-io-token
       - name: Leeway Build components:all-ci
         id: leeway
         shell: bash
@@ -101,13 +107,14 @@ jobs:
         env:
           JAVA_HOME: /home/gitpod/.sdkman/candidates/java/current
           VERSION: "${{ steps.branches.outputs.sanitized-branch-name }}.${{github.run_number}}"
+          SEGMENT_IO_TOKEN: '${{ steps.secrets.outputs.segment-io-token }}'
         run: |
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
           RESULT=0
           leeway build components:all-ci \
             -Dversion=$VERSION \
-            -DSEGMENT_IO_TOKEN=value \
+            -DSEGMENT_IO_TOKEN=$SEGMENT_IO_TOKEN \
             -DpublishToNPM=false \
             --dont-test \
             --report report.html || RESULT=$?
