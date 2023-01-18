@@ -90,6 +90,16 @@ jobs:
             echo "::error title=The Pre-Commit Checks Failed.::Please run 'pre-commit run --show-diff-on-failure'"
           fi
           exit "$RESULT"
+      - name: Check License Headers
+        shell: bash
+        working-directory: /workspace/gitpod
+        run: |
+          RESULT=0
+          LICENCE_HEADER_CHECK_ONLY=true leeway run components:update-license-header || RESULT=$?
+          if [ $RESULT -ne 0 ]; then
+            echo "::error title=There are some license headers missing.::Please run 'leeway run components:update-license-header'"
+          fi
+          exit "$RESULT"
       - name: Get Secrets from GCP
         id: 'secrets'
         uses: 'google-github-actions/get-secretmanager-secrets@v1'
