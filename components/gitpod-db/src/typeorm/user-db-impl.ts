@@ -33,6 +33,7 @@ import { v4 as uuidv4 } from "uuid";
 import {
     BUILTIN_WORKSPACE_PROBE_USER_ID,
     BUILTIN_WORKSPACE_USER_AGENT_SMITH,
+    BUILTIN_INSTLLATION_ADMIN_USER_ID,
     MaybeUser,
     PartialUserUpdate,
     UserDB,
@@ -380,7 +381,7 @@ export class TypeORMUserDBImpl implements UserDB {
             WHERE markedDeleted != true`;
         if (excludeBuiltinUsers) {
             query = `${query}
-                AND id NOT IN ('${BUILTIN_WORKSPACE_PROBE_USER_ID}', '${BUILTIN_WORKSPACE_USER_AGENT_SMITH}')`;
+                AND id NOT IN ('${BUILTIN_WORKSPACE_PROBE_USER_ID}', '${BUILTIN_WORKSPACE_USER_AGENT_SMITH}', '${BUILTIN_INSTLLATION_ADMIN_USER_ID}')`;
         }
         const res = await userRepo.query(query);
         const count = res[0].cnt;
