@@ -6,8 +6,10 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"time"
@@ -21,14 +23,16 @@ import (
 	wsinit "github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	"github.com/gitpod-io/gitpod/content-service/pkg/logs"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
-	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/quota"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
+	"github.com/opencontainers/go-digest"
+	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opentracing/opentracing-go"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 
 	"golang.org/x/xerrors"
@@ -42,12 +46,23 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+const (
+	// maxPendingChanges is the limit beyond which we no longer report pending changes.
+	// For example, if a workspace has then 150 untracked files, we'll report the first
+	// 100 followed by "... and 50 more".
+	//
+	// We do this to keep the load on our infrastructure light and because beyond this number
+	// the changes are irrelevant anyways.
+	maxPendingChanges = 100
+)
+
 type WorkspaceControllerOpts struct {
 	NodeName         string
 	ContentConfig    content.Config
 	UIDMapperConfig  iws.UidmapperConfig
 	ContainerRuntime container.Runtime
 	CGroupMountPoint string
+	MetricsRegistry  prometheus.Registerer
 }
 
 type WorkspaceController struct {
@@ -57,6 +72,9 @@ type WorkspaceController struct {
 
 	opts  *WorkspaceControllerOpts
 	store *session.Store
+	// channel to limit the number of concurrent backups and uploads.
+	backupWorkspaceLimiter chan struct{}
+	metrics                *content.Metrics
 }
 
 func NewWorkspaceController(c client.Client, opts WorkspaceControllerOpts) (*WorkspaceController, error) {
@@ -75,11 +93,20 @@ func NewWorkspaceController(c client.Client, opts WorkspaceControllerOpts) (*Wor
 		return nil, err
 	}
 
+	waitingTimeHist, waitingTimeoutCounter, err := content.RegisterConcurrentBackupMetrics(opts.MetricsRegistry)
+	if err != nil {
+		return nil, err
+	}
+
 	return &WorkspaceController{
 		Client:   c,
 		NodeName: opts.NodeName,
 		opts:     &opts,
 		store:    store,
+		metrics: &content.Metrics{
+			BackupWaitingTimeHist:       waitingTimeHist,
+			BackupWaitingTimeoutCounter: waitingTimeoutCounter,
+		},
 	}, nil
 }
 
@@ -153,6 +180,7 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	if workspace.Status.Phase == workspacev1.WorkspacePhaseStopping {
+		disposeErr := wsc.disposeWorkspace(ctx, &workspace)
 
 		err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 			var workspace workspacev1.Workspace
@@ -161,25 +189,29 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 				return err
 			}
 
-			if failure != "" {
+			if disposeErr != nil {
 				workspace.Status.Conditions = wsk8s.AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
-					Type:               string(workspacev1.WorkspaceConditionContentReady),
-					Status:             metav1.ConditionFalse,
-					Message:            failure,
-					Reason:             "failed to initialize",
+					Type:               string(workspacev1.WorkspaceConditionBackupFailure),
+					Status:             metav1.ConditionTrue,
+					Message:            err.Error(),
+					Reason:             "failed to backup",
 					LastTransitionTime: metav1.Now(),
 				})
 			} else {
 				workspace.Status.Conditions = wsk8s.AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
-					Type:               string(workspacev1.WorkspaceConditionContentReady),
+					Type:               string(workspacev1.WorkspaceConditionBackupComplete),
 					Status:             metav1.ConditionTrue,
-					Message:            "content is ready",
+					Message:            "workspace backed up",
 					LastTransitionTime: metav1.Now(),
 				})
 			}
 
 			return wsc.Status().Update(ctx, &workspace)
 		})
+
+		if err != nil {
+			return ctrl.Result{}, err
+		}
 	}
 
 	return ctrl.Result{}, nil
@@ -273,13 +305,29 @@ func (wsc *WorkspaceController) initWorkspaceContent(ctx context.Context, ws *wo
 	return "", nil
 }
 
-func (wsc *WorkspaceController) disposeWorkspace(ctx context.Context, ws *workspacev1.Workspace) (failure string, err error) {
-	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)); c == nil || c.Status == metav1.ConditionFalse {
-		return "workspace content was never ready", xerrors.Errorf("workspace content was never ready")
+func (wsc *WorkspaceController) disposeWorkspace(ctx context.Context, ws *workspacev1.Workspace) error {
+	sess := wsc.store.Get(ws.Name)
+	if sess == nil {
+		return status.Error(codes.NotFound, fmt.Sprintf("cannot find workspace %s during DisposeWorkspace", ws.Name))
 	}
 
-	resp := &api.DisposeWorkspaceResponse{}
+	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)); c == nil || c.Status == metav1.ConditionFalse {
+		return xerrors.Errorf("workspace content was never ready")
+	}
 
+	// Maybe there's someone else already trying to dispose the workspace.
+	// In that case we'll simply wait for that to happen.
+	done, repo, err := sess.WaitOrMarkForDisposal(ctx)
+	if err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+
+	if done {
+		ws.Status.GitStatus = toWorkspaceGitStatus(repo)
+		return nil
+	}
+
+	// todo(thomas) check when logs need to be backed up
 	if ws.Spec.Type == workspacev1.WorkspaceTypePrebuild {
 		err = wsc.uploadWorkspaceLogs(ctx, ws)
 		if err != nil {
@@ -288,24 +336,28 @@ func (wsc *WorkspaceController) disposeWorkspace(ctx context.Context, ws *worksp
 		}
 	}
 
-	err = wsc.uploadWorkspaceContent(ctx, ws)
+	if sess.RemoteStorageDisabled {
+		return xerrors.Errorf("workspace has no remote storage")
+	}
+
+	err = wsc.uploadWorkspaceContent(ctx, ws, sess)
 	if err != nil {
 		glog.WithError(err).Error("final backup failed")
-		return "", status.Error(codes.DataLoss, "final backup failed")
+		return xerrors.Errorf("final backup failed for workspace %s", ws.Name)
 	}
 
 	// Update the git status prior to deleting the workspace
-	repo, err := wsc.UpdateGitStatus(ctx)
+	repo, err = wsc.UpdateGitStatus(ctx, ws, sess)
 	if err != nil {
 		// do not fail workspace because we were unable to get git status
 		// which can happen for various reasons, including user corrupting his .git folder somehow
 		// instead we log the error and continue cleaning up workspace
 		// todo(pavel): it would be great if we can somehow bubble this up to user without failing workspace
 		glog.WithError(err).Warn("cannot get git status")
-		span.LogKV("error", err.Error())
 	}
+
 	if repo != nil {
-		resp.GitStatus = repo
+		ws.Status.GitStatus = toWorkspaceGitStatus(repo)
 	}
 
 	// remove workspace daemon directory in the node
@@ -313,7 +365,20 @@ func (wsc *WorkspaceController) disposeWorkspace(ctx context.Context, ws *worksp
 		glog.WithError(err).Error("cannot delete workspace daemon directory")
 	}
 
-	return "", nil
+	return nil
+}
+
+func toWorkspaceGitStatus(status *csapi.GitStatus) *workspacev1.GitStatus {
+	return &workspacev1.GitStatus{
+		Branch:               status.Branch,
+		LatestCommit:         status.LatestCommit,
+		UncommitedFiles:      status.UncommitedFiles,
+		TotalUncommitedFiles: status.TotalUncommitedFiles,
+		UntrackedFiles:       status.UntrackedFiles,
+		TotalUntrackedFiles:  status.TotalUntrackedFiles,
+		UnpushedCommits:      status.UnpushedCommits,
+		TotalUnpushedCommits: status.TotalUnpushedCommits,
+	}
 }
 
 func (wsc *WorkspaceController) uploadWorkspaceLogs(ctx context.Context, ws *workspacev1.Workspace) (err error) {
@@ -360,7 +425,7 @@ func (wsc *WorkspaceController) uploadWorkspaceLogs(ctx context.Context, ws *wor
 	return err
 }
 
-func (wsc *WorkspaceController) uploadWorkspaceContent(ctx context.Context, ws *workspacev1.Workspace) (err error) {
+func (wsc *WorkspaceController) uploadWorkspaceContent(ctx context.Context, ws *workspacev1.Workspace, sess *session.Workspace) (err error) {
 	var (
 		backupName = storage.DefaultBackup
 		mfName     = storage.DefaultBackupManifest
@@ -369,18 +434,18 @@ func (wsc *WorkspaceController) uploadWorkspaceContent(ctx context.Context, ws *
 	// Avoid too many simultaneous backups in order to avoid excessive memory utilization.
 	waitStart := time.Now()
 	select {
-	case s.backupWorkspaceLimiter <- struct{}{}:
+	case wsc.backupWorkspaceLimiter <- struct{}{}:
 	case <-time.After(15 * time.Minute):
 		// we timed out on the rate limit - let's upload anyways, because we don't want to actually block
 		// an upload. If we reach this point, chances are other things are broken. No upload should ever
 		// take this long.
-		s.metrics.BackupWaitingTimeoutCounter.Inc()
+		wsc.metrics.BackupWaitingTimeoutCounter.Inc()
 	}
 
-	s.metrics.BackupWaitingTimeHist.Observe(time.Since(waitStart).Seconds())
+	wsc.metrics.BackupWaitingTimeHist.Observe(time.Since(waitStart).Seconds())
 
 	defer func() {
-		<-s.backupWorkspaceLimiter
+		<-wsc.backupWorkspaceLimiter
 	}()
 
 	var (
@@ -389,26 +454,11 @@ func (wsc *WorkspaceController) uploadWorkspaceContent(ctx context.Context, ws *
 		mf   csapi.WorkspaceContentManifest
 	)
 
-	if sess.PersistentVolumeClaim {
-		// currently not supported (will be done differently via snapshots)
-		return status.Error(codes.FailedPrecondition, "uploadWorkspaceContent not supported yet when PVC feature is enabled")
-	}
-
-	if sess.FullWorkspaceBackup {
-		// Backup any change located in the upper overlay directory of the workspace in the node
-		loc = filepath.Join(sess.ServiceLocDaemon, "upper")
-
-		err = json.Unmarshal(sess.ContentManifest, &mf)
-		if err != nil {
-			return xerrors.Errorf("cannot unmarshal original content manifest: %w", err)
-		}
-	}
-
 	err = os.Remove(filepath.Join(sess.Location, wsinit.WorkspaceReadyFile))
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		// We'll still upload the backup, well aware that the UX during restart will be broken.
 		// But it's better to have a backup with all files (albeit one too many), than having no backup at all.
-		log.WithError(err).WithFields(sess.OWI()).Warn("cannot remove workspace ready file")
+		glog.WithError(err).WithFields(sess.OWI()).Warn("cannot remove workspace ready file")
 	}
 
 	rs, ok := sess.NonPersistentAttrs[session.AttrRemoteStorage].(storage.DirectAccess)
@@ -421,8 +471,9 @@ func (wsc *WorkspaceController) uploadWorkspaceContent(ctx context.Context, ws *
 		tmpfSize   int64
 		tmpfDigest digest.Digest
 	)
-	err = retryIfErr(ctx, s.config.Backup.Attempts, log.WithFields(sess.OWI()).WithField("op", "create archive"), func(ctx context.Context) (err error) {
-		tmpf, err = os.CreateTemp(s.config.TmpDir, fmt.Sprintf("wsbkp-%s-*.tar", sess.InstanceID))
+
+	err = retryIfErr(ctx, wsc.opts.ContentConfig.Backup.Attempts, glog.WithFields(sess.OWI()).WithField("op", "create archive"), func(ctx context.Context) (err error) {
+		tmpf, err = os.CreateTemp(wsc.opts.ContentConfig.TmpDir, fmt.Sprintf("wsbkp-%s-*.tar", sess.InstanceID))
 		if err != nil {
 			return
 		}
@@ -441,7 +492,7 @@ func (wsc *WorkspaceController) uploadWorkspaceContent(ctx context.Context, ws *
 			)
 		}
 
-		err = BuildTarbal(ctx, loc, tmpf.Name(), sess.FullWorkspaceBackup, opts...)
+		err = content.BuildTarbal(ctx, loc, tmpf.Name(), sess.FullWorkspaceBackup, opts...)
 		if err != nil {
 			return
 		}
@@ -463,7 +514,7 @@ func (wsc *WorkspaceController) uploadWorkspaceContent(ctx context.Context, ws *
 			return
 		}
 		tmpfSize = stat.Size()
-		log.WithField("size", tmpfSize).WithField("location", tmpf.Name()).WithFields(sess.OWI()).Debug("created temp file for workspace backup upload")
+		glog.WithField("size", tmpfSize).WithField("location", tmpf.Name()).WithFields(sess.OWI()).Debug("created temp file for workspace backup upload")
 
 		return
 	})
@@ -481,7 +532,7 @@ func (wsc *WorkspaceController) uploadWorkspaceContent(ctx context.Context, ws *
 		layerBucket string
 		layerObject string
 	)
-	err = retryIfErr(ctx, s.config.Backup.Attempts, log.WithFields(sess.OWI()).WithField("op", "upload layer"), func(ctx context.Context) (err error) {
+	err = retryIfErr(ctx, wsc.opts.ContentConfig.Backup.Attempts, glog.WithFields(sess.OWI()).WithField("op", "upload layer"), func(ctx context.Context) (err error) {
 		layerUploadOpts := opts
 		if sess.FullWorkspaceBackup {
 			// we deliberately ignore the other opload options here as FWB workspace trailing doesn't make sense
@@ -505,7 +556,7 @@ func (wsc *WorkspaceController) uploadWorkspaceContent(ctx context.Context, ws *
 		return xerrors.Errorf("cannot upload workspace content: %w", err)
 	}
 
-	err = retryIfErr(ctx, s.config.Backup.Attempts, log.WithFields(sess.OWI()).WithField("op", "upload manifest"), func(ctx context.Context) (err error) {
+	err = retryIfErr(ctx, wsc.opts.ContentConfig.Backup.Attempts, glog.WithFields(sess.OWI()).WithField("op", "upload manifest"), func(ctx context.Context) (err error) {
 		if !sess.FullWorkspaceBackup {
 			return
 		}
@@ -531,9 +582,9 @@ func (wsc *WorkspaceController) uploadWorkspaceContent(ctx context.Context, ws *
 		if err != nil {
 			return err
 		}
-		log.WithFields(sess.OWI()).WithField("manifest", mf).Debug("uploading content manifest")
+		glog.WithFields(sess.OWI()).WithField("manifest", mf).Debug("uploading content manifest")
 
-		tmpmf, err := os.CreateTemp(s.config.TmpDir, fmt.Sprintf("mf-%s-*.json", sess.InstanceID))
+		tmpmf, err := os.CreateTemp(wsc.opts.ContentConfig.TmpDir, fmt.Sprintf("mf-%s-*.json", sess.InstanceID))
 		if err != nil {
 			return err
 		}
@@ -561,7 +612,7 @@ func (wsc *WorkspaceController) uploadWorkspaceContent(ctx context.Context, ws *
 }
 
 // UpdateGitStatus attempts to update the LastGitStatus from the workspace's local working copy.
-func (wsc *WorkspaceController) UpdateGitStatus(ctx context.Context, ws *workspacev1.Workspace) (res *csapi.GitStatus, err error) {
+func (wsc *WorkspaceController) UpdateGitStatus(ctx context.Context, ws *workspacev1.Workspace, s *session.Workspace) (res *csapi.GitStatus, err error) {
 	var loc string
 	loc = ws.Spec.WorkspaceLocation
 	if loc == "" {
@@ -592,7 +643,7 @@ func (wsc *WorkspaceController) UpdateGitStatus(ctx context.Context, ws *workspa
 
 	lastGitStatus := toGitStatus(stat)
 
-	err = s.persist()
+	err = s.Persist()
 	if err != nil {
 		glog.WithError(err).Warn("cannot persist latest Git status")
 		err = nil

@@ -173,6 +173,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 			UIDMapperConfig:  config.Uidmapper,
 			ContainerRuntime: containerRuntime,
 			CGroupMountPoint: config.CPULimit.CGroupBasePath,
+			MetricsRegistry:  reg,
 		})
 		if err != nil {
 			return nil, err
