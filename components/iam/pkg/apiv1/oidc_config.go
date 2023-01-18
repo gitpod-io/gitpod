@@ -33,6 +33,11 @@ type OIDCClientConfigService struct {
 }
 
 func (s *OIDCClientConfigService) CreateClientConfig(ctx context.Context, req *v1.CreateClientConfigRequest) (*v1.CreateClientConfigResponse, error) {
+	organizationID, err := validateOrganizationID(req.GetConfig().GetOrganizationId())
+	if err != nil {
+		return nil, err
+	}
+
 	oauth2Config := req.GetConfig().GetOauth2Config()
 	oidcConfig := req.GetConfig().GetOidcConfig()
 
@@ -43,9 +48,10 @@ func (s *OIDCClientConfigService) CreateClientConfig(ctx context.Context, req *v
 	}
 
 	created, err := db.CreateOIDCCLientConfig(ctx, s.dbConn, db.OIDCClientConfig{
-		ID:     uuid.New(),
-		Issuer: oidcConfig.GetIssuer(),
-		Data:   data,
+		ID:             uuid.New(),
+		OrganizationID: &organizationID,
+		Issuer:         oidcConfig.GetIssuer(),
+		Data:           data,
 	})
 	if err != nil {
 		log.Log.WithError(err).Error("Failed to store oidc client config in the database.")
@@ -94,8 +100,23 @@ func toDBSpec(oauth2Config *v1.OAuth2Config, oidcConfig *v1.OIDCConfig) db.OIDCS
 }
 
 func oidcClientConfigToProto(cfg db.OIDCClientConfig) *v1.OIDCClientConfig {
+	var organizationID string
+	if cfg.OrganizationID != nil {
+		organizationID = cfg.OrganizationID.String()
+	}
+
 	return &v1.OIDCClientConfig{
-		Id: cfg.ID.String(),
+		Id:             cfg.ID.String(),
+		OrganizationId: organizationID,
 		// TODO: Populate remainder of fields
 	}
+}
+
+func validateOrganizationID(id string) (uuid.UUID, error) {
+	organizationID, err := uuid.Parse(id)
+	if err != nil {
+		return uuid.Nil, status.Error(codes.InvalidArgument, "invalid organization id, must be a UUID")
+	}
+
+	return organizationID, nil
 }
