@@ -4,7 +4,7 @@ metadata:
   labels:
     prometheus: k8s
     role: alert-rules
-  name: server-monitoring-rules
+  name: ws-manager-bridge-monitoring-rules
 spec:
   groups:
   - name: ws-manager-bridge
