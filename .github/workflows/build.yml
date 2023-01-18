@@ -103,9 +103,11 @@ jobs:
           PR_DESC: '${{ github.event.pull_request.body }}'
         run: |
           PR_NO_CACHE=${{ contains(github.event.pull_request.body, '[x] leeway-no-cache') }}
+          PR_NO_TEST=${{ contains(github.event.pull_request.body, '[x] /werft no-test') }}
           PR_LEEWAY_TARGET=$(echo "$PR_DESC" | sed -n -e 's/^.*leeway-target=//p' | sed 's/\r$//')
 
           echo "PR_NO_CACHE=$PR_NO_CACHE" >> $GITHUB_ENV
+          echo "PR_NO_TEST=$PR_NO_TEST"   >> $GITHUB_ENV
           echo "PR_LEEWAY_TARGET=$PR_LEEWAY_TARGET" >> $GITHUB_ENV
       - name: Leeway Build
         id: leeway
@@ -117,17 +119,21 @@ jobs:
           SEGMENT_IO_TOKEN: '${{ steps.secrets.outputs.segment-io-token }}'
         run: |
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none" || CACHE="remote"
+          [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none"       || CACHE="remote"
+          [[ "$PR_NO_TEST"  = "true" ]] && TEST="--dont-test" || TEST=""
           [[ -z "$PR_LEEWAY_TARGET" ]] && PR_LEEWAY_TARGET="components:all-ci"
+
+          mkdir -p /__w/gitpod/gitpod/test-coverage-report
 
           RESULT=0
           set -x
           leeway build $PR_LEEWAY_TARGET \
             --cache $CACHE \
+            $TEST \
             -Dversion=$VERSION \
             -DSEGMENT_IO_TOKEN=$SEGMENT_IO_TOKEN \
             -DpublishToNPM=false \
-            --dont-test \
+            --coverage-output-path=/__w/gitpod/gitpod/test-coverage-report \
             --report report.html || RESULT=$?
           set +x
 
@@ -144,6 +150,13 @@ jobs:
           path: |
             versions.yaml
             installer
+      - name: "Upload Test Coverage Report"
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-coverage-report
+          if-no-files-found: ignore
+          path: |
+            test-coverage-report
 
   install:
     needs: [previewctl, build, infrastructure]

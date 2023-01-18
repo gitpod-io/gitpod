@@ -35,6 +35,8 @@ Does this PR require updates to the documentation at www.gitpod.io/docs?
       Experimental feature to run the build with GitHub Actions (and not in Werft).
 - [ ] leeway-no-cache
       leeway-target=components:all-ci
+- [ ] /werft no-test
+      Run Leeway with `--dont-test`
 - [ ] /werft with-local-preview
       If enabled this will build `install/preview`
 - [ ] /werft with-preview
