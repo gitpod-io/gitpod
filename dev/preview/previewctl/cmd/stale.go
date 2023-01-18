@@ -59,7 +59,7 @@ func newListStaleCmd(logger *logrus.Logger) *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVar(&opts.TFDir, "tf-dir", "dev/preview/infrastructure/harvester", "TF working directory")
+	cmd.PersistentFlags().StringVar(&opts.TFDir, "tf-dir", "dev/preview/infrastructure", "TF working directory")
 	cmd.Flags().DurationVarP(&opts.timeout, "timeout", "t", 10*time.Minute, "Duration to wait for a preview enviroment contexts' to get installed")
 	cmd.PersistentFlags().StringVar(&opts.sshPrivateKeyPath, "private-key-path", fmt.Sprintf("%s/.ssh/vm_id_rsa", homedir.HomeDir()), "path to the private key used to authenticate with the VM")
 

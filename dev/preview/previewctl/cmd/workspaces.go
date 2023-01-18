@@ -47,7 +47,7 @@ func newListWorkspacesCmd(logger *logrus.Logger) *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVar(&opts.TFDir, "tf-dir", "dev/preview/infrastructure/harvester", "TF working directory")
+	cmd.PersistentFlags().StringVar(&opts.TFDir, "tf-dir", "dev/preview/infrastructure", "TF working directory")
 
 	return cmd
 }
