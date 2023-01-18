@@ -45,7 +45,7 @@ resource "kubernetes_deployment" "dev-loadbalancer" {
             "--kubeconfig",
             "/mnt/kubeconfig/harvester-kubeconfig.yml",
             "-n",
-            kubernetes_namespace.preview_namespace.metadata[0].name,
+            var.preview_namespace,
             "--address=0.0.0.0",
             "--pod-running-timeout=2m",
             "svc/proxy",

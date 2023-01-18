@@ -1,3 +1,9 @@
+variable "infra_provider" {
+  type        = string
+  default     = "harvester"
+  description = "the provider for the infra: [harvester, gce]"
+}
+
 variable "preview_name" {
   type        = string
   description = "The preview environment's name"
@@ -33,16 +39,15 @@ variable "vm_cpu" {
   description = "CPU for the VM"
 }
 
-variable "vm_storage_class" {
-  type        = string
-  description = "The storage class for the VM"
-  default     = "longhorn-gitpod-k3s-202209251218-onereplica"
+variable "vm_type" {
+  type    = string
+  default = "n2-standard-8"
 }
 
-variable "harvester_ingress_ip" {
+variable "vm_image" {
   type        = string
-  default     = "159.69.172.117"
-  description = "Ingress IP in Harvester cluster"
+  description = "The VM image"
+  default     = "gitpod-k3s-202209251218"
 }
 
 variable "cert_issuer" {
@@ -55,4 +60,10 @@ variable "gcp_project_dns" {
   type        = string
   default     = "gitpod-core-dev"
   description = "The GCP project in which to create DNS records"
+}
+
+variable "gce_use_spot" {
+  type        = bool
+  default     = false
+  description = "Flag to decide whether to use spot instances"
 }

@@ -1,25 +1,34 @@
 terraform {
-
   backend "gcs" {
     bucket = "3f4745df-preview-tf-state"
-    prefix = "preview-gce"
+    prefix = "preview"
   }
 
   required_version = ">= 1.2"
   required_providers {
+    harvester = {
+      source  = "harvester/harvester"
+      version = "=0.5.3"
+    }
     k8s = {
       source  = "hashicorp/kubernetes"
       version = ">= 2.0"
     }
     google = {
       source  = "hashicorp/google"
-      version = ">=4.47.0"
+      version = ">=4.40.0"
     }
     acme = {
       source  = "vancluever/acme"
       version = "~> 2.0"
     }
   }
+}
+
+provider "harvester" {
+  alias       = "harvester"
+  kubeconfig  = pathexpand(var.kubeconfig_path)
+  kubecontext = "harvester"
 }
 
 provider "k8s" {
