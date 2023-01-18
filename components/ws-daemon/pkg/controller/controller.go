@@ -649,7 +649,7 @@ func (wsc *WorkspaceController) UpdateGitStatus(ctx context.Context, ws *workspa
 		err = nil
 	}
 
-	return lastGitStatus, nil
+	return lastGitStatus, err
 }
 
 func toGitStatus(s *git.Status) *csapi.GitStatus {
