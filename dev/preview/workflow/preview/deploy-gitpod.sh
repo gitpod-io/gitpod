@@ -476,11 +476,6 @@ yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeConfig" "st
 # IAM
 #
 
-#
-# OpenFGA
-#
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.openfga.enabled "true"
-
 # copy secret from werft's space
 kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" -n werft get secret preview-envs-oidc-clients-config-secret -o yaml > preview-envs-oidc-clients-config-secret.secret.yaml
 yq d -i preview-envs-oidc-clients-config-secret.secret.yaml metadata.name
