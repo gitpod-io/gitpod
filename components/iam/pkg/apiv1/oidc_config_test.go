@@ -25,6 +25,7 @@ func TestOIDCClientConfig_Create(t *testing.T) {
 	client, dbConn := setupOIDCClientConfigService(t)
 
 	config := &v1.OIDCClientConfig{
+		OrganizationId: uuid.NewString(),
 		Oauth2Config: &v1.OAuth2Config{
 			ClientId:              "some-client-id",
 			ClientSecret:          "some-client-secret",
