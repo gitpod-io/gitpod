@@ -6,7 +6,7 @@
 
 import { FunctionComponent, useMemo, useState } from "react";
 import dayjs from "dayjs";
-import { PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
+import { Project } from "@gitpod/gitpod-protocol";
 import { Link } from "react-router-dom";
 import ContextMenu from "../components/ContextMenu";
 import { useCurrentTeam } from "../teams/teams-context";
@@ -14,16 +14,17 @@ import { RemoveProjectModal } from "./RemoveProjectModal";
 import { toRemoteURL } from "./render-utils";
 import { prebuildStatusIcon } from "./Prebuilds";
 import { gitpodHostUrl } from "../service/service";
+import { useLatestProjectPrebuildQuery } from "../data/prebuilds/latest-project-prebuild-query";
 
 type ProjectListItemProps = {
     project: Project;
-    prebuild?: PrebuildWithStatus;
     onProjectRemoved: () => void;
 };
 
-export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ project, prebuild, onProjectRemoved }) => {
+export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ project, onProjectRemoved }) => {
     const team = useCurrentTeam();
     const [showRemoveModal, setShowRemoveModal] = useState(false);
+    const { data: prebuild, isLoading } = useLatestProjectPrebuildQuery({ projectId: project.id });
 
     const teamOrUserSlug = useMemo(() => {
         return !!team ? "t/" + team.slug : "projects";
@@ -102,6 +103,10 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                         >
                             View All &rarr;
                         </Link>
+                    </div>
+                ) : isLoading ? (
+                    <div className="flex h-full text-md">
+                        <p className="my-auto ">...</p>
                     </div>
                 ) : (
                     <div className="flex h-full text-md">
