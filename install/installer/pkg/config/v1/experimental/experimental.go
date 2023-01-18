@@ -276,6 +276,8 @@ type ProxyConfig struct {
 	ServiceType *corev1.ServiceType `json:"serviceType,omitempty" validate:"omitempty,service_config_type"`
 
 	Configcat *ConfigcatProxyConfig `json:"configcat,omitempty"`
+
+	FrontendDevEnabled bool `json:"frontendDevEnabled"`
 }
 
 type ConfigcatProxyConfig struct {

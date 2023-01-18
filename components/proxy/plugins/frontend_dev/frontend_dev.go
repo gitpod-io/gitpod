@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/caddyserver/caddy/v2"
@@ -18,8 +19,9 @@ import (
 )
 
 const (
-	frontendDevModule = "gitpod.frontend_dev"
-	devURLHeaderName  = "X-Frontend-Dev-URL"
+	frontendDevModule            = "gitpod.frontend_dev"
+	devURLHeaderName             = "X-Frontend-Dev-URL"
+	frontendDevEnabledEnvVarName = "FRONTEND_DEV_ENABLED"
 )
 
 func init() {
@@ -41,9 +43,15 @@ func (Config) CaddyModule() caddy.ModuleInfo {
 
 // ServeHTTP implements caddyhttp.MiddlewareHandler.
 func (m Config) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
+	enabled := os.Getenv(frontendDevEnabledEnvVarName)
+	if enabled != "true" {
+		caddy.Log().Sugar().Debugf("Dev URL header present but disabled")
+		return caddyhttp.Error(http.StatusBadRequest, fmt.Errorf("frontend dev module disabled"))
+	}
+
 	devURLStr := r.Header.Get(devURLHeaderName)
 	if devURLStr == "" {
-		caddy.Log().Sugar().Errorf("dev URL header empty")
+		caddy.Log().Sugar().Errorf("Dev URL header empty")
 		return caddyhttp.Error(http.StatusInternalServerError, fmt.Errorf("unexpected error forwarding to dev URL"))
 	}
 	devURL, err := url.Parse(devURLStr)

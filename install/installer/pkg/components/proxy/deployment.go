@@ -119,6 +119,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	var frontendDevEnabled bool
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.ProxyConfig != nil {
+			frontendDevEnabled = cfg.WebApp.ProxyConfig.FrontendDevEnabled
+		}
+		return nil
+	})
+
 	const kubeRbacProxyContainerName = "kube-rbac-proxy"
 	return []runtime.Object{
 		&appsv1.Deployment{
@@ -252,6 +260,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								[]corev1.EnvVar{{
 									Name:  "PROXY_DOMAIN",
 									Value: ctx.Config.Domain,
+								}, {
+									Name:  "FRONTEND_DEV_ENABLED",
+									Value: fmt.Sprintf("%t", frontendDevEnabled),
 								}},
 							)),
 						}},
