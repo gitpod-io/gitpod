@@ -25,4 +25,7 @@ const (
 	DebugNodePortName                      = "debugnode"
 	ServicePort                            = 3000
 	personalAccessTokenSigningKeyMountPath = "/secrets/personal-access-token-signing-key"
+	AdminSecretName                        = "server-admin-secret"
+	AdminSecretLoginKeyName                = "login-key"
+	AdminSecretMountPath                   = "/admin"
 )

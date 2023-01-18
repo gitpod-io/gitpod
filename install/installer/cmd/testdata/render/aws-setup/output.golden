@@ -1164,6 +1164,19 @@ stringData:
   password: uq4KxOLtrA-QsDTfuwQ-
   username: gitpod
 ---
+# v1/Secret server-admin-secret
+apiVersion: v1
+data:
+  login-key: bTMwRUgtTTItY1dNZ2tnZHk3cHU=
+kind: Secret
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: server
+  name: server-admin-secret
+  namespace: default
+---
 # v1/ConfigMap agent-smith
 apiVersion: v1
 data:
@@ -2466,6 +2479,16 @@ data:
         app: gitpod
         component: server
       name: server
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: server
+      name: server-admin-secret
       namespace: default
     ---
     apiVersion: networking.k8s.io/v1
@@ -4980,7 +5003,7 @@ data:
       },
       "oauthServer": {
         "enabled": true,
-        "jwtSecret": "m30EH-M2-cWMgkgdy7pu"
+        "jwtSecret": "_7wODLGlsPauKCw4SBI2"
       },
       "rateLimiter": {
         "groups": {
@@ -5013,6 +5036,10 @@ data:
         "contentLimit": 0,
         "resources": null
       },
+      "admin": {
+        "grantFirstUserAdminRole": true
+      },
+      "adminLoginKeyFile": "/admin/login-key",
       "prebuildLimiter": {
         "*": {
           "limit": 100,
@@ -9645,7 +9672,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 8c05f78bde8894a461a3d382e567b6d00d34026fa916c9e7baf2c1e81e43b239
+        gitpod.io/checksum_config: 5269d9fc5c6b73baff49aac56fba12707ad3a7e30252fdcba506ef27fb1afebf
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9786,6 +9813,9 @@ spec:
         - mountPath: /ws-manager-client-tls-certs
           name: ws-manager-client-tls-certs
           readOnly: true
+        - mountPath: /admin
+          name: admin-login-key
+          readOnly: true
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -9900,6 +9930,9 @@ spec:
       - name: ws-manager-client-tls-certs
         secret:
           secretName: ws-manager-client-tls
+      - name: admin-login-key
+        secret:
+          secretName: server-admin-secret
 status: {}
 ---
 # apps/v1/Deployment ws-manager

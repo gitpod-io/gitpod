@@ -249,6 +249,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		WorkspaceClasses:               workspaceClasses,
 		InactivityPeriodForReposInDays: inactivityPeriodForReposInDays,
+		Admin: server.AdminConfig{
+			GrantFirstUserAdminRole: true, // existing default
+		},
+		AdminLoginKeyFile: fmt.Sprintf("%s/%s", server.AdminSecretMountPath, server.AdminSecretLoginKeyName),
 	}
 
 	fc, err := common.ToJSONString(scfg)
