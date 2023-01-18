@@ -34,4 +34,4 @@ pod:
         - .werft/platform-trigger-werft-cleanup.sh
 
 plugins:
-  cron: "15 */4 * * *"
+  cron: "15 * * * *"
