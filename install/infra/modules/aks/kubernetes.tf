@@ -42,6 +42,7 @@ resource "azurerm_kubernetes_cluster" "k8s" {
       "gitpod.io/workload_meta"               = true
       "gitpod.io/workload_ide"                = true
       "gitpod.io/workload_workspace_services" = true
+      "gitpod.io/workload_services"           = true
     }
 
     type           = "VirtualMachineScaleSets"
