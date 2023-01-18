@@ -1632,6 +1632,86 @@ data:
     certificate:
       kind: secret
       name: https-certificates
+    components:
+      agentSmith:
+        blocklists:
+          audit:
+            allowlist:
+            - auditAllowList1
+            - auditAllowList1
+            binaries:
+            - auditBinaries1
+            - auditBinaries2
+            signatures:
+            - domain: process
+              filenames:
+              - auditFile1.yaml
+              - auditFile2.yaml
+              kind: elf-rodata
+              name: auditSignatures1
+              pattern: Q1BVbGltaXQgdmVyc2lvbg==
+              regexp: false
+              slice:
+                end: 20
+                start: 10
+          barely:
+            allowlist:
+            - barelyAllowList1
+            - barelyAllowList1
+            binaries:
+            - barelyBinaries1
+            - barelyBinaries2
+            signatures:
+            - domain: process
+              filenames:
+              - barelyFile1.yaml
+              - barelyFile2.yaml
+              kind: elf-rodata
+              name: barelySignatures1
+              pattern: Q1BVbGltaXQgdmVyc2lvbg==
+              regexp: false
+              slice:
+                end: 20
+                start: 10
+          very:
+            allowlist:
+            - veryAllowList1
+            - veryAllowList1
+            binaries:
+            - veryBinaries1
+            - veryBinaries2
+            signatures:
+            - domain: process
+              filenames:
+              - veryFile1.yaml
+              - veryFile2.yaml
+              kind: elf-rodata
+              name: verySignatures1
+              pattern: Q1BVbGltaXQgdmVyc2lvbg==
+              regexp: false
+              slice:
+                end: 20
+                start: 10
+        enforcement:
+          cpuLimitPenalty: "6"
+          default:
+            opt1: stop workspace
+          perRepo:
+            gitpod.example.com:
+              opt2: limit CPU
+        excessiveCPUCheck:
+          averageOverMinutes: 2
+          threshold: 4.4
+        gitpodAPI:
+          apiToken: abcde12345
+          hostURL: https://api.gitpod.example.com
+        kubernetes:
+          enabled: true
+        namespace: agent-smith-nsp
+        probePath: path
+        slackWebhooks:
+          audit: https://slack.com/audit
+          warning: https://slack.com/warning
     containerRegistry:
       inCluster: true
       privateBaseImageAllowList: []

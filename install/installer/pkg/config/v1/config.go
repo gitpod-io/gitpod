@@ -7,6 +7,7 @@ package config
 import (
 	"time"
 
+	agentSmith "github.com/gitpod-io/gitpod/agent-smith/pkg/config"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/config"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
@@ -426,7 +427,8 @@ type CustomizationSpec struct {
 }
 
 type Components struct {
-	Proxy *ProxyComponent `json:"proxy,omitempty"`
+	AgentSmith *agentSmith.Config `json:"agentSmith,omitempty"`
+	Proxy      *ProxyComponent    `json:"proxy,omitempty"`
 }
 
 type ProxyComponent struct {
