@@ -10705,6 +10705,8 @@ spec:
           value: info
         - name: PROXY_DOMAIN
           value: gitpod.example.com
+        - name: FRONTEND_DEV_ENABLED
+          value: "false"
         image: eu.gcr.io/gitpod-core-dev/build/proxy:test
         imagePullPolicy: IfNotPresent
         name: proxy
