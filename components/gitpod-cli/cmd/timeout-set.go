@@ -15,10 +15,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// extendTimeoutCmd extend timeout of current workspace
-var extendTimeoutCmd = &cobra.Command{
-	Use:   "extend",
-	Short: "Extend timeout of current workspace",
+// setTimeoutCmd sets the timeout of current workspace
+var setTimeoutCmd = &cobra.Command{
+	Use:   "set <duration>",
+	Args:  cobra.ExactArgs(1),
+	Short: "Set timeout of current workspace",
+	Long: `Set timeout of current workspace.
+
+Duration must be in the format of <n>m (minutes), <n>h (hours), or <n>d (days).
+For example, 30m, 1h, 2d, etc.`,
+	Example: `gitpod timeout set 1h`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -33,16 +39,20 @@ var extendTimeoutCmd = &cobra.Command{
 		if err != nil {
 			fail(err.Error())
 		}
-		if _, err := client.SetWorkspaceTimeout(ctx, wsInfo.WorkspaceId, time.Minute*180); err != nil {
+		duration, err := time.ParseDuration(args[0])
+		if err != nil {
+			fail(err.Error())
+		}
+		if _, err := client.SetWorkspaceTimeout(ctx, wsInfo.WorkspaceId, duration); err != nil {
 			if err, ok := err.(*jsonrpc2.Error); ok && err.Code == serverapi.PLAN_PROFESSIONAL_REQUIRED {
 				fail("Cannot extend workspace timeout for current plan, please upgrade your plan")
 			}
 			fail(err.Error())
 		}
-		fmt.Println("Workspace timeout has been extended to three hours.")
+		fmt.Printf("Workspace timeout has been set to %d minutes.\n", int(duration.Minutes()))
 	},
 }
 
 func init() {
-	timeoutCmd.AddCommand(extendTimeoutCmd)
+	timeoutCmd.AddCommand(setTimeoutCmd)
 }

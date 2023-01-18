@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -11,6 +11,7 @@ package protocol
 import (
 	context "context"
 	reflect "reflect"
+	time "time"
 
 	gomock "github.com/golang/mock/gomock"
 )
@@ -951,7 +952,7 @@ func (mr *MockAPIInterfaceMockRecorder) SetWorkspaceDescription(ctx, id, desc in
 }
 
 // SetWorkspaceTimeout mocks base method.
-func (m *MockAPIInterface) SetWorkspaceTimeout(ctx context.Context, workspaceID string, duration *WorkspaceTimeoutDuration) (*SetWorkspaceTimeoutResult, error) {
+func (m *MockAPIInterface) SetWorkspaceTimeout(ctx context.Context, workspaceID string, duration time.Duration) (*SetWorkspaceTimeoutResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetWorkspaceTimeout", ctx, workspaceID, duration)
 	ret0, _ := ret[0].(*SetWorkspaceTimeoutResult)
