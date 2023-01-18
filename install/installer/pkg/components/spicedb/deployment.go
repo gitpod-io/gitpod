@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
-package openfga
+package spicedb
 
 import (
 	"fmt"
@@ -13,6 +13,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -23,7 +24,7 @@ import (
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDeployment)
 
-	cfg := getExperimentalOpenFGAConfig(ctx)
+	cfg := getExperimentalSpiceDBConfig(ctx)
 	if cfg == nil || !cfg.Enabled {
 		return nil, nil
 	}
@@ -31,7 +32,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	var containers []corev1.Container
 
 	var volumes []corev1.Volume
-	var openfgaEnvVars []corev1.EnvVar
+	var containerEnvVars []corev1.EnvVar
 
 	if cfg.CloudSQL != nil {
 		containers = append(containers, corev1.Container{
@@ -75,11 +76,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 		// We use our cloud-sql-proxy sidecar to target the DB.
 		dbHost := "localhost"
-		openfgaEnvVars = append(openfgaEnvVars, []corev1.EnvVar{
-			{
-				Name:  "OPENFGA_DATASTORE_ENGINE",
-				Value: "mysql",
-			},
+		containerEnvVars = append(containerEnvVars, []corev1.EnvVar{
 			{
 				Name: "DB_PASSWORD",
 				ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
@@ -99,24 +96,30 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				}},
 			},
 			{
-				Name:  "OPENFGA_DATASTORE_URI",
-				Value: fmt.Sprintf("$(DB_USERNAME):$(DB_PASSWORD)@tcp(%s:%d)/%s?parseTime=true", dbHost, CloudSQLProxyPort, cfg.CloudSQL.Database),
+				Name:  "SPICEDB_DATASTORE_CONN_URI",
+				Value: fmt.Sprintf("$(DB_USERNAME):$(DB_PASSWORD)@tcp(%s:%d)/%s", dbHost, CloudSQLProxyPort, cfg.CloudSQL.Database),
+			},
+			{
+				Name:  "SPICEDB_GRPC_PRESHARED_KEY",
+				Value: "static-for-now",
 			},
 		}...)
 	}
 
-	openfgaContainer := corev1.Container{
+	container := corev1.Container{
 		Name:            ContainerName,
 		Image:           ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, RegistryRepo), RegistryImage, ImageTag),
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Args: []string{
-			"run",
+			"serve",
 			"--log-format=json",
-			"--log-level=warn",
+			"--log-level=debug",
+			"--datastore-engine=mysql",
+			"--datastore-conn-max-open=100",
 		},
 		Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 			common.DefaultEnv(&ctx.Config),
-			openfgaEnvVars,
+			containerEnvVars,
 		)),
 		Ports: []corev1.ContainerPort{
 			{
@@ -130,15 +133,25 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Protocol:      *common.TCPProtocol,
 			},
 			{
-				ContainerPort: ContainerPlaygroundPort,
-				Name:          ContainerPlaygroundName,
+				ContainerPort: ContainerDashboardPort,
+				Name:          ContainerDashboardName,
+				Protocol:      *common.TCPProtocol,
+			},
+			{
+				ContainerPort: ContainerDispatchPort,
+				Name:          ContainerDispatchName,
+				Protocol:      *common.TCPProtocol,
+			},
+			{
+				ContainerPort: ContainerPrometheusPort,
+				Name:          ContainterPrometheusName,
 				Protocol:      *common.TCPProtocol,
 			},
 		},
 		Resources: common.ResourceRequirements(ctx, Component, ContainerName, corev1.ResourceRequirements{
 			Requests: corev1.ResourceList{
-				"cpu":    resource.MustParse("1m"),
-				"memory": resource.MustParse("30Mi"),
+				"cpu":    resource.MustParse("2"),
+				"memory": resource.MustParse("1Gi"),
 			},
 		}),
 		SecurityContext: &corev1.SecurityContext{
@@ -160,19 +173,18 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		ReadinessProbe: &corev1.Probe{
 			ProbeHandler: corev1.ProbeHandler{
-				HTTPGet: &corev1.HTTPGetAction{
-					Path:   "/healthz",
-					Port:   intstr.IntOrString{IntVal: ContainerHTTPPort},
-					Scheme: corev1.URISchemeHTTP,
+				Exec: &v1.ExecAction{
+					Command: []string{"grpc_health_probe", "-v", "-addr=localhost:50051"},
 				},
 			},
-			FailureThreshold: 3,
+			FailureThreshold: 5,
+			PeriodSeconds:    10,
 			SuccessThreshold: 1,
-			TimeoutSeconds:   1,
+			TimeoutSeconds:   5,
 		},
 	}
 
-	containers = append(containers, openfgaContainer)
+	containers = append(containers, container)
 
 	return []runtime.Object{
 		&appsv1.Deployment{

@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
-package openfga
+package spicedb
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -12,8 +12,8 @@ import (
 
 func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
 
-	openFGAConfig := getExperimentalOpenFGAConfig(ctx)
-	if openFGAConfig == nil {
+	spiceDBConfig := getExperimentalSpiceDBConfig(ctx)
+	if spiceDBConfig == nil {
 		return nil, nil
 	}
 
@@ -24,12 +24,12 @@ func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
 	)(ctx)
 }
 
-func getExperimentalOpenFGAConfig(ctx *common.RenderContext) *experimental.OpenFGAConfig {
+func getExperimentalSpiceDBConfig(ctx *common.RenderContext) *experimental.SpiceDBConfig {
 	webappCfg := common.ExperimentalWebappConfig(ctx)
 
-	if webappCfg == nil || webappCfg.OpenFGA == nil {
+	if webappCfg == nil || webappCfg.SpiceDB == nil {
 		return nil
 	}
 
-	return webappCfg.OpenFGA
+	return webappCfg.SpiceDB
 }
