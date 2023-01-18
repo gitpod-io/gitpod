@@ -12,6 +12,7 @@ import (
 	connect "github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	iam "github.com/gitpod-io/gitpod/components/iam-api/go/v1"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
@@ -19,13 +20,16 @@ import (
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
-func NewOIDCService(connPool proxy.ServerConnectionPool, expClient experiments.Client, oidcService iam.OIDCServiceClient) *OIDCService {
+func NewOIDCService(connPool proxy.ServerConnectionPool, expClient experiments.Client, oidcService iam.OIDCServiceClient, dbConn *gorm.DB, cipher db.Cipher) *OIDCService {
 	return &OIDCService{
 		connectionPool: connPool,
 		expClient:      expClient,
 		oidcService:    oidcService,
+		cipher:         cipher,
+		dbConn:         dbConn,
 	}
 }
 
@@ -33,6 +37,9 @@ type OIDCService struct {
 	expClient      experiments.Client
 	connectionPool proxy.ServerConnectionPool
 	oidcService    iam.OIDCServiceClient
+
+	cipher db.Cipher
+	dbConn *gorm.DB
 
 	v1connect.UnimplementedOIDCServiceHandler
 }
@@ -66,33 +73,6 @@ func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Reque
 	}), nil
 }
 
-func papiConfigToIAM(c *v1.OIDCClientConfig) *iam.OIDCClientConfig {
-	return &iam.OIDCClientConfig{
-		OrganizationId: c.GetOrganizationId(),
-		OidcConfig: &iam.OIDCConfig{
-			Issuer: c.OidcConfig.GetIssuer(),
-		},
-		Oauth2Config: &iam.OAuth2Config{
-			ClientId:     c.GetOauth2Config().GetClientId(),
-			ClientSecret: c.GetOauth2Config().GetClientSecret(),
-		},
-	}
-}
-func iamConfigToPAPI(c *iam.OIDCClientConfig) *v1.OIDCClientConfig {
-	return &v1.OIDCClientConfig{
-		Id:             c.GetId(),
-		OrganizationId: c.GetOrganizationId(),
-		OidcConfig: &v1.OIDCConfig{
-			Issuer: c.OidcConfig.GetIssuer(),
-		},
-		Oauth2Config: &v1.OAuth2Config{
-			ClientId:     c.GetOauth2Config().GetClientId(),
-			ClientSecret: "REDACTED",
-		},
-		CreationTime: c.GetCreationTime(),
-	}
-}
-
 func (s *OIDCService) GetClientConfig(ctx context.Context, req *connect.Request[v1.GetClientConfigRequest]) (*connect.Response[v1.GetClientConfigResponse], error) {
 	conn, err := s.getConnection(ctx)
 	if err != nil {
@@ -108,6 +88,11 @@ func (s *OIDCService) GetClientConfig(ctx context.Context, req *connect.Request[
 }
 
 func (s *OIDCService) ListClientConfigs(ctx context.Context, req *connect.Request[v1.ListClientConfigsRequest]) (*connect.Response[v1.ListClientConfigsResponse], error) {
+	organizationID, err := validateOrganizationID(req.Msg.GetOrganizationId())
+	if err != nil {
+		return nil, err
+	}
+
 	conn, err := s.getConnection(ctx)
 	if err != nil {
 		return nil, err
@@ -118,7 +103,20 @@ func (s *OIDCService) ListClientConfigs(ctx context.Context, req *connect.Reques
 		return nil, err
 	}
 
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gitpod.experimental.v1.OIDCService.ListClientConfigs is not implemented"))
+	configs, err := db.ListOIDCClientConfigsForOrganization(ctx, s.dbConn, organizationID)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to retrieve oidc client configs"))
+	}
+
+	results, err := dbOIDCClientConfigsToAPI(configs, s.cipher)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to decrypt client configs"))
+	}
+
+	return connect.NewResponse(&v1.ListClientConfigsResponse{
+		Providers:    results,
+		TotalResults: int64(len(results)),
+	}), nil
 }
 
 func (s *OIDCService) UpdateClientConfig(ctx context.Context, req *connect.Request[v1.UpdateClientConfigRequest]) (*connect.Response[v1.UpdateClientConfigResponse], error) {
@@ -203,4 +201,59 @@ func (s *OIDCService) isFeatureEnabled(ctx context.Context, conn protocol.APIInt
 	}
 
 	return false
+}
+
+func dbOIDCClientConfigToAPI(config db.OIDCClientConfig, decryptor db.Decryptor) (*v1.OIDCClientConfig, error) {
+	_, err := config.Data.Decrypt(decryptor)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt oidc client config: %w", err)
+	}
+
+	return &v1.OIDCClientConfig{
+		Id:             config.ID.String(),
+		OrganizationId: config.OrganizationID.String(),
+		// TODO remaining fields
+	}, nil
+}
+
+func dbOIDCClientConfigsToAPI(configs []db.OIDCClientConfig, decryptor db.Decryptor) ([]*v1.OIDCClientConfig, error) {
+	var results []*v1.OIDCClientConfig
+
+	for _, c := range configs {
+		res, err := dbOIDCClientConfigToAPI(c, decryptor)
+		if err != nil {
+			return nil, err
+		}
+
+		results = append(results, res)
+	}
+
+	return results, nil
+}
+
+func papiConfigToIAM(c *v1.OIDCClientConfig) *iam.OIDCClientConfig {
+	return &iam.OIDCClientConfig{
+		OrganizationId: c.GetOrganizationId(),
+		OidcConfig: &iam.OIDCConfig{
+			Issuer: c.OidcConfig.GetIssuer(),
+		},
+		Oauth2Config: &iam.OAuth2Config{
+			ClientId:     c.GetOauth2Config().GetClientId(),
+			ClientSecret: c.GetOauth2Config().GetClientSecret(),
+		},
+	}
+}
+func iamConfigToPAPI(c *iam.OIDCClientConfig) *v1.OIDCClientConfig {
+	return &v1.OIDCClientConfig{
+		Id:             c.GetId(),
+		OrganizationId: c.GetOrganizationId(),
+		OidcConfig: &v1.OIDCConfig{
+			Issuer: c.OidcConfig.GetIssuer(),
+		},
+		Oauth2Config: &v1.OAuth2Config{
+			ClientId:     c.GetOauth2Config().GetClientId(),
+			ClientSecret: "REDACTED",
+		},
+		CreationTime: c.GetCreationTime(),
+	}
 }
