@@ -18,12 +18,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func validateTeamID(s string) (uuid.UUID, error) {
-	if s == "" {
-		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Team ID is a required argument."))
-	}
-
-	teamID, err := uuid.Parse(s)
+func validateTeamID(id string) (uuid.UUID, error) {
+	teamID, err := validateUUID(id)
 	if err != nil {
 		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Team ID must be a valid UUID."))
 	}
@@ -61,13 +57,7 @@ func validateWorkspaceID(id string) (string, error) {
 }
 
 func validateProjectID(id string) (uuid.UUID, error) {
-	trimmed := strings.TrimSpace(id)
-
-	if trimmed == "" {
-		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Project ID is a required argument."))
-	}
-
-	projectID, err := uuid.Parse(trimmed)
+	projectID, err := validateUUID(id)
 	if err != nil {
 		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Project ID must be a valid UUID."))
 	}
@@ -76,12 +66,7 @@ func validateProjectID(id string) (uuid.UUID, error) {
 }
 
 func validatePersonalAccessTokenID(id string) (uuid.UUID, error) {
-	trimmed := strings.TrimSpace(id)
-	if trimmed == "" {
-		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Token ID is a required argument."))
-	}
-
-	tokenID, err := uuid.Parse(trimmed)
+	tokenID, err := validateUUID(id)
 	if err != nil {
 		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Token ID must be a valid UUID"))
 	}
@@ -114,4 +99,13 @@ func validateFieldMask(mask *fieldmaskpb.FieldMask, message proto.Message) (*fie
 	}
 
 	return mask, nil
+}
+
+func validateUUID(id string) (uuid.UUID, error) {
+	trimmed := strings.TrimSpace(id)
+	if trimmed == "" {
+		return uuid.Nil, errors.New("empty uuid")
+	}
+
+	return uuid.Parse(trimmed)
 }
