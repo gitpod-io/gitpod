@@ -2,7 +2,7 @@
 /// Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
-package openfga
+package spicedb
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -12,9 +12,19 @@ import (
 func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 	return common.GenerateService(Component, []common.ServicePort{
 		{
+			Name:          ContainerGRPCName,
+			ContainerPort: ContainerGRPCPort,
+			ServicePort:   ContainerGRPCPort,
+		},
+		{
 			Name:          ContainerHTTPName,
 			ContainerPort: ContainerHTTPPort,
 			ServicePort:   ContainerHTTPPort,
+		},
+		{
+			Name:          ContainerDispatchName,
+			ContainerPort: ContainerDispatchPort,
+			ServicePort:   ContainerDispatchPort,
 		},
 	})(ctx)
 }
