@@ -130,12 +130,7 @@ export default function () {
                     </div>
                     <div className="mt-4 grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-4 pb-40">
                         {filteredProjects.map((p) => (
-                            <ProjectListItem
-                                project={p}
-                                key={p.id}
-                                prebuild={data?.latestPrebuilds.get(p.id)}
-                                onProjectRemoved={refetch}
-                            />
+                            <ProjectListItem project={p} key={p.id} onProjectRemoved={refetch} />
                         ))}
                         {!searchFilter && (
                             <div
