@@ -96,7 +96,7 @@ func NewWorkspaceService(ctx context.Context, cfg Config, runtime container.Runt
 		return nil, xerrors.Errorf("cannot register Prometheus gauge for working area diskspace: %w", err)
 	}
 
-	waitingTimeHist, waitingTimeoutCounter, err := RegisterConcurrentBackupMetrics(reg)
+	waitingTimeHist, waitingTimeoutCounter, err := RegisterConcurrentBackupMetrics(reg, "")
 	if err != nil {
 		return nil, err
 	}
@@ -150,9 +150,9 @@ func registerWorkingAreaDiskspaceGauge(workingArea string, reg prometheus.Regist
 	}))
 }
 
-func RegisterConcurrentBackupMetrics(reg prometheus.Registerer) (prometheus.Histogram, prometheus.Counter, error) {
+func RegisterConcurrentBackupMetrics(reg prometheus.Registerer, suffix string) (prometheus.Histogram, prometheus.Counter, error) {
 	backupWaitingTime := prometheus.NewHistogram(prometheus.HistogramOpts{
-		Name:    "concurrent_backup_waiting_seconds",
+		Name:    "concurrent_backup_waiting_seconds" + suffix,
 		Help:    "waiting time for concurrent backups to finish",
 		Buckets: []float64{5, 10, 30, 60, 120, 180, 300, 600, 1800},
 	})
@@ -163,7 +163,7 @@ func RegisterConcurrentBackupMetrics(reg prometheus.Registerer) (prometheus.Hist
 	}
 
 	waitingTimeoutCounter := prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "concurrent_backup_waiting_timeout_total",
+		Name: "concurrent_backup_waiting_timeout_total" + suffix,
 		Help: "total count of backup rate limiting timeouts",
 	})
 	err = reg.Register(waitingTimeoutCounter)
