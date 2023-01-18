@@ -40,8 +40,8 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/quota"
 )
 
-// Metrics combine custom metrics exported by WorkspaceService
-type metrics struct {
+// Metrics combine custom Metrics exported by WorkspaceService
+type Metrics struct {
 	BackupWaitingTimeHist       prometheus.Histogram
 	BackupWaitingTimeoutCounter prometheus.Counter
 	InitializerHistogram        *prometheus.HistogramVec
@@ -56,7 +56,7 @@ type WorkspaceService struct {
 	stopService context.CancelFunc
 	runtime     container.Runtime
 
-	metrics *metrics
+	metrics *Metrics
 
 	// channel to limit the number of concurrent backups and uploads.
 	backupWorkspaceLimiter chan struct{}
@@ -96,17 +96,9 @@ func NewWorkspaceService(ctx context.Context, cfg Config, runtime container.Runt
 		return nil, xerrors.Errorf("cannot register Prometheus gauge for working area diskspace: %w", err)
 	}
 
-	waitingTimeHist, err := registerConcurrentBackupWaitingTime(reg)
+	waitingTimeHist, waitingTimeoutCounter, err := RegisterConcurrentBackupMetrics(reg)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot register Prometheus histogram for backup waiting time: %w", err)
-	}
-	waitingTimeoutCounter := prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "concurrent_backup_waiting_timeout_total",
-		Help: "total count of backup rate limiting timeouts",
-	})
-	err = reg.Register(waitingTimeoutCounter)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot register Prometheus counter for backup waiting timeouts: %w", err)
+		return nil, err
 	}
 
 	initializerHistogram := prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -127,7 +119,7 @@ func NewWorkspaceService(ctx context.Context, cfg Config, runtime container.Runt
 		stopService: stopService,
 		runtime:     runtime,
 
-		metrics: &metrics{
+		metrics: &Metrics{
 			BackupWaitingTimeHist:       waitingTimeHist,
 			BackupWaitingTimeoutCounter: waitingTimeoutCounter,
 			InitializerHistogram:        initializerHistogram,
@@ -158,7 +150,7 @@ func registerWorkingAreaDiskspaceGauge(workingArea string, reg prometheus.Regist
 	}))
 }
 
-func registerConcurrentBackupWaitingTime(reg prometheus.Registerer) (prometheus.Histogram, error) {
+func RegisterConcurrentBackupMetrics(reg prometheus.Registerer) (prometheus.Histogram, prometheus.Counter, error) {
 	backupWaitingTime := prometheus.NewHistogram(prometheus.HistogramOpts{
 		Name:    "concurrent_backup_waiting_seconds",
 		Help:    "waiting time for concurrent backups to finish",
@@ -167,10 +159,19 @@ func registerConcurrentBackupWaitingTime(reg prometheus.Registerer) (prometheus.
 
 	err := reg.Register(backupWaitingTime)
 	if err != nil {
-		return nil, err
+		return nil, nil, xerrors.Errorf("cannot register Prometheus histogram for backup waiting time: %w", err)
 	}
 
-	return backupWaitingTime, nil
+	waitingTimeoutCounter := prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "concurrent_backup_waiting_timeout_total",
+		Help: "total count of backup rate limiting timeouts",
+	})
+	err = reg.Register(waitingTimeoutCounter)
+	if err != nil {
+		return nil, nil, xerrors.Errorf("cannot register Prometheus counter for backup waiting timeouts: %w", err)
+	}
+
+	return backupWaitingTime, waitingTimeoutCounter, nil
 }
 
 // Start starts this workspace service and returns when the service gets stopped.
