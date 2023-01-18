@@ -11,7 +11,7 @@ spec:
     rules:
     - alert: WsManagerBridgeHighCPUUsage
       # Reasoning: high rates of CPU consumption should only be temporary.
-      expr: sum(rate(container_cpu_usage_seconds_total{container!="POD", pod=~"ws-manager-bridge-.*"}[5m])) by (cluster) > 0.80
+      expr: avg(rate(container_cpu_usage_seconds_total{container!="POD", pod=~"ws-manager-bridge-.*"}[5m])) by (cluster) > 0.1
       for: 10m
       labels:
         # sent to the team internal channel until we fine tuned it

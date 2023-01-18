@@ -11,7 +11,7 @@ spec:
     rules:
     - alert: DBHighCPUUsage
       # Reasoning: high rates of CPU consumption should only be temporary.
-      expr: sum(rate(container_cpu_usage_seconds_total{container!="POD", pod=~"db-.*"}[5m])) by (cluster) > 0.80
+      expr: avg(rate(container_cpu_usage_seconds_total{container!="POD", pod=~"db-.*"}[5m])) by (cluster) > 0.4
       for: 10m
       labels:
         # sent to the team internal channel until we fine tuned it
