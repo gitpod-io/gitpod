@@ -1663,7 +1663,7 @@ export class WorkspaceStarter {
                 Object.entries(context.additionalFiles).map(async ([filePath, content]) => {
                     const url = await this.otsServer.serve(traceCtx, content, tokenExpirationTime);
                     const finfo = new FileDownloadInitializer.FileInfo();
-                    finfo.setUrl(url.token);
+                    finfo.setUrl(url.url);
                     finfo.setFilePath(filePath);
                     finfo.setDigest(getDigest(content));
                     return finfo;

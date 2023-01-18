@@ -72,11 +72,27 @@ export class OneTimeSecretServer implements Disposable {
         ctx: TraceContext,
         secret: string,
         expirationTime: Date,
+    ): Promise<{ url: string; disposable: Disposable }> {
+        const revokableToken = await this.serveToken(ctx, secret, expirationTime);
+        const url = this.config.hostUrl.withApi({ pathname: `/ots/get/${revokableToken.token}` }).toString();
+        return { url, disposable: revokableToken.disposable };
+    }
+
+    /**
+     * serve registers a secret for one-time servance.
+     *
+     * @param secret the secret to serve once
+     * @param expirationTime time until which the secret is available
+     * @returns the ID under which the token is available
+     */
+    public async serveToken(
+        ctx: TraceContext,
+        secret: string,
+        expirationTime: Date,
     ): Promise<{ token: string; disposable: Disposable }> {
-        const key = await this.oneTimeSecretDB.trace(ctx).register(secret, expirationTime);
-        const token = this.config.hostUrl.withApi({ pathname: `/ots/get/${key}` }).toString();
+        const token = await this.oneTimeSecretDB.trace(ctx).register(secret, expirationTime);
         const disposable: Disposable = {
-            dispose: () => this.oneTimeSecretDB.trace({}).remove(key),
+            dispose: () => this.oneTimeSecretDB.trace({}).remove(token),
         };
         return { token, disposable };
     }
