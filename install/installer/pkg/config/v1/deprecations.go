@@ -16,6 +16,22 @@ type deprecatedField struct {
 }
 
 var deprecatedFields = map[string]deprecatedField{
+	"experimental.agentSmith": {
+		Selector: func(cfg *Config) (bool, any) {
+			val := cfg.Experimental.AgentSmith
+			return val != nil, val
+		},
+		MapValue: func(cfg *Config) error {
+			if cfg.Components != nil && cfg.Components.AgentSmith != nil {
+				return errors.New("cannot configure agent smith in both components and experimental")
+			}
+			if cfg.Components == nil {
+				cfg.Components = &Components{}
+			}
+			cfg.Components.AgentSmith = cfg.Experimental.AgentSmith
+			return nil
+		},
+	},
 	"experimental.common.usePodSecurityPolicies": {
 		Selector: func(cfg *Config) (bool, any) {
 			usePSPs := cfg.Experimental.Common.UsePodSecurityPolicies

@@ -4,7 +4,7 @@
 
 apiVersion: v1
 domain: gitpod.example.com
-experimental:
+components:
   agentSmith:
     gitpodAPI:
       hostUrl: https://api.gitpod.example.com
