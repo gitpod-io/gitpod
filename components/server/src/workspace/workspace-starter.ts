@@ -120,7 +120,6 @@ import {
     increaseSuccessfulInstanceStartCounter,
 } from "../prometheus-metrics";
 import { ContextParser } from "./context-parser-service";
-import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-imagebuilder-client-provider";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { WorkspaceClassesConfig } from "./workspace-classes";
 import { EntitlementService } from "../billing/entitlement-service";
@@ -196,8 +195,6 @@ export class WorkspaceStarter {
     @inject(MessageBusIntegration) protected readonly messageBus: MessageBusIntegration;
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
     @inject(ImageBuilderClientProvider) protected readonly imagebuilderClientProvider: ImageBuilderClientProvider;
-    @inject(WorkspaceClusterImagebuilderClientProvider)
-    protected readonly wsClusterImageBuilderClientProvider: ImageBuilderClientProvider;
     @inject(ImageSourceProvider) protected readonly imageSourceProvider: ImageSourceProvider;
     @inject(UserService) protected readonly userService: UserService;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
@@ -1832,37 +1829,6 @@ export class WorkspaceStarter {
      * @returns
      */
     protected async getImageBuilderClient(user: User, workspace: Workspace, instance?: WorkspaceInstance) {
-        // If cluster does not contain workspace components, must use workspace image builder client. Otherwise, check experiment value.
-        const isMovedImageBuilder =
-            this.config.withoutWorkspaceComponents ||
-            (await getExperimentsClientForBackend().getValueAsync("movedImageBuilder", true, {
-                user,
-                projectId: workspace.projectId,
-            }));
-
-        log.info(
-            { userId: user.id, workspaceId: workspace.id, instanceId: instance?.id },
-            "image-builder in workspace cluster?",
-            {
-                userId: user.id,
-                projectId: workspace.projectId,
-                isMovedImageBuilder,
-            },
-        );
-        if (isMovedImageBuilder) {
-            return this.wsClusterImageBuilderClientProvider.getClient(
-                this.config.installationShortname,
-                user,
-                workspace,
-                instance,
-            );
-        } else {
-            return this.imagebuilderClientProvider.getClient(
-                this.config.installationShortname,
-                user,
-                workspace,
-                instance,
-            );
-        }
+        return this.imagebuilderClientProvider.getClient(this.config.installationShortname, user, workspace, instance);
     }
 }

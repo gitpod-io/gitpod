@@ -54,7 +54,6 @@ import { StorageClient } from "./storage/storage-client";
 import {
     ImageBuilderClientConfig,
     ImageBuilderClientProvider,
-    CachingImageBuilderClientProvider,
     ImageBuilderClientCallMetrics,
 } from "@gitpod/image-builder/lib";
 import { ImageSourceProvider } from "./workspace/image-source-provider";
@@ -178,9 +177,8 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
         const config = ctx.container.get<Config>(Config);
         return { address: config.imageBuilderAddr };
     });
-    bind(CachingImageBuilderClientProvider).toSelf().inSingletonScope();
-    bind(WorkspaceClusterImagebuilderClientProvider).toSelf().inSingletonScope(); // during the transition period, we have two kinds of image builder client providers
-    bind(ImageBuilderClientProvider).toService(CachingImageBuilderClientProvider);
+    bind(WorkspaceClusterImagebuilderClientProvider).toSelf().inSingletonScope();
+    bind(ImageBuilderClientProvider).toService(WorkspaceClusterImagebuilderClientProvider);
     bind(ImageBuilderClientCallMetrics).toService(IClientCallMetrics);
 
     /* The binding order of the context parser does not configure preference/a working order. Each context parser must be able
