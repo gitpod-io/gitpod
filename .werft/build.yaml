@@ -115,6 +115,8 @@ pod:
     #   mountPath: /mnt/secrets/github-ssh-key
     #   readOnly: true
     env:
+    - name: DB_HOST
+      value: 127.0.0.1
     - name: LEEWAY_WORKSPACE_ROOT
       value: /workspace
     - name: LEEWAY_REMOTE_CACHE_BUCKET
