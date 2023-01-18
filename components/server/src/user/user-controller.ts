@@ -405,7 +405,7 @@ export class UserController {
                     otsExpirationTime.setMinutes(otsExpirationTime.getMinutes() + 2);
                     const ots = await this.otsServer.serve({}, token, otsExpirationTime);
 
-                    res.redirect(`http://${rt}/?ots=${encodeURI(ots.token)}`);
+                    res.redirect(`http://${rt}/?ots=${encodeURI(ots.url)}`);
                 },
             );
         }
