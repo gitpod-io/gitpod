@@ -7,6 +7,7 @@
 import * as crypto from "crypto";
 import { inject, injectable } from "inversify";
 import { UserDB, DBUser, WorkspaceDB, OneTimeSecretDB } from "@gitpod/gitpod-db/lib";
+import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib/user-db";
 import * as express from "express";
 import { Authenticator } from "../auth/authenticator";
 import { Config } from "../config";
@@ -105,44 +106,87 @@ export class UserController {
             await this.authenticator.authenticate(req, res, next);
         });
 
-        router.get(
-            "/login/ots/:userId/:key",
-            async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+        const loginUserWithOts = (
+            verifyAndHandle: (req: express.Request, res: express.Response, user: User, secret: string) => Promise<void>,
+            _userId?: string,
+        ) => {
+            return async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+                const sessionId = req.sessionID;
+                let userId = _userId || req.params.userId;
                 try {
+                    log.debug({ sessionId, userId }, "OTS based login started.");
                     const secret = await this.otsDb.get(req.params.key);
                     if (!secret) {
-                        res.sendStatus(401);
-                        return;
+                        throw new ResponseError(401, "Invalid OTS key");
                     }
 
-                    const user = await this.userDb.findUserById(req.params.userId);
+                    const user = await this.userDb.findUserById(userId);
                     if (!user) {
-                        res.sendStatus(404);
-                        return;
+                        throw new ResponseError(404, "User not found");
                     }
 
-                    const secretHash = crypto
-                        .createHash("sha256")
-                        .update(user.id + this.config.session.secret)
-                        .digest("hex");
-                    if (secretHash !== secret) {
-                        res.sendStatus(401);
-                        return;
+                    await verifyAndHandle(req, res, user, secret);
+
+                    log.debug({ sessionId, userId }, "OTS based login successful.");
+                } catch (err) {
+                    let code = 500;
+                    if (err.code !== undefined) {
+                        code = err.code;
                     }
-
-                    // mimick the shape of a successful login
-                    (req.session! as any).passport = { user: user.id };
-
-                    // Save session to DB
-                    await new Promise<void>((resolve, reject) =>
-                        req.session!.save((err) => (err ? reject(err) : resolve())),
-                    );
-
-                    res.sendStatus(200);
-                } catch (error) {
-                    res.sendStatus(500);
+                    res.sendStatus(code);
+                    log.error({ sessionId, userId }, "OTS based login failed", err, { code });
                 }
-            },
+            };
+        };
+        router.get(
+            "/login/ots/admin-user/:key",
+            loginUserWithOts(async (req: express.Request, res: express.Response, user: User, secret: string) => {
+                // Counterpart is here: https://github.com/gitpod-io/gitpod/blob/478a75e744a642d9b764de37cfae655bc8b29dd5/components/server/src/installation-admin/installation-admin-controller.ts#L38
+                const secretHash = crypto
+                    .createHash("sha256")
+                    .update(user.id + this.config.admin.loginKey)
+                    .digest("hex");
+                if (secretHash !== secret) {
+                    throw new ResponseError(401, "OTS secret not verified");
+                }
+
+                // Login this user (sets cookie as side-effect)
+                await new Promise<void>((resolve, reject) => {
+                    req.login(user, (err) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve();
+                        }
+                    });
+                });
+
+                // Simply redirect to the app for now
+                res.redirect("/", 307);
+            }, BUILTIN_INSTLLATION_ADMIN_USER_ID),
+        );
+        router.get(
+            "/login/ots/:userId/:key",
+            loginUserWithOts(async (req: express.Request, res: express.Response, user: User, secret: string) => {
+                // This mechanism is used by integration tests, cmp. https://github.com/gitpod-io/gitpod/blob/478a75e744a642d9b764de37cfae655bc8b29dd5/test/tests/ide/vscode/python_ws_test.go#L105
+                const secretHash = crypto
+                    .createHash("sha256")
+                    .update(user.id + this.config.session.secret)
+                    .digest("hex");
+                if (secretHash !== secret) {
+                    throw new ResponseError(401, "OTS secret not verified");
+                }
+
+                // mimick the shape of a successful login
+                (req.session! as any).passport = { user: user.id };
+
+                // Save session to DB
+                await new Promise<void>((resolve, reject) =>
+                    req.session!.save((err) => (err ? reject(err) : resolve())),
+                );
+
+                res.sendStatus(200);
+            }),
         );
 
         router.get("/authorize", (req: express.Request, res: express.Response, next: express.NextFunction) => {
