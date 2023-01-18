@@ -38,6 +38,10 @@ type OIDCService struct {
 }
 
 func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Request[v1.CreateClientConfigRequest]) (*connect.Response[v1.CreateClientConfigResponse], error) {
+	_, err := validateOrganizationID(req.Msg.Config.GetOrganizationId())
+	if err != nil {
+		return nil, err
+	}
 
 	conn, err := s.getConnection(ctx)
 	if err != nil {
@@ -64,6 +68,7 @@ func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Reque
 
 func papiConfigToIAM(c *v1.OIDCClientConfig) *iam.OIDCClientConfig {
 	return &iam.OIDCClientConfig{
+		OrganizationId: c.GetOrganizationId(),
 		OidcConfig: &iam.OIDCConfig{
 			Issuer: c.OidcConfig.GetIssuer(),
 		},
@@ -75,7 +80,8 @@ func papiConfigToIAM(c *v1.OIDCClientConfig) *iam.OIDCClientConfig {
 }
 func iamConfigToPAPI(c *iam.OIDCClientConfig) *v1.OIDCClientConfig {
 	return &v1.OIDCClientConfig{
-		Id: c.GetId(),
+		Id:             c.GetId(),
+		OrganizationId: c.GetOrganizationId(),
 		OidcConfig: &v1.OIDCConfig{
 			Issuer: c.OidcConfig.GetIssuer(),
 		},

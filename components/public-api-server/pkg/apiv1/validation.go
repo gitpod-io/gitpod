@@ -89,6 +89,20 @@ func validatePersonalAccessTokenID(id string) (uuid.UUID, error) {
 	return tokenID, nil
 }
 
+func validateOrganizationID(id string) (uuid.UUID, error) {
+	trimmed := strings.TrimSpace(id)
+	if trimmed == "" {
+		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("OrganizationID is a required argument."))
+	}
+
+	organizationID, err := uuid.Parse(trimmed)
+	if err != nil {
+		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("OrganizationID must be a valid UUID"))
+	}
+
+	return organizationID, nil
+}
+
 func validateFieldMask(mask *fieldmaskpb.FieldMask, message proto.Message) (*fieldmaskpb.FieldMask, error) {
 	if mask == nil {
 		return &fieldmaskpb.FieldMask{}, nil

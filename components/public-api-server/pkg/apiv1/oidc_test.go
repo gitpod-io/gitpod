@@ -16,6 +16,7 @@ import (
 	grpc "google.golang.org/grpc"
 
 	iam "github.com/gitpod-io/gitpod/components/iam-api/go/v1"
+	"github.com/google/uuid"
 
 	connect "github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/experiments"
@@ -43,26 +44,66 @@ var (
 	user = newUser(&protocol.User{})
 )
 
-func TestOIDCService_CreateClientConfig(t *testing.T) {
-	t.Run("feature flag disabled returns unauthorized", func(t *testing.T) {
+func TestOIDCService_CreateClientConfig_FeatureFlagDisabled(t *testing.T) {
+	organizationID := uuid.New()
+
+	t.Run("returns unauthorized", func(t *testing.T) {
 		serverMock, client := setupOIDCService(t, withOIDCFeatureDisabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
 
-		_, err := client.CreateClientConfig(context.Background(), connect.NewRequest(&v1.CreateClientConfigRequest{}))
+		_, err := client.CreateClientConfig(context.Background(), connect.NewRequest(&v1.CreateClientConfigRequest{
+			Config: &v1.OIDCClientConfig{
+				OrganizationId: organizationID.String(),
+			},
+		}))
 		require.Error(t, err)
 		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
 	})
+}
 
-	t.Run("feature flag enabled returns created config", func(t *testing.T) {
+func TestOIDCService_CreateClientConfig_FeatureFlagEnabled(t *testing.T) {
+	organizationID := uuid.New()
+
+	t.Run("returns invalid argument when no organisation specified", func(t *testing.T) {
+		_, client := setupOIDCService(t, withOIDCFeatureEnabled)
+
+		config := &v1.OIDCClientConfig{
+			OidcConfig:   &v1.OIDCConfig{Issuer: "test-issuer"},
+			Oauth2Config: &v1.OAuth2Config{ClientId: "test-id", ClientSecret: "test-secret"},
+		}
+		_, err := client.CreateClientConfig(context.Background(), connect.NewRequest(&v1.CreateClientConfigRequest{
+			Config: config,
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("returns invalid argument when organisation id is not a uuid", func(t *testing.T) {
+		_, client := setupOIDCService(t, withOIDCFeatureEnabled)
+
+		config := &v1.OIDCClientConfig{
+			OrganizationId: "some-random-id",
+			OidcConfig:     &v1.OIDCConfig{Issuer: "test-issuer"},
+			Oauth2Config:   &v1.OAuth2Config{ClientId: "test-id", ClientSecret: "test-secret"},
+		}
+		_, err := client.CreateClientConfig(context.Background(), connect.NewRequest(&v1.CreateClientConfigRequest{
+			Config: config,
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("delegates to iam and returns created config", func(t *testing.T) {
 		serverMock, client := setupOIDCService(t, withOIDCFeatureEnabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
 		config := &v1.OIDCClientConfig{
-			OidcConfig:   &v1.OIDCConfig{Issuer: "test-issuer"},
-			Oauth2Config: &v1.OAuth2Config{ClientId: "test-id", ClientSecret: "test-secret"},
+			OrganizationId: organizationID.String(),
+			OidcConfig:     &v1.OIDCConfig{Issuer: "test-issuer"},
+			Oauth2Config:   &v1.OAuth2Config{ClientId: "test-id", ClientSecret: "test-secret"},
 		}
 		response, err := client.CreateClientConfig(context.Background(), connect.NewRequest(&v1.CreateClientConfigRequest{
 			Config: config,
