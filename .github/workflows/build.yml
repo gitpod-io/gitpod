@@ -94,6 +94,16 @@ jobs:
         working-directory: /workspace/gitpod
         run: |
           leeway vet --ignore-warnings
+      - name: Pre-Commit Checks
+        shell: bash
+        working-directory: /workspace/gitpod
+        run: |
+          RESULT=0
+          pre-commit run --show-diff-on-failure || RESULT=$?
+          if [ $RESULT -ne 0 ]; then
+            echo "::error title=The Pre-Commit Checks Failed.::Please run 'pre-commit run --show-diff-on-failure'"
+          fi
+          exit "$RESULT"
       - name: Get Secrets from GCP
         id: 'secrets'
         uses: 'google-github-actions/get-secretmanager-secrets@v1'
