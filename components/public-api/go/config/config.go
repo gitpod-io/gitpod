@@ -19,5 +19,8 @@ type Configuration struct {
 	// Path to file which contains personal access token singing key
 	PersonalAccessTokenSigningKeyPath string `json:"personalAccessTokenSigningKeyPath"`
 
+	// Path to directory containing database configuration files
+	DatabaseConfigPath string `json:"databaseConfigPath"`
+
 	Server *baseserver.Configuration `json:"server,omitempty"`
 }

@@ -2601,7 +2601,7 @@ data:
     kind: Deployment
     metadata:
       annotations:
-        gitpod.io/checksum_config: 82b32972a85084140320cd225c2893f0a2f22d55675f95a68e021c43e5e9b9ac
+        gitpod.io/checksum_config: 4323280d43b39ac16a1946291981c8798f4d957934a2bbc4a8161d1d4c679ac5
       creationTimestamp: null
       labels:
         app: gitpod
@@ -4828,6 +4828,7 @@ data:
       "oidcServiceAddress": "iam.default.svc.cluster.local:9001",
       "stripeWebhookSigningSecretPath": "",
       "personalAccessTokenSigningKeyPath": "",
+      "databaseConfigPath": "/secrets/database-config",
       "server": {
         "services": {
           "grpc": {
@@ -9425,7 +9426,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    gitpod.io/checksum_config: 82b32972a85084140320cd225c2893f0a2f22d55675f95a68e021c43e5e9b9ac
+    gitpod.io/checksum_config: 4323280d43b39ac16a1946291981c8798f4d957934a2bbc4a8161d1d4c679ac5
   creationTimestamp: null
   labels:
     app: gitpod
@@ -9540,6 +9541,9 @@ spec:
           name: config
           readOnly: true
           subPath: config.json
+        - mountPath: /secrets/database-config
+          name: database-config
+          readOnly: true
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -9610,6 +9614,9 @@ spec:
       - configMap:
           name: public-api-server
         name: config
+      - name: database-config
+        secret:
+          secretName: aws-database
 status: {}
 ---
 # apps/v1/Deployment server
