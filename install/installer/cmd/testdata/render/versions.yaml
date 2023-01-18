@@ -121,8 +121,6 @@ components:
     userNamespaces:
       seccompProfileInstaller:
         version: test
-      shiftfsModuleLoader:
-        version: test
       version: test
     version: test
   wsManager:

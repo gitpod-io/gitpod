@@ -92,7 +92,6 @@ packages:
       - components/workspacekit:docker
       - components/ws-daemon:docker
       - components/ws-daemon/seccomp-profile-installer:docker
-      - components/ws-daemon/shiftfs-module-loader:docker
       - components/ws-manager-bridge:docker
       - components/ws-manager:docker
       - components/ws-proxy:docker
