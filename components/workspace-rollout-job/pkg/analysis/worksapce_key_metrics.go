@@ -132,7 +132,7 @@ func (pa *WorkspaceKeyMetricsAnalyzer) MoveForward(ctx context.Context, clusterN
 		}
 
 		if successPercentage < float64(pa.targetSuccessPercentage) {
-			log.Infof("Percentage for %s is below target success percentage %f: %f", keyMetricWrapper.name, pa.targetSuccessPercentage, successPercentage)
+			log.Infof("Percentage for %s is below target success percentage %d: %f", keyMetricWrapper.name, pa.targetSuccessPercentage, successPercentage)
 			return -1, nil
 		}
 	}
