@@ -9,6 +9,11 @@ set -Eeuo pipefail
 
 component=${PWD##*/}
 workspaceUrl=$(echo "${1}" |sed -e "s/\/$//")
+
+# build
+go build .
+echo "$component built"
+
 echo "URL: $workspaceUrl"
 
 workspaceDesc=$(gpctl workspaces describe "$workspaceUrl" -o=json)
@@ -28,10 +33,6 @@ sshConfig=$(mktemp)
 echo "Host $workspaceId" > "$sshConfig"
 echo "    Hostname \"$workspaceId.ssh.$clusterHost\"" >> "$sshConfig"
 echo "    User \"$workspaceId#$ownerToken\"" >> "$sshConfig"
-
-# build
-go build .
-echo "$component built"
 
 # upload
 uploadDest="/.supervisor/$component"

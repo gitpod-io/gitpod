@@ -36,14 +36,14 @@ const (
 )
 
 type TrackCommandUsageParams struct {
-	Command            string `json:"command,omitempty"`
-	Duration           int64  `json:"duration,omitempty"`
-	ErrorCode          string `json:"errorCode,omitempty"`
-	WorkspaceId        string `json:"workspaceId,omitempty"`
-	InstanceId         string `json:"instanceId,omitempty"`
-	Timestamp          int64  `json:"timestamp,omitempty"`
-	ImageBuildDuration int64  `json:"imageBuildDuration,omitempty"`
-	Outcome            string `json:"outcome,omitempty"`
+	Command            []string `json:"command,omitempty"`
+	Duration           int64    `json:"duration,omitempty"`
+	ErrorCode          string   `json:"errorCode,omitempty"`
+	WorkspaceId        string   `json:"workspaceId,omitempty"`
+	InstanceId         string   `json:"instanceId,omitempty"`
+	Timestamp          int64    `json:"timestamp,omitempty"`
+	ImageBuildDuration int64    `json:"imageBuildDuration,omitempty"`
+	Outcome            string   `json:"outcome,omitempty"`
 }
 
 type AnalyticsEvent struct {
@@ -71,10 +71,10 @@ func NewAnalyticsEvent(ctx context.Context, supervisorClient *supervisor.Supervi
 
 	event.Data = &TrackCommandUsageParams{
 		Command:     cmdParams.Command,
-		Duration:    0,
+		Duration:    cmdParams.Duration,
 		WorkspaceId: wsInfo.WorkspaceId,
 		InstanceId:  wsInfo.InstanceId,
-		ErrorCode:   "",
+		ErrorCode:   cmdParams.ErrorCode,
 		Timestamp:   time.Now().UnixMilli(),
 	}
 
@@ -84,7 +84,7 @@ func NewAnalyticsEvent(ctx context.Context, supervisorClient *supervisor.Supervi
 func (e *AnalyticsEvent) Set(key string, value interface{}) *AnalyticsEvent {
 	switch key {
 	case "Command":
-		e.Data.Command = value.(string)
+		e.Data.Command = value.([]string)
 	case "ErrorCode":
 		e.Data.ErrorCode = value.(string)
 	case "Duration":
