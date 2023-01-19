@@ -27,6 +27,7 @@
         { "path": "components/ws-proxy" },
         { "path": "components/public-api-server" },
         { "path": "components/gitpod-db" },
+        { "path": "components/spicedb" },
         { "path": "test" },
         { "path": "dev/blowtorch" },
         { "path": "dev/changelog" },
