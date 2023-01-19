@@ -1530,6 +1530,12 @@ data:
     certificate:
       kind: secret
       name: https-certificates
+    components:
+      podConfig:
+        dashboard:
+          replicas: 456
+        server:
+          replicas: 123
     containerRegistry:
       inCluster: true
       privateBaseImageAllowList: []
