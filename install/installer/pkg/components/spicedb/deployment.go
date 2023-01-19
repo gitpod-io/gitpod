@@ -96,7 +96,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			{
 				Name:  "SPICEDB_DATASTORE_CONN_URI",
-				Value: fmt.Sprintf("$(DB_USERNAME):$(DB_PASSWORD)@tcp(%s:%d)/%s", dbHost, CloudSQLProxyPort, cfg.CloudSQL.Database),
+				Value: fmt.Sprintf("$(DB_USERNAME):$(DB_PASSWORD)@tcp(%s:%d)/%s?parseTime=true", dbHost, CloudSQLProxyPort, cfg.CloudSQL.Database),
 			},
 			{
 				Name:  "SPICEDB_GRPC_PRESHARED_KEY",
