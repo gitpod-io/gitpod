@@ -27,6 +27,7 @@ import { UserContext } from "../user-context";
 import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
 import Alert from "../components/Alert";
 import { getExperimentsClient } from "../experiments/client";
+import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 
 type PendingPlan = Plan & { pendingSince: number };
 
@@ -43,6 +44,7 @@ export default function TeamBilling() {
     const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
     const [pendingTeamPlan, setPendingTeamPlan] = useState<PendingPlan | undefined>();
     const [pollTeamSubscriptionTimeout, setPollTeamSubscriptionTimeout] = useState<NodeJS.Timeout | undefined>();
+    const { oidcServiceEnabled } = useContext(FeatureFlagContext);
 
     useEffect(() => {
         if (!team) {
@@ -345,7 +347,7 @@ export default function TeamBilling() {
     const showUBP = BillingMode.showUsageBasedBilling(teamBillingMode);
     return (
         <PageWithSubMenu
-            subMenu={getTeamSettingsMenu({ team, billingMode: teamBillingMode })}
+            subMenu={getTeamSettingsMenu({ team, billingMode: teamBillingMode, ssoEnabled: oidcServiceEnabled })}
             title="Billing"
             subtitle="Configure and manage billing for your team."
         >
