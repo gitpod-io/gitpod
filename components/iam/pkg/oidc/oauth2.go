@@ -78,6 +78,7 @@ func (s *Service) OAuth2Middleware(next http.Handler) http.Handler {
 			return
 		}
 
+		config.OAuth2Config.RedirectURL = getCallbackURL(r.Host)
 		oauth2Token, err := config.OAuth2Config.Exchange(r.Context(), code)
 		if err != nil {
 			http.Error(rw, "failed to exchange token: "+err.Error(), http.StatusInternalServerError)
