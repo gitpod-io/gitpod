@@ -11,28 +11,34 @@ import { Redirect } from "react-router";
 import Alert from "../components/Alert";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
+import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
 import { TeamsContext, useCurrentTeam } from "./teams-context";
 
-export function getTeamSettingsMenu(params: { team?: Team; billingMode?: BillingMode }) {
-    const { team, billingMode } = params;
-    return [
+export function getTeamSettingsMenu(params: { team?: Team; billingMode?: BillingMode; ssoEnabled?: boolean }) {
+    const { team, billingMode, ssoEnabled } = params;
+    const result = [
         {
             title: "General",
             link: [`/t/${team?.slug}/settings`],
         },
-        // The Billing page contains both chargebee and usage-based components, so: always show them!
-        ...(billingMode && billingMode.mode !== "none"
-            ? [
-                  {
-                      title: "Billing",
-                      link: [`/t/${team?.slug}/billing`],
-                  },
-              ]
-            : []),
     ];
+    if (ssoEnabled) {
+        result.push({
+            title: "SSO",
+            link: [`/t/${team?.slug}/sso`],
+        });
+    }
+    if (billingMode?.mode !== "none") {
+        // The Billing page contains both chargebee and usage-based components, so: always show them!
+        result.push({
+            title: "Billing",
+            link: [`/t/${team?.slug}/billing`],
+        });
+    }
+    return result;
 }
 
 export default function TeamSettings() {
@@ -46,6 +52,7 @@ export default function TeamSettings() {
     const [isUserOwner, setIsUserOwner] = useState(true);
     const [billingMode, setBillingMode] = useState<BillingMode | undefined>(undefined);
     const [updated, setUpdated] = useState(false);
+    const { oidcServiceEnabled } = useContext(FeatureFlagContext);
 
     const close = () => setModal(false);
 
@@ -118,7 +125,7 @@ export default function TeamSettings() {
     return (
         <>
             <PageWithSubMenu
-                subMenu={getTeamSettingsMenu({ team, billingMode })}
+                subMenu={getTeamSettingsMenu({ team, billingMode, ssoEnabled: oidcServiceEnabled })}
                 title="Settings"
                 subtitle="Manage general team settings."
             >
