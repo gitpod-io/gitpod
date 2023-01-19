@@ -167,7 +167,7 @@ message ListClientConfigsRequest {
 }
 
 message ListClientConfigsResponse {
-  repeated OIDCClientConfig providers = 1;
+  repeated OIDCClientConfig client_configs = 1;
 
   int64 total_results = 2;
 }
