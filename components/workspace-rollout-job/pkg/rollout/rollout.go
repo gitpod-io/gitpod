@@ -62,19 +62,21 @@ func (r *RollOutJob) Start(ctx context.Context) {
 					log.Info("Reverting the rollout")
 					// Revert the rollout in case of analysis failure
 					r.revert <- true
-					continue
+					return
 				}
 
 				// Analyzer says no, stop the rollout
 				if moveForward == -1 {
 					log.Info("Analyzer says no, stopping the rollout")
 					r.revert <- true
+					return
 				} else if moveForward == 0 {
 					log.Info("Analyzer says no data, waiting for more data")
 					// Rollout okay until currentScore < okayScoreUntilNoData
 					if r.currentScore >= r.okayScoreUntilNoData {
 						log.Info("Current score is more than okayScoreUntilNoData, reverting the rollout")
 						r.revert <- true
+						return
 					}
 				} else {
 					// Roll forward otherwise
@@ -117,6 +119,7 @@ func (r *RollOutJob) Start(ctx context.Context) {
 
 			log.Infof("Updated cluster scores: %s: %d, %s: %d", r.oldCluster, 100, r.newCluster, 0)
 			r.Stop()
+			return
 
 		case <-r.done:
 			return
