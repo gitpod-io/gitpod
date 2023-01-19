@@ -33,7 +33,9 @@ import (
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -1072,15 +1074,26 @@ func startInfoService(socketDir string) (func(), error) {
 	}, nil
 }
 
+var lastWorkspaceInfo *api.WorkspaceInfoResponse
+
 func (svc *workspaceInfoService) WorkspaceInfo(ctx context.Context, req *api.WorkspaceInfoRequest) (*api.WorkspaceInfoResponse, error) {
 	client, err := connectToInWorkspaceDaemonService(ctx)
 	if err != nil {
-		return nil, err
+		log.WithError(err).Error("could not connect to workspace daemon")
+		return nil, status.Error(codes.Internal, "could not resolve workspace info")
 	}
+	defer client.Close()
 
 	resp, err := client.WorkspaceInfo(ctx, &api.WorkspaceInfoRequest{})
 	if err != nil {
-		log.WithError(err).Error("could not get workspace info")
+		e, ok := status.FromError(err)
+		if ok && e.Code() == codes.ResourceExhausted {
+			return lastWorkspaceInfo, nil
+		}
+		log.WithError(err).Error("could not resolve workspace info")
+		return nil, status.Error(codes.Internal, "could not resolve workspace info")
+	} else {
+		lastWorkspaceInfo = resp
 	}
 	return resp, nil
 }
