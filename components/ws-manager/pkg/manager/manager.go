@@ -380,7 +380,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	// if we reach this point the pod is created
 	err = wait.PollImmediateWithContext(ctx, 100*time.Millisecond, 7*time.Minute, podRunning(m.Clientset, pod.Name, pod.Namespace))
 	if err != nil {
-		clog.WithError(err).WithField("pod", pod.Name).Warn("workspace pod did not transition to running state")
+		clog.WithError(err).WithField("pod", pod.Name).WithField("phase", pod.Status.Phase).Warn("workspace pod did not transition to running state")
 		if err == wait.ErrWaitTimeout && isPodUnschedulable(m.Clientset, pod.Name, pod.Namespace) {
 			// this could be an error due to a scale-up event
 			// delete the PVC object if present
@@ -401,9 +401,12 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 			ctx := context.Background()
 			remainingTime := startWorkspaceTimeout - time.Since(startWorkspaceTime)
 			ctx = context.WithValue(ctx, ctxKeyRemainingTime{}, remainingTime)
+
+			span.LogKV("event", "retry starting a workspace")
 			return m.StartWorkspace(ctx, req)
 		}
 
+		clog.WithError(err).WithField("pod", pod.Name).Error("workspace pod never reached Running state")
 		return nil, xerrors.Errorf("workspace pod never reached Running state: %w", err)
 	}
 
