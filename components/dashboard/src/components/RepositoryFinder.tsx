@@ -31,7 +31,7 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
                 setSuggestedContextURLs(urls);
                 saveSearchData(urls);
             });
-    }, [suggestedContextURLs]);
+    }, []);
 
     const getElements = useCallback(
         (searchString: string) => {
