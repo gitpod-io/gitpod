@@ -53,6 +53,35 @@ func (w *Workspace) ToOwnerRelationship() string {
 	return fmt.Sprintf("workspace:%s#owner@user:%s", w.ID, w.OwnerID)
 }
 
+// {"userId":"ddaa86e6-3aa2-44a7-bc9e-2f8c8c7324ac","role":"owner","teamId":"bce79c38-b850-4475-896a-e0a696abc5a5"}
+type Team struct {
+	TeamID string `json:"teamId"`
+	UserID string `json:"userId"`
+	Role   string `json:"role"`
+}
+
+func (t *Team) ToRelationship() string {
+	return fmt.Sprintf("team:%s#%s@user:%s", t.TeamID, t.Role, t.UserID)
+}
+
+type Project struct {
+	ID     string `json:"id"`
+	TeamID string `json:"teamId"`
+	UserID string `json:"userId"`
+}
+
+func (t *Project) ToRelationship() string {
+	var relation string
+	if t.TeamID != "" {
+		relation = "team"
+	}
+	if t.UserID != "" {
+		relation = "user"
+	}
+
+	return fmt.Sprintf("project:%s#%s@team:%s", t.ID, relation, t.TeamID)
+}
+
 func transform(wsFilePath, projFilePath, teamsFilePath string) error {
 	var relationships []string
 
@@ -64,6 +93,28 @@ func transform(wsFilePath, projFilePath, teamsFilePath string) error {
 
 		for _, w := range workspaces {
 			relationships = append(relationships, w.ToOwnerRelationship())
+		}
+	}
+
+	if teamsFilePath != "" {
+		teams, err := readTeams(teamsFilePath)
+		if err != nil {
+			return err
+		}
+
+		for _, w := range teams {
+			relationships = append(relationships, w.ToRelationship())
+		}
+	}
+
+	if projFilePath != "" {
+		projects, err := readProjects(projFilePath)
+		if err != nil {
+			return err
+		}
+
+		for _, p := range projects {
+			relationships = append(relationships, p.ToRelationship())
 		}
 	}
 
@@ -94,6 +145,52 @@ func readWS(filePath string) ([]Workspace, error) {
 		}
 
 		results = append(results, ws)
+	}
+
+	return results, nil
+}
+
+func readTeams(filePath string) ([]Team, error) {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	defer f.Close()
+
+	var results []Team
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		var t Team
+		if err := json.Unmarshal(scanner.Bytes(), &t); err != nil {
+			return nil, err
+		}
+
+		results = append(results, t)
+	}
+
+	return results, nil
+}
+
+func readProjects(filePath string) ([]Project, error) {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	defer f.Close()
+
+	var results []Project
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		var t Project
+		if err := json.Unmarshal(scanner.Bytes(), &t); err != nil {
+			return nil, err
+		}
+
+		results = append(results, t)
 	}
 
 	return results, nil

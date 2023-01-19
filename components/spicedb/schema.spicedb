@@ -1,0 +1,46 @@
+definition user {}
+
+definition cell {
+    relation admin: user
+}
+
+definition organisation {
+    relation cell: cell
+	relation owner: user
+	relation member: user
+
+    permission org_read = cell->admin + owner
+    permission org_write = cell->admin + owner
+
+    permission members_read = cell->admin + owner + member
+    permission members_write = cell->admin + owner + member
+
+    permission settings_read = cell->admin + owner
+    permission settings_write = cell->admin + owner
+
+    permission usage_read = cell->admin + owner
+
+    permission billing_read = cell->admin + owner
+    permission billing_write = cell->admin + owner
+
+    permission workspace_create = cell->admin + owner + member
+}
+
+definition project {
+    relation org: organisation
+
+    permission project_read = org->owner + org->member
+    permission project_write = org->owner + org->member
+
+    permission workspace_create = org->workspace_create
+}
+
+definition workspace {
+    relation org: organisation
+    relation proj: project
+	relation owner: user
+
+    permission workspace_create = owner + proj->workspace_create + org->workspace_create
+	permission worksarce_read = owner
+	permission workspace_write = owner
+}
