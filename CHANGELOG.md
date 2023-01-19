@@ -1,6 +1,8 @@
 # Change Log
 
 ## January 2023
+- [installer]: refactor the config's deprecation handling ([#15773](https://github.com/gitpod-io/gitpod/pull/15773)) - [@mrsimonemms](https://github.com/mrsimonemms)
+- A new CLI command `gp timeout set` allows to set the workspace timeout to arbitrary durations. ([#15815](https://github.com/gitpod-io/gitpod/pull/15815)) - [@svenefftinge](https://github.com/svenefftinge)
 - new `.gitpod.yml` default template ([#15728](https://github.com/gitpod-io/gitpod/pull/15728)) - [@Siddhant-K-code](https://github.com/Siddhant-K-code)
 - Delete semgrep.yml ([#15601](https://github.com/gitpod-io/gitpod/pull/15601)) - [@securitymirco](https://github.com/securitymirco)
 - Allow renaming teams ([#15754](https://github.com/gitpod-io/gitpod/pull/15754)) - [@svenefftinge](https://github.com/svenefftinge)
