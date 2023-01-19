@@ -423,20 +423,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     }
 
     private openDesktopLink(link: string) {
-        let redirect = false;
-        try {
-            const desktopLink = new URL(link);
-            redirect = desktopLink.protocol !== "http:" && desktopLink.protocol !== "https:";
-        } catch (e) {
-            console.error("invalid desktop link:", e);
-        }
-        // redirect only if points to desktop application
-        // don't navigate browser to another page
-        if (redirect) {
-            window.location.href = link;
-        } else {
-            window.open(link, "_blank", "noopener");
-        }
+        this.ideFrontendService?.openDesktopIDE(link);
     }
 
     render() {
@@ -543,7 +530,13 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                     menuEntries={[
                                         {
                                             title: "Open in Browser",
-                                            onClick: () => window.parent.postMessage({ type: "openBrowserIde" }, "*"),
+                                            onClick: () => {
+                                                // TODO(ak): delete after supervisor deploy
+                                                window.parent.postMessage({ type: "openBrowserIde" }, "*");
+                                                // TODO(ak): end of delete
+
+                                                this.ideFrontendService?.openBrowserIDE();
+                                            },
                                         },
                                         {
                                             title: "Stop Workspace",
