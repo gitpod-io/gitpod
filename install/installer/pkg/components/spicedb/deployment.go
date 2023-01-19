@@ -17,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 )
 
@@ -158,18 +157,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			RunAsGroup:   pointer.Int64(65532),
 			RunAsNonRoot: pointer.Bool(true),
 			RunAsUser:    pointer.Int64(65532),
-		},
-		LivenessProbe: &corev1.Probe{
-			ProbeHandler: corev1.ProbeHandler{
-				HTTPGet: &corev1.HTTPGetAction{
-					Path:   "/healthz",
-					Port:   intstr.IntOrString{IntVal: ContainerHTTPPort},
-					Scheme: corev1.URISchemeHTTP,
-				},
-			},
-			FailureThreshold: 3,
-			SuccessThreshold: 1,
-			TimeoutSeconds:   1,
 		},
 		ReadinessProbe: &corev1.Probe{
 			ProbeHandler: corev1.ProbeHandler{
