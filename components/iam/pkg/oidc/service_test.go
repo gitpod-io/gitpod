@@ -15,10 +15,15 @@ import (
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/gitpod-io/gitpod/components/gitpod-db/go/dbtest"
+	v1 "github.com/gitpod-io/gitpod/components/iam-api/go/v1"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
+
+	iam "github.com/gitpod-io/gitpod/iam/pkg/apiv1"
 )
 
 func TestGetStartParams(t *testing.T) {
@@ -26,10 +31,8 @@ func TestGetStartParams(t *testing.T) {
 		issuerG  = "https://accounts.google.com"
 		clientID = "client-id-123"
 	)
-	sessionServerAddress := newFakeSessionServer(t)
-	service := NewService(sessionServerAddress)
+	service, _ := setupOIDCServiceForTests(t)
 	config := &ClientConfig{
-		ID:             "google-1",
 		Issuer:         issuerG,
 		VerifierConfig: &oidc.Config{},
 		OAuth2Config: &oauth2.Config{
@@ -61,10 +64,14 @@ func TestGetStartParams(t *testing.T) {
 
 func TestGetClientConfigFromStartRequest(t *testing.T) {
 	issuer := newFakeIdP(t)
+	service, configService := setupOIDCServiceForTests(t)
+	clientID, err := createConfig(configService, &ClientConfig{
+		Issuer:         issuer,
+		VerifierConfig: &oidc.Config{},
+		OAuth2Config:   &oauth2.Config{},
+	})
+	require.NoError(t, err, "failed to initialize test")
 
-	const (
-		clientID = "google-1"
-	)
 	testCases := []struct {
 		Location      string
 		ExpectedError bool
@@ -87,16 +94,6 @@ func TestGetClientConfigFromStartRequest(t *testing.T) {
 		},
 	}
 
-	sessionServerAddress := newFakeSessionServer(t)
-	service := NewService(sessionServerAddress)
-	err := service.AddClientConfig(&ClientConfig{
-		ID:             clientID,
-		Issuer:         issuer,
-		VerifierConfig: &oidc.Config{},
-		OAuth2Config:   &oauth2.Config{},
-	})
-	require.NoError(t, err, "failed to initialize test")
-
 	for _, tc := range testCases {
 		t.Run(tc.Location, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, tc.Location, nil)
@@ -115,10 +112,13 @@ func TestGetClientConfigFromStartRequest(t *testing.T) {
 
 func TestGetClientConfigFromCallbackRequest(t *testing.T) {
 	issuer := newFakeIdP(t)
-
-	const (
-		clientID = "google-1"
-	)
+	service, configService := setupOIDCServiceForTests(t)
+	clientID, err := createConfig(configService, &ClientConfig{
+		Issuer:         issuer,
+		VerifierConfig: &oidc.Config{},
+		OAuth2Config:   &oauth2.Config{},
+	})
+	require.NoError(t, err, "failed to initialize test")
 
 	state, err := encodeStateParam(StateParam{
 		ClientConfigID: clientID,
@@ -154,16 +154,6 @@ func TestGetClientConfigFromCallbackRequest(t *testing.T) {
 		},
 	}
 
-	sessionServerAddress := newFakeSessionServer(t)
-	service := NewService(sessionServerAddress)
-	err = service.AddClientConfig(&ClientConfig{
-		ID:             clientID,
-		Issuer:         issuer,
-		VerifierConfig: &oidc.Config{},
-		OAuth2Config:   &oauth2.Config{},
-	})
-	require.NoError(t, err, "failed to initialize test")
-
 	for _, tc := range testCases {
 		t.Run(tc.Location, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, tc.Location, nil)
@@ -182,21 +172,21 @@ func TestGetClientConfigFromCallbackRequest(t *testing.T) {
 
 func TestAuthenticate_nonce_check(t *testing.T) {
 	issuer := newFakeIdP(t)
-	sessionServerAddress := newFakeSessionServer(t)
-
-	service := NewService(sessionServerAddress)
-	err := service.AddClientConfig(&ClientConfig{
-		ID:     "google-1",
+	service, configService := setupOIDCServiceForTests(t)
+	configID, err := createConfig(configService, &ClientConfig{
 		Issuer: issuer,
-		VerifierConfig: &oidc.Config{
-			SkipClientIDCheck:          true,
-			SkipIssuerCheck:            true,
-			SkipExpiryCheck:            true,
-			InsecureSkipSignatureCheck: true,
-		},
+		// VerifierConfig: &oidc.Config{
+		// 	SkipClientIDCheck:          true,
+		// 	SkipIssuerCheck:            true,
+		// 	SkipExpiryCheck:            true,
+		// 	InsecureSkipSignatureCheck: true,
+		// },
 		OAuth2Config: &oauth2.Config{},
 	})
 	require.NoError(t, err, "failed to initialize test")
+
+	_, err = service.getConfigById(configID)
+	require.NoError(t, err, "could not assert config creation")
 
 	token := oauth2.Token{}
 	extra := map[string]interface{}{
@@ -213,6 +203,39 @@ func TestAuthenticate_nonce_check(t *testing.T) {
 
 	require.NoError(t, err, "failed to authenticate")
 	require.NotNil(t, result)
+}
+
+func setupOIDCServiceForTests(t *testing.T) (*Service, *iam.OIDCClientConfigService) {
+	t.Helper()
+
+	dbConn := dbtest.ConnectForTests(t)
+	cipher := dbtest.CipherSet(t)
+
+	clientConfigService := iam.NewOIDCClientConfigService(dbConn, cipher)
+
+	sessionServerAddress := newFakeSessionServer(t)
+
+	service := newTestService(sessionServerAddress, dbConn, cipher)
+	return service, clientConfigService
+}
+
+func createConfig(configService *iam.OIDCClientConfigService, config *ClientConfig) (string, error) {
+	res, err := configService.CreateClientConfig(context.Background(), &v1.CreateClientConfigRequest{
+		Config: &v1.OIDCClientConfig{
+			OrganizationId: uuid.NewString(),
+			OidcConfig: &v1.OIDCConfig{
+				Issuer: config.Issuer,
+			},
+			Oauth2Config: &v1.OAuth2Config{
+				ClientId:     config.OAuth2Config.ClientID,
+				ClientSecret: config.OAuth2Config.ClientSecret,
+			},
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+	return res.GetConfig().GetId(), nil
 }
 
 func newFakeSessionServer(t *testing.T) string {

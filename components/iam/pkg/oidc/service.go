@@ -16,21 +16,32 @@ import (
 	"strings"
 
 	"github.com/coreos/go-oidc/v3/oidc"
+	goidc "github.com/coreos/go-oidc/v3/oidc"
+	"github.com/gitpod-io/gitpod/common-go/log"
+	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
+	"github.com/google/uuid"
 	"golang.org/x/oauth2"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
 )
 
 type Service struct {
-	configsById           map[string]*ClientConfig
-	verifierByIssuer      map[string]*oidc.IDTokenVerifier
-	providerByIssuer      map[string]*oidc.Provider
+	dbConn *gorm.DB
+	cipher db.Cipher
+
+	verifierByIssuer      map[string]*goidc.IDTokenVerifier
 	sessionServiceAddress string
+
+	// TODO(at) remove by enhancing test setups
+	skipVerifyIdToken bool
 }
 
 type ClientConfig struct {
 	ID             string
 	Issuer         string
 	OAuth2Config   *oauth2.Config
-	VerifierConfig *oidc.Config
+	VerifierConfig *goidc.Config
 }
 
 type StartParams struct {
@@ -40,32 +51,24 @@ type StartParams struct {
 }
 
 type AuthFlowResult struct {
-	IDToken *oidc.IDToken          `json:"idToken"`
+	IDToken *goidc.IDToken         `json:"idToken"`
 	Claims  map[string]interface{} `json:"claims"`
 }
 
-func NewService(sessionServiceAddress string) *Service {
+func NewService(sessionServiceAddress string, dbConn *gorm.DB, cipher db.Cipher) *Service {
 	return &Service{
-		configsById:           map[string]*ClientConfig{},
-		verifierByIssuer:      map[string]*oidc.IDTokenVerifier{},
-		providerByIssuer:      map[string]*oidc.Provider{},
+		verifierByIssuer:      map[string]*goidc.IDTokenVerifier{},
 		sessionServiceAddress: sessionServiceAddress,
+
+		dbConn: dbConn,
+		cipher: cipher,
 	}
 }
 
-func (s *Service) AddClientConfig(config *ClientConfig) error {
-	if s.providerByIssuer[config.Issuer] == nil {
-		provider, err := oidc.NewProvider(context.Background(), config.Issuer)
-		if err != nil {
-			return fmt.Errorf("OIDC discovery failed: %w", err)
-		}
-		s.providerByIssuer[config.Issuer] = provider
-		s.verifierByIssuer[config.Issuer] = provider.Verifier(config.VerifierConfig)
-	}
-
-	config.OAuth2Config.Endpoint = s.providerByIssuer[config.Issuer].Endpoint()
-	s.configsById[config.ID] = config
-	return nil
+func newTestService(sessionServiceAddress string, dbConn *gorm.DB, cipher db.Cipher) *Service {
+	service := NewService(sessionServiceAddress, dbConn, cipher)
+	service.skipVerifyIdToken = true
+	return service
 }
 
 func (s *Service) GetStartParams(config *ClientConfig) (*StartParams, error) {
@@ -89,7 +92,7 @@ func (s *Service) GetStartParams(config *ClientConfig) (*StartParams, error) {
 	}
 
 	// Nonce is the single option passed on to configure the consent page ATM.
-	authCodeURL := config.OAuth2Config.AuthCodeURL(state, oidc.Nonce(nonce))
+	authCodeURL := config.OAuth2Config.AuthCodeURL(state, goidc.Nonce(nonce))
 
 	return &StartParams{
 		AuthCodeURL: authCodeURL,
@@ -130,11 +133,11 @@ func (s *Service) GetClientConfigFromStartRequest(r *http.Request) (*ClientConfi
 	}
 
 	if idParam != "" {
-		config := s.configsById[idParam]
-		if config != nil {
-			return config, nil
+		config, err := s.getConfigById(idParam)
+		if err != nil {
+			return nil, err
 		}
-		return nil, fmt.Errorf("failed to find OIDC config by ID")
+		return config, nil
 	}
 
 	return nil, fmt.Errorf("failed to find OIDC config")
@@ -150,12 +153,63 @@ func (s *Service) GetClientConfigFromCallbackRequest(r *http.Request) (*ClientCo
 	if err != nil {
 		return nil, fmt.Errorf("bad state param")
 	}
-	config := s.configsById[state.ClientConfigID]
+	config, _ := s.getConfigById(state.ClientConfigID)
 	if config != nil {
 		return config, nil
 	}
 
 	return nil, fmt.Errorf("failed to find OIDC config on callback")
+}
+
+func (s *Service) getConfigById(id string) (*ClientConfig, error) {
+	uuid, err := uuid.Parse(id)
+	if err != nil {
+		return nil, err
+	}
+	dbEntry, err := db.GetOIDCClientConfig(context.Background(), s.dbConn, uuid)
+	if err != nil {
+		return nil, err
+	}
+	spec, err := dbEntry.Data.Decrypt(s.cipher)
+	if err != nil {
+		log.Log.WithError(err).Error("Failed to decrypt oidc client config.")
+		return nil, status.Errorf(codes.Internal, "Failed to decrypt OIDC client config.")
+	}
+
+	provider, err := oidc.NewProvider(context.Background(), dbEntry.Issuer)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.verifierByIssuer[dbEntry.Issuer] == nil {
+		if s.skipVerifyIdToken {
+			s.verifierByIssuer[dbEntry.Issuer] = provider.Verifier(&goidc.Config{
+				ClientID:                   spec.ClientID,
+				SkipClientIDCheck:          true,
+				SkipIssuerCheck:            true,
+				SkipExpiryCheck:            true,
+				InsecureSkipSignatureCheck: true,
+			})
+		} else {
+			s.verifierByIssuer[dbEntry.Issuer] = provider.Verifier(&goidc.Config{
+				ClientID: spec.ClientID,
+			})
+
+		}
+	}
+
+	return &ClientConfig{
+		ID:     dbEntry.ID.String(),
+		Issuer: dbEntry.Issuer,
+		OAuth2Config: &oauth2.Config{
+			ClientID:     spec.ClientID,
+			ClientSecret: spec.ClientSecret,
+			Endpoint:     provider.Endpoint(),
+		},
+		VerifierConfig: &goidc.Config{
+			ClientID: spec.ClientID,
+		},
+	}, nil
 }
 
 type AuthenticateParams struct {

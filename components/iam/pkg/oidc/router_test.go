@@ -5,7 +5,6 @@
 package oidc
 
 import (
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -23,23 +22,27 @@ func TestRoute_start(t *testing.T) {
 	idpUrl := newFakeIdP(t)
 
 	// setup test server with client routes
-	baseUrl, _ := newTestServer(t, testServerParams{
-		issuer:         idpUrl,
-		returnToURL:    "",
-		clientConfigID: "R4ND0M1D",
+	baseUrl, _, configId := newTestServer(t, testServerParams{
+		issuer:      idpUrl,
+		returnToURL: "",
 	})
 
 	// go to /start
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get(baseUrl + "/oidc/start?issuer=" + idpUrl)
+	// don't follow redirect
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	resp, err := client.Get(baseUrl + "/oidc/start?id=" + configId)
 	require.NoError(t, err)
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	require.Equal(t, http.StatusTemporaryRedirect, resp.StatusCode)
+	redirectUrl, err := resp.Location()
 	require.NoError(t, err)
-
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-	require.NotEqual(t, "config not found", string(body))
+	require.Contains(t, redirectUrl.String(), idpUrl, "should redirect to IdP")
 }
 
 func TestRoute_callback(t *testing.T) {
@@ -47,10 +50,9 @@ func TestRoute_callback(t *testing.T) {
 	idpUrl := newFakeIdP(t)
 
 	// setup test server with client routes
-	baseUrl, stateParam := newTestServer(t, testServerParams{
-		issuer:         idpUrl,
-		returnToURL:    "/relative/url/to/some/page",
-		clientConfigID: "R4ND0M1D",
+	baseUrl, stateParam, _ := newTestServer(t, testServerParams{
+		issuer:      idpUrl,
+		returnToURL: "/relative/url/to/some/page",
 	})
 	state, err := encodeStateParam(*stateParam)
 	require.NoError(t, err)
@@ -85,28 +87,21 @@ func TestRoute_callback(t *testing.T) {
 }
 
 type testServerParams struct {
-	issuer         string
-	returnToURL    string
-	clientConfigID string
-	clientID       string
+	issuer      string
+	returnToURL string
+	clientID    string
 }
 
-func newTestServer(t *testing.T, params testServerParams) (url string, state *StateParam) {
+func newTestServer(t *testing.T, params testServerParams) (url string, state *StateParam, configId string) {
 	router := chi.NewRouter()
-	sessionServerAddress := newFakeSessionServer(t)
-	oidcService := NewService(sessionServerAddress)
+	oidcService, configService := setupOIDCServiceForTests(t)
 	router.Mount("/oidc", Router(oidcService))
 
 	ts := httptest.NewServer(router)
 	url = ts.URL
 
-	stateParam := &StateParam{
-		ClientConfigID: params.clientConfigID,
-		ReturnToURL:    params.returnToURL,
-	}
-
 	oidcConfig := &goidc.Config{
-		ClientID:                   params.clientConfigID,
+		ClientID:                   params.clientID,
 		SkipClientIDCheck:          true,
 		SkipIssuerCheck:            true,
 		SkipExpiryCheck:            true,
@@ -120,12 +115,17 @@ func newTestServer(t *testing.T, params testServerParams) (url string, state *St
 	}
 	clientConfig := &ClientConfig{
 		Issuer:         params.issuer,
-		ID:             params.clientConfigID,
 		OAuth2Config:   oauth2Config,
 		VerifierConfig: oidcConfig,
 	}
-	err := oidcService.AddClientConfig(clientConfig)
+	configId, err := createConfig(configService, clientConfig)
 	require.NoError(t, err)
+	require.NotEmpty(t, configId)
 
-	return url, stateParam
+	stateParam := &StateParam{
+		ClientConfigID: configId,
+		ReturnToURL:    params.returnToURL,
+	}
+
+	return url, stateParam, configId
 }
