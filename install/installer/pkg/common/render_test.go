@@ -60,12 +60,10 @@ func TestReplicas(t *testing.T) {
 		},
 	}
 	ctx, err := common.NewRenderContext(config.Config{
-		Experimental: &experimental.Config{
-			Common: &experimental.CommonConfig{
-				PodConfig: map[string]*experimental.PodConfig{
-					"server":    {Replicas: pointer.Int32(123)},
-					"dashboard": {Replicas: pointer.Int32(456)},
-				},
+		Components: &config.Components{
+			PodConfig: map[string]*config.PodConfig{
+				"server":    {Replicas: pointer.Int32(123)},
+				"dashboard": {Replicas: pointer.Int32(456)},
 			},
 		},
 	}, versions.Manifest{}, "test_namespace")
@@ -142,18 +140,16 @@ func TestResourceRequirements(t *testing.T) {
 		},
 	}
 	ctx, err := common.NewRenderContext(config.Config{
-		Experimental: &experimental.Config{
-			Common: &experimental.CommonConfig{
-				PodConfig: map[string]*experimental.PodConfig{
-					server.Component: {
-						Resources: map[string]*corev1.ResourceRequirements{
-							server.Component: &serverResources,
-						},
+		Components: &config.Components{
+			PodConfig: map[string]*config.PodConfig{
+				server.Component: {
+					Resources: map[string]*corev1.ResourceRequirements{
+						server.Component: &serverResources,
 					},
-					dashboard.Component: {
-						Resources: map[string]*corev1.ResourceRequirements{
-							dashboard.Component: &dashboardResources,
-						},
+				},
+				dashboard.Component: {
+					Resources: map[string]*corev1.ResourceRequirements{
+						dashboard.Component: &dashboardResources,
 					},
 				},
 			},

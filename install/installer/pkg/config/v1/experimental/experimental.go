@@ -41,6 +41,7 @@ type TelemetryConfig struct {
 }
 
 type CommonConfig struct {
+	// @deprecated
 	PodConfig                map[string]*PodConfig `json:"podConfig,omitempty"`
 	StaticMessagebusPassword string                `json:"staticMessagebusPassword"`
 	// @deprecated PodSecurityPolicies are deprecated in k8s 1.21 and removed in 1.25

@@ -5,6 +5,7 @@
 package config
 
 import (
+	"encoding/json"
 	"errors"
 )
 
@@ -29,6 +30,31 @@ var deprecatedFields = map[string]deprecatedField{
 				cfg.Components = &Components{}
 			}
 			cfg.Components.AgentSmith = cfg.Experimental.AgentSmith
+			return nil
+		},
+	},
+	"experimental.common.podConfig": {
+		Selector: func(cfg *Config) (bool, any) {
+			val := cfg.Experimental.Common.PodConfig
+			// Output message as JSON
+			o, _ := json.Marshal(val)
+			return len(val) > 0, string(o)
+		},
+		MapValue: func(cfg *Config) error {
+			if cfg.Components != nil && cfg.Components.PodConfig != nil {
+				return errors.New("cannot set pod config in both components and experimental")
+			}
+			if cfg.Components == nil {
+				cfg.Components = &Components{}
+			}
+			// Need to convert types - same signature, but using the non-experimental object
+			cfg.Components.PodConfig = make(map[string]*PodConfig, 0)
+			for k, v := range cfg.Experimental.Common.PodConfig {
+				cfg.Components.PodConfig[k] = &PodConfig{
+					Replicas:  v.Replicas,
+					Resources: v.Resources,
+				}
+			}
 			return nil
 		},
 	},

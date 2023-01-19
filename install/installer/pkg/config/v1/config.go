@@ -427,8 +427,14 @@ type CustomizationSpec struct {
 }
 
 type Components struct {
-	AgentSmith *agentSmith.Config `json:"agentSmith,omitempty"`
-	Proxy      *ProxyComponent    `json:"proxy,omitempty"`
+	AgentSmith *agentSmith.Config    `json:"agentSmith,omitempty"`
+	PodConfig  map[string]*PodConfig `json:"podConfig,omitempty"`
+	Proxy      *ProxyComponent       `json:"proxy,omitempty"`
+}
+
+type PodConfig struct {
+	Replicas  *int32                                  `json:"replicas,omitempty"`
+	Resources map[string]*corev1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 type ProxyComponent struct {

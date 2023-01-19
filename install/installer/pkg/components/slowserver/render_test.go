@@ -100,16 +100,14 @@ func TestSlowServerDeployment_UsesServerReplicaCountAndResources(t *testing.T) {
 		},
 	}
 
-	commonConfig := &experimental.CommonConfig{
-		PodConfig: map[string]*experimental.PodConfig{
-			common.ServerComponent: {
-				Replicas:  pointer.Int32(5),
-				Resources: resources,
-			},
+	podConfig := map[string]*config.PodConfig{
+		common.ServerComponent: {
+			Replicas:  pointer.Int32(5),
+			Resources: resources,
 		},
 	}
 
-	ctx := renderContext(t, commonConfig, true)
+	ctx := renderContext(t, podConfig, true)
 
 	objects, err := deployment(ctx)
 	require.NoError(t, err)
@@ -188,7 +186,7 @@ func TestServerDeployment_UsesTracingConfig(t *testing.T) {
 	require.Equal(t, "12.5", actualSamplerParam)
 }
 
-func renderContext(t *testing.T, commonConfig *experimental.CommonConfig, slowDatabase bool) *common.RenderContext {
+func renderContext(t *testing.T, podConfig map[string]*config.PodConfig, slowDatabase bool) *common.RenderContext {
 	var samplerType experimental.TracingSampleType = "probabilistic"
 
 	ctx, err := common.NewRenderContext(config.Config{
@@ -202,8 +200,10 @@ func renderContext(t *testing.T, commonConfig *experimental.CommonConfig, slowDa
 				AgentHost: pointer.String("some-agent-host"),
 			},
 		},
+		Components: &config.Components{
+			PodConfig: podConfig,
+		},
 		Experimental: &experimental.Config{
-			Common: commonConfig,
 			WebApp: &experimental.WebAppConfig{
 				Tracing: &experimental.Tracing{
 					SamplerType:  &samplerType,
