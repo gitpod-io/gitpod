@@ -88,7 +88,18 @@ jobs:
         with:
           secrets: |-
             segment-io-token:gitpod-core-dev/segment-io-token
-      - name: Leeway Build components:all-ci
+      - name: Parse PullRequest
+        shell: bash
+        working-directory: /workspace/gitpod
+        env:
+          PR_DESC: '${{ github.event.pull_request.body }}'
+        run: |
+          PR_NO_CACHE=${{ contains(github.event.pull_request.body, '[x] leeway-no-cache') }}
+          PR_LEEWAY_TARGET=$(echo "$PR_DESC" | sed -n -e 's/^.*leeway-target=//p' | sed 's/\r$//')
+
+          echo "PR_NO_CACHE=$PR_NO_CACHE" >> $GITHUB_ENV
+          echo "PR_LEEWAY_TARGET=$PR_LEEWAY_TARGET" >> $GITHUB_ENV
+      - name: Leeway Build
         id: leeway
         shell: bash
         working-directory: /workspace/gitpod
@@ -98,24 +109,30 @@ jobs:
           SEGMENT_IO_TOKEN: '${{ steps.secrets.outputs.segment-io-token }}'
         run: |
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none" || CACHE="remote"
+          [[ -z "$PR_LEEWAY_TARGET" ]] && PR_LEEWAY_TARGET="components:all-ci"
 
           RESULT=0
-          leeway build components:all-ci \
+          set -x
+          leeway build $PR_LEEWAY_TARGET \
+            --cache $CACHE \
             -Dversion=$VERSION \
             -DSEGMENT_IO_TOKEN=$SEGMENT_IO_TOKEN \
             -DpublishToNPM=false \
             --dont-test \
             --report report.html || RESULT=$?
+          set +x
 
           cat report.html >> $GITHUB_STEP_SUMMARY
-          cp /tmp/versions.yaml /__w/gitpod/gitpod/versions.yaml
-          cp /tmp/installer /__w/gitpod/gitpod/installer
+          [[ -f /tmp/versions.yaml ]] && cp /tmp/versions.yaml /__w/gitpod/gitpod/versions.yaml
+          [[ -f /tmp/installer ]]     && cp /tmp/installer     /__w/gitpod/gitpod/installer
 
           exit $RESULT
       - name: "Upload Installer artifacts"
         uses: actions/upload-artifact@v3
         with:
           name: installer-artifacts
+          if-no-files-found: ignore
           path: |
             versions.yaml
             installer
