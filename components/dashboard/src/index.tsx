@@ -6,7 +6,9 @@
 
 import React from "react";
 import ReactDOM from "react-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+// import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import App from "./App";
 import { UserContextProvider } from "./user-context";
 import { AdminContextProvider } from "./admin-context";
@@ -26,11 +28,9 @@ import { isWebsiteSlug } from "./utils";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 import "./index.css";
+import { createIDBPersister } from "./data";
 
 const bootApp = () => {
-    // Handle any boot logic prior to rendering app
-    const queryClient = new QueryClient();
-
     // gitpod.io specific boot logic
     if (isGitpodIo()) {
         // Redirect to www website for any website slugs
@@ -51,6 +51,10 @@ const bootApp = () => {
         );
     }
 
+    // Handle any boot logic prior to rendering app
+    const queryClient = new QueryClient();
+    const queryClientPersister = createIDBPersister();
+
     // Configure libraries
     dayjs.extend(relativeTime);
     dayjs.extend(utc);
@@ -58,7 +62,7 @@ const bootApp = () => {
     // Render the App
     ReactDOM.render(
         <React.StrictMode>
-            <QueryClientProvider client={queryClient}>
+            <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: queryClientPersister }}>
                 <UserContextProvider>
                     <AdminContextProvider>
                         <PaymentContextProvider>
@@ -81,7 +85,7 @@ const bootApp = () => {
                         </PaymentContextProvider>
                     </AdminContextProvider>
                 </UserContextProvider>
-            </QueryClientProvider>
+            </PersistQueryClientProvider>
         </React.StrictMode>,
         document.getElementById("root"),
     );
