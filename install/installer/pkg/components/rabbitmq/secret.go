@@ -25,27 +25,50 @@ var clientPem []byte
 func secrets(ctx *common.RenderContext) ([]runtime.Object, error) {
 	cookieString := "ZX3m37WDZvdH8zy03ZVZ"
 
-	return []runtime.Object{&corev1.Secret{
-		TypeMeta: common.TypeMetaSecret,
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      CookieSecret,
-			Namespace: ctx.Namespace,
-			Labels:    common.DefaultLabels(Component),
+	return []runtime.Object{
+		&corev1.Secret{
+			TypeMeta: common.TypeMetaSecret,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      CookieSecret,
+				Namespace: ctx.Namespace,
+				Labels:    common.DefaultLabels(Component),
+			},
+			Data: map[string][]byte{
+				"rabbitmq-erlang-cookie": []byte(cookieString),
+			},
 		},
-		Data: map[string][]byte{
-			"rabbitmq-erlang-cookie": []byte(cookieString),
+		&corev1.Secret{
+			TypeMeta: common.TypeMetaSecret,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      TLSSecret,
+				Namespace: ctx.Namespace,
+				Labels:    common.DefaultLabels(Component),
+			},
+			Data: map[string][]byte{
+				"ca.crt":  caPem,
+				"tls.crt": clientCert,
+				"tls.key": clientPem,
+			},
 		},
-	}, &corev1.Secret{
-		TypeMeta: common.TypeMetaSecret,
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      TLSSecret,
-			Namespace: ctx.Namespace,
-			Labels:    common.DefaultLabels(Component),
+		&corev1.Secret{
+			TypeMeta: common.TypeMetaSecret,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      InClusterMsgBusSecret,
+				Namespace: ctx.Namespace,
+				Labels:    common.DefaultLabels(Component),
+			},
+			Data: func() map[string][]byte {
+				data := map[string][]byte{
+					"username": []byte(rabbitMQUsername),
+				}
+
+				if ctx.Config.MessageBus == nil || ctx.Config.MessageBus.Credentials == nil {
+					// If not providing message bus secret, use the default creds
+					data["rabbitmq-password"] = []byte(ctx.Values.MessageBusPassword)
+				}
+
+				return data
+			}(),
 		},
-		Data: map[string][]byte{
-			"ca.crt":  caPem,
-			"tls.crt": clientCert,
-			"tls.key": clientPem,
-		},
-	}}, nil
+	}, nil
 }

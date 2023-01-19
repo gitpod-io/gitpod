@@ -1083,36 +1083,20 @@ metadata:
   namespace: default
 ---
 # v1/Secret load-definition
-# Source: rabbitmq/charts/rabbitmq/templates/secrets.yaml
 apiVersion: v1
 kind: Secret
 metadata:
+  annotations:
+    app: gitpod
+    component: rabbitmq
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: rabbitmq
   name: load-definition
-  namespace: "default"
-  labels:
-    app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-11.3.0
-    app.kubernetes.io/instance: rabbitmq
-    app.kubernetes.io/managed-by: Helm
-type: Opaque
+  namespace: default
 stringData:
-  load_definition.json: '{"users":[{"name":"gitpod","password":"uq4KxOLtrA-QsDTfuwQ-","tags":"administrator"}],"vhosts":[{"name":"/"}],"parameters":[],"permissions":[{"user":"gitpod","vhost":"/","configure":".*","write":".*","read":".*"}],"exchanges":[{"name":"gitpod.ws.local","vhost":"/","type":"topic","durable":true,"auto_delete":false},{"name":"consensus-leader","vhost":"/","type":"fanout","durable":false,"auto_delete":false}],"bindings":[],"queues":[{"name":"consensus-peers","vhost":"/","durable":false,"auto_delete":false,"arguments":{}},{"name":"pwsupdatable","vhost":"/","durable":true,"auto_delete":false,"arguments":{}}],"policies":[{"name":"ha-all","vhost":"/","pattern":".*","definition":{"ha-mode":"all","ha-sync-mode":"automatic","ha-sync-batch-size":5}}]}'
----
-# v1/Secret messagebus
-# Source: rabbitmq/charts/rabbitmq/templates/secrets.yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: messagebus
-  namespace: "default"
-  labels:
-    app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-11.3.0
-    app.kubernetes.io/instance: rabbitmq
-    app.kubernetes.io/managed-by: Helm
-type: Opaque
-data:
-  rabbitmq-password: "dXE0S3hPTHRyQS1Rc0RUZnV3US0="
+  load_definition.json: '{"users":[{"name":"gitpod","password":"%PASSWORD%","tags":"administrator"}],"vhosts":[{"name":"/"}],"parameters":[],"permissions":[{"user":"gitpod","vhost":"/","configure":".*","write":".*","read":".*"}],"exchanges":[{"name":"gitpod.ws.local","vhost":"/","type":"topic","durable":true,"auto_delete":false},{"name":"consensus-leader","vhost":"/","type":"fanout","durable":false,"auto_delete":false}],"bindings":[],"queues":[{"name":"consensus-peers","vhost":"/","durable":false,"auto_delete":false,"arguments":{}},{"name":"pwsupdatable","vhost":"/","durable":true,"auto_delete":false,"arguments":{}}],"policies":[{"name":"ha-all","vhost":"/","pattern":".*","definition":{"ha-mode":"all","ha-sync-mode":"automatic","ha-sync-batch-size":5}}]}'
 ---
 # v1/Secret messagebus-certificates-secret-core
 apiVersion: v1
@@ -1144,7 +1128,7 @@ metadata:
 type: Opaque
 data:
   rabbitmq.conf: |-
-    IyMgVXNlcm5hbWUgYW5kIHBhc3N3b3JkCiMjCmRlZmF1bHRfdXNlciA9IGdpdHBvZAojIyBDbHVzdGVyaW5nCiMjCmNsdXN0ZXJfZm9ybWF0aW9uLnBlZXJfZGlzY292ZXJ5X2JhY2tlbmQgID0gcmFiYml0X3BlZXJfZGlzY292ZXJ5X2s4cwpjbHVzdGVyX2Zvcm1hdGlvbi5rOHMuaG9zdCA9IGt1YmVybmV0ZXMuZGVmYXVsdApjbHVzdGVyX2Zvcm1hdGlvbi5ub2RlX2NsZWFudXAuaW50ZXJ2YWwgPSAxMApjbHVzdGVyX2Zvcm1hdGlvbi5ub2RlX2NsZWFudXAub25seV9sb2dfd2FybmluZyA9IHRydWUKY2x1c3Rlcl9wYXJ0aXRpb25faGFuZGxpbmcgPSBhdXRvaGVhbApsb2FkX2RlZmluaXRpb25zID0gL2FwcC9sb2FkX2RlZmluaXRpb24uanNvbgojIHF1ZXVlIG1hc3RlciBsb2NhdG9yCnF1ZXVlX21hc3Rlcl9sb2NhdG9yID0gbWluLW1hc3RlcnMKIyBlbmFibGUgZ3Vlc3QgdXNlcgpsb29wYmFja191c2Vycy5ndWVzdCA9IGZhbHNlCmxvYWRfZGVmaW5pdGlvbnMgPSAvYXBwL2xvYWRfZGVmaW5pdGlvbi5qc29uCiMgSW5jcmVhc2Ugc3RhdGlzdGljcyBlbWlzc2lvbiBpbnRlcnZhbCBodHRwczovL3d3dy5yYWJiaXRtcS5jb20vbWFuYWdlbWVudC5odG1sI3N0YXRpc3RpY3MtaW50ZXJ2YWwKY29sbGVjdF9zdGF0aXN0aWNzX2ludGVydmFsID0gMTUwMDAKCnNzbF9vcHRpb25zLnZlcmlmeSA9IHZlcmlmeV9wZWVyCmxpc3RlbmVycy5zc2wuZGVmYXVsdCA9IDU2NzEKc3NsX29wdGlvbnMuZmFpbF9pZl9ub19wZWVyX2NlcnQgPSB0cnVlCnNzbF9vcHRpb25zLmNhY2VydGZpbGUgPSAvb3B0L2JpdG5hbWkvcmFiYml0bXEvY2VydHMvY2FfY2VydGlmaWNhdGUucGVtCnNzbF9vcHRpb25zLmNlcnRmaWxlID0gL29wdC9iaXRuYW1pL3JhYmJpdG1xL2NlcnRzL3NlcnZlcl9jZXJ0aWZpY2F0ZS5wZW0Kc3NsX29wdGlvbnMua2V5ZmlsZSA9IC9vcHQvYml0bmFtaS9yYWJiaXRtcS9jZXJ0cy9zZXJ2ZXJfa2V5LnBlbQojIyBQcm9tZXRoZXVzIG1ldHJpY3MKIyMKcHJvbWV0aGV1cy50Y3AucG9ydCA9IDk0MTk=
+    IyMgVXNlcm5hbWUgYW5kIHBhc3N3b3JkCiMjCmRlZmF1bHRfdXNlciA9IGdpdHBvZAojIyBDbHVzdGVyaW5nCiMjCmNsdXN0ZXJfZm9ybWF0aW9uLnBlZXJfZGlzY292ZXJ5X2JhY2tlbmQgID0gcmFiYml0X3BlZXJfZGlzY292ZXJ5X2s4cwpjbHVzdGVyX2Zvcm1hdGlvbi5rOHMuaG9zdCA9IGt1YmVybmV0ZXMuZGVmYXVsdApjbHVzdGVyX2Zvcm1hdGlvbi5ub2RlX2NsZWFudXAuaW50ZXJ2YWwgPSAxMApjbHVzdGVyX2Zvcm1hdGlvbi5ub2RlX2NsZWFudXAub25seV9sb2dfd2FybmluZyA9IHRydWUKY2x1c3Rlcl9wYXJ0aXRpb25faGFuZGxpbmcgPSBhdXRvaGVhbApsb2FkX2RlZmluaXRpb25zID0gL2dpdHBvZC1jb25maWcvbG9hZF9kZWZpbml0aW9uLmpzb24KIyBxdWV1ZSBtYXN0ZXIgbG9jYXRvcgpxdWV1ZV9tYXN0ZXJfbG9jYXRvciA9IG1pbi1tYXN0ZXJzCiMgZW5hYmxlIGd1ZXN0IHVzZXIKbG9vcGJhY2tfdXNlcnMuZ3Vlc3QgPSBmYWxzZQojIEluY3JlYXNlIHN0YXRpc3RpY3MgZW1pc3Npb24gaW50ZXJ2YWwgaHR0cHM6Ly93d3cucmFiYml0bXEuY29tL21hbmFnZW1lbnQuaHRtbCNzdGF0aXN0aWNzLWludGVydmFsCmNvbGxlY3Rfc3RhdGlzdGljc19pbnRlcnZhbCA9IDE1MDAwCgpzc2xfb3B0aW9ucy52ZXJpZnkgPSB2ZXJpZnlfcGVlcgpsaXN0ZW5lcnMuc3NsLmRlZmF1bHQgPSA1NjcxCnNzbF9vcHRpb25zLmZhaWxfaWZfbm9fcGVlcl9jZXJ0ID0gdHJ1ZQpzc2xfb3B0aW9ucy5jYWNlcnRmaWxlID0gL29wdC9iaXRuYW1pL3JhYmJpdG1xL2NlcnRzL2NhX2NlcnRpZmljYXRlLnBlbQpzc2xfb3B0aW9ucy5jZXJ0ZmlsZSA9IC9vcHQvYml0bmFtaS9yYWJiaXRtcS9jZXJ0cy9zZXJ2ZXJfY2VydGlmaWNhdGUucGVtCnNzbF9vcHRpb25zLmtleWZpbGUgPSAvb3B0L2JpdG5hbWkvcmFiYml0bXEvY2VydHMvc2VydmVyX2tleS5wZW0KIyMgUHJvbWV0aGV1cyBtZXRyaWNzCiMjCnByb21ldGhldXMudGNwLnBvcnQgPSA5NDE5
 ---
 # v1/Secret messagebus-erlang-cookie
 apiVersion: v1
@@ -1160,21 +1144,18 @@ metadata:
   namespace: default
 ---
 # v1/Secret rabbitmq
-# Source: rabbitmq/charts/rabbitmq/templates/secrets.yaml
 apiVersion: v1
+data:
+  rabbitmq-password: dXE0S3hPTHRyQS1Rc0RUZnV3US0=
+  username: Z2l0cG9k
 kind: Secret
 metadata:
-  name: rabbitmq
-  namespace: "default"
+  creationTimestamp: null
   labels:
-    app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-11.3.0
-    app.kubernetes.io/instance: rabbitmq
-    app.kubernetes.io/managed-by: Helm
-type: Opaque
-stringData:
-  password: uq4KxOLtrA-QsDTfuwQ-
-  username: gitpod
+    app: gitpod
+    component: rabbitmq
+  name: rabbitmq
+  namespace: default
 ---
 # v1/Secret server-admin-secret
 apiVersion: v1
@@ -2471,6 +2452,19 @@ data:
       name: proxy
       namespace: default
     ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      annotations:
+        app: gitpod
+        component: rabbitmq
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: rabbitmq
+      name: load-definition
+      namespace: default
+    ---
     apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding
     metadata:
@@ -2499,6 +2493,16 @@ data:
         app: gitpod
         component: rabbitmq
       name: messagebus-certificates-secret-core
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: rabbitmq
+      name: rabbitmq
       namespace: default
     ---
     apiVersion: v1
@@ -3344,42 +3348,6 @@ data:
         app.kubernetes.io/name: rabbitmq
         helm.sh/chart: rabbitmq-11.3.0
       name: messagebus-config
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      creationTimestamp: null
-      labels:
-        app.kubernetes.io/instance: rabbitmq
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-11.3.0
-      name: messagebus
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      creationTimestamp: null
-      labels:
-        app.kubernetes.io/instance: rabbitmq
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-11.3.0
-      name: load-definition
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      creationTimestamp: null
-      labels:
-        app.kubernetes.io/instance: rabbitmq
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-11.3.0
-      name: rabbitmq
       namespace: default
     ---
     apiVersion: rbac.authorization.k8s.io/v1
@@ -8054,8 +8022,8 @@ spec:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
       annotations:
-        checksum/config: d5780a0c58210a2062d54feb61cfb1d5a9c076f95569c4a77076d22c9bad4190
-        checksum/secret: 64c39dd3a8570ed4b0cc71bc0402bc814d016e16f68732938722b12a57c8e82c
+        checksum/config: aca5a97bd1dfe3912d74e61f85bdffcde993310848389fa0c674e2fd8dc0ac27
+        gitpod.io/checksum_config: 39278f618027543f2d07f55ab8503caf8ab1943de3030b6e4d45d61014c1e886
         prometheus.io/port: '9419'
         prometheus.io/scrape: "true"
     spec:
@@ -8073,6 +8041,25 @@ spec:
         fsGroup: 1001
       terminationGracePeriodSeconds: 120
       initContainers:
+        - args:
+          - sh
+          - -c
+          - sed "s/%PASSWORD%/${PASSWORD}/" /app/load_definition.json > /gitpod-config/load_definition.json
+          env:
+          - name: PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: rabbitmq-password
+                name: rabbitmq
+          image: docker.io/library/alpine:3.16
+          name: credential-injector
+          resources: {}
+          volumeMounts:
+          - mountPath: /app
+            name: load-definition-volume
+          - mountPath: /gitpod-config
+            name: shared-data
+        
       containers:
         - name: rabbitmq
           image: docker.io/bitnami/rabbitmq:3.11.5-debian-11-r2
@@ -8135,7 +8122,7 @@ spec:
             - name: RABBITMQ_LOAD_DEFINITIONS
               value: "yes"
             - name: RABBITMQ_DEFINITIONS_FILE
-              value: "/app/load_definition.json"
+              value: "/gitpod-config/load_definition.json"
             - name: RABBITMQ_SECURE_PASSWORD
               value: "yes"
             - name: RABBITMQ_USERNAME
@@ -8143,7 +8130,7 @@ spec:
             - name: RABBITMQ_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: messagebus
+                  name: rabbitmq
                   key: rabbitmq-password
             - name: RABBITMQ_PLUGINS
               value: "rabbitmq_management, rabbitmq_peer_discovery_k8s, rabbitmq_prometheus"
@@ -8198,6 +8185,9 @@ spec:
             - name: load-definition-volume
               mountPath: /app
               readOnly: true
+            - mountPath: /gitpod-config
+              name: shared-data
+            
       volumes:
         - name: certs
           secret:
@@ -8217,6 +8207,9 @@ spec:
         - name: load-definition-volume
           secret:
             secretName: "load-definition"
+        - emptyDir: {}
+          name: shared-data
+        
         - name: data
           emptyDir: {}
 ---
@@ -9871,7 +9864,7 @@ spec:
         - name: MESSAGEBUS_PASSWORD
           valueFrom:
             secretKeyRef:
-              key: password
+              key: rabbitmq-password
               name: rabbitmq
         - name: MESSAGEBUS_CA
           valueFrom:
@@ -10015,7 +10008,7 @@ spec:
         - name: MESSAGEBUS_PASSWORD
           valueFrom:
             secretKeyRef:
-              key: password
+              key: rabbitmq-password
               name: rabbitmq
         - name: MESSAGEBUS_CA
           valueFrom:
@@ -10225,7 +10218,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 3ad51aa773cef28bbae395d86b989182024496ee9b59c59aa37b25ca6f311d2c
+        gitpod.io/checksum_config: 0749b66975e7151fef1f7840a21f31303efabc3756f71be150a41a932c2cc61f
       creationTimestamp: null
       labels:
         app: gitpod
@@ -10268,7 +10261,7 @@ spec:
         - name: MESSAGEBUS_PASSWORD
           valueFrom:
             secretKeyRef:
-              key: password
+              key: rabbitmq-password
               name: rabbitmq
         - name: MESSAGEBUS_CA
           valueFrom:
@@ -10396,7 +10389,7 @@ spec:
         - name: MESSAGEBUS_PASSWORD
           valueFrom:
             secretKeyRef:
-              key: password
+              key: rabbitmq-password
               name: rabbitmq
         - name: MESSAGEBUS_CA
           valueFrom:

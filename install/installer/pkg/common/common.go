@@ -223,9 +223,14 @@ func AnalyticsEnv(cfg *config.Config) (res []corev1.EnvVar) {
 	}}
 }
 
-func MessageBusEnv(_ *config.Config) (res []corev1.EnvVar) {
+func MessageBusEnv(cfg *config.Config) (res []corev1.EnvVar) {
 	clusterObj := corev1.LocalObjectReference{Name: InClusterMessageQueueName}
 	tlsObj := corev1.LocalObjectReference{Name: InClusterMessageQueueTLS}
+
+	credsSecret := clusterObj
+	if cfg.MessageBus != nil && cfg.MessageBus.Credentials != nil {
+		credsSecret = corev1.LocalObjectReference{Name: cfg.MessageBus.Credentials.Name}
+	}
 
 	return []corev1.EnvVar{{
 		Name: "MESSAGEBUS_USERNAME",
@@ -236,8 +241,8 @@ func MessageBusEnv(_ *config.Config) (res []corev1.EnvVar) {
 	}, {
 		Name: "MESSAGEBUS_PASSWORD",
 		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-			LocalObjectReference: clusterObj,
-			Key:                  "password",
+			LocalObjectReference: credsSecret,
+			Key:                  "rabbitmq-password",
 		}},
 	}, {
 		Name: "MESSAGEBUS_CA",
