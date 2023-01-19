@@ -71,7 +71,7 @@ func newTestService(sessionServiceAddress string, dbConn *gorm.DB, cipher db.Cip
 	return service
 }
 
-func (s *Service) GetStartParams(config *ClientConfig) (*StartParams, error) {
+func (s *Service) GetStartParams(config *ClientConfig, redirectURL string) (*StartParams, error) {
 	// state is supposed to a) be present on client request as cookie header
 	// and b) to be mirrored by the IdP on callback requests.
 	stateParam := StateParam{
@@ -92,6 +92,7 @@ func (s *Service) GetStartParams(config *ClientConfig) (*StartParams, error) {
 	}
 
 	// Nonce is the single option passed on to configure the consent page ATM.
+	config.OAuth2Config.RedirectURL = redirectURL
 	authCodeURL := config.OAuth2Config.AuthCodeURL(state, goidc.Nonce(nonce))
 
 	return &StartParams{

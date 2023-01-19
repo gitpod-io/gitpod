@@ -110,7 +110,6 @@ func newTestServer(t *testing.T, params testServerParams) (url string, state *St
 	oauth2Config := &oauth2.Config{
 		ClientID:     params.clientID,
 		ClientSecret: "secret",
-		RedirectURL:  url + "/callback",
 		Scopes:       []string{goidc.ScopeOpenID, "profile", "email"},
 	}
 	clientConfig := &ClientConfig{

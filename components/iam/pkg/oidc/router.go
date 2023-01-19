@@ -6,6 +6,7 @@ package oidc
 
 import (
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -41,7 +42,8 @@ func (s *Service) getStartHandler() http.HandlerFunc {
 			return
 		}
 
-		startParams, err := s.GetStartParams(config)
+		redirectURL := getCallbackURL(r.Host)
+		startParams, err := s.GetStartParams(config, redirectURL)
 		if err != nil {
 			http.Error(rw, "failed to start auth flow", http.StatusInternalServerError)
 			return
@@ -52,6 +54,11 @@ func (s *Service) getStartHandler() http.HandlerFunc {
 
 		http.Redirect(rw, r, startParams.AuthCodeURL, http.StatusTemporaryRedirect)
 	}
+}
+
+func getCallbackURL(host string) string {
+	callbackURL := url.URL{Scheme: "https", Path: "/iam/oidc/callback", Host: host}
+	return callbackURL.String()
 }
 
 func newCallbackCookie(r *http.Request, name string, value string) *http.Cookie {
