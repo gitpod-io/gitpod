@@ -24,8 +24,10 @@ import (
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 type APIInterface interface {
@@ -280,7 +282,9 @@ func (s *Service) onInstanceUpdates(ctx context.Context) {
 				if errors.Is(err, context.Canceled) || errors.Is(err, io.EOF) {
 					continue
 				}
-				log.WithField("method", "InstanceUpdates").WithError(err).Error("failed to listen")
+				if status.Code(err) != codes.Unavailable {
+					log.WithField("method", "InstanceUpdates").WithError(err).Error("failed to listen")
+				}
 				cancel()
 				time.Sleep(time.Second * 2)
 				cancel = processUpdate(s.usePublicAPI(ctx))
@@ -335,7 +339,7 @@ func (s *Service) publicAPIInstanceUpdate(ctx context.Context, errChan chan erro
 	for {
 		resp, err := resp.Recv()
 		if err != nil {
-			if err != io.EOF {
+			if err != io.EOF && status.Code(err) != codes.Unavailable {
 				log.WithField("method", "StreamWorkspaceStatus").WithError(err).Error("failed to receive status update")
 			}
 			if ctx.Err() != nil {
