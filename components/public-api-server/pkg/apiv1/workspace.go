@@ -380,6 +380,11 @@ func convertWorkspaceInstance(wsi *protocol.WorkspaceInstance, shareable bool) (
 				FirstUserActivity: firstUserActivity,
 			},
 			Ports: ports,
+			Repo: &v1.WorkspaceInstanceStatus_Repo{
+				Branch:               wsi.Status.Repo.Branch,
+				LatestCommit:         wsi.Status.Repo.LatestCommit,
+				TotalUncommitedFiles: uint64(wsi.Status.Repo.TotalUncommitedFiles),
+			},
 		},
 	}, nil
 }

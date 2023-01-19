@@ -1156,6 +1156,13 @@ export class WorkspaceInstanceStatus extends Message<WorkspaceInstanceStatus> {
    */
   ports: Port[] = [];
 
+  /**
+   * repo details the Git working copy status of the workspace.
+   *
+   * @generated from field: gitpod.experimental.v1.WorkspaceInstanceStatus.Repo repo = 8;
+   */
+  repo?: WorkspaceInstanceStatus_Repo;
+
   constructor(data?: PartialMessage<WorkspaceInstanceStatus>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1171,6 +1178,7 @@ export class WorkspaceInstanceStatus extends Message<WorkspaceInstanceStatus> {
     { no: 5, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 6, name: "admission", kind: "enum", T: proto3.getEnumType(AdmissionLevel) },
     { no: 7, name: "ports", kind: "message", T: Port, repeated: true },
+    { no: 8, name: "repo", kind: "message", T: WorkspaceInstanceStatus_Repo },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceInstanceStatus {
@@ -1356,6 +1364,61 @@ export class WorkspaceInstanceStatus_Conditions extends Message<WorkspaceInstanc
 
   static equals(a: WorkspaceInstanceStatus_Conditions | PlainMessage<WorkspaceInstanceStatus_Conditions> | undefined, b: WorkspaceInstanceStatus_Conditions | PlainMessage<WorkspaceInstanceStatus_Conditions> | undefined): boolean {
     return proto3.util.equals(WorkspaceInstanceStatus_Conditions, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.WorkspaceInstanceStatus.Repo
+ */
+export class WorkspaceInstanceStatus_Repo extends Message<WorkspaceInstanceStatus_Repo> {
+  /**
+   * branch is the name of the branch the workspace is based on (e.g. "master")
+   *
+   * @generated from field: string branch = 1;
+   */
+  branch = "";
+
+  /**
+   * commit is the commit the workspace is based on (e.g. "a1b2c3d4")
+   *
+   * @generated from field: string latest_commit = 2;
+   */
+  latestCommit = "";
+
+  /**
+   * total_uncommited_files is the number of uncommited files in the workspace.
+   *
+   * @generated from field: uint64 total_uncommited_files = 3;
+   */
+  totalUncommitedFiles = protoInt64.zero;
+
+  constructor(data?: PartialMessage<WorkspaceInstanceStatus_Repo>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.WorkspaceInstanceStatus.Repo";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "branch", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "latest_commit", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "total_uncommited_files", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceInstanceStatus_Repo {
+    return new WorkspaceInstanceStatus_Repo().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceInstanceStatus_Repo {
+    return new WorkspaceInstanceStatus_Repo().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceInstanceStatus_Repo {
+    return new WorkspaceInstanceStatus_Repo().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WorkspaceInstanceStatus_Repo | PlainMessage<WorkspaceInstanceStatus_Repo> | undefined, b: WorkspaceInstanceStatus_Repo | PlainMessage<WorkspaceInstanceStatus_Repo> | undefined): boolean {
+    return proto3.util.equals(WorkspaceInstanceStatus_Repo, a, b);
   }
 }
 

@@ -250,6 +250,17 @@ message WorkspaceInstanceStatus {
         optional bool stopped_by_request = 11;
     }
 
+    message Repo {
+        // branch is the name of the branch the workspace is based on (e.g. "master")
+        string branch = 1;
+
+        // commit is the commit the workspace is based on (e.g. "a1b2c3d4")
+        string latest_commit = 2;
+
+        // total_uncommited_files is the number of uncommited files in the workspace.
+        uint64 total_uncommited_files = 3;
+    }
+
     // version of the status update. Workspace instances themselves are unversioned,
     // but their statuus has different versions.
     // The value of this field has no semantic meaning (e.g. don't interpret it as
@@ -274,6 +285,9 @@ message WorkspaceInstanceStatus {
 
     // ports is the list of exposed ports in the workspace.
     repeated Port ports = 7;
+
+    // repo details the Git working copy status of the workspace.
+    Repo repo = 12;
 
     // repo details the Git working copy status of the workspace.
     // Note: this is a best-effort field and more often than not will not be present. Its absence does not

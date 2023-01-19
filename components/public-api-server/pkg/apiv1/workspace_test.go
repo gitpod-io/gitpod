@@ -495,6 +495,11 @@ var workspaceTestData = []workspaceTestDataEntry{
 						FirstUserActivity: "2022-07-12T10:04:49+0000",
 						Timeout:           "nada",
 					},
+					Repo: &protocol.WorkspaceInstanceRepoStatus{
+						Branch:               "master",
+						LatestCommit:         "260a6270-cd70-43fa-a059-13983060edab",
+						TotalUncommitedFiles: 5,
+					},
 					Message: "has no message",
 					Phase:   "running",
 					Version: 42,
@@ -537,6 +542,11 @@ var workspaceTestData = []workspaceTestDataEntry{
 							Failed:            "nope",
 							Timeout:           "nada",
 							FirstUserActivity: timestamppb.New(must(time.Parse(time.RFC3339, "2022-07-12T10:04:49Z"))),
+						},
+						Repo: &v1.WorkspaceInstanceStatus_Repo{
+							Branch:               "master",
+							LatestCommit:         "260a6270-cd70-43fa-a059-13983060edab",
+							TotalUncommitedFiles: 5,
 						},
 						Message:   "has no message",
 						Url:       "https://gitpodio-gitpod-isq6xj458lj.ws-eu53.protocol.io/",
