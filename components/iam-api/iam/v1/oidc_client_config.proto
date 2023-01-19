@@ -95,7 +95,7 @@ message OAuth2Config {
   // Required.
   string token_endpoint = 4;
   // Required.
-  repeated string scopes_supported = 5;
+  repeated string scopes = 5;
 
   // Source for additional claims for the token.
   // Additional keys may be used to control the extraction of a profile.
