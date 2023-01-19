@@ -7,9 +7,12 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
+	"os/user"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -18,6 +21,7 @@ import (
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 	"github.com/gitpod-io/gitpod/supervisor/api"
+	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 )
 
@@ -134,9 +138,64 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 
 	dockerPath, err := exec.LookPath("docker")
 	if err != nil {
-		fmt.Println("Docker is not installed in your workspace")
-		event.Set("ErrorCode", utils.RebuildErrorCode_DockerNotFound)
-		return utils.Outcome_SystemErr, err
+		currentUser, userErr := user.Current()
+		if userErr != nil {
+			event.Set("ErrorCode", utils.RebuildErrorCode_DockerNotFound)
+			return utils.Outcome_SystemErr, err
+		}
+
+		if currentUser.Username != "root" {
+			_, sudoErr := exec.LookPath("sudo")
+			if sudoErr != nil {
+				event.Set("ErrorCode", utils.RebuildErrorCode_DockerNotFound)
+				return utils.Outcome_SystemErr, err
+			}
+		}
+
+		fmt.Println("Docker is not installed in your workspace.")
+		fmt.Println("It can be automatically installed using Docker Install Script (https://github.com/docker/docker-install)")
+
+		prompt := promptui.Select{
+			Label: "Do you want to proceed with the automatic install?",
+			Items: []string{"Yes", "No"},
+		}
+
+		_, result, promptErr := prompt.Run()
+		if promptErr != nil {
+			return utils.Outcome_SystemErr, err
+		}
+
+		if result == "No" {
+			event.Set("ErrorCode", utils.RebuildErrorCode_DockerNotFound)
+			return utils.Outcome_SystemErr, err
+		}
+
+		resp, err := http.Get("https://get.docker.com")
+		if err != nil {
+			return utils.Outcome_SystemErr, err
+		}
+		defer resp.Body.Close()
+
+		dockerInstallScript := filepath.Join(tmpDir, "get-docker.sh")
+
+		file, err := os.Create(dockerInstallScript)
+		if err != nil {
+			return utils.Outcome_SystemErr, err
+		}
+		defer file.Close()
+
+		_, err = io.Copy(file, resp.Body)
+		if err != nil {
+			return utils.Outcome_SystemErr, err
+		}
+
+		dockerInstallCmd := exec.CommandContext(ctx, "sh", dockerInstallScript)
+		dockerInstallCmd.Stdout = os.Stdout
+		dockerInstallCmd.Stderr = os.Stderr
+		err = dockerInstallCmd.Run()
+		if err != nil {
+			return utils.Outcome_SystemErr, err
+		}
 	}
 
 	tag := "gp-rebuild-temp-build"
