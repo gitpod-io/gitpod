@@ -75,16 +75,12 @@ LoadingFrame.load().then(async (loading) => {
         const supervisorServiceClient = SupervisorServiceClient.get();
 
         let hideDesktopIde = false;
-        const serverOrigin = startUrl.url.origin;
-        const hideDesktopIdeEventListener = (event: MessageEvent) => {
-            if (event.origin === serverOrigin && event.data.type == "openBrowserIde") {
-                window.removeEventListener("message", hideDesktopIdeEventListener);
-                hideDesktopIde = true;
-                toStop.push(ideService.start());
-            }
-        };
-        window.addEventListener("message", hideDesktopIdeEventListener, false);
-        toStop.push({ dispose: () => window.removeEventListener("message", hideDesktopIdeEventListener) });
+        const hideDesktopIdeEventListener = frontendDashboardServiceClient.onOpenBrowserIDE(() => {
+            hideDesktopIdeEventListener.dispose();
+            hideDesktopIde = true;
+            toStop.push(ideService.start());
+        });
+        toStop.push(hideDesktopIdeEventListener);
 
         //#region gitpod browser telemetry
         // TODO(ak) get rid of it
@@ -140,7 +136,7 @@ LoadingFrame.load().then(async (loading) => {
                             });
                             if (!desktopRedirected) {
                                 desktopRedirected = true;
-                                loading.openDesktopLink(ideStatus.desktop.link);
+                                frontendDashboardServiceClient.openDesktopIDE(ideStatus.desktop.link);
                             }
                             return loading.frame;
                         }

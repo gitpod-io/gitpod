@@ -66,7 +66,6 @@ export function getIDEFrontendService(workspaceID: string, sessionId: string, se
 
 export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
     private instanceID: string | undefined;
-    private ideUrl: URL | undefined;
     private user: User | undefined;
 
     private latestStatus?: IDEFrontendDashboardService.Status;
@@ -82,10 +81,6 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
     ) {
         this.processServerInfo();
         window.addEventListener("message", (event: MessageEvent) => {
-            if (event.origin !== this.ideUrl?.origin) {
-                return;
-            }
-
             if (IDEFrontendDashboardService.isTrackEventData(event.data)) {
                 this.trackEvent(event.data.msg);
             }
@@ -94,6 +89,9 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             }
             if (IDEFrontendDashboardService.isSetStateEventData(event.data)) {
                 this.onDidChangeEmitter.fire(event.data.state);
+            }
+            if (IDEFrontendDashboardService.isOpenDesktopIDE(event.data)) {
+                this.openDesktopIDE(event.data.url);
             }
         });
         window.addEventListener("unload", () => {
@@ -116,7 +114,6 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
         const reconcile = () => {
             const status = this.getWorkspaceStatus(listener.info);
             this.latestStatus = status;
-            this.ideUrl = status.ideUrl ? new URL(status.ideUrl) : undefined;
             const oldInstanceID = this.instanceID;
             this.instanceID = status.instanceId;
             if (status.instanceId && oldInstanceID !== status.instanceId) {
@@ -128,7 +125,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
         listener.onDidChange(reconcile);
     }
 
-    getWorkspaceStatus(workspace: WorkspaceInfo): IDEFrontendDashboardService.Status {
+    private getWorkspaceStatus(workspace: WorkspaceInfo): IDEFrontendDashboardService.Status {
         return {
             loggedUserId: this.user!.id,
             workspaceID: this.workspaceID,
@@ -142,7 +139,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
 
     // implements
 
-    async auth() {
+    private async auth() {
         if (!this.instanceID) {
             return;
         }
@@ -152,7 +149,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
         });
     }
 
-    trackEvent(msg: RemoteTrackMessage): void {
+    private trackEvent(msg: RemoteTrackMessage): void {
         msg.properties = {
             ...msg.properties,
             sessionId: this.sessionId,
@@ -163,32 +160,48 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
         this.service.server.trackEvent(msg);
     }
 
-    activeHeartbeat(): void {
+    private activeHeartbeat(): void {
         if (this.instanceID) {
             this.service.server.sendHeartBeat({ instanceId: this.instanceID });
         }
     }
 
-    sendStatusUpdate(status: IDEFrontendDashboardService.Status): void {
-        if (!this.ideUrl) {
-            return;
+    openDesktopIDE(url: string): void {
+        let redirect = false;
+        try {
+            const desktopLink = new URL(url);
+            redirect = desktopLink.protocol !== "http:" && desktopLink.protocol !== "https:";
+        } catch (e) {
+            console.error("invalid desktop link:", e);
         }
+        // redirect only if points to desktop application
+        // don't navigate browser to another page
+        if (redirect) {
+            window.location.href = url;
+        } else {
+            window.open(url, "_blank", "noopener");
+        }
+    }
+
+    sendStatusUpdate(status: IDEFrontendDashboardService.Status): void {
         this.clientWindow.postMessage(
             {
+                version: 1,
                 type: "ide-status-update",
                 status,
             } as IDEFrontendDashboardService.StatusUpdateEventData,
-            this.ideUrl.origin,
+            "*",
         );
     }
 
     relocate(url: string): void {
-        if (!this.ideUrl) {
-            return;
-        }
         this.clientWindow.postMessage(
             { type: "ide-relocate", url } as IDEFrontendDashboardService.RelocateEventData,
-            this.ideUrl.origin,
+            "*",
         );
+    }
+
+    openBrowserIDE(): void {
+        this.clientWindow.postMessage({ type: "ide-open-browser" } as IDEFrontendDashboardService.OpenBrowserIDE, "*");
     }
 }
