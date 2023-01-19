@@ -58,15 +58,24 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		})
 	}
 
+	msgBugSecret := corev1.LocalObjectReference{Name: common.InClusterMessageQueueName}
+	if ctx.Config.MessageBus != nil && ctx.Config.MessageBus.Credentials != nil {
+		msgBugSecret = corev1.LocalObjectReference{Name: ctx.Config.MessageBus.Credentials.Name}
+	}
+
 	hashObj = append(hashObj, &corev1.Pod{
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
 					Env: []corev1.EnvVar{
 						{
-							Name:  "MESSAGEBUS_PASSWORD",
-							Value: ctx.Values.MessageBusPassword,
+							Name: "MESSAGEBUS_PASSWORD",
+							ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+								LocalObjectReference: msgBugSecret,
+								Key:                  "rabbitmq-password",
+							}},
 						},
+
 						{
 							// If the database type changes, this pod may stay up if no other changes are made.
 							Name: "DATABASE_TYPE",
