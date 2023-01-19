@@ -8,9 +8,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/containerd/containerd/content"
@@ -24,6 +26,7 @@ import (
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -171,14 +174,17 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 		bp := bufPool.Get().(*[]byte)
 		defer bufPool.Put(bp)
 
-		const retryMax int = 5
 		var n int64
-		for i := 0; i <= retryMax; i++ {
+		err = wait.PollImmediateWithContext(ctx, 100*time.Millisecond, time.Minute, func(context.Context) (done bool, err error) {
 			n, err = io.CopyBuffer(w, rc, *bp)
 			if err == nil {
-				break
+				return true, nil
 			}
-		}
+			if errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.EPIPE) {
+				return false, nil
+			}
+			return true, err
+		})
 		if err != nil {
 			if bh.Metrics != nil {
 				bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "false").Inc()
