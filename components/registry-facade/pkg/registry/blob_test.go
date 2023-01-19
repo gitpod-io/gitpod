@@ -7,7 +7,6 @@ package registry
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"syscall"
 	"testing"
 
 	"github.com/alicebob/miniredis/v2"
@@ -230,10 +230,17 @@ func (rw *failFirstResponseWriter) Header() http.Header {
 }
 
 func (rw *failFirstResponseWriter) Write(buf []byte) (int, error) {
-	if rw.requests == 0 {
+	defer func() {
 		rw.requests += 1
-		return 0, errors.New("connection reset by peer")
+	}()
+
+	if rw.requests == 0 {
+		return 0, syscall.ECONNRESET
 	}
+	if rw.requests == 1 {
+		return 0, syscall.EPIPE
+	}
+
 	if rw.body != nil {
 		rw.body.Write(buf)
 	}

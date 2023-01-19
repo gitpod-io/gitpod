@@ -34,6 +34,7 @@ require (
 	golang.org/x/net v0.1.0
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f
 	google.golang.org/grpc v1.49.0
+	k8s.io/apimachinery v0.24.4
 )
 
 require (
@@ -277,7 +278,6 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/api v0.24.4 // indirect
-	k8s.io/apimachinery v0.24.4 // indirect
 	k8s.io/klog/v2 v2.60.1 // indirect
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
 	lukechampine.com/blake3 v1.1.7 // indirect
