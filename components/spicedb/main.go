@@ -70,7 +70,7 @@ func transform(wsFilePath, projFilePath, teamsFilePath string) error {
 	fmt.Fprintf(os.Stdout, "relationships: |-\n")
 
 	for _, r := range relationships {
-		fmt.Fprintf(os.Stdout, "\t%s\n", r)
+		fmt.Fprintf(os.Stdout, "  %s\n", r)
 	}
 
 	return nil
