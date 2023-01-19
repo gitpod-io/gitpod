@@ -18,6 +18,7 @@
     "configcat-js": "^6.0.0",
     "countries-list": "^2.6.1",
     "dayjs": "^1.11.5",
+    "idb-keyval": "^6.2.0",
     "js-cookie": "^3.0.1",
     "monaco-editor": "^0.25.2",
     "query-string": "^7.1.1",
