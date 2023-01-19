@@ -195,8 +195,12 @@ func (s *Service) getConfigById(id string) (*ClientConfig, error) {
 			s.verifierByIssuer[dbEntry.Issuer] = provider.Verifier(&goidc.Config{
 				ClientID: spec.ClientID,
 			})
-
 		}
+	}
+
+	scopes := spec.Scopes
+	if len(scopes) < 1 {
+		scopes = []string{"openid"}
 	}
 
 	return &ClientConfig{
@@ -206,6 +210,7 @@ func (s *Service) getConfigById(id string) (*ClientConfig, error) {
 			ClientID:     spec.ClientID,
 			ClientSecret: spec.ClientSecret,
 			Endpoint:     provider.Endpoint(),
+			Scopes:       scopes,
 		},
 		VerifierConfig: &goidc.Config{
 			ClientID: spec.ClientID,
