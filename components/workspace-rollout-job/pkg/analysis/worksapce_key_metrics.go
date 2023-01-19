@@ -22,7 +22,6 @@ import (
 )
 
 const (
-	// sum by (status) (increase(http_requests_total{job="app"}[4w]))
 	workspace_start_total_metric   = "sum by (cluster) (increase(gitpod_ws_manager_workspace_starts_total{cluster=~\"%s.*\", type=\"REGULAR\"}[%dms]))"
 	workspace_start_failure_metric = "sum by (cluster) (increase(gitpod_ws_manager_workspace_starts_failure_total{cluster=~\"%s.*\", type=\"REGULAR\"}[%dms]))"
 
