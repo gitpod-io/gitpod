@@ -40,7 +40,7 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 		// continue below
 	default:
 		// This is exceptional - not sure what to do here. Probably fail the pod
-		workspace.Status.Conditions = addUniqueCondition(workspace.Status.Conditions, metav1.Condition{
+		workspace.Status.Conditions = AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
 			Type:               string(workspacev1.WorkspaceConditionFailed),
 			Status:             metav1.ConditionTrue,
 			LastTransitionTime: metav1.Now(),
@@ -50,7 +50,7 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 		return nil
 	}
 
-	workspace.Status.Conditions = addUniqueCondition(workspace.Status.Conditions, metav1.Condition{
+	workspace.Status.Conditions = AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
 		Type:               string(workspacev1.WorkspaceConditionDeployed),
 		Status:             metav1.ConditionTrue,
 		LastTransitionTime: metav1.Now(),
@@ -81,7 +81,7 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 
 	if failure != "" && !conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) {
 		// workspaces can fail only once - once there is a failed condition set, stick with it
-		workspace.Status.Conditions = addUniqueCondition(workspace.Status.Conditions, metav1.Condition{
+		workspace.Status.Conditions = AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
 			Type:               string(workspacev1.WorkspaceConditionFailed),
 			Status:             metav1.ConditionTrue,
 			LastTransitionTime: metav1.Now(),
@@ -91,6 +91,7 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 
 	switch {
 	case isPodBeingDeleted(pod):
+		log.Info("setting phase for workspace to stopping", "workspace", workspace.Name)
 		workspace.Status.Phase = workspacev1.WorkspacePhaseStopping
 
 		var hasFinalizer bool

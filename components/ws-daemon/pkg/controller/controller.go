@@ -104,6 +104,8 @@ func NewWorkspaceController(c client.Client, opts WorkspaceControllerOpts) (*Wor
 			BackupWaitingTimeHist:       waitingTimeHist,
 			BackupWaitingTimeoutCounter: waitingTimeoutCounter,
 		},
+		// we permit five concurrent backups at any given time, hence the five in the channel
+		backupWorkspaceLimiter: make(chan struct{}, 5),
 	}, nil
 }
 
@@ -130,7 +132,7 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, nil
 	}
 
-	log.WithValues("workspaceID", workspace.Name, "runtime", workspace.Status.Runtime).Info("seen workspace we have to manage")
+	log.WithValues("workspaceID", workspace.Name, "runtime", workspace.Status.Runtime, "phase", workspace.Status.Phase).Info("seen workspace we have to manage")
 
 	if workspace.Status.Phase == workspacev1.WorkspacePhaseCreating ||
 		workspace.Status.Phase == workspacev1.WorkspacePhaseInitializing ||
@@ -156,7 +158,7 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 						Type:               string(workspacev1.WorkspaceConditionContentReady),
 						Status:             metav1.ConditionFalse,
 						Message:            failure,
-						Reason:             "failed to initialize",
+						Reason:             "InitializationFailure",
 						LastTransitionTime: metav1.Now(),
 					})
 				} else {
@@ -176,35 +178,34 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 		}
 	}
 
-	log.WithValues("workspaceID", workspace.Name, "runtime", workspace.Status.Runtime).Info("CHECKING PHASE")
+	log.WithValues("workspaceID", workspace.Name, "runtime", workspace.Status.Runtime, "phase", workspace.Status.Phase).Info("CHECKING PHASE")
 
 	if workspace.Status.Phase == workspacev1.WorkspacePhaseStopping {
 		log.WithValues("workspaceID", workspace.Name, "runtime", workspace.Status.Runtime).Info("DISPOSING WORKSPACE")
-		disposeErr := wsc.disposeWorkspace(ctx, &workspace)
+		alreadyDisposed, disposeErr := wsc.disposeWorkspace(ctx, &workspace)
 		if disposeErr != nil {
 			log.Error(disposeErr, "failed to dispose workspace", "workspace", workspace.Name)
 		}
 
+		glog.WithField("workspace", workspace).Info(" disposed workspace")
+
 		err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-			var workspace workspacev1.Workspace
-			err := wsc.Get(ctx, req.NamespacedName, &workspace)
-			if err != nil {
-				return err
+			if alreadyDisposed {
+				return nil
 			}
 
 			if disposeErr != nil {
 				workspace.Status.Conditions = wsk8s.AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
 					Type:               string(workspacev1.WorkspaceConditionBackupFailure),
 					Status:             metav1.ConditionTrue,
-					Message:            err.Error(),
-					Reason:             "failed to backup",
+					Message:            disposeErr.Error(),
 					LastTransitionTime: metav1.Now(),
 				})
 			} else {
 				workspace.Status.Conditions = wsk8s.AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
 					Type:               string(workspacev1.WorkspaceConditionBackupComplete),
 					Status:             metav1.ConditionTrue,
-					Message:            "workspace backed up",
+					Message:            "backup complete",
 					LastTransitionTime: metav1.Now(),
 				})
 			}
@@ -308,33 +309,34 @@ func (wsc *WorkspaceController) initWorkspaceContent(ctx context.Context, ws *wo
 	return "", nil
 }
 
-func (wsc *WorkspaceController) disposeWorkspace(ctx context.Context, ws *workspacev1.Workspace) error {
+func (wsc *WorkspaceController) disposeWorkspace(ctx context.Context, ws *workspacev1.Workspace) (bool, error) {
 	log := log.FromContext(ctx)
 
 	sess := wsc.store.Get(ws.Name)
 	if sess == nil {
-		return status.Error(codes.NotFound, fmt.Sprintf("cannot find workspace %s during DisposeWorkspace", ws.Name))
+		return false, status.Error(codes.NotFound, fmt.Sprintf("cannot find workspace %s during DisposeWorkspace", ws.Name))
 	}
 
 	log.Info("get condition")
 
 	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)); c == nil || c.Status == metav1.ConditionFalse {
-		return xerrors.Errorf("workspace content was never ready")
+		return false, xerrors.Errorf("workspace content was never ready")
 	}
 
 	log.Info("wait disposal")
 
 	// Maybe there's someone else already trying to dispose the workspace.
 	// In that case we'll simply wait for that to happen.
-	// done, repo, err := sess.WaitOrMarkForDisposal(ctx)
-	// if err != nil {
-	// 	return status.Error(codes.Internal, err.Error())
-	// }
+	done, repo, err := sess.WaitOrMarkForDisposal(ctx)
+	if err != nil {
+		return false, status.Error(codes.Internal, err.Error())
+	}
 
-	// if done {
-	// 	ws.Status.GitStatus = toWorkspaceGitStatus(repo)
-	// 	return nil
-	// }
+	if done {
+		log.Info("get git status", "repo", repo)
+		ws.Status.GitStatus = toWorkspaceGitStatus(repo)
+		return true, nil
+	}
 
 	// todo(thomas) check when logs need to be backed up
 	if ws.Spec.Type == workspacev1.WorkspaceTypePrebuild {
@@ -346,21 +348,21 @@ func (wsc *WorkspaceController) disposeWorkspace(ctx context.Context, ws *worksp
 	}
 
 	if sess.RemoteStorageDisabled {
-		return xerrors.Errorf("workspace has no remote storage")
+		return false, xerrors.Errorf("workspace has no remote storage")
 	}
 
 	log.Info("upload workspace content")
 
-	err := wsc.uploadWorkspaceContent(ctx, ws, sess)
+	err = wsc.uploadWorkspaceContent(ctx, ws, sess)
 	if err != nil {
 		glog.WithError(err).Error("final backup failed")
-		return xerrors.Errorf("final backup failed for workspace %s", ws.Name)
+		return false, xerrors.Errorf("final backup failed for workspace %s", ws.Name)
 	}
 
 	log.Info("update git status")
 
 	// Update the git status prior to deleting the workspace
-	repo, err := wsc.UpdateGitStatus(ctx, ws, sess)
+	repo, err = sess.UpdateGitStatus(ctx, false)
 	if err != nil {
 		// do not fail workspace because we were unable to get git status
 		// which can happen for various reasons, including user corrupting his .git folder somehow
@@ -369,8 +371,15 @@ func (wsc *WorkspaceController) disposeWorkspace(ctx context.Context, ws *worksp
 		glog.WithError(err).Warn("cannot get git status")
 	}
 
+	log.Info("updated git status", "repo", repo)
+
 	if repo != nil {
+		log.Info("updating repo status")
 		ws.Status.GitStatus = toWorkspaceGitStatus(repo)
+	}
+
+	if err = sess.Dispose(ctx); err != nil {
+		glog.WithError(err).Error("cannot dispose session")
 	}
 
 	// remove workspace daemon directory in the node
@@ -378,10 +387,15 @@ func (wsc *WorkspaceController) disposeWorkspace(ctx context.Context, ws *worksp
 		glog.WithError(err).Error("cannot delete workspace daemon directory")
 	}
 
-	return nil
+	log.Info("returning from dispose")
+	return false, nil
 }
 
 func toWorkspaceGitStatus(status *csapi.GitStatus) *workspacev1.GitStatus {
+	if status == nil {
+		return nil
+	}
+
 	return &workspacev1.GitStatus{
 		Branch:               status.Branch,
 		LatestCommit:         status.LatestCommit,
@@ -550,7 +564,7 @@ func (wsc *WorkspaceController) uploadWorkspaceContent(ctx context.Context, ws *
 // UpdateGitStatus attempts to update the LastGitStatus from the workspace's local working copy.
 func (wsc *WorkspaceController) UpdateGitStatus(ctx context.Context, ws *workspacev1.Workspace, s *session.Workspace) (res *csapi.GitStatus, err error) {
 	var loc string
-	loc = ws.Spec.WorkspaceLocation
+	loc = s.Location
 	if loc == "" {
 		// FWB workspaces don't have `Location` set, but rather ServiceLocDaemon and ServiceLocNode.
 		// We'd can't easily produce the Git status, because in this context `mark` isn't mounted, and `upper`
@@ -564,6 +578,7 @@ func (wsc *WorkspaceController) UpdateGitStatus(ctx context.Context, ws *workspa
 		return
 	}
 
+	glog.Infof("GIT LOCATION IS %v", loc)
 	loc = filepath.Join(loc, s.CheckoutLocation)
 	if !git.IsWorkingCopy(loc) {
 		glog.WithField("loc", loc).WithField("checkout location", s.CheckoutLocation).WithFields(s.OWI()).Debug("did not find a Git working copy - not updating Git status")

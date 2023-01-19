@@ -160,6 +160,24 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		return nil, err
 	}
 
+	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename, listener...)
+	if err != nil {
+		return nil, err
+	}
+
+	contentService, err := content.NewWorkspaceService(
+		context.Background(),
+		config.Content,
+		containerRuntime,
+		dsptch.WorkspaceExistsOnNode,
+		&iws.Uidmapper{Config: config.Uidmapper, Runtime: containerRuntime},
+		config.CPULimit.CGroupBasePath,
+		reg,
+	)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot create content service: %w", err)
+	}
+
 	if config.WorkspaceController.Enabled {
 		log.Info("enabling workspace CRD controller")
 
@@ -182,24 +200,6 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename, listener...)
-	if err != nil {
-		return nil, err
-	}
-
-	contentService, err := content.NewWorkspaceService(
-		context.Background(),
-		config.Content,
-		containerRuntime,
-		dsptch.WorkspaceExistsOnNode,
-		&iws.Uidmapper{Config: config.Uidmapper, Runtime: containerRuntime},
-		config.CPULimit.CGroupBasePath,
-		reg,
-	)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot create content service: %w", err)
 	}
 
 	dsk := diskguard.FromConfig(config.DiskSpaceGuard, clientset, nodename)
