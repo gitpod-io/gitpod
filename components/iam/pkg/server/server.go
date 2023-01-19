@@ -41,7 +41,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.ServiceConfig) erro
 		return fmt.Errorf("failed to initialize IAM server: %w", err)
 	}
 
-	oidcService := oidc.NewService(cfg.SessionServiceAddress)
+	oidcService := oidc.NewService(cfg.SessionServiceAddress, dbConn, cipherSet)
 	oidcClientConfigService := apiv1.NewOIDCClientConfigService(dbConn, cipherSet)
 
 	err = register(srv, &dependencies{
