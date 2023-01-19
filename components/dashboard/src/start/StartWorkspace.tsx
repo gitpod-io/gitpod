@@ -113,38 +113,6 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     private readonly toDispose = new DisposableCollection();
     componentWillMount() {
         if (this.props.runsInIFrame) {
-            // TODO(hw): delete after supervisor deploy
-            window.parent.postMessage({ type: "$setSessionId", sessionId }, "*");
-            const setStateEventListener = (event: MessageEvent) => {
-                if (
-                    event.data.type === "setState" &&
-                    "state" in event.data &&
-                    typeof event.data["state"] === "object"
-                ) {
-                    if (event.data.state.ideFrontendFailureCause) {
-                        const error = { message: event.data.state.ideFrontendFailureCause };
-                        this.setState({ error });
-                    }
-                    if (event.data.state.desktopIdeLink) {
-                        const label = event.data.state.desktopIdeLabel || "Open Desktop IDE";
-                        const clientID = event.data.state.desktopIdeClientID;
-                        this.setState({ desktopIde: { link: event.data.state.desktopIdeLink, label, clientID } });
-                    }
-                }
-                if (
-                    event.data.type === "$openDesktopLink" &&
-                    "link" in event.data &&
-                    typeof event.data["link"] === "string"
-                ) {
-                    this.openDesktopLink(event.data["link"] as string);
-                }
-            };
-            window.addEventListener("message", setStateEventListener, false);
-            this.toDispose.push({
-                dispose: () => window.removeEventListener("message", setStateEventListener),
-            });
-            // TODO(hw): end of delete
-
             this.ideFrontendService = getIDEFrontendService(this.props.workspaceId, sessionId, getGitpodService());
             this.toDispose.push(
                 this.ideFrontendService.onSetState((data) => {
@@ -448,9 +416,6 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
     redirectTo(url: string) {
         if (this.props.runsInIFrame) {
-            // TODO(hw): delete after supervisor deploy
-            window.parent.postMessage({ type: "relocate", url }, "*");
-            // TODO(hw): end of delete
             this.ideFrontendService?.relocate(url);
         } else {
             window.location.href = url;
