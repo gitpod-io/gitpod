@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -272,5 +273,7 @@ func (s *Service) CreateSession(ctx context.Context, flowResult *AuthFlowResult)
 		}
 		return nil, fmt.Errorf("unexpected count of cookies: %v", len(cookies))
 	}
+	message, _ := ioutil.ReadAll(res.Body)
+	log.WithField("create-session-error", message).Error("Failed to create session (via server)")
 	return nil, fmt.Errorf("unexpected status code: %v", res.StatusCode)
 }

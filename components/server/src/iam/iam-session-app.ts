@@ -10,6 +10,7 @@ import { SessionHandlerProvider } from "../session-handler";
 import { Authenticator } from "../auth/authenticator";
 import { UserService } from "../user/user-service";
 import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class IamSessionApp {
@@ -35,6 +36,7 @@ export class IamSessionApp {
                 const result = await this.doCreateSession(req);
                 res.status(200).json(result);
             } catch (error) {
+                log.error("Error creating session on behalf of IAM", error, { error });
                 // we treat all errors as bad request here and forward the error message to the caller
                 res.status(400).json({ error, message: error.message });
             }
