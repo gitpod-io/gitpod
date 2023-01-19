@@ -108,11 +108,12 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				WorkspaceHostSuffixRegex: gitpodInstallationWorkspaceHostSuffixRegex,
 			},
 			WorkspacePodConfig: &proxy.WorkspacePodConfig{
-				TheiaPort:           workspace.ContainerPort,
-				IDEDebugPort:        workspace.IDEDebugPort,
-				SupervisorPort:      workspace.SupervisorPort,
-				SupervisorDebugPort: workspace.SupervisorDebugPort,
-				SupervisorImage:     ctx.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
+				TheiaPort:               workspace.ContainerPort,
+				IDEDebugPort:            workspace.IDEDebugPort,
+				SupervisorPort:          workspace.SupervisorPort,
+				SupervisorDebugPort:     workspace.SupervisorDebugPort,
+				DebugWorkspaceProxyPort: workspace.DebugWorkspaceProxyPort,
+				SupervisorImage:         ctx.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
 			},
 			BuiltinPages: proxy.BuiltinPagesConfig{
 				Location: "/app/public",

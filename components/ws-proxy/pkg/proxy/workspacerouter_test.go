@@ -78,6 +78,22 @@ func TestWorkspaceRouter(t *testing.T) {
 				URL:           "http://1234-amaranth-smelt-9ba20cc1.ws.gitpod.dev/",
 			},
 		},
+		{
+			Name: "host-based debug port access",
+			URL:  "http://1234-debug-amaranth-smelt-9ba20cc1.ws.gitpod.dev/",
+			Headers: map[string]string{
+				forwardedHostnameHeader: "1234-debug-amaranth-smelt-9ba20cc1.ws.gitpod.dev",
+			},
+			Router:       HostBasedRouter(forwardedHostnameHeader, wsHostSuffix, wsHostRegex),
+			WSHostSuffix: wsHostSuffix,
+			Expected: Expectation{
+				DebugWorkspace: "true",
+				WorkspaceID:    "amaranth-smelt-9ba20cc1",
+				WorkspacePort:  "1234",
+				Status:         http.StatusOK,
+				URL:            "http://1234-debug-amaranth-smelt-9ba20cc1.ws.gitpod.dev/",
+			},
+		},
 	}
 
 	for _, test := range tests {
