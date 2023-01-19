@@ -56,14 +56,15 @@ var (
 		},
 	}
 
-	ideServerHost       = "localhost:20000"
-	workspacePort       = uint16(20001)
-	supervisorPort      = uint16(20002)
-	workspaceDebugPort  = uint16(20004)
-	supervisorDebugPort = uint16(20005)
-	workspaceHost       = fmt.Sprintf("localhost:%d", workspacePort)
-	portServeHost       = fmt.Sprintf("localhost:%d", workspaces[0].Ports[0].Port)
-	blobServeHost       = "localhost:20003"
+	ideServerHost           = "localhost:20000"
+	workspacePort           = uint16(20001)
+	supervisorPort          = uint16(20002)
+	workspaceDebugPort      = uint16(20004)
+	supervisorDebugPort     = uint16(20005)
+	debugWorkspaceProxyPort = uint16(20006)
+	workspaceHost           = fmt.Sprintf("localhost:%d", workspacePort)
+	portServeHost           = fmt.Sprintf("localhost:%d", workspaces[0].Ports[0].Port)
+	blobServeHost           = "localhost:20003"
 
 	config = Config{
 		TransportConfig: &TransportConfig{
@@ -82,10 +83,11 @@ var (
 			Scheme: "http",
 		},
 		WorkspacePodConfig: &WorkspacePodConfig{
-			TheiaPort:           workspacePort,
-			SupervisorPort:      supervisorPort,
-			IDEDebugPort:        workspaceDebugPort,
-			SupervisorDebugPort: supervisorDebugPort,
+			TheiaPort:               workspacePort,
+			SupervisorPort:          supervisorPort,
+			IDEDebugPort:            workspaceDebugPort,
+			SupervisorDebugPort:     supervisorDebugPort,
+			DebugWorkspaceProxyPort: debugWorkspaceProxyPort,
 		},
 		BuiltinPages: BuiltinPagesConfig{
 			Location: "../../public",
@@ -203,13 +205,14 @@ func TestRoutes(t *testing.T) {
 		Body   string
 	}
 	type Targets struct {
-		IDE             *Target
-		Blobserve       *Target
-		Workspace       *Target
-		DebugWorkspace  *Target
-		Supervisor      *Target
-		DebugSupervisor *Target
-		Port            *Target
+		IDE                 *Target
+		Blobserve           *Target
+		Workspace           *Target
+		DebugWorkspace      *Target
+		Supervisor          *Target
+		DebugSupervisor     *Target
+		Port                *Target
+		DebugWorkspaceProxy *Target
 	}
 	tests := []struct {
 		Desc        string
@@ -391,6 +394,30 @@ func TestRoutes(t *testing.T) {
 			),
 			Targets: &Targets{
 				DebugWorkspace: &Target{
+					Handler: func(w http.ResponseWriter, r *http.Request, requestCount uint8) {
+						fmt.Fprintf(w, "host: %s\n", r.Host)
+						fmt.Fprintf(w, "path: %s\n", r.URL.Path)
+					},
+				},
+			},
+			Expectation: Expectation{
+				Status: http.StatusOK,
+				Header: http.Header{
+					"Content-Length": {"69"},
+					"Content-Type":   {"text/plain; charset=utf-8"},
+				},
+				Body: "host: v--sr1o1nu24nqdf809l0u27jk5t7.test-domain.com\npath: /test.html\n",
+			},
+		},
+		{
+			Desc:   "port debug foreign resource",
+			Config: &config,
+			Request: modifyRequest(httptest.NewRequest("GET", "https://v--sr1o1nu24nqdf809l0u27jk5t7"+wsHostSuffix+"/28080-debug-amaranth-smelt-9ba20cc1/test.html", nil),
+				addHostHeader,
+				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+			),
+			Targets: &Targets{
+				DebugWorkspaceProxy: &Target{
 					Handler: func(w http.ResponseWriter, r *http.Request, requestCount uint8) {
 						fmt.Fprintf(w, "host: %s\n", r.Host)
 						fmt.Fprintf(w, "path: %s\n", r.URL.Path)
@@ -589,6 +616,26 @@ func TestRoutes(t *testing.T) {
 			},
 		},
 		{
+			Desc: "debug port GET 404",
+			Request: modifyRequest(httptest.NewRequest("GET", "https://28080-debug-amaranth-smelt-9ba20cc1.test-domain.com/this-does-not-exist", nil),
+				addHostHeader,
+				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+			),
+			Targets: &Targets{
+				DebugWorkspaceProxy: &Target{
+					Handler: func(w http.ResponseWriter, r *http.Request, requestCount uint8) {
+						w.WriteHeader(http.StatusNotFound)
+						fmt.Fprintf(w, "host: %s\n", r.Host)
+					},
+				},
+			},
+			Expectation: Expectation{
+				Header: http.Header{"Content-Length": {"58"}, "Content-Type": {"text/plain; charset=utf-8"}},
+				Status: http.StatusNotFound,
+				Body:   "host: 28080-debug-amaranth-smelt-9ba20cc1.test-domain.com\n",
+			},
+		},
+		{
 			Desc: "port GET unexposed",
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].Ports[0].Url+"this-does-not-exist", nil),
 				addHostHeader,
@@ -728,6 +775,7 @@ func TestRoutes(t *testing.T) {
 			controlTarget(test.Targets.IDE, "IDE", ideServerHost, false)
 			controlTarget(test.Targets.Blobserve, "blobserve", blobServeHost, true)
 			controlTarget(test.Targets.Port, "port", portServeHost, true)
+			controlTarget(test.Targets.DebugWorkspaceProxy, "debug workspace proxy", fmt.Sprintf("localhost:%d", debugWorkspaceProxyPort), false)
 			controlTarget(test.Targets.Workspace, "workspace", workspaceHost, false)
 			controlTarget(test.Targets.DebugWorkspace, "debug workspace", fmt.Sprintf("localhost:%d", workspaceDebugPort), false)
 			controlTarget(test.Targets.Supervisor, "supervisor", fmt.Sprintf("localhost:%d", supervisorPort), false)

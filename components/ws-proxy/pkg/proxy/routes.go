@@ -329,7 +329,7 @@ func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 }
 
 func installForeignRoutes(r *mux.Router, config *RouteHandlerConfig, infoProvider WorkspaceInfoProvider) error {
-	installWorkspacePortRoutes(r.MatcherFunc(func(r *http.Request, rm *mux.RouteMatch) bool {
+	err := installWorkspacePortRoutes(r.MatcherFunc(func(r *http.Request, rm *mux.RouteMatch) bool {
 		workspacePathPrefix := rm.Vars[workspacePathPrefixIdentifier]
 		if workspacePathPrefix == "" || rm.Vars[workspacePortIdentifier] == "" {
 			return false
@@ -337,7 +337,10 @@ func installForeignRoutes(r *mux.Router, config *RouteHandlerConfig, infoProvide
 		r.URL.Path = strings.TrimPrefix(r.URL.Path, workspacePathPrefix)
 		return true
 	}).Subrouter(), config, infoProvider)
-	err := installDebugWorkspaceRoutes(r.MatcherFunc(func(r *http.Request, rm *mux.RouteMatch) bool {
+	if err != nil {
+		return err
+	}
+	err = installDebugWorkspaceRoutes(r.MatcherFunc(func(r *http.Request, rm *mux.RouteMatch) bool {
 		workspacePathPrefix := rm.Vars[workspacePathPrefixIdentifier]
 		if workspacePathPrefix == "" || rm.Vars[debugWorkspaceIdentifier] != "true" {
 			return false
@@ -419,6 +422,12 @@ func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig, infoP
 			r.Header.Add("X-Forwarded-Proto", "https")
 			r.Header.Add("X-Forwarded-Host", r.Host)
 			r.Header.Add("X-Forwarded-Port", "443")
+
+			coords := getWorkspaceCoords(r)
+			if coords.Debug {
+				r.Header.Add("X-WS-Proxy-Debug-Port", coords.Port)
+			}
+
 			proxyPass(
 				config,
 				infoProvider,
@@ -449,7 +458,13 @@ func workspacePodResolver(config *Config, infoProvider WorkspaceInfoProvider, re
 func workspacePodPortResolver(config *Config, infoProvider WorkspaceInfoProvider, req *http.Request) (url *url.URL, err error) {
 	coords := getWorkspaceCoords(req)
 	workspaceInfo := infoProvider.WorkspaceInfo(coords.ID)
-	return buildWorkspacePodURL(workspaceInfo.IPAddress, coords.Port)
+	var port string
+	if coords.Debug {
+		port = fmt.Sprint(config.WorkspacePodConfig.DebugWorkspaceProxyPort)
+	} else {
+		port = coords.Port
+	}
+	return buildWorkspacePodURL(workspaceInfo.IPAddress, port)
 }
 
 // workspacePodSupervisorResolver resolves to the workspace pods Supervisor url from the given request.
