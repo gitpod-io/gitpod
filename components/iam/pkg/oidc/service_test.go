@@ -28,8 +28,9 @@ import (
 
 func TestGetStartParams(t *testing.T) {
 	const (
-		issuerG  = "https://accounts.google.com"
-		clientID = "client-id-123"
+		issuerG     = "https://accounts.google.com"
+		clientID    = "client-id-123"
+		redirectURL = "https://test.local/iam/oidc/callback"
 	)
 	service, _ := setupOIDCServiceForTests(t)
 	config := &ClientConfig{
@@ -43,7 +44,7 @@ func TestGetStartParams(t *testing.T) {
 		},
 	}
 
-	params, err := service.GetStartParams(config)
+	params, err := service.GetStartParams(config, redirectURL)
 
 	require.NoError(t, err)
 	require.NotNil(t, params.Nonce)
@@ -54,10 +55,12 @@ func TestGetStartParams(t *testing.T) {
 	// ?client_id=client-id-123
 	// &nonce=UFTMxxUtc5jVZbp2a2R9XEoRwpfzs-04FcmVQ-HdCsw
 	// &response_type=code
+	// &redirect_url=https...
 	// &state=Q4XzRcdo4jtOYeRbF17T9LHHwX-4HacT1_5pZH8mXLI
 	require.NotNil(t, params.AuthCodeURL)
 	require.Contains(t, params.AuthCodeURL, issuerG)
 	require.Contains(t, params.AuthCodeURL, clientID)
+	require.Contains(t, params.AuthCodeURL, url.QueryEscape(redirectURL))
 	require.Contains(t, params.AuthCodeURL, url.QueryEscape(params.Nonce))
 	require.Contains(t, params.AuthCodeURL, url.QueryEscape(params.State))
 }
