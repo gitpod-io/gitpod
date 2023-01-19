@@ -172,12 +172,6 @@ export interface ConfigSerialized {
     contentServiceAddr: string;
 
     /**
-     * The address content service clients connect to
-     * Example: image-builder:8080
-     */
-    imageBuilderAddr: string;
-
-    /**
      * The address usage service clients connect to
      * Example: usage:8080
      */

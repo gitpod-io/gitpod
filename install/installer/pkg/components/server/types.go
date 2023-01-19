@@ -29,7 +29,6 @@ type ConfigSerialized struct {
 	DefaultBaseImageRegistryWhitelist []string `json:"defaultBaseImageRegistryWhitelist"`
 	RunDbDeleter                      bool     `json:"runDbDeleter"`
 	ContentServiceAddr                string   `json:"contentServiceAddr"`
-	ImageBuilderAddr                  string   `json:"imageBuilderAddr"`
 	UsageServiceAddr                  string   `json:"usageServiceAddr"`
 	IDEServiceAddr                    string   `json:"ideServiceAddr"`
 	MaximumEventLoopLag               float64  `json:"maximumEventLoopLag"`

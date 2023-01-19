@@ -5418,7 +5418,6 @@ data:
       "defaultBaseImageRegistryWhitelist": [],
       "runDbDeleter": true,
       "contentServiceAddr": "content-service.default.svc.cluster.local:8080",
-      "imageBuilderAddr": "image-builder-mk3.default.svc.cluster.local:8080",
       "usageServiceAddr": "usage.default.svc.cluster.local:9001",
       "ideServiceAddr": "ide-service.default.svc.cluster.local:9001",
       "maximumEventLoopLag": 0.35,
@@ -10675,7 +10674,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: a650c4798487d5b4bfddae5466f28d9990d216a5e0be8ec832228a3e0ae48331
+        gitpod.io/checksum_config: e33935097352111eb21b366b90d076a4456b6951d8c94c7060486a65f3dee292
       creationTimestamp: null
       labels:
         app: gitpod
