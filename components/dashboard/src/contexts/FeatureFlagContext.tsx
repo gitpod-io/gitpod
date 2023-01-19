@@ -22,6 +22,7 @@ const FeatureFlagContext = createContext<{
     usePublicApiWorkspacesService: boolean;
     enablePersonalAccessTokens: boolean;
     useNewWorkspacesList: boolean;
+    oidcServiceEnabled: boolean;
 }>({
     showUsageView: false,
     isUsageBasedBillingEnabled: false,
@@ -29,6 +30,7 @@ const FeatureFlagContext = createContext<{
     usePublicApiWorkspacesService: false,
     enablePersonalAccessTokens: false,
     useNewWorkspacesList: false,
+    oidcServiceEnabled: false,
 });
 
 const FeatureFlagContextProvider: React.FC = ({ children }) => {
@@ -43,6 +45,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const [enablePersonalAccessTokens, setPersonalAccessTokensEnabled] = useState<boolean>(false);
     const [usePublicApiWorkspacesService, setUsePublicApiWorkspacesService] = useState<boolean>(false);
     const [useNewWorkspacesList, setUseNewWorkspacesList] = useState<boolean>(false);
+    const [oidcServiceEnabled, setOidcServiceEnabled] = useState<boolean>(false);
 
     useEffect(() => {
         if (!user) return;
@@ -60,6 +63,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                     defaultValue: false,
                     setter: setUseNewWorkspacesList,
                 },
+                oidcServiceEnabled: { defaultValue: false, setter: setOidcServiceEnabled },
             };
 
             for (const [flagName, config] of Object.entries(featureFlags)) {
@@ -105,6 +109,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 enablePersonalAccessTokens,
                 usePublicApiWorkspacesService,
                 useNewWorkspacesList,
+                oidcServiceEnabled,
             }}
         >
             {children}
