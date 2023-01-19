@@ -152,6 +152,7 @@ export type FailedInstanceStartReason =
     | "clusterSelectionFailed"
     | "startOnClusterFailed"
     | "imageBuildFailed"
+    | "resourceExhausted"
     | "other";
 export function increaseFailedInstanceStartCounter(reason: FailedInstanceStartReason) {
     instanceStartsFailedTotal.inc({ reason });

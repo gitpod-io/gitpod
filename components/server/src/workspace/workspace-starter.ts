@@ -522,8 +522,12 @@ export class WorkspaceStarter {
                         );
                     }
                 } catch (err) {
+                    let reason: FailedInstanceStartReason = "startOnClusterFailed";
+                    if ("code" in err && err.code === grpc.status.RESOURCE_EXHAUSTED) {
+                        reason = "resourceExhausted";
+                    }
                     await this.failInstanceStart({ span }, err, workspace, instance);
-                    throw new StartInstanceError("startOnClusterFailed", err);
+                    throw new StartInstanceError(reason, err);
                 }
 
                 if (!resp) {
@@ -663,7 +667,9 @@ export class WorkspaceStarter {
                 log.info({ instanceId: instance.id }, "starting instance");
                 return (await manager.startWorkspace(ctx, startRequest)).toObject();
             } catch (err: any) {
-                if ("code" in err && err.code !== grpc.status.OK && lastInstallation !== "") {
+                if ("code" in err && err.code === grpc.status.RESOURCE_EXHAUSTED) {
+                    throw err;
+                } else if ("code" in err && err.code !== grpc.status.OK && lastInstallation !== "") {
                     log.error({ instanceId: instance.id }, "cannot start workspace on cluster, might retry", err, {
                         cluster: lastInstallation,
                     });
