@@ -90,7 +90,7 @@ var rootCmd = &cobra.Command{
 		}
 
 		// Start the rollout process
-		prometheusAnalyzer, err := analysis.NewErrorRatioAnalyzer(ctx, config, conf.prometheusService, conf.targetPositivePercentage, 30305)
+		prometheusAnalyzer, err := analysis.NewWorkspaceKeyMetricsAnalyzer(ctx, config, conf.prometheusService, conf.targetPositivePercentage, 30305)
 		if err != nil {
 			log.WithError(err).Fatal("failed to create a prometheus client")
 			return
@@ -120,7 +120,7 @@ func Execute() {
 	rootCmd.Flags().StringVar(&conf.oldCluster, "old-cluster", "", "Name of the old cluster with score 100")
 	rootCmd.Flags().StringVar(&conf.newCluster, "new-cluster", "", "Name of the new cluster with score 0")
 	rootCmd.Flags().StringVar(&conf.prometheusService, "prometheus-resource", "", "Please set in the format <namespace>/<kind>/<name>")
-	rootCmd.Flags().DurationVar(&conf.rollOutWaitDuration, "rollout-wait-duration", 20*time.Second, "Duration to wait before updating the score of the new cluster")
+	rootCmd.Flags().DurationVar(&conf.rollOutWaitDuration, "rollout-wait-duration", 50*time.Second, "Duration to wait before updating the score of the new cluster")
 	rootCmd.Flags().DurationVar(&conf.analsysWaitDuration, "analysis-wait-duration", 1*time.Second, "Duration to wait before analyzing the metrics")
 	rootCmd.Flags().Int32Var(&conf.rolloutStepScore, "rollout-step-score", 10, "Score to be added to the new cluster, and decreased to the old cluster")
 	rootCmd.Flags().Int32Var(&conf.okayScoreUntilNoData, "okay-score-until-no-data", 60, "If the score is below this value, and there is no data, the rollout score will be considered okay")

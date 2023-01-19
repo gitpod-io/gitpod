@@ -58,9 +58,11 @@ func (r *RollOutJob) Start(ctx context.Context) {
 				time.Sleep(r.analysisWaitDuration)
 				moveForward, err := r.analyzer.MoveForward(context.Background(), r.newCluster)
 				if err != nil {
-					log.Error("Failed to retrieve new cluster error count: ", err)
+					log.Error("Analysis returned error: ", err)
+					log.Info("Reverting the rollout")
 					// Revert the rollout in case of analysis failure
 					r.revert <- true
+					continue
 				}
 
 				// Analyzer says no, stop the rollout
@@ -135,5 +137,6 @@ func (r *RollOutJob) UpdateScoreWithMetricUpdate(ctx context.Context, cluster st
 
 func (r *RollOutJob) Stop() {
 	close(r.done)
+	close(r.revert)
 	r.ticker.Stop()
 }
