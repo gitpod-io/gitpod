@@ -6,6 +6,9 @@ package rollout
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	logrus "github.com/gitpod-io/gitpod/common-go/log"
@@ -47,6 +50,19 @@ func New(oldCluster, newCluster string, rolloutWaitDuration, analysisWaitDuratio
 
 // Start runs the job synchronously
 func (r *RollOutJob) Start(ctx context.Context) {
+	// Handle interrupt signal
+	c := make(chan os.Signal, 1)
+	signal.Notify(c,
+		os.Interrupt,
+		syscall.SIGTERM,
+	)
+	go func() {
+		<-c
+		// sig is a ^C, handle it
+		logrus.Info("Received interrupt signal, Reverting")
+		r.revert <- true
+	}()
+
 	// keep checking the analyzer asynchronously to see if there is a
 	// problem with the new cluster
 	log := logrus.WithField("component", "rollout-job")
