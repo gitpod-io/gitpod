@@ -21,6 +21,8 @@ import { FunctionComponent } from "react";
 const CACHE_VERSION = "1";
 
 export const setupQueryClientProvider = () => {
+    // TODO: add a feature-check for idb (set/get to verify it works) and conditionally use persister
+
     const client = new QueryClient();
     const queryClientPersister = createIDBPersister();
 
@@ -49,13 +51,26 @@ export const setupQueryClientProvider = () => {
 function createIDBPersister(idbValidKey: IDBValidKey = "gitpodQueryClient") {
     return {
         persistClient: async (client: PersistedClient) => {
-            set(idbValidKey, client);
+            try {
+                await set(idbValidKey, client);
+            } catch (e) {
+                console.error("unable to persist query client");
+            }
         },
         restoreClient: async () => {
-            return await get<PersistedClient>(idbValidKey);
+            try {
+                const client = await get<PersistedClient>(idbValidKey);
+                return client;
+            } catch (e) {
+                console.error("unable to load query client from cache");
+            }
         },
         removeClient: async () => {
-            await del(idbValidKey);
+            try {
+                await del(idbValidKey);
+            } catch (e) {
+                console.error("unable to remove query client");
+            }
         },
     } as Persister;
 }
