@@ -1,6 +1,10 @@
 # Change Log
 
 ## January 2023
+- [installer]: promote experimental agent-smith config ([#15841](https://github.com/gitpod-io/gitpod/pull/15841)) - [@mrsimonemms](https://github.com/mrsimonemms)
+- [installer]: promote experimental telemetry config ([#15840](https://github.com/gitpod-io/gitpod/pull/15840)) - [@mrsimonemms](https://github.com/mrsimonemms)
+- [installer]: add override option to arbitrarily change the output ([#15658](https://github.com/gitpod-io/gitpod/pull/15658)) - [@mrsimonemms](https://github.com/mrsimonemms)
+- Improvements and bug fixes to the Projects list page on the dashboard. Sorting of projects on that view is now alphanumeric instead of by activity. ([#15854](https://github.com/gitpod-io/gitpod/pull/15854)) - [@selfcontained](https://github.com/selfcontained)
 - [installer]: refactor the config's deprecation handling ([#15773](https://github.com/gitpod-io/gitpod/pull/15773)) - [@mrsimonemms](https://github.com/mrsimonemms)
 - A new CLI command `gp timeout set` allows to set the workspace timeout to arbitrary durations. ([#15815](https://github.com/gitpod-io/gitpod/pull/15815)) - [@svenefftinge](https://github.com/svenefftinge)
 - new `.gitpod.yml` default template ([#15728](https://github.com/gitpod-io/gitpod/pull/15728)) - [@Siddhant-K-code](https://github.com/Siddhant-K-code)
