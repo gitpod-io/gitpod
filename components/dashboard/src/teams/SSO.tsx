@@ -263,7 +263,7 @@ function OIDCClientConfigModal(
 
     return (
         <Modal visible={!!props} onClose={onClose} closeable={props.closeable}>
-            <h3 className="pb-2">{mode === "new" ? "New Git Integration" : "Git Integration"}</h3>
+            <h3 className="pb-2">{mode === "new" ? "New OIDC Client" : "OIDC Client"}</h3>
             <div className="space-y-4 border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
                 <div className="flex flex-col">
                     <span className="text-gray-500">Enter this information from your OIDC service.</span>
