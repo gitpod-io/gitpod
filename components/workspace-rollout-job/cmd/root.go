@@ -41,7 +41,7 @@ var (
 
 var rootCmd = &cobra.Command{
 	Short: "Rollout from old to a new cluster while monitoring metrics",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		log.Info("Starting workspace-rollout-job")
 		ctx := context.Background()
 		var err error
@@ -50,6 +50,7 @@ var rootCmd = &cobra.Command{
 		config, err := getKubeConfig()
 		if err != nil {
 			log.WithError(err).Fatal("failed to retrieve kube config")
+			return err
 		}
 
 		serverOpts := []baseserver.Option{
@@ -59,14 +60,14 @@ var rootCmd = &cobra.Command{
 		srv, err := baseserver.New("workspace-rollout-job", serverOpts...)
 		if err != nil {
 			log.WithError(err).Fatal("failed to initialize server")
-			return
+			return err
 		}
 
 		// Run in a separate routine as this is not the main purpose
 		go srv.ListenAndServe()
 		if err != nil {
 			log.WithError(err).Fatal("failed to listen and serve")
-			return
+			return err
 		}
 
 		rollout.RegisterMetrics(srv.MetricsRegistry())
@@ -75,29 +76,31 @@ var rootCmd = &cobra.Command{
 		wsManagerBridgeClient, err := wsbridge.NewWsManagerBridgeClient(context.Background(), config, 30304)
 		if err != nil {
 			log.WithError(err).Fatal("failed to create a ws-manager-bridge client")
-			return
+			return err
 		}
 
 		// Check if the old cluster has a 100 score.
 		if score, err := wsManagerBridgeClient.GetScore(ctx, conf.oldCluster); err != nil || score != 100 {
 			log.WithError(err).Fatal("init condition does not satisfy")
+			return err
 		}
 
 		// Check if the new cluster has a 0 zero score.
 		// TODO: Check if the new cluster has no constraints.
 		if score, err := wsManagerBridgeClient.GetScore(ctx, conf.newCluster); err != nil || score != 0 {
 			log.WithError(err).Fatal("init condition does not satisfy")
+			return err
 		}
 
 		// Start the rollout process
 		prometheusAnalyzer, err := analysis.NewWorkspaceKeyMetricsAnalyzer(ctx, config, conf.prometheusService, conf.targetPositivePercentage, 30305)
 		if err != nil {
 			log.WithError(err).Fatal("failed to create a prometheus client")
-			return
+			return err
 		}
 
 		job := rollout.New(conf.oldCluster, conf.newCluster, conf.rollOutWaitDuration, conf.analsysWaitDuration, conf.rolloutStepScore, conf.okayScoreUntilNoData, prometheusAnalyzer, wsManagerBridgeClient)
-		job.Start(ctx)
+		return job.Start(ctx)
 	},
 }
 
