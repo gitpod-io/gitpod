@@ -83,3 +83,30 @@ func TestDeleteOIDCClientConfig(t *testing.T) {
 	})
 
 }
+
+func TestGetOIDCClientConfigForOrganization(t *testing.T) {
+
+	t.Run("not found when config does not exist", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+
+		_, err := db.GetOIDCClientConfigForOrganization(context.Background(), conn, uuid.New(), uuid.New())
+		require.Error(t, err)
+		require.ErrorIs(t, err, db.ErrorNotFound)
+	})
+
+	t.Run("retrieves config which exists", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+
+		orgID := uuid.New()
+
+		created := dbtest.CreateOIDCClientConfigs(t, conn, db.OIDCClientConfig{
+			OrganizationID: &orgID,
+		})[0]
+
+		retrieved, err := db.GetOIDCClientConfigForOrganization(context.Background(), conn, created.ID, *created.OrganizationID)
+		require.NoError(t, err)
+
+		require.Equal(t, created, retrieved)
+	})
+
+}

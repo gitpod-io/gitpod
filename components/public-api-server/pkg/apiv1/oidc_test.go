@@ -139,26 +139,76 @@ func TestOIDCService_CreateClientConfig_FeatureFlagEnabled(t *testing.T) {
 	})
 }
 
-func TestOIDCService_GetClientConfig(t *testing.T) {
-	t.Run("feature flag disabled returns unauthorized", func(t *testing.T) {
-		serverMock, client, _ := setupOIDCService(t, withOIDCFeatureDisabled)
+func TestOIDCService_GetClientConfig_WithFeatureFlagDisabled(t *testing.T) {
+	serverMock, client, _ := setupOIDCService(t, withOIDCFeatureDisabled)
 
-		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
-		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
+	serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
+	serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
+
+	_, err := client.GetClientConfig(context.Background(), connect.NewRequest(&v1.GetClientConfigRequest{
+		Id:             uuid.NewString(),
+		OrganizationId: uuid.NewString(),
+	}))
+	require.Error(t, err)
+	require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
+}
+
+func TestOIDCService_GetClientConfig_WithFeatureFlagEnabled(t *testing.T) {
+
+	t.Run("invalid argument when config id missing", func(t *testing.T) {
+		_, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
 
 		_, err := client.GetClientConfig(context.Background(), connect.NewRequest(&v1.GetClientConfigRequest{}))
 		require.Error(t, err)
-		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
-	t.Run("feature flag enabled returns unimplemented", func(t *testing.T) {
+	t.Run("invalid argument when organization id missing", func(t *testing.T) {
+		_, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
+
+		_, err := client.GetClientConfig(context.Background(), connect.NewRequest(&v1.GetClientConfigRequest{
+			Id: uuid.NewString(),
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("not found when record does not exist", func(t *testing.T) {
 		serverMock, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
-		_, err := client.GetClientConfig(context.Background(), connect.NewRequest(&v1.GetClientConfigRequest{}))
+		_, err := client.GetClientConfig(context.Background(), connect.NewRequest(&v1.GetClientConfigRequest{
+			Id:             uuid.NewString(),
+			OrganizationId: uuid.NewString(),
+		}))
 		require.Error(t, err)
-		require.Equal(t, connect.CodeUnimplemented, connect.CodeOf(err))
+		require.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
+	})
+
+	t.Run("retrieves record when it exists", func(t *testing.T) {
+		serverMock, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
+
+		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
+
+		orgID := uuid.New()
+
+		created := dbtest.CreateOIDCClientConfigs(t, dbConn, db.OIDCClientConfig{
+			OrganizationID: &orgID,
+		})[0]
+
+		resp, err := client.GetClientConfig(context.Background(), connect.NewRequest(&v1.GetClientConfigRequest{
+			Id:             created.ID.String(),
+			OrganizationId: created.OrganizationID.String(),
+		}))
+		require.NoError(t, err)
+
+		converted, err := dbOIDCClientConfigToAPI(created, dbtest.CipherSet(t))
+		require.NoError(t, err)
+
+		requireEqualProto(t, &v1.GetClientConfigResponse{
+			Config: converted,
+		}, resp.Msg)
 	})
 }
 

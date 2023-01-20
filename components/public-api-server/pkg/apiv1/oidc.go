@@ -96,6 +96,18 @@ func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Reque
 }
 
 func (s *OIDCService) GetClientConfig(ctx context.Context, req *connect.Request[v1.GetClientConfigRequest]) (*connect.Response[v1.GetClientConfigResponse], error) {
+	organizationID, err := validateOrganizationID(req.Msg.GetOrganizationId())
+	if err != nil {
+		return nil, err
+	}
+
+	clientConfigID, err := validateOIDCClientConfigID(req.Msg.GetId())
+	if err != nil {
+		return nil, err
+	}
+
+	logger := log.WithField("oidc_client_config_id", clientConfigID.String()).WithField("organization_id", organizationID.String())
+
 	conn, err := s.getConnection(ctx)
 	if err != nil {
 		return nil, err
@@ -106,7 +118,25 @@ func (s *OIDCService) GetClientConfig(ctx context.Context, req *connect.Request[
 		return nil, err
 	}
 
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gitpod.experimental.v1.OIDCService.GetClientConfig is not implemented"))
+	record, err := db.GetOIDCClientConfigForOrganization(ctx, s.dbConn, clientConfigID, organizationID)
+	if err != nil {
+		if errors.Is(err, db.ErrorNotFound) {
+			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("OIDC Client Config %s for Organization %s does not exist", clientConfigID.String(), organizationID.String()))
+		}
+
+		logger.WithError(err).Error("Failed to delete OIDC Client config.")
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to delete OIDC Client Config %s for Organization %s", clientConfigID.String(), organizationID.String()))
+	}
+
+	converted, err := dbOIDCClientConfigToAPI(record, s.cipher)
+	if err != nil {
+		logger.WithError(err).Error("Failed to convert OIDC Client config to response.")
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to convert OIDC Client Config %s for Organization %s to API response", clientConfigID.String(), organizationID.String()))
+	}
+
+	return connect.NewResponse(&v1.GetClientConfigResponse{
+		Config: converted,
+	}), nil
 }
 
 func (s *OIDCService) ListClientConfigs(ctx context.Context, req *connect.Request[v1.ListClientConfigsRequest]) (*connect.Response[v1.ListClientConfigsResponse], error) {
