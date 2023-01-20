@@ -49,7 +49,7 @@ func TerminateExistingContainer(ctx context.Context) error {
 	return nil
 }
 
-func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClient, event *utils.AnalyticsEvent) (string, error) {
+func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClient, analyticsData *utils.TrackCommandUsageParams) (string, error) {
 	wsInfo, err := supervisorClient.Info.WorkspaceInfo(ctx, &api.WorkspaceInfoRequest{})
 	if err != nil {
 		return utils.Outcome_SystemErr, err
@@ -67,7 +67,7 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		fmt.Println("")
 		fmt.Println("For help check out the reference page:")
 		fmt.Println("https://www.gitpod.io/docs/references/gitpod-yml#gitpodyml")
-		event.Set("ErrorCode", utils.RebuildErrorCode_MalformedGitpodYaml)
+		analyticsData.ErrorCode = utils.RebuildErrorCode_MalformedGitpodYaml
 		return utils.Outcome_UserErr, err
 	}
 
@@ -78,7 +78,7 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		fmt.Println("")
 		fmt.Println("Alternatively, check out the following docs for getting started configuring your project")
 		fmt.Println("https://www.gitpod.io/docs/configure#configure-gitpod")
-		event.Set("ErrorCode", utils.RebuildErrorCode_MissingGitpodYaml)
+		analyticsData.ErrorCode = utils.RebuildErrorCode_MissingGitpodYaml
 		return utils.Outcome_UserErr, nil
 	}
 
@@ -111,7 +111,7 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		baseimage = "\n" + string(dockerfile) + "\n"
 	default:
 		fmt.Println("Check your .gitpod.yml and make sure the image property is configured correctly")
-		event.Set("ErrorCode", utils.RebuildErrorCode_MalformedGitpodYaml)
+		analyticsData.ErrorCode = utils.RebuildErrorCode_MalformedGitpodYaml
 		return utils.Outcome_UserErr, nil
 	}
 
@@ -120,7 +120,7 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		fmt.Println("Check out the following docs, to know how to get started")
 		fmt.Println("")
 		fmt.Println("https://www.gitpod.io/docs/configure/workspaces/workspace-image#use-a-public-docker-image")
-		event.Set("ErrorCode", utils.RebuildErrorCode_NoCustomImage)
+		analyticsData.ErrorCode = utils.RebuildErrorCode_NoCustomImage
 		return utils.Outcome_UserErr, nil
 	}
 
@@ -135,7 +135,7 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 	dockerPath, err := exec.LookPath("docker")
 	if err != nil {
 		fmt.Println("Docker is not installed in your workspace")
-		event.Set("ErrorCode", utils.RebuildErrorCode_DockerNotFound)
+		analyticsData.ErrorCode = utils.RebuildErrorCode_DockerNotFound
 		return utils.Outcome_SystemErr, err
 	}
 
@@ -149,15 +149,16 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 	err = dockerCmd.Run()
 	if _, ok := err.(*exec.ExitError); ok {
 		fmt.Println("Image Build Failed")
-		event.Set("ErrorCode", utils.RebuildErrorCode_ImageBuildFailed)
+		analyticsData.ErrorCode = utils.RebuildErrorCode_ImageBuildFailed
 		return utils.Outcome_UserErr, nil
 	} else if err != nil {
 		fmt.Println("Docker error")
-		event.Set("ErrorCode", utils.RebuildErrorCode_DockerErr)
+		analyticsData.ErrorCode = utils.RebuildErrorCode_DockerErr
 		return utils.Outcome_SystemErr, err
 	}
 	ImageBuildDuration := time.Since(imageBuildStartTime).Milliseconds()
-	event.Set("ImageBuildDuration", ImageBuildDuration)
+	// todo: move this UP
+	analyticsData.ImageBuildDuration = ImageBuildDuration
 
 	err = TerminateExistingContainer(ctx)
 	if err != nil {
@@ -201,7 +202,7 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 	err = dockerRunCmd.Start()
 	if err != nil {
 		fmt.Println("Failed to run docker container")
-		event.Set("ErrorCode", utils.RebuildErrorCode_DockerRunFailed)
+		analyticsData.ErrorCode = utils.RebuildErrorCode_DockerRunFailed
 		return utils.Outcome_UserErr, err
 	}
 
@@ -224,16 +225,17 @@ var buildCmd = &cobra.Command{
 		}()
 		supervisorClient := ctx.Value(ctxKeySupervisorClient).(*supervisor.SupervisorClient)
 
-		event := cmd.Context().Value(ctxKeyAnalytics).(*utils.AnalyticsEvent)
-		outcome, err := runRebuild(ctx, supervisorClient, event)
-		event.Set("Outcome", outcome)
+		analyticsData := cmd.Context().Value(ctxKeyAnalytics).(*utils.TrackCommandUsageParams)
+		outcome, err := runRebuild(ctx, supervisorClient, analyticsData)
+		// event.Set("Outcome", outcome)
+		analyticsData.Outcome = outcome
 
-		if outcome != utils.Outcome_Success && event.Data.ErrorCode == "" {
+		if outcome != utils.Outcome_Success && analyticsData.ErrorCode == "" {
 			switch outcome {
 			case utils.Outcome_UserErr:
-				event.Set("ErrorCode", utils.UserErrorCode)
+				analyticsData.ErrorCode = utils.UserErrorCode
 			case utils.Outcome_SystemErr:
-				event.Set("ErrorCode", utils.SystemErrorCode)
+				analyticsData.ErrorCode = utils.SystemErrorCode
 			}
 		}
 

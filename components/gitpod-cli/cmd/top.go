@@ -7,8 +7,8 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
 	"os"
 	"sync"
 	"time"
@@ -36,24 +36,25 @@ var topCmd = &cobra.Command{
 	Use:   "top",
 	Short: "Display usage of workspace resources (CPU and memory)",
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
 		defer cancel()
 
-		client, err := supervisor.New(ctx)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer client.Close()
+		client := ctx.Value(ctxKeySupervisorClient).(*supervisor.SupervisorClient)
 
 		data := &topData{}
 
 		var wg sync.WaitGroup
 		wg.Add(2)
 
+		fatalErrorChannel := make(chan error)
+		wgDone := make(chan bool)
+
 		go func() {
 			workspaceResources, err := client.Status.ResourcesStatus(ctx, &api.ResourcesStatuRequest{})
-			if err != nil {
-				log.Fatalf("cannot get workspace resources: %s", err)
+			if err == nil {
+				// log.Fatalf("cannot get workspace resources: %s", err)
+				err = errors.New("Mock err")
+				fatalErrorChannel <- err
 			}
 			data.Resources = workspaceResources
 			wg.Done()
@@ -65,6 +66,21 @@ var topCmd = &cobra.Command{
 			}
 			wg.Done()
 		}()
+
+		go func() {
+			wg.Wait()
+			close(wgDone)
+		}()
+
+		select {
+		case <-wgDone:
+			break
+		case err := <-fatalErrorChannel:
+			close(fatalErrorChannel)
+			errorCtx := context.WithValue(ctx, ctxKeyError, err)
+			cmd.SetContext(errorCtx)
+			return
+		}
 
 		wg.Wait()
 

@@ -7,6 +7,8 @@ package utils
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"os"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/analytics"
@@ -101,10 +103,21 @@ func (e *AnalyticsEvent) Set(key string, value interface{}) *AnalyticsEvent {
 	return e
 }
 
+func (e *AnalyticsEvent) ExportToJson(ctx context.Context) string {
+	fmt.Println(e.startTime)
+	e.Set("Duration", time.Since(e.startTime).Milliseconds())
+
+	data, err := json.Marshal(e.Data)
+	if err != nil {
+		LogError(ctx, err.(error), "error marshaling analytics data", e.supervisorClient)
+		os.Exit(1)
+	}
+
+	return string(data)
+}
+
 func (e *AnalyticsEvent) Send(ctx context.Context) {
 	defer e.w.Close()
-
-	e.Set("Duration", time.Since(e.startTime).Milliseconds())
 
 	data := make(map[string]interface{})
 	jsonData, err := json.Marshal(e.Data)

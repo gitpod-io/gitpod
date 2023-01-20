@@ -5,62 +5,48 @@
 package cmd
 
 import (
-	"context"
 	"encoding/json"
+	"errors"
+	"os"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
-type AnalyticsData struct {
-	Command            []string `json:"command,omitempty"`
-	Duration           int64    `json:"duration,omitempty"`
-	ErrorCode          string   `json:"errorCode,omitempty"`
-	ImageBuildDuration int64    `json:"imageBuildDuration,omitempty"`
-	Outcome            string   `json:"outcome,omitempty"`
-}
-
 var sendAnalyticsCmdOpts struct {
 	data string
 }
 
+const (
+	supervisorPid = 1
+)
+
 // sendAnalyticsCmd represents the send-analytics command
 var sendAnalyticsCmd = &cobra.Command{
 	Use:    "send-analytics",
-	Long:   "Sending anonymous statistics about the executed gp commands inside a workspace",
+	Long:   "Sending anonymous statistics about the gp commands executed inside a workspace",
 	Hidden: true,
 	Args:   cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		if skipAnalytics || len(args) == 0 {
-			return
+		if os.Getppid() != supervisorPid {
+			err := errors.New("send-analytics should not be executed directly")
+			log.Fatal(err)
 		}
 
-		var data AnalyticsData
+		var data utils.TrackCommandUsageParams
 		err := json.Unmarshal([]byte(sendAnalyticsCmdOpts.data), &data)
 
 		if err != nil {
-			errorCtx := context.WithValue(cmd.Context(), ctxKeyError, err)
-			cmd.SetContext(errorCtx)
-			return
+			log.Fatal(err)
 		}
-
-		// if !isValidCommand(data.Command) {
-		// 	err := errors.New("send-analytics: disallowed command")
-		// 	errorCtx := context.WithValue(cmd.Context(), ctxKeyError, err)
-		// 	cmd.SetContext(errorCtx)
-		// 	return
-		// }
 
 		ctx := cmd.Context()
 
 		supervisorClient := ctx.Value(ctxKeySupervisorClient).(*supervisor.SupervisorClient)
 
-		event := utils.NewAnalyticsEvent(ctx, supervisorClient, &utils.TrackCommandUsageParams{
-			Command:   data.Command,
-			Duration:  data.Duration,
-			ErrorCode: data.ErrorCode,
-		})
+		event := utils.NewAnalyticsEvent(ctx, supervisorClient, &data)
 
 		if data.ImageBuildDuration != 0 {
 			event.Set("ImageBuildDuration", data.ImageBuildDuration)
@@ -70,7 +56,7 @@ var sendAnalyticsCmd = &cobra.Command{
 			event.Set("Outcome", data.Outcome)
 		}
 
-		// event.Send(ctx)
+		event.Send(ctx)
 	},
 }
 
@@ -80,13 +66,3 @@ func init() {
 	sendAnalyticsCmd.Flags().StringVarP(&sendAnalyticsCmdOpts.data, "data", "", "", "JSON encoded event data")
 	sendAnalyticsCmd.MarkFlagRequired("data")
 }
-
-// TODO: make it work with sub-commands
-// func isValidCommand(cmdName string) bool {
-// 	for _, c := range rootCmd.Commands() {
-// 		if c.Name() == cmdName {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }

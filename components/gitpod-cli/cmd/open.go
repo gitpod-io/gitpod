@@ -5,7 +5,6 @@
 package cmd
 
 import (
-	"context"
 	"log"
 	"os"
 	"os/exec"
@@ -25,13 +24,15 @@ var openCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// TODO(ak) use NotificationService.NotifyActive supervisor API instead
 
-		ctx := context.Background()
+		ctx := cmd.Context()
 
-		client, err := supervisor.New(ctx)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer client.Close()
+		client := ctx.Value(ctxKeySupervisorClient).(*supervisor.SupervisorClient)
+
+		// client, err := supervisor.New(ctx)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+		// defer client.Close()
 
 		client.WaitForIDEReady(ctx)
 

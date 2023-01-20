@@ -36,10 +36,15 @@ var rootCmd = &cobra.Command{
 	Use:   rootCmdName,
 	Short: "Command line interface for Gitpod",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		// if os.Args[0] != "gp" {
-		// 	// skip analytics when running in development mode
-		// 	skipAnalytics = true
-		// }
+		if os.Args[0] != "gp" {
+			// skip analytics when running in development mode
+			skipAnalytics = true
+		}
+
+		if cmd.Name() == "send-analytics" {
+			// skip itself, otherwise we'd end up in a loop
+			skipAnalytics = true
+		}
 
 		ctx := context.Background()
 		supervisorClient, err := supervisor.New(ctx)
@@ -55,11 +60,12 @@ var rootCmd = &cobra.Command{
 		}
 
 		cmdName := GetCommandName(cmd.CommandPath())
-		analyticsData := &AnalyticsData{
-			Command: cmdName,
-		}
 
-		analyticsCtx := context.WithValue(cmd.Context(), ctxKeyAnalytics, analyticsData)
+		event := utils.NewAnalyticsEvent(ctx, supervisorClient, &utils.TrackCommandUsageParams{
+			Command: cmdName,
+		})
+
+		analyticsCtx := context.WithValue(cmd.Context(), ctxKeyAnalytics, event)
 		cmd.SetContext(analyticsCtx)
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
@@ -68,36 +74,41 @@ var rootCmd = &cobra.Command{
 		supervisorClient := ctx.Value(ctxKeySupervisorClient).(*supervisor.SupervisorClient)
 		defer supervisorClient.Close()
 
-		err := ctx.Value(ctxKeyError)
-		if err != nil {
-			utils.LogError(ctx, err.(error), "gp error", supervisorClient)
-			os.Exit(1)
+		if skipAnalytics {
+			return
 		}
-		data := ctx.Value(ctxKeyAnalytics).(*utils.AnalyticsEvent)
-		// s := time.Now()
-		// event.Send(ctx)
-		// fmt.Println("Time = ", time.Since(s).Milliseconds())
 
-		sendAnalytics := exec.CommandContext(ctx,
+		event := ctx.Value(ctxKeyAnalytics).(*utils.AnalyticsEvent)
+
+		cmdErr := ctx.Value(ctxKeyError)
+		if cmdErr != nil {
+			utils.LogError(ctx, cmdErr.(error), "gp cli error", supervisorClient)
+			event.Set("Outcome", utils.Outcome_SystemErr)
+		} else {
+			event.Set("Outcome", utils.Outcome_Success)
+		}
+
+		sendAnalytics := exec.Command(
 			rootCmdName,
 			"send-analytics",
 			"--data",
-			data
+			event.ExportToJson(ctx),
 		)
 
-		// dockerRunCmd.Stdout = os.Stdout
-		// dockerRunCmd.Stderr = os.Stderr
-		// dockerRunCmd.Stdin = os.Stdin
+		sendAnalytics.Stdout = os.Stdout
+		sendAnalytics.Stderr = os.Stderr
+		sendAnalytics.Stdin = os.Stdin
 
-		// err = dockerRunCmd.Start()
-		// if err != nil {
-		// 	fmt.Println("Failed to run docker container")
-		// 	event.Set("ErrorCode", utils.RebuildErrorCode_DockerRunFailed)
-		// 	return utils.Outcome_UserErr, err
-		// }
+		// sendAnalytics.Stdout = ioutil.Discard
+		// sendAnalytics.Stderr = ioutil.Discard
+		// sendAnalytics.Stdin = os.Stdin
 
-		// _ = dockerRunCmd.Wait()
+		// fire and forget
+		_ = sendAnalytics.Start()
 
+		if cmdErr != nil {
+			os.Exit(1)
+		}
 	},
 }
 
