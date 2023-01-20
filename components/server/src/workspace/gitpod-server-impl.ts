@@ -408,6 +408,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     protected async doUpdateUser(): Promise<void> {
         // execute the check for the setup to be shown until the setup is not required.
         // cf. evaluation of the condition in `checkUser`
+        if (!this.config.showSetupModal) {
+            this.showSetupCondition = { value: false };
+        }
         if (!this.showSetupCondition || this.showSetupCondition.value === true) {
             const hasAnyStaticProviders = this.hostContextProvider
                 .getAll()

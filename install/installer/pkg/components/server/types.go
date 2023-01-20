@@ -40,6 +40,7 @@ type ConfigSerialized struct {
 	EnablePayment                     bool     `json:"enablePayment"`
 	PATSigningKeyFile                 string   `json:"patSigningKeyFile"`
 	WithoutWorkspaceComponents        bool     `json:"withoutWorkspaceComponents"`
+	ShowSetupModal                    bool     `json:"showSetupModal"`
 
 	WorkspaceHeartbeat         WorkspaceHeartbeat         `json:"workspaceHeartbeat"`
 	WorkspaceDefaults          WorkspaceDefaults          `json:"workspaceDefaults"`

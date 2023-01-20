@@ -143,6 +143,8 @@ export interface ConfigSerialized {
         passlist: string[];
     };
 
+    showSetupModal: boolean;
+
     adminLoginKeyFile: string;
     admin: {
         grantFirstUserAdminRole: boolean;

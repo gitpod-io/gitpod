@@ -6027,6 +6027,7 @@ data:
       "enablePayment": false,
       "patSigningKeyFile": "",
       "withoutWorkspaceComponents": false,
+      "showSetupModal": true,
       "workspaceHeartbeat": {
         "intervalSeconds": 60,
         "timeoutSeconds": 300
@@ -11528,7 +11529,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: c3b0b1bc8f51ba9af5abeb508dcba2952067d9f94e0acf102ccf0caf178dfc92
+        gitpod.io/checksum_config: 05ea415d86820cdebe10c6e25e8dc68addab2f02c272900fafe82cb5b63eb729
         hello: world
       creationTimestamp: null
       labels:
