@@ -4,6 +4,9 @@ on:
     types: [opened, synchronize, edited]
 
 jobs:
+  # We are building "previewctl" outside of "build" because we want to start
+  # the infrastructure job as early as possible (before a full build is done)
+  # and that job requires previewctl
   previewctl:
     if: ${{ contains(github.event.pull_request.body, '[x] /werft with-github-actions') && contains(github.event.pull_request.body, '[x] /werft with-preview') }}
     runs-on: [self-hosted]
@@ -11,19 +14,19 @@ jobs:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.3.4
     steps:
       - uses: actions/checkout@v3
-      - name: Configure workspace
-        run: cp -r /__w/gitpod/gitpod /workspace
       - name: Build previewctl
         shell: bash
-        working-directory: /workspace/gitpod
+        env:
+          HOME: /home/gitpod
+          PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
         run: |
-          leeway run dev/preview/previewctl:install --dont-test
-          cp /workspace/bin/previewctl /__w/gitpod/gitpod/previewctl
-      - name: "Upload Installer artifacts"
-        uses: actions/upload-artifact@v3
-        with:
-          name: previewctl
-          path: previewctl
+          # Authenticate with GCP so we can use the Leeway cache
+          export PREVIEW_ENV_DEV_SA_KEY_PATH="$HOME/.config/gcloud/preview-environment-dev-sa.json"
+          echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+          gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+
+          export LEEWAY_WORKSPACE_ROOT="$(pwd)"
+          leeway build dev/preview/previewctl:cli
 
   infrastructure:
     runs-on: [self-hosted]
@@ -150,18 +153,7 @@ jobs:
           set +x
 
           cat report.html >> $GITHUB_STEP_SUMMARY
-          [[ -f /tmp/versions.yaml ]] && cp /tmp/versions.yaml /__w/gitpod/gitpod/versions.yaml
-          [[ -f /tmp/installer ]]     && cp /tmp/installer     /__w/gitpod/gitpod/installer
-
           exit $RESULT
-      - name: "Upload Installer artifacts"
-        uses: actions/upload-artifact@v3
-        with:
-          name: installer-artifacts
-          if-no-files-found: ignore
-          path: |
-            versions.yaml
-            installer
       - name: "Upload Test Coverage Report"
         uses: actions/upload-artifact@v3
         with:
@@ -171,89 +163,26 @@ jobs:
             test-coverage-report
 
   install:
-    needs: [previewctl, build, infrastructure]
+    name: "Install Gitpod"
+    needs: [build, infrastructure]
     runs-on: [self-hosted]
-    container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.3.4
     steps:
       - uses: actions/checkout@v3
-      - name: Configure workspace
-        run: |
-          cp -r /__w/gitpod/gitpod /workspace
-          # Needed by google-github-actions/setup-gcloud
-          sudo chown -R gitpod:gitpod /__t
-      - uses: actions/download-artifact@v3
+      - name: Deploy Gitpod to the preview environment
+        id: deploy-gitpod
+        uses: ./.github/actions/deploy-gitpod
         with:
-          name: installer-artifacts
-      - uses: actions/download-artifact@v3
-        with:
-          name: previewctl
-      - name: Install artifacts
-        run: |
-          cp versions.yaml /tmp/versions.yaml
-          chmod +x ./installer
-          sudo mv ./installer /usr/local/bin/
-          chmod +x ./previewctl
-          sudo mv ./previewctl /usr/local/bin/
-      - id: auth
-        uses: google-github-actions/auth@v1
-        with:
-          token_format: access_token
-          credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
-      - name: Install
-        shell: bash
-        working-directory: /workspace/gitpod
-        env:
-          VERSION: ${{needs.build.outputs.version}}
-          HOME: /home/gitpod
-          PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
-          PREVIEW_ENV_DEV_SA_KEY_PATH: /home/gitpod/.config/gcloud/preview-environment-dev-sa.json
-        run: |
-          echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-          previewctl install-context --timeout 10m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-          leeway run dev/preview:deploy-gitpod
-          previewctl report >> $GITHUB_STEP_SUMMARY
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          version: ${{needs.build.outputs.version}}
 
   monitoring:
-    needs: [previewctl, infrastructure]
+    name: "Install Monitoring Satellite"
+    needs: [infrastructure]
     runs-on: [self-hosted]
-    container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.3.4
     steps:
       - uses: actions/checkout@v3
-      - name: Configure workspace
-        run: |
-          cp -r /__w/gitpod/gitpod /workspace
-          # Needed by google-github-actions/setup-gcloud
-          sudo chown -R gitpod:gitpod /__t
-      - uses: actions/download-artifact@v3
+      - name: Deploy monitoring satellite to the preview environment
+        id: deploy-monitoring-satellite
+        uses: ./.github/actions/deploy-monitoring-satellite
         with:
-          name: previewctl
-      - id: auth
-        uses: google-github-actions/auth@v1
-        with:
-          token_format: access_token
-          credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
-      - name: Install artifacts
-        run: |
-          chmod +x ./previewctl
-          sudo mv ./previewctl /usr/local/bin/
-      - name: Install
-        shell: bash
-        working-directory: /workspace/gitpod
-        env:
-          HOME: /home/gitpod
-          PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
-          PREVIEW_ENV_DEV_SA_KEY_PATH: /home/gitpod/.config/gcloud/preview-environment-dev-sa.json
-        run: |
-          echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-          previewctl install-context --timeout 10m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-          leeway run dev/preview:deploy-monitoring-satellite
-          echo '<p>Monitoring satellite has been installed in your preview environment.</p>' >> $GITHUB_STEP_SUMMARY
-          echo '<ul>' >> $GITHUB_STEP_SUMMARY
-          echo '<li><b>📚 Documentation</b> - See our <a href="https://www.notion.so/gitpod/f2938b2bcb0c4c8c99afe1d2b872380e" target="_blank">internal documentation</a> on how to use it.</li>' >> $GITHUB_STEP_SUMMARY
-          echo '</ul>' >> $GITHUB_STEP_SUMMARY
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}

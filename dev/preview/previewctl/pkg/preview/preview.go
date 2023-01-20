@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 
 	"github.com/cockroachdb/errors"
@@ -113,7 +114,8 @@ func (c *Config) GetName() string {
 
 func InstallVMSSHKeys() error {
 	// TODO: https://github.com/gitpod-io/ops/issues/6524
-	return exec.Command("bash", "/workspace/gitpod/dev/preview/util/install-vm-ssh-keys.sh").Run()
+	path := filepath.Join(os.Getenv("LEEWAY_WORKSPACE_ROOT"), "dev/preview/util/install-vm-ssh-keys.sh")
+	return exec.Command("bash", path).Run()
 }
 
 func SSHPreview(branch string) error {
@@ -121,7 +123,9 @@ func SSHPreview(branch string) error {
 	if err != nil {
 		return err
 	}
-	sshCommand := exec.Command("bash", "/workspace/gitpod/dev/preview/ssh-vm.sh", "-b", branch)
+
+	path := filepath.Join(os.Getenv("LEEWAY_WORKSPACE_ROOT"), "dev/preview/ssh-vm.sh")
+	sshCommand := exec.Command("bash", path, "-b", branch)
 
 	// We need to bind standard output files to the command
 	// otherwise 'previewctl' will exit as soon as the script is run.
