@@ -1,0 +1,12 @@
+name: "Deploy Gitpod"
+description: "Deploys Gitpod to an existing preview environment"
+inputs:
+    sa_key:
+        description: "The service account key to use when authenticating with GCP"
+        required: true
+    version:
+        description: "The version of Gitpod to install"
+        required: true
+runs:
+    using: "docker"
+    image: "Dockerfile"
