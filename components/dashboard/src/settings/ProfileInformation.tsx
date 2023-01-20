@@ -18,6 +18,12 @@ export namespace ProfileState {
         if (!isGitpodIo()) {
             return false;
         }
+        if (user.identities.length === 0) {
+            // Special case to exclude admin-user from being asked for profile info
+            // TODO(gpl) Ideally this whole check should be done in backend, and this specific test being based on userId
+            // In addition, we should disable it for all SSO users
+            return false;
+        }
         if (!user.additionalData?.profile) {
             // never updated profile information and account is older than 24 hours (i.e. ask on second day).
             return !isDateSmaller(hoursBefore(new Date().toISOString(), 24), user.creationDate);
