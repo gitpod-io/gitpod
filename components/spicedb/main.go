@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 
 	v1 "github.com/authzed/authzed-go/proto/authzed/api/v1"
 	"github.com/authzed/authzed-go/v1"
@@ -253,12 +254,26 @@ func stress(checksPath string) error {
 		return err
 	}
 
+	work := make(chan *v1.CheckPermissionRequest, 1024)
+
+	wg := sync.WaitGroup{}
+
+	workersCount := 5
+	wg.Add(workersCount)
+	for i := 0; i < workersCount; i++ {
+		go func() {
+			defer wg.Done()
+
+			worker(client, work)
+		}()
+	}
+
 	for _, check := range checks {
 		resourceTokens := strings.Split(check.Resource, ":")
 
 		subjectTokens := strings.Split(check.Subject, ":")
 
-		resp, err := client.CheckPermission(context.Background(), &v1.CheckPermissionRequest{
+		work <- &v1.CheckPermissionRequest{
 			Consistency: &v1.Consistency{
 				Requirement: &v1.Consistency_FullyConsistent{
 					FullyConsistent: true,
@@ -275,13 +290,22 @@ func stress(checksPath string) error {
 					ObjectId:   subjectTokens[1],
 				},
 			},
-		})
+		}
+	}
+
+	wg.Wait()
+
+	return nil
+}
+
+func worker(client *authzed.Client, data <-chan *v1.CheckPermissionRequest) {
+	for d := range data {
+		resp, err := client.CheckPermission(context.Background(), d)
 		if err != nil {
-			return err
+			fmt.Println("failed", err)
+			continue
 		}
 
 		fmt.Println("Check", resp.Permissionship == v1.CheckPermissionResponse_PERMISSIONSHIP_HAS_PERMISSION)
 	}
-
-	return nil
 }
