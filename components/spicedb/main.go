@@ -12,6 +12,8 @@ import (
 	"github.com/authzed/authzed-go/v1"
 	"github.com/authzed/grpcutil"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
@@ -244,6 +246,7 @@ func stress(checksPath string) error {
 
 	client, err := authzed.NewClient(
 		"localhost:50051",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpcutil.WithInsecureBearerToken("static-for-now"),
 	)
 	if err != nil {
