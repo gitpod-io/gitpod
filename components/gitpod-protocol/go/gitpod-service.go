@@ -1926,7 +1926,8 @@ type GithubAppPrebuildConfig struct {
 	AddComment            bool        `json:"addComment,omitempty"`
 	AddLabel              interface{} `json:"addLabel,omitempty"`
 	Branches              bool        `json:"branches,omitempty"`
-	Master                bool        `json:"master,omitempty"`
+	Master                bool        `json:"master,omitempty"` // Deprecated: use DefaultBranch instead
+	DefaultBranch         bool        `json:"defaultBranch,omitempty"`
 	PullRequests          bool        `json:"pullRequests,omitempty"`
 	PullRequestsFromForks bool        `json:"pullRequestsFromForks,omitempty"`
 }

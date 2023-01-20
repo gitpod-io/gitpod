@@ -16,7 +16,8 @@ const defaultConfig: GithubAppConfig = {
         addComment: false,
         addLabel: false,
         branches: false,
-        master: true,
+        master: false, // Deprecated: use defaultBranch instead
+        defaultBranch: true,
         pullRequests: true,
         pullRequestsFromForks: false,
     },
@@ -52,7 +53,7 @@ export class GithubAppRules {
                 return !!prebuildCfg.pullRequests;
             }
         } else if (isDefaultBranch) {
-            return !!prebuildCfg.master;
+            return /* !!prebuildCfg.master || */ !!prebuildCfg.defaultBranch;
         } else {
             return !!prebuildCfg.branches;
         }

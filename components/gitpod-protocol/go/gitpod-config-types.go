@@ -179,6 +179,9 @@ type Prebuilds_object struct {
 	// Enable prebuilds for all branches. Defaults to false.
 	Branches bool `yaml:"branches,omitempty" json:"branches,omitempty"`
 
+	// Enable prebuilds for the default branch (typically main). Defaults to true.
+	DefaultBranch bool `yaml:"defaultBranch,omitempty" json:"defaultBranch,omitempty"`
+
 	// Enable prebuilds for the default branch (typically master). Defaults to true.
 	Master bool `yaml:"master,omitempty" json:"master,omitempty"`
 

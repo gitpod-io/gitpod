@@ -849,7 +849,8 @@ export interface GithubAppConfig {
     prebuilds?: GithubAppPrebuildConfig;
 }
 export interface GithubAppPrebuildConfig {
-    master?: boolean;
+    master?: boolean; // Deprecated: use defaultBranch instead
+    defaultBranch?: boolean;
     branches?: boolean;
     pullRequests?: boolean;
     pullRequestsFromForks?: boolean;

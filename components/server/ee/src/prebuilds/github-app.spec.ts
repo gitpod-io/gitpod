@@ -37,10 +37,15 @@ describe("GitHub app", () => {
                 tasks: [{ init: "ls" }],
             };
 
+            // chai.assert.equal(
+            //     rules.shouldRunPrebuild(cfg, true, false, false),
+            //     expectation[0],
+            //     `master prebuild check failed with ${JSON.stringify(pbcfg)}`,
+            // );
             chai.assert.equal(
                 rules.shouldRunPrebuild(cfg, true, false, false),
                 expectation[0],
-                `master prebuild check failed with ${JSON.stringify(pbcfg)}`,
+                `defaultBranch prebuild check failed with ${JSON.stringify(pbcfg)}`,
             );
             chai.assert.equal(
                 rules.shouldRunPrebuild(cfg, false, true, false),
@@ -60,10 +65,14 @@ describe("GitHub app", () => {
         };
 
         checkConfig({ branches: true }, [true, true, true, false]);
-        checkConfig({ master: false }, [false, true, false, false]);
-        checkConfig({ master: false, branches: true }, [false, true, true, false]);
+        // checkConfig({ master: false }, [false, true, false, false]);
+        // checkConfig({ master: false, branches: true }, [false, true, true, false]);
+        checkConfig({ defaultBranch: false }, [false, true, false, false]);
+        // checkConfig({ master: false, defaultBranch: false }, [false, true, false, false]);
+        checkConfig({ defaultBranch: false, branches: true }, [false, true, true, false]);
         checkConfig({ pullRequests: false }, [true, false, false, false]);
-        checkConfig({ pullRequests: false, master: false }, [false, false, false, false]);
+        // checkConfig({ pullRequests: false, master: false }, [false, false, false, false]);
+        checkConfig({ pullRequests: false, defaultBranch: false }, [false, false, false, false]);
         checkConfig({ pullRequests: true, pullRequestsFromForks: true }, [true, true, false, true]);
         checkConfig({ pullRequestsFromForks: true }, [true, true, false, true]);
     });
