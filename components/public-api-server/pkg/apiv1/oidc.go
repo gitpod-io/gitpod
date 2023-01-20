@@ -10,24 +10,25 @@ import (
 	"fmt"
 
 	connect "github.com/bufbuild/connect-go"
+	goidc "github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
-	iam "github.com/gitpod-io/gitpod/components/iam-api/go/v1"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 )
 
-func NewOIDCService(connPool proxy.ServerConnectionPool, expClient experiments.Client, oidcService iam.OIDCServiceClient, dbConn *gorm.DB, cipher db.Cipher) *OIDCService {
+func NewOIDCService(connPool proxy.ServerConnectionPool, expClient experiments.Client, dbConn *gorm.DB, cipher db.Cipher) *OIDCService {
 	return &OIDCService{
 		connectionPool: connPool,
 		expClient:      expClient,
-		oidcService:    oidcService,
 		cipher:         cipher,
 		dbConn:         dbConn,
 	}
@@ -36,7 +37,6 @@ func NewOIDCService(connPool proxy.ServerConnectionPool, expClient experiments.C
 type OIDCService struct {
 	expClient      experiments.Client
 	connectionPool proxy.ServerConnectionPool
-	oidcService    iam.OIDCServiceClient
 
 	cipher db.Cipher
 	dbConn *gorm.DB
@@ -45,10 +45,12 @@ type OIDCService struct {
 }
 
 func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Request[v1.CreateClientConfigRequest]) (*connect.Response[v1.CreateClientConfigResponse], error) {
-	_, err := validateOrganizationID(req.Msg.Config.GetOrganizationId())
+	organizationID, err := validateOrganizationID(req.Msg.Config.GetOrganizationId())
 	if err != nil {
 		return nil, err
 	}
+
+	logger := log.WithField("organization_id", organizationID.String())
 
 	conn, err := s.getConnection(ctx)
 	if err != nil {
@@ -60,16 +62,36 @@ func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Reque
 		return nil, err
 	}
 
-	result, err := s.oidcService.CreateClientConfig(ctx, &iam.CreateClientConfigRequest{
-		Config: papiConfigToIAM(req.Msg.GetConfig()),
+	oauth2Config := req.Msg.GetConfig().GetOauth2Config()
+	oidcConfig := req.Msg.GetConfig().GetOidcConfig()
+
+	data, err := db.EncryptJSON(s.cipher, toDbOIDCSpec(oauth2Config, oidcConfig))
+	if err != nil {
+		logger.WithError(err).Error("Failed to encrypt oidc client config.")
+		return nil, status.Errorf(codes.Internal, "Failed to store OIDC client config.")
+	}
+
+	created, err := db.CreateOIDCCLientConfig(ctx, s.dbConn, db.OIDCClientConfig{
+		ID:             uuid.New(),
+		OrganizationID: &organizationID,
+		Issuer:         oidcConfig.GetIssuer(),
+		Data:           data,
 	})
 	if err != nil {
-		// todo@at fix error handling
-		return nil, connect.NewError(connect.CodeInternal, err)
+		logger.WithError(err).Error("Failed to store oidc client config in the database.")
+		return nil, status.Errorf(codes.Internal, "Failed to store OIDC client config.")
+	}
+
+	logger = log.WithField("oidc_client_config_id", created.ID.String())
+
+	converted, err := dbOIDCClientConfigToAPI(created, s.cipher)
+	if err != nil {
+		logger.WithError(err).Error("Failed to convert OIDC Client config to response.")
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to convert OIDC Client Config %s for Organization %s to API response", created.ID.String(), organizationID.String()))
 	}
 
 	return connect.NewResponse(&v1.CreateClientConfigResponse{
-		Config: iamConfigToPAPI(result.GetConfig()),
+		Config: converted,
 	}), nil
 }
 
@@ -226,7 +248,7 @@ func (s *OIDCService) isFeatureEnabled(ctx context.Context, conn protocol.APIInt
 }
 
 func dbOIDCClientConfigToAPI(config db.OIDCClientConfig, decryptor db.Decryptor) (*v1.OIDCClientConfig, error) {
-	_, err := config.Data.Decrypt(decryptor)
+	decrypted, err := config.Data.Decrypt(decryptor)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decrypt oidc client config: %w", err)
 	}
@@ -234,7 +256,12 @@ func dbOIDCClientConfigToAPI(config db.OIDCClientConfig, decryptor db.Decryptor)
 	return &v1.OIDCClientConfig{
 		Id:             config.ID.String(),
 		OrganizationId: config.OrganizationID.String(),
-		// TODO remaining fields
+		Oauth2Config: &v1.OAuth2Config{
+			ClientId:              decrypted.ClientID,
+			ClientSecret:          "REDACTED",
+			AuthorizationEndpoint: decrypted.RedirectURL,
+			Scopes:                decrypted.Scopes,
+		},
 	}, nil
 }
 
@@ -253,29 +280,11 @@ func dbOIDCClientConfigsToAPI(configs []db.OIDCClientConfig, decryptor db.Decryp
 	return results, nil
 }
 
-func papiConfigToIAM(c *v1.OIDCClientConfig) *iam.OIDCClientConfig {
-	return &iam.OIDCClientConfig{
-		OrganizationId: c.GetOrganizationId(),
-		OidcConfig: &iam.OIDCConfig{
-			Issuer: c.OidcConfig.GetIssuer(),
-		},
-		Oauth2Config: &iam.OAuth2Config{
-			ClientId:     c.GetOauth2Config().GetClientId(),
-			ClientSecret: c.GetOauth2Config().GetClientSecret(),
-		},
-	}
-}
-func iamConfigToPAPI(c *iam.OIDCClientConfig) *v1.OIDCClientConfig {
-	return &v1.OIDCClientConfig{
-		Id:             c.GetId(),
-		OrganizationId: c.GetOrganizationId(),
-		OidcConfig: &v1.OIDCConfig{
-			Issuer: c.OidcConfig.GetIssuer(),
-		},
-		Oauth2Config: &v1.OAuth2Config{
-			ClientId:     c.GetOauth2Config().GetClientId(),
-			ClientSecret: "REDACTED",
-		},
-		CreationTime: c.GetCreationTime(),
+func toDbOIDCSpec(oauth2Config *v1.OAuth2Config, oidcConfig *v1.OIDCConfig) db.OIDCSpec {
+	return db.OIDCSpec{
+		ClientID:     oauth2Config.GetClientId(),
+		ClientSecret: oauth2Config.GetClientSecret(),
+		RedirectURL:  oauth2Config.GetAuthorizationEndpoint(),
+		Scopes:       append([]string{goidc.ScopeOpenID, "profile", "email"}, oauth2Config.GetScopes()...),
 	}
 }
