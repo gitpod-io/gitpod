@@ -48,8 +48,6 @@ func NewWsManagerBridgeClient(ctx context.Context, kubeConfig *rest.Config, loca
 	case <-readychan:
 	case err := <-errchan:
 		return nil, err
-	case <-ctx.Done():
-		return nil, ctx.Err()
 	}
 
 	secopt := grpc.WithTransportCredentials(insecure.NewCredentials())
@@ -92,12 +90,14 @@ func (c *WsManagerBridgeClient) UpdateScore(ctx context.Context, clusterName str
 		return err
 	}
 
-	client.Update(ctx, &api.UpdateRequest{
+	if _, err := client.Update(ctx, &api.UpdateRequest{
 		Name: clusterName,
 		Property: &api.UpdateRequest_Score{
 			Score: score,
 		},
-	})
+	}); err != nil {
+		return err
+	}
 	log.Infof("Updated score as %s:%d", clusterName, score)
 	return nil
 }
