@@ -2,10 +2,15 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
+	v1 "github.com/authzed/authzed-go/proto/authzed/api/v1"
+	"github.com/authzed/authzed-go/v1"
+	"github.com/authzed/grpcutil"
 	"github.com/spf13/cobra"
 )
 
@@ -17,6 +22,8 @@ var (
 	workspacesFile string
 	projectsFile   string
 	teamsFile      string
+
+	stressFile string
 )
 
 func init() {
@@ -24,7 +31,10 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&projectsFile, "projects-file", "", "path to projects file")
 	rootCmd.PersistentFlags().StringVar(&teamsFile, "teams-file", "", "path to teams file")
 
+	stressCmd.PersistentFlags().StringVar(&stressFile, "stress-file", "", "path to file containing statements")
+
 	rootCmd.AddCommand(transformCmd)
+	rootCmd.AddCommand(stressCmd)
 }
 
 var (
@@ -40,6 +50,13 @@ to quickly create a Cobra application.`,
 		Use: "transform",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return transform(workspacesFile, projectsFile, teamsFile)
+		},
+	}
+
+	stressCmd = &cobra.Command{
+		Use: "stress",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return stress(stressFile)
 		},
 	}
 )
@@ -197,4 +214,71 @@ func readProjects(filePath string) ([]Project, error) {
 	}
 
 	return results, nil
+}
+
+type Check struct {
+	Resource string `json:"resource"`
+	Relation string `json:"relation"`
+	Subject  string `json:"subject"`
+}
+
+func stress(checksPath string) error {
+	f, err := os.Open(checksPath)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+
+	var checks []Check
+	for scanner.Scan() {
+		var check Check
+		if err := json.Unmarshal(scanner.Bytes(), &check); err != nil {
+			return err
+		}
+
+		checks = append(checks, check)
+	}
+
+	client, err := authzed.NewClient(
+		"localhost:50051",
+		grpcutil.WithBearerToken("static-for-now"),
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, check := range checks {
+		resourceTokens := strings.Split(check.Resource, ":")
+
+		subjectTokens := strings.Split(check.Subject, ":")
+
+		resp, err := client.CheckPermission(context.Background(), &v1.CheckPermissionRequest{
+			Consistency: &v1.Consistency{
+				Requirement: &v1.Consistency_FullyConsistent{
+					FullyConsistent: true,
+				},
+			},
+			Resource: &v1.ObjectReference{
+				ObjectType: resourceTokens[0],
+				ObjectId:   resourceTokens[1],
+			},
+			Permission: check.Relation,
+			Subject: &v1.SubjectReference{
+				Object: &v1.ObjectReference{
+					ObjectType: subjectTokens[0],
+					ObjectId:   subjectTokens[1],
+				},
+			},
+		})
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("Check", resp.Permissionship == v1.CheckPermissionResponse_PERMISSIONSHIP_HAS_PERMISSION)
+	}
+
+	return nil
 }
