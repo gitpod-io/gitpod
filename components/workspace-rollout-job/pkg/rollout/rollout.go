@@ -6,6 +6,7 @@ package rollout
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/signal"
 	"syscall"
@@ -49,7 +50,7 @@ func New(oldCluster, newCluster string, rolloutWaitDuration, analysisWaitDuratio
 }
 
 // Start runs the job synchronously
-func (r *RollOutJob) Start(ctx context.Context) {
+func (r *RollOutJob) Start(ctx context.Context) error {
 	// Handle interrupt signal
 	c := make(chan os.Signal, 1)
 	signal.Notify(c,
@@ -103,14 +104,16 @@ func (r *RollOutJob) Start(ctx context.Context) {
 	}()
 
 	// Initial Score Update
-	log.Infof("Initial Score Update: %d", r.currentScore)
+	log.Info("Initial Score Update")
 	r.currentScore += r.rolloutStep
 	if err := r.UpdateScoreWithMetricUpdate(ctx, r.newCluster, r.currentScore); err != nil {
 		log.Error("Failed to update new cluster score: ", err)
+		return err
 	}
 
 	if err := r.UpdateScoreWithMetricUpdate(ctx, r.oldCluster, 100-r.currentScore); err != nil {
 		log.Error("Failed to update old cluster score: ", err)
+		return err
 	}
 	log.Infof("Updated cluster scores: %s: %d, %s: %d", r.oldCluster, 100-r.currentScore, r.newCluster, r.currentScore)
 
@@ -120,17 +123,19 @@ func (r *RollOutJob) Start(ctx context.Context) {
 			if r.currentScore == 100 {
 				log.Info("Rollout completed")
 				r.Stop()
-				return
+				return nil
 			}
 
 			r.currentScore += r.rolloutStep
 			// TODO (ask): Handle them together? so that we don't end up in a mixed state during failure
 			if err := r.UpdateScoreWithMetricUpdate(ctx, r.newCluster, r.currentScore); err != nil {
 				log.Error("Failed to update new cluster score: ", err)
+				return err
 			}
 
 			if err := r.UpdateScoreWithMetricUpdate(ctx, r.oldCluster, 100-r.currentScore); err != nil {
 				log.Error("Failed to update old cluster score: ", err)
+				return err
 			}
 
 			log.Infof("Updated cluster scores: %s: %d, %s: %d", r.oldCluster, 100-r.currentScore, r.newCluster, r.currentScore)
@@ -139,18 +144,20 @@ func (r *RollOutJob) Start(ctx context.Context) {
 
 			if err := r.UpdateScoreWithMetricUpdate(ctx, r.oldCluster, 100); err != nil {
 				log.Error("Failed to update new cluster score: ", err)
+				return err
 			}
 
 			if err := r.UpdateScoreWithMetricUpdate(ctx, r.newCluster, 0); err != nil {
 				log.Error("Failed to update new cluster score: ", err)
+				return err
 			}
 
 			log.Infof("Updated cluster scores: %s: %d, %s: %d", r.oldCluster, 100, r.newCluster, 0)
 			r.Stop()
-			return
+			return errors.New("Rollout Reverted")
 
 		case <-r.done:
-			return
+			return nil
 		}
 	}
 }
