@@ -17,10 +17,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"gorm.io/gorm"
 
-	grpc "google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-
-	iam "github.com/gitpod-io/gitpod/components/iam-api/go/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/config"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	"github.com/gorilla/handlers"
@@ -106,19 +102,12 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 
 	srv.HTTPMux().Handle("/stripe/invoices/webhook", handlers.ContentTypeHandler(stripeWebhookHandler, "application/json"))
 
-	conn, err := grpc.Dial(cfg.OIDCServiceAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return fmt.Errorf("failed to dial oidc service gRPC server: %w", err)
-	}
-	var oidcService = iam.NewOIDCServiceClient(conn)
-
 	if registerErr := register(srv, &registerDependencies{
-		connPool:    connPool,
-		expClient:   expClient,
-		dbConn:      dbConn,
-		signer:      signer,
-		oidcService: oidcService,
-		cipher:      cipherSet,
+		connPool:  connPool,
+		expClient: expClient,
+		dbConn:    dbConn,
+		signer:    signer,
+		cipher:    cipherSet,
 	}); registerErr != nil {
 		return fmt.Errorf("failed to register services: %w", registerErr)
 	}
@@ -131,12 +120,11 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 }
 
 type registerDependencies struct {
-	connPool    proxy.ServerConnectionPool
-	expClient   experiments.Client
-	dbConn      *gorm.DB
-	signer      auth.Signer
-	oidcService iam.OIDCServiceClient
-	cipher      db.Cipher
+	connPool  proxy.ServerConnectionPool
+	expClient experiments.Client
+	dbConn    *gorm.DB
+	signer    auth.Signer
+	cipher    db.Cipher
 }
 
 func register(srv *baseserver.Server, deps *registerDependencies) error {
@@ -176,7 +164,7 @@ func register(srv *baseserver.Server, deps *registerDependencies) error {
 	projectsRoute, projectsServiceHandler := v1connect.NewProjectsServiceHandler(apiv1.NewProjectsService(deps.connPool), handlerOptions...)
 	srv.HTTPMux().Handle(projectsRoute, projectsServiceHandler)
 
-	oidcRoute, oidcServiceHandler := v1connect.NewOIDCServiceHandler(apiv1.NewOIDCService(deps.connPool, deps.expClient, deps.oidcService, deps.dbConn, deps.cipher), handlerOptions...)
+	oidcRoute, oidcServiceHandler := v1connect.NewOIDCServiceHandler(apiv1.NewOIDCService(deps.connPool, deps.expClient, deps.dbConn, deps.cipher), handlerOptions...)
 	srv.HTTPMux().Handle(oidcRoute, oidcServiceHandler)
 
 	return nil

@@ -12,15 +12,10 @@ import (
 	"strings"
 	"testing"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
-
-	grpc "google.golang.org/grpc"
 
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	"github.com/gitpod-io/gitpod/components/gitpod-db/go/dbtest"
-	iam "github.com/gitpod-io/gitpod/components/iam-api/go/v1"
 	"github.com/google/uuid"
 
 	connect "github.com/bufbuild/connect-go"
@@ -100,25 +95,47 @@ func TestOIDCService_CreateClientConfig_FeatureFlagEnabled(t *testing.T) {
 		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
-	t.Run("delegates to iam and returns created config", func(t *testing.T) {
-		serverMock, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
+	t.Run("creates oidc client config", func(t *testing.T) {
+		serverMock, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
 		config := &v1.OIDCClientConfig{
 			OrganizationId: organizationID.String(),
 			OidcConfig:     &v1.OIDCConfig{Issuer: "test-issuer"},
-			Oauth2Config:   &v1.OAuth2Config{ClientId: "test-id", ClientSecret: "test-secret"},
+			Oauth2Config: &v1.OAuth2Config{
+				ClientId:     "test-id",
+				ClientSecret: "test-secret",
+				Scopes:       []string{"my-scope"},
+			},
 		}
 		response, err := client.CreateClientConfig(context.Background(), connect.NewRequest(&v1.CreateClientConfigRequest{
 			Config: config,
 		}))
 		require.NoError(t, err)
-		require.NotNil(t, response)
-		config.Oauth2Config.ClientSecret = "REDACTED"
+
 		requireEqualProto(t, &v1.CreateClientConfigResponse{
-			Config: config,
+			Config: &v1.OIDCClientConfig{
+				Id:             response.Msg.Config.Id,
+				OrganizationId: response.Msg.Config.OrganizationId,
+				Oauth2Config: &v1.OAuth2Config{
+					ClientId:     config.Oauth2Config.ClientId,
+					ClientSecret: "REDACTED",
+					Scopes:       []string{"openid", "profile", "email", "my-scope"},
+				},
+			},
 		}, response.Msg)
+
+		t.Cleanup(func() {
+			dbtest.HardDeleteOIDCClientConfigs(t, response.Msg.Config.GetId())
+		})
+
+		retrieved, err := db.GetOIDCClientConfig(context.Background(), dbConn, uuid.MustParse(response.Msg.Config.Id))
+		require.NoError(t, err)
+
+		decrypted, err := retrieved.Data.Decrypt(dbtest.CipherSet(t))
+		require.NoError(t, err)
+		require.Equal(t, toDbOIDCSpec(config.Oauth2Config, config.OidcConfig), decrypted)
 	})
 }
 
@@ -202,9 +219,14 @@ func TestOIDCService_ListClientConfigs_WithFeatureFlagEnabled(t *testing.T) {
 		}))
 		require.NoError(t, err)
 
+		configA, err := dbOIDCClientConfigToAPI(configs[0], dbtest.CipherSet(t))
+		require.NoError(t, err)
+		configB, err := dbOIDCClientConfigToAPI(configs[1], dbtest.CipherSet(t))
+		require.NoError(t, err)
+
 		expected := []*v1.OIDCClientConfig{
-			{Id: configs[0].ID.String(), OrganizationId: configs[0].OrganizationID.String()},
-			{Id: configs[1].ID.String(), OrganizationId: configs[1].OrganizationID.String()},
+			configA,
+			configB,
 		}
 		sort.Slice(expected, func(i, j int) bool {
 			return strings.Compare(expected[i].Id, expected[j].Id) == -1
@@ -272,7 +294,7 @@ func setupOIDCService(t *testing.T, expClient experiments.Client) (*protocol.Moc
 
 	serverMock := protocol.NewMockAPIInterface(ctrl)
 
-	svc := NewOIDCService(&FakeServerConnPool{api: serverMock}, expClient, &stubOIDCServiceServer{}, dbConn, dbtest.CipherSet(t))
+	svc := NewOIDCService(&FakeServerConnPool{api: serverMock}, expClient, dbConn, dbtest.CipherSet(t))
 
 	_, handler := v1connect.NewOIDCServiceHandler(svc, connect.WithInterceptors(auth.NewServerInterceptor()))
 
@@ -284,25 +306,4 @@ func setupOIDCService(t *testing.T, expClient experiments.Client) (*protocol.Moc
 	))
 
 	return serverMock, client, dbConn
-}
-
-type stubOIDCServiceServer struct {
-}
-
-func (stubOIDCServiceServer) CreateClientConfig(ctx context.Context, request *iam.CreateClientConfigRequest, options ...grpc.CallOption) (*iam.CreateClientConfigResponse, error) {
-	return &iam.CreateClientConfigResponse{
-		Config: request.GetConfig(),
-	}, nil
-}
-func (stubOIDCServiceServer) GetClientConfig(context.Context, *iam.GetClientConfigRequest, ...grpc.CallOption) (*iam.GetClientConfigResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetClientConfig not implemented")
-}
-func (stubOIDCServiceServer) ListClientConfigs(context.Context, *iam.ListClientConfigsRequest, ...grpc.CallOption) (*iam.ListClientConfigsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListClientConfigs not implemented")
-}
-func (stubOIDCServiceServer) UpdateClientConfig(context.Context, *iam.UpdateClientConfigRequest, ...grpc.CallOption) (*iam.UpdateClientConfigResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateClientConfig not implemented")
-}
-func (stubOIDCServiceServer) DeleteClientConfig(context.Context, *iam.DeleteClientConfigRequest, ...grpc.CallOption) (*iam.DeleteClientConfigResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteClientConfig not implemented")
 }
