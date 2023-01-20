@@ -40,6 +40,10 @@ packages:
       - :bin-runc-facade
     config:
       commands:
+        - ["mkdir", "unarchived"]
+        - ["tar", "-zxvf", "components-docker-up--bin-docker-up/docker.tgz", "-C", "unarchived"]
+        - ["cp", "-vaR", "unarchived/docker/.", "."]
+        - ["rm", "-r", "unarchived"]
         - ["mv", "components-docker-up--bin-docker-up/docker-up", "docker-up"]
         - ["rm", "-r", "components-docker-up--bin-docker-up"]
         - ["mv", "components-docker-up--bin-runc-facade/docker-up", "runc-facade"]
