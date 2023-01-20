@@ -280,8 +280,8 @@ func stress(checksPath string, workers int) error {
 
 		work <- &v1.CheckPermissionRequest{
 			Consistency: &v1.Consistency{
-				Requirement: &v1.Consistency_FullyConsistent{
-					FullyConsistent: true,
+				Requirement: &v1.Consistency_MinimizeLatency{
+					MinimizeLatency: true,
 				},
 			},
 			Resource: &v1.ObjectReference{
