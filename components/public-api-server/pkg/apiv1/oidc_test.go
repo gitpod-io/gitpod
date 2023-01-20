@@ -239,26 +239,72 @@ func TestOIDCService_UpdateClientConfig(t *testing.T) {
 	})
 }
 
-func TestOIDCService_DeleteClientConfig(t *testing.T) {
+func TestOIDCService_DeleteClientConfig_WithFeatureFlagDisabled(t *testing.T) {
 	t.Run("feature flag disabled returns unauthorized", func(t *testing.T) {
 		serverMock, client, _ := setupOIDCService(t, withOIDCFeatureDisabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
 
-		_, err := client.DeleteClientConfig(context.Background(), connect.NewRequest(&v1.DeleteClientConfigRequest{}))
+		_, err := client.DeleteClientConfig(context.Background(), connect.NewRequest(&v1.DeleteClientConfigRequest{
+			Id:             uuid.NewString(),
+			OrganizationId: uuid.NewString(),
+		}))
 		require.Error(t, err)
 		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
 	})
 
-	t.Run("feature flag enabled returns unimplemented", func(t *testing.T) {
+}
+
+func TestOIDCService_DeleteClientConfig_WithFeatureFlagEnabled(t *testing.T) {
+	t.Run("invalid argument when ID not specified", func(t *testing.T) {
+		_, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
+
+		_, err := client.DeleteClientConfig(context.Background(), connect.NewRequest(&v1.DeleteClientConfigRequest{}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("invalid argument when Organization ID not specified", func(t *testing.T) {
+		_, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
+
+		_, err := client.DeleteClientConfig(context.Background(), connect.NewRequest(&v1.DeleteClientConfigRequest{
+			Id: uuid.NewString(),
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("not found when record does not exist", func(t *testing.T) {
 		serverMock, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
-		_, err := client.DeleteClientConfig(context.Background(), connect.NewRequest(&v1.DeleteClientConfigRequest{}))
+		_, err := client.DeleteClientConfig(context.Background(), connect.NewRequest(&v1.DeleteClientConfigRequest{
+			Id:             uuid.NewString(),
+			OrganizationId: uuid.NewString(),
+		}))
 		require.Error(t, err)
-		require.Equal(t, connect.CodeUnimplemented, connect.CodeOf(err))
+		require.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
+	})
+
+	t.Run("deletes record", func(t *testing.T) {
+		serverMock, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
+
+		orgID := uuid.New()
+
+		created := dbtest.CreateOIDCClientConfigs(t, dbConn, db.OIDCClientConfig{
+			OrganizationID: &orgID,
+		})[0]
+
+		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
+
+		resp, err := client.DeleteClientConfig(context.Background(), connect.NewRequest(&v1.DeleteClientConfigRequest{
+			Id:             created.ID.String(),
+			OrganizationId: created.OrganizationID.String(),
+		}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.DeleteClientConfigResponse{}, resp.Msg)
 	})
 }
 

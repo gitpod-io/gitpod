@@ -53,3 +53,33 @@ func TestListOIDCClientConfigsForOrganization(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, configsForRandomOrg, 0)
 }
+
+func TestDeleteOIDCClientConfig(t *testing.T) {
+
+	t.Run("returns not found, when record does not exist", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+		orgID := uuid.New()
+
+		err := db.DeleteOIDCClientConfig(context.Background(), conn, uuid.New(), orgID)
+		require.Error(t, err)
+		require.ErrorIs(t, err, db.ErrorNotFound)
+	})
+
+	t.Run("marks record deleted", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+		orgID := uuid.New()
+
+		created := dbtest.CreateOIDCClientConfigs(t, conn, db.OIDCClientConfig{
+			OrganizationID: &orgID,
+		})[0]
+
+		err := db.DeleteOIDCClientConfig(context.Background(), conn, created.ID, *created.OrganizationID)
+		require.NoError(t, err)
+
+		// Delete only sets the `deleted` field, verify that's true
+		var retrieved db.OIDCClientConfig
+		tx := conn.Where("id = ?", created.ID).Where("deleted = 1").First(&retrieved)
+		require.NoError(t, tx.Error)
+	})
+
+}
