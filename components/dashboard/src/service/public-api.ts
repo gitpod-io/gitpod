@@ -10,6 +10,7 @@ import { TeamsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/team
 import { TokensService } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_connectweb";
 import { ProjectsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_connectweb";
 import { WorkspacesService } from "@gitpod/public-api/lib/gitpod/experimental/v1/workspaces_connectweb";
+import { OIDCService } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_connectweb";
 import { Team } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
 import { TeamMember, TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
@@ -23,6 +24,7 @@ export const teamsService = createPromiseClient(TeamsService, transport);
 export const personalAccessTokensService = createPromiseClient(TokensService, transport);
 export const projectsService = createPromiseClient(ProjectsService, transport);
 export const workspacesService = createPromiseClient(WorkspacesService, transport);
+export const oidcService = createPromiseClient(OIDCService, transport);
 
 export function publicApiTeamToProtocol(team: Team): ProtocolTeam {
     return {
