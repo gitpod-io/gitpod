@@ -72,14 +72,17 @@ type Project struct {
 
 func (t *Project) ToRelationship() string {
 	var relation string
+	var subject string
 	if t.TeamID != "" {
 		relation = "team"
+		subject = fmt.Sprintf("team:%s", t.TeamID)
 	}
 	if t.UserID != "" {
 		relation = "user"
+		subject = fmt.Sprintf("user:%s", t.UserID)
 	}
 
-	return fmt.Sprintf("project:%s#%s@team:%s", t.ID, relation, t.TeamID)
+	return fmt.Sprintf("project:%s#%s@%s", t.ID, relation, subject)
 }
 
 func transform(wsFilePath, projFilePath, teamsFilePath string) error {
