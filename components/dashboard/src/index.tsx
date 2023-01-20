@@ -6,9 +6,10 @@
 
 import React from "react";
 import ReactDOM from "react-dom";
-import { QueryClient } from "@tanstack/react-query";
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+// import { QueryClient } from "@tanstack/react-query";
+// import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 // import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
+// import { PersistQueryClientProvider, Persister } from "@tanstack/react-query-persist-client";
 import App from "./App";
 import { UserContextProvider } from "./user-context";
 import { AdminContextProvider } from "./admin-context";
@@ -28,7 +29,7 @@ import { isWebsiteSlug } from "./utils";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 import "./index.css";
-import { createIDBPersister } from "./data";
+import { setupQueryClientProvider } from "./data/setup";
 
 const bootApp = () => {
     // gitpod.io specific boot logic
@@ -52,8 +53,10 @@ const bootApp = () => {
     }
 
     // Handle any boot logic prior to rendering app
-    const queryClient = new QueryClient();
-    const queryClientPersister = createIDBPersister();
+    // const queryClient = new QueryClient();
+    // const queryClientPersister = createIDBPersister();
+
+    const GitpodQueryClientProvider = setupQueryClientProvider();
 
     // Configure libraries
     dayjs.extend(relativeTime);
@@ -62,7 +65,8 @@ const bootApp = () => {
     // Render the App
     ReactDOM.render(
         <React.StrictMode>
-            <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: queryClientPersister }}>
+            <GitpodQueryClientProvider>
+                {/* <PersistQueryClientProvider client={queryClient} persistOptions={{  persister: queryClientPersister }}> */}
                 <UserContextProvider>
                     <AdminContextProvider>
                         <PaymentContextProvider>
@@ -85,7 +89,8 @@ const bootApp = () => {
                         </PaymentContextProvider>
                     </AdminContextProvider>
                 </UserContextProvider>
-            </PersistQueryClientProvider>
+                {/* </PersistQueryClientProvider> */}
+            </GitpodQueryClientProvider>
         </React.StrictMode>,
         document.getElementById("root"),
     );
