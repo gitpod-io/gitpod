@@ -134,6 +134,18 @@ func (s *OIDCService) UpdateClientConfig(ctx context.Context, req *connect.Reque
 }
 
 func (s *OIDCService) DeleteClientConfig(ctx context.Context, req *connect.Request[v1.DeleteClientConfigRequest]) (*connect.Response[v1.DeleteClientConfigResponse], error) {
+	organizationID, err := validateOrganizationID(req.Msg.GetOrganizationId())
+	if err != nil {
+		return nil, err
+	}
+
+	clientConfigID, err := validateOIDCClientConfigID(req.Msg.GetId())
+	if err != nil {
+		return nil, err
+	}
+
+	logger := log.WithField("oidc_client_config_id", clientConfigID.String()).WithField("organization_id", organizationID.String())
+
 	conn, err := s.getConnection(ctx)
 	if err != nil {
 		return nil, err
@@ -144,7 +156,17 @@ func (s *OIDCService) DeleteClientConfig(ctx context.Context, req *connect.Reque
 		return nil, err
 	}
 
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gitpod.experimental.v1.OIDCService.DeleteClientConfig is not implemented"))
+	err = db.DeleteOIDCClientConfig(ctx, s.dbConn, clientConfigID, organizationID)
+	if err != nil {
+		if errors.Is(err, db.ErrorNotFound) {
+			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("OIDC Client Config %s for Organization %s does not exist", clientConfigID.String(), organizationID.String()))
+		}
+
+		logger.WithError(err).Error("Failed to delete OIDC Client config.")
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to delete OIDC Client Config %s for Organization %s", clientConfigID.String(), organizationID.String()))
+	}
+
+	return connect.NewResponse(&v1.DeleteClientConfigResponse{}), nil
 }
 
 func (s *OIDCService) getConnection(ctx context.Context) (protocol.APIInterface, error) {

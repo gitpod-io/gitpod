@@ -110,3 +110,31 @@ func ListOIDCClientConfigsForOrganization(ctx context.Context, conn *gorm.DB, or
 
 	return results, nil
 }
+
+func DeleteOIDCClientConfig(ctx context.Context, conn *gorm.DB, id, organizationID uuid.UUID) error {
+	if id == uuid.Nil {
+		return fmt.Errorf("id is a required argument")
+	}
+
+	if organizationID == uuid.Nil {
+		return fmt.Errorf("organization id is a required argument")
+	}
+
+	tx := conn.
+		WithContext(ctx).
+		Table((&OIDCClientConfig{}).TableName()).
+		Where("id = ?", id).
+		Where("organizationId = ?", organizationID).
+		Where("deleted = ?", 0).
+		Update("deleted", 1)
+
+	if tx.Error != nil {
+		return fmt.Errorf("failed to delete oidc client config (ID: %s): %v", id.String(), tx.Error)
+	}
+
+	if tx.RowsAffected == 0 {
+		return fmt.Errorf("oidc client config ID: %s for organization ID: %s does not exist: %w", id.String(), organizationID.String(), ErrorNotFound)
+	}
+
+	return nil
+}
