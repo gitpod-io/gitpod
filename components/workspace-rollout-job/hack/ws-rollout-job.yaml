@@ -7,7 +7,7 @@ spec:
     spec:
       containers:
       - name: ws-rollout
-        image: eu.gcr.io/gitpod-core-dev/build/workspace-rollout-job:tar-work-rollout.46
+        image: eu.gcr.io/gitpod-core-dev/build/workspace-rollout-job:tar-work-rollout.49
         args:
         - --old-cluster=$(OLD_CLUSTER)
         - --new-cluster=$(NEW_CLUSTER)
@@ -20,6 +20,8 @@ spec:
           name: metrics
       restartPolicy: Never
       serviceAccountName: ws-rollout
+  # Never re-run the job if error'ed
+  backoffLimit: 0
 ---
 kind: ServiceAccount
 apiVersion: v1
@@ -42,7 +44,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: ws-rollout
-  namespace: default
+  namespace: $(NAMESPACE)
 roleRef:
   kind: Role
   name: ws-rollout
