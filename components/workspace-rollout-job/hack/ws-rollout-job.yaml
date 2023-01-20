@@ -7,11 +7,11 @@ spec:
     spec:
       containers:
       - name: ws-rollout
-        image: eu.gcr.io/gitpod-core-dev/build/workspace-rollout-job:tar-work-rollout.29
+        image: eu.gcr.io/gitpod-core-dev/build/workspace-rollout-job:tar-work-rollout.44
         args:
         - --old-cluster=$(OLD_CLUSTER)
         - --new-cluster=$(NEW_CLUSTER)
-        - --prometheus-resource=$(PROMETHEUS_RESOURCE)
+        - --prometheus-url=$(PROMETHEUS_URL)
         - --rollout-wait-duration=$(ROLLOUT_WAIT_DURATION)
         - --analysis-wait-duration=$(ANALYSIS_WAIT_DURATION)
         - --rollout-step-score=$(ROLLOUT_STEP_SCORE)

@@ -8,16 +8,13 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"strings"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	logrus "github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/gpctl/pkg/util"
 	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
 
@@ -46,38 +43,10 @@ type WorkspaceKeyMetricsAnalyzer struct {
 	api v1.API
 }
 
-func NewWorkspaceKeyMetricsAnalyzer(ctx context.Context, kubeConfig *rest.Config, prometheusResource string, targetSuccessPercentage, localPort int) (*WorkspaceKeyMetricsAnalyzer, error) {
-	clientSet, err := kubernetes.NewForConfig(kubeConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	ownerSplit := strings.Split(prometheusResource, "/")
-	if len(ownerSplit) != 3 {
-		return nil, fmt.Errorf("invalid prometheus service name: %s", prometheusResource)
-	}
-	namespace := ownerSplit[0]
-	ownerKind := ownerSplit[1]
-	ownerName := ownerSplit[2]
-
-	// 9090 is the port of the prometheus Service
-	port := fmt.Sprintf("%d:%d", localPort, 9090)
-	podName, err := util.FindAnyPodWithOwnedBy(clientSet, namespace, ownerKind, ownerName)
-	if err != nil {
-		return nil, err
-	}
-	readychan, errchan := util.ForwardPort(ctx, kubeConfig, namespace, podName, port)
-	select {
-	case <-readychan:
-	case err := <-errchan:
-		return nil, err
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	}
-
+func NewWorkspaceKeyMetricsAnalyzer(ctx context.Context, kubeConfig *rest.Config, prometheusURL string, targetSuccessPercentage, localPort int) (*WorkspaceKeyMetricsAnalyzer, error) {
 	// Create Prometheus API Client
 	client, err := api.NewClient(api.Config{
-		Address: fmt.Sprintf("http://localhost:%d", localPort),
+		Address: prometheusURL,
 	})
 	if err != nil {
 		return nil, err

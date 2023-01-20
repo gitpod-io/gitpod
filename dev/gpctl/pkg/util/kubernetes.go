@@ -74,29 +74,6 @@ func FindPodsForComponent(clientSet kubernetes.Interface, namespace, label strin
 	return res, nil
 }
 
-// FindAnyPodWithLabel returns a pods we found for a particular label
-func FindAnyPodWithOwnedBy(clientSet kubernetes.Interface, namespace, ownerKind, ownerName string) (string, error) {
-	pods, err := clientSet.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		return "", err
-	}
-
-	res := []string{}
-	for _, p := range pods.Items {
-		for _, ownerRef := range p.ObjectMeta.OwnerReferences {
-			if ownerRef.Name == ownerName && strings.ToLower(ownerRef.Kind) == ownerKind {
-				res = append(res, p.Name)
-			}
-		}
-	}
-
-	if len(res) == 0 {
-		return "", xerrors.Errorf("no pod in %s with owner %s/%s", namespace, ownerKind, ownerName)
-	}
-
-	return res[0], nil
-}
-
 // ForwardPort establishes a TCP port forwarding to a Kubernetes pod
 func ForwardPort(ctx context.Context, config *rest.Config, namespace, pod, port string) (readychan chan struct{}, errchan chan error) {
 	errchan = make(chan error, 1)
