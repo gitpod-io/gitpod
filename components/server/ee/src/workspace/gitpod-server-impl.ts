@@ -2111,6 +2111,28 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
+    async getPriceInformation(ctx: TraceContext, attributionId: string): Promise<string | undefined> {
+        const user = this.checkAndBlockUser("getPriceInformation");
+        const attrId = AttributionId.parse(attributionId);
+        if (!attrId) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attributionId '${attributionId}'`);
+        }
+        let team: Team | undefined;
+        if (attrId.kind === "team") {
+            team = await this.guardTeamOperation(attrId.teamId, "update");
+            await this.ensureStripeApiIsAllowed({ team });
+        } else {
+            if (attrId.userId !== user.id) {
+                throw new ResponseError(
+                    ErrorCodes.PERMISSION_DENIED,
+                    "Cannot get pricing information for another user",
+                );
+            }
+            await this.ensureStripeApiIsAllowed({ user });
+        }
+        return this.stripeService.getPriceInformation(attributionId);
+    }
+
     async createStripeCustomerIfNeeded(ctx: TraceContext, attributionId: string, currency: string): Promise<void> {
         const user = this.checkAndBlockUser("createStripeCustomerIfNeeded");
         const attrId = AttributionId.parse(attributionId);

@@ -3169,6 +3169,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getStripePortalUrl(ctx: TraceContext, attributionId: string): Promise<string> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
+    async getPriceInformation(ctx: TraceContext, attributionId: string): Promise<string | undefined> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
 
     async listUsage(ctx: TraceContext, req: ListUsageRequest): Promise<ListUsageResponse> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
