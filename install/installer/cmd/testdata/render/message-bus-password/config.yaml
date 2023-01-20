@@ -4,6 +4,7 @@
 
 apiVersion: v1
 domain: gitpod.example.com
-experimental:
-  common:
-    staticMessagebusPassword: pa55w0rd
+messageBus:
+  credentials:
+    kind: secret
+    name: message-bus-password

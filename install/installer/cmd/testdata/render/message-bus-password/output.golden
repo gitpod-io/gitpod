@@ -1253,7 +1253,6 @@ metadata:
 # v1/Secret rabbitmq
 apiVersion: v1
 data:
-  rabbitmq-password: cGE1NXcwcmQ=
   username: Z2l0cG9k
 kind: Secret
 metadata:
@@ -1532,6 +1531,10 @@ data:
     disableDefinitelyGp: true
     domain: gitpod.example.com
     kind: Full
+    messageBus:
+      credentials:
+        kind: secret
+        name: message-bus-password
     metadata:
       region: local
       shortname: default
@@ -8604,7 +8607,7 @@ spec:
         app.kubernetes.io/managed-by: Helm
       annotations:
         checksum/config: aca5a97bd1dfe3912d74e61f85bdffcde993310848389fa0c674e2fd8dc0ac27
-        gitpod.io/checksum_config: 9bf4bf5d3f27510cd73df849ce505278aac6b8e2cd07e71b13eb26b67c72dc86
+        gitpod.io/checksum_config: d106ecde0d368d5bc5cc804bd6f48556049b6916f2db4357c88f2a87e58a08e7
         prometheus.io/port: '9419'
         prometheus.io/scrape: "true"
     spec:
@@ -8631,7 +8634,7 @@ spec:
             valueFrom:
               secretKeyRef:
                 key: rabbitmq-password
-                name: rabbitmq
+                name: message-bus-password
           image: docker.io/library/alpine:3.16
           name: credential-injector
           resources: {}
@@ -8711,7 +8714,7 @@ spec:
             - name: RABBITMQ_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: rabbitmq
+                  name: message-bus-password
                   key: rabbitmq-password
             - name: RABBITMQ_PLUGINS
               value: "rabbitmq_management, rabbitmq_peer_discovery_k8s, rabbitmq_prometheus"
@@ -10767,7 +10770,7 @@ spec:
           valueFrom:
             secretKeyRef:
               key: rabbitmq-password
-              name: rabbitmq
+              name: message-bus-password
         - name: MESSAGEBUS_CA
           valueFrom:
             secretKeyRef:
@@ -10917,7 +10920,7 @@ spec:
           valueFrom:
             secretKeyRef:
               key: rabbitmq-password
-              name: rabbitmq
+              name: message-bus-password
         - name: MESSAGEBUS_CA
           valueFrom:
             secretKeyRef:
@@ -11120,7 +11123,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 93bf7d7fea84b56c9bb1fd7193a03452db0e5b0f2df9e1db82d5f70dea6f90a0
+        gitpod.io/checksum_config: e45c0bdd6cd28d358b8310497b1d6220656765e7637af2f4a51bddeabfc844ba
       creationTimestamp: null
       labels:
         app: gitpod
@@ -11164,7 +11167,7 @@ spec:
           valueFrom:
             secretKeyRef:
               key: rabbitmq-password
-              name: rabbitmq
+              name: message-bus-password
         - name: MESSAGEBUS_CA
           valueFrom:
             secretKeyRef:
@@ -11304,7 +11307,7 @@ spec:
           valueFrom:
             secretKeyRef:
               key: rabbitmq-password
-              name: rabbitmq
+              name: message-bus-password
         - name: MESSAGEBUS_CA
           valueFrom:
             secretKeyRef:

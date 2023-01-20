@@ -19,7 +19,6 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/components/dashboard"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 )
 
@@ -179,32 +178,6 @@ func TestResourceRequirements(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestStaticMessagebusPassword(t *testing.T) {
-	const expectedPassword = "some-password"
-
-	ctx, err := common.NewRenderContext(config.Config{
-		Experimental: &experimental.Config{
-			Common: &experimental.CommonConfig{
-				StaticMessagebusPassword: expectedPassword,
-			},
-		},
-	}, versions.Manifest{}, "test_namespace")
-	require.NoError(t, err)
-
-	actualPassword := ctx.Values.MessageBusPassword
-
-	require.Equal(t, expectedPassword, actualPassword)
-}
-
-func TestDynamicMessagebusPassword(t *testing.T) {
-	ctx, err := common.NewRenderContext(config.Config{}, versions.Manifest{}, "test_namespace")
-	require.NoError(t, err)
-
-	actualPassword := ctx.Values.MessageBusPassword
-
-	require.NotEmpty(t, actualPassword)
 }
 
 func TestRepoName(t *testing.T) {
