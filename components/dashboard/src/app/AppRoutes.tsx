@@ -74,6 +74,7 @@ const JoinTeam = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/J
 const Members = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/Members"));
 const TeamSettings = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/TeamSettings"));
 const TeamBilling = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/TeamBilling"));
+const SSO = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/SSO"));
 const TeamUsage = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/TeamUsage"));
 const NewProject = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/NewProject"));
 const Projects = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/Projects"));
@@ -278,6 +279,8 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                                             return <TeamSettings />;
                                         case "billing":
                                             return <TeamBilling />;
+                                        case "sso":
+                                            return <SSO />;
                                         case "usage":
                                             return <TeamUsage />;
                                         default:
