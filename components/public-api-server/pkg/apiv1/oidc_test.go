@@ -211,7 +211,7 @@ func TestOIDCService_ListClientConfigs_WithFeatureFlagEnabled(t *testing.T) {
 
 		})
 
-		requireEqualProto(t, expected, response.Msg.Providers)
+		requireEqualProto(t, expected, response.Msg.ClientConfigs)
 	})
 
 }
