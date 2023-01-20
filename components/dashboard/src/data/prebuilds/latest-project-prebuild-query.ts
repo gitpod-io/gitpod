@@ -16,13 +16,15 @@ type Args = {
 export const useLatestProjectPrebuildQuery = ({ projectId }: Args) => {
     return useQuery<LatestProjectPrebuildQueryResult>({
         queryKey: getLatestProjectPrebuildQueryKey(projectId),
+        // Prevent bursting for latest project prebuilds too frequently
+        staleTime: 1000 * 60 * 1, // 1 minute
         queryFn: async () => {
             const latestPrebuilds = await getGitpodService().server.findPrebuilds({
                 projectId,
                 latest: true,
             });
 
-            return latestPrebuilds[0];
+            return latestPrebuilds[0] || null;
         },
     });
 };

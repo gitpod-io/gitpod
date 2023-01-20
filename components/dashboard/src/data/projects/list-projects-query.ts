@@ -30,6 +30,7 @@ export const useListProjectsQuery = () => {
     return useQuery<ListProjectsQueryResults>({
         // Projects are either tied to current team, otherwise current user
         queryKey: getListProjectsQueryKey({ teamId, userId }),
+        cacheTime: 1000 * 60 * 60 * 1, // 1 hour
         queryFn: async () => {
             if (!userId && !teamId) {
                 return {
