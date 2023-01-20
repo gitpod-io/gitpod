@@ -27,6 +27,7 @@ var (
 	teamsFile      string
 
 	stressFile string
+	workers    int
 )
 
 func init() {
@@ -35,6 +36,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&teamsFile, "teams-file", "", "path to teams file")
 
 	stressCmd.PersistentFlags().StringVar(&stressFile, "stress-file", "", "path to file containing statements")
+	stressCmd.PersistentFlags().IntVar(&workers, "workers", 5, "number of workers")
 
 	rootCmd.AddCommand(transformCmd)
 	rootCmd.AddCommand(stressCmd)
@@ -59,7 +61,7 @@ to quickly create a Cobra application.`,
 	stressCmd = &cobra.Command{
 		Use: "stress",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return stress(stressFile)
+			return stress(stressFile, workers)
 		},
 	}
 )
@@ -225,7 +227,7 @@ type Check struct {
 	Subject  string `json:"subject"`
 }
 
-func stress(checksPath string) error {
+func stress(checksPath string, workers int) error {
 	f, err := os.Open(checksPath)
 	if err != nil {
 		return err
