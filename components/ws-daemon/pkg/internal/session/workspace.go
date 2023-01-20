@@ -167,16 +167,12 @@ func (s *Workspace) WaitOrMarkForDisposal(ctx context.Context) (done bool, repo 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "workspace.WaitOrMarkForDisposal")
 	defer tracing.FinishSpan(span, &err)
 
-	log.Info("waitOrMark")
-
 	s.stateLock.Lock()
 	if s.state == WorkspaceDisposed {
-		log.Info("waitOrMark: already disposed")
 		s.stateLock.Unlock()
 		return true, nil, nil
 	} else if s.state != WorkspaceDisposing {
 		s.state = WorkspaceDisposing
-		log.Info("waitOrMark: need to dispose")
 		s.stateLock.Unlock()
 
 		err = s.Persist()
@@ -184,7 +180,6 @@ func (s *Workspace) WaitOrMarkForDisposal(ctx context.Context) (done bool, repo 
 			return false, nil, xerrors.Errorf("cannot mark as disposing: %w", err)
 		}
 
-		log.Info("waitOrMark: run hooks")
 		err = s.store.runLifecycleHooks(ctx, s)
 		if err != nil {
 			return false, nil, err
@@ -192,10 +187,8 @@ func (s *Workspace) WaitOrMarkForDisposal(ctx context.Context) (done bool, repo 
 
 		return false, nil, nil
 	}
-	log.Info("waitOrMark: unlock")
 	s.stateLock.Unlock()
 
-	log.Info("waitOrMark: wait for condition")
 	s.operatingCondition.L.Lock()
 	s.operatingCondition.Wait()
 	done = true
