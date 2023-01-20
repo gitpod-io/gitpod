@@ -64,7 +64,7 @@ module.exports = {
                 "Segoe UI Symbol",
                 "Noto Color Emoji",
             ],
-            mono: ["SF Mono", "Monaco", "Inconsolata", "Fira Mono", "Droid Sans Mono", "Source Code Pro", "monospace"],
+            mono: ["JetBrains Mono", "SF Mono", "Monaco", "Inconsolata", "Fira Mono", "Droid Sans Mono", "Source Code Pro", "monospace"],
         },
         underlineThickness: {
             thin: "2px",

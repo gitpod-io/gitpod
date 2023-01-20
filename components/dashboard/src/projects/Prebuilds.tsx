@@ -281,7 +281,7 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                                                     />
                                                 )}
                                                 Authored {formatDate(p.info.changeDate)} ·{" "}
-                                                {p.info.changeHash?.substring(0, 8)}
+                                                <span className="font-mono">{p.info.changeHash?.substring(0, 8)}</span>
                                             </p>
                                         </div>
                                     </ItemField>
@@ -290,7 +290,7 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                                             <a href={p.info.changeUrl} className="cursor-pointer">
                                                 <div className="flex space-x-2 truncate">
                                                     <span
-                                                        className="font-medium text-gray-500 dark:text-gray-50 truncate"
+                                                        className="font-medium text-gray-500 dark:text-gray-50 truncate font-mono"
                                                         title={p.info.branch}
                                                     >
                                                         {p.info.branch}

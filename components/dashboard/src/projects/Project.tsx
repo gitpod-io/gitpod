@@ -338,10 +338,10 @@ export default function () {
                                             <ItemField className="flex items-center my-auto">
                                                 <div>
                                                     <a href={branch.url}>
-                                                        <div className="text-base text-gray-600 hover:text-gray-800 dark:text-gray-50 dark:hover:text-gray-200 font-medium mb-1">
+                                                        <div className="text-base text-gray-600 hover:text-gray-800 dark:text-gray-50 dark:hover:text-gray-200 font-medium mb-1 font-mono">
                                                             {branch.name}
                                                             {branch.isDefault && (
-                                                                <span className="ml-2 self-center rounded-xl py-0.5 px-2 text-sm bg-blue-50 text-blue-40 dark:bg-blue-500 dark:text-blue-100">
+                                                                <span className="ml-2 self-center rounded-xl py-0.5 px-2 text-sm font-sans bg-blue-50 text-blue-40 dark:bg-blue-500 dark:text-blue-100">
                                                                     DEFAULT
                                                                 </span>
                                                             )}
@@ -356,7 +356,9 @@ export default function () {
                                                     </div>
                                                     <p>
                                                         {avatar}Authored {formatDate(branch.changeDate)} ·{" "}
-                                                        {branch.changeHash?.substring(0, 8)}
+                                                        <span className="font-mono">
+                                                            {branch.changeHash?.substring(0, 8)}
+                                                        </span>
                                                     </p>
                                                 </div>
                                             </ItemField>

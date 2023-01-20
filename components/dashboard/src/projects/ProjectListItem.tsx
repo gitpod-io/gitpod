@@ -87,7 +87,7 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                         >
                             {prebuildStatusIcon(prebuild)}
                             <div
-                                className="font-semibold text-gray-500 dark:text-gray-400 truncate"
+                                className="font-semibold text-gray-500 dark:text-gray-400 truncate font-mono"
                                 title={prebuild?.info?.branch}
                             >
                                 {prebuild?.info?.branch}
