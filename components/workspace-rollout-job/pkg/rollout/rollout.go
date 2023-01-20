@@ -102,6 +102,18 @@ func (r *RollOutJob) Start(ctx context.Context) {
 		}
 	}()
 
+	// Initial Score Update
+	log.Infof("Initial Score Update: %d", r.currentScore)
+	r.currentScore += r.rolloutStep
+	if err := r.UpdateScoreWithMetricUpdate(ctx, r.newCluster, r.currentScore); err != nil {
+		log.Error("Failed to update new cluster score: ", err)
+	}
+
+	if err := r.UpdateScoreWithMetricUpdate(ctx, r.oldCluster, 100-r.currentScore); err != nil {
+		log.Error("Failed to update old cluster score: ", err)
+	}
+	log.Infof("Updated cluster scores: %s: %d, %s: %d", r.oldCluster, 100-r.currentScore, r.newCluster, r.currentScore)
+
 	for {
 		select {
 		case <-r.ticker.C:

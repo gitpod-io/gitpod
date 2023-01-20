@@ -156,7 +156,7 @@ func (m *ProgressiveMockAnalyzer) MoveForward(ctx context.Context, clusterName s
 
 func TestRollout_AnalysisProgressivePositiveData(t *testing.T) {
 	rolloutAction := NewMockRolloutAction()
-	rolloutJob := New("ws-1", "ws-2", 1*time.Second, 1*time.Second, 10, 50, &ProgressiveMockAnalyzer{endResult: 1}, rolloutAction)
+	rolloutJob := New("ws-1", "ws-2", 1*time.Second, 1*time.Second, 5, 50, &ProgressiveMockAnalyzer{endResult: 1}, rolloutAction)
 	rolloutJob.Start(context.Background())
 
 	newClusterScore, err := rolloutAction.GetScore(context.Background(), "ws-2")
