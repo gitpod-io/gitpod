@@ -246,8 +246,7 @@ func stress(checksPath string) error {
 
 	client, err := authzed.NewClient(
 		"localhost:50051",
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpcutil.WithBearerToken("static-for-now"),
+		grpcutil.WithInsecureBearerToken("static-for-now"),
 	)
 	if err != nil {
 		return err
