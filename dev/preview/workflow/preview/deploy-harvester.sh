@@ -33,6 +33,8 @@ shopt -os allexport
 
 terraform_init
 
+source "${SCRIPT_PATH}/determine-env.sh"
+
 PLAN_EXIT_CODE=0
 terraform_plan || PLAN_EXIT_CODE=$?
 
