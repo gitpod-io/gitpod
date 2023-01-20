@@ -355,6 +355,9 @@ then
           --dry-run=client -o yaml | \
           kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" replace --force -f -
   done
+
+  # Suppress the Self-Hosted setup modal
+  yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.server.showSetupModal "false"
 fi
 
 
