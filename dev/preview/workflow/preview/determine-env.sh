@@ -13,7 +13,7 @@ fi
 
 state_output=$(terraform_output "infra_provider")
 # If we don't have the provider_choice in the outputs, bail. This is temporary until all envs have it set
-if [[ -z "${state_output}" ]]; then
+if [[ "${state_output}" != "harvester" && "${state_output}" != "gce" ]]; then
   return
 fi
 
