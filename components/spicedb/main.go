@@ -209,13 +209,16 @@ func readProjects(filePath string) ([]Project, error) {
 	var results []Project
 
 	scanner := bufio.NewScanner(f)
+	line := 1
 	for scanner.Scan() {
 		var t Project
 		if err := json.Unmarshal(scanner.Bytes(), &t); err != nil {
+			fmt.Println("line", line)
 			return nil, err
 		}
 
 		results = append(results, t)
+		line += 1
 	}
 
 	return results, nil
