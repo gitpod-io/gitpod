@@ -293,6 +293,8 @@ func stress(checksPath string) error {
 		}
 	}
 
+	close(work)
+
 	wg.Wait()
 
 	return nil
