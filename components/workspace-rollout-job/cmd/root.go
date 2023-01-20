@@ -27,7 +27,7 @@ const (
 type config struct {
 	oldCluster               string
 	newCluster               string
-	prometheusService        string
+	prometheusURL            string
 	rollOutWaitDuration      time.Duration
 	analsysWaitDuration      time.Duration
 	rolloutStepScore         int32
@@ -92,8 +92,7 @@ var rootCmd = &cobra.Command{
 			return err
 		}
 
-		// Start the rollout process
-		prometheusAnalyzer, err := analysis.NewWorkspaceKeyMetricsAnalyzer(ctx, config, conf.prometheusService, conf.targetPositivePercentage, 30305)
+		prometheusAnalyzer, err := analysis.NewWorkspaceKeyMetricsAnalyzer(ctx, config, conf.prometheusURL, conf.targetPositivePercentage, 30305)
 		if err != nil {
 			log.WithError(err).Fatal("failed to create a prometheus client")
 			return err
@@ -122,7 +121,7 @@ func getKubeConfig() (*rest.Config, error) {
 func Execute() {
 	rootCmd.Flags().StringVar(&conf.oldCluster, "old-cluster", "", "Name of the old cluster with score 100")
 	rootCmd.Flags().StringVar(&conf.newCluster, "new-cluster", "", "Name of the new cluster with score 0")
-	rootCmd.Flags().StringVar(&conf.prometheusService, "prometheus-resource", "", "Please set in the format <namespace>/<kind>/<name>")
+	rootCmd.Flags().StringVar(&conf.prometheusURL, "prometheus-url", "", "URL of Prometheus Service")
 	rootCmd.Flags().DurationVar(&conf.rollOutWaitDuration, "rollout-wait-duration", 50*time.Second, "Duration to wait before updating the score of the new cluster")
 	rootCmd.Flags().DurationVar(&conf.analsysWaitDuration, "analysis-wait-duration", 1*time.Second, "Duration to wait before analyzing the metrics")
 	rootCmd.Flags().Int32Var(&conf.rolloutStepScore, "rollout-step-score", 10, "Score to be added to the new cluster, and decreased to the old cluster")
@@ -131,7 +130,7 @@ func Execute() {
 
 	rootCmd.MarkFlagRequired("old-cluster")
 	rootCmd.MarkFlagRequired("new-cluster")
-	rootCmd.MarkFlagRequired("prometheus-resource")
+	rootCmd.MarkFlagRequired("prometheus-url")
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

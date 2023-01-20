@@ -7,11 +7,11 @@ spec:
     spec:
       containers:
       - name: ws-rollout
-        image: eu.gcr.io/gitpod-core-dev/build/workspace-rollout-job:tar-work-rollout.29
+        image: eu.gcr.io/gitpod-core-dev/build/workspace-rollout-job:tar-work-rollout.46
         args:
         - --old-cluster=$(OLD_CLUSTER)
         - --new-cluster=$(NEW_CLUSTER)
-        - --prometheus-resource=$(PROMETHEUS_RESOURCE)
+        - --prometheus-url=$(PROMETHEUS_URL)
         - --rollout-wait-duration=$(ROLLOUT_WAIT_DURATION)
         - --analysis-wait-duration=$(ANALYSIS_WAIT_DURATION)
         - --rollout-step-score=$(ROLLOUT_STEP_SCORE)
@@ -26,8 +26,7 @@ apiVersion: v1
 metadata:
   name: ws-rollout
 ---
-# ClusterRole as we need port-forward across namespaces
-kind: ClusterRole
+kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: ws-rollout
@@ -36,7 +35,7 @@ rules:
   resources: ["pods", "pods/portforward"]
   verbs: ["get", "list", "create"]
 ---
-kind: ClusterRoleBinding
+kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: ws-rollout
@@ -45,6 +44,6 @@ subjects:
   name: ws-rollout
   namespace: default
 roleRef:
-  kind: ClusterRole
+  kind: Role
   name: ws-rollout
   apiGroup: rbac.authorization.k8s.io

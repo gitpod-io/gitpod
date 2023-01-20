@@ -51,6 +51,9 @@ func New(oldCluster, newCluster string, rolloutWaitDuration, analysisWaitDuratio
 
 // Start runs the job synchronously
 func (r *RollOutJob) Start(ctx context.Context) error {
+	log := logrus.WithField("component", "rollout-job")
+	log.Infof("Rollout job started with the following configuration: %+v", r)
+
 	// Handle interrupt signal
 	c := make(chan os.Signal, 1)
 	signal.Notify(c,
@@ -66,13 +69,13 @@ func (r *RollOutJob) Start(ctx context.Context) error {
 
 	// keep checking the analyzer asynchronously to see if there is a
 	// problem with the new cluster
-	log := logrus.WithField("component", "rollout-job")
 	go func() {
 		for {
 			// Run only if the revert channel is empty
 			if len(r.revert) == 0 {
 				// check every analysisWaitDuration
 				time.Sleep(r.analysisWaitDuration)
+
 				moveForward, err := r.analyzer.MoveForward(context.Background(), r.newCluster)
 				if err != nil {
 					log.Error("Analysis returned error: ", err)
@@ -99,6 +102,7 @@ func (r *RollOutJob) Start(ctx context.Context) error {
 					// Roll forward otherwise
 					log.Info("Analyzer says yes, rolling forward")
 				}
+
 			}
 		}
 	}()
