@@ -88,6 +88,11 @@ export class StripeService {
         return result.data[0]?.id;
     }
 
+    async getPriceInformation(attributionId: string): Promise<string> {
+        const priceInformation = await this.billingService.getPriceInformation({ attributionId });
+        return priceInformation.humanReadableDescription;
+    }
+
     async cancelSubscription(subscriptionId: string): Promise<void> {
         await reportStripeOutcome("subscriptions_cancel", () => {
             return this.getStripe().subscriptions.del(subscriptionId, { invoice_now: true });

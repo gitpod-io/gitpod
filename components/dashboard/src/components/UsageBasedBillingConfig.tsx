@@ -32,7 +32,6 @@ interface Props {
 
 export default function UsageBasedBillingConfig({ attributionId }: Props) {
     const location = useLocation();
-    const { currency } = useContext(PaymentContext);
     const [showUpdateLimitModal, setShowUpdateLimitModal] = useState<boolean>(false);
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
     const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | undefined>();
@@ -41,6 +40,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
     const [usageLimit, setUsageLimit] = useState<number>(0);
     const [stripePortalUrl, setStripePortalUrl] = useState<string | undefined>();
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
+    const [priceInformation, setPriceInformation] = useState<string | undefined>();
     const [pendingStripeSubscription, setPendingStripeSubscription] = useState<PendingStripeSubscription | undefined>(
         undefined,
     );
@@ -48,6 +48,11 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
     const now = useMemo(() => dayjs().utc(true), []);
     const [billingCycleFrom, setBillingCycleFrom] = useState<dayjs.Dayjs>(now.startOf("month"));
     const [billingCycleTo, setBillingCycleTo] = useState<dayjs.Dayjs>(now.endOf("month"));
+    useEffect(() => {
+        if (attributionId) {
+            getGitpodService().server.getPriceInformation(attributionId).then(setPriceInformation);
+        }
+    }, [attributionId]);
 
     const refreshSubscriptionDetails = useCallback(
         async (attributionId: string) => {
@@ -153,6 +158,12 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
 
     const balance = currentUsage * -1 + usageLimit;
     const percentage = usageLimit === 0 ? 0 : Math.max(Math.round((balance * 100) / usageLimit), 0);
+    const freePlanName = useMemo(() => {
+        if (usageLimit === 0) {
+            return "No Plan";
+        }
+        return usageLimit > 500 ? "Open Source" : "Free";
+    }, [usageLimit]);
 
     return (
         <div className="mb-16">
@@ -226,72 +237,40 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                         </div>
                     </div>
                 )}
-                {showUpgradeTeam && (
-                    <div className="flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
-                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Upgrade Plan</div>
-                        <div className="mt-1 text-xl font-semibold flex-grow text-gray-500 dark:text-gray-400">
-                            Pay-as-you-go
-                        </div>
-                        <div className="mt-4 flex space-x-1 text-gray-400 dark:text-gray-500">
-                            <Check className="m-0.5 w-5 h-5" />
-                            <div className="flex flex-col">
-                                <span>
-                                    {currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard workspace
-                                    usage, excluding VAT.{" "}
-                                    <a className="gp-link" href="https://www.gitpod.io/pricing#cost-estimator">
-                                        Estimate costs
-                                    </a>
-                                </span>
-                            </div>
-                        </div>
-                        <div className="flex justify-end mt-6 space-x-2">
-                            {stripePortalUrl && (
-                                <a href={stripePortalUrl}>
-                                    <button className="secondary" disabled={!stripePortalUrl}>
-                                        View Past Invoices ↗
-                                    </button>
-                                </a>
-                            )}
-                            <button onClick={() => setShowBillingSetupModal(true)}>Upgrade Plan</button>
-                        </div>
-                    </div>
-                )}
-                {showUpgradeUser && (
-                    <div className="flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
-                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Current Plan</div>
-                        <div className="mt-1 text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">
-                            {usageLimit > 500 ? "Open Source" : "Free"}
-                        </div>
-                        <div className="mt-4 flex space-x-1 text-gray-400 dark:text-gray-500">
-                            <Check className="m-0.5 w-5 h-5 text-orange-500" />
-                            <div className="flex flex-col">
-                                <span className="font-bold text-gray-500 dark:text-gray-400">{usageLimit} credits</span>
-                                <span>
-                                    {usageLimit / 10} hours of Standard workspace usage.{" "}
-                                    <a className="gp-link" href="https://www.gitpod.io/pricing#cost-estimator">
-                                        Estimate costs
-                                    </a>
-                                </span>
-                            </div>
-                        </div>
-                        <div className="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 -m-4 p-4 mt-8 rounded-b-xl">
-                            <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Upgrade Plan</div>
-                            <div className="mt-1 text-xl font-semibold flex-grow text-gray-500 dark:text-gray-400">
-                                {currency === "EUR" ? "€" : "$"}9 / month
+                {(showUpgradeTeam || showUpgradeUser) && (
+                    <>
+                        <div className="flex flex-col mt-4 p-4 rounded-t-xl bg-gray-50 dark:bg-gray-800">
+                            <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Current Plan</div>
+                            <div className="mt-1 text-xl font-semibold flex-grow text-gray-600 dark:text-gray-400">
+                                {freePlanName}
                             </div>
                             <div className="mt-4 flex space-x-1 text-gray-400 dark:text-gray-500">
-                                <Check className="m-0.5 w-5 h-5" />
-                                <div className="flex flex-col">
-                                    <span className="font-bold">1,000 credits</span>
+                                <div className="m-0.5 w-5 h-5 text-orange-500">
+                                    <Check />
+                                </div>
+                                <div className="flex flex-col w-96">
+                                    <span className="font-bold text-gray-500 dark:text-gray-400">
+                                        {usageLimit} credits
+                                    </span>
+                                    <span>{usageLimit / 10} hours of Standard workspace usage.</span>
                                 </div>
                             </div>
-                            <div className="mt-2 flex space-x-1 text-gray-400 dark:text-gray-500">
-                                <Check className="m-0.5 w-5 h-5" />
+                        </div>
+                        <div className="flex flex-col p-4 rounded-b-xl bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+                            <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Upgrade Plan</div>
+                            <div className="mt-1 text-xl font-semibold flex-grow text-gray-800 dark:text-gray-100">
+                                Pay-as-you-go
+                            </div>
+                            <div className="mt-4 flex space-x-1 text-gray-400 dark:text-gray-500">
+                                <div className="m-0.5 w-8 h-5">
+                                    <Check />
+                                </div>
                                 <div className="flex flex-col">
-                                    <span className="font-bold">Pay-as-you-go after 1,000 credits</span>
                                     <span>
-                                        {currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of Standard
-                                        workspace usage, excluding VAT.
+                                        {priceInformation}{" "}
+                                        <a className="gp-link" href="https://www.gitpod.io/pricing#cost-estimator">
+                                            Estimate costs
+                                        </a>
                                     </span>
                                 </div>
                             </div>
@@ -306,71 +285,27 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                                 <button onClick={() => setShowBillingSetupModal(true)}>Upgrade Plan</button>
                             </div>
                         </div>
-                    </div>
+                    </>
                 )}
                 {showManageBilling && (
                     <div className="max-w-xl flex space-x-4">
                         <div className="flex-grow flex flex-col mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
                             <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Current Plan</div>
-                            {AttributionId.parse(attributionId)?.kind === "user" ? (
-                                <>
-                                    <div className="mt-1 text-xl font-semibold flex-grow text-gray-800 dark:text-gray-100">
-                                        {currency === "EUR" ? "€" : "$"}9 / month
-                                    </div>
-                                    <div className="mt-4 flex space-x-1 text-gray-400 dark:text-gray-500">
-                                        <Check className="m-0.5 w-5 h-5 text-orange-500" />
-                                        <div className="flex flex-col">
-                                            <span className="font-bold text-gray-500 dark:text-gray-400">
-                                                1,000 credits
-                                            </span>
-                                            <span>
-                                                100 hours of Standard workspace usage.{" "}
-                                                <a
-                                                    className="gp-link"
-                                                    href="https://www.gitpod.io/docs/configure/billing/usage-based-billing"
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                >
-                                                    Learn more about credits
-                                                </a>
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="mt-3 flex space-x-1 text-gray-400 dark:text-gray-500">
-                                        <Check className="m-0.5 w-5 h-5 text-orange-500" />
-                                        <div className="flex flex-col">
-                                            <span className="font-bold text-gray-500 dark:text-gray-400">
-                                                Pay-as-you-go after 1,000 credits
-                                            </span>
-                                            <span>
-                                                {currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of
-                                                Standard workspace usage, excluding VAT.
-                                            </span>
-                                        </div>
-                                    </div>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="mt-1 text-xl font-semibold flex-grow text-gray-800 dark:text-gray-100">
-                                        Pay-as-you-go
-                                    </div>
-                                    <div className="mt-4 flex space-x-1 text-gray-400 dark:text-gray-500">
-                                        <Check className="m-0.5 w-5 h-5 text-orange-500" />
-                                        <div className="flex flex-col">
-                                            <span>
-                                                {currency === "EUR" ? "€" : "$"}0.36 for 10 credits or 1 hour of
-                                                Standard workspace usage, excluding VAT.{" "}
-                                                <a
-                                                    className="gp-link"
-                                                    href="https://www.gitpod.io/docs/configure/billing/usage-based-billing"
-                                                >
-                                                    Learn more about credits
-                                                </a>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
+                            <div className="mt-1 text-xl font-semibold flex-grow text-gray-800 dark:text-gray-100">
+                                Pay-as-you-go
+                            </div>
+                            <div className="mt-4 flex space-x-1 text-gray-400 dark:text-gray-500">
+                                <Check className="m-0.5 w-8 h-5 text-orange-500" />
+                                <div className="flex flex-col">
+                                    <span>
+                                        {priceInformation}{" "}
+                                        <a className="gp-link" href="https://www.gitpod.io/pricing#cost-estimator">
+                                            Estimate costs
+                                        </a>
+                                    </span>
+                                </div>
+                            </div>
+
                             <a className="mt-5 self-end" href={stripePortalUrl}>
                                 <button className="secondary" disabled={!stripePortalUrl}>
                                     Manage Plan ↗

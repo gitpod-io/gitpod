@@ -382,6 +382,65 @@ func (s *BillingService) CancelSubscription(ctx context.Context, in *v1.CancelSu
 	return &v1.CancelSubscriptionResponse{}, nil
 }
 
+func (s *BillingService) getPriceId(ctx context.Context, attributionId string) string {
+	defaultPriceId := s.stripePrices.TeamUsagePriceIDs.USD
+	attributionID, err := db.ParseAttributionID(attributionId)
+	if err != nil {
+		log.Errorf("Failed to parse attribution ID %s: %s", attributionId, err.Error())
+		return defaultPriceId
+	}
+
+	customer, err := s.GetStripeCustomer(ctx, &v1.GetStripeCustomerRequest{
+		Identifier: &v1.GetStripeCustomerRequest_AttributionId{
+			AttributionId: string(attributionID),
+		},
+	})
+	if err != nil {
+		if status.Code(err) != codes.NotFound {
+			log.Errorf("Failed to get stripe customer for attribution ID %s: %s", attributionId, err.Error())
+		}
+		return defaultPriceId
+	}
+
+	stripeCustomer, err := s.stripeClient.GetCustomer(ctx, customer.Customer.Id)
+	if err != nil {
+		log.Errorf("Failed to get customer infromation from stripe for customer ID %s: %s", customer.Customer.Id, err.Error())
+		return defaultPriceId
+	}
+
+	// if the customer has an active subscription, return that information
+	for _, subscription := range stripeCustomer.Subscriptions.Data {
+		if subscription.Status != "canceled" {
+			return subscription.Plan.ID
+		}
+	}
+	priceID, err := getPriceIdentifier(attributionID, stripeCustomer, s)
+	if err != nil {
+		log.Errorf("Failed to get price identifier for attribution ID %s: %s", attributionId, err.Error())
+		return defaultPriceId
+	}
+	return priceID
+}
+
+func (s *BillingService) GetPriceInformation(ctx context.Context, req *v1.GetPriceInformationRequest) (*v1.GetPriceInformationResponse, error) {
+	_, err := db.ParseAttributionID(req.GetAttributionId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid attribution ID %s", req.GetAttributionId())
+	}
+	priceID := s.getPriceId(ctx, req.GetAttributionId())
+	price, err := s.stripeClient.GetPriceInformation(ctx, priceID)
+	if err != nil {
+		return nil, err
+	}
+	information := price.Metadata["human_readable_description"]
+	if information == "" {
+		information = "No information available"
+	}
+	return &v1.GetPriceInformationResponse{
+		HumanReadableDescription: information,
+	}, nil
+}
+
 func (s *BillingService) storeStripeCustomer(ctx context.Context, cus *stripe_api.Customer, attributionID db.AttributionID) (*v1.StripeCustomer, error) {
 	err := db.CreateStripeCustomer(ctx, s.conn, db.StripeCustomer{
 		StripeCustomerID: cus.ID,
