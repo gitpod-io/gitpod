@@ -89,7 +89,7 @@ function OIDCClients(props: { organizationId: string }) {
         const clientConfigs = await oidcService
             .listClientConfigs({ organizationId: props.organizationId })
             .then((resp) => {
-                return resp.providers;
+                return resp.clientConfigs;
             });
         setClientConfigs(clientConfigs);
     };

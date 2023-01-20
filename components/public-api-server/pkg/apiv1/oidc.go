@@ -114,8 +114,8 @@ func (s *OIDCService) ListClientConfigs(ctx context.Context, req *connect.Reques
 	}
 
 	return connect.NewResponse(&v1.ListClientConfigsResponse{
-		Providers:    results,
-		TotalResults: int64(len(results)),
+		ClientConfigs: results,
+		TotalResults:  int64(len(results)),
 	}), nil
 }
 

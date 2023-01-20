@@ -344,9 +344,9 @@ export class OAuth2Config extends Message<OAuth2Config> {
   /**
    * Required.
    *
-   * @generated from field: repeated string scopes_supported = 5;
+   * @generated from field: repeated string scopes = 5;
    */
-  scopesSupported: string[] = [];
+  scopes: string[] = [];
 
   /**
    * Source for additional claims for the token.
@@ -377,7 +377,7 @@ export class OAuth2Config extends Message<OAuth2Config> {
     { no: 2, name: "client_secret", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "authorization_endpoint", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "token_endpoint", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 5, name: "scopes_supported", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 5, name: "scopes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 6, name: "userinfo_endpoint", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 7, name: "userinfo_keys", kind: "message", T: UserInfoKeys },
   ]);
@@ -693,9 +693,9 @@ export class ListClientConfigsRequest extends Message<ListClientConfigsRequest> 
  */
 export class ListClientConfigsResponse extends Message<ListClientConfigsResponse> {
   /**
-   * @generated from field: repeated gitpod.experimental.v1.OIDCClientConfig providers = 1;
+   * @generated from field: repeated gitpod.experimental.v1.OIDCClientConfig client_configs = 1;
    */
-  providers: OIDCClientConfig[] = [];
+  clientConfigs: OIDCClientConfig[] = [];
 
   /**
    * @generated from field: int64 total_results = 2;
@@ -710,7 +710,7 @@ export class ListClientConfigsResponse extends Message<ListClientConfigsResponse
   static readonly runtime = proto3;
   static readonly typeName = "gitpod.experimental.v1.ListClientConfigsResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "providers", kind: "message", T: OIDCClientConfig, repeated: true },
+    { no: 1, name: "client_configs", kind: "message", T: OIDCClientConfig, repeated: true },
     { no: 2, name: "total_results", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
   ]);
 

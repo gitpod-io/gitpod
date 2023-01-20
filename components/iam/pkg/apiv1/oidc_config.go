@@ -95,7 +95,7 @@ func toDBSpec(oauth2Config *v1.OAuth2Config, oidcConfig *v1.OIDCConfig) db.OIDCS
 		ClientID:     oauth2Config.GetClientId(),
 		ClientSecret: oauth2Config.GetClientSecret(),
 		RedirectURL:  oauth2Config.GetAuthorizationEndpoint(),
-		Scopes:       append([]string{goidc.ScopeOpenID, "profile", "email"}, oauth2Config.GetScopesSupported()...),
+		Scopes:       append([]string{goidc.ScopeOpenID, "profile", "email"}, oauth2Config.GetScopes()...),
 	}
 }
 

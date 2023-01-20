@@ -30,7 +30,7 @@ func TestOIDCClientConfig_Create(t *testing.T) {
 			ClientId:              "some-client-id",
 			ClientSecret:          "some-client-secret",
 			AuthorizationEndpoint: "http://some-endpoint.here",
-			ScopesSupported:       []string{"my-scope"},
+			Scopes:                []string{"my-scope"},
 		},
 		OidcConfig: &v1.OIDCConfig{
 			Issuer: "some-issuer",
