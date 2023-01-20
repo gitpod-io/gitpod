@@ -58,6 +58,13 @@ var deprecatedFields = map[string]deprecatedField{
 			return nil
 		},
 	},
+	// No MapValue can exist as this requires a secret rather than passing in the value
+	"experimental.common.staticMessagebusPassword": {
+		Selector: func(cfg *Config) (bool, any) {
+			val := cfg.Experimental.Common.StaticMessagebusPassword
+			return val != "", "***" // Redact the password
+		},
+	},
 	"experimental.common.usePodSecurityPolicies": {
 		Selector: func(cfg *Config) (bool, any) {
 			usePSPs := cfg.Experimental.Common.UsePodSecurityPolicies

@@ -8,6 +8,7 @@ import (
 	_ "embed"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -62,9 +63,28 @@ func secrets(ctx *common.RenderContext) ([]runtime.Object, error) {
 					"username": []byte(rabbitMQUsername),
 				}
 
-				if ctx.Config.MessageBus == nil || ctx.Config.MessageBus.Credentials == nil {
+				// The password may be set three ways:
+				// 1. deprecated experimental config (add to this map)
+				// 2. default method here (add to this map)
+				// 3. a secret (don't add to this map)
+				password := ""
+
+				// @deprecated Pull message bus password from experimental config
+				_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+					if cfg.Common != nil {
+						password = cfg.Common.StaticMessagebusPassword
+					}
+					return nil
+				})
+
+				if password == "" && (ctx.Config.MessageBus == nil || ctx.Config.MessageBus.Credentials == nil) {
 					// If not providing message bus secret, use the default creds
-					data["rabbitmq-password"] = []byte(ctx.Values.MessageBusPassword)
+					// This service is not accessible externally, so setting a default password is an acceptable compromise
+					password = "uq4KxOLtrA-QsDTfuwQ-"
+				}
+
+				if password != "" {
+					data["rabbitmq-password"] = []byte(password)
 				}
 
 				return data

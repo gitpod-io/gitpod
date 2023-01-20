@@ -27,7 +27,7 @@ type Config struct {
 	Workspace  *WorkspaceConfig   `json:"workspace,omitempty"`
 	WebApp     *WebAppConfig      `json:"webapp,omitempty"`
 	IDE        *IDEConfig         `json:"ide,omitempty"`
-	Common     *CommonConfig      `json:"common,omitempty"`
+	Common     *CommonConfig      `json:"common,omitempty"` // @deprecated
 	Overrides  *[]Overrides       `json:"overrides,omitempty"`
 	Telemetry  *TelemetryConfig   `json:"telemetry,omitempty"`  // @deprecated
 	AgentSmith *agentSmith.Config `json:"agentSmith,omitempty"` // @deprecated
@@ -42,8 +42,9 @@ type TelemetryConfig struct {
 
 type CommonConfig struct {
 	// @deprecated
-	PodConfig                map[string]*PodConfig `json:"podConfig,omitempty"`
-	StaticMessagebusPassword string                `json:"staticMessagebusPassword"`
+	PodConfig map[string]*PodConfig `json:"podConfig,omitempty"`
+	// @deprecated use a secret instead in messageBus.credentials
+	StaticMessagebusPassword string `json:"staticMessagebusPassword"`
 	// @deprecated PodSecurityPolicies are deprecated in k8s 1.21 and removed in 1.25
 	UsePodSecurityPolicies bool `json:"usePodSecurityPolicies"`
 }
