@@ -289,7 +289,7 @@ https://{$GITPOD_DOMAIN} {
 
 		uri strip_prefix /iam
 
-		reverse_proxy iam.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002 {
+		reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002 {
 			import upstream_connection
 		}
 	}
