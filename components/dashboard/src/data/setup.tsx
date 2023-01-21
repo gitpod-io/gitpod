@@ -21,8 +21,6 @@ import { FunctionComponent } from "react";
 const CACHE_VERSION = "1";
 
 export const setupQueryClientProvider = () => {
-    // TODO: add a feature-check for idb (set/get to verify it works) and conditionally use persister
-
     const client = new QueryClient();
     const queryClientPersister = createIDBPersister();
 
@@ -49,12 +47,22 @@ export const setupQueryClientProvider = () => {
 
 // Persister that uses IndexedDB
 function createIDBPersister(idbValidKey: IDBValidKey = "gitpodQueryClient") {
+    // Track a flag that indicates if we're attempting to persist the client
+    // Some browsers/versions don't support using indexed-db w/ certain settings or in private mode
+    // If we get an error performing an operation, we'll disable persistance and assume it's not supported
+    let persistanceActive = true;
+
     return {
         persistClient: async (client: PersistedClient) => {
+            if (!persistanceActive) {
+                return;
+            }
+
             try {
                 await set(idbValidKey, client);
             } catch (e) {
                 console.error("unable to persist query client");
+                persistanceActive = false;
             }
         },
         restoreClient: async () => {
@@ -63,6 +71,7 @@ function createIDBPersister(idbValidKey: IDBValidKey = "gitpodQueryClient") {
                 return client;
             } catch (e) {
                 console.error("unable to load query client from cache");
+                persistanceActive = false;
             }
         },
         removeClient: async () => {
@@ -70,6 +79,7 @@ function createIDBPersister(idbValidKey: IDBValidKey = "gitpodQueryClient") {
                 await del(idbValidKey);
             } catch (e) {
                 console.error("unable to remove query client");
+                persistanceActive = false;
             }
         },
     } as Persister;
