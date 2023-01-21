@@ -12,7 +12,6 @@ require (
 	github.com/gitpod-io/gitpod/components/gitpod-db/go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/iam v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ide-metrics-api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ide-service-api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/image-builder/api v0.0.0-00010101000000-000000000000
@@ -349,8 +348,6 @@ require (
 replace github.com/gitpod-io/gitpod/image-builder => ../components/image-builder-mk3 // leeway
 
 replace github.com/gitpod-io/gitpod/agent-smith => ../../components/ee/agent-smith // leeway
-
-replace github.com/gitpod-io/gitpod/iam => ../../components/iam // leeway
 
 replace github.com/gitpod-io/gitpod/blobserve => ../../components/blobserve // leeway
 

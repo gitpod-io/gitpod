@@ -11,9 +11,6 @@ type Configuration struct {
 
 	BillingServiceAddress string `json:"billingServiceAddress,omitempty"`
 
-	// Deprecated.
-	OIDCServiceAddress string `json:"oidcServiceAddress,omitempty"`
-
 	// Address to use for creating new sessions
 	SessionServiceAddress string `json:"sessionServiceAddress"`
 
