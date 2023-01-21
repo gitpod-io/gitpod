@@ -21,6 +21,7 @@ import { openAuthorizeWindow } from "../provider-utils";
 import Alert from "../components/Alert";
 import { listAllProjects } from "../service/public-api";
 import { UserContext } from "../user-context";
+import { StartWorkspaceModalContext } from "../workspaces/start-workspace-modal-context";
 
 export default function () {
     const location = useLocation();
@@ -29,6 +30,7 @@ export default function () {
     const { teams } = useContext(TeamsContext);
     const { user } = useContext(UserContext);
     const team = getCurrentTeam(location, teams);
+    const { setStartWorkspaceModalProps } = useContext(StartWorkspaceModalContext);
 
     const match = useRouteMatch<{ team: string; resource: string }>("/(t/)?:team/:resource");
     const projectSlug = match?.params?.resource;
@@ -397,9 +399,11 @@ export default function () {
                                                     menuEntries={[
                                                         {
                                                             title: "New Workspace ...",
-                                                            href: gitpodHostUrl
-                                                                .withContext(`${branch.url}`, { showOptions: true })
-                                                                .toString(),
+                                                            onClick: () =>
+                                                                setStartWorkspaceModalProps({
+                                                                    contextUrl: branch.url,
+                                                                    allowContextUrlChange: true,
+                                                                }),
                                                             separator: true,
                                                         },
                                                         prebuild?.status === "queued" || prebuild?.status === "building"
