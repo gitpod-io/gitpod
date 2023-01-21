@@ -13,6 +13,7 @@ packages:
       - components/gitpod-protocol/go:lib
       - components/gitpod-db/go:lib
       - components/gitpod-db/go:init-testdb
+      - components/iam:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux

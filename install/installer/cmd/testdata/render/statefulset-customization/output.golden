@@ -403,6 +403,14 @@ spec:
       ports:
         - port: 9876
           protocol: TCP
+    - from:
+        - podSelector:
+            matchLabels:
+              app: gitpod
+              component: public-api-server
+      ports:
+        - port: 9876
+          protocol: TCP
   podSelector:
     matchLabels:
       app: gitpod
@@ -2844,7 +2852,7 @@ data:
     kind: Deployment
     metadata:
       annotations:
-        gitpod.io/checksum_config: 4323280d43b39ac16a1946291981c8798f4d957934a2bbc4a8161d1d4c679ac5
+        gitpod.io/checksum_config: 78a21dc8826012e49bd9d99a628e0d147f1ab9dac5fdcba48e89936701532253
       creationTimestamp: null
       labels:
         app: gitpod
@@ -5268,6 +5276,7 @@ data:
       "gitpodServiceUrl": "ws://server.default.svc.cluster.local:3000",
       "billingServiceAddress": "usage.default.svc.cluster.local:9001",
       "oidcServiceAddress": "iam.default.svc.cluster.local:9001",
+      "sessionServiceAddress": "server.default.svc.cluster.local:9876",
       "stripeWebhookSigningSecretPath": "",
       "personalAccessTokenSigningKeyPath": "",
       "databaseConfigPath": "/secrets/database-config",
@@ -10406,7 +10415,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    gitpod.io/checksum_config: 4323280d43b39ac16a1946291981c8798f4d957934a2bbc4a8161d1d4c679ac5
+    gitpod.io/checksum_config: 78a21dc8826012e49bd9d99a628e0d147f1ab9dac5fdcba48e89936701532253
   creationTimestamp: null
   labels:
     app: gitpod

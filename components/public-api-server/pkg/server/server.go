@@ -15,6 +15,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/go-chi/chi/v5"
 	"gorm.io/gorm"
 
 	"github.com/gitpod-io/gitpod/components/public-api/go/config"
@@ -23,6 +24,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
+	"github.com/gitpod-io/gitpod/iam/pkg/oidc"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/apiv1"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice"
@@ -102,12 +104,15 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 
 	srv.HTTPMux().Handle("/stripe/invoices/webhook", handlers.ContentTypeHandler(stripeWebhookHandler, "application/json"))
 
+	oidcService := oidc.NewService(cfg.SessionServiceAddress, dbConn, cipherSet)
+
 	if registerErr := register(srv, &registerDependencies{
-		connPool:  connPool,
-		expClient: expClient,
-		dbConn:    dbConn,
-		signer:    signer,
-		cipher:    cipherSet,
+		connPool:    connPool,
+		expClient:   expClient,
+		dbConn:      dbConn,
+		signer:      signer,
+		cipher:      cipherSet,
+		oidcService: oidcService,
 	}); registerErr != nil {
 		return fmt.Errorf("failed to register services: %w", registerErr)
 	}
@@ -120,11 +125,12 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 }
 
 type registerDependencies struct {
-	connPool  proxy.ServerConnectionPool
-	expClient experiments.Client
-	dbConn    *gorm.DB
-	signer    auth.Signer
-	cipher    db.Cipher
+	connPool    proxy.ServerConnectionPool
+	expClient   experiments.Client
+	dbConn      *gorm.DB
+	signer      auth.Signer
+	cipher      db.Cipher
+	oidcService *oidc.Service
 }
 
 func register(srv *baseserver.Server, deps *registerDependencies) error {
@@ -136,6 +142,8 @@ func register(srv *baseserver.Server, deps *registerDependencies) error {
 		return err
 	}
 
+	rootHandler := chi.NewRouter()
+
 	handlerOptions := []connect.HandlerOption{
 		connect.WithInterceptors(
 			NewMetricsInterceptor(connectMetrics),
@@ -145,27 +153,33 @@ func register(srv *baseserver.Server, deps *registerDependencies) error {
 	}
 
 	workspacesRoute, workspacesServiceHandler := v1connect.NewWorkspacesServiceHandler(apiv1.NewWorkspaceService(deps.connPool), handlerOptions...)
-	srv.HTTPMux().Handle(workspacesRoute, workspacesServiceHandler)
+	rootHandler.Mount(workspacesRoute, workspacesServiceHandler)
 
 	teamsRoute, teamsServiceHandler := v1connect.NewTeamsServiceHandler(apiv1.NewTeamsService(deps.connPool), handlerOptions...)
-	srv.HTTPMux().Handle(teamsRoute, teamsServiceHandler)
+	rootHandler.Mount(teamsRoute, teamsServiceHandler)
 
 	if deps.signer != nil {
 		tokensRoute, tokensServiceHandler := v1connect.NewTokensServiceHandler(apiv1.NewTokensService(deps.connPool, deps.expClient, deps.dbConn, deps.signer), handlerOptions...)
-		srv.HTTPMux().Handle(tokensRoute, tokensServiceHandler)
+		rootHandler.Mount(tokensRoute, tokensServiceHandler)
 	}
 
 	userRoute, userServiceHandler := v1connect.NewUserServiceHandler(apiv1.NewUserService(deps.connPool), handlerOptions...)
-	srv.HTTPMux().Handle(userRoute, userServiceHandler)
+	rootHandler.Mount(userRoute, userServiceHandler)
 
 	ideClientRoute, ideClientServiceHandler := v1connect.NewIDEClientServiceHandler(apiv1.NewIDEClientService(deps.connPool), handlerOptions...)
-	srv.HTTPMux().Handle(ideClientRoute, ideClientServiceHandler)
+	rootHandler.Mount(ideClientRoute, ideClientServiceHandler)
 
 	projectsRoute, projectsServiceHandler := v1connect.NewProjectsServiceHandler(apiv1.NewProjectsService(deps.connPool), handlerOptions...)
-	srv.HTTPMux().Handle(projectsRoute, projectsServiceHandler)
+	rootHandler.Mount(projectsRoute, projectsServiceHandler)
 
 	oidcRoute, oidcServiceHandler := v1connect.NewOIDCServiceHandler(apiv1.NewOIDCService(deps.connPool, deps.expClient, deps.dbConn, deps.cipher), handlerOptions...)
-	srv.HTTPMux().Handle(oidcRoute, oidcServiceHandler)
+	rootHandler.Mount(oidcRoute, oidcServiceHandler)
+
+	// OIDC sign-in handlers
+	rootHandler.Mount("/oidc", oidc.Router(deps.oidcService))
+
+	// All requests are handled by our root router
+	srv.HTTPMux().Handle("/", rootHandler)
 
 	return nil
 }
