@@ -14,6 +14,9 @@ type Configuration struct {
 	// Deprecated.
 	OIDCServiceAddress string `json:"oidcServiceAddress,omitempty"`
 
+	// Address to use for creating new sessions
+	SessionServiceAddress string `json:"sessionServiceAddress"`
+
 	// StripeWebhookSigningSecretPath is a filepath to a secret used to validate incoming webhooks from Stripe
 	StripeWebhookSigningSecretPath string `json:"stripeWebhookSigningSecretPath"`
 

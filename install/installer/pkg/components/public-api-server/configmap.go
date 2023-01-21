@@ -50,6 +50,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		PersonalAccessTokenSigningKeyPath: personalAccessTokenSigningKeyPath,
 		OIDCServiceAddress:                net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", iam.Component, ctx.Namespace), strconv.Itoa(iam.GRPCServicePort)),
 		BillingServiceAddress:             net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", usage.Component, ctx.Namespace), strconv.Itoa(usage.GRPCServicePort)),
+		SessionServiceAddress:             net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", common.ServerComponent, ctx.Namespace), strconv.Itoa(common.ServerIAMSessionPort)),
 		DatabaseConfigPath:                databaseSecretMountPath,
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{

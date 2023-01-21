@@ -122,6 +122,24 @@ func Networkpolicy(ctx *common.RenderContext, component string) ([]runtime.Objec
 							},
 						},
 					},
+					{
+						Ports: []networkingv1.NetworkPolicyPort{
+							{
+								Protocol: common.TCPProtocol,
+								Port:     &intstr.IntOrString{IntVal: IAMSessionPort},
+							},
+						},
+						From: []networkingv1.NetworkPolicyPeer{
+							{
+								PodSelector: &metav1.LabelSelector{
+									MatchLabels: map[string]string{
+										"app":       "gitpod",
+										"component": common.PublicApiComponent,
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
