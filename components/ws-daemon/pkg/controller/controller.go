@@ -60,7 +60,10 @@ func NewWorkspaceController(c client.Client, opts WorkspaceControllerOpts) (*Wor
 		return nil, err
 	}
 
-	ops := NewWorkspaceOperations(store)
+	ops, err := NewWorkspaceOperations(opts.ContentConfig, store, opts.MetricsRegistry)
+	if err != nil {
+		return nil, err
+	}
 
 	return &WorkspaceController{
 		Client:     c,
@@ -101,7 +104,7 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 		workspace.Status.Phase == workspacev1.WorkspacePhaseInitializing ||
 		workspace.Status.Phase == workspacev1.WorkspacePhaseRunning {
 
-		result, err = wsc.handleWorkspaceInit(ctx, &workspace)
+		result, err = wsc.handleWorkspaceInit(ctx, &workspace, req)
 		return result, err
 	}
 
@@ -113,13 +116,13 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 	return ctrl.Result{}, nil
 }
 
-func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, workspace *workspacev1.Workspace) (result ctrl.Result, err error) {
+func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *workspacev1.Workspace, req ctrl.Request) (result ctrl.Result, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "handleWorkspaceInit")
 	defer tracing.FinishSpan(span, &err)
 
-	if c := wsk8s.GetCondition(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)); c == nil {
+	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)); c == nil {
 		var init csapi.WorkspaceInitializer
-		err = proto.Unmarshal(workspace.Spec.Initializer, &init)
+		err = proto.Unmarshal(ws.Spec.Initializer, &init)
 		if err != nil {
 			err = fmt.Errorf("cannot unmarshal initializer config: %w", err)
 			return ctrl.Result{}, err
@@ -127,16 +130,16 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, workspa
 
 		alreadyInit, failure, err := wsc.operations.InitWorkspaceContent(ctx, InitContentOptions{
 			Meta: WorkspaceMeta{
-				Owner:       workspace.Spec.Ownership.Owner,
-				WorkspaceId: workspace.Spec.Ownership.WorkspaceID,
-				InstanceId:  workspace.Name,
+				Owner:       ws.Spec.Ownership.Owner,
+				WorkspaceId: ws.Spec.Ownership.WorkspaceID,
+				InstanceId:  ws.Name,
 			},
 			Initializer: &init,
-			Headless:    workspace.Status.Headless,
+			Headless:    ws.Status.Headless,
 		})
 
 		if err != nil {
-
+			return ctrl.Result{}, fmt.Errorf("could not initialize workspace %s: %w", ws.Name, err)
 		}
 
 		if alreadyInit {
@@ -144,8 +147,13 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, workspa
 		}
 
 		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			var workspace workspacev1.Workspace
+			if err := wsc.Get(ctx, req.NamespacedName, &workspace); err != nil {
+				return err
+			}
+
 			if failure != "" {
-				workspace.Status.Conditions = wsk8s.AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
+				workspace.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
 					Type:               string(workspacev1.WorkspaceConditionContentReady),
 					Status:             metav1.ConditionFalse,
 					Message:            failure,
@@ -153,7 +161,7 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, workspa
 					LastTransitionTime: metav1.Now(),
 				})
 			} else {
-				workspace.Status.Conditions = wsk8s.AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
+				workspace.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
 					Type:               string(workspacev1.WorkspaceConditionContentReady),
 					Status:             metav1.ConditionTrue,
 					Reason:             "InitializationSuccess",
@@ -161,7 +169,7 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, workspa
 				})
 			}
 
-			return wsc.Status().Update(ctx, workspace)
+			return wsc.Status().Update(ctx, &workspace)
 		})
 
 		return ctrl.Result{}, err
@@ -170,20 +178,29 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, workspa
 	return ctrl.Result{}, nil
 }
 
-func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, workspace *workspacev1.Workspace) (result ctrl.Result, err error) {
+func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *workspacev1.Workspace) (result ctrl.Result, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "handleWorkspaceInit")
 	defer tracing.FinishSpan(span, &err)
 	log := log.FromContext(ctx)
 
-	log.WithValues("workspaceID", workspace.Name, "runtime", workspace.Status.Runtime).Info("DISPOSING WORKSPACE")
-	alreadyDisposing, gitStatus, disposeErr := wsc.operations.DisposeWorkspace(ctx, WorkspaceMeta{
-		Owner:       workspace.Spec.Ownership.Owner,
-		WorkspaceId: workspace.Spec.Ownership.WorkspaceID,
-		InstanceId:  workspace.Name,
+	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)); c == nil || c.Status == metav1.ConditionFalse {
+		return ctrl.Result{}, fmt.Errorf("workspace content was never ready")
+	}
+
+	log.WithValues("workspaceID", ws.Name, "runtime", ws.Status.Runtime).Info("DISPOSING WORKSPACE")
+	alreadyDisposing, gitStatus, disposeErr := wsc.operations.DisposeWorkspace(ctx, DisposeOptions{
+		Meta: WorkspaceMeta{
+			Owner:       ws.Spec.Ownership.Owner,
+			WorkspaceId: ws.Spec.Ownership.WorkspaceID,
+			InstanceId:  ws.Name,
+		},
+		WorkspaceLocation: ws.Spec.WorkspaceLocation,
+		BackupLogs:        ws.Spec.Type == workspacev1.WorkspaceTypePrebuild,
 	})
+
 	if disposeErr != nil {
-		log.Error(disposeErr, "failed to dispose workspace", "workspace", workspace.Name)
-		err = fmt.Errorf("failed to dispose workspace %s: %w", workspace.Name, disposeErr)
+		log.Error(disposeErr, "failed to dispose workspace", "workspace", ws.Name)
+		err = fmt.Errorf("failed to dispose workspace %s: %w", ws.Name, disposeErr)
 		return ctrl.Result{}, err
 	}
 
@@ -191,11 +208,11 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, workspa
 		return ctrl.Result{}, nil
 	}
 
-	workspace.Status.GitStatus = toWorkspaceGitStatus(gitStatus)
+	ws.Status.GitStatus = toWorkspaceGitStatus(gitStatus)
 
 	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		if disposeErr != nil {
-			workspace.Status.Conditions = wsk8s.AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
+			ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
 				Type:               string(workspacev1.WorkspaceConditionBackupFailure),
 				Status:             metav1.ConditionTrue,
 				Reason:             "BackupFailed",
@@ -203,7 +220,7 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, workspa
 				LastTransitionTime: metav1.Now(),
 			})
 		} else {
-			workspace.Status.Conditions = wsk8s.AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
+			ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
 				Type:               string(workspacev1.WorkspaceConditionBackupComplete),
 				Status:             metav1.ConditionTrue,
 				Reason:             "BackupComplete",
@@ -211,7 +228,7 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, workspa
 			})
 		}
 
-		return wsc.Status().Update(ctx, workspace)
+		return wsc.Status().Update(ctx, ws)
 	})
 
 	return ctrl.Result{}, err

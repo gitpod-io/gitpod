@@ -25,6 +25,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/opentracing/opentracing-go"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
@@ -43,8 +44,8 @@ const (
 )
 
 type WorkspaceOperations struct {
-	store                  *session.Store
 	config                 content.Config
+	store                  *session.Store
 	backupWorkspaceLimiter chan struct{}
 	metrics                *content.Metrics
 }
@@ -61,15 +62,28 @@ type InitContentOptions struct {
 	Headless    bool
 }
 
-func NewWorkspaceOperations(store *session.Store) *WorkspaceOperations {
-	return &WorkspaceOperations{store: store,
+type DisposeOptions struct {
+	Meta              WorkspaceMeta
+	WorkspaceLocation string
+	BackupLogs        bool
+}
+
+func NewWorkspaceOperations(config content.Config, store *session.Store, reg prometheus.Registerer) (*WorkspaceOperations, error) {
+	waitingTimeHist, waitingTimeoutCounter, err := content.RegisterConcurrentBackupMetrics(reg, "mk2")
+	if err != nil {
+		return nil, err
+	}
+
+	return &WorkspaceOperations{
+		config: config,
+		store:  store,
 		metrics: &content.Metrics{
 			BackupWaitingTimeHist:       waitingTimeHist,
 			BackupWaitingTimeoutCounter: waitingTimeoutCounter,
 		},
 		// we permit five concurrent backups at any given time, hence the five in the channel
 		backupWorkspaceLimiter: make(chan struct{}, 5),
-	}
+	}, nil
 }
 
 func (wso *WorkspaceOperations) InitWorkspaceContent(ctx context.Context, options InitContentOptions) (bool, string, error) {
@@ -77,26 +91,32 @@ func (wso *WorkspaceOperations) InitWorkspaceContent(ctx context.Context, option
 		ctx, options.Meta.WorkspaceId, filepath.Join(wso.store.Location, options.Meta.WorkspaceId),
 		wso.creator(options.Meta.Owner, options.Meta.WorkspaceId, options.Meta.InstanceId, options.Initializer, options.Headless))
 	if errors.Is(err, storage.ErrNotFound) {
-		return "", nil
+		return false, "", nil
+	}
+
+	if errors.Is(err, session.ErrAlreadyExists) {
+		return true, "", nil
 	}
 
 	if err != nil {
-		return "bug: cannot add workspace to store", xerrors.Errorf("cannot add workspace to store: %w", err)
+		return false, "bug: cannot add workspace to store", xerrors.Errorf("cannot add workspace to store: %w", err)
 	}
 
 	rs, ok := res.NonPersistentAttrs[session.AttrRemoteStorage].(storage.DirectAccess)
 	if rs == nil || !ok {
-		return "bug: workspace has no remote storage", xerrors.Errorf("workspace has no remote storage")
+		return false, "bug: workspace has no remote storage", xerrors.Errorf("workspace has no remote storage")
 	}
 	ps, err := storage.NewPresignedAccess(&wso.config.Storage)
 	if err != nil {
-		return "bug: no presigned storage available", xerrors.Errorf("no presigned storage available: %w", err)
+		return false, "bug: no presigned storage available", xerrors.Errorf("no presigned storage available: %w", err)
 	}
 
 	remoteContent, err := content.CollectRemoteContent(ctx, rs, ps, options.Meta.Owner, options.Initializer)
 	if err != nil {
-		return "remote content error", xerrors.Errorf("remote content error: %w", err)
+		return false, "remote content error", xerrors.Errorf("remote content error: %w", err)
 	}
+
+	glog.Info("RUNNING INITIALIZER")
 
 	// Initialize workspace.
 	// FWB workspaces initialize without the help of ws-daemon, but using their supervisor or the registry-facade.
@@ -123,10 +143,10 @@ func (wso *WorkspaceOperations) InitWorkspaceContent(ctx context.Context, option
 
 	err = content.RunInitializer(ctx, res.Location, options.Initializer, remoteContent, opts)
 	if err != nil {
-		return err.Error(), err
+		return false, err.Error(), err
 	}
 
-	return "", nil
+	return false, "", nil
 }
 
 func (wso *WorkspaceOperations) creator(owner, workspaceId, instanceId string, init *csapi.WorkspaceInitializer, storageDisabled bool) session.WorkspaceFactory {
@@ -135,6 +155,8 @@ func (wso *WorkspaceOperations) creator(owner, workspaceId, instanceId string, i
 	if len(allLocations) > 0 {
 		checkoutLocation = allLocations[0]
 	}
+
+	glog.WithField("checkoutLocation", checkoutLocation)
 
 	serviceDirName := instanceId + "-daemon"
 	return func(ctx context.Context, location string) (res *session.Workspace, err error) {
@@ -155,19 +177,13 @@ func (wso *WorkspaceOperations) creator(owner, workspaceId, instanceId string, i
 	}
 }
 
-func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, owi WorkspaceMeta) (bool, *csapi.GitStatus, error) {
+func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, opts DisposeOptions) (bool, *csapi.GitStatus, error) {
 	log := log.FromContext(ctx)
 
-	sess := wso.store.Get(owi.InstanceId)
+	sess := wso.store.Get(opts.Meta.InstanceId)
 	if sess == nil {
-		return false, nil, status.Error(codes.NotFound, fmt.Sprintf("cannot find workspace %s during DisposeWorkspace", owi.InstanceId))
+		return false, nil, status.Error(codes.NotFound, fmt.Sprintf("cannot find workspace %s during DisposeWorkspace", opts.Meta.InstanceId))
 	}
-
-	log.Info("get condition")
-
-	// if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)); c == nil || c.Status == metav1.ConditionFalse {
-	// 	return false, nil, xerrors.Errorf("workspace content was never ready")
-	// }
 
 	log.Info("wait disposal")
 
@@ -184,9 +200,8 @@ func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, owi Worksp
 		return true, repo, nil
 	}
 
-	// todo(thomas) check when logs need to be backed up
-	if ws.Spec.Type == workspacev1.WorkspaceTypePrebuild {
-		err := wso.uploadWorkspaceLogs(ctx, ws)
+	if opts.BackupLogs {
+		err := wso.uploadWorkspaceLogs(ctx, opts)
 		if err != nil {
 			// we do not fail the workspace yet because we still might succeed with its content!
 			glog.WithError(err).Error("log backup failed")
@@ -199,10 +214,10 @@ func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, owi Worksp
 
 	log.Info("upload workspace content")
 
-	err = wso.uploadWorkspaceContent(ctx, ws, sess)
+	err = wso.uploadWorkspaceContent(ctx, sess)
 	if err != nil {
 		glog.WithError(err).Error("final backup failed")
-		return false, nil, xerrors.Errorf("final backup failed for workspace %s", ws.Name)
+		return false, nil, xerrors.Errorf("final backup failed for workspace %s", opts.Meta.InstanceId)
 	}
 
 	log.Info("update git status")
@@ -219,11 +234,6 @@ func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, owi Worksp
 
 	log.Info("updated git status", "repo", repo)
 
-	if repo != nil {
-		log.Info("updating repo status")
-		ws.Status.GitStatus = toWorkspaceGitStatus(repo)
-	}
-
 	if err = sess.Dispose(ctx); err != nil {
 		glog.WithError(err).Error("cannot dispose session")
 	}
@@ -237,9 +247,9 @@ func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, owi Worksp
 	return false, repo, nil
 }
 
-func (wso *WorkspaceOperations) uploadWorkspaceLogs(ctx context.Context, owi WorkspaceMeta) (err error) {
+func (wso *WorkspaceOperations) uploadWorkspaceLogs(ctx context.Context, opts DisposeOptions) (err error) {
 	// currently we're only uploading prebuild log files
-	logFiles, err := logs.ListPrebuildLogFiles(ctx, ws.Spec.WorkspaceLocation)
+	logFiles, err := logs.ListPrebuildLogFiles(ctx, opts.WorkspaceLocation)
 	if err != nil {
 		return err
 	}
@@ -249,7 +259,7 @@ func (wso *WorkspaceOperations) uploadWorkspaceLogs(ctx context.Context, owi Wor
 		return xerrors.Errorf("cannot use configured storage: %w", err)
 	}
 
-	err = rs.Init(ctx, owi.Owner, owi.WorkspaceId, owi.InstanceId)
+	err = rs.Init(ctx, opts.Meta.Owner, opts.Meta.WorkspaceId, opts.Meta.InstanceId)
 	if err != nil {
 		return xerrors.Errorf("cannot use configured storage: %w", err)
 	}
