@@ -87,6 +87,7 @@ func NewWorkspaceOperations(config content.Config, store *session.Store, reg pro
 }
 
 func (wso *WorkspaceOperations) InitWorkspaceContent(ctx context.Context, options InitContentOptions) (bool, string, error) {
+	glog.Infof("CALLING INIT CONTENT FOR %s", options.Meta.InstanceId)
 	res, err := wso.store.NewWorkspace(
 		ctx, options.Meta.WorkspaceId, filepath.Join(wso.store.Location, options.Meta.WorkspaceId),
 		wso.creator(options.Meta.Owner, options.Meta.WorkspaceId, options.Meta.InstanceId, options.Initializer, options.Headless))
@@ -95,6 +96,7 @@ func (wso *WorkspaceOperations) InitWorkspaceContent(ctx context.Context, option
 	}
 
 	if errors.Is(err, session.ErrAlreadyExists) {
+		glog.Infof("workspace %s already exists. no create", options.Meta.InstanceId)
 		return true, "", nil
 	}
 
@@ -116,7 +118,8 @@ func (wso *WorkspaceOperations) InitWorkspaceContent(ctx context.Context, option
 		return false, "remote content error", xerrors.Errorf("remote content error: %w", err)
 	}
 
-	glog.Info("RUNNING INITIALIZER")
+	glog.Infof("Initializer is %+v", options.Initializer)
+	glog.Infof("RUNNING INITIALIZER FOR %v with len %v", remoteContent, len(remoteContent))
 
 	// Initialize workspace.
 	// FWB workspaces initialize without the help of ws-daemon, but using their supervisor or the registry-facade.
@@ -143,6 +146,7 @@ func (wso *WorkspaceOperations) InitWorkspaceContent(ctx context.Context, option
 
 	err = content.RunInitializer(ctx, res.Location, options.Initializer, remoteContent, opts)
 	if err != nil {
+		glog.Infof("error running initializer %v", err)
 		return false, err.Error(), err
 	}
 
@@ -150,8 +154,10 @@ func (wso *WorkspaceOperations) InitWorkspaceContent(ctx context.Context, option
 }
 
 func (wso *WorkspaceOperations) creator(owner, workspaceId, instanceId string, init *csapi.WorkspaceInitializer, storageDisabled bool) session.WorkspaceFactory {
+	glog.Info("CREATOR CALLED")
 	var checkoutLocation string
 	allLocations := csapi.GetCheckoutLocationsFromInitializer(init)
+	glog.Infof("all location is %v", allLocations)
 	if len(allLocations) > 0 {
 		checkoutLocation = allLocations[0]
 	}

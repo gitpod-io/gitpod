@@ -117,6 +117,7 @@ func (s *Store) NewWorkspace(ctx context.Context, instanceID, location string, c
 	if err != nil {
 		return nil, err
 	}
+	log.Infof("created workspace is %v", res)
 	res.state = WorkspaceInitializing
 	if res.NonPersistentAttrs == nil {
 		res.NonPersistentAttrs = make(map[string]interface{})
