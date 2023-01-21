@@ -36,10 +36,6 @@ import (
 func Start(logger *logrus.Entry, version string, cfg *config.Configuration) error {
 	logger.WithField("config", cfg).Info("Starting public-api.")
 
-	if cfg.OIDCServiceAddress == "" {
-		return fmt.Errorf("`oidcServiceAddress` is missing in config")
-	}
-
 	gitpodAPI, err := url.Parse(cfg.GitpodServiceURL)
 	if err != nil {
 		return fmt.Errorf("failed to parse Gitpod API URL: %w", err)

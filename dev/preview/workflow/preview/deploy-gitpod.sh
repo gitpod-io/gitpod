@@ -492,10 +492,6 @@ yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeSecret" "st
 yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeConfig" "stripe-config"
 
 #
-# IAM
-#
-
-#
 # Enable "Frontend Dev" on all preview envs
 #
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.frontendDevEnabled "true"
@@ -510,9 +506,6 @@ yq w -i preview-envs-oidc-clients-config-secret.secret.yaml metadata.name "oidc-
 yq w -i preview-envs-oidc-clients-config-secret.secret.yaml metadata.namespace "default"
 kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" apply -f preview-envs-oidc-clients-config-secret.secret.yaml
 rm -f preview-envs-oidc-clients-config-secret.secret.yaml
-
-# enable config
-yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.iam.oidsClientsConfigSecret" "oidc-clients-config-secret"
 
 
 log_success "Generated config at $INSTALLER_CONFIG_PATH"

@@ -50,7 +50,6 @@ packages:
       - components/ee/db-sync:docker
       - components/ee/payment-endpoint:docker
       - components/gitpod-db:docker
-      - components/iam:docker
       - components/ide/code-desktop:docker
       - components/ide/code-desktop:docker-insiders
       - components/ide/code:docker
@@ -126,7 +125,6 @@ packages:
   - name: all-apps
     type: generic
     deps:
-      - components/iam:app
       - components/blobserve:app
       - components/content-service:app
       - components/dashboard:app

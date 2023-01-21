@@ -16,7 +16,6 @@ import (
 	"github.com/gitpod-io/gitpod/components/public-api/go/config"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/iam"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
 	corev1 "k8s.io/api/core/v1"
@@ -48,7 +47,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		GitpodServiceURL:                  fmt.Sprintf("ws://%s.%s.svc.cluster.local:%d", server.Component, ctx.Namespace, server.ContainerPort),
 		StripeWebhookSigningSecretPath:    stripeSecretPath,
 		PersonalAccessTokenSigningKeyPath: personalAccessTokenSigningKeyPath,
-		OIDCServiceAddress:                net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", iam.Component, ctx.Namespace), strconv.Itoa(iam.GRPCServicePort)),
 		BillingServiceAddress:             net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", usage.Component, ctx.Namespace), strconv.Itoa(usage.GRPCServicePort)),
 		SessionServiceAddress:             net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", common.ServerComponent, ctx.Namespace), strconv.Itoa(common.ServerIAMSessionPort)),
 		DatabaseConfigPath:                databaseSecretMountPath,

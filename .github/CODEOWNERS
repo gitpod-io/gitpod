@@ -18,8 +18,6 @@
 /components/gitpod-messagebus @gitpod-io/engineering-webapp
 /components/gitpod-protocol @gitpod-io/engineering-webapp
 /components/gitpod-protocol/java @gitpod-io/engineering-ide
-/components/iam @gitpod-io/engineering-webapp
-/components/iam-api @gitpod-io/engineering-webapp
 /components/ide @gitpod-io/engineering-ide
 /components/ide-metrics @gitpod-io/engineering-ide
 /components/ide-metrics-api @gitpod-io/engineering-ide
@@ -52,8 +50,6 @@
 /install/installer/pkg/components/registry-facade @gitpod-io/engineering-workspace
 /install/installer/pkg/components/spicedb @gitpod-io/engineering-webapp
 /install/installer/pkg/components/public-api-server @gitpod-io/engineering-webapp
-/install/installer/pkg/components/iam @gitpod-io/engineering-webapp
-/install/installer/pkg/components/iam-api @gitpod-io/engineering-webapp
 /install/installer/pkg/components/server @gitpod-io/engineering-webapp
 /install/installer/pkg/components/server/ide @gitpod-io/engineering-ide
 /install/installer/pkg/components/usage @gitpod-io/engineering-webapp

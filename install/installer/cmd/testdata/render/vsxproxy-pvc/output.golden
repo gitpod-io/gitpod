@@ -87,38 +87,6 @@ spec:
     - Ingress
 
 ---
-# networking.k8s.io/v1/NetworkPolicy iam
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: iam
-  name: iam
-  namespace: default
-spec:
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              component: proxy
-        - podSelector:
-            matchLabels:
-              component: public-api-server
-      ports:
-        - port: 9001
-          protocol: TCP
-        - port: 9002
-          protocol: TCP
-  podSelector:
-    matchLabels:
-      app: gitpod
-      component: iam
-  policyTypes:
-    - Ingress
-
----
 # networking.k8s.io/v1/NetworkPolicy ide-metrics
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -394,14 +362,6 @@ spec:
               component: gitpod
       ports:
         - port: 9000
-          protocol: TCP
-    - from:
-        - podSelector:
-            matchLabels:
-              app: gitpod
-              component: iam
-      ports:
-        - port: 9876
           protocol: TCP
     - from:
         - podSelector:
@@ -893,18 +853,6 @@ metadata:
     app: gitpod
     component: gitpod
   name: gitpod
-  namespace: default
----
-# v1/ServiceAccount iam
-apiVersion: v1
-automountServiceAccountToken: true
-kind: ServiceAccount
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: iam
-  name: iam
   namespace: default
 ---
 # v1/ServiceAccount ide-metrics
@@ -2276,78 +2224,6 @@ data:
       creationTimestamp: null
       labels:
         app: gitpod
-        component: iam
-      name: iam
-      namespace: default
-    ---
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      annotations:
-        gitpod.io/checksum_config: 350c5081ae3f30253f80d07e0adfd8d82f0d8b416858b42d61fec05c2d1d246a
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: iam
-      name: iam
-      namespace: default
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRoleBinding
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: iam
-      name: default-iam-rb-kube-rbac-proxy
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: RoleBinding
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: iam
-      name: iam
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: iam
-      name: iam
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: Service
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: iam
-        kind: service
-      name: iam
-      namespace: default
-    ---
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: iam
-      name: iam
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
         component: content-service
       name: content-service
       namespace: default
@@ -2842,7 +2718,7 @@ data:
     kind: Deployment
     metadata:
       annotations:
-        gitpod.io/checksum_config: 78a21dc8826012e49bd9d99a628e0d147f1ab9dac5fdcba48e89936701532253
+        gitpod.io/checksum_config: 3cc95f976fd2b074f33d82a494edf92c0b9b46962e03fd0689b885ad33836f4f
       creationTimestamp: null
       labels:
         app: gitpod
@@ -3774,33 +3650,6 @@ metadata:
   name: gitpod-app
   namespace: default
 
----
-# v1/ConfigMap iam
-apiVersion: v1
-data:
-  config.json: |-
-    {
-      "server": {
-        "services": {
-          "grpc": {
-            "address": "0.0.0.0:9001"
-          },
-          "http": {
-            "address": "0.0.0.0:9002"
-          }
-        }
-      },
-      "databaseConfigPath": "/secrets/database-config",
-      "sessionServiceAddress": "server.default.svc.cluster.local:9876"
-    }
-kind: ConfigMap
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: iam
-  name: iam
-  namespace: default
 ---
 # v1/ConfigMap ide-config
 apiVersion: v1
@@ -5265,7 +5114,6 @@ data:
     {
       "gitpodServiceUrl": "ws://server.default.svc.cluster.local:3000",
       "billingServiceAddress": "usage.default.svc.cluster.local:9001",
-      "oidcServiceAddress": "iam.default.svc.cluster.local:9001",
       "sessionServiceAddress": "server.default.svc.cluster.local:9876",
       "stripeWebhookSigningSecretPath": "",
       "personalAccessTokenSigningKeyPath": "",
@@ -6356,24 +6204,6 @@ subjects:
   name: content-service
   namespace: default
 ---
-# rbac.authorization.k8s.io/v1/ClusterRoleBinding default-iam-rb-kube-rbac-proxy
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: iam
-  name: default-iam-rb-kube-rbac-proxy
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: default-kube-rbac-proxy
-subjects:
-- kind: ServiceAccount
-  name: iam
-  namespace: default
----
 # rbac.authorization.k8s.io/v1/ClusterRoleBinding default-ide-metrics-kube-rbac-proxy
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -6978,24 +6808,6 @@ subjects:
 - kind: ServiceAccount
   name: gitpod
 ---
-# rbac.authorization.k8s.io/v1/RoleBinding iam
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: iam
-  name: iam
-  namespace: default
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: default-ns-psp:restricted-root-user
-subjects:
-- kind: ServiceAccount
-  name: iam
----
 # rbac.authorization.k8s.io/v1/RoleBinding ide-metrics
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -7433,34 +7245,6 @@ spec:
     targetPort: 3306
   selector:
     app.kubernetes.io/name: mysql
-  type: ClusterIP
-status:
-  loadBalancer: {}
----
-# v1/Service iam
-apiVersion: v1
-kind: Service
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: iam
-    kind: service
-  name: iam
-  namespace: default
-spec:
-  ports:
-  - name: grpc
-    port: 9001
-    protocol: TCP
-    targetPort: 9001
-  - name: http
-    port: 9002
-    protocol: TCP
-    targetPort: 9002
-  selector:
-    app: gitpod
-    component: iam
   type: ClusterIP
 status:
   loadBalancer: {}
@@ -9442,203 +9226,6 @@ spec:
       terminationGracePeriodSeconds: 30
 status: {}
 ---
-# apps/v1/Deployment iam
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  annotations:
-    gitpod.io/checksum_config: 350c5081ae3f30253f80d07e0adfd8d82f0d8b416858b42d61fec05c2d1d246a
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: iam
-  name: iam
-  namespace: default
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: gitpod
-      component: iam
-  strategy:
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
-    type: RollingUpdate
-  template:
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: iam
-      name: iam
-      namespace: default
-    spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: gitpod.io/workload_meta
-                operator: Exists
-      containers:
-      - args:
-        - run
-        - --config=/config.json
-        - --json-log=true
-        env:
-        - name: GITPOD_DOMAIN
-          value: gitpod.example.com
-        - name: GITPOD_INSTALLATION_SHORTNAME
-          value: default
-        - name: GITPOD_REGION
-          value: local
-        - name: HOST_URL
-          value: https://gitpod.example.com
-        - name: KUBE_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        - name: KUBE_DOMAIN
-          value: svc.cluster.local
-        - name: LOG_LEVEL
-          value: info
-        - name: DB_HOST
-          valueFrom:
-            secretKeyRef:
-              key: host
-              name: mysql
-        - name: DB_PORT
-          valueFrom:
-            secretKeyRef:
-              key: port
-              name: mysql
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: password
-              name: mysql
-        - name: DB_USERNAME
-          valueFrom:
-            secretKeyRef:
-              key: username
-              name: mysql
-        - name: DB_ENCRYPTION_KEYS
-          valueFrom:
-            secretKeyRef:
-              key: encryptionKeys
-              name: mysql
-        image: eu.gcr.io/gitpod-core-dev/build/iam:test
-        imagePullPolicy: IfNotPresent
-        livenessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /live
-            port: 9501
-            scheme: HTTP
-          successThreshold: 1
-          timeoutSeconds: 1
-        name: iam
-        ports:
-        - containerPort: 9001
-          name: grpc
-        readinessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /ready
-            port: 9501
-            scheme: HTTP
-          successThreshold: 1
-          timeoutSeconds: 1
-        resources:
-          requests:
-            cpu: 100m
-            memory: 32Mi
-        securityContext:
-          privileged: false
-        volumeMounts:
-        - mountPath: /config.json
-          name: config
-          readOnly: true
-          subPath: config.json
-        - mountPath: /secrets/database-config
-          name: database-config
-          readOnly: true
-      - args:
-        - --logtostderr
-        - --insecure-listen-address=[$(IP)]:9500
-        - --upstream=http://127.0.0.1:9500/
-        env:
-        - name: IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        image: quay.io/brancz/kube-rbac-proxy:v0.12.0
-        name: kube-rbac-proxy
-        ports:
-        - containerPort: 9500
-          name: metrics
-        resources:
-          requests:
-            cpu: 1m
-            memory: 30Mi
-        securityContext:
-          allowPrivilegeEscalation: false
-          runAsGroup: 65532
-          runAsNonRoot: true
-          runAsUser: 65532
-        terminationMessagePolicy: FallbackToLogsOnError
-      dnsPolicy: ClusterFirst
-      enableServiceLinks: false
-      initContainers:
-      - args:
-        - -v
-        - database
-        env:
-        - name: DB_HOST
-          valueFrom:
-            secretKeyRef:
-              key: host
-              name: mysql
-        - name: DB_PORT
-          valueFrom:
-            secretKeyRef:
-              key: port
-              name: mysql
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: password
-              name: mysql
-        - name: DB_USERNAME
-          valueFrom:
-            secretKeyRef:
-              key: username
-              name: mysql
-        - name: DB_ENCRYPTION_KEYS
-          valueFrom:
-            secretKeyRef:
-              key: encryptionKeys
-              name: mysql
-        image: eu.gcr.io/gitpod-core-dev/build/service-waiter:test
-        name: database-waiter
-        resources: {}
-        securityContext:
-          allowPrivilegeEscalation: false
-          privileged: false
-          runAsUser: 31001
-      restartPolicy: Always
-      serviceAccountName: iam
-      terminationGracePeriodSeconds: 30
-      volumes:
-      - configMap:
-          name: iam
-        name: config
-      - name: database-config
-        secret:
-          secretName: mysql
-status: {}
----
 # apps/v1/Deployment ide-metrics
 apiVersion: apps/v1
 kind: Deployment
@@ -10392,7 +9979,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    gitpod.io/checksum_config: 78a21dc8826012e49bd9d99a628e0d147f1ab9dac5fdcba48e89936701532253
+    gitpod.io/checksum_config: 3cc95f976fd2b074f33d82a494edf92c0b9b46962e03fd0689b885ad33836f4f
   creationTimestamp: null
   labels:
     app: gitpod
