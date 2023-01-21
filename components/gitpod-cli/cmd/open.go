@@ -28,12 +28,6 @@ var openCmd = &cobra.Command{
 
 		client := ctx.Value(ctxKeySupervisorClient).(*supervisor.SupervisorClient)
 
-		// client, err := supervisor.New(ctx)
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
-		// defer client.Close()
-
 		client.WaitForIDEReady(ctx)
 
 		wait, _ := cmd.Flags().GetBool("wait")

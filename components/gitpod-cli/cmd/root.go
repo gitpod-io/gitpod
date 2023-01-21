@@ -7,6 +7,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,6 +16,7 @@ import (
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 type contextKey int
@@ -61,8 +63,17 @@ var rootCmd = &cobra.Command{
 
 		cmdName := GetCommandName(cmd.CommandPath())
 
+		usedFlags := []string{}
+		flags := cmd.Flags()
+		flags.VisitAll(func(flag *pflag.Flag) {
+			if flag.Changed {
+				usedFlags = append(usedFlags, flag.Name)
+			}
+		})
+
 		event := utils.NewAnalyticsEvent(ctx, supervisorClient, &utils.TrackCommandUsageParams{
 			Command: cmdName,
+			Flags:   usedFlags,
 		})
 
 		analyticsCtx := context.WithValue(cmd.Context(), ctxKeyAnalytics, event)
@@ -94,14 +105,8 @@ var rootCmd = &cobra.Command{
 			"--data",
 			event.ExportToJson(ctx),
 		)
-
-		sendAnalytics.Stdout = os.Stdout
-		sendAnalytics.Stderr = os.Stderr
-		sendAnalytics.Stdin = os.Stdin
-
-		// sendAnalytics.Stdout = ioutil.Discard
-		// sendAnalytics.Stderr = ioutil.Discard
-		// sendAnalytics.Stdin = os.Stdin
+		sendAnalytics.Stdout = ioutil.Discard
+		sendAnalytics.Stderr = ioutil.Discard
 
 		// fire and forget
 		_ = sendAnalytics.Start()

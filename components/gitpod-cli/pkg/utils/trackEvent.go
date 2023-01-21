@@ -7,7 +7,6 @@ package utils
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"time"
 
@@ -39,6 +38,7 @@ const (
 
 type TrackCommandUsageParams struct {
 	Command            []string `json:"command,omitempty"`
+	Flags              []string `json:"flags,omitempty"`
 	Duration           int64    `json:"duration,omitempty"`
 	ErrorCode          string   `json:"errorCode,omitempty"`
 	WorkspaceId        string   `json:"workspaceId,omitempty"`
@@ -73,6 +73,7 @@ func NewAnalyticsEvent(ctx context.Context, supervisorClient *supervisor.Supervi
 
 	event.Data = &TrackCommandUsageParams{
 		Command:     cmdParams.Command,
+		Flags:       cmdParams.Flags,
 		Duration:    cmdParams.Duration,
 		WorkspaceId: wsInfo.WorkspaceId,
 		InstanceId:  wsInfo.InstanceId,
@@ -87,6 +88,8 @@ func (e *AnalyticsEvent) Set(key string, value interface{}) *AnalyticsEvent {
 	switch key {
 	case "Command":
 		e.Data.Command = value.([]string)
+	case "Flags":
+		e.Data.Flags = value.([]string)
 	case "ErrorCode":
 		e.Data.ErrorCode = value.(string)
 	case "Duration":
@@ -104,7 +107,6 @@ func (e *AnalyticsEvent) Set(key string, value interface{}) *AnalyticsEvent {
 }
 
 func (e *AnalyticsEvent) ExportToJson(ctx context.Context) string {
-	fmt.Println(e.startTime)
 	e.Set("Duration", time.Since(e.startTime).Milliseconds())
 
 	data, err := json.Marshal(e.Data)

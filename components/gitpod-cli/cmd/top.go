@@ -7,7 +7,6 @@ package cmd
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"sync"
@@ -46,15 +45,13 @@ var topCmd = &cobra.Command{
 		var wg sync.WaitGroup
 		wg.Add(2)
 
-		fatalErrorChannel := make(chan error)
+		errCh := make(chan error)
 		wgDone := make(chan bool)
 
 		go func() {
 			workspaceResources, err := client.Status.ResourcesStatus(ctx, &api.ResourcesStatuRequest{})
-			if err == nil {
-				// log.Fatalf("cannot get workspace resources: %s", err)
-				err = errors.New("Mock err")
-				fatalErrorChannel <- err
+			if err != nil {
+				errCh <- err
 			}
 			data.Resources = workspaceResources
 			wg.Done()
@@ -63,6 +60,8 @@ var topCmd = &cobra.Command{
 		go func() {
 			if wsInfo, err := client.Info.WorkspaceInfo(ctx, &api.WorkspaceInfoRequest{}); err == nil {
 				data.WorkspaceClass = wsInfo.WorkspaceClass
+			} else {
+				errCh <- err
 			}
 			wg.Done()
 		}()
@@ -75,14 +74,12 @@ var topCmd = &cobra.Command{
 		select {
 		case <-wgDone:
 			break
-		case err := <-fatalErrorChannel:
-			close(fatalErrorChannel)
+		case err := <-errCh:
+			close(errCh)
 			errorCtx := context.WithValue(ctx, ctxKeyError, err)
 			cmd.SetContext(errorCtx)
 			return
 		}
-
-		wg.Wait()
 
 		if topCmdOpts.Json {
 			content, _ := json.Marshal(data)

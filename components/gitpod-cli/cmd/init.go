@@ -5,9 +5,9 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -31,16 +31,23 @@ var initCmd = &cobra.Command{
 Create a Gitpod configuration for this project.
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx := cmd.Context()
 		cfg := gitpodlib.GitpodFile{}
 		if interactive {
 			if err := askForDockerImage(&cfg); err != nil {
-				log.Fatal(err)
+				errorCtx := context.WithValue(ctx, ctxKeyError, err)
+				cmd.SetContext(errorCtx)
+				return
 			}
 			if err := askForPorts(&cfg); err != nil {
-				log.Fatal(err)
+				errorCtx := context.WithValue(ctx, ctxKeyError, err)
+				cmd.SetContext(errorCtx)
+				return
 			}
 			if err := askForTask(&cfg); err != nil {
-				log.Fatal(err)
+				errorCtx := context.WithValue(ctx, ctxKeyError, err)
+				cmd.SetContext(errorCtx)
+				return
 			}
 		} else {
 			cfg.AddPort(3000)
@@ -49,7 +56,9 @@ Create a Gitpod configuration for this project.
 
 		d, err := yaml.Marshal(cfg)
 		if err != nil {
-			log.Fatal(err)
+			errorCtx := context.WithValue(ctx, ctxKeyError, err)
+			cmd.SetContext(errorCtx)
+			return
 		}
 		if !interactive {
 			d = []byte(`# List the start up tasks. Learn more: https://www.gitpod.io/docs/configure/workspaces/tasks
@@ -78,13 +87,15 @@ ports:
 			}
 			if _, err := prompt.Run(); err != nil {
 				fmt.Printf("Not overwriting .gitpod.yml file. Aborting.\n")
-				os.Exit(1)
 				return
 			}
 		}
 
 		if err := os.WriteFile(".gitpod.yml", d, 0644); err != nil {
-			log.Fatal(err)
+			// TODO(af): shall we introduce an outcome=cancelled?
+			errorCtx := context.WithValue(ctx, ctxKeyError, err)
+			cmd.SetContext(errorCtx)
+			return
 		}
 
 		// open .gitpod.yml and Dockerfile
@@ -103,7 +114,9 @@ USER gitpod
 #
 # More information: https://www.gitpod.io/docs/config-docker/
 `), 0644); err != nil {
-					log.Fatal(err)
+					errorCtx := context.WithValue(ctx, ctxKeyError, err)
+					cmd.SetContext(errorCtx)
+					return
 				}
 			}
 

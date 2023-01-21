@@ -11,7 +11,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/olekukonko/tablewriter"
@@ -31,11 +30,7 @@ var infoCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
 		defer cancel()
 
-		client, err := supervisor.New(ctx)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer client.Close()
+		client := ctx.Value(ctxKeySupervisorClient).(*supervisor.SupervisorClient)
 
 		wsInfo, err := client.Info.WorkspaceInfo(ctx, &api.WorkspaceInfoRequest{})
 
@@ -48,7 +43,9 @@ var infoCmd = &cobra.Command{
 		}
 
 		if err != nil {
-			log.Fatal(err)
+			errorCtx := context.WithValue(ctx, ctxKeyError, err)
+			cmd.SetContext(errorCtx)
+			return
 		}
 
 		if infoCmdOpts.Json {
