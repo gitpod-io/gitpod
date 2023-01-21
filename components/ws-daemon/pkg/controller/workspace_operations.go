@@ -30,7 +30,6 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
@@ -87,16 +86,14 @@ func NewWorkspaceOperations(config content.Config, store *session.Store, reg pro
 }
 
 func (wso *WorkspaceOperations) InitWorkspaceContent(ctx context.Context, options InitContentOptions) (bool, string, error) {
-	glog.Infof("CALLING INIT CONTENT FOR %s", options.Meta.InstanceId)
 	res, err := wso.store.NewWorkspace(
-		ctx, options.Meta.WorkspaceId, filepath.Join(wso.store.Location, options.Meta.WorkspaceId),
+		ctx, options.Meta.InstanceId, filepath.Join(wso.store.Location, options.Meta.InstanceId),
 		wso.creator(options.Meta.Owner, options.Meta.WorkspaceId, options.Meta.InstanceId, options.Initializer, options.Headless))
 	if errors.Is(err, storage.ErrNotFound) {
 		return false, "", nil
 	}
 
 	if errors.Is(err, session.ErrAlreadyExists) {
-		glog.Infof("workspace %s already exists. no create", options.Meta.InstanceId)
 		return true, "", nil
 	}
 
@@ -117,9 +114,6 @@ func (wso *WorkspaceOperations) InitWorkspaceContent(ctx context.Context, option
 	if err != nil {
 		return false, "remote content error", xerrors.Errorf("remote content error: %w", err)
 	}
-
-	glog.Infof("Initializer is %+v", options.Initializer)
-	glog.Infof("RUNNING INITIALIZER FOR %v with len %v", remoteContent, len(remoteContent))
 
 	// Initialize workspace.
 	// FWB workspaces initialize without the help of ws-daemon, but using their supervisor or the registry-facade.
@@ -154,15 +148,11 @@ func (wso *WorkspaceOperations) InitWorkspaceContent(ctx context.Context, option
 }
 
 func (wso *WorkspaceOperations) creator(owner, workspaceId, instanceId string, init *csapi.WorkspaceInitializer, storageDisabled bool) session.WorkspaceFactory {
-	glog.Info("CREATOR CALLED")
 	var checkoutLocation string
 	allLocations := csapi.GetCheckoutLocationsFromInitializer(init)
-	glog.Infof("all location is %v", allLocations)
 	if len(allLocations) > 0 {
 		checkoutLocation = allLocations[0]
 	}
-
-	glog.WithField("checkoutLocation", checkoutLocation)
 
 	serviceDirName := instanceId + "-daemon"
 	return func(ctx context.Context, location string) (res *session.Workspace, err error) {
@@ -184,14 +174,10 @@ func (wso *WorkspaceOperations) creator(owner, workspaceId, instanceId string, i
 }
 
 func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, opts DisposeOptions) (bool, *csapi.GitStatus, error) {
-	log := log.FromContext(ctx)
-
 	sess := wso.store.Get(opts.Meta.InstanceId)
 	if sess == nil {
-		return false, nil, status.Error(codes.NotFound, fmt.Sprintf("cannot find workspace %s during DisposeWorkspace", opts.Meta.InstanceId))
+		return false, nil, fmt.Errorf("cannot find workspace %s during DisposeWorkspace", opts.Meta.InstanceId)
 	}
-
-	log.Info("wait disposal")
 
 	// Maybe there's someone else already trying to dispose the workspace.
 	// In that case we'll simply wait for that to happen.
@@ -201,9 +187,11 @@ func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, opts Dispo
 	}
 
 	if done {
-		log.Info("get git status", "repo", repo)
-		//ws.Status.GitStatus = toWorkspaceGitStatus(repo)
 		return true, repo, nil
+	}
+
+	if sess.RemoteStorageDisabled {
+		return false, nil, xerrors.Errorf("workspace has no remote storage")
 	}
 
 	if opts.BackupLogs {
@@ -214,19 +202,10 @@ func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, opts Dispo
 		}
 	}
 
-	if sess.RemoteStorageDisabled {
-		return false, nil, xerrors.Errorf("workspace has no remote storage")
-	}
-
-	log.Info("upload workspace content")
-
 	err = wso.uploadWorkspaceContent(ctx, sess)
 	if err != nil {
-		glog.WithError(err).Error("final backup failed")
 		return false, nil, xerrors.Errorf("final backup failed for workspace %s", opts.Meta.InstanceId)
 	}
-
-	log.Info("update git status")
 
 	// Update the git status prior to deleting the workspace
 	repo, err = sess.UpdateGitStatus(ctx, false)
@@ -238,8 +217,6 @@ func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, opts Dispo
 		glog.WithError(err).Warn("cannot get git status")
 	}
 
-	log.Info("updated git status", "repo", repo)
-
 	if err = sess.Dispose(ctx); err != nil {
 		glog.WithError(err).Error("cannot dispose session")
 	}
@@ -249,7 +226,6 @@ func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, opts Dispo
 		glog.WithError(err).Error("cannot delete workspace daemon directory")
 	}
 
-	log.Info("returning from dispose")
 	return false, repo, nil
 }
 

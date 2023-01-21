@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	glog "github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
@@ -25,7 +26,6 @@ import (
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type WorkspaceControllerOpts struct {
@@ -83,7 +83,6 @@ func (wsc *WorkspaceController) SetupWithManager(mgr ctrl.Manager) error {
 func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Reconcile")
 	defer tracing.FinishSpan(span, &err)
-	log := log.FromContext(ctx)
 
 	var workspace workspacev1.Workspace
 	if err := wsc.Get(ctx, req.NamespacedName, &workspace); err != nil {
@@ -98,7 +97,7 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, nil
 	}
 
-	log.WithValues("workspaceID", workspace.Name, "phase", workspace.Status.Phase).Info("seen workspace we have to manage")
+	glog.WithField("workspaceID", workspace.Name).WithField("phase", workspace.Status.Phase).Debug("Reconcile workspace")
 
 	if workspace.Status.Phase == workspacev1.WorkspacePhaseCreating ||
 		workspace.Status.Phase == workspacev1.WorkspacePhaseInitializing ||
@@ -109,7 +108,7 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	if workspace.Status.Phase == workspacev1.WorkspacePhaseStopping {
-		result, err = wsc.handleWorkspaceStop(ctx, &workspace)
+		result, err = wsc.handleWorkspaceStop(ctx, &workspace, req)
 		return result, err
 	}
 
@@ -178,16 +177,14 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 	return ctrl.Result{}, nil
 }
 
-func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *workspacev1.Workspace) (result ctrl.Result, err error) {
+func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *workspacev1.Workspace, req ctrl.Request) (result ctrl.Result, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "handleWorkspaceInit")
 	defer tracing.FinishSpan(span, &err)
-	log := log.FromContext(ctx)
 
 	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)); c == nil || c.Status == metav1.ConditionFalse {
 		return ctrl.Result{}, fmt.Errorf("workspace content was never ready")
 	}
 
-	log.WithValues("workspaceID", ws.Name, "runtime", ws.Status.Runtime).Info("DISPOSING WORKSPACE")
 	alreadyDisposing, gitStatus, disposeErr := wsc.operations.DisposeWorkspace(ctx, DisposeOptions{
 		Meta: WorkspaceMeta{
 			Owner:       ws.Spec.Ownership.Owner,
@@ -199,7 +196,6 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 	})
 
 	if disposeErr != nil {
-		log.Error(disposeErr, "failed to dispose workspace", "workspace", ws.Name)
 		err = fmt.Errorf("failed to dispose workspace %s: %w", ws.Name, disposeErr)
 		return ctrl.Result{}, err
 	}
@@ -208,9 +204,14 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 		return ctrl.Result{}, nil
 	}
 
-	ws.Status.GitStatus = toWorkspaceGitStatus(gitStatus)
-
 	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		var workspace workspacev1.Workspace
+		if err := wsc.Get(ctx, req.NamespacedName, &workspace); err != nil {
+			return err
+		}
+
+		workspace.Status.GitStatus = toWorkspaceGitStatus(gitStatus)
+
 		if disposeErr != nil {
 			ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
 				Type:               string(workspacev1.WorkspaceConditionBackupFailure),
