@@ -28,6 +28,8 @@ import (
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 // DefaultRetry is the recommended retry for a conflict where multiple clients
@@ -88,7 +90,30 @@ func NewWorkspaceController(c client.Client, opts WorkspaceControllerOpts) (*Wor
 func (wsc *WorkspaceController) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&workspacev1.Workspace{}).
+		WithEventFilter(eventFilter(wsc.NodeName)).
 		Complete(wsc)
+}
+
+func eventFilter(nodeName string) predicate.Predicate {
+	return predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			return workspaceFilter(e.Object, nodeName)
+		},
+
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			return workspaceFilter(e.ObjectNew, nodeName)
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			return false
+		},
+	}
+}
+
+func workspaceFilter(object client.Object, nodeName string) bool {
+	if ws, ok := object.(*workspacev1.Workspace); ok {
+		return ws.Status.Runtime != nil && ws.Status.Runtime.NodeName == nodeName
+	}
+	return false
 }
 
 func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, err error) {
@@ -97,15 +122,9 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 
 	var workspace workspacev1.Workspace
 	if err := wsc.Get(ctx, req.NamespacedName, &workspace); err != nil {
-		// we'll ignore not-found errors, since they can't be fixed by an immediate
-		// requeue (we'll need to wait for a new notification), and we can get them
-		// on deleted requests.
+		// ignore not-found errors, since they can't be fixed by an immediate
+		// requeue (we'll need to wait for a new notification).
 		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-
-	// not our workspace
-	if workspace.Status.Runtime == nil || workspace.Status.Runtime.NodeName != wsc.NodeName {
-		return ctrl.Result{}, nil
 	}
 
 	glog.WithField("workspaceID", workspace.Name).WithField("phase", workspace.Status.Phase).Debug("Reconcile workspace")
@@ -189,11 +208,19 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 }
 
 func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *workspacev1.Workspace, req ctrl.Request) (result ctrl.Result, err error) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "handleWorkspaceInit")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "handleWorkspaceStop")
 	defer tracing.FinishSpan(span, &err)
 
 	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)); c == nil || c.Status == metav1.ConditionFalse {
 		return ctrl.Result{}, fmt.Errorf("workspace content was never ready")
+	}
+
+	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)); c != nil && c.Status == metav1.ConditionTrue {
+		return ctrl.Result{}, nil
+	}
+
+	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)); c != nil && c.Status == metav1.ConditionTrue {
+		return ctrl.Result{}, nil
 	}
 
 	alreadyDisposing, gitStatus, disposeErr := wsc.operations.DisposeWorkspace(ctx, DisposeOptions{
