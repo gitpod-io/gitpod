@@ -15,15 +15,14 @@ import (
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
+	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	"github.com/gitpod-io/gitpod/components/gitpod-db/go/dbtest"
-	v1 "github.com/gitpod-io/gitpod/components/iam-api/go/v1"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
-
-	iam "github.com/gitpod-io/gitpod/iam/pkg/apiv1"
+	"gorm.io/gorm"
 )
 
 func TestGetStartParams(t *testing.T) {
@@ -67,13 +66,12 @@ func TestGetStartParams(t *testing.T) {
 
 func TestGetClientConfigFromStartRequest(t *testing.T) {
 	issuer := newFakeIdP(t)
-	service, configService := setupOIDCServiceForTests(t)
-	clientID, err := createConfig(configService, &ClientConfig{
+	service, dbConn := setupOIDCServiceForTests(t)
+	configID := createConfig(t, dbConn, &ClientConfig{
 		Issuer:         issuer,
 		VerifierConfig: &oidc.Config{},
 		OAuth2Config:   &oauth2.Config{},
 	})
-	require.NoError(t, err, "failed to initialize test")
 
 	testCases := []struct {
 		Location      string
@@ -91,9 +89,9 @@ func TestGetClientConfigFromStartRequest(t *testing.T) {
 			ExpectedId:    "",
 		},
 		{
-			Location:      "/start?id=" + clientID,
+			Location:      "/start?id=" + configID,
 			ExpectedError: false,
-			ExpectedId:    clientID,
+			ExpectedId:    configID,
 		},
 	}
 
@@ -115,16 +113,15 @@ func TestGetClientConfigFromStartRequest(t *testing.T) {
 
 func TestGetClientConfigFromCallbackRequest(t *testing.T) {
 	issuer := newFakeIdP(t)
-	service, configService := setupOIDCServiceForTests(t)
-	clientID, err := createConfig(configService, &ClientConfig{
+	service, dbConn := setupOIDCServiceForTests(t)
+	configID := createConfig(t, dbConn, &ClientConfig{
 		Issuer:         issuer,
 		VerifierConfig: &oidc.Config{},
 		OAuth2Config:   &oauth2.Config{},
 	})
-	require.NoError(t, err, "failed to initialize test")
 
 	state, err := encodeStateParam(StateParam{
-		ClientConfigID: clientID,
+		ClientConfigID: configID,
 		ReturnToURL:    "",
 	})
 	require.NoError(t, err, "failed encode state param")
@@ -153,7 +150,7 @@ func TestGetClientConfigFromCallbackRequest(t *testing.T) {
 		{
 			Location:      "/callback?state=" + state,
 			ExpectedError: false,
-			ExpectedId:    clientID,
+			ExpectedId:    configID,
 		},
 	}
 
@@ -175,8 +172,8 @@ func TestGetClientConfigFromCallbackRequest(t *testing.T) {
 
 func TestAuthenticate_nonce_check(t *testing.T) {
 	issuer := newFakeIdP(t)
-	service, configService := setupOIDCServiceForTests(t)
-	configID, err := createConfig(configService, &ClientConfig{
+	service, dbConn := setupOIDCServiceForTests(t)
+	configID := createConfig(t, dbConn, &ClientConfig{
 		Issuer: issuer,
 		// VerifierConfig: &oidc.Config{
 		// 	SkipClientIDCheck:          true,
@@ -186,9 +183,8 @@ func TestAuthenticate_nonce_check(t *testing.T) {
 		// },
 		OAuth2Config: &oauth2.Config{},
 	})
-	require.NoError(t, err, "failed to initialize test")
 
-	_, err = service.getConfigById(configID)
+	_, err := service.getConfigById(configID)
 	require.NoError(t, err, "could not assert config creation")
 
 	token := oauth2.Token{}
@@ -208,37 +204,36 @@ func TestAuthenticate_nonce_check(t *testing.T) {
 	require.NotNil(t, result)
 }
 
-func setupOIDCServiceForTests(t *testing.T) (*Service, *iam.OIDCClientConfigService) {
+func setupOIDCServiceForTests(t *testing.T) (*Service, *gorm.DB) {
 	t.Helper()
 
 	dbConn := dbtest.ConnectForTests(t)
 	cipher := dbtest.CipherSet(t)
 
-	clientConfigService := iam.NewOIDCClientConfigService(dbConn, cipher)
-
 	sessionServerAddress := newFakeSessionServer(t)
 
 	service := newTestService(sessionServerAddress, dbConn, cipher)
-	return service, clientConfigService
+	return service, dbConn
 }
 
-func createConfig(configService *iam.OIDCClientConfigService, config *ClientConfig) (string, error) {
-	res, err := configService.CreateClientConfig(context.Background(), &v1.CreateClientConfigRequest{
-		Config: &v1.OIDCClientConfig{
-			OrganizationId: uuid.NewString(),
-			OidcConfig: &v1.OIDCConfig{
-				Issuer: config.Issuer,
-			},
-			Oauth2Config: &v1.OAuth2Config{
-				ClientId:     config.OAuth2Config.ClientID,
-				ClientSecret: config.OAuth2Config.ClientSecret,
-			},
-		},
+func createConfig(t *testing.T, dbConn *gorm.DB, config *ClientConfig) string {
+	t.Helper()
+
+	orgID := uuid.New()
+
+	data, err := db.EncryptJSON(dbtest.CipherSet(t), db.OIDCSpec{
+		ClientID:     config.OAuth2Config.ClientID,
+		ClientSecret: config.OAuth2Config.ClientSecret,
 	})
-	if err != nil {
-		return "", err
-	}
-	return res.GetConfig().GetId(), nil
+	require.NoError(t, err)
+
+	created := dbtest.CreateOIDCClientConfigs(t, dbConn, db.OIDCClientConfig{
+		OrganizationID: &orgID,
+		Issuer:         config.Issuer,
+		Data:           data,
+	})[0]
+
+	return created.ID.String()
 }
 
 func newFakeSessionServer(t *testing.T) string {

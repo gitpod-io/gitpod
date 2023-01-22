@@ -14,7 +14,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/iam/pkg/apiv1"
 	"github.com/gitpod-io/gitpod/iam/pkg/config"
-	"github.com/gitpod-io/gitpod/iam/pkg/oidc"
 	"github.com/go-chi/chi/v5"
 	"github.com/sirupsen/logrus"
 )
@@ -41,12 +40,10 @@ func Start(logger *logrus.Entry, version string, cfg *config.ServiceConfig) erro
 		return fmt.Errorf("failed to initialize IAM server: %w", err)
 	}
 
-	oidcService := oidc.NewService(cfg.SessionServiceAddress, dbConn, cipherSet)
 	oidcClientConfigService := apiv1.NewOIDCClientConfigService(dbConn, cipherSet)
 
 	err = register(srv, &dependencies{
 		oidcClientConfigSvc: oidcClientConfigService,
-		oidcService:         oidcService,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to register services for iam server: %w", err)
@@ -61,15 +58,11 @@ func Start(logger *logrus.Entry, version string, cfg *config.ServiceConfig) erro
 
 type dependencies struct {
 	oidcClientConfigSvc v1.OIDCServiceServer
-
-	oidcService *oidc.Service
 }
 
 func register(srv *baseserver.Server, deps *dependencies) error {
 	// HTTP
 	rootHandler := chi.NewRouter()
-
-	rootHandler.Mount("/oidc", oidc.Router(deps.oidcService))
 
 	// All root requests are handled by our router
 	srv.HTTPMux().Handle("/", rootHandler)

@@ -7,13 +7,11 @@ packages:
       - "go.sum"
     deps:
       - components/common-go:lib
-      - components/iam-api/go:lib
       - components/public-api/go:lib
       - components/usage-api/go:lib
       - components/gitpod-protocol/go:lib
       - components/gitpod-db/go:lib
       - components/gitpod-db/go:init-testdb
-      - components/iam:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux

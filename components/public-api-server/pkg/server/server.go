@@ -24,10 +24,10 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
-	"github.com/gitpod-io/gitpod/iam/pkg/oidc"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/apiv1"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/oidc"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/webhooks"
 	"github.com/sirupsen/logrus"
