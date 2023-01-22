@@ -94,7 +94,7 @@ type testServerParams struct {
 
 func newTestServer(t *testing.T, params testServerParams) (url string, state *StateParam, configId string) {
 	router := chi.NewRouter()
-	oidcService, configService := setupOIDCServiceForTests(t)
+	oidcService, dbConn := setupOIDCServiceForTests(t)
 	router.Mount("/oidc", Router(oidcService))
 
 	ts := httptest.NewServer(router)
@@ -117,9 +117,7 @@ func newTestServer(t *testing.T, params testServerParams) (url string, state *St
 		OAuth2Config:   oauth2Config,
 		VerifierConfig: oidcConfig,
 	}
-	configId, err := createConfig(configService, clientConfig)
-	require.NoError(t, err)
-	require.NotEmpty(t, configId)
+	configId = createConfig(t, dbConn, clientConfig)
 
 	stateParam := &StateParam{
 		ClientConfigID: configId,
