@@ -339,10 +339,11 @@ func (s *Service) publicAPIInstanceUpdate(ctx context.Context, errChan chan erro
 	for {
 		resp, err := resp.Recv()
 		if err != nil {
-			if err != io.EOF && status.Code(err) != codes.Unavailable {
+			code := status.Code(err)
+			if err != io.EOF && code != codes.Unavailable && code != codes.Canceled {
 				log.WithField("method", "StreamWorkspaceStatus").WithError(err).Error("failed to receive status update")
 			}
-			if ctx.Err() != nil {
+			if ctx.Err() != nil || code == codes.Canceled {
 				return
 			}
 			errChan <- err
