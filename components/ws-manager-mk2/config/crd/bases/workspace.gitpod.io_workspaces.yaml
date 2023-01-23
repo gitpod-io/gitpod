@@ -16,10 +16,39 @@ spec:
     kind: Workspace
     listKind: WorkspaceList
     plural: workspaces
+    shortNames:
+    - ws
     singular: workspace
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.ownership.workspaceID
+      name: Workspace
+      priority: 10
+      type: string
+    - jsonPath: .spec.class
+      name: Class
+      type: string
+    - jsonPath: .spec.type
+      name: Type
+      priority: 10
+      type: string
+    - jsonPath: .status.runtime.nodeName
+      name: Node
+      type: string
+    - jsonPath: .spec.ownership.owner
+      name: Owner
+      type: string
+    - jsonPath: .spec.ownership.team
+      name: Team
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: Workspace is the Schema for the workspaces API
