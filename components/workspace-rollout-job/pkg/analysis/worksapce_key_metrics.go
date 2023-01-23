@@ -78,17 +78,17 @@ func NewWorkspaceKeyMetricsAnalyzer(ctx context.Context, kubeConfig *rest.Config
 	}, nil
 }
 
-func (pa *WorkspaceKeyMetricsAnalyzer) MoveForward(ctx context.Context, clusterName string) (int, error) {
+func (pa *WorkspaceKeyMetricsAnalyzer) MoveForward(ctx context.Context, clusterName string) (Decision, error) {
 	log := logrus.WithField("component", "workspace-key-metrics-analyzer")
 	for _, keyMetricWrapper := range pa.keyMetricsWrappers {
 		failureResult, err := pa.executeQueryGetResult(ctx, fmt.Sprintf(keyMetricWrapper.failureMetric, clusterName, time.Since(pa.startTime).Milliseconds()))
 		if err != nil {
-			return -1, err
+			return DecisionRevert, err
 		}
 
 		totalResult, err := pa.executeQueryGetResult(ctx, fmt.Sprintf(keyMetricWrapper.totalMetric, clusterName, time.Since(pa.startTime).Milliseconds()))
 		if err != nil {
-			return -1, err
+			return DecisionRevert, err
 		}
 
 		log.Infof("Total result: %f, Failure Result: %f", totalResult, failureResult)
@@ -96,16 +96,16 @@ func (pa *WorkspaceKeyMetricsAnalyzer) MoveForward(ctx context.Context, clusterN
 		log.Infof("Percentage for %s: %f", keyMetricWrapper.name, successPercentage)
 
 		if math.IsNaN(successPercentage) {
-			return 0, nil
+			return DecisionNoData, nil
 		}
 
 		if successPercentage < float64(pa.targetSuccessPercentage) {
 			log.Infof("Percentage for %s is below target success percentage %d: %f", keyMetricWrapper.name, pa.targetSuccessPercentage, successPercentage)
-			return -1, nil
+			return DecisionRevert, nil
 		}
 	}
 
-	return 1, nil
+	return DecisionMoveForward, nil
 }
 
 func (pa *WorkspaceKeyMetricsAnalyzer) executeQueryGetResult(ctx context.Context, query string) (float64, error) {
