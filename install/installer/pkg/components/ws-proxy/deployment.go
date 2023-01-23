@@ -8,7 +8,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 
@@ -61,29 +60,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			MountPath: "/mnt/host-key",
 		})
 	}
-	addWsManagerTls := true
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.WithoutWorkspaceComponents {
-			// No ws-manager exists in the cluster, so no TLS secret to mount.
-			addWsManagerTls = false
-		}
-		return nil
-	})
-	if addWsManagerTls {
-		volumes = append(volumes, corev1.Volume{
-			Name: "ws-manager-client-tls-certs",
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: wsmanager.TLSSecretNameClient,
-				},
-			},
-		})
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      "ws-manager-client-tls-certs",
-			MountPath: "/ws-manager-client-tls-certs",
-			ReadOnly:  true,
-		})
-	}
 
 	podSpec := corev1.PodSpec{
 		PriorityClassName: common.SystemNodeCritical,
@@ -101,14 +77,24 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		SecurityContext: &corev1.PodSecurityContext{
 			RunAsUser: pointer.Int64(31002),
 		},
-		Volumes: append([]corev1.Volume{{
-			Name: "config",
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{Name: Component},
+		Volumes: append([]corev1.Volume{
+			{
+				Name: "config",
+				VolumeSource: corev1.VolumeSource{
+					ConfigMap: &corev1.ConfigMapVolumeSource{
+						LocalObjectReference: corev1.LocalObjectReference{Name: Component},
+					},
 				},
 			},
-		}}, volumes...),
+			{
+				Name: "ws-manager-client-tls-certs",
+				VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{
+						SecretName: wsmanager.TLSSecretNameClient,
+					},
+				},
+			},
+		}, volumes...),
 		Containers: []corev1.Container{{
 			Name:            Component,
 			Args:            []string{"run", "/config/config.json"},
@@ -166,11 +152,18 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 				},
 			},
-			VolumeMounts: append([]corev1.VolumeMount{{
-				Name:      "config",
-				MountPath: "/config",
-				ReadOnly:  true,
-			}}, volumeMounts...),
+			VolumeMounts: append([]corev1.VolumeMount{
+				{
+					Name:      "config",
+					MountPath: "/config",
+					ReadOnly:  true,
+				},
+				{
+					Name:      "ws-manager-client-tls-certs",
+					MountPath: "/ws-manager-client-tls-certs",
+					ReadOnly:  true,
+				},
+			}, volumeMounts...),
 		},
 			*common.KubeRBACProxyContainer(ctx),
 		},

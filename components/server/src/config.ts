@@ -232,13 +232,6 @@ export interface ConfigSerialized {
      * This is the same signing key used by Public API
      */
     patSigningKeyFile?: string;
-
-    /**
-     * Whether the application cluster contains workspace components or not.
-     * Used to e.g. determine whether image builds need to happen in workspace
-     * clusters or application clusters.
-     */
-    withoutWorkspaceComponents: boolean;
 }
 
 export namespace ConfigFile {

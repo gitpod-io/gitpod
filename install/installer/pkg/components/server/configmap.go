@@ -176,14 +176,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
-	var withoutWorkspaceComponents bool
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil {
-			withoutWorkspaceComponents = cfg.WebApp.WithoutWorkspaceComponents
-		}
-		return nil
-	})
-
 	showSetupModal := true // old default to make self-hosted continue to work!
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.ShowSetupModal != nil {
@@ -282,7 +274,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		WorkspaceClasses:               workspaceClasses,
 		InactivityPeriodForReposInDays: inactivityPeriodForReposInDays,
 		PATSigningKeyFile:              personalAccessTokenSigningKeyPath,
-		WithoutWorkspaceComponents:     withoutWorkspaceComponents,
 		Admin: AdminConfig{
 			GrantFirstUserAdminRole: true, // existing default
 		},

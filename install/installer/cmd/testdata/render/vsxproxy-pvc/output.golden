@@ -5409,7 +5409,6 @@ data:
       "stripeConfigFile": "",
       "enablePayment": false,
       "patSigningKeyFile": "",
-      "withoutWorkspaceComponents": false,
       "showSetupModal": true,
       "workspaceHeartbeat": {
         "intervalSeconds": 60,
@@ -10697,7 +10696,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: e32facbc4b3e033d097380f96946c743c51cb7f8ffad143acb1c62d9231a21dc
+        gitpod.io/checksum_config: be1a6e9b223875689a4e70b2e8dca5a0e576b2f78b2bdc08c633cfea5a241cc3
       creationTimestamp: null
       labels:
         app: gitpod
@@ -11440,11 +11439,11 @@ spec:
         - mountPath: /config
           name: config
           readOnly: true
-        - mountPath: /mnt/certificates
-          name: config-certificates
         - mountPath: /ws-manager-client-tls-certs
           name: ws-manager-client-tls-certs
           readOnly: true
+        - mountPath: /mnt/certificates
+          name: config-certificates
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -11486,12 +11485,12 @@ spec:
       - configMap:
           name: ws-proxy
         name: config
-      - name: config-certificates
-        secret:
-          secretName: https-certificates
       - name: ws-manager-client-tls-certs
         secret:
           secretName: ws-manager-client-tls
+      - name: config-certificates
+        secret:
+          secretName: https-certificates
 status: {}
 ---
 # batch/v1/Job migrations
