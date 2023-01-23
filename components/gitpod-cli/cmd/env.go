@@ -59,15 +59,18 @@ delete environment variables with a repository pattern of */foo, foo/* or */*.
 			log.SetOutput(f)
 		}
 
+		ctx, cancel := context.WithTimeout(cmd.Context(), 1*time.Minute)
+		defer cancel()
+
 		if len(args) > 0 {
 			if unsetEnvs {
 				deleteEnvs(args)
 				return
 			}
 
-			setEnvs(args)
+			setEnvs(ctx, args)
 		} else {
-			getEnvs()
+			getEnvs(ctx)
 		}
 	},
 }
@@ -120,9 +123,7 @@ func connectToServer(ctx context.Context) (*connectToServerResult, error) {
 	return &connectToServerResult{repositoryPattern, client}, nil
 }
 
-func getEnvs() {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
+func getEnvs(ctx context.Context) {
 	result, err := connectToServer(ctx)
 	if err != nil {
 		fail(err.Error())
@@ -138,9 +139,7 @@ func getEnvs() {
 	}
 }
 
-func setEnvs(args []string) {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
+func setEnvs(ctx context.Context, args []string) {
 	result, err := connectToServer(ctx)
 	if err != nil {
 		fail(err.Error())

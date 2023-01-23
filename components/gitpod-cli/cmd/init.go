@@ -35,18 +35,24 @@ Create a Gitpod configuration for this project.
 		cfg := gitpodlib.GitpodFile{}
 		if interactive {
 			if err := askForDockerImage(&cfg); err != nil {
-				errorCtx := context.WithValue(ctx, ctxKeyError, err)
-				cmd.SetContext(errorCtx)
+				gpErr := &GpError{
+					Err: err,
+				}
+				cmd.SetContext(context.WithValue(ctx, ctxKeyError, gpErr))
 				return
 			}
 			if err := askForPorts(&cfg); err != nil {
-				errorCtx := context.WithValue(ctx, ctxKeyError, err)
-				cmd.SetContext(errorCtx)
+				gpErr := &GpError{
+					Err: err,
+				}
+				cmd.SetContext(context.WithValue(ctx, ctxKeyError, gpErr))
 				return
 			}
 			if err := askForTask(&cfg); err != nil {
-				errorCtx := context.WithValue(ctx, ctxKeyError, err)
-				cmd.SetContext(errorCtx)
+				gpErr := &GpError{
+					Err: err,
+				}
+				cmd.SetContext(context.WithValue(ctx, ctxKeyError, gpErr))
 				return
 			}
 		} else {
@@ -56,8 +62,10 @@ Create a Gitpod configuration for this project.
 
 		d, err := yaml.Marshal(cfg)
 		if err != nil {
-			errorCtx := context.WithValue(ctx, ctxKeyError, err)
-			cmd.SetContext(errorCtx)
+			gpErr := &GpError{
+				Err: err,
+			}
+			cmd.SetContext(context.WithValue(ctx, ctxKeyError, gpErr))
 			return
 		}
 		if !interactive {
@@ -93,8 +101,10 @@ ports:
 
 		if err := os.WriteFile(".gitpod.yml", d, 0644); err != nil {
 			// TODO(af): shall we introduce an outcome=cancelled?
-			errorCtx := context.WithValue(ctx, ctxKeyError, err)
-			cmd.SetContext(errorCtx)
+			gpErr := &GpError{
+				Err: err,
+			}
+			cmd.SetContext(context.WithValue(ctx, ctxKeyError, gpErr))
 			return
 		}
 
@@ -114,8 +124,10 @@ USER gitpod
 #
 # More information: https://www.gitpod.io/docs/config-docker/
 `), 0644); err != nil {
-					errorCtx := context.WithValue(ctx, ctxKeyError, err)
-					cmd.SetContext(errorCtx)
+					gpErr := &GpError{
+						Err: err,
+					}
+					cmd.SetContext(context.WithValue(ctx, ctxKeyError, gpErr))
 					return
 				}
 			}

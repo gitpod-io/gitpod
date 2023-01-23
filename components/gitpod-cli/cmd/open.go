@@ -5,6 +5,8 @@
 package cmd
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -39,15 +41,20 @@ var openCmd = &cobra.Command{
 		}
 		pargs, err := shlex.Split(pcmd)
 		if err != nil {
-			log.Fatalf("cannot parse GP_OPEN_EDITOR: %v", err)
-			return
+			gpErr := &GpError{
+				Err: fmt.Errorf("cannot parse GP_OPEN_EDITOR: %v", err),
+			}
+			cmd.SetContext(context.WithValue(ctx, ctxKeyError, gpErr))
 		}
 		if len(pargs) > 1 {
 			pcmd = pargs[0]
 		}
 		pcmd, err = exec.LookPath(pcmd)
 		if err != nil {
-			log.Fatal(err)
+			gpErr := &GpError{
+				Err: err,
+			}
+			cmd.SetContext(context.WithValue(ctx, ctxKeyError, gpErr))
 		}
 
 		if wait {
@@ -56,7 +63,10 @@ var openCmd = &cobra.Command{
 
 		err = unix.Exec(pcmd, append(pargs, args...), os.Environ())
 		if err != nil {
-			log.Fatal(err)
+			gpErr := &GpError{
+				Err: err,
+			}
+			cmd.SetContext(context.WithValue(ctx, ctxKeyError, gpErr))
 		}
 	},
 }

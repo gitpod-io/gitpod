@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -25,15 +26,23 @@ var awaitPortCmd = &cobra.Command{
 	Short: "Waits for a process to listen on a port",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx := cmd.Context()
+
 		port, err := strconv.ParseUint(args[0], 10, 16)
 		if err != nil {
-			log.Fatalf("port cannot be parsed as int: %s", err)
+			gpErr := &GpError{
+				Err: fmt.Errorf("port cannot be parsed as int: %s", err),
+			}
+			cmd.SetContext(context.WithValue(ctx, ctxKeyError, gpErr))
 		}
 
 		// Expected format: local port (in hex), remote address (irrelevant here), connection state ("0A" is "TCP_LISTEN")
 		pattern, err := regexp.Compile(fmt.Sprintf(":[0]*%X \\w+:\\w+ 0A ", port))
 		if err != nil {
-			log.Fatal("cannot compile regexp pattern")
+			gpErr := &GpError{
+				Err: fmt.Errorf("cannot compile regexp pattern"),
+			}
+			cmd.SetContext(context.WithValue(ctx, ctxKeyError, gpErr))
 		}
 
 		var protos []string

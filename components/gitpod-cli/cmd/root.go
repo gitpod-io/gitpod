@@ -28,6 +28,12 @@ const (
 	rootCmdName                       = "gp"
 )
 
+type GpError struct {
+	Err      error
+	Message  string
+	ExitCode int
+}
+
 var skipAnalytics = false
 
 func GetCommandName(path string) []string {
@@ -38,10 +44,10 @@ var rootCmd = &cobra.Command{
 	Use:   rootCmdName,
 	Short: "Command line interface for Gitpod",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		if os.Args[0] != "gp" {
-			// skip analytics when running in development mode
-			skipAnalytics = true
-		}
+		// if os.Args[0] != "gp" {
+		// 	// skip analytics when running in development mode
+		// 	skipAnalytics = true
+		// }
 
 		if cmd.Name() == "send-analytics" {
 			// skip itself, otherwise we'd end up in a loop
@@ -91,9 +97,13 @@ var rootCmd = &cobra.Command{
 
 		event := ctx.Value(ctxKeyAnalytics).(*utils.AnalyticsEvent)
 
-		cmdErr := ctx.Value(ctxKeyError)
-		if cmdErr != nil {
-			utils.LogError(ctx, cmdErr.(error), "gp cli error", supervisorClient)
+		cmdErr := ctx.Value(ctxKeyError).(GpError)
+		if cmdErr.Err != nil {
+			errorMessage := "gp cli error"
+			if cmdErr.Message != "" {
+				errorMessage = cmdErr.Message
+			}
+			utils.LogError(ctx, cmdErr.Err, errorMessage, supervisorClient)
 			event.Set("Outcome", utils.Outcome_SystemErr)
 		} else {
 			event.Set("Outcome", utils.Outcome_Success)
@@ -111,8 +121,12 @@ var rootCmd = &cobra.Command{
 		// fire and forget
 		_ = sendAnalytics.Start()
 
-		if cmdErr != nil {
-			os.Exit(1)
+		if cmdErr.Err != nil {
+			exitCode := 1
+			if cmdErr.ExitCode != 0 {
+				exitCode = cmdErr.ExitCode
+			}
+			os.Exit(exitCode)
 		}
 	},
 }

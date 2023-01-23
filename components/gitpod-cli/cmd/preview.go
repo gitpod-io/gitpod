@@ -6,7 +6,8 @@ package cmd
 
 import (
 	"context"
-	"log"
+	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"regexp"
@@ -33,50 +34,54 @@ var previewCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// TODO(ak) use NotificationService.NotifyActive supervisor API instead
 
-		ctx := context.Background()
+		ctx := cmd.Context()
 
-		client, err := supervisor.New(ctx)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer client.Close()
+		client := ctx.Value(ctxKeySupervisorClient).(*supervisor.SupervisorClient)
+
 		client.WaitForIDEReady(ctx)
+
+		gpBrowserEnvVar := "GP_PREVIEW_BROWSER"
 
 		url := replaceLocalhostInURL(args[0])
 		if previewCmdOpts.External {
 			if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
 				url = "https://" + url
 			}
-			openPreview("GP_EXTERNAL_BROWSER", url)
-			return
+			gpBrowserEnvVar = "GP_EXTERNAL_BROWSER"
 		}
-		openPreview("GP_PREVIEW_BROWSER", url)
+
+		err := openPreview(gpBrowserEnvVar, url)
+		if err != nil {
+			errorCtx := context.WithValue(ctx, ctxKeyError, err)
+			cmd.SetContext(errorCtx)
+		}
 	},
 }
 
-func openPreview(gpBrowserEnvVar string, url string) {
+func openPreview(gpBrowserEnvVar string, url string) error {
 	pcmd := os.Getenv(gpBrowserEnvVar)
 	if pcmd == "" {
-		log.Fatalf("%s is not set", gpBrowserEnvVar)
-		return
+		err := errors.New(fmt.Sprintf("%s is not set", gpBrowserEnvVar))
+		return err
 	}
 	pargs, err := shlex.Split(pcmd)
 	if err != nil {
-		log.Fatalf("cannot parse %s: %v", gpBrowserEnvVar, err)
-		return
+		return err
 	}
 	if len(pargs) > 1 {
 		pcmd = pargs[0]
 	}
 	pcmd, err = exec.LookPath(pcmd)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	err = unix.Exec(pcmd, append(pargs, url), os.Environ())
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
+
+	return nil
 }
 
 func replaceLocalhostInURL(url string) string {
