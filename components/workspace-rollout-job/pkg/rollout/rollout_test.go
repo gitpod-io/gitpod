@@ -10,14 +10,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gitpod-io/gitpod/workspace-rollout-job/pkg/analysis"
 	"github.com/stretchr/testify/assert"
 )
 
 type MockAnalyzer struct {
 }
 
-func (m *MockAnalyzer) MoveForward(ctx context.Context, clusterName string) (int, error) {
-	return 1, nil
+func (m *MockAnalyzer) MoveForward(ctx context.Context, clusterName string) (analysis.Decision, error) {
+	return analysis.DecisionMoveForward, nil
 }
 
 type FailureMockAnalyzer struct {
@@ -25,13 +26,13 @@ type FailureMockAnalyzer struct {
 	FailureStep int
 }
 
-func (m *FailureMockAnalyzer) MoveForward(ctx context.Context, clusterName string) (int, error) {
+func (m *FailureMockAnalyzer) MoveForward(ctx context.Context, clusterName string) (analysis.Decision, error) {
 	if m.currentStep == m.FailureStep {
-		return -1, nil
+		return analysis.DecisionRevert, nil
 	}
 
 	m.currentStep++
-	return 1, nil
+	return analysis.DecisionMoveForward, nil
 }
 
 type MockRolloutAction struct {
@@ -99,8 +100,8 @@ func TestRollout_MidpointFailure(t *testing.T) {
 
 type ErrorMockAnalyzer struct{}
 
-func (m *ErrorMockAnalyzer) MoveForward(ctx context.Context, clusterName string) (int, error) {
-	return 1, errors.New("error")
+func (m *ErrorMockAnalyzer) MoveForward(ctx context.Context, clusterName string) (analysis.Decision, error) {
+	return analysis.DecisionMoveForward, errors.New("error")
 }
 
 func TestRollout_AnalysisError(t *testing.T) {
@@ -120,8 +121,8 @@ func TestRollout_AnalysisError(t *testing.T) {
 
 type NoDataMockAnalyzer struct{}
 
-func (m *NoDataMockAnalyzer) MoveForward(ctx context.Context, clusterName string) (int, error) {
-	return 0, nil
+func (m *NoDataMockAnalyzer) MoveForward(ctx context.Context, clusterName string) (analysis.Decision, error) {
+	return analysis.DecisionNoData, nil
 }
 
 func TestRollout_AnalysisNoData(t *testing.T) {
@@ -141,13 +142,13 @@ func TestRollout_AnalysisNoData(t *testing.T) {
 
 type ProgressiveMockAnalyzer struct {
 	currentStep int
-	endResult   int
+	endResult   analysis.Decision
 }
 
-func (m *ProgressiveMockAnalyzer) MoveForward(ctx context.Context, clusterName string) (int, error) {
+func (m *ProgressiveMockAnalyzer) MoveForward(ctx context.Context, clusterName string) (analysis.Decision, error) {
 	if m.currentStep <= 3 {
 		m.currentStep++
-		return 0, nil
+		return analysis.DecisionNoData, nil
 	}
 
 	// Return Positive

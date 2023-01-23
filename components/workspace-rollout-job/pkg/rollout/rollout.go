@@ -76,7 +76,7 @@ func (r *RollOutJob) Start(ctx context.Context) error {
 				// check every analysisWaitDuration
 				time.Sleep(r.analysisWaitDuration)
 
-				moveForward, err := r.analyzer.MoveForward(context.Background(), r.newCluster)
+				decision, err := r.analyzer.MoveForward(context.Background(), r.newCluster)
 				if err != nil {
 					log.Error("Analysis returned error: ", err)
 					log.Info("Reverting the rollout")
@@ -86,11 +86,11 @@ func (r *RollOutJob) Start(ctx context.Context) error {
 				}
 
 				// Analyzer says no, stop the rollout
-				if moveForward == -1 {
+				if decision == analysis.DecisionRevert {
 					log.Info("Analyzer says no, stopping the rollout")
 					r.revert <- true
 					return
-				} else if moveForward == 0 {
+				} else if decision == analysis.DecisionNoData {
 					log.Info("Analyzer says no data, waiting for more data")
 					// Rollout okay until currentScore < okayScoreUntilNoData
 					if r.currentScore >= r.okayScoreUntilNoData {
@@ -98,10 +98,10 @@ func (r *RollOutJob) Start(ctx context.Context) error {
 						r.revert <- true
 						return
 					}
-				} else {
-					// Roll forward otherwise
-					log.Info("Analyzer says yes, rolling forward")
 				}
+
+				// Roll forward otherwise
+				log.Info("Analyzer says yes, rolling forward")
 
 			}
 		}
