@@ -46,7 +46,7 @@ export const setupQueryClientProvider = () => {
 };
 
 // Persister that uses IndexedDB
-function createIDBPersister(idbValidKey: IDBValidKey = "gitpodQueryClient") {
+function createIDBPersister(idbValidKey: IDBValidKey = "gitpodQueryClient"): Persister {
     // Track a flag that indicates if we're attempting to persist the client
     // Some browsers/versions don't support using indexed-db w/ certain settings or in private mode
     // If we get an error performing an operation, we'll disable persistance and assume it's not supported
@@ -82,5 +82,5 @@ function createIDBPersister(idbValidKey: IDBValidKey = "gitpodQueryClient") {
                 persistanceActive = false;
             }
         },
-    } as Persister;
+    };
 }
