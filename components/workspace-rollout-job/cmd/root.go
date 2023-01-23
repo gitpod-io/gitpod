@@ -64,6 +64,7 @@ var rootCmd = &cobra.Command{
 		}
 
 		// Run in a separate routine as this is not the main purpose
+		// This is used to expose prometheus metrics
 		go srv.ListenAndServe()
 		if err != nil {
 			log.WithError(err).Fatal("failed to listen and serve")
@@ -124,7 +125,7 @@ func Execute() {
 	rootCmd.Flags().StringVar(&conf.prometheusURL, "prometheus-url", "", "URL of Prometheus Service")
 	rootCmd.Flags().DurationVar(&conf.rollOutWaitDuration, "rollout-wait-duration", 50*time.Second, "Duration to wait before updating the score of the new cluster")
 	rootCmd.Flags().DurationVar(&conf.analsysWaitDuration, "analysis-wait-duration", 1*time.Second, "Duration to wait before analyzing the metrics")
-	rootCmd.Flags().Int32Var(&conf.rolloutStepScore, "rollout-step-score", 10, "Score to be added to the new cluster, and decreased to the old cluster")
+	rootCmd.Flags().Int32Var(&conf.rolloutStepScore, "rollout-step-score", 10, "Score to be added to the new cluster, and decreased from the old cluster")
 	rootCmd.Flags().Int32Var(&conf.okayScoreUntilNoData, "okay-score-until-no-data", 60, "If the score is below this value, and there is no data, the rollout score will be considered okay")
 	rootCmd.Flags().IntVar(&conf.targetPositivePercentage, "target-positive-percentage", 95, "Target percentage of positive metrics")
 

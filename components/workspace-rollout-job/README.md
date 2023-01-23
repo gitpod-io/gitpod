@@ -5,14 +5,11 @@ metrics.
 
 ## Running Locally
 
-First, Connect to your `meta` cluster and make sure both the new cluster is registered with
-a score of `0`.
+First, Connect to your `application` cluster and make sure the new cluster is
+registered with a score of `0`.
 
-Then, Make `ws-manager-bridge` accessible:
-
-```bash
-kubectl port-forward deployment/ws-manager-bridge 8080
-```
+Then, Make sure `kubeconfig` for the application cluster is available
+along with permissions to port-forward. (Follow ./hack/ws-rollout-job.yaml for an example)
 
 Also, Make prometheus accessible:
 
@@ -23,7 +20,7 @@ kubectl -n monitoring-satellite port-forward prometheus-k8s-0 9090
 Now, Run the job:
 
 ```bash
-OLD_CLUSTER="<xyz>" NEW_CLUSTER="<abc>" go run .
+go run . --old-cluster <abc> --new-cluster <xyz> --prometheus-url <>
 ```
 
 Rollout progress can either be monitored through logs or by metrics at `localhost:9500/metrics`
