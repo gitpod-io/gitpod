@@ -19,6 +19,7 @@ export interface DropDown2Props {
     disableSearch?: boolean;
     expanded?: boolean;
     onSelectionChange: (id: string) => void;
+    allOptions?: string;
 }
 
 export const DropDown2: FunctionComponent<DropDown2Props> = (props) => {
@@ -38,6 +39,9 @@ export const DropDown2: FunctionComponent<DropDown2Props> = (props) => {
     // reset search when the drop down is expanded or closed
     useEffect(() => {
         setSearch("");
+        if (props.allOptions) {
+            setSelectedElementTemp(props.allOptions);
+        }
         if (showDropDown && selectedElementTemp) {
             document.getElementById(selectedElementTemp)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }
