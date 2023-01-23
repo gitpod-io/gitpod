@@ -1758,6 +1758,9 @@ data:
           "wsManager": {
             "version": "test"
           },
+          "wsManagerMk2": {
+            "version": "test"
+          },
           "wsManagerBridge": {
             "version": "test"
           },
@@ -5896,6 +5899,10 @@ data:
               "minBytesAvail": 21474836480
             }
           ]
+        },
+        "workspaceController": {
+          "enabled": false,
+          "workingAreaSuffix": ""
         }
       },
       "service": {
@@ -6270,6 +6277,22 @@ rules:
   - delete
   - update
   - patch
+- apiGroups:
+  - workspace.gitpod.io
+  resources:
+  - workspaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - workspace.gitpod.io
+  resources:
+  - workspaces/status
+  verbs:
+  - get
+  - patch
+  - update
 ---
 # rbac.authorization.k8s.io/v1/ClusterRole ws-manager
 apiVersion: rbac.authorization.k8s.io/v1
@@ -6826,6 +6849,14 @@ rules:
   - ""
   resources:
   - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - workspace.gitpod.io
+  resources:
+  - workspaces
   verbs:
   - get
   - list
@@ -8330,7 +8361,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 2a29ef265c219405bda658cb21613f40ad5e692590d2779476a3ff90917ed6fb
+        gitpod.io/checksum_config: 1e5f92c54481d2a3f63e3993a056e945763cf91f8b12ff04f8236eb7a710f4b9
       creationTimestamp: null
       labels:
         app: gitpod
