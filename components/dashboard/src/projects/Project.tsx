@@ -360,9 +360,7 @@ export default function () {
                                                     {branch.changeDate ? (
                                                         <Tooltip
                                                             className="w-fit"
-                                                            content={`Authored On ${dayjs(branch.changeDate)
-                                                                .toDate()
-                                                                .toLocaleString("hi-IN")}`}
+                                                            content={dayjs(branch.changeDate).format("MMM D, YYYY")}
                                                         >
                                                             <p>
                                                                 {avatar}Authored {formatDate(branch.changeDate)} ·{" "}

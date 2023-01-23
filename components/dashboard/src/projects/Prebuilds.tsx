@@ -261,9 +261,7 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                                                 )}
                                                 <Tooltip
                                                     className="w-fit"
-                                                    content={`Triggered At ${dayjs(p.info.startedAt)
-                                                        .toDate()
-                                                        .toLocaleString("hi-IN")}`}
+                                                    content={dayjs(p.info.startedAt).format("MMM D, YYYY")}
                                                 >
                                                     Triggered {formatDate(p.info.startedAt)}
                                                 </Tooltip>
@@ -290,9 +288,7 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                                                 )}
                                                 <Tooltip
                                                     className="w-fit"
-                                                    content={`Authored On ${dayjs(p.info.changeDate)
-                                                        .toDate()
-                                                        .toLocaleString("hi-IN")}`}
+                                                    content={dayjs(p.info.changeDate).format("MMM D, YYYY")}
                                                 >
                                                     Authored {formatDate(p.info.changeDate)} ·{" "}
                                                     {p.info.changeHash?.substring(0, 8)}

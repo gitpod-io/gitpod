@@ -98,10 +98,7 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                                 {prebuild?.info?.branch}
                             </div>
                             <span className="flex-shrink-0 mx-1 text-gray-400 dark:text-gray-600">·</span>
-                            <Tooltip
-                                className="w-fit"
-                                content={dayjs(prebuild?.info?.startedAt).toDate().toLocaleString("hi-IN")}
-                            >
+                            <Tooltip className="w-fit" content={dayjs(prebuild?.info?.startedAt).format("MMM D, YYYY")}>
                                 <div className="flex-shrink-0 text-gray-400 dark:text-gray-500 group-hover:text-gray-800 dark:group-hover:text-gray-300">
                                     {dayjs(prebuild?.info?.startedAt).fromNow()}
                                 </div>

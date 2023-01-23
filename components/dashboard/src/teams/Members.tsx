@@ -235,10 +235,7 @@ export default function () {
                                     </div>
                                 </ItemField>
                                 <ItemField className="my-auto">
-                                    <Tooltip
-                                        className="w-fit"
-                                        content={`Joined On ${dayjs(m.memberSince).toDate().toLocaleString("hi-IN")}`}
-                                    >
+                                    <Tooltip className="w-fit" content={dayjs(m.memberSince).format("MMM D, YYYY")}>
                                         <span className="text-gray-400 hover:text-gray-200">
                                             {dayjs(m.memberSince).fromNow()}
                                         </span>
