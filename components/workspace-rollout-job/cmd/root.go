@@ -65,11 +65,13 @@ var rootCmd = &cobra.Command{
 
 		// Run in a separate routine as this is not the main purpose
 		// This is used to expose prometheus metrics
-		go srv.ListenAndServe()
-		if err != nil {
-			log.WithError(err).Fatal("failed to listen and serve")
-			return err
-		}
+		go func() {
+			err = srv.ListenAndServe()
+			if err != nil {
+				log.WithError(err).Fatal("failed to listen and serve")
+				os.Exit(1)
+			}
+		}()
 
 		rollout.RegisterMetrics(srv.MetricsRegistry())
 

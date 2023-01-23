@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	logrus "github.com/gitpod-io/gitpod/common-go/log"
+	logging "github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
@@ -79,7 +79,7 @@ func NewWorkspaceKeyMetricsAnalyzer(ctx context.Context, kubeConfig *rest.Config
 }
 
 func (pa *WorkspaceKeyMetricsAnalyzer) MoveForward(ctx context.Context, clusterName string) (Decision, error) {
-	log := logrus.WithField("component", "workspace-key-metrics-analyzer")
+	log := logging.WithField("component", "workspace-key-metrics-analyzer")
 	for _, keyMetricWrapper := range pa.keyMetricsWrappers {
 		failureResult, err := pa.executeQueryGetResult(ctx, fmt.Sprintf(keyMetricWrapper.failureMetric, clusterName, time.Since(pa.startTime).Milliseconds()))
 		if err != nil {

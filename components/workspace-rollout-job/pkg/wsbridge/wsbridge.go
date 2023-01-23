@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 
-	logrus "github.com/gitpod-io/gitpod/common-go/log"
+	logging "github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/gpctl/pkg/util"
 	"github.com/gitpod-io/gitpod/ws-manager-bridge/api"
 	"google.golang.org/grpc"
@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	log = logrus.WithField("component", "ws-manager-bridge-client")
+	log = logging.WithField("component", "ws-manager-bridge-client")
 )
 
 // RolloutAction is the interface that wraps the updateScore method.
