@@ -202,17 +202,17 @@ func shouldSkip(ideName string) bool {
 func TestJetBrainsIDEs(t *testing.T) {
 	for _, ideName := range jetBrainsIDEs {
 		if shouldSkip(ideName) {
-			continue
+			// continue
 		}
 		integration.SkipWithoutUsername(t, username)
 		integration.SkipWithoutUserToken(t, userToken)
 		if roboquatToken == "" {
 			t.Fatal("this test need github action run permission")
 		}
-		f := features.New(fmt.Sprintf("Start a workspace using %s.", ideName)).
+		f := features.New(fmt.Sprintf("Workspace running with %s", ideName)).
 			WithLabel("component", "IDE").
 			WithLabel("ide", ideName).
-			Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			Assess("JetBrains Gateway connection", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 				ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 				defer cancel()
 				JetBrainsIDETest(ctx, t, cfg, ideName, "https://github.com/gitpod-io/empty")
