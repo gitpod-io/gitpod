@@ -5,14 +5,12 @@ https://payment.{{.Domain}} {
     import debug_headers
 
     reverse_proxy {{.ReverseProxy}} {
-        import upstream_headers
         import upstream_connection
     }
 
     @backend path /stripe/invoices/webhook
     handle @backend {
         reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002 {
-            import upstream_headers
             import upstream_connection
         }
     }

@@ -121,7 +121,7 @@ func (g *GitpodExposedPorts) Observe(ctx context.Context) (<-chan []ExposedPort,
 		defer close(reschan)
 		defer close(errchan)
 
-		updates, err := g.gitpodService.InstanceUpdates(ctx, g.InstanceID, g.WorkspaceID)
+		updates, err := g.gitpodService.InstanceUpdates(ctx)
 		if err != nil {
 			errchan <- err
 			return
@@ -205,7 +205,7 @@ func (g *GitpodExposedPorts) doExpose(req *exposePortRequest) {
 	exp.Reset()
 	attempt := 0
 	for {
-		_, err = g.gitpodService.OpenPort(req.ctx, g.WorkspaceID, req.port)
+		_, err = g.gitpodService.OpenPort(req.ctx, req.port)
 		if err == nil || req.ctx.Err() != nil || attempt == 5 {
 			return
 		}

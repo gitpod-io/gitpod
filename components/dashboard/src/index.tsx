@@ -6,7 +6,6 @@
 
 import React from "react";
 import ReactDOM from "react-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./App";
 import { UserContextProvider } from "./user-context";
 import { AdminContextProvider } from "./admin-context";
@@ -26,11 +25,9 @@ import { isWebsiteSlug } from "./utils";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 import "./index.css";
+import { setupQueryClientProvider } from "./data/setup";
 
 const bootApp = () => {
-    // Handle any boot logic prior to rendering app
-    const queryClient = new QueryClient();
-
     // gitpod.io specific boot logic
     if (isGitpodIo()) {
         // Redirect to www website for any website slugs
@@ -51,6 +48,8 @@ const bootApp = () => {
         );
     }
 
+    const GitpodQueryClientProvider = setupQueryClientProvider();
+
     // Configure libraries
     dayjs.extend(relativeTime);
     dayjs.extend(utc);
@@ -58,7 +57,7 @@ const bootApp = () => {
     // Render the App
     ReactDOM.render(
         <React.StrictMode>
-            <QueryClientProvider client={queryClient}>
+            <GitpodQueryClientProvider>
                 <UserContextProvider>
                     <AdminContextProvider>
                         <PaymentContextProvider>
@@ -81,7 +80,7 @@ const bootApp = () => {
                         </PaymentContextProvider>
                     </AdminContextProvider>
                 </UserContextProvider>
-            </QueryClientProvider>
+            </GitpodQueryClientProvider>
         </React.StrictMode>,
         document.getElementById("root"),
     );

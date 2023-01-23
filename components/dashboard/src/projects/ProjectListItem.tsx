@@ -4,9 +4,9 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FunctionComponent, useMemo, useState } from "react";
+import { FunctionComponent, useContext, useMemo, useState } from "react";
 import dayjs from "dayjs";
-import { PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
+import { Project } from "@gitpod/gitpod-protocol";
 import { Link } from "react-router-dom";
 import ContextMenu from "../components/ContextMenu";
 import { useCurrentTeam } from "../teams/teams-context";
@@ -15,16 +15,19 @@ import { toRemoteURL } from "./render-utils";
 import { prebuildStatusIcon } from "./Prebuilds";
 import { gitpodHostUrl } from "../service/service";
 import Tooltip from "../components/Tooltip";
+import { useLatestProjectPrebuildQuery } from "../data/prebuilds/latest-project-prebuild-query";
+import { StartWorkspaceModalContext } from "../workspaces/start-workspace-modal-context";
 
 type ProjectListItemProps = {
     project: Project;
-    prebuild?: PrebuildWithStatus;
     onProjectRemoved: () => void;
 };
 
-export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ project, prebuild, onProjectRemoved }) => {
+export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ project, onProjectRemoved }) => {
     const team = useCurrentTeam();
     const [showRemoveModal, setShowRemoveModal] = useState(false);
+    const { data: prebuild, isLoading } = useLatestProjectPrebuildQuery({ projectId: project.id });
+    const { setStartWorkspaceModalProps } = useContext(StartWorkspaceModalContext);
 
     const teamOrUserSlug = useMemo(() => {
         return !!team ? "t/" + team.slug : "projects";
@@ -47,9 +50,11 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                                     },
                                     {
                                         title: "New Workspace ...",
-                                        href: gitpodHostUrl
-                                            .withContext(`${project.cloneUrl}`, { showOptions: true })
-                                            .toString(),
+                                        onClick: () =>
+                                            setStartWorkspaceModalProps({
+                                                contextUrl: project.cloneUrl,
+                                                allowContextUrlChange: true,
+                                            }),
                                         separator: true,
                                     },
                                     {
@@ -87,7 +92,7 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                         >
                             {prebuildStatusIcon(prebuild)}
                             <div
-                                className="font-semibold text-gray-500 dark:text-gray-400 truncate"
+                                className="font-semibold text-gray-500 dark:text-gray-400 truncate font-mono"
                                 title={prebuild?.info?.branch}
                             >
                                 {prebuild?.info?.branch}
@@ -108,6 +113,10 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                         >
                             View All &rarr;
                         </Link>
+                    </div>
+                ) : isLoading ? (
+                    <div className="flex h-full text-md">
+                        <p className="my-auto ">...</p>
                     </div>
                 ) : (
                     <div className="flex h-full text-md">

@@ -5,18 +5,7 @@
  */
 
 import { injectable, inject } from "inversify";
-import {
-    User,
-    Identity,
-    WorkspaceTimeoutDuration,
-    UserEnvVarValue,
-    Token,
-    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
-    WORKSPACE_TIMEOUT_DEFAULT_LONG,
-    WORKSPACE_TIMEOUT_EXTENDED,
-    WORKSPACE_TIMEOUT_EXTENDED_ALT,
-    Workspace,
-} from "@gitpod/gitpod-protocol";
+import { User, Identity, UserEnvVarValue, Token, Workspace } from "@gitpod/gitpod-protocol";
 import { ProjectDB, TeamDB, TermsAcceptanceDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -163,33 +152,8 @@ export class UserService {
             // blocked = if user already blocked OR is not allowed to pass
             newUser.blocked = newUser.blocked || !canPass;
         }
-        if (!newUser.blocked && (isFirstUser || this.config.makeNewUsersAdmin)) {
+        if (!newUser.blocked && isFirstUser && this.config.admin.grantFirstUserAdminRole) {
             newUser.rolesOrPermissions = ["admin"];
-        }
-    }
-
-    public workspaceTimeoutToDuration(timeout: WorkspaceTimeoutDuration): string {
-        switch (timeout) {
-            case WORKSPACE_TIMEOUT_DEFAULT_SHORT:
-                return "30m";
-            case WORKSPACE_TIMEOUT_DEFAULT_LONG:
-                return "60m";
-            case WORKSPACE_TIMEOUT_EXTENDED:
-            case WORKSPACE_TIMEOUT_EXTENDED_ALT:
-                return "180m";
-        }
-    }
-
-    public durationToWorkspaceTimeout(duration: string): WorkspaceTimeoutDuration {
-        switch (duration) {
-            case "30m":
-                return WORKSPACE_TIMEOUT_DEFAULT_SHORT;
-            case "60m":
-                return WORKSPACE_TIMEOUT_DEFAULT_LONG;
-            case "180m":
-                return WORKSPACE_TIMEOUT_EXTENDED_ALT;
-            default:
-                return WORKSPACE_TIMEOUT_DEFAULT_SHORT;
         }
     }
 

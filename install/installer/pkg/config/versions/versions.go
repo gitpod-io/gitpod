@@ -76,10 +76,10 @@ type Components struct {
 
 		UserNamespaces struct {
 			SeccompProfileInstaller Versioned `json:"seccompProfileInstaller"`
-			ShiftFSModuleLoader     Versioned `json:"shiftfsModuleLoader"`
 		} `json:"userNamespaces"`
 	} `json:"wsDaemon"`
 	WSManager       Versioned `json:"wsManager"`
+	WSManagerMk2    Versioned `json:"wsManagerMk2"`
 	WSManagerBridge Versioned `json:"wsManagerBridge"`
 	WSProxy         Versioned `json:"wsProxy"`
 }

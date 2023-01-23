@@ -266,7 +266,7 @@ func TestTeamToAPIResponse(t *testing.T) {
 			{
 				UserId:       members[0].UserId,
 				Role:         teamRoleToAPIResponse(members[0].Role),
-				MemberSince:  parseTimeStamp(members[0].MemberSince),
+				MemberSince:  parseGitpodTimeStampOrDefault(members[0].MemberSince),
 				AvatarUrl:    members[0].AvatarUrl,
 				FullName:     members[0].FullName,
 				PrimaryEmail: members[0].PrimaryEmail,
@@ -274,7 +274,7 @@ func TestTeamToAPIResponse(t *testing.T) {
 			{
 				UserId:       members[1].UserId,
 				Role:         teamRoleToAPIResponse(members[1].Role),
-				MemberSince:  parseTimeStamp(members[1].MemberSince),
+				MemberSince:  parseGitpodTimeStampOrDefault(members[1].MemberSince),
 				AvatarUrl:    members[1].AvatarUrl,
 				FullName:     members[1].FullName,
 				PrimaryEmail: members[1].PrimaryEmail,

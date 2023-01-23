@@ -17,6 +17,8 @@ export interface StartWorkspaceModalProps {
     ide?: string;
     workspaceClass?: string;
     contextUrl?: string;
+    // If contextUrl is provided, setting `allowContextUrlChange` to true will allow it to be changed still
+    allowContextUrlChange?: boolean;
     onClose?: () => void;
 }
 
@@ -88,7 +90,10 @@ export function StartWorkspaceModal(props: StartWorkspaceModalProps) {
             <div className="-mx-6 px-6">
                 <div className="text-xs text-gray-500">Start a new workspace with the following options.</div>
                 <div className="pt-3">
-                    <RepositoryFinder setSelection={props.contextUrl ? undefined : setRepo} initialValue={repo} />
+                    <RepositoryFinder
+                        setSelection={props.contextUrl && !props.allowContextUrlChange ? undefined : setRepo}
+                        initialValue={repo}
+                    />
                 </div>
                 <div className="pt-3">
                     {errorIde && <div className="text-red-500 text-sm">{errorIde}</div>}

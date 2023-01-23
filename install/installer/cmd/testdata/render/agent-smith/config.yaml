@@ -1,0 +1,87 @@
+# Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+apiVersion: v1
+domain: gitpod.example.com
+components:
+  agentSmith:
+    gitpodAPI:
+      hostUrl: https://api.gitpod.example.com
+      apiToken: abcde12345
+    namespace: agent-smith-nsp
+    blocklists:
+      barely:
+        binaries:
+          - barelyBinaries1
+          - barelyBinaries2
+        allowlist:
+          - barelyAllowList1
+          - barelyAllowList1
+        signatures:
+          - name: barelySignatures1
+            domain: "process"
+            kind: "elf-rodata"
+            pattern: "Q1BVbGltaXQgdmVyc2lvbg=="
+            regexp: false
+            slice:
+              start: 10
+              end: 20
+            filenames:
+              - barelyFile1.yaml
+              - barelyFile2.yaml
+      audit:
+        binaries:
+          - auditBinaries1
+          - auditBinaries2
+        allowlist:
+          - auditAllowList1
+          - auditAllowList1
+        signatures:
+          - name: auditSignatures1
+            domain: "process"
+            kind: "elf-rodata"
+            pattern: "Q1BVbGltaXQgdmVyc2lvbg=="
+            regexp: false
+            slice:
+              start: 10
+              end: 20
+            filenames:
+              - auditFile1.yaml
+              - auditFile2.yaml
+      very:
+        binaries:
+          - veryBinaries1
+          - veryBinaries2
+        allowlist:
+          - veryAllowList1
+          - veryAllowList1
+        signatures:
+          - name: verySignatures1
+            domain: "process"
+            kind: "elf-rodata"
+            pattern: "Q1BVbGltaXQgdmVyc2lvbg=="
+            regexp: false
+            slice:
+              start: 10
+              end: 20
+            filenames:
+              - veryFile1.yaml
+              - veryFile2.yaml
+    enforcement:
+      cpuLimitPenalty: 6
+      default:
+        opt1: stop workspace
+      perRepo:
+        gitpod.example.com:
+          opt2: limit CPU
+    excessiveCPUCheck:
+      threshold: 4.4
+      averageOverMinutes: 2
+    slackWebhooks:
+      audit: https://slack.com/audit
+      warning: https://slack.com/warning
+    kubernetes:
+      enabled: true
+      kubeconfig: ""
+    probePath: path

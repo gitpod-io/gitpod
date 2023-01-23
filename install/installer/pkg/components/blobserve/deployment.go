@@ -27,7 +27,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	if pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
 		secretName = dockerregistry.BuiltInRegistryAuth
 	} else if ctx.Config.ContainerRegistry.External != nil {
-		secretName = ctx.Config.ContainerRegistry.External.Certificate.Name
+		if ctx.Config.ContainerRegistry.External.Certificate != nil {
+			secretName = ctx.Config.ContainerRegistry.External.Certificate.Name
+		}
 	} else {
 		return nil, fmt.Errorf("%s: invalid container registry config", Component)
 	}

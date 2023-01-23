@@ -104,4 +104,32 @@ describe("Migration Service", () => {
             (await conn.query("SELECT * FROM d_b_stripe_customer WHERE attributionId = ?", [newAttrId])).length,
         ).be.eq(1);
     });
+
+    it("should create a new free cost center when user doesn't have a team", async () => {
+        await wipeRepo();
+        const user = await userDB.newUser();
+        const conn = await typeORM.getConnection();
+
+        // first migration
+        await migrationService.migrateUser(user);
+        let teams = await teamDB.findTeamsByUser(user.id);
+        expect(teams.length).to.be.eq(1);
+        await teamDB.deleteTeam(teams[0].id);
+
+        teams = await teamDB.findTeamsByUser(user.id);
+        expect(teams.length).to.be.eq(0);
+
+        // second migration after deleting the team
+        await migrationService.migrateUser(user);
+        teams = await teamDB.findTeamsByUser(user.id);
+        expect(teams.length).to.be.eq(1);
+        await teamDB.deleteTeam(teams[0].id);
+
+        // verify that a new free cost center was created
+        const newAttrId = "team:" + teams[0].id;
+        expect(
+            (await conn.query("SELECT * FROM d_b_cost_center WHERE id = ? AND spendingLimit = 500", [newAttrId]))
+                .length,
+        ).be.eq(1);
+    });
 });

@@ -34,6 +34,7 @@ export interface JobConfig {
     withObservability: boolean;
     withLocalPreview: boolean;
     withSlowDatabase: boolean;
+    withDedicatedEmulation: boolean;
     workspaceFeatureFlags: string[];
     previewEnvironment: PreviewEnvironmentConfig;
     repository: Repository;
@@ -43,6 +44,8 @@ export interface JobConfig {
     certIssuer: string;
     recreatePreview: boolean;
     recreateVm: boolean;
+    withGitHubActions: boolean;
+    useWsManagerMk2: boolean;
 }
 
 export interface PreviewEnvironmentConfig {
@@ -106,11 +109,13 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const recreatePreview = "recreate-preview" in buildConfig
     const recreateVm = mainBuild || "recreate-vm" in buildConfig;
     const withSlowDatabase = "with-slow-database" in buildConfig && !mainBuild;
+    const withDedicatedEmulation = "with-dedicated-emulation" in buildConfig && !mainBuild;
     const storageClass = buildConfig["storage-class"] || "";
 
     const analytics = parseAnalytics(werft, sliceId, buildConfig["analytics"])
     const withIntegrationTests = parseWithIntegrationTests(werft, sliceId, buildConfig["with-integration-tests"]);
     const withPreview = decideWithPreview({werft, sliceID: sliceId, buildConfig, mainBuild, withIntegrationTests})
+    const withGitHubActions = "with-github-actions" in buildConfig;
 
     switch (buildConfig["cert-issuer"]) {
         case "zerossl":
@@ -122,6 +127,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     }
     const certIssuer = buildConfig["cert-issuer"];
 
+    const useWsManagerMk2 = "with-wsman-mk2" in buildConfig;
     const repository: Repository = {
         owner: context.Repository.owner,
         repo: context.Repository.repo,
@@ -180,6 +186,9 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         recreatePreview,
         recreateVm,
         withSlowDatabase,
+        withGitHubActions,
+        withDedicatedEmulation,
+        useWsManagerMk2,
     };
 
     werft.logOutput(sliceId, JSON.stringify(jobConfig, null, 2));

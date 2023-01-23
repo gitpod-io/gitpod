@@ -2,10 +2,10 @@
 
 # this script is meant to be sourced
 
-SCRIPT_PATH=$(dirname "${BASH_SOURCE[0]}")
+FILE_PATH=$(dirname "${BASH_SOURCE[0]}")
 
 # shellcheck source=./common.sh
-source "${SCRIPT_PATH}/common.sh"
+source "${FILE_PATH}/common.sh"
 
 TF_CLI_ARGS_plan=${TF_CLI_ARGS_plan:-""}
 TF_CLI_ARGS_apply=${TF_CLI_ARGS_apply:-""}
@@ -96,4 +96,20 @@ function terraform_apply() {
   timeout --signal=INT --foreground 10m terraform apply "${plan_location}"
 
   popd || return "${ERROR_CHANGE_DIR}"
+}
+
+function terraform_output() {
+  local var=${1:-}
+  local format=${2:-raw}
+
+  if [ -z "${TARGET_DIR-}" ]; then
+    log_error "Must provide TARGET_DIR"
+    return "${ERROR_NO_DIR}"
+  fi
+
+  pushd "${TARGET_DIR}" >/dev/null || return "${ERROR_CHANGE_DIR}"
+
+  terraform output -${format} "${var}" 2>/dev/null
+
+  popd >/dev/null || return "${ERROR_CHANGE_DIR}"
 }

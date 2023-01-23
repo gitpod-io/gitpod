@@ -24,15 +24,3 @@ variable "gcp_project_dns" {
   default     = "gitpod-core-dev"
   description = "The GCP project in which to create DNS records"
 }
-
-variable "kubeconfig_path" {
-  type        = string
-  default     = "~/.kube/config"
-  description = "The path to the kubernetes config"
-}
-
-variable "dev_kube_context" {
-  type        = string
-  default     = "dev"
-  description = "The name of the dev kube context"
-}

@@ -50,9 +50,12 @@ import { BlockedRepositories } from "../admin/BlockedRepositories";
 import PersonalAccessTokenCreateView from "../settings/PersonalAccessTokensCreateView";
 import { StartWorkspaceModalContext } from "../workspaces/start-workspace-modal-context";
 import { StartWorkspaceOptions } from "../start/start-workspace-options";
+import { WebsocketClients } from "./WebsocketClients";
+import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
+const WorkspacesNew = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/WorkspacesNew"));
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/Account"));
 const Notifications = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/Notifications"));
 const Billing = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/Billing"));
@@ -71,6 +74,7 @@ const JoinTeam = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/J
 const Members = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/Members"));
 const TeamSettings = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/TeamSettings"));
 const TeamBilling = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/TeamBilling"));
+const SSO = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/SSO"));
 const TeamUsage = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/TeamUsage"));
 const NewProject = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/NewProject"));
 const Projects = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/Projects"));
@@ -98,6 +102,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
     const hash = getURLHash();
     const { startWorkspaceModalProps, setStartWorkspaceModalProps } = useContext(StartWorkspaceModalContext);
     const [isWhatsNewShown, setWhatsNewShown] = useState(shouldSeeWhatsNew(user));
+    const { useNewWorkspacesList } = useFeatureFlags();
 
     // Prefix with `/#referrer` will specify an IDE for workspace
     // We don't need to show IDE preference in this case
@@ -142,7 +147,6 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                 />
             );
         } else {
-            // return <div>create workspace yay {hash}</div>;
             return <CreateWorkspace contextUrl={hash} />;
         }
     }
@@ -172,7 +176,11 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                     <Route path={projectsPathNew} exact component={NewProject} />
                     <Route path="/open" exact component={Open} />
                     <Route path="/setup" exact component={Setup} />
-                    <Route path={workspacesPathMain} exact component={Workspaces} />
+                    <Route
+                        path={workspacesPathMain}
+                        exact
+                        component={useNewWorkspacesList ? WorkspacesNew : Workspaces}
+                    />
                     <Route path={settingsPathAccount} exact component={Account} />
                     <Route path={usagePathMain} exact component={Usage} />
                     <Route path={settingsPathIntegrations} exact component={Integrations} />
@@ -265,14 +273,14 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                                     switch (maybeProject) {
                                         case "projects":
                                             return <Projects />;
-                                        case "workspaces":
-                                            return <Workspaces />;
                                         case "members":
                                             return <Members />;
                                         case "settings":
                                             return <TeamSettings />;
                                         case "billing":
                                             return <TeamBilling />;
+                                        case "sso":
+                                            return <SSO />;
                                         case "usage":
                                             return <TeamUsage />;
                                         default:
@@ -316,6 +324,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                     />
                 )}
             </div>
+            {useNewWorkspacesList && <WebsocketClients />}
         </Route>
     );
 };

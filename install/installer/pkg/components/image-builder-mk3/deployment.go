@@ -128,7 +128,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	var nodeAffinity = cluster.AffinityLabelMeta
 	if ctx.Config.Kind == config.InstallationWorkspace {
-		nodeAffinity = cluster.AffinityLabelWorkspaceServices
+		nodeAffinity = cluster.AffinityLabelServices
 	}
 
 	return []runtime.Object{&appsv1.Deployment{

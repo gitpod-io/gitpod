@@ -168,9 +168,7 @@ import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { InstallationAdminTelemetryDataProvider } from "../installation-admin/telemetry-data-provider";
 import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
-import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-imagebuilder-client-provider";
 import { VerificationService } from "../auth/verification-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { EntitlementService } from "../billing/entitlement-service";
@@ -214,8 +212,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(WorkspaceManagerClientProvider)
     protected readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider;
     @inject(ImageBuilderClientProvider) protected imagebuilderClientProvider: ImageBuilderClientProvider;
-    @inject(WorkspaceClusterImagebuilderClientProvider)
-    protected readonly wsClusterImageBuilderClientProvider: ImageBuilderClientProvider;
 
     @inject(UserDB) protected readonly userDB: UserDB;
     @inject(BlockedRepositoryDB) protected readonly blockedRepostoryDB: BlockedRepositoryDB;
@@ -408,6 +404,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     protected async doUpdateUser(): Promise<void> {
         // execute the check for the setup to be shown until the setup is not required.
         // cf. evaluation of the condition in `checkUser`
+        if (!this.config.showSetupModal) {
+            this.showSetupCondition = { value: false };
+        }
         if (!this.showSetupCondition || this.showSetupCondition.value === true) {
             const hasAnyStaticProviders = this.hostContextProvider
                 .getAll()
@@ -2061,6 +2060,24 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return team;
     }
 
+    public async updateTeam(ctx: TraceContext, teamId: string, team: Pick<Team, "name">): Promise<Team> {
+        traceAPIParams(ctx, { teamId });
+
+        if (!teamId || !uuidValidate(teamId)) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "team ID must be a valid UUID");
+        }
+        this.checkUser("updateTeam");
+        const existingTeam = await this.teamDB.findTeamById(teamId);
+        if (!existingTeam) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, `Team ${teamId} does not exist`);
+        }
+        const members = await this.teamDB.findMembersByTeam(teamId);
+        await this.guardAccess({ kind: "team", subject: existingTeam, members }, "update");
+
+        const updatedTeam = await this.teamDB.updateTeam(teamId, team);
+        return updatedTeam;
+    }
+
     public async getTeamMembers(ctx: TraceContext, teamId: string): Promise<TeamMemberInfo[]> {
         traceAPIParams(ctx, { teamId });
 
@@ -3151,6 +3168,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getStripePortalUrl(ctx: TraceContext, attributionId: string): Promise<string> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
+    async getPriceInformation(ctx: TraceContext, attributionId: string): Promise<string | undefined> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
 
     async listUsage(ctx: TraceContext, req: ListUsageRequest): Promise<ListUsageResponse> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
@@ -3237,38 +3257,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
      * @returns
      */
     protected async getImageBuilderClient(user: User, workspace: Workspace, instance?: WorkspaceInstance) {
-        // If cluster does not contain workspace components, must use workspace image builder client. Otherwise, check experiment value.
-        const isMovedImageBuilder =
-            this.config.withoutWorkspaceComponents ||
-            (await getExperimentsClientForBackend().getValueAsync("movedImageBuilder", true, {
-                user,
-                projectId: workspace.projectId,
-            }));
-
-        log.info(
-            { userId: user.id, workspaceId: workspace.id, instanceId: instance?.id },
-            "image-builder in workspace cluster?",
-            {
-                userId: user.id,
-                projectId: workspace.projectId,
-                isMovedImageBuilder,
-            },
-        );
-        if (isMovedImageBuilder) {
-            return this.wsClusterImageBuilderClientProvider.getClient(
-                this.config.installationShortname,
-                user,
-                workspace,
-                instance,
-            );
-        } else {
-            return this.imagebuilderClientProvider.getClient(
-                this.config.installationShortname,
-                user,
-                workspace,
-                instance,
-            );
-        }
+        return this.imagebuilderClientProvider.getClient(this.config.installationShortname, user, workspace, instance);
     }
 
     async getNotifications(ctx: TraceContext): Promise<string[]> {

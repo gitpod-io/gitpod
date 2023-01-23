@@ -20,7 +20,7 @@ if [[ -n ${WERFT_SERVICE_HOST+x} ]]; then
 fi
 
 export TF_WORKSPACE="${TF_VAR_preview_name:-$TF_WORKSPACE}"
-TARGET_DIR="${PROJECT_ROOT}/dev/preview/infrastructure/harvester"
+TARGET_DIR="${PROJECT_ROOT}/dev/preview/infrastructure"
 # Setting the TF_DATA_DIR is advisable if we set the PLAN_LOCATION in a different place than the dir with the tf
 TF_DATA_DIR="${TARGET_DIR}"
 
@@ -32,6 +32,8 @@ PLAN_LOCATION="${PLAN_LOCATION:-$static_plan}"
 shopt -os allexport
 
 terraform_init
+
+source "${SCRIPT_PATH}/determine-env.sh"
 
 PLAN_EXIT_CODE=0
 terraform_plan || PLAN_EXIT_CODE=$?

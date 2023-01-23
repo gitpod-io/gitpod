@@ -152,6 +152,20 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
         }
     };
 
+    // check for workspace changes
+    const repo = desc.latestInstance?.status?.repo;
+    let currentChanges = false;
+    if (repo) {
+        if ((repo.totalUntrackedFiles || 0) > 0) {
+            currentChanges = true;
+        }
+        if ((repo.totalUncommitedFiles || 0) > 0) {
+            currentChanges = true;
+        }
+        if ((repo.totalUnpushedCommits || 0) > 0) {
+            currentChanges = true;
+        }
+    }
     const normalizedContextUrl = ContextURL.getNormalizedURL(ws)?.toString();
     const normalizedContextUrlDescription = normalizedContextUrl || ws.contextURL; // Instead of showing nothing, we prefer to show the raw content instead
     return (
@@ -184,7 +198,9 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
                 </a>
             </ItemField>
             <ItemField className="w-2/12 flex flex-col my-auto">
-                <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate">{currentBranch}</div>
+                <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate font-mono">
+                    {currentBranch}
+                </div>
                 <div className="mr-auto">
                     <PendingChangesDropdown workspaceInstance={desc.latestInstance} />
                 </div>
@@ -207,6 +223,8 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
                     }}
                     buttonText="Delete Workspace"
                     visible={isDeleteModalVisible}
+                    warningHead="Pending Changes"
+                    warningText={currentChanges ? "Workspace contains uncommited files or unpushed commits." : ""}
                     onClose={() => setDeleteModalVisible(false)}
                     onConfirm={() => model.deleteWorkspace(ws.id, usePublicApiWorkspacesService)}
                 />

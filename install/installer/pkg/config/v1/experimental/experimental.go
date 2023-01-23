@@ -19,6 +19,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Config contains all experimental configuration.
@@ -26,11 +27,13 @@ type Config struct {
 	Workspace  *WorkspaceConfig   `json:"workspace,omitempty"`
 	WebApp     *WebAppConfig      `json:"webapp,omitempty"`
 	IDE        *IDEConfig         `json:"ide,omitempty"`
-	Common     *CommonConfig      `json:"common,omitempty"`
-	Telemetry  *TelemetryConfig   `json:"telemetry,omitempty"`
-	AgentSmith *agentSmith.Config `json:"agentSmith,omitempty"`
+	Common     *CommonConfig      `json:"common,omitempty"` // @deprecated
+	Overrides  *[]Overrides       `json:"overrides,omitempty"`
+	Telemetry  *TelemetryConfig   `json:"telemetry,omitempty"`  // @deprecated
+	AgentSmith *agentSmith.Config `json:"agentSmith,omitempty"` // @deprecated
 }
 
+// @deprecated
 type TelemetryConfig struct {
 	Data struct {
 		Platform string `json:"platform"`
@@ -38,8 +41,10 @@ type TelemetryConfig struct {
 }
 
 type CommonConfig struct {
-	PodConfig                map[string]*PodConfig `json:"podConfig,omitempty"`
-	StaticMessagebusPassword string                `json:"staticMessagebusPassword"`
+	// @deprecated
+	PodConfig map[string]*PodConfig `json:"podConfig,omitempty"`
+	// @deprecated use a secret instead in messageBus.credentials
+	StaticMessagebusPassword string `json:"staticMessagebusPassword"`
 	// @deprecated PodSecurityPolicies are deprecated in k8s 1.21 and removed in 1.25
 	UsePodSecurityPolicies bool `json:"usePodSecurityPolicies"`
 }
@@ -128,6 +133,7 @@ type WorkspaceConfig struct {
 	} `json:"contentService"`
 
 	EnableProtectedSecrets *bool `json:"enableProtectedSecrets"`
+	UseWsmanagerMk2        bool  `json:"useWsmanagerMk2,omitempty"`
 }
 
 type PersistentVolumeClaim struct {
@@ -188,7 +194,7 @@ type IAMConfig struct {
 	OIDCClientsSecretName string `json:"oidsClientsConfigSecret,omitempty"`
 }
 
-type OpenFGAConfig struct {
+type SpiceDBConfig struct {
 	Enabled bool `json:"enabled"`
 
 	CloudSQL *struct {
@@ -216,7 +222,7 @@ type WebAppConfig struct {
 	SlowDatabase               bool                   `json:"slowDatabase,omitempty"`
 	IAM                        *IAMConfig             `json:"iam,omitempty"`
 	WithoutWorkspaceComponents bool                   `json:"withoutWorkspaceComponents,omitempty"`
-	OpenFGA                    *OpenFGAConfig         `json:"openfga,omitempty"`
+	SpiceDB                    *SpiceDBConfig         `json:"spicedb,omitempty"`
 }
 
 type WorkspaceDefaults struct {
@@ -261,6 +267,7 @@ type ServerConfig struct {
 	RunDbDeleter                      *bool             `json:"runDbDeleter"`
 	DisableWorkspaceGarbageCollection bool              `json:"disableWorkspaceGarbageCollection"`
 	InactivityPeriodForReposInDays    *int              `json:"inactivityPeriodForReposInDays"`
+	ShowSetupModal                    *bool             `json:"showSetupModal"`
 
 	// @deprecated use containerRegistry.privateBaseImageAllowList instead
 	DefaultBaseImageRegistryWhiteList []string `json:"defaultBaseImageRegistryWhitelist"`
@@ -274,6 +281,8 @@ type ProxyConfig struct {
 	ServiceType *corev1.ServiceType `json:"serviceType,omitempty" validate:"omitempty,service_config_type"`
 
 	Configcat *ConfigcatProxyConfig `json:"configcat,omitempty"`
+
+	FrontendDevEnabled bool `json:"frontendDevEnabled"`
 }
 
 type ConfigcatProxyConfig struct {
@@ -348,3 +357,9 @@ const (
 	TracingSampleTypeRateLimiting  TracingSampleType = "rateLimiting"
 	TracingSampleTypeRemote        TracingSampleType = "remote"
 )
+
+type Overrides struct {
+	metav1.TypeMeta `json:",inline"`
+	Metadata        metav1.ObjectMeta `json:"metadata"`
+	Override        map[string]any    `json:"override"`
+}

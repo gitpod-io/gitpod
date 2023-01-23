@@ -23,6 +23,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
+const (
+	defaultCopyConcurrency = 10
+	defaultPartSize        = 50 // MiB
+	megabytes              = 1024 * 1024
+)
+
 var _ DirectAccess = &s3Storage{}
 var _ PresignedAccess = &PresignedS3Storage{}
 
@@ -284,16 +290,32 @@ func (s3st *s3Storage) DownloadSnapshot(ctx context.Context, destination string,
 }
 
 func (s3st *s3Storage) download(ctx context.Context, destination string, obj string, mappings []archive.IDMapping) (found bool, err error) {
-	resp, err := s3st.client.GetObject(ctx, &s3.GetObjectInput{
+	downloader := s3manager.NewDownloader(s3st.client, func(d *s3manager.Downloader) {
+		d.Concurrency = defaultCopyConcurrency
+		d.PartSize = defaultPartSize * megabytes
+		d.BufferProvider = s3manager.NewPooledBufferedWriterReadFromProvider(25 * megabytes)
+	})
+
+	s3File, err := os.CreateTemp("", "temporal-s3-file")
+	if err != nil {
+		return true, xerrors.Errorf("creating temporal file: %s", err.Error())
+	}
+	defer os.Remove(s3File.Name())
+
+	_, err = downloader.Download(ctx, s3File, &s3.GetObjectInput{
 		Bucket: aws.String(s3st.Config.Bucket),
 		Key:    aws.String(obj),
 	})
 	if err != nil {
 		return false, err
 	}
-	defer resp.Body.Close()
 
-	err = archive.ExtractTarbal(ctx, resp.Body, destination, archive.WithUIDMapping(mappings), archive.WithGIDMapping(mappings))
+	_, err = s3File.Seek(0, 0)
+	if err != nil {
+		return false, err
+	}
+
+	err = archive.ExtractTarbal(ctx, s3File, destination, archive.WithUIDMapping(mappings), archive.WithGIDMapping(mappings))
 	if err != nil {
 		return true, xerrors.Errorf("tar %s: %s", destination, err.Error())
 	}
@@ -389,7 +411,11 @@ func (s3st *s3Storage) Upload(ctx context.Context, source string, name string, o
 		err = xerrors.Errorf("Can only upload with actual S3 client")
 	}
 
-	uploader := s3manager.NewUploader(s3c)
+	uploader := s3manager.NewUploader(s3c, func(u *s3manager.Uploader) {
+		u.Concurrency = defaultCopyConcurrency
+		u.PartSize = defaultPartSize * megabytes
+		u.BufferProvider = s3manager.NewBufferedReadSeekerWriteToPool(25 * megabytes)
+	})
 	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(obj),

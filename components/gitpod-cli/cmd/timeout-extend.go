@@ -33,8 +33,7 @@ var extendTimeoutCmd = &cobra.Command{
 		if err != nil {
 			fail(err.Error())
 		}
-		var tmp serverapi.WorkspaceTimeoutDuration = serverapi.WorkspaceTimeoutDuration180m
-		if _, err := client.SetWorkspaceTimeout(ctx, wsInfo.WorkspaceId, &tmp); err != nil {
+		if _, err := client.SetWorkspaceTimeout(ctx, wsInfo.WorkspaceId, time.Minute*180); err != nil {
 			if err, ok := err.(*jsonrpc2.Error); ok && err.Code == serverapi.PLAN_PROFESSIONAL_REQUIRED {
 				fail("Cannot extend workspace timeout for current plan, please upgrade your plan")
 			}

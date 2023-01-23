@@ -9,8 +9,12 @@ import (
 )
 
 const (
-	Component         = "rabbitmq"
-	CookieSecret      = "messagebus-erlang-cookie"
-	InClusterDbSecret = common.InClusterMessageQueueName
-	TLSSecret         = common.InClusterMessageQueueTLS
+	Component             = "rabbitmq"
+	CookieSecret          = "messagebus-erlang-cookie"
+	InClusterMsgBusSecret = common.InClusterMessageQueueName
+	TLSSecret             = common.InClusterMessageQueueTLS
+	rabbitMQUsername      = "gitpod"
+	InitContainerImage    = "library/alpine"
+	InitContainerTag      = "3.16"
+	passwordReplaceString = "%PASSWORD%"
 )

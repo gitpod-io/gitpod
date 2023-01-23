@@ -1,6 +1,18 @@
 # Change Log
 
 ## January 2023
+- [installer]: promote PodConfig to config main ([#15900](https://github.com/gitpod-io/gitpod/pull/15900)) - [@mrsimonemms](https://github.com/mrsimonemms)
+- [installer]: promote experimental agent-smith config ([#15841](https://github.com/gitpod-io/gitpod/pull/15841)) - [@mrsimonemms](https://github.com/mrsimonemms)
+- [installer]: promote experimental telemetry config ([#15840](https://github.com/gitpod-io/gitpod/pull/15840)) - [@mrsimonemms](https://github.com/mrsimonemms)
+- [installer]: add override option to arbitrarily change the output ([#15658](https://github.com/gitpod-io/gitpod/pull/15658)) - [@mrsimonemms](https://github.com/mrsimonemms)
+- Improvements and bug fixes to the Projects list page on the dashboard. Sorting of projects on that view is now alphanumeric instead of by activity. ([#15854](https://github.com/gitpod-io/gitpod/pull/15854)) - [@selfcontained](https://github.com/selfcontained)
+- [installer]: refactor the config's deprecation handling ([#15773](https://github.com/gitpod-io/gitpod/pull/15773)) - [@mrsimonemms](https://github.com/mrsimonemms)
+- A new CLI command `gp timeout set` allows to set the workspace timeout to arbitrary durations. ([#15815](https://github.com/gitpod-io/gitpod/pull/15815)) - [@svenefftinge](https://github.com/svenefftinge)
+- new `.gitpod.yml` default template ([#15728](https://github.com/gitpod-io/gitpod/pull/15728)) - [@Siddhant-K-code](https://github.com/Siddhant-K-code)
+- Delete semgrep.yml ([#15601](https://github.com/gitpod-io/gitpod/pull/15601)) - [@securitymirco](https://github.com/securitymirco)
+- Allow renaming teams ([#15754](https://github.com/gitpod-io/gitpod/pull/15754)) - [@svenefftinge](https://github.com/svenefftinge)
+- new command: `gp rebuild` ([#15638](https://github.com/gitpod-io/gitpod/pull/15638)) - [@andreafalzetti](https://github.com/andreafalzetti)
+- feat: `gp docs` in gitpod cli ([#15724](https://github.com/gitpod-io/gitpod/pull/15724)) - [@Siddhant-K-code](https://github.com/Siddhant-K-code)
 - fix-IDEA2022.3-gradle-runIde ([#15646](https://github.com/gitpod-io/gitpod/pull/15646)) - [@zhipengzuo](https://github.com/zhipengzuo)
 - [dashboard] Default use public API when interacting with Teams ([#15706](https://github.com/gitpod-io/gitpod/pull/15706)) - [@easyCZ](https://github.com/easyCZ)
 - Fix race for DB connection ([#15691](https://github.com/gitpod-io/gitpod/pull/15691)) - [@geropl](https://github.com/geropl)

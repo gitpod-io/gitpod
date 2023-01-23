@@ -22,6 +22,7 @@ import Alert from "../components/Alert";
 import { listAllProjects } from "../service/public-api";
 import { UserContext } from "../user-context";
 import Tooltip from "../components/Tooltip";
+import { StartWorkspaceModalContext } from "../workspaces/start-workspace-modal-context";
 
 export default function () {
     const location = useLocation();
@@ -30,6 +31,7 @@ export default function () {
     const { teams } = useContext(TeamsContext);
     const { user } = useContext(UserContext);
     const team = getCurrentTeam(location, teams);
+    const { setStartWorkspaceModalProps } = useContext(StartWorkspaceModalContext);
 
     const match = useRouteMatch<{ team: string; resource: string }>("/(t/)?:team/:resource");
     const projectSlug = match?.params?.resource;
@@ -339,10 +341,10 @@ export default function () {
                                             <ItemField className="flex items-center my-auto">
                                                 <div>
                                                     <a href={branch.url}>
-                                                        <div className="text-base text-gray-600 hover:text-gray-800 dark:text-gray-50 dark:hover:text-gray-200 font-medium mb-1">
+                                                        <div className="text-base text-gray-600 hover:text-gray-800 dark:text-gray-50 dark:hover:text-gray-200 font-medium mb-1 font-mono">
                                                             {branch.name}
                                                             {branch.isDefault && (
-                                                                <span className="ml-2 self-center rounded-xl py-0.5 px-2 text-sm bg-blue-50 text-blue-40 dark:bg-blue-500 dark:text-blue-100">
+                                                                <span className="ml-2 self-center rounded-xl py-0.5 px-2 text-sm font-sans bg-blue-50 text-blue-40 dark:bg-blue-500 dark:text-blue-100">
                                                                     DEFAULT
                                                                 </span>
                                                             )}
@@ -373,6 +375,12 @@ export default function () {
                                                             {branch.changeHash?.substring(0, 8)}
                                                         </p>
                                                     )}
+                                                    <p>
+                                                        {avatar}Authored {formatDate(branch.changeDate)} ·{" "}
+                                                        <span className="font-mono">
+                                                            {branch.changeHash?.substring(0, 8)}
+                                                        </span>
+                                                    </p>
                                                 </div>
                                             </ItemField>
                                             <ItemField className="flex items-center my-auto">
@@ -410,9 +418,11 @@ export default function () {
                                                     menuEntries={[
                                                         {
                                                             title: "New Workspace ...",
-                                                            href: gitpodHostUrl
-                                                                .withContext(`${branch.url}`, { showOptions: true })
-                                                                .toString(),
+                                                            onClick: () =>
+                                                                setStartWorkspaceModalProps({
+                                                                    contextUrl: branch.url,
+                                                                    allowContextUrlChange: true,
+                                                                }),
                                                             separator: true,
                                                         },
                                                         prebuild?.status === "queued" || prebuild?.status === "building"

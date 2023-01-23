@@ -31,7 +31,6 @@ rabbitmq:
     enabled: true
     existingSecret: load-definition
   extraConfiguration: |
-    load_definitions = /app/load_definition.json
     # Increase statistics emission interval https://www.rabbitmq.com/management.html#statistics-interval
     collect_statistics_interval = 15000
   pdb:

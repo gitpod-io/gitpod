@@ -432,7 +432,7 @@ have a containerd runtime.
 Your Kubernetes nodes must have the following labels applied to them:
 - `gitpod.io/workload_meta`
 - `gitpod.io/workload_ide`
-- `gitpod.io/workload_workspace_services`
+- `gitpod.io/workload_services`
 - `gitpod.io/workload_workspace_regular`
 - `gitpod.io/workload_workspace_headless`
 

@@ -89,7 +89,18 @@ export class UserToTeamMigrationService {
             newAttribution,
             oldAttribution,
         ]);
-        log.info(ctx, "Migrated cost center data.", { teamId: team.id, result });
+        if (result.affectedRows === 0) {
+            const now = new Date();
+            const nextMonth = new Date();
+            nextMonth.setMonth(now.getMonth() + 1);
+            await conn.query(
+                "INSERT INTO d_b_cost_center (id, creationTime, spendingLimit, billingStrategy, billingCycleStart, nextBillingTime) VALUES (?,?,?,?,?,?)",
+                [newAttribution, now.toISOString(), 500, "other", now.toISOString(), nextMonth.toISOString()],
+            );
+            log.info(ctx, "Created cost center data.", { teamId: team.id, result });
+        } else {
+            log.info(ctx, "Migrated cost center data.", { teamId: team.id, result });
+        }
 
         result = await conn.query(
             "UPDATE d_b_workspace_instance SET usageAttributionId = ? WHERE usageAttributionId = ?",

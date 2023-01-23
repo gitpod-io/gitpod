@@ -5,6 +5,7 @@ import { Werft } from "../../util/werft";
 import { Analytics, JobConfig } from "./job-config";
 import * as VM from "../../vm/vm";
 import { Installer } from "./installer/installer";
+import { ChildProcess, spawn } from 'child_process';
 
 // used by Installer
 const STACKDRIVER_SERVICEACCOUNT = JSON.parse(
@@ -18,6 +19,7 @@ const phases = {
 
 const installerSlices = {
     INSTALL: "Generate, validate, and install Gitpod",
+    DEDICATED_PRESEED: "Preseed for Dedicated",
 };
 
 const vmSlices = {
@@ -39,7 +41,7 @@ interface DeploymentConfig {
 }
 
 export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobConfig) {
-    const { version, cleanSlateDeployment, withObservability, installEELicense, workspaceFeatureFlags } = jobConfig;
+    const { version, cleanSlateDeployment, withObservability, installEELicense, workspaceFeatureFlags, useWsManagerMk2 } = jobConfig;
 
     const { destname, namespace } = jobConfig.previewEnvironment;
 
@@ -103,6 +105,8 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
             withEELicense: deploymentConfig.installEELicense,
             workspaceFeatureFlags: workspaceFeatureFlags,
             withSlowDatabase: jobConfig.withSlowDatabase,
+            withDedicatedEmulation: jobConfig.withDedicatedEmulation,
+            useWsManagerMk2: useWsManagerMk2,
         });
         try {
             werft.log(installerSlices.INSTALL, "deploying using installer");
@@ -112,6 +116,35 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
             );
         } catch (err) {
             werft.fail(installerSlices.INSTALL, err);
+        }
+
+        if (jobConfig.withDedicatedEmulation) {
+            // After the installation is done, and everything is running, we need to prepare first-time access for the admin-user
+            let portForwardProcess: ChildProcess | undefined;
+            try {
+                werft.log(installerSlices.DEDICATED_PRESEED, "preseed for dedicated");
+                portForwardProcess = spawn("kubectl", ["port-forward", "deployment/server", "9000", "&"], {
+                    shell: true,
+                    detached: true,
+                    stdio: "overlapped",
+                });
+                await new Promise(resolve => portForwardProcess.stdout.on('data', resolve));    // wait until process is running
+
+                const adminLoginOts = exec(`curl -X POST localhost:9000/admin-user/login-token/create`, { silent: true }).stdout.trim();
+                exec(
+                    `werft log result "admin login OTS token" ${adminLoginOts}`,
+                );
+                exec(
+                    `werft log result -d "admin-user login link" url https://${deploymentConfig.domain}/api/login/ots/admin-user/${adminLoginOts}`,
+                );
+                werft.log(installerSlices.DEDICATED_PRESEED, "done preseeding for dedicated.");
+            } catch (err) {
+                werft.fail(installerSlices.DEDICATED_PRESEED, err);
+            } finally {
+                if (portForwardProcess) {
+                    portForwardProcess.kill("SIGINT");
+                }
+            }
         }
     })();
 

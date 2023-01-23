@@ -95,7 +95,7 @@ func userToAPIResponse(user *protocol.User) *v1.User {
 		Id:        user.ID,
 		Name:      name,
 		AvatarUrl: user.AvatarURL,
-		CreatedAt: parseTimeStamp(user.CreationDate),
+		CreatedAt: parseGitpodTimeStampOrDefault(user.CreationDate),
 	}
 }
 
@@ -104,7 +104,7 @@ func sshKeyToAPIResponse(key *protocol.UserSSHPublicKeyValue) *v1.SSHKey {
 		Id:        key.ID,
 		Name:      key.Name,
 		Key:       key.Key,
-		CreatedAt: parseTimeStamp(key.CreationTime),
+		CreatedAt: parseGitpodTimeStampOrDefault(key.CreationTime),
 	}
 }
 

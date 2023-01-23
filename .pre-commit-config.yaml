@@ -21,7 +21,7 @@ repos:
         exclude: |
           (?x)^(
             .*example-layer.tar.gz|
-            .*\.(png|svg|ico|gpg)|
+            .*\.(png|svg|ico|gpg|woff2)|
             dev/version-manifest/version-manifest|
             .*gradle-wrapper\.jar
           )$

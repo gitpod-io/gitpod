@@ -28,6 +28,7 @@ export type Config = Omit<
     | "stripeConfigFile"
     | "licenseFile"
     | "patSigningKeyFile"
+    | "adminLoginKeyFile"
 > & {
     hostUrl: GitpodHostUrl;
     workspaceDefaults: WorkspaceDefaults;
@@ -37,6 +38,7 @@ export type Config = Omit<
     inactivityPeriodForReposInDays?: number;
 
     patSigningKey: string;
+    admin: { loginKey: string };
 };
 
 export interface WorkspaceDefaults {
@@ -141,7 +143,12 @@ export interface ConfigSerialized {
         passlist: string[];
     };
 
-    makeNewUsersAdmin: boolean;
+    showSetupModal: boolean;
+
+    adminLoginKeyFile: string;
+    admin: {
+        grantFirstUserAdminRole: boolean;
+    };
 
     /** defaultBaseImageRegistryWhitelist is the list of registryies users get acces to by default */
     defaultBaseImageRegistryWhitelist: string[];
@@ -163,12 +170,6 @@ export interface ConfigSerialized {
      * Example: content-service:8080
      */
     contentServiceAddr: string;
-
-    /**
-     * The address content service clients connect to
-     * Example: image-builder:8080
-     */
-    imageBuilderAddr: string;
 
     /**
      * The address usage service clients connect to
@@ -231,13 +232,6 @@ export interface ConfigSerialized {
      * This is the same signing key used by Public API
      */
     patSigningKeyFile?: string;
-
-    /**
-     * Whether the application cluster contains workspace components or not.
-     * Used to e.g. determine whether image builds need to happen in workspace
-     * clusters or application clusters.
-     */
-    withoutWorkspaceComponents: boolean;
 }
 
 export namespace ConfigFile {
@@ -330,6 +324,15 @@ export namespace ConfigFile {
             }
         }
 
+        let adminLoginKey = "";
+        if (config.adminLoginKeyFile) {
+            try {
+                adminLoginKey = fs.readFileSync(filePathTelepresenceAware(config.adminLoginKeyFile), "utf-8").trim();
+            } catch (error) {
+                log.error("Could not load admin login key", error);
+            }
+        }
+
         return {
             ...config,
             hostUrl,
@@ -347,6 +350,10 @@ export namespace ConfigFile {
             },
             inactivityPeriodForReposInDays,
             patSigningKey,
+            admin: {
+                ...config.admin,
+                loginKey: adminLoginKey,
+            },
         };
     }
 }

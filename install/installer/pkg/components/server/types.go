@@ -29,7 +29,6 @@ type ConfigSerialized struct {
 	DefaultBaseImageRegistryWhitelist []string `json:"defaultBaseImageRegistryWhitelist"`
 	RunDbDeleter                      bool     `json:"runDbDeleter"`
 	ContentServiceAddr                string   `json:"contentServiceAddr"`
-	ImageBuilderAddr                  string   `json:"imageBuilderAddr"`
 	UsageServiceAddr                  string   `json:"usageServiceAddr"`
 	IDEServiceAddr                    string   `json:"ideServiceAddr"`
 	MaximumEventLoopLag               float64  `json:"maximumEventLoopLag"`
@@ -39,7 +38,7 @@ type ConfigSerialized struct {
 	StripeConfigFile                  string   `json:"stripeConfigFile"`
 	EnablePayment                     bool     `json:"enablePayment"`
 	PATSigningKeyFile                 string   `json:"patSigningKeyFile"`
-	WithoutWorkspaceComponents        bool     `json:"withoutWorkspaceComponents"`
+	ShowSetupModal                    bool     `json:"showSetupModal"`
 
 	WorkspaceHeartbeat         WorkspaceHeartbeat         `json:"workspaceHeartbeat"`
 	WorkspaceDefaults          WorkspaceDefaults          `json:"workspaceDefaults"`
@@ -52,6 +51,8 @@ type ConfigSerialized struct {
 	OAuthServer                OAuthServer                `json:"oauthServer"`
 	RateLimiter                RateLimiter                `json:"rateLimiter"`
 	CodeSync                   CodeSync                   `json:"codeSync"`
+	Admin                      AdminConfig                `json:"admin"`
+	AdminLoginKeyFile          string                     `json:"adminLoginKeyFile"`
 	// PrebuildLimiter defines the number of prebuilds allowed for each cloneURL in a given 1 minute interval
 	// Key of "*" defines the default limit, unless there exists a cloneURL in the map which overrides it.
 	PrebuildLimiter                PrebuildRateLimiters `json:"prebuildLimiter"`
@@ -164,4 +165,8 @@ type PrebuildRateLimiters = map[string]PrebuildRateLimiterConfig
 type PrebuildRateLimiterConfig struct {
 	Limit  uint32 `json:"limit"`
 	Period uint32 `json:"period"`
+}
+
+type AdminConfig struct {
+	GrantFirstUserAdminRole bool `json:"grantFirstUserAdminRole"`
 }

@@ -5,6 +5,8 @@
 package dbtest
 
 import (
+	"net"
+	"os"
 	"sync"
 	"testing"
 
@@ -34,10 +36,10 @@ func ConnectForTests(t *testing.T) *gorm.DB {
 	conn, err = db.Connect(db.ConnectionParams{
 		User:     "root",
 		Password: "test",
-		Host:     "localhost:23306",
+		Host:     net.JoinHostPort(os.Getenv("DB_HOST"), "23306"),
 		Database: "gitpod",
 	})
-	require.NoError(t, err, "Failed to establish connection to  In a workspace, run `leeway build components/gitpod-db/go:init-testdb` once to bootstrap the db")
+	require.NoError(t, err, "Failed to establish connection to  In a workspace, run `leeway run components/gitpod-db:init-testdb` once to bootstrap the db")
 
 	return conn
 }

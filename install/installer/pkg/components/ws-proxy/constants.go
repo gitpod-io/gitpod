@@ -9,14 +9,16 @@ import (
 )
 
 const (
-	Component          = common.WSProxyComponent
-	HostHeader         = "x-wsproxy-host"
-	HTTPProxyPort      = 8080
-	HTTPProxyPortName  = "http-proxy"
-	HTTPSProxyPort     = 9090
-	HTTPSProxyPortName = "https-proxy"
-	SSHServicePort     = 22
-	SSHTargetPort      = 2200
-	SSHPortName        = "ssh"
-	ReadinessPort      = 8086
+	Component            = common.WSProxyComponent
+	HostHeader           = "x-wsproxy-host"
+	HTTPProxyPort        = 8080
+	HTTPProxyTargetPort  = 8080
+	HTTPProxyPortName    = "http-proxy"
+	HTTPSProxyPort       = 9090
+	HTTPSProxyTargetPort = 9090
+	HTTPSProxyPortName   = "https-proxy"
+	SSHServicePort       = 22
+	SSHTargetPort        = 2200
+	SSHPortName          = "ssh"
+	ReadinessPort        = 8086
 )

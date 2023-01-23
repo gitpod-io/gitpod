@@ -25,7 +25,7 @@ import Arrow from "../components/Arrow";
 import ContextMenu from "../components/ContextMenu";
 import PendingChangesDropdown from "../components/PendingChangesDropdown";
 import PrebuildLogs from "../components/PrebuildLogs";
-import { getGitpodService, gitpodHostUrl } from "../service/service";
+import { getGitpodService, gitpodHostUrl, getIDEFrontendService, IDEFrontendService } from "../service/service";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
 import Alert from "../components/Alert";
@@ -103,6 +103,8 @@ export interface StartWorkspaceState {
 export default class StartWorkspace extends React.Component<StartWorkspaceProps, StartWorkspaceState> {
     static contextType = FeatureFlagContext;
 
+    private ideFrontendService: IDEFrontendService | undefined;
+
     constructor(props: StartWorkspaceProps) {
         super(props);
         this.state = {};
@@ -111,35 +113,21 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     private readonly toDispose = new DisposableCollection();
     componentWillMount() {
         if (this.props.runsInIFrame) {
-            window.parent.postMessage({ type: "$setSessionId", sessionId }, "*");
-            const setStateEventListener = (event: MessageEvent) => {
-                if (
-                    event.data.type === "setState" &&
-                    "state" in event.data &&
-                    typeof event.data["state"] === "object"
-                ) {
-                    if (event.data.state.ideFrontendFailureCause) {
-                        const error = { message: event.data.state.ideFrontendFailureCause };
+            this.ideFrontendService = getIDEFrontendService(this.props.workspaceId, sessionId, getGitpodService());
+            this.toDispose.push(
+                this.ideFrontendService.onSetState((data) => {
+                    if (data.ideFrontendFailureCause) {
+                        const error = { message: data.ideFrontendFailureCause };
                         this.setState({ error });
                     }
-                    if (event.data.state.desktopIdeLink) {
-                        const label = event.data.state.desktopIdeLabel || "Open Desktop IDE";
-                        const clientID = event.data.state.desktopIdeClientID;
-                        this.setState({ desktopIde: { link: event.data.state.desktopIdeLink, label, clientID } });
+                    if (data.desktopIDE?.link) {
+                        const label = data.desktopIDE.label || "Open Desktop IDE";
+                        const clientID = data.desktopIDE.clientID;
+                        const link = data.desktopIDE?.link;
+                        this.setState({ desktopIde: { link, label, clientID } });
                     }
-                }
-                if (
-                    event.data.type === "$openDesktopLink" &&
-                    "link" in event.data &&
-                    typeof event.data["link"] === "string"
-                ) {
-                    this.openDesktopLink(event.data["link"] as string);
-                }
-            };
-            window.addEventListener("message", setStateEventListener, false);
-            this.toDispose.push({
-                dispose: () => window.removeEventListener("message", setStateEventListener),
-            });
+                }),
+            );
         }
 
         try {
@@ -354,7 +342,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             return;
         }
 
-        if (workspaceInstance.status.phase === "building" || workspaceInstance.status.phase == "preparing") {
+        if (workspaceInstance.status.phase === "building" || workspaceInstance.status.phase === "preparing") {
             this.setState({ hasImageBuildLogs: true });
         }
 
@@ -428,27 +416,14 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
     redirectTo(url: string) {
         if (this.props.runsInIFrame) {
-            window.parent.postMessage({ type: "relocate", url }, "*");
+            this.ideFrontendService?.relocate(url);
         } else {
             window.location.href = url;
         }
     }
 
     private openDesktopLink(link: string) {
-        let redirect = false;
-        try {
-            const desktopLink = new URL(link);
-            redirect = desktopLink.protocol !== "http:" && desktopLink.protocol !== "https:";
-        } catch (e) {
-            console.error("invalid desktop link:", e);
-        }
-        // redirect only if points to desktop application
-        // don't navigate browser to another page
-        if (redirect) {
-            window.location.href = link;
-        } else {
-            window.open(link, "_blank", "noopener");
-        }
+        this.ideFrontendService?.openDesktopIDE(link);
     }
 
     render() {
@@ -555,7 +530,13 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                     menuEntries={[
                                         {
                                             title: "Open in Browser",
-                                            onClick: () => window.parent.postMessage({ type: "openBrowserIde" }, "*"),
+                                            onClick: () => {
+                                                // TODO(ak): delete after supervisor deploy
+                                                window.parent.postMessage({ type: "openBrowserIde" }, "*");
+                                                // TODO(ak): end of delete
+
+                                                this.ideFrontendService?.openBrowserIDE();
+                                            },
                                         },
                                         {
                                             title: "Stop Workspace",
@@ -776,9 +757,25 @@ function ImageBuildView(props: ImageBuildViewProps) {
                 <WorkspaceLogs logsEmitter={logsEmitter} errorMessage={props.error?.message} />
             </Suspense>
             {!!props.onStartWithDefaultImage && (
-                <button className="mt-6 secondary" onClick={props.onStartWithDefaultImage}>
-                    Continue with Default Image
-                </button>
+                <>
+                    <div className="mt-6 w-11/12 lg:w-3/5">
+                        <p className="text-center text-gray-400 dark:text-gray-500">
+                            💡 You can use the <code>gp rebuild</code> command to rebuild the workspace from the editor
+                            terminal. &nbsp;
+                            <a
+                                href="https://www.gitpod.io/docs/configure/workspaces/workspace-image#trying-out-changes-to-your-dockerfile"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="gp-link"
+                            >
+                                Learn More
+                            </a>
+                        </p>
+                    </div>
+                    <button className="mt-6 secondary" onClick={props.onStartWithDefaultImage}>
+                        Continue with Default Image
+                    </button>
+                </>
             )}
         </StartPage>
     );

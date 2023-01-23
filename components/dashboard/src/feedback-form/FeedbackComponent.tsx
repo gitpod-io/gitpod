@@ -107,7 +107,6 @@ function FeedbackComponent(props: {
                         }
                     >
                         <div className="relative">
-                            <div className="absolute flex bottom-5 right-5 -space-x-3">{emojiGroup(24)}</div>
                             <textarea
                                 style={{ height: "160px", borderRadius: "6px" }}
                                 autoFocus
@@ -128,13 +127,16 @@ function FeedbackComponent(props: {
                                 .
                             </p>
                         </div>
-                        <div className="flex justify-end mt-6">
-                            <button className="secondary" onClick={onClose}>
-                                Cancel
-                            </button>
-                            <button className="ml-2" onClick={onSubmit}>
-                                Send Feedback
-                            </button>
+                        <div className="flex justify-between mt-6">
+                            <div className="flex bottom-5 right-5 -space-x-3">{emojiGroup(24)}</div>
+                            <div>
+                                <button className="secondary" onClick={onClose}>
+                                    Cancel
+                                </button>
+                                <button className="ml-2" onClick={onSubmit}>
+                                    Send Feedback
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </>

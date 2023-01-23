@@ -8,9 +8,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/containerd/containerd/content"
@@ -24,6 +26,7 @@ import (
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -171,16 +174,32 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 		bp := bufPool.Get().(*[]byte)
 		defer bufPool.Put(bp)
 
-		n, err := io.CopyBuffer(w, rc, *bp)
+		var n int64
+		var serr error
+		err = wait.PollImmediateWithContext(ctx, 100*time.Millisecond, time.Minute, func(context.Context) (done bool, err error) {
+			n, serr = io.CopyBuffer(w, rc, *bp)
+			if serr == nil {
+				return true, nil
+			}
+			if errors.Is(serr, syscall.ECONNRESET) || errors.Is(serr, syscall.EPIPE) {
+				log.WithField("blobSource", src.Name()).WithField("baseRef", bh.Spec.BaseRef).WithError(serr).Warn("retry get blob because of error")
+				return false, nil
+			}
+			return true, serr
+		})
 		if err != nil {
-			bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "false").Inc()
-			log.WithField("blobSource", src.Name()).WithField("baseRef", bh.Spec.BaseRef).WithError(err).Error("unable to return blob")
+			if bh.Metrics != nil {
+				bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "false").Inc()
+			}
+			log.WithField("blobSource", src.Name()).WithField("baseRef", bh.Spec.BaseRef).WithError(err).Errorf("unable to return blob: %v", serr)
 			return xerrors.Errorf("unable to return blob: %w", err)
 		}
 
-		bh.Metrics.BlobDownloadSpeedHist.WithLabelValues(src.Name()).Observe(float64(n) / time.Since(t0).Seconds())
-		bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "true").Inc()
-		bh.Metrics.BlobDownloadSizeCounter.WithLabelValues(src.Name()).Add(float64(n))
+		if bh.Metrics != nil {
+			bh.Metrics.BlobDownloadSpeedHist.WithLabelValues(src.Name()).Observe(float64(n) / time.Since(t0).Seconds())
+			bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "true").Inc()
+			bh.Metrics.BlobDownloadSizeCounter.WithLabelValues(src.Name()).Add(float64(n))
+		}
 
 		if dontCache {
 			return nil

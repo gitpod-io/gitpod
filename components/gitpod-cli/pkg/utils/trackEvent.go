@@ -6,31 +6,33 @@ package utils
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
-	gitpod "github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpod"
+	"github.com/gitpod-io/gitpod/common-go/analytics"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
-	serverapi "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
-	log "github.com/sirupsen/logrus"
+)
+
+const (
+	Outcome_Success   = "success"
+	Outcome_UserErr   = "user_error"
+	Outcome_SystemErr = "system_error"
 )
 
 const (
 	// System
 	SystemErrorCode = "system_error"
+	UserErrorCode   = "user_error"
 
 	// Rebuild
-	RebuildErrorCode_DockerBuildFailed     = "rebuild_docker_build_failed"
-	RebuildErrorCode_DockerErr             = "rebuild_docker_err"
-	RebuildErrorCode_DockerfileCannotRead  = "rebuild_dockerfile_cannot_read"
-	RebuildErrorCode_DockerfileCannotWirte = "rebuild_dockerfile_cannot_write"
-	RebuildErrorCode_DockerfileEmpty       = "rebuild_dockerfile_empty"
-	RebuildErrorCode_DockerfileNotFound    = "rebuild_dockerfile_not_found"
-	RebuildErrorCode_DockerNotFound        = "rebuild_docker_not_found"
-	RebuildErrorCode_DockerRunFailed       = "rebuild_docker_run_failed"
-	RebuildErrorCode_MalformedGitpodYaml   = "rebuild_malformed_gitpod_yaml"
-	RebuildErrorCode_MissingGitpodYaml     = "rebuild_missing_gitpod_yaml"
-	RebuildErrorCode_NoCustomImage         = "rebuild_no_custom_image"
+	RebuildErrorCode_ImageBuildFailed    = "rebuild_image_build_failed"
+	RebuildErrorCode_DockerErr           = "rebuild_docker_err"
+	RebuildErrorCode_DockerNotFound      = "rebuild_docker_not_found"
+	RebuildErrorCode_DockerRunFailed     = "rebuild_docker_run_failed"
+	RebuildErrorCode_MalformedGitpodYaml = "rebuild_malformed_gitpod_yaml"
+	RebuildErrorCode_MissingGitpodYaml   = "rebuild_missing_gitpod_yaml"
+	RebuildErrorCode_NoCustomImage       = "rebuild_no_custom_image"
 )
 
 type TrackCommandUsageParams struct {
@@ -41,19 +43,22 @@ type TrackCommandUsageParams struct {
 	InstanceId         string `json:"instanceId,omitempty"`
 	Timestamp          int64  `json:"timestamp,omitempty"`
 	ImageBuildDuration int64  `json:"imageBuildDuration,omitempty"`
+	Outcome            string `json:"outcome,omitempty"`
 }
 
-type EventTracker struct {
+type AnalyticsEvent struct {
 	Data             *TrackCommandUsageParams
 	startTime        time.Time
-	serverClient     *serverapi.APIoverJSONRPC
 	supervisorClient *supervisor.SupervisorClient
+	ownerId          string
+	w                analytics.Writer
 }
 
-func TrackEvent(ctx context.Context, supervisorClient *supervisor.SupervisorClient, cmdParams *TrackCommandUsageParams) *EventTracker {
-	tracker := &EventTracker{
+func NewAnalyticsEvent(ctx context.Context, supervisorClient *supervisor.SupervisorClient, cmdParams *TrackCommandUsageParams) *AnalyticsEvent {
+	event := &AnalyticsEvent{
 		startTime:        time.Now(),
 		supervisorClient: supervisorClient,
+		w:                analytics.NewFromEnvironment(),
 	}
 
 	wsInfo, err := supervisorClient.Info.WorkspaceInfo(ctx, &api.WorkspaceInfoRequest{})
@@ -62,15 +67,9 @@ func TrackEvent(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		return nil
 	}
 
-	serverClient, err := gitpod.ConnectToServer(ctx, wsInfo, []string{"function:trackEvent"})
-	if err != nil {
-		log.WithError(err).Fatal("error connecting to server")
-		return nil
-	}
+	event.ownerId = wsInfo.OwnerId
 
-	tracker.serverClient = serverClient
-
-	tracker.Data = &TrackCommandUsageParams{
+	event.Data = &TrackCommandUsageParams{
 		Command:     cmdParams.Command,
 		Duration:    0,
 		WorkspaceId: wsInfo.WorkspaceId,
@@ -79,38 +78,49 @@ func TrackEvent(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		Timestamp:   time.Now().UnixMilli(),
 	}
 
-	return tracker
+	return event
 }
 
-func (t *EventTracker) Set(key string, value interface{}) *EventTracker {
+func (e *AnalyticsEvent) Set(key string, value interface{}) *AnalyticsEvent {
 	switch key {
 	case "Command":
-		t.Data.Command = value.(string)
+		e.Data.Command = value.(string)
 	case "ErrorCode":
-		t.Data.ErrorCode = value.(string)
+		e.Data.ErrorCode = value.(string)
 	case "Duration":
-		t.Data.Duration = value.(int64)
+		e.Data.Duration = value.(int64)
 	case "WorkspaceId":
-		t.Data.WorkspaceId = value.(string)
+		e.Data.WorkspaceId = value.(string)
 	case "InstanceId":
-		t.Data.InstanceId = value.(string)
+		e.Data.InstanceId = value.(string)
 	case "ImageBuildDuration":
-		t.Data.ImageBuildDuration = value.(int64)
+		e.Data.ImageBuildDuration = value.(int64)
+	case "Outcome":
+		e.Data.Outcome = value.(string)
 	}
-	return t
+	return e
 }
 
-func (t *EventTracker) Send(ctx context.Context) {
-	t.Set("Duration", time.Since(t.startTime).Milliseconds())
+func (e *AnalyticsEvent) Send(ctx context.Context) {
+	defer e.w.Close()
 
-	event := &serverapi.RemoteTrackMessage{
-		Event:      "gp_command",
-		Properties: t.Data,
-	}
+	e.Set("Duration", time.Since(e.startTime).Milliseconds())
 
-	err := t.serverClient.TrackEvent(ctx, event)
+	data := make(map[string]interface{})
+	jsonData, err := json.Marshal(e.Data)
 	if err != nil {
-		LogError(ctx, err, "Could not track gp command event", t.supervisorClient)
+		LogError(ctx, err, "Could not marshal event data", e.supervisorClient)
 		return
 	}
+	err = json.Unmarshal(jsonData, &data)
+	if err != nil {
+		LogError(ctx, err, "Could not unmarshal event data", e.supervisorClient)
+		return
+	}
+
+	e.w.Track(analytics.TrackMessage{
+		Identity:   analytics.Identity{UserID: e.ownerId},
+		Event:      "gp_command",
+		Properties: data,
+	})
 }

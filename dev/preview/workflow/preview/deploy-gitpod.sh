@@ -29,6 +29,9 @@ GITPOD_ANALYTICS="${GITPOD_ANALYTICS:-}"
 GITPOD_WITH_EE_LICENSE="${GITPOD_WITH_EE_LICENSE:-true}"
 GITPOD_WORKSPACE_FEATURE_FLAGS="${GITPOD_WORKSPACE_FEATURE_FLAGS:-}"
 GITPOD_WITH_SLOW_DATABASE="${GITPOD_WITH_SLOW_DATABASE:-false}"
+GITPOD_WITH_DEDICATED_EMU="${GITPOD_WITH_DEDICATED_EMU:-false}"
+GITPOD_WSMANAGER_MK2="${GITPOD_WSMANAGER_MK2:-false}"
+
 
 if [[ "${VERSION:-}" == "" ]]; then
   if [[ ! -f  /tmp/local-dev-version ]]; then
@@ -333,24 +336,38 @@ yq w -i "${INSTALLER_CONFIG_PATH}" observability.tracing.endpoint "${TRACING_END
 #
 # configureAuthProviders
 #
-for row in $(kubectl --kubeconfig "$DEV_KUBE_PATH" --context "${DEV_KUBE_CONTEXT}" get secret preview-envs-authproviders-harvester --namespace=keys -o jsonpath="{.data.authProviders}" \
-| base64 -d -w 0 \
-| yq r - authProviders -j \
-| jq -r 'to_entries | .[] | @base64'); do
-    key=$(echo "${row}" | base64 -d | jq -r '.key')
-    providerId=$(echo "$row" | base64 -d | jq -r '.value.id | ascii_downcase')
-    data=$(echo "$row" | base64 -d | yq r - value --prettyPrint)
-    yq w -i "${INSTALLER_CONFIG_PATH}" authProviders["$key"].kind "secret"
-    yq w -i "${INSTALLER_CONFIG_PATH}" authProviders["$key"].name "$providerId"
 
-    kubectl create secret generic "$providerId" \
-        --namespace "${PREVIEW_NAMESPACE}" \
-        --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-        --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-        --from-literal=provider="$data" \
-        --dry-run=client -o yaml | \
-        kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" replace --force -f -
-done
+if [[ "${GITPOD_WITH_DEDICATED_EMU}" != "true" ]]
+then
+  for row in $(kubectl --kubeconfig "$DEV_KUBE_PATH" --context "${DEV_KUBE_CONTEXT}" get secret preview-envs-authproviders-harvester --namespace=keys -o jsonpath="{.data.authProviders}" \
+  | base64 -d -w 0 \
+  | yq r - authProviders -j \
+  | jq -r 'to_entries | .[] | @base64'); do
+      key=$(echo "${row}" | base64 -d | jq -r '.key')
+      providerId=$(echo "$row" | base64 -d | jq -r '.value.id | ascii_downcase')
+      data=$(echo "$row" | base64 -d | yq r - value --prettyPrint)
+      yq w -i "${INSTALLER_CONFIG_PATH}" authProviders["$key"].kind "secret"
+      yq w -i "${INSTALLER_CONFIG_PATH}" authProviders["$key"].name "$providerId"
+
+      kubectl create secret generic "$providerId" \
+          --namespace "${PREVIEW_NAMESPACE}" \
+          --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+          --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+          --from-literal=provider="$data" \
+          --dry-run=client -o yaml | \
+          kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" replace --force -f -
+  done
+fi
+
+#
+# configure dedicated emulation
+#
+
+if [[ "${GITPOD_WITH_DEDICATED_EMU}" == "true" ]]
+then
+  # Suppress the Self-Hosted setup modal
+  yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.server.showSetupModal "false"
+fi
 
 #
 # configureStripeAPIKeys
@@ -389,8 +406,8 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.defaultSpendingLimi
 # Configure Price IDs
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.stripe.individualUsagePriceIds['EUR'] "price_1LmYVxGadRXm50o3AiLq0Qmo"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.stripe.individualUsagePriceIds['USD'] "price_1LmYWRGadRXm50o3Ym8PLqnG"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.stripe.teamUsagePriceIds['EUR'] "price_1LiId7GadRXm50o3OayAS2y4"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.stripe.teamUsagePriceIds['USD'] "price_1LiIdbGadRXm50o3ylg5S44r"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.stripe.teamUsagePriceIds['EUR'] "price_1LmYVxGadRXm50o3AiLq0Qmo"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.stripe.teamUsagePriceIds['USD'] "price_1LmYWRGadRXm50o3Ym8PLqnG"
 
 #
 # configureConfigCat
@@ -456,6 +473,14 @@ else
 fi
 
 #
+# wsManagerMk2
+#
+if [[ "${GITPOD_WSMANAGER_MK2}" == "true" ]]; then
+  yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.workspace.useWsmanagerMk2" "true"
+fi
+
+
+#
 # chargebee
 #
 yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.chargebeeSecret" "chargebee-config"
@@ -467,13 +492,9 @@ yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeSecret" "st
 yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeConfig" "stripe-config"
 
 #
-# IAM
+# Enable "Frontend Dev" on all preview envs
 #
-
-#
-# OpenFGA
-#
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.openfga.enabled "true"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.frontendDevEnabled "true"
 
 # copy secret from werft's space
 kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" -n werft get secret preview-envs-oidc-clients-config-secret -o yaml > preview-envs-oidc-clients-config-secret.secret.yaml
@@ -485,9 +506,6 @@ yq w -i preview-envs-oidc-clients-config-secret.secret.yaml metadata.name "oidc-
 yq w -i preview-envs-oidc-clients-config-secret.secret.yaml metadata.namespace "default"
 kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" apply -f preview-envs-oidc-clients-config-secret.secret.yaml
 rm -f preview-envs-oidc-clients-config-secret.secret.yaml
-
-# enable config
-yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.iam.oidsClientsConfigSecret" "oidc-clients-config-secret"
 
 
 log_success "Generated config at $INSTALLER_CONFIG_PATH"

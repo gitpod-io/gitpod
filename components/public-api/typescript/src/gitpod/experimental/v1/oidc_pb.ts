@@ -31,19 +31,24 @@ export class OIDCClientConfig extends Message<OIDCClientConfig> {
   id = "";
 
   /**
-   * @generated from field: gitpod.experimental.v1.OIDCConfig oidc_config = 2;
+   * @generated from field: string organization_id = 2;
+   */
+  organizationId = "";
+
+  /**
+   * @generated from field: gitpod.experimental.v1.OIDCConfig oidc_config = 3;
    */
   oidcConfig?: OIDCConfig;
 
   /**
-   * @generated from field: gitpod.experimental.v1.OAuth2Config oauth2_config = 3;
+   * @generated from field: gitpod.experimental.v1.OAuth2Config oauth2_config = 4;
    */
   oauth2Config?: OAuth2Config;
 
   /**
    * Optional.
    *
-   * @generated from field: bool oauth_only = 4;
+   * @generated from field: bool oauth_only = 5;
    */
   oauthOnly = false;
 
@@ -53,7 +58,7 @@ export class OIDCClientConfig extends Message<OIDCClientConfig> {
    * included.
    * Optional.
    *
-   * @generated from field: repeated string id_token_signing_alg_values_supported = 5;
+   * @generated from field: repeated string id_token_signing_alg_values_supported = 6;
    */
   idTokenSigningAlgValuesSupported: string[] = [];
 
@@ -61,7 +66,7 @@ export class OIDCClientConfig extends Message<OIDCClientConfig> {
    * Time when the config was created.
    * Read-only.
    *
-   * @generated from field: google.protobuf.Timestamp creation_time = 6;
+   * @generated from field: google.protobuf.Timestamp creation_time = 7;
    */
   creationTime?: Timestamp;
 
@@ -69,7 +74,7 @@ export class OIDCClientConfig extends Message<OIDCClientConfig> {
    * Describes the status of this configuration item.
    * Read-only.
    *
-   * @generated from field: gitpod.experimental.v1.OIDCClientConfigStatus status = 7;
+   * @generated from field: gitpod.experimental.v1.OIDCClientConfigStatus status = 8;
    */
   status?: OIDCClientConfigStatus;
 
@@ -82,12 +87,13 @@ export class OIDCClientConfig extends Message<OIDCClientConfig> {
   static readonly typeName = "gitpod.experimental.v1.OIDCClientConfig";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "oidc_config", kind: "message", T: OIDCConfig },
-    { no: 3, name: "oauth2_config", kind: "message", T: OAuth2Config },
-    { no: 4, name: "oauth_only", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 5, name: "id_token_signing_alg_values_supported", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 6, name: "creation_time", kind: "message", T: Timestamp },
-    { no: 7, name: "status", kind: "message", T: OIDCClientConfigStatus },
+    { no: 2, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "oidc_config", kind: "message", T: OIDCConfig },
+    { no: 4, name: "oauth2_config", kind: "message", T: OAuth2Config },
+    { no: 5, name: "oauth_only", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 6, name: "id_token_signing_alg_values_supported", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 7, name: "creation_time", kind: "message", T: Timestamp },
+    { no: 8, name: "status", kind: "message", T: OIDCClientConfigStatus },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OIDCClientConfig {
@@ -338,9 +344,9 @@ export class OAuth2Config extends Message<OAuth2Config> {
   /**
    * Required.
    *
-   * @generated from field: repeated string scopes_supported = 5;
+   * @generated from field: repeated string scopes = 5;
    */
-  scopesSupported: string[] = [];
+  scopes: string[] = [];
 
   /**
    * Source for additional claims for the token.
@@ -371,7 +377,7 @@ export class OAuth2Config extends Message<OAuth2Config> {
     { no: 2, name: "client_secret", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "authorization_endpoint", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "token_endpoint", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 5, name: "scopes_supported", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 5, name: "scopes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 6, name: "userinfo_endpoint", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 7, name: "userinfo_keys", kind: "message", T: UserInfoKeys },
   ]);
@@ -444,8 +450,6 @@ export class UserInfoKeys extends Message<UserInfoKeys> {
 
 /**
  * The status of an OIDC client configuration.
- *
- *
  *
  * @generated from message gitpod.experimental.v1.OIDCClientConfigStatus
  */
@@ -568,6 +572,11 @@ export class GetClientConfigRequest extends Message<GetClientConfigRequest> {
    */
   id = "";
 
+  /**
+   * @generated from field: string organization_id = 2;
+   */
+  organizationId = "";
+
   constructor(data?: PartialMessage<GetClientConfigRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -577,6 +586,7 @@ export class GetClientConfigRequest extends Message<GetClientConfigRequest> {
   static readonly typeName = "gitpod.experimental.v1.GetClientConfigRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetClientConfigRequest {
@@ -638,9 +648,14 @@ export class GetClientConfigResponse extends Message<GetClientConfigResponse> {
  */
 export class ListClientConfigsRequest extends Message<ListClientConfigsRequest> {
   /**
+   * @generated from field: string organization_id = 1;
+   */
+  organizationId = "";
+
+  /**
    * Page information
    *
-   * @generated from field: gitpod.experimental.v1.Pagination pagination = 1;
+   * @generated from field: gitpod.experimental.v1.Pagination pagination = 2;
    */
   pagination?: Pagination;
 
@@ -652,7 +667,8 @@ export class ListClientConfigsRequest extends Message<ListClientConfigsRequest> 
   static readonly runtime = proto3;
   static readonly typeName = "gitpod.experimental.v1.ListClientConfigsRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "pagination", kind: "message", T: Pagination },
+    { no: 1, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "pagination", kind: "message", T: Pagination },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListClientConfigsRequest {
@@ -677,9 +693,9 @@ export class ListClientConfigsRequest extends Message<ListClientConfigsRequest> 
  */
 export class ListClientConfigsResponse extends Message<ListClientConfigsResponse> {
   /**
-   * @generated from field: repeated gitpod.experimental.v1.OIDCClientConfig providers = 1;
+   * @generated from field: repeated gitpod.experimental.v1.OIDCClientConfig client_configs = 1;
    */
-  providers: OIDCClientConfig[] = [];
+  clientConfigs: OIDCClientConfig[] = [];
 
   /**
    * @generated from field: int64 total_results = 2;
@@ -694,7 +710,7 @@ export class ListClientConfigsResponse extends Message<ListClientConfigsResponse
   static readonly runtime = proto3;
   static readonly typeName = "gitpod.experimental.v1.ListClientConfigsResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "providers", kind: "message", T: OIDCClientConfig, repeated: true },
+    { no: 1, name: "client_configs", kind: "message", T: OIDCClientConfig, repeated: true },
     { no: 2, name: "total_results", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
   ]);
 
@@ -792,6 +808,11 @@ export class DeleteClientConfigRequest extends Message<DeleteClientConfigRequest
    */
   id = "";
 
+  /**
+   * @generated from field: string organization_id = 2;
+   */
+  organizationId = "";
+
   constructor(data?: PartialMessage<DeleteClientConfigRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -801,6 +822,7 @@ export class DeleteClientConfigRequest extends Message<DeleteClientConfigRequest
   static readonly typeName = "gitpod.experimental.v1.DeleteClientConfigRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteClientConfigRequest {

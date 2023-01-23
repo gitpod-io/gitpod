@@ -122,6 +122,20 @@ export class TeamDBImpl implements TeamDB {
         return soleOwnedTeams;
     }
 
+    public async updateTeam(teamId: string, team: Pick<Team, "name">): Promise<Team> {
+        const teamRepo = await this.getTeamRepo();
+        const existingTeam = await teamRepo.findOne({ id: teamId, deleted: false, markedDeleted: false });
+        if (!existingTeam) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
+        }
+        const name = team.name && team.name.trim();
+        if (!name || name.length === 0 || name.length > 32) {
+            throw new ResponseError(ErrorCodes.INVALID_VALUE, "A team's name must be between 1 and 32 characters long");
+        }
+        existingTeam.name = name;
+        return teamRepo.save(existingTeam);
+    }
+
     public async createTeam(userId: string, name: string): Promise<Team> {
         if (!name) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "Team name cannot be empty");

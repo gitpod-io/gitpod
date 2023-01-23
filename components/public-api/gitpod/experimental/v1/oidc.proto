@@ -18,25 +18,28 @@ message OIDCClientConfig {
   // Read only.
   string id = 1;
 
-  OIDCConfig oidc_config = 2;
+  string organization_id = 2;
 
-  OAuth2Config oauth2_config = 3;
+  OIDCConfig oidc_config = 3;
+
+  OAuth2Config oauth2_config = 4;
+
   // Optional.
-  bool oauth_only = 4;
+  bool oauth_only = 5;
 
   // List of the JWS signing algorithms (alg values) supported by the OP for the
   // ID Token to encode the Claims in a JWT. The algorithm RS256 MUST be
   // included.
   // Optional.
-  repeated string id_token_signing_alg_values_supported = 5;
+  repeated string id_token_signing_alg_values_supported = 6;
 
   // Time when the config was created.
   // Read-only.
-  google.protobuf.Timestamp creation_time = 6;
+  google.protobuf.Timestamp creation_time = 7;
 
   // Describes the status of this configuration item.
   // Read-only.
-  OIDCClientConfigStatus status = 7;
+  OIDCClientConfigStatus status = 8;
 }
 
 // The OIDC specific part of the client configuration.
@@ -95,7 +98,7 @@ message OAuth2Config {
   // Required.
   string token_endpoint = 4;
   // Required.
-  repeated string scopes_supported = 5;
+  repeated string scopes = 5;
 
   // Source for additional claims for the token.
   // Additional keys may be used to control the extraction of a profile.
@@ -116,31 +119,24 @@ message UserInfoKeys {
 }
 
 // The status of an OIDC client configuration.
-message OIDCClientConfigStatus {
-  //
-}
+message OIDCClientConfigStatus {}
 
 
 service OIDCService {
   // Creates a new OIDC client configuration.
-  rpc CreateClientConfig(CreateClientConfigRequest)
-      returns (CreateClientConfigResponse) {};
+  rpc CreateClientConfig(CreateClientConfigRequest) returns (CreateClientConfigResponse) {};
 
   // Retrieves an OIDC client configuration by ID.
-  rpc GetClientConfig(GetClientConfigRequest)
-      returns (GetClientConfigResponse) {};
+  rpc GetClientConfig(GetClientConfigRequest) returns (GetClientConfigResponse) {};
 
   // Lists OIDC client configurations.
-  rpc ListClientConfigs(ListClientConfigsRequest)
-      returns (ListClientConfigsResponse) {};
+  rpc ListClientConfigs(ListClientConfigsRequest) returns (ListClientConfigsResponse) {};
 
   // Updates modifiable properties of an existing OIDC client configuration.
-  rpc UpdateClientConfig(UpdateClientConfigRequest)
-      returns (UpdateClientConfigResponse) {};
+  rpc UpdateClientConfig(UpdateClientConfigRequest) returns (UpdateClientConfigResponse) {};
 
   // Removes a OIDC client configuration by ID.
-  rpc DeleteClientConfig(DeleteClientConfigRequest)
-      returns (DeleteClientConfigResponse) {};
+  rpc DeleteClientConfig(DeleteClientConfigRequest) returns (DeleteClientConfigResponse) {};
 }
 
 message CreateClientConfigRequest {
@@ -150,27 +146,41 @@ message CreateClientConfigRequest {
   bool use_discovery = 2;
 }
 
-message CreateClientConfigResponse { OIDCClientConfig config = 1; }
+message CreateClientConfigResponse {
+  OIDCClientConfig config = 1;
+}
 
-message GetClientConfigRequest { string id = 1; }
-message GetClientConfigResponse { OIDCClientConfig config = 1; }
+message GetClientConfigRequest {
+  string id = 1;
+  string organization_id = 2;
+}
+
+message GetClientConfigResponse {
+  OIDCClientConfig config = 1;
+}
 
 message ListClientConfigsRequest {
+  string organization_id = 1;
 
   // Page information
-  Pagination pagination = 1;
+  Pagination pagination = 2;
 }
 
 message ListClientConfigsResponse {
-  repeated OIDCClientConfig providers = 1;
+  repeated OIDCClientConfig client_configs = 1;
 
   int64 total_results = 2;
 }
 
-message UpdateClientConfigRequest { OIDCClientConfig config = 1; }
+message UpdateClientConfigRequest {
+  OIDCClientConfig config = 1;
+}
 
 message UpdateClientConfigResponse {}
 
-message DeleteClientConfigRequest { string id = 1; }
+message DeleteClientConfigRequest {
+  string id = 1;
+  string organization_id = 2;
+}
 
 message DeleteClientConfigResponse {}

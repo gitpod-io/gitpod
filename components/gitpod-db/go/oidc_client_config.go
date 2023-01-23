@@ -17,6 +17,8 @@ import (
 type OIDCClientConfig struct {
 	ID uuid.UUID `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
 
+	OrganizationID *uuid.UUID `gorm:"column:organizationId;type:char;size:36;" json:"organizationId"`
+
 	Issuer string `gorm:"column:issuer;type:char;size:255;" json:"issuer"`
 
 	Data EncryptedJSON[OIDCSpec] `gorm:"column:data;type:text;size:65535" json:"data"`
@@ -50,11 +52,11 @@ type OIDCSpec struct {
 
 func CreateOIDCCLientConfig(ctx context.Context, conn *gorm.DB, cfg OIDCClientConfig) (OIDCClientConfig, error) {
 	if cfg.ID == uuid.Nil {
-		return OIDCClientConfig{}, errors.New("OIDC Client Config ID must be set")
+		return OIDCClientConfig{}, errors.New("id must be set")
 	}
 
 	if cfg.Issuer == "" {
-		return OIDCClientConfig{}, errors.New("OIDC Client Config issuer must be set")
+		return OIDCClientConfig{}, errors.New("issuer must be set")
 	}
 
 	tx := conn.
@@ -81,10 +83,86 @@ func GetOIDCClientConfig(ctx context.Context, conn *gorm.DB, id uuid.UUID) (OIDC
 		First(&config)
 	if tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
-			return OIDCClientConfig{}, fmt.Errorf("OIDC Client Config with ID %s does not exist: %w", id, ErrorNotFound)
+			return OIDCClientConfig{}, fmt.Errorf("OIDC Client Config with ID %s does not exist: %w", id.String(), ErrorNotFound)
 		}
 		return OIDCClientConfig{}, fmt.Errorf("Failed to retrieve OIDC client config: %v", tx.Error)
 	}
 
 	return config, nil
+}
+
+func GetOIDCClientConfigForOrganization(ctx context.Context, conn *gorm.DB, id, organizationID uuid.UUID) (OIDCClientConfig, error) {
+	var config OIDCClientConfig
+
+	if id == uuid.Nil {
+		return OIDCClientConfig{}, fmt.Errorf("OIDC Client Config ID is a required argument")
+	}
+
+	if organizationID == uuid.Nil {
+		return OIDCClientConfig{}, fmt.Errorf("organization id is a required argument")
+	}
+
+	tx := conn.
+		WithContext(ctx).
+		Where("id = ?", id).
+		Where("organizationId = ?", organizationID).
+		Where("deleted = ?", 0).
+		First(&config)
+	if tx.Error != nil {
+		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			return OIDCClientConfig{}, fmt.Errorf("OIDC Client Config with ID %s for Organization ID %s does not exist: %w", id.String(), organizationID.String(), ErrorNotFound)
+		}
+
+		return OIDCClientConfig{}, fmt.Errorf("Failed to retrieve OIDC client config %s for Organization ID %s: %v", id.String(), organizationID.String(), tx.Error)
+	}
+
+	return config, nil
+}
+
+func ListOIDCClientConfigsForOrganization(ctx context.Context, conn *gorm.DB, organizationID uuid.UUID) ([]OIDCClientConfig, error) {
+	if organizationID == uuid.Nil {
+		return nil, errors.New("organization ID is a required argument")
+	}
+
+	var results []OIDCClientConfig
+
+	tx := conn.
+		WithContext(ctx).
+		Where("organizationId = ?", organizationID).
+		Where("deleted = ?", 0).
+		Order("id").
+		Find(&results)
+	if tx.Error != nil {
+		return nil, fmt.Errorf("failed to list oidc client configs for organization %s: %w", organizationID.String(), tx.Error)
+	}
+
+	return results, nil
+}
+
+func DeleteOIDCClientConfig(ctx context.Context, conn *gorm.DB, id, organizationID uuid.UUID) error {
+	if id == uuid.Nil {
+		return fmt.Errorf("id is a required argument")
+	}
+
+	if organizationID == uuid.Nil {
+		return fmt.Errorf("organization id is a required argument")
+	}
+
+	tx := conn.
+		WithContext(ctx).
+		Table((&OIDCClientConfig{}).TableName()).
+		Where("id = ?", id).
+		Where("organizationId = ?", organizationID).
+		Where("deleted = ?", 0).
+		Update("deleted", 1)
+
+	if tx.Error != nil {
+		return fmt.Errorf("failed to delete oidc client config (ID: %s): %v", id.String(), tx.Error)
+	}
+
+	if tx.RowsAffected == 0 {
+		return fmt.Errorf("oidc client config ID: %s for organization ID: %s does not exist: %w", id.String(), organizationID.String(), ErrorNotFound)
+	}
+
+	return nil
 }

@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"sync"
+	"time"
 
 	"github.com/sourcegraph/jsonrpc2"
 	"golang.org/x/xerrors"
@@ -57,7 +58,7 @@ type APIInterface interface {
 	SendHeartBeat(ctx context.Context, options *SendHeartBeatOptions) (err error)
 	WatchWorkspaceImageBuildLogs(ctx context.Context, workspaceID string) (err error)
 	IsPrebuildDone(ctx context.Context, pwsid string) (res bool, err error)
-	SetWorkspaceTimeout(ctx context.Context, workspaceID string, duration *WorkspaceTimeoutDuration) (res *SetWorkspaceTimeoutResult, err error)
+	SetWorkspaceTimeout(ctx context.Context, workspaceID string, duration time.Duration) (res *SetWorkspaceTimeoutResult, err error)
 	GetWorkspaceTimeout(ctx context.Context, workspaceID string) (res *GetWorkspaceTimeoutResult, err error)
 	GetOpenPorts(ctx context.Context, workspaceID string) (res []*WorkspaceInstancePort, err error)
 	OpenPort(ctx context.Context, workspaceID string, port *WorkspaceInstancePort) (res *WorkspaceInstancePort, err error)
@@ -952,7 +953,7 @@ func (gp *APIoverJSONRPC) IsPrebuildDone(ctx context.Context, pwsid string) (res
 }
 
 // SetWorkspaceTimeout calls setWorkspaceTimeout on the server
-func (gp *APIoverJSONRPC) SetWorkspaceTimeout(ctx context.Context, workspaceID string, duration *WorkspaceTimeoutDuration) (res *SetWorkspaceTimeoutResult, err error) {
+func (gp *APIoverJSONRPC) SetWorkspaceTimeout(ctx context.Context, workspaceID string, duration time.Duration) (res *SetWorkspaceTimeoutResult, err error) {
 	if gp == nil {
 		err = errNotConnected
 		return
@@ -960,7 +961,7 @@ func (gp *APIoverJSONRPC) SetWorkspaceTimeout(ctx context.Context, workspaceID s
 	var _params []interface{}
 
 	_params = append(_params, workspaceID)
-	_params = append(_params, duration)
+	_params = append(_params, fmt.Sprintf("%dm", int(duration.Minutes())))
 
 	var result SetWorkspaceTimeoutResult
 	err = gp.C.Call(ctx, "setWorkspaceTimeout", _params, &result)
@@ -1619,18 +1620,6 @@ const (
 	PinActionToggle PinAction = "toggle"
 )
 
-// WorkspaceTimeoutDuration is the durations one have set for the workspace timeout
-type WorkspaceTimeoutDuration string
-
-const (
-	// WorkspaceTimeoutDuration30m sets "30m" as timeout duration
-	WorkspaceTimeoutDuration30m = "30m"
-	// WorkspaceTimeoutDuration60m sets "60m" as timeout duration
-	WorkspaceTimeoutDuration60m = "60m"
-	// WorkspaceTimeoutDuration180m sets "180m" as timeout duration
-	WorkspaceTimeoutDuration180m = "180m"
-)
-
 // UserInfo is the UserInfo message type
 type UserInfo struct {
 	Name string `json:"name,omitempty"`
@@ -1909,9 +1898,8 @@ type StartWorkspaceOptions struct {
 
 // GetWorkspaceTimeoutResult is the GetWorkspaceTimeoutResult message type
 type GetWorkspaceTimeoutResult struct {
-	CanChange   bool   `json:"canChange,omitempty"`
-	DurationRaw string `json:"durationRaw,omitempty"`
-	Duration    string `json:"duration,omitempty"`
+	CanChange bool   `json:"canChange,omitempty"`
+	Duration  string `json:"duration,omitempty"`
 }
 
 // WorkspaceInstancePort is the WorkspaceInstancePort message type

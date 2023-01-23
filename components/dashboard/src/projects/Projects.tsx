@@ -14,16 +14,16 @@ import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { ThemeContext } from "../theme-context";
 import { Project } from "@gitpod/gitpod-protocol";
 import Alert from "../components/Alert";
-import { useProjects } from "../data/projects/queries";
 import { ProjectListItem } from "./ProjectListItem";
 import { SpinnerLoader } from "../components/Loader";
+import { useListProjectsQuery } from "../data/projects/list-projects-query";
 
 export default function () {
     const location = useLocation();
     const history = useHistory();
     const { teams } = useContext(TeamsContext);
     const team = getCurrentTeam(location, teams);
-    const { data, isLoading, isError, refetch } = useProjects();
+    const { data, isLoading, isError, refetch } = useListProjectsQuery();
     const { isDark } = useContext(ThemeContext);
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
     const newProjectUrl = useMemo(() => (!!team ? `/new?team=${team.slug}` : "/new?user=1"), [team]);
@@ -45,16 +45,6 @@ export default function () {
 
     return (
         <>
-            {!team && (
-                <div className="app-container pt-2">
-                    <Alert type={"message"} closable={false} showIcon={true} className="flex rounded mb-2 w-full">
-                        We'll remove projects under personal accounts in Q1'2023.{" "}
-                        <Link to="/teams/new" className="gp-link">
-                            Create a team
-                        </Link>
-                    </Alert>
-                </div>
-            )}
             <Header title="Projects" subtitle="Manage recently added projects." />
             {/* TODO: Add a delay around Spinner so it delays rendering ~ 500ms so we don't flash spinners too often for fast response */}
             {isLoading && <SpinnerLoader />}
@@ -140,12 +130,7 @@ export default function () {
                     </div>
                     <div className="mt-4 grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-4 pb-40">
                         {filteredProjects.map((p) => (
-                            <ProjectListItem
-                                project={p}
-                                key={p.id}
-                                prebuild={data?.latestPrebuilds.get(p.id)}
-                                onProjectRemoved={refetch}
-                            />
+                            <ProjectListItem project={p} key={p.id} onProjectRemoved={refetch} />
                         ))}
                         {!searchFilter && (
                             <div

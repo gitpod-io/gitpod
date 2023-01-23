@@ -10,7 +10,6 @@ import (
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/config"
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,13 +30,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 	}
 
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.AgentSmith != nil {
-			ascfg.Config = *cfg.AgentSmith
-			ascfg.Config.KubernetesNamespace = ctx.Namespace
-		}
-		return nil
-	})
+	if ctx.Config.Components != nil && ctx.Config.Components.AgentSmith != nil {
+		ascfg.Config = *ctx.Config.Components.AgentSmith
+		ascfg.Config.KubernetesNamespace = ctx.Namespace
+	}
 
 	fc, err := common.ToJSONString(ascfg)
 	if err != nil {

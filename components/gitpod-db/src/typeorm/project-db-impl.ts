@@ -96,12 +96,12 @@ export class ProjectDBImpl implements ProjectDB {
 
     public async findTeamProjects(teamId: string): Promise<Project[]> {
         const repo = await this.getRepo();
-        return repo.find({ teamId, markedDeleted: false });
+        return repo.find({ where: { teamId, markedDeleted: false }, order: { name: "ASC" } });
     }
 
     public async findUserProjects(userId: string): Promise<Project[]> {
         const repo = await this.getRepo();
-        return repo.find({ userId, markedDeleted: false });
+        return repo.find({ where: { userId, markedDeleted: false }, order: { name: "ASC" } });
     }
 
     public async findProjectsBySearchTerm(

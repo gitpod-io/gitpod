@@ -12,8 +12,6 @@ import (
 	"sort"
 	"strings"
 
-	"google.golang.org/protobuf/proto"
-
 	connect "github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -101,7 +99,7 @@ func (s *TokensService) CreatePersonalAccessToken(ctx context.Context, req *conn
 }
 
 func (s *TokensService) GetPersonalAccessToken(ctx context.Context, req *connect.Request[v1.GetPersonalAccessTokenRequest]) (*connect.Response[v1.GetPersonalAccessTokenResponse], error) {
-	tokenID, err := validateTokenID(req.Msg.GetId())
+	tokenID, err := validatePersonalAccessTokenID(req.Msg.GetId())
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +149,7 @@ func (s *TokensService) ListPersonalAccessTokens(ctx context.Context, req *conne
 }
 
 func (s *TokensService) RegeneratePersonalAccessToken(ctx context.Context, req *connect.Request[v1.RegeneratePersonalAccessTokenRequest]) (*connect.Response[v1.RegeneratePersonalAccessTokenResponse], error) {
-	tokenID, err := validateTokenID(req.Msg.GetId())
+	tokenID, err := validatePersonalAccessTokenID(req.Msg.GetId())
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +201,7 @@ func (s *TokensService) UpdatePersonalAccessToken(ctx context.Context, req *conn
 
 	tokenReq := req.Msg.GetToken()
 
-	tokenID, err := validateTokenID(tokenReq.GetId())
+	tokenID, err := validatePersonalAccessTokenID(tokenReq.GetId())
 	if err != nil {
 		return nil, err
 	}
@@ -269,7 +267,7 @@ func (s *TokensService) UpdatePersonalAccessToken(ctx context.Context, req *conn
 }
 
 func (s *TokensService) DeletePersonalAccessToken(ctx context.Context, req *connect.Request[v1.DeletePersonalAccessTokenRequest]) (*connect.Response[v1.DeletePersonalAccessTokenResponse], error) {
-	tokenID, err := validateTokenID(req.Msg.GetId())
+	tokenID, err := validatePersonalAccessTokenID(req.Msg.GetId())
 	if err != nil {
 		return nil, err
 	}
@@ -353,20 +351,6 @@ func getConnection(ctx context.Context, pool proxy.ServerConnectionPool) (protoc
 	return conn, nil
 }
 
-func validateTokenID(id string) (uuid.UUID, error) {
-	trimmed := strings.TrimSpace(id)
-	if trimmed == "" {
-		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Token ID is a required argument."))
-	}
-
-	tokenID, err := uuid.Parse(trimmed)
-	if err != nil {
-		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Token ID must be a valid UUID"))
-	}
-
-	return tokenID, nil
-}
-
 func personalAccessTokensToAPI(ts []db.PersonalAccessToken) []*v1.PersonalAccessToken {
 	var tokens []*v1.PersonalAccessToken
 	for _, t := range ts {
@@ -428,17 +412,4 @@ func validateScopes(scopes []string) ([]string, error) {
 	}
 
 	return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Tokens can currently only have no scopes (empty), or all scopes represented as [%s, %s]", allFunctionsScope, defaultResourceScope))
-}
-
-func validateFieldMask(mask *fieldmaskpb.FieldMask, message proto.Message) (*fieldmaskpb.FieldMask, error) {
-	if mask == nil {
-		return &fieldmaskpb.FieldMask{}, nil
-	}
-
-	mask.Normalize()
-	if !mask.IsValid(message) {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("Invalid field mask specified."))
-	}
-
-	return mask, nil
 }

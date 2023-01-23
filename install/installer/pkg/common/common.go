@@ -223,9 +223,14 @@ func AnalyticsEnv(cfg *config.Config) (res []corev1.EnvVar) {
 	}}
 }
 
-func MessageBusEnv(_ *config.Config) (res []corev1.EnvVar) {
+func MessageBusEnv(cfg *config.Config) (res []corev1.EnvVar) {
 	clusterObj := corev1.LocalObjectReference{Name: InClusterMessageQueueName}
 	tlsObj := corev1.LocalObjectReference{Name: InClusterMessageQueueTLS}
+
+	credsSecret := clusterObj
+	if cfg.MessageBus != nil && cfg.MessageBus.Credentials != nil {
+		credsSecret = corev1.LocalObjectReference{Name: cfg.MessageBus.Credentials.Name}
+	}
 
 	return []corev1.EnvVar{{
 		Name: "MESSAGEBUS_USERNAME",
@@ -236,8 +241,8 @@ func MessageBusEnv(_ *config.Config) (res []corev1.EnvVar) {
 	}, {
 		Name: "MESSAGEBUS_PASSWORD",
 		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-			LocalObjectReference: clusterObj,
-			Key:                  "password",
+			LocalObjectReference: credsSecret,
+			Key:                  "rabbitmq-password",
 		}},
 	}, {
 		Name: "MESSAGEBUS_CA",
@@ -570,28 +575,23 @@ func IsDatabaseMigrationDisabled(ctx *RenderContext) bool {
 func Replicas(ctx *RenderContext, component string) *int32 {
 	replicas := int32(1)
 
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.Common != nil && cfg.Common.PodConfig[component] != nil {
-			if cfg.Common.PodConfig[component].Replicas != nil {
-				replicas = *cfg.Common.PodConfig[component].Replicas
-			}
+	if ctx.Config.Components != nil && ctx.Config.Components.PodConfig[component] != nil {
+		if ctx.Config.Components.PodConfig[component].Replicas != nil {
+			replicas = *ctx.Config.Components.PodConfig[component].Replicas
 		}
-		return nil
-	})
+	}
+
 	return &replicas
 }
 
 func ResourceRequirements(ctx *RenderContext, component, containerName string, defaults corev1.ResourceRequirements) corev1.ResourceRequirements {
 	resources := defaults
 
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.Common != nil && cfg.Common.PodConfig[component] != nil {
-			if cfg.Common.PodConfig[component].Resources[containerName] != nil {
-				resources = *cfg.Common.PodConfig[component].Resources[containerName]
-			}
+	if ctx.Config.Components != nil && ctx.Config.Components.PodConfig[component] != nil {
+		if ctx.Config.Components.PodConfig[component].Resources[containerName] != nil {
+			resources = *ctx.Config.Components.PodConfig[component].Resources[containerName]
 		}
-		return nil
-	})
+	}
 
 	return resources
 }

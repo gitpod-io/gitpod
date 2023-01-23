@@ -251,6 +251,32 @@ func (c *Client) GetCustomer(ctx context.Context, customerID string) (customer *
 	return customer, nil
 }
 
+func (c *Client) GetPriceInformation(ctx context.Context, priceID string) (price *stripe.Price, err error) {
+	now := time.Now()
+	reportStripeRequestStarted("prices_get")
+	defer func() {
+		reportStripeRequestCompleted("prices_get", err, time.Since(now))
+	}()
+
+	price, err = c.sc.Prices.Get(priceID, &stripe.PriceParams{
+		Params: stripe.Params{
+			Context: ctx,
+		},
+	})
+	if err != nil {
+		if stripeErr, ok := err.(*stripe.Error); ok {
+			switch stripeErr.Code {
+			case stripe.ErrorCodeMissing:
+				return nil, status.Errorf(codes.NotFound, "price %s does not exist in stripe", priceID)
+			}
+		}
+
+		return nil, fmt.Errorf("failed to get price by price ID %s", priceID)
+	}
+
+	return price, nil
+}
+
 type CreateCustomerParams struct {
 	AttributuonID string
 	Currency      string

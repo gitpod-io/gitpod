@@ -120,7 +120,6 @@ import {
     increaseSuccessfulInstanceStartCounter,
 } from "../prometheus-metrics";
 import { ContextParser } from "./context-parser-service";
-import { WorkspaceClusterImagebuilderClientProvider } from "./workspace-cluster-imagebuilder-client-provider";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { WorkspaceClassesConfig } from "./workspace-classes";
 import { EntitlementService } from "../billing/entitlement-service";
@@ -196,8 +195,6 @@ export class WorkspaceStarter {
     @inject(MessageBusIntegration) protected readonly messageBus: MessageBusIntegration;
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
     @inject(ImageBuilderClientProvider) protected readonly imagebuilderClientProvider: ImageBuilderClientProvider;
-    @inject(WorkspaceClusterImagebuilderClientProvider)
-    protected readonly wsClusterImageBuilderClientProvider: ImageBuilderClientProvider;
     @inject(ImageSourceProvider) protected readonly imageSourceProvider: ImageSourceProvider;
     @inject(UserService) protected readonly userService: UserService;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
@@ -522,8 +519,12 @@ export class WorkspaceStarter {
                         );
                     }
                 } catch (err) {
+                    let reason: FailedInstanceStartReason = "startOnClusterFailed";
+                    if (this.isResourceExhaustedError(err)) {
+                        reason = "resourceExhausted";
+                    }
                     await this.failInstanceStart({ span }, err, workspace, instance);
-                    throw new StartInstanceError("startOnClusterFailed", err);
+                    throw new StartInstanceError(reason, err);
                 }
 
                 if (!resp) {
@@ -598,6 +599,10 @@ export class WorkspaceStarter {
         }
     }
 
+    private isResourceExhaustedError(err: any): boolean {
+        return "code" in err && err.code === grpc.status.RESOURCE_EXHAUSTED;
+    }
+
     protected logAndTraceStartWorkspaceError(ctx: TraceContext, logCtx: LogContext, err: any) {
         TraceContext.setError(ctx, err);
 
@@ -663,7 +668,9 @@ export class WorkspaceStarter {
                 log.info({ instanceId: instance.id }, "starting instance");
                 return (await manager.startWorkspace(ctx, startRequest)).toObject();
             } catch (err: any) {
-                if ("code" in err && err.code !== grpc.status.OK && lastInstallation !== "") {
+                if (this.isResourceExhaustedError(err)) {
+                    throw err;
+                } else if ("code" in err && err.code !== grpc.status.OK && lastInstallation !== "") {
                     log.error({ instanceId: instance.id }, "cannot start workspace on cluster, might retry", err, {
                         cluster: lastInstallation,
                     });
@@ -1483,7 +1490,7 @@ export class WorkspaceStarter {
         spec.setClass(instance.workspaceClass!);
 
         if (workspace.type === "regular") {
-            spec.setTimeout(this.userService.workspaceTimeoutToDuration(await userTimeoutPromise));
+            spec.setTimeout(await userTimeoutPromise);
         }
         spec.setAdmission(admissionLevel);
         const sshKeys = await this.userDB.trace(traceCtx).getSSHPublicKeys(user.id);
@@ -1663,7 +1670,7 @@ export class WorkspaceStarter {
                 Object.entries(context.additionalFiles).map(async ([filePath, content]) => {
                     const url = await this.otsServer.serve(traceCtx, content, tokenExpirationTime);
                     const finfo = new FileDownloadInitializer.FileInfo();
-                    finfo.setUrl(url.token);
+                    finfo.setUrl(url.url);
                     finfo.setFilePath(filePath);
                     finfo.setDigest(getDigest(content));
                     return finfo;
@@ -1822,37 +1829,6 @@ export class WorkspaceStarter {
      * @returns
      */
     protected async getImageBuilderClient(user: User, workspace: Workspace, instance?: WorkspaceInstance) {
-        // If cluster does not contain workspace components, must use workspace image builder client. Otherwise, check experiment value.
-        const isMovedImageBuilder =
-            this.config.withoutWorkspaceComponents ||
-            (await getExperimentsClientForBackend().getValueAsync("movedImageBuilder", true, {
-                user,
-                projectId: workspace.projectId,
-            }));
-
-        log.info(
-            { userId: user.id, workspaceId: workspace.id, instanceId: instance?.id },
-            "image-builder in workspace cluster?",
-            {
-                userId: user.id,
-                projectId: workspace.projectId,
-                isMovedImageBuilder,
-            },
-        );
-        if (isMovedImageBuilder) {
-            return this.wsClusterImageBuilderClientProvider.getClient(
-                this.config.installationShortname,
-                user,
-                workspace,
-                instance,
-            );
-        } else {
-            return this.imagebuilderClientProvider.getClient(
-                this.config.installationShortname,
-                user,
-                workspace,
-                instance,
-            );
-        }
+        return this.imagebuilderClientProvider.getClient(this.config.installationShortname, user, workspace, instance);
     }
 }

@@ -85,7 +85,11 @@ export default function Alert(props: AlertProps) {
     const showIcon = props.showIcon ?? true;
     const light = props.light ?? false;
     return (
-        <div className={`flex relative rounded p-4 ${info.txtCls} ${props.className || ""} ${light ? "" : info.bgCls}`}>
+        <div
+            className={`flex relative whitespace-pre-wrap rounded p-4 ${info.txtCls} ${props.className || ""} ${
+                light ? "" : info.bgCls
+            }`}
+        >
             {showIcon && <span className={`mt-1 mr-4 h-4 w-4 ${info.iconColor}`}>{props.icon ?? info.icon}</span>}
             <span className="flex-1 text-left">{props.children}</span>
             {props.closable && (

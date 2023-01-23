@@ -18,6 +18,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/components"
 	"github.com/gitpod-io/gitpod/installer/pkg/config"
 	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/installer/pkg/postprocess"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
@@ -230,6 +231,16 @@ func renderKubernetesObjects(cfgVersion string, cfg *configv1.Config) ([]string,
 
 	postProcessed, err := postprocess.Run(sortedObjs)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		postProcessed, err = postprocess.Override(ucfg.Overrides, postProcessed)
+		if err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
 		return nil, err
 	}
 

@@ -176,10 +176,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
-	var withoutWorkspaceComponents bool
+	showSetupModal := true // old default to make self-hosted continue to work!
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil {
-			withoutWorkspaceComponents = cfg.WebApp.WithoutWorkspaceComponents
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.ShowSetupModal != nil {
+			showSetupModal = *cfg.WebApp.Server.ShowSetupModal
 		}
 		return nil
 	})
@@ -234,7 +234,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		MaxConcurrentPrebuildsPerRef:      10,
 		IncrementalPrebuilds:              IncrementalPrebuilds{CommitHistory: 100, RepositoryPasslist: []string{}},
 		BlockNewUsers:                     ctx.Config.BlockNewUsers,
-		MakeNewUsersAdmin:                 false,
 		DefaultBaseImageRegistryWhitelist: defaultBaseImageRegistryWhitelist,
 		RunDbDeleter:                      runDbDeleter,
 		OAuthServer: OAuthServer{
@@ -256,7 +255,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 		},
 		ContentServiceAddr:           net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", contentservice.Component, ctx.Namespace), strconv.Itoa(contentservice.RPCPort)),
-		ImageBuilderAddr:             net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", common.ImageBuilderComponent, ctx.Namespace), strconv.Itoa(common.ImageBuilderRPCPort)),
 		UsageServiceAddr:             net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", usage.Component, ctx.Namespace), strconv.Itoa(usage.GRPCServicePort)),
 		IDEServiceAddr:               net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", ideservice.Component, ctx.Namespace), strconv.Itoa(ideservice.GRPCServicePort)),
 		MaximumEventLoopLag:          0.35,
@@ -276,7 +274,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		WorkspaceClasses:               workspaceClasses,
 		InactivityPeriodForReposInDays: inactivityPeriodForReposInDays,
 		PATSigningKeyFile:              personalAccessTokenSigningKeyPath,
-		WithoutWorkspaceComponents:     withoutWorkspaceComponents,
+		Admin: AdminConfig{
+			GrantFirstUserAdminRole: true, // existing default
+		},
+		AdminLoginKeyFile: fmt.Sprintf("%s/%s", AdminSecretMountPath, AdminSecretLoginKeyName),
+		ShowSetupModal:    showSetupModal,
 	}
 
 	fc, err := common.ToJSONString(scfg)

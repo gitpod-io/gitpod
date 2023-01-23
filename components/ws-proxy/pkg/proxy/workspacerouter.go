@@ -80,7 +80,7 @@ type hostHeaderProvider func(req *http.Request) string
 func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProvider, matchPort bool) mux.MatcherFunc {
 	var regexPrefix string
 	if matchPort {
-		regexPrefix = workspacePortRegex + workspaceIDRegex
+		regexPrefix = workspacePortRegex + debugWorkspaceRegex + workspaceIDRegex
 	} else {
 		regexPrefix = debugWorkspaceRegex + workspaceIDRegex
 	}
@@ -99,13 +99,26 @@ func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 			return false
 		}
 		if matchPort {
+			if len(matches) < 4 {
+				return false
+			}
+			// https://3000-debug-coral-dragon-ilr0r6eq.ws-eu10.gitpod.io/index.html
+			// debugWorkspace: true
+			// workspaceID: coral-dragon-ilr0r6eq
+			// workspacePort: 3000
+			if matches[2] != "" {
+				debugWorkspace = "true"
+			}
 			// https://3000-coral-dragon-ilr0r6eq.ws-eu10.gitpod.io/index.html
 			// debugWorkspace:
 			// workspaceID: coral-dragon-ilr0r6eq
 			// workspacePort: 3000
-			workspaceID = matches[2]
+			workspaceID = matches[3]
 			workspacePort = matches[1]
 		} else {
+			if len(matches) < 3 {
+				return false
+			}
 			// https://debug-coral-dragon-ilr0r6eq.ws-eu10.gitpod.io/index.html
 			// debugWorkspace: true
 			// workspaceID: coral-dragon-ilr0r6eq
@@ -145,40 +158,65 @@ func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 }
 
 func matchForeignHostHeader(wsHostSuffix string, headerProvider hostHeaderProvider) mux.MatcherFunc {
-	pathPortRegex := regexp.MustCompile("^/" + workspacePortRegex + workspaceIDRegex + "/")
+	pathPortRegex := regexp.MustCompile("^/" + workspacePortRegex + debugWorkspaceRegex + workspaceIDRegex + "/")
 	pathDebugRegex := regexp.MustCompile("^/" + debugWorkspaceRegex + workspaceIDRegex + "/")
 
 	r := regexp.MustCompile("^(?:v--)?[0-9a-v]+" + wsHostSuffix)
-	return func(req *http.Request, m *mux.RouteMatch) bool {
+	return func(req *http.Request, m *mux.RouteMatch) (result bool) {
 		hostname := headerProvider(req)
 		if hostname == "" {
-			return false
+			return
 		}
 
 		matches := r.FindStringSubmatch(hostname)
 		if len(matches) < 1 {
-			return false
+			return
 		}
+
+		result = true
+
+		var pathPrefix, workspaceID, workspacePort, debugWorkspace string
 		matches = pathPortRegex.FindStringSubmatch(req.URL.Path)
-		if len(matches) < 3 {
+		if len(matches) < 4 {
 			matches = pathDebugRegex.FindStringSubmatch(req.URL.Path)
+			if len(matches) < 3 {
+				return
+			}
+			// 0 => pathPrefix
+			pathPrefix = matches[0]
+			// 1 => debug
+			if matches[1] != "" {
+				debugWorkspace = "true"
+			}
+			// 2 => workspaceId
+			workspaceID = matches[2]
+		} else {
+			// 0 => pathPrefix
+			pathPrefix = matches[0]
+			// 1 => port
+			workspacePort = matches[1]
+			// 2 => debug
+			if matches[2] != "" {
+				debugWorkspace = "true"
+			}
+			// 3 => workspaceId
+			workspaceID = matches[3]
 		}
-		if len(matches) < 3 {
-			return true
+
+		if pathPrefix == "" {
+			return
 		}
 
 		if m.Vars == nil {
 			m.Vars = make(map[string]string)
 		}
-		m.Vars[workspacePathPrefixIdentifier] = strings.TrimRight(matches[0], "/")
-		m.Vars[workspaceIDIdentifier] = matches[2]
-		if matches[1] == "debug-" {
-			m.Vars[debugWorkspaceIdentifier] = "true"
-		} else {
-			m.Vars[workspacePortIdentifier] = matches[1]
-		}
 
-		return true
+		m.Vars[workspacePathPrefixIdentifier] = strings.TrimRight(pathPrefix, "/")
+		m.Vars[workspaceIDIdentifier] = workspaceID
+		m.Vars[debugWorkspaceIdentifier] = debugWorkspace
+		m.Vars[workspacePortIdentifier] = workspacePort
+
+		return
 	}
 }
 

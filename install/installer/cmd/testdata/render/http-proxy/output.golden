@@ -87,38 +87,6 @@ spec:
     - Ingress
 
 ---
-# networking.k8s.io/v1/NetworkPolicy iam
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: iam
-  name: iam
-  namespace: default
-spec:
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              component: proxy
-        - podSelector:
-            matchLabels:
-              component: public-api-server
-      ports:
-        - port: 9001
-          protocol: TCP
-        - port: 9002
-          protocol: TCP
-  podSelector:
-    matchLabels:
-      app: gitpod
-      component: iam
-  policyTypes:
-    - Ingress
-
----
 # networking.k8s.io/v1/NetworkPolicy ide-metrics
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -399,7 +367,7 @@ spec:
         - podSelector:
             matchLabels:
               app: gitpod
-              component: iam
+              component: public-api-server
       ports:
         - port: 9876
           protocol: TCP
@@ -887,18 +855,6 @@ metadata:
   name: gitpod
   namespace: default
 ---
-# v1/ServiceAccount iam
-apiVersion: v1
-automountServiceAccountToken: true
-kind: ServiceAccount
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: iam
-  name: iam
-  namespace: default
----
 # v1/ServiceAccount ide-metrics
 apiVersion: v1
 automountServiceAccountToken: true
@@ -1154,36 +1110,20 @@ metadata:
   namespace: default
 ---
 # v1/Secret load-definition
-# Source: rabbitmq/charts/rabbitmq/templates/secrets.yaml
 apiVersion: v1
 kind: Secret
 metadata:
+  annotations:
+    app: gitpod
+    component: rabbitmq
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: rabbitmq
   name: load-definition
-  namespace: "default"
-  labels:
-    app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-11.3.0
-    app.kubernetes.io/instance: rabbitmq
-    app.kubernetes.io/managed-by: Helm
-type: Opaque
+  namespace: default
 stringData:
-  load_definition.json: '{"users":[{"name":"gitpod","password":"uq4KxOLtrA-QsDTfuwQ-","tags":"administrator"}],"vhosts":[{"name":"/"}],"parameters":[],"permissions":[{"user":"gitpod","vhost":"/","configure":".*","write":".*","read":".*"}],"exchanges":[{"name":"gitpod.ws.local","vhost":"/","type":"topic","durable":true,"auto_delete":false},{"name":"consensus-leader","vhost":"/","type":"fanout","durable":false,"auto_delete":false}],"bindings":[],"queues":[{"name":"consensus-peers","vhost":"/","durable":false,"auto_delete":false,"arguments":{}},{"name":"pwsupdatable","vhost":"/","durable":true,"auto_delete":false,"arguments":{}}],"policies":[{"name":"ha-all","vhost":"/","pattern":".*","definition":{"ha-mode":"all","ha-sync-mode":"automatic","ha-sync-batch-size":5}}]}'
----
-# v1/Secret messagebus
-# Source: rabbitmq/charts/rabbitmq/templates/secrets.yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: messagebus
-  namespace: "default"
-  labels:
-    app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-11.3.0
-    app.kubernetes.io/instance: rabbitmq
-    app.kubernetes.io/managed-by: Helm
-type: Opaque
-data:
-  rabbitmq-password: "dXE0S3hPTHRyQS1Rc0RUZnV3US0="
+  load_definition.json: '{"users":[{"name":"gitpod","password":"%PASSWORD%","tags":"administrator"}],"vhosts":[{"name":"/"}],"parameters":[],"permissions":[{"user":"gitpod","vhost":"/","configure":".*","write":".*","read":".*"}],"exchanges":[{"name":"gitpod.ws.local","vhost":"/","type":"topic","durable":true,"auto_delete":false},{"name":"consensus-leader","vhost":"/","type":"fanout","durable":false,"auto_delete":false}],"bindings":[],"queues":[{"name":"consensus-peers","vhost":"/","durable":false,"auto_delete":false,"arguments":{}},{"name":"pwsupdatable","vhost":"/","durable":true,"auto_delete":false,"arguments":{}}],"policies":[{"name":"ha-all","vhost":"/","pattern":".*","definition":{"ha-mode":"all","ha-sync-mode":"automatic","ha-sync-batch-size":5}}]}'
 ---
 # v1/Secret messagebus-certificates-secret-core
 apiVersion: v1
@@ -1215,7 +1155,7 @@ metadata:
 type: Opaque
 data:
   rabbitmq.conf: |-
-    IyMgVXNlcm5hbWUgYW5kIHBhc3N3b3JkCiMjCmRlZmF1bHRfdXNlciA9IGdpdHBvZAojIyBDbHVzdGVyaW5nCiMjCmNsdXN0ZXJfZm9ybWF0aW9uLnBlZXJfZGlzY292ZXJ5X2JhY2tlbmQgID0gcmFiYml0X3BlZXJfZGlzY292ZXJ5X2s4cwpjbHVzdGVyX2Zvcm1hdGlvbi5rOHMuaG9zdCA9IGt1YmVybmV0ZXMuZGVmYXVsdApjbHVzdGVyX2Zvcm1hdGlvbi5ub2RlX2NsZWFudXAuaW50ZXJ2YWwgPSAxMApjbHVzdGVyX2Zvcm1hdGlvbi5ub2RlX2NsZWFudXAub25seV9sb2dfd2FybmluZyA9IHRydWUKY2x1c3Rlcl9wYXJ0aXRpb25faGFuZGxpbmcgPSBhdXRvaGVhbApsb2FkX2RlZmluaXRpb25zID0gL2FwcC9sb2FkX2RlZmluaXRpb24uanNvbgojIHF1ZXVlIG1hc3RlciBsb2NhdG9yCnF1ZXVlX21hc3Rlcl9sb2NhdG9yID0gbWluLW1hc3RlcnMKIyBlbmFibGUgZ3Vlc3QgdXNlcgpsb29wYmFja191c2Vycy5ndWVzdCA9IGZhbHNlCmxvYWRfZGVmaW5pdGlvbnMgPSAvYXBwL2xvYWRfZGVmaW5pdGlvbi5qc29uCiMgSW5jcmVhc2Ugc3RhdGlzdGljcyBlbWlzc2lvbiBpbnRlcnZhbCBodHRwczovL3d3dy5yYWJiaXRtcS5jb20vbWFuYWdlbWVudC5odG1sI3N0YXRpc3RpY3MtaW50ZXJ2YWwKY29sbGVjdF9zdGF0aXN0aWNzX2ludGVydmFsID0gMTUwMDAKCnNzbF9vcHRpb25zLnZlcmlmeSA9IHZlcmlmeV9wZWVyCmxpc3RlbmVycy5zc2wuZGVmYXVsdCA9IDU2NzEKc3NsX29wdGlvbnMuZmFpbF9pZl9ub19wZWVyX2NlcnQgPSB0cnVlCnNzbF9vcHRpb25zLmNhY2VydGZpbGUgPSAvb3B0L2JpdG5hbWkvcmFiYml0bXEvY2VydHMvY2FfY2VydGlmaWNhdGUucGVtCnNzbF9vcHRpb25zLmNlcnRmaWxlID0gL29wdC9iaXRuYW1pL3JhYmJpdG1xL2NlcnRzL3NlcnZlcl9jZXJ0aWZpY2F0ZS5wZW0Kc3NsX29wdGlvbnMua2V5ZmlsZSA9IC9vcHQvYml0bmFtaS9yYWJiaXRtcS9jZXJ0cy9zZXJ2ZXJfa2V5LnBlbQojIyBQcm9tZXRoZXVzIG1ldHJpY3MKIyMKcHJvbWV0aGV1cy50Y3AucG9ydCA9IDk0MTk=
+    IyMgVXNlcm5hbWUgYW5kIHBhc3N3b3JkCiMjCmRlZmF1bHRfdXNlciA9IGdpdHBvZAojIyBDbHVzdGVyaW5nCiMjCmNsdXN0ZXJfZm9ybWF0aW9uLnBlZXJfZGlzY292ZXJ5X2JhY2tlbmQgID0gcmFiYml0X3BlZXJfZGlzY292ZXJ5X2s4cwpjbHVzdGVyX2Zvcm1hdGlvbi5rOHMuaG9zdCA9IGt1YmVybmV0ZXMuZGVmYXVsdApjbHVzdGVyX2Zvcm1hdGlvbi5ub2RlX2NsZWFudXAuaW50ZXJ2YWwgPSAxMApjbHVzdGVyX2Zvcm1hdGlvbi5ub2RlX2NsZWFudXAub25seV9sb2dfd2FybmluZyA9IHRydWUKY2x1c3Rlcl9wYXJ0aXRpb25faGFuZGxpbmcgPSBhdXRvaGVhbApsb2FkX2RlZmluaXRpb25zID0gL2dpdHBvZC1jb25maWcvbG9hZF9kZWZpbml0aW9uLmpzb24KIyBxdWV1ZSBtYXN0ZXIgbG9jYXRvcgpxdWV1ZV9tYXN0ZXJfbG9jYXRvciA9IG1pbi1tYXN0ZXJzCiMgZW5hYmxlIGd1ZXN0IHVzZXIKbG9vcGJhY2tfdXNlcnMuZ3Vlc3QgPSBmYWxzZQojIEluY3JlYXNlIHN0YXRpc3RpY3MgZW1pc3Npb24gaW50ZXJ2YWwgaHR0cHM6Ly93d3cucmFiYml0bXEuY29tL21hbmFnZW1lbnQuaHRtbCNzdGF0aXN0aWNzLWludGVydmFsCmNvbGxlY3Rfc3RhdGlzdGljc19pbnRlcnZhbCA9IDE1MDAwCgpzc2xfb3B0aW9ucy52ZXJpZnkgPSB2ZXJpZnlfcGVlcgpsaXN0ZW5lcnMuc3NsLmRlZmF1bHQgPSA1NjcxCnNzbF9vcHRpb25zLmZhaWxfaWZfbm9fcGVlcl9jZXJ0ID0gdHJ1ZQpzc2xfb3B0aW9ucy5jYWNlcnRmaWxlID0gL29wdC9iaXRuYW1pL3JhYmJpdG1xL2NlcnRzL2NhX2NlcnRpZmljYXRlLnBlbQpzc2xfb3B0aW9ucy5jZXJ0ZmlsZSA9IC9vcHQvYml0bmFtaS9yYWJiaXRtcS9jZXJ0cy9zZXJ2ZXJfY2VydGlmaWNhdGUucGVtCnNzbF9vcHRpb25zLmtleWZpbGUgPSAvb3B0L2JpdG5hbWkvcmFiYml0bXEvY2VydHMvc2VydmVyX2tleS5wZW0KIyMgUHJvbWV0aGV1cyBtZXRyaWNzCiMjCnByb21ldGhldXMudGNwLnBvcnQgPSA5NDE5
 ---
 # v1/Secret messagebus-erlang-cookie
 apiVersion: v1
@@ -1267,21 +1207,18 @@ metadata:
   namespace: default
 ---
 # v1/Secret rabbitmq
-# Source: rabbitmq/charts/rabbitmq/templates/secrets.yaml
 apiVersion: v1
+data:
+  rabbitmq-password: dXE0S3hPTHRyQS1Rc0RUZnV3US0=
+  username: Z2l0cG9k
 kind: Secret
 metadata:
-  name: rabbitmq
-  namespace: "default"
+  creationTimestamp: null
   labels:
-    app.kubernetes.io/name: rabbitmq
-    helm.sh/chart: rabbitmq-11.3.0
-    app.kubernetes.io/instance: rabbitmq
-    app.kubernetes.io/managed-by: Helm
-type: Opaque
-stringData:
-  password: uq4KxOLtrA-QsDTfuwQ-
-  username: gitpod
+    app: gitpod
+    component: rabbitmq
+  name: rabbitmq
+  namespace: default
 ---
 # v1/Secret registry-secret
 # Source: docker-registry/charts/docker-registry/templates/secret.yaml
@@ -1300,6 +1237,19 @@ data:
   haSharedSecret: "a2pjcXpkdHRjd3BRY3Brcw=="
   proxyUsername: ""
   proxyPassword: ""
+---
+# v1/Secret server-admin-secret
+apiVersion: v1
+data:
+  login-key: bTMwRUgtTTItY1dNZ2tnZHk3cHU=
+kind: Secret
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: server
+  name: server-admin-secret
+  namespace: default
 ---
 # v1/ConfigMap agent-smith
 apiVersion: v1
@@ -1739,13 +1689,13 @@ data:
             "userNamespaces": {
               "seccompProfileInstaller": {
                 "version": "test"
-              },
-              "shiftfsModuleLoader": {
-                "version": "test"
               }
             }
           },
           "wsManager": {
+            "version": "test"
+          },
+          "wsManagerMk2": {
             "version": "test"
           },
           "wsManagerBridge": {
@@ -2275,78 +2225,6 @@ data:
       creationTimestamp: null
       labels:
         app: gitpod
-        component: iam
-      name: iam
-      namespace: default
-    ---
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      annotations:
-        gitpod.io/checksum_config: 350c5081ae3f30253f80d07e0adfd8d82f0d8b416858b42d61fec05c2d1d246a
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: iam
-      name: iam
-      namespace: default
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRoleBinding
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: iam
-      name: default-iam-rb-kube-rbac-proxy
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: RoleBinding
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: iam
-      name: iam
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: iam
-      name: iam
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: Service
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: iam
-        kind: service
-      name: iam
-      namespace: default
-    ---
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: iam
-      name: iam
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
         component: content-service
       name: content-service
       namespace: default
@@ -2625,6 +2503,19 @@ data:
       name: proxy
       namespace: default
     ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      annotations:
+        app: gitpod
+        component: rabbitmq
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: rabbitmq
+      name: load-definition
+      namespace: default
+    ---
     apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding
     metadata:
@@ -2656,6 +2547,16 @@ data:
       namespace: default
     ---
     apiVersion: v1
+    kind: Secret
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: rabbitmq
+      name: rabbitmq
+      namespace: default
+    ---
+    apiVersion: v1
     kind: ConfigMap
     metadata:
       creationTimestamp: null
@@ -2673,6 +2574,16 @@ data:
         app: gitpod
         component: server
       name: server
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: server
+      name: server-admin-secret
       namespace: default
     ---
     apiVersion: networking.k8s.io/v1
@@ -2808,7 +2719,7 @@ data:
     kind: Deployment
     metadata:
       annotations:
-        gitpod.io/checksum_config: 82b32972a85084140320cd225c2893f0a2f22d55675f95a68e021c43e5e9b9ac
+        gitpod.io/checksum_config: 3cc95f976fd2b074f33d82a494edf92c0b9b46962e03fd0689b885ad33836f4f
       creationTimestamp: null
       labels:
         app: gitpod
@@ -3662,42 +3573,6 @@ data:
       name: messagebus-config
       namespace: default
     ---
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      creationTimestamp: null
-      labels:
-        app.kubernetes.io/instance: rabbitmq
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-11.3.0
-      name: messagebus
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      creationTimestamp: null
-      labels:
-        app.kubernetes.io/instance: rabbitmq
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-11.3.0
-      name: load-definition
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      creationTimestamp: null
-      labels:
-        app.kubernetes.io/instance: rabbitmq
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: rabbitmq
-        helm.sh/chart: rabbitmq-11.3.0
-      name: rabbitmq
-      namespace: default
-    ---
     apiVersion: rbac.authorization.k8s.io/v1
     kind: Role
     metadata:
@@ -3777,33 +3652,6 @@ metadata:
   namespace: default
 
 ---
-# v1/ConfigMap iam
-apiVersion: v1
-data:
-  config.json: |-
-    {
-      "server": {
-        "services": {
-          "grpc": {
-            "address": "0.0.0.0:9001"
-          },
-          "http": {
-            "address": "0.0.0.0:9002"
-          }
-        }
-      },
-      "databaseConfigPath": "/secrets/database-config",
-      "sessionServiceAddress": "server.default.svc.cluster.local:9876"
-    }
-kind: ConfigMap
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: iam
-  name: iam
-  namespace: default
----
 # v1/ConfigMap ide-config
 apiVersion: v1
 data:
@@ -3837,7 +3685,7 @@ data:
             "type": "browser",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "label": "Browser",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-f861b9d093fc8cdc728a0179b3a0c43a9155d9b4",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-8f9e9f93136a787fde5142f0708367ffaf46094c",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
           },
           "code-desktop": {
@@ -5237,14 +5085,12 @@ data:
         import debug_headers
 
         reverse_proxy payment-endpoint.default.svc.cluster.local:3002 {
-            import upstream_headers
             import upstream_connection
         }
 
         @backend path /stripe/invoices/webhook
         handle @backend {
             reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002 {
-                import upstream_headers
                 import upstream_connection
             }
         }
@@ -5269,9 +5115,10 @@ data:
     {
       "gitpodServiceUrl": "ws://server.default.svc.cluster.local:3000",
       "billingServiceAddress": "usage.default.svc.cluster.local:9001",
-      "oidcServiceAddress": "iam.default.svc.cluster.local:9001",
+      "sessionServiceAddress": "server.default.svc.cluster.local:9876",
       "stripeWebhookSigningSecretPath": "",
       "personalAccessTokenSigningKeyPath": "",
+      "databaseConfigPath": "/secrets/database-config",
       "server": {
         "services": {
           "grpc": {
@@ -5402,7 +5249,6 @@ data:
       "defaultBaseImageRegistryWhitelist": [],
       "runDbDeleter": true,
       "contentServiceAddr": "content-service.default.svc.cluster.local:8080",
-      "imageBuilderAddr": "image-builder-mk3.default.svc.cluster.local:8080",
       "usageServiceAddr": "usage.default.svc.cluster.local:9001",
       "ideServiceAddr": "ide-service.default.svc.cluster.local:9001",
       "maximumEventLoopLag": 0.35,
@@ -5412,7 +5258,7 @@ data:
       "stripeConfigFile": "",
       "enablePayment": false,
       "patSigningKeyFile": "",
-      "withoutWorkspaceComponents": false,
+      "showSetupModal": true,
       "workspaceHeartbeat": {
         "intervalSeconds": 60,
         "timeoutSeconds": 300
@@ -5460,7 +5306,7 @@ data:
       },
       "oauthServer": {
         "enabled": true,
-        "jwtSecret": "m30EH-M2-cWMgkgdy7pu"
+        "jwtSecret": "_7wODLGlsPauKCw4SBI2"
       },
       "rateLimiter": {
         "groups": {
@@ -5493,6 +5339,10 @@ data:
         "contentLimit": 0,
         "resources": null
       },
+      "admin": {
+        "grantFirstUserAdminRole": true
+      },
+      "adminLoginKeyFile": "/admin/login-key",
       "prebuildLimiter": {
         "*": {
           "limit": 100,
@@ -5554,7 +5404,7 @@ data:
             "type": "browser",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "label": "Browser",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-f861b9d093fc8cdc728a0179b3a0c43a9155d9b4",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-8f9e9f93136a787fde5142f0708367ffaf46094c",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
           },
           "code-desktop": {
@@ -5872,6 +5722,10 @@ data:
               "minBytesAvail": 21474836480
             }
           ]
+        },
+        "workspaceController": {
+          "enabled": false,
+          "workingAreaSuffix": ""
         }
       },
       "service": {
@@ -6103,6 +5957,7 @@ data:
           "ideDebugPort": 25000,
           "supervisorPort": 22999,
           "supervisorDebugPort": 24999,
+          "debugWorkspaceProxyPort": 25003,
           "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:test"
         },
         "builtinPages": {
@@ -6245,6 +6100,22 @@ rules:
   - delete
   - update
   - patch
+- apiGroups:
+  - workspace.gitpod.io
+  resources:
+  - workspaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - workspace.gitpod.io
+  resources:
+  - workspaces/status
+  verbs:
+  - get
+  - patch
+  - update
 ---
 # rbac.authorization.k8s.io/v1/ClusterRole ws-manager
 apiVersion: rbac.authorization.k8s.io/v1
@@ -6332,24 +6203,6 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: content-service
-  namespace: default
----
-# rbac.authorization.k8s.io/v1/ClusterRoleBinding default-iam-rb-kube-rbac-proxy
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: iam
-  name: default-iam-rb-kube-rbac-proxy
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: default-kube-rbac-proxy
-subjects:
-- kind: ServiceAccount
-  name: iam
   namespace: default
 ---
 # rbac.authorization.k8s.io/v1/ClusterRoleBinding default-ide-metrics-kube-rbac-proxy
@@ -6805,6 +6658,14 @@ rules:
   - get
   - list
   - watch
+- apiGroups:
+  - workspace.gitpod.io
+  resources:
+  - workspaces
+  verbs:
+  - get
+  - list
+  - watch
 ---
 # rbac.authorization.k8s.io/v1/RoleBinding agent-smith
 apiVersion: rbac.authorization.k8s.io/v1
@@ -6947,24 +6808,6 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: gitpod
----
-# rbac.authorization.k8s.io/v1/RoleBinding iam
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: iam
-  name: iam
-  namespace: default
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: default-ns-psp:restricted-root-user
-subjects:
-- kind: ServiceAccount
-  name: iam
 ---
 # rbac.authorization.k8s.io/v1/RoleBinding ide-metrics
 apiVersion: rbac.authorization.k8s.io/v1
@@ -7403,34 +7246,6 @@ spec:
     targetPort: 3306
   selector:
     app.kubernetes.io/name: mysql
-  type: ClusterIP
-status:
-  loadBalancer: {}
----
-# v1/Service iam
-apiVersion: v1
-kind: Service
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: iam
-    kind: service
-  name: iam
-  namespace: default
-spec:
-  ports:
-  - name: grpc
-    port: 9001
-    protocol: TCP
-    targetPort: 9001
-  - name: http
-    port: 9002
-    protocol: TCP
-    targetPort: 9002
-  selector:
-    app: gitpod
-    component: iam
   type: ClusterIP
 status:
   loadBalancer: {}
@@ -8546,8 +8361,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 2a29ef265c219405bda658cb21613f40ad5e692590d2779476a3ff90917ed6fb
-        seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
+        gitpod.io/checksum_config: 1e5f92c54481d2a3f63e3993a056e945763cf91f8b12ff04f8236eb7a710f4b9
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8824,69 +8638,6 @@ spec:
       enableServiceLinks: false
       hostPID: true
       initContainers:
-      - args:
-        - "exec {BASH_XTRACEFD}>&1 # this causes 'set -x' to write to stdout insted
-          of stderr\nset -euExo pipefail\nsystemctl status kube-container-runtime-monitor.service
-          || true\nif [ \"$(systemctl is-active kube-container-runtime-monitor.service)\"
-          == \"active\" ]\nthen\n\techo \"kube-container-runtime-monitor.service is
-          active\"\n\tsystemctl stop kube-container-runtime-monitor.service\n\tsystemctl
-          disable kube-container-runtime-monitor.service\n\tsystemctl status kube-container-runtime-monitor.service
-          || true\nelse\n\techo \"kube-container-runtime-monitor.service is not active,
-          not doing anything\"\nfi\n"
-        command:
-        - /usr/bin/nsenter
-        - -t
-        - "1"
-        - -a
-        - /bin/bash
-        - -c
-        env:
-        - name: HTTP_PROXY
-          valueFrom:
-            secretKeyRef:
-              key: httpProxy
-              name: http-proxy-settings
-              optional: true
-        - name: http_proxy
-          valueFrom:
-            secretKeyRef:
-              key: httpProxy
-              name: http-proxy-settings
-              optional: true
-        - name: HTTPS_PROXY
-          valueFrom:
-            secretKeyRef:
-              key: httpsProxy
-              name: http-proxy-settings
-              optional: true
-        - name: https_proxy
-          valueFrom:
-            secretKeyRef:
-              key: httpsProxy
-              name: http-proxy-settings
-              optional: true
-        - name: CUSTOM_NO_PROXY
-          valueFrom:
-            secretKeyRef:
-              key: noProxy
-              name: http-proxy-settings
-              optional: true
-        - name: custom_no_proxy
-          valueFrom:
-            secretKeyRef:
-              key: noProxy
-              name: http-proxy-settings
-              optional: true
-        - name: NO_PROXY
-          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
-        - name: no_proxy
-          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
-        image: docker.io/library/ubuntu:20.04
-        name: disable-kube-health-monitor
-        resources: {}
-        securityContext:
-          privileged: true
-          procMount: Default
       - command:
         - /bin/sh
         - -c
@@ -9008,8 +8759,8 @@ spec:
         app.kubernetes.io/instance: rabbitmq
         app.kubernetes.io/managed-by: Helm
       annotations:
-        checksum/config: d5780a0c58210a2062d54feb61cfb1d5a9c076f95569c4a77076d22c9bad4190
-        checksum/secret: 64c39dd3a8570ed4b0cc71bc0402bc814d016e16f68732938722b12a57c8e82c
+        checksum/config: aca5a97bd1dfe3912d74e61f85bdffcde993310848389fa0c674e2fd8dc0ac27
+        gitpod.io/checksum_config: 39278f618027543f2d07f55ab8503caf8ab1943de3030b6e4d45d61014c1e886
         prometheus.io/port: '9419'
         prometheus.io/scrape: "true"
     spec:
@@ -9027,6 +8778,25 @@ spec:
         fsGroup: 1001
       terminationGracePeriodSeconds: 120
       initContainers:
+        - args:
+          - sh
+          - -c
+          - sed "s/%PASSWORD%/${PASSWORD}/" /app/load_definition.json > /gitpod-config/load_definition.json
+          env:
+          - name: PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: rabbitmq-password
+                name: rabbitmq
+          image: docker.io/library/alpine:3.16
+          name: credential-injector
+          resources: {}
+          volumeMounts:
+          - mountPath: /app
+            name: load-definition-volume
+          - mountPath: /gitpod-config
+            name: shared-data
+        
       containers:
         - name: rabbitmq
           image: docker.io/bitnami/rabbitmq:3.11.5-debian-11-r2
@@ -9089,7 +8859,7 @@ spec:
             - name: RABBITMQ_LOAD_DEFINITIONS
               value: "yes"
             - name: RABBITMQ_DEFINITIONS_FILE
-              value: "/app/load_definition.json"
+              value: "/gitpod-config/load_definition.json"
             - name: RABBITMQ_SECURE_PASSWORD
               value: "yes"
             - name: RABBITMQ_USERNAME
@@ -9097,7 +8867,7 @@ spec:
             - name: RABBITMQ_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: messagebus
+                  name: rabbitmq
                   key: rabbitmq-password
             - name: RABBITMQ_PLUGINS
               value: "rabbitmq_management, rabbitmq_peer_discovery_k8s, rabbitmq_prometheus"
@@ -9152,6 +8922,9 @@ spec:
             - name: load-definition-volume
               mountPath: /app
               readOnly: true
+            - mountPath: /gitpod-config
+              name: shared-data
+            
       volumes:
         - name: certs
           secret:
@@ -9171,6 +8944,9 @@ spec:
         - name: load-definition-volume
           secret:
             secretName: "load-definition"
+        - emptyDir: {}
+          name: shared-data
+        
         - name: data
           emptyDir: {}
 ---
@@ -10102,323 +9878,6 @@ spec:
       restartPolicy: Always
       serviceAccountName: dashboard
       terminationGracePeriodSeconds: 30
-status: {}
----
-# apps/v1/Deployment iam
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  annotations:
-    gitpod.io/checksum_config: 350c5081ae3f30253f80d07e0adfd8d82f0d8b416858b42d61fec05c2d1d246a
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: iam
-  name: iam
-  namespace: default
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: gitpod
-      component: iam
-  strategy:
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
-    type: RollingUpdate
-  template:
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: iam
-      name: iam
-      namespace: default
-    spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: gitpod.io/workload_meta
-                operator: Exists
-      containers:
-      - args:
-        - run
-        - --config=/config.json
-        - --json-log=true
-        env:
-        - name: GITPOD_DOMAIN
-          value: gitpod.example.com
-        - name: GITPOD_INSTALLATION_SHORTNAME
-          value: default
-        - name: GITPOD_REGION
-          value: local
-        - name: HOST_URL
-          value: https://gitpod.example.com
-        - name: KUBE_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        - name: KUBE_DOMAIN
-          value: svc.cluster.local
-        - name: LOG_LEVEL
-          value: info
-        - name: HTTP_PROXY
-          valueFrom:
-            secretKeyRef:
-              key: httpProxy
-              name: http-proxy-settings
-              optional: true
-        - name: http_proxy
-          valueFrom:
-            secretKeyRef:
-              key: httpProxy
-              name: http-proxy-settings
-              optional: true
-        - name: HTTPS_PROXY
-          valueFrom:
-            secretKeyRef:
-              key: httpsProxy
-              name: http-proxy-settings
-              optional: true
-        - name: https_proxy
-          valueFrom:
-            secretKeyRef:
-              key: httpsProxy
-              name: http-proxy-settings
-              optional: true
-        - name: CUSTOM_NO_PROXY
-          valueFrom:
-            secretKeyRef:
-              key: noProxy
-              name: http-proxy-settings
-              optional: true
-        - name: custom_no_proxy
-          valueFrom:
-            secretKeyRef:
-              key: noProxy
-              name: http-proxy-settings
-              optional: true
-        - name: NO_PROXY
-          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
-        - name: no_proxy
-          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
-        - name: DB_HOST
-          valueFrom:
-            secretKeyRef:
-              key: host
-              name: mysql
-        - name: DB_PORT
-          valueFrom:
-            secretKeyRef:
-              key: port
-              name: mysql
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: password
-              name: mysql
-        - name: DB_USERNAME
-          valueFrom:
-            secretKeyRef:
-              key: username
-              name: mysql
-        - name: DB_ENCRYPTION_KEYS
-          valueFrom:
-            secretKeyRef:
-              key: encryptionKeys
-              name: mysql
-        image: eu.gcr.io/gitpod-core-dev/build/iam:test
-        imagePullPolicy: IfNotPresent
-        livenessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /live
-            port: 9501
-            scheme: HTTP
-          successThreshold: 1
-          timeoutSeconds: 1
-        name: iam
-        ports:
-        - containerPort: 9001
-          name: grpc
-        readinessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /ready
-            port: 9501
-            scheme: HTTP
-          successThreshold: 1
-          timeoutSeconds: 1
-        resources:
-          requests:
-            cpu: 100m
-            memory: 32Mi
-        securityContext:
-          privileged: false
-        volumeMounts:
-        - mountPath: /config.json
-          name: config
-          readOnly: true
-          subPath: config.json
-        - mountPath: /secrets/database-config
-          name: database-config
-          readOnly: true
-      - args:
-        - --logtostderr
-        - --insecure-listen-address=[$(IP)]:9500
-        - --upstream=http://127.0.0.1:9500/
-        env:
-        - name: IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        - name: HTTP_PROXY
-          valueFrom:
-            secretKeyRef:
-              key: httpProxy
-              name: http-proxy-settings
-              optional: true
-        - name: http_proxy
-          valueFrom:
-            secretKeyRef:
-              key: httpProxy
-              name: http-proxy-settings
-              optional: true
-        - name: HTTPS_PROXY
-          valueFrom:
-            secretKeyRef:
-              key: httpsProxy
-              name: http-proxy-settings
-              optional: true
-        - name: https_proxy
-          valueFrom:
-            secretKeyRef:
-              key: httpsProxy
-              name: http-proxy-settings
-              optional: true
-        - name: CUSTOM_NO_PROXY
-          valueFrom:
-            secretKeyRef:
-              key: noProxy
-              name: http-proxy-settings
-              optional: true
-        - name: custom_no_proxy
-          valueFrom:
-            secretKeyRef:
-              key: noProxy
-              name: http-proxy-settings
-              optional: true
-        - name: NO_PROXY
-          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
-        - name: no_proxy
-          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
-        image: quay.io/brancz/kube-rbac-proxy:v0.12.0
-        name: kube-rbac-proxy
-        ports:
-        - containerPort: 9500
-          name: metrics
-        resources:
-          requests:
-            cpu: 1m
-            memory: 30Mi
-        securityContext:
-          allowPrivilegeEscalation: false
-          runAsGroup: 65532
-          runAsNonRoot: true
-          runAsUser: 65532
-        terminationMessagePolicy: FallbackToLogsOnError
-      dnsPolicy: ClusterFirst
-      enableServiceLinks: false
-      initContainers:
-      - args:
-        - -v
-        - database
-        env:
-        - name: DB_HOST
-          valueFrom:
-            secretKeyRef:
-              key: host
-              name: mysql
-        - name: DB_PORT
-          valueFrom:
-            secretKeyRef:
-              key: port
-              name: mysql
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: password
-              name: mysql
-        - name: DB_USERNAME
-          valueFrom:
-            secretKeyRef:
-              key: username
-              name: mysql
-        - name: DB_ENCRYPTION_KEYS
-          valueFrom:
-            secretKeyRef:
-              key: encryptionKeys
-              name: mysql
-        - name: HTTP_PROXY
-          valueFrom:
-            secretKeyRef:
-              key: httpProxy
-              name: http-proxy-settings
-              optional: true
-        - name: http_proxy
-          valueFrom:
-            secretKeyRef:
-              key: httpProxy
-              name: http-proxy-settings
-              optional: true
-        - name: HTTPS_PROXY
-          valueFrom:
-            secretKeyRef:
-              key: httpsProxy
-              name: http-proxy-settings
-              optional: true
-        - name: https_proxy
-          valueFrom:
-            secretKeyRef:
-              key: httpsProxy
-              name: http-proxy-settings
-              optional: true
-        - name: CUSTOM_NO_PROXY
-          valueFrom:
-            secretKeyRef:
-              key: noProxy
-              name: http-proxy-settings
-              optional: true
-        - name: custom_no_proxy
-          valueFrom:
-            secretKeyRef:
-              key: noProxy
-              name: http-proxy-settings
-              optional: true
-        - name: NO_PROXY
-          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
-        - name: no_proxy
-          value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
-        image: eu.gcr.io/gitpod-core-dev/build/service-waiter:test
-        name: database-waiter
-        resources: {}
-        securityContext:
-          allowPrivilegeEscalation: false
-          privileged: false
-          runAsUser: 31001
-      restartPolicy: Always
-      serviceAccountName: iam
-      terminationGracePeriodSeconds: 30
-      volumes:
-      - configMap:
-          name: iam
-        name: config
-      - name: database-config
-        secret:
-          secretName: mysql
 status: {}
 ---
 # apps/v1/Deployment ide-metrics
@@ -11355,7 +10814,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: a7bd71558cb04a04656bafe7651d4192a9d37be96d2d817f9b6225f63e3a6989
+        gitpod.io/checksum_config: 7f753dd1b1611bd802a8aeca1e438006eaf07ff1d4806a4089ef43b449dfda30
       creationTimestamp: null
       labels:
         app: gitpod
@@ -11455,6 +10914,8 @@ spec:
           value: ws-manager,wsdaemon,$(CUSTOM_NO_PROXY)
         - name: PROXY_DOMAIN
           value: gitpod.example.com
+        - name: FRONTEND_DEV_ENABLED
+          value: "false"
         image: eu.gcr.io/gitpod-core-dev/build/proxy:test
         imagePullPolicy: IfNotPresent
         name: proxy
@@ -11533,7 +10994,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    gitpod.io/checksum_config: 82b32972a85084140320cd225c2893f0a2f22d55675f95a68e021c43e5e9b9ac
+    gitpod.io/checksum_config: 3cc95f976fd2b074f33d82a494edf92c0b9b46962e03fd0689b885ad33836f4f
   creationTimestamp: null
   labels:
     app: gitpod
@@ -11688,6 +11149,9 @@ spec:
           name: config
           readOnly: true
           subPath: config.json
+        - mountPath: /secrets/database-config
+          name: database-config
+          readOnly: true
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -11838,6 +11302,9 @@ spec:
       - configMap:
           name: public-api-server
         name: config
+      - name: database-config
+        secret:
+          secretName: mysql
 status: {}
 ---
 # apps/v1/Deployment registry
@@ -11951,7 +11418,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: f52ae23eddcf2fe15c87ec92cc3d998045c5ff491d52caed0f23a6fccc020134
+        gitpod.io/checksum_config: be1a6e9b223875689a4e70b2e8dca5a0e576b2f78b2bdc08c633cfea5a241cc3
       creationTimestamp: null
       labels:
         app: gitpod
@@ -12059,7 +11526,7 @@ spec:
         - name: MESSAGEBUS_PASSWORD
           valueFrom:
             secretKeyRef:
-              key: password
+              key: rabbitmq-password
               name: rabbitmq
         - name: MESSAGEBUS_CA
           valueFrom:
@@ -12133,6 +11600,9 @@ spec:
           readOnly: true
         - mountPath: /ws-manager-client-tls-certs
           name: ws-manager-client-tls-certs
+          readOnly: true
+        - mountPath: /admin
+          name: admin-login-key
           readOnly: true
       - args:
         - --logtostderr
@@ -12288,7 +11758,7 @@ spec:
         - name: MESSAGEBUS_PASSWORD
           valueFrom:
             secretKeyRef:
-              key: password
+              key: rabbitmq-password
               name: rabbitmq
         - name: MESSAGEBUS_CA
           valueFrom:
@@ -12368,6 +11838,9 @@ spec:
       - name: ws-manager-client-tls-certs
         secret:
           secretName: ws-manager-client-tls
+      - name: admin-login-key
+        secret:
+          secretName: server-admin-secret
 status: {}
 ---
 # apps/v1/Deployment ws-manager
@@ -12407,7 +11880,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: gitpod.io/workload_workspace_services
+              - key: gitpod.io/workload_services
                 operator: Exists
       containers:
       - args:
@@ -12609,7 +12082,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: c0a3088b82fda02787165a99308e1e0cd9f919c7ba88828f2c98734c22d14c64
+        gitpod.io/checksum_config: 93bf7d7fea84b56c9bb1fd7193a03452db0e5b0f2df9e1db82d5f70dea6f90a0
       creationTimestamp: null
       labels:
         app: gitpod
@@ -12692,7 +12165,7 @@ spec:
         - name: MESSAGEBUS_PASSWORD
           valueFrom:
             secretKeyRef:
-              key: password
+              key: rabbitmq-password
               name: rabbitmq
         - name: MESSAGEBUS_CA
           valueFrom:
@@ -12912,7 +12385,7 @@ spec:
         - name: MESSAGEBUS_PASSWORD
           valueFrom:
             secretKeyRef:
-              key: password
+              key: rabbitmq-password
               name: rabbitmq
         - name: MESSAGEBUS_CA
           valueFrom:
@@ -13013,7 +12486,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 714740065966c437ee71b41e8953aa6bb77ac83596e2326b267a2b954f60242d
+        gitpod.io/checksum_config: 50975660db033ea3555b3ced8dcb5e88a95b63142b5402732d0bc8355f3daaed
       creationTimestamp: null
       labels:
         app: gitpod
@@ -13026,7 +12499,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: gitpod.io/workload_workspace_services
+              - key: gitpod.io/workload_services
                 operator: Exists
       containers:
       - args:
@@ -13110,6 +12583,8 @@ spec:
           name: https-proxy
         - containerPort: 9500
           name: metrics
+        - containerPort: 22
+          name: ssh
         readinessProbe:
           failureThreshold: 10
           httpGet:
@@ -13128,11 +12603,11 @@ spec:
         - mountPath: /config
           name: config
           readOnly: true
-        - mountPath: /mnt/certificates
-          name: config-certificates
         - mountPath: /ws-manager-client-tls-certs
           name: ws-manager-client-tls-certs
           readOnly: true
+        - mountPath: /mnt/certificates
+          name: config-certificates
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -13214,12 +12689,12 @@ spec:
       - configMap:
           name: ws-proxy
         name: config
-      - name: config-certificates
-        secret:
-          secretName: https-certificates
       - name: ws-manager-client-tls-certs
         secret:
           secretName: ws-manager-client-tls
+      - name: config-certificates
+        secret:
+          secretName: https-certificates
 status: {}
 ---
 # batch/v1/Job migrations

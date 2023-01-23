@@ -17,6 +17,7 @@
 	order gitpod.headless_log_download before rewrite
 	order gitpod.configcat before rewrite
 	order gitpod.sec_websocket_key before header
+	order gitpod.frontend_dev after forward_auth
 
 	servers {
 		protocols h1 h2 h2c
@@ -86,10 +87,6 @@
 		protocols tls1.2
 		#ca_root   <pem_file>
 	}
-}
-
-(upstream_headers) {
-	header_up X-Real-IP {http.request.remote.host}
 }
 
 (upstream_connection) {
@@ -245,12 +242,10 @@ https://{$GITPOD_DOMAIN} {
 		uri strip_prefix /api
 
 		reverse_proxy @fast server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-			import upstream_headers
 			import upstream_connection
 		}
 
 		reverse_proxy @slow slow-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-			import upstream_headers
 			import upstream_connection
 		}
 	}
@@ -271,7 +266,6 @@ https://{$GITPOD_DOMAIN} {
 		uri strip_prefix /api
 
 		reverse_proxy @fast server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-			import upstream_headers
 			import upstream_connection
 
 			# required for smooth streaming of terminal logs
@@ -279,7 +273,6 @@ https://{$GITPOD_DOMAIN} {
 		}
 
 		reverse_proxy @slow slow-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-			import upstream_headers
 			import upstream_connection
 
 			# required for smooth streaming of terminal logs
@@ -296,8 +289,7 @@ https://{$GITPOD_DOMAIN} {
 
 		uri strip_prefix /iam
 
-		reverse_proxy iam.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002 {
-			import upstream_headers
+		reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002 {
 			import upstream_connection
 		}
 	}
@@ -311,7 +303,6 @@ https://{$GITPOD_DOMAIN} {
 		import compression
 
 		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-			import upstream_headers
 			import upstream_connection
 
 			flush_interval -1
@@ -325,7 +316,6 @@ https://{$GITPOD_DOMAIN} {
 		import compression
 
 		reverse_proxy ide-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:80 {
-			import upstream_headers
 			import upstream_connection
 		}
 	}
@@ -342,19 +332,33 @@ https://{$GITPOD_DOMAIN} {
 		import slow_fast_matchers
 
 		reverse_proxy @fast server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-			import upstream_headers
 			import upstream_connection
 		}
 
 		reverse_proxy @slow slow-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-			import upstream_headers
 			import upstream_connection
 		}
 	}
 
+	# Default: route to dashboard
 	handle {
+		# Dev URL header present?
+		@frontend_dev {
+			header X-Frontend-Dev-URL *
+		}
+		handle @frontend_dev {
+			# ...and allowed to use it?
+			forward_auth server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+				uri /auth/frontend-dev
+
+				header_up -Connection
+				header_up -Upgrade
+			}
+			# Then handle it with our plugin!
+			gitpod.frontend_dev
+		}
+
 		reverse_proxy dashboard.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3001 {
-			import upstream_headers
 			import upstream_connection
 		}
 	}
@@ -386,7 +390,6 @@ https://*.*.{$GITPOD_DOMAIN} {
 	handle @foreign_content2 {
 		reverse_proxy https://ws-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9090 {
 			import workspace_transport
-			import upstream_headers
 
 			header_up X-WSProxy-Host {http.request.host}
 		}
@@ -396,7 +399,6 @@ https://*.*.{$GITPOD_DOMAIN} {
 	handle @workspace_port {
 		reverse_proxy https://ws-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9090 {
 			import workspace_transport
-			import upstream_headers
 
 			header_up X-Gitpod-WorkspaceId {re.host.workspaceID}
 			header_up X-Gitpod-Port {re.host.workspacePort}
@@ -409,7 +411,6 @@ https://*.*.{$GITPOD_DOMAIN} {
 	handle @debug_workspace {
 		reverse_proxy https://ws-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9090 {
 			import workspace_transport
-			import upstream_headers
 
 			header_up X-Gitpod-WorkspaceId {re.host.workspaceID}
 			header_up X-WSProxy-Host {http.request.host}
@@ -420,7 +421,6 @@ https://*.*.{$GITPOD_DOMAIN} {
 	handle @workspace {
 		reverse_proxy https://ws-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9090 {
 			import workspace_transport
-			import upstream_headers
 
 			header_up X-Gitpod-WorkspaceId {re.host.workspaceID}
 			header_up X-WSProxy-Host {http.request.host}

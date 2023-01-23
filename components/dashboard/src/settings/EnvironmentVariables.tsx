@@ -61,7 +61,7 @@ function AddEnvVarModal(p: EnvVarModalProps) {
                     <h4>Name</h4>
                     <input
                         autoFocus
-                        className="w-full"
+                        className="w-full font-mono"
                         type="text"
                         value={ev.name}
                         onChange={(v) => {
@@ -72,7 +72,7 @@ function AddEnvVarModal(p: EnvVarModalProps) {
                 <div className="mt-4">
                     <h4>Value</h4>
                     <input
-                        className="w-full"
+                        className="w-full font-mono"
                         type="text"
                         value={ev.value}
                         onChange={(v) => {
@@ -83,7 +83,7 @@ function AddEnvVarModal(p: EnvVarModalProps) {
                 <div className="mt-4">
                     <h4>Scope</h4>
                     <input
-                        className="w-full"
+                        className="w-full font-mono"
                         type="text"
                         value={ev.repositoryPattern}
                         placeholder="e.g. owner/repository"
@@ -128,8 +128,8 @@ function DeleteEnvVarModal(p: { variable: UserEnvVarValue; deleteVariable: () =>
                 <span className="truncate">Scope</span>
             </div>
             <div className="grid grid-cols-2 gap-4 p-3 mt-3 text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-xl">
-                <span className="truncate text-gray-900 dark:text-gray-50">{p.variable.name}</span>
-                <span className="truncate text-sm">{p.variable.repositoryPattern}</span>
+                <span className="truncate text-gray-900 dark:text-gray-50 font-mono">{p.variable.name}</span>
+                <span className="truncate text-sm font-mono">{p.variable.repositoryPattern}</span>
             </div>
         </ConfirmationModal>
     );
@@ -262,10 +262,10 @@ export default function EnvVars() {
                     {envVars.map((variable) => {
                         return (
                             <Item className="whitespace-nowrap">
-                                <ItemField className="w-5/12 overflow-ellipsis truncate my-auto">
+                                <ItemField className="w-5/12 overflow-ellipsis truncate my-auto font-mono">
                                     {variable.name}
                                 </ItemField>
-                                <ItemField className="w-5/12 overflow-ellipsis truncate text-sm text-gray-400 my-auto">
+                                <ItemField className="w-5/12 overflow-ellipsis truncate text-sm text-gray-400 my-auto font-mono">
                                     {variable.repositoryPattern}
                                 </ItemField>
                                 <ItemFieldContextMenu

@@ -265,10 +265,13 @@ func (v version) BuildFromEnvvars(in interface{}) error {
 		cfg.ContainerRegistry.InCluster = pointer.Bool(false)
 		cfg.ContainerRegistry.External = &ContainerRegistryExternal{
 			URL: envvars.RegistryExternalURL,
-			Certificate: ObjectRef{
+		}
+
+		if envvars.RegistryExternalCertName != "" {
+			cfg.ContainerRegistry.External.Certificate = &ObjectRef{
 				Kind: ObjectRefSecret,
 				Name: envvars.RegistryExternalCertName,
-			},
+			}
 		}
 	} else {
 		if envvars.RegistryInClusterStorageType == "s3" {
@@ -278,11 +281,15 @@ func (v version) BuildFromEnvvars(in interface{}) error {
 				Region:   envvars.RegistryInClusterStorageS3Region,
 				Endpoint: envvars.RegistryInClusterStorageS3Endpoint,
 				Bucket:   envvars.RegistryInClusterStorageS3BucketName,
-				Certificate: ObjectRef{
-					Kind: ObjectRefSecret,
-					Name: envvars.RegistryInClusterStorageS3CertName,
-				},
 			}
+
+			if envvars.RegistryInClusterStorageS3CertName != "" {
+				cfg.ContainerRegistry.S3Storage.Certificate = &ObjectRef{
+					Kind: ObjectRefSecret,
+					Name: envvars.RegistryInClusterStorageS3CertName}
+
+			}
+
 		}
 	}
 
@@ -322,10 +329,13 @@ func (v version) BuildFromEnvvars(in interface{}) error {
 			cfg.ObjectStorage.S3 = &ObjectStorageS3{
 				Endpoint:   envvars.StorageS3Endpoint,
 				BucketName: envvars.StorageS3Bucket,
-				Credentials: ObjectRef{
+			}
+
+			if envvars.StorageS3CredsName != "" {
+				cfg.ObjectStorage.S3.Credentials = &ObjectRef{
 					Kind: ObjectRefSecret,
 					Name: envvars.StorageS3CredsName,
-				},
+				}
 			}
 		default:
 			return fmt.Errorf("unknown storage provider: %s", storageProvider)

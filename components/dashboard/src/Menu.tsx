@@ -38,7 +38,7 @@ interface Entry {
 
 export default function Menu() {
     const { user } = useContext(UserContext);
-    const { showUsageView } = useContext(FeatureFlagContext);
+    const { showUsageView, oidcServiceEnabled } = useContext(FeatureFlagContext);
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
@@ -76,6 +76,7 @@ export default function Menu() {
                 "members",
                 "settings",
                 "billing",
+                "sso",
                 "usage",
                 // admin sub-pages
                 "users",
@@ -238,7 +239,11 @@ export default function Menu() {
             teamSettingsList.push({
                 title: "Settings",
                 link: `/t/${team.slug}/settings`,
-                alternatives: getTeamSettingsMenu({ team, billingMode: teamBillingMode }).flatMap((e) => e.link),
+                alternatives: getTeamSettingsMenu({
+                    team,
+                    billingMode: teamBillingMode,
+                    ssoEnabled: oidcServiceEnabled,
+                }).flatMap((e) => e.link),
             });
         }
 

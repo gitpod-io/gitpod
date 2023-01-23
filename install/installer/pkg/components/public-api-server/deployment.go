@@ -33,6 +33,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
+	databaseSecretVolume, databaseSecretMount, _ := common.DatabaseEnvSecret(ctx.Config)
+
 	volumes := []corev1.Volume{
 		{
 			Name: configmapVolume,
@@ -44,6 +46,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 		},
+		databaseSecretVolume,
 	}
 	volumeMounts := []corev1.VolumeMount{
 		{
@@ -52,6 +55,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			MountPath: configMountPath,
 			SubPath:   configJSONFilename,
 		},
+		databaseSecretMount,
 	}
 
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {

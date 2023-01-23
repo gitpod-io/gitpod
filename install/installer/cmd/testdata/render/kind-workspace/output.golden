@@ -859,13 +859,13 @@ data:
             "userNamespaces": {
               "seccompProfileInstaller": {
                 "version": "test"
-              },
-              "shiftfsModuleLoader": {
-                "version": "test"
               }
             }
           },
           "wsManager": {
+            "version": "test"
+          },
+          "wsManagerMk2": {
             "version": "test"
           },
           "wsManagerBridge": {
@@ -1953,6 +1953,10 @@ data:
               "minBytesAvail": 21474836480
             }
           ]
+        },
+        "workspaceController": {
+          "enabled": false,
+          "workingAreaSuffix": ""
         }
       },
       "service": {
@@ -2135,6 +2139,7 @@ data:
           "ideDebugPort": 25000,
           "supervisorPort": 22999,
           "supervisorDebugPort": 24999,
+          "debugWorkspaceProxyPort": 25003,
           "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:test"
         },
         "builtinPages": {
@@ -2258,6 +2263,22 @@ rules:
   - delete
   - update
   - patch
+- apiGroups:
+  - workspace.gitpod.io
+  resources:
+  - workspaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - workspace.gitpod.io
+  resources:
+  - workspaces/status
+  verbs:
+  - get
+  - patch
+  - update
 ---
 # rbac.authorization.k8s.io/v1/ClusterRole ws-manager
 apiVersion: rbac.authorization.k8s.io/v1
@@ -2543,6 +2564,14 @@ rules:
   - ""
   resources:
   - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - workspace.gitpod.io
+  resources:
+  - workspaces
   verbs:
   - get
   - list
@@ -3231,8 +3260,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 2a29ef265c219405bda658cb21613f40ad5e692590d2779476a3ff90917ed6fb
-        seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
+        gitpod.io/checksum_config: 1e5f92c54481d2a3f63e3993a056e945763cf91f8b12ff04f8236eb7a710f4b9
       creationTimestamp: null
       labels:
         app: gitpod
@@ -3389,28 +3417,6 @@ spec:
       enableServiceLinks: false
       hostPID: true
       initContainers:
-      - args:
-        - "exec {BASH_XTRACEFD}>&1 # this causes 'set -x' to write to stdout insted
-          of stderr\nset -euExo pipefail\nsystemctl status kube-container-runtime-monitor.service
-          || true\nif [ \"$(systemctl is-active kube-container-runtime-monitor.service)\"
-          == \"active\" ]\nthen\n\techo \"kube-container-runtime-monitor.service is
-          active\"\n\tsystemctl stop kube-container-runtime-monitor.service\n\tsystemctl
-          disable kube-container-runtime-monitor.service\n\tsystemctl status kube-container-runtime-monitor.service
-          || true\nelse\n\techo \"kube-container-runtime-monitor.service is not active,
-          not doing anything\"\nfi\n"
-        command:
-        - /usr/bin/nsenter
-        - -t
-        - "1"
-        - -a
-        - /bin/bash
-        - -c
-        image: docker.io/library/ubuntu:20.04
-        name: disable-kube-health-monitor
-        resources: {}
-        securityContext:
-          privileged: true
-          procMount: Default
       - command:
         - /bin/sh
         - -c
@@ -3539,7 +3545,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: gitpod.io/workload_workspace_services
+              - key: gitpod.io/workload_services
                 operator: Exists
       containers:
       - args:
@@ -3782,7 +3788,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: gitpod.io/workload_workspace_services
+              - key: gitpod.io/workload_services
                 operator: Exists
       containers:
       - args:
@@ -3910,7 +3916,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 714740065966c437ee71b41e8953aa6bb77ac83596e2326b267a2b954f60242d
+        gitpod.io/checksum_config: 50975660db033ea3555b3ced8dcb5e88a95b63142b5402732d0bc8355f3daaed
       creationTimestamp: null
       labels:
         app: gitpod
@@ -3923,7 +3929,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: gitpod.io/workload_workspace_services
+              - key: gitpod.io/workload_services
                 operator: Exists
       containers:
       - args:
@@ -3967,6 +3973,8 @@ spec:
           name: https-proxy
         - containerPort: 9500
           name: metrics
+        - containerPort: 22
+          name: ssh
         readinessProbe:
           failureThreshold: 10
           httpGet:
@@ -3985,11 +3993,11 @@ spec:
         - mountPath: /config
           name: config
           readOnly: true
-        - mountPath: /mnt/certificates
-          name: config-certificates
         - mountPath: /ws-manager-client-tls-certs
           name: ws-manager-client-tls-certs
           readOnly: true
+        - mountPath: /mnt/certificates
+          name: config-certificates
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -4031,10 +4039,10 @@ spec:
       - configMap:
           name: ws-proxy
         name: config
-      - name: config-certificates
-        secret:
-          secretName: https-certificates
       - name: ws-manager-client-tls-certs
         secret:
           secretName: ws-manager-client-tls
+      - name: config-certificates
+        secret:
+          secretName: https-certificates
 status: {}

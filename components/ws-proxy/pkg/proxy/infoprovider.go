@@ -29,6 +29,7 @@ import (
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	wsapi "github.com/gitpod-io/gitpod/ws-manager/api"
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
 
 // WorkspaceCoords represents the coordinates of a workspace (port).
@@ -128,6 +129,7 @@ func (r *RemoteWorkspaceInfoProvider) SetupWithManager(mgr ctrl.Manager) error {
 		MatchLabels: map[string]string{
 			"app":       "gitpod",
 			"component": "workspace",
+			"gpwsman":   "true",
 		},
 	})
 	if err != nil {
@@ -202,6 +204,123 @@ func getPortStr(urlStr string) string {
 	}
 
 	return portURL.Port()
+}
+
+type CRDWorkspaceInfoProvider struct {
+	client.Client
+	Scheme *runtime.Scheme
+
+	store cache.ThreadSafeStore
+}
+
+// NewRemoteWorkspaceInfoProvider creates a fresh WorkspaceInfoProvider.
+func NewCRDWorkspaceInfoProvider(ctx context.Context, client client.Client, scheme *runtime.Scheme) (*CRDWorkspaceInfoProvider, error) {
+	// create custom indexer for searches
+	indexers := cache.Indexers{
+		workspaceIndex: func(obj interface{}) ([]string, error) {
+			if workspaceInfo, ok := obj.(*WorkspaceInfo); ok {
+				return []string{workspaceInfo.WorkspaceID}, nil
+			}
+
+			return nil, xerrors.Errorf("object is not a WorkspaceInfo")
+		},
+	}
+
+	return &CRDWorkspaceInfoProvider{
+		Client: client,
+		Scheme: scheme,
+
+		store: cache.NewThreadSafeStore(indexers, cache.Indices{}),
+	}, nil
+}
+
+// WorkspaceInfo return the WorkspaceInfo available for the given workspaceID.
+func (r *CRDWorkspaceInfoProvider) WorkspaceInfo(workspaceID string) *WorkspaceInfo {
+	workspaces, err := r.store.ByIndex(workspaceIndex, workspaceID)
+	if err != nil {
+		return nil
+	}
+
+	if len(workspaces) == 1 {
+		return workspaces[0].(*WorkspaceInfo)
+	}
+
+	return nil
+}
+
+func (r *CRDWorkspaceInfoProvider) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	var ws workspacev1.Workspace
+	err := r.Client.Get(context.Background(), req.NamespacedName, &ws)
+	if errors.IsNotFound(err) {
+		// workspace is gone - that's ok
+		r.store.Delete(req.Name)
+		log.WithField("workspacepod", req.Name).Debug("removing workspace from store")
+
+		return reconcile.Result{}, nil
+	}
+
+	var podIP string
+	if ws.Status.Runtime != nil {
+		podIP = ws.Status.Runtime.PodIP
+	}
+
+	ports := make([]*wsapi.PortSpec, 0, len(ws.Spec.Ports))
+	for _, p := range ws.Spec.Ports {
+		v := wsapi.PortVisibility_PORT_VISIBILITY_PRIVATE
+		if p.Visibility == workspacev1.AdmissionLevelEveryone {
+			v = wsapi.PortVisibility_PORT_VISIBILITY_PUBLIC
+		}
+		ports = append(ports, &wsapi.PortSpec{
+			Port:       p.Port,
+			Visibility: v,
+		})
+	}
+
+	admission := wsapi.AdmissionLevel_ADMIT_OWNER_ONLY
+	if ws.Spec.Admission.Level == workspacev1.AdmissionLevelEveryone {
+		admission = wsapi.AdmissionLevel_ADMIT_EVERYONE
+	}
+	wsinfo := &WorkspaceInfo{
+		WorkspaceID:     ws.Spec.Ownership.WorkspaceID,
+		InstanceID:      ws.Name,
+		URL:             ws.Status.URL,
+		IDEImage:        ws.Spec.Image.IDE.Web,
+		SupervisorImage: ws.Spec.Image.IDE.Supervisor,
+		IDEPublicPort:   getPortStr(ws.Status.URL),
+		IPAddress:       podIP,
+		Ports:           ports,
+		Auth:            &wsapi.WorkspaceAuthentication{Admission: admission, OwnerToken: ws.Status.OwnerToken},
+		StartedAt:       ws.CreationTimestamp.Time,
+	}
+
+	r.store.Update(req.Name, wsinfo)
+	log.WithField("workspace", req.Name).WithField("details", wsinfo).Debug("adding/updating workspace details")
+
+	return ctrl.Result{}, nil
+}
+
+// SetupWithManager sets up the controller with the Manager.
+func (r *CRDWorkspaceInfoProvider) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		Named("workspacecrd").
+		WithEventFilter(predicate.ResourceVersionChangedPredicate{}).
+		For(
+			&workspacev1.Workspace{},
+		).
+		Complete(r)
+}
+
+// CompositeInfoProvider checks each of its info providers and returns the first info found.
+type CompositeInfoProvider []WorkspaceInfoProvider
+
+func (c CompositeInfoProvider) WorkspaceInfo(workspaceID string) *WorkspaceInfo {
+	for _, ip := range c {
+		res := ip.WorkspaceInfo(workspaceID)
+		if res != nil {
+			return res
+		}
+	}
+	return nil
 }
 
 type fixedInfoProvider struct {

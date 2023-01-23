@@ -51,12 +51,7 @@ import { ConsensusLeaderMessenger } from "./consensus/consensus-leader-messenger
 import { RabbitMQConsensusLeaderMessenger } from "./consensus/rabbitmq-consensus-leader-messenger";
 import { ConsensusLeaderQorum } from "./consensus/consensus-leader-quorum";
 import { StorageClient } from "./storage/storage-client";
-import {
-    ImageBuilderClientConfig,
-    ImageBuilderClientProvider,
-    CachingImageBuilderClientProvider,
-    ImageBuilderClientCallMetrics,
-} from "@gitpod/image-builder/lib";
+import { ImageBuilderClientProvider, ImageBuilderClientCallMetrics } from "@gitpod/image-builder/lib";
 import { ImageSourceProvider } from "./workspace/image-source-provider";
 import { WorkspaceGarbageCollector } from "./workspace/garbage-collector";
 import { TokenGarbageCollector } from "./user/token-garbage-collector";
@@ -174,13 +169,8 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(PrometheusClientCallMetrics).toSelf().inSingletonScope();
     bind(IClientCallMetrics).to(PrometheusClientCallMetrics).inSingletonScope();
 
-    bind(ImageBuilderClientConfig).toDynamicValue((ctx) => {
-        const config = ctx.container.get<Config>(Config);
-        return { address: config.imageBuilderAddr };
-    });
-    bind(CachingImageBuilderClientProvider).toSelf().inSingletonScope();
-    bind(WorkspaceClusterImagebuilderClientProvider).toSelf().inSingletonScope(); // during the transition period, we have two kinds of image builder client providers
-    bind(ImageBuilderClientProvider).toService(CachingImageBuilderClientProvider);
+    bind(WorkspaceClusterImagebuilderClientProvider).toSelf().inSingletonScope();
+    bind(ImageBuilderClientProvider).toService(WorkspaceClusterImagebuilderClientProvider);
     bind(ImageBuilderClientCallMetrics).toService(IClientCallMetrics);
 
     /* The binding order of the context parser does not configure preference/a working order. Each context parser must be able

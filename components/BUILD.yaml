@@ -15,6 +15,19 @@ packages:
       - install/installer:docker
       - install/kots:lint
       - components/gitpod-protocol:all
+
+  - name: all-ci
+  # like components:all + dev:all + exports files for .github/workflows/build.yml
+    type: generic
+    deps:
+      - :all
+      - dev:all
+      - :all-docker
+      - install/installer:raw-app
+    config:
+      commands:
+        - [ "sh", "-c", "mv install-installer--raw-app/installer /tmp/installer" ]
+        - [ "sh", "-c", "cat components--all-docker/versions.yaml > /tmp/versions.yaml" ]
   - name: docker-versions
     type: docker
     config:
@@ -37,7 +50,6 @@ packages:
       - components/ee/db-sync:docker
       - components/ee/payment-endpoint:docker
       - components/gitpod-db:docker
-      - components/iam:docker
       - components/ide/code-desktop:docker
       - components/ide/code-desktop:docker-insiders
       - components/ide/code:docker
@@ -69,7 +81,6 @@ packages:
       - components/usage:docker
       - components/openvsx-proxy:docker
       - components/proxy:docker
-      - components/refresh-credential:docker
       - components/registry-facade:docker
       - components/registry-facade/ca-updater:docker
       - components/server:docker
@@ -78,11 +89,12 @@ packages:
       - components/toxic-config:docker
       - components/installation-telemetry:docker
       - components/workspacekit:docker
+      - components/workspace-rollout-job:docker
       - components/ws-daemon:docker
       - components/ws-daemon/seccomp-profile-installer:docker
-      - components/ws-daemon/shiftfs-module-loader:docker
       - components/ws-manager-bridge:docker
       - components/ws-manager:docker
+      - components/ws-manager-mk2:docker
       - components/ws-proxy:docker
       - components/ide-proxy:docker
       - components/ide-metrics:docker
@@ -114,7 +126,6 @@ packages:
   - name: all-apps
     type: generic
     deps:
-      - components/iam:app
       - components/blobserve:app
       - components/content-service:app
       - components/dashboard:app
@@ -125,7 +136,6 @@ packages:
       - components/image-builder-mk3:app
       - components/openvsx-proxy:app
       - components/public-api-server:app
-      - components/refresh-credential:app
       - components/registry-facade:app
       - components/server:app
       - components/service-waiter:app
@@ -134,6 +144,7 @@ packages:
       - components/toxic-config:app
       - components/installation-telemetry:app
       - components/workspacekit:app
+      - components/workspace-rollout-job:app
       - components/ws-daemon:app
       - components/ws-manager-bridge:app
       - components/ws-manager:app
