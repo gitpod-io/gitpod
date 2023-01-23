@@ -53,7 +53,7 @@ var (
 func init() {
 	userToken, _ = os.LookupEnv("USER_TOKEN")
 	roboquatToken, _ = os.LookupEnv("ROBOQUAT_TOKEN")
-	jetBrainsIDEs = []string{"GoLand", "Intellij", "PhpStorm", "PyCharm", "RubyMine", "WebStorm", "Rider", "CLion"}
+	jetBrainsIDEs = []string{"GoLand", "RubyMine", "PhpStorm", "PyCharm", "Intellij", "WebStorm", "Rider", "CLion"}
 }
 
 func GetHttpContent(url string) ([]byte, error) {
