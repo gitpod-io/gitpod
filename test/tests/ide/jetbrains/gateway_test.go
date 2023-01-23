@@ -191,6 +191,7 @@ func TestGoLand(t *testing.T) {
 	if roboquatToken == "" {
 		t.Fatal("this test need github action run permission")
 	}
+	t.Parallel()
 	f := features.New("Start a workspace using GoLand").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "GoLand").
@@ -210,6 +211,7 @@ func TestIntellij(t *testing.T) {
 	if roboquatToken == "" {
 		t.Fatal("this test need github action run permission")
 	}
+	t.Parallel()
 	f := features.New("Start a workspace using Intellij").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "Intellij").
@@ -229,6 +231,7 @@ func TestPhpStorm(t *testing.T) {
 	if roboquatToken == "" {
 		t.Fatal("this test need github action run permission")
 	}
+	t.Parallel()
 	f := features.New("Start a workspace using PhpStorm").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "PhpStorm").
@@ -248,6 +251,7 @@ func TestPyCharm(t *testing.T) {
 	if roboquatToken == "" {
 		t.Fatal("this test need github action run permission")
 	}
+	t.Parallel()
 	f := features.New("Start a workspace using Pycharm").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "Pycharm").
@@ -267,6 +271,7 @@ func TestRubyMine(t *testing.T) {
 	if roboquatToken == "" {
 		t.Fatal("this test need github action run permission")
 	}
+	t.Parallel()
 	f := features.New("Start a workspace using RubyMine").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "RubyMine").
@@ -286,6 +291,7 @@ func TestWebStorm(t *testing.T) {
 	if roboquatToken == "" {
 		t.Fatal("this test need github action run permission")
 	}
+	t.Parallel()
 	f := features.New("Start a workspace using WebStorm").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "WebStorm").
@@ -300,11 +306,12 @@ func TestWebStorm(t *testing.T) {
 }
 
 func TestRider(t *testing.T) {
-	if roboquatToken == "" {
-		t.Skip("this test need github action run permission")
-	}
 	integration.SkipWithoutUsername(t, username)
 	integration.SkipWithoutUserToken(t, userToken)
+	if roboquatToken == "" {
+		t.Fatal("this test need github action run permission")
+	}
+	t.Parallel()
 	f := features.New("Start a workspace using Rider").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "Rider").
@@ -319,11 +326,12 @@ func TestRider(t *testing.T) {
 }
 
 func TestCLion(t *testing.T) {
-	if roboquatToken == "" {
-		t.Skip("this test need github action run permission")
-	}
 	integration.SkipWithoutUsername(t, username)
 	integration.SkipWithoutUserToken(t, userToken)
+	if roboquatToken == "" {
+		t.Fatal("this test need github action run permission")
+	}
+	t.Parallel()
 	f := features.New("Start a workspace using CLion").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "CLion").

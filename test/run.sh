@@ -17,6 +17,7 @@ set -euo pipefail
 
 REPORT=""
 TEST_SUITE=all
+PARALLEL_FLAG=""
 opt=""
 optarg=""
 while getopts rs-: opt; do
@@ -54,9 +55,11 @@ case $TEST_SUITE in
     ;;
   "ide")
     TEST_LIST="$IDE_TEST_LIST"
+    PARALLEL_FLAG="-parallel 2"
     ;;
   "jetbrains")
     TEST_LIST="$JETBRAINS_TESTS"
+    PARALLEL_FLAG="-parallel 2"
     ;;
   "vscode")
     TEST_LIST="$VSCODE_TESTS"
@@ -109,7 +112,7 @@ if [ "$TEST_SUITE" == "workspace" ]; then
 
   set +e
   # shellcheck disable=SC2086
-  go test -v $TEST_LIST "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1 | tee "${LOG_FILE}" | werft log slice "test-${TEST_NAME}-parallel"
+  go test -v $TEST_LIST "${args[@]}" -run '.*[^.SerialOnly]$' $PARALLEL_FLAG 2>&1 | tee "${LOG_FILE}" | werft log slice "test-${TEST_NAME}-parallel"
   RC=${PIPESTATUS[0]}
   set -e
 

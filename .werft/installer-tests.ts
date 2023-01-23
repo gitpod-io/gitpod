@@ -226,25 +226,31 @@ const WORKSPACES_TESTS: { [name: string]: InfraConfig } = {
     },
 };
 
+const SSH_TEST = {
+    phase: "run-ssh-tests",
+    makeTarget: "run-ssh-tests",
+    description: "SSH Gateway tests",
+    slackhook: slackHook.get("ide-jobs"),
+};
+
+const VSCODE_IDE_TEST = {
+    phase: "run-vscode-ide-tests",
+    makeTarget: "run-vscode-ide-tests",
+    description: "vscode IDE tests",
+    slackhook: slackHook.get("ide-jobs"),
+};
+
+const JB_IDE_TEST = {
+    phase: "run-jb-ide-tests",
+    makeTarget: "run-jb-ide-tests",
+    description: "jetbrains IDE tests",
+    slackhook: slackHook.get("ide-jobs"),
+}
+
 const IDE_TESTS: { [name: string]: InfraConfig } = {
-    SSH_TEST: {
-        phase: "run-ssh-tests",
-        makeTarget: "run-ssh-tests",
-        description: "SSH Gateway tests",
-        slackhook: slackHook.get("ide-jobs"),
-    },
-    VSCODE_IDE_TEST: {
-        phase: "run-vscode-ide-tests",
-        makeTarget: "run-vscode-ide-tests",
-        description: "vscode IDE tests",
-        slackhook: slackHook.get("ide-jobs"),
-    },
-    JB_IDE_TEST: {
-        phase: "run-jb-ide-tests",
-        makeTarget: "run-jb-ide-tests",
-        description: "jetbrains IDE tests",
-        slackhook: slackHook.get("ide-jobs"),
-    },
+    SSH_TEST,
+    VSCODE_IDE_TEST,
+    JB_IDE_TEST,
 }
 
 
@@ -274,6 +280,9 @@ const WEBAPP_TESTS: { [name: string]: InfraConfig } = {
 const TestMap = {
     "workspaces": WORKSPACES_TESTS,
     "ide": IDE_TESTS,
+    "ssh": SSH_TEST,
+    "vscode": VSCODE_IDE_TEST,
+    "jetbrains": JB_IDE_TEST,
     "webapp": WEBAPP_TESTS,
 }
 
@@ -427,7 +436,7 @@ async function runIntegrationTests() {
 
     const componentTests = TestMap[testSuite.toLowerCase()]
     if(componentTests === undefined) {
-        console.log("'%s' is not a valid testSuite name, options are: 'workspaces', 'ide', 'webapp'", testSuite)
+        console.log("'%s' is not a valid testSuite name, options are: 'workspaces', 'ide', 'ssh', 'vscode', 'jetbrains', 'webapp'", testSuite)
         werft.fail(`run-${testSuite}-integration-tests`, "Error finding the testSuite")
         return
     }
