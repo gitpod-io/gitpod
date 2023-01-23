@@ -7,12 +7,13 @@ package rollout
 import (
 	"context"
 	"errors"
+	"math"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	logrus "github.com/gitpod-io/gitpod/common-go/log"
+	logging "github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/workspace-rollout-job/pkg/analysis"
 	"github.com/gitpod-io/gitpod/workspace-rollout-job/pkg/wsbridge"
 )
@@ -51,7 +52,7 @@ func New(oldCluster, newCluster string, rolloutWaitDuration, analysisWaitDuratio
 
 // Start runs the job synchronously
 func (r *RollOutJob) Start(ctx context.Context) error {
-	log := logrus.WithField("component", "rollout-job")
+	log := logging.WithField("component", "rollout-job")
 	log.Infof("Rollout job started with the following configuration: %+v", r)
 
 	// Handle interrupt signal
@@ -63,7 +64,7 @@ func (r *RollOutJob) Start(ctx context.Context) error {
 	go func() {
 		<-c
 		// sig is a ^C, handle it
-		logrus.Info("Received interrupt signal, Reverting")
+		logging.Info("Received interrupt signal, Reverting")
 		r.revert <- true
 	}()
 
@@ -130,7 +131,7 @@ func (r *RollOutJob) Start(ctx context.Context) error {
 				return nil
 			}
 
-			r.currentScore += r.rolloutStep
+			r.currentScore = int32(math.Min(float64(r.currentScore+r.rolloutStep), 100))
 			// TODO (ask): Handle them together? so that we don't end up in a mixed state during failure
 			if err := r.UpdateScoreWithMetricUpdate(ctx, r.newCluster, r.currentScore); err != nil {
 				log.Error("Failed to update new cluster score: ", err)

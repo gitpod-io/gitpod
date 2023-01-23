@@ -56,7 +56,7 @@ func (m *MockRolloutAction) GetScore(ctx context.Context, clusterName string) (i
 
 func TestRollout_Successful(t *testing.T) {
 	rolloutAction := NewMockRolloutAction()
-	rolloutJob := New("ws-1", "ws-2", 1*time.Second, 1*time.Second, 25, 50, &MockAnalyzer{}, rolloutAction)
+	rolloutJob := New("ws-1", "ws-2", 1*time.Second, 1*time.Second, 30, 50, &MockAnalyzer{}, rolloutAction)
 	rolloutJob.Start(context.Background())
 
 	newClusterScore, err := rolloutAction.GetScore(context.Background(), "ws-2")
