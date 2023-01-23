@@ -111,7 +111,7 @@ func (e *AnalyticsEvent) ExportToJson(ctx context.Context) string {
 
 	data, err := json.Marshal(e.Data)
 	if err != nil {
-		LogError(ctx, err.(error), "error marshaling analytics data", e.supervisorClient)
+		LogError(ctx, err, "error marshaling analytics data", e.supervisorClient)
 		os.Exit(1)
 	}
 
