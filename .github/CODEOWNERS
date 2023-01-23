@@ -64,6 +64,7 @@
 /install/installer/pkg/components/workspace/ide @gitpod-io/engineering-ide
 /install/installer/pkg/components/ws-daemon @gitpod-io/engineering-workspace
 /install/installer/pkg/components/ws-manager @gitpod-io/engineering-workspace
+/install/installer/pkg/components/ws-manager-mk2 @gitpod-io/engineering-workspace
 /install/installer/pkg/components/ws-manager-bridge @gitpod-io/engineering-webapp
 /install/installer/pkg/components/ws-proxy @gitpod-io/engineering-workspace
 /install/installer/pkg/config/versions @gitpod-io/engineering-ide
@@ -92,6 +93,7 @@
 /components/ws-manager-bridge-api @gitpod-io/engineering-webapp
 /components/ws-manager-bridge @gitpod-io/engineering-webapp
 /components/ws-manager @gitpod-io/engineering-workspace
+/components/ws-manager-mk2 @gitpod-io/engineering-workspace
 /components/ws-proxy @gitpod-io/engineering-workspace
 /dev/gpctl @gitpod-io/engineering-workspace
 /dev/gpctl/api/ @gitpod-io/engineering-webapp
