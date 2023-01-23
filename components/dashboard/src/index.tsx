@@ -22,7 +22,6 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import utc from "dayjs/plugin/utc";
 import { getURLHash, isGitpodIo } from "./utils";
 import { isWebsiteSlug } from "./utils";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 import "./index.css";
 import { setupQueryClientProvider } from "./data/setup";
@@ -69,7 +68,6 @@ const bootApp = () => {
                                                 <BrowserRouter>
                                                     <FeatureFlagContextProvider>
                                                         <App />
-                                                        <ReactQueryDevtools initialIsOpen={false} />
                                                     </FeatureFlagContextProvider>
                                                 </BrowserRouter>
                                             </StartWorkspaceModalContextProvider>
