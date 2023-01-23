@@ -2393,7 +2393,6 @@ data:
       "stripeConfigFile": "",
       "enablePayment": false,
       "patSigningKeyFile": "",
-      "withoutWorkspaceComponents": false,
       "showSetupModal": true,
       "workspaceHeartbeat": {
         "intervalSeconds": 60,
@@ -4789,7 +4788,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: e32facbc4b3e033d097380f96946c743c51cb7f8ffad143acb1c62d9231a21dc
+        gitpod.io/checksum_config: be1a6e9b223875689a4e70b2e8dca5a0e576b2f78b2bdc08c633cfea5a241cc3
       creationTimestamp: null
       labels:
         app: gitpod

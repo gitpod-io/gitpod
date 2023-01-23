@@ -50,10 +50,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	ctx.WithExperimental(func(ucfg *experimental.Config) error {
-		if ucfg.WebApp != nil && ucfg.WebApp.WithoutWorkspaceComponents {
-			// No ws-manager exists in the application cluster, don't try to connect to it.
-			wsManagerConfig = nil
-		}
 		if ucfg.Workspace == nil {
 			return nil
 		}
