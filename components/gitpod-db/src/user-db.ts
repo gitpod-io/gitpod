@@ -155,7 +155,8 @@ export const BUILTIN_WORKSPACE_PROBE_USER_ID = "builtin-user-workspace-probe-000
 
 export const BUILTIN_WORKSPACE_USER_AGENT_SMITH = "builtin-user-agent-smith-0000000";
 
-export const BUILTIN_INSTLLATION_ADMIN_USER_ID = "builtin-installation-admin-user-0000";
+// We need a valid UUID for the builtin admin user so that it can authenticate in order to call endpoints for setting up SSO
+export const BUILTIN_INSTLLATION_ADMIN_USER_ID = "f071bb8e-b5d1-46cf-a436-da03ae63bcd2";
 
 export interface OwnerAndRepo {
     owner: string;
