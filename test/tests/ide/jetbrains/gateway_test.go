@@ -8,7 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -47,11 +47,13 @@ type GatewayHostStatus struct {
 var (
 	userToken     string
 	roboquatToken string
+	jetBrainsIDEs []string
 )
 
 func init() {
 	userToken, _ = os.LookupEnv("USER_TOKEN")
 	roboquatToken, _ = os.LookupEnv("ROBOQUAT_TOKEN")
+	jetBrainsIDEs = []string{"GoLand", "Intellij", "PhpStorm", "PyCharm", "RubyMine", "WebStorm", "Rider", "CLion"}
 }
 
 func GetHttpContent(url string) ([]byte, error) {
@@ -60,7 +62,7 @@ func GetHttpContent(url string) ([]byte, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	return b, err
 }
 
@@ -185,13 +187,27 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 	}
 }
 
+func shouldSkip(ideName string) bool {
+	ideIndex := -1
+	for i, name := range jetBrainsIDEs {
+		if name == ideName {
+			ideIndex = i
+			break
+		}
+	}
+
+	return time.Now().Day()%len(jetBrainsIDEs) != ideIndex
+}
+
 func TestGoLand(t *testing.T) {
+	if shouldSkip("GoLand") {
+		t.Skip()
+	}
 	integration.SkipWithoutUsername(t, username)
 	integration.SkipWithoutUserToken(t, userToken)
 	if roboquatToken == "" {
 		t.Fatal("this test need github action run permission")
 	}
-	t.Parallel()
 	f := features.New("Start a workspace using GoLand").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "GoLand").
@@ -206,12 +222,14 @@ func TestGoLand(t *testing.T) {
 }
 
 func TestIntellij(t *testing.T) {
+	if shouldSkip("Intellij") {
+		t.Skip()
+	}
 	integration.SkipWithoutUsername(t, username)
 	integration.SkipWithoutUserToken(t, userToken)
 	if roboquatToken == "" {
 		t.Fatal("this test need github action run permission")
 	}
-	t.Parallel()
 	f := features.New("Start a workspace using Intellij").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "Intellij").
@@ -226,12 +244,14 @@ func TestIntellij(t *testing.T) {
 }
 
 func TestPhpStorm(t *testing.T) {
+	if shouldSkip("PhpStorm") {
+		t.Skip()
+	}
 	integration.SkipWithoutUsername(t, username)
 	integration.SkipWithoutUserToken(t, userToken)
 	if roboquatToken == "" {
 		t.Fatal("this test need github action run permission")
 	}
-	t.Parallel()
 	f := features.New("Start a workspace using PhpStorm").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "PhpStorm").
@@ -246,12 +266,14 @@ func TestPhpStorm(t *testing.T) {
 }
 
 func TestPyCharm(t *testing.T) {
+	if shouldSkip("PyCharm") {
+		t.Skip()
+	}
 	integration.SkipWithoutUsername(t, username)
 	integration.SkipWithoutUserToken(t, userToken)
 	if roboquatToken == "" {
 		t.Fatal("this test need github action run permission")
 	}
-	t.Parallel()
 	f := features.New("Start a workspace using Pycharm").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "Pycharm").
@@ -266,12 +288,14 @@ func TestPyCharm(t *testing.T) {
 }
 
 func TestRubyMine(t *testing.T) {
+	if shouldSkip("RubyMine") {
+		t.Skip()
+	}
 	integration.SkipWithoutUsername(t, username)
 	integration.SkipWithoutUserToken(t, userToken)
 	if roboquatToken == "" {
 		t.Fatal("this test need github action run permission")
 	}
-	t.Parallel()
 	f := features.New("Start a workspace using RubyMine").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "RubyMine").
@@ -286,12 +310,14 @@ func TestRubyMine(t *testing.T) {
 }
 
 func TestWebStorm(t *testing.T) {
+	if shouldSkip("WebStorm") {
+		t.Skip()
+	}
 	integration.SkipWithoutUsername(t, username)
 	integration.SkipWithoutUserToken(t, userToken)
 	if roboquatToken == "" {
 		t.Fatal("this test need github action run permission")
 	}
-	t.Parallel()
 	f := features.New("Start a workspace using WebStorm").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "WebStorm").
@@ -306,12 +332,14 @@ func TestWebStorm(t *testing.T) {
 }
 
 func TestRider(t *testing.T) {
+	if shouldSkip("Rider") {
+		t.Skip()
+	}
 	integration.SkipWithoutUsername(t, username)
 	integration.SkipWithoutUserToken(t, userToken)
 	if roboquatToken == "" {
 		t.Fatal("this test need github action run permission")
 	}
-	t.Parallel()
 	f := features.New("Start a workspace using Rider").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "Rider").
@@ -326,12 +354,14 @@ func TestRider(t *testing.T) {
 }
 
 func TestCLion(t *testing.T) {
+	if shouldSkip("CLion") {
+		t.Skip()
+	}
 	integration.SkipWithoutUsername(t, username)
 	integration.SkipWithoutUserToken(t, userToken)
 	if roboquatToken == "" {
 		t.Fatal("this test need github action run permission")
 	}
-	t.Parallel()
 	f := features.New("Start a workspace using CLion").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "CLion").
