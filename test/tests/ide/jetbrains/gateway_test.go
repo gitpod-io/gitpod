@@ -53,7 +53,7 @@ var (
 func init() {
 	userToken, _ = os.LookupEnv("USER_TOKEN")
 	roboquatToken, _ = os.LookupEnv("ROBOQUAT_TOKEN")
-	jetBrainsIDEs = []string{"GoLand", "RubyMine", "PhpStorm", "PyCharm", "Intellij", "WebStorm", "Rider", "CLion"}
+	jetBrainsIDEs = []string{"goland", "rubymine", "phpstorm", "pycharm", "intellij", "webstorm", "rider", "clion"}
 }
 
 func GetHttpContent(url string) ([]byte, error) {
@@ -199,178 +199,26 @@ func shouldSkip(ideName string) bool {
 	return time.Now().Day()%len(jetBrainsIDEs) != ideIndex
 }
 
-func TestGoLand(t *testing.T) {
-	if shouldSkip("GoLand") {
-		t.Skip()
+func TestJetBrainsIDEs(t *testing.T) {
+	for _, ideName := range jetBrainsIDEs {
+		if shouldSkip(ideName) {
+			continue
+		}
+		integration.SkipWithoutUsername(t, username)
+		integration.SkipWithoutUserToken(t, userToken)
+		if roboquatToken == "" {
+			t.Fatal("this test need github action run permission")
+		}
+		f := features.New(fmt.Sprintf("Start a workspace using %s.", ideName)).
+			WithLabel("component", "IDE").
+			WithLabel("ide", ideName).
+			Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+				ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+				defer cancel()
+				JetBrainsIDETest(ctx, t, cfg, ideName, "https://github.com/gitpod-io/empty")
+				return ctx
+			}).
+			Feature()
+		testEnv.Test(t, f)
 	}
-	integration.SkipWithoutUsername(t, username)
-	integration.SkipWithoutUserToken(t, userToken)
-	if roboquatToken == "" {
-		t.Fatal("this test need github action run permission")
-	}
-	f := features.New("Start a workspace using GoLand").
-		WithLabel("component", "IDE").
-		WithLabel("ide", "GoLand").
-		Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
-			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "goland", "https://github.com/gitpod-io/empty")
-			return ctx
-		}).
-		Feature()
-	testEnv.Test(t, f)
-}
-
-func TestIntellij(t *testing.T) {
-	if shouldSkip("Intellij") {
-		t.Skip()
-	}
-	integration.SkipWithoutUsername(t, username)
-	integration.SkipWithoutUserToken(t, userToken)
-	if roboquatToken == "" {
-		t.Fatal("this test need github action run permission")
-	}
-	f := features.New("Start a workspace using Intellij").
-		WithLabel("component", "IDE").
-		WithLabel("ide", "Intellij").
-		Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
-			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "intellij", "https://github.com/gitpod-io/empty")
-			return ctx
-		}).
-		Feature()
-	testEnv.Test(t, f)
-}
-
-func TestPhpStorm(t *testing.T) {
-	if shouldSkip("PhpStorm") {
-		t.Skip()
-	}
-	integration.SkipWithoutUsername(t, username)
-	integration.SkipWithoutUserToken(t, userToken)
-	if roboquatToken == "" {
-		t.Fatal("this test need github action run permission")
-	}
-	f := features.New("Start a workspace using PhpStorm").
-		WithLabel("component", "IDE").
-		WithLabel("ide", "PhpStorm").
-		Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
-			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "phpstorm", "https://github.com/gitpod-io/empty")
-			return ctx
-		}).
-		Feature()
-	testEnv.Test(t, f)
-}
-
-func TestPyCharm(t *testing.T) {
-	if shouldSkip("PyCharm") {
-		t.Skip()
-	}
-	integration.SkipWithoutUsername(t, username)
-	integration.SkipWithoutUserToken(t, userToken)
-	if roboquatToken == "" {
-		t.Fatal("this test need github action run permission")
-	}
-	f := features.New("Start a workspace using Pycharm").
-		WithLabel("component", "IDE").
-		WithLabel("ide", "Pycharm").
-		Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
-			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "pycharm", "https://github.com/gitpod-io/empty")
-			return ctx
-		}).
-		Feature()
-	testEnv.Test(t, f)
-}
-
-func TestRubyMine(t *testing.T) {
-	if shouldSkip("RubyMine") {
-		t.Skip()
-	}
-	integration.SkipWithoutUsername(t, username)
-	integration.SkipWithoutUserToken(t, userToken)
-	if roboquatToken == "" {
-		t.Fatal("this test need github action run permission")
-	}
-	f := features.New("Start a workspace using RubyMine").
-		WithLabel("component", "IDE").
-		WithLabel("ide", "RubyMine").
-		Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
-			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "rubymine", "https://github.com/gitpod-io/empty")
-			return ctx
-		}).
-		Feature()
-	testEnv.Test(t, f)
-}
-
-func TestWebStorm(t *testing.T) {
-	if shouldSkip("WebStorm") {
-		t.Skip()
-	}
-	integration.SkipWithoutUsername(t, username)
-	integration.SkipWithoutUserToken(t, userToken)
-	if roboquatToken == "" {
-		t.Fatal("this test need github action run permission")
-	}
-	f := features.New("Start a workspace using WebStorm").
-		WithLabel("component", "IDE").
-		WithLabel("ide", "WebStorm").
-		Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
-			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "webstorm", "https://github.com/gitpod-io/empty")
-			return ctx
-		}).
-		Feature()
-	testEnv.Test(t, f)
-}
-
-func TestRider(t *testing.T) {
-	if shouldSkip("Rider") {
-		t.Skip()
-	}
-	integration.SkipWithoutUsername(t, username)
-	integration.SkipWithoutUserToken(t, userToken)
-	if roboquatToken == "" {
-		t.Fatal("this test need github action run permission")
-	}
-	f := features.New("Start a workspace using Rider").
-		WithLabel("component", "IDE").
-		WithLabel("ide", "Rider").
-		Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
-			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "Rider", "https://github.com/gitpod-io/empty")
-			return ctx
-		}).
-		Feature()
-	testEnv.Test(t, f)
-}
-
-func TestCLion(t *testing.T) {
-	if shouldSkip("CLion") {
-		t.Skip()
-	}
-	integration.SkipWithoutUsername(t, username)
-	integration.SkipWithoutUserToken(t, userToken)
-	if roboquatToken == "" {
-		t.Fatal("this test need github action run permission")
-	}
-	f := features.New("Start a workspace using CLion").
-		WithLabel("component", "IDE").
-		WithLabel("ide", "CLion").
-		Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
-			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "CLion", "https://github.com/gitpod-io/empty")
-			return ctx
-		}).
-		Feature()
-	testEnv.Test(t, f)
 }
