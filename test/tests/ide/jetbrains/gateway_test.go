@@ -214,7 +214,7 @@ func TestGoLand(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "goland", "https://github.com/gitpod-samples/template-golang-cli")
+			JetBrainsIDETest(ctx, t, cfg, "goland", "https://github.com/gitpod-io/empty")
 			return ctx
 		}).
 		Feature()
@@ -236,7 +236,7 @@ func TestIntellij(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "intellij", "https://github.com/gitpod-samples/spring-petclinic")
+			JetBrainsIDETest(ctx, t, cfg, "intellij", "https://github.com/gitpod-io/empty")
 			return ctx
 		}).
 		Feature()
@@ -258,7 +258,7 @@ func TestPhpStorm(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "phpstorm", "https://github.com/gitpod-samples/template-php-laravel-mysql")
+			JetBrainsIDETest(ctx, t, cfg, "phpstorm", "https://github.com/gitpod-io/empty")
 			return ctx
 		}).
 		Feature()
@@ -280,7 +280,7 @@ func TestPyCharm(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "pycharm", "https://github.com/gitpod-samples/template-python-django")
+			JetBrainsIDETest(ctx, t, cfg, "pycharm", "https://github.com/gitpod-io/empty")
 			return ctx
 		}).
 		Feature()
@@ -302,7 +302,7 @@ func TestRubyMine(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "rubymine", "https://github.com/gitpod-samples/template-ruby-on-rails-postgres")
+			JetBrainsIDETest(ctx, t, cfg, "rubymine", "https://github.com/gitpod-io/empty")
 			return ctx
 		}).
 		Feature()
@@ -324,7 +324,7 @@ func TestWebStorm(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "webstorm", "https://github.com/gitpod-samples/template-typescript-react")
+			JetBrainsIDETest(ctx, t, cfg, "webstorm", "https://github.com/gitpod-io/empty")
 			return ctx
 		}).
 		Feature()
@@ -346,7 +346,7 @@ func TestRider(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "Rider", "https://github.com/gitpod-samples/template-dotnet-core-cli-csharp")
+			JetBrainsIDETest(ctx, t, cfg, "Rider", "https://github.com/gitpod-io/empty")
 			return ctx
 		}).
 		Feature()
@@ -368,7 +368,7 @@ func TestCLion(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "CLion", "https://github.com/gitpod-samples/template-cpp")
+			JetBrainsIDETest(ctx, t, cfg, "CLion", "https://github.com/gitpod-io/empty")
 			return ctx
 		}).
 		Feature()
