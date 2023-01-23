@@ -6,7 +6,6 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -52,8 +51,10 @@ var previewCmd = &cobra.Command{
 
 		err := openPreview(gpBrowserEnvVar, url)
 		if err != nil {
-			errorCtx := context.WithValue(ctx, ctxKeyError, err)
-			cmd.SetContext(errorCtx)
+			gpErr := &GpError{
+				Err: err,
+			}
+			cmd.SetContext(context.WithValue(ctx, ctxKeyError, gpErr))
 		}
 	},
 }
@@ -61,7 +62,7 @@ var previewCmd = &cobra.Command{
 func openPreview(gpBrowserEnvVar string, url string) error {
 	pcmd := os.Getenv(gpBrowserEnvVar)
 	if pcmd == "" {
-		err := errors.New(fmt.Sprintf("%s is not set", gpBrowserEnvVar))
+		err := fmt.Errorf("%s is not set", gpBrowserEnvVar)
 		return err
 	}
 	pargs, err := shlex.Split(pcmd)
