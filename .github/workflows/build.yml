@@ -4,20 +4,55 @@ on:
     types: [opened, synchronize, edited]
 
 jobs:
-  # We are building "previewctl" outside of "build" because we want to start
-  # the infrastructure job as early as possible (before a full build is done)
-  # and that job requires previewctl
-  previewctl:
-    if: ${{ contains(github.event.pull_request.body, '[x] /werft with-github-actions') && contains(github.event.pull_request.body, '[x] /werft with-preview') }}
+
+  configuration:
+    name: Configure job parameters
+    runs-on: [self-hosted]
+    if: ${{ contains(github.event.pull_request.body, '[x] /werft with-github-actions') }}
     concurrency:
-      group: ${{ github.head_ref || github.ref }}-previewctl
+      group: ${{ github.head_ref || github.ref }}-configuration
+      cancel-in-progress: true
+    outputs:
+      version: ${{ steps.output.outputs.version }}
+      preview_enable: ${{ steps.output.outputs.preview_enable }}
+      preview_infra_provider: ${{ steps.output.outputs.preview_infra_provider }}
+      build_no_cache: ${{ steps.output.outputs.build_no_cache }}
+      build_no_test: ${{ steps.output.outputs.build_no_test }}
+      build_leeway_target: ${{ steps.output.outputs.build_leeway_target }}
+    steps:
+      - name: "Determine Branch"
+        id: branches
+        uses: transferwise/sanitize-branch-name@v1
+      - name: "Set outputs"
+        id: output
+        env:
+          PR_DESC: '${{ github.event.pull_request.body }}'
+        shell: bash
+        run: |
+          {
+            echo "version=${{ steps.branches.outputs.sanitized-branch-name }}.${{github.run_number}}"
+            echo "preview_enable=${{ contains(github.event.pull_request.body, '[x] /werft with-preview') }}"
+            echo "preview_infra_provider=${{ contains(github.event.pull_request.body, '[X] /werft with-gce-vm') && 'gce' || 'harvester' }}"
+            echo "build_no_cache=${{ contains(github.event.pull_request.body, '[x] leeway-no-cache') }}"
+            echo "build_no_test=${{ contains(github.event.pull_request.body, '[x] /werft no-test') }}"
+            echo "build_leeway_target=$(echo "$PR_DESC" | sed -n -e 's/^.*leeway-target=//p' | sed 's/\r$//')"
+          } >> $GITHUB_OUTPUT
+
+  build-previewctl:
+    name: Build previewctl
+    needs: [configuration]
+    concurrency:
+      group: ${{ github.head_ref || github.ref }}-build-previewctl
       cancel-in-progress: true
     runs-on: [self-hosted]
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.3.4
+    outputs:
+      previewctl_hash: ${{ steps.build.outputs.previewctl_hash }}
     steps:
       - uses: actions/checkout@v3
-      - name: Build previewctl
+      - name: Build dev:all
+        id: build
         shell: bash
         env:
           HOME: /home/gitpod
@@ -29,31 +64,33 @@ jobs:
           gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
 
           export LEEWAY_WORKSPACE_ROOT="$(pwd)"
-          leeway build dev/preview/previewctl:cli
+          leeway build dev/preview/previewctl:docker -Dversion="${{needs.configuration.outputs.version}}"
+          echo "previewctl_hash=$(leeway describe dev/preview/previewctl:docker -t '{{ .Metadata.Version }}')" >> $GITHUB_OUTPUT
 
   infrastructure:
+    needs: [configuration, build-previewctl]
+    if: ${{ needs.configuration.outputs.preview_enable }}
     runs-on: [self-hosted]
-    needs: [previewctl]
     concurrency:
       group: ${{ github.head_ref || github.ref }}-infrastructure
     steps:
       - uses: actions/checkout@v3
       - name: Create preview environment infrastructure
         env:
-          TF_VAR_infra_provider: ${{ contains(github.event.pull_request.body, '[X] /werft with-gce-vm') && 'gce' || 'harvester' }}
+          TF_VAR_infra_provider: ${{ needs.configuration.outputs.preview_infra_provider }}
         id: create
         uses: ./.github/actions/preview-create
         with:
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
 
-  build:
-    if: ${{ contains(github.event.pull_request.body, '[x] /werft with-github-actions') }}
+  build-gitpod:
+    name: Build Gitpod
+    needs: [configuration]
     runs-on: [self-hosted]
     concurrency:
-      group: ${{ github.head_ref || github.ref }}-build
+      group: ${{ github.head_ref || github.ref }}-build-gitpod
       cancel-in-progress: true
-    outputs:
-      version: ${{ steps.leeway.outputs.version }}
     services:
       mysql:
         image: mysql:5.7
@@ -85,9 +122,6 @@ jobs:
           registry: eu.gcr.io
           username: oauth2accesstoken
           password: "${{ steps.auth.outputs.access_token }}"
-      - name: "Determine Branch"
-        id: branches
-        uses: transferwise/sanitize-branch-name@v1
       - name: Leeway Vet
         shell: bash
         working-directory: /workspace/gitpod
@@ -119,32 +153,21 @@ jobs:
         with:
           secrets: |-
             segment-io-token:gitpod-core-dev/segment-io-token
-      - name: Parse PullRequest
-        shell: bash
-        working-directory: /workspace/gitpod
-        env:
-          PR_DESC: '${{ github.event.pull_request.body }}'
-        run: |
-          PR_NO_CACHE=${{ contains(github.event.pull_request.body, '[x] leeway-no-cache') }}
-          PR_NO_TEST=${{ contains(github.event.pull_request.body, '[x] /werft no-test') }}
-          PR_LEEWAY_TARGET=$(echo "$PR_DESC" | sed -n -e 's/^.*leeway-target=//p' | sed 's/\r$//')
-
-          echo "PR_NO_CACHE=$PR_NO_CACHE" >> $GITHUB_ENV
-          echo "PR_NO_TEST=$PR_NO_TEST"   >> $GITHUB_ENV
-          echo "PR_LEEWAY_TARGET=$PR_LEEWAY_TARGET" >> $GITHUB_ENV
       - name: Leeway Build
         id: leeway
         shell: bash
         working-directory: /workspace/gitpod
         env:
           JAVA_HOME: /home/gitpod/.sdkman/candidates/java/current
-          VERSION: "${{ steps.branches.outputs.sanitized-branch-name }}.${{github.run_number}}"
+          VERSION: ${{needs.configuration.outputs.version}}
           SEGMENT_IO_TOKEN: '${{ steps.secrets.outputs.segment-io-token }}'
+          PR_NO_CACHE: ${{needs.configuration.outputs.build_no_cache}}
+          PR_NO_TEST: ${{needs.configuration.outputs.build_no_test}}
+          PR_LEEWAY_TARGET: ${{needs.configuration.outputs.build_leeway_target}}
         run: |
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
           [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none"       || CACHE="remote"
           [[ "$PR_NO_TEST"  = "true" ]] && TEST="--dont-test" || TEST=""
-          [[ -z "$PR_LEEWAY_TARGET" ]] && PR_LEEWAY_TARGET="components:all-ci"
+          [[ -z "$PR_LEEWAY_TARGET" ]] && PR_LEEWAY_TARGET="components:all"
 
           mkdir -p /__w/gitpod/gitpod/test-coverage-report
 
@@ -172,7 +195,7 @@ jobs:
 
   install:
     name: "Install Gitpod"
-    needs: [build, infrastructure]
+    needs: [configuration, build-previewctl, build-gitpod, infrastructure]
     runs-on: [self-hosted]
     concurrency:
       group: ${{ github.head_ref || github.ref }}-install
@@ -184,11 +207,12 @@ jobs:
         uses: ./.github/actions/deploy-gitpod
         with:
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
-          version: ${{needs.build.outputs.version}}
+          version: ${{needs.configuration.outputs.version}}
+          previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
 
   monitoring:
     name: "Install Monitoring Satellite"
-    needs: [infrastructure]
+    needs: [infrastructure, build-previewctl]
     runs-on: [self-hosted]
     concurrency:
       group: ${{ github.head_ref || github.ref }}-monitoring
@@ -200,3 +224,4 @@ jobs:
         uses: ./.github/actions/deploy-monitoring-satellite
         with:
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
