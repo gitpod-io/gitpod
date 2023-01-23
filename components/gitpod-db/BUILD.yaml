@@ -94,6 +94,12 @@ packages:
         - ${imageRepoBase}/db-migrations:${version}
         - ${imageRepoBase}/db-migrations:commit-${__git_commit}
 scripts:
+- name: init-testdb
+  description: "Starts a properly initialized MySQL instance to run tests against. Usage: '. $(leeway run components/gitpod-db:db-test-env)'"
+  deps: []
+  script: |
+    export DB_HOST=127.0.0.1
+    leeway build components/gitpod-db/go:init-testdb
 - name: db-test-env
   description: "Creates a file with env vars necessary for running DB tests. The file delets itself after being sourced. Usage: '. $(leeway run components/gitpod-db:db-test-env)'"
   deps: []
