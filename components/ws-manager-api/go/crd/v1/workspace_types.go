@@ -232,6 +232,18 @@ type WorkspaceRuntimeStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:resource:shortName=ws
+// Custom print columns on the Custom Resource Definition. These are the columns
+// showing up when doing e.g. `kubectl get workspaces`.
+// Columns with priority > 0 will only show up with `-o wide`.
+//+kubebuilder:printcolumn:name="Workspace",type="string",JSONPath=".spec.ownership.workspaceID",priority=10
+//+kubebuilder:printcolumn:name="Class",type="string",JSONPath=".spec.class"
+//+kubebuilder:printcolumn:name="Type",type="string",JSONPath=".spec.type",priority=10
+//+kubebuilder:printcolumn:name="Node",type="string",JSONPath=".status.runtime.nodeName"
+//+kubebuilder:printcolumn:name="Owner",type="string",JSONPath=".spec.ownership.owner"
+//+kubebuilder:printcolumn:name="Team",type="string",JSONPath=".spec.ownership.team"
+//+kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase"
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
 // Workspace is the Schema for the workspaces API
 type Workspace struct {
