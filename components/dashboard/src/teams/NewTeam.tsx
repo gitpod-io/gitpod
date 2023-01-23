@@ -12,11 +12,11 @@ import { ConnectError } from "@bufbuild/connect-web";
 
 export default function () {
     const { setTeams } = useContext(TeamsContext);
+    const [name, setName] = useState("");
 
     const history = useHistory();
 
     const [creationError, setCreationError] = useState<Error>();
-    let name = "";
     const createTeam = async (event: FormEvent) => {
         event.preventDefault();
 
@@ -64,7 +64,7 @@ export default function () {
                         autoFocus
                         className={`w-full${!!creationError ? " error" : ""}`}
                         type="text"
-                        onChange={(event) => (name = event.target.value)}
+                        onChange={(event) => setName(event.target.value)}
                     />
                     {!!creationError && (
                         <p className="text-gitpod-red">
