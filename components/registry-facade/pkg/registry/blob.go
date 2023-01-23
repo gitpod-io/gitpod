@@ -175,12 +175,14 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 		defer bufPool.Put(bp)
 
 		var n int64
+		var serr error
 		err = wait.PollImmediateWithContext(ctx, 100*time.Millisecond, time.Minute, func(context.Context) (done bool, err error) {
-			n, err = io.CopyBuffer(w, rc, *bp)
-			if err == nil {
+			n, serr = io.CopyBuffer(w, rc, *bp)
+			if serr == nil {
 				return true, nil
 			}
-			if errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.EPIPE) {
+			if errors.Is(serr, syscall.ECONNRESET) || errors.Is(serr, syscall.EPIPE) {
+				log.WithField("blobSource", src.Name()).WithField("baseRef", bh.Spec.BaseRef).WithError(serr).Warn("retry get blob because of error")
 				return false, nil
 			}
 			return true, err
@@ -189,7 +191,7 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 			if bh.Metrics != nil {
 				bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "false").Inc()
 			}
-			log.WithField("blobSource", src.Name()).WithField("baseRef", bh.Spec.BaseRef).WithError(err).Error("unable to return blob")
+			log.WithField("blobSource", src.Name()).WithField("baseRef", bh.Spec.BaseRef).WithError(err).Errorf("unable to return blob: %v", serr)
 			return xerrors.Errorf("unable to return blob: %w", err)
 		}
 
