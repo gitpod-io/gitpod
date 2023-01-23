@@ -1,0 +1,17 @@
+name: "Delete preview environment"
+on:
+    workflow_dispatch:
+        inputs:
+            name:
+                required: true
+                description: "The name of the preview environment to delete"
+jobs:
+    delete:
+        runs-on: [self-hosted]
+        steps:
+            - uses: actions/checkout@v3
+            - name: Delete preview environment
+              uses: ./.github/actions/delete-preview
+              with:
+                  name: ${{ github.event.inputs.name }}
+                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
