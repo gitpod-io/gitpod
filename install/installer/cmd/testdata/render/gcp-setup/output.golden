@@ -774,7 +774,7 @@ metadata:
 spec:
   maxUnavailable: 1
   selector:
-    matchLabels:
+    matchLabels: 
       app.kubernetes.io/name: rabbitmq
       app.kubernetes.io/instance: rabbitmq
 ---
@@ -7140,7 +7140,7 @@ spec:
       port: 9419
       targetPort: metrics
       nodePort: null
-  selector:
+  selector: 
     app.kubernetes.io/name: rabbitmq
     app.kubernetes.io/instance: rabbitmq
 ---
@@ -7174,7 +7174,7 @@ spec:
     - name: http-stats
       port: 15672
       targetPort: stats
-  selector:
+  selector: 
     app.kubernetes.io/name: rabbitmq
     app.kubernetes.io/instance: rabbitmq
   publishNotReadyAddresses: true
@@ -7771,7 +7771,6 @@ spec:
     metadata:
       annotations:
         gitpod.io/checksum_config: 4c90923e49e1c3f977ec3ca2ab845046f4c79df06412c4b8367f560644c2c7c3
-        seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8060,7 +8059,7 @@ spec:
         prometheus.io/port: '9419'
         prometheus.io/scrape: "true"
     spec:
-
+      
       serviceAccountName: rabbitmq
       affinity:
         nodeAffinity:
@@ -8069,7 +8068,7 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_meta
                 operator: Exists
-
+        
       securityContext:
         fsGroup: 1001
       terminationGracePeriodSeconds: 120
