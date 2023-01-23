@@ -10,7 +10,8 @@ import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getGitpodService } from "../service/service";
-import { getProject, WorkspaceStatusIndicator } from "../workspaces/WorkspaceEntry";
+import { getProjectPath } from "../workspaces/WorkspaceEntryNew";
+import { WorkspaceStatusIndicator } from "../workspaces/WorkspaceStatusIndicator";
 import { getAdminLinks } from "./gcp-info";
 import Property from "./Property";
 
@@ -64,7 +65,7 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                             <WorkspaceStatusIndicator instance={WorkspaceAndInstance.toInstance(workspace)} />
                         </span>
                     </div>
-                    <p>{getProject(WorkspaceAndInstance.toWorkspace(workspace))}</p>
+                    <p>{getProjectPath(WorkspaceAndInstance.toWorkspace(workspace))}</p>
                 </div>
                 <button
                     className="secondary ml-3"

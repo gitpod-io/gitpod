@@ -46,7 +46,7 @@ export function WorkspaceStatusIndicator({ instance }: { instance?: WorkspaceIns
     );
 }
 
-function getLabel(state: WorkspaceInstancePhase, conditions?: WorkspaceInstanceConditions) {
+export function getLabel(state: WorkspaceInstancePhase, conditions?: WorkspaceInstanceConditions) {
     if (conditions?.failed) {
         return "Failed";
     }

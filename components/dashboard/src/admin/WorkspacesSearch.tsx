@@ -21,11 +21,12 @@ import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
 import Pagination from "../Pagination/Pagination";
 import { getGitpodService } from "../service/service";
-import { getProject, WorkspaceStatusIndicator } from "../workspaces/WorkspaceEntry";
+import { getProjectPath } from "../workspaces/WorkspaceEntryNew";
 import WorkspaceDetail from "./WorkspaceDetail";
 import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
 import Alert from "../components/Alert";
 import { isGitpodIo } from "../utils";
+import { WorkspaceStatusIndicator } from "../workspaces/WorkspaceStatusIndicator";
 
 interface Props {
     user?: User;
@@ -165,7 +166,7 @@ export function WorkspaceSearch(props: Props) {
                     <div className="w-2/12">Last Started</div>
                 </div>
                 {searchResult.rows.map((ws) => (
-                    <WorkspaceEntry ws={ws} />
+                    <WorkspaceEntry key={ws.workspaceId} ws={ws} />
                 ))}
             </div>
             <Pagination
@@ -193,7 +194,7 @@ function WorkspaceEntry(p: { ws: WorkspaceAndInstance }) {
                         {p.ws.workspaceId}
                     </div>
                     <div className="text-sm overflow-ellipsis truncate text-gray-400 truncate">
-                        {getProject(WorkspaceAndInstance.toWorkspace(p.ws))}
+                        {getProjectPath(WorkspaceAndInstance.toWorkspace(p.ws))}
                     </div>
                 </div>
                 <div className="flex flex-col w-5/12 self-center truncate">

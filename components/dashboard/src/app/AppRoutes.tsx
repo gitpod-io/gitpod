@@ -51,10 +51,8 @@ import PersonalAccessTokenCreateView from "../settings/PersonalAccessTokensCreat
 import { StartWorkspaceModalContext } from "../workspaces/start-workspace-modal-context";
 import { StartWorkspaceOptions } from "../start/start-workspace-options";
 import { WebsocketClients } from "./WebsocketClients";
-import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
-const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
 const WorkspacesNew = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/WorkspacesNew"));
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/Account"));
 const Notifications = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/Notifications"));
@@ -102,7 +100,6 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
     const hash = getURLHash();
     const { startWorkspaceModalProps, setStartWorkspaceModalProps } = useContext(StartWorkspaceModalContext);
     const [isWhatsNewShown, setWhatsNewShown] = useState(shouldSeeWhatsNew(user));
-    const { useNewWorkspacesList } = useFeatureFlags();
 
     // Prefix with `/#referrer` will specify an IDE for workspace
     // We don't need to show IDE preference in this case
@@ -176,11 +173,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                     <Route path={projectsPathNew} exact component={NewProject} />
                     <Route path="/open" exact component={Open} />
                     <Route path="/setup" exact component={Setup} />
-                    <Route
-                        path={workspacesPathMain}
-                        exact
-                        component={useNewWorkspacesList ? WorkspacesNew : Workspaces}
-                    />
+                    <Route path={workspacesPathMain} exact component={WorkspacesNew} />
                     <Route path={settingsPathAccount} exact component={Account} />
                     <Route path={usagePathMain} exact component={Usage} />
                     <Route path={settingsPathIntegrations} exact component={Integrations} />
@@ -324,7 +317,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                     />
                 )}
             </div>
-            {useNewWorkspacesList && <WebsocketClients />}
+            <WebsocketClients />
         </Route>
     );
 };
