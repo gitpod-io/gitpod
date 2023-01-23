@@ -71,6 +71,7 @@ export default function SelectIDEComponent(props: SelectIDEComponentProps) {
             getElements={getElements}
             onSelectionChange={internalOnSelectionChange}
             searchPlaceholder={"Select Editor"}
+            allOptions={ide}
         >
             <IdeOptionElementSelected option={ideOptions?.options[ide]} useLatest={!!props.useLatest} />
         </DropDown2>
