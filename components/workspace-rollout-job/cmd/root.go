@@ -46,6 +46,10 @@ var rootCmd = &cobra.Command{
 		ctx := context.Background()
 		var err error
 
+		if conf.rolloutStepScore <= 0 {
+			return fmt.Errorf("rollout step score must be greater than 0")
+		}
+
 		// Get kubeconfig
 		config, err := getKubeConfig()
 		if err != nil {
