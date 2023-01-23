@@ -187,10 +187,10 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
 
-		// err = r.Client.Delete(ctx, workspace)
-		// if err != nil {
-		// 	return ctrl.Result{Requeue: true}, err
-		// }
+		err = r.Client.Delete(ctx, workspace)
+		if err != nil {
+			return ctrl.Result{Requeue: true}, err
+		}
 	}
 
 	return ctrl.Result{}, nil

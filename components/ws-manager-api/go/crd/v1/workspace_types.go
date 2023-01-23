@@ -5,7 +5,6 @@
 package v1
 
 import (
-	"github.com/gitpod-io/gitpod/common-go/log"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -266,12 +265,4 @@ type WorkspaceList struct {
 
 func init() {
 	SchemeBuilder.Register(&Workspace{}, &WorkspaceList{})
-}
-
-func (ws *Workspace) OWI() log.Fields {
-	return log.Fields{
-		OwnerField:     ws.Spec.Ownership.Owner,
-		WorkspaceField: ws.Spec.Ownership.WorkspaceID,
-		InstanceField:  ws.ObjectMeta.Name,
-	}
 }
