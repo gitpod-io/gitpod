@@ -174,6 +174,7 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 		if err != nil {
 			continue
 		}
+
 		if len(status.Projects) == 1 && status.Projects[0].ControllerConnected {
 			testStatus = true
 			break
