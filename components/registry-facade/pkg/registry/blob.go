@@ -185,7 +185,7 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 				log.WithField("blobSource", src.Name()).WithField("baseRef", bh.Spec.BaseRef).WithError(serr).Warn("retry get blob because of error")
 				return false, nil
 			}
-			return true, err
+			return true, serr
 		})
 		if err != nil {
 			if bh.Metrics != nil {
