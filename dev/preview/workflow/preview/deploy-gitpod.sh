@@ -355,11 +355,17 @@ then
           --dry-run=client -o yaml | \
           kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" replace --force -f -
   done
+fi
 
+#
+# configure dedicated emulation
+#
+
+if [[ "${GITPOD_WITH_DEDICATED_EMU}" == "true" ]]
+then
   # Suppress the Self-Hosted setup modal
   yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.server.showSetupModal "false"
 fi
-
 
 #
 # configureStripeAPIKeys
