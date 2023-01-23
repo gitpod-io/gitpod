@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.3.4
+image: eu.gcr.io/gitpod-core-dev/build/installer:dev-image-dockerfile.1
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
