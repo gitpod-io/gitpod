@@ -492,6 +492,11 @@ yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeSecret" "st
 yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeConfig" "stripe-config"
 
 #
+# Enable SpiceDB on all preview envs
+#
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.spicedb.enabled "true"
+
+#
 # Enable "Frontend Dev" on all preview envs
 #
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.frontendDevEnabled "true"
