@@ -6577,7 +6577,8 @@ data:
           "crt": "/ws-manager-client-tls-certs/tls.crt",
           "key": "/ws-manager-client-tls-certs/tls.key"
         }
-      }
+      },
+      "enableWorkspaceCRD": false
     }
 kind: ConfigMap
 metadata:
@@ -7261,14 +7262,6 @@ rules:
   - ""
   resources:
   - pods
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - workspace.gitpod.io
-  resources:
-  - workspaces
   verbs:
   - get
   - list
@@ -11808,7 +11801,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: 91f8cea7c5bfea1b90f1426ef89c453853e01b7c692851fc25af41491d5734a7
+        gitpod.io/checksum_config: debddc20903a6eb862a1a2daa9de07e26fd294c8fd531d99a739610fc8f10fcb
         hello: world
       creationTimestamp: null
       labels:
