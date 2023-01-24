@@ -26,21 +26,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, nil
 	}
 
-	var volumes []corev1.Volume
-	containerEnvVars := common.DatabaseEnv(&ctx.Config)
-
-	if ctx.Config.Database.CloudSQLGlobal != nil {
-		containerEnvVars = append(containerEnvVars, common.MergeEnv(
-			// Override the DB host to point to global cloudsql
-			[]corev1.EnvVar{
-				{
-					Name:  "DB_HOST",
-					Value: cloudsql.ComponentGlobal,
-				},
-			},
-		)...)
-	}
-
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
@@ -72,6 +57,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						SecurityContext: &corev1.PodSecurityContext{
 							RunAsNonRoot: pointer.Bool(false),
 						},
+						InitContainers: []corev1.Container{
+							dbWaiter(ctx),
+						},
 						Containers: []corev1.Container{
 							{
 								Name:            ContainerName,
@@ -86,17 +74,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 								Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 									common.DefaultEnv(&ctx.Config),
-									containerEnvVars,
-									[]corev1.EnvVar{
-										{
-											Name:  "SPICEDB_DATASTORE_CONN_URI",
-											Value: "$(DB_USERNAME):$(DB_PASSWORD)@tcp($(DB_HOST):$(DB_PORT))/authorization?parseTime=true",
-										},
-										{
-											Name:  "SPICEDB_GRPC_PRESHARED_KEY",
-											Value: "static-for-now",
-										},
-									},
+									dbEnvVars(ctx),
+									spicedbEnvVars(ctx),
 								)),
 								Ports: []corev1.ContainerPort{
 									{
@@ -128,7 +107,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Resources: common.ResourceRequirements(ctx, Component, ContainerName, corev1.ResourceRequirements{
 									Requests: corev1.ResourceList{
 										"cpu":    resource.MustParse("1"),
-										"memory": resource.MustParse("1Gi"),
+										"memory": resource.MustParse("500M"),
 									},
 								}),
 								SecurityContext: &corev1.SecurityContext{
@@ -149,10 +128,51 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 							},
 						},
-						Volumes: volumes,
 					},
 				},
 			},
 		},
 	}, nil
+}
+
+func dbEnvVars(ctx *common.RenderContext) []corev1.EnvVar {
+	containerEnvVars := common.DatabaseEnv(&ctx.Config)
+
+	if ctx.Config.Database.CloudSQLGlobal != nil {
+		containerEnvVars = append(containerEnvVars, common.MergeEnv(
+			// Override the DB host to point to global cloudsql
+			[]corev1.EnvVar{
+				{
+					Name:  "DB_HOST",
+					Value: cloudsql.ComponentGlobal,
+				},
+			},
+		)...)
+	}
+
+	return containerEnvVars
+}
+
+func dbWaiter(ctx *common.RenderContext) v1.Container {
+	databaseWaiter := common.DatabaseWaiterContainer(ctx)
+	// Use updated env-vars, which in the case cloud-sql-proxy override default db conf
+	databaseWaiter.Env = common.MergeEnv(databaseWaiter.Env, dbEnvVars(ctx))
+
+	return *databaseWaiter
+}
+
+func spicedbEnvVars(ctx *common.RenderContext) []corev1.EnvVar {
+	return common.MergeEnv(
+		dbEnvVars(ctx),
+		[]corev1.EnvVar{
+			{
+				Name:  "SPICEDB_DATASTORE_CONN_URI",
+				Value: "$(DB_USERNAME):$(DB_PASSWORD)@tcp($(DB_HOST):$(DB_PORT))/authorization?parseTime=true",
+			},
+			{
+				Name:  "SPICEDB_GRPC_PRESHARED_KEY",
+				Value: "static-for-now",
+			},
+		},
+	)
 }

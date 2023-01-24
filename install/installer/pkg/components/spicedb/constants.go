@@ -24,7 +24,7 @@ const (
 
 	RegistryRepo  = "registry.hub.docker.com"
 	RegistryImage = "authzed/spicedb"
-	ImageTag      = "v1.16.0"
+	ImageTag      = "v1.16.1"
 
 	ContainerName = "spicedb"
 
