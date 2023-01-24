@@ -46,6 +46,7 @@ func NewRootCmd(logger *logrus.Logger) *cobra.Command {
 		newGetCmd(logger),
 		newHasAccessCmd(logger),
 		newReportNameCmd(),
+		newCreateCmd(logger),
 	)
 
 	return cmd
