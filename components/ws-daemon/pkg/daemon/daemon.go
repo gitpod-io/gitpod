@@ -21,6 +21,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
@@ -151,16 +152,17 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		return nil
 	}))
 
-	mgr, err := ctrl.NewManager(restCfg, ctrl.Options{
-		Scheme:    scheme,
-		Port:      9443,
-		Namespace: config.Runtime.KubernetesNamespace,
-	})
-	if err != nil {
-		return nil, err
-	}
-
+	var mgr manager.Manager
 	if config.WorkspaceController.Enabled {
+		mgr, err := ctrl.NewManager(restCfg, ctrl.Options{
+			Scheme:    scheme,
+			Port:      9443,
+			Namespace: config.Runtime.KubernetesNamespace,
+		})
+		if err != nil {
+			return nil, err
+		}
+
 		log.Info("enabling workspace CRD controller")
 
 		contentCfg := config.Content
@@ -262,12 +264,15 @@ func (d *Daemon) Start() error {
 
 	var ctx context.Context
 	ctx, d.cancel = context.WithCancel(context.Background())
-	go func() {
-		err := d.mgr.Start(ctx)
-		if err != nil {
-			log.WithError(err).Fatal("cannot start controller")
-		}
-	}()
+
+	if d.Config.WorkspaceController.Enabled {
+		go func() {
+			err := d.mgr.Start(ctx)
+			if err != nil {
+				log.WithError(err).Fatal("cannot start controller")
+			}
+		}()
+	}
 
 	return nil
 }
