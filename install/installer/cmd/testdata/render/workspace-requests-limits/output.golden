@@ -162,6 +162,9 @@ spec:
         - podSelector:
             matchLabels:
               component: ws-manager
+        - podSelector:
+            matchLabels:
+              component: ws-manager-mk2
   podSelector:
     matchLabels:
       app: gitpod
