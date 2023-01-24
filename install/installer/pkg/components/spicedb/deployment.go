@@ -95,12 +95,12 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				}},
 			},
 			{
-				Name:  "SPICEDB_DATASTORE_CONN_URI",
-				Value: fmt.Sprintf("$(DB_USERNAME):$(DB_PASSWORD)@tcp(%s:%d)/%s?parseTime=true", dbHost, CloudSQLProxyPort, cfg.CloudSQL.Database),
+				Name:  "DB_HOST",
+				Value: dbHost,
 			},
 			{
-				Name:  "SPICEDB_GRPC_PRESHARED_KEY",
-				Value: "static-for-now",
+				Name:  "DB_PORT",
+				Value: fmt.Sprintf("%d", CloudSQLProxyPort),
 			},
 		}...)
 	}
@@ -118,7 +118,17 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 			common.DefaultEnv(&ctx.Config),
-			containerEnvVars,
+			common.DatabaseEnv(&ctx.Config),
+			common.MergeEnv([]v1.EnvVar{
+				{
+					Name:  "SPICEDB_DATASTORE_CONN_URI",
+					Value: "$(DB_USERNAME):$(DB_PASSWORD)@tcp($(DB_HOST):$(DB_PORT))/authorization?parseTime=true",
+				},
+				{
+					Name:  "SPICEDB_GRPC_PRESHARED_KEY",
+					Value: "static-for-now",
+				},
+			}, containerEnvVars),
 		)),
 		Ports: []corev1.ContainerPort{
 			{
