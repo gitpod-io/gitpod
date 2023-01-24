@@ -137,5 +137,3 @@ pod:
         TESTCONFIG="CLEANUP_OLD_TESTS"
 
         npx ts-node .werft/installer-tests.ts ${TESTCONFIG}
-plugins:
-  cron: "0 */12 * * *"
