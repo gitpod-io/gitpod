@@ -31,9 +31,14 @@ type InstallCtxOpts struct {
 
 func (c *Config) InstallContext(ctx context.Context, opts *InstallCtxOpts) error {
 	if previewCfg, err := k8s.NewFromDefaultConfigWithContext(c.logger.Logger, c.name); err == nil {
-		c.logger.WithFields(logrus.Fields{"preview": c.name}).Debug("Context already exists")
-		c.previewClient = previewCfg
-		return nil
+		c.logger.WithFields(logrus.Fields{"preview": c.name}).Info("Context already exists")
+		if previewCfg.HasAccess(ctx) {
+			c.previewClient = previewCfg
+			return nil
+		}
+
+		c.logger.WithFields(logrus.Fields{"preview": c.name}).Info("Context already exists, but has no access. Retrying install")
+		k8s.DeleteContext(previewCfg.ClientConfig(), c.name)
 	}
 
 	// TODO: https://github.com/gitpod-io/ops/issues/6524

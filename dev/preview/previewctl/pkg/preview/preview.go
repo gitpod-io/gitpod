@@ -33,7 +33,7 @@ type Config struct {
 
 	logger *logrus.Entry
 
-	vmiCreationTime *metav1.Time
+	creationTime *metav1.Time
 }
 
 func New(branch string, logger *logrus.Logger) (*Config, error) {
@@ -58,7 +58,7 @@ func New(branch string, logger *logrus.Logger) (*Config, error) {
 		},
 		harvesterClient: harvesterConfig,
 		logger:          logEntry,
-		vmiCreationTime: nil,
+		creationTime:    nil,
 	}, nil
 }
 
@@ -72,19 +72,24 @@ func (c *Config) Same(newPreview *Config) bool {
 		return false
 	}
 
-	c.ensureVMICreationTime()
-	newPreview.ensureVMICreationTime()
+	c.ensureCreationTime()
+	newPreview.ensureCreationTime()
 
-	return c.vmiCreationTime.Equal(newPreview.vmiCreationTime)
+	if c.creationTime == nil {
+		return false
+	}
+
+	return c.creationTime.Equal(newPreview.creationTime)
 }
 
-func (c *Config) ensureVMICreationTime() {
+// ensureCreationTime best-effort guess on when the preview got created, based on the creation timestamp of the service
+func (c *Config) ensureCreationTime() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if c.vmiCreationTime == nil {
-		creationTime, err := c.harvesterClient.GetVMICreationTimestamp(ctx, c.name, c.namespace)
-		c.vmiCreationTime = creationTime
+	if c.creationTime == nil {
+		creationTime, err := c.harvesterClient.GetSVCCreationTimestamp(ctx, c.name, c.namespace)
+		c.creationTime = creationTime
 		if err != nil {
 			c.logger.WithFields(logrus.Fields{"err": err}).Infof("Failed to get creation time")
 		}
