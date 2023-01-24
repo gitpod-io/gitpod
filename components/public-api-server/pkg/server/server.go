@@ -75,6 +75,15 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 		}
 	}
 
+	if cfg.JWTSigningSecretPath != "" {
+		_, err := readSecretFromFile(cfg.JWTSigningSecretPath)
+		if err != nil {
+			return fmt.Errorf("failed to read JWT signing secret: %w", err)
+		}
+	} else {
+		log.Info("No JWT signing secret is configured.")
+	}
+
 	var stripeWebhookHandler http.Handler = webhooks.NewNoopWebhookHandler()
 	if cfg.StripeWebhookSigningSecretPath != "" {
 		stripeWebhookSecret, err := readSecretFromFile(cfg.StripeWebhookSigningSecretPath)

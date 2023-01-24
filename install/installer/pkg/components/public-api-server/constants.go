@@ -14,6 +14,7 @@ const (
 	HTTPServicePort   = 9002
 	HTTPPortName      = "http"
 
+	jwtSigningKeyMountPath                 = "/secrets/jwt-signing-key"
 	stripeSecretMountPath                  = "/secrets/stripe-webhook-secret"
 	personalAccessTokenSigningKeyMountPath = "/secrets/personal-access-token-signing-key"
 )

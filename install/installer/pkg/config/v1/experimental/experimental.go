@@ -294,6 +294,9 @@ type PublicAPIConfig struct {
 	// Name of the kubernetes secret to use for Stripe secrets
 	StripeSecretName string `json:"stripeSecretName"`
 
+	// Name of the kubernetes secret to use for signing JWTs
+	JWTSigningKeySecretName string `json:"jwtSigningKeySecretName"`
+
 	// Name of the kubernetes secret to use for signature of Personal Access Tokens
 	PersonalAccessTokenSigningKeySecretName string `json:"personalAccessTokenSigningKeySecretName"`
 }

@@ -1,0 +1,8 @@
+apiVersion: v1
+data:
+  jwt-signing-key: and0LWtleS1mb3ItcHJldmlldy1lbnZzCg==
+kind: Secret
+metadata:
+  name: jwt-signing-key
+  namespace: default
+type: Opaque

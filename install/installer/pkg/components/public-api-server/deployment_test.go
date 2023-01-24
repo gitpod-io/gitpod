@@ -65,6 +65,15 @@ func TestDeployment_ServerArguments(t *testing.T) {
 			},
 		},
 		{
+			Name: "jwt-signing-key",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: "jwt-signing-key",
+					Optional:   pointer.Bool(true),
+				},
+			},
+		},
+		{
 			Name: "stripe-secret",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{

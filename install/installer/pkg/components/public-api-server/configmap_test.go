@@ -31,6 +31,12 @@ func TestConfigMap(t *testing.T) {
 		return nil
 	})
 
+	var jwtSigningSecretPath string
+	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		_, _, jwtSigningSecretPath, _ = getJWTSecretConfig(ucfg)
+		return nil
+	})
+
 	var personalAccessTokenSigningKeyPath string
 	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
 		_, _, personalAccessTokenSigningKeyPath, _ = getPersonalAccessTokenSigningKey(ucfg)
@@ -41,6 +47,7 @@ func TestConfigMap(t *testing.T) {
 		GitpodServiceURL:                  fmt.Sprintf("ws://server.%s.svc.cluster.local:3000", ctx.Namespace),
 		BillingServiceAddress:             fmt.Sprintf("usage.%s.svc.cluster.local:9001", ctx.Namespace),
 		SessionServiceAddress:             fmt.Sprintf("server.%s.svc.cluster.local:9876", ctx.Namespace),
+		JWTSigningSecretPath:              jwtSigningSecretPath,
 		StripeWebhookSigningSecretPath:    stripeSecretPath,
 		PersonalAccessTokenSigningKeyPath: personalAccessTokenSigningKeyPath,
 		DatabaseConfigPath:                "/secrets/database-config",
