@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
+	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/google/shlex"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
@@ -31,31 +32,42 @@ var previewCmd = &cobra.Command{
 	Short: "Opens a URL in the IDE's preview",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO(ak) use NotificationService.NotifyActive supervisor API instead
-
-		ctx := context.Background()
-
-		client, err := supervisor.New(ctx)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer client.Close()
-		client.WaitForIDEReady(ctx)
-
-		url := replaceLocalhostInURL(args[0])
-		if previewCmdOpts.External {
-			if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-				url = "https://" + url
-			}
-			openPreview("GP_EXTERNAL_BROWSER", url)
-			return
-		}
-		openPreview("GP_PREVIEW_BROWSER", url)
+		openPreview(cmd.Context(), args[0], previewCmdOpts.External)
 	},
 }
 
-func openPreview(gpBrowserEnvVar string, url string) {
+func openPreview(ctx context.Context, url string, external bool) {
+	client, err := supervisor.New(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Close()
+	client.WaitForIDEReady(ctx)
+
+	url = replaceLocalhostInURL(url)
+	gpBrowserEnvVar := "GP_PREVIEW_BROWSER"
+	if external {
+		gpBrowserEnvVar = "GP_EXTERNAL_BROWSER"
+		if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+			url = "https://" + url
+		}
+	}
 	pcmd := os.Getenv(gpBrowserEnvVar)
+	if pcmd == "" {
+		_, err := client.Notification.NotifyActive(ctx, &api.NotifyActiveRequest{
+			ActionData: &api.NotifyActiveRequest_Preview{
+				Preview: &api.NotifyActiveRequest_PreviewData{
+					Url:      url,
+					External: external,
+				},
+			},
+		})
+		if err != nil && ctx.Err() == nil {
+			log.Fatal(err)
+		}
+		return
+	}
+	// TODO: backward compatibilty, remove when all IDEs are updated
 	if pcmd == "" {
 		log.Fatalf("%s is not set", gpBrowserEnvVar)
 		return

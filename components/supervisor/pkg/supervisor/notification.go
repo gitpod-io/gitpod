@@ -26,18 +26,23 @@ const (
 // NewNotificationService creates a new notification service.
 func NewNotificationService() *NotificationService {
 	return &NotificationService{
-		subscriptions:        make(map[uint64]*subscription),
-		pendingNotifications: make(map[uint64]*pendingNotification),
+		subscriptions:              make(map[uint64]*subscription),
+		pendingNotifications:       make(map[uint64]*pendingNotification),
+		pendingActiveNotifications: make(map[uint64]*pendingActiveNotification),
 	}
 }
 
 // NotificationService implements the notification service API.
 type NotificationService struct {
-	mutex                sync.Mutex
-	nextSubscriptionID   uint64
-	subscriptions        map[uint64]*subscription
-	nextNotificationID   uint64
-	pendingNotifications map[uint64]*pendingNotification
+	mutex sync.Mutex
+
+	nextSubscriptionID uint64
+	subscriptions      map[uint64]*subscription
+	activeSubscription *activeSubscription
+
+	nextNotificationID         uint64
+	pendingNotifications       map[uint64]*pendingNotification
+	pendingActiveNotifications map[uint64]*pendingActiveNotification
 
 	api.UnimplementedNotificationServiceServer
 }
@@ -50,6 +55,20 @@ type pendingNotification struct {
 }
 
 func (pending *pendingNotification) close() {
+	pending.once.Do(func() {
+		close(pending.responseChannel)
+		pending.closed = true
+	})
+}
+
+type pendingActiveNotification struct {
+	message         *api.SubscribeActiveResponse
+	responseChannel chan *api.NotifyActiveResponse
+	once            sync.Once
+	closed          bool
+}
+
+func (pending *pendingActiveNotification) close() {
 	pending.once.Do(func() {
 		close(pending.responseChannel)
 		pending.closed = true
@@ -69,6 +88,21 @@ func (subscription *subscription) close() {
 		close(subscription.channel)
 		subscription.closed = true
 		subscription.cancel()
+	})
+}
+
+type activeSubscription struct {
+	channel chan *api.SubscribeActiveResponse
+	once    sync.Once
+	closed  bool
+	cancel  context.CancelFunc
+}
+
+func (s *activeSubscription) close() {
+	s.once.Do(func() {
+		close(s.channel)
+		s.closed = true
+		s.cancel()
 	})
 }
 
@@ -149,8 +183,8 @@ func (srv *NotificationService) notifySubscribers(req *api.NotifyRequest) *pendi
 
 // Subscribe subscribes to notifications that are sent to the supervisor.
 func (srv *NotificationService) Subscribe(req *api.SubscribeRequest, resp api.NotificationService_SubscribeServer) error {
-	log.WithField("SubscribeRequest", req).Info("Subscribe entered")
-	defer log.WithField("SubscribeRequest", req).Info("Subscribe exited")
+	log.WithField("SubscribeRequest", req).Debug("Subscribe entered")
+	defer log.WithField("SubscribeRequest", req).Debug("Subscribe exited")
 	subscription := srv.subscribeLocked(req, resp)
 	defer srv.unsubscribeLocked(subscription.id)
 	for {
@@ -164,7 +198,7 @@ func (srv *NotificationService) Subscribe(req *api.SubscribeRequest, resp api.No
 				return status.Errorf(codes.Internal, "Sending notification failed. %s", err)
 			}
 		case <-resp.Context().Done():
-			log.WithField("SubscribeRequest", req).Info("Subscriber cancelled")
+			log.WithField("SubscribeRequest", req).Debug("Subscriber cancelled")
 			return nil
 		}
 	}
@@ -179,7 +213,7 @@ func (srv *NotificationService) subscribeLocked(req *api.SubscribeRequest, resp 
 		capacity = SubscriberMaxPendingNotifications
 	}
 	channel := make(chan *api.SubscribeResponse, capacity)
-	log.WithField("pending", len(srv.pendingNotifications)).Info("sending pending notifications")
+	log.WithField("pending", len(srv.pendingNotifications)).Debug("sending pending notifications")
 	for id, pending := range srv.pendingNotifications {
 		channel <- pending.message
 		if len(pending.message.Request.Actions) == 0 {
@@ -248,4 +282,157 @@ func isActionAllowed(action string, req *api.NotifyRequest) bool {
 		}
 	}
 	return false
+}
+
+// Called by the IDE to inform supervisor about which is the latest client
+// actively used by the user. We consider active the last IDE with focus.
+// Only 1 stream is kept open at any given time. A new subscription
+// overrides the previous one, causing the stream to close.
+// Supervisor will respond with a stream to which the IDE will listen
+// waiting to receive actions to run, for example: `open` or `preview`
+func (srv *NotificationService) SubscribeActive(req *api.SubscribeActiveRequest, resp api.NotificationService_SubscribeActiveServer) error {
+	subscription := srv.acquireActiveSubscription(resp.Context())
+	defer srv.releaseActiveSubscription(subscription)
+	for {
+		select {
+		case subscribeResponse, ok := <-subscription.channel:
+			if !ok || subscription.closed {
+				return status.Errorf(codes.Aborted, "Active subscriber channel closed.")
+			}
+			err := resp.Send(subscribeResponse)
+			if err != nil {
+				return status.Errorf(codes.Internal, "Sending notification failed. %s", err)
+			}
+		case <-resp.Context().Done():
+			log.WithField("SubscribeRequest", req).Debug("Active subscriber cancelled")
+			return nil
+		}
+	}
+}
+
+// NotifyActive requests the active client to run a given command (eg. open or preview)
+func (srv *NotificationService) NotifyActive(ctx context.Context, req *api.NotifyActiveRequest) (*api.NotifyActiveResponse, error) {
+	if len(srv.pendingActiveNotifications) >= NotifierMaxPendingNotifications {
+		return nil, status.Error(codes.ResourceExhausted, "Max number of pending notifications exceeded")
+	}
+
+	pending := srv.notifyActiveSubscriber(req)
+	select {
+	case resp, ok := <-pending.responseChannel:
+		if !ok {
+			log.Error("notify active response channel has been closed")
+			return nil, status.Error(codes.Aborted, "response channel closed")
+		}
+		return resp, nil
+	case <-ctx.Done():
+		srv.mutex.Lock()
+		defer srv.mutex.Unlock()
+		// make sure the notification has not been responded in between these selectors
+		_, ok := srv.pendingActiveNotifications[pending.message.RequestId]
+		if ok {
+			delete(srv.pendingActiveNotifications, pending.message.RequestId)
+			pending.close()
+		}
+		return nil, ctx.Err()
+	}
+}
+
+// NotifyActiveRespond informs the requesting client about the result (eg. success or
+// failure) of the action (eg. open or preview) requested via NotifyActive
+func (srv *NotificationService) NotifyActiveRespond(ctx context.Context, req *api.NotifyActiveRespondRequest) (*api.NotifyActiveRespondResponse, error) {
+	srv.mutex.Lock()
+	defer srv.mutex.Unlock()
+	pending, ok := srv.pendingActiveNotifications[req.RequestId]
+	if !ok {
+		log.WithFields(map[string]interface{}{
+			"RequestId": req.RequestId,
+		}).Info("Invalid or late response to notification")
+		return nil, status.Errorf(codes.DeadlineExceeded, "Invalid or late response to notification")
+	}
+	if !pending.closed {
+		pending.responseChannel <- req.Response
+		pending.close()
+	}
+	delete(srv.pendingActiveNotifications, pending.message.RequestId)
+	return &api.NotifyActiveRespondResponse{}, nil
+}
+
+func (srv *NotificationService) acquireActiveSubscription(ctx context.Context) *activeSubscription {
+	srv.mutex.Lock()
+	defer srv.mutex.Unlock()
+	if srv.activeSubscription != nil {
+		srv.activeSubscription.close()
+		srv.activeSubscription = nil
+	}
+	// account for some back pressure
+	capacity := len(srv.pendingActiveNotifications)
+	if SubscriberMaxPendingNotifications > capacity {
+		capacity = SubscriberMaxPendingNotifications
+	}
+	channel := make(chan *api.SubscribeActiveResponse, capacity)
+	log.WithField("pending", len(srv.pendingActiveNotifications)).Debug("sending pending active notifications")
+	for _, pending := range srv.pendingActiveNotifications {
+		channel <- pending.message
+		if !isBlocking(pending.message.Request) {
+			delete(srv.pendingActiveNotifications, pending.message.RequestId)
+		}
+	}
+	_, cancel := context.WithCancel(ctx)
+	subscription := &activeSubscription{
+		channel: channel,
+		cancel:  cancel,
+	}
+	srv.activeSubscription = subscription
+	return subscription
+}
+
+func (srv *NotificationService) releaseActiveSubscription(subscription *activeSubscription) {
+	srv.mutex.Lock()
+	defer srv.mutex.Unlock()
+	subscription.close()
+	if srv.activeSubscription == subscription {
+		srv.activeSubscription = nil
+	}
+}
+
+func (srv *NotificationService) notifyActiveSubscriber(req *api.NotifyActiveRequest) *pendingActiveNotification {
+	srv.mutex.Lock()
+	defer srv.mutex.Unlock()
+	var (
+		requestID = srv.nextNotificationID
+		message   = &api.SubscribeActiveResponse{
+			RequestId: requestID,
+			Request:   req,
+		}
+	)
+	srv.nextNotificationID++
+	subscription := srv.activeSubscription
+	if subscription != nil {
+		select {
+		case subscription.channel <- message:
+			// all good
+		default:
+			// subscriber doesn't consume messages fast enough
+			log.WithField("subscription", req).Info("Cancelling unresponsive active subscriber")
+			srv.activeSubscription = nil
+			subscription.close()
+		}
+	}
+	channel := make(chan *api.NotifyActiveResponse, 1)
+	pending := &pendingActiveNotification{
+		message:         message,
+		responseChannel: channel,
+	}
+	srv.pendingActiveNotifications[requestID] = pending
+	if !isBlocking(req) {
+		// produce an immediate response
+		channel <- &api.NotifyActiveResponse{}
+		pending.close()
+	}
+	return pending
+}
+
+func isBlocking(req *api.NotifyActiveRequest) bool {
+	open := req.GetOpen()
+	return open != nil && open.Await
 }

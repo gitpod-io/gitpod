@@ -52,15 +52,14 @@ service NotificationService {
     };
   }
 
-  // Used by gp-cli to ask supervisor to request the active client
-  // to run a given command (eg. open or preview)
+  // NotifyActive requests the active client to run a given command (eg. open or preview)
   rpc NotifyActive(NotifyActiveRequest) returns (NotifyActiveResponse) {
     option (google.api.http) = {
       post : "/v1/notification/notify-action"
     };
   }
 
-  // Used by the IDE to inform supervisor about the result (eg. success or
+  // NotifyActiveRespond informs the requesting client about the result (eg. success or
   // failure) of the action (eg. open or preview) requested via NotifyActive
   rpc NotifyActiveRespond(NotifyActiveRespondRequest)
       returns (NotifyActiveRespondResponse) {

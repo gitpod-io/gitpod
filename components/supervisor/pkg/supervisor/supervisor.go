@@ -993,6 +993,16 @@ func buildChildProcEnv(cfg *Config, envvars []string, runGP bool) []string {
 		envs["JAVA_TOOL_OPTIONS"] += fmt.Sprintf(" -Xmx%sm", mem)
 	}
 
+	if envs["EDITOR"] == "" {
+		envs["EDITOR"] = "gp open"
+	}
+	if envs["VISUAL"] == "" {
+		envs["VISUAL"] = "gp open"
+	}
+	if envs["GIT_EDITOR"] == "" {
+		envs["GIT_EDITOR"] = "gp open --wait"
+	}
+
 	var env, envn []string
 	for nme, val := range envs {
 		log.WithField("envvar", nme).Debug("passing environment variable to IDE")
