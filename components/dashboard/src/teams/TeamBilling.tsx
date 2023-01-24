@@ -26,7 +26,6 @@ import TeamUsageBasedBilling from "./TeamUsageBasedBilling";
 import { UserContext } from "../user-context";
 import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
 import Alert from "../components/Alert";
-import { getExperimentsClient } from "../experiments/client";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 
 type PendingPlan = Plan & { pendingSince: number };
@@ -40,7 +39,6 @@ export default function TeamBilling() {
     const [isUserOwner, setIsUserOwner] = useState(true);
     const [teamSubscription, setTeamSubscription] = useState<TeamSubscription2 | undefined>();
     const { currency, setCurrency } = useContext(PaymentContext);
-    const [isUsageBasedBillingEnabled, setIsUsageBasedBillingEnabled] = useState<boolean>(false);
     const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
     const [pendingTeamPlan, setPendingTeamPlan] = useState<PendingPlan | undefined>();
     const [pollTeamSubscriptionTimeout, setPollTeamSubscriptionTimeout] = useState<NodeJS.Timeout | undefined>();
@@ -115,20 +113,6 @@ export default function TeamBilling() {
         };
     }, [pendingTeamPlan, pollTeamSubscriptionTimeout, team, teamSubscription]);
 
-    useEffect(() => {
-        if (!team || !user) {
-            return;
-        }
-        (async () => {
-            const isEnabled = await getExperimentsClient().getValueAsync("isUsageBasedBillingEnabled", false, {
-                user,
-                teamId: team.id,
-                teamName: team.name,
-            });
-            setIsUsageBasedBillingEnabled(isEnabled);
-        })();
-    }, [team, user]);
-
     const availableTeamPlans = Plans.getAvailableTeamPlans(currency || "USD").filter((p) => p.type !== "student");
 
     const checkout = async (plan: Plan) => {
@@ -176,7 +160,7 @@ export default function TeamBilling() {
     function renderTeamBilling(): JSX.Element {
         return (
             <>
-                {isUsageBasedBillingEnabled && (
+                {
                     <Alert type="message" className="mb-4">
                         To access{" "}
                         <a className="gp-link" href="https://www.gitpod.io/docs/configure/workspaces/workspace-classes">
@@ -189,7 +173,7 @@ export default function TeamBilling() {
                         , first cancel your existing plan. Existing plans will keep working until the end of March,
                         2023.
                     </Alert>
-                )}
+                }
                 <h3>{!teamPlan ? "Select Team Plan" : "Team Plan"}</h3>
                 <h2 className="text-gray-500">
                     {!teamPlan ? (

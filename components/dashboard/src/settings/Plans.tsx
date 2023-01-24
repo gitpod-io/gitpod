@@ -25,7 +25,6 @@ import { UserContext } from "../user-context";
 import Tooltip from "../components/Tooltip";
 import { PaymentContext } from "../payment-context";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 
 type PlanWithOriginalPrice = Plan & { originalPrice?: number };
 type Pending = { pendingSince: number };
@@ -46,7 +45,7 @@ type TeamClaimModal =
 export default function () {
     const { user, userBillingMode } = useContext(UserContext);
     const { currency, setCurrency, isStudent, isChargebeeCustomer } = useContext(PaymentContext);
-    const { isUsageBasedBillingEnabled } = useContext(FeatureFlagContext);
+    const isUsageBasedBillingEnabled = true; // TODO(gpl) No need to clean up all the code below as we're going to remove all Chargebee related code anyway.
     const [accountStatement, setAccountStatement] = useState<AccountStatement>();
     const [availableCoupons, setAvailableCoupons] = useState<PlanCoupon[]>();
     const [appliedCoupons, setAppliedCoupons] = useState<PlanCoupon[]>();

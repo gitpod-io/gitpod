@@ -73,47 +73,12 @@ export class BillingModesImpl implements BillingModes {
 
         // Is Usage Based Billing enabled for this user or not?
         const teams = await this.teamDB.findTeamsByUser(user.id);
-        let isUsageBasedBillingEnabled = false;
-        if (teams.length > 0) {
-            for (const team of teams) {
-                // Checking here doesn't actually block on every team as the flags are fetched once and catched, subsequent calls are non-blocking.
-                const isEnabled = await this.configCatClientFactory().getValueAsync(
-                    "isUsageBasedBillingEnabled",
-                    false,
-                    {
-                        user,
-                        teamId: team.id,
-                        teamName: team.name,
-                    },
-                );
-                if (isEnabled) {
-                    isUsageBasedBillingEnabled = true;
-                    break;
-                }
-            }
-            // No need to check the user, because ConfigCat rules would have already flagged them with one of the calls above.
-        } else {
-            isUsageBasedBillingEnabled = await this.configCatClientFactory().getValueAsync(
-                "isUsageBasedBillingEnabled",
-                false,
-                {
-                    user,
-                },
-            );
-        }
 
         // Stripe: Active personal subsciption?
         let hasUbbPersonal = false;
         const billingStrategy = await this.usageService.getCurrentBillingStategy({ kind: "user", userId: user.id });
         if (billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
             hasUbbPersonal = true;
-        }
-
-        // 1. UBB enabled?
-        if (!isUsageBasedBillingEnabled && !hasUbbPersonal) {
-            // UBB is not enabled: definitely chargebee
-            // EXCEPT we're doing a rollback
-            return { mode: "chargebee" };
         }
 
         // 2. Any personal subscriptions?
@@ -221,39 +186,24 @@ export class BillingModesImpl implements BillingModes {
         }
         const now = _now.toISOString();
 
-        // Is Usage Based Billing enabled for this team?
-        const isUsageBasedBillingEnabled = await this.configCatClientFactory().getValueAsync(
-            "isUsageBasedBillingEnabled",
-            false,
-            {
-                teamId: team.id,
-                teamName: team.name,
-            },
-        );
-
         // 1. Check Chargebee: Any TeamSubscription2 (old Team Subscriptions are not relevant here, as they are not associated with a team)
         const teamSubscription = await this.teamSubscription2Db.findForTeam(team.id, now);
         if (teamSubscription && TeamSubscription2.isActive(teamSubscription, now)) {
             if (TeamSubscription2.isCancelled(teamSubscription, now)) {
                 // The team has a paid subscription, but it's already cancelled, and UBB enabled
-                return { mode: "chargebee", canUpgradeToUBB: isUsageBasedBillingEnabled };
+                return { mode: "chargebee", canUpgradeToUBB: true };
             }
 
             return { mode: "chargebee", teamNames: [team.name], paid: true };
         }
 
-        // 2. UBP enabled OR respective BillingStrategy?
+        // 2. UBP enabled OR respective BillingStrategy? Yes, always.
         const billingStrategy = await this.usageService.getCurrentBillingStategy(AttributionId.create(team));
-        if (billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE || isUsageBasedBillingEnabled) {
-            // Now we're usage-based. We only have to figure out whether we have a paid plan yet or not.
-            const result: BillingMode = { mode: "usage-based" };
-            if (billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
-                result.paid = true;
-            }
-            return result;
+        // Now we're usage-based. We only have to figure out whether we have a paid plan yet or not.
+        const result: BillingMode = { mode: "usage-based" };
+        if (billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
+            result.paid = true;
         }
-
-        // 3. Default case if none is enabled: fall back to Chargebee
-        return { mode: "chargebee" };
+        return result;
     }
 }

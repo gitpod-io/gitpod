@@ -149,7 +149,6 @@ class BillingModeSpec {
             subject: User | Pick<Team, "name">;
             config: {
                 enablePayment: boolean;
-                usageBasedPricingEnabled: boolean;
                 subscriptions?: TestSubscription[];
                 stripeSubscription?: StripeSubscription & { isTeam?: boolean };
             };
@@ -163,69 +162,9 @@ class BillingModeSpec {
                 subject: user(),
                 config: {
                     enablePayment: false,
-                    usageBasedPricingEnabled: true,
                 },
                 expectation: {
                     mode: "none",
-                },
-            },
-            {
-                name: "payment disabled (ubb: false)",
-                subject: user(),
-                config: {
-                    enablePayment: false,
-                    usageBasedPricingEnabled: false,
-                },
-                expectation: {
-                    mode: "none",
-                },
-            },
-            {
-                name: "payment enabled (ubb: false)",
-                subject: user(),
-                config: {
-                    enablePayment: true,
-                    usageBasedPricingEnabled: false,
-                },
-                expectation: {
-                    mode: "chargebee",
-                },
-            },
-            // user: chargebee
-            {
-                name: "user: chargebee paid personal",
-                subject: user(),
-                config: {
-                    enablePayment: true,
-                    usageBasedPricingEnabled: false,
-                    subscriptions: [subscription(Plans.PERSONAL_EUR)],
-                },
-                expectation: {
-                    mode: "chargebee",
-                },
-            },
-            {
-                name: "user: chargebee paid team seat",
-                subject: user(),
-                config: {
-                    enablePayment: true,
-                    usageBasedPricingEnabled: false,
-                    subscriptions: [teamSubscription(Plans.TEAM_PROFESSIONAL_EUR)],
-                },
-                expectation: {
-                    mode: "chargebee",
-                },
-            },
-            {
-                name: "user: chargebee paid personal + team seat",
-                subject: user(),
-                config: {
-                    enablePayment: true,
-                    usageBasedPricingEnabled: false,
-                    subscriptions: [subscription(Plans.PERSONAL_EUR), teamSubscription(Plans.TEAM_PROFESSIONAL_EUR)],
-                },
-                expectation: {
-                    mode: "chargebee",
                 },
             },
             // user: transition chargebee -> UBB
@@ -234,7 +173,6 @@ class BillingModeSpec {
                 subject: user(),
                 config: {
                     enablePayment: true,
-                    usageBasedPricingEnabled: true,
                     subscriptions: [
                         subscription(Plans.PERSONAL_EUR, cancellationDate, endDate),
                         teamSubscription(Plans.TEAM_PROFESSIONAL_EUR),
@@ -251,7 +189,6 @@ class BillingModeSpec {
                 subject: user(),
                 config: {
                     enablePayment: true,
-                    usageBasedPricingEnabled: true,
                     subscriptions: [
                         subscription(Plans.PERSONAL_EUR, cancellationDate, endDate),
                         teamSubscription(Plans.TEAM_PROFESSIONAL_EUR, cancellationDate, endDate),
@@ -268,7 +205,6 @@ class BillingModeSpec {
                 subject: user(),
                 config: {
                     enablePayment: true,
-                    usageBasedPricingEnabled: true,
                     subscriptions: [
                         subscription(Plans.PERSONAL_EUR, cancellationDate, endDate),
                         teamSubscription(Plans.TEAM_PROFESSIONAL_EUR),
@@ -286,7 +222,6 @@ class BillingModeSpec {
                 subject: user(),
                 config: {
                     enablePayment: true,
-                    usageBasedPricingEnabled: true,
                     subscriptions: [
                         subscription(Plans.PERSONAL_EUR, cancellationDate, cancellationDate),
                         teamSubscription(Plans.TEAM_PROFESSIONAL_EUR, cancellationDate, cancellationDate),
@@ -301,7 +236,6 @@ class BillingModeSpec {
                 subject: user(),
                 config: {
                     enablePayment: true,
-                    usageBasedPricingEnabled: true,
                     subscriptions: [subscription(Plans.PERSONAL_EUR, cancellationDate, cancellationDate)],
                 },
                 expectation: {
@@ -313,7 +247,6 @@ class BillingModeSpec {
                 subject: user(),
                 config: {
                     enablePayment: true,
-                    usageBasedPricingEnabled: true,
                     subscriptions: [
                         subscription(Plans.PERSONAL_EUR, cancellationDate, cancellationDate),
                         teamSubscription(Plans.TEAM_PROFESSIONAL_EUR, cancellationDate, cancellationDate),
@@ -329,7 +262,6 @@ class BillingModeSpec {
                 subject: user(),
                 config: {
                     enablePayment: true,
-                    usageBasedPricingEnabled: true,
                     stripeSubscription: stripeSubscription(),
                 },
                 expectation: {
@@ -341,7 +273,6 @@ class BillingModeSpec {
                 subject: user(),
                 config: {
                     enablePayment: true,
-                    usageBasedPricingEnabled: true,
                 },
                 expectation: {
                     mode: "usage-based",
@@ -353,55 +284,17 @@ class BillingModeSpec {
                 subject: team(),
                 config: {
                     enablePayment: false,
-                    usageBasedPricingEnabled: true,
                 },
                 expectation: {
                     mode: "none",
-                },
-            },
-            {
-                name: "payment disabled (ubb: false)",
-                subject: team(),
-                config: {
-                    enablePayment: false,
-                    usageBasedPricingEnabled: false,
-                },
-                expectation: {
-                    mode: "none",
-                },
-            },
-            {
-                name: "payment enabled (ubb: false)",
-                subject: team(),
-                config: {
-                    enablePayment: true,
-                    usageBasedPricingEnabled: false,
-                },
-                expectation: {
-                    mode: "chargebee",
                 },
             },
             // team: chargebee
-            {
-                name: "team: chargebee paid",
-                subject: team(),
-                config: {
-                    enablePayment: true,
-                    usageBasedPricingEnabled: false,
-                    subscriptions: [teamSubscription2(Plans.TEAM_PROFESSIONAL_EUR)],
-                },
-                expectation: {
-                    mode: "chargebee",
-                    paid: true,
-                    teamNames: ["team-123"],
-                },
-            },
             {
                 name: "team: chargebee paid (UBB)",
                 subject: team(),
                 config: {
                     enablePayment: true,
-                    usageBasedPricingEnabled: true,
                     subscriptions: [teamSubscription2(Plans.TEAM_PROFESSIONAL_EUR)],
                 },
                 expectation: {
@@ -416,7 +309,6 @@ class BillingModeSpec {
                 subject: team(),
                 config: {
                     enablePayment: true,
-                    usageBasedPricingEnabled: true,
                     subscriptions: [teamSubscription2(Plans.TEAM_PROFESSIONAL_EUR, cancellationDate, endDate)],
                 },
                 expectation: {
@@ -429,7 +321,6 @@ class BillingModeSpec {
                 subject: team(),
                 config: {
                     enablePayment: true,
-                    usageBasedPricingEnabled: true,
                     subscriptions: [teamSubscription(Plans.TEAM_PROFESSIONAL_EUR, cancellationDate, endDate)],
                 },
                 expectation: {
@@ -442,7 +333,6 @@ class BillingModeSpec {
                 subject: team(),
                 config: {
                     enablePayment: true,
-                    usageBasedPricingEnabled: true,
                 },
                 expectation: {
                     mode: "usage-based",
@@ -453,7 +343,6 @@ class BillingModeSpec {
                 subject: team(),
                 config: {
                     enablePayment: true,
-                    usageBasedPricingEnabled: true,
                     subscriptions: [teamSubscription2(Plans.TEAM_PROFESSIONAL_EUR, cancellationDate, cancellationDate)],
                 },
                 expectation: {
@@ -465,7 +354,6 @@ class BillingModeSpec {
                 subject: team(),
                 config: {
                     enablePayment: true,
-                    usageBasedPricingEnabled: true,
                     subscriptions: [teamSubscription2(Plans.TEAM_PROFESSIONAL_EUR, cancellationDate, cancellationDate)],
                     stripeSubscription: stripeSubscription(),
                 },
@@ -479,38 +367,11 @@ class BillingModeSpec {
                 subject: team(),
                 config: {
                     enablePayment: true,
-                    usageBasedPricingEnabled: true,
                     stripeSubscription: stripeSubscription(),
                 },
                 expectation: {
                     mode: "usage-based",
                     paid: true,
-                },
-            },
-            // rollback: make sure users/teams with Stripe subscription stay UBP
-            {
-                name: "team: stripe paid, w/o UBP",
-                subject: team(),
-                config: {
-                    enablePayment: true,
-                    usageBasedPricingEnabled: false,
-                    stripeSubscription: stripeSubscription(),
-                },
-                expectation: {
-                    mode: "usage-based",
-                    paid: true,
-                },
-            },
-            {
-                name: "user: stripe paid, w/o UBP",
-                subject: user(),
-                config: {
-                    enablePayment: true,
-                    usageBasedPricingEnabled: false,
-                    stripeSubscription: stripeSubscription(),
-                },
-                expectation: {
-                    mode: "usage-based",
                 },
             },
         ];
@@ -527,12 +388,7 @@ class BillingModeSpec {
                     bind(BillingModes).to(BillingModesImpl).inSingletonScope();
 
                     bind(UsageService).toConstantValue(new UsageServiceMock(test.config.stripeSubscription));
-                    bind(ConfigCatClientFactory).toConstantValue(
-                        () =>
-                            new ConfigCatClientMock({
-                                isUsageBasedBillingEnabled: test.config.usageBasedPricingEnabled,
-                            }),
-                    );
+                    bind(ConfigCatClientFactory).toConstantValue(() => new ConfigCatClientMock({}));
                 }),
             );
 

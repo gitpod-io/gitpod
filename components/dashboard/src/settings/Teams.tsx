@@ -23,7 +23,6 @@ import { poll, PollOptions } from "../utils";
 import { Disposable } from "@gitpod/gitpod-protocol";
 import { PaymentContext } from "../payment-context";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 
 export default function Teams() {
     return (
@@ -44,7 +43,6 @@ interface Slot extends TeamSubscriptionSlotResolved {
 }
 
 function AllTeams() {
-    const { isUsageBasedBillingEnabled } = useContext(FeatureFlagContext);
     const { currency, isStudent, isChargebeeCustomer, setIsChargebeeCustomer } = useContext(PaymentContext);
 
     const [slots, setSlots] = useState<Slot[]>([]);
@@ -454,7 +452,7 @@ function AllTeams() {
 
     return (
         <div>
-            {isUsageBasedBillingEnabled && (
+            {
                 <Alert type="message" className="mb-4">
                     To access{" "}
                     <a className="gp-link" href="https://www.gitpod.io/docs/configure/workspaces/workspace-classes">
@@ -466,7 +464,7 @@ function AllTeams() {
                     </a>
                     , first cancel your existing plan. Existing plans will keep working until the end of March, 2023.
                 </Alert>
-            )}
+            }
             <div className="flex flex-row">
                 <div className="flex-grow ">
                     <h3 className="self-center">All Team Plans</h3>
@@ -482,9 +480,10 @@ function AllTeams() {
                         <button
                             className="self-end my-auto"
                             disabled={
-                                !!isUsageBasedBillingEnabled ||
+                                true
+                                /** !!isUsageBasedBillingEnabled ||
                                 !!pendingPlanPurchase ||
-                                getAvailableSubTypes().length === 0
+                                getAvailableSubTypes().length === 0 **/
                             }
                             onClick={() => showCreateTeamModal()}
                         >
@@ -515,29 +514,6 @@ function AllTeams() {
 
             {addMembersModal && (
                 <AddMembersModal onClose={() => setAddMembersModal(undefined)} onBuy={onBuy} {...addMembersModal} />
-            )}
-
-            {getActiveSubs().length === 0 && !pendingPlanPurchase && !isUsageBasedBillingEnabled && (
-                <div className="w-full flex h-80 mt-2 rounded-xl bg-gray-100 dark:bg-gray-900">
-                    <div className="m-auto text-center">
-                        <h3 className="self-center text-gray-500 dark:text-gray-400 mb-4">No Active Team Plans</h3>
-                        <div className="text-gray-500 mb-6">
-                            Get started by creating a team plan
-                            <br /> and adding team members.{" "}
-                            <a
-                                href="https://www.gitpod.io/docs/teams/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="gp-link"
-                            >
-                                Learn more
-                            </a>
-                        </div>
-                        <button className="self-center" onClick={() => showCreateTeamModal()}>
-                            Create Team Plan
-                        </button>
-                    </div>
-                </div>
             )}
 
             {(getActiveSubs().length > 0 || !!pendingPlanPurchase) && (
