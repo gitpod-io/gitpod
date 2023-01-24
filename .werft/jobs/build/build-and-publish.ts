@@ -103,9 +103,10 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
         }
     }
 
-    if (jobConfig.publishToKots) {
-        publishKots(werft, jobConfig);
-    }
+    // temporarily skipping publish kots step
+    // if (jobConfig.publishToKots) {
+    //     publishKots(werft, jobConfig);
+    // }
 
     werft.rootSpan.setAttributes({ "preview.gitpod_built_successfully": true });
 }
