@@ -197,6 +197,8 @@ type IAMConfig struct {
 type SpiceDBConfig struct {
 	Enabled bool `json:"enabled"`
 
+	DisableMigrations bool `json:"disableMigrations"`
+
 	CloudSQL *struct {
 		Instance string `json:"instance"`
 		Database string `json:"database"`
