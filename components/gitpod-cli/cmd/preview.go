@@ -11,9 +11,9 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
+	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/google/shlex"
 	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
@@ -31,34 +31,48 @@ var previewCmd = &cobra.Command{
 	Short: "Opens a URL in the IDE's preview",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// TODO(ak) use NotificationService.NotifyActive supervisor API instead
-
-		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
-		defer cancel()
-		client, err := supervisor.New(ctx)
-		if err != nil {
-			return err
-		}
-		defer client.Close()
-
-		client.WaitForIDEReady(ctx)
-
-		gpBrowserEnvVar := "GP_PREVIEW_BROWSER"
-
-		url := replaceLocalhostInURL(args[0])
-		if previewCmdOpts.External {
-			if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-				url = "https://" + url
-			}
-			gpBrowserEnvVar = "GP_EXTERNAL_BROWSER"
-		}
-
-		return openPreview(gpBrowserEnvVar, url)
+		return openPreview(cmd.Context(), args[0], previewCmdOpts.External)
 	},
 }
 
-func openPreview(gpBrowserEnvVar string, url string) error {
+func openPreview(ctx context.Context, url string, external bool) error {
+	client, err := supervisor.New(ctx)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+	client.WaitForIDEReady(ctx)
+
+	url = replaceLocalhostInURL(url)
+	gpBrowserEnvVar := "GP_PREVIEW_BROWSER"
+	if external {
+		gpBrowserEnvVar = "GP_EXTERNAL_BROWSER"
+		if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+			url = "https://" + url
+		}
+	}
 	pcmd := os.Getenv(gpBrowserEnvVar)
+	if pcmd == "" {
+		resp, err := client.Notification.Notify(ctx, &api.NotifyRequest{
+			Preview: &api.NotifyRequest_Preview{
+				Url:      url,
+				External: external,
+			},
+			Active: true,
+		})
+		if err != nil {
+			return err
+		}
+		if resp.Command == nil {
+			return nil
+		}
+		c := exec.CommandContext(ctx, resp.Command.Cmd, resp.Command.Args...)
+		c.Stdin = os.Stdin
+		c.Stdout = os.Stdout
+		c.Stderr = os.Stderr
+		return c.Run()
+	}
+	// TODO: backward compatibilty, remove when all IDEs are updated
 	if pcmd == "" {
 		return xerrors.Errorf("%s is not set", gpBrowserEnvVar)
 	}

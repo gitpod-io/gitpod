@@ -39,35 +39,6 @@ service NotificationService {
     };
   }
 
-  // Called by the IDE to inform supervisor about which is the latest client
-  // actively used by the user. We consider active the last IDE with focus.
-  // Only 1 stream is kept open at any given time. A new subscription
-  // overrides the previous one, causing the stream to close.
-  // Supervisor will respond with a stream to which the IDE will listen
-  // waiting to receive actions to run, for example: `open` or `preview`
-  rpc SubscribeActive(SubscribeActiveRequest)
-      returns (stream SubscribeActiveResponse) {
-    option (google.api.http) = {
-      post : "/v1/notification/subscribe-active"
-    };
-  }
-
-  // Used by gp-cli to ask supervisor to request the active client
-  // to run a given command (eg. open or preview)
-  rpc NotifyActive(NotifyActiveRequest) returns (NotifyActiveResponse) {
-    option (google.api.http) = {
-      post : "/v1/notification/notify-action"
-    };
-  }
-
-  // Used by the IDE to inform supervisor about the result (eg. success or
-  // failure) of the action (eg. open or preview) requested via NotifyActive
-  rpc NotifyActiveRespond(NotifyActiveRespondRequest)
-      returns (NotifyActiveRespondResponse) {
-    option (google.api.http) = {
-      post : "/v1/notification/notify-action-respond"
-    };
-  }
 }
 
 message NotifyRequest {
@@ -80,14 +51,44 @@ message NotifyRequest {
   string message = 2;
   // if actions are empty, Notify will return immediately
   repeated string actions = 3;
+
+  message Open {
+    // paths to open
+    repeated string paths = 1;
+    // wait until all opened files are closed
+    bool await = 2;
+  }
+  // open paths
+  Open open = 4;
+
+  message Preview {
+    string url = 1;
+    // preview the URL in a new browser tab
+    bool external = 2;
+  }
+  // preview a URL
+  Preview preview = 5;
+
+  // notify active (currently focused) subscribers
+  bool active = 6;
 }
 
 message NotifyResponse {
   // action chosen by the user or empty string if cancelled
   string action = 1;
+
+  message Command {
+    string cmd = 1;
+    repeated string args = 2;
+  }
+  // command to execute
+  Command command = 2;
 }
 
-message SubscribeRequest {}
+message SubscribeRequest {
+  // subscriber is active (currently focused)
+  bool active = 1;
+}
 
 message SubscribeResponse {
   uint64 requestId = 1;
@@ -100,40 +101,3 @@ message RespondRequest {
 }
 
 message RespondResponse {}
-
-message NotifyActiveRequest {
-  // open a file in editor
-  message OpenData {
-    repeated string urls = 1;
-    // wait until all opened files are closed
-    bool await = 2;
-  }
-
-  // ask editor to open a URL in its preview
-  message PreviewData {
-    string url = 1;
-    // open the URL in a new browser tab
-    bool external = 2;
-  }
-
-  oneof action_data {
-    OpenData open = 1;
-    PreviewData preview = 2;
-  }
-}
-
-message NotifyActiveResponse {}
-
-message SubscribeActiveRequest {}
-
-message SubscribeActiveResponse {
-  uint64 requestId = 1;
-  NotifyActiveRequest request = 2;
-}
-
-message NotifyActiveRespondRequest {
-  uint64 requestId = 1;
-  NotifyActiveResponse response = 2;
-}
-
-message NotifyActiveRespondResponse {}

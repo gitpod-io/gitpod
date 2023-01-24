@@ -7,11 +7,10 @@ package cmd
 import (
 	"os"
 	"os/exec"
-	"time"
+	"path/filepath"
 
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
-
-	"context"
+	"github.com/gitpod-io/gitpod/supervisor/api"
 
 	"github.com/google/shlex"
 	"github.com/spf13/cobra"
@@ -24,25 +23,48 @@ var openCmd = &cobra.Command{
 	Short: "Opens a file in Gitpod",
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// TODO(ak) use NotificationService.NotifyActive supervisor API instead
-
-		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
-		defer cancel()
+		ctx := cmd.Context()
 
 		client, err := supervisor.New(ctx)
 		if err != nil {
 			return err
 		}
 		defer client.Close()
-
 		client.WaitForIDEReady(ctx)
 
 		wait, _ := cmd.Flags().GetBool("wait")
 
 		pcmd := os.Getenv("GP_OPEN_EDITOR")
 		if pcmd == "" {
-			return xerrors.Errorf("GP_OPEN_EDITOR is not set")
+			var paths []string
+			for _, path := range args {
+				absPath, err := filepath.Abs(path)
+				if err == nil {
+					path = absPath
+				}
+				paths = append(paths, path)
+			}
+
+			resp, err := client.Notification.Notify(ctx, &api.NotifyRequest{
+				Open: &api.NotifyRequest_Open{
+					Paths: paths,
+					Await: wait,
+				},
+				Active: true,
+			})
+			if err != nil {
+				return err
+			}
+			if resp.Command == nil {
+				return nil
+			}
+			c := exec.CommandContext(cmd.Context(), resp.Command.Cmd, resp.Command.Args...)
+			c.Stdin = os.Stdin
+			c.Stdout = os.Stdout
+			c.Stderr = os.Stderr
+			return c.Run()
 		}
+		// TODO: backward compatibilty, remove when all IDEs are updated
 		pargs, err := shlex.Split(pcmd)
 		if err != nil {
 			return xerrors.Errorf("cannot parse GP_OPEN_EDITOR: %w", err)

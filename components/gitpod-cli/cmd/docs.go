@@ -15,7 +15,7 @@ var docsCmd = &cobra.Command{
 	Use:   "docs",
 	Short: "Open Gitpod Documentation in default browser",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return openPreview("GP_EXTERNAL_BROWSER", DocsUrl)
+		return openPreview(cmd.Context(), DocsUrl, true)
 	},
 }
 

@@ -35,19 +35,6 @@ type NotificationServiceClient interface {
 	// Report a user's choice as a response to a notification. Typically called by
 	// the IDE.
 	Respond(ctx context.Context, in *RespondRequest, opts ...grpc.CallOption) (*RespondResponse, error)
-	// Called by the IDE to inform supervisor about which is the latest client
-	// actively used by the user. We consider active the last IDE with focus.
-	// Only 1 stream is kept open at any given time. A new subscription
-	// overrides the previous one, causing the stream to close.
-	// Supervisor will respond with a stream to which the IDE will listen
-	// waiting to receive actions to run, for example: `open` or `preview`
-	SubscribeActive(ctx context.Context, in *SubscribeActiveRequest, opts ...grpc.CallOption) (NotificationService_SubscribeActiveClient, error)
-	// Used by gp-cli to ask supervisor to request the active client
-	// to run a given command (eg. open or preview)
-	NotifyActive(ctx context.Context, in *NotifyActiveRequest, opts ...grpc.CallOption) (*NotifyActiveResponse, error)
-	// Used by the IDE to inform supervisor about the result (eg. success or
-	// failure) of the action (eg. open or preview) requested via NotifyActive
-	NotifyActiveRespond(ctx context.Context, in *NotifyActiveRespondRequest, opts ...grpc.CallOption) (*NotifyActiveRespondResponse, error)
 }
 
 type notificationServiceClient struct {
@@ -108,56 +95,6 @@ func (c *notificationServiceClient) Respond(ctx context.Context, in *RespondRequ
 	return out, nil
 }
 
-func (c *notificationServiceClient) SubscribeActive(ctx context.Context, in *SubscribeActiveRequest, opts ...grpc.CallOption) (NotificationService_SubscribeActiveClient, error) {
-	stream, err := c.cc.NewStream(ctx, &NotificationService_ServiceDesc.Streams[1], "/supervisor.NotificationService/SubscribeActive", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &notificationServiceSubscribeActiveClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type NotificationService_SubscribeActiveClient interface {
-	Recv() (*SubscribeActiveResponse, error)
-	grpc.ClientStream
-}
-
-type notificationServiceSubscribeActiveClient struct {
-	grpc.ClientStream
-}
-
-func (x *notificationServiceSubscribeActiveClient) Recv() (*SubscribeActiveResponse, error) {
-	m := new(SubscribeActiveResponse)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *notificationServiceClient) NotifyActive(ctx context.Context, in *NotifyActiveRequest, opts ...grpc.CallOption) (*NotifyActiveResponse, error) {
-	out := new(NotifyActiveResponse)
-	err := c.cc.Invoke(ctx, "/supervisor.NotificationService/NotifyActive", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *notificationServiceClient) NotifyActiveRespond(ctx context.Context, in *NotifyActiveRespondRequest, opts ...grpc.CallOption) (*NotifyActiveRespondResponse, error) {
-	out := new(NotifyActiveRespondResponse)
-	err := c.cc.Invoke(ctx, "/supervisor.NotificationService/NotifyActiveRespond", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // NotificationServiceServer is the server API for NotificationService service.
 // All implementations must embed UnimplementedNotificationServiceServer
 // for forward compatibility
@@ -171,19 +108,6 @@ type NotificationServiceServer interface {
 	// Report a user's choice as a response to a notification. Typically called by
 	// the IDE.
 	Respond(context.Context, *RespondRequest) (*RespondResponse, error)
-	// Called by the IDE to inform supervisor about which is the latest client
-	// actively used by the user. We consider active the last IDE with focus.
-	// Only 1 stream is kept open at any given time. A new subscription
-	// overrides the previous one, causing the stream to close.
-	// Supervisor will respond with a stream to which the IDE will listen
-	// waiting to receive actions to run, for example: `open` or `preview`
-	SubscribeActive(*SubscribeActiveRequest, NotificationService_SubscribeActiveServer) error
-	// Used by gp-cli to ask supervisor to request the active client
-	// to run a given command (eg. open or preview)
-	NotifyActive(context.Context, *NotifyActiveRequest) (*NotifyActiveResponse, error)
-	// Used by the IDE to inform supervisor about the result (eg. success or
-	// failure) of the action (eg. open or preview) requested via NotifyActive
-	NotifyActiveRespond(context.Context, *NotifyActiveRespondRequest) (*NotifyActiveRespondResponse, error)
 	mustEmbedUnimplementedNotificationServiceServer()
 }
 
@@ -199,15 +123,6 @@ func (UnimplementedNotificationServiceServer) Subscribe(*SubscribeRequest, Notif
 }
 func (UnimplementedNotificationServiceServer) Respond(context.Context, *RespondRequest) (*RespondResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Respond not implemented")
-}
-func (UnimplementedNotificationServiceServer) SubscribeActive(*SubscribeActiveRequest, NotificationService_SubscribeActiveServer) error {
-	return status.Errorf(codes.Unimplemented, "method SubscribeActive not implemented")
-}
-func (UnimplementedNotificationServiceServer) NotifyActive(context.Context, *NotifyActiveRequest) (*NotifyActiveResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method NotifyActive not implemented")
-}
-func (UnimplementedNotificationServiceServer) NotifyActiveRespond(context.Context, *NotifyActiveRespondRequest) (*NotifyActiveRespondResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method NotifyActiveRespond not implemented")
 }
 func (UnimplementedNotificationServiceServer) mustEmbedUnimplementedNotificationServiceServer() {}
 
@@ -279,63 +194,6 @@ func _NotificationService_Respond_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _NotificationService_SubscribeActive_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(SubscribeActiveRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(NotificationServiceServer).SubscribeActive(m, &notificationServiceSubscribeActiveServer{stream})
-}
-
-type NotificationService_SubscribeActiveServer interface {
-	Send(*SubscribeActiveResponse) error
-	grpc.ServerStream
-}
-
-type notificationServiceSubscribeActiveServer struct {
-	grpc.ServerStream
-}
-
-func (x *notificationServiceSubscribeActiveServer) Send(m *SubscribeActiveResponse) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func _NotificationService_NotifyActive_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NotifyActiveRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NotificationServiceServer).NotifyActive(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/supervisor.NotificationService/NotifyActive",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NotificationServiceServer).NotifyActive(ctx, req.(*NotifyActiveRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _NotificationService_NotifyActiveRespond_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NotifyActiveRespondRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NotificationServiceServer).NotifyActiveRespond(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/supervisor.NotificationService/NotifyActiveRespond",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NotificationServiceServer).NotifyActiveRespond(ctx, req.(*NotifyActiveRespondRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // NotificationService_ServiceDesc is the grpc.ServiceDesc for NotificationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -351,24 +209,11 @@ var NotificationService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "Respond",
 			Handler:    _NotificationService_Respond_Handler,
 		},
-		{
-			MethodName: "NotifyActive",
-			Handler:    _NotificationService_NotifyActive_Handler,
-		},
-		{
-			MethodName: "NotifyActiveRespond",
-			Handler:    _NotificationService_NotifyActiveRespond_Handler,
-		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "Subscribe",
 			Handler:       _NotificationService_Subscribe_Handler,
-			ServerStreams: true,
-		},
-		{
-			StreamName:    "SubscribeActive",
-			Handler:       _NotificationService_SubscribeActive_Handler,
 			ServerStreams: true,
 		},
 	},

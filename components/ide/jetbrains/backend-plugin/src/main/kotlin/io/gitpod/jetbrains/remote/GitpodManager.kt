@@ -4,27 +4,43 @@
 
 package io.gitpod.jetbrains.remote
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.CliResult
+import com.intellij.ide.CommandLineProcessor
+import com.intellij.ide.impl.ProjectUtil.getActiveProject
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.client.ClientKind
+import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.LowMemoryWatcher
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.util.application
 import com.intellij.util.net.ssl.CertificateManager
 import com.intellij.util.proxy.CommonProxy
+import com.intellij.util.withFragment
+import com.intellij.util.withPath
+import com.intellij.util.withQuery
+import com.jetbrains.rd.framework.util.launch
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.LifetimeDefinition
+import com.jetbrains.rd.util.lifetime.isNotAlive
 import git4idea.config.GitVcsApplicationSettings
 import io.gitpod.gitpodprotocol.api.GitpodClient
 import io.gitpod.gitpodprotocol.api.GitpodServerLauncher
 import io.gitpod.gitpodprotocol.api.entities.RemoteTrackMessage
 import io.gitpod.jetbrains.remote.services.HeartbeatService
+import io.gitpod.jetbrains.remote.utils.LocalHostUri
 import io.gitpod.jetbrains.remote.utils.Retrier.retry
 import io.gitpod.supervisor.api.*
 import io.gitpod.supervisor.api.Info.WorkspaceInfoResponse
@@ -37,22 +53,25 @@ import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.Counter
 import io.prometheus.client.Gauge
 import io.prometheus.client.exporter.PushGateway
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.guava.asDeferred
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import org.jetbrains.ide.BuiltInServerManager
+import java.awt.KeyboardFocusManager
+import java.beans.PropertyChangeEvent
 import java.net.URI
 import java.net.URL
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.nio.file.InvalidPathException
+import java.nio.file.Path
 import java.time.Duration
+import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import javax.websocket.DeploymentException
+
 
 @Suppress("UnstableApiUsage", "OPT_IN_USAGE")
 @Service
@@ -79,13 +98,13 @@ class GitpodManager : Disposable {
         // Rate of low memory after GC notifications in the last 5 minutes:
         // rate(gitpod_jb_backend_low_memory_after_gc_total[5m])
         val lowMemoryCounter = Counter.build()
-            .name("gitpod_jb_backend_low_memory_after_gc")
-            .help("Low memory notifications after GC")
-            .labelNames("product", "qualifier")
-            .register(registry)
+                .name("gitpod_jb_backend_low_memory_after_gc")
+                .help("Low memory notifications after GC")
+                .labelNames("product", "qualifier")
+                .register(registry)
         LowMemoryWatcher.register({
             lowMemoryCounter.labels(backendKind, backendQualifier).inc()
-         }, LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC, this)
+        }, LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC, this)
     }
 
     init {
@@ -93,7 +112,7 @@ class GitpodManager : Disposable {
             if (application.isHeadlessEnvironment) {
                 return@launch
             }
-            val pg = if(devMode) null else PushGateway("localhost:22999")
+            val pg = if (devMode) null else PushGateway("localhost:22999")
             // Heap usage at any time in the last 5 minutes:
             // max_over_time(gitpod_jb_backend_memory_used_bytes[5m:])/max_over_time(gitpod_jb_backend_memory_max_bytes[5m:])
             val allocatedGauge = Gauge.build()
@@ -131,20 +150,20 @@ class GitpodManager : Disposable {
             try {
                 val backendPort = BuiltInServerManager.getInstance().waitForStart().port
                 val httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS)
-                    .connectTimeout(Duration.ofSeconds(5))
-                    .build()
+                        .connectTimeout(Duration.ofSeconds(5))
+                        .build()
                 val httpRequest = HttpRequest.newBuilder()
-                    .uri(URI.create("http://localhost:24000/gatewayLink?backendPort=$backendPort"))
-                    .GET()
-                    .build()
+                        .uri(URI.create("http://localhost:24000/gatewayLink?backendPort=$backendPort"))
+                        .GET()
+                        .build()
                 val response =
-                    httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString())
+                        httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString())
                 if (response.statusCode() == 200) {
                     val gatewayLink = response.body()
                     thisLogger().warn(
-                        "\n\n\n*********************************************************\n\n" +
-                                "Gitpod gateway link: $gatewayLink" +
-                                "\n\n*********************************************************\n\n\n"
+                            "\n\n\n*********************************************************\n\n" +
+                                    "Gitpod gateway link: $gatewayLink" +
+                                    "\n\n*********************************************************\n\n\n"
                     )
                 } else {
                     throw Exception("" + response.statusCode())
@@ -159,69 +178,177 @@ class GitpodManager : Disposable {
         GitVcsApplicationSettings.getInstance().isUseCredentialHelper = true
     }
 
-    val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Gitpod Notifications")
-    private val notificationsJob = GlobalScope.launch {
-        if (application.isHeadlessEnvironment) {
-            return@launch
-        }
-        val notifications = NotificationServiceGrpc.newStub(supervisorChannel)
-        val futureNotifications = NotificationServiceGrpc.newFutureStub(supervisorChannel)
-        while (isActive) {
-            try {
-                val f = CompletableFuture<Void>()
-                notifications.subscribe(
-                    SubscribeRequest.newBuilder().build(),
-                    object : ClientResponseObserver<SubscribeRequest, SubscribeResponse> {
+    init {
+        observeNotifications(lifetime)
+        registerActiveNotifications()
+    }
 
-                        override fun beforeStart(requestStream: ClientCallStreamObserver<SubscribeRequest>) {
-                            // TODO(ak): actually should be bound to cancellation of notifications job
-                            lifetime.onTerminationOrNow {
-                                requestStream.cancel(null, null)
-                            }
-                        }
+    private fun registerActiveNotifications() {
+        val keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
 
-                        override fun onNext(n: SubscribeResponse) {
-                            val request = n.request
-                            val type = when (request.level) {
-                                NotifyRequest.Level.ERROR -> NotificationType.ERROR
-                                NotifyRequest.Level.WARNING -> NotificationType.WARNING
-                                else -> NotificationType.INFORMATION
-                            }
-                            val notification = notificationGroup.createNotification(request.message, type)
-                            for (action in request.actionsList) {
-                                notification.addAction(NotificationAction.createSimpleExpiring(action) {
-                                    futureNotifications.respond(
-                                        RespondRequest.newBuilder()
-                                            .setRequestId(n.requestId)
-                                            .setResponse(NotifyResponse.newBuilder().setAction(action).build())
-                                            .build()
-                                    )
-                                })
-                            }
-                            notification.notify(null)
-                        }
-
-                        override fun onError(t: Throwable) {
-                            f.completeExceptionally(t)
-                        }
-
-                        override fun onCompleted() {
-                            f.complete(null)
-                        }
-                    })
-                f.await()
-            } catch (t: Throwable) {
-                if (t is CancellationException) {
-                    throw t
+        var activeProject: Project? = null
+        var activeLifetime = Lifetime.Terminated.createNested()
+        val lock = Object()
+        val updateActiveNotifications = {
+            synchronized(lock) {
+                var project = getActiveProject()
+                if (project == null || project.isDefault || project.isDisposed || !project.isInitialized) {
+                    project = null
                 }
-                thisLogger().error("gitpod: failed to stream notifications: ", t)
+                if (project != null) {
+                    val session = ClientSessionsManager.getProjectSessions(project, ClientKind.REMOTE).firstOrNull()
+                    if (session == null) {
+                        project = null
+                    }
+                }
+
+                if (project != activeProject) {
+                    activeLifetime.terminate()
+                }
+                activeProject = project
+                if (activeLifetime.isNotAlive && activeProject != null) {
+                    activeLifetime = lifetime.createNested()
+                    observeNotifications(activeLifetime, activeProject!!)
+                }
             }
-            delay(1000L)
+        }
+        updateActiveNotifications()
+        val listener = { _: PropertyChangeEvent -> updateActiveNotifications() }
+        keyboardFocusManager.addPropertyChangeListener("activeWindow", listener)
+        lifetime.onTerminationOrNow {
+            keyboardFocusManager.removePropertyChangeListener("activeWindow", listener)
+            activeLifetime.terminate()
         }
     }
-    init {
+
+    val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Gitpod Notifications")
+    val gitpodPortForwardingService = serviceOrNull<GitpodPortForwardingService>()
+    private fun observeNotifications(lifetime: LifetimeDefinition, project: Project? = null) {
+        val job = lifetime.launch {
+            if (application.isHeadlessEnvironment) {
+                return@launch
+            }
+            val notifications = NotificationServiceGrpc.newStub(supervisorChannel)
+            val futureNotifications = NotificationServiceGrpc.newFutureStub(supervisorChannel)
+            while (isActive) {
+                try {
+                    val f = CompletableFuture<Void>()
+                    notifications.subscribe(
+                            SubscribeRequest.newBuilder().setActive(project != null).build(),
+                            object : ClientResponseObserver<SubscribeRequest, SubscribeResponse> {
+
+                                override fun beforeStart(requestStream: ClientCallStreamObserver<SubscribeRequest>) {
+                                    lifetime.onTerminationOrNow {
+                                        requestStream.cancel("disposed", null)
+                                    }
+                                }
+
+                                override fun onNext(n: SubscribeResponse) {
+                                    try {
+                                        val request = n.request
+                                        if (!request.message.isNullOrBlank()) {
+                                            val type = when (request.level) {
+                                                NotifyRequest.Level.ERROR -> NotificationType.ERROR
+                                                NotifyRequest.Level.WARNING -> NotificationType.WARNING
+                                                else -> NotificationType.INFORMATION
+                                            }
+                                            val notification = notificationGroup.createNotification(request.message, type)
+                                            for (action in request.actionsList) {
+                                                notification.addAction(NotificationAction.createSimpleExpiring(action) {
+                                                    futureNotifications.respond(
+                                                            RespondRequest.newBuilder()
+                                                                    .setRequestId(n.requestId)
+                                                                    .setResponse(NotifyResponse.newBuilder().setAction(action).build())
+                                                                    .build()
+                                                    )
+                                                })
+                                            }
+                                            notification.notify(project)
+                                        }
+                                        if (project == null) {
+                                            return
+                                        }
+                                        lifetime.launch request@{
+                                            val session = ClientSessionsManager.getProjectSessions(project, ClientKind.REMOTE).firstOrNull()
+                                                    ?: return@request
+                                            ClientId.withClientId(session.clientId) {
+                                                if (request.preview != null) {
+                                                    var resolvedUrl = request.preview.url
+                                                    val uri = URI.create(request.preview.url)
+                                                    val localHostUriMetadata = LocalHostUri.extractLocalHostUriMetaDataForPortMapping(uri)
+                                                    if (localHostUriMetadata.isPresent && gitpodPortForwardingService != null) {
+                                                        var localHostUriFromPort = Optional.empty<URI>()
+                                                        application.invokeAndWait {
+                                                            localHostUriFromPort = gitpodPortForwardingService
+                                                                    .getLocalHostUriFromHostPort(localHostUriMetadata.get().port)
+                                                        }
+                                                        if (localHostUriFromPort.isPresent) {
+                                                            resolvedUrl = localHostUriFromPort.get()
+                                                                    .withPath(uri.path)
+                                                                    .withQuery(uri.query)
+                                                                    .withFragment(uri.fragment)
+                                                                    .toString()
+                                                        }
+                                                    }
+                                                    BrowserUtil.browse(resolvedUrl, project)
+                                                }
+                                                if (request.open != null) {
+                                                    val futures = ArrayList<Deferred<CliResult>>()
+                                                    for (path in request.open.pathsList) {
+                                                        try {
+                                                            val file = parseFilePath(path)
+                                                            futures.add(CommandLineProcessor.doOpenFileOrProject(file, request.open.await).future)
+                                                        } catch (t: Throwable) {
+                                                            thisLogger().error("gitpod: failed to open '" + path + "': ", t)
+                                                        }
+                                                    }
+                                                    futures.awaitAll()
+                                                }
+                                            }
+                                            futureNotifications.respond(
+                                                    RespondRequest.newBuilder()
+                                                            .setRequestId(n.requestId)
+                                                            .setResponse(NotifyResponse.newBuilder().build())
+                                                            .build()
+                                            )
+                                        }
+                                    } catch (t: Throwable) {
+                                        thisLogger().error("gitpod: failed to process notification request: ", t)
+                                    }
+                                }
+
+                                override fun onError(t: Throwable) {
+                                    f.completeExceptionally(t)
+                                }
+
+                                override fun onCompleted() {
+                                    f.complete(null)
+                                }
+                            })
+                    f.await()
+                } catch (t: Throwable) {
+                    if (t is CancellationException) {
+                        throw t
+                    }
+                    thisLogger().error("gitpod: failed to stream notifications: ", t)
+                }
+                delay(1000L)
+            }
+        }
         lifetime.onTerminationOrNow {
-            notificationsJob.cancel()
+            job.cancel()
+        }
+    }
+
+    private fun parseFilePath(path: String): Path {
+        return try {
+            var file: Path = Path.of(FileUtilRt.toSystemDependentName(path)) // handle paths like '/file/foo\qwe'
+            if (!file.isAbsolute) {
+                file = file.toAbsolutePath()
+            }
+            file.normalize()
+        } catch (e: InvalidPathException) {
+            throw Exception("failed to parse file path", e)
         }
     }
 
@@ -246,6 +373,7 @@ class GitpodManager : Disposable {
             pendingInfo.completeExceptionally(t)
         }
     }
+
     init {
         lifetime.onTerminationOrNow {
             infoJob.cancel()
@@ -340,6 +468,7 @@ class GitpodManager : Disposable {
         }
         thisLogger().warn("$gitpodHost: connection permanently closed: $closeReason")
     }
+
     init {
         lifetime.onTerminationOrNow {
             serverJob.cancel()
@@ -393,6 +522,7 @@ class GitpodManager : Disposable {
             delay(1000L)
         }
     }
+
     init {
         lifetime.onTerminationOrNow {
             metricsJob.cancel()

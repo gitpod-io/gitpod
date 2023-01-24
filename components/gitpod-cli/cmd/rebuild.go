@@ -262,6 +262,8 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		{Source: "/workspace"},
 		{Source: "/.supervisor"},
 		{Source: "/ide"},
+		{Source: "/ide-desktop"},
+		{Source: "/ide-desktop-plugins"},
 		{Source: "/workspace/.gitpod-debug/.docker-root", Target: "/workspace/.docker-root", Permission: 0710},
 		{Source: "/workspace/.gitpod-debug/.gitpod", Target: "/workspace/.gitpod", Permission: 0751},
 		{Source: "/workspace/.gitpod-debug/.vscode-remote", Target: "/workspace/.vscode-remote", Permission: 0751},

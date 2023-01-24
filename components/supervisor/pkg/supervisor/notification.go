@@ -33,9 +33,11 @@ func NewNotificationService() *NotificationService {
 
 // NotificationService implements the notification service API.
 type NotificationService struct {
-	mutex                sync.Mutex
-	nextSubscriptionID   uint64
-	subscriptions        map[uint64]*subscription
+	mutex sync.Mutex
+
+	nextSubscriptionID uint64
+	subscriptions      map[uint64]*subscription
+
 	nextNotificationID   uint64
 	pendingNotifications map[uint64]*pendingNotification
 
@@ -58,6 +60,7 @@ func (pending *pendingNotification) close() {
 
 type subscription struct {
 	id      uint64
+	active  bool
 	channel chan *api.SubscribeResponse
 	once    sync.Once
 	closed  bool
@@ -123,6 +126,9 @@ func (srv *NotificationService) notifySubscribers(req *api.NotifyRequest) *pendi
 	)
 	srv.nextNotificationID++
 	for _, subscription := range srv.subscriptions {
+		if !subscription.supports(req) {
+			continue
+		}
 		select {
 		case subscription.channel <- message:
 			// all good
@@ -139,7 +145,7 @@ func (srv *NotificationService) notifySubscribers(req *api.NotifyRequest) *pendi
 		responseChannel: channel,
 	}
 	srv.pendingNotifications[requestID] = pending
-	if len(req.Actions) == 0 {
+	if !isBlocking(req) {
 		// produce an immediate response
 		channel <- &api.NotifyResponse{}
 		pending.close()
@@ -147,10 +153,18 @@ func (srv *NotificationService) notifySubscribers(req *api.NotifyRequest) *pendi
 	return pending
 }
 
+func isBlocking(req *api.NotifyRequest) bool {
+	return len(req.Actions) > 0 || req.Open != nil || req.Preview != nil
+}
+
+func (s *subscription) supports(req *api.NotifyRequest) bool {
+	return s.active == req.Active
+}
+
 // Subscribe subscribes to notifications that are sent to the supervisor.
 func (srv *NotificationService) Subscribe(req *api.SubscribeRequest, resp api.NotificationService_SubscribeServer) error {
-	log.WithField("SubscribeRequest", req).Info("Subscribe entered")
-	defer log.WithField("SubscribeRequest", req).Info("Subscribe exited")
+	log.WithField("SubscribeRequest", req).Debug("Subscribe entered")
+	defer log.WithField("SubscribeRequest", req).Debug("Subscribe exited")
 	subscription := srv.subscribeLocked(req, resp)
 	defer srv.unsubscribeLocked(subscription.id)
 	for {
@@ -164,7 +178,7 @@ func (srv *NotificationService) Subscribe(req *api.SubscribeRequest, resp api.No
 				return status.Errorf(codes.Internal, "Sending notification failed. %s", err)
 			}
 		case <-resp.Context().Done():
-			log.WithField("SubscribeRequest", req).Info("Subscriber cancelled")
+			log.WithField("SubscribeRequest", req).Debug("Subscriber cancelled")
 			return nil
 		}
 	}
@@ -179,22 +193,28 @@ func (srv *NotificationService) subscribeLocked(req *api.SubscribeRequest, resp 
 		capacity = SubscriberMaxPendingNotifications
 	}
 	channel := make(chan *api.SubscribeResponse, capacity)
-	log.WithField("pending", len(srv.pendingNotifications)).Info("sending pending notifications")
-	for id, pending := range srv.pendingNotifications {
-		channel <- pending.message
-		if len(pending.message.Request.Actions) == 0 {
-			delete(srv.pendingNotifications, id)
-		}
-	}
 	id := srv.nextSubscriptionID
 	srv.nextSubscriptionID++
 	_, cancel := context.WithCancel(resp.Context())
 	subscription := &subscription{
+		active:  req.Active,
 		channel: channel,
 		id:      id,
 		cancel:  cancel,
 	}
 	srv.subscriptions[id] = subscription
+
+	log.WithField("pending", len(srv.pendingNotifications)).Debug("sending pending notifications")
+	for id, pending := range srv.pendingNotifications {
+		if !subscription.supports(pending.message.Request) {
+			continue
+		}
+		channel <- pending.message
+		if !isBlocking(pending.message.Request) {
+			delete(srv.pendingNotifications, id)
+		}
+	}
+
 	return subscription
 }
 
@@ -216,18 +236,16 @@ func (srv *NotificationService) Respond(ctx context.Context, req *api.RespondReq
 	defer srv.mutex.Unlock()
 	pending, ok := srv.pendingNotifications[req.RequestId]
 	if !ok {
-		log.WithFields(map[string]interface{}{
-			"RequestId": req.RequestId,
-			"Action":    req.Response.Action,
-		}).Info("Invalid or late response to notification")
-		return nil, status.Errorf(codes.DeadlineExceeded, "Invalid or late response to notification")
+		log.WithField("requestId", req.RequestId).Info("invalid or late response to notification")
+		return nil, status.Errorf(codes.DeadlineExceeded, "invalid or late response to notification")
 	}
-	if !isActionAllowed(req.Response.Action, pending.message.Request) {
+	if !validateResponse(req.Response, pending.message.Request) {
 		log.WithFields(map[string]interface{}{
 			"Notification": pending.message,
 			"Action":       req.Response.Action,
-		}).Error("Invalid user action on notification")
-		return nil, status.Errorf(codes.InvalidArgument, "Invalid user action on notification")
+			"Command":      req.Response.Command,
+		}).Error("invalid notification")
+		return nil, status.Errorf(codes.InvalidArgument, "invalid notification")
 	}
 	if !pending.closed {
 		pending.responseChannel <- req.Response
@@ -237,13 +255,16 @@ func (srv *NotificationService) Respond(ctx context.Context, req *api.RespondReq
 	return &api.RespondResponse{}, nil
 }
 
-func isActionAllowed(action string, req *api.NotifyRequest) bool {
-	if action == "" {
+func validateResponse(resp *api.NotifyResponse, req *api.NotifyRequest) bool {
+	if resp.Command != nil {
+		return resp.Command.Cmd != ""
+	}
+	if resp.Action == "" {
 		// user cancelled, which is always allowed
 		return true
 	}
 	for _, allowedAction := range req.Actions {
-		if allowedAction == action {
+		if allowedAction == resp.Action {
 			return true
 		}
 	}
