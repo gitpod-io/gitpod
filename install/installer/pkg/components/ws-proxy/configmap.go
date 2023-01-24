@@ -60,6 +60,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 	}
 
+	var enableWorkspaceCRD bool
+
 	ctx.WithExperimental(func(ucfg *experimental.Config) error {
 		if ucfg.Workspace == nil {
 			return nil
@@ -79,6 +81,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		if ucfg.Workspace.WSProxy.GitpodInstallationWorkspaceHostSuffixRegex != "" {
 			gitpodInstallationWorkspaceHostSuffixRegex = ucfg.Workspace.WSProxy.GitpodInstallationWorkspaceHostSuffixRegex
 		}
+
+		enableWorkspaceCRD = ucfg.Workspace.UseWsmanagerMk2
+
 		return nil
 	})
 
@@ -131,6 +136,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		PrometheusAddr:     common.LocalhostPrometheusAddr(),
 		ReadinessProbeAddr: fmt.Sprintf(":%v", ReadinessPort),
 		WorkspaceManager:   wsManagerConfig,
+		EnableWorkspaceCRD: enableWorkspaceCRD,
 	}
 
 	fc, err := common.ToJSONString(wspcfg)
