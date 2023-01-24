@@ -4,14 +4,6 @@ import { Werft } from "../../util/werft";
 import { GCLOUD_SERVICE_ACCOUNT_PATH } from "./const";
 import { JobConfig } from "./job-config";
 
-const phases = {
-    PUBLISH_KOTS: "publish kots",
-};
-
-const REPLICATED_DIR = "./install/kots";
-const REPLICATED_YAML_DIR = `${REPLICATED_DIR}/manifests`;
-const INSTALLER_JOB_IMAGE = "spec.template.spec.containers[0].image";
-
 export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
     const {
         publishRelease,
