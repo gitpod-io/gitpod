@@ -24,6 +24,7 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UsageService } from "./usage-service";
 import { UserToTeamMigrationService } from "@gitpod/gitpod-db/lib/user-to-team-migration-service";
 import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { BillingModes } from "../../ee/src/billing/billing-mode";
 
 export interface FindUserByIdentityStrResult {
     user: User;
@@ -72,6 +73,7 @@ export class UserService {
     @inject(UsageService) protected readonly usageService: UsageService;
     @inject(UserToTeamMigrationService) protected readonly migrationService: UserToTeamMigrationService;
     @inject(ConfigCatClientFactory) protected readonly configCatClientFactory: ConfigCatClientFactory;
+    @inject(BillingModes) protected readonly billingModes: BillingModes;
 
     /**
      * Takes strings in the form of <authHost>/<authName> and returns the matching User
@@ -395,6 +397,10 @@ export class UserService {
                 user,
             });
             if (User.is(user) && (await this.migrationService.needsMigration(user)) && (await shouldMigrate)) {
+                const mode = await this.billingModes.getBillingModeForUser(user, new Date());
+                if (mode.mode === "chargebee") {
+                    return user;
+                }
                 return await this.migrationService.migrateUser(user);
             }
         } catch (error) {
