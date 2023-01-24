@@ -154,7 +154,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 
 	var mgr manager.Manager
 	if config.WorkspaceController.Enabled {
-		mgr, err := ctrl.NewManager(restCfg, ctrl.Options{
+		mgr, err = ctrl.NewManager(restCfg, ctrl.Options{
 			Scheme:    scheme,
 			Port:      9443,
 			Namespace: config.Runtime.KubernetesNamespace,
@@ -175,6 +175,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 			UIDMapperConfig:  config.Uidmapper,
 			ContainerRuntime: containerRuntime,
 			CGroupMountPoint: config.CPULimit.CGroupBasePath,
+			MetricsRegistry:  reg,
 		})
 		if err != nil {
 			return nil, err
@@ -203,30 +204,6 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		return nil, xerrors.Errorf("cannot create content service: %w", err)
 	}
 
-	if config.WorkspaceController.Enabled {
-		log.Info("enabling workspace CRD controller")
-
-		contentCfg := config.Content
-		contentCfg.WorkingArea += config.WorkspaceController.WorkingAreaSuffix
-		contentCfg.WorkingAreaNode += config.WorkspaceController.WorkingAreaSuffix
-
-		wsctrl, err := controller.NewWorkspaceController(mgr.GetClient(), controller.WorkspaceControllerOpts{
-			NodeName:         nodename,
-			ContentConfig:    contentCfg,
-			UIDMapperConfig:  config.Uidmapper,
-			ContainerRuntime: containerRuntime,
-			CGroupMountPoint: config.CPULimit.CGroupBasePath,
-			MetricsRegistry:  reg,
-		})
-		if err != nil {
-			return nil, err
-		}
-		err = wsctrl.SetupWithManager(mgr)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	dsk := diskguard.FromConfig(config.DiskSpaceGuard, clientset, nodename)
 
 	hsts, err := hosts.FromConfig(config.Hosts, clientset, config.Runtime.KubernetesNamespace)
@@ -235,8 +212,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	}
 
 	return &Daemon{
-		Config: config,
-
+		Config:         config,
 		dispatch:       dsptch,
 		content:        contentService,
 		diskGuards:     dsk,
