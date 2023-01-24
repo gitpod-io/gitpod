@@ -9,6 +9,9 @@ jobs:
   # and that job requires previewctl
   previewctl:
     if: ${{ contains(github.event.pull_request.body, '[x] /werft with-github-actions') && contains(github.event.pull_request.body, '[x] /werft with-preview') }}
+    concurrency:
+      group: ${{ github.head_ref || github.ref }}-previewctl
+      cancel-in-progress: true
     runs-on: [self-hosted]
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.3.4
@@ -31,6 +34,8 @@ jobs:
   infrastructure:
     runs-on: [self-hosted]
     needs: [previewctl]
+    concurrency:
+      group: ${{ github.head_ref || github.ref }}-infrastructure
     steps:
       - uses: actions/checkout@v3
       - name: Create preview environment infrastructure
@@ -44,6 +49,9 @@ jobs:
   build:
     if: ${{ contains(github.event.pull_request.body, '[x] /werft with-github-actions') }}
     runs-on: [self-hosted]
+    concurrency:
+      group: ${{ github.head_ref || github.ref }}-build
+      cancel-in-progress: true
     outputs:
       version: ${{ steps.leeway.outputs.version }}
     services:
@@ -166,6 +174,9 @@ jobs:
     name: "Install Gitpod"
     needs: [build, infrastructure]
     runs-on: [self-hosted]
+    concurrency:
+      group: ${{ github.head_ref || github.ref }}-install
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
       - name: Deploy Gitpod to the preview environment
@@ -179,6 +190,9 @@ jobs:
     name: "Install Monitoring Satellite"
     needs: [infrastructure]
     runs-on: [self-hosted]
+    concurrency:
+      group: ${{ github.head_ref || github.ref }}-monitoring
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
       - name: Deploy monitoring satellite to the preview environment
