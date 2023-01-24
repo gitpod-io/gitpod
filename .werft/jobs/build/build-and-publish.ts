@@ -103,52 +103,5 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
         }
     }
 
-    // temporarily skipping publish kots step
-    // if (jobConfig.publishToKots) {
-    //     publishKots(werft, jobConfig);
-    // }
-
     werft.rootSpan.setAttributes({ "preview.gitpod_built_successfully": true });
-}
-
-function publishKots(werft: Werft, jobConfig: JobConfig) {
-    werft.phase(phases.PUBLISH_KOTS, "Publish release to KOTS");
-    exec(
-        `docker run --entrypoint sh --rm eu.gcr.io/gitpod-core-dev/build/installer:${jobConfig.version} -c "cat /app/installer" > /tmp/installer`,
-    );
-    exec(`chmod +x /tmp/installer`);
-
-    const imageAndTag = exec(`yq r ${REPLICATED_YAML_DIR}/gitpod-installer-job.yaml ${INSTALLER_JOB_IMAGE}`);
-    const [image] = imageAndTag.split(":");
-
-    // Set the tag to the current version
-    exec(
-        `yq w -i ${REPLICATED_YAML_DIR}/gitpod-installer-job.yaml ${INSTALLER_JOB_IMAGE} ${image}:${jobConfig.version}`,
-        { slice: phases.PUBLISH_KOTS },
-    );
-    exec(
-        `yq w -i ${REPLICATED_YAML_DIR}/gitpod-installation-status.yaml ${INSTALLER_JOB_IMAGE} ${image}:${jobConfig.version}`,
-        { slice: phases.PUBLISH_KOTS },
-    );
-
-    // Generate the preflights, logo and pull any Helm charts
-    exec(`make generate_preflight_checks logo helm -C ${REPLICATED_DIR}`, { slice: phases.PUBLISH_KOTS });
-
-    // Update the additionalImages in the kots-app.yaml
-    exec(`/tmp/installer mirror kots --file ${REPLICATED_YAML_DIR}/kots-app.yaml`, { slice: phases.PUBLISH_KOTS });
-
-    const replicatedChannel = jobConfig.mainBuild ? "Unstable" : jobConfig.repository.branch;
-
-    exec(
-        `replicated release create \
-        --lint \
-        --ensure-channel \
-        --yaml-dir ${REPLICATED_YAML_DIR} \
-        --version ${jobConfig.version} \
-        --release-notes "# ${jobConfig.version}\n\nSee [Werft job](https://werft.gitpod-dev.com/job/gitpod-build-${jobConfig.version}/logs) for notes" \
-        --promote ${replicatedChannel}`,
-        { slice: phases.PUBLISH_KOTS },
-    );
-
-    werft.done(phases.PUBLISH_KOTS);
 }
