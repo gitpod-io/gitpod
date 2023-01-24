@@ -42,6 +42,7 @@ async function decideHarvesterVMCreation(werft: Werft, config: JobConfig) {
 async function createVM(werft: Werft, config: JobConfig) {
     const cpu = config.withLargeVM ? 12 : 6;
     const memory = config.withLargeVM ? 24 : 12;
+    const infra = config.withGceVm ? "gce" : "harvester"
 
     const environment = {
         // We pass the GCP credentials explicitly, otherwise for some reason TF doesn't pick them up
@@ -51,6 +52,7 @@ async function createVM(werft: Werft, config: JobConfig) {
         "TF_VAR_preview_name": config.previewEnvironment.destname,
         "TF_VAR_vm_cpu": `${cpu}`,
         "TF_VAR_vm_memory": `${memory}Gi`,
+        "TF_VAR_infra_provider": `${infra}`,
     }
 
     if (config.storageClass.length > 0) {

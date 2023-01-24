@@ -31,6 +31,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Create preview environment infrastructure
+        env:
+          TF_VAR_infra_provider: ${{ contains(github.event.pull_request.body, '[X] /werft with-gce-vm') && 'gce' || 'harvester' }}
         id: create
         uses: ./.github/actions/preview-create
         with:
