@@ -6,7 +6,7 @@ package k8s
 
 import (
 	"context"
-	"github.com/cockroachdb/errors"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -17,18 +17,10 @@ var (
 		Version:  "v1",
 		Resource: "virtualmachines",
 	}
-
-	vmInstanceResource = schema.GroupVersionResource{
-		Group:    "kubevirt.io",
-		Version:  "v1",
-		Resource: "virtualmachineinstances",
-	}
-
-	ErrVmNotReady = errors.New("vm not ready")
 )
 
 func (c *Config) GetSVCCreationTimestamp(ctx context.Context, name, namespace string) (*metav1.Time, error) {
-	svc, err := c.CoreClient.CoreV1().Services(namespace).Get(ctx, name, metav1.GetOptions{})
+	svc, err := c.CoreClient.CoreV1().Services(namespace).Get(ctx, "proxy", metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
