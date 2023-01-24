@@ -46,6 +46,7 @@ export interface JobConfig {
     recreateVm: boolean;
     withGitHubActions: boolean;
     useWsManagerMk2: boolean;
+    withGceVm: boolean;
 }
 
 export interface PreviewEnvironmentConfig {
@@ -116,6 +117,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const withIntegrationTests = parseWithIntegrationTests(werft, sliceId, buildConfig["with-integration-tests"]);
     const withPreview = decideWithPreview({werft, sliceID: sliceId, buildConfig, mainBuild, withIntegrationTests})
     const withGitHubActions = "with-github-actions" in buildConfig;
+    const withGceVm = "with-gce-vm" in buildConfig;
 
     switch (buildConfig["cert-issuer"]) {
         case "zerossl":
@@ -189,6 +191,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         withGitHubActions,
         withDedicatedEmulation,
         useWsManagerMk2,
+        withGceVm,
     };
 
     werft.logOutput(sliceId, JSON.stringify(jobConfig, null, 2));
