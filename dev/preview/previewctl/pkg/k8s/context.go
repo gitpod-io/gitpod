@@ -99,3 +99,13 @@ func OutputContext(kubeConfigSavePath string, config *api.Config) error {
 
 	return err
 }
+
+func DeleteContext(config *api.Config, name string) {
+	_, exists := config.Contexts[name]
+	if !exists {
+		return
+	}
+
+	delete(config.Contexts, name)
+	delete(config.Clusters, name)
+}

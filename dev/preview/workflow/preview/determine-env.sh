@@ -7,13 +7,19 @@ if [ -n "${GITHUB_ACTIONS-}" ] || [ -n "${WERFT_SERVICE_HOST-}" ]; then
   return
 fi
 
-if [ -n "${TF_VAR_infra_provider-}" ]; then
-  return
-fi
-
 state_output=$(terraform_output "infra_provider")
 # If we don't have the provider_choice in the outputs, bail. This is temporary until all envs have it set
 if [[ "${state_output}" != "harvester" && "${state_output}" != "gce" ]]; then
+  return
+fi
+
+# If we're switching providers, try to delete the old context if there was one, as they will be different and we won't install it again
+if [ -n "${TF_VAR_infra_provider-}" ] && [[ "${state_output}" != "${TF_VAR_infra_provider-}" ]]; then
+  kubectl config delete-context "${TF_WORKSPACE}" &>/dev/null || true
+  kubectl config delete-cluster "${TF_WORKSPACE}" &>/dev/null || true
+fi
+
+if [ -n "${TF_VAR_infra_provider-}" ]; then
   return
 fi
 
