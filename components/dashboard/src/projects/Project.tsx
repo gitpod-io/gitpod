@@ -373,12 +373,6 @@ export default function () {
                                                             {branch.changeHash?.substring(0, 8)}
                                                         </p>
                                                     )}
-                                                    <p>
-                                                        {avatar}Authored {formatDate(branch.changeDate)} ·{" "}
-                                                        <span className="font-mono">
-                                                            {branch.changeHash?.substring(0, 8)}
-                                                        </span>
-                                                    </p>
                                                 </div>
                                             </ItemField>
                                             <ItemField className="flex items-center my-auto">

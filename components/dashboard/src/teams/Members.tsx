@@ -236,9 +236,7 @@ export default function () {
                                 </ItemField>
                                 <ItemField className="my-auto">
                                     <Tooltip className="w-fit" content={dayjs(m.memberSince).format("MMM D, YYYY")}>
-                                        <span className="text-gray-400 hover:text-gray-200">
-                                            {dayjs(m.memberSince).fromNow()}
-                                        </span>
+                                        <span className="text-gray-400">{dayjs(m.memberSince).fromNow()}</span>
                                     </Tooltip>
                                 </ItemField>
                                 <ItemField className="flex items-center my-auto">

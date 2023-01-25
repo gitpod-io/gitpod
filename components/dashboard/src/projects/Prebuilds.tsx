@@ -293,8 +293,6 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                                                     Authored {formatDate(p.info.changeDate)} ·{" "}
                                                     {p.info.changeHash?.substring(0, 8)}
                                                 </Tooltip>
-                                                Authored {formatDate(p.info.changeDate)} ·{" "}
-                                                <span className="font-mono">{p.info.changeHash?.substring(0, 8)}</span>
                                             </p>
                                         </div>
                                     </ItemField>

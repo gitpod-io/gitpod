@@ -76,7 +76,7 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info }) => {
                 </div>
             </ItemField>
             <ItemField className="w-2/12 flex my-auto">
-                <Tooltip content={`Created ${dayjs(info.workspace.creationTime).fromNow()}`}>
+                <Tooltip content={dayjs(info.workspace.creationTime).format("MMM D, YYYY")}>
                     <div className="text-sm w-full text-gray-400 overflow-ellipsis truncate">
                         {dayjs(WorkspaceInfo.lastActiveISODate(info)).fromNow()}
                     </div>
