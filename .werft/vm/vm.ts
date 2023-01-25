@@ -29,7 +29,7 @@ export async function destroyPreview(options: { name: string }) {
  */
 export function vmExists(options: { name: string }) {
     const namespace = `preview-${options.name}`;
-    const status = exec(`kubectl --kubeconfig ${HARVESTER_KUBECONFIG_PATH} -n ${namespace} get vmi ${options.name}`, {
+    const status = exec(`kubectl --kubeconfig ${HARVESTER_KUBECONFIG_PATH} -n ${namespace} get svc proxy`, {
         dontCheckRc: true,
         silent: true,
     });
