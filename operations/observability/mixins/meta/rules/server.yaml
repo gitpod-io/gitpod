@@ -47,7 +47,7 @@ spec:
     # Rollout alerts
     - alert: JsonRpcApiErrorRates
       # Reasoning: the values are taken from past data
-      expr: sum(rate(gitpod_server_api_calls_total{statusCode!~"2..|429"}[5m])) by (cluster) / sum(rate(gitpod_server_api_calls_total[5m])) by (cluster) > 0.04
+      expr: sum(rate(gitpod_server_api_calls_total{statusCode!~"2.*|3.*|4.*"}[5m])) by (cluster) / sum(rate(gitpod_server_api_calls_total[5m])) by (cluster) > 0.04
       for: 5m
       labels:
         # sent to the team internal channel until we fine tuned it
