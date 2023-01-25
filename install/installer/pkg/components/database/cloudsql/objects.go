@@ -21,4 +21,5 @@ var Objects = common.CompositeRenderFunc(
 			ServicePort:   Port,
 		},
 	}),
+	CloudSQLGlobalObjects,
 )
