@@ -16,17 +16,26 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/clock"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
 
+const (
+	// kubernetesOperationTimeout is the time we give Kubernetes operations in general.
+	kubernetesOperationTimeout = 5 * time.Second
+)
+
 func NewWorkspaceReconciler(c client.Client, scheme *runtime.Scheme, cfg config.Configuration) (*WorkspaceReconciler, error) {
-	res := &WorkspaceReconciler{
+	reconciler := &WorkspaceReconciler{
 		Client: c,
 		Scheme: scheme,
 		Config: cfg,
+		clock:  clock.System(),
 	}
-	return res, nil
+
+	reconciler.metrics = *newMetrics(reconciler)
+	return reconciler, nil
 }
 
 // WorkspaceReconciler reconciles a Workspace object
@@ -35,6 +44,8 @@ type WorkspaceReconciler struct {
 	Scheme *runtime.Scheme
 
 	Config      config.Configuration
+	clock       *clock.HLC
+	metrics     metrics
 	OnReconcile func(ctx context.Context, ws *workspacev1.Workspace)
 }
 

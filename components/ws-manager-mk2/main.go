@@ -113,6 +113,11 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Workspace")
 		os.Exit(1)
 	}
+
+	if err = reconciler.RegisterMetrics(metrics.Registry); err != nil {
+		setupLog.Error(err, "unable to register metrics")
+		os.Exit(1)
+	}
 	// if err = (&workspacev1.Workspace{}).SetupWebhookWithManager(mgr); err != nil {
 	// 	setupLog.Error(err, "unable to create webhook", "webhook", "Workspace")
 	// 	os.Exit(1)
