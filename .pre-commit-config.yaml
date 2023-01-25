@@ -4,6 +4,7 @@ repos:
     hooks:
       #- id: check-yaml
       #  args: [--allow-multiple-documents]
+      - id: check-json
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: check-symlinks
