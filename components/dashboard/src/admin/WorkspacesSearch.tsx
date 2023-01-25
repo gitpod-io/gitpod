@@ -27,6 +27,7 @@ import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
 import Alert from "../components/Alert";
 import { isGitpodIo } from "../utils";
 import { WorkspaceStatusIndicator } from "../workspaces/WorkspaceStatusIndicator";
+import Tooltip from "../components/Tooltip";
 
 interface Props {
     user?: User;
@@ -204,9 +205,14 @@ function WorkspaceEntry(p: { ws: WorkspaceAndInstance }) {
                     </div>
                 </div>
                 <div className="flex w-2/12 self-center">
-                    <div className="text-sm w-full text-gray-400 truncate">
-                        {dayjs(p.ws.instanceCreationTime || p.ws.workspaceCreationTime).fromNow()}
-                    </div>
+                    <Tooltip
+                        className="w-fit"
+                        content={dayjs(p.ws.instanceCreationTime || p.ws.workspaceCreationTime).format("MMM D, YYYY")}
+                    >
+                        <div className="text-sm w-full text-gray-400 truncate">
+                            {dayjs(p.ws.instanceCreationTime || p.ws.workspaceCreationTime).fromNow()}
+                        </div>
+                    </Tooltip>
                 </div>
             </div>
         </Link>
