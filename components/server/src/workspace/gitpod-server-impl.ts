@@ -180,6 +180,8 @@ import * as grpc from "@grpc/grpc-js";
 import { CachingBlobServiceClientProvider } from "../util/content-service-sugar";
 import { CostCenterJSON } from "@gitpod/gitpod-protocol/lib/usage";
 import { createCookielessId, maskIp } from "../analytics";
+import { Permissions } from "../permissions/permissions";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -249,6 +251,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(VerificationService) protected readonly verificationService: VerificationService;
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
     @inject(MessageBusIntegration) protected readonly messageBus: MessageBusIntegration;
+
+    @inject(Permissions) protected readonly perms: Permissions;
 
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
@@ -2040,7 +2044,17 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async getTeams(ctx: TraceContext): Promise<Team[]> {
         // Note: this operation is per-user only, hence needs no resource guard
         const user = this.checkUser("getTeams");
-        return this.teamDB.findTeamsByUser(user.id);
+        const centralizedPermissionsEnabled = await this.centralizedPermissionsEnabled(user);
+
+        const teams = await this.teamDB.findTeamsByUser(user.id);
+
+        if (centralizedPermissionsEnabled) {
+            const permittedOrgs = await this.perms.listAllowedOrganizations(user.id);
+
+            return teams.filter((t) => permittedOrgs.has(t.id));
+        }
+
+        return teams;
     }
 
     public async getTeam(ctx: TraceContext, teamId: string): Promise<Team> {
@@ -2050,9 +2064,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "organization ID must be a valid UUID");
         }
 
-        this.checkAndBlockUser("getTeam");
+        const user = this.checkAndBlockUser("getTeam");
+        const centralizedPermissionsEnabled = await this.centralizedPermissionsEnabled(user, teamId);
 
         const team = await this.guardTeamOperation(teamId, "get");
+        if (centralizedPermissionsEnabled) {
+            await this.perms.allowedToReadOrganization(user.id, teamId);
+        }
+
         if (!team) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, `Team ${teamId} does not exist`);
         }
@@ -2066,7 +2085,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (!teamId || !uuidValidate(teamId)) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "organization ID must be a valid UUID");
         }
-        this.checkUser("updateTeam");
+
+        const user = this.checkUser("updateTeam");
+        const centralizedPermissionsEnabled = await this.centralizedPermissionsEnabled(user, teamId);
+
+        if (centralizedPermissionsEnabled) {
+            await this.perms.allowedToWriteOrganization(user.id, teamId);
+        }
+
         const existingTeam = await this.teamDB.findTeamById(teamId);
         if (!existingTeam) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, `Organization ${teamId} does not exist`);
@@ -2085,7 +2111,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "organization ID must be a valid UUID");
         }
 
-        this.checkUser("getTeamMembers");
+        const user = this.checkUser("getTeamMembers");
+        const centralizedPermissionsEnabled = await this.centralizedPermissionsEnabled(user, teamId);
+
+        if (centralizedPermissionsEnabled) {
+            await this.perms.allowedToReadOrganizationMembers(user.id, teamId);
+        }
+
         const team = await this.getTeam(ctx, teamId);
         const members = await this.teamDB.findMembersByTeam(team.id);
         await this.guardAccess({ kind: "team", subject: team, members }, "get");
@@ -2097,7 +2129,18 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         // Note: this operation is per-user only, hence needs no resource guard
         const user = this.checkAndBlockUser("createTeam");
+        const centralizedPermissionsEnabled = await this.centralizedPermissionsEnabled(user);
+
+        if (centralizedPermissionsEnabled) {
+            await this.perms.createOrganization(user.id);
+        }
+
         const team = await this.teamDB.createTeam(user.id, name);
+
+        if (centralizedPermissionsEnabled) {
+            await this.perms.grantOrganizationRole(user.id, "owner", team.id);
+        }
+
         const invite = await this.getGenericInvite(ctx, team.id);
         ctx.span?.setTag("teamId", team.id);
         this.analytics.track({
@@ -2117,6 +2160,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { inviteId });
 
         const user = this.checkAndBlockUser("joinTeam");
+        const centralizedPermissionsEnabled = await this.centralizedPermissionsEnabled(user);
+
         // Invites can be used by anyone, as long as they know the invite ID, hence needs no resource guard
         const invite = await this.teamDB.findTeamMembershipInviteById(inviteId);
         if (!invite || invite.invalidationTime !== "") {
@@ -2136,6 +2181,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                     invite_id: inviteId,
                 },
             });
+        }
+
+        if (centralizedPermissionsEnabled && team) {
+            this.perms.grantOrganizationRole(user.id, "member", team.id);
         }
 
         return team!;
@@ -2161,9 +2210,19 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "invalid role name");
         }
 
-        this.checkAndBlockUser("setTeamMemberRole");
+        const user = this.checkAndBlockUser("setTeamMemberRole");
+        const centralizedPermissionsEnabled = await this.centralizedPermissionsEnabled(user, teamId);
+
         await this.guardTeamOperation(teamId, "update");
+        if (centralizedPermissionsEnabled) {
+            await this.perms.allowedToWriteOrganizationMembers(user.id, teamId);
+        }
+
         await this.teamDB.setTeamMemberRole(userId, teamId, role);
+
+        if (centralizedPermissionsEnabled) {
+            await this.perms.grantOrganizationRole(userId, role, teamId);
+        }
     }
 
     public async removeTeamMember(ctx: TraceContext, teamId: string, userId: string): Promise<void> {
@@ -2178,12 +2237,26 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         const user = this.checkAndBlockUser("removeTeamMember");
+        const centralizedPermissionsEnabled = await this.centralizedPermissionsEnabled(user, teamId);
+
+        // The user is leaving a team, if they are removing themselves
+        const userIsLeavingTeam = user.id === userId;
+
         // Users are free to leave any team themselves, but only owners can remove others from their teams.
-        await this.guardTeamOperation(teamId, user.id === userId ? "get" : "update");
+        await this.guardTeamOperation(teamId, userIsLeavingTeam ? "get" : "update");
+        if (centralizedPermissionsEnabled) {
+            await this.perms.allowedToWriteOrganizationMembers(user.id, teamId);
+        }
+
         const membership = await this.teamDB.findTeamMembership(userId, teamId);
         if (!membership) {
             throw new Error(`Could not find membership for user '${userId}' in organization '${teamId}'`);
         }
+
+        if (centralizedPermissionsEnabled) {
+            await this.perms.removeOrganizationMember(userId, teamId);
+        }
+
         await this.teamDB.removeMemberFromTeam(userId, teamId);
         await this.onTeamMemberRemoved(userId, teamId, membership.id);
         this.analytics.track({
@@ -2203,8 +2276,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "organization ID must be a valid UUID");
         }
 
-        this.checkUser("getGenericInvite");
+        const user = this.checkUser("getGenericInvite");
+        const centralizedPermissionsEnabled = await this.centralizedPermissionsEnabled(user, teamId);
+
         await this.guardTeamOperation(teamId, "get");
+        if (centralizedPermissionsEnabled) {
+            await this.perms.allowedToWriteOrganizationMembers(user.id, teamId);
+        }
+
         const invite = await this.teamDB.findGenericInviteByTeamId(teamId);
         if (invite) {
             return invite;
@@ -2219,8 +2298,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "organization ID must be a valid UUID");
         }
 
-        this.checkAndBlockUser("resetGenericInvite");
+        const user = this.checkAndBlockUser("resetGenericInvite");
+        const centralizedPermissionsEnabled = await this.centralizedPermissionsEnabled(user, teamId);
+
         await this.guardTeamOperation(teamId, "update");
+        if (centralizedPermissionsEnabled) {
+            await this.perms.allowedToWriteOrganizationMembers(user.id, teamId);
+        }
+
         return this.teamDB.resetGenericInvite(teamId);
     }
 
@@ -3278,5 +3363,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             default:
                 return new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, err.details);
         }
+    }
+
+    private async centralizedPermissionsEnabled(user: User, teamId?: string): Promise<boolean> {
+        return await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
+            user: user,
+            teamId,
+        });
     }
 }
