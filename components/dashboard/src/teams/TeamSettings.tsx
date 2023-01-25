@@ -16,8 +16,13 @@ import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
 import { TeamsContext, useCurrentTeam, useIsOwnerOfCurrentTeam } from "./teams-context";
 
-export function getTeamSettingsMenu(params: { team?: Team; billingMode?: BillingMode; ssoEnabled?: boolean }) {
-    const { billingMode, ssoEnabled } = params;
+export function getTeamSettingsMenu(params: {
+    team?: Team;
+    billingMode?: BillingMode;
+    ssoEnabled?: boolean;
+    orgGitAuthProviders: boolean;
+}) {
+    const { billingMode, ssoEnabled, orgGitAuthProviders } = params;
     const result = [
         {
             title: "General",
@@ -28,6 +33,12 @@ export function getTeamSettingsMenu(params: { team?: Team; billingMode?: Billing
         result.push({
             title: "SSO",
             link: [`/sso`],
+        });
+    }
+    if (orgGitAuthProviders) {
+        result.push({
+            title: "Git Integrations",
+            link: [`/settings/git`],
         });
     }
     if (billingMode?.mode !== "none") {

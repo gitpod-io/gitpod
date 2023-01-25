@@ -5,11 +5,9 @@
  */
 
 import { Team, TeamMemberInfo } from "@gitpod/gitpod-protocol";
-import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
-import { getGitpodService } from "../service/service";
 import { useCurrentUser } from "../user-context";
 
 export const TeamsContext = createContext<{
@@ -54,17 +52,6 @@ export function useCurrentTeam(): Team | undefined {
 export function useTeams(): Team[] | undefined {
     const { teams } = useContext(TeamsContext);
     return teams;
-}
-
-export function useBillingModeForCurrentTeam(): BillingMode | undefined {
-    const team = useCurrentTeam();
-    const [billingMode, setBillingMode] = useState<BillingMode | undefined>();
-    useEffect(() => {
-        if (!!team) {
-            getGitpodService().server.getBillingModeForTeam(team.id).then(setBillingMode);
-        }
-    }, [team]);
-    return billingMode;
 }
 
 export function useTeamMemberInfos(): Record<string, TeamMemberInfo[]> {

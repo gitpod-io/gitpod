@@ -13,7 +13,7 @@ import { countries } from "countries-list";
 import gitpodIcon from "../icons/gitpod.svg";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
-import { useBillingModeForCurrentTeam, useCurrentTeam, useTeamMemberInfos } from "../teams/teams-context";
+import { useCurrentTeam, useTeamMemberInfos } from "../teams/teams-context";
 import ContextMenu from "../components/ContextMenu";
 import Separator from "../components/Separator";
 import PillMenuItem from "../components/PillMenuItem";
@@ -22,8 +22,9 @@ import { PaymentContext } from "../payment-context";
 import FeedbackFormModal from "../feedback-form/FeedbackModal";
 import { inResource, isGitpodIo } from "../utils";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
+import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import OrganizationSelector from "./OrganizationSelector";
+import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
 
 interface Entry {
     title: string;
@@ -35,8 +36,8 @@ export default function Menu() {
     const user = useCurrentUser();
     const team = useCurrentTeam();
     const location = useLocation();
-    const teamBillingMode = useBillingModeForCurrentTeam();
-    const { showUsageView, oidcServiceEnabled } = useContext(FeatureFlagContext);
+    const { data: teamBillingMode } = useOrgBillingMode();
+    const { showUsageView, oidcServiceEnabled, orgGitAuthProviders } = useFeatureFlags();
     const { setCurrency, setIsStudent, setIsChargebeeCustomer } = useContext(PaymentContext);
     const [userBillingMode, setUserBillingMode] = useState<BillingMode | undefined>(undefined);
     const [isFeedbackFormVisible, setFeedbackFormVisible] = useState<boolean>(false);
@@ -114,12 +115,23 @@ export default function Menu() {
                         team,
                         billingMode: teamBillingMode,
                         ssoEnabled: oidcServiceEnabled,
+                        orgGitAuthProviders,
                     }).flatMap((e) => e.link),
                 });
             }
         }
         return leftMenu;
-    }, [oidcServiceEnabled, showUsageView, team, teamBillingMode, teamMembers, user, userBillingMode]);
+    }, [
+        oidcServiceEnabled,
+        orgGitAuthProviders,
+        showUsageView,
+        team,
+        teamBillingMode,
+        teamMembers,
+        user?.additionalData?.isMigratedToTeamOnlyAttribution,
+        user?.id,
+        userBillingMode,
+    ]);
 
     const handleFeedbackFormClick = () => {
         setFeedbackFormVisible(true);

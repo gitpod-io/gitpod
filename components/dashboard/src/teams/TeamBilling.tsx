@@ -15,6 +15,7 @@ import Card from "../components/Card";
 import DropDown from "../components/DropDown";
 import PillLabel from "../components/PillLabel";
 import SolidCard from "../components/SolidCard";
+import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
 import { getExperimentsClient } from "../experiments/client";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { ReactComponent as CheckSvg } from "../images/check.svg";
@@ -22,12 +23,7 @@ import { PaymentContext } from "../payment-context";
 import { getGitpodService } from "../service/service";
 import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
-import {
-    useBillingModeForCurrentTeam,
-    useCurrentTeam,
-    useIsOwnerOfCurrentTeam,
-    useTeamMemberInfos,
-} from "./teams-context";
+import { useCurrentTeam, useIsOwnerOfCurrentTeam, useTeamMemberInfos } from "./teams-context";
 import TeamUsageBasedBilling from "./TeamUsageBasedBilling";
 
 type PendingPlan = Plan & { pendingSince: number };
@@ -37,7 +33,7 @@ export default function TeamBilling() {
     const team = useCurrentTeam();
     const members = useTeamMemberInfos();
     const isUserOwner = useIsOwnerOfCurrentTeam();
-    const teamBillingMode = useBillingModeForCurrentTeam();
+    const { data: teamBillingMode } = useOrgBillingMode();
     const [teamSubscription, setTeamSubscription] = useState<TeamSubscription2 | undefined>();
     const { currency, setCurrency } = useContext(PaymentContext);
     const [isUsageBasedBillingEnabled, setIsUsageBasedBillingEnabled] = useState<boolean>(false);

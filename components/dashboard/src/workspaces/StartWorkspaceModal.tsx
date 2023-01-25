@@ -4,8 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useCallback, useContext, useMemo, useState } from "react";
-import Modal from "../components/Modal";
+import { useCallback, useContext, useState } from "react";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import RepositoryFinder from "../components/RepositoryFinder";
 import SelectIDEComponent from "../components/SelectIDEComponent";
 import SelectWorkspaceClassComponent from "../components/SelectWorkspaceClassComponent";
@@ -58,61 +58,57 @@ export function StartWorkspaceModal(props: StartWorkspaceModalProps) {
         return true;
     }, [repo, selectedIde, selectedWsClass, useLatestIde, errorIde, errorWsClass]);
 
-    const buttons = useMemo(() => {
-        const result = [
-            <button key="cancel" className="secondary" onClick={props.onClose}>
-                Cancel
-            </button>,
-            <button
-                key="start"
-                className=""
-                onClick={startWorkspace}
-                disabled={!repo || repo.length === 0 || !!errorIde || !!errorWsClass}
-            >
-                New Workspace
-            </button>,
-        ];
-        if (!props.onClose) {
-            return result.slice(1, 2);
-        }
-        return result;
-    }, [props.onClose, startWorkspace, repo, errorIde, errorWsClass]);
-
     return (
         <Modal
             onClose={props.onClose || (() => {})}
             closeable={!!props.onClose}
             onEnter={startWorkspace}
             visible={true}
-            title="Open in Gitpod"
-            buttons={buttons}
         >
-            <div className="-mx-6 px-6">
-                <div className="text-xs text-gray-500">Start a new workspace with the following options.</div>
-                <div className="pt-3">
-                    <RepositoryFinder
-                        setSelection={props.contextUrl && !props.allowContextUrlChange ? undefined : setRepo}
-                        initialValue={repo}
-                    />
+            <ModalHeader>Open in Gitpod</ModalHeader>
+            <ModalBody noScroll>
+                <div className="-mx-6 px-6">
+                    <div className="text-xs text-gray-500">Start a new workspace with the following options.</div>
+                    <div className="pt-3">
+                        <RepositoryFinder
+                            setSelection={props.contextUrl && !props.allowContextUrlChange ? undefined : setRepo}
+                            initialValue={repo}
+                        />
+                    </div>
+                    <div className="pt-3">
+                        {errorIde && <div className="text-red-500 text-sm">{errorIde}</div>}
+                        <SelectIDEComponent
+                            onSelectionChange={onSelectEditorChange}
+                            setError={setErrorIde}
+                            selectedIdeOption={selectedIde}
+                            useLatest={useLatestIde}
+                        />
+                    </div>
+                    <div className="pt-3">
+                        {errorWsClass && <div className="text-red-500 text-sm">{errorWsClass}</div>}
+                        <SelectWorkspaceClassComponent
+                            onSelectionChange={setSelectedWsClass}
+                            setError={setErrorWsClass}
+                            selectedWorkspaceClass={selectedWsClass}
+                        />
+                    </div>
                 </div>
-                <div className="pt-3">
-                    {errorIde && <div className="text-red-500 text-sm">{errorIde}</div>}
-                    <SelectIDEComponent
-                        onSelectionChange={onSelectEditorChange}
-                        setError={setErrorIde}
-                        selectedIdeOption={selectedIde}
-                        useLatest={useLatestIde}
-                    />
-                </div>
-                <div className="pt-3">
-                    {errorWsClass && <div className="text-red-500 text-sm">{errorWsClass}</div>}
-                    <SelectWorkspaceClassComponent
-                        onSelectionChange={setSelectedWsClass}
-                        setError={setErrorWsClass}
-                        selectedWorkspaceClass={selectedWsClass}
-                    />
-                </div>
-            </div>
+            </ModalBody>
+            <ModalFooter>
+                {props.onClose && (
+                    <button key="cancel" className="secondary" onClick={props.onClose}>
+                        Cancel
+                    </button>
+                )}
+                <button
+                    key="start"
+                    className=""
+                    onClick={startWorkspace}
+                    disabled={!repo || repo.length === 0 || !!errorIde || !!errorWsClass}
+                >
+                    New Workspace
+                </button>
+            </ModalFooter>
         </Modal>
     );
 }
