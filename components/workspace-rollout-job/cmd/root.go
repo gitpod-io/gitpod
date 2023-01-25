@@ -20,8 +20,9 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-const (
-	version string = "0.0.0"
+var (
+	Version string
+	conf    config
 )
 
 type config struct {
@@ -34,10 +35,6 @@ type config struct {
 	okayScoreUntilNoData     int32
 	targetPositivePercentage int
 }
-
-var (
-	conf config
-)
 
 var rootCmd = &cobra.Command{
 	Short: "Rollout from old to a new cluster while monitoring metrics",
@@ -58,7 +55,7 @@ var rootCmd = &cobra.Command{
 		}
 
 		serverOpts := []baseserver.Option{
-			baseserver.WithVersion(version),
+			baseserver.WithVersion(Version),
 		}
 
 		srv, err := baseserver.New("workspace-rollout-job", serverOpts...)
@@ -134,10 +131,12 @@ func Execute() {
 	rootCmd.Flags().Int32Var(&conf.rolloutStepScore, "rollout-step-score", 10, "Score to be added to the new cluster, and decreased from the old cluster")
 	rootCmd.Flags().Int32Var(&conf.okayScoreUntilNoData, "okay-score-until-no-data", 60, "If the score is below this value, and there is no data, the rollout score will be considered okay")
 	rootCmd.Flags().IntVar(&conf.targetPositivePercentage, "target-positive-percentage", 95, "Target percentage of positive metrics")
-
 	rootCmd.MarkFlagRequired("old-cluster")
 	rootCmd.MarkFlagRequired("new-cluster")
 	rootCmd.MarkFlagRequired("prometheus-url")
+
+	rootCmd.Version = Version
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

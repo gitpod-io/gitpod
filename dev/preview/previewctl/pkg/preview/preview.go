@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 
 	"github.com/cockroachdb/errors"
@@ -32,7 +33,7 @@ type Config struct {
 
 	logger *logrus.Entry
 
-	vmiCreationTime *metav1.Time
+	creationTime *metav1.Time
 }
 
 func New(branch string, logger *logrus.Logger) (*Config, error) {
@@ -57,7 +58,7 @@ func New(branch string, logger *logrus.Logger) (*Config, error) {
 		},
 		harvesterClient: harvesterConfig,
 		logger:          logEntry,
-		vmiCreationTime: nil,
+		creationTime:    nil,
 	}, nil
 }
 
@@ -71,19 +72,24 @@ func (c *Config) Same(newPreview *Config) bool {
 		return false
 	}
 
-	c.ensureVMICreationTime()
-	newPreview.ensureVMICreationTime()
+	c.ensureCreationTime()
+	newPreview.ensureCreationTime()
 
-	return c.vmiCreationTime.Equal(newPreview.vmiCreationTime)
+	if c.creationTime == nil {
+		return false
+	}
+
+	return c.creationTime.Equal(newPreview.creationTime)
 }
 
-func (c *Config) ensureVMICreationTime() {
+// ensureCreationTime best-effort guess on when the preview got created, based on the creation timestamp of the service
+func (c *Config) ensureCreationTime() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if c.vmiCreationTime == nil {
-		creationTime, err := c.harvesterClient.GetVMICreationTimestamp(ctx, c.name, c.namespace)
-		c.vmiCreationTime = creationTime
+	if c.creationTime == nil {
+		creationTime, err := c.harvesterClient.GetSVCCreationTimestamp(ctx, c.name, c.namespace)
+		c.creationTime = creationTime
 		if err != nil {
 			c.logger.WithFields(logrus.Fields{"err": err}).Infof("Failed to get creation time")
 		}
@@ -113,7 +119,8 @@ func (c *Config) GetName() string {
 
 func InstallVMSSHKeys() error {
 	// TODO: https://github.com/gitpod-io/ops/issues/6524
-	return exec.Command("bash", "/workspace/gitpod/dev/preview/util/install-vm-ssh-keys.sh").Run()
+	path := filepath.Join(os.Getenv("LEEWAY_WORKSPACE_ROOT"), "dev/preview/util/install-vm-ssh-keys.sh")
+	return exec.Command("bash", path).Run()
 }
 
 func SSHPreview(branch string) error {
@@ -121,7 +128,9 @@ func SSHPreview(branch string) error {
 	if err != nil {
 		return err
 	}
-	sshCommand := exec.Command("bash", "/workspace/gitpod/dev/preview/ssh-vm.sh", "-b", branch)
+
+	path := filepath.Join(os.Getenv("LEEWAY_WORKSPACE_ROOT"), "dev/preview/ssh-vm.sh")
+	sshCommand := exec.Command("bash", path, "-b", branch)
 
 	// We need to bind standard output files to the command
 	// otherwise 'previewctl' will exit as soon as the script is run.

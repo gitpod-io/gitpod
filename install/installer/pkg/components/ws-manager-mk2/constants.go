@@ -10,8 +10,8 @@ const (
 	Component                  = common.WSManagerMk2Component
 	RPCPort                    = 8080
 	RPCPortName                = "rpc"
-	TLSSecretNameSecret        = "ws-manager-tls"
-	TLSSecretNameClient        = "ws-manager-client-tls"
+	TLSSecretNameSecret        = "ws-manager-mk2-tls"
+	TLSSecretNameClient        = "ws-manager-mk2-client-tls"
 	VolumeConfig               = "config"
 	VolumeTLSCerts             = "tls-certs"
 	VolumeWorkspaceTemplate    = "workspace-template"

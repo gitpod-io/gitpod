@@ -6,6 +6,7 @@ package wsproxy
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,24 +14,21 @@ import (
 )
 
 func role(ctx *common.RenderContext) ([]runtime.Object, error) {
-	return []runtime.Object{&rbacv1.Role{
-		TypeMeta: common.TypeMetaRole,
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      Component,
-			Namespace: ctx.Namespace,
-			Labels:    common.DefaultLabels(Component),
-		},
-		Rules: []rbacv1.PolicyRule{
-			{
-				APIGroups: []string{""},
-				Resources: []string{"pods"},
-				Verbs: []string{
-					"get",
-					"list",
-					"watch",
-				},
+	rules := []rbacv1.PolicyRule{
+		{
+			APIGroups: []string{""},
+			Resources: []string{"pods"},
+			Verbs: []string{
+				"get",
+				"list",
+				"watch",
 			},
-			{
+		},
+	}
+
+	ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		if ucfg.Workspace != nil && ucfg.Workspace.UseWsmanagerMk2 {
+			rules = append(rules, rbacv1.PolicyRule{
 				APIGroups: []string{"workspace.gitpod.io"},
 				Resources: []string{"workspaces"},
 				Verbs: []string{
@@ -38,7 +36,20 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 					"list",
 					"watch",
 				},
-			},
+			})
+		}
+
+		return nil
+	})
+
+	return []runtime.Object{&rbacv1.Role{
+		TypeMeta: common.TypeMetaRole,
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      Component,
+			Namespace: ctx.Namespace,
+			Labels:    common.DefaultLabels(Component),
 		},
-	}}, nil
+		Rules: rules,
+	},
+	}, nil
 }

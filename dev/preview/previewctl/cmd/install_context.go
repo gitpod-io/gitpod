@@ -57,7 +57,6 @@ func newInstallContextCmd(logger *logrus.Logger) *cobra.Command {
 		}
 
 		p, err := preview.New(branch, logger)
-
 		if err != nil {
 			return err
 		}

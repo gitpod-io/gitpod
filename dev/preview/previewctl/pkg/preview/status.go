@@ -40,14 +40,14 @@ func (c *Config) GetStatus(ctx context.Context) (Status, error) {
 
 	// If the VM got created in the last 120 mins, always assume it's active
 	// clock skew can go to hell
-	c.ensureVMICreationTime()
-	if c.vmiCreationTime.After(time.Now().Add(-120 * time.Minute)) {
+	c.ensureCreationTime()
+	if c.creationTime != nil && c.creationTime.After(time.Now().Add(-120*time.Minute)) {
 		logEntry.WithFields(log.Fields{
-			"created": c.vmiCreationTime,
+			"created": c.creationTime,
 		}).Debug("VM created in the past 120 mins, assuming active")
 
 		c.status.Active = true
-		c.status.Reason = fmt.Sprintf("VM created in the past 120 mins, assuming active: [%v]", c.vmiCreationTime.Time)
+		c.status.Reason = fmt.Sprintf("VM created in the past 120 mins, assuming active: [%v]", c.creationTime.Time)
 		return c.status, nil
 	}
 
@@ -144,7 +144,7 @@ func (c *Config) dbStatus(ctx context.Context, password, port string) (Status, e
 		if r.RowsAffected > 0 {
 			c.logger.WithFields(log.Fields{
 				"preview":  c.name,
-				"created":  c.vmiCreationTime,
+				"created":  c.creationTime,
 				"query":    q,
 				"activity": fmt.Sprintf("%v hours ago", res["timediff"]),
 			}).Debug("db has activity")

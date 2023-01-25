@@ -162,6 +162,9 @@ spec:
         - podSelector:
             matchLabels:
               component: ws-manager
+        - podSelector:
+            matchLabels:
+              component: ws-manager-mk2
   podSelector:
     matchLabels:
       app: gitpod
@@ -5524,7 +5527,8 @@ data:
           "crt": "/ws-manager-client-tls-certs/tls.crt",
           "key": "/ws-manager-client-tls-certs/tls.key"
         }
-      }
+      },
+      "enableWorkspaceCRD": false
     }
 kind: ConfigMap
 metadata:
@@ -6165,14 +6169,6 @@ rules:
   - ""
   resources:
   - pods
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - workspace.gitpod.io
-  resources:
-  - workspaces
   verbs:
   - get
   - list
@@ -10057,7 +10053,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 50975660db033ea3555b3ced8dcb5e88a95b63142b5402732d0bc8355f3daaed
+        gitpod.io/checksum_config: 11d2dce254049d5f6f089c5c55a59c1a60f61fdd0864031278f287a1bc8d1d08
       creationTimestamp: null
       labels:
         app: gitpod

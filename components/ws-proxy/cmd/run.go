@@ -79,15 +79,17 @@ var runCmd = &cobra.Command{
 		}
 		infoprov = append(infoprov, podInfoProv)
 
-		crdInfoProv, err := proxy.NewCRDWorkspaceInfoProvider(context.TODO(), mgr.GetClient(), mgr.GetScheme())
-		if err == nil {
-			if err = crdInfoProv.SetupWithManager(mgr); err != nil {
-				log.WithError(err).Warn(err, "unable to create CRD-based info provider", "controller", "Workspace")
+		if cfg.EnableWorkspaceCRD {
+			crdInfoProv, err := proxy.NewCRDWorkspaceInfoProvider(context.TODO(), mgr.GetClient(), mgr.GetScheme())
+			if err == nil {
+				if err = crdInfoProv.SetupWithManager(mgr); err != nil {
+					log.WithError(err).Warn(err, "unable to create CRD-based info provider", "controller", "Workspace")
+				} else {
+					infoprov = append(infoprov, crdInfoProv)
+				}
 			} else {
-				infoprov = append(infoprov, crdInfoProv)
+				log.WithError(err).Warn("cannot create CRD-based info provider")
 			}
-		} else {
-			log.WithError(err).Warn("cannot create CRD-based info provider")
 		}
 
 		if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
