@@ -2901,7 +2901,7 @@
       "title": "Pod Metrics",
       "type": "row"
     }
-  ],,
+  ],
   "refresh": false,
   "schemaVersion": 37,
   "style": "dark",
