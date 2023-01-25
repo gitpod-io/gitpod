@@ -43,6 +43,7 @@ async function createVM(werft: Werft, config: JobConfig) {
     const cpu = config.withLargeVM ? 12 : 6;
     const memory = config.withLargeVM ? 24 : 12;
     const infra = config.withGceVm ? "gce" : "harvester"
+    const replace = config.withGceVm ? "module.preview_gce[0].google_compute_instance.default" : "module.preview_harvester[0].harvester_virtualmachine.harvester"
 
     const environment = {
         // We pass the GCP credentials explicitly, otherwise for some reason TF doesn't pick them up
@@ -59,6 +60,7 @@ async function createVM(werft: Werft, config: JobConfig) {
         environment["TF_VAR_vm_storage_class"] = config.storageClass
     }
 
+
     const variables = Object
         .entries(environment)
         .filter(([_, value]) => value.length > 0)
@@ -73,7 +75,7 @@ async function createVM(werft: Werft, config: JobConfig) {
         werft.log(prepareSlices.BOOT_VM, "Cleaning previously created VM");
         // -replace=... forces recreation of the resource
         await execStream(`${variables} \
-                                   TF_CLI_ARGS_plan=-replace=module.preview_harvester[0].harvester_virtualmachine.harvester \
+                                   TF_CLI_ARGS_plan=-replace=${replace} \
                                    leeway run dev/preview:create-preview`, {slice: prepareSlices.BOOT_VM});
     }
 
