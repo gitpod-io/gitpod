@@ -232,8 +232,6 @@ export interface ConfigSerialized {
      * This is the same signing key used by Public API
      */
     patSigningKeyFile?: string;
-
-    useOldCookieName?: boolean;
 }
 
 export namespace ConfigFile {
