@@ -69,6 +69,7 @@ const Members = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/Me
 const TeamSettings = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/TeamSettings"));
 const TeamBilling = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/TeamBilling"));
 const SSO = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/SSO"));
+const TeamGitIntegrations = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/GitIntegrationsPage"));
 const NewProject = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/NewProject"));
 const Projects = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/Projects"));
 const Project = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/Project"));
@@ -232,6 +233,8 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                     <Route exact path="/members" component={Members} />
                     <Route exact path="/projects" component={Projects} />
                     <Route exact path="/settings" component={TeamSettings} />
+                    <Route exact path="/settings/git" component={TeamGitIntegrations} />
+                    {/* TODO: migrate other org settings pages underneath /settings prefix */}
                     <Route exact path="/billing" component={TeamBilling} />
                     <Route exact path="/sso" component={SSO} />
                     <Route exact path={`/projects/:projectSlug`} component={Project} />

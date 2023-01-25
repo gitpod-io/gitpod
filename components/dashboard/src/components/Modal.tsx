@@ -118,13 +118,15 @@ export const ModalHeader = ({ children }: ModalHeaderProps) => {
 type ModalBodyProps = {
     children: ReactNode;
     hideDivider?: boolean;
+    noScroll?: boolean;
 };
 
-export const ModalBody = ({ children, hideDivider = false }: ModalBodyProps) => {
+export const ModalBody = ({ children, hideDivider = false, noScroll = false }: ModalBodyProps) => {
     return (
         <div
             className={cn("border-gray-200 dark:border-gray-800 -mx-6 px-6 ", {
                 "border-t border-b mt-2 py-4": !hideDivider,
+                "overflow-y-auto": !noScroll,
             })}
         >
             {children}
