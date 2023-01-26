@@ -16,6 +16,7 @@ packages:
     deps:
       - :cli
     argdeps:
+      - version
       - imageRepoBase
     config:
       dockerfile: leeway.Dockerfile
