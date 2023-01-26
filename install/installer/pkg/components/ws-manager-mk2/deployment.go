@@ -54,8 +54,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			RunAsUser: pointer.Int64(31002),
 		},
 		Containers: []corev1.Container{{
-			Name:            Component,
-			Args:            []string{"--config", "/config/config.json"},
+			Name: Component,
+			Args: []string{
+				"--config", "/config/config.json",
+				"--leader-elect",
+			},
 			Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.WSManagerMk2.Version),
 			ImagePullPolicy: corev1.PullIfNotPresent,
 			Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
