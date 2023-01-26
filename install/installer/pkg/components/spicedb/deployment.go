@@ -177,6 +177,11 @@ func dbWaiter(ctx *common.RenderContext) v1.Container {
 }
 
 func spicedbEnvVars(ctx *common.RenderContext) []corev1.EnvVar {
+	cfg := getExperimentalSpiceDBConfig(ctx)
+	if cfg == nil {
+		return nil
+	}
+
 	return common.MergeEnv(
 		dbEnvVars(ctx),
 		[]corev1.EnvVar{
@@ -185,8 +190,15 @@ func spicedbEnvVars(ctx *common.RenderContext) []corev1.EnvVar {
 				Value: "$(DB_USERNAME):$(DB_PASSWORD)@tcp($(DB_HOST):$(DB_PORT))/authorization?parseTime=true",
 			},
 			{
-				Name:  "SPICEDB_GRPC_PRESHARED_KEY",
-				Value: "static-for-now",
+				Name: "SPICEDB_GRPC_PRESHARED_KEY",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: secretRef(cfg),
+						},
+						Key: SecretPresharedKeyName,
+					},
+				},
 			},
 		},
 	)
