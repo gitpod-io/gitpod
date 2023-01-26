@@ -67,31 +67,12 @@ export class FrontendDashboardServiceClient implements IDEFrontendDashboardServi
         );
     }
 
+    // always perfrom redirect to dekstop IDE on gitpod origin
+    // to avoid confirmation popup on each workspace origin
     openDesktopIDE(url: string): void {
-        if (this.version && this.version >= 1) {
-            // always perfrom redirect to dekstop IDE on gitpod origin
-            // to avoid confirmation popup on each workspace origin
-            this.serverWindow.postMessage(
-                { type: "ide-open-desktop", url } as IDEFrontendDashboardService.OpenDesktopIDE,
-                serverUrl.url.origin,
-            );
-            return;
-        }
-
-        // TODO(ak) remove after new dashboard is deployed
-        let redirect = false;
-        try {
-            const desktopLink = new URL(url);
-            redirect = desktopLink.protocol !== "http:" && desktopLink.protocol !== "https:";
-        } catch (e) {
-            console.error("invalid desktop link:", e);
-        }
-        // redirect only if points to desktop application
-        // don't navigate browser to another page
-        if (redirect) {
-            window.location.href = url;
-        } else {
-            window.open(url, "_blank", "noopener");
-        }
+        this.serverWindow.postMessage(
+            { type: "ide-open-desktop", url } as IDEFrontendDashboardService.OpenDesktopIDE,
+            serverUrl.url.origin,
+        );
     }
 }

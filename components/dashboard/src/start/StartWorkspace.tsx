@@ -531,10 +531,6 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                         {
                                             title: "Open in Browser",
                                             onClick: () => {
-                                                // TODO(ak): delete after supervisor deploy
-                                                window.parent.postMessage({ type: "openBrowserIde" }, "*");
-                                                // TODO(ak): end of delete
-
                                                 this.ideFrontendService?.openBrowserIDE();
                                             },
                                         },
