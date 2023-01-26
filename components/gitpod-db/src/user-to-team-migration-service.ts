@@ -14,6 +14,7 @@ import { WorkspaceDB } from "./workspace-db";
 import { TypeORM } from "./typeorm/typeorm";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { UserDB } from "./user-db";
+import { Synchronizer } from "./typeorm/synchronizer";
 
 @injectable()
 export class UserToTeamMigrationService {
@@ -22,21 +23,29 @@ export class UserToTeamMigrationService {
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(WorkspaceDB) protected readonly workspaceDB: WorkspaceDB;
     @inject(TypeORM) protected readonly typeorm: TypeORM;
+    @inject(Synchronizer) protected readonly synchronizer: Synchronizer;
 
-    async migrateUser(user: User): Promise<User> {
-        if (!(await this.needsMigration(user))) {
-            return user;
+    async migrateUser(candidate: User): Promise<User> {
+        // do a quick check before going into synchonization for the common case that the user has been migrated already
+        if (!(await this.needsMigration(candidate))) {
+            return candidate;
         }
-        AdditionalUserData.set(user, { isMigratedToTeamOnlyAttribution: true });
-        await this.userDB.storeUser(user);
-        try {
-            await this.internalMigrateUser(user);
-        } catch (error) {
-            console.error("Failed to migrate user to team.", error);
-            AdditionalUserData.set(user, { isMigratedToTeamOnlyAttribution: false });
+        return this.synchronizer.synchronized("migrate-" + candidate.id, "migrateUser", async () => {
+            const user = (await this.userDB.findUserById(candidate.id)) as User;
+            if (!(await this.needsMigration(user))) {
+                return user;
+            }
+            AdditionalUserData.set(user, { isMigratedToTeamOnlyAttribution: true });
             await this.userDB.storeUser(user);
-        }
-        return user;
+            try {
+                await this.internalMigrateUser(user);
+            } catch (error) {
+                console.error("Failed to migrate user to team.", error);
+                AdditionalUserData.set(user, { isMigratedToTeamOnlyAttribution: false });
+                await this.userDB.storeUser(user);
+            }
+            return user;
+        });
     }
 
     private async internalMigrateUser(user: User): Promise<Team> {

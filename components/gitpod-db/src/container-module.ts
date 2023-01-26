@@ -69,6 +69,7 @@ import { WebhookEventDB } from "./webhook-event-db";
 import { WebhookEventDBImpl } from "./typeorm/webhook-event-db-impl";
 import { PersonalAccessTokenDBImpl } from "./typeorm/personal-access-token-db-impl";
 import { UserToTeamMigrationService } from "./user-to-team-migration-service";
+import { Synchronizer } from "./typeorm/synchronizer";
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
@@ -163,4 +164,5 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
     bind(LicenseDB).to(LicenseDBImpl).inSingletonScope();
     bind(OssAllowListDB).to(OssAllowListDBImpl).inSingletonScope();
     bind(UserToTeamMigrationService).toSelf().inSingletonScope();
+    bind(Synchronizer).toSelf().inSingletonScope();
 });
