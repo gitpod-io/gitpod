@@ -6,6 +6,7 @@ package controllers
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -19,14 +20,18 @@ import (
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/clock"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
+	"github.com/go-logr/logr"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
+	metricsNamespace          = "gitpod"
+	metricsWorkspaceSubsystem = "ws_manager"
 	// kubernetesOperationTimeout is the time we give Kubernetes operations in general.
 	kubernetesOperationTimeout = 5 * time.Second
 )
 
-func NewWorkspaceReconciler(c client.Client, scheme *runtime.Scheme, cfg config.Configuration) (*WorkspaceReconciler, error) {
+func NewWorkspaceReconciler(c client.Client, scheme *runtime.Scheme, cfg config.Configuration, reg prometheus.Registerer) (*WorkspaceReconciler, error) {
 	reconciler := &WorkspaceReconciler{
 		Client: c,
 		Scheme: scheme,
@@ -34,7 +39,10 @@ func NewWorkspaceReconciler(c client.Client, scheme *runtime.Scheme, cfg config.
 		clock:  clock.System(),
 	}
 
-	reconciler.metrics = *newMetrics(reconciler)
+	metrics := newControllerMetrics(reconciler)
+	reg.Register(metrics)
+	reconciler.metrics = metrics
+
 	return reconciler, nil
 }
 
@@ -45,7 +53,7 @@ type WorkspaceReconciler struct {
 
 	Config      config.Configuration
 	clock       *clock.HLC
-	metrics     metrics
+	metrics     *controllerMetrics
 	OnReconcile func(ctx context.Context, ws *workspacev1.Workspace)
 }
 
@@ -95,6 +103,11 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
+	err = r.updateMetrics(ctx, &workspace)
+	if err != nil {
+		log.Error(err, "could not update metrics")
+	}
+
 	result, err := r.actOnStatus(ctx, &workspace, workspacePods)
 	if err != nil {
 		return result, err
@@ -114,20 +127,20 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 }
 
 func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *workspacev1.Workspace, workspacePods corev1.PodList) (ctrl.Result, error) {
-	logger := log.FromContext(ctx)
+	log := log.FromContext(ctx)
 
 	// if there isn't a workspace pod and we're not currently deleting this workspace,
 	// create one.
 	if len(workspacePods.Items) == 0 && workspace.Status.PodStarts == 0 {
 		sctx, err := newStartWorkspaceContext(ctx, &r.Config, workspace)
 		if err != nil {
-			logger.Error(err, "unable to create startWorkspace context")
+			log.Error(err, "unable to create startWorkspace context")
 			return ctrl.Result{Requeue: true}, err
 		}
 
 		pod, err := r.createWorkspacePod(sctx)
 		if err != nil {
-			logger.Error(err, "unable to produce workspace pod")
+			log.Error(err, "unable to produce workspace pod")
 			return ctrl.Result{}, err
 		}
 
@@ -139,7 +152,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		if errors.IsAlreadyExists(err) {
 			// pod exists, we're good
 		} else if err != nil {
-			logger.Error(err, "unable to create Pod for Workspace", "pod", pod)
+			log.Error(err, "unable to create Pod for Workspace", "pod", pod)
 			return ctrl.Result{Requeue: true}, err
 		} else {
 			// TODO(cw): replicate the startup mechanism where pods can fail to be scheduled,
@@ -207,10 +220,74 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 	return ctrl.Result{}, nil
 }
 
+func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *workspacev1.Workspace) error {
+	log := log.FromContext(ctx)
+
+	phase := workspace.Status.Phase
+
+	switch {
+	case phase == workspacev1.WorkspacePhasePending ||
+		phase == workspacev1.WorkspacePhaseCreating ||
+		phase == workspacev1.WorkspacePhaseInitializing:
+
+		if conditionWithStatusAndReson(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "") {
+			r.metrics.countTotalRestoreFailures(&log, workspace)
+		}
+
+		if conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) {
+			r.metrics.countWorkspaceStartupFailure(&log, workspace)
+		}
+
+	case phase == workspacev1.WorkspacePhaseRunning:
+		r.metrics.recordWorkspaceStartupTime(&log, workspace)
+		if conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)) {
+			r.metrics.countTotalRestores(&log, workspace)
+		}
+
+	case phase == workspacev1.WorkspacePhaseStopped:
+		if conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) {
+			r.metrics.countTotalBackupFailures(&log, workspace)
+		}
+
+		if conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) {
+			r.metrics.countTotalBackups(&log, workspace)
+		}
+
+		r.metrics.countWorkspaceStop(&log, workspace)
+	}
+
+	return nil
+}
+func (r *WorkspaceReconciler) RegisterMetrics(reg prometheus.Registerer) error {
+	return reg.Register(r.metrics)
+}
+
+func (r *WorkspaceReconciler) GetWorkspaces(context.Context) workspacev1.WorkspaceList {
+	return workspacev1.WorkspaceList{}
+}
+
 func conditionPresentAndTrue(cond []metav1.Condition, tpe string) bool {
 	for _, c := range cond {
 		if c.Type == tpe {
 			return c.Status == metav1.ConditionTrue
+		}
+	}
+	return false
+}
+
+// func conditionPresentAndFalse(cond []metav1.Condition, tpe string) bool {
+// 	for _, c := range cond {
+// 		if c.Type == tpe {
+// 			return c.Status == metav1.ConditionFalse
+// 		}
+// 	}
+// 	return false
+// }
+
+func conditionWithStatusAndReson(cond []metav1.Condition, tpe string, status bool, reason string) bool {
+	for _, c := range cond {
+		if c.Type == tpe {
+			return c.Type == tpe && c.Reason == reason
 		}
 	}
 	return false
@@ -251,7 +328,7 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 func AddUniqueCondition(conds []metav1.Condition, cond metav1.Condition) []metav1.Condition {
 	if cond.Reason == "" {
-		cond.Reason = "Foo"
+		cond.Reason = "unknown"
 	}
 
 	for i, c := range conds {
@@ -262,4 +339,293 @@ func AddUniqueCondition(conds []metav1.Condition, cond metav1.Condition) []metav
 	}
 
 	return append(conds, cond)
+}
+
+type controllerMetrics struct {
+	startupTimeHistVec           *prometheus.HistogramVec
+	totalStartsFailureCounterVec *prometheus.CounterVec
+	totalStopsCounterVec         *prometheus.CounterVec
+
+	totalBackupCounterVec         *prometheus.CounterVec
+	totalBackupFailureCounterVec  *prometheus.CounterVec
+	totalRestoreCounterVec        *prometheus.CounterVec
+	totalRestoreFailureCounterVec *prometheus.CounterVec
+
+	workspacePhases *phaseTotalVec
+	timeoutSettings *timeoutSettingsVec
+}
+
+func newControllerMetrics(r *WorkspaceReconciler) *controllerMetrics {
+	return &controllerMetrics{
+		startupTimeHistVec: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      "workspace_startup_seconds",
+			Help:      "time it took for workspace pods to reach the running phase",
+			Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
+		}, []string{"type", "class"}),
+		totalStartsFailureCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      "workspace_starts_failure_total",
+			Help:      "total number of workspaces that failed to start",
+		}, []string{"type", "class"}),
+		totalStopsCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      "workspace_stops_total",
+			Help:      "total number of workspaces stopped",
+		}, []string{"reason", "type", "class"}),
+
+		totalBackupCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      "workspace_backups_total",
+			Help:      "total number of workspace backups",
+		}, []string{"type", "class"}),
+		totalBackupFailureCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      "workspace_backups_failure_total",
+			Help:      "total number of workspace backup failures",
+		}, []string{"type", "class"}),
+		totalRestoreCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      "workspace_restores_total",
+			Help:      "total number of workspace restores",
+		}, []string{"type", "class"}),
+		totalRestoreFailureCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      "workspace_restores_failure_total",
+			Help:      "total number of workspace restore failures",
+		}, []string{"type", "class"}),
+
+		workspacePhases: newPhaseTotalVec(r),
+		timeoutSettings: newTimeoutSettingsVec(r),
+	}
+}
+
+func (m *controllerMetrics) recordWorkspaceStartupTime(log *logr.Logger, ws *workspacev1.Workspace) {
+	class := ws.Spec.Class
+	tpe := string(ws.Spec.Type)
+
+	hist, err := m.startupTimeHistVec.GetMetricWithLabelValues(tpe, class)
+	if err != nil {
+		log.Error(err, "could not record workspace startup time", "type", tpe, "class", class)
+	}
+
+	hist.Observe(float64(time.Since(ws.CreationTimestamp.Time).Seconds()))
+}
+
+func (m *controllerMetrics) countWorkspaceStartupFailure(log *logr.Logger, ws *workspacev1.Workspace) {
+	class := ws.Spec.Class
+	tpe := string(ws.Spec.Type)
+
+	counter, err := m.totalStartsFailureCounterVec.GetMetricWithLabelValues(tpe, class)
+	if err != nil {
+		log.Error(err, "could not count workspace startup failure", "type", tpe, "class", class)
+	}
+
+	counter.Inc()
+}
+
+func (m *controllerMetrics) countWorkspaceStop(log *logr.Logger, ws *workspacev1.Workspace) {
+	class := ws.Spec.Class
+	tpe := string(ws.Spec.Type)
+
+	counter, err := m.totalStopsCounterVec.GetMetricWithLabelValues(tpe, class)
+	if err != nil {
+		log.Error(err, "could not count workspace stop", "type", tpe, "class", class)
+	}
+
+	counter.Inc()
+}
+
+func (m *controllerMetrics) countTotalBackups(log *logr.Logger, ws *workspacev1.Workspace) {
+	class := ws.Spec.Class
+	tpe := string(ws.Spec.Type)
+
+	counter, err := m.totalBackupCounterVec.GetMetricWithLabelValues(tpe, class)
+	if err != nil {
+		log.Error(err, "could not count workspace backup", "type", tpe, "class", class)
+	}
+
+	counter.Inc()
+}
+
+func (m *controllerMetrics) countTotalBackupFailures(log *logr.Logger, ws *workspacev1.Workspace) {
+	class := ws.Spec.Class
+	tpe := string(ws.Spec.Type)
+
+	counter, err := m.totalBackupFailureCounterVec.GetMetricWithLabelValues(tpe, class)
+	if err != nil {
+		log.Error(err, "could not count workspace backup failure", "type", tpe, "class", class)
+	}
+
+	counter.Inc()
+}
+
+func (m *controllerMetrics) countTotalRestores(log *logr.Logger, ws *workspacev1.Workspace) {
+	class := ws.Spec.Class
+	tpe := string(ws.Spec.Type)
+
+	counter, err := m.totalRestoreCounterVec.GetMetricWithLabelValues(tpe, class)
+	if err != nil {
+		log.Error(err, "could not count workspace restore", "type", tpe, "class", class)
+	}
+
+	counter.Inc()
+}
+
+func (m *controllerMetrics) countTotalRestoreFailures(log *logr.Logger, ws *workspacev1.Workspace) {
+	class := ws.Spec.Class
+	tpe := string(ws.Spec.Type)
+
+	counter, err := m.totalRestoreFailureCounterVec.GetMetricWithLabelValues(tpe, class)
+	if err != nil {
+		log.Error(err, "could not record workspace restore failure", "type", tpe, "class", class)
+	}
+
+	counter.Inc()
+}
+
+// Describe implements Collector. It will send exactly one Desc to the provided channel.
+func (m *controllerMetrics) Describe(ch chan<- *prometheus.Desc) {
+	m.startupTimeHistVec.Describe(ch)
+	m.totalStopsCounterVec.Describe(ch)
+	m.totalStartsFailureCounterVec.Describe(ch)
+
+	m.totalBackupCounterVec.Describe(ch)
+	m.totalBackupFailureCounterVec.Describe(ch)
+	m.totalRestoreCounterVec.Describe(ch)
+	m.totalRestoreFailureCounterVec.Describe(ch)
+
+	m.workspacePhases.Describe(ch)
+	m.timeoutSettings.Describe(ch)
+}
+
+// Collect implements Collector.
+func (m *controllerMetrics) Collect(ch chan<- prometheus.Metric) {
+	m.startupTimeHistVec.Collect(ch)
+	m.totalStopsCounterVec.Collect(ch)
+	m.totalStartsFailureCounterVec.Collect(ch)
+
+	m.totalBackupCounterVec.Collect(ch)
+	m.totalBackupFailureCounterVec.Collect(ch)
+	m.totalRestoreCounterVec.Collect(ch)
+	m.totalRestoreFailureCounterVec.Collect(ch)
+
+	m.workspacePhases.Collect(ch)
+	m.timeoutSettings.Collect(ch)
+}
+
+// phaseTotalVec returns a gauge vector counting the workspaces per phase
+type phaseTotalVec struct {
+	name       string
+	desc       *prometheus.Desc
+	reconciler *WorkspaceReconciler
+}
+
+func newPhaseTotalVec(r *WorkspaceReconciler) *phaseTotalVec {
+	name := prometheus.BuildFQName(metricsNamespace, metricsWorkspaceSubsystem, "workspace_phase_total")
+	return &phaseTotalVec{
+		name:       name,
+		desc:       prometheus.NewDesc(name, "Current number of workspaces per phase", []string{"phase", "type", "class"}, prometheus.Labels(map[string]string{})),
+		reconciler: r,
+	}
+}
+
+// Describe implements Collector. It will send exactly one Desc to the provided channel.
+func (ptv *phaseTotalVec) Describe(ch chan<- *prometheus.Desc) {
+	ch <- ptv.desc
+}
+
+// Collect implements Collector.
+func (ptv *phaseTotalVec) Collect(ch chan<- prometheus.Metric) {
+	ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
+	defer cancel()
+
+	var workspaces workspacev1.WorkspaceList
+	err := ptv.reconciler.List(ctx, &workspaces, client.InNamespace(ptv.reconciler.Config.Namespace))
+	if err != nil {
+		return
+	}
+
+	counts := make(map[string]int)
+	for _, ws := range workspaces.Items {
+		counts[string(ws.Spec.Type)+"::"+string(ws.Status.Phase)+"::"+ws.Spec.Class]++
+	}
+
+	for key, count := range counts {
+		segs := strings.Split(key, "::")
+		tpe, phase, class := segs[0], segs[1], segs[2]
+
+		metric, err := prometheus.NewConstMetric(ptv.desc, prometheus.GaugeValue, float64(count), phase, tpe, class)
+		if err != nil {
+			continue
+		}
+
+		ch <- metric
+	}
+}
+
+// timeoutSettingsVec provides a gauge of the currently active/inactive workspaces.
+// Adding both up returns the total number of workspaces.
+type timeoutSettingsVec struct {
+	name       string
+	reconciler *WorkspaceReconciler
+	desc       *prometheus.Desc
+}
+
+func newTimeoutSettingsVec(r *WorkspaceReconciler) *timeoutSettingsVec {
+	name := prometheus.BuildFQName("wsman", "workspace", "timeout_settings_total")
+	desc := prometheus.NewDesc(
+		name,
+		"Current number of workspaces per timeout setting",
+		[]string{"timeout"},
+		prometheus.Labels(map[string]string{}),
+	)
+	return &timeoutSettingsVec{
+		name:       name,
+		reconciler: r,
+		desc:       desc,
+	}
+}
+
+// Describe implements Collector. It will send exactly one Desc to the provided channel.
+func (vec *timeoutSettingsVec) Describe(ch chan<- *prometheus.Desc) {
+	ch <- vec.desc
+}
+
+// Collect implements Collector.
+func (tsv *timeoutSettingsVec) Collect(ch chan<- prometheus.Metric) {
+	ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
+	defer cancel()
+
+	var workspaces workspacev1.WorkspaceList
+	err := tsv.reconciler.List(ctx, &workspaces, client.InNamespace(tsv.reconciler.Config.Namespace))
+	if err != nil {
+		return
+	}
+
+	timeouts := make(map[time.Duration]int)
+	for _, ws := range workspaces.Items {
+		if ws.Spec.Timeout.Time == nil {
+			continue
+		}
+
+		timeouts[ws.Spec.Timeout.Time.Duration]++
+	}
+
+	for phase, cnt := range timeouts {
+		// metrics cannot be re-used, we have to create them every single time
+		metric, err := prometheus.NewConstMetric(tsv.desc, prometheus.GaugeValue, float64(cnt), phase.String())
+		if err != nil {
+			continue
+		}
+
+		ch <- metric
+	}
 }
