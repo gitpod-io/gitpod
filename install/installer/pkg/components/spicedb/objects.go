@@ -23,6 +23,7 @@ func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
 		common.DefaultServiceAccount(Component),
 		migrations,
 		networkpolicy,
+		secret,
 	)(ctx)
 }
 

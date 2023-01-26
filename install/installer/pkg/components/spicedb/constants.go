@@ -29,4 +29,6 @@ const (
 	ContainerName = "spicedb"
 
 	CloudSQLProxyPort = 3306
+
+	SecretPresharedKeyName = "presharedKey"
 )
