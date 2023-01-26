@@ -74,7 +74,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 								Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 									common.DefaultEnv(&ctx.Config),
-									dbEnvVars(ctx),
 									spicedbEnvVars(ctx),
 								)),
 								Ports: []corev1.ContainerPort{
@@ -139,15 +138,24 @@ func dbEnvVars(ctx *common.RenderContext) []corev1.EnvVar {
 	containerEnvVars := common.DatabaseEnv(&ctx.Config)
 
 	if ctx.Config.Database.CloudSQLGlobal != nil {
-		containerEnvVars = append(containerEnvVars, common.MergeEnv(
+		var withoutDBHost []corev1.EnvVar
+
+		for _, v := range containerEnvVars {
+			if v.Name == "DB_HOST" {
+				continue
+			}
+			withoutDBHost = append(withoutDBHost, v)
+		}
+
+		withoutDBHost = append(withoutDBHost,
 			// Override the DB host to point to global cloudsql
-			[]corev1.EnvVar{
-				{
-					Name:  "DB_HOST",
-					Value: cloudsql.ComponentGlobal,
-				},
+			corev1.EnvVar{
+				Name:  "DB_HOST",
+				Value: cloudsql.ComponentGlobal,
 			},
-		)...)
+		)
+
+		containerEnvVars = withoutDBHost
 	}
 
 	return containerEnvVars
