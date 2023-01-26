@@ -2,13 +2,14 @@ name: Build
 on:
   pull_request:
     types: [opened, synchronize, edited]
+  push:
+    branches: [main]
 
 jobs:
 
   configuration:
     name: Configure job parameters
     runs-on: [self-hosted]
-    if: ${{ contains(github.event.pull_request.body, '[x] /werft with-github-actions') }}
     concurrency:
       group: ${{ github.head_ref || github.ref }}-configuration
       cancel-in-progress: true
@@ -16,6 +17,7 @@ jobs:
       version: ${{ steps.output.outputs.version }}
       preview_enable: ${{ steps.output.outputs.preview_enable }}
       preview_infra_provider: ${{ steps.output.outputs.preview_infra_provider }}
+      build_enable: ${{ steps.output.outputs.build_enable }}
       build_no_cache: ${{ steps.output.outputs.build_no_cache }}
       build_no_test: ${{ steps.output.outputs.build_no_test }}
       build_leeway_target: ${{ steps.output.outputs.build_leeway_target }}
@@ -33,6 +35,7 @@ jobs:
             echo "version=${{ steps.branches.outputs.sanitized-branch-name }}.${{github.run_number}}"
             echo "preview_enable=${{ contains(github.event.pull_request.body, '[x] /werft with-preview') }}"
             echo "preview_infra_provider=${{ contains(github.event.pull_request.body, '[X] /werft with-gce-vm') && 'gce' || 'harvester' }}"
+            echo "build_enable=${{ contains(github.event.pull_request.body, '[x] /werft with-github-actions') }}"
             echo "build_no_cache=${{ contains(github.event.pull_request.body, '[x] leeway-no-cache') }}"
             echo "build_no_test=${{ contains(github.event.pull_request.body, '[x] /werft no-test') }}"
             echo "build_leeway_target=$(echo "$PR_DESC" | sed -n -e 's/^.*leeway-target=//p' | sed 's/\r$//')"
@@ -51,7 +54,7 @@ jobs:
       previewctl_hash: ${{ steps.build.outputs.previewctl_hash }}
     steps:
       - uses: actions/checkout@v3
-      - name: Build dev:all
+      - name: Build previewctl
         id: build
         shell: bash
         env:
@@ -87,6 +90,7 @@ jobs:
   build-gitpod:
     name: Build Gitpod
     needs: [configuration]
+    if: ${{ needs.configuration.outputs.build_enable }}
     runs-on: [self-hosted]
     concurrency:
       group: ${{ github.head_ref || github.ref }}-build-gitpod
