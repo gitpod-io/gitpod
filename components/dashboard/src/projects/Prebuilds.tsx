@@ -301,7 +301,7 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                                             <a href={p.info.changeUrl} className="cursor-pointer">
                                                 <div className="flex space-x-2 truncate">
                                                     <span
-                                                        className="font-medium text-gray-500 dark:text-gray-50 truncate font-mono"
+                                                        className="font-medium text-gray-500 dark:text-gray-50 truncate"
                                                         title={p.info.branch}
                                                     >
                                                         {p.info.branch}

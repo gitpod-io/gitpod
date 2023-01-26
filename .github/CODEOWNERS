@@ -95,26 +95,26 @@
 /dev/gpctl @gitpod-io/engineering-workspace
 /dev/gpctl/api/ @gitpod-io/engineering-webapp
 /dev/loadgen @gitpod-io/engineering-workspace
-/dev/preview @gitpod-io/engineering-devx
+/dev/preview @gitpod-io/engineering-delivery-operations-experience
 /operations/observability/mixins @gitpod-io/engineering-delivery-operations-experience
-/operations/observability/mixins/platform @gitpod-io/engineering-devx
+/operations/observability/mixins/platform @gitpod-io/engineering-delivery-operations-experience
 /operations/observability/mixins/IDE @gitpod-io/engineering-ide
 /operations/observability/mixins/meta @gitpod-io/engineering-webapp
 /operations/observability/mixins/workspace @gitpod-io/engineering-workspace
-/operations/observability/mixins/cross-teams @gitpod-io/engineering-workspace @gitpod-io/engineering-webapp @gitpod-io/engineering-ide @gitpod-io/engineering-devx @gitpod-io/engineering-delivery-operations-experience
+/operations/observability/mixins/cross-teams @gitpod-io/engineering-workspace @gitpod-io/engineering-webapp @gitpod-io/engineering-ide @gitpod-io/engineering-delivery-operations-experience
 
 /.werft/observability @gitpod-io/engineering-delivery-operations-experience
 
 /.werft/ide-* @gitpod-io/engineering-ide
-/.werft/platform-* @gitpod-io/engineering-devx
+/.werft/platform-* @gitpod-io/engineering-delivery-operations-experience
 /.werft/webapp-* @gitpod-io/engineering-webapp
 /.werft/workspace-* @gitpod-io/engineering-workspace
 /.werft/self-hosted-* @gitpod-io/engineering-delivery-operations-experience
 /.werft/*installer-tests* @gitpod-io/engineering-delivery-operations-experience
 /.werft/jobs/build/self-hosted-* @gitpod-io/engineering-delivery-operations-experience
 
-/dev/preview/infrastructure/harvester @gitpod-io/engineering-devx
-/dev/preview/workflow @gitpod-io/engineering-devx
+/dev/preview/infrastructure/harvester @gitpod-io/engineering-delivery-operations-experience
+/dev/preview/workflow @gitpod-io/engineering-delivery-operations-experience
 
 #
 # Automation

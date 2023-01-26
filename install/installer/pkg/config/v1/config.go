@@ -202,6 +202,9 @@ type Database struct {
 	External  *DatabaseExternal `json:"external,omitempty"`
 	CloudSQL  *DatabaseCloudSQL `json:"cloudSQL,omitempty"`
 	SSL       *SSLOptions       `json:"ssl,omitempty"`
+
+	// Experimental. CloudSQLGlobal is configuration for a single CloudSQL DB across multiple regions.
+	CloudSQLGlobal *DatabaseCloudSQL `json:"cloudSQLGlobal,omitempty"`
 }
 
 type DatabaseExternal struct {

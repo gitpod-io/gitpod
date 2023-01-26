@@ -34,7 +34,7 @@ Does this PR require updates to the documentation at www.gitpod.io/docs?
 - [ ] /werft with-github-actions
       Experimental feature to run the build with GitHub Actions (and not in Werft).
 - [ ] leeway-no-cache
-      leeway-target=components:all-ci
+      leeway-target=components:all
 - [ ] /werft no-test
       Run Leeway with `--dont-test`
 

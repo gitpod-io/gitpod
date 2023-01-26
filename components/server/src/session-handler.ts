@@ -43,6 +43,9 @@ export class SessionHandlerProvider {
     }
 
     protected getCookieOptions(config: Config): express.CookieOptions {
+        // ############################################################################################################
+        // WARNING: Whenever we do changes here, we very likely want to have bump the cookie name as well!
+        // ############################################################################################################
         // Do not set `domain` attribute so only the base domain (e.g. only gitpod.io) has the Gitpod cookie.
         // If `domain` is specified, then subdomains are always included. Therefore, specifying `domain` is less restrictive than omitting it.
         return {
@@ -55,6 +58,14 @@ export class SessionHandlerProvider {
     }
 
     static getCookieName(config: Config) {
+        const derived = config.hostUrl
+            .toString()
+            .replace(/https?/, "")
+            .replace(/[\W_]+/g, "_");
+        return `${derived}v2_`;
+    }
+
+    static getOldCookieName(config: Config) {
         return config.hostUrl
             .toString()
             .replace(/https?/, "")

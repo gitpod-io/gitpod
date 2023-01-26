@@ -68,9 +68,7 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info }) => {
                 </a>
             </ItemField>
             <ItemField className="w-2/12 flex flex-col my-auto">
-                <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate font-mono">
-                    {currentBranch}
-                </div>
+                <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate">{currentBranch}</div>
                 <div className="mr-auto">
                     <PendingChangesDropdown workspaceInstance={info.latestInstance} />
                 </div>

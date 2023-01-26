@@ -4,6 +4,7 @@ repos:
     hooks:
       #- id: check-yaml
       #  args: [--allow-multiple-documents]
+      - id: check-json
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: check-symlinks
@@ -21,7 +22,7 @@ repos:
         exclude: |
           (?x)^(
             .*example-layer.tar.gz|
-            .*\.(png|svg|ico|gpg|woff2)|
+            .*\.(png|svg|ico|gpg)|
             dev/version-manifest/version-manifest|
             .*gradle-wrapper\.jar
           )$

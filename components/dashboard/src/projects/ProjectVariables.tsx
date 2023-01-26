@@ -77,7 +77,7 @@ export default function () {
                         {envVars.map((variable) => {
                             return (
                                 <Item className="grid grid-cols-3 items-center">
-                                    <ItemField className="truncate font-mono">{variable.name}</ItemField>
+                                    <ItemField className="truncate">{variable.name}</ItemField>
                                     <ItemField>{variable.censored ? "Hidden" : "Visible"}</ItemField>
                                     <ItemField className="flex justify-end">
                                         <ItemFieldContextMenu
@@ -148,7 +148,7 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
                     <h4>Name</h4>
                     <input
                         autoFocus
-                        className="w-full font-mono"
+                        className="w-full"
                         type="text"
                         name="name"
                         value={name}
@@ -158,7 +158,7 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
                 <div className="mt-4">
                     <h4>Value</h4>
                     <input
-                        className="w-full font-mono"
+                        className="w-full"
                         type="text"
                         name="value"
                         value={value}

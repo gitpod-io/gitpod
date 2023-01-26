@@ -341,10 +341,10 @@ export default function () {
                                             <ItemField className="flex items-center my-auto">
                                                 <div>
                                                     <a href={branch.url}>
-                                                        <div className="text-base text-gray-600 hover:text-gray-800 dark:text-gray-50 dark:hover:text-gray-200 font-medium mb-1 font-mono">
+                                                        <div className="text-base text-gray-600 hover:text-gray-800 dark:text-gray-50 dark:hover:text-gray-200 font-medium mb-1">
                                                             {branch.name}
                                                             {branch.isDefault && (
-                                                                <span className="ml-2 self-center rounded-xl py-0.5 px-2 text-sm font-sans bg-blue-50 text-blue-40 dark:bg-blue-500 dark:text-blue-100">
+                                                                <span className="ml-2 self-center rounded-xl py-0.5 px-2 text-sm bg-blue-50 text-blue-40 dark:bg-blue-500 dark:text-blue-100">
                                                                     DEFAULT
                                                                 </span>
                                                             )}
