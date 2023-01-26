@@ -72,7 +72,7 @@ jobs:
 
   infrastructure:
     needs: [configuration, build-previewctl]
-    if: ${{ needs.configuration.outputs.preview_enable }}
+    if: ${{ needs.configuration.outputs.preview_enable == 'true' }}
     runs-on: [self-hosted]
     concurrency:
       group: ${{ github.head_ref || github.ref }}-infrastructure
@@ -90,7 +90,7 @@ jobs:
   build-gitpod:
     name: Build Gitpod
     needs: [configuration]
-    if: ${{ needs.configuration.outputs.build_enable }}
+    if: ${{ needs.configuration.outputs.build_enable == 'true' }}
     runs-on: [self-hosted]
     concurrency:
       group: ${{ github.head_ref || github.ref }}-build-gitpod
