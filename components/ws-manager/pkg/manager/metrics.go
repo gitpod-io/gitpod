@@ -323,7 +323,18 @@ func (m *metrics) OnChange(status *api.WorkspaceStatus) {
 				log.WithError(err).WithField("type", tpe).Warn("cannot get counter for workspace start failure metric")
 				return
 			}
-			startC.Inc()
+
+			// avoid incrementing when the workspace start was aborted, or cancelled by the user
+			// TODO: what is the reason when stoppedByRequest is used? Ref: https://github.com/gitpod-io/gitpod/pull/6218
+
+			// stoppedByRequest received on the workspace side: https://cloudlogging.app.goo.gl/yrAkZvxPFAvMwK4r7
+			// aborted on the webapp side:
+			// https://console.cloud.google.com/logs/query;cursorTimestamp=2023-01-26T19:22:03.856Z;query=resource.labels.project_id%3D%22gitpod-191109%22%0A%22c2653377-aa64-4b99-a1e0-d89e7c6392e0%22%0Atimestamp%3D%222023-01-26T19:22:03.772Z%22%0AinsertId%3D%227gi8qlbaxscrk7fy%22;timeRange=PT2H?project=gitpod-191109
+			// https://github.com/gitpod-io/gitpod/blob/f9b3c4fc4a824aa72278b4f5ddb0bd015c4b8c8e/components/server/ee/src/prebuilds/prebuild-manager.ts#L80-L88
+
+			if reason != "aborted" {
+				startC.Inc()
+			}
 		}
 
 		if isNeverReady && reason == "failed" {
