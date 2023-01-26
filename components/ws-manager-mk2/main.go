@@ -89,7 +89,7 @@ func main() {
 		Port:                   9443,
 		HealthProbeBindAddress: cfg.Health.Addr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "0616d21e.gitpod.io",
+		LeaderElectionID:       "ws-manager-mk2.gitpod.io",
 		Namespace:              cfg.Manager.Namespace,
 	})
 	if err != nil {

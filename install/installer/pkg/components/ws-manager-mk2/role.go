@@ -69,6 +69,41 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 						"update",
 					},
 				},
+				// ConfigMap, Leases, and Events access is required for leader-election.
+				{
+					APIGroups: []string{""},
+					Resources: []string{"configmaps"},
+					Verbs: []string{
+						"create",
+						"delete",
+						"get",
+						"list",
+						"patch",
+						"update",
+						"watch",
+					},
+				},
+				{
+					APIGroups: []string{"coordination.k8s.io"},
+					Resources: []string{"leases"},
+					Verbs: []string{
+						"create",
+						"delete",
+						"get",
+						"list",
+						"patch",
+						"update",
+						"watch",
+					},
+				},
+				{
+					APIGroups: []string{""},
+					Resources: []string{"events"},
+					Verbs: []string{
+						"create",
+						"patch",
+					},
+				},
 			},
 		},
 	}, nil
