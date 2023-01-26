@@ -91,7 +91,6 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 
 	switch {
 	case isPodBeingDeleted(pod):
-		log.Info("setting phase for workspace to stopping", "workspace", workspace.Name)
 		workspace.Status.Phase = workspacev1.WorkspacePhaseStopping
 
 		var hasFinalizer bool
@@ -102,9 +101,10 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 			}
 		}
 		if hasFinalizer {
-			// TODO(cw): if the condition isn't present or not true, we should re-trigger the reconiliation
 			if conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) ||
-				conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) {
+				conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) ||
+				conditionWithStatusAndReson(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure") {
+
 				workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
 			}
 

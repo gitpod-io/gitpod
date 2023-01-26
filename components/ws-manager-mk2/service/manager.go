@@ -13,6 +13,7 @@ import (
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/opentracing/opentracing-go"
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"
@@ -40,10 +41,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func NewWorkspaceManagerServer(clnt client.Client, cfg *config.Configuration) *WorkspaceManagerServer {
+func NewWorkspaceManagerServer(clnt client.Client, cfg *config.Configuration, reg prometheus.Registerer) *WorkspaceManagerServer {
+	metrics := newWorkspaceMetrics()
+	reg.MustRegister(metrics)
+
 	return &WorkspaceManagerServer{
-		Client: clnt,
-		Config: cfg,
+		Client:  clnt,
+		Config:  cfg,
+		metrics: metrics,
 		subs: subscriptions{
 			subscribers: make(map[string]chan *wsmanapi.SubscribeResponse),
 		},
@@ -51,8 +56,9 @@ func NewWorkspaceManagerServer(clnt client.Client, cfg *config.Configuration) *W
 }
 
 type WorkspaceManagerServer struct {
-	Client client.Client
-	Config *config.Configuration
+	Client  client.Client
+	Config  *config.Configuration
+	metrics *workspaceMetrics
 
 	subs subscriptions
 	wsmanapi.UnimplementedWorkspaceManagerServer
@@ -191,6 +197,8 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 			Ports: ports,
 		},
 	}
+
+	wsm.metrics.recordWorkspaceStart(&ws)
 	err = wsm.Client.Create(ctx, &ws)
 	if err != nil {
 		log.WithError(err).WithFields(owi).Error("error creating workspace")
@@ -835,4 +843,40 @@ func (subs *subscriptions) OnChange(ctx context.Context, status *api.WorkspaceSt
 	if status.Phase == 0 {
 		log.WithField("status", status).Error("workspace in UNKNOWN phase")
 	}
+}
+
+type workspaceMetrics struct {
+	totalStartsCounterVec *prometheus.CounterVec
+}
+
+func newWorkspaceMetrics() *workspaceMetrics {
+	return &workspaceMetrics{
+		totalStartsCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "gitpod",
+			Subsystem: "ws_manager_mk2",
+			Name:      "workspace_starts_total",
+			Help:      "total number of workspaces started",
+		}, []string{"type", "class"}),
+	}
+}
+
+func (m *workspaceMetrics) recordWorkspaceStart(ws *workspacev1.Workspace) {
+	tpe := string(ws.Spec.Type)
+	class := ws.Spec.Class
+
+	counter, err := m.totalStartsCounterVec.GetMetricWithLabelValues(tpe, class)
+	if err != nil {
+		log.WithError(err).WithField("type", tpe).WithField("class", class)
+	}
+	counter.Inc()
+}
+
+// Describe implements Collector. It will send exactly one Desc to the provided channel.
+func (m *workspaceMetrics) Describe(ch chan<- *prometheus.Desc) {
+	m.totalStartsCounterVec.Describe(ch)
+}
+
+// Collect implements Collector.
+func (m *workspaceMetrics) Collect(ch chan<- prometheus.Metric) {
+	m.totalStartsCounterVec.Collect(ch)
 }
