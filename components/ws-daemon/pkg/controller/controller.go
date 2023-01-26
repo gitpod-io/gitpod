@@ -32,8 +32,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
-// DefaultRetry is the recommended retry for a conflict where multiple clients
-// are making changes to the same resource.
 var retryParams = wait.Backoff{
 	Steps:    10,
 	Duration: 10 * time.Millisecond,
@@ -176,13 +174,12 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 		}
 
 		err = retry.RetryOnConflict(retryParams, func() error {
-			var workspace workspacev1.Workspace
-			if err := wsc.Get(ctx, req.NamespacedName, &workspace); err != nil {
+			if err := wsc.Get(ctx, req.NamespacedName, ws); err != nil {
 				return err
 			}
 
 			if failure != "" {
-				workspace.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
+				ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
 					Type:               string(workspacev1.WorkspaceConditionContentReady),
 					Status:             metav1.ConditionFalse,
 					Message:            failure,
@@ -190,7 +187,7 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 					LastTransitionTime: metav1.Now(),
 				})
 			} else {
-				workspace.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
+				ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
 					Type:               string(workspacev1.WorkspaceConditionContentReady),
 					Status:             metav1.ConditionTrue,
 					Reason:             "InitializationSuccess",
@@ -198,7 +195,7 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 				})
 			}
 
-			return wsc.Status().Update(ctx, &workspace)
+			return wsc.Status().Update(ctx, ws)
 		})
 
 		return ctrl.Result{}, err
@@ -243,15 +240,14 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 	}
 
 	err = retry.RetryOnConflict(retryParams, func() error {
-		var workspace workspacev1.Workspace
-		if err := wsc.Get(ctx, req.NamespacedName, &workspace); err != nil {
+		if err := wsc.Get(ctx, req.NamespacedName, ws); err != nil {
 			return err
 		}
 
-		workspace.Status.GitStatus = toWorkspaceGitStatus(gitStatus)
+		ws.Status.GitStatus = toWorkspaceGitStatus(gitStatus)
 
 		if disposeErr != nil {
-			workspace.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
+			ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
 				Type:               string(workspacev1.WorkspaceConditionBackupFailure),
 				Status:             metav1.ConditionTrue,
 				Reason:             "BackupFailed",
@@ -259,7 +255,7 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 				LastTransitionTime: metav1.Now(),
 			})
 		} else {
-			workspace.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
+			ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
 				Type:               string(workspacev1.WorkspaceConditionBackupComplete),
 				Status:             metav1.ConditionTrue,
 				Reason:             "BackupComplete",
@@ -267,7 +263,7 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 			})
 		}
 
-		return wsc.Status().Update(ctx, &workspace)
+		return wsc.Status().Update(ctx, ws)
 	})
 
 	return ctrl.Result{}, err
