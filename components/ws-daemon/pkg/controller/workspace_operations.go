@@ -66,7 +66,7 @@ type DisposeOptions struct {
 }
 
 func NewWorkspaceOperations(config content.Config, store *session.Store, reg prometheus.Registerer) (*WorkspaceOperations, error) {
-	waitingTimeHist, waitingTimeoutCounter, err := content.RegisterConcurrentBackupMetrics(reg, "mk2")
+	waitingTimeHist, waitingTimeoutCounter, err := content.RegisterConcurrentBackupMetrics(reg, "_mk2")
 	if err != nil {
 		return nil, err
 	}
@@ -274,6 +274,7 @@ func (wso *WorkspaceOperations) uploadWorkspaceLogs(ctx context.Context, opts Di
 func (wso *WorkspaceOperations) uploadWorkspaceContent(ctx context.Context, sess *session.Workspace) error {
 	var backupName = storage.DefaultBackup
 	// Avoid too many simultaneous backups in order to avoid excessive memory utilization.
+	var timedOut bool
 	waitStart := time.Now()
 	select {
 	case wso.backupWorkspaceLimiter <- struct{}{}:
@@ -281,12 +282,19 @@ func (wso *WorkspaceOperations) uploadWorkspaceContent(ctx context.Context, sess
 		// we timed out on the rate limit - let's upload anyways, because we don't want to actually block
 		// an upload. If we reach this point, chances are other things are broken. No upload should ever
 		// take this long.
+		timedOut = true
 		wso.metrics.BackupWaitingTimeoutCounter.Inc()
 	}
 
-	wso.metrics.BackupWaitingTimeHist.Observe(time.Since(waitStart).Seconds())
+	waitTime := time.Since(waitStart)
+	wso.metrics.BackupWaitingTimeHist.Observe(waitTime.Seconds())
 
 	defer func() {
+		// timeout -> we did not add to the limiter
+		if timedOut {
+			return
+		}
+
 		<-wso.backupWorkspaceLimiter
 	}()
 
@@ -312,12 +320,24 @@ func (wso *WorkspaceOperations) uploadWorkspaceContent(ctx context.Context, sess
 		tmpfSize int64
 	)
 
+	defer func() {
+		if tmpf != nil {
+			os.Remove(tmpf.Name())
+		}
+	}()
+
 	err = retryIfErr(ctx, wso.config.Backup.Attempts, glog.WithFields(sess.OWI()).WithField("op", "create archive"), func(ctx context.Context) (err error) {
 		tmpf, err = os.CreateTemp(wso.config.TmpDir, fmt.Sprintf("wsbkp-%s-*.tar", sess.InstanceID))
 		if err != nil {
 			return
 		}
-		defer tmpf.Close()
+
+		defer func() {
+			tmpf.Close()
+			if err != nil {
+				os.Remove(tmpf.Name())
+			}
+		}()
 
 		var opts []archive.TarOption
 		opts = append(opts)
@@ -357,12 +377,6 @@ func (wso *WorkspaceOperations) uploadWorkspaceContent(ctx context.Context, sess
 	if err != nil {
 		return xerrors.Errorf("cannot create archive: %w", err)
 	}
-	defer func() {
-		if tmpf != nil {
-			// always remove the archive file to not fill up the node needlessly
-			os.Remove(tmpf.Name())
-		}
-	}()
 
 	err = retryIfErr(ctx, wso.config.Backup.Attempts, glog.WithFields(sess.OWI()).WithField("op", "upload layer"), func(ctx context.Context) (err error) {
 		_, _, err = rs.Upload(ctx, tmpf.Name(), backupName, opts...)
