@@ -53,6 +53,7 @@ type WorkspaceController struct {
 	NodeName   string
 	opts       *WorkspaceControllerOpts
 	operations WorkspaceOperations
+	metrics    *workspaceMetrics
 }
 
 func NewWorkspaceController(c client.Client, opts WorkspaceControllerOpts) (*WorkspaceController, error) {
@@ -71,6 +72,9 @@ func NewWorkspaceController(c client.Client, opts WorkspaceControllerOpts) (*Wor
 		return nil, err
 	}
 
+	metrics := newWorkspaceMetrics()
+	opts.MetricsRegistry.Register(metrics)
+
 	ops, err := NewWorkspaceOperations(opts.ContentConfig, store, opts.MetricsRegistry)
 	if err != nil {
 		return nil, err
@@ -81,6 +85,7 @@ func NewWorkspaceController(c client.Client, opts WorkspaceControllerOpts) (*Wor
 		NodeName:   opts.NodeName,
 		opts:       &opts,
 		operations: *ops,
+		metrics:    metrics,
 	}, nil
 }
 
@@ -155,6 +160,7 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 			return ctrl.Result{}, err
 		}
 
+		initStart := time.Now()
 		alreadyInit, failure, err := wsc.operations.InitWorkspaceContent(ctx, InitContentOptions{
 			Meta: WorkspaceMeta{
 				Owner:       ws.Spec.Ownership.Owner,
@@ -198,6 +204,10 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 			return wsc.Status().Update(ctx, ws)
 		})
 
+		if err != nil {
+			wsc.metrics.recordInitializeTime(time.Since(initStart).Seconds(), ws)
+		}
+
 		return ctrl.Result{}, err
 	}
 
@@ -220,6 +230,7 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 		return ctrl.Result{}, nil
 	}
 
+	disposeStart := time.Now()
 	alreadyDisposing, gitStatus, disposeErr := wsc.operations.DisposeWorkspace(ctx, DisposeOptions{
 		Meta: WorkspaceMeta{
 			Owner:       ws.Spec.Ownership.Owner,
@@ -266,6 +277,10 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 		return wsc.Status().Update(ctx, ws)
 	})
 
+	if err != nil {
+		wsc.metrics.recordFinalizeTime(time.Since(disposeStart).Seconds(), ws)
+	}
+
 	return ctrl.Result{}, err
 }
 
@@ -284,4 +299,64 @@ func toWorkspaceGitStatus(status *csapi.GitStatus) *workspacev1.GitStatus {
 		UnpushedCommits:      status.UnpushedCommits,
 		TotalUnpushedCommits: status.TotalUnpushedCommits,
 	}
+}
+
+type workspaceMetrics struct {
+	initializeTimeHistVec *prometheus.HistogramVec
+	finalizeTimeHistVec   *prometheus.HistogramVec
+}
+
+func newWorkspaceMetrics() *workspaceMetrics {
+	return &workspaceMetrics{
+		initializeTimeHistVec: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: "gitpod",
+			Subsystem: "ws_daemon",
+			Name:      "workspace_initialize_seconds",
+			Help:      "time it took to initialize workspace",
+			Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
+		}, []string{"type", "class"}),
+		finalizeTimeHistVec: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: "gitpod",
+			Subsystem: "ws_daemon",
+			Name:      "workspace_finalize_seconds",
+			Help:      "time it took to finalize workspace",
+			Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
+		}, []string{"type", "class"}),
+	}
+}
+
+func (m *workspaceMetrics) recordInitializeTime(duration float64, ws *workspacev1.Workspace) {
+	tpe := string(ws.Spec.Type)
+	class := ws.Spec.Class
+
+	hist, err := m.initializeTimeHistVec.GetMetricWithLabelValues(tpe, class)
+	if err != nil {
+		glog.WithError(err).WithField("type", tpe).WithField("class", class).Infof("could not retrieve initialize metric")
+	}
+
+	hist.Observe(duration)
+}
+
+func (m *workspaceMetrics) recordFinalizeTime(duration float64, ws *workspacev1.Workspace) {
+	tpe := string(ws.Spec.Type)
+	class := ws.Spec.Class
+
+	hist, err := m.finalizeTimeHistVec.GetMetricWithLabelValues(tpe, class)
+	if err != nil {
+		glog.WithError(err).WithField("type", tpe).WithField("class", class).Infof("could not retrieve finalize metric")
+	}
+
+	hist.Observe(duration)
+}
+
+// Describe implements Collector. It will send exactly one Desc to the provided channel.
+func (m *workspaceMetrics) Describe(ch chan<- *prometheus.Desc) {
+	m.initializeTimeHistVec.Describe(ch)
+	m.finalizeTimeHistVec.Describe(ch)
+}
+
+// Collect implements Collector.
+func (m *workspaceMetrics) Collect(ch chan<- prometheus.Metric) {
+	m.initializeTimeHistVec.Collect(ch)
+	m.finalizeTimeHistVec.Collect(ch)
 }
