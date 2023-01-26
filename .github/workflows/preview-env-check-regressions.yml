@@ -1,0 +1,11 @@
+name: "Preview environment regression check"
+on:
+    workflow_dispatch:
+jobs:
+    check:
+        name: Check for regressions
+        runs-on: [self-hosted]
+        steps:
+            - uses: actions/checkout@v3
+            - name: Check
+              run: echo "No regressions caught because I didn't check anything 🤡"
