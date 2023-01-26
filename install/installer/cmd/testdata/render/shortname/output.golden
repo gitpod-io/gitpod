@@ -5870,6 +5870,9 @@ data:
       },
       "prometheus": {
         "addr": "127.0.0.1:9500"
+      },
+      "health": {
+        "addr": ""
       }
     }
 kind: ConfigMap
@@ -10586,7 +10589,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 4c65a42ef4d94121901b843e258a390d10752fd720f83788ac0a184199a7643d
+        gitpod.io/checksum_config: 2a4b67934129e4c19a1a2570378a2a1de9cdedb8e565e0f28b5416cd3c3c2ebb
       creationTimestamp: null
       labels:
         app: gitpod

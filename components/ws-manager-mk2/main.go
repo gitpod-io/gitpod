@@ -87,7 +87,7 @@ func main() {
 		Scheme:                 scheme,
 		MetricsBindAddress:     cfg.Prometheus.Addr,
 		Port:                   9443,
-		HealthProbeBindAddress: ":9090",
+		HealthProbeBindAddress: cfg.Health.Addr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "0616d21e.gitpod.io",
 		Namespace:              cfg.Manager.Namespace,
