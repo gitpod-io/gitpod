@@ -1,0 +1,15 @@
+packages:
+  - name: docker
+    type: docker
+    argdeps:
+      - imageRepoBase
+      - codeExtensionCommit
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.codeExtensionImage
+      buildArgs:
+        CODE_COMMIT: ${codeExtensionCommit}
+      image:
+        - ${imageRepoBase}/ide/code-extension:${version}
+        - ${imageRepoBase}/ide/code-extension:commit-${__git_commit}
