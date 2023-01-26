@@ -272,6 +272,7 @@ export default function UserDetail(p: { user: User }) {
                                 .map((i) => i.primaryEmail)
                                 .filter((e) => !!e)
                                 .join(", ")}
+                            {user.verificationPhoneNumber ? ` — ${user.verificationPhoneNumber}` : null}
                         </p>
                     </div>
                     {!user.lastVerificationTime ? (
