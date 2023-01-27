@@ -28,7 +28,7 @@ func migrations(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	objectMeta := metav1.ObjectMeta{
-		Name:        Component,
+		Name:        fmt.Sprintf("%s-migrations", Component),
 		Namespace:   ctx.Namespace,
 		Labels:      common.CustomizeLabel(ctx, Component, common.TypeMetaBatchJob),
 		Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaBatchJob),
@@ -45,7 +45,7 @@ func migrations(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Spec: corev1.PodSpec{
 						Affinity:           common.NodeAffinity(cluster.AffinityLabelMeta),
 						RestartPolicy:      corev1.RestartPolicyNever,
-						ServiceAccountName: fmt.Sprintf("%s-migrations", Component),
+						ServiceAccountName: Component,
 						EnableServiceLinks: pointer.Bool(false),
 						InitContainers: []corev1.Container{
 							dbWaiter(ctx),
