@@ -71,6 +71,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									"--log-level=debug",
 									"--datastore-engine=mysql",
 									"--datastore-conn-max-open=100",
+									"--telemetry-endpoint=", // disable telemetry to https://telemetry.authzed.com
 								},
 								Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 									common.DefaultEnv(&ctx.Config),
