@@ -26,7 +26,9 @@ import {
     settingsPathPreferences,
     settingsPathTeams,
     settingsPathTeamsJoin,
-    settingsPathTeamsNew,
+    settingsPathOrgs,
+    settingsPathOrgsJoin,
+    settingsPathOrgsNew,
     settingsPathVariables,
     settingsPathSSHKeys,
     usagePathMain,
@@ -198,7 +200,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                     <Route path="/from-referrer" exact component={FromReferrer} />
 
                     <AdminRoute path="/admin/users" component={UserSearch} />
-                    <AdminRoute path="/admin/teams" component={TeamsSearch} />
+                    <AdminRoute path="/admin/orgs" component={TeamsSearch} />
                     <AdminRoute path="/admin/workspaces" component={WorkspacesSearch} />
                     <AdminRoute path="/admin/projects" component={ProjectsSearch} />
                     <AdminRoute path="/admin/blocked-repositories" component={BlockedRepositories} />
@@ -248,10 +250,14 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                             }}
                         />
                     </Route>
+                    {/* TODO remove these navigation after a few weeks */}
                     <Route path={settingsPathTeams}>
-                        <Route exact path={settingsPathTeams} component={Teams} />
-                        <Route exact path={settingsPathTeamsNew} component={NewTeam} />
                         <Route exact path={settingsPathTeamsJoin} component={JoinTeam} />
+                    </Route>
+                    <Route path={settingsPathOrgs}>
+                        <Route exact path={settingsPathOrgs} component={Teams} />
+                        <Route exact path={settingsPathOrgsNew} component={NewTeam} />
+                        <Route exact path={settingsPathOrgsJoin} component={JoinTeam} />
                     </Route>
                     {(teams || []).map((team) => (
                         <Route path={`/t/${team.slug}`} key={team.slug}>

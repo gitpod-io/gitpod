@@ -190,7 +190,7 @@ export default function TeamBilling() {
                         2023.
                     </Alert>
                 )}
-                <h3>{!teamPlan ? "Select Team Plan" : "Team Plan"}</h3>
+                <h3>{!teamPlan ? "Select Plan" : "Current Plan"}</h3>
                 <h2 className="text-gray-500">
                     {!teamPlan ? (
                         <div className="flex space-x-1">
@@ -213,7 +213,7 @@ export default function TeamBilling() {
                         </div>
                     ) : (
                         <span>
-                            This team is currently on the <strong>{teamPlan.name}</strong> plan.
+                            This organization is currently on the <strong>{teamPlan.name}</strong> plan.
                         </span>
                     )}
                 </h2>
@@ -335,7 +335,7 @@ export default function TeamBilling() {
                     )}
                 </div>
                 <div className="mt-4 text-gray-500">
-                    Team Billing automatically adds all members to the plan.{" "}
+                    Gitpod automatically adds all members of this organization to the plan.{" "}
                     <a href="https://www.gitpod.io/docs/team-billing" rel="noopener" className="gp-link">
                         Learn more
                     </a>
@@ -349,7 +349,7 @@ export default function TeamBilling() {
         <PageWithSubMenu
             subMenu={getTeamSettingsMenu({ team, billingMode: teamBillingMode, ssoEnabled: oidcServiceEnabled })}
             title="Billing"
-            subtitle="Configure and manage billing for your team."
+            subtitle="Configure and manage billing for your organization."
         >
             {teamBillingMode === undefined ? (
                 <div className="p-20">

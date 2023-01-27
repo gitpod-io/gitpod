@@ -126,11 +126,11 @@ export class TeamDBImpl implements TeamDB {
         const teamRepo = await this.getTeamRepo();
         const existingTeam = await teamRepo.findOne({ id: teamId, deleted: false, markedDeleted: false });
         if (!existingTeam) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Organization not found");
         }
         const name = team.name && team.name.trim();
         if (!name || name.length === 0 || name.length > 32) {
-            throw new ResponseError(ErrorCodes.INVALID_VALUE, "A team's name must be between 1 and 32 characters long");
+            throw new ResponseError(ErrorCodes.INVALID_VALUE, "The name must be between 1 and 32 characters long");
         }
         existingTeam.name = name;
         return teamRepo.save(existingTeam);
@@ -138,22 +138,22 @@ export class TeamDBImpl implements TeamDB {
 
     public async createTeam(userId: string, name: string): Promise<Team> {
         if (!name) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Team name cannot be empty");
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Name cannot be empty");
         }
         if (!/^[A-Za-z0-9 '_-]+$/.test(name)) {
             throw new ResponseError(
                 ErrorCodes.BAD_REQUEST,
-                "Please choose a team name containing only letters, numbers, -, _, ', or spaces.",
+                "Please choose a name containing only letters, numbers, -, _, ', or spaces.",
             );
         }
         const slug = name.toLocaleLowerCase().replace(/[ ']/g, "-");
         if (blocklist.indexOf(slug) !== -1) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Creating a team with this name is not allowed");
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Creating an organization with this name is not allowed");
         }
         const teamRepo = await this.getTeamRepo();
         const existingTeam = await teamRepo.findOne({ slug, deleted: false, markedDeleted: false });
         if (!!existingTeam) {
-            throw new ResponseError(ErrorCodes.CONFLICT, "A team with this name already exists");
+            throw new ResponseError(ErrorCodes.CONFLICT, "An organization with this name already exists");
         }
         const team: Team = {
             id: uuidv4(),
@@ -186,7 +186,7 @@ export class TeamDBImpl implements TeamDB {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOne(teamId);
         if (!team || !!team.deleted) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "A team with this ID could not be found");
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
         }
         const membershipRepo = await this.getMembershipRepo();
         const membership = await membershipRepo.findOne({ teamId, userId, deleted: false });
@@ -208,7 +208,7 @@ export class TeamDBImpl implements TeamDB {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOne(teamId);
         if (!team || !!team.deleted) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "A team with this ID could not be found");
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
         }
         const membershipRepo = await this.getMembershipRepo();
 
@@ -219,13 +219,13 @@ export class TeamDBImpl implements TeamDB {
                 deleted: false,
             });
             if (ownerCount <= 1) {
-                throw new ResponseError(ErrorCodes.CONFLICT, "Team must retain at least one owner");
+                throw new ResponseError(ErrorCodes.CONFLICT, "An organization must retain at least one owner");
             }
         }
 
         const membership = await membershipRepo.findOne({ teamId, userId, deleted: false });
         if (!membership) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "The user is not currently a member of this team");
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "The user is not currently a member of this organization");
         }
         membership.role = role;
         await membershipRepo.save(membership);
@@ -235,12 +235,12 @@ export class TeamDBImpl implements TeamDB {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOne(teamId);
         if (!team || !!team.deleted) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "A team with this ID could not be found");
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
         }
         const membershipRepo = await this.getMembershipRepo();
         const membership = await membershipRepo.findOne({ teamId, userId, deleted: false });
         if (!membership) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "The user is not currently a member of this team");
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "The user is not currently a member of this organization");
         }
         membership.subscriptionId = subscriptionId;
         await membershipRepo.save(membership);
@@ -250,12 +250,15 @@ export class TeamDBImpl implements TeamDB {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOne(teamId);
         if (!team || !!team.deleted) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "A team with this ID could not be found");
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
         }
         const membershipRepo = await this.getMembershipRepo();
         const membership = await membershipRepo.findOne({ teamId, userId, deleted: false });
         if (!membership) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "You are not currently a member of this team");
+            throw new ResponseError(
+                ErrorCodes.BAD_REQUEST,
+                "The given user is not currently a member of this organization or does not exist.",
+            );
         }
         membership.deleted = true;
         await membershipRepo.save(membership);

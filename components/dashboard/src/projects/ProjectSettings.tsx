@@ -141,7 +141,7 @@ export default function () {
                             , first cancel your existing plan.
                         </span>
                         <Link className="mt-2" to={project.teamId ? "../billing" : "/plans"}>
-                            <button>Go to {project.teamId ? "Team" : "Personal"} Billing</button>
+                            <button>Go to {project.teamId ? "Organization" : "Personal"} Billing</button>
                         </Link>
                     </div>
                 </Alert>
@@ -254,7 +254,7 @@ export default function () {
                                 , first cancel your existing plan.
                             </span>
                             <Link className="mt-2" to={project.teamId ? "../billing" : "/plans"}>
-                                <button>Go to {project.teamId ? "Team" : "Personal"} Billing</button>
+                                <button>Go to {project.teamId ? "Organization" : "Personal"} Billing</button>
                             </Link>
                         </div>
                     </Alert>

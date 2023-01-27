@@ -33,7 +33,7 @@ export default function TeamUsageBasedBilling() {
 
     return (
         <>
-            <h3>Team Billing</h3>
+            <h3>Organization Billing</h3>
             <UsageBasedBillingConfig attributionId={team && AttributionId.render({ kind: "team", teamId: team.id })} />
         </>
     );

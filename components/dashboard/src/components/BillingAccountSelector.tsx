@@ -28,7 +28,7 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
             return;
         }
 
-        // Fetch the list of teams we can actually attribute to
+        // Fetch the list of orgs we can actually attribute to
         getGitpodService()
             .server.listAvailableUsageAttributionIds()
             .then((attrIds) => {
@@ -59,7 +59,7 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
                         (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
                     );
                 } catch (error) {
-                    console.warn("Could not get members of team", team, error);
+                    console.warn("Could not get members of org", team, error);
                 }
             }),
         ).then(() => setMembersByTeam(members));

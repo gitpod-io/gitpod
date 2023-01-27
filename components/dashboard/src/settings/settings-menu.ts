@@ -13,7 +13,7 @@ import {
     settingsPathNotifications,
     settingsPathPlans,
     settingsPathPreferences,
-    settingsPathTeams,
+    settingsPathOrgs,
     settingsPathVariables,
     settingsPathSSHKeys,
     settingsPathPersonalAccessTokens,
@@ -80,8 +80,8 @@ function renderBillingMenuEntries(billingMode?: BillingMode) {
                     link: [settingsPathPlans],
                 },
                 {
-                    title: "Team Plans",
-                    link: [settingsPathTeams],
+                    title: "Organization Plans",
+                    link: [settingsPathOrgs],
                 },
                 ...(BillingMode.showUsageBasedBilling(billingMode)
                     ? [
@@ -98,12 +98,12 @@ function renderBillingMenuEntries(billingMode?: BillingMode) {
                     title: "Billing",
                     link: [settingsPathBilling],
                 },
-                // We need to allow access to "Team Plans" here, at least for owners.
+                // We need to allow access to "Organization Plans" here, at least for owners.
                 ...(BillingMode.showTeamSubscriptionUI(billingMode)
                     ? [
                           {
-                              title: "Team Plans",
-                              link: [settingsPathTeams],
+                              title: "Organization Plans",
+                              link: [settingsPathOrgs],
                           },
                       ]
                     : []),

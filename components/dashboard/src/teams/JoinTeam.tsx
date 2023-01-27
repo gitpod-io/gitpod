@@ -37,7 +37,7 @@ export default function () {
     }, []);
 
     useEffect(() => {
-        document.title = "Joining Team — Gitpod";
+        document.title = "Joining Organization — Gitpod";
     }, []);
 
     return joinError ? <div className="mt-16 text-center text-gitpod-red">{String(joinError)}</div> : <></>;

@@ -14,9 +14,17 @@ export const settingsPathBilling = "/billing";
 export const settingsPathPlans = "/plans";
 export const settingsPathPreferences = "/preferences";
 
+/**
+ * @deprecated use settingsPathOrgs instead
+ * we keep this for some time to not break links
+ */
 export const settingsPathTeams = "/teams";
 export const settingsPathTeamsJoin = [settingsPathTeams, "join"].join("/");
 export const settingsPathTeamsNew = [settingsPathTeams, "new"].join("/");
+
+export const settingsPathOrgs = "/orgs";
+export const settingsPathOrgsJoin = [settingsPathOrgs, "join"].join("/");
+export const settingsPathOrgsNew = [settingsPathOrgs, "new"].join("/");
 
 export const settingsPathVariables = "/variables";
 export const settingsPathPersonalAccessTokens = "/tokens";

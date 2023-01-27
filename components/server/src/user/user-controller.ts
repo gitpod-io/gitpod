@@ -162,7 +162,7 @@ export class UserController {
                 });
 
                 // Simply redirect to the app for now
-                res.redirect("/teams/new", 307);
+                res.redirect("/orgs/new", 307);
             }, BUILTIN_INSTLLATION_ADMIN_USER_ID),
         );
         router.get(

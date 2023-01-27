@@ -28,7 +28,7 @@ export const RemoveProjectModal: FunctionComponent<RemoveProjectModalProps> = ({
     return (
         <ConfirmationModal
             title="Remove Project"
-            areYouSureText="Are you sure you want to remove this project from this team? Team members will also lose access to this project."
+            areYouSureText="Are you sure you want to remove this project from this organization? Organization members will also lose access to this project."
             children={{
                 name: project?.name ?? "",
                 description: project?.cloneUrl ?? "",

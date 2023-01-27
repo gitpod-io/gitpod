@@ -2030,7 +2030,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     protected async guardTeamOperation(teamId: string | undefined, op: ResourceAccessOp): Promise<Team> {
         const team = await this.teamDB.findTeamById(teamId || "");
         if (!team) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Organization not found");
         }
         const members = await this.teamDB.findMembersByTeam(team.id);
         await this.guardAccess({ kind: "team", subject: team, members }, op);
@@ -2047,7 +2047,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { teamId });
 
         if (!uuidValidate(teamId)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "team ID must be a valid UUID");
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "organization ID must be a valid UUID");
         }
 
         this.checkAndBlockUser("getTeam");
@@ -2064,12 +2064,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { teamId });
 
         if (!teamId || !uuidValidate(teamId)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "team ID must be a valid UUID");
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "organization ID must be a valid UUID");
         }
         this.checkUser("updateTeam");
         const existingTeam = await this.teamDB.findTeamById(teamId);
         if (!existingTeam) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, `Team ${teamId} does not exist`);
+            throw new ResponseError(ErrorCodes.NOT_FOUND, `Organization ${teamId} does not exist`);
         }
         const members = await this.teamDB.findMembersByTeam(teamId);
         await this.guardAccess({ kind: "team", subject: existingTeam, members }, "update");
@@ -2082,7 +2082,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { teamId });
 
         if (!uuidValidate(teamId)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "team ID must be a valid UUID");
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "organization ID must be a valid UUID");
         }
 
         this.checkUser("getTeamMembers");
@@ -2152,7 +2152,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { teamId, userId, role });
 
         if (!uuidValidate(teamId)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "team ID must be a valid UUID");
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "organization ID must be a valid UUID");
         }
 
         if (!uuidValidate(userId)) {
@@ -2172,7 +2172,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { teamId, userId });
 
         if (!uuidValidate(teamId)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "team ID must be a valid UUID");
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "organization ID must be a valid UUID");
         }
 
         if (!uuidValidate(userId)) {
@@ -2184,7 +2184,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardTeamOperation(teamId, user.id === userId ? "get" : "update");
         const membership = await this.teamDB.findTeamMembership(userId, teamId);
         if (!membership) {
-            throw new Error(`Could not find membership for user '${userId}' in team '${teamId}'`);
+            throw new Error(`Could not find membership for user '${userId}' in organization '${teamId}'`);
         }
         await this.teamDB.removeMemberFromTeam(userId, teamId);
         await this.onTeamMemberRemoved(userId, teamId, membership.id);
@@ -2202,7 +2202,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { teamId });
 
         if (!uuidValidate(teamId)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "team ID must be a valid UUID");
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "organization ID must be a valid UUID");
         }
 
         this.checkUser("getGenericInvite");
@@ -2218,7 +2218,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { teamId });
 
         if (!uuidValidate(teamId)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "team ID must be a valid UUID");
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "organization ID must be a valid UUID");
         }
 
         this.checkAndBlockUser("resetGenericInvite");
