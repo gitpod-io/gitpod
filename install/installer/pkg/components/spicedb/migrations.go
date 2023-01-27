@@ -45,7 +45,7 @@ func migrations(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Spec: corev1.PodSpec{
 						Affinity:           common.NodeAffinity(cluster.AffinityLabelMeta),
 						RestartPolicy:      corev1.RestartPolicyNever,
-						ServiceAccountName: Component,
+						ServiceAccountName: fmt.Sprintf("%s-migrations", Component),
 						EnableServiceLinks: pointer.Bool(false),
 						InitContainers: []corev1.Container{
 							dbWaiter(ctx),
