@@ -320,26 +320,29 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 
 		// we always need WebImage for when the user chooses a desktop ide
 		resp.WebImage = getUserIDEImage(defaultIde)
+		webUserImageLayers := getUserImageLayers(defaultIde)
 
 		var desktopImageLayer string
-		var userImageLayers []string
+		var desktopUserImageLayers []string
 		if chosenIDE.Type == config.IDETypeDesktop {
 			desktopImageLayer = getUserIDEImage(chosenIDE)
-			userImageLayers = getUserImageLayers(chosenIDE)
+			desktopUserImageLayers = getUserImageLayers(chosenIDE)
 		} else {
 			resp.WebImage = getUserIDEImage(chosenIDE)
+			webUserImageLayers = getUserImageLayers(chosenIDE)
 		}
 
 		ideName, referrer := s.resolveReferrerIDE(ideConfig, wsContext, userIdeName)
 		if ideName != "" {
 			resp.RefererIde = ideName
 			desktopImageLayer = getUserIDEImage(referrer)
-			userImageLayers = getUserImageLayers(referrer)
+			desktopUserImageLayers = getUserImageLayers(referrer)
 		}
 
+		resp.IdeImageLayers = append(resp.IdeImageLayers, webUserImageLayers...)
 		if desktopImageLayer != "" {
 			resp.IdeImageLayers = append(resp.IdeImageLayers, desktopImageLayer)
-			resp.IdeImageLayers = append(resp.IdeImageLayers, userImageLayers...)
+			resp.IdeImageLayers = append(resp.IdeImageLayers, desktopUserImageLayers...)
 		}
 
 		if ideConfig.GpRunImage != "" {

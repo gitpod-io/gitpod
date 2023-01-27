@@ -1619,6 +1619,9 @@ data:
             "codeImage": {
               "version": "test"
             },
+            "codeHelperImage": {
+              "version": "test"
+            },
             "dockerUp": {
               "version": "test"
             },
@@ -3696,7 +3699,15 @@ data:
             "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "label": "Browser",
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-8f9e9f93136a787fde5142f0708367ffaf46094c",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly",
+            "imageLayers": [
+              "eu.gcr.io/gitpod-core-dev/build/ide/gitpod-code-web:commit-1f8f65b4b9b1be9c8bc5a981974a8d29c54ba235",
+              "eu.gcr.io/gitpod-core-dev/build/ide/code-codehelper:test"
+            ],
+            "latestImageLayers": [
+              "eu.gcr.io/gitpod-core-dev/build/ide/gitpod-code-web:commit-1f8f65b4b9b1be9c8bc5a981974a8d29c54ba235",
+              "eu.gcr.io/gitpod-core-dev/build/ide/code-codehelper:test"
+            ]
           },
           "code-desktop": {
             "orderKey": "02",
@@ -5416,7 +5427,15 @@ data:
             "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "label": "Browser",
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-8f9e9f93136a787fde5142f0708367ffaf46094c",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly",
+            "imageLayers": [
+              "eu.gcr.io/gitpod-core-dev/build/ide/gitpod-code-web:commit-1f8f65b4b9b1be9c8bc5a981974a8d29c54ba235",
+              "eu.gcr.io/gitpod-core-dev/build/ide/code-codehelper:test"
+            ],
+            "latestImageLayers": [
+              "eu.gcr.io/gitpod-core-dev/build/ide/gitpod-code-web:commit-1f8f65b4b9b1be9c8bc5a981974a8d29c54ba235",
+              "eu.gcr.io/gitpod-core-dev/build/ide/code-codehelper:test"
+            ]
           },
           "code-desktop": {
             "orderKey": "02",

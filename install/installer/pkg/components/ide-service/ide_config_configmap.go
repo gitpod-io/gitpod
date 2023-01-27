@@ -46,6 +46,8 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return ctx.ImageName(ctx.Config.Repository, name, bundledLatest.Version)
 	}
 
+	codeHelperImage := ctx.ImageName(ctx.Config.Repository, ide.CodeHelperIDEImage, ctx.VersionManifest.Components.Workspace.CodeHelperImage.Version)
+	codeWebExtensionImage := ctx.ImageName(ctx.Config.Repository, ide.CodeWebExtensionImage, ide.CodeWebExtensionVersion)
 	jbPluginImage := ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginImage.Version)
 	jbPluginLatestImage := resolveLatestImage(ide.JetBrainsBackendPluginImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginLatestImage)
 	jbLauncherImage := ctx.ImageName(ctx.Config.Repository, ide.JetBrainsLauncherImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsLauncherImage.Version)
@@ -78,13 +80,15 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Options: map[string]ide_config.IDEOption{
 				"code": {
-					OrderKey:    "00",
-					Title:       "VS Code",
-					Type:        ide_config.IDETypeBrowser,
-					Label:       "Browser",
-					Logo:        getIdeLogoPath("vscode"),
-					Image:       ctx.ImageName(ctx.Config.Repository, ide.CodeIDEImage, ide.CodeIDEImageStableVersion),
-					LatestImage: resolveLatestImage(ide.CodeIDEImage, "nightly", ctx.VersionManifest.Components.Workspace.CodeImage),
+					OrderKey:          "00",
+					Title:             "VS Code",
+					Type:              ide_config.IDETypeBrowser,
+					Label:             "Browser",
+					Logo:              getIdeLogoPath("vscode"),
+					Image:             ctx.ImageName(ctx.Config.Repository, ide.CodeIDEImage, ide.CodeIDEImageStableVersion),
+					ImageLayers:       []string{codeWebExtensionImage, codeHelperImage},
+					LatestImage:       resolveLatestImage(ide.CodeIDEImage, "nightly", ctx.VersionManifest.Components.Workspace.CodeImage),
+					LatestImageLayers: []string{codeWebExtensionImage, codeHelperImage},
 				},
 				codeDesktop: {
 					OrderKey:    "02",
