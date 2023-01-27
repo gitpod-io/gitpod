@@ -174,9 +174,6 @@ function UsageView({ attributionId }: UsageViewProps) {
     };
 
     const currentPaginatedResults = usagePage?.usageEntriesList.filter((u) => u.kind === "workspaceinstance") ?? [];
-
-    const headerTitle = attributionId.kind === "team" ? "Team Usage" : "Personal Usage";
-
     const DateDisplay = forwardRef((arg: any, ref: any) => (
         <div
             className="px-2 py-0.5 text-gray-500 bg-gray-50 dark:text-gray-400 dark:bg-gray-800 rounded-md cursor-pointer flex items-center hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -209,7 +206,7 @@ function UsageView({ attributionId }: UsageViewProps) {
             <Header
                 title={
                     <div className="flex items-baseline">
-                        <h1 className="tracking-tight">{headerTitle}</h1>
+                        <h1 className="tracking-tight">Usage</h1>
                         <h2 className="ml-3">(updated every 15 minutes).</h2>
                     </div>
                 }
@@ -281,7 +278,7 @@ function UsageView({ attributionId }: UsageViewProps) {
                                             {" "}
                                             workspaces
                                         </a>{" "}
-                                        in {startDate.format("MMMM YYYY")} or checked your other teams?
+                                        in {startDate.format("MMMM YYYY")} or checked your other organizations?
                                     </p>
                                 </div>
                             )}

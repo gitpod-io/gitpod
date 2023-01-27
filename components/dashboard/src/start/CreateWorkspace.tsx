@@ -330,7 +330,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
 function SelectCostCenterModal(props: { onSelected?: () => void }) {
     return (
         <Modal visible={true} closeable={false} onClose={() => {}}>
-            <h3>Choose Billing Team</h3>
+            <h3>Choose Billing Organization</h3>
             <BillingAccountSelector onSelected={props.onSelected} />
         </Modal>
     );

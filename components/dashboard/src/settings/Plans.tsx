@@ -109,14 +109,14 @@ export default function () {
                 if (!freeSlot) {
                     setTeamClaimModal({
                         mode: "error",
-                        errorText: "This invitation is no longer valid. Please contact the team owner.",
+                        errorText: "This invitation is no longer valid. Please contact the organization owner.",
                     });
                 } else {
                     setTeamClaimModal({
                         mode: "confirmation",
                         teamId: claimedTeamSubscriptionId,
                         slotId: freeSlot.id,
-                        text: "You are about to claim a seat in a team.",
+                        text: "You are about to claim a seat in an organization.",
                     });
                 }
             });
@@ -722,7 +722,7 @@ export default function () {
                 <div className="mt-4 flex justify-center space-x-3 2xl:space-x-7">{planCards}</div>
                 {assignedTs && userBillingMode?.mode === "chargebee" && !!userBillingMode.teamNames && (
                     <Alert type="info" className="mt-10 mx-auto">
-                        <p>Assigned Team Seats</p>
+                        <p>Assigned Organization Seats</p>
                         <ul>{userBillingMode.teamNames.join(", ")}</ul>
                     </Alert>
                 )}
@@ -805,7 +805,7 @@ export default function () {
                 {!!teamClaimModal && (
                     // TODO: Use title and buttons props
                     <Modal visible={true} onClose={() => setTeamClaimModal(undefined)}>
-                        <h3 className="pb-2">Team Invitation</h3>
+                        <h3 className="pb-2">Organization Invitation</h3>
                         <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
                             <p className="pb-4 text-gray-500 text-base">
                                 {teamClaimModal.mode === "error" ? teamClaimModal.errorText : teamClaimModal.text}
@@ -925,7 +925,7 @@ function PlanCard(p: PlanCardProps) {
             <div className="relative w-full">
                 {p.isTsAssigned && (
                     <div className="absolute w-full mt-5 text-center font-semibold cursor-default">
-                        Team seat assigned
+                        Organization seat assigned
                     </div>
                 )}
                 <div className="absolute w-full mt-5 text-center font-semibold cursor-default">{p.bottomLabel}</div>

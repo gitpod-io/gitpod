@@ -333,7 +333,7 @@ export default function NewProject() {
                 <p className="text-gray-500 text-center text-base">
                     Projects allow you to manage prebuilds and workspaces for your repository.{" "}
                     <a
-                        href="https://www.gitpod.io/docs/teams-and-projects"
+                        href="https://www.gitpod.io/docs/orgs-and-projects"
                         target="_blank"
                         rel="noreferrer"
                         className="gp-link"
@@ -527,23 +527,11 @@ export default function NewProject() {
     };
 
     const renderSelectTeam = () => {
-        const userFullName = user?.fullName || user?.name || "...";
         const teamsToRender = teams || [];
         return (
             <>
-                <p className="mt-2 text-gray-500 text-center text-base">Select team or personal account</p>
+                <p className="mt-2 text-gray-500 text-center text-base">Select organization</p>
                 <div className="mt-14 flex flex-col space-y-2">
-                    <label
-                        key={`user-${userFullName}`}
-                        className={`w-80 px-4 py-3 flex space-x-3 items-center cursor-pointer rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800`}
-                        onClick={() => setSelectedTeamOrUser(user)}
-                    >
-                        <input type="radio" />
-                        <div className="flex-grow overflow-ellipsis truncate flex flex-col">
-                            <span className="font-semibold">{userFullName}</span>
-                            <span className="text-sm text-gray-400">Personal account</span>
-                        </div>
-                    </label>
                     {teamsToRender.map((t) => (
                         <label
                             key={`team-${t.name}`}
@@ -558,7 +546,7 @@ export default function NewProject() {
                                         ? `${teamMembers[t.id].length} member${
                                               teamMembers[t.id].length === 1 ? "" : "s"
                                           }`
-                                        : "Team"}
+                                        : "Organization"}
                                 </span>
                             </div>
                         </label>
@@ -567,7 +555,7 @@ export default function NewProject() {
                         <div className="flex space-x-3 items-center relative">
                             <input type="radio" onChange={() => setShowNewTeam(!showNewTeam)} />
                             <div className="flex-grow overflow-ellipsis truncate flex flex-col">
-                                <span className="font-semibold">Create new team</span>
+                                <span className="font-semibold">Create new organization</span>
                                 <span className="text-sm text-gray-400">Collaborate with others</span>
                             </div>
                             {teamsToRender.length > 0 && (
@@ -624,7 +612,7 @@ export default function NewProject() {
         ) : (
             <>
                 {" "}
-                in team{" "}
+                in organization{" "}
                 <a className="gp-link" href={`/t/${selectedTeamOrUser?.slug}/projects`}>
                     {selectedTeamOrUser?.name}
                 </a>

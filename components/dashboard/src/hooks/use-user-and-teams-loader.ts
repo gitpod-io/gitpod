@@ -47,7 +47,7 @@ export const useUserAndTeamsLoader = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // TODO: Can this check happen when we load the teams rather than a separate effect?
+    // TODO: Can this check happen when we load the orgs rather than a separate effect?
     useEffect(() => {
         if (!teams) {
             return;

@@ -82,6 +82,7 @@ export default function Menu() {
                 "users",
                 "workspaces",
                 "teams",
+                "orgs",
             ].includes(resource)
         ) {
             return resource;
@@ -118,6 +119,7 @@ export default function Menu() {
         "usage",
         "plans",
         "teams",
+        "orgs",
         "variables",
         "keys",
         "integrations",
@@ -282,8 +284,8 @@ export default function Menu() {
                 <div className="p-1 text-base text-gray-500 dark:text-gray-400 border-gray-800">
                     <PillMenuItem
                         additionalClasses="border-2 border-gray-200 dark:border-gray-700 border-dashed"
-                        name="New Team →"
-                        link="/teams/new"
+                        name="New Organization →"
+                        link="/orgs/new"
                     />
                 </div>
             );
@@ -330,10 +332,10 @@ export default function Menu() {
                 .sort((a, b) => (a.title.toLowerCase() > b.title.toLowerCase() ? 1 : -1)),
             {
                 slug: "new",
-                title: "Create a new team",
+                title: "Create a new organization",
                 customContent: (
                     <div className="w-full text-gray-400 flex items-center">
-                        <span className="flex-1 font-semibold">New Team</span>
+                        <span className="flex-1 font-semibold">New Organization</span>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" className="w-3.5">
                             <path
                                 fill="currentColor"
@@ -344,7 +346,7 @@ export default function Menu() {
                         </svg>
                     </div>
                 ),
-                link: "/teams/new",
+                link: "/orgs/new",
             },
         ];
         const classes =
@@ -370,7 +372,7 @@ export default function Menu() {
                                     d="M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414Z"
                                     fill="#78716C"
                                 />
-                                <title>Toggle team selection menu</title>
+                                <title>Toggle organization selection menu</title>
                             </svg>
                         </div>
                     </ContextMenu>

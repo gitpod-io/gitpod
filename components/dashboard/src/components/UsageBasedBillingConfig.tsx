@@ -170,7 +170,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
             <h2 className="text-gray-500">
                 {attributionId && AttributionId.parse(attributionId)?.kind === "user"
                     ? "Manage billing for your personal account."
-                    : "Manage billing for your team."}
+                    : "Manage billing for your organization."}
             </h2>
             <div className="max-w-xl flex flex-col">
                 {errorMessage && (

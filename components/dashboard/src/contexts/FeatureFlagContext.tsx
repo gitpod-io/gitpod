@@ -61,7 +61,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
 
             for (const [flagName, config] of Object.entries(featureFlags)) {
                 const value = async () => {
-                    // First check if the flag is non-default for any of the teams
+                    // First check if the flag is non-default for any of the orgs
                     for (const team of teams || []) {
                         const flagValue = await getExperimentsClient().getValueAsync(flagName, config.defaultValue, {
                             user,

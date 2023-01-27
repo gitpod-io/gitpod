@@ -39,7 +39,7 @@ export function UsageLimitReachedModal(p: { hints: any }) {
                     You have reached the <strong>usage limit</strong> of your billing account.
                 </Alert>
                 <p className="mt-3 text-base text-gray-600 dark:text-gray-300">
-                    {"Contact a team owner "}
+                    {"Contact an organization owner "}
                     {attributedTeamName && (
                         <>
                             of <strong>{attributedTeamName} </strong>
