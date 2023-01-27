@@ -198,15 +198,6 @@ type SpiceDBConfig struct {
 	Enabled bool `json:"enabled"`
 
 	DisableMigrations bool `json:"disableMigrations"`
-
-	CloudSQL *struct {
-		Instance string `json:"instance"`
-		Database string `json:"database"`
-		// Credentials for CloudSQL proxy to authenticate with GCP
-		ProxySecretRef string `json:"proxySecretRef"`
-		// Username/Password to authenticate with the database
-		DatabaseSecretRef string `json:"databaseSecretRef"`
-	} `json:"cloudSql,omitempty"`
 }
 
 type WebAppConfig struct {
