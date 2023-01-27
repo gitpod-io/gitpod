@@ -139,15 +139,7 @@ func dbEnvVars(ctx *common.RenderContext) []corev1.EnvVar {
 	containerEnvVars := common.DatabaseEnv(&ctx.Config)
 
 	if ctx.Config.Database.CloudSQLGlobal != nil {
-		var withoutDBHost []corev1.EnvVar
-
-		for _, v := range containerEnvVars {
-			if v.Name == "DB_HOST" {
-				continue
-			}
-			withoutDBHost = append(withoutDBHost, v)
-		}
-
+		withoutDBHost := filterOutEnvVars("DB_HOST", containerEnvVars)
 		withoutDBHost = append(withoutDBHost,
 			// Override the DB host to point to global cloudsql
 			corev1.EnvVar{
@@ -162,10 +154,24 @@ func dbEnvVars(ctx *common.RenderContext) []corev1.EnvVar {
 	return containerEnvVars
 }
 
+func filterOutEnvVars(name string, vars []corev1.EnvVar) []corev1.EnvVar {
+	var filtered []corev1.EnvVar
+	for _, v := range vars {
+		if v.Name == name {
+			continue
+		}
+
+		filtered = append(filtered, v)
+	}
+
+	return filtered
+}
+
 func dbWaiter(ctx *common.RenderContext) v1.Container {
 	databaseWaiter := common.DatabaseWaiterContainer(ctx)
 	// Use updated env-vars, which in the case cloud-sql-proxy override default db conf
-	databaseWaiter.Env = common.MergeEnv(databaseWaiter.Env, dbEnvVars(ctx))
+
+	databaseWaiter.Env = dbEnvVars(ctx)
 
 	return *databaseWaiter
 }
