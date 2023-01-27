@@ -128,6 +128,9 @@ type WorkspaceStatus struct {
 
 	// +kubebuilder:validation:Optional
 	Runtime *WorkspaceRuntimeStatus `json:"runtime,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	Metrics map[string]bool `json:"metrics,omitempty"`
 }
 
 // +kubebuilder:validation:Enum=Deployed;Failed;Timeout;UserActivity;HeadlessTaskFailed;StoppedByRequest;EverReady;ContentReady;BackupComplete;BackupFailure

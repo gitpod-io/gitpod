@@ -40,7 +40,7 @@ func NewWorkspaceReconciler(c client.Client, scheme *runtime.Scheme, cfg config.
 	}
 
 	metrics := newControllerMetrics(reconciler)
-	reg.Register(metrics)
+	reg.MustRegister(metrics)
 	reconciler.metrics = metrics
 
 	return reconciler, nil
@@ -89,6 +89,10 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		workspace.Status.Conditions = []metav1.Condition{}
 	}
 
+	if workspace.Status.Metrics == nil {
+		workspace.Status.Metrics = make(map[string]bool)
+	}
+
 	log.Info("reconciling workspace", "ws", req.NamespacedName)
 
 	var workspacePods corev1.PodList
@@ -103,10 +107,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	err = r.updateMetrics(ctx, &workspace)
-	if err != nil {
-		log.Error(err, "could not update metrics")
-	}
+	r.updateMetrics(ctx, &workspace)
 
 	result, err := r.actOnStatus(ctx, &workspace, workspacePods)
 	if err != nil {
@@ -129,35 +130,43 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *workspacev1.Workspace, workspacePods corev1.PodList) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
-	// if there isn't a workspace pod and we're not currently deleting this workspace,
-	// create one.
-	if len(workspacePods.Items) == 0 && workspace.Status.PodStarts == 0 {
-		sctx, err := newStartWorkspaceContext(ctx, &r.Config, workspace)
-		if err != nil {
-			log.Error(err, "unable to create startWorkspace context")
-			return ctrl.Result{Requeue: true}, err
-		}
+	if len(workspacePods.Items) == 0 {
+		// if there isn't a workspace pod and we're not currently deleting this workspace,// create one.
+		switch {
+		case workspace.Status.PodStarts == 0:
+			sctx, err := newStartWorkspaceContext(ctx, &r.Config, workspace)
+			if err != nil {
+				log.Error(err, "unable to create startWorkspace context")
+				return ctrl.Result{Requeue: true}, err
+			}
 
-		pod, err := r.createWorkspacePod(sctx)
-		if err != nil {
-			log.Error(err, "unable to produce workspace pod")
-			return ctrl.Result{}, err
-		}
+			pod, err := r.createWorkspacePod(sctx)
+			if err != nil {
+				log.Error(err, "unable to produce workspace pod")
+				return ctrl.Result{}, err
+			}
 
-		if err := ctrl.SetControllerReference(workspace, pod, r.Scheme); err != nil {
-			return ctrl.Result{}, err
-		}
+			if err := ctrl.SetControllerReference(workspace, pod, r.Scheme); err != nil {
+				return ctrl.Result{}, err
+			}
 
-		err = r.Create(ctx, pod)
-		if errors.IsAlreadyExists(err) {
-			// pod exists, we're good
-		} else if err != nil {
-			log.Error(err, "unable to create Pod for Workspace", "pod", pod)
-			return ctrl.Result{Requeue: true}, err
-		} else {
-			// TODO(cw): replicate the startup mechanism where pods can fail to be scheduled,
-			//			 need to be deleted and re-created
-			workspace.Status.PodStarts++
+			err = r.Create(ctx, pod)
+			if errors.IsAlreadyExists(err) {
+				// pod exists, we're good
+			} else if err != nil {
+				log.Error(err, "unable to create Pod for Workspace", "pod", pod)
+				return ctrl.Result{Requeue: true}, err
+			} else {
+				// TODO(cw): replicate the startup mechanism where pods can fail to be scheduled,
+				//			 need to be deleted and re-created
+				workspace.Status.PodStarts++
+			}
+
+		case workspace.Status.Phase == workspacev1.WorkspacePhaseStopped:
+			err := r.Client.Delete(ctx, workspace)
+			if err != nil {
+				return ctrl.Result{Requeue: true}, err
+			}
 		}
 
 		return ctrl.Result{}, nil
@@ -188,6 +197,15 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 			return ctrl.Result{Requeue: true}, err
 		}
 
+	// if the content initialization failed, delete the pod
+	case conditionWithStatusAndReson(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure") && !isPodBeingDeleted(pod):
+		err := r.Client.Delete(ctx, pod)
+		if errors.IsNotFound(err) {
+			// pod is gone - nothing to do here
+		} else {
+			return ctrl.Result{Requeue: true}, err
+		}
+
 	// we've disposed already - try to remove the finalizer and call it a day
 	case workspace.Status.Phase == workspacev1.WorkspacePhaseStopped:
 		var foundFinalizer bool
@@ -210,17 +228,12 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 			// reque to remove workspace
 			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
-
-		err = r.Client.Delete(ctx, workspace)
-		if err != nil {
-			return ctrl.Result{Requeue: true}, err
-		}
 	}
 
 	return ctrl.Result{}, nil
 }
 
-func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *workspacev1.Workspace) error {
+func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *workspacev1.Workspace) {
 	log := log.FromContext(ctx)
 
 	phase := workspace.Status.Phase
@@ -230,12 +243,13 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 		phase == workspacev1.WorkspacePhaseCreating ||
 		phase == workspacev1.WorkspacePhaseInitializing:
 
-		if conditionWithStatusAndReson(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "") {
+		if conditionWithStatusAndReson(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure") {
 			r.metrics.countTotalRestoreFailures(&log, workspace)
+			r.metrics.countWorkspaceStartFailures(&log, workspace)
 		}
 
 		if conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) {
-			r.metrics.countWorkspaceStartupFailure(&log, workspace)
+			r.metrics.countWorkspaceStartFailures(&log, workspace)
 		}
 
 	case phase == workspacev1.WorkspacePhaseRunning:
@@ -246,6 +260,7 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 
 	case phase == workspacev1.WorkspacePhaseStopped:
 		if conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) {
+			r.metrics.countTotalBackups(&log, workspace)
 			r.metrics.countTotalBackupFailures(&log, workspace)
 		}
 
@@ -255,15 +270,6 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 
 		r.metrics.countWorkspaceStop(&log, workspace)
 	}
-
-	return nil
-}
-func (r *WorkspaceReconciler) RegisterMetrics(reg prometheus.Registerer) error {
-	return reg.Register(r.metrics)
-}
-
-func (r *WorkspaceReconciler) GetWorkspaces(context.Context) workspacev1.WorkspaceList {
-	return workspacev1.WorkspaceList{}
 }
 
 func conditionPresentAndTrue(cond []metav1.Condition, tpe string) bool {
@@ -274,15 +280,6 @@ func conditionPresentAndTrue(cond []metav1.Condition, tpe string) bool {
 	}
 	return false
 }
-
-// func conditionPresentAndFalse(cond []metav1.Condition, tpe string) bool {
-// 	for _, c := range cond {
-// 		if c.Type == tpe {
-// 			return c.Status == metav1.ConditionFalse
-// 		}
-// 	}
-// 	return false
-// }
 
 func conditionWithStatusAndReson(cond []metav1.Condition, tpe string, status bool, reason string) bool {
 	for _, c := range cond {
@@ -341,6 +338,16 @@ func AddUniqueCondition(conds []metav1.Condition, cond metav1.Condition) []metav
 	return append(conds, cond)
 }
 
+const (
+	workspaceStartupSeconds       string = "workspace_startup_seconds"
+	workspaceStartFailuresTotal   string = "workspace_starts_failure_total"
+	workspaceStopsTotal           string = "workspace_stops_total"
+	workspaceBackupsTotal         string = "workspace_backups_total"
+	workspaceBackupFailuresTotal  string = "workspace_backups_failure_total"
+	workspaceRestoresTotal        string = "workspace_restores_total"
+	workspaceRestoresFailureTotal string = "workspace_restores_failure_total"
+)
+
 type controllerMetrics struct {
 	startupTimeHistVec           *prometheus.HistogramVec
 	totalStartsFailureCounterVec *prometheus.CounterVec
@@ -360,45 +367,45 @@ func newControllerMetrics(r *WorkspaceReconciler) *controllerMetrics {
 		startupTimeHistVec: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
-			Name:      "workspace_startup_seconds",
+			Name:      workspaceStartupSeconds,
 			Help:      "time it took for workspace pods to reach the running phase",
 			Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
 		}, []string{"type", "class"}),
 		totalStartsFailureCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
-			Name:      "workspace_starts_failure_total",
+			Name:      workspaceStartFailuresTotal,
 			Help:      "total number of workspaces that failed to start",
 		}, []string{"type", "class"}),
 		totalStopsCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
-			Name:      "workspace_stops_total",
+			Name:      workspaceStopsTotal,
 			Help:      "total number of workspaces stopped",
 		}, []string{"reason", "type", "class"}),
 
 		totalBackupCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
-			Name:      "workspace_backups_total",
+			Name:      workspaceBackupsTotal,
 			Help:      "total number of workspace backups",
 		}, []string{"type", "class"}),
 		totalBackupFailureCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
-			Name:      "workspace_backups_failure_total",
+			Name:      workspaceBackupFailuresTotal,
 			Help:      "total number of workspace backup failures",
 		}, []string{"type", "class"}),
 		totalRestoreCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
-			Name:      "workspace_restores_total",
+			Name:      workspaceRestoresTotal,
 			Help:      "total number of workspace restores",
 		}, []string{"type", "class"}),
 		totalRestoreFailureCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
-			Name:      "workspace_restores_failure_total",
+			Name:      workspaceRestoresFailureTotal,
 			Help:      "total number of workspace restore failures",
 		}, []string{"type", "class"}),
 
@@ -408,6 +415,10 @@ func newControllerMetrics(r *WorkspaceReconciler) *controllerMetrics {
 }
 
 func (m *controllerMetrics) recordWorkspaceStartupTime(log *logr.Logger, ws *workspacev1.Workspace) {
+	if _, countedAlready := ws.Status.Metrics[workspaceStartupSeconds]; countedAlready {
+		return
+	}
+
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
@@ -417,9 +428,14 @@ func (m *controllerMetrics) recordWorkspaceStartupTime(log *logr.Logger, ws *wor
 	}
 
 	hist.Observe(float64(time.Since(ws.CreationTimestamp.Time).Seconds()))
+	ws.Status.Metrics[workspaceStartupSeconds] = true
 }
 
-func (m *controllerMetrics) countWorkspaceStartupFailure(log *logr.Logger, ws *workspacev1.Workspace) {
+func (m *controllerMetrics) countWorkspaceStartFailures(log *logr.Logger, ws *workspacev1.Workspace) {
+	if _, countedAlready := ws.Status.Metrics[workspaceStartFailuresTotal]; countedAlready {
+		return
+	}
+
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
@@ -429,21 +445,31 @@ func (m *controllerMetrics) countWorkspaceStartupFailure(log *logr.Logger, ws *w
 	}
 
 	counter.Inc()
+	ws.Status.Metrics[workspaceStartFailuresTotal] = true
 }
 
 func (m *controllerMetrics) countWorkspaceStop(log *logr.Logger, ws *workspacev1.Workspace) {
+	if _, countedAlready := ws.Status.Metrics[workspaceStopsTotal]; countedAlready {
+		return
+	}
+
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalStopsCounterVec.GetMetricWithLabelValues(tpe, class)
+	counter, err := m.totalStopsCounterVec.GetMetricWithLabelValues("unknown", tpe, class)
 	if err != nil {
-		log.Error(err, "could not count workspace stop", "type", tpe, "class", class)
+		log.Error(err, "could not count workspace stop", "reason", "unknown", "type", tpe, "class", class)
 	}
 
 	counter.Inc()
+	ws.Status.Metrics[workspaceStopsTotal] = true
 }
 
 func (m *controllerMetrics) countTotalBackups(log *logr.Logger, ws *workspacev1.Workspace) {
+	if _, countedAlready := ws.Status.Metrics[workspaceBackupsTotal]; countedAlready {
+		return
+	}
+
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
@@ -453,9 +479,14 @@ func (m *controllerMetrics) countTotalBackups(log *logr.Logger, ws *workspacev1.
 	}
 
 	counter.Inc()
+	ws.Status.Metrics[workspaceBackupsTotal] = true
 }
 
 func (m *controllerMetrics) countTotalBackupFailures(log *logr.Logger, ws *workspacev1.Workspace) {
+	if _, countedAlready := ws.Status.Metrics[workspaceBackupFailuresTotal]; countedAlready {
+		return
+	}
+
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
@@ -465,9 +496,14 @@ func (m *controllerMetrics) countTotalBackupFailures(log *logr.Logger, ws *works
 	}
 
 	counter.Inc()
+	ws.Status.Metrics[workspaceBackupFailuresTotal] = true
 }
 
 func (m *controllerMetrics) countTotalRestores(log *logr.Logger, ws *workspacev1.Workspace) {
+	if _, countedAlready := ws.Status.Metrics[workspaceRestoresTotal]; countedAlready {
+		return
+	}
+
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
@@ -477,18 +513,24 @@ func (m *controllerMetrics) countTotalRestores(log *logr.Logger, ws *workspacev1
 	}
 
 	counter.Inc()
+	ws.Status.Metrics[workspaceRestoresTotal] = true
 }
 
 func (m *controllerMetrics) countTotalRestoreFailures(log *logr.Logger, ws *workspacev1.Workspace) {
+	if _, countedAlready := ws.Status.Metrics[workspaceRestoresFailureTotal]; countedAlready {
+		return
+	}
+
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
 	counter, err := m.totalRestoreFailureCounterVec.GetMetricWithLabelValues(tpe, class)
 	if err != nil {
-		log.Error(err, "could not record workspace restore failure", "type", tpe, "class", class)
+		log.Error(err, "could not count workspace restore failure", "type", tpe, "class", class)
 	}
 
 	counter.Inc()
+	ws.Status.Metrics[workspaceRestoresFailureTotal] = true
 }
 
 // Describe implements Collector. It will send exactly one Desc to the provided channel.
