@@ -59,6 +59,17 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		volume, mount, _, ok := getOIDCClientJWTSecretConfig(cfg)
+		if !ok {
+			return nil
+		}
+
+		volumes = append(volumes, volume)
+		volumeMounts = append(volumeMounts, mount)
+		return nil
+	})
+
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		volume, mount, _, ok := getStripeConfig(cfg)
 		if !ok {
 			return nil
