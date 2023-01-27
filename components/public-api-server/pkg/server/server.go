@@ -75,6 +75,15 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 		}
 	}
 
+	if cfg.OIDCClientJWTSigningSecretPath != "" {
+		_, err := readSecretFromFile(cfg.OIDCClientJWTSigningSecretPath)
+		if err != nil {
+			return fmt.Errorf("failed to read JWT signing secret for OIDC flows: %w", err)
+		}
+	} else {
+		log.Info("No JWT signing secret for OIDC flows is configured.")
+	}
+
 	var stripeWebhookHandler http.Handler = webhooks.NewNoopWebhookHandler()
 	if cfg.StripeWebhookSigningSecretPath != "" {
 		stripeWebhookSecret, err := readSecretFromFile(cfg.StripeWebhookSigningSecretPath)

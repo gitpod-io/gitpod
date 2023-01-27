@@ -3111,7 +3111,7 @@ data:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: 8f9715de0ca5459f27239b0de167ca51f970b650173d793545278bf049b47465
+        gitpod.io/checksum_config: 0bb7669b80268061303b990baae787a8d997b25fb668c6ae4ddd32db507823e0
         hello: world
       creationTimestamp: null
       labels:
@@ -5684,6 +5684,7 @@ data:
       "billingServiceAddress": "usage.default.svc.cluster.local:9001",
       "sessionServiceAddress": "server.default.svc.cluster.local:9876",
       "stripeWebhookSigningSecretPath": "",
+      "oidcClientJWTSigningSecretPath": "",
       "personalAccessTokenSigningKeyPath": "",
       "databaseConfigPath": "/secrets/database-config",
       "server": {
@@ -10785,7 +10786,7 @@ kind: Deployment
 metadata:
   annotations:
     gitpod.io: hello
-    gitpod.io/checksum_config: 8f9715de0ca5459f27239b0de167ca51f970b650173d793545278bf049b47465
+    gitpod.io/checksum_config: 0bb7669b80268061303b990baae787a8d997b25fb668c6ae4ddd32db507823e0
     hello: world
   creationTimestamp: null
   labels:

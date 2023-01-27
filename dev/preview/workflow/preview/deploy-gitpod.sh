@@ -418,6 +418,11 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.configcat.baseUrl "
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.configcat.pollInterval "1m"
 
 #
+# configure JWT signign key
+#
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.publicApi.oidcClientJWTSigningKeySecretName "oidc-client-jwt-signing-key"
+
+#
 # configure Personal Access Token signign key
 #
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.publicApi.personalAccessTokenSigningKeySecretName "personal-access-token-signing-key"
