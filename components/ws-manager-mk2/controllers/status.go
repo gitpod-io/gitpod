@@ -32,6 +32,10 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 
 	switch len(pods.Items) {
 	case 0:
+		if workspace.Status.Phase == "" {
+			workspace.Status.Phase = workspacev1.WorkspacePhasePending
+		}
+
 		if workspace.Status.Phase != workspacev1.WorkspacePhasePending {
 			workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
 		}
