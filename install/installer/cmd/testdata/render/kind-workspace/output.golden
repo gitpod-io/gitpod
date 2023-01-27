@@ -779,6 +779,9 @@ data:
             "codeImage": {
               "version": "test"
             },
+            "codeHelperImage": {
+              "version": "test"
+            },
             "dockerUp": {
               "version": "test"
             },
