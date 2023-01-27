@@ -87,4 +87,4 @@ pod:
 
           npx ts-node .werft/platform-delete-preview-environments-cron.ts
 plugins:
-  cron: "15 * * * *"
+  cron: "15 */4 * * *"
