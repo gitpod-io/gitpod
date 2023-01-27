@@ -31,4 +31,5 @@ const (
 	CloudSQLProxyPort = 3306
 
 	SecretPresharedKeyName = "presharedKey"
+	BootstrapConfigMapName = "spicedb-bootstrap"
 )

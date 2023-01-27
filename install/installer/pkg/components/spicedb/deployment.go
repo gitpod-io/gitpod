@@ -5,6 +5,9 @@
 package spicedb
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/database/cloudsql"
@@ -24,6 +27,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	cfg := getExperimentalSpiceDBConfig(ctx)
 	if cfg == nil || !cfg.Enabled {
 		return nil, nil
+	}
+
+	bootstrapVolume, bootstrapVolumeMount, bootstrapFiles, err := getBootstrapConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get bootstrap config: %w", err)
 	}
 
 	return []runtime.Object{
@@ -72,6 +80,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									"--datastore-engine=mysql",
 									"--datastore-conn-max-open=100",
 									"--telemetry-endpoint=", // disable telemetry to https://telemetry.authzed.com
+									fmt.Sprintf("--datastore-bootstrap-files=%s", strings.Join(bootstrapFiles, ",")),
+									"--datastore-bootstrap-overwrite=true",
 								},
 								Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 									common.DefaultEnv(&ctx.Config),
@@ -126,7 +136,13 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									SuccessThreshold: 1,
 									TimeoutSeconds:   5,
 								},
+								VolumeMounts: []v1.VolumeMount{
+									bootstrapVolumeMount,
+								},
 							},
+						},
+						Volumes: []v1.Volume{
+							bootstrapVolume,
 						},
 					},
 				},

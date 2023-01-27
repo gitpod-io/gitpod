@@ -24,6 +24,7 @@ func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
 		migrations,
 		networkpolicy,
 		secret,
+		bootstrap,
 	)(ctx)
 }
 

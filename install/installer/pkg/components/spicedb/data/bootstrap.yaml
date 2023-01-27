@@ -1,0 +1,34 @@
+# Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+schema: |-
+  definition user {}
+
+  definition team {
+  	relation org: organisation
+  	relation member: user
+  	relation owner: user
+  	permission read_teams = owner + member + org->read_teams
+  	permission invite_members = owner
+  }
+
+  definition project {}
+
+  definition organisation {
+  	relation owner: user
+  	relation member: user
+  	relation service: service
+  	permission read_teams = owner + service
+  	permission write_teams = owner + service
+  	permission read_workspaces = owner + service
+  }
+
+  definition workspace {
+  	relation org: organisation
+  	relation owner: user
+  	permission create_workspace = org->member
+  	permission delete_workspace = owner + org->owner
+  }
+
+  definition service {}
