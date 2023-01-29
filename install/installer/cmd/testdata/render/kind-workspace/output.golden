@@ -1508,8 +1508,6 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
-      annotations:
-        cloud.google.com/neg: '{"exposed_ports": {"80":{},"443": {}}}'
       creationTimestamp: null
       labels:
         app: gitpod
@@ -2870,8 +2868,6 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    cloud.google.com/neg: '{"exposed_ports": {"80":{},"443": {}}}'
   creationTimestamp: null
   labels:
     app: gitpod
@@ -2900,7 +2896,7 @@ spec:
   selector:
     app: gitpod
     component: ws-proxy
-  type: LoadBalancer
+  type: ClusterIP
 status:
   loadBalancer: {}
 ---
