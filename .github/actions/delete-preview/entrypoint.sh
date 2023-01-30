@@ -19,5 +19,7 @@ previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}
 
 export TF_INPUT=0
 export TF_IN_AUTOMATION=true
-export TF_VAR_preview_name="${INPUT_NAME}"
+TF_VAR_preview_name="$(previewctl get-name --branch "${INPUT_NAME}")"
+export TF_VAR_preview_name
+
 leeway run dev/preview:delete-preview
