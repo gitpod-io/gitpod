@@ -39,7 +39,6 @@ func migrations(ctx *common.RenderContext) ([]runtime.Object, error) {
 			TypeMeta:   common.TypeMetaBatchJob,
 			ObjectMeta: objectMeta,
 			Spec: batchv1.JobSpec{
-				TTLSecondsAfterFinished: pointer.Int32(120),
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: objectMeta,
 					Spec: corev1.PodSpec{
