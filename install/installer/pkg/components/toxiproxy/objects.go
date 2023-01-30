@@ -11,7 +11,7 @@ import (
 
 func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
 	cfg := common.ExperimentalWebappConfig(ctx)
-	if cfg == nil || !cfg.SlowDatabase {
+	if cfg == nil || cfg.SlowDatabase == "" {
 		return nil, nil
 	}
 

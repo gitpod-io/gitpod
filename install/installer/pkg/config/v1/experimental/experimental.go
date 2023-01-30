@@ -221,7 +221,7 @@ type WebAppConfig struct {
 	ConfigcatKey               string                 `json:"configcatKey"`
 	WorkspaceClasses           []WebAppWorkspaceClass `json:"workspaceClasses"`
 	Stripe                     *StripeConfig          `json:"stripe,omitempty"`
-	SlowDatabase               bool                   `json:"slowDatabase,omitempty"`
+	SlowDatabase               string                 `json:"slowDatabase,omitempty"`
 	IAM                        *IAMConfig             `json:"iam,omitempty"`
 	WithoutWorkspaceComponents bool                   `json:"withoutWorkspaceComponents,omitempty"`
 	SpiceDB                    *SpiceDBConfig         `json:"spicedb,omitempty"`

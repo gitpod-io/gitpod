@@ -324,11 +324,18 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	var slowDatabaseHost string
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil {
+			slowDatabaseHost = cfg.WebApp.SlowDatabase
+		}
+		return nil
+	})
 	dbWaiterDbEnv := common.DatabaseEnv(&ctx.Config)
 	for i := range dbWaiterDbEnv {
 		if dbWaiterDbEnv[i].Name == "DB_HOST" {
 			dbWaiterDbEnv[i].ValueFrom = nil
-			dbWaiterDbEnv[i].Value = toxiproxy.Component
+			dbWaiterDbEnv[i].Value = slowDatabaseHost
 		}
 	}
 
