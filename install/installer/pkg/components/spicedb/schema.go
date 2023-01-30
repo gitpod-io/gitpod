@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -88,6 +89,11 @@ type file struct {
 	data string
 }
 
+type SpiceDBSchema struct {
+	Schema        string `yaml:"schema"`
+	Relationships string `yaml:"relationships"`
+}
+
 func getBootstrapFiles() ([]file, error) {
 	files, err := fs.ReadDir(bootstrapFiles, "data")
 	if err != nil {
@@ -101,9 +107,27 @@ func getBootstrapFiles() ([]file, error) {
 			return nil, err
 		}
 
+		var schema SpiceDBSchema
+		err = yaml.Unmarshal(b, &schema)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse file %s as yaml: %w", f.Name(), err)
+		}
+
+		data, err := yaml.Marshal(SpiceDBSchema{
+			Schema: schema.Schema,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to serialize contents: %w", err)
+		}
+
+		// We only want to populate spicedb with the schema - we don't want to persist relationships or other data
+		// This is because the relationships defined in this schema are used for validation, but can also be used to
+		// import data into a running instance - we do not want that.
+		// We cannot split the definitions across multiple files as that would prevent us from performing CI validation,
+		// and we do not want to duplicate the schema.
 		filesWithContents = append(filesWithContents, file{
 			name: f.Name(),
-			data: string(b),
+			data: string(data),
 		})
 	}
 

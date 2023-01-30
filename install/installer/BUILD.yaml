@@ -12,7 +12,7 @@ packages:
       - "pkg/components/**/*.key"
       - "pkg/components/**/*.pem"
       - "pkg/components/**/*.sql"
-      - "pkg/components/spicedb/data/bootstrap.yaml"
+      - "pkg/components/spicedb/data/*.yaml"
       - "scripts/*.sh"
       - "third_party/charts/*/Chart.yaml"
       - "third_party/charts/*/values.yaml"
