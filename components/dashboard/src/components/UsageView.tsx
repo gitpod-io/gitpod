@@ -18,7 +18,6 @@ import { Item, ItemField, ItemsList } from "../components/ItemsList";
 import Pagination from "../Pagination/Pagination";
 import Header from "../components/Header";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { ReactComponent as CreditsSvg } from "../images/credits.svg";
 import Spinner from "../icons/Spinner.svg";
 import { ReactComponent as UsageIcon } from "../images/usage-default.svg";
 import { toRemoteURL } from "../projects/render-utils";
@@ -257,10 +256,11 @@ function UsageView({ attributionId }: UsageViewProps) {
                                 {!isLoading && (
                                     <div>
                                         <div className="flex flex-col truncate">
-                                            <div className="text-base text-gray-500">Total Usage</div>
+                                            <div className="text-base text-gray-500">Credits</div>
                                             <div className="flex text-lg text-gray-600 font-semibold">
-                                                <CreditsSvg className="my-auto mr-1" />
-                                                <span>{totalCreditsUsed.toLocaleString()} Credits</span>
+                                                <span className="dark:text-gray-400">
+                                                    {totalCreditsUsed.toLocaleString()}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
