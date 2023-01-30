@@ -35,7 +35,10 @@ func NewWorkspaceReconciler(c client.Client, scheme *runtime.Scheme, cfg config.
 		Config: cfg,
 	}
 
-	metrics := newControllerMetrics(reconciler)
+	metrics, err := newControllerMetrics(reconciler)
+	if err != nil {
+		return nil, err
+	}
 	reg.MustRegister(metrics)
 	reconciler.metrics = metrics
 
@@ -82,10 +85,6 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	if workspace.Status.Conditions == nil {
 		workspace.Status.Conditions = []metav1.Condition{}
-	}
-
-	if workspace.Status.Metrics == nil {
-		workspace.Status.Metrics = make(map[string]bool)
 	}
 
 	log.Info("reconciling workspace", "ws", req.NamespacedName)
@@ -156,6 +155,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 				//			 need to be deleted and re-created
 				workspace.Status.PodStarts++
 			}
+			r.metrics.rememberWorkspace(workspace)
 
 		case workspace.Status.Phase == workspacev1.WorkspacePhaseStopped:
 			err := r.Client.Delete(ctx, workspace)
@@ -233,6 +233,10 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 
 	phase := workspace.Status.Phase
 
+	if !r.metrics.shouldUpdate(&log, workspace) {
+		return
+	}
+
 	switch {
 	case phase == workspacev1.WorkspacePhasePending ||
 		phase == workspacev1.WorkspacePhaseCreating ||
@@ -264,7 +268,11 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 		}
 
 		r.metrics.countWorkspaceStop(&log, workspace)
+		r.metrics.forgetWorkspace(workspace)
+		return
 	}
+
+	r.metrics.rememberWorkspace(workspace)
 }
 
 func conditionPresentAndTrue(cond []metav1.Condition, tpe string) bool {

@@ -11,6 +11,7 @@ import (
 
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/go-logr/logr"
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/prometheus/client_golang/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -37,9 +38,17 @@ type controllerMetrics struct {
 
 	workspacePhases *phaseTotalVec
 	timeoutSettings *timeoutSettingsVec
+
+	// used to prevent recording metrics multiple times
+	cache *lru.Cache
 }
 
-func newControllerMetrics(r *WorkspaceReconciler) *controllerMetrics {
+func newControllerMetrics(r *WorkspaceReconciler) (*controllerMetrics, error) {
+	cache, err := lru.New(6000)
+	if err != nil {
+		return nil, err
+	}
+
 	return &controllerMetrics{
 		startupTimeHistVec: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: metricsNamespace,
@@ -88,14 +97,11 @@ func newControllerMetrics(r *WorkspaceReconciler) *controllerMetrics {
 
 		workspacePhases: newPhaseTotalVec(r),
 		timeoutSettings: newTimeoutSettingsVec(r),
-	}
+		cache:           cache,
+	}, nil
 }
 
 func (m *controllerMetrics) recordWorkspaceStartupTime(log *logr.Logger, ws *workspacev1.Workspace) {
-	if _, countedAlready := ws.Status.Metrics[workspaceStartupSeconds]; countedAlready {
-		return
-	}
-
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
@@ -105,14 +111,9 @@ func (m *controllerMetrics) recordWorkspaceStartupTime(log *logr.Logger, ws *wor
 	}
 
 	hist.Observe(float64(time.Since(ws.CreationTimestamp.Time).Seconds()))
-	ws.Status.Metrics[workspaceStartupSeconds] = true
 }
 
 func (m *controllerMetrics) countWorkspaceStartFailures(log *logr.Logger, ws *workspacev1.Workspace) {
-	if _, countedAlready := ws.Status.Metrics[workspaceStartFailuresTotal]; countedAlready {
-		return
-	}
-
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
@@ -122,14 +123,9 @@ func (m *controllerMetrics) countWorkspaceStartFailures(log *logr.Logger, ws *wo
 	}
 
 	counter.Inc()
-	ws.Status.Metrics[workspaceStartFailuresTotal] = true
 }
 
 func (m *controllerMetrics) countWorkspaceStop(log *logr.Logger, ws *workspacev1.Workspace) {
-	if _, countedAlready := ws.Status.Metrics[workspaceStopsTotal]; countedAlready {
-		return
-	}
-
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
@@ -139,14 +135,9 @@ func (m *controllerMetrics) countWorkspaceStop(log *logr.Logger, ws *workspacev1
 	}
 
 	counter.Inc()
-	ws.Status.Metrics[workspaceStopsTotal] = true
 }
 
 func (m *controllerMetrics) countTotalBackups(log *logr.Logger, ws *workspacev1.Workspace) {
-	if _, countedAlready := ws.Status.Metrics[workspaceBackupsTotal]; countedAlready {
-		return
-	}
-
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
@@ -156,14 +147,9 @@ func (m *controllerMetrics) countTotalBackups(log *logr.Logger, ws *workspacev1.
 	}
 
 	counter.Inc()
-	ws.Status.Metrics[workspaceBackupsTotal] = true
 }
 
 func (m *controllerMetrics) countTotalBackupFailures(log *logr.Logger, ws *workspacev1.Workspace) {
-	if _, countedAlready := ws.Status.Metrics[workspaceBackupFailuresTotal]; countedAlready {
-		return
-	}
-
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
@@ -173,14 +159,9 @@ func (m *controllerMetrics) countTotalBackupFailures(log *logr.Logger, ws *works
 	}
 
 	counter.Inc()
-	ws.Status.Metrics[workspaceBackupFailuresTotal] = true
 }
 
 func (m *controllerMetrics) countTotalRestores(log *logr.Logger, ws *workspacev1.Workspace) {
-	if _, countedAlready := ws.Status.Metrics[workspaceRestoresTotal]; countedAlready {
-		return
-	}
-
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
@@ -190,14 +171,9 @@ func (m *controllerMetrics) countTotalRestores(log *logr.Logger, ws *workspacev1
 	}
 
 	counter.Inc()
-	ws.Status.Metrics[workspaceRestoresTotal] = true
 }
 
 func (m *controllerMetrics) countTotalRestoreFailures(log *logr.Logger, ws *workspacev1.Workspace) {
-	if _, countedAlready := ws.Status.Metrics[workspaceRestoresFailureTotal]; countedAlready {
-		return
-	}
-
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
@@ -207,7 +183,24 @@ func (m *controllerMetrics) countTotalRestoreFailures(log *logr.Logger, ws *work
 	}
 
 	counter.Inc()
-	ws.Status.Metrics[workspaceRestoresFailureTotal] = true
+}
+
+func (m *controllerMetrics) rememberWorkspace(ws *workspacev1.Workspace) {
+	m.cache.Add(ws.Name, ws.Status.Phase)
+}
+
+func (m *controllerMetrics) forgetWorkspace(ws *workspacev1.Workspace) {
+	m.cache.Remove(ws.Name)
+}
+
+func (m *controllerMetrics) shouldUpdate(log *logr.Logger, ws *workspacev1.Workspace) bool {
+	p, ok := m.cache.Get(ws.Name)
+	if !ok {
+		return false
+	}
+
+	phase := p.(workspacev1.WorkspacePhase)
+	return phase != ws.Status.Phase
 }
 
 // Describe implements Collector. It will send exactly one Desc to the provided channel.
