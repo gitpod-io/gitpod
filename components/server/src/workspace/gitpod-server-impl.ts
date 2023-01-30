@@ -2913,6 +2913,153 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
     }
 
+    async createOrgAuthProvider(
+        ctx: TraceContext,
+        { entry }: GitpodServer.CreateOrgAuthProviderParams,
+    ): Promise<AuthProviderEntry> {
+        traceAPIParams(ctx, {}); // entry contains PII
+
+        let userId = this.checkAndBlockUser("createOrgAuthProvider").id;
+
+        // TODO: Add check for orgGitAuthProviders feature flag
+
+        const safeProvider = <AuthProviderEntry.NewEntry>{
+            host: entry.host,
+            type: entry.type,
+            clientId: entry.clientId,
+            clientSecret: entry.clientSecret,
+            ownerId: entry.ownerId,
+            organizationId: entry.organizationId,
+        };
+
+        // Since this is a create, ensure they're not creating it as someone else
+        if (userId !== safeProvider.ownerId) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Cannot create an auth provider for another owner.");
+        }
+
+        if (!safeProvider.organizationId) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Must provide an organizationId");
+        }
+
+        // TODO: Is this a sufficient check that the user can create org auth providers?
+        await this.guardTeamOperation(safeProvider.organizationId, "create");
+
+        try {
+            if ("host" in safeProvider) {
+                // on creating we're are checking for already existing runtime providers
+                const host = safeProvider.host && safeProvider.host.toLowerCase();
+
+                if (!(await this.authProviderService.isHostReachable(host))) {
+                    log.debug(`Host could not be reached.`, { entry, safeProvider });
+                    throw new Error("Host could not be reached.");
+                }
+
+                const hostContext = this.hostContextProvider.get(host);
+                if (hostContext) {
+                    const builtInExists = hostContext.authProvider.params.ownerId === undefined;
+                    log.debug(`Attempt to override existing auth provider.`, { entry, safeProvider, builtInExists });
+                    throw new Error("Provider for this host already exists.");
+                }
+            }
+            const result = await this.authProviderService.updateAuthProvider(safeProvider);
+            return AuthProviderEntry.redact(result);
+        } catch (error) {
+            const message = error && error.message ? error.message : "Failed to create the provider.";
+            throw new ResponseError(ErrorCodes.CONFLICT, message);
+        }
+    }
+
+    async updateOrgAuthProvider(
+        ctx: TraceContext,
+        { entry }: GitpodServer.UpdateOrgAuthProviderParams,
+    ): Promise<AuthProviderEntry> {
+        traceAPIParams(ctx, {}); // entry contains PII
+
+        let userId = this.checkAndBlockUser("updateOrgAuthProvider").id;
+
+        // TODO: Add check for orgGitAuthProviders feature flag
+
+        const safeProvider: AuthProviderEntry.UpdateEntry = {
+            id: entry.id,
+            clientId: entry.clientId,
+            clientSecret: entry.clientSecret,
+            ownerId: entry.ownerId,
+            organizationId: entry.organizationId,
+        };
+
+        // TODO: What do we want to enforce here for updates? That ownerId is set to last user who updated it, or creator?
+        if (userId !== safeProvider.ownerId) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Cannot update an auth provider for another owner.");
+        }
+
+        if (!safeProvider.organizationId) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Must provide an organizationId");
+        }
+
+        // TODO: Is this a sufficient check that the user can update org auth providers?
+        await this.guardTeamOperation(safeProvider.organizationId, "update");
+
+        try {
+            const result = await this.authProviderService.updateAuthProvider(safeProvider);
+            return AuthProviderEntry.redact(result);
+        } catch (error) {
+            const message = error && error.message ? error.message : "Failed to update the provider.";
+            throw new ResponseError(ErrorCodes.CONFLICT, message);
+        }
+    }
+
+    async getOrgAuthProviders(
+        ctx: TraceContext,
+        params: GitpodServer.GetOrgAuthProviderParams,
+    ): Promise<AuthProviderEntry[]> {
+        traceAPIParams(ctx, { params });
+
+        this.checkAndBlockUser("getOrgAuthProviders");
+
+        // TODO: Add check for orgGitAuthProviders feature flag
+
+        if (!params.organizationId) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Must provide an organizationId");
+        }
+
+        // TODO: Is this a sufficient check that the user can get org auth providers?
+        await this.guardTeamOperation(params.organizationId, "get");
+
+        try {
+            const result = await this.authProviderService.getAuthProvidersOfOrg(params.organizationId);
+            return result.map(AuthProviderEntry.redact.bind(AuthProviderEntry));
+        } catch (error) {
+            const message =
+                error && error.message ? error.message : "Error retreiving auth providers for organization.";
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, message);
+        }
+    }
+
+    async deleteOrgAuthProvider(ctx: TraceContext, params: GitpodServer.DeleteOrgAuthProviderParams): Promise<void> {
+        traceAPIParams(ctx, { params });
+
+        this.checkAndBlockUser("deleteOrgAuthProvider");
+
+        // TODO: Add check for orgGitAuthProviders feature flag
+
+        // Find the matching auth provider we're attempting to delete
+        const orgProviders = await this.authProviderService.getAuthProvidersOfOrg(params.id);
+        const authProvider = orgProviders.find((p) => p.id === params.id);
+        if (!authProvider) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Provider resource not found.");
+        }
+
+        // TODO: Is this a sufficient check that the user can delete org auth providers?
+        await this.guardTeamOperation(authProvider.organizationId, "delete");
+
+        try {
+            await this.authProviderService.deleteAuthProvider(authProvider);
+        } catch (error) {
+            const message = error && error.message ? error.message : "Failed to delete the provider.";
+            throw new ResponseError(ErrorCodes.CONFLICT, message);
+        }
+    }
+
     public async trackEvent(ctx: TraceContext, event: RemoteTrackMessage): Promise<void> {
         // Beware: DO NOT just event... the message, but consume it individually as the message is coming from
         //         the wire and we have no idea what's in it. Even passing the context and properties directly
