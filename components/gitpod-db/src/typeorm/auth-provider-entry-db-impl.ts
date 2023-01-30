@@ -92,6 +92,15 @@ export class AuthProviderEntryDBImpl implements AuthProviderEntryDB {
         return query.getMany();
     }
 
+    async findByOrgId(organizationId: string): Promise<AuthProviderEntry[]> {
+        const repo = await this.getAuthProviderRepo();
+        const query = repo
+            .createQueryBuilder("auth_provider")
+            .where(`auth_provider.organizationId = :organizationId`, { organizationId })
+            .andWhere("auth_provider.deleted != true");
+        return query.getMany();
+    }
+
     protected oauthContentHash(entry: AuthProviderEntry): string {
         const result = createHash("sha256")
             .update(JSON.stringify({ oauth: entry.oauth, ownerId: entry.ownerId, status: entry.status }))

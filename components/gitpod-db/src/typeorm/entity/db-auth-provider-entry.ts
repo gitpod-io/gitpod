@@ -18,6 +18,9 @@ export class DBAuthProviderEntry implements AuthProviderEntry {
     @Column()
     ownerId: string;
 
+    @Column()
+    organizationId?: string;
+
     @Column("varchar")
     status: AuthProviderEntry.Status;
 

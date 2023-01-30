@@ -70,6 +70,11 @@ export class AuthProviderService {
         return result;
     }
 
+    async getAuthProvidersOfOrg(organizationId: string): Promise<AuthProviderEntry[]> {
+        const result = await this.authProviderDB.findByOrgId(organizationId);
+        return result;
+    }
+
     async deleteAuthProvider(authProvider: AuthProviderEntry): Promise<void> {
         await this.authProviderDB.delete(authProvider);
     }

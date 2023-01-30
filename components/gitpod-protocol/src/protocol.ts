@@ -1419,6 +1419,7 @@ export interface AuthProviderEntry {
     readonly type: AuthProviderEntry.Type;
     readonly host: string;
     readonly ownerId: string;
+    readonly organizationId?: string;
 
     readonly status: AuthProviderEntry.Status;
 
@@ -1444,11 +1445,11 @@ export interface OAuth2Config {
 export namespace AuthProviderEntry {
     export type Type = "GitHub" | "GitLab" | string;
     export type Status = "pending" | "verified";
-    export type NewEntry = Pick<AuthProviderEntry, "ownerId" | "host" | "type"> & {
+    export type NewEntry = Pick<AuthProviderEntry, "ownerId" | "host" | "type" | "organizationId"> & {
         clientId?: string;
         clientSecret?: string;
     };
-    export type UpdateEntry = Pick<AuthProviderEntry, "id" | "ownerId"> &
+    export type UpdateEntry = Pick<AuthProviderEntry, "id" | "ownerId" | "organizationId"> &
         Pick<OAuth2Config, "clientId" | "clientSecret">;
     export function redact(entry: AuthProviderEntry): AuthProviderEntry {
         return {
