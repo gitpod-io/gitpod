@@ -82,6 +82,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									"--telemetry-endpoint=", // disable telemetry to https://telemetry.authzed.com
 									fmt.Sprintf("--datastore-bootstrap-files=%s", strings.Join(bootstrapFiles, ",")),
 									"--datastore-bootstrap-overwrite=true",
+									fmt.Sprintf("--dispatch-upstream-addr=kubernetes:///spicedb:%d", ContainerDispatchPort),
 								},
 								Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 									common.DefaultEnv(&ctx.Config),
