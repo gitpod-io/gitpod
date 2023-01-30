@@ -14,7 +14,6 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	contentservice "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/toxiproxy"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 
@@ -128,10 +127,17 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 	)
 
+	var slowDatabaseHost string
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil {
+			slowDatabaseHost = cfg.WebApp.SlowDatabase
+		}
+		return nil
+	})
 	for i := range env {
 		if env[i].Name == "DB_HOST" {
 			env[i].ValueFrom = nil
-			env[i].Value = toxiproxy.Component
+			env[i].Value = slowDatabaseHost
 		}
 	}
 
@@ -324,13 +330,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
-	var slowDatabaseHost string
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil {
-			slowDatabaseHost = cfg.WebApp.SlowDatabase
-		}
-		return nil
-	})
 	dbWaiterDbEnv := common.DatabaseEnv(&ctx.Config)
 	for i := range dbWaiterDbEnv {
 		if dbWaiterDbEnv[i].Name == "DB_HOST" {
