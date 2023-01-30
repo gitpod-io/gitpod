@@ -189,6 +189,10 @@ func TestServerDeployment_UsesTracingConfig(t *testing.T) {
 func renderContext(t *testing.T, podConfig map[string]*config.PodConfig, slowDatabase bool) *common.RenderContext {
 	var samplerType experimental.TracingSampleType = "probabilistic"
 
+	var slowDbHost string
+	if slowDatabase {
+		slowDbHost = toxiproxy.Component
+	}
 	ctx, err := common.NewRenderContext(config.Config{
 		Database: config.Database{
 			InCluster: pointer.Bool(true),
@@ -209,7 +213,7 @@ func renderContext(t *testing.T, podConfig map[string]*config.PodConfig, slowDat
 					SamplerType:  &samplerType,
 					SamplerParam: pointer.Float64(12.5),
 				},
-				SlowDatabase: slowDatabase,
+				SlowDatabase: slowDbHost,
 				Server: &experimental.ServerConfig{
 					GithubApp: &experimental.GithubApp{
 						AppId:           0,

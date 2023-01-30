@@ -442,7 +442,7 @@ yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templat
 #
 if [[ "${GITPOD_WITH_SLOW_DATABASE}" == "true" ]]
 then
-  yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.slowDatabase" "true"
+  yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.slowDatabase" "toxiproxy"
 fi
 
 #
