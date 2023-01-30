@@ -204,7 +204,7 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 			return wsc.Status().Update(ctx, ws)
 		})
 
-		if err != nil {
+		if err == nil {
 			wsc.metrics.recordInitializeTime(time.Since(initStart).Seconds(), ws)
 		}
 
@@ -277,7 +277,7 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 		return wsc.Status().Update(ctx, ws)
 	})
 
-	if err != nil {
+	if err == nil {
 		wsc.metrics.recordFinalizeTime(time.Since(disposeStart).Seconds(), ws)
 	}
 

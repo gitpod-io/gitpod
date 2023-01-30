@@ -395,10 +395,6 @@ spec:
                 type: object
               headless:
                 type: boolean
-              metrics:
-                additionalProperties:
-                  type: boolean
-                type: object
               ownerToken:
                 type: string
               phase:
