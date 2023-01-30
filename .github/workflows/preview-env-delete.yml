@@ -1,4 +1,4 @@
-name: "Delete preview environment"
+name: "Preview environment delete"
 on:
     workflow_dispatch:
         inputs:
