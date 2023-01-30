@@ -39,7 +39,7 @@ var extendTimeoutCmd = &cobra.Command{
 			}
 			fail(err.Error())
 		}
-		fmt.Println("Workspace timeout has been extended to three hours.")
+		fmt.Println("Workspace timeout extended to 180 minutes.")
 	},
 }
 

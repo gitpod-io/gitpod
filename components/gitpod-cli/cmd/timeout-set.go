@@ -22,9 +22,9 @@ var setTimeoutCmd = &cobra.Command{
 	Short: "Set timeout of current workspace",
 	Long: `Set timeout of current workspace.
 
-Duration must be in the format of <n>m (minutes), <n>h (hours), or <n>d (days).
-For example, 30m, 1h, 2d, etc.`,
-	Example: `gitpod timeout set 1h`,
+Duration must be in the format of <n>m (minutes) or <n>h (hours).
+For example, 30m, 1h`,
+	Example: `gitpod timeout set 30m`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()

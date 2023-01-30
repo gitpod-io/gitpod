@@ -31,10 +31,10 @@ class ExtendWorkspaceTimeoutAction : AnAction() {
                     thisLogger().error("gitpod: failed to extend workspace timeout", e)
                 } else {
                     if (result.resetTimeoutOnWorkspaces.isNotEmpty()) {
-                        message = "Workspace timeout has been extended to three hours. This reset the workspace timeout for other workspaces."
+                        message = "Workspace timeout extended to 180 minutes. This reset the workspace timeout for other workspaces."
                         notificationType = NotificationType.WARNING
                     } else {
-                        message = "Workspace timeout has been extended to three hours."
+                        message = "Workspace timeout extended to 180 minutes."
                         notificationType = NotificationType.INFORMATION
                     }
                 }
