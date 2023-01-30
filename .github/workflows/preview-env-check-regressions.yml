@@ -1,11 +1,43 @@
 name: "Preview environment regression check"
 on:
     workflow_dispatch:
+        inputs:
+            name:
+                required: true
+                description: "The name of the preview environment"
+            version:
+                required: true
+                description: "The version of Gitpod to install"
+            infrastructure_provider:
+                description: "The infrastructure provider to use. Valid options: harvester, gcp"
+                required: false
+                default: harvester
 jobs:
     check:
         name: Check for regressions
         runs-on: [self-hosted]
         steps:
             - uses: actions/checkout@v3
+            - name: Create preview environment infrastructure
+              uses: ./.github/actions/preview-create
+              with:
+                  name: ${{ github.event.inputs.name }}
+                  infrastructure_provider: ${{ github.event.inputs.infrastructure_provider }}
+                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
+            - name: Deploy Gitpod to the preview environment
+              id: deploy-gitpod
+              uses: ./.github/actions/deploy-gitpod
+              with:
+                  name: ${{ github.event.inputs.name }}
+                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
+                  version: ${{ github.event.inputs.version}}
             - name: Check
-              run: echo "No regressions caught because I didn't check anything 🤡"
+              run: |
+                  echo "No regressions caught because I didn't check anything 🤡 Sleeping for 2 minutes."
+                  sleep 60
+            - name: Delete preview environment
+              if: always()
+              uses: ./.github/actions/delete-preview
+              with:
+                  name: ${{ github.event.inputs.name }}
+                  sa_key: ${{ secrets.GCP_CREDENTIALS }}

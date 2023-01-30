@@ -79,12 +79,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Create preview environment infrastructure
-        env:
-          TF_VAR_infra_provider: ${{ needs.configuration.outputs.preview_infra_provider }}
         id: create
         uses: ./.github/actions/preview-create
         with:
+          name: ${{ github.head_ref || github.ref }}
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          infrastructure_provider: ${{ needs.configuration.outputs.preview_infra_provider }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
 
   build-gitpod:
@@ -210,8 +210,9 @@ jobs:
         id: deploy-gitpod
         uses: ./.github/actions/deploy-gitpod
         with:
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          name: ${{ github.head_ref || github.ref }}
           version: ${{needs.configuration.outputs.version}}
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
 
   monitoring:
