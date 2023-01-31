@@ -6,7 +6,7 @@
 
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { UserContext } from "./user-context";
 import { TeamsContext } from "./teams/teams-context";
 import { getGitpodService } from "./service/service";
@@ -29,7 +29,7 @@ function Item(props: { icon: string; iconSize?: string; text: string }) {
     const iconSize = props.iconSize || 28;
     return (
         <div className="flex-col items-center w-1/3 px-3">
-            <img src={props.icon} className={`w-${iconSize} m-auto h-24`} />
+            <img src={props.icon} alt={props.text} className={`w-${iconSize} m-auto h-24`} />
             <div className="text-gray-400 text-sm w-36 h-20 text-center">{props.text}</div>
         </div>
     );
@@ -51,25 +51,27 @@ export function Login() {
     const { setUser } = useContext(UserContext);
     const { setTeams } = useContext(TeamsContext);
 
-    const urlHash = getURLHash();
-    let hostFromContext: string | undefined;
-    let repoPathname: string | undefined;
-
-    try {
-        if (urlHash.length > 0) {
-            const url = new URL(urlHash);
-            hostFromContext = url.host;
-            repoPathname = url.pathname;
-        }
-    } catch (error) {
-        // Hash is not a valid URL
-    }
+    const urlHash = useMemo(() => getURLHash(), []);
 
     const [authProviders, setAuthProviders] = useState<AuthProviderInfo[]>([]);
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
     const [providerFromContext, setProviderFromContext] = useState<AuthProviderInfo>();
+    const [hostFromContext, setHostFromContext] = useState<string | undefined>();
+    const [repoPathname, setRepoPathname] = useState<string | undefined>();
 
     const showWelcome = !hasLoggedInBefore() && !hasVisitedMarketingWebsiteBefore() && !urlHash.startsWith("https://");
+
+    useEffect(() => {
+        try {
+            if (urlHash.length > 0) {
+                const url = new URL(urlHash);
+                setHostFromContext(url.host);
+                setRepoPathname(url.pathname);
+            }
+        } catch (error) {
+            // Hash is not a valid URL
+        }
+    }, [urlHash]);
 
     useEffect(() => {
         (async () => {
@@ -82,7 +84,7 @@ export function Login() {
             const providerFromContext = authProviders.find((provider) => provider.host === hostFromContext);
             setProviderFromContext(providerFromContext);
         }
-    }, [authProviders]);
+    }, [hostFromContext, authProviders]);
 
     const authorizeSuccessful = async (payload?: string) => {
         updateUser().catch(console.error);
