@@ -1,5 +1,8 @@
 name: public-api-compatibility
-on: pull_request
+on:
+  pull_request:
+    paths:
+    - components/public-api/**
 jobs:
   build:
     runs-on: ubuntu-latest
