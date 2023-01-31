@@ -5,12 +5,12 @@
  */
 
 import { useContext, useEffect, useState } from "react";
-import { Redirect, useLocation } from "react-router";
+import { Redirect } from "react-router";
 import { TeamMemberInfo } from "@gitpod/gitpod-protocol";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
-import { getCurrentTeam, TeamsContext } from "./teams-context";
+import { useCurrentTeam } from "./teams-context";
 import { getTeamSettingsMenu } from "./TeamSettings";
 import { UserContext } from "../user-context";
 import { oidcService, publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
@@ -26,9 +26,7 @@ import exclamation from "../images/exclamation.svg";
 
 export default function SSO() {
     const { user } = useContext(UserContext);
-    const { teams } = useContext(TeamsContext);
-    const location = useLocation();
-    const team = getCurrentTeam(location, teams);
+    const team = useCurrentTeam();
     const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
     const [isUserOwner, setIsUserOwner] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
@@ -52,7 +50,7 @@ export default function SSO() {
     }, [team]);
 
     if (!isUserOwner) {
-        return <Redirect to={team ? `/t/${team.slug}` : "/"} />;
+        return <Redirect to={`/`} />;
     }
 
     return (

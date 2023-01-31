@@ -6,8 +6,8 @@
 
 import { Team } from "@gitpod/gitpod-protocol";
 import React, { createContext, useContext, useState } from "react";
-import { Location } from "history";
 import { useLocation } from "react-router";
+import { useCurrentUser } from "../user-context";
 
 export const TeamsContext = createContext<{
     teams?: Team[];
@@ -21,33 +21,34 @@ export const TeamsContextProvider: React.FC = ({ children }) => {
     return <TeamsContext.Provider value={{ teams, setTeams }}>{children}</TeamsContext.Provider>;
 };
 
-export function getCurrentTeam(location: Location<any>, teams?: Team[]): Team | undefined {
+// Helper hook to return the current org if one is selected
+export function useCurrentTeam(): Team | undefined {
+    const location = useLocation();
+    const teams = useTeams();
+    const user = useCurrentUser();
+
     if (!teams) {
         return;
     }
-    const slug = location.pathname.startsWith("/t/") ? location.pathname.split("/")[2] : undefined;
-    if (slug === undefined && ["projects"].indexOf(location.pathname.split("/")[1]) === -1) {
-        return undefined;
+    let orgId = localStorage.getItem("active-org");
+    const orgIdParam = new URLSearchParams(location.search).get("org");
+    if (orgIdParam) {
+        orgId = orgIdParam;
     }
-    const team = teams.find((t) => t.slug === slug);
-    localStorage.setItem("team-selection", team?.slug || "");
-    return team;
+    let org = teams.find((t) => t.id === orgId);
+    if (!org && user?.additionalData?.isMigratedToTeamOnlyAttribution) {
+        // if the user is migrated to team-only attribution, we return the first org
+        org = teams[0];
+    }
+    if (org) {
+        localStorage.setItem("active-org", org.id);
+    } else {
+        localStorage.removeItem("active-org");
+    }
+    return org;
 }
 
-export function getSelectedTeamSlug(): string {
-    return localStorage.getItem("team-selection") || "";
-}
-
-// Helper hook to return the current team if one is selected
-export function useCurrentTeam(): Team | undefined {
-    const location = useLocation();
+export function useTeams(): Team[] | undefined {
     const { teams } = useContext(TeamsContext);
-
-    return getCurrentTeam(location, teams);
-}
-
-export function useTeams(): Team[] {
-    const { teams } = useContext(TeamsContext);
-
-    return teams || [];
+    return teams;
 }

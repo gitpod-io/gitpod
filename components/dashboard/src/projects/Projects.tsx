@@ -8,9 +8,9 @@ import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import projectsEmpty from "../images/projects-empty.svg";
 import projectsEmptyDark from "../images/projects-empty-dark.svg";
-import { useHistory, useLocation } from "react-router";
+import { useHistory } from "react-router";
 import { useCallback, useContext, useMemo, useState } from "react";
-import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
+import { useCurrentTeam } from "../teams/teams-context";
 import { ThemeContext } from "../theme-context";
 import { Project } from "@gitpod/gitpod-protocol";
 import Alert from "../components/Alert";
@@ -19,14 +19,12 @@ import { SpinnerLoader } from "../components/Loader";
 import { useListProjectsQuery } from "../data/projects/list-projects-query";
 
 export default function () {
-    const location = useLocation();
     const history = useHistory();
-    const { teams } = useContext(TeamsContext);
-    const team = getCurrentTeam(location, teams);
+    const team = useCurrentTeam();
     const { data, isLoading, isError, refetch } = useListProjectsQuery();
     const { isDark } = useContext(ThemeContext);
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
-    const newProjectUrl = useMemo(() => (!!team ? `/new?team=${team.slug}` : "/new?user=1"), [team]);
+    const newProjectUrl = `/new`;
 
     const onNewProject = useCallback(() => {
         history.push(newProjectUrl);

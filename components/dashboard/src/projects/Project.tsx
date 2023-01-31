@@ -4,38 +4,27 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import dayjs from "dayjs";
 import { PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
-import { useContext, useEffect, useState } from "react";
-import { useHistory, useLocation, useRouteMatch } from "react-router";
-import Header from "../components/Header";
-import { ItemsList, Item, ItemField, ItemFieldContextMenu } from "../components/ItemsList";
-import { getGitpodService, gitpodHostUrl } from "../service/service";
-import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
-import { prebuildStatusIcon, prebuildStatusLabel } from "./Prebuilds";
-import { shortCommitMessage, toRemoteURL } from "./render-utils";
-import { ReactComponent as Spinner } from "../icons/Spinner.svg";
-import NoAccess from "../icons/NoAccess.svg";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { openAuthorizeWindow } from "../provider-utils";
+import dayjs from "dayjs";
+import { useContext, useEffect, useState } from "react";
+import { useHistory } from "react-router";
 import Alert from "../components/Alert";
-import { listAllProjects } from "../service/public-api";
-import { UserContext } from "../user-context";
+import Header from "../components/Header";
+import { Item, ItemField, ItemFieldContextMenu, ItemsList } from "../components/ItemsList";
+import NoAccess from "../icons/NoAccess.svg";
+import { ReactComponent as Spinner } from "../icons/Spinner.svg";
+import { openAuthorizeWindow } from "../provider-utils";
+import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { StartWorkspaceModalContext } from "../workspaces/start-workspace-modal-context";
+import { prebuildStatusIcon, prebuildStatusLabel } from "./Prebuilds";
+import { useCurrentProject } from "./project-context";
+import { shortCommitMessage, toRemoteURL } from "./render-utils";
 
 export default function () {
-    const location = useLocation();
     const history = useHistory();
-
-    const { teams } = useContext(TeamsContext);
-    const { user } = useContext(UserContext);
-    const team = getCurrentTeam(location, teams);
+    const project = useCurrentProject();
     const { setStartWorkspaceModalProps } = useContext(StartWorkspaceModalContext);
-
-    const match = useRouteMatch<{ team: string; resource: string }>("/(t/)?:team/:resource");
-    const projectSlug = match?.params?.resource;
-
-    const [project, setProject] = useState<Project | undefined>();
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isLoadingBranches, setIsLoadingBranches] = useState<boolean>(false);
@@ -48,10 +37,6 @@ export default function () {
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
 
     const [showAuthBanner, setShowAuthBanner] = useState<{ host: string } | undefined>(undefined);
-
-    useEffect(() => {
-        updateProject();
-    }, [teams]);
 
     useEffect(() => {
         if (!project) {
@@ -69,26 +54,6 @@ export default function () {
             }
         })();
     }, [project]);
-
-    const updateProject = async () => {
-        if (!teams || !projectSlug) {
-            return;
-        }
-        let projects: Project[];
-        if (!!team) {
-            projects = await listAllProjects({ teamId: team.id });
-        } else {
-            projects = await listAllProjects({ userId: user?.id });
-        }
-        // Find project matching with slug, otherwise with name
-        const project = projectSlug && projects.find((p) => (p.slug ? p.slug === projectSlug : p.name === projectSlug));
-
-        if (!project) {
-            return;
-        }
-
-        setProject(project);
-    };
 
     const updateBranches = async () => {
         if (!project) {
@@ -178,7 +143,7 @@ export default function () {
         try {
             setIsLoading(true);
             const prebuildResult = await getGitpodService().server.triggerPrebuild(project.id, branch.name);
-            history.push(`/${!!team ? "t/" + team.slug : "projects"}/${projectSlug}/${prebuildResult.prebuildId}`);
+            history.push(`/projects/${Project.slug(project!)}/${prebuildResult.prebuildId}`);
         } finally {
             setIsLoading(false);
         }
@@ -203,7 +168,7 @@ export default function () {
             setIsResuming(true);
             const response = await getGitpodService().server.triggerPrebuild(project.id, null);
             setIsConsideredInactive(false);
-            history.push(`/${!!team ? "t/" + team.slug : "projects"}/${projectSlug}/${response.prebuildId}`);
+            history.push(`/projects/${Project.slug(project!)}/${response.prebuildId}`);
         } catch (error) {
             console.error(error);
         } finally {
@@ -367,9 +332,7 @@ export default function () {
                                                     className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1 cursor-pointer"
                                                     href={
                                                         prebuild
-                                                            ? `/${
-                                                                  !!team ? "t/" + team.slug : "projects"
-                                                              }/${projectSlug}/${prebuild.info.id}`
+                                                            ? `/projects/${Project.slug(project!)}/${prebuild.info.id}`
                                                             : "javascript:void(0)"
                                                     }
                                                 >

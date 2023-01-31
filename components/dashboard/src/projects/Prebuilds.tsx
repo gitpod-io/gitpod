@@ -6,8 +6,7 @@
 
 import dayjs from "dayjs";
 import { PrebuildWithStatus, PrebuiltWorkspaceState, Project } from "@gitpod/gitpod-protocol";
-import { useContext, useEffect, useState } from "react";
-import { useLocation, useRouteMatch } from "react-router";
+import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import DropDown, { DropDownEntry } from "../components/DropDown";
 import { ItemsList, Item, ItemField } from "../components/ItemsList";
@@ -18,24 +17,14 @@ import StatusCanceled from "../icons/StatusCanceled.svg";
 import StatusPaused from "../icons/StatusPaused.svg";
 import StatusRunning from "../icons/StatusRunning.svg";
 import { getGitpodService } from "../service/service";
-import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
 import { shortCommitMessage } from "./render-utils";
 import { Link } from "react-router-dom";
 import { Disposable } from "vscode-jsonrpc";
-import { UserContext } from "../user-context";
-import { listAllProjects } from "../service/public-api";
+import { useCurrentProject } from "./project-context";
 
 export default function (props: { project?: Project; isAdminDashboard?: boolean }) {
-    const location = useLocation();
-
-    const { teams } = useContext(TeamsContext);
-    const { user } = useContext(UserContext);
-    const team = getCurrentTeam(location, teams);
-
-    const match = useRouteMatch<{ team: string; resource: string }>("/(t/)?:team/:resource");
-    const projectSlug = props.isAdminDashboard ? props.project?.slug : match?.params?.resource;
-
-    const [project, setProject] = useState<Project | undefined>();
+    const currentProject = useCurrentProject();
+    const project = props.project || currentProject;
 
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
     const [statusFilter, setStatusFilter] = useState<PrebuiltWorkspaceState | undefined>();
@@ -46,11 +35,6 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
 
     useEffect(() => {
         let registration: Disposable;
-        // Props come from the Admin dashboard and we do not need
-        // the variables generated from route or location
-        if (props.project) {
-            setProject(props.project);
-        }
         if (!project) {
             return;
         }
@@ -81,27 +65,7 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                 registration.dispose();
             };
         }
-    }, [project]);
-
-    useEffect(() => {
-        if (!teams) {
-            return;
-        }
-        (async () => {
-            let projects: Project[];
-            if (!!team) {
-                projects = await listAllProjects({ teamId: team.id });
-            } else {
-                projects = await listAllProjects({ userId: user?.id });
-            }
-            const newProject =
-                projectSlug && projects.find((p) => (p.slug ? p.slug === projectSlug : p.name === projectSlug));
-
-            if (newProject) {
-                setProject(newProject);
-            }
-        })();
-    }, [projectSlug, team, teams]);
+    }, [project, props]);
 
     useEffect(() => {
         if (prebuilds.length === 0) {
@@ -230,10 +194,7 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                         .filter(filter)
                         .sort(prebuildSorter)
                         .map((p, index) => (
-                            <Link
-                                to={`/${!!team ? "t/" + team.slug : "projects"}/${projectSlug}/${p.info.id}`}
-                                className="cursor-pointer"
-                            >
+                            <Link to={`/projects/${Project.slug(project!)}/${p.info.id}`} className="cursor-pointer">
                                 <Item key={`prebuild-${p.info.id}`}>
                                     <ItemField
                                         className={`flex items-center my-auto md:w-3/12 xl:w-4/12 ${

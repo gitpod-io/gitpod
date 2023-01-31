@@ -2259,7 +2259,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         } else if (attrId.kind === "team") {
             const team = await this.guardTeamOperation(attrId.teamId, "update");
             await this.ensureStripeApiIsAllowed({ team });
-            returnUrl = this.config.hostUrl.with(() => ({ pathname: `/t/${team.slug}/billing` })).toString();
+            returnUrl = this.config.hostUrl
+                .with(() => ({ pathname: `/org-billing`, search: `org=${team.id}` }))
+                .toString();
         }
         let url: string;
         try {
@@ -2362,10 +2364,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                         const teamOrUser = await this.teamDB.findTeamById(limit.attributionId.teamId);
                         if (teamOrUser) {
                             if (limit.reached) {
-                                result.push(teamOrUser?.slug);
+                                result.push(teamOrUser?.name);
                                 result.unshift(`Your team '${teamOrUser?.name}' has reached its usage limit.`);
                             } else if (limit.almostReached) {
-                                result.push(teamOrUser?.slug);
+                                result.push(teamOrUser?.name);
                                 result.unshift(
                                     `Your team '${teamOrUser?.name}' has reached 80% or more of its usage limit.`,
                                 );

@@ -13,7 +13,6 @@ import {
     settingsPathNotifications,
     settingsPathPlans,
     settingsPathPreferences,
-    settingsPathOrgs,
     settingsPathVariables,
     settingsPathSSHKeys,
     settingsPathPersonalAccessTokens,
@@ -80,8 +79,8 @@ function renderBillingMenuEntries(billingMode?: BillingMode) {
                     link: [settingsPathPlans],
                 },
                 {
-                    title: "Organization Plans",
-                    link: [settingsPathOrgs],
+                    title: "Team Plans (deprecated)",
+                    link: ["/old-team-plans"],
                 },
                 ...(BillingMode.showUsageBasedBilling(billingMode)
                     ? [
@@ -102,8 +101,8 @@ function renderBillingMenuEntries(billingMode?: BillingMode) {
                 ...(BillingMode.showTeamSubscriptionUI(billingMode)
                     ? [
                           {
-                              title: "Organization Plans",
-                              link: [settingsPathOrgs],
+                              title: "Team Plans (deprecated)",
+                              link: ["/old-team-plans"],
                           },
                       ]
                     : []),

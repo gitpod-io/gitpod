@@ -8,7 +8,7 @@ import { useContext, useEffect, useState } from "react";
 import { Team, TeamMemberInfo } from "@gitpod/gitpod-protocol";
 import { AttributionId, AttributionTarget } from "@gitpod/gitpod-protocol/lib/attribution";
 import { getGitpodService } from "../service/service";
-import { TeamsContext } from "../teams/teams-context";
+import { useTeams } from "../teams/teams-context";
 import { UserContext } from "../user-context";
 import SelectableCardSolid from "../components/SelectableCardSolid";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
@@ -17,7 +17,7 @@ import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-
 
 export function BillingAccountSelector(props: { onSelected?: () => void }) {
     const { user, setUser } = useContext(UserContext);
-    const { teams } = useContext(TeamsContext);
+    const teams = useTeams();
     const [teamsAvailableForAttribution, setTeamsAvailableForAttribution] = useState<Team[] | undefined>();
     const [membersByTeam, setMembersByTeam] = useState<Record<string, TeamMemberInfo[]>>({});
     const [errorMessage, setErrorMessage] = useState<string | undefined>();

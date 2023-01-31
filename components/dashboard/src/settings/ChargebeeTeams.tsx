@@ -25,12 +25,12 @@ import { PaymentContext } from "../payment-context";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 
-export default function Teams() {
+export default function ChargebeeTeams() {
     return (
         <div>
             <PageWithSettingsSubMenu
-                title="Organization Plans"
-                subtitle="View and manage subscriptions for your organization with one centralized billing."
+                title="Team Plans (deprecated)"
+                subtitle="View and manage subscriptions for entire teams with one centralized billing."
             >
                 <AllTeams />
             </PageWithSettingsSubMenu>
@@ -469,8 +469,8 @@ function AllTeams() {
             )}
             <div className="flex flex-row">
                 <div className="flex-grow ">
-                    <h3 className="self-center">All Organization Plans</h3>
-                    <h2>Manage organization plans and organization members.</h2>
+                    <h3 className="self-center">All Team Plans</h3>
+                    <h2>Manage team plans and members.</h2>
                 </div>
                 <div className="flex flex-end space-x-3">
                     {isChargebeeCustomer && (
@@ -488,7 +488,7 @@ function AllTeams() {
                             }
                             onClick={() => showCreateTeamModal()}
                         >
-                            Create Organization Plan
+                            Create Team Plan
                         </button>
                     )}
                 </div>
@@ -520,23 +520,13 @@ function AllTeams() {
             {getActiveSubs().length === 0 && !pendingPlanPurchase && !isUsageBasedBillingEnabled && (
                 <div className="w-full flex h-80 mt-2 rounded-xl bg-gray-100 dark:bg-gray-900">
                     <div className="m-auto text-center">
-                        <h3 className="self-center text-gray-500 dark:text-gray-400 mb-4">
-                            No Active Organization Plans
-                        </h3>
+                        <h3 className="self-center text-gray-500 dark:text-gray-400 mb-4">No Active Team Plans</h3>
                         <div className="text-gray-500 mb-6">
-                            Get started by creating an organization plan
+                            Get started by creating a team plan
                             <br /> and adding members.{" "}
-                            <a
-                                href="https://www.gitpod.io/docs/orgs/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="gp-link"
-                            >
-                                Learn more
-                            </a>
                         </div>
                         <button className="self-center" onClick={() => showCreateTeamModal()}>
-                            Create Organization Plan
+                            Create Team Plan
                         </button>
                     </div>
                 </div>
@@ -776,7 +766,7 @@ function NewTeamModal(props: {
     return (
         // TODO: Use title and buttons props
         <Modal visible={true} onClose={props.onClose}>
-            <h3 className="pb-2">New Organization Plan</h3>
+            <h3 className="pb-2">New Team Plan</h3>
             <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4 space-y-2">
                 <p className="pb-4 text-gray-500 text-base">Create a plan and add members.</p>
 

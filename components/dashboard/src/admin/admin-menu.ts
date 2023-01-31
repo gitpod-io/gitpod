@@ -19,7 +19,7 @@ export function getAdminMenu() {
             link: ["/admin/projects"],
         },
         {
-            title: "Organizationss",
+            title: "Organizations",
             link: ["/admin/orgs"],
         },
         {

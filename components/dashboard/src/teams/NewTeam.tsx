@@ -26,7 +26,7 @@ export default function () {
             const teams = publicApiTeamsToProtocol((await teamsService.listTeams({})).teams);
 
             setTeams(teams);
-            history.push(`/t/${team.slug}`);
+            history.push(`/?org=${team.id}`);
         } catch (error) {
             console.error(error);
             if (error instanceof ConnectError) {
