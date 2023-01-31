@@ -299,7 +299,7 @@ export default function Menu() {
                           ),
                           active: team === undefined,
                           separator: true,
-                          link: `${location.pathname}?org=0`,
+                          link: `/projects/?org=0`,
                       },
                   ]
                 : []),
