@@ -30,6 +30,8 @@ func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
 		networkpolicy,
 		secret,
 		bootstrap,
+		role,
+		rolebinding,
 	)(ctx)
 }
 
