@@ -4,7 +4,7 @@
 
 > Once completed, [#7845](https://github.com/gitpod-io/gitpod/issues/7845) will move `image-builder-mk3` (and image builds) from meta to workspace clusters.
 
-The following diagram shows what happens during a workspace image build. See the [Architecture page](https://www.notion.so/gitpod/Architecture-0e39e570b10f4e8ba7b259629ee3cb74) for more details.
+The following diagram shows what happens during a workspace image build. See the (internal) [Architecture page](https://www.notion.so/gitpod/Architecture-0e39e570b10f4e8ba7b259629ee3cb74) for more details.
 
 ![Architecture](../../docs/workspace/image-builder-mk3/sequencediagram.svg)
 
