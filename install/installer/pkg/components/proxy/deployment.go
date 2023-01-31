@@ -6,6 +6,7 @@ package proxy
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
@@ -263,6 +264,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								}, {
 									Name:  "FRONTEND_DEV_ENABLED",
 									Value: fmt.Sprintf("%t", frontendDevEnabled),
+								}, {
+									Name:  "WORKSPACE_HANDLER_FILE",
+									Value: strings.ToLower(string(ctx.Config.Kind)),
 								}},
 							)),
 						}},

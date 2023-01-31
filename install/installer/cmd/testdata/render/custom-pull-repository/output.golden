@@ -9921,6 +9921,8 @@ spec:
           value: gitpod.example.com
         - name: FRONTEND_DEV_ENABLED
           value: "false"
+        - name: WORKSPACE_HANDLER_VHOST_FILE
+          value: full
         image: registry.mydomain.com/namespace/proxy:test
         imagePullPolicy: IfNotPresent
         name: proxy
