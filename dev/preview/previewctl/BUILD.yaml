@@ -57,6 +57,6 @@ scripts:
         PREVIEWCTL_IMAGE="eu.gcr.io/gitpod-core-dev/build/previewctl:hash-$INPUT_PREVIEWCTL_HASH"
       fi
 
-      echo "Downloading previewctil for $PREVIEWCTL_IMAGE"
+      echo "Downloading previewctl for $PREVIEWCTL_IMAGE"
       oci-tool fetch file -o $HOME/bin/previewctl --platform=linux-amd64 "$PREVIEWCTL_IMAGE" app/previewctl
       chmod +x $HOME/bin/previewctl

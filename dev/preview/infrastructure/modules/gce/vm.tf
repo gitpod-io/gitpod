@@ -5,9 +5,10 @@ data "google_compute_default_service_account" "default" {
 resource "google_compute_instance" "default" {
   provider = google
 
-  name         = var.preview_name
-  machine_type = var.vm_type
-  zone         = "us-central1-a"
+  name                      = var.preview_name
+  machine_type              = local.machine_type
+  zone                      = "us-central1-a"
+  allow_stopping_for_update = true
 
   boot_disk {
     initialize_params {
@@ -16,6 +17,7 @@ resource "google_compute_instance" "default" {
   }
 
   tags = ["preview"]
+
 
   dynamic "scheduling" {
     for_each = var.use_spot == true ? [1] : []
@@ -76,4 +78,6 @@ locals {
     vm_name             = var.preview_name
     ssh_authorized_keys = var.ssh_key
   })
+
+  machine_type = var.with_large_vm ? "n2d-standard-16" : var.vm_type
 }

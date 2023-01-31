@@ -17,8 +17,8 @@ resource "harvester_virtualmachine" "harvester" {
     harvester_ssh_key.harvester_ssh_key.id
   ]
 
-  cpu    = var.vm_cpu
-  memory = var.vm_memory
+  cpu    = local.vm_cpu
+  memory = local.vm_memory
 
   run_strategy = "RerunOnFailure"
   machine_type = "q35"
@@ -99,4 +99,7 @@ locals {
       vm_name = var.preview_name
     })
   })
+
+  vm_cpu    = var.with_large_vm ? 12 : 6
+  vm_memory = var.with_large_vm ? "24Gi" : "12Gi"
 }
