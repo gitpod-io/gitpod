@@ -14,6 +14,7 @@ jobs:
       group: ${{ github.head_ref || github.ref }}-configuration
       cancel-in-progress: true
     outputs:
+      is_main_branch: ${{ steps.output.outputs.is_main_branch }}
       version: ${{ steps.output.outputs.version }}
       preview_enable: ${{ steps.output.outputs.preview_enable }}
       preview_infra_provider: ${{ steps.output.outputs.preview_infra_provider }}
@@ -33,7 +34,8 @@ jobs:
         shell: bash
         run: |
           {
-            echo "version=${{ steps.branches.outputs.sanitized-branch-name }}.${{github.run_number}}"
+            echo "is_main_branch=${{ (github.head_ref || github.ref) == 'refs/heads/main' }}"
+            echo "version=${{ steps.branches.outputs.sanitized-branch-name }}-gha.${{github.run_number}}"
             echo "with_github_actions=${{ contains(github.event.pull_request.body, '[x] /werft with-github-actions') }}"
             echo "preview_enable=${{ contains(github.event.pull_request.body, '[x] /werft with-preview') }}"
             echo "preview_infra_provider=${{ contains(github.event.pull_request.body, '[X] /werft with-gce-vm') && 'gce' || 'harvester' }}"
@@ -93,11 +95,13 @@ jobs:
   build-gitpod:
     name: Build Gitpod
     needs: [configuration]
-    if: ${{ needs.configuration.outputs.with_github_actions == 'true' }}
+    if: ${{ needs.configuration.outputs.is_main_branch == 'true' || needs.configuration.outputs.with_github_actions == 'true' }}
     runs-on: [self-hosted]
     concurrency:
       group: ${{ github.head_ref || github.ref }}-build-gitpod
-      cancel-in-progress: true
+      # For the main branch we always want the build job to run to completion
+      # For other branches we only care about the "latest" version, so it is fine to cancel in-progress builds
+      cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     services:
       mysql:
         image: mysql:5.7
