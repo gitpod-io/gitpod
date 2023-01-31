@@ -287,3 +287,8 @@ func isPodBeingDeleted(pod *corev1.Pod) bool {
 	// if the pod is being deleted the only marker we have is that the deletionTimestamp is set
 	return pod.ObjectMeta.DeletionTimestamp != nil
 }
+
+// isWorkspaceBeingDeleted returns true if the workspace resource is currently being deleted.
+func isWorkspaceBeingDeleted(ws *workspacev1.Workspace) bool {
+	return ws.ObjectMeta.DeletionTimestamp != nil
+}

@@ -24,6 +24,7 @@ import (
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api/config"
@@ -41,14 +42,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func NewWorkspaceManagerServer(clnt client.Client, cfg *config.Configuration, reg prometheus.Registerer) *WorkspaceManagerServer {
+func NewWorkspaceManagerServer(clnt client.Client, cfg *config.Configuration, reg prometheus.Registerer, activity *activity.WorkspaceActivity) *WorkspaceManagerServer {
 	metrics := newWorkspaceMetrics()
 	reg.MustRegister(metrics)
 
 	return &WorkspaceManagerServer{
-		Client:  clnt,
-		Config:  cfg,
-		metrics: metrics,
+		Client:   clnt,
+		Config:   cfg,
+		metrics:  metrics,
+		activity: activity,
 		subs: subscriptions{
 			subscribers: make(map[string]chan *wsmanapi.SubscribeResponse),
 		},
@@ -56,9 +58,10 @@ func NewWorkspaceManagerServer(clnt client.Client, cfg *config.Configuration, re
 }
 
 type WorkspaceManagerServer struct {
-	Client  client.Client
-	Config  *config.Configuration
-	metrics *workspaceMetrics
+	Client   client.Client
+	Config   *config.Configuration
+	metrics  *workspaceMetrics
+	activity *activity.WorkspaceActivity
 
 	subs subscriptions
 	wsmanapi.UnimplementedWorkspaceManagerServer
@@ -280,10 +283,15 @@ func (wsm *WorkspaceManagerServer) DescribeWorkspace(ctx context.Context, req *w
 		return nil, status.Errorf(codes.Internal, "cannot lookup workspace: %v", err)
 	}
 
-	return &wsmanapi.DescribeWorkspaceResponse{
+	result := &wsmanapi.DescribeWorkspaceResponse{
 		Status: extractWorkspaceStatus(&ws),
-		// TODO(cw): Add lastActivity
-	}, nil
+	}
+
+	lastActivity := wsm.activity.GetLastActivity(req.Id)
+	if lastActivity != nil {
+		result.LastActivity = lastActivity.UTC().Format(time.RFC3339Nano)
+	}
+	return result, nil
 }
 
 // Subscribe streams all status updates to a client
@@ -296,8 +304,87 @@ func (m *WorkspaceManagerServer) Subscribe(req *api.SubscribeRequest, srv api.Wo
 	return m.subs.Subscribe(srv.Context(), sub)
 }
 
-func (wsm *WorkspaceManagerServer) MarkActive(ctx context.Context, req *wsmanapi.MarkActiveRequest) (*wsmanapi.MarkActiveResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method MarkActive not implemented")
+// MarkActive records a workspace as being active which prevents it from timing out
+func (wsm *WorkspaceManagerServer) MarkActive(ctx context.Context, req *wsmanapi.MarkActiveRequest) (res *wsmanapi.MarkActiveResponse, err error) {
+	//nolint:ineffassign
+	span, ctx := tracing.FromContext(ctx, "MarkActive")
+	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
+	defer tracing.FinishSpan(span, &err)
+
+	workspaceID := req.Id
+
+	var ws workspacev1.Workspace
+	err = wsm.Client.Get(ctx, types.NamespacedName{Namespace: wsm.Config.Namespace, Name: req.Id}, &ws)
+	if errors.IsNotFound(err) {
+		return nil, status.Errorf(codes.NotFound, "workspace %s does not exist", req.Id)
+	}
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot mark workspace: %v", err)
+	}
+
+	var firstUserActivity *timestamppb.Timestamp
+	for _, c := range ws.Status.Conditions {
+		if c.Type == string(workspacev1.WorkspaceConditionFirstUserActivity) {
+			firstUserActivity = timestamppb.New(c.LastTransitionTime.Time)
+		}
+	}
+
+	// if user already mark workspace as active and this request has IgnoreIfActive flag, just simple ignore it
+	if firstUserActivity != nil && req.IgnoreIfActive {
+		return &api.MarkActiveResponse{}, nil
+	}
+
+	// We do not keep the last activity in the workspace resource to limit the load we're placing
+	// on the K8S master in check. Thus, this state lives locally in a map.
+	now := time.Now().UTC()
+	wsm.activity.Store(req.Id, now)
+
+	// We do however maintain the the "closed" flag as annotation on the workspace. This flag should not change
+	// very often and provides a better UX if it persists across ws-manager restarts.
+	isMarkedClosed := conditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionClosed))
+	if req.Closed && !isMarkedClosed {
+		err = wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
+			ws.Status.Conditions = addUniqueCondition(ws.Status.Conditions, metav1.Condition{
+				Type:               string(workspacev1.WorkspaceConditionClosed),
+				Status:             metav1.ConditionTrue,
+				LastTransitionTime: metav1.NewTime(now),
+				Reason:             "MarkActiveRequest",
+			})
+			return nil
+		})
+	} else if !req.Closed && isMarkedClosed {
+		err = wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
+			ws.Status.Conditions = addUniqueCondition(ws.Status.Conditions, metav1.Condition{
+				Type:               string(workspacev1.WorkspaceConditionClosed),
+				Status:             metav1.ConditionFalse,
+				LastTransitionTime: metav1.NewTime(now),
+				Reason:             "MarkActiveRequest",
+			})
+			return nil
+		})
+	}
+	if err != nil {
+		log.WithError(err).WithFields(log.OWI("", "", workspaceID)).Warn("was unable to mark workspace properly")
+	}
+
+	// If it's the first call: Mark the pod with FirstUserActivity condition.
+	if firstUserActivity == nil {
+		err := wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
+			ws.Status.Conditions = addUniqueCondition(ws.Status.Conditions, metav1.Condition{
+				Type:               string(workspacev1.WorkspaceConditionFirstUserActivity),
+				Status:             metav1.ConditionTrue,
+				LastTransitionTime: metav1.NewTime(now),
+				Reason:             "FirstActivity",
+			})
+			return nil
+		})
+		if err != nil {
+			log.WithError(err).WithFields(log.OWI("", "", workspaceID)).Warn("was unable to set FirstUserActivity condition on workspace")
+			return nil, err
+		}
+	}
+
+	return &api.MarkActiveResponse{}, nil
 }
 
 func (wsm *WorkspaceManagerServer) SetTimeout(ctx context.Context, req *wsmanapi.SetTimeoutRequest) (*wsmanapi.SetTimeoutResponse, error) {
@@ -501,7 +588,7 @@ func extractWorkspaceStatus(ws *workspacev1.Workspace) *wsmanapi.WorkspaceStatus
 
 	var timeout string
 	if ws.Spec.Timeout.Time != nil {
-		timeout = ws.Spec.Timeout.Time.String()
+		timeout = ws.Spec.Timeout.Time.Duration.String()
 	}
 
 	var phase wsmanapi.WorkspacePhase
@@ -527,7 +614,7 @@ func extractWorkspaceStatus(ws *workspacev1.Workspace) *wsmanapi.WorkspaceStatus
 
 	var firstUserActivity *timestamppb.Timestamp
 	for _, c := range ws.Status.Conditions {
-		if c.Type == string(workspacev1.WorkspaceConditionUserActivity) {
+		if c.Type == string(workspacev1.WorkspaceConditionFirstUserActivity) {
 			firstUserActivity = timestamppb.New(c.LastTransitionTime.Time)
 		}
 	}
@@ -877,4 +964,24 @@ func (m *workspaceMetrics) Describe(ch chan<- *prometheus.Desc) {
 // Collect implements Collector.
 func (m *workspaceMetrics) Collect(ch chan<- prometheus.Metric) {
 	m.totalStartsCounterVec.Collect(ch)
+}
+
+func addUniqueCondition(conds []metav1.Condition, cond metav1.Condition) []metav1.Condition {
+	for i, c := range conds {
+		if c.Type == cond.Type {
+			conds[i] = cond
+			return conds
+		}
+	}
+
+	return append(conds, cond)
+}
+
+func conditionPresentAndTrue(cond []metav1.Condition, tpe string) bool {
+	for _, c := range cond {
+		if c.Type == tpe {
+			return c.Status == metav1.ConditionTrue
+		}
+	}
+	return false
 }

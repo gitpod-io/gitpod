@@ -8,6 +8,7 @@ import (
 	"context"
 	"path/filepath"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -19,6 +20,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"github.com/gitpod-io/gitpod/common-go/util"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
 	"github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	//+kubebuilder:scaffold:imports
@@ -101,6 +104,25 @@ var _ = BeforeSuite(func() {
 			},
 		},
 	}).SetupWithManager(k8sManager)
+	Expect(err).ToNot(HaveOccurred())
+
+	activity := activity.WorkspaceActivity{}
+	timeoutReconciler, err := NewTimeoutReconciler(k8sManager.GetClient(), config.Configuration{
+		Timeouts: config.WorkspaceTimeoutConfiguration{
+			TotalStartup:        util.Duration(1 * time.Minute),
+			Initialization:      util.Duration(1 * time.Minute),
+			RegularWorkspace:    util.Duration(1 * time.Minute),
+			MaxLifetime:         util.Duration(1 * time.Minute),
+			HeadlessWorkspace:   util.Duration(1 * time.Minute),
+			AfterClose:          util.Duration(1 * time.Minute),
+			ContentFinalization: util.Duration(1 * time.Minute),
+			Stopping:            util.Duration(1 * time.Minute),
+			Interrupted:         util.Duration(1 * time.Minute),
+		},
+		TimeoutMaxConcurrentReconciles: 2,
+	}, &activity)
+	Expect(err).ToNot(HaveOccurred())
+	err = timeoutReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
 	ctx, cancel = context.WithCancel(context.TODO())

@@ -145,7 +145,10 @@ const (
 	WorkspaceConditionTimeout WorkspaceCondition = "Timeout"
 
 	// UserActivity is the time when MarkActive was first called on the workspace
-	WorkspaceConditionUserActivity WorkspaceCondition = "UserActivity"
+	WorkspaceConditionFirstUserActivity WorkspaceCondition = "FirstUserActivity"
+
+	// Closed indicates that a workspace is marked as closed. This will shorten its timeout.
+	WorkspaceConditionClosed WorkspaceCondition = "Closed"
 
 	// HeadlessTaskFailed indicates that a headless workspace task failed
 	WorkspaceConditionsHeadlessTaskFailed WorkspaceCondition = "HeadlessTaskFailed"

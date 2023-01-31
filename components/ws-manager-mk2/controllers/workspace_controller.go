@@ -75,7 +75,9 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	var workspace workspacev1.Workspace
 	if err := r.Get(ctx, req.NamespacedName, &workspace); err != nil {
-		log.Error(err, "unable to fetch workspace")
+		if !errors.IsNotFound(err) {
+			log.Error(err, "unable to fetch workspace")
+		}
 		// we'll ignore not-found errors, since they can't be fixed by an immediate
 		// requeue (we'll need to wait for a new notification), and we can get them
 		// on deleted requests.
@@ -184,6 +186,15 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 
 	// if the pod was stopped by request, delete it
 	case conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionStoppedByRequest)) && !isPodBeingDeleted(pod):
+		err := r.Client.Delete(ctx, pod)
+		if errors.IsNotFound(err) {
+			// pod is gone - nothing to do here
+		} else {
+			return ctrl.Result{Requeue: true}, err
+		}
+
+	// if the workspace timed out, delete it
+	case conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionTimeout)) && !isPodBeingDeleted(pod):
 		err := r.Client.Delete(ctx, pod)
 		if errors.IsNotFound(err) {
 			// pod is gone - nothing to do here
