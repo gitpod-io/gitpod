@@ -50,7 +50,8 @@ jobs:
     needs: [configuration]
     concurrency:
       group: ${{ github.head_ref || github.ref }}-build-previewctl
-      cancel-in-progress: true
+      # see comment in build-gitpod below for context
+      cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     runs-on: [self-hosted]
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.3.4
