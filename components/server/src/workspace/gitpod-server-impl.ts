@@ -180,6 +180,7 @@ import * as grpc from "@grpc/grpc-js";
 import { CachingBlobServiceClientProvider } from "../util/content-service-sugar";
 import { CostCenterJSON } from "@gitpod/gitpod-protocol/lib/usage";
 import { createCookielessId, maskIp } from "../analytics";
+import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -249,6 +250,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(VerificationService) protected readonly verificationService: VerificationService;
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
     @inject(MessageBusIntegration) protected readonly messageBus: MessageBusIntegration;
+
+    @inject(ConfigCatClientFactory) protected readonly configCatClientFactory: ConfigCatClientFactory;
 
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
@@ -2919,11 +2922,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<AuthProviderEntry> {
         traceAPIParams(ctx, {}); // entry contains PII
 
-        let userId = this.checkAndBlockUser("createOrgAuthProvider").id;
-
-        // TODO: Add check for orgGitAuthProviders feature flag
-
-        const safeProvider = <AuthProviderEntry.NewEntry>{
+        // map params to a new provider
+        const newProvider = <AuthProviderEntry.NewEntry>{
             host: entry.host,
             type: entry.type,
             clientId: entry.clientId,
@@ -2932,36 +2932,45 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             organizationId: entry.organizationId,
         };
 
+        let user = this.checkAndBlockUser("createOrgAuthProvider");
+        let team = await this.getTeam(ctx, newProvider.organizationId || "");
+        if (!team) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Invalid organizationId");
+        }
+
+        await this.guardWithFeatureFlag("orgGitAuthProviders", team);
+
         // Since this is a create, ensure they're not creating it as someone else
-        if (userId !== safeProvider.ownerId) {
+        if (user.id !== newProvider.ownerId) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "Cannot create an auth provider for another owner.");
         }
 
-        if (!safeProvider.organizationId) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Must provide an organizationId");
+        if (!newProvider.host) {
+            throw new ResponseError(
+                ErrorCodes.BAD_REQUEST,
+                "Must provider a host value when creating a new auth provider.",
+            );
         }
 
-        // TODO: Is this a sufficient check that the user can create org auth providers?
-        await this.guardTeamOperation(safeProvider.organizationId, "create");
+        await this.guardTeamOperation(newProvider.organizationId, "create");
 
         try {
-            if ("host" in safeProvider) {
-                // on creating we're are checking for already existing runtime providers
-                const host = safeProvider.host && safeProvider.host.toLowerCase();
+            // on creating we're are checking for already existing runtime providers
+            const host = newProvider.host && newProvider.host.toLowerCase();
 
-                if (!(await this.authProviderService.isHostReachable(host))) {
-                    log.debug(`Host could not be reached.`, { entry, safeProvider });
-                    throw new Error("Host could not be reached.");
-                }
-
-                const hostContext = this.hostContextProvider.get(host);
-                if (hostContext) {
-                    const builtInExists = hostContext.authProvider.params.ownerId === undefined;
-                    log.debug(`Attempt to override existing auth provider.`, { entry, safeProvider, builtInExists });
-                    throw new Error("Provider for this host already exists.");
-                }
+            if (!(await this.authProviderService.isHostReachable(host))) {
+                log.debug(`Host could not be reached.`, { entry, newProvider });
+                throw new Error("Host could not be reached.");
             }
-            const result = await this.authProviderService.updateAuthProvider(safeProvider);
+
+            const hostContext = this.hostContextProvider.get(host);
+            if (hostContext) {
+                const builtInExists = hostContext.authProvider.params.ownerId === undefined;
+                log.debug(`Attempt to override existing auth provider.`, { entry, newProvider, builtInExists });
+                throw new Error("Provider for this host already exists.");
+            }
+
+            const result = await this.authProviderService.updateAuthProvider(newProvider);
             return AuthProviderEntry.redact(result);
         } catch (error) {
             const message = error && error.message ? error.message : "Failed to create the provider.";
@@ -2975,11 +2984,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<AuthProviderEntry> {
         traceAPIParams(ctx, {}); // entry contains PII
 
-        let userId = this.checkAndBlockUser("updateOrgAuthProvider").id;
-
-        // TODO: Add check for orgGitAuthProviders feature flag
-
-        const safeProvider: AuthProviderEntry.UpdateEntry = {
+        // map params to a provider update
+        const providerUpdate: AuthProviderEntry.UpdateEntry = {
             id: entry.id,
             clientId: entry.clientId,
             clientSecret: entry.clientSecret,
@@ -2987,20 +2993,23 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             organizationId: entry.organizationId,
         };
 
+        const user = this.checkAndBlockUser("updateOrgAuthProvider");
+        const team = await this.getTeam(ctx, providerUpdate.organizationId || "");
+        if (!team) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Invalid organizationId");
+        }
+
+        await this.guardWithFeatureFlag("orgGitAuthProviders", team);
+
         // TODO: What do we want to enforce here for updates? That ownerId is set to last user who updated it, or creator?
-        if (userId !== safeProvider.ownerId) {
+        if (user.id !== providerUpdate.ownerId) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "Cannot update an auth provider for another owner.");
         }
 
-        if (!safeProvider.organizationId) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Must provide an organizationId");
-        }
-
-        // TODO: Is this a sufficient check that the user can update org auth providers?
-        await this.guardTeamOperation(safeProvider.organizationId, "update");
+        await this.guardTeamOperation(providerUpdate.organizationId, "update");
 
         try {
-            const result = await this.authProviderService.updateAuthProvider(safeProvider);
+            const result = await this.authProviderService.updateAuthProvider(providerUpdate);
             return AuthProviderEntry.redact(result);
         } catch (error) {
             const message = error && error.message ? error.message : "Failed to update the provider.";
@@ -3016,17 +3025,17 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         this.checkAndBlockUser("getOrgAuthProviders");
 
-        // TODO: Add check for orgGitAuthProviders feature flag
-
-        if (!params.organizationId) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Must provide an organizationId");
+        const team = await this.getTeam(ctx, params.organizationId || "");
+        if (!team) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Invalid organizationId");
         }
 
-        // TODO: Is this a sufficient check that the user can get org auth providers?
-        await this.guardTeamOperation(params.organizationId, "get");
+        await this.guardWithFeatureFlag("orgGitAuthProviders", team);
+
+        await this.guardTeamOperation(team.id, "get");
 
         try {
-            const result = await this.authProviderService.getAuthProvidersOfOrg(params.organizationId);
+            const result = await this.authProviderService.getAuthProvidersOfOrg(team.id);
             return result.map(AuthProviderEntry.redact.bind(AuthProviderEntry));
         } catch (error) {
             const message =
@@ -3040,16 +3049,20 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         this.checkAndBlockUser("deleteOrgAuthProvider");
 
-        // TODO: Add check for orgGitAuthProviders feature flag
+        const team = await this.getTeam(ctx, params.organizationId);
+        if (!team) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Invalid organizationId");
+        }
+
+        await this.guardWithFeatureFlag("orgGitAuthProviders", team);
 
         // Find the matching auth provider we're attempting to delete
-        const orgProviders = await this.authProviderService.getAuthProvidersOfOrg(params.id);
+        const orgProviders = await this.authProviderService.getAuthProvidersOfOrg(team.id);
         const authProvider = orgProviders.find((p) => p.id === params.id);
         if (!authProvider) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Provider resource not found.");
         }
 
-        // TODO: Is this a sufficient check that the user can delete org auth providers?
         await this.guardTeamOperation(authProvider.organizationId, "delete");
 
         try {
@@ -3057,6 +3070,18 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         } catch (error) {
             const message = error && error.message ? error.message : "Failed to delete the provider.";
             throw new ResponseError(ErrorCodes.CONFLICT, message);
+        }
+    }
+
+    protected async guardWithFeatureFlag(flagName: string, team: Team) {
+        // Guard method w/ a feature flag check
+        const isEnabled = await this.configCatClientFactory().getValueAsync(flagName, false, {
+            user: this.user,
+            teamId: team.id,
+            teamName: team.name,
+        });
+        if (!isEnabled) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Method not available");
         }
     }
 

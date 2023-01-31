@@ -477,6 +477,7 @@ export namespace GitpodServer {
     }
     export interface DeleteOrgAuthProviderParams {
         readonly id: string;
+        readonly organizationId: string;
     }
     export type AdmissionLevel = "owner" | "everyone";
     export type PinAction = "pin" | "unpin" | "toggle";
