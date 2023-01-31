@@ -544,11 +544,14 @@ func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTok
 					Host: repoUrl.Host,
 					Kind: KindGit,
 				})
-				if err != nil {
-					return
+				if err == nil {
+					username = resp.User
+					password = resp.Token
+				} else {
+					username = "gitpod"
+					password = "not-provided"
 				}
-				username = resp.User
-				password = resp.Token
+
 				return
 			}
 			client := &git.Client{
