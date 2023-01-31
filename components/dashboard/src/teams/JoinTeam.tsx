@@ -6,7 +6,7 @@
 
 import { useContext, useEffect, useMemo, useState } from "react";
 import { useHistory, useLocation } from "react-router-dom";
-import { publicApiTeamsToProtocol, teamsService } from "../service/public-api";
+import { publicApiTeamsToProtocol, publicApiTeamToProtocol, teamsService } from "../service/public-api";
 import { TeamsContext } from "./teams-context";
 
 export default function () {
@@ -23,11 +23,11 @@ export default function () {
                 if (!inviteId) {
                     throw new Error("This invite URL is incorrect.");
                 }
-
+                const team = publicApiTeamToProtocol((await teamsService.joinTeam({ invitationId: inviteId })).team!);
                 const teams = publicApiTeamsToProtocol((await teamsService.listTeams({})).teams);
                 setTeams(teams);
 
-                history.push(`/members`);
+                history.push(`/members?org=${team.id}`);
             } catch (error) {
                 console.error(error);
                 setJoinError(error);
