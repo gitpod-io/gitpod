@@ -5,10 +5,9 @@
  */
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { useLocation } from "react-router";
 import { getExperimentsClient } from "../experiments/client";
 import { ProjectContext } from "../projects/project-context";
-import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
+import { useCurrentTeam, useTeams } from "../teams/teams-context";
 import { UserContext } from "../user-context";
 
 interface FeatureFlagConfig {
@@ -33,10 +32,9 @@ const FeatureFlagContext = createContext<{
 
 const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const { user } = useContext(UserContext);
-    const { teams } = useContext(TeamsContext);
+    const teams = useTeams();
     const { project } = useContext(ProjectContext);
-    const location = useLocation();
-    const team = getCurrentTeam(location, teams);
+    const team = useCurrentTeam();
     const [showUsageView, setShowUsageView] = useState<boolean>(false);
     const [isUsageBasedBillingEnabled, setIsUsageBasedBillingEnabled] = useState<boolean>(false);
     const [showUseLastSuccessfulPrebuild, setShowUseLastSuccessfulPrebuild] = useState<boolean>(false);

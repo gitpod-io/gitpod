@@ -18,24 +18,24 @@ import { useCurrentUser } from "../user-context";
 import { TeamsContext, useCurrentTeam } from "./teams-context";
 
 export function getTeamSettingsMenu(params: { team?: Team; billingMode?: BillingMode; ssoEnabled?: boolean }) {
-    const { team, billingMode, ssoEnabled } = params;
+    const { billingMode, ssoEnabled } = params;
     const result = [
         {
             title: "General",
-            link: [`/t/${team?.slug}/settings`],
+            link: [`/org-settings`],
         },
     ];
     if (ssoEnabled) {
         result.push({
             title: "SSO",
-            link: [`/t/${team?.slug}/sso`],
+            link: [`/sso`],
         });
     }
     if (billingMode?.mode !== "none") {
         // The Billing page contains both chargebee and usage-based components, so: always show them!
         result.push({
             title: "Billing",
-            link: [`/t/${team?.slug}/billing`],
+            link: [`/org-billing`],
         });
     }
     return result;
@@ -182,7 +182,7 @@ export default function TeamSettings() {
                 onConfirm={deleteTeam}
             >
                 <p className="text-base text-gray-500">
-                    You are about to permanently delete <b>{team?.slug}</b> including all associated data.
+                    You are about to permanently delete <b>{team?.name}</b> including all associated data.
                 </p>
                 <ol className="text-gray-500 text-m list-outside list-decimal">
                     <li className="ml-5">

@@ -7,7 +7,7 @@
 import { TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
 import dayjs from "dayjs";
 import { useContext, useEffect, useState } from "react";
-import { useHistory, useLocation } from "react-router";
+import { useHistory } from "react-router";
 import Header from "../components/Header";
 import DropDown from "../components/DropDown";
 import { ItemsList, Item, ItemField, ItemFieldContextMenu } from "../components/ItemsList";
@@ -15,18 +15,17 @@ import Modal from "../components/Modal";
 import Tooltip from "../components/Tooltip";
 import copy from "../images/copy.svg";
 import { UserContext } from "../user-context";
-import { TeamsContext, getCurrentTeam } from "./teams-context";
+import { TeamsContext, useCurrentTeam } from "./teams-context";
 import { trackEvent } from "../Analytics";
 import { publicApiTeamMembersToProtocol, publicApiTeamsToProtocol, teamsService } from "../service/public-api";
 import { TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 
 export default function () {
     const { user } = useContext(UserContext);
-    const { teams, setTeams } = useContext(TeamsContext);
+    const { setTeams } = useContext(TeamsContext);
 
     const history = useHistory();
-    const location = useLocation();
-    const team = getCurrentTeam(location, teams);
+    const team = useCurrentTeam();
     const [members, setMembers] = useState<TeamMemberInfo[]>([]);
     const [genericInviteId, setGenericInviteId] = useState<string>();
     const [showInviteModal, setShowInviteModal] = useState<boolean>(false);

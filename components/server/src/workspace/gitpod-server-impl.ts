@@ -2106,7 +2106,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             properties: {
                 id: team.id,
                 name: team.name,
-                slug: team.slug,
                 created_at: team.creationTime,
                 invite_id: invite.id,
             },
@@ -2134,7 +2133,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 properties: {
                     team_id: invite.teamId,
                     team_name: team?.name,
-                    team_slug: team?.slug,
                     invite_id: inviteId,
                 },
             });

@@ -4,15 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useContext } from "react";
-import { useLocation } from "react-router";
-import { getCurrentTeam, TeamsContext } from "./teams-context";
+import { useCurrentTeam } from "./teams-context";
 import UsageView from "../components/UsageView";
 
 function TeamUsage() {
-    const { teams } = useContext(TeamsContext);
-    const location = useLocation();
-    const team = getCurrentTeam(location, teams);
+    const team = useCurrentTeam();
     if (!team) {
         return <></>;
     }

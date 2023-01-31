@@ -5,18 +5,18 @@
  */
 
 import { Project, ProjectEnvVar } from "@gitpod/gitpod-protocol";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Alert from "../components/Alert";
 import CheckBox from "../components/CheckBox";
 import InfoBox from "../components/InfoBox";
 import { Item, ItemField, ItemFieldContextMenu, ItemsList } from "../components/ItemsList";
 import Modal from "../components/Modal";
 import { getGitpodService } from "../service/service";
-import { ProjectContext } from "./project-context";
+import { useCurrentProject } from "./project-context";
 import { ProjectSettingsPage } from "./ProjectSettings";
 
 export default function () {
-    const { project } = useContext(ProjectContext);
+    const project = useCurrentProject();
     const [envVars, setEnvVars] = useState<ProjectEnvVar[]>([]);
     const [showAddVariableModal, setShowAddVariableModal] = useState<boolean>(false);
 

@@ -13,7 +13,7 @@ import { countries } from "countries-list";
 import gitpodIcon from "./icons/gitpod.svg";
 import { getGitpodService, gitpodHostUrl } from "./service/service";
 import { UserContext } from "./user-context";
-import { TeamsContext, getCurrentTeam, getSelectedTeamSlug } from "./teams/teams-context";
+import { useCurrentTeam, useTeams } from "./teams/teams-context";
 import { getAdminMenu } from "./admin/admin-menu";
 import ContextMenu, { ContextMenuEntry } from "./components/ContextMenu";
 import Separator from "./components/Separator";
@@ -39,9 +39,9 @@ interface Entry {
 export default function Menu() {
     const { user } = useContext(UserContext);
     const { showUsageView, oidcServiceEnabled } = useContext(FeatureFlagContext);
-    const { teams } = useContext(TeamsContext);
+    const teams = useTeams();
     const location = useLocation();
-    const team = getCurrentTeam(location, teams);
+    const team = useCurrentTeam();
     const { setCurrency, setIsStudent, setIsChargebeeCustomer } = useContext(PaymentContext);
     const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
     const [userBillingMode, setUserBillingMode] = useState<BillingMode | undefined>(undefined);
@@ -57,17 +57,12 @@ export default function Menu() {
         getGitpodService().server.getBillingModeForUser().then(setUserBillingMode);
     }, []);
 
-    const teamRouteMatch = useRouteMatch<{ segment1?: string; segment2?: string; segment3?: string }>(
-        "/t/:segment1/:segment2?/:segment3?",
-    );
-
-    // TODO: Remove it after remove projects under personal accounts
     const projectsRouteMatch = useRouteMatch<{ segment1?: string; segment2?: string }>(
         "/projects/:segment1?/:segment2?",
     );
 
     const projectSlug = (() => {
-        const resource = teamRouteMatch?.params?.segment2 || projectsRouteMatch?.params.segment1;
+        const resource = projectsRouteMatch?.params.segment1;
         if (
             resource &&
             ![
@@ -89,7 +84,7 @@ export default function Menu() {
         }
     })();
     const prebuildId = (() => {
-        const resource = projectSlug && (teamRouteMatch?.params?.segment3 || projectsRouteMatch?.params.segment2);
+        const resource = projectSlug && projectsRouteMatch?.params.segment2;
         if (
             resource &&
             ![
@@ -110,7 +105,7 @@ export default function Menu() {
     }
 
     // Hide most of the top menu when in a full-page form.
-    const isMinimalUI = inResource(location.pathname, ["new", "teams/new", "open"]);
+    const isMinimalUI = inResource(location.pathname, ["new", "orgs/new", "open"]);
     const isWorkspacesUI = inResource(location.pathname, ["workspaces"]);
     const isPersonalSettingsUI = inResource(location.pathname, [
         "account",
@@ -164,8 +159,7 @@ export default function Menu() {
             }
 
             // Find project matching with slug, otherwise with name
-            const project =
-                projectSlug && projects.find((p) => (p.slug ? p.slug === projectSlug : p.name === projectSlug));
+            const project = projectSlug && projects.find((p) => Project.slug(p) === projectSlug);
             if (!project) {
                 return;
             }
@@ -191,22 +185,21 @@ export default function Menu() {
         }
     }, [team]);
 
-    const teamOrUserSlug = !!team ? "/t/" + team.slug : "/projects";
     const secondLevelMenu: Entry[] = (() => {
         // Project menu
         if (projectSlug) {
             return [
                 {
                     title: "Branches",
-                    link: `${teamOrUserSlug}/${projectSlug}`,
+                    link: `/projects/${projectSlug}`,
                 },
                 {
                     title: "Prebuilds",
-                    link: `${teamOrUserSlug}/${projectSlug}/prebuilds`,
+                    link: `/projects/${projectSlug}/prebuilds`,
                 },
                 {
                     title: "Settings",
-                    link: `${teamOrUserSlug}/${projectSlug}/settings`,
+                    link: `/projects/${projectSlug}/settings`,
                     alternatives: getProjectSettingsMenu({ slug: projectSlug } as Project, team).flatMap((e) => e.link),
                 },
             ];
@@ -220,12 +213,12 @@ export default function Menu() {
         const teamSettingsList = [
             {
                 title: "Projects",
-                link: `/t/${team.slug}/projects`,
+                link: `/projects`,
                 alternatives: [] as string[],
             },
             {
                 title: "Members",
-                link: `/t/${team.slug}/members`,
+                link: `/members`,
             },
         ];
         if (
@@ -234,13 +227,13 @@ export default function Menu() {
         ) {
             teamSettingsList.push({
                 title: "Usage",
-                link: `/t/${team.slug}/usage`,
+                link: `/org-usage`,
             });
         }
         if (currentUserInTeam?.role === "owner") {
             teamSettingsList.push({
                 title: "Settings",
-                link: `/t/${team.slug}/settings`,
+                link: `/org-settings`,
                 alternatives: getTeamSettingsMenu({
                     team,
                     billingMode: teamBillingMode,
@@ -277,7 +270,7 @@ export default function Menu() {
     const onFeedbackFormClose = () => {
         setFeedbackFormVisible(false);
     };
-    const isTeamLevelActive = !projectSlug && !isWorkspacesUI && !isPersonalSettingsUI && !isAdminUI && teamOrUserSlug;
+    const isTeamLevelActive = !projectSlug && !isWorkspacesUI && !isPersonalSettingsUI && !isAdminUI;
     const renderTeamMenu = () => {
         if (!hasIndividualProjects && (!teams || teams.length === 0)) {
             return (
@@ -291,8 +284,8 @@ export default function Menu() {
             );
         }
         const userFullName = user?.fullName || user?.name || "...";
-        const entries: (ContextMenuEntry & { slug: string })[] = [
-            ...(hasIndividualProjects
+        const entries: ContextMenuEntry[] = [
+            ...(!user?.additionalData?.isMigratedToTeamOnlyAttribution
                 ? [
                       {
                           title: userFullName,
@@ -304,16 +297,14 @@ export default function Menu() {
                                   <span className="">Personal Account</span>
                               </div>
                           ),
-                          active: getSelectedTeamSlug() === "",
+                          active: team === undefined,
                           separator: true,
-                          slug: "",
-                          link: "/projects",
+                          link: `${location.pathname}?org=0`,
                       },
                   ]
                 : []),
             ...(teams || [])
                 .map((t) => ({
-                    slug: t.slug,
                     title: t.name,
                     customContent: (
                         <div className="w-full text-gray-400 flex flex-col">
@@ -325,13 +316,12 @@ export default function Menu() {
                             </span>
                         </div>
                     ),
-                    active: getSelectedTeamSlug() === t.slug,
+                    active: team?.id === t.id,
                     separator: true,
-                    link: `/t/${t.slug}`,
+                    link: `/projects/?org=${t.id}`,
                 }))
                 .sort((a, b) => (a.title.toLowerCase() > b.title.toLowerCase() ? 1 : -1)),
             {
-                slug: "new",
                 title: "Create a new organization",
                 customContent: (
                     <div className="w-full text-gray-400 flex items-center">
@@ -354,7 +344,7 @@ export default function Menu() {
             (isTeamLevelActive
                 ? "text-gray-50  bg-gray-800 dark:bg-gray-50  dark:text-gray-900 border-gray-700 dark:border-gray-200"
                 : "text-gray-500 bg-gray-50  dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-700");
-        const selectedEntry = entries.find((e) => e.slug === getSelectedTeamSlug()) || entries[0];
+        const selectedEntry = entries.find((e) => e.active) || entries[0];
         return (
             <div className="flex p-1">
                 <Link to={selectedEntry.link!}>
@@ -378,14 +368,14 @@ export default function Menu() {
                     </ContextMenu>
                 </div>
                 {projectSlug && !prebuildId && !isAdminUI && (
-                    <Link to={`${teamOrUserSlug}/${projectSlug}${prebuildId ? "/prebuilds" : ""}`}>
+                    <Link to={`/projects/${projectSlug}${prebuildId ? "/prebuilds" : ""}`}>
                         <span className=" flex h-full text-base text-gray-50 bg-gray-800 dark:bg-gray-50 dark:text-gray-900 font-semibold ml-2 px-3 py-1 rounded-2xl border-gray-100">
                             {project?.name}
                         </span>
                     </Link>
                 )}
                 {prebuildId && (
-                    <Link to={`${teamOrUserSlug}/${projectSlug}${prebuildId ? "/prebuilds" : ""}`}>
+                    <Link to={`/projects/${projectSlug}${prebuildId ? "/prebuilds" : ""}`}>
                         <span className=" flex h-full text-base text-gray-500 bg-gray-50 hover:bg-gray-100 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700 font-semibold ml-2 px-3 py-1 rounded-2xl border-gray-100">
                             {project?.name}
                         </span>
@@ -403,7 +393,7 @@ export default function Menu() {
                                 />
                             </svg>
                         </div>
-                        <Link to={`${teamOrUserSlug}/${projectSlug}/${prebuildId}`}>
+                        <Link to={`/projects/${projectSlug}/${prebuildId}`}>
                             <span className="flex h-full text-base text-gray-50 bg-gray-800 dark:bg-gray-50 dark:text-gray-900 font-semibold px-3 py-1 rounded-2xl border-gray-100">
                                 {prebuildId.substring(0, 8).trimEnd()}
                             </span>

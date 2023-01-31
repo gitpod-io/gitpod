@@ -79,7 +79,7 @@ export default function TeamDetail(props: { team: Team }) {
                             </span>
                         )}
                     </div>
-                    <span className="mb-6 text-gray-400">/t/{team.slug}</span>
+                    <span className="mb-6 text-gray-400">{team.id}</span>
                     <span className="text-gray-400"> · </span>
                     <span className="text-gray-400">Created on {dayjs(team.creationTime).format("MMM D, YYYY")}</span>
                 </div>

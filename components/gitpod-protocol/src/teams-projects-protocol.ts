@@ -48,6 +48,10 @@ export namespace Project {
         };
     };
 
+    export function slug(p: Project): string {
+        return p.slug || p.name || p.id;
+    }
+
     export interface Overview {
         branches: BranchDetails[];
         isConsideredInactive?: boolean;
