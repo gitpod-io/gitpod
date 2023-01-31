@@ -15,7 +15,7 @@ variable "preview_namespace" {
 
 variable "vm_type" {
   type    = string
-  default = "n2-standard-8"
+  default = "n2d-standard-8"
 }
 
 variable "ssh_key" {
@@ -63,4 +63,10 @@ variable "use_spot" {
   type        = bool
   default     = false
   description = "Flag to decide whether to use spot instances"
+}
+
+variable "with_large_vm" {
+  type        = bool
+  default     = false
+  description = "Flag to decide whether to use a larger VM"
 }

@@ -21,6 +21,7 @@ jobs:
       build_no_cache: ${{ steps.output.outputs.build_no_cache }}
       build_no_test: ${{ steps.output.outputs.build_no_test }}
       build_leeway_target: ${{ steps.output.outputs.build_leeway_target }}
+      with_large_vm: ${{ steps.output.outputs.with_large_vm }}
     steps:
       - name: "Determine Branch"
         id: branches
@@ -39,6 +40,7 @@ jobs:
             echo "build_no_cache=${{ contains(github.event.pull_request.body, '[x] leeway-no-cache') }}"
             echo "build_no_test=${{ contains(github.event.pull_request.body, '[x] /werft no-test') }}"
             echo "build_leeway_target=$(echo "$PR_DESC" | sed -n -e 's/^.*leeway-target=//p' | sed 's/\r$//')"
+            echo "with_large_vm=${{ contains(github.event.pull_request.body, '[X] /werft with-large-vm') }}"
           } >> $GITHUB_OUTPUT
 
   build-previewctl:
@@ -86,6 +88,7 @@ jobs:
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
           infrastructure_provider: ${{ needs.configuration.outputs.preview_infra_provider }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
+          large_vm: ${{ needs.configuration.outputs.with_large_vm }}
 
   build-gitpod:
     name: Build Gitpod

@@ -3,6 +3,8 @@ resource "kubernetes_pod" "proxy" {
   metadata {
     name      = "proxy"
     namespace = var.preview_namespace
+    # this label should match the one in ../../svc.tf
+    # and is the same as the one that a pod running a harvester vm has
     labels = {
       "harvesterhci.io/vmName" = var.preview_name
     }
