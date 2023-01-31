@@ -68,7 +68,7 @@ jobs:
 
           export LEEWAY_WORKSPACE_ROOT="$(pwd)"
           leeway build dev/preview/previewctl:docker -Dversion="${{needs.configuration.outputs.version}}"
-          echo "previewctl_hash=$(leeway describe dev/preview/previewctl:docker -t '{{ .Metadata.Version }}')" >> $GITHUB_OUTPUT
+          echo "previewctl_hash=$(leeway describe dev/preview/previewctl:docker -Dversion="${{needs.configuration.outputs.version}}" -t '{{ .Metadata.Version }}')" >> $GITHUB_OUTPUT
 
   infrastructure:
     needs: [configuration, build-previewctl]
