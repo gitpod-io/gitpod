@@ -47,7 +47,7 @@ scripts:
         # If a specific hash isn't provided we'll use the latest image off main
         PREVIEWCTL_VERSION=$(\
             gcloud container images list-tags eu.gcr.io/gitpod-core-dev/build/previewctl \
-                --filter="tags:main.*" \
+                --filter="tags:main-gha.*" \
                 --limit=1 \
                 --format=json \
             | jq --raw-output '.[0].tags[0]' \
