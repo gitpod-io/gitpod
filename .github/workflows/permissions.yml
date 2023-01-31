@@ -1,5 +1,7 @@
 name: permissions
 on: pull_request
+    paths:
+      - install/installer/pkg/components/spicedb/data/schema.yaml
 jobs:
   build:
     runs-on: ubuntu-latest
