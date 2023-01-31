@@ -13,6 +13,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	contentservice "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/spicedb"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 
@@ -83,6 +84,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		common.AnalyticsEnv(&ctx.Config),
 		common.MessageBusEnv(&ctx.Config),
 		common.ConfigcatEnv(ctx),
+		spicedb.Env(ctx),
 		[]corev1.EnvVar{
 			{
 				Name:  "CONFIG_PATH",
