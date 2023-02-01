@@ -1,0 +1,12 @@
+name: "Preview environment garbage collection"
+on:
+    workflow_dispatch:
+jobs:
+    gc:
+        name: "Delete unused preview environments"
+        runs-on: [self-hosted]
+        steps:
+            - uses: actions/checkout@v3
+            - name: Garbage collect
+              run: |
+                  echo "Not implemented yet 🧹"
