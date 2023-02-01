@@ -17,6 +17,7 @@ import (
 	// . "github.com/onsi/ginkgo/extensions/table"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -99,8 +100,7 @@ var _ = Describe("WorkspaceController", func() {
 			Expect(k8sClient.Delete(ctx, createdPod)).To(Succeed())
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, podLookupKey, createdPod)
-				if err != nil {
-					// TODO(cw): check if this is a not found error
+				if err != nil && errors.IsNotFound(err) {
 					// We have an error and assume we did not find the pod. This is what we want.
 					return true
 				}
@@ -112,8 +112,7 @@ var _ = Describe("WorkspaceController", func() {
 			// Now we make sure the pod doesn't come back
 			Consistently(func() bool {
 				err := k8sClient.Get(ctx, podLookupKey, createdPod)
-				if err != nil {
-					// TODO(cw): check if this is a not found error
+				if err != nil && errors.IsNotFound(err) {
 					// We have an error and assume we did not find the pod. This is what we want.
 					return true
 				}
