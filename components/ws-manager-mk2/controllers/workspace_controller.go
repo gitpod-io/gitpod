@@ -63,7 +63,7 @@ type WorkspaceReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
+// Modify the Reconcile function to compare the state specified by
 // the Workspace object against the actual cluster state, and then
 // perform operations to make the cluster state reflect the state specified by
 // the user.
@@ -75,7 +75,6 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	var workspace workspacev1.Workspace
 	if err := r.Get(ctx, req.NamespacedName, &workspace); err != nil {
-		// TODO(cw): create pdo
 		log.Error(err, "unable to fetch workspace")
 		// we'll ignore not-found errors, since they can't be fixed by an immediate
 		// requeue (we'll need to wait for a new notification), and we can get them

@@ -7,4 +7,3 @@ kind: Workspace
 metadata:
   name: workspace-sample
 spec:
-  # TODO(user): Add fields here
