@@ -17,6 +17,7 @@ import (
 
 	"github.com/imdario/mergo"
 	"golang.org/x/xerrors"
+	"google.golang.org/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -25,6 +26,7 @@ import (
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
@@ -40,7 +42,7 @@ const (
 	headlessLabel = "gitpod.io/headless"
 
 	// instanceIDLabel is added for the container dispatch mechanism in ws-daemon to work
-	// TODO(cw): remove this label once we have moved ws-daemon to a controller setup
+	// TODO(furisto): remove this label once we have moved ws-daemon to a controller setup
 	instanceIDLabel = "gitpod.io/instanceID"
 
 	// gitpodPodFinalizerName is the name of the finalizer we use on pods
@@ -282,7 +284,6 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 		"prometheus.io/scrape": "true",
 		"prometheus.io/path":   "/metrics",
 		"prometheus.io/port":   strconv.Itoa(int(sctx.IDEPort)),
-		// TODO(cw): post Kubernetes 1.19 use GA form for settings those profiles
 		"container.apparmor.security.beta.kubernetes.io/workspace": "unconfined",
 		// prevent cluster-autoscaler from removing a node
 		// https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md#what-types-of-pods-can-prevent-ca-from-removing-a-node
@@ -535,13 +536,25 @@ func createWorkspaceEnvironment(sctx *startWorkspaceContext) ([]corev1.EnvVar, e
 		return filepath.Join("/workspace", strings.TrimPrefix(segment, "/workspace"))
 	}
 
-	// repoRoot := content.GetCheckoutLocationFromInitializer(spec.Initializer)
-	// TODO(cw): compute from initializer
-	repoRoot := "/workspace"
+	var init csapi.WorkspaceInitializer
+	err := proto.Unmarshal(sctx.Workspace.Spec.Initializer, &init)
+	if err != nil {
+		err = fmt.Errorf("cannot unmarshal initializer config: %w", err)
+		return nil, err
+	}
+
+	allRepoRoots := csapi.GetCheckoutLocationsFromInitializer(&init)
+	if len(allRepoRoots) == 0 {
+		allRepoRoots = []string{""} // for backward compatibility, we are adding a single empty location (translates to /workspace/)
+	}
+	for i, root := range allRepoRoots {
+		allRepoRoots[i] = getWorkspaceRelativePath(root)
+	}
 
 	// Envs that start with GITPOD_ are appended to the Terminal environments
 	result := []corev1.EnvVar{}
-	result = append(result, corev1.EnvVar{Name: "GITPOD_REPO_ROOT", Value: getWorkspaceRelativePath(repoRoot)})
+	result = append(result, corev1.EnvVar{Name: "GITPOD_REPO_ROOT", Value: allRepoRoots[0]})
+	result = append(result, corev1.EnvVar{Name: "GITPOD_REPO_ROOTS", Value: strings.Join(allRepoRoots, ",")})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_OWNER_ID", Value: sctx.Workspace.Spec.Ownership.Owner})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_WORKSPACE_ID", Value: sctx.Workspace.Spec.Ownership.WorkspaceID})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_INSTANCE_ID", Value: sctx.Workspace.Name})
