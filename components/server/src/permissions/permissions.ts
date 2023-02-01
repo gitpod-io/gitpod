@@ -9,6 +9,7 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { inject, injectable } from "inversify";
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { SpiceDBClient } from "./spicedb";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 const organizationRoles: OrganizationRelation[] = ["member", "owner"];
 
@@ -41,7 +42,13 @@ export class Permissions {
             ],
         });
 
-        return this.client.writeRelationships(req);
+        const response = await this.client.writeRelationships(req);
+        log.info("Completed spicedb write.", {
+            updates: req.updates,
+            response,
+        });
+
+        return response;
     }
 
     async removeOrganizationMember(userID: string, organizationID: string): Promise<v1.WriteRelationshipsResponse> {
@@ -56,7 +63,13 @@ export class Permissions {
             ],
         });
 
-        return this.client.writeRelationships(req);
+        const response = await this.client.writeRelationships(req);
+        log.info("Completed spicedb write.", {
+            updates: req.updates,
+            response,
+        });
+
+        return response;
     }
 
     async listAllowedOrganizations(userID: string): Promise<Set<string>> {
@@ -65,9 +78,15 @@ export class Permissions {
             permission: "organization_read",
             resourceObjectType: "organization",
         });
-        const resp = await this.client.lookupResources(req);
+        const response = await this.client.lookupResources(req);
 
-        return new Set(resp.map((r) => r.resourceObjectId));
+        const ids = new Set(response.map((r) => r.resourceObjectId));
+        log.info("Completed spicedb resource lookup.", {
+            request: req,
+            response,
+        });
+
+        return ids;
     }
 
     async allowedToWriteOrganizationMembers(userID: string, organizationID: string): Promise<void> {
@@ -111,6 +130,12 @@ export class Permissions {
         const req = check(resource, relation, subject);
 
         const response = await this.client.checkPermission(req);
+        log.info("Completed spicedb permission check.", {
+            resource,
+            relation,
+            subject,
+            response,
+        });
         if (response.permissionship === v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION) {
             return;
         }

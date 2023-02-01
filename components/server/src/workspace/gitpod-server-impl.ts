@@ -2051,7 +2051,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (centralizedPermissionsEnabled) {
             const permittedOrgs = await this.perms.listAllowedOrganizations(user.id);
 
-            return teams.filter((t) => permittedOrgs.has(t.id));
+            const filtered = teams.filter((t) => permittedOrgs.has(t.id));
+            log.info(`Spicedb filtered organizations: ${filtered.length}, db: ${teams.length}`);
         }
 
         return teams;
