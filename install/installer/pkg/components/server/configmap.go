@@ -277,7 +277,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Admin: AdminConfig{
 			GrantFirstUserAdminRole: true, // existing default
 		},
-		AdminLoginKeyFile: fmt.Sprintf("%s/%s", AdminSecretMountPath, AdminSecretLoginKeyName),
+		AdminLoginKeyFile: AdminLoginKeyFile(ctx),
 		ShowSetupModal:    showSetupModal,
 	}
 
@@ -300,6 +300,13 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 		},
 	}, nil
+}
+
+func AdminLoginKeyFile(ctx *common.RenderContext) string {
+	if ctx.Config.AdminLoginSecret == nil {
+		return ""
+	}
+	return fmt.Sprintf("%s/%s", AdminSecretMountPath, AdminSecretLoginKeyName)
 }
 
 func getPersonalAccessTokenSigningKey(cfg *experimental.Config) (corev1.Volume, corev1.VolumeMount, string, bool) {

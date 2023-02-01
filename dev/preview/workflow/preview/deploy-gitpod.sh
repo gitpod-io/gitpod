@@ -367,6 +367,20 @@ if [[ "${GITPOD_WITH_DEDICATED_EMU}" == "true" ]]
 then
   # Suppress the Self-Hosted setup modal
   yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.server.showSetupModal "false"
+
+  #
+  # configure admin-login-secret
+  #
+  kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" -n werft get secret admin-login-secret -o yaml > admin-login-secret.yaml
+  yq w -i admin-login-secret.yaml metadata.namespace "default"
+  yq d -i admin-login-secret.yaml metadata.creationTimestamp
+  yq d -i admin-login-secret.yaml metadata.uid
+  yq d -i admin-login-secret.yaml metadata.resourceVersion
+  kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" apply -f admin-login-secret.yaml
+  rm -f admin-login-secret.yaml
+
+  yq w -i "${INSTALLER_CONFIG_PATH}" adminLoginSecret.kind "secret"
+  yq w -i "${INSTALLER_CONFIG_PATH}" adminLoginSecret.name "admin-login-secret"
 fi
 
 #

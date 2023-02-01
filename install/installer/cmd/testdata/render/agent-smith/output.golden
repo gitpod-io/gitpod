@@ -1241,19 +1241,6 @@ data:
   proxyUsername: ""
   proxyPassword: ""
 ---
-# v1/Secret server-admin-secret
-apiVersion: v1
-data:
-  login-key: bTMwRUgtTTItY1dNZ2tnZHk3cHU=
-kind: Secret
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: server
-  name: server-admin-secret
-  namespace: default
----
 # v1/ConfigMap agent-smith
 apiVersion: v1
 data:
@@ -2770,16 +2757,6 @@ data:
         app: gitpod
         component: server
       name: server
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: server
-      name: server-admin-secret
       namespace: default
     ---
     apiVersion: networking.k8s.io/v1
@@ -5511,7 +5488,7 @@ data:
       },
       "oauthServer": {
         "enabled": true,
-        "jwtSecret": "_7wODLGlsPauKCw4SBI2"
+        "jwtSecret": "m30EH-M2-cWMgkgdy7pu"
       },
       "rateLimiter": {
         "groups": {
@@ -5547,7 +5524,7 @@ data:
       "admin": {
         "grantFirstUserAdminRole": true
       },
-      "adminLoginKeyFile": "/admin/login-key",
+      "adminLoginKeyFile": "",
       "prebuildLimiter": {
         "*": {
           "limit": 100,
@@ -10507,7 +10484,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: be1a6e9b223875689a4e70b2e8dca5a0e576b2f78b2bdc08c633cfea5a241cc3
+        gitpod.io/checksum_config: 28344080ba3478c4e4eef76de95e6b69b85082b5c278e3c1d28080b7c490ffbe
       creationTimestamp: null
       labels:
         app: gitpod
@@ -10648,9 +10625,6 @@ spec:
         - mountPath: /ws-manager-client-tls-certs
           name: ws-manager-client-tls-certs
           readOnly: true
-        - mountPath: /admin
-          name: admin-login-key
-          readOnly: true
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -10765,9 +10739,6 @@ spec:
       - name: ws-manager-client-tls-certs
         secret:
           secretName: ws-manager-client-tls
-      - name: admin-login-key
-        secret:
-          secretName: server-admin-secret
 status: {}
 ---
 # apps/v1/Deployment ws-manager

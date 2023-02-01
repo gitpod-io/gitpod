@@ -323,19 +323,21 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	// admin secret
-	volumes = append(volumes, corev1.Volume{
-		Name: "admin-login-key",
-		VolumeSource: corev1.VolumeSource{
-			Secret: &corev1.SecretVolumeSource{
-				SecretName: AdminSecretName,
+	if ctx.Config.AdminLoginSecret != nil {
+		volumes = append(volumes, corev1.Volume{
+			Name: "admin-login-key",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: ctx.Config.AdminLoginSecret.Name,
+				},
 			},
-		},
-	})
-	volumeMounts = append(volumeMounts, corev1.VolumeMount{
-		Name:      "admin-login-key",
-		MountPath: AdminSecretMountPath,
-		ReadOnly:  true,
-	})
+		})
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "admin-login-key",
+			MountPath: AdminSecretMountPath,
+			ReadOnly:  true,
+		})
+	}
 
 	return []runtime.Object{
 		&appsv1.Deployment{

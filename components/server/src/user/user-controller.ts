@@ -141,6 +141,11 @@ export class UserController {
         router.get(
             "/login/ots/admin-user/:key",
             loginUserWithOts(async (req: express.Request, res: express.Response, user: User, secret: string) => {
+                // In case there is no/an empty key specified: Nobody should be able to call this so they are not able to guess values here
+                if (!this.config.admin.loginKey) {
+                    throw new ResponseError(500, "No admin login key configured, cannot login as admin-user");
+                }
+
                 // Counterpart is here: https://github.com/gitpod-io/gitpod/blob/478a75e744a642d9b764de37cfae655bc8b29dd5/components/server/src/installation-admin/installation-admin-controller.ts#L38
                 const secretHash = crypto
                     .createHash("sha256")
