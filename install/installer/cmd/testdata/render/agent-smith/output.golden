@@ -1675,6 +1675,7 @@ data:
         slackWebhooks:
           audit: https://slack.com/audit
           warning: https://slack.com/warning
+      ide: null
     containerRegistry:
       inCluster: true
       privateBaseImageAllowList: []

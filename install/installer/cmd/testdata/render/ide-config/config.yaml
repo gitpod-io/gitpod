@@ -4,14 +4,15 @@
 
 apiVersion: v1
 domain: gitpod.example.com
-experimental:
+components:
   ide:
     resolveLatest: true
-    ideProxy:
+    metrics:
+      errorReportingEnabled: true
+    proxy:
       serviceAnnotations:
         ideProxyAnnotation: some-value
-    openvsxProxy:
-      serviceAnnotations:
-        openvsxProxyAnnotation: some-other-value
-    ideMetrics:
-      enabledErrorReporting: true
+openVSX:
+  proxy:
+    serviceAnnotations:
+      openvsxProxyAnnotation: some-other-value

@@ -7,7 +7,6 @@ package openvsx_proxy
 import (
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -15,12 +14,10 @@ import (
 
 func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 	var annotations map[string]string
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.IDE != nil && cfg.IDE.VSXProxyConfig != nil {
-			annotations = cfg.IDE.VSXProxyConfig.ServiceAnnotations
-		}
-		return nil
-	})
+
+	if ctx.Config.OpenVSX.Proxy != nil {
+		annotations = ctx.Config.OpenVSX.Proxy.ServiceAnnotations
+	}
 
 	ports := []common.ServicePort{
 		{

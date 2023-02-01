@@ -71,6 +71,85 @@ var deprecatedFields = map[string]deprecatedField{
 			return usePSPs, usePSPs
 		},
 	},
+	"experimental.ide.resolveLatest": {
+		Selector: func(cfg *Config) (bool, any) {
+			val := cfg.Experimental.IDE.ResolveLatest
+			return val != nil, *val
+		},
+		MapValue: func(cfg *Config) error {
+			if cfg.Components != nil && cfg.Components.IDE != nil && cfg.Components.IDE.ResolveLatest != nil {
+				return errors.New("cannot set resolve latest ide in both components and experimental")
+			}
+			if cfg.Components == nil {
+				cfg.Components = &Components{}
+			}
+			if cfg.Components.IDE == nil {
+				cfg.Components.IDE = &IDEComponents{}
+			}
+			cfg.Components.IDE.ResolveLatest = cfg.Experimental.IDE.ResolveLatest
+			return nil
+		},
+	},
+	"experimental.ide.ideMetrics.enabledErrorReporting": {
+		Selector: func(cfg *Config) (bool, any) {
+			val := cfg.Experimental.IDE.IDEMetricsConfig
+			return val != nil, val.EnabledErrorReporting
+		},
+		MapValue: func(cfg *Config) error {
+			if cfg.Components != nil && cfg.Components.IDE != nil && cfg.Components.IDE.Metrics != nil {
+				return errors.New("cannot set ide metrics in both component and experimental")
+			}
+			if cfg.Components == nil {
+				cfg.Components = &Components{}
+			}
+			if cfg.Components.IDE == nil {
+				cfg.Components.IDE = &IDEComponents{}
+			}
+			if cfg.Components.IDE.Metrics == nil {
+				cfg.Components.IDE.Metrics = &IDEMetrics{}
+			}
+			cfg.Components.IDE.Metrics.ErrorReportingEnabled = cfg.Experimental.IDE.IDEMetricsConfig.EnabledErrorReporting
+			return nil
+		},
+	},
+	"experimental.ide.ideProxy.serviceAnnotations": {
+		Selector: func(cfg *Config) (bool, any) {
+			val := cfg.Experimental.IDE.IDEProxyConfig.ServiceAnnotations
+			return len(val) > 0, val
+		},
+		MapValue: func(cfg *Config) error {
+			if cfg.Components != nil && cfg.Components.IDE != nil && cfg.Components.IDE.Proxy != nil && len(cfg.Components.IDE.Proxy.ServiceAnnotations) > 0 {
+				return errors.New("cannot set ide proxy service annotations in both components and experimental")
+			}
+			if cfg.Components == nil {
+				cfg.Components = &Components{}
+			}
+			if cfg.Components.IDE == nil {
+				cfg.Components.IDE = &IDEComponents{}
+			}
+			if cfg.Components.IDE.Proxy == nil {
+				cfg.Components.IDE.Proxy = &Proxy{}
+			}
+			cfg.Components.IDE.Proxy.ServiceAnnotations = cfg.Experimental.IDE.IDEProxyConfig.ServiceAnnotations
+			return nil
+		},
+	},
+	"experimental.ide.openvsxProxy.serviceAnnotations": {
+		Selector: func(cfg *Config) (bool, any) {
+			val := cfg.Experimental.IDE.VSXProxyConfig.ServiceAnnotations
+			return len(val) > 0, val
+		},
+		MapValue: func(cfg *Config) error {
+			if cfg.OpenVSX.Proxy != nil && len(cfg.OpenVSX.Proxy.ServiceAnnotations) > 0 {
+				return errors.New("cannot set openvsx proxy service annotations in both components and experimental")
+			}
+			if cfg.OpenVSX.Proxy == nil {
+				cfg.OpenVSX.Proxy = &OpenVSXProxy{}
+			}
+			cfg.OpenVSX.Proxy.ServiceAnnotations = cfg.Experimental.IDE.VSXProxyConfig.ServiceAnnotations
+			return nil
+		},
+	},
 	"experimental.webapp.proxy.serviceType": {
 		Selector: func(cfg *Config) (bool, any) {
 			val := cfg.Experimental.WebApp.ProxyConfig.ServiceType
