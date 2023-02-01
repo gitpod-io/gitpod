@@ -65,7 +65,6 @@ const Members = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/Me
 const TeamSettings = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/TeamSettings"));
 const TeamBilling = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/TeamBilling"));
 const SSO = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/SSO"));
-const TeamUsage = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/TeamUsage"));
 const NewProject = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/NewProject"));
 const Projects = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/Projects"));
 const Project = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/Project"));
@@ -227,7 +226,6 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                     <Route exact path="/projects" component={Projects} />
                     <Route exact path="/org-settings" component={TeamSettings} />
                     <Route exact path="/org-billing" component={TeamBilling} />
-                    <Route exact path="/org-usage" component={TeamUsage} />
                     <Route exact path="/sso" component={SSO} />
                     <Route exact path={`/projects/:projectSlug`} component={Project} />
                     <Route exact path={`/projects/:projectSlug/events`} component={Events} />
