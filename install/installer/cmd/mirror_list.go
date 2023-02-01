@@ -136,31 +136,6 @@ func renderAllKubernetesObject(cfgVersion string, cfg *configv1.Config) ([]strin
 			return renderKubernetesObjects(cfgVersion, cfg)
 		},
 		func() ([]string, error) {
-			// Render for external depedencies - Azure
-			cfg.Database.CloudSQL = nil
-			cfg.ContainerRegistry = configv1.ContainerRegistry{
-				InCluster: pointer.Bool(false),
-				External: &configv1.ContainerRegistryExternal{
-					URL: "some-url",
-					Certificate: &configv1.ObjectRef{
-						Kind: configv1.ObjectRefSecret,
-						Name: "value",
-					},
-				},
-			}
-			cfg.ObjectStorage = configv1.ObjectStorage{
-				InCluster: pointer.Bool(false),
-				Azure: &configv1.ObjectStorageAzure{
-					Credentials: configv1.ObjectRef{
-						Kind: configv1.ObjectRefSecret,
-						Name: "value",
-					},
-				},
-			}
-
-			return renderKubernetesObjects(cfgVersion, cfg)
-		},
-		func() ([]string, error) {
 			// Render for external depedencies - GCP
 			cfg.Database = configv1.Database{
 				InCluster: pointer.Bool(false),

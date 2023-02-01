@@ -32,8 +32,6 @@ Config defines the v1 version structure of the gitpod config file
 |`objectStorage.cloudStorage.serviceAccount.kind`|string|N| `secret` ||
 |`objectStorage.cloudStorage.serviceAccount.name`|string|Y|  ||
 |`objectStorage.cloudStorage.project`|string|Y|  ||
-|`objectStorage.azure.credentials.kind`|string|N| `secret` ||
-|`objectStorage.azure.credentials.name`|string|Y|  ||
 |`objectStorage.maximumBackupCount`|int|N|  |  DEPRECATED|
 |`objectStorage.blobQuota`|int64|N|  ||
 |`objectStorage.resources.requests`||Y|  |  todo(sje): add custom validation to corev1.ResourceList|
