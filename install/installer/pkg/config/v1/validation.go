@@ -136,11 +136,6 @@ func (v version) ClusterValidation(rcfg interface{}) cluster.ValidationChecks {
 		res = append(res, cluster.CheckSecret(secretName, cluster.CheckSecretRequiredData("service-account.json")))
 	}
 
-	if cfg.ObjectStorage.Azure != nil {
-		secretName := cfg.ObjectStorage.Azure.Credentials.Name
-		res = append(res, cluster.CheckSecret(secretName, cluster.CheckSecretRequiredData("accountName", "accountKey")))
-	}
-
 	if cfg.ObjectStorage.S3 != nil {
 		secretName := cfg.ObjectStorage.S3.Credentials.Name
 		res = append(res, cluster.CheckSecret(secretName, cluster.CheckSecretRequiredData("accessKeyId", "secretAccessKey")))
