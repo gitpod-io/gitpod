@@ -19,6 +19,7 @@ import { GitHubService } from "./github-service";
 import { URL } from "url";
 import { ContextParser } from "../../../src/workspace/context-parser-service";
 import { RepoURL } from "../../../src/repohost";
+import { GithubAppRules } from "./github-app-rules";
 
 @injectable()
 export class GitHubEnterpriseApp {
@@ -30,6 +31,7 @@ export class GitHubEnterpriseApp {
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(ContextParser) protected readonly contextParser: ContextParser;
     @inject(WebhookEventDB) protected readonly webhookEvents: WebhookEventDB;
+    @inject(GithubAppRules) protected readonly appRules: GithubAppRules;
 
     protected _router = express.Router();
     public static path = "/apps/ghe/";
@@ -162,8 +164,11 @@ export class GitHubEnterpriseApp {
             });
 
             const config = await this.prebuildManager.fetchConfig({ span }, user, context);
-            if (!this.prebuildManager.shouldPrebuild(config)) {
-                log.info("GitHub Enterprise push event: No config. No prebuild.");
+            if (
+                !this.prebuildManager.shouldPrebuild(config) ||
+                !this.appRules.shouldRunPrebuild(config, context.ref === context.repository.defaultBranch, false, false)
+            ) {
+                log.info("GitHub Enterprise push event: No prebuild.", config);
 
                 await this.webhookEvents.updateEvent(event.id, {
                     prebuildStatus: "ignored_unconfigured",
