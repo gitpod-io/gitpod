@@ -10,7 +10,7 @@ handle @workspace_port {
 
 @workspace header_regexp host Host ^(?P<workspaceID>[a-z0-9][0-9a-z\-]+).ws(?P<location>-[a-z0-9]+)?.{$GITPOD_DOMAIN}
 handle @workspace {
-	redir https://{$GITPOD_DOMAIN}/?not_found=true#{re.host.workspaceID} temporary
+	redir https://{$GITPOD_DOMAIN}/start/?not_found=true#{re.host.workspaceID} temporary
 }
 
 respond "Not found" 404
