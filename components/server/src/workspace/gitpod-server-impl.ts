@@ -2934,12 +2934,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             organizationId: entry.organizationId,
         };
 
-        let team = await this.getTeam(ctx, newProvider.organizationId || "");
-        if (!team) {
+        if (!newProvider.organizationId || !uuidValidate(newProvider.organizationId)) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "Invalid organizationId");
         }
 
-        await this.guardWithFeatureFlag("orgGitAuthProviders", team);
+        await this.guardWithFeatureFlag("orgGitAuthProviders", newProvider.organizationId);
 
         if (!newProvider.host) {
             throw new ResponseError(
@@ -2948,6 +2947,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             );
         }
 
+        // Ensure user can perform this operation on this organization
         await this.guardTeamOperation(newProvider.organizationId, "create");
 
         try {
@@ -2991,12 +2991,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             organizationId: entry.organizationId,
         };
 
-        const team = await this.getTeam(ctx, providerUpdate.organizationId || "");
-        if (!team) {
+        if (!providerUpdate.organizationId || !uuidValidate(providerUpdate.organizationId)) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "Invalid organizationId");
         }
 
-        await this.guardWithFeatureFlag("orgGitAuthProviders", team);
+        await this.guardWithFeatureFlag("orgGitAuthProviders", providerUpdate.organizationId);
 
         await this.guardTeamOperation(providerUpdate.organizationId, "update");
 
@@ -3017,17 +3016,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         this.checkAndBlockUser("getOrgAuthProviders");
 
-        const team = await this.getTeam(ctx, params.organizationId || "");
-        if (!team) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Invalid organizationId");
-        }
+        await this.guardWithFeatureFlag("orgGitAuthProviders", params.organizationId);
 
-        await this.guardWithFeatureFlag("orgGitAuthProviders", team);
-
-        await this.guardTeamOperation(team.id, "get");
+        await this.guardTeamOperation(params.organizationId, "get");
 
         try {
-            const result = await this.authProviderService.getAuthProvidersOfOrg(team.id);
+            const result = await this.authProviderService.getAuthProvidersOfOrg(params.organizationId);
             return result.map(AuthProviderEntry.redact.bind(AuthProviderEntry));
         } catch (error) {
             const message =
@@ -3046,7 +3040,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "Invalid organizationId");
         }
 
-        await this.guardWithFeatureFlag("orgGitAuthProviders", team);
+        await this.guardWithFeatureFlag("orgGitAuthProviders", team.id);
 
         // Find the matching auth provider we're attempting to delete
         const orgProviders = await this.authProviderService.getAuthProvidersOfOrg(team.id);
@@ -3065,12 +3059,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
     }
 
-    protected async guardWithFeatureFlag(flagName: string, team: Team) {
+    protected async guardWithFeatureFlag(flagName: string, teamId: string) {
         // Guard method w/ a feature flag check
         const isEnabled = await this.configCatClientFactory().getValueAsync(flagName, false, {
             user: this.user,
-            teamId: team.id,
-            teamName: team.name,
+            teamId,
         });
         if (!isEnabled) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Method not available");
