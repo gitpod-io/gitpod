@@ -111,7 +111,6 @@ export default function Menu() {
         "account",
         "notifications",
         "billing",
-        "usage",
         "plans",
         "teams",
         "orgs",
@@ -206,7 +205,22 @@ export default function Menu() {
         }
         // Team menu
         if (!team) {
-            return [];
+            return [
+                {
+                    title: "Projects",
+                    link: `/projects`,
+                    alternatives: [] as string[],
+                },
+                ...(BillingMode.showUsageBasedBilling(userBillingMode) &&
+                !user?.additionalData?.isMigratedToTeamOnlyAttribution
+                    ? [
+                          {
+                              title: "Usage",
+                              link: "/usage",
+                          },
+                      ]
+                    : []),
+            ];
         }
         const currentUserInTeam = (teamMembers[team.id] || []).find((m) => m.userId === user?.id);
 
@@ -227,7 +241,7 @@ export default function Menu() {
         ) {
             teamSettingsList.push({
                 title: "Usage",
-                link: `/org-usage`,
+                link: `/usage`,
             });
         }
         if (currentUserInTeam?.role === "owner") {
@@ -465,15 +479,6 @@ export default function Menu() {
                                         title: "Settings",
                                         link: "/settings",
                                     },
-                                    ...(BillingMode.showUsageBasedBilling(userBillingMode) &&
-                                    !user?.additionalData?.isMigratedToTeamOnlyAttribution
-                                        ? [
-                                              {
-                                                  title: "Usage",
-                                                  link: "/usage",
-                                              },
-                                          ]
-                                        : []),
                                     {
                                         title: "Docs",
                                         href: "https://www.gitpod.io/docs/",
