@@ -230,8 +230,6 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 
 func (wsm *WorkspaceManagerServer) StopWorkspace(ctx context.Context, req *wsmanapi.StopWorkspaceRequest) (*wsmanapi.StopWorkspaceResponse, error) {
 	err := wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
-		// TODO(cw): stopping the workspace by modifying the status is nasty.
-		// 			 instead we should modify the spec or delete the workspace object.
 		ws.Status.Conditions = append(ws.Status.Conditions, metav1.Condition{
 			Type:               string(workspacev1.WorkspaceConditionStoppedByRequest),
 			Status:             metav1.ConditionTrue,
