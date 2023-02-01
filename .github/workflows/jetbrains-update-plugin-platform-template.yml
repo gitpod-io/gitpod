@@ -80,7 +80,10 @@ jobs:
 
                       ## How to test
                       1. Ensure you have the Gateway installed from [JetBrains Toolbox App](https://www.jetbrains.com/toolbox-app/) and have it up-to-date.
+                        - You should use Gateway version corresponding to plugin qualifier, i.e. for stable plugin test with released, for latest test with EAP.
+                        - It could be that a new Gateway is not published for the given SDK yet then wait for it to be published. You can check the build version in the About dialog.
                       2. Download the plugin build related to this branch in [Dev Versions](https://plugins.jetbrains.com/plugin/18438-gitpod-gateway/versions/dev), and [install it on the Gateway](https://www.jetbrains.com/help/idea/managing-plugins.html#install_plugin_from_disk).
+                        - You can also uninstall current Gitpod plugin, configure dev channel using https://plugins.jetbrains.com/plugins/list?channel=dev&pluginId=18438-gitpod-gateway and restart GW to test that the proper version is detected and installed.
                       3. Create a new workspace from the Gateway (it's ok to use the pre-selected IDE and Repository) and confirm if JetBrains Client can connect to it.
 
                       ## Release Notes
