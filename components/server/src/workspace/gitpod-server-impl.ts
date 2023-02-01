@@ -2052,7 +2052,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         this.checkAndBlockUser("getTeam");
 
-        const team = await this.teamDB.findTeamById(teamId);
+        const team = await this.guardTeamOperation(teamId, "get");
         if (!team) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, `Team ${teamId} does not exist`);
         }
