@@ -66,6 +66,8 @@ jobs:
 
           export LEEWAY_WORKSPACE_ROOT=$(pwd)
 
+          mkdir -p /workspace/.gradle-latest
+          mkdir -p $HOME/.cache/pluginVerifier-latest
           leeway run dev/jetbrains-test:test -Dversion=integration-test -DpublishToJBMarketplace=false
       - name: Move video
         if: always()
