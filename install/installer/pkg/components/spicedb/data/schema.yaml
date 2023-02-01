@@ -5,44 +5,58 @@
 schema: |-
   definition user {}
 
-  definition team {
-  	relation org: organisation
-  	relation member: user
-  	relation owner: user
-  	permission read_teams = owner + member + org->read_teams
-  	permission invite_members = owner
+  definition organization {
+    relation owner: user
+    relation member: user
+
+    permission organization_read = owner + member
+    permission organization_write = owner
+
+    permission organization_members_read = owner + member
+    permission organization_members_write = owner + member
   }
 
-  definition project {}
+# relationships to be used for assertions & validation
+relationships: |-
+  // user1 is org1 owner
+  organization:org1#owner@user:user1
 
-  definition organisation {
-  	relation owner: user
-  	relation member: user
-  	relation service: service
-  	permission read_teams = owner + service
-  	permission write_teams = owner + service
-  	permission read_workspaces = owner + service
-  }
+  // user2 is org1 member
+  organization:org1#member@user:user2
 
-  definition workspace {
-  	relation org: organisation
-  	relation owner: user
-  	permission create_workspace = org->member
-  	permission delete_workspace = owner + org->owner
-  }
+  // user3 is org2 member
+  organization:org2#member@user:user3
 
-  definition service {}
-
-# relationships to be used for assertions
-relationships: >-
-  organisation:org1#owner@user:user1
-
+# assertions should assert that a particular permission holds, or not
 assertions:
   assertTrue:
-    - "organisation:org1#owner@user:user1"
-    - "organisation:org1#read_teams@user:user1"
-    - "organisation:org1#write_teams@user:user1"
-    - "organisation:org1#read_workspaces@user:user1"
+    # organisation owner has all permissions
+    - "organization:org1#organization_read@user:user1"
+    - "organization:org1#organization_write@user:user1"
+    - "organization:org1#organization_members_read@user:user1"
+    - "organization:org1#organization_members_write@user:user1"
+
+    # organisation member can read organisation, read & write members
+    - "organization:org1#organization_read@user:user2"
+    - "organization:org1#organization_members_read@user:user2"
+    - "organization:org1#organization_members_write@user:user2"
 
   assertFalse:
-    - "organisation:org2#owner@user:user1"
+    # organization member cannot write to an organization
+    - "organization:org1#organization_write@user:user2"
+
+    # non-member/owner cannot access organization
+    - "organization:org1#organization_read@user:user3"
+    - "organization:org1#organization_write@user:user3"
+    - "organization:org1#organization_members_read@user:user3"
+    - "organization:org1#organization_members_write@user:user3"
+
+# validation should assert that a particular relation exists between an entity, and a subject
+# validations are not used to assert that a permission exists
+validation:
+  organization:org1#owner:
+  - "[user:user1] is <organization:org1#owner>"
+  organization:org1#member:
+  - "[user:user2] is <organization:org1#member>"
+  organization:org2#member:
+  - "[user:user3] is <organization:org2#member>"
