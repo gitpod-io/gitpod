@@ -193,7 +193,6 @@ func projectToAPIResponse(p *protocol.Project) *v1.Project {
 		TeamId:       p.TeamID,
 		UserId:       p.UserID,
 		Name:         p.Name,
-		Slug:         p.Slug,
 		CloneUrl:     p.CloneURL,
 		CreationTime: parseGitpodTimeStampOrDefault(p.CreationTime),
 		Settings:     projectSettingsToAPIResponse(p.Settings),

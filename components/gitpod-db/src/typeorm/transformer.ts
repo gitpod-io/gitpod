@@ -89,6 +89,15 @@ export namespace Transformer {
             return num;
         },
     };
+
+    export const ALWAYS_EMPTY_STRING: ValueTransformer = {
+        to(value: any): any {
+            return "";
+        },
+        from(value: any): any {
+            return "";
+        },
+    };
 }
 
 export class CompositeValueTransformer implements ValueTransformer {

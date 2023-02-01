@@ -37,7 +37,6 @@ const t1 = new Date(Date.now() - 123533).toISOString();
 const team1: Team = {
     id: "team1",
     name: "ACME",
-    slug: "ACME",
     creationTime: t1,
 };
 const pr1: Project = {
