@@ -162,6 +162,9 @@ spec:
         - podSelector:
             matchLabels:
               component: ws-manager
+        - podSelector:
+            matchLabels:
+              component: ws-manager-mk2
   podSelector:
     matchLabels:
       app: gitpod
@@ -1458,6 +1461,16 @@ data:
     @statementStr = CONCAT('CREATE DATABASE ', @gitpodDB, ' CHARSET utf8mb4');
     PREPARE statement FROM @statementStr;
     EXECUTE statement;
+    -- 03-create-authorization-db.sql
+
+    -- Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+    -- Licensed under the GNU Affero General Public License (AGPL). See License.AGPL.txt in the project root for license information.
+
+    -- must be idempotent
+    CREATE DATABASE IF NOT EXISTS `authorization` CHARSET utf8mb4;
+
+    -- Grant privileges
+    GRANT ALL ON `authorization`.* TO "gitpod"@"%";
   tuneMysql.sql: SET GLOBAL innodb_lru_scan_depth=256;
 kind: ConfigMap
 metadata:
@@ -1480,6 +1493,14 @@ data:
     certificate:
       kind: secret
       name: https-certificates
+    components:
+      ide:
+        metrics:
+          errorReportingEnabled: true
+        proxy:
+          serviceAnnotations:
+            ideProxyAnnotation: some-value
+        resolveLatest: true
     containerRegistry:
       inCluster: true
       privateBaseImageAllowList: []
@@ -1499,6 +1520,10 @@ data:
     observability:
       logLevel: info
     openVSX:
+      proxy:
+        disablePVC: false
+        serviceAnnotations:
+          openvsxProxyAnnotation: some-other-value
       url: https://open-vsx.org
     repository: eu.gcr.io/gitpod-core-dev/build
     workspace:
@@ -2720,7 +2745,7 @@ data:
     kind: Deployment
     metadata:
       annotations:
-        gitpod.io/checksum_config: 3cc95f976fd2b074f33d82a494edf92c0b9b46962e03fd0689b885ad33836f4f
+        gitpod.io/checksum_config: d1a06645ff1ca1ad25691a8a88a60eafcc6b87a15cf630ea5b8518026619656d
       creationTimestamp: null
       labels:
         app: gitpod
@@ -5118,6 +5143,7 @@ data:
       "billingServiceAddress": "usage.default.svc.cluster.local:9001",
       "sessionServiceAddress": "server.default.svc.cluster.local:9876",
       "stripeWebhookSigningSecretPath": "",
+      "oidcClientJWTSigningSecretPath": "",
       "personalAccessTokenSigningKeyPath": "",
       "databaseConfigPath": "/secrets/database-config",
       "server": {
@@ -5861,6 +5887,9 @@ data:
       },
       "prometheus": {
         "addr": "127.0.0.1:9500"
+      },
+      "health": {
+        "addr": ""
       }
     }
 kind: ConfigMap
@@ -5976,7 +6005,8 @@ data:
           "crt": "/ws-manager-client-tls-certs/tls.crt",
           "key": "/ws-manager-client-tls-certs/tls.key"
         }
-      }
+      },
+      "enableWorkspaceCRD": false
     }
 kind: ConfigMap
 metadata:
@@ -6655,14 +6685,6 @@ rules:
   - ""
   resources:
   - pods
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - workspace.gitpod.io
-  resources:
-  - workspaces
   verbs:
   - get
   - list
@@ -9921,6 +9943,8 @@ spec:
           value: gitpod.example.com
         - name: FRONTEND_DEV_ENABLED
           value: "false"
+        - name: WORKSPACE_HANDLER_FILE
+          value: full
         image: eu.gcr.io/gitpod-core-dev/build/proxy:test
         imagePullPolicy: IfNotPresent
         name: proxy
@@ -9999,7 +10023,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    gitpod.io/checksum_config: 3cc95f976fd2b074f33d82a494edf92c0b9b46962e03fd0689b885ad33836f4f
+    gitpod.io/checksum_config: d1a06645ff1ca1ad25691a8a88a60eafcc6b87a15cf630ea5b8518026619656d
   creationTimestamp: null
   labels:
     app: gitpod
@@ -10590,7 +10614,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 21c3b53bac44cf0f98bc57e43353e3136dc5806409951038c2ba36aea69dd218
+        gitpod.io/checksum_config: a9cdd3ea5f6917ed937156fdd24eeb10a2bfc38d17438dcba87e774e5f92945e
       creationTimestamp: null
       labels:
         app: gitpod
@@ -10969,7 +10993,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 50975660db033ea3555b3ced8dcb5e88a95b63142b5402732d0bc8355f3daaed
+        gitpod.io/checksum_config: 11d2dce254049d5f6f089c5c55a59c1a60f61fdd0864031278f287a1bc8d1d08
       creationTimestamp: null
       labels:
         app: gitpod

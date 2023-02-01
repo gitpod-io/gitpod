@@ -1494,6 +1494,7 @@ data:
       kind: secret
       name: https-certificates
     components:
+      ide: null
       podConfig:
         dashboard:
           replicas: 456

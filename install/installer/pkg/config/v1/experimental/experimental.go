@@ -26,7 +26,7 @@ import (
 type Config struct {
 	Workspace  *WorkspaceConfig   `json:"workspace,omitempty"`
 	WebApp     *WebAppConfig      `json:"webapp,omitempty"`
-	IDE        *IDEConfig         `json:"ide,omitempty"`
+	IDE        *IDEConfig         `json:"ide,omitempty"`    // @deprecated
 	Common     *CommonConfig      `json:"common,omitempty"` // @deprecated
 	Overrides  *[]Overrides       `json:"overrides,omitempty"`
 	Telemetry  *TelemetryConfig   `json:"telemetry,omitempty"`  // @deprecated
@@ -323,6 +323,7 @@ type WorkspaceClassCredits struct {
 	PerMinute float64 `json:"perMinute,omitempty"`
 }
 
+// @deprecated
 type IDEConfig struct {
 	// Disable resolution of latest images and use bundled latest versions instead
 	ResolveLatest    *bool             `json:"resolveLatest,omitempty"`
@@ -331,14 +332,17 @@ type IDEConfig struct {
 	IDEMetricsConfig *IDEMetricsConfig `json:"ideMetrics,omitempty"`
 }
 
+// @deprecated
 type IDEProxyConfig struct {
 	ServiceAnnotations map[string]string `json:"serviceAnnotations"`
 }
 
+// @deprecated
 type IDEMetricsConfig struct {
 	EnabledErrorReporting bool `json:"enabledErrorReporting,omitempty"`
 }
 
+// @deprecated
 type VSXProxyConfig struct {
 	ServiceAnnotations map[string]string `json:"serviceAnnotations"`
 }

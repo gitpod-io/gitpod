@@ -7,7 +7,6 @@ package ide_metrics
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -48,18 +47,12 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		common.DefaultEnv(&ctx.Config),
 	))
 
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.IDE != nil && cfg.IDE.IDEMetricsConfig != nil {
-			if cfg.IDE.IDEMetricsConfig.EnabledErrorReporting {
-				env = append(env, corev1.EnvVar{
-					Name:  "GITPOD_ENABLED_ERROR_REPORTING",
-					Value: "true",
-				})
-			}
-
-		}
-		return nil
-	})
+	if ctx.Config.Components != nil && ctx.Config.Components.IDE != nil && ctx.Config.Components.IDE.Metrics != nil && ctx.Config.Components.IDE.Metrics.ErrorReportingEnabled {
+		env = append(env, corev1.EnvVar{
+			Name:  "GITPOD_ENABLED_ERROR_REPORTING",
+			Value: "true",
+		})
+	}
 
 	return []runtime.Object{
 		&appsv1.Deployment{

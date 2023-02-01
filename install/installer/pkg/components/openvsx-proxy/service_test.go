@@ -12,14 +12,19 @@ import (
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 )
 
 func TestServiceAnnotations(t *testing.T) {
 	annotations := map[string]string{"hello": "world"}
 
-	ctx := renderContextWithVSXProxyConfig(t, &experimental.VSXProxyConfig{ServiceAnnotations: annotations})
+	ctx := renderContextWithVSXProxyConfig(t, &config.OpenVSX{
+		Proxy: &config.OpenVSXProxy{
+			Proxy: config.Proxy{
+				ServiceAnnotations: annotations,
+			},
+		},
+	})
 
 	objects, err := service(ctx)
 	require.NoError(t, err)
@@ -33,13 +38,9 @@ func TestServiceAnnotations(t *testing.T) {
 	}
 }
 
-func renderContextWithVSXProxyConfig(t *testing.T, proxyConfig *experimental.VSXProxyConfig) *common.RenderContext {
+func renderContextWithVSXProxyConfig(t *testing.T, openvsxConfig *config.OpenVSX) *common.RenderContext {
 	ctx, err := common.NewRenderContext(config.Config{
-		Experimental: &experimental.Config{
-			IDE: &experimental.IDEConfig{
-				VSXProxyConfig: proxyConfig,
-			},
-		},
+		OpenVSX: *openvsxConfig,
 	}, versions.Manifest{
 		Components: versions.Components{
 			PublicAPIServer: versions.Versioned{

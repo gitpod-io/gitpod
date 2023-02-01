@@ -290,6 +290,8 @@ type S3Storage struct {
 	Certificate *ObjectRef `json:"certificate,omitempty"`
 }
 
+type ServiceAnnotations map[string]string
+
 type LogLevel string
 
 // Taken from github.com/gitpod-io/gitpod/components/gitpod-protocol/src/util/logging.ts
@@ -381,12 +383,17 @@ type Workspace struct {
 }
 
 type OpenVSX struct {
-	URL   string `json:"url" validate:"url"`
-	Proxy *Proxy `json:"proxy,omitempty"`
+	URL   string        `json:"url" validate:"url"`
+	Proxy *OpenVSXProxy `json:"proxy,omitempty"`
+}
+
+type OpenVSXProxy struct {
+	DisablePVC bool `json:"disablePVC"`
+	Proxy      `json:",inline"`
 }
 
 type Proxy struct {
-	DisablePVC bool `json:"disablePVC"`
+	ServiceAnnotations ServiceAnnotations `json:"serviceAnnotations"`
 }
 
 type LicensorType string
@@ -437,8 +444,19 @@ type CustomizationSpec struct {
 
 type Components struct {
 	AgentSmith *agentSmith.Config    `json:"agentSmith,omitempty"`
+	IDE        *IDEComponents        `json:"ide"`
 	PodConfig  map[string]*PodConfig `json:"podConfig,omitempty"`
 	Proxy      *ProxyComponent       `json:"proxy,omitempty"`
+}
+
+type IDEComponents struct {
+	Metrics       *IDEMetrics `json:"metrics,omitempty"`
+	Proxy         *Proxy      `json:"proxy,omitempty"`
+	ResolveLatest *bool       `json:"resolveLatest,omitempty"`
+}
+
+type IDEMetrics struct {
+	ErrorReportingEnabled bool `json:"errorReportingEnabled,omitempty"`
 }
 
 type PodConfig struct {

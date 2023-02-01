@@ -10,7 +10,6 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace/ide"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 
 	ide_config "github.com/gitpod-io/gitpod/ide-service-api/config"
@@ -38,12 +37,9 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	resolveLatestImage := func(name string, tag string, bundledLatest versions.Versioned) string {
 		resolveLatest := true
-		ctx.WithExperimental(func(ucfg *experimental.Config) error {
-			if ucfg.IDE != nil && ucfg.IDE.ResolveLatest != nil {
-				resolveLatest = *ucfg.IDE.ResolveLatest
-			}
-			return nil
-		})
+		if ctx.Config.Components != nil && ctx.Config.Components.IDE != nil && ctx.Config.Components.IDE.ResolveLatest != nil {
+			resolveLatest = *ctx.Config.Components.IDE.ResolveLatest
+		}
 		if resolveLatest {
 			return ctx.ImageName(ctx.Config.Repository, name, tag)
 		}
