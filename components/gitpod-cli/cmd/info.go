@@ -40,11 +40,12 @@ var infoCmd = &cobra.Command{
 		wsInfo, err := client.Info.WorkspaceInfo(ctx, &api.WorkspaceInfoRequest{})
 
 		data := &infoData{
-			WorkspaceId:    wsInfo.WorkspaceId,
-			InstanceId:     wsInfo.InstanceId,
-			WorkspaceClass: wsInfo.WorkspaceClass,
-			WorkspaceUrl:   wsInfo.WorkspaceUrl,
-			ClusterHost:    wsInfo.WorkspaceClusterHost,
+			WorkspaceId:         wsInfo.WorkspaceId,
+			InstanceId:          wsInfo.InstanceId,
+			WorkspaceClass:      wsInfo.WorkspaceClass,
+			WorkspaceUrl:        wsInfo.WorkspaceUrl,
+			WorkspaceContextUrl: wsInfo.WorkspaceContextUrl,
+			ClusterHost:         wsInfo.WorkspaceClusterHost,
 		}
 
 		if err != nil {
@@ -62,11 +63,12 @@ var infoCmd = &cobra.Command{
 }
 
 type infoData struct {
-	WorkspaceId    string                                    `json:"workspace_id"`
-	InstanceId     string                                    `json:"instance_id"`
-	WorkspaceClass *api.WorkspaceInfoResponse_WorkspaceClass `json:"workspace_class"`
-	WorkspaceUrl   string                                    `json:"workspace_url"`
-	ClusterHost    string                                    `json:"cluster_host"`
+	WorkspaceId         string                                    `json:"workspace_id"`
+	InstanceId          string                                    `json:"instance_id"`
+	WorkspaceClass      *api.WorkspaceInfoResponse_WorkspaceClass `json:"workspace_class"`
+	WorkspaceUrl        string                                    `json:"workspace_url"`
+	WorkspaceContextUrl string                                    `json:"workspace_context_url"`
+	ClusterHost         string                                    `json:"cluster_host"`
 }
 
 func outputInfo(info *infoData) {
@@ -78,6 +80,7 @@ func outputInfo(info *infoData) {
 	table.Append([]string{"Instance ID", info.InstanceId})
 	table.Append([]string{"Workspace class", fmt.Sprintf("%s: %s", info.WorkspaceClass.DisplayName, info.WorkspaceClass.Description)})
 	table.Append([]string{"Workspace URL", info.WorkspaceUrl})
+	table.Append([]string{"Workspace Context URL", info.WorkspaceContextUrl})
 	table.Append([]string{"Cluster host", info.ClusterHost})
 	table.Render()
 }
