@@ -67,16 +67,19 @@ func newListStaleCmd(logger *logrus.Logger) *cobra.Command {
 }
 
 func (o *listWorkspaceOpts) listWorskpaceStatus(ctx context.Context) ([]preview.Status, error) {
+	o.logger.Debug("Getting recent branches")
 	branches, err := preview.GetRecentBranches(time.Now().AddDate(0, 0, -30))
 	if err != nil {
 		return nil, err
 	}
 
+	o.logger.Debug("Getting terraform workspaces")
 	workspaces, err := o.getWorkspaces(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	o.logger.Debug("Finding workspaces without associated branches")
 	branchlessWorkspaces, err := getBranchlessWorkspaces(workspaces, branches)
 	if err != nil {
 		return nil, err
