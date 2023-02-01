@@ -2922,28 +2922,24 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<AuthProviderEntry> {
         traceAPIParams(ctx, {}); // entry contains PII
 
+        let user = this.checkAndBlockUser("createOrgAuthProvider");
+
         // map params to a new provider
         const newProvider = <AuthProviderEntry.NewEntry>{
             host: entry.host,
             type: entry.type,
             clientId: entry.clientId,
             clientSecret: entry.clientSecret,
-            ownerId: entry.ownerId,
+            ownerId: user.id,
             organizationId: entry.organizationId,
         };
 
-        let user = this.checkAndBlockUser("createOrgAuthProvider");
         let team = await this.getTeam(ctx, newProvider.organizationId || "");
         if (!team) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "Invalid organizationId");
         }
 
         await this.guardWithFeatureFlag("orgGitAuthProviders", team);
-
-        // Since this is a create, ensure they're not creating it as someone else
-        if (user.id !== newProvider.ownerId) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Cannot create an auth provider for another owner.");
-        }
 
         if (!newProvider.host) {
             throw new ResponseError(
@@ -2984,27 +2980,23 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<AuthProviderEntry> {
         traceAPIParams(ctx, {}); // entry contains PII
 
+        const user = this.checkAndBlockUser("updateOrgAuthProvider");
+
         // map params to a provider update
         const providerUpdate: AuthProviderEntry.UpdateEntry = {
             id: entry.id,
+            ownerId: user.id,
             clientId: entry.clientId,
             clientSecret: entry.clientSecret,
-            ownerId: entry.ownerId,
             organizationId: entry.organizationId,
         };
 
-        const user = this.checkAndBlockUser("updateOrgAuthProvider");
         const team = await this.getTeam(ctx, providerUpdate.organizationId || "");
         if (!team) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "Invalid organizationId");
         }
 
         await this.guardWithFeatureFlag("orgGitAuthProviders", team);
-
-        // TODO: What do we want to enforce here for updates? That ownerId is set to last user who updated it, or creator?
-        if (user.id !== providerUpdate.ownerId) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Cannot update an auth provider for another owner.");
-        }
 
         await this.guardTeamOperation(providerUpdate.organizationId, "update");
 

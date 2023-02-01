@@ -467,10 +467,10 @@ export namespace GitpodServer {
         readonly id: string;
     }
     export interface CreateOrgAuthProviderParams {
-        readonly entry: AuthProviderEntry.NewEntry;
+        readonly entry: Omit<AuthProviderEntry.NewEntry, "ownerId">;
     }
     export interface UpdateOrgAuthProviderParams {
-        readonly entry: AuthProviderEntry.UpdateEntry;
+        readonly entry: Omit<AuthProviderEntry.UpdateEntry, "ownerId">;
     }
     export interface GetOrgAuthProviderParams {
         readonly organizationId: string;
