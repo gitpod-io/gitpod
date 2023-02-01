@@ -1,6 +1,15 @@
 # Change Log
 
 ## January 2023
+- Update README links ([#16127](https://github.com/gitpod-io/gitpod/pull/16127)) - [@axonasif](https://github.com/axonasif)
+- removed org slugs ([#16070](https://github.com/gitpod-io/gitpod/pull/16070)) - [@svenefftinge](https://github.com/svenefftinge)
+- teams are now called organizations ([#16050](https://github.com/gitpod-io/gitpod/pull/16050)) - [@svenefftinge](https://github.com/svenefftinge)
+- [ws-rollout] Add prometheus init check ([#16000](https://github.com/gitpod-io/gitpod/pull/16000)) - [@Pothulapati](https://github.com/Pothulapati)
+-  ([#16086](https://github.com/gitpod-io/gitpod/pull/16086)) - [@mads-hartmann](https://github.com/mads-hartmann)
+- [ws-rollout] Fix Build Versioning ([#15999](https://github.com/gitpod-io/gitpod/pull/15999)) - [@Pothulapati](https://github.com/Pothulapati)
+- [installer]: deprecate static message bus password and replace with secret ([#15905](https://github.com/gitpod-io/gitpod/pull/15905)) - [@]()
+- Added support to JetBrains Gateway v2023.1 ([#15971](https://github.com/gitpod-io/gitpod/pull/15971)) - [@felladrin](https://github.com/felladrin)
+- Teams get the first 1000 credits for 9 USD/€ ([#15877](https://github.com/gitpod-io/gitpod/pull/15877)) - [@svenefftinge](https://github.com/svenefftinge)
 - [installer]: promote PodConfig to config main ([#15900](https://github.com/gitpod-io/gitpod/pull/15900)) - [@mrsimonemms](https://github.com/mrsimonemms)
 - [installer]: promote experimental agent-smith config ([#15841](https://github.com/gitpod-io/gitpod/pull/15841)) - [@mrsimonemms](https://github.com/mrsimonemms)
 - [installer]: promote experimental telemetry config ([#15840](https://github.com/gitpod-io/gitpod/pull/15840)) - [@mrsimonemms](https://github.com/mrsimonemms)
