@@ -340,7 +340,6 @@ class TestResourceAccess {
                 id: "team-123",
                 name: "test-team",
                 creationTime: user.creationDate,
-                slug: "test-team",
             };
             const resourceGuard = new CompositeResourceAccessGuard([
                 new OwnerResourceGuard(user.id),

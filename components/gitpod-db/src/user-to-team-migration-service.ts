@@ -40,7 +40,7 @@ export class UserToTeamMigrationService {
             try {
                 await this.internalMigrateUser(user);
             } catch (error) {
-                console.error("Failed to migrate user to team.", error);
+                log.error("Failed to migrate user to team.", error);
                 AdditionalUserData.set(user, { isMigratedToTeamOnlyAttribution: false });
                 await this.userDB.storeUser(user);
             }

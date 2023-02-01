@@ -227,7 +227,6 @@ func TestTeamToAPIResponse(t *testing.T) {
 	team := &protocol.Team{
 		ID:           uuid.New().String(),
 		Name:         "New Team",
-		Slug:         "new_team",
 		CreationTime: "2022-09-09T09:09:09.000Z",
 	}
 	members := []*protocol.TeamMemberInfo{
@@ -261,7 +260,6 @@ func TestTeamToAPIResponse(t *testing.T) {
 	requireEqualProto(t, &v1.Team{
 		Id:   team.ID,
 		Name: team.Name,
-		Slug: team.Slug,
 		Members: []*v1.TeamMember{
 			{
 				UserId:       members[0].UserId,
@@ -442,7 +440,6 @@ func newTeam(t *protocol.Team) *protocol.Team {
 	result := &protocol.Team{
 		ID:           uuid.New().String(),
 		Name:         "Team Name",
-		Slug:         "team_name",
 		CreationTime: "2022-10-10T10:10:10.000Z",
 	}
 
@@ -452,10 +449,6 @@ func newTeam(t *protocol.Team) *protocol.Team {
 
 	if t.Name != "" {
 		result.Name = t.Name
-	}
-
-	if t.Slug != "" {
-		result.Slug = t.Slug
 	}
 
 	if t.CreationTime != "" {
