@@ -161,6 +161,8 @@ type Config struct {
 
 	Telemetry *TelemetryConfig `json:"telemetry,omitempty"`
 
+	AdminLoginSecret *ObjectRef `json:"adminLoginSecret,omitempty"`
+
 	Experimental *experimental.Config `json:"experimental,omitempty"`
 }
 

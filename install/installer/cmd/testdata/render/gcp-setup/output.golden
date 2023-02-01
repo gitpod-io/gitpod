@@ -1128,19 +1128,6 @@ metadata:
   name: rabbitmq
   namespace: default
 ---
-# v1/Secret server-admin-secret
-apiVersion: v1
-data:
-  login-key: bTMwRUgtTTItY1dNZ2tnZHk3cHU=
-kind: Secret
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: server
-  name: server-admin-secret
-  namespace: default
----
 # v1/ConfigMap agent-smith
 apiVersion: v1
 data:
@@ -2478,16 +2465,6 @@ data:
         app: gitpod
         component: server
       name: server
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: server
-      name: server-admin-secret
       namespace: default
     ---
     apiVersion: networking.k8s.io/v1
@@ -4937,7 +4914,7 @@ data:
       },
       "oauthServer": {
         "enabled": true,
-        "jwtSecret": "_7wODLGlsPauKCw4SBI2"
+        "jwtSecret": "m30EH-M2-cWMgkgdy7pu"
       },
       "rateLimiter": {
         "groups": {
@@ -4973,7 +4950,7 @@ data:
       "admin": {
         "grantFirstUserAdminRole": true
       },
-      "adminLoginKeyFile": "/admin/login-key",
+      "adminLoginKeyFile": "",
       "prebuildLimiter": {
         "*": {
           "limit": 100,
@@ -9607,7 +9584,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 56076d9d49384da8734d0e8f91136db3443e075e4b4fcb350846af73f797b9a9
+        gitpod.io/checksum_config: be4fde9dc3a3ea33cfb5e2a1ca27c9b0b2ae985bd440ee621b55540e4b8d92cd
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9742,9 +9719,6 @@ spec:
         - mountPath: /ws-manager-client-tls-certs
           name: ws-manager-client-tls-certs
           readOnly: true
-        - mountPath: /admin
-          name: admin-login-key
-          readOnly: true
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -9853,9 +9827,6 @@ spec:
       - name: ws-manager-client-tls-certs
         secret:
           secretName: ws-manager-client-tls
-      - name: admin-login-key
-        secret:
-          secretName: server-admin-secret
 status: {}
 ---
 # apps/v1/Deployment ws-manager

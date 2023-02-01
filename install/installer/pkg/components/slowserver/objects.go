@@ -21,9 +21,6 @@ func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
 		configmap,
 		deployment,
 		func(ctx *common.RenderContext) ([]runtime.Object, error) {
-			return server.AdminSecret(ctx)
-		},
-		func(ctx *common.RenderContext) ([]runtime.Object, error) {
 			return server.Networkpolicy(ctx, Component)
 		},
 		func(ctx *common.RenderContext) ([]runtime.Object, error) {

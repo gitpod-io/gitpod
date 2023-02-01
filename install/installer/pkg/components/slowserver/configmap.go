@@ -251,7 +251,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Admin: server.AdminConfig{
 			GrantFirstUserAdminRole: true, // existing default
 		},
-		AdminLoginKeyFile: fmt.Sprintf("%s/%s", server.AdminSecretMountPath, server.AdminSecretLoginKeyName),
+		AdminLoginKeyFile: server.AdminLoginKeyFile(ctx),
 	}
 
 	fc, err := common.ToJSONString(scfg)

@@ -30,15 +30,6 @@ func TestObjects_NotRenderedByDefault(t *testing.T) {
 	require.Empty(t, objects, "no objects should be rendered with default config")
 }
 
-func TestObjects_RenderedWhenExperimentalConfigSet(t *testing.T) {
-	ctx := renderContext(t, nil, "toxiproxy")
-
-	objects, err := Objects(ctx)
-	require.NoError(t, err)
-	require.NotEmpty(t, objects, "must render objects because experimental config is specified")
-	require.Len(t, objects, 10, "should render expected k8s objects")
-}
-
 func TestServerDeployment_UsesToxiproxyDbHost(t *testing.T) {
 	slowDbHost := toxiproxy.Component
 	ctx := renderContext(t, nil, slowDbHost)

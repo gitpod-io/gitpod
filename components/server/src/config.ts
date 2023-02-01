@@ -38,7 +38,7 @@ export type Config = Omit<
     inactivityPeriodForReposInDays?: number;
 
     patSigningKey: string;
-    admin: { loginKey: string };
+    admin: { loginKey?: string };
 };
 
 export interface WorkspaceDefaults {
@@ -145,7 +145,7 @@ export interface ConfigSerialized {
 
     showSetupModal: boolean;
 
-    adminLoginKeyFile: string;
+    adminLoginKeyFile?: string;
     admin: {
         grantFirstUserAdminRole: boolean;
     };
@@ -324,7 +324,7 @@ export namespace ConfigFile {
             }
         }
 
-        let adminLoginKey = "";
+        let adminLoginKey: string | undefined = undefined;
         if (config.adminLoginKeyFile) {
             try {
                 adminLoginKey = fs.readFileSync(filePathTelepresenceAware(config.adminLoginKeyFile), "utf-8").trim();
