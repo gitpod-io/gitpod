@@ -23,6 +23,7 @@ jobs:
       build_no_test: ${{ steps.output.outputs.build_no_test }}
       build_leeway_target: ${{ steps.output.outputs.build_leeway_target }}
       with_large_vm: ${{ steps.output.outputs.with_large_vm }}
+      publish_to_npm: ${{ steps.output.outputs.publish_to_npm }}
     steps:
       - name: "Determine Branch"
         id: branches
@@ -43,6 +44,7 @@ jobs:
             echo "build_no_test=${{ contains(github.event.pull_request.body, '[x] /werft no-test') }}"
             echo "build_leeway_target=$(echo "$PR_DESC" | sed -n -e 's/^.*leeway-target=//p' | sed 's/\r$//')"
             echo "with_large_vm=${{ contains(github.event.pull_request.body, '[X] /werft with-large-vm') }}"
+            echo "publish_to_npm=${{ contains(github.event.pull_request.body, '[X] /werft publish-to-npm') }}"
           } >> $GITHUB_OUTPUT
 
   build-previewctl:
@@ -165,6 +167,7 @@ jobs:
         with:
           secrets: |-
             segment-io-token:gitpod-core-dev/segment-io-token
+            npm-auth-token:gitpod-core-dev/npm-auth-token
       - name: Leeway Build
         id: leeway
         shell: bash
@@ -176,10 +179,13 @@ jobs:
           PR_NO_CACHE: ${{needs.configuration.outputs.build_no_cache}}
           PR_NO_TEST: ${{needs.configuration.outputs.build_no_test}}
           PR_LEEWAY_TARGET: ${{needs.configuration.outputs.build_leeway_target}}
+          NPM_AUTH_TOKEN: '${{ steps.secrets.outputs.npm-auth-token }}'
+          PUBLISH_TO_NPM: ${{ needs.configuration.outputs.publish_to_npm == 'true' || needs.configuration.outputs.is_main_branch == 'true' }}
         run: |
           [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none"       || CACHE="remote"
           [[ "$PR_NO_TEST"  = "true" ]] && TEST="--dont-test" || TEST=""
           [[ -z "$PR_LEEWAY_TARGET" ]] && PR_LEEWAY_TARGET="components:all"
+          [[ "${PUBLISH_TO_NPM}" = 'true' ]] && NPM_PUBLISH_TRIGGER=$(date +%s%3N) || NPM_PUBLISH_TRIGGER="false"
 
           mkdir -p /__w/gitpod/gitpod/test-coverage-report
 
@@ -190,7 +196,8 @@ jobs:
             $TEST \
             -Dversion=$VERSION \
             -DSEGMENT_IO_TOKEN=$SEGMENT_IO_TOKEN \
-            -DpublishToNPM=false \
+            -DpublishToNPM="${PUBLISH_TO_NPM}" \
+            -DnpmPublishTrigger="${NPM_PUBLISH_TRIGGER}" \
             --coverage-output-path=/__w/gitpod/gitpod/test-coverage-report \
             --report report.html || RESULT=$?
           set +x
