@@ -500,6 +500,18 @@ yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeConfig" "st
 # Enable SpiceDB on all preview envs
 #
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.spicedb.enabled "true"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.spicedb.secretRef "spicedb-secret"
+
+#
+# Configure spicedb secret
+#
+kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" -n werft get secret spicedb-secret -o yaml > spicedb-secret.yaml
+yq w -i spicedb-secret.yaml metadata.namespace "default"
+yq d -i spicedb-secret.yaml metadata.creationTimestamp
+yq d -i spicedb-secret.yaml metadata.uid
+yq d -i spicedb-secret.yaml metadata.resourceVersion
+kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" apply -f spicedb-secret.yaml
+rm -f spicedb-secret.yaml
 
 #
 # Enable "Frontend Dev" on all preview envs
