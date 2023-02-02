@@ -24,7 +24,7 @@ dev_image="$(tar xfO "$bldfn" ./imgnames.txt | head -n1)"
 echo "Dev Image: $dev_image"
 
 
-cf_patch=$(kubectl get cm server-ide-config -o=json | jq '.data."config.json"' |jq -r)
+cf_patch=$(kubectl get cm ide-config -o=json | jq '.data."config.json"' |jq -r)
 cf_patch=$(echo "$cf_patch" |jq ".supervisorImage = \"$dev_image\"")
 cf_patch=$(echo "$cf_patch" |jq tostring)
 cf_patch="{\"data\": {\"config.json\": $cf_patch}}"

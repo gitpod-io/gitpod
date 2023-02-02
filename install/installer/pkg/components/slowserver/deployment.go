@@ -111,10 +111,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				return envvar
 			}(),
 			{
-				Name:  "IDE_CONFIG_PATH",
-				Value: "/ide-config/config.json",
-			},
-			{
 				Name:  "NODE_ENV",
 				Value: "production", // todo(sje): will we need to change this?
 			},
@@ -417,14 +413,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 										},
 									},
 								},
-								{
-									Name: "ide-config",
-									VolumeSource: corev1.VolumeSource{
-										ConfigMap: &corev1.ConfigMapVolumeSource{
-											LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-ide-config", common.ServerComponent)},
-										},
-									},
-								},
 							},
 							volumes...,
 						),
@@ -502,11 +490,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									{
 										Name:      "config",
 										MountPath: "/config",
-										ReadOnly:  true,
-									},
-									{
-										Name:      "ide-config",
-										MountPath: "/ide-config",
 										ReadOnly:  true,
 									},
 								},
