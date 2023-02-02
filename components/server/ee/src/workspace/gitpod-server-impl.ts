@@ -2119,7 +2119,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
         let team: Team | undefined;
         if (attrId.kind === "team") {
-            team = await this.guardTeamOperation(attrId.teamId, "update");
+            team = (await this.guardTeamOperation(attrId.teamId, "update")).team;
             await this.ensureStripeApiIsAllowed({ team });
         } else {
             if (attrId.userId !== user.id) {
@@ -2141,7 +2141,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
         let team: Team | undefined;
         if (attrId.kind === "team") {
-            team = await this.guardTeamOperation(attrId.teamId, "update");
+            team = (await this.guardTeamOperation(attrId.teamId, "update")).team;
             await this.ensureStripeApiIsAllowed({ team });
         } else {
             if (attrId.userId !== user.id) {
@@ -2211,7 +2211,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         let team: Team | undefined;
         try {
             if (attrId.kind === "team") {
-                team = await this.guardTeamOperation(attrId.teamId, "update");
+                team = (await this.guardTeamOperation(attrId.teamId, "update")).team;
                 await this.ensureStripeApiIsAllowed({ team });
             } else {
                 await this.ensureStripeApiIsAllowed({ user });
@@ -2257,7 +2257,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         if (attrId.kind === "user") {
             await this.ensureStripeApiIsAllowed({ user });
         } else if (attrId.kind === "team") {
-            const team = await this.guardTeamOperation(attrId.teamId, "update");
+            const team = (await this.guardTeamOperation(attrId.teamId, "update")).team;
             await this.ensureStripeApiIsAllowed({ team });
             returnUrl = this.config.hostUrl
                 .with(() => ({ pathname: `/org-billing`, search: `org=${team.id}` }))
@@ -2493,7 +2493,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         traceAPIParams(ctx, { teamId });
 
         this.checkAndBlockUser("getBillingModeForTeam");
-        const team = await this.guardTeamOperation(teamId, "get");
+        const { team } = await this.guardTeamOperation(teamId, "get");
 
         return this.billingModes.getBillingModeForTeam(team, new Date());
     }
