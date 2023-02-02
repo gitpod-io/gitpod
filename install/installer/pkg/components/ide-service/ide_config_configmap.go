@@ -228,17 +228,5 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				"config.json": string(fc),
 			},
 		},
-		&corev1.ConfigMap{
-			TypeMeta: common.TypeMetaConfigmap,
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        "server-ide-config",
-				Namespace:   ctx.Namespace,
-				Labels:      common.CustomizeLabel(ctx, "server", common.TypeMetaConfigmap),
-				Annotations: common.CustomizeAnnotation(ctx, "server", common.TypeMetaConfigmap),
-			},
-			Data: map[string]string{
-				"config.json": string(fc),
-			},
-		},
 	}, nil
 }

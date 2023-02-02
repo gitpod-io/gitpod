@@ -4462,8 +4462,6 @@ spec:
           value: /config/config.json
         - name: GITPOD_LICENSE_TYPE
           value: gitpod
-        - name: IDE_CONFIG_PATH
-          value: /ide-config/config.json
         - name: NODE_ENV
           value: production
         - name: SHLVL
@@ -4504,9 +4502,6 @@ spec:
         volumeMounts:
         - mountPath: /config
           name: config
-          readOnly: true
-        - mountPath: /ide-config
-          name: ide-config
           readOnly: true
         - mountPath: /twilio-config
           name: twilio-secret-volume
@@ -4615,9 +4610,6 @@ spec:
       - configMap:
           name: server-config
         name: config
-      - configMap:
-          name: server-ide-config
-        name: ide-config
       - name: twilio-secret-volume
         secret:
           optional: true

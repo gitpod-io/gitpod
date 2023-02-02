@@ -22,6 +22,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/namegen"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
+	ide "github.com/gitpod-io/gitpod/ide-service-api/config"
 	imgbldr "github.com/gitpod-io/gitpod/image-builder/api"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 )
@@ -193,10 +194,11 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 	}
 
 	ideImage := options.IdeImage
+	ideImageLayers := make([]string, 0)
 	if ideImage == "" {
-		var cfg *ServerIDEConfigPartial
+		var cfg *ide.IDEConfig
 		for i := 0; i < 3; i++ {
-			cfg, err = GetServerIDEConfig(api.namespace, api.client)
+			cfg, err = GetIDEConfig(api.namespace, api.client)
 			if err != nil {
 				continue
 			}
@@ -204,7 +206,8 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 		if err != nil {
 			return nil, nil, xerrors.Errorf("cannot find server IDE config: %w", err)
 		}
-		ideImage = cfg.IDEOptions.Options.Code.Image
+		ideImage = cfg.IdeOptions.Options["code"].Image
+		ideImageLayers = cfg.IdeOptions.Options["code"].ImageLayers
 		if ideImage == "" {
 			err = xerrors.Errorf("cannot start workspaces without an IDE image (required by registry-facade resolver)")
 			return nil, nil, err
@@ -225,6 +228,7 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 			IdeImage: &wsmanapi.IDEImage{
 				WebRef: ideImage,
 			},
+			IdeImageLayers:    ideImageLayers,
 			WorkspaceLocation: "/",
 			Timeout:           "30m",
 			Initializer: &csapi.WorkspaceInitializer{
