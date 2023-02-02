@@ -804,3 +804,8 @@ func ExperimentalWebappConfig(ctx *RenderContext) *experimental.WebAppConfig {
 
 	return experimentalCfg.WebApp
 }
+
+// WithLocalWsManager returns true if the installed application cluster should connect to a local ws-manager
+func WithLocalWsManager(ctx *RenderContext) bool {
+	return ctx.Config.Kind == config.InstallationFull
+}

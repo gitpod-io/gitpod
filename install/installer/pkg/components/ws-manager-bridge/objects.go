@@ -28,7 +28,7 @@ func WSManagerList(ctx *common.RenderContext) []WorkspaceCluster {
 			skipSelf = cfg.WebApp.WorkspaceManagerBridge.SkipSelf
 		}
 
-		if cfg.WebApp != nil && cfg.WebApp.WithoutWorkspaceComponents {
+		if !common.WithLocalWsManager(ctx) {
 			// Must skip self if cluster does not contain ws-manager.
 			skipSelf = true
 		}

@@ -305,14 +305,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
-	addWsManagerTls := true
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.WithoutWorkspaceComponents {
-			// No ws-manager exists in the cluster, so no TLS secret to mount.
-			addWsManagerTls = false
-		}
-		return nil
-	})
+	addWsManagerTls := common.WithLocalWsManager(ctx)
 	if addWsManagerTls {
 		volumes = append(volumes, corev1.Volume{
 			Name: "ws-manager-client-tls-certs",

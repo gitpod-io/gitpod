@@ -7621,9 +7621,6 @@ spec:
         - mountPath: /twilio-config
           name: twilio-secret-volume
           readOnly: true
-        - mountPath: /ws-manager-client-tls-certs
-          name: ws-manager-client-tls-certs
-          readOnly: true
         - mountPath: /admin
           name: admin-login-key
           readOnly: true
@@ -7738,9 +7735,6 @@ spec:
         secret:
           optional: true
           secretName: twilio-secret
-      - name: ws-manager-client-tls-certs
-        secret:
-          secretName: ws-manager-client-tls
       - name: admin-login-key
         secret:
           secretName: server-admin-secret
@@ -7875,9 +7869,6 @@ spec:
         - mountPath: /config
           name: config
           readOnly: true
-        - mountPath: /ws-manager-client-tls-certs
-          name: ws-manager-client-tls-certs
-          readOnly: true
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -7985,9 +7976,6 @@ spec:
       - configMap:
           name: ws-manager-bridge-config
         name: config
-      - name: ws-manager-client-tls-certs
-        secret:
-          secretName: ws-manager-client-tls
 status: {}
 ---
 # batch/v1/Job migrations
