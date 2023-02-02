@@ -39,6 +39,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, fmt.Errorf("failed to get bootstrap config: %w", err)
 	}
 
+	replicas := common.Replicas(ctx, Component)
+
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
@@ -50,7 +52,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Spec: appsv1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(Component)},
-				Replicas: common.Replicas(ctx, Component),
+				Replicas: replicas,
 				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
@@ -78,17 +80,25 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Name:            ContainerName,
 								Image:           ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, RegistryRepo), RegistryImage, ImageTag),
 								ImagePullPolicy: corev1.PullIfNotPresent,
-								Args: []string{
-									"serve",
-									"--log-format=json",
-									"--log-level=debug",
-									"--datastore-engine=mysql",
-									"--datastore-conn-max-open=100",
-									"--telemetry-endpoint=", // disable telemetry to https://telemetry.authzed.com
-									fmt.Sprintf("--datastore-bootstrap-files=%s", strings.Join(bootstrapFiles, ",")),
-									"--datastore-bootstrap-overwrite=true",
-									fmt.Sprintf("--dispatch-upstream-addr=kubernetes:///spicedb:%d", ContainerDispatchPort),
-								},
+								Args: (func() []string {
+									args := []string{
+										"serve",
+										"--log-format=json",
+										"--log-level=debug",
+										"--datastore-engine=mysql",
+										"--datastore-conn-max-open=100",
+										"--telemetry-endpoint=", // disable telemetry to https://telemetry.authzed.com
+										fmt.Sprintf("--datastore-bootstrap-files=%s", strings.Join(bootstrapFiles, ",")),
+										"--datastore-bootstrap-overwrite=true",
+									}
+
+									// Dispatching only makes sense, when we have more than one replica
+									if *replicas > 1 {
+										args = append(args, fmt.Sprintf("--dispatch-upstream-addr=kubernetes:///spicedb:%d", ContainerDispatchPort))
+									}
+
+									return args
+								})(),
 								Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 									common.DefaultEnv(&ctx.Config),
 									spicedbEnvVars(ctx),
