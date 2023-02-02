@@ -5,6 +5,7 @@
 package spicedb
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -27,6 +28,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	cfg := getExperimentalSpiceDBConfig(ctx)
 	if cfg == nil || !cfg.Enabled {
 		return nil, nil
+	}
+
+	if cfg.SecretRef == "" {
+		return nil, errors.New("missing configuration for spicedb.secretRef")
 	}
 
 	bootstrapVolume, bootstrapVolumeMount, bootstrapFiles, err := getBootstrapConfig(ctx)
@@ -211,7 +216,7 @@ func spicedbEnvVars(ctx *common.RenderContext) []corev1.EnvVar {
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: secretRef(cfg),
+							Name: cfg.SecretRef,
 						},
 						Key: SecretPresharedKeyName,
 					},
