@@ -37,6 +37,7 @@ Does this PR require updates to the documentation at www.gitpod.io/docs?
       leeway-target=components:all
 - [ ] /werft no-test
       Run Leeway with `--dont-test`
+- [ ] /werft publish-to-npm
 
 #### Preview Environment Options:
 - [ ] /werft with-local-preview
