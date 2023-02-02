@@ -33,7 +33,10 @@ func newListStaleCmd(logger *logrus.Logger) *cobra.Command {
 		Short: "Get preview envs that are inactive (no branch with recent commits, and no db activity in the last 48h)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if _, err := os.Stat(opts.sshPrivateKeyPath); errors.Is(err, fs.ErrNotExist) {
-				return preview.InstallVMSSHKeys()
+				opts.logger.Debug("Installing SSH keys")
+				if err := preview.InstallVMSSHKeys(); err != nil {
+					return err
+				}
 			}
 
 			statuses, err := opts.listWorskpaceStatus(ctx)
