@@ -4,6 +4,6 @@ packages:
     config:
       dockerfile: leeway.Dockerfile
       buildArgs:
-        VERSION: v0.17.0
+        VERSION: v0.18.1
       image:
-        - ${imageRepoBase}/ipfs/kubo:v0.17.0
+        - ${imageRepoBase}/ipfs/kubo:v0.18.1

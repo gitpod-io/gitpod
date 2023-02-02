@@ -65,7 +65,7 @@ require (
 	github.com/ipfs/go-path v0.3.0 // indirect
 	github.com/ipfs/go-unixfs v0.4.2 // indirect
 	github.com/ipfs/go-verifcid v0.0.2 // indirect
-	github.com/ipfs/interface-go-ipfs-core v0.7.0 // indirect
+	github.com/ipfs/interface-go-ipfs-core v0.8.2 // indirect
 	github.com/ipld/go-codec-dagpb v1.5.0 // indirect
 	github.com/ipld/go-ipld-prime v0.19.0 // indirect
 	github.com/jbenet/goprocess v0.1.4 // indirect
@@ -73,7 +73,7 @@ require (
 	github.com/klauspost/compress v1.15.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.1 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
-	github.com/libp2p/go-libp2p v0.23.4 // indirect
+	github.com/libp2p/go-libp2p v0.24.2 // indirect
 	github.com/libp2p/go-libp2p-core v0.20.1 // indirect
 	github.com/libp2p/go-openssl v0.1.0 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
@@ -130,6 +130,13 @@ require (
 	sigs.k8s.io/json v0.0.0-20211208200746-9f7c6b3444d2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 )
+
+// start - needed to upgrade ipfs/kubo to v0.18.1
+replace github.com/libp2p/go-libp2p => github.com/libp2p/go-libp2p v0.23.4
+
+replace github.com/ipfs/interface-go-ipfs-core => github.com/ipfs/interface-go-ipfs-core v0.7.0
+
+// end - needed to upgrade ipfs/kubo
 
 replace github.com/gitpod-io/gitpod/gitpod-protocol => ../gitpod-protocol/go // leeway
 
