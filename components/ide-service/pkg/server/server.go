@@ -251,6 +251,7 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 	resp = &api.ResolveWorkspaceConfigResponse{
 		SupervisorImage: ideConfig.SupervisorImage,
 		WebImage:        defaultIde.Image,
+		IdeImageLayers:  defaultIde.ImageLayers,
 	}
 
 	var wsConfig *gitpodapi.GitpodConfig
@@ -320,7 +321,7 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 
 		// we always need WebImage for when the user chooses a desktop ide
 		resp.WebImage = getUserIDEImage(defaultIde)
-		webUserImageLayers := getUserImageLayers(defaultIde)
+		resp.IdeImageLayers = getUserImageLayers(defaultIde)
 
 		var desktopImageLayer string
 		var desktopUserImageLayers []string
@@ -329,7 +330,7 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 			desktopUserImageLayers = getUserImageLayers(chosenIDE)
 		} else {
 			resp.WebImage = getUserIDEImage(chosenIDE)
-			webUserImageLayers = getUserImageLayers(chosenIDE)
+			resp.IdeImageLayers = getUserImageLayers(chosenIDE)
 		}
 
 		ideName, referrer := s.resolveReferrerIDE(ideConfig, wsContext, userIdeName)
@@ -339,7 +340,6 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 			desktopUserImageLayers = getUserImageLayers(referrer)
 		}
 
-		resp.IdeImageLayers = append(resp.IdeImageLayers, webUserImageLayers...)
 		if desktopImageLayer != "" {
 			resp.IdeImageLayers = append(resp.IdeImageLayers, desktopImageLayer)
 			resp.IdeImageLayers = append(resp.IdeImageLayers, desktopUserImageLayers...)
