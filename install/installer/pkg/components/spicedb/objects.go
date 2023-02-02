@@ -28,7 +28,6 @@ func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
 		common.DefaultServiceAccount(Component),
 		migrations,
 		networkpolicy,
-		secret,
 		bootstrap,
 		role,
 		rolebinding,
@@ -61,7 +60,7 @@ func Env(ctx *common.RenderContext) []corev1.EnvVar {
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: &corev1.SecretKeySelector{
 					LocalObjectReference: corev1.LocalObjectReference{
-						Name: secretRef(cfg),
+						Name: cfg.SecretRef,
 					},
 					Key: SecretPresharedKeyName,
 				},

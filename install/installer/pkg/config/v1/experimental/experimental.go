@@ -200,7 +200,7 @@ type SpiceDBConfig struct {
 	DisableMigrations bool `json:"disableMigrations"`
 
 	// Reference to a k8s secret which contains a "presharedKey" for authentication with SpiceDB
-	// If not specified, a secret is generated.
+	// Required.
 	SecretRef string `json:"secretRef"`
 }
 
