@@ -823,6 +823,7 @@ export interface WorkspaceConfig {
     vscode?: VSCodeConfig;
     jetbrains?: JetBrainsConfig;
     coreDump?: CoreDumpConfig;
+    ideCredentialsToken?: string;
 
     /** deprecated. Enabled by default **/
     experimentalNetwork?: boolean;

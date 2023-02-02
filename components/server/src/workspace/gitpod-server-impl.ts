@@ -626,7 +626,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         this.checkUser("getWorkspace");
 
-        const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace(ctx));
+        const workspace = await this.workspaceDb.trace(ctx).transaction(async (db) => {
+            const ws = await this.internalGetWorkspace(workspaceId, db);
+            if (!ws.config.ideCredentialsToken) {
+                ws.config.ideCredentialsToken = crypto.randomBytes(32).toString("base64");
+            }
+            await db.store(ws);
+            return ws;
+        });
+
         const latestInstancePromise = this.workspaceDb.trace(ctx).findCurrentInstance(workspaceId);
         const teamMembers = await this.getTeamMembersByProject(workspace.projectId);
         await this.guardAccess({ kind: "workspace", subject: workspace, teamMembers }, "get");
@@ -659,6 +667,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (!workspace) {
             throw new Error("owner token not found");
         }
+        // should we change operator to update/delete ?
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
 
         const latestInstance = await this.workspaceDb.trace(ctx).findCurrentInstance(workspaceId);
