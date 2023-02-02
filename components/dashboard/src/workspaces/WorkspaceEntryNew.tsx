@@ -6,7 +6,7 @@
 
 import { CommitContext, Workspace, WorkspaceInfo, ContextURL } from "@gitpod/gitpod-protocol";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
-import { FunctionComponent, useMemo } from "react";
+import { FunctionComponent, useMemo, useState } from "react";
 import { Item, ItemField, ItemFieldIcon } from "../components/ItemsList";
 import PendingChangesDropdown from "../components/PendingChangesDropdown";
 import Tooltip from "../components/Tooltip";
@@ -19,12 +19,18 @@ type Props = {
 };
 
 export const WorkspaceEntry: FunctionComponent<Props> = ({ info }) => {
+    const [menuActive, setMenuActive] = useState(false);
+
     const workspace = info.workspace;
     const currentBranch =
         info.latestInstance?.status.repo?.branch || Workspace.getBranchName(info.workspace) || "<unknown>";
     const project = getProjectPath(workspace);
     const normalizedContextUrl = ContextURL.getNormalizedURL(workspace)?.toString();
     const normalizedContextUrlDescription = normalizedContextUrl || workspace.contextURL; // Instead of showing nothing, we prefer to show the raw content instead
+
+    const changeMenuState = (state: boolean) => {
+        setMenuActive(state);
+    };
 
     // Could this be `/start#${workspace.id}` instead?
     const startUrl = useMemo(
@@ -39,7 +45,7 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info }) => {
     );
 
     return (
-        <Item className="whitespace-nowrap py-6 px-6">
+        <Item className="whitespace-nowrap py-6 px-6" solid={menuActive}>
             <ItemFieldIcon>
                 <WorkspaceStatusIndicator instance={info?.latestInstance} />
             </ItemFieldIcon>
@@ -80,7 +86,7 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info }) => {
                     </div>
                 </Tooltip>
             </ItemField>
-            <WorkspaceEntryOverflowMenu info={info} />
+            <WorkspaceEntryOverflowMenu changeMenuState={changeMenuState} info={info} />
         </Item>
     );
 };

@@ -19,9 +19,13 @@ import { RenameWorkspaceModal } from "./RenameWorkspaceModal";
 
 type WorkspaceEntryOverflowMenuProps = {
     info: WorkspaceInfo;
+    changeMenuState: (state: boolean) => void;
 };
 
-export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflowMenuProps> = ({ info }) => {
+export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflowMenuProps> = ({
+    info,
+    changeMenuState,
+}) => {
     const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
     const [isRenameModalVisible, setRenameModalVisible] = useState(false);
     const [isSSHModalVisible, setSSHModalVisible] = useState(false);
@@ -131,7 +135,7 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
 
     return (
         <>
-            <ItemFieldContextMenu menuEntries={menuEntries} />
+            <ItemFieldContextMenu changeMenuState={changeMenuState} menuEntries={menuEntries} />
             {isDeleteModalVisible && (
                 <DeleteWorkspaceModal workspace={workspace} onClose={() => setDeleteModalVisible(false)} />
             )}
