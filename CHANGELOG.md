@@ -1,6 +1,10 @@
 # Change Log
 
-## January 2023
+## February 2023
+- [fix] : workspace options model closes on entering space(" ") ([#15889](https://github.com/gitpod-io/gitpod/pull/15889)) - [@vedant-jain03](https://github.com/vedant-jain03)
+- [installer]: deprecate experimental IDE config ([#15976](https://github.com/gitpod-io/gitpod/pull/15976)) - [@](), [@iQQBot](https://github.com/iQQBot)
+
+##  January 2023
 - Update README links ([#16127](https://github.com/gitpod-io/gitpod/pull/16127)) - [@axonasif](https://github.com/axonasif)
 - removed org slugs ([#16070](https://github.com/gitpod-io/gitpod/pull/16070)) - [@svenefftinge](https://github.com/svenefftinge)
 - teams are now called organizations ([#16050](https://github.com/gitpod-io/gitpod/pull/16050)) - [@svenefftinge](https://github.com/svenefftinge)
