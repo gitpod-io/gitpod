@@ -1,77 +1,398 @@
 {
-    "folders": [
-        { "path": "." },
-        { "path": "components/blobserve" },
-        { "path": "components/common-go" },
-        { "path": "components/content-service" },
-        { "path": "components/docker-up" },
-        { "path": "components/ee/agent-smith" },
-        { "path": "components/gitpod-cli" },
-        { "path": "components/gitpod-protocol" },
-        { "path": "components/ide-metrics" },
-        { "path": "components/ide-service" },
-        { "path": "components/image-builder-bob" },
-        { "path": "components/image-builder-mk3" },
-        { "path": "components/licensor" },
-        { "path": "components/local-app" },
-        { "path": "components/registry-facade" },
-        { "path": "components/service-waiter" },
-        { "path": "components/supervisor" },
-        { "path": "components/usage" },
-        { "path": "components/usage-api" },
-        { "path": "components/workspacekit" },
-        { "path": "components/ws-daemon" },
-        { "path": "components/ws-manager" },
-        { "path": "components/ws-proxy" },
-        { "path": "components/public-api-server" },
-        { "path": "components/gitpod-db" },
-        { "path": "test" },
-        { "path": "dev/blowtorch" },
-        { "path": "dev/changelog" },
-        { "path": "dev/gpctl" },
-        { "path": "dev/gp-gcloud" },
-        { "path": "dev/loadgen" },
-        { "path": "dev/preview/previewctl" },
-        { "path": "install/installer" },
-        { "path": "install/preview" },
-        { "path": "dev/ready-probe-labeler" },
-    ],
-    "settings": {
-        "typescript.tsdk": "gitpod/node_modules/typescript/lib",
-        "[javascript]": {
-            "editor.defaultFormatter": "esbenp.prettier-vscode",
-            "editor.formatOnSave": true
-        },
-        "[typescript]": {
-            "editor.defaultFormatter": "esbenp.prettier-vscode",
-            "editor.formatOnSave": true
-        },
-        "[json]": {
-            "editor.insertSpaces": true,
-            "editor.tabSize": 2
-        },
-        "[yaml]": {
-            "editor.insertSpaces": true,
-            "editor.tabSize": 2
-        },
-        "[go]": {
-            "editor.formatOnSave": true
-        },
-        "[tf]": {
-            "editor.insertSpaces": true,
-            "editor.tabSize": 2
-        },
-        "go.formatTool": "goimports",
-        "go.useLanguageServer": true,
-        "workspace.supportMultiRootWorkspace": true,
-        "launch": {},
-        "files.exclude": {
-            "**/.git": true
-        },
-        "go.lintTool": "golangci-lint",
-        "gopls": {
-            "allowModfileModifications": true
-        },
-        "prettier.configPath": "/workspace/gitpod/.prettierrc.json"
-    }
+  folders: [
+    {
+      path: 'components/blobserve',
+      name: 'components/blobserve',
+    },
+    {
+      path: 'components/common-go',
+      name: 'components/common-go',
+    },
+    {
+      path: 'components/content-service',
+      name: 'components/content-service',
+    },
+    {
+      path: 'components/content-service-api/go',
+      name: 'components/content-service-api/go',
+    },
+    {
+      path: 'components/content-service-api/typescript',
+      name: 'components/content-service-api/typescript',
+    },
+    {
+      path: 'components/dashboard',
+      name: 'components/dashboard',
+    },
+    {
+      path: 'components/docker-up',
+      name: 'components/docker-up',
+    },
+    {
+      path: 'components/ee/agent-smith',
+      name: 'components/ee/agent-smith',
+    },
+    {
+      path: 'components/ee/agent-smith/cmd/testbed',
+      name: 'components/ee/agent-smith/cmd/testbed',
+    },
+    {
+      path: 'components/ee/agent-smith/cmd/testtarget',
+      name: 'components/ee/agent-smith/cmd/testtarget',
+    },
+    {
+      path: 'components/ee/db-sync',
+      name: 'components/ee/db-sync',
+    },
+    {
+      path: 'components/ee/payment-endpoint',
+      name: 'components/ee/payment-endpoint',
+    },
+    {
+      path: 'components/gitpod-cli',
+      name: 'components/gitpod-cli',
+    },
+    {
+      path: 'components/gitpod-db',
+      name: 'components/gitpod-db',
+    },
+    {
+      path: 'components/gitpod-db/go',
+      name: 'components/gitpod-db/go',
+    },
+    {
+      path: 'components/gitpod-messagebus',
+      name: 'components/gitpod-messagebus',
+    },
+    {
+      path: 'components/gitpod-protocol',
+      name: 'components/gitpod-protocol',
+    },
+    {
+      path: 'components/gitpod-protocol/go',
+      name: 'components/gitpod-protocol/go',
+    },
+    {
+      path: 'components/ide-metrics',
+      name: 'components/ide-metrics',
+    },
+    {
+      path: 'components/ide-metrics-api',
+      name: 'components/ide-metrics-api',
+    },
+    {
+      path: 'components/ide-metrics-api/go',
+      name: 'components/ide-metrics-api/go',
+    },
+    {
+      path: 'components/ide-metrics-api/typescript-grpc',
+      name: 'components/ide-metrics-api/typescript-grpc',
+    },
+    {
+      path: 'components/ide-metrics-api/typescript-grpcweb',
+      name: 'components/ide-metrics-api/typescript-grpcweb',
+    },
+    {
+      path: 'components/ide-service',
+      name: 'components/ide-service',
+    },
+    {
+      path: 'components/ide-service-api/go',
+      name: 'components/ide-service-api/go',
+    },
+    {
+      path: 'components/ide-service-api/typescript',
+      name: 'components/ide-service-api/typescript',
+    },
+    {
+      path: 'components/ide/code-desktop/status',
+      name: 'components/ide/code-desktop/status',
+    },
+    {
+      path: 'components/ide/code/codehelper',
+      name: 'components/ide/code/codehelper',
+    },
+    {
+      path: 'components/ide/jetbrains/cli',
+      name: 'components/ide/jetbrains/cli',
+    },
+    {
+      path: 'components/ide/jetbrains/launcher',
+      name: 'components/ide/jetbrains/launcher',
+    },
+    {
+      path: 'components/image-builder-api/go',
+      name: 'components/image-builder-api/go',
+    },
+    {
+      path: 'components/image-builder-api/typescript',
+      name: 'components/image-builder-api/typescript',
+    },
+    {
+      path: 'components/image-builder-bob',
+      name: 'components/image-builder-bob',
+    },
+    {
+      path: 'components/image-builder-mk3',
+      name: 'components/image-builder-mk3',
+    },
+    {
+      path: 'components/installation-telemetry',
+      name: 'components/installation-telemetry',
+    },
+    {
+      path: 'components/kots-config-check/registry',
+      name: 'components/kots-config-check/registry',
+    },
+    {
+      path: 'components/licensor',
+      name: 'components/licensor',
+    },
+    {
+      path: 'components/licensor/typescript',
+      name: 'components/licensor/typescript',
+    },
+    {
+      path: 'components/local-app',
+      name: 'components/local-app',
+    },
+    {
+      path: 'components/local-app-api',
+      name: 'components/local-app-api',
+    },
+    {
+      path: 'components/local-app-api/go',
+      name: 'components/local-app-api/go',
+    },
+    {
+      path: 'components/local-app-api/typescript-grpcweb',
+      name: 'components/local-app-api/typescript-grpcweb',
+    },
+    {
+      path: 'components/openvsx-proxy',
+      name: 'components/openvsx-proxy',
+    },
+    {
+      path: 'components/public-api-server',
+      name: 'components/public-api-server',
+    },
+    {
+      path: 'components/public-api/go',
+      name: 'components/public-api/go',
+    },
+    {
+      path: 'components/public-api/typescript',
+      name: 'components/public-api/typescript',
+    },
+    {
+      path: 'components/registry-facade',
+      name: 'components/registry-facade',
+    },
+    {
+      path: 'components/registry-facade-api/go',
+      name: 'components/registry-facade-api/go',
+    },
+    {
+      path: 'components/server',
+      name: 'components/server',
+    },
+    {
+      path: 'components/service-waiter',
+      name: 'components/service-waiter',
+    },
+    {
+      path: 'components/supervisor',
+      name: 'components/supervisor',
+    },
+    {
+      path: 'components/supervisor-api',
+      name: 'components/supervisor-api',
+    },
+    {
+      path: 'components/supervisor-api/go',
+      name: 'components/supervisor-api/go',
+    },
+    {
+      path: 'components/supervisor-api/typescript-grpc',
+      name: 'components/supervisor-api/typescript-grpc',
+    },
+    {
+      path: 'components/supervisor-api/typescript-grpcweb',
+      name: 'components/supervisor-api/typescript-grpcweb',
+    },
+    {
+      path: 'components/supervisor/frontend',
+      name: 'components/supervisor/frontend',
+    },
+    {
+      path: 'components/toxic-config',
+      name: 'components/toxic-config',
+    },
+    {
+      path: 'components/usage',
+      name: 'components/usage',
+    },
+    {
+      path: 'components/usage-api/go',
+      name: 'components/usage-api/go',
+    },
+    {
+      path: 'components/usage-api/typescript',
+      name: 'components/usage-api/typescript',
+    },
+    {
+      path: 'components/workspace-rollout-job',
+      name: 'components/workspace-rollout-job',
+    },
+    {
+      path: 'components/workspacekit',
+      name: 'components/workspacekit',
+    },
+    {
+      path: 'components/ws-daemon',
+      name: 'components/ws-daemon',
+    },
+    {
+      path: 'components/ws-daemon-api/go',
+      name: 'components/ws-daemon-api/go',
+    },
+    {
+      path: 'components/ws-daemon-api/typescript',
+      name: 'components/ws-daemon-api/typescript',
+    },
+    {
+      path: 'components/ws-daemon/nsinsider',
+      name: 'components/ws-daemon/nsinsider',
+    },
+    {
+      path: 'components/ws-daemon/seccomp-profile-installer',
+      name: 'components/ws-daemon/seccomp-profile-installer',
+    },
+    {
+      path: 'components/ws-manager',
+      name: 'components/ws-manager',
+    },
+    {
+      path: 'components/ws-manager-api/go',
+      name: 'components/ws-manager-api/go',
+    },
+    {
+      path: 'components/ws-manager-api/typescript',
+      name: 'components/ws-manager-api/typescript',
+    },
+    {
+      path: 'components/ws-manager-bridge',
+      name: 'components/ws-manager-bridge',
+    },
+    {
+      path: 'components/ws-manager-bridge-api/go',
+      name: 'components/ws-manager-bridge-api/go',
+    },
+    {
+      path: 'components/ws-manager-bridge-api/typescript',
+      name: 'components/ws-manager-bridge-api/typescript',
+    },
+    {
+      path: 'components/ws-manager-mk2',
+      name: 'components/ws-manager-mk2',
+    },
+    {
+      path: 'components/ws-proxy',
+      name: 'components/ws-proxy',
+    },
+    {
+      path: 'dev/addlicense',
+      name: 'dev/addlicense',
+    },
+    {
+      path: 'dev/blowtorch',
+      name: 'dev/blowtorch',
+    },
+    {
+      path: 'dev/changelog',
+      name: 'dev/changelog',
+    },
+    {
+      path: 'dev/gp-gcloud',
+      name: 'dev/gp-gcloud',
+    },
+    {
+      path: 'dev/gpctl',
+      name: 'dev/gpctl',
+    },
+    {
+      path: 'dev/kubecdl',
+      name: 'dev/kubecdl',
+    },
+    {
+      path: 'dev/loadgen',
+      name: 'dev/loadgen',
+    },
+    {
+      path: 'dev/preview/previewctl',
+      name: 'dev/preview/previewctl',
+    },
+    {
+      path: 'dev/ready-probe-labeler',
+      name: 'dev/ready-probe-labeler',
+    },
+    {
+      path: 'dev/telepresence-hack',
+      name: 'dev/telepresence-hack',
+    },
+    {
+      path: 'dev/version-manifest',
+      name: 'dev/version-manifest',
+    },
+    {
+      path: 'install/installer',
+      name: 'install/installer',
+    },
+    {
+      path: 'install/preview/prettylog',
+      name: 'install/preview/prettylog',
+    },
+    {
+      path: 'test',
+      name: 'test',
+    },
+  ],
+  settings: {
+    'typescript.tsdk': 'gitpod/node_modules/typescript/lib',
+    '[javascript]': {
+      'editor.defaultFormatter': 'esbenp.prettier-vscode',
+      'editor.formatOnSave': true,
+    },
+    '[typescript]': {
+      'editor.defaultFormatter': 'esbenp.prettier-vscode',
+      'editor.formatOnSave': true,
+    },
+    '[json]': {
+      'editor.insertSpaces': true,
+      'editor.tabSize': 2,
+    },
+    '[yaml]': {
+      'editor.insertSpaces': true,
+      'editor.tabSize': 2,
+    },
+    '[go]': {
+      'editor.formatOnSave': true,
+    },
+    '[tf]': {
+      'editor.insertSpaces': true,
+      'editor.tabSize': 2,
+    },
+    'go.formatTool': 'goimports',
+    'go.useLanguageServer': true,
+    'workspace.supportMultiRootWorkspace': true,
+    launch: {},
+    'files.exclude': {
+      '**/.git': true,
+    },
+    'go.lintTool': 'golangci-lint',
+    gopls: {
+      allowModfileModifications: true,
+    },
+    'prettier.configPath': '/workspace/gitpod/.prettierrc.json',
+  },
 }
