@@ -205,21 +205,20 @@ type SpiceDBConfig struct {
 }
 
 type WebAppConfig struct {
-	PublicAPI                  *PublicAPIConfig       `json:"publicApi,omitempty"`
-	Server                     *ServerConfig          `json:"server,omitempty"`
-	ProxyConfig                *ProxyConfig           `json:"proxy,omitempty"`
-	WorkspaceManagerBridge     *WsManagerBridgeConfig `json:"wsManagerBridge,omitempty"`
-	Tracing                    *Tracing               `json:"tracing,omitempty"`
-	UsePodAntiAffinity         bool                   `json:"usePodAntiAffinity"`
-	DisableMigration           bool                   `json:"disableMigration"`
-	Usage                      *UsageConfig           `json:"usage,omitempty"`
-	ConfigcatKey               string                 `json:"configcatKey"`
-	WorkspaceClasses           []WebAppWorkspaceClass `json:"workspaceClasses"`
-	Stripe                     *StripeConfig          `json:"stripe,omitempty"`
-	SlowDatabase               string                 `json:"slowDatabase,omitempty"`
-	IAM                        *IAMConfig             `json:"iam,omitempty"`
-	WithoutWorkspaceComponents bool                   `json:"withoutWorkspaceComponents,omitempty"`
-	SpiceDB                    *SpiceDBConfig         `json:"spicedb,omitempty"`
+	PublicAPI              *PublicAPIConfig       `json:"publicApi,omitempty"`
+	Server                 *ServerConfig          `json:"server,omitempty"`
+	ProxyConfig            *ProxyConfig           `json:"proxy,omitempty"`
+	WorkspaceManagerBridge *WsManagerBridgeConfig `json:"wsManagerBridge,omitempty"`
+	Tracing                *Tracing               `json:"tracing,omitempty"`
+	UsePodAntiAffinity     bool                   `json:"usePodAntiAffinity"`
+	DisableMigration       bool                   `json:"disableMigration"`
+	Usage                  *UsageConfig           `json:"usage,omitempty"`
+	ConfigcatKey           string                 `json:"configcatKey"`
+	WorkspaceClasses       []WebAppWorkspaceClass `json:"workspaceClasses"`
+	Stripe                 *StripeConfig          `json:"stripe,omitempty"`
+	SlowDatabase           string                 `json:"slowDatabase,omitempty"`
+	IAM                    *IAMConfig             `json:"iam,omitempty"`
+	SpiceDB                *SpiceDBConfig         `json:"spicedb,omitempty"`
 }
 
 type WorkspaceDefaults struct {
