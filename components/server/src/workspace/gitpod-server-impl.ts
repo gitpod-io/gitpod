@@ -182,6 +182,7 @@ import { CostCenterJSON } from "@gitpod/gitpod-protocol/lib/usage";
 import { createCookielessId, maskIp } from "../analytics";
 import { Permissions } from "../permissions/permissions";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { countSpicedbCheck, spicedbChecksTotal } from "../prometheus-metrics";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -2049,10 +2050,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const teams = await this.teamDB.findTeamsByUser(user.id);
 
         if (centralizedPermissionsEnabled) {
-            const permittedOrgs = await this.perms.listAllowedOrganizations(user.id);
+            try {
+                const permittedOrgs = await this.perms.listAllowedOrganizations(user.id);
 
-            const filtered = teams.filter((t) => permittedOrgs.has(t.id));
-            log.info(`Spicedb filtered organizations: ${filtered.length}, db: ${teams.length}`);
+                const filtered = teams.filter((t) => permittedOrgs.has(t.id));
+                log.info(`[spicedb] filtered organizations from spicedb: ${filtered.length}, db: ${teams.length}`);
+            } catch (e) {
+                log.info("[spicedb] permission list failed", e);
+            }
         }
 
         return teams;
@@ -2070,7 +2075,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const team = await this.guardTeamOperation(teamId, "get");
         if (centralizedPermissionsEnabled) {
-            await this.perms.allowedToReadOrganization(user.id, teamId);
+            try {
+                await this.perms.allowedToReadOrganization(user.id, teamId);
+                countSpicedbCheck("organization", "agree");
+            } catch (e) {
+                log.info("[spicedb] permission check failed", e);
+                countSpicedbCheck("organization", "disagree");
+            }
         }
 
         if (!team) {
@@ -2090,16 +2101,21 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = this.checkUser("updateTeam");
         const centralizedPermissionsEnabled = await this.centralizedPermissionsEnabled(user, teamId);
 
-        if (centralizedPermissionsEnabled) {
-            await this.perms.allowedToWriteOrganization(user.id, teamId);
-        }
-
         const existingTeam = await this.teamDB.findTeamById(teamId);
         if (!existingTeam) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, `Organization ${teamId} does not exist`);
         }
         const members = await this.teamDB.findMembersByTeam(teamId);
         await this.guardAccess({ kind: "team", subject: existingTeam, members }, "update");
+        if (centralizedPermissionsEnabled) {
+            try {
+                await this.perms.allowedToWriteOrganization(user.id, teamId);
+                countSpicedbCheck("organization", "agree");
+            } catch (e) {
+                log.info("[spicedb] permission check failed", e);
+                countSpicedbCheck("organization", "disagree");
+            }
+        }
 
         const updatedTeam = await this.teamDB.updateTeam(teamId, team);
         return updatedTeam;
@@ -2115,13 +2131,20 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = this.checkUser("getTeamMembers");
         const centralizedPermissionsEnabled = await this.centralizedPermissionsEnabled(user, teamId);
 
-        if (centralizedPermissionsEnabled) {
-            await this.perms.allowedToReadOrganizationMembers(user.id, teamId);
-        }
-
         const team = await this.getTeam(ctx, teamId);
         const members = await this.teamDB.findMembersByTeam(team.id);
+
         await this.guardAccess({ kind: "team", subject: team, members }, "get");
+        if (centralizedPermissionsEnabled) {
+            try {
+                await this.perms.allowedToReadOrganizationMembers(user.id, teamId);
+                countSpicedbCheck("organization", "agree");
+            } catch (e) {
+                log.info("[spicedb] permission check failed", e);
+                countSpicedbCheck("organization", "disagree");
+            }
+        }
+
         return members;
     }
 
@@ -2133,13 +2156,21 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const centralizedPermissionsEnabled = await this.centralizedPermissionsEnabled(user);
 
         if (centralizedPermissionsEnabled) {
-            await this.perms.createOrganization(user.id);
+            try {
+                await this.perms.createOrganization(user.id);
+            } catch (e) {
+                log.info("[spicedb] permission check failed", e);
+            }
         }
 
         const team = await this.teamDB.createTeam(user.id, name);
 
         if (centralizedPermissionsEnabled) {
-            await this.perms.grantOrganizationRole(user.id, "owner", team.id);
+            try {
+                await this.perms.grantOrganizationRole(user.id, "owner", team.id);
+            } catch (e) {
+                log.info("[spicedb] permission grant failed", e);
+            }
         }
 
         const invite = await this.getGenericInvite(ctx, team.id);
@@ -2185,7 +2216,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         if (centralizedPermissionsEnabled && team) {
-            await this.perms.grantOrganizationRole(user.id, "member", team.id);
+            try {
+                await this.perms.grantOrganizationRole(user.id, "member", team.id);
+            } catch (e) {
+                log.info("[spicedb] permission grant failed", e);
+            }
         }
 
         return team!;
@@ -2216,13 +2251,23 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         await this.guardTeamOperation(teamId, "update");
         if (centralizedPermissionsEnabled) {
-            await this.perms.allowedToWriteOrganizationMembers(user.id, teamId);
+            try {
+                await this.perms.allowedToWriteOrganizationMembers(user.id, teamId);
+                countSpicedbCheck("organization", "agree");
+            } catch (e) {
+                countSpicedbCheck("organization", "disagree");
+                log.info("[spicedb] permission check failed", e);
+            }
         }
 
         await this.teamDB.setTeamMemberRole(userId, teamId, role);
 
         if (centralizedPermissionsEnabled) {
-            await this.perms.grantOrganizationRole(userId, role, teamId);
+            try {
+                await this.perms.grantOrganizationRole(userId, role, teamId);
+            } catch (e) {
+                log.info("[spicedb] permission grant failed", e);
+            }
         }
     }
 
@@ -2243,10 +2288,18 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         // The user is leaving a team, if they are removing themselves
         const userIsLeavingTeam = user.id === userId;
 
+        this.perms.AllowedToRemoveUser();
+
         // Users are free to leave any team themselves, but only owners can remove others from their teams.
         await this.guardTeamOperation(teamId, userIsLeavingTeam ? "get" : "update");
         if (centralizedPermissionsEnabled) {
-            await this.perms.allowedToWriteOrganizationMembers(user.id, teamId);
+            try {
+                await this.perms.allowedToWriteOrganizationMembers(user.id, teamId);
+                countSpicedbCheck("organization", "agree");
+            } catch (e) {
+                countSpicedbCheck("organization", "disagree");
+                log.info("[spicedb] permission check failed", e);
+            }
         }
 
         const membership = await this.teamDB.findTeamMembership(userId, teamId);
@@ -2255,7 +2308,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         if (centralizedPermissionsEnabled) {
-            await this.perms.removeOrganizationMember(userId, teamId);
+            try {
+                await this.perms.removeOrganizationMember(userId, teamId);
+            } catch (e) {
+                log.info("[spicedb] permission remove failed", e);
+            }
         }
 
         await this.teamDB.removeMemberFromTeam(userId, teamId);

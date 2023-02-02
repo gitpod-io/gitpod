@@ -22,6 +22,7 @@ export function registerServerMetrics(registry: prometheusClient.Registry) {
     registry.registerMetric(stripeClientRequestsCompletedDurationSeconds);
     registry.registerMetric(imageBuildsStartedTotal);
     registry.registerMetric(imageBuildsCompletedTotal);
+    registry.registerMetric(spicedbChecksTotal);
 }
 
 const loginCounter = new prometheusClient.Counter({
@@ -194,4 +195,14 @@ export const imageBuildsCompletedTotal = new prometheusClient.Counter({
 
 export function increaseImageBuildsCompletedTotal(outcome: "succeeded" | "failed") {
     imageBuildsCompletedTotal.inc({ outcome });
+}
+
+const spicedbChecksTotal = new prometheusClient.Counter({
+    name: "gitpod_server_spicedb_checks_total",
+    help: "counter of spicedb checks, and outcome comparison",
+    labelNames: ["resource", "outcome"],
+});
+
+export function countSpicedbCheck(resource: string, outcome: "agree" | "disagree") {
+    spicedbChecksTotal.inc({ resource, outcome });
 }

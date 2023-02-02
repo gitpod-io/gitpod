@@ -52,7 +52,6 @@ export class Permissions {
         const response = await this.client.writeRelationships(req);
         log.info("Completed spicedb write.", {
             updates: req.updates,
-            response,
         });
 
         return response;
@@ -73,7 +72,6 @@ export class Permissions {
         const response = await this.client.writeRelationships(req);
         log.info("Completed spicedb write.", {
             updates: req.updates,
-            response,
         });
 
         return response;
@@ -91,7 +89,6 @@ export class Permissions {
         const ids = new Set(response.map((r) => r.resourceObjectId));
         log.info("Completed spicedb resource lookup.", {
             request: req,
-            response,
         });
 
         return ids;
@@ -139,10 +136,12 @@ export class Permissions {
 
         const response = await this.client.checkPermission(req);
         log.info("Completed spicedb permission check.", {
-            resource,
-            relation,
-            subject,
-            response,
+            request: {
+                resource,
+                relation,
+                subject,
+            },
+            permissionship: permissionshipString(response.permissionship),
         });
         if (response.permissionship === v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION) {
             return;
@@ -205,4 +204,15 @@ function newUnathorizedError(resource: v1.ObjectReference, relation: Relation, s
 
 function objString(obj?: v1.ObjectReference): string {
     return `${obj?.objectType}:${obj?.objectId}`;
+}
+
+function permissionshipString(p: v1.CheckPermissionResponse_Permissionship): string {
+    switch (p) {
+        case v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION:
+            return "HAS_PERMISSION";
+        case v1.CheckPermissionResponse_Permissionship.NO_PERMISSION:
+            return "NO_PERMISSION";
+        default:
+            return "UNKNOWN, NO_PERMISSION";
+    }
 }
