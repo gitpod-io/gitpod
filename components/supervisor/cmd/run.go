@@ -24,6 +24,8 @@ var runCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, !runOpts.RunGP, os.Getenv("SUPERVISOR_DEBUG_ENABLE") == "true")
+		log.Log.Logger.AddHook(fatalTerminationLogHook{})
+
 		common_grpc.SetupLogging()
 		supervisor.Version = Version
 		supervisor.Run(supervisor.WithRunGP(runOpts.RunGP))
