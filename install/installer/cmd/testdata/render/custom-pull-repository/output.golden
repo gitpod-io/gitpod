@@ -3675,7 +3675,7 @@ data:
             "type": "browser",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "label": "Browser",
-            "image": "registry.mydomain.com/namespace/ide/code:commit-8f9e9f93136a787fde5142f0708367ffaf46094c",
+            "image": "registry.mydomain.com/namespace/ide/code:commit-6f51885933f59a9f6fab937e8cb07a432559a28c",
             "latestImage": "registry.mydomain.com/namespace/ide/code:nightly",
             "imageLayers": [
               "registry.mydomain.com/namespace/ide/gitpod-code-web:commit-1f8f65b4b9b1be9c8bc5a981974a8d29c54ba235",
@@ -5403,7 +5403,7 @@ data:
             "type": "browser",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "label": "Browser",
-            "image": "registry.mydomain.com/namespace/ide/code:commit-8f9e9f93136a787fde5142f0708367ffaf46094c",
+            "image": "registry.mydomain.com/namespace/ide/code:commit-6f51885933f59a9f6fab937e8cb07a432559a28c",
             "latestImage": "registry.mydomain.com/namespace/ide/code:nightly",
             "imageLayers": [
               "registry.mydomain.com/namespace/ide/gitpod-code-web:commit-1f8f65b4b9b1be9c8bc5a981974a8d29c54ba235",
