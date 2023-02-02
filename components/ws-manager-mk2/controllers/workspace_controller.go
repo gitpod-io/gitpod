@@ -75,7 +75,9 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	var workspace workspacev1.Workspace
 	if err := r.Get(ctx, req.NamespacedName, &workspace); err != nil {
-		log.Error(err, "unable to fetch workspace")
+		if !errors.IsNotFound(err) {
+			log.Error(err, "unable to fetch workspace")
+		}
 		// we'll ignore not-found errors, since they can't be fixed by an immediate
 		// requeue (we'll need to wait for a new notification), and we can get them
 		// on deleted requests.

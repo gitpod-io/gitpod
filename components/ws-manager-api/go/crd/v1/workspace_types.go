@@ -130,7 +130,7 @@ type WorkspaceStatus struct {
 	Runtime *WorkspaceRuntimeStatus `json:"runtime,omitempty"`
 }
 
-// +kubebuilder:validation:Enum=Deployed;Failed;Timeout;UserActivity;HeadlessTaskFailed;StoppedByRequest;EverReady;ContentReady;BackupComplete;BackupFailure
+// +kubebuilder:validation:Enum=Deployed;Failed;Timeout;FirstUserActivity;Closed;HeadlessTaskFailed;StoppedByRequest;EverReady;ContentReady;BackupComplete;BackupFailure
 type WorkspaceCondition string
 
 const (
@@ -144,8 +144,11 @@ const (
 	// Timeout contains the reason the workspace has timed out.
 	WorkspaceConditionTimeout WorkspaceCondition = "Timeout"
 
-	// UserActivity is the time when MarkActive was first called on the workspace
-	WorkspaceConditionUserActivity WorkspaceCondition = "UserActivity"
+	// FirstUserActivity is the time when MarkActive was first called on the workspace
+	WorkspaceConditionFirstUserActivity WorkspaceCondition = "FirstUserActivity"
+
+	// Closed indicates that a workspace is marked as closed. This will shorten its timeout.
+	WorkspaceConditionClosed WorkspaceCondition = "Closed"
 
 	// HeadlessTaskFailed indicates that a headless workspace task failed
 	WorkspaceConditionsHeadlessTaskFailed WorkspaceCondition = "HeadlessTaskFailed"
