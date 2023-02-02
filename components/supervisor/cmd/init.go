@@ -31,6 +31,8 @@ var initCmd = &cobra.Command{
 	Short: "init the supervisor",
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, true, false)
+		log.Log.Logger.AddHook(fatalTerminationLogHook{})
+
 		cfg, err := supervisor.GetConfig()
 		if err != nil {
 			log.WithError(err).Info("cannnot load config")
