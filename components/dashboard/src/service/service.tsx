@@ -134,6 +134,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             statusPhase: workspace.latestInstance?.status.phase,
             workspaceDescription: workspace.workspace.description,
             workspaceType: workspace.workspace.type,
+            credentialsToken: workspace.workspace.config.ideCredentialsToken!,
         };
     }
 
