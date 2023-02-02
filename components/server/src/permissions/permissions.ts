@@ -13,6 +13,13 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 const organizationRoles: OrganizationRelation[] = ["member", "owner"];
 
+const FULLY_CONSISTENT = v1.Consistency.create({
+    requirement: {
+        oneofKind: "fullyConsistent",
+        fullyConsistent: true,
+    },
+});
+
 @injectable()
 export class Permissions {
     @inject(SpiceDBClient)
@@ -77,6 +84,7 @@ export class Permissions {
             subject: userSubject(userID),
             permission: "organization_read",
             resourceObjectType: "organization",
+            consistency: FULLY_CONSISTENT,
         });
         const response = await this.client.lookupResources(req);
 
@@ -161,6 +169,7 @@ function check(resource: v1.ObjectReference, relation: Relation, subject: v1.Sub
         subject: subject,
         permission: relation,
         resource: resource,
+        consistency: FULLY_CONSISTENT,
     });
 }
 
