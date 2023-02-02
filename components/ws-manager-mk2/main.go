@@ -39,6 +39,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/controllers"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/service"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
@@ -103,7 +104,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	wsmanService, err := setupGRPCService(cfg, mgr.GetClient())
+	activity := &activity.WorkspaceActivity{}
+	wsmanService, err := setupGRPCService(cfg, mgr.GetClient(), activity)
 	if err != nil {
 		setupLog.Error(err, "unable to start manager service")
 		os.Exit(1)
@@ -137,7 +139,7 @@ func main() {
 	}
 }
 
-func setupGRPCService(cfg *config.ServiceConfiguration, k8s client.Client) (*service.WorkspaceManagerServer, error) {
+func setupGRPCService(cfg *config.ServiceConfiguration, k8s client.Client, activity *activity.WorkspaceActivity) (*service.WorkspaceManagerServer, error) {
 	// TODO(cw): remove use of common-go/log
 
 	if len(cfg.RPCServer.RateLimits) > 0 {
@@ -170,7 +172,7 @@ func setupGRPCService(cfg *config.ServiceConfiguration, k8s client.Client) (*ser
 
 	grpcOpts = append(grpcOpts, grpc.UnknownServiceHandler(proxy.TransparentHandler(imagebuilderDirector(cfg.ImageBuilderProxy.TargetAddr))))
 
-	srv := service.NewWorkspaceManagerServer(k8s, &cfg.Manager, metrics.Registry)
+	srv := service.NewWorkspaceManagerServer(k8s, &cfg.Manager, metrics.Registry, activity)
 
 	grpcServer := grpc.NewServer(grpcOpts...)
 	grpc_prometheus.Register(grpcServer)
