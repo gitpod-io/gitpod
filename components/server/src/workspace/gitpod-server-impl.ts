@@ -2925,7 +2925,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         let user = this.checkAndBlockUser("createOrgAuthProvider");
 
         // map params to a new provider
-        const newProvider = <AuthProviderEntry.NewEntry>{
+        const newProvider = <AuthProviderEntry.NewOrgEntry>{
             host: entry.host,
             type: entry.type,
             clientId: entry.clientId,
@@ -2966,7 +2966,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 throw new Error("Provider for this host already exists.");
             }
 
-            const result = await this.authProviderService.updateAuthProvider(newProvider);
+            const result = await this.authProviderService.createOrgAuthProvider(newProvider);
             return AuthProviderEntry.redact(result);
         } catch (error) {
             const message = error && error.message ? error.message : "Failed to create the provider.";
@@ -2980,12 +2980,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<AuthProviderEntry> {
         traceAPIParams(ctx, {}); // entry contains PII
 
-        const user = this.checkAndBlockUser("updateOrgAuthProvider");
+        this.checkAndBlockUser("updateOrgAuthProvider");
 
         // map params to a provider update
-        const providerUpdate: AuthProviderEntry.UpdateEntry = {
+        const providerUpdate: AuthProviderEntry.UpdateOrgEntry = {
             id: entry.id,
-            ownerId: user.id,
             clientId: entry.clientId,
             clientSecret: entry.clientSecret,
             organizationId: entry.organizationId,
@@ -3000,7 +2999,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardTeamOperation(providerUpdate.organizationId, "update");
 
         try {
-            const result = await this.authProviderService.updateAuthProvider(providerUpdate);
+            const result = await this.authProviderService.updateOrgAuthProvider(providerUpdate);
             return AuthProviderEntry.redact(result);
         } catch (error) {
             const message = error && error.message ? error.message : "Failed to update the provider.";
