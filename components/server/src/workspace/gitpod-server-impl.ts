@@ -2185,7 +2185,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         if (centralizedPermissionsEnabled && team) {
-            this.perms.grantOrganizationRole(user.id, "member", team.id);
+            await this.perms.grantOrganizationRole(user.id, "member", team.id);
         }
 
         return team!;
