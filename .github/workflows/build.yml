@@ -180,7 +180,7 @@ jobs:
           PR_NO_TEST: ${{needs.configuration.outputs.build_no_test}}
           PR_LEEWAY_TARGET: ${{needs.configuration.outputs.build_leeway_target}}
           NPM_AUTH_TOKEN: '${{ steps.secrets.outputs.npm-auth-token }}'
-          PUBLISH_TO_NPM: ${{ needs.configuration.outputs.publish_to_npm == 'true' || needs.configuration.outputs.is_main_branch == 'true' }}
+          PUBLISH_TO_NPM: ${{ needs.configuration.outputs.publish_to_npm == 'true' }}
         run: |
           [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none"       || CACHE="remote"
           [[ "$PR_NO_TEST"  = "true" ]] && TEST="--dont-test" || TEST=""
