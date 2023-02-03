@@ -173,7 +173,7 @@ export class GithubApp {
             catchError(this.handlePushEvent(ctx));
         });
 
-        app.on(["pull_request.opened", "pull_request.synchronize", "pull_request.reopened"], (ctx) => {
+        app.on(["pull_request.opened", "pull_request.reopened"], (ctx) => {
             catchError(this.handlePullRequest(ctx));
         });
 
