@@ -118,6 +118,8 @@
 /dev/preview/infrastructure/harvester @gitpod-io/engineering-delivery-operations-experience
 /dev/preview/workflow @gitpod-io/engineering-delivery-operations-experience
 
+.github/workflows/ide-*.yml @gitpod-io/engineering-ide
+
 #
 # Automation
 # The following files are updated automatically so we don't want to have a specific code-owner
