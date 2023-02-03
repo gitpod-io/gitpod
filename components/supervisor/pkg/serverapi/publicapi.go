@@ -143,6 +143,7 @@ func (s *Service) tryConnToPublicAPI() {
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS13})),
 		grpc.WithStreamInterceptor(grpc_middleware.ChainStreamClient([]grpc.StreamClientInterceptor{
+			s.publicApiMetrics.StreamClientInterceptor(),
 			func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 				withAuth := metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+s.token)
 				return streamer(withAuth, desc, cc, method, opts...)
