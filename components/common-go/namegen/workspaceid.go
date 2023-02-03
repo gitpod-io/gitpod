@@ -13,11 +13,25 @@ import (
 	"strings"
 )
 
-// WorkspaceIDPattern is the expected Worksapce ID pattern
+// PossibleWorkspaceIDPatterns
 // gitpod-protocol/src/util/generate-workspace-id.ts is authoritative over the generation
 // ws-proxy/pkg/proxy/workspacerouter.go is authoritative for this regexp
+var PossibleWorkspaceIDPatterns = []string{
+	"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+	"[0-9a-z]{2,16}-[0-9a-z]{2,16}-[0-9a-z]{8,11}",
+}
 
-var WorkspaceIDPattern = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$|^[0-9a-z]{2,16}-[0-9a-z]{2,16}-[0-9a-z]{8,11}$`)
+var workspaceIDPattern = regexp.MustCompile(getWorkspaceIDPatternStr())
+
+// getWorkspaceIDPatternStr is the expected Workspace ID pattern str
+// ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$|^[0-9a-z]{2,16}-[0-9a-z]{2,16}-[0-9a-z]{8,11}$
+func getWorkspaceIDPatternStr() string {
+	patterns := []string{}
+	for _, p := range PossibleWorkspaceIDPatterns {
+		patterns = append(patterns, fmt.Sprintf("^%s$", p))
+	}
+	return strings.Join(patterns, "|")
+}
 
 func GenerateWorkspaceID() (string, error) {
 	s1, err := chooseRandomly(colors, 1)
@@ -41,8 +55,8 @@ var (
 )
 
 func ValidateWorkspaceID(id string) error {
-	if !WorkspaceIDPattern.MatchString(id) {
-		return fmt.Errorf("id '%s' does not match workspace ID regex '%s': %w", id, WorkspaceIDPattern.String(), InvalidWorkspaceID)
+	if !workspaceIDPattern.MatchString(id) {
+		return fmt.Errorf("id '%s' does not match workspace ID regex '%s': %w", id, workspaceIDPattern.String(), InvalidWorkspaceID)
 	}
 
 	return nil
